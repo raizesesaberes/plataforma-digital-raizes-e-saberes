@@ -435,6 +435,29 @@ const getSuggestedBook = (book) =>
   bookCatalog.find((candidate) => candidate.id !== book.id && candidate.collection === book.collection) ||
   defaultBook;
 
+const ecosystemConnections = {
+  byBook: {
+    "livro-005": {
+      label: "Curso relacionado disponivel",
+      title: "Educacao Inclusiva: Praticas que Acolhem",
+      lesson: "Aula: acolhimento e inclusao na rotina",
+      href: "universidade.html?lesson=educacao-inclusiva-acolhem#curso-relacionado",
+    },
+  },
+  byLesson: {
+    "educacao-inclusiva-acolhem": {
+      label: "Material didatico relacionado",
+      title: "Educacao Infantil 4 anos - Volume 1",
+      description: "Livro do Aluno conectado a aula de inclusao e acolhimento.",
+      href: "book-viewer.html?book=livro-005&page=20",
+    },
+  },
+};
+
+const getRelatedCourseForBook = (book) => ecosystemConnections.byBook[book.id];
+const getRelatedMaterialForLesson = (lessonId = "educacao-inclusiva-acolhem") =>
+  ecosystemConnections.byLesson[lessonId] || ecosystemConnections.byLesson["educacao-inclusiva-acolhem"];
+
 const buildLatestMaterialsCards = () =>
   latestLibraryBooks
     .map(
@@ -460,6 +483,10 @@ const buildFeaturedBookCard = () => `
 `;
 
 const suggestedBook = getSuggestedBook(activeBook);
+const relatedCourse = getRelatedCourseForBook(activeBook);
+const relatedMaterial = getRelatedMaterialForLesson(
+  typeof window === "undefined" ? undefined : new URLSearchParams(window.location.search).get("lesson")
+);
 
 const collectionShowcaseCards = [
   {
@@ -680,7 +707,7 @@ const modules = {
           </div>
         </section>
 
-        <section class="university-card university-current-course">
+        <section class="university-card university-current-course" id="curso-relacionado">
           <div class="university-card-head"><h2>Meus Cursos em Andamento</h2><a href="#">Ver todos</a></div>
           <div class="current-course-body">
             <div class="course-portrait" aria-hidden="true"><span></span></div>
@@ -688,6 +715,12 @@ const modules = {
               <h3>Educacao Inclusiva: Praticas que Acolhem</h3>
               <div class="course-progress-line"><i><span style="width: 65%"></span></i><strong>65%</strong></div>
               <button type="button" data-complete-university-lesson>Continuar Curso</button>
+              <aside class="ecosystem-link-panel university-material-link">
+                <span>📚 ${relatedMaterial.label}</span>
+                <strong>${relatedMaterial.title}</strong>
+                <p>${relatedMaterial.description}</p>
+                <a href="${relatedMaterial.href}">Abrir no Book Viewer</a>
+              </aside>
             </div>
           </div>
         </section>
@@ -788,6 +821,20 @@ const modules = {
           </div>
           <a href="${suggestedBook.href}">Abrir sugestao</a>
         </section>
+        ${
+          relatedCourse
+            ? `
+              <section class="ecosystem-link-panel reader-course-link">
+                <div>
+                  <span>🎓 ${relatedCourse.label}</span>
+                  <h2>${relatedCourse.title}</h2>
+                  <p>${relatedCourse.lesson}</p>
+                </div>
+                <a href="${relatedCourse.href}">Abrir aula</a>
+              </section>
+            `
+            : ""
+        }
       </div>
     `,
   },
@@ -1082,7 +1129,10 @@ const initBookReader = () => {
   const stage = reader.querySelector("[data-book-stage]");
   const pageTemplate = document.createDocumentFragment();
 
-  let page = 1;
+  const readerParams = typeof window === "undefined" ? new URLSearchParams() : new URLSearchParams(window.location.search);
+  const hasRequestedPage = readerParams.has("page");
+  const requestedPage = hasRequestedPage ? Number(readerParams.get("page")) || 1 : 1;
+  let page = clamp(requestedPage, 1, book.totalPages);
   let zoom = 1;
   let bookmarkedPage = Number(localStorage.getItem(storageKey)) || 0;
   const preloadedPages = new Set();
@@ -1221,7 +1271,7 @@ const initBookReader = () => {
     image.classList.remove("is-loading");
   });
 
-  if (bookmarkedPage) {
+  if (bookmarkedPage && !hasRequestedPage) {
     page = clamp(bookmarkedPage, 1, book.totalPages);
   }
   setZoom(1);

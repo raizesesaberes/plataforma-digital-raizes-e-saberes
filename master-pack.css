@@ -1178,6 +1178,64 @@
   white-space: nowrap;
 }
 
+.ecosystem-link-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid rgba(13, 107, 75, 0.14);
+  border-radius: var(--rs-radius);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(215, 169, 40, 0.12), transparent 12rem),
+    rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 30px rgba(18, 32, 51, 0.06);
+}
+
+.ecosystem-link-panel span {
+  display: block;
+  color: var(--rs-green-800);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.ecosystem-link-panel h2,
+.ecosystem-link-panel strong {
+  display: block;
+  margin: 5px 0 3px;
+  color: var(--rs-green-950);
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 0.96rem;
+  line-height: 1.25;
+}
+
+.ecosystem-link-panel p {
+  margin: 0;
+  color: var(--rs-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.ecosystem-link-panel a {
+  display: inline-grid;
+  min-height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0 13px;
+  border-radius: var(--rs-radius);
+  color: #fff;
+  background: var(--rs-green-700);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.reader-course-link {
+  margin-top: 12px;
+  padding: 13px 15px;
+}
+
 .screen[data-route-screen="viewer"] {
   padding: 18px;
   background:
@@ -2052,6 +2110,17 @@ td {
   font-size: 0.78rem;
 }
 
+.university-material-link {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px;
+}
+
+.university-material-link a {
+  width: fit-content;
+}
+
 .university-next-courses,
 .university-materials-card,
 .university-assessments-card {
@@ -2377,6 +2446,11 @@ td {
   .page {
     min-height: 480px;
     padding: 28px;
+  }
+
+  .ecosystem-link-panel {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .mobile-tabbar {
