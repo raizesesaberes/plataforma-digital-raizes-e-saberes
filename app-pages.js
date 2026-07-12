@@ -676,11 +676,7 @@ const modules = {
             <p>Seu aprendizado transforma voce, sua escola e o futuro.</p>
             <button type="button" data-complete-university-lesson>Continuar Aprendendo</button>
           </div>
-          <div class="university-hero-art" aria-hidden="true">
-            <span class="art-tree"></span>
-            <span class="art-books"></span>
-            <span class="art-cap"></span>
-          </div>
+          <img class="university-hero-art" src="assets/universidade/banner-principal.webp" alt="" aria-hidden="true" />
         </section>
 
         <aside class="university-progress-card">
@@ -692,25 +688,25 @@ const modules = {
         </aside>
 
         <aside class="university-achievement-card">
-          <article><span>🏅</span><strong>7</strong><small>Certificados Conquistados</small><a href="#">Ver certificados</a></article>
-          <article><span>◷</span><strong>120 h</strong><small>Horas de Formacao</small><a href="#">Ver historico</a></article>
+          <article><span><img src="assets/universidade/icone-certificado.webp" alt="" /></span><strong>7</strong><small>Certificados Conquistados</small><a href="#">Ver certificados</a></article>
+          <article><span><img src="assets/universidade/icone-horas.webp" alt="" /></span><strong>120 h</strong><small>Horas de Formacao</small><a href="#">Ver historico</a></article>
         </aside>
 
         <section class="university-card university-trails-card span-2">
           <div class="university-card-head"><h2>Trilhas de Aprendizagem</h2><a href="#">Ver todas</a></div>
           <div class="university-trail-strip">
-            <article><span>📗</span><strong>Praticas Pedagogicas</strong><small>12 cursos</small></article>
-            <article><span>🙌</span><strong>Inclusao e Diversidade</strong><small>10 cursos</small></article>
-            <article><span>💻</span><strong>Tecnologias Educacionais</strong><small>8 cursos</small></article>
-            <article><span>👥</span><strong>Gestao Escolar e Lideranca</strong><small>9 cursos</small></article>
-            <article><span>💛</span><strong>Socioemocional e Convivencia</strong><small>7 cursos</small></article>
+            <article><img src="assets/universidade/trilha-praticas-pedagogicas.webp" alt="" /><strong>Praticas Pedagogicas</strong><small>12 cursos</small></article>
+            <article><img src="assets/universidade/trilha-inclusao-diversidade.webp" alt="" /><strong>Inclusao e Diversidade</strong><small>10 cursos</small></article>
+            <article><img src="assets/universidade/trilha-tecnologias.webp" alt="" /><strong>Tecnologias Educacionais</strong><small>8 cursos</small></article>
+            <article><img src="assets/universidade/trilha-gestao.webp" alt="" /><strong>Gestao Escolar e Lideranca</strong><small>9 cursos</small></article>
+            <article><img src="assets/universidade/trilha-socioemocional.webp" alt="" /><strong>Socioemocional e Convivencia</strong><small>7 cursos</small></article>
           </div>
         </section>
 
         <section class="university-card university-current-course" id="curso-relacionado">
           <div class="university-card-head"><h2>Meus Cursos em Andamento</h2><a href="#">Ver todos</a></div>
           <div class="current-course-body">
-            <div class="course-portrait" aria-hidden="true"><span></span></div>
+            <img class="course-portrait" src="assets/universidade/curso-educacao-inclusiva.webp" alt="" />
             <div>
               <h3>Educacao Inclusiva: Praticas que Acolhem</h3>
               <div class="course-progress-line"><i><span style="width: 65%"></span></i><strong>65%</strong></div>
@@ -735,7 +731,7 @@ const modules = {
         <section class="university-card university-teacher-card">
           <div class="university-card-head"><h2>Professor em Destaque</h2></div>
           <div class="teacher-highlight">
-            <span aria-hidden="true"></span>
+            <img src="assets/universidade/professor-ricardo-mendes.webp" alt="" />
             <div><strong>Prof. Ricardo Mendes</strong><p>Doutor em Educacao. Especialista em praticas inovadoras e gestao pedagogica.</p><a href="#">Ver perfil</a></div>
           </div>
         </section>
@@ -743,17 +739,17 @@ const modules = {
         <section class="university-card university-video-card span-2">
           <div class="university-card-head"><h2>Videoaulas em Destaque</h2><a href="#">Ver todas</a></div>
           <div class="university-video-grid">
-            <article><span>▶</span><strong>Acolhimento e Escuta Ativa na Escola</strong><small>10:45</small></article>
-            <article><span>▶</span><strong>Planejamento com Foco na Aprendizagem</strong><small>22:10</small></article>
-            <article><span>▶</span><strong>Tecnologias que Transformam</strong><small>16:50</small></article>
+            <article><img src="assets/universidade/video-acolhimento.webp" alt="" /><strong>Acolhimento e Escuta Ativa na Escola</strong></article>
+            <article><img src="assets/universidade/video-planejamento.webp" alt="" /><strong>Planejamento com Foco na Aprendizagem</strong></article>
+            <article><img src="assets/universidade/video-tecnologias.webp" alt="" /><strong>Tecnologias que Transformam</strong></article>
           </div>
         </section>
 
         <section class="university-card university-materials-card">
           <div class="university-card-head"><h2>Materiais Complementares</h2><a href="#">Ver todos</a></div>
-          <article><span class="pdf">PDF</span><strong>Guia Pratico da BNCC</strong><small>PDF - 2.4 MB</small></article>
-          <article><span class="sheet">✓</span><strong>Checklist de Planejamento</strong><small>PDF - 1.1 MB</small></article>
-          <article><span class="doc">W</span><strong>Modelo de Plano de Aula</strong><small>DOCX - 880 KB</small></article>
+          <article><img src="assets/universidade/material-pdf.webp" alt="" /><strong>Guia Pratico da BNCC</strong><small>PDF - 2.4 MB</small></article>
+          <article><img src="assets/universidade/material-checklist.webp" alt="" /><strong>Checklist de Planejamento</strong><small>PDF - 1.1 MB</small></article>
+          <article><img src="assets/universidade/material-doc.webp" alt="" /><strong>Modelo de Plano de Aula</strong><small>DOCX - 880 KB</small></article>
         </section>
 
         <section class="university-card university-assessments-card">
@@ -948,6 +944,8 @@ const environments = {
     profile: "Formacao que Transforma",
     search: "Buscar cursos, trilhas, temas...",
     user: "Ana Carolina<br />Nivel 3 - 1.250 XP",
+    avatar: "assets/universidade/avatar-ana-carolina.webp",
+    profileImage: "logo-sidebar-dark.png",
     nav: [
       ["universidade", "Inicio", "universidade.html"],
       ["trilhas", "Trilhas de Aprendizagem", "#"],
@@ -1327,7 +1325,7 @@ const renderAppPage = () => {
         <div class="environment-label">${environment.label}</div>
         <nav class="app-nav" aria-label="Master Screens">${nav}</nav>
         <section class="sidebar-profile">
-          <img src="logo-app.png" alt="" onerror="this.hidden=true;" />
+          <img src="${environment.profileImage || "logo-app.png"}" alt="" onerror="this.hidden=true;" />
           <div><strong>${environment.label}</strong><span>${environment.profile}</span></div>
         </section>
       </aside>
@@ -1337,7 +1335,7 @@ const renderAppPage = () => {
           <label class="app-search"><span>Pesquisar</span><input type="search" placeholder="${environment.search}" /></label>
           <button class="top-filter" type="button">Filtros</button>
           <nav class="module-switcher" aria-label="Modulos do Ecossistema">${ecosystemModuleLinks(activeKey)}</nav>
-          <div class="top-actions" aria-label="Acoes"><span class="notif">3</span><span class="notif">2</span><div class="user-chip"><span>MS</span><strong>${environment.user}</strong></div></div>
+          <div class="top-actions" aria-label="Acoes"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>MS</span>`}<strong>${environment.user}</strong></div></div>
         </header>
         <section class="screen is-active route-screen" data-route-screen="${activeKey}">${activeModule.html}</section>
       </main>
