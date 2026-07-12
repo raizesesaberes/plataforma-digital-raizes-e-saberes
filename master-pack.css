@@ -70,6 +70,21 @@
     linear-gradient(180deg, #06422f 0%, #053125 100%);
 }
 
+.app-shell[data-environment="universidade"] {
+  background: #fbf8ef;
+}
+
+.app-shell[data-environment="universidade"] .app-sidebar {
+  background:
+    radial-gradient(circle at 48% 0%, rgba(26, 114, 73, 0.58), transparent 34%),
+    linear-gradient(180deg, #063f2f 0%, #03291f 100%);
+}
+
+.app-shell[data-environment="universidade"] .app-topbar {
+  border-bottom-color: rgba(226, 218, 202, 0.9);
+  background: rgba(255, 252, 245, 0.92);
+}
+
 .sidebar-logo {
   display: block;
   width: 174px;
@@ -1720,6 +1735,488 @@ td {
   font-size: 1.3rem;
 }
 
+.university-platform {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.62fr) minmax(220px, 0.62fr);
+  gap: 18px;
+  color: #11291f;
+}
+
+.university-platform-hero,
+.university-card,
+.university-progress-card,
+.university-achievement-card article {
+  border: 1px solid rgba(216, 204, 183, 0.74);
+  border-radius: var(--rs-radius);
+  background: rgba(255, 253, 247, 0.94);
+  box-shadow: 0 18px 46px rgba(56, 45, 26, 0.08);
+}
+
+.university-platform-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(260px, 0.9fr);
+  min-height: 252px;
+  overflow: hidden;
+  padding: 30px 32px;
+  background:
+    radial-gradient(circle at 72% 24%, rgba(215, 169, 40, 0.2), transparent 15rem),
+    linear-gradient(135deg, #fffdf5 0%, #eef7df 100%);
+}
+
+.university-platform-hero > div:first-child {
+  position: relative;
+  z-index: 2;
+}
+
+.university-platform-hero span,
+.university-card-head a,
+.university-next-courses a,
+.teacher-highlight a {
+  color: var(--rs-green-800);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.university-platform-hero h1 {
+  max-width: 560px;
+  margin: 10px 0 10px;
+  color: #092f22;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: clamp(2rem, 3.4vw, 3.05rem);
+  line-height: 1.05;
+}
+
+.university-platform-hero p {
+  max-width: 520px;
+  margin: 0;
+  color: #526050;
+  font-weight: 700;
+}
+
+.university-platform-hero button,
+.current-course-body button {
+  min-height: 42px;
+  margin-top: 24px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--rs-radius);
+  color: #fff;
+  background: linear-gradient(135deg, var(--rs-green-700), var(--rs-green-900));
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.university-hero-art {
+  position: relative;
+  z-index: 1;
+  min-height: 210px;
+}
+
+.art-tree,
+.art-books,
+.art-cap {
+  position: absolute;
+  display: block;
+}
+
+.art-tree {
+  right: 20px;
+  bottom: 22px;
+  width: 190px;
+  height: 150px;
+  border-radius: 52% 48% 44% 56%;
+  background:
+    radial-gradient(circle at 38% 24%, #b8d36f 0 12%, transparent 13%),
+    radial-gradient(circle at 56% 20%, #7fb94d 0 14%, transparent 15%),
+    radial-gradient(circle at 70% 36%, #a7cf5d 0 15%, transparent 16%),
+    linear-gradient(90deg, transparent 46%, #8b5e2d 47% 54%, transparent 55%);
+}
+
+.art-books {
+  right: 128px;
+  bottom: 38px;
+  width: 176px;
+  height: 92px;
+  border-radius: 16px;
+  background:
+    linear-gradient(#0f6b45 0 26%, transparent 27%),
+    linear-gradient(#d7a928 35% 59%, transparent 60%),
+    linear-gradient(#7c4d29 69% 100%);
+  box-shadow: 0 16px 28px rgba(71, 57, 31, 0.16);
+  transform: skewY(-5deg);
+}
+
+.art-cap {
+  right: 172px;
+  bottom: 132px;
+  width: 144px;
+  height: 48px;
+  border-radius: 10px 10px 18px 18px;
+  background: linear-gradient(135deg, #0e6b45, #06462f);
+  transform: rotate(-8deg);
+}
+
+.university-progress-card {
+  display: grid;
+  align-content: center;
+  min-height: 252px;
+  padding: 24px;
+}
+
+.university-progress-card h2,
+.university-card h2 {
+  margin: 0;
+  color: #173527;
+  font-size: 0.98rem;
+}
+
+.university-progress-ring {
+  display: grid;
+  width: 110px;
+  height: 110px;
+  place-items: center;
+  margin: 22px 0 8px;
+  border: 14px solid #dfe9cf;
+  border-top-color: var(--rs-green-700);
+  border-right-color: var(--rs-green-700);
+  border-radius: 50%;
+}
+
+.university-progress-ring strong {
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 1.5rem;
+}
+
+.university-progress-card p,
+.university-progress-card small {
+  margin: 0;
+  color: #526050;
+  font-weight: 800;
+}
+
+.university-progress-card i,
+.course-progress-line i {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e5dfcf;
+}
+
+.university-progress-card i {
+  margin: 18px 0 8px;
+}
+
+.university-progress-card i span,
+.course-progress-line i span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--rs-green-700);
+}
+
+.university-achievement-card {
+  display: grid;
+  gap: 12px;
+}
+
+.university-achievement-card article {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px 12px;
+  align-items: center;
+  min-height: 120px;
+  padding: 20px;
+}
+
+.university-achievement-card span {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: #eef6de;
+}
+
+.university-achievement-card strong {
+  color: #123526;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 1.6rem;
+}
+
+.university-achievement-card small {
+  grid-column: 2 / -1;
+  color: #526050;
+  font-weight: 800;
+}
+
+.university-achievement-card a {
+  color: var(--rs-green-800);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.university-card {
+  min-width: 0;
+  padding: 20px;
+}
+
+.university-platform .span-2 {
+  grid-column: span 2;
+}
+
+.university-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.university-trail-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(104px, 1fr));
+  gap: 14px;
+}
+
+.university-trail-strip article {
+  display: grid;
+  min-height: 164px;
+  align-content: center;
+  justify-items: center;
+  gap: 8px;
+  padding: 16px 10px;
+  border: 1px solid rgba(216, 204, 183, 0.74);
+  border-radius: var(--rs-radius);
+  background: #fff8ea;
+  text-align: center;
+}
+
+.university-trail-strip span {
+  font-size: 2.15rem;
+}
+
+.university-trail-strip strong {
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.university-trail-strip small,
+.university-next-courses small,
+.university-materials-card small,
+.university-assessments-card small {
+  color: #6a745f;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.current-course-body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  align-items: center;
+}
+
+.course-portrait,
+.teacher-highlight span {
+  overflow: hidden;
+  border-radius: var(--rs-radius);
+  background:
+    radial-gradient(circle at 48% 30%, #5e3b24 0 11%, transparent 12%),
+    radial-gradient(circle at 51% 26%, #251713 0 18%, transparent 19%),
+    linear-gradient(150deg, #c89758, #f4d8a6 42%, #2e7d50 43% 100%);
+}
+
+.course-portrait {
+  height: 154px;
+}
+
+.current-course-body h3 {
+  margin: 0 0 18px;
+  font-size: 0.95rem;
+  line-height: 1.28;
+}
+
+.course-progress-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.course-progress-line strong {
+  color: var(--rs-green-800);
+  font-size: 0.78rem;
+}
+
+.university-next-courses,
+.university-materials-card,
+.university-assessments-card {
+  display: grid;
+  gap: 10px;
+}
+
+.university-next-courses article,
+.university-materials-card article,
+.university-assessments-card article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 13px;
+  border: 1px solid rgba(216, 204, 183, 0.72);
+  border-radius: var(--rs-radius);
+  background: #fffdf8;
+}
+
+.university-materials-card article {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.university-next-courses strong,
+.university-materials-card strong,
+.university-assessments-card strong {
+  color: #173527;
+  font-size: 0.82rem;
+}
+
+.university-next-courses span,
+.university-assessments-card span {
+  grid-row: span 2;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #cfd8c6;
+  border-radius: 50%;
+}
+
+.university-assessments-card span.done {
+  display: grid;
+  place-items: center;
+  border-color: #3d9d65;
+  color: #fff;
+  background: #3d9d65;
+  font-size: 0.7rem;
+}
+
+.university-next-courses a {
+  display: grid;
+  min-height: 34px;
+  place-items: center;
+  border-radius: var(--rs-radius);
+  background: #f6f0e3;
+}
+
+.teacher-highlight {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.teacher-highlight span {
+  width: 74px;
+  height: 74px;
+}
+
+.teacher-highlight strong,
+.teacher-highlight p {
+  display: block;
+  margin: 0;
+}
+
+.teacher-highlight p {
+  margin: 5px 0 12px;
+  color: #526050;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.university-video-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.university-video-grid article {
+  position: relative;
+  display: grid;
+  min-height: 128px;
+  align-content: end;
+  gap: 5px;
+  overflow: hidden;
+  padding: 12px;
+  border-radius: var(--rs-radius);
+  color: #fff;
+  background:
+    linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.72) 100%),
+    linear-gradient(135deg, #d7c29e, #7aa05e);
+}
+
+.university-video-grid article > span {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.62);
+  transform: translate(-50%, -50%);
+}
+
+.university-video-grid strong,
+.university-video-grid small {
+  position: relative;
+  z-index: 1;
+}
+
+.university-video-grid strong {
+  font-size: 0.78rem;
+}
+
+.university-video-grid small {
+  width: fit-content;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.54);
+  font-size: 0.66rem;
+  font-weight: 900;
+}
+
+.university-materials-card span {
+  display: grid;
+  grid-row: span 2;
+  grid-column: 1;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 7px;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.university-materials-card strong,
+.university-materials-card small {
+  grid-column: 2;
+}
+
+.university-materials-card .pdf {
+  background: #e34835;
+}
+
+.university-materials-card .sheet {
+  background: #2d9b5f;
+}
+
+.university-materials-card .doc {
+  background: #2f6cbd;
+}
+
 .mobile-tabbar {
   display: none;
 }
@@ -1768,8 +2265,20 @@ td {
 
   .metric-row,
   .teacher-layout,
-  .analytics-grid {
+  .analytics-grid,
+  .university-platform {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .university-platform-hero,
+  .university-platform .span-2 {
+    grid-column: span 2;
+  }
+
+  .university-trail-strip {
+    grid-template-columns: repeat(5, minmax(96px, 1fr));
+    overflow-x: auto;
+    padding-bottom: 4px;
   }
 
   .latest-materials-grid {
@@ -1813,7 +2322,26 @@ td {
   .family-grid,
   .teacher-layout,
   .analytics-grid,
+  .university-platform,
   .metric-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .university-platform-hero,
+  .university-platform .span-2 {
+    grid-column: span 2;
+  }
+
+  .university-platform-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.74fr);
+  }
+
+  .university-achievement-card {
+    grid-column: span 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .university-video-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1905,6 +2433,53 @@ td {
   .dashboard-head {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .university-platform,
+  .university-platform-hero,
+  .university-platform .span-2,
+  .university-achievement-card {
+    grid-column: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .university-platform-hero {
+    min-height: auto;
+    padding: 22px;
+  }
+
+  .university-hero-art {
+    min-height: 140px;
+  }
+
+  .art-tree {
+    right: 6px;
+    width: 140px;
+    height: 112px;
+  }
+
+  .art-books {
+    right: 92px;
+    width: 132px;
+    height: 70px;
+  }
+
+  .art-cap {
+    right: 126px;
+    bottom: 106px;
+    width: 102px;
+    height: 36px;
+  }
+
+  .university-trail-strip,
+  .university-video-grid,
+  .current-course-body,
+  .teacher-highlight {
+    grid-template-columns: 1fr;
+  }
+
+  .course-portrait {
+    height: 190px;
   }
 
   .library-grid,

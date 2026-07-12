@@ -23,6 +23,7 @@ requirePlatformAuth();
 const ecosystemModules = [
   ["index.html", "🏠 Site"],
   ["biblioteca.html", "Biblioteca"],
+  ["universidade.html", "Universidade"],
   ["book-viewer.html", "Book Viewer"],
   ["professor.html", "Professor"],
   ["avalia.html", "Avalia+"],
@@ -573,6 +574,7 @@ const libraryBookCards = sortedLibraryBooks
 
 const routeKeyByHref = {
   "biblioteca.html": "biblioteca",
+  "universidade.html": "universidade",
   "book-viewer.html": "viewer",
   "professor.html": "professor",
   "avalia.html": "avalia",
@@ -630,6 +632,102 @@ const modules = {
         <section class="wide-panel recent-books library-catalog-panel" id="acervo-completo">
           <div class="panel-head"><h2>Ultimos Materiais</h2><a>${publishedMaterialsCount} materiais</a></div>
           <div class="library-catalog">${libraryBookCards}</div>
+        </section>
+      </div>
+    `,
+  },
+  universidade: {
+    title: "Universidade Raizes e Saberes",
+    subtitle: "Formacao que transforma",
+    code: "MS-008",
+    html: `
+      <div class="university-platform" data-university-platform>
+        <section class="university-platform-hero">
+          <div>
+            <span>Universidade Raizes e Saberes</span>
+            <h1>Bem-vinda de volta, Ana Carolina!</h1>
+            <p>Seu aprendizado transforma voce, sua escola e o futuro.</p>
+            <button type="button" data-complete-university-lesson>Continuar Aprendendo</button>
+          </div>
+          <div class="university-hero-art" aria-hidden="true">
+            <span class="art-tree"></span>
+            <span class="art-books"></span>
+            <span class="art-cap"></span>
+          </div>
+        </section>
+
+        <aside class="university-progress-card">
+          <h2>Seu Progresso Geral</h2>
+          <div class="university-progress-ring"><strong>78%</strong></div>
+          <p>Voce esta indo <strong>muito bem!</strong></p>
+          <i><span style="width: 78%"></span></i>
+          <small>12 cursos concluidos</small>
+        </aside>
+
+        <aside class="university-achievement-card">
+          <article><span>🏅</span><strong>7</strong><small>Certificados Conquistados</small><a href="#">Ver certificados</a></article>
+          <article><span>◷</span><strong>120 h</strong><small>Horas de Formacao</small><a href="#">Ver historico</a></article>
+        </aside>
+
+        <section class="university-card university-trails-card span-2">
+          <div class="university-card-head"><h2>Trilhas de Aprendizagem</h2><a href="#">Ver todas</a></div>
+          <div class="university-trail-strip">
+            <article><span>📗</span><strong>Praticas Pedagogicas</strong><small>12 cursos</small></article>
+            <article><span>🙌</span><strong>Inclusao e Diversidade</strong><small>10 cursos</small></article>
+            <article><span>💻</span><strong>Tecnologias Educacionais</strong><small>8 cursos</small></article>
+            <article><span>👥</span><strong>Gestao Escolar e Lideranca</strong><small>9 cursos</small></article>
+            <article><span>💛</span><strong>Socioemocional e Convivencia</strong><small>7 cursos</small></article>
+          </div>
+        </section>
+
+        <section class="university-card university-current-course">
+          <div class="university-card-head"><h2>Meus Cursos em Andamento</h2><a href="#">Ver todos</a></div>
+          <div class="current-course-body">
+            <div class="course-portrait" aria-hidden="true"><span></span></div>
+            <div>
+              <h3>Educacao Inclusiva: Praticas que Acolhem</h3>
+              <div class="course-progress-line"><i><span style="width: 65%"></span></i><strong>65%</strong></div>
+              <button type="button" data-complete-university-lesson>Continuar Curso</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="university-card university-next-courses">
+          <div class="university-card-head"><h2>Proximos Cursos</h2></div>
+          <article><strong>Avaliacao Formativa na Pratica</strong><small>Inicio: 15/06/2025</small><span>□</span></article>
+          <article><strong>Neurociencia e Aprendizagem</strong><small>Inicio: 22/06/2025</small><span>□</span></article>
+          <a href="#">Ver agenda completa</a>
+        </section>
+
+        <section class="university-card university-teacher-card">
+          <div class="university-card-head"><h2>Professor em Destaque</h2></div>
+          <div class="teacher-highlight">
+            <span aria-hidden="true"></span>
+            <div><strong>Prof. Ricardo Mendes</strong><p>Doutor em Educacao. Especialista em praticas inovadoras e gestao pedagogica.</p><a href="#">Ver perfil</a></div>
+          </div>
+        </section>
+
+        <section class="university-card university-video-card span-2">
+          <div class="university-card-head"><h2>Videoaulas em Destaque</h2><a href="#">Ver todas</a></div>
+          <div class="university-video-grid">
+            <article><span>▶</span><strong>Acolhimento e Escuta Ativa na Escola</strong><small>10:45</small></article>
+            <article><span>▶</span><strong>Planejamento com Foco na Aprendizagem</strong><small>22:10</small></article>
+            <article><span>▶</span><strong>Tecnologias que Transformam</strong><small>16:50</small></article>
+          </div>
+        </section>
+
+        <section class="university-card university-materials-card">
+          <div class="university-card-head"><h2>Materiais Complementares</h2><a href="#">Ver todos</a></div>
+          <article><span class="pdf">PDF</span><strong>Guia Pratico da BNCC</strong><small>PDF - 2.4 MB</small></article>
+          <article><span class="sheet">✓</span><strong>Checklist de Planejamento</strong><small>PDF - 1.1 MB</small></article>
+          <article><span class="doc">W</span><strong>Modelo de Plano de Aula</strong><small>DOCX - 880 KB</small></article>
+        </section>
+
+        <section class="university-card university-assessments-card">
+          <div class="university-card-head"><h2>Avaliacoes</h2><a href="#">Ver todas</a></div>
+          <article><strong>Avaliacao: Inclusao Escolar</strong><small>Concluida</small><span class="done">✓</span></article>
+          <article><strong>Avaliacao: Metodologias Ativas</strong><small>Em andamento</small><span></span></article>
+          <article><strong>Avaliacao: Gestao da Sala de Aula</strong><small>Pendente</small><span></span></article>
         </section>
       </div>
     `,
@@ -798,6 +896,31 @@ const environments = {
       ["colecoes", "Colecoes", "#"],
     ],
   },
+  universidade: {
+    label: "Universidade",
+    profile: "Formacao que Transforma",
+    search: "Buscar cursos, trilhas, temas...",
+    user: "Ana Carolina<br />Nivel 3 - 1.250 XP",
+    nav: [
+      ["universidade", "Inicio", "universidade.html"],
+      ["trilhas", "Trilhas de Aprendizagem", "#"],
+      ["cursos", "Meus Cursos", "#"],
+      ["certificados", "Certificados", "#"],
+      ["biblioteca", "Biblioteca", "biblioteca.html"],
+      ["videoaulas", "Videoaulas", "#"],
+      ["avaliacoes", "Avaliacoes", "#"],
+      ["comunidade", "Comunidade", "#"],
+      ["eventos", "Eventos", "#"],
+      ["favoritos", "Favoritos", "#"],
+    ],
+    mobile: [
+      ["universidade", "Inicio", "universidade.html"],
+      ["trilhas", "Trilhas", "#"],
+      ["cursos", "Meus Cursos", "#"],
+      ["certificados", "Certificados", "#"],
+      ["biblioteca", "Biblioteca", "biblioteca.html"],
+    ],
+  },
   professor: {
     label: "Painel do Professor",
     profile: "Professor",
@@ -928,6 +1051,7 @@ const environments = {
 const moduleEnvironment = {
   biblioteca: "biblioteca",
   viewer: "biblioteca",
+  universidade: "universidade",
   professor: "professor",
   avalia: "avalia",
   secretaria: "secretaria",
