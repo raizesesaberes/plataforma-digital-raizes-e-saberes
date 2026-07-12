@@ -22,6 +22,7 @@ requirePlatformAuth();
 
 const ecosystemModules = [
   ["index.html", "🏠 Site"],
+  ["aluno.html", "Aluno"],
   ["biblioteca.html", "Biblioteca"],
   ["universidade.html", "Universidade"],
   ["book-viewer.html", "Book Viewer"],
@@ -600,6 +601,7 @@ const libraryBookCards = sortedLibraryBooks
   .join("");
 
 const routeKeyByHref = {
+  "aluno.html": "aluno",
   "biblioteca.html": "biblioteca",
   "universidade.html": "universidade",
   "book-viewer.html": "viewer",
@@ -618,7 +620,200 @@ const ecosystemModuleLinks = (activeKey) =>
     })
     .join("");
 
+// Supabase-ready fallback view model. Replace this object with fetched records when the backend is connected.
+const studentDashboardData = {
+  profile: {
+    name: "Pedro",
+    greeting: "Que alegria ter voce aqui hoje!",
+    avatar: "assets/aluno/avatar-pedro.webp",
+    xp: 125,
+    level: "Nivel 1",
+    notifications: 3,
+    progress: 24,
+    heroArt: "assets/aluno/hero-arvore-livro.webp",
+  },
+  dailyMission: {
+    code: "Missao 001",
+    title: "Encontre as Cores",
+    description: "Descubra e toque na cor igual ao objeto!",
+    image: "assets/aluno/missao-maca.webp",
+    href: "#missoes",
+  },
+  currentBook: {
+    title: "Linguagem",
+    subtitle: "Educacao Infantil 2 anos",
+    progress: 45,
+    cover: "assets/aluno/livro-linguagem.webp",
+    href: "book-viewer.html?book=livro-mestre-001",
+  },
+  library: [
+    { title: "Linguagem", cover: "assets/aluno/livro-biblioteca-linguagem.webp", href: "book-viewer.html?book=livro-mestre-001" },
+    { title: "Matematica", cover: "assets/aluno/livro-biblioteca-matematica.webp", href: "book-viewer.html?book=livro-002" },
+    { title: "Natureza e Sociedade", cover: "assets/aluno/livro-biblioteca-natureza.webp", href: "book-viewer.html?book=laboratorio-sensorial-002" },
+    { title: "Caderno de Atividades", cover: "assets/aluno/livro-biblioteca-caderno.webp", href: "biblioteca.html" },
+  ],
+  xpGoal: {
+    current: 125,
+    target: 200,
+    level: "Nivel 1",
+    image: "assets/aluno/bau-xp.webp",
+    nextText: "Conquiste mais 75 XP para alcancar o Nivel 2!",
+  },
+  medals: [
+    { title: "Pequeno Explorador", image: "assets/aluno/medalha-explorador.webp" },
+    { title: "Leitor Iniciante", image: "assets/aluno/medalha-leitor.webp" },
+    { title: "Curioso por Natureza", image: "assets/aluno/medalha-curioso.webp" },
+  ],
+  evolution: {
+    title: "Voce esta indo muito bem!",
+    labels: ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"],
+    values: [22, 34, 48, 51, 62, 70, 86],
+  },
+  quickAccess: [
+    { label: "Continuar Leitura", detail: "Retome onde parou", icon: "📖", href: "book-viewer.html?book=livro-mestre-001" },
+    { label: "Minhas Conquistas", detail: "Veja suas medalhas e premios", icon: "🏆", href: "#conquistas" },
+    { label: "Explorar Biblioteca", detail: "Descubra novos livros", icon: "📚", href: "biblioteca.html" },
+  ],
+};
+
+const studentLazyImg = (src, alt, className = "") =>
+  `<img${className ? ` class="${className}"` : ""} src="${src}" alt="${alt}" loading="lazy" decoding="async" />`;
+
+// Reusable student dashboard components. Each renderer receives data only, ready for Supabase records.
+const renderStudentHero = ({ profile }) => `
+  <section class="student-hero" aria-label="Resumo do aluno">
+    <div class="student-hero-copy">
+      ${studentLazyImg(profile.avatar, "", "student-avatar")}
+      <div>
+        <h1>Ola, ${profile.name}! 👋</h1>
+        <p>${profile.greeting}</p>
+      </div>
+    </div>
+    ${studentLazyImg(profile.heroArt, "", "student-hero-art")}
+    <div class="student-status">
+      <span class="student-bell" aria-label="${profile.notifications} notificacoes">🔔<b>${profile.notifications}</b></span>
+      <span class="student-xp-pill">⭐ <strong>${profile.xp} XP</strong><small>${profile.level}</small></span>
+      <span class="student-progress-ring" style="--student-progress:${profile.progress}%"></span>
+    </div>
+  </section>
+`;
+
+const renderStudentMission = (mission) => `
+  <section class="student-card student-mission-card" aria-labelledby="student-mission-title">
+    <div class="student-card-head"><h2 id="student-mission-title">⭐ Missao do Dia</h2></div>
+    <article>
+      <div><small>${mission.code}</small><strong>${mission.title}</strong><p>${mission.description}</p></div>
+      ${studentLazyImg(mission.image, "", "student-mission-art")}
+    </article>
+    <a class="student-primary-action" href="${mission.href}">Iniciar Missao <span>›</span></a>
+  </section>
+`;
+
+const renderStudentCurrentBook = (book) => `
+  <section class="student-card student-current-book" aria-labelledby="student-book-title">
+    <div class="student-card-head"><h2 id="student-book-title">📖 Livro em andamento</h2></div>
+    <article>
+      ${studentLazyImg(book.cover, book.title, "student-book-cover")}
+      <div>
+        <h3>${book.title}</h3>
+        <p>${book.subtitle}</p>
+        <strong>${book.progress}% concluido</strong>
+        <i><span style="width:${book.progress}%"></span></i>
+      </div>
+    </article>
+    <a class="student-primary-action" href="${book.href}">Continuar Leitura <span>›</span></a>
+  </section>
+`;
+
+const renderStudentLibrary = (books) => `
+  <section class="student-card student-library-card" aria-labelledby="student-library-title">
+    <div class="student-card-head"><h2 id="student-library-title">📚 Biblioteca</h2><a href="biblioteca.html">Ver tudo</a></div>
+    <div class="student-book-strip">
+      ${books.map((book) => `<a href="${book.href}" aria-label="Abrir ${book.title}">${studentLazyImg(book.cover, book.title)}</a>`).join("")}
+    </div>
+  </section>
+`;
+
+const renderStudentEvolution = (evolution) => {
+  const points = evolution.values.map((value, index) => `${44 + index * 64},${126 - value}`).join(" ");
+  const dots = evolution.values
+    .map((value, index) => `<circle cx="${44 + index * 64}" cy="${126 - value}" r="5"></circle>`)
+    .join("");
+  const labels = evolution.labels.map((label) => `<span>${label}</span>`).join("");
+
+  return `
+    <section class="student-card student-evolution-card" aria-labelledby="student-evolution-title">
+      <div class="student-card-head"><h2 id="student-evolution-title">↗ Minha Evolucao</h2></div>
+      <p>${evolution.title}</p>
+      <div class="student-chart" aria-hidden="true">
+        <svg viewBox="0 0 440 150" role="img">
+          <defs><linearGradient id="student-chart-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#8bcf6a" stop-opacity=".34" /><stop offset="1" stop-color="#8bcf6a" stop-opacity="0" /></linearGradient></defs>
+          <polygon points="44,126 ${points} 428,126" fill="url(#student-chart-fill)"></polygon>
+          <polyline points="${points}" fill="none" stroke="#0d6b4b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>
+          ${dots}
+          <path d="M421 37l7 14 15 2-11 10 3 15-14-8-14 8 3-15-11-10 15-2z" fill="#f6c431" stroke="#d7a928" stroke-width="2"></path>
+        </svg>
+        <div>${labels}</div>
+      </div>
+    </section>
+  `;
+};
+
+const renderStudentXp = (xpGoal) => {
+  const percentage = Math.round((xpGoal.current / xpGoal.target) * 100);
+  return `
+    <section class="student-card student-xp-card" aria-labelledby="student-xp-title">
+      <div class="student-card-head"><h2 id="student-xp-title">⭐ XP e Proximo Objetivo</h2></div>
+      <article>
+        <div><strong>${xpGoal.current} XP</strong><small>${xpGoal.level}</small></div>
+        ${studentLazyImg(xpGoal.image, "", "student-xp-art")}
+      </article>
+      <div class="student-progress-line"><i><span style="width:${percentage}%"></span></i><b>${xpGoal.current} / ${xpGoal.target} XP</b></div>
+      <p><strong>Proximo objetivo</strong>${xpGoal.nextText}</p>
+    </section>
+  `;
+};
+
+const renderStudentMedals = (medals) => `
+  <section class="student-card student-medals-card" aria-labelledby="student-medals-title">
+    <div class="student-card-head"><h2 id="student-medals-title">🏅 Medalhas</h2><a href="#conquistas">Ver todas</a></div>
+    <div>
+      ${medals
+        .map((medal) => `<article>${studentLazyImg(medal.image, "", "student-medal-art")}<strong>${medal.title}</strong></article>`)
+        .join("")}
+    </div>
+  </section>
+`;
+
+const renderStudentQuickAccess = (items) => `
+  <section class="student-quick-grid" aria-label="Acessos rapidos">
+    ${items
+      .map((item) => `<a class="student-quick-card" href="${item.href}"><span>${item.icon}</span><strong>${item.label}</strong><small>${item.detail}</small></a>`)
+      .join("")}
+  </section>
+`;
+
 const modules = {
+  aluno: {
+    title: "Dashboard do Aluno",
+    subtitle: "Home principal do aluno",
+    code: "PLAT-V2-005",
+    html: `
+      <div class="student-dashboard" data-student-dashboard>
+        <div class="student-skeleton" aria-hidden="true"></div>
+        ${renderStudentHero(studentDashboardData)}
+        <div class="student-grid">
+          ${renderStudentMission(studentDashboardData.dailyMission)}
+          ${renderStudentCurrentBook(studentDashboardData.currentBook)}
+          ${renderStudentLibrary(studentDashboardData.library)}
+          ${renderStudentEvolution(studentDashboardData.evolution)}
+          ${renderStudentXp(studentDashboardData.xpGoal)}
+          ${renderStudentMedals(studentDashboardData.medals)}
+        </div>
+        ${renderStudentQuickAccess(studentDashboardData.quickAccess)}
+      </div>
+    `,
+  },
   biblioteca: {
     title: "Biblioteca Digital",
     subtitle: "Sua jornada de conhecimento comeca aqui",
@@ -919,6 +1114,30 @@ const modules = {
 };
 
 const environments = {
+  aluno: {
+    label: "Aluno",
+    profile: "Aprendizagem",
+    search: "Buscar livros, missoes, atividades...",
+    user: "Pedro<br />Nivel 1 - 125 XP",
+    avatar: "assets/aluno/avatar-pedro.webp",
+    profileImage: "logo-sidebar-dark.png",
+    nav: [
+      ["aluno", "Inicio", "aluno.html"],
+      ["biblioteca", "Biblioteca", "biblioteca.html"],
+      ["missoes", "Missoes", "#missoes"],
+      ["conquistas", "Minhas Conquistas", "#conquistas"],
+      ["atividades", "Atividades", "#atividades"],
+      ["mensagens", "Mensagens", "#mensagens"],
+      ["configuracoes", "Configuracoes", "#configuracoes"],
+    ],
+    mobile: [
+      ["aluno", "Inicio", "aluno.html"],
+      ["biblioteca", "Biblioteca", "biblioteca.html"],
+      ["missoes", "Missoes", "#missoes"],
+      ["conquistas", "Conquistas", "#conquistas"],
+      ["evolucao", "Evolucao", "#evolucao"],
+    ],
+  },
   biblioteca: {
     label: "Biblioteca Digital",
     profile: "Acervo Educacional",
@@ -1094,6 +1313,7 @@ const environments = {
 };
 
 const moduleEnvironment = {
+  aluno: "aluno",
   biblioteca: "biblioteca",
   viewer: "biblioteca",
   universidade: "universidade",
