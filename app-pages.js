@@ -23,6 +23,7 @@ requirePlatformAuth();
 const ecosystemModules = [
   ["index.html", "🏠 Site"],
   ["aluno.html", "Aluno"],
+  ["arvore.html", "Minha Arvore"],
   ["biblioteca.html", "Biblioteca"],
   ["universidade.html", "Universidade"],
   ["book-viewer.html", "Book Viewer"],
@@ -602,6 +603,7 @@ const libraryBookCards = sortedLibraryBooks
 
 const routeKeyByHref = {
   "aluno.html": "aluno",
+  "arvore.html": "arvore",
   "biblioteca.html": "biblioteca",
   "universidade.html": "universidade",
   "book-viewer.html": "viewer",
@@ -620,8 +622,247 @@ const ecosystemModuleLinks = (activeKey) =>
     })
     .join("");
 
+const knowledgeTreeStages = [
+  { key: "seed", level: 1, label: "Semente", xpRange: "0 - 199 XP", minXp: 0, maxXp: 199, asset: "assets/knowledge-tree/stage-seed.webp", description: "Tudo comeca com uma pequena semente de curiosidade." },
+  { key: "sprout", level: 2, label: "Broto", xpRange: "200 - 499 XP", minXp: 200, maxXp: 499, asset: "assets/knowledge-tree/stage-sprout.webp", description: "Voce esta aprendendo e sua arvore comeca a crescer." },
+  { key: "leaves", level: 3, label: "Folhas", xpRange: "500 - 999 XP", minXp: 500, maxXp: 999, asset: "assets/knowledge-tree/stage-leaves.webp", description: "Seu conhecimento se fortalece e novas possibilidades surgem." },
+  { key: "flowers", level: 4, label: "Flores", xpRange: "1000 - 1999 XP", minXp: 1000, maxXp: 1999, asset: "assets/knowledge-tree/stage-flowers.webp", description: "Voce domina novos conteudos e suas conquistas florescem." },
+  { key: "fruits", level: 5, label: "Frutos", xpRange: "2000+ XP", minXp: 2000, maxXp: 2999, asset: "assets/knowledge-tree/stage-fruits.webp", description: "Seu esforco da frutos e inspira outros ao seu redor." },
+  { key: "complete", level: 6, label: "Completa", xpRange: "3000+ XP", minXp: 3000, maxXp: 5000, asset: "assets/knowledge-tree/stage-complete.webp", description: "Arvore mestre: dedicacao, conquistas e inspiracao para a comunidade." },
+];
+
+const knowledgeTreeBadges = [
+  { key: "explorer", label: "Explorador", asset: "assets/knowledge-tree/medal-explorer.webp", alt: "Medalha Explorador" },
+  { key: "scholar", label: "Estudioso", asset: "assets/knowledge-tree/medal-scholar.webp", alt: "Medalha Estudioso" },
+  { key: "discoverer", label: "Descobridor", asset: "assets/knowledge-tree/medal-discoverer.webp", alt: "Medalha Descobridor" },
+  { key: "focus", label: "Foco", asset: "assets/knowledge-tree/medal-focus.webp", alt: "Medalha Foco" },
+  { key: "champion", label: "Campeao", asset: "assets/knowledge-tree/medal-champion.webp", alt: "Medalha Campeao" },
+];
+
+const knowledgeTreeFixtures = {
+  pedro: {
+    student: "Pedro",
+    xp: 125,
+    level: 1,
+    booksCompleted: 1,
+    activitiesCompleted: 4,
+    missionsCompleted: 2,
+    medals: ["explorer"],
+    specialAchievements: [],
+  },
+  growing: {
+    student: "Ana Clara",
+    xp: 720,
+    level: 3,
+    booksCompleted: 3,
+    activitiesCompleted: 16,
+    missionsCompleted: 8,
+    medals: ["explorer", "scholar", "discoverer"],
+    specialAchievements: [],
+  },
+  complete: {
+    student: "Turma Raizes",
+    xp: 3200,
+    level: 6,
+    booksCompleted: 12,
+    activitiesCompleted: 48,
+    missionsCompleted: 24,
+    medals: ["explorer", "scholar", "discoverer", "focus", "champion"],
+    specialAchievements: ["community"],
+  },
+  empty: {
+    student: "Novo aluno",
+    xp: 0,
+    level: 1,
+    booksCompleted: 0,
+    activitiesCompleted: 0,
+    missionsCompleted: 0,
+    medals: [],
+    specialAchievements: [],
+  },
+};
+
+const getKnowledgeTreeStage = (xp = 0) =>
+  [...knowledgeTreeStages].reverse().find((stage) => xp >= stage.minXp) || knowledgeTreeStages[0];
+
+const getKnowledgeTreeProgress = (stage, xp = 0) => {
+  if (stage.key === "complete") {
+    return 100;
+  }
+  return Math.round(((xp - stage.minXp) / Math.max(stage.maxXp - stage.minXp, 1)) * 100);
+};
+
+const createKnowledgeTreeState = (data) => {
+  const stage = getKnowledgeTreeStage(data.xp);
+  const nextStage = knowledgeTreeStages.find((item) => item.minXp > data.xp) || null;
+  return {
+    ...data,
+    stage,
+    nextStage,
+    progress: Math.max(0, Math.min(100, getKnowledgeTreeProgress(stage, data.xp))),
+    earnedBadges: knowledgeTreeBadges.filter((badge) => data.medals.includes(badge.key)),
+    leaves: Math.min(24, Math.max(1, data.activitiesCompleted + Math.floor(data.xp / 80))),
+    flowers: Math.min(12, data.booksCompleted),
+    fruits: Math.min(12, data.missionsCompleted),
+  };
+};
+
+const knowledgeTreeImg = (src, alt, className = "") =>
+  `<img${className ? ` class="${className}"` : ""} src="${src}" alt="${alt}" loading="lazy" decoding="async" />`;
+
+const renderKnowledgeTreeProgress = (state, label = "Progresso da arvore") => `
+  <div class="knowledge-tree-progress" role="group" aria-label="${label}">
+    <div><strong>Nivel ${state.stage.level}</strong><span>${state.stage.xpRange}</span></div>
+    <i role="progressbar" aria-label="${label}" aria-valuenow="${state.progress}" aria-valuemin="0" aria-valuemax="100">
+      <span style="width:${state.progress}%"></span>
+    </i>
+    <small>${state.xp} XP${state.nextStage ? ` · proximo estagio em ${state.nextStage.minXp} XP` : " · arvore completa"}</small>
+  </div>
+`;
+
+const renderKnowledgeTreeStage = (state, variant = "default") => `
+  <figure class="knowledge-tree-stage is-${variant}" data-tree-stage="${state.stage.key}">
+    ${knowledgeTreeImg(state.stage.asset, `Arvore Viva no estado ${state.stage.label}`, "knowledge-tree-art")}
+    <figcaption>
+      <strong>${state.stage.label}</strong>
+      <span>${state.stage.description}</span>
+    </figcaption>
+  </figure>
+`;
+
+const renderKnowledgeTreeBadgeLayer = (state) => `
+  <div class="knowledge-tree-badges" aria-label="Medalhas aplicadas na arvore">
+    ${state.earnedBadges.length
+      ? state.earnedBadges.map((badge) => `<span>${knowledgeTreeImg(badge.asset, badge.alt)}<small>${badge.label}</small></span>`).join("")
+      : "<em>Nenhuma medalha aplicada ainda</em>"}
+  </div>
+`;
+
+const renderKnowledgeTreeSeasonLayer = (state) => `
+  <div class="knowledge-tree-season" aria-hidden="true">
+    <span>${state.leaves} folhas</span>
+    <span>${state.flowers} flores</span>
+    <span>${state.fruits} frutos</span>
+  </div>
+`;
+
+const renderKnowledgeTreeCompact = (data, className = "") => {
+  const state = createKnowledgeTreeState(data);
+  return `
+    <article class="knowledge-tree compact ${className}" aria-label="Arvore Viva compacta de ${state.student}">
+      ${renderKnowledgeTreeStage(state, "compact")}
+      ${renderKnowledgeTreeProgress(state, "Progresso compacto da Arvore Viva")}
+    </article>
+  `;
+};
+
+const renderKnowledgeTreeLibrary = (data) => {
+  const state = createKnowledgeTreeState(data);
+  return `
+    <article class="knowledge-tree library" aria-label="Arvore Viva integrada a Biblioteca">
+      ${renderKnowledgeTreeStage(state, "library")}
+      <div>
+        <h3>Progresso de leitura</h3>
+        ${renderKnowledgeTreeProgress(state, "Progresso de leitura da Arvore Viva")}
+        <ul>
+          <li><strong>${state.booksCompleted}</strong><span>livros concluidos</span></li>
+          <li><strong>${state.missionsCompleted}</strong><span>missoes concluidas</span></li>
+        </ul>
+      </div>
+    </article>
+  `;
+};
+
+const renderKnowledgeTreeMission = (mission, data) => {
+  const state = createKnowledgeTreeState(data);
+  return `
+    <article class="knowledge-tree mission" aria-label="Arvore Viva na Missao do Dia">
+      ${renderKnowledgeTreeStage(state, "mission")}
+      <div>
+        <span>Missao do Dia</span>
+        <h3>${mission.title}</h3>
+        <p>${mission.description}</p>
+        <strong>+${mission.rewardXp} XP para sua arvore</strong>
+        <a href="${mission.href}">${mission.actionLabel}</a>
+      </div>
+    </article>
+  `;
+};
+
+const renderKnowledgeTreeLegend = () => `
+  <section class="knowledge-tree-card knowledge-tree-legend" aria-labelledby="knowledge-tree-legend-title">
+    <h2 id="knowledge-tree-legend-title">Elementos da Arvore</h2>
+    <article>${knowledgeTreeImg("assets/knowledge-tree/icon-leaf.webp", "", "")}<div><strong>Folhas</strong><p>Conteudos estudados e atividades concluidas.</p></div></article>
+    <article>${knowledgeTreeImg("assets/knowledge-tree/icon-flower.webp", "", "")}<div><strong>Flores</strong><p>Dominio de habilidades e novos aprendizados.</p></div></article>
+    <article>${knowledgeTreeImg("assets/knowledge-tree/icon-fruit.webp", "", "")}<div><strong>Frutos</strong><p>Grandes conquistas e conclusao de missoes.</p></div></article>
+    <article>${knowledgeTreeImg("assets/knowledge-tree/icon-medal.webp", "", "")}<div><strong>Medalhas</strong><p>Reconhecimentos especiais obtidos em desafios.</p></div></article>
+  </section>
+`;
+
+const renderKnowledgeTreeFull = (data) => {
+  const state = createKnowledgeTreeState(data);
+  return `
+    <div class="knowledge-tree-full" aria-label="Minha Arvore Viva completa">
+      <section class="knowledge-tree-hero">
+        <div>
+          <span>Asset 010</span>
+          <h1>Arvore do Conhecimento</h1>
+          <p>Seu aprendizado cresce. Sua arvore floresce. Seu futuro se transforma.</p>
+        </div>
+        <aside><strong>⭐</strong><p>Cada conquista alimenta sua arvore e aproxima voce de grandes descobertas.</p></aside>
+      </section>
+
+      <section class="knowledge-tree-levels" aria-label="Estados oficiais de evolucao">
+        ${knowledgeTreeStages.map((stage) => {
+          const stageState = createKnowledgeTreeState({ ...state, xp: stage.minXp, medals: [] });
+          return `<article class="${stage.key === state.stage.key ? "is-current" : ""}">
+            <strong>Nivel ${stage.level}</strong>
+            <span>${stage.xpRange}</span>
+            ${renderKnowledgeTreeStage(stageState, "timeline")}
+          </article>`;
+        }).join("")}
+      </section>
+
+      <section class="knowledge-tree-detail-grid">
+        ${renderKnowledgeTreeLegend()}
+        <section class="knowledge-tree-card">
+          <h2>Evolucao Visual Ligada ao XP</h2>
+          ${knowledgeTreeStages.slice(0, 5).map((stage) => {
+            const stageState = createKnowledgeTreeState({ ...state, xp: stage.minXp, medals: [] });
+            return `<article class="knowledge-tree-xp-row">
+              ${knowledgeTreeImg(stage.asset, "", "")}
+              <div><strong>Nivel ${stage.level}</strong><i><span style="width:${stage.key === state.stage.key ? state.progress : stage.minXp <= state.xp ? 100 : 0}%"></span></i></div>
+              <small>${stage.xpRange}</small>
+            </article>`;
+          }).join("")}
+        </section>
+        <section class="knowledge-tree-card knowledge-tree-medal-tree">
+          <h2>Medalhas Aplicadas na Arvore</h2>
+          ${knowledgeTreeImg("assets/knowledge-tree/tree-complete-medals.webp", "Arvore completa com medalhas aplicadas", "knowledge-tree-master-art")}
+          ${renderKnowledgeTreeBadgeLayer(state)}
+        </section>
+        <section class="knowledge-tree-card">
+          <h2>Integracao com Livros Concluidos</h2>
+          ${renderKnowledgeTreeLibrary(state)}
+        </section>
+        <section class="knowledge-tree-card">
+          <h2>Integracao com Missoes Digitais</h2>
+          ${renderKnowledgeTreeMission({ title: "Encontre as Cores", description: "Missao concluida adiciona XP, folhas e medalhas.", rewardXp: 25, href: "#", actionLabel: "Continuar missao" }, state)}
+        </section>
+      </section>
+
+      <section class="knowledge-tree-bottom-grid">
+        <article class="knowledge-tree-card"><h2>Como sua arvore cresce</h2><p>Leia livros, complete atividades, participe de missoes digitais, ganhe XP e acompanhe sua arvore florescer.</p></article>
+        <article class="knowledge-tree-card"><h2>Beneficios</h2><p>Motiva, engaja, desenvolve autonomia, valoriza conquistas e conecta o aluno a comunidade.</p></article>
+        <article class="knowledge-tree-card"><h2>Cores e Significados</h2><div class="knowledge-tree-colors"><span>Crescimento</span><span>Alegria</span><span>Imaginacao</span><span>Confianca</span><span>Energia</span></div></article>
+      </section>
+    </div>
+  `;
+};
+
 // Supabase-ready fallback view model. Replace this object with fetched records when the backend is connected.
 const studentDashboardData = {
+  tree: knowledgeTreeFixtures.pedro,
   profile: {
     name: "Pedro",
     greeting: "Que alegria ter voce aqui hoje!",
@@ -671,7 +912,7 @@ const studentDashboardData = {
   },
   quickAccess: [
     { label: "Continuar Leitura", detail: "Retome onde parou", icon: "📖", href: "book-viewer.html?book=livro-mestre-001" },
-    { label: "Minhas Conquistas", detail: "Veja suas medalhas e premios", icon: "🏆", href: "#conquistas" },
+    { label: "Minha Arvore", detail: "Veja seu crescimento", icon: "🌱", href: "arvore.html" },
     { label: "Explorar Biblioteca", detail: "Descubra novos livros", icon: "📚", href: "biblioteca.html" },
   ],
 };
@@ -680,7 +921,7 @@ const studentLazyImg = (src, alt, className = "") =>
   `<img${className ? ` class="${className}"` : ""} src="${src}" alt="${alt}" loading="lazy" decoding="async" />`;
 
 // Reusable student dashboard components. Each renderer receives data only, ready for Supabase records.
-const renderStudentHero = ({ profile }) => `
+const renderStudentHero = ({ profile, tree }) => `
   <section class="student-hero" aria-label="Resumo do aluno">
     <div class="student-hero-copy">
       ${studentLazyImg(profile.avatar, "", "student-avatar")}
@@ -693,7 +934,7 @@ const renderStudentHero = ({ profile }) => `
     <div class="student-status">
       <span class="student-bell" aria-label="${profile.notifications} notificacoes">🔔<b>${profile.notifications}</b></span>
       <span class="student-xp-pill">⭐ <strong>${profile.xp} XP</strong><small>${profile.level}</small></span>
-      <span class="student-progress-ring" style="--student-progress:${profile.progress}%"></span>
+      ${renderKnowledgeTreeCompact(tree, "student-tree-widget")}
     </div>
   </section>
 `;
@@ -813,6 +1054,12 @@ const modules = {
         ${renderStudentQuickAccess(studentDashboardData.quickAccess)}
       </div>
     `,
+  },
+  arvore: {
+    title: "Minha Arvore",
+    subtitle: "Asset 010 - Arvore Viva",
+    code: "PLAT-V2-006",
+    html: renderKnowledgeTreeFull(knowledgeTreeFixtures.growing),
   },
   biblioteca: {
     title: "Biblioteca Digital",
@@ -1123,6 +1370,7 @@ const environments = {
     profileImage: "logo-sidebar-dark.png",
     nav: [
       ["aluno", "Inicio", "aluno.html"],
+      ["arvore", "Minha Arvore", "arvore.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
       ["missoes", "Missoes", "#missoes"],
       ["conquistas", "Minhas Conquistas", "#conquistas"],
@@ -1132,10 +1380,10 @@ const environments = {
     ],
     mobile: [
       ["aluno", "Inicio", "aluno.html"],
+      ["arvore", "Arvore", "arvore.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
       ["missoes", "Missoes", "#missoes"],
       ["conquistas", "Conquistas", "#conquistas"],
-      ["evolucao", "Evolucao", "#evolucao"],
     ],
   },
   biblioteca: {
@@ -1314,6 +1562,7 @@ const environments = {
 
 const moduleEnvironment = {
   aluno: "aluno",
+  arvore: "aluno",
   biblioteca: "biblioteca",
   viewer: "biblioteca",
   universidade: "universidade",
@@ -1536,7 +1785,7 @@ const renderAppPage = () => {
     .join("");
 
   mount.innerHTML = `
-    <div class="app-shell" data-environment="${environmentKey}">
+    <div class="app-shell" data-environment="${environmentKey}" data-active-module="${activeKey}">
       <aside class="app-sidebar" aria-label="Navegacao principal">
         <a class="sidebar-logo" href="index.html" aria-label="Raizes e Saberes">
           <img src="logo-sidebar-dark.png" alt="Raizes e Saberes Ecossistema Educacional" onerror="this.hidden=true; this.nextElementSibling.hidden=false;" />
