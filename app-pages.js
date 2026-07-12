@@ -24,6 +24,7 @@ const ecosystemModules = [
   ["index.html", "🏠 Site"],
   ["aluno.html", "Aluno"],
   ["arvore.html", "Minha Arvore"],
+  ["missao.html", "Missao do Dia"],
   ["biblioteca.html", "Biblioteca"],
   ["universidade.html", "Universidade"],
   ["book-viewer.html", "Book Viewer"],
@@ -604,6 +605,7 @@ const libraryBookCards = sortedLibraryBooks
 const routeKeyByHref = {
   "aluno.html": "aluno",
   "arvore.html": "arvore",
+  "missao.html": "missao",
   "biblioteca.html": "biblioteca",
   "universidade.html": "universidade",
   "book-viewer.html": "viewer",
@@ -860,6 +862,200 @@ const renderKnowledgeTreeFull = (data) => {
   `;
 };
 
+const missionFixtures = {
+  colorMatch001: {
+    id: "color-match-001",
+    code: "Missao 001",
+    type: "choice",
+    status: "correct",
+    title: "Encontre as Cores",
+    subtitle: "Uma nova aventura para aprender brincando!",
+    instruction: "Toque na cor igual ao objeto!",
+    prompt: "Qual cor combina com a maca?",
+    image: "assets/missao/apple.webp",
+    introImage: "assets/missao/hero-pedro.webp",
+    resultImage: "assets/missao/result-pedro.webp",
+    audioLabel: "Ouvir instrucao",
+    hint: "Observe a cor principal do objeto.",
+    reward: {
+      xp: 20,
+      medal: "Pequeno Explorador",
+      medalImage: "assets/missao/medal-explorer.webp",
+      starImage: "assets/missao/star-xp.webp",
+      tree: { ...knowledgeTreeFixtures.pedro, xp: 145, missionsCompleted: 3, medals: ["explorer"] },
+    },
+    options: [
+      { id: "red", label: "Vermelho", value: "red", image: "assets/missao/paint-red.webp", isCorrect: true },
+      { id: "blue", label: "Azul", value: "blue", image: "assets/missao/paint-blue.webp", isCorrect: false },
+      { id: "yellow", label: "Amarelo", value: "yellow", image: "assets/missao/paint-yellow.webp", isCorrect: false },
+      { id: "green", label: "Verde", value: "green", image: "assets/missao/paint-green.webp", isCorrect: false },
+    ],
+    nextMission: {
+      title: "Sons da Natureza",
+      href: "#proxima-missao",
+    },
+  },
+};
+
+const missionEngine = {
+  getInitialState(mission) {
+    return {
+      missionId: mission.id,
+      status: mission.status || "available",
+      selectedOptionId: mission.status === "correct" || mission.status === "completed" ? mission.options.find((option) => option.isCorrect)?.id : null,
+      attempts: mission.status === "correct" || mission.status === "completed" ? 1 : 0,
+      progress: mission.status === "completed" ? 100 : mission.status === "correct" ? 85 : mission.status === "in-progress" ? 45 : 0,
+      reward: mission.status === "correct" || mission.status === "completed" ? mission.reward : null,
+    };
+  },
+  answer(mission, currentState, optionId) {
+    const option = mission.options.find((item) => item.id === optionId);
+    const isCorrect = Boolean(option?.isCorrect);
+    return {
+      ...currentState,
+      selectedOptionId: optionId,
+      attempts: currentState.attempts + 1,
+      status: isCorrect ? "correct" : "incorrect",
+      progress: isCorrect ? 85 : Math.max(currentState.progress, 45),
+      reward: isCorrect ? mission.reward : null,
+    };
+  },
+  complete(mission, currentState) {
+    return {
+      ...currentState,
+      status: "completed",
+      progress: 100,
+      reward: mission.reward,
+    };
+  },
+  hint(currentState) {
+    return {
+      ...currentState,
+      status: "hint",
+      progress: Math.max(currentState.progress, 25),
+    };
+  },
+};
+
+const missionStateLabel = {
+  available: "Missao disponivel",
+  "in-progress": "Missao em andamento",
+  correct: "Resposta correta",
+  incorrect: "Resposta incorreta",
+  hint: "Dica disponivel",
+  completed: "Missao concluida",
+  reward: "Recompensa liberada",
+  next: "Proxima missao",
+};
+
+const missionImg = (src, alt, className = "") =>
+  `<img${className ? ` class="${className}"` : ""} src="${src}" alt="${alt}" loading="lazy" decoding="async" />`;
+
+const renderMissionProgress = (mission, state) => `
+  <div class="mission-progress" role="group" aria-label="Progresso da missao">
+    <div><strong>${mission.code}</strong><span>${missionStateLabel[state.status] || missionStateLabel.available}</span></div>
+    <i role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${state.progress}" aria-label="Progresso da Missao do Dia"><span style="width:${state.progress}%"></span></i>
+  </div>
+`;
+
+const renderAudioButton = (mission) => `
+  <button class="mission-audio-button" type="button" data-mission-audio aria-label="${mission.audioLabel}">Som</button>
+`;
+
+const renderMissionOption = (option, state) => {
+  const isSelected = state.selectedOptionId === option.id;
+  const resultClass = isSelected ? (option.isCorrect ? " is-correct" : " is-incorrect") : "";
+  return `
+    <button class="mission-option${isSelected ? " is-selected" : ""}${resultClass}" type="button" data-mission-option="${option.id}" aria-label="${option.label}">
+      ${missionImg(option.image, option.label)}
+      <span>${option.label}</span>
+    </button>
+  `;
+};
+
+const renderMissionQuestion = (mission, state) => `
+  <section class="mission-question" aria-labelledby="mission-question-title">
+    <div class="mission-code">${mission.code}</div>
+    <div class="mission-question-title">
+      <h2 id="mission-question-title">${mission.title}</h2>
+      ${renderAudioButton(mission)}
+    </div>
+    <p>${mission.instruction}</p>
+    <figure>
+      ${missionImg(mission.image, mission.prompt, "mission-object")}
+      <figcaption>${mission.prompt}</figcaption>
+    </figure>
+    <div class="mission-options" role="group" aria-label="Opcoes de resposta">
+      ${mission.options.map((option) => renderMissionOption(option, state)).join("")}
+    </div>
+  </section>
+`;
+
+const renderMissionReward = (mission, state) => `
+  <section class="mission-reward" aria-label="Recompensas da missao">
+    <article>${missionImg(mission.reward.starImage, "", "")}<strong>+${mission.reward.xp} XP</strong></article>
+    <article>${missionImg(mission.reward.medalImage, "", "")}<div><span>Medalha conquistada!</span><strong>${mission.reward.medal}</strong></div></article>
+    ${renderKnowledgeTreeCompact(mission.reward.tree, "mission-tree-reward")}
+  </section>
+`;
+
+const renderMissionResult = (mission, state) => {
+  const isPositive = state.status === "correct" || state.status === "completed";
+  const title = isPositive ? "Muito bem!" : state.status === "hint" ? "Uma dica para voce!" : "Tente novamente";
+  const message = isPositive ? "Voce encontrou a cor certa!" : state.status === "hint" ? mission.hint : "Observe a cor do objeto e escolha de novo.";
+  return `
+    <aside class="mission-result is-${state.status}" aria-live="polite">
+      <div class="mission-result-ribbon">${title}</div>
+      ${missionImg(mission.resultImage, "", "mission-result-art")}
+      <p>${message}</p>
+      ${isPositive ? renderMissionReward(mission, state) : ""}
+      <div class="mission-result-actions">
+        <a href="aluno.html">⌂ Voltar ao meu painel</a>
+        <button type="button" data-mission-reset>↻ Tentar novamente</button>
+      </div>
+    </aside>
+  `;
+};
+
+const renderMissionToolbar = (mission, state) => `
+  <section class="mission-toolbar" aria-label="Ferramentas da missao">
+    ${renderMissionProgress(mission, state)}
+    <button type="button" data-mission-hint>💡 Dica</button>
+    <button type="button" data-mission-complete>⭐ Concluir</button>
+  </section>
+`;
+
+const renderMissionCard = (mission) => `
+  <section class="mission-card" aria-label="Apresentacao da Missao do Dia">
+    <div class="mission-card-ribbon">Missao do Dia</div>
+    ${missionImg(mission.introImage, "", "mission-card-art")}
+    <article class="mission-card-note">
+      <h2>Vamos aprender juntos!</h2>
+      <p>Ao completar a missao, voce ganha estrelas, XP e conquistas especiais!</p>
+    </article>
+  </section>
+`;
+
+const renderMissionPlayer = (mission) => {
+  const state = missionEngine.getInitialState(mission);
+  return `
+    <div class="mission-module" data-mission-player data-mission-id="${mission.id}" data-mission-state='${JSON.stringify(state)}'>
+      <header class="mission-header">
+        <div><span>⭐</span><strong>Missao do Dia</strong><small>${mission.subtitle}</small></div>
+        <aside class="mission-xp-chip"><span>⭐</span><strong>${studentDashboardData.profile.xp} XP</strong><small>${studentDashboardData.profile.level}</small>${studentLazyImg(studentDashboardData.profile.avatar, "", "")}</aside>
+      </header>
+      ${renderMissionToolbar(mission, state)}
+      <div class="mission-layout">
+        ${renderMissionCard(mission)}
+        <main class="mission-player-panel">
+          ${renderMissionQuestion(mission, state)}
+        </main>
+        ${renderMissionResult(mission, state)}
+      </div>
+    </div>
+  `;
+};
+
 // Supabase-ready fallback view model. Replace this object with fetched records when the backend is connected.
 const studentDashboardData = {
   tree: knowledgeTreeFixtures.pedro,
@@ -878,7 +1074,7 @@ const studentDashboardData = {
     title: "Encontre as Cores",
     description: "Descubra e toque na cor igual ao objeto!",
     image: "assets/aluno/missao-maca.webp",
-    href: "#missoes",
+    href: "missao.html",
   },
   currentBook: {
     title: "Linguagem",
@@ -1060,6 +1256,12 @@ const modules = {
     subtitle: "Asset 010 - Arvore Viva",
     code: "PLAT-V2-006",
     html: renderKnowledgeTreeFull(knowledgeTreeFixtures.growing),
+  },
+  missao: {
+    title: "Missao do Dia",
+    subtitle: "Uma nova aventura para aprender brincando",
+    code: "PLAT-V2-007",
+    html: renderMissionPlayer(missionFixtures.colorMatch001),
   },
   biblioteca: {
     title: "Biblioteca Digital",
@@ -1372,7 +1574,7 @@ const environments = {
       ["aluno", "Inicio", "aluno.html"],
       ["arvore", "Minha Arvore", "arvore.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
-      ["missoes", "Missoes", "#missoes"],
+      ["missao", "Missao do Dia", "missao.html"],
       ["conquistas", "Minhas Conquistas", "#conquistas"],
       ["atividades", "Atividades", "#atividades"],
       ["mensagens", "Mensagens", "#mensagens"],
@@ -1382,7 +1584,7 @@ const environments = {
       ["aluno", "Inicio", "aluno.html"],
       ["arvore", "Arvore", "arvore.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
-      ["missoes", "Missoes", "#missoes"],
+      ["missao", "Missao", "missao.html"],
       ["conquistas", "Conquistas", "#conquistas"],
     ],
   },
@@ -1563,6 +1765,7 @@ const environments = {
 const moduleEnvironment = {
   aluno: "aluno",
   arvore: "aluno",
+  missao: "aluno",
   biblioteca: "biblioteca",
   viewer: "biblioteca",
   universidade: "universidade",
@@ -1765,6 +1968,66 @@ const initLibrarySearch = () => {
   });
 };
 
+const getMissionById = (missionId) =>
+  Object.values(missionFixtures).find((mission) => mission.id === missionId) || missionFixtures.colorMatch001;
+
+const initMissionPlayer = () => {
+  const player = document.querySelector("[data-mission-player]");
+  if (!player) {
+    return;
+  }
+
+  const mission = getMissionById(player.dataset.missionId);
+  const playerPanel = player.querySelector(".mission-player-panel");
+  let state = missionEngine.getInitialState(mission);
+
+  try {
+    state = { ...state, ...JSON.parse(player.dataset.missionState || "{}") };
+  } catch (error) {
+    state = missionEngine.getInitialState(mission);
+  }
+
+  const sync = () => {
+    player.dataset.missionState = JSON.stringify(state);
+    player.querySelector(".mission-toolbar").outerHTML = renderMissionToolbar(mission, state);
+    playerPanel.innerHTML = renderMissionQuestion(mission, state);
+    player.querySelector(".mission-result").outerHTML = renderMissionResult(mission, state);
+    bind();
+  };
+
+  const setState = (nextState) => {
+    state = nextState;
+    sync();
+  };
+
+  const bind = () => {
+    player.querySelectorAll("[data-mission-option]").forEach((button) => {
+      button.addEventListener("click", () => {
+        setState(missionEngine.answer(mission, state, button.dataset.missionOption));
+      });
+    });
+
+    player.querySelector("[data-mission-hint]")?.addEventListener("click", () => {
+      setState(missionEngine.hint(state));
+    });
+
+    player.querySelector("[data-mission-complete]")?.addEventListener("click", () => {
+      setState(missionEngine.complete(mission, state));
+    });
+
+    player.querySelector("[data-mission-reset]")?.addEventListener("click", () => {
+      setState({ ...missionEngine.getInitialState(mission), status: "in-progress", progress: 35 });
+    });
+
+    player.querySelector("[data-mission-audio]")?.addEventListener("click", (event) => {
+      event.currentTarget.classList.add("is-playing");
+      window.setTimeout(() => event.currentTarget.classList.remove("is-playing"), 620);
+    });
+  };
+
+  bind();
+};
+
 const renderAppPage = () => {
   const mount = document.querySelector("[data-app-page]");
   if (!mount) {
@@ -1818,6 +2081,7 @@ const renderAppPage = () => {
 
   initBookReader();
   initLibrarySearch();
+  initMissionPlayer();
 };
 
 renderAppPage();
