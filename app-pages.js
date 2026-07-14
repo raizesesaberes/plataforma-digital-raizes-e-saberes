@@ -25,6 +25,7 @@ const ecosystemModules = [
   ["aluno.html", "Aluno"],
   ["arvore.html", "Minha Arvore"],
   ["missao.html", "Missao do Dia"],
+  ["jogos.html", "Jogos"],
   ["biblioteca.html", "Biblioteca"],
   ["universidade.html", "Universidade"],
   ["book-viewer.html", "Book Viewer"],
@@ -606,6 +607,7 @@ const routeKeyByHref = {
   "aluno.html": "aluno",
   "arvore.html": "arvore",
   "missao.html": "missao",
+  "jogos.html": "jogos",
   "biblioteca.html": "biblioteca",
   "universidade.html": "universidade",
   "book-viewer.html": "viewer",
@@ -1070,11 +1072,11 @@ const studentDashboardData = {
     heroArt: "assets/aluno/hero-arvore-livro.webp",
   },
   dailyMission: {
-    code: "Missao 001",
-    title: "Encontre as Cores",
-    description: "Descubra e toque na cor igual ao objeto!",
-    image: "assets/aluno/missao-maca.webp",
-    href: "missao.html",
+    code: "Missao 012",
+    title: "A Caixa Misteriosa",
+    description: "Ouca a dica, descubra o objeto e ganhe XP!",
+    image: "assets/games/caixa-misteriosa/telas-assets.png",
+    href: "jogos.html",
   },
   currentBook: {
     title: "Linguagem",
@@ -1109,6 +1111,7 @@ const studentDashboardData = {
   quickAccess: [
     { label: "Continuar Leitura", detail: "Retome onde parou", icon: "📖", href: "book-viewer.html?book=livro-mestre-001" },
     { label: "Minha Arvore", detail: "Veja seu crescimento", icon: "🌱", href: "arvore.html" },
+    { label: "Jogos Digitais", detail: "Acesse as descobertas", icon: "▶", href: "jogos.html" },
     { label: "Explorar Biblioteca", detail: "Descubra novos livros", icon: "📚", href: "biblioteca.html" },
   ],
 };
@@ -1262,6 +1265,39 @@ const modules = {
     subtitle: "Uma nova aventura para aprender brincando",
     code: "PLAT-V2-007",
     html: renderMissionPlayer(missionFixtures.colorMatch001),
+  },
+  jogos: {
+    title: "Jogos Digitais",
+    subtitle: "Motor de jogos da Educacao Infantil",
+    code: "GAME-ENGINE-1.0",
+    html: `
+      <div class="screen-title">
+        <p>GAME-ENGINE-1.0</p>
+        <h1>A Caixa Misteriosa</h1>
+        <span>Motor reutilizavel por configuracao para a biblioteca de jogos digitais.</span>
+      </div>
+      <div class="game-engine" data-game-engine data-game-id="caixa-misteriosa"></div>
+      <section class="wide-panel">
+        <div class="panel-head"><h2>Estrutura reutilizavel</h2><a>Sem alterar logica principal</a></div>
+        <div class="class-grid">
+          <article>GameRepository<span>Registra jogos e assets homologados</span></article>
+          <article>ProgressController<span>Controla telas, rodadas e tempo</span></article>
+          <article>RewardController<span>Persiste XP, medalhas e progresso</span></article>
+          <article>AudioPlayer<span>Narracao, efeitos e volumes independentes</span></article>
+        </div>
+        <pre style="white-space:pre-wrap;margin:16px 0 0;padding:16px;border-radius:8px;background:#f8fbf1;color:#123827;font-weight:800;line-height:1.55">Novo jogo por configuracao:
+{
+  id: "sons-da-natureza",
+  title: "Sons da Natureza",
+  scenario: "Bosque",
+  mascot: "Tito",
+  rounds: [{ hint, narration, correctId, choices }],
+  xp: 25,
+  medal: "Guardiao da Natureza",
+  assets: { atlas, library, scenarios }
+}</pre>
+      </section>
+    `,
   },
   biblioteca: {
     title: "Biblioteca Digital",
@@ -1575,6 +1611,7 @@ const environments = {
       ["arvore", "Minha Arvore", "arvore.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
       ["missao", "Missao do Dia", "missao.html"],
+      ["jogos", "Jogos Digitais", "jogos.html"],
       ["conquistas", "Minhas Conquistas", "#conquistas"],
       ["atividades", "Atividades", "#atividades"],
       ["mensagens", "Mensagens", "#mensagens"],
@@ -1585,6 +1622,7 @@ const environments = {
       ["arvore", "Arvore", "arvore.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
       ["missao", "Missao", "missao.html"],
+      ["jogos", "Jogos", "jogos.html"],
       ["conquistas", "Conquistas", "#conquistas"],
     ],
   },
@@ -1766,6 +1804,7 @@ const moduleEnvironment = {
   aluno: "aluno",
   arvore: "aluno",
   missao: "aluno",
+  jogos: "aluno",
   biblioteca: "biblioteca",
   viewer: "biblioteca",
   universidade: "universidade",
