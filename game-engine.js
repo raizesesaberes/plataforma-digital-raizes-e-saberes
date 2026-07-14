@@ -8,6 +8,8 @@
   const ponteAsset = (path) => `${ponteBase}${path}`;
   const formasBase = "assets/games/formas-casa/";
   const formasAsset = (path) => `${formasBase}${path}`;
+  const caminhoBase = "assets/games/caminho-bia/";
+  const caminhoAsset = (path) => `${caminhoBase}${path}`;
 
   const gameRepository = {
     games: {
@@ -292,7 +294,7 @@
         mascot: "Bia e Pipo",
         xp: 20,
         medal: "Pequeno Construtor de Formas",
-        unlock: { order: 5, unlocked: true, requires: "construindo-ponte" },
+        unlock: { order: 6, unlocked: true, requires: "busca-criterios" },
         assets: {
           atlas: formasAsset("atlas.png"),
           card: formasAsset("screens/screen-intro.png"),
@@ -333,6 +335,103 @@
           },
         ],
       },
+      "busca-criterios": {
+        id: "busca-criterios",
+        type: "criteria",
+        title: "Descobrindo por Critérios",
+        category: "Critérios",
+        subtitle: "Busca e Classificacao",
+        scenario: "Jardim das Descobertas",
+        character: "Bia",
+        mascot: "Borboleta Bia",
+        xp: 20,
+        medal: "Pequeno Investigador",
+        unlock: { order: 5, unlocked: true, requires: "construindo-ponte" },
+        assets: {
+          atlas: jardimAsset("atlas.png"),
+          card: jardimAsset("screens/screen-explore.png"),
+          flow: jardimAsset("atlas.png"),
+          library: jardimAsset("atlas.png"),
+          scenarios: jardimAsset("atlas.png"),
+          screens: {
+            intro: jardimAsset("screens/screen-intro.png"),
+            room: jardimAsset("screens/screen-explore.png"),
+            choice: jardimAsset("screens/screen-explore.png"),
+            feedback: jardimAsset("screens/screen-final.png"),
+            final: jardimAsset("screens/screen-final.png"),
+          },
+        },
+        audio: {
+          narration: 0.9,
+          effects: 0.75,
+          music: 0.35,
+        },
+        rounds: [
+          {
+            id: "natureza",
+            hint: "Encontre os elementos da natureza.",
+            narration: "Procure os elementos da natureza: folha, flor e gotinha.",
+            required: 3,
+            choices: [
+              { id: "folha", label: "Folha", image: jardimAsset("objects/leaf.png"), correct: true },
+              { id: "flor", label: "Flor", image: jardimAsset("objects/flower.png"), correct: true },
+              { id: "gotinha", label: "Gotinha", image: jardimAsset("objects/drop.png"), correct: true },
+              { id: "passarinho", label: "Passarinho", image: jardimAsset("objects/bird.png"), correct: false },
+              { id: "caracol", label: "Caracol", image: jardimAsset("objects/snail.png"), correct: false },
+            ],
+          },
+        ],
+      },
+      "caminho-bia": {
+        id: "caminho-bia",
+        type: "path-follow",
+        title: "O Caminho da Bia",
+        category: "Percurso",
+        subtitle: "Path Following",
+        scenario: "Jardim das Descobertas",
+        character: "Bia",
+        mascot: "Tito e Pipo",
+        xp: 20,
+        medal: "Pequeno Explorador de Caminhos",
+        unlock: { order: 7, unlocked: true, requires: "formas-casa" },
+        assets: {
+          atlas: caminhoAsset("atlas.png"),
+          card: caminhoAsset("screens/screen-intro.png"),
+          flow: caminhoAsset("atlas.png"),
+          library: caminhoAsset("atlas.png"),
+          scenarios: caminhoAsset("atlas.png"),
+          screens: {
+            intro: caminhoAsset("screens/screen-intro.png"),
+            room: caminhoAsset("screens/screen-path.png"),
+            choice: caminhoAsset("screens/screen-path.png"),
+            feedback: caminhoAsset("screens/screen-feedback.png"),
+            final: caminhoAsset("screens/screen-final.png"),
+          },
+        },
+        audio: {
+          narration: 0.9,
+          effects: 0.75,
+          music: 0.35,
+        },
+        rounds: [
+          {
+            id: "percurso-flores",
+            hint: "Siga o caminho com o dedo para levar a Bia ate o Tito.",
+            narration: "Siga o caminho com o dedo. Passe pelos pontos ate chegar na casinha do Tito.",
+            path: {
+              tolerance: 88,
+              points: [
+                { id: "p1", x: 24, y: 78 },
+                { id: "p2", x: 31, y: 63 },
+                { id: "p3", x: 43, y: 49 },
+                { id: "p4", x: 57, y: 40 },
+                { id: "p5", x: 70, y: 30 },
+                { id: "p6", x: 83, y: 22 },
+              ],
+            },
+          },
+        ],
+      },
     },
     getGame(id) {
       return this.games[id] || this.games["caixa-misteriosa"];
@@ -350,6 +449,9 @@
         selectedDragId: null,
         snapPlacements: {},
         selectedSnapId: null,
+        criteriaFound: [],
+        pathProgress: 0,
+        pathDrawing: false,
         xp: 0,
         medal: null,
         startedAt: Date.now(),
@@ -628,7 +730,7 @@
             <span>Hub</span>
             <strong>Jogos Educativos</strong>
           </button>
-          ${Object.values(gameRepository.games).map((game) => `
+          ${Object.values(gameRepository.games).sort((a, b) => a.unlock.order - b.unlock.order).map((game) => `
             <button class="${game.id === this.game.id ? "is-active" : ""}" type="button" data-game-select="${game.id}">
               <span>${game.category}</span>
               <strong>${game.title}</strong>
@@ -691,6 +793,32 @@
           </section>
         `;
       }
+      if (this.game.type === "criteria") {
+        return `
+          <section class="game-screen" data-screen="room" aria-label="Busca por criterios">
+            <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
+            ${components.particles(18)}
+            <article class="garden-prompt">
+              ${components.audioButton("Ouvir criterio", this.currentRound().narration)}
+              <strong data-hint-text>${this.currentRound().hint}</strong>
+            </article>
+            <button class="game-primary-button game-observe-button" type="button" data-game-action="begin-criteria">Buscar</button>
+          </section>
+        `;
+      }
+      if (this.game.type === "path-follow") {
+        return `
+          <section class="game-screen" data-screen="room" aria-label="Percurso da Bia">
+            <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
+            ${components.particles(18)}
+            <article class="garden-prompt">
+              ${components.audioButton("Ouvir instrucao", this.currentRound().narration)}
+              <strong data-hint-text>${this.currentRound().hint}</strong>
+            </article>
+            <button class="game-primary-button game-observe-button" type="button" data-game-action="begin-path">Seguir</button>
+          </section>
+        `;
+      }
       if (this.game.type === "find") {
         return `
           <section class="game-screen" data-screen="room" aria-label="Exploracao do jardim">
@@ -714,7 +842,7 @@
     }
 
     renderHintScreen() {
-      if (this.game.type === "drag-drop" || this.game.type === "find" || this.game.type === "snap") {
+      if (this.game.type === "drag-drop" || this.game.type === "find" || this.game.type === "snap" || this.game.type === "criteria" || this.game.type === "path-follow") {
         return "";
       }
       const round = this.currentRound();
@@ -766,6 +894,30 @@
               <div class="snap-state" data-snap-state>Ponte vazia</div>
               <div class="snap-board" data-snap-board></div>
               <div class="snap-tray" data-snap-tray></div>
+            </article>
+          </section>
+        `;
+      }
+      if (this.game.type === "criteria") {
+        return `
+          <section class="game-screen" data-screen="choice" aria-label="Escolha por criterios">
+            <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.choice}')" aria-hidden="true"></div>
+            <article class="criteria-panel">
+              <h2>${this.currentRound().hint}</h2>
+              <div class="criteria-progress" data-criteria-progress>0/${this.currentRound().required}</div>
+              <div class="criteria-grid" data-criteria-grid></div>
+            </article>
+          </section>
+        `;
+      }
+      if (this.game.type === "path-follow") {
+        return `
+          <section class="game-screen" data-screen="choice" aria-label="Seguir caminho">
+            <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.choice}')" aria-hidden="true"></div>
+            <article class="path-panel">
+              <h2>${this.currentRound().hint}</h2>
+              <div class="path-progress"><i><b data-path-progress style="width:0%"></b></i><span data-path-progress-label>0%</span></div>
+              <div class="path-board" data-path-board></div>
             </article>
           </section>
         `;
@@ -864,6 +1016,8 @@
         const gameBack = event.target.closest("[data-game-back]");
         const action = event.target.closest("[data-game-action]")?.dataset.gameAction;
         const card = event.target.closest("[data-choice-id]");
+        const criteria = event.target.closest("[data-criteria-id]");
+        const pathPoint = event.target.closest("[data-path-point-id]");
         const dragItem = event.target.closest("[data-drag-id]");
         const dropTarget = event.target.closest("[data-drop-id]");
         const shapeBoard = event.target.closest("[data-shape-house-board]");
@@ -876,6 +1030,8 @@
         if (gameBack) this.openHub();
         if (action) this.handleAction(action, event.target.closest("button"));
         if (card) this.answer(card.dataset.choiceId, card);
+        if (criteria) this.answerCriteria(criteria.dataset.criteriaId, criteria);
+        if (pathPoint) this.advancePath(pathPoint.dataset.pathPointId, pathPoint);
         if (dragItem) this.selectDragItem(dragItem.dataset.dragId);
         if (dropTarget) this.dropSelectedItem(dropTarget.dataset.dropId);
         if (snapPiece) this.selectSnapPiece(snapPiece.dataset.snapPieceId);
@@ -924,6 +1080,20 @@
         }
         if (dropTarget && dragId) this.placeDragItem(dragId, dropTarget.dataset.dropId);
       });
+      this.root.addEventListener("pointerdown", (event) => {
+        const board = event.target.closest("[data-path-board]");
+        if (!board) return;
+        this.state = { ...this.state, pathDrawing: true };
+        this.advanceNearestPathPoint(event.clientX, event.clientY);
+      });
+      this.root.addEventListener("pointermove", (event) => {
+        if (!this.state.pathDrawing) return;
+        if (!event.target.closest("[data-path-board]")) return;
+        this.advanceNearestPathPoint(event.clientX, event.clientY);
+      });
+      this.root.addEventListener("pointerup", () => {
+        if (this.state.pathDrawing) this.state = { ...this.state, pathDrawing: false };
+      });
       this.root.addEventListener("input", (event) => {
         const input = event.target.closest("[data-volume]");
         if (!input) return;
@@ -962,6 +1132,16 @@
         this.go("choice");
       }
       if (action === "begin-snap") {
+        this.updateRoundContent();
+        audioPlayer.speak(this.currentRound().narration, null);
+        this.go("choice");
+      }
+      if (action === "begin-criteria") {
+        this.updateRoundContent();
+        audioPlayer.speak(this.currentRound().narration, null);
+        this.go("choice");
+      }
+      if (action === "begin-path") {
         this.updateRoundContent();
         audioPlayer.speak(this.currentRound().narration, null);
         this.go("choice");
@@ -1007,6 +1187,62 @@
       card.classList.add("is-correct");
       audioPlayer.blip("success");
       window.setTimeout(() => this.go("feedback"), 520);
+    }
+
+    answerCriteria(choiceId, card) {
+      if (this.game.type !== "criteria") return;
+      const round = this.currentRound();
+      const choice = round.choices.find((entry) => entry.id === choiceId);
+      this.state = { ...this.state, attempts: this.state.attempts + 1 };
+      if (!choice?.correct) {
+        card.classList.add("is-wrong");
+        audioPlayer.blip();
+        audioPlayer.speak("Esse nao combina com o criterio. Tente outro.", null);
+        window.setTimeout(() => card.classList.remove("is-wrong"), 620);
+        return;
+      }
+      const found = [...new Set([...this.state.criteriaFound, choiceId])];
+      this.state = { ...this.state, criteriaFound: found };
+      card.classList.add("is-correct");
+      audioPlayer.blip("success");
+      this.syncCriteria();
+      if (found.length >= round.required) {
+        this.state = { ...this.state, completedRounds: [round.id] };
+        window.setTimeout(() => this.go("feedback"), 620);
+      }
+    }
+
+    advancePath(pointId, point) {
+      if (this.game.type !== "path-follow") return;
+      const points = this.currentRound().path.points;
+      const expected = points[this.state.pathProgress];
+      if (!expected || expected.id !== pointId) {
+        point?.classList.add("is-wrong");
+        audioPlayer.blip();
+        window.setTimeout(() => point?.classList.remove("is-wrong"), 420);
+        return;
+      }
+      this.state = { ...this.state, pathProgress: this.state.pathProgress + 1, attempts: this.state.attempts + 1 };
+      point?.classList.add("is-done");
+      audioPlayer.blip("success");
+      this.syncPath();
+      if (this.state.pathProgress >= points.length) {
+        this.state = { ...this.state, completedRounds: [this.currentRound().id], pathDrawing: false };
+        this.root.querySelector("[data-path-board]")?.classList.add("is-complete");
+        window.setTimeout(() => this.go("feedback"), 740);
+      }
+    }
+
+    advanceNearestPathPoint(clientX, clientY) {
+      if (this.game.type !== "path-follow") return;
+      const tolerance = this.currentRound().path?.tolerance || 80;
+      const expected = this.currentRound().path.points[this.state.pathProgress];
+      if (!expected) return;
+      const point = this.root.querySelector(`[data-path-point-id="${expected.id}"]`);
+      if (!point) return;
+      const box = point.getBoundingClientRect();
+      const distance = Math.hypot(box.left + box.width / 2 - clientX, box.top + box.height / 2 - clientY);
+      if (distance <= tolerance) this.advancePath(expected.id, point);
     }
 
     selectDragItem(dragId) {
@@ -1225,6 +1461,43 @@
         }
         return;
       }
+      if (this.game.type === "criteria") {
+        const grid = this.root.querySelector("[data-criteria-grid]");
+        const progress = this.root.querySelector("[data-criteria-progress]");
+        if (progress) progress.textContent = `${this.state.criteriaFound.length}/${round.required}`;
+        if (grid) {
+          grid.innerHTML = round.choices.map((choice) => {
+            const found = this.state.criteriaFound.includes(choice.id);
+            return `
+              <button class="criteria-card${found ? " is-correct" : ""}" type="button" data-criteria-id="${choice.id}" aria-label="${choice.label}">
+                <img src="${choice.image}" alt="" loading="eager" decoding="async" />
+                <span>${choice.label}</span>
+              </button>
+            `;
+          }).join("");
+        }
+        return;
+      }
+      if (this.game.type === "path-follow") {
+        const board = this.root.querySelector("[data-path-board]");
+        const progress = this.root.querySelector("[data-path-progress]");
+        const label = this.root.querySelector("[data-path-progress-label]");
+        const points = round.path.points;
+        const percent = Math.round((this.state.pathProgress / points.length) * 100);
+        if (progress) progress.style.width = `${percent}%`;
+        if (label) label.textContent = `${percent}%`;
+        if (board) {
+          board.innerHTML = `
+            <svg class="path-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <polyline points="${points.map((point) => `${point.x},${point.y}`).join(" ")}"></polyline>
+            </svg>
+            ${points.map((point, index) => `
+              <button class="path-point${index < this.state.pathProgress ? " is-done" : ""}${index === this.state.pathProgress ? " is-current" : ""}" type="button" data-path-point-id="${point.id}" aria-label="Ponto ${index + 1}" style="--path-x:${point.x}%;--path-y:${point.y}%"></button>
+            `).join("")}
+          `;
+        }
+        return;
+      }
       const hint = this.root.querySelector("[data-hint-text]");
       if (hint) hint.textContent = round.hint;
       const speak = this.root.querySelector("[data-game-speak]");
@@ -1245,6 +1518,14 @@
     }
 
     syncSnap() {
+      this.updateRoundContent();
+    }
+
+    syncCriteria() {
+      this.updateRoundContent();
+    }
+
+    syncPath() {
       this.updateRoundContent();
     }
 

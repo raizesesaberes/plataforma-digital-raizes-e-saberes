@@ -1127,7 +1127,9 @@ const studentGameCatalog = [
   { id: "organizando-cesta", title: "Organizando a Cesta", medal: "Pequeno Organizador", image: "assets/games/organizando-cesta/effects/medal-jogo.png" },
   { id: "jardim-descobertas", title: "O Jardim das Descobertas", medal: "Pequeno Observador", image: "assets/games/jardim-descobertas/rewards/medal-jardim.png" },
   { id: "construindo-ponte", title: "Construindo a Ponte", medal: "Pequeno Construtor", image: "assets/games/construindo-ponte/rewards/medal-pequeno-construtor.png" },
+  { id: "busca-criterios", title: "Descobrindo por Critérios", medal: "Pequeno Investigador", image: "assets/games/caixa-misteriosa/rewards/medal-pequeno-explorador.png" },
   { id: "formas-casa", title: "As Formas da Casa", medal: "Pequeno Construtor de Formas", image: "assets/games/formas-casa/rewards/medal-formas.png" },
+  { id: "caminho-bia", title: "O Caminho da Bia", medal: "Pequeno Explorador de Caminhos", image: "assets/games/caminho-bia/rewards/medal-caminhos.png" },
 ];
 
 const readStudentGameRecords = () => {
@@ -1190,6 +1192,9 @@ const renderStudentProfilePage = () => {
   const medals = summary.completed.length
     ? summary.completed.map((record) => `<article>${studentLazyImg(record.image, "", "student-medal-art")}<strong>${record.medal}</strong><small>${record.title}</small></article>`).join("")
     : `<article>${studentLazyImg("assets/aluno/medalha-explorador.webp", "", "student-medal-art")}<strong>Nenhuma medalha de jogo ainda</strong><small>Complete um jogo para registrar sua primeira conquista.</small></article>`;
+  const completedGames = summary.completed.length
+    ? summary.completed.map((record) => `<li><strong>${record.title}</strong><span>${record.xp} XP · ${record.medal}</span></li>`).join("")
+    : `<li><strong>Nenhum jogo concluido ainda</strong><span>Comece pelo Hub dos Jogos.</span></li>`;
   return `
     <div class="student-dashboard student-profile-page">
       ${renderStudentHero(view)}
@@ -1207,6 +1212,15 @@ const renderStudentProfilePage = () => {
           <div class="student-progress-line"><i><span style="width:${summary.percent}%"></span></i><b>${summary.percent}% da experiencia inicial</b></div>
           <p><strong>Dias consecutivos</strong> ${summary.streak} dias</p>
           <p><strong>Ultima atividade</strong> ${summary.lastActivity ? new Date(summary.lastActivity).toLocaleDateString("pt-BR") : "Nenhuma atividade concluida"}</p>
+        </section>
+        <section class="student-card">
+          <div class="student-card-head"><h2>Minhas Conquistas</h2></div>
+          <p><strong>${summary.completedCount}</strong> jogos concluidos de ${summary.totalGames} disponiveis.</p>
+          <p><strong>${summary.totalXp} XP</strong> conquistados em jogos digitais.</p>
+        </section>
+        <section class="student-card">
+          <div class="student-card-head"><h2>Jogos Concluidos</h2><a href="jogos.html">Hub</a></div>
+          <ul class="clean-list">${completedGames}</ul>
         </section>
       </div>
       ${renderStudentQuickAccess([
