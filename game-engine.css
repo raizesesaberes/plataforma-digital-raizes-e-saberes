@@ -639,6 +639,119 @@
   text-align: center;
 }
 
+.shape-house-panel {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  gap: 10px;
+  width: min(94%, 960px);
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(255, 250, 238, 0.88);
+  box-shadow: 0 18px 42px rgba(40, 66, 44, 0.14);
+  text-align: center;
+}
+
+.shape-house-panel h2 {
+  margin: 0;
+  color: #151515;
+  font-size: clamp(1.05rem, 2.4vw, 1.7rem);
+}
+
+.shape-house-board {
+  position: relative;
+  min-height: clamp(250px, 35vw, 390px);
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.shape-house-board::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 45%, rgba(255, 219, 92, 0.18), rgba(255, 219, 92, 0) 48%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.shape-house-board.is-complete::after {
+  animation: snap-spark 900ms ease both;
+}
+
+.shape-house-slot {
+  position: absolute;
+  left: var(--shape-x);
+  top: var(--shape-y);
+  z-index: 2;
+  width: var(--shape-w);
+  height: var(--shape-h);
+  min-width: 44px;
+  min-height: 44px;
+  border: 3px dashed rgba(255, 255, 255, 0.82);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.14);
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.shape-house-slot:hover,
+.shape-house-slot:focus-visible {
+  border-color: #f4b72e;
+  box-shadow: 0 0 0 6px rgba(244, 183, 46, 0.18);
+}
+
+.shape-house-slot.is-filled {
+  border-color: transparent;
+  background: transparent;
+}
+
+.shape-house-slot.is-wrong {
+  border-color: #dc604c;
+  background: rgba(255, 244, 239, 0.82);
+}
+
+.shape-house-slot.is-snapped {
+  animation: snap-in 620ms cubic-bezier(.18, .89, .32, 1.28) both;
+}
+
+.shape-house-slot.is-snapped::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border-radius: inherit;
+  background: radial-gradient(circle, rgba(255, 228, 111, 0.9), rgba(255, 228, 111, 0));
+  animation: snap-spark 680ms ease both;
+  pointer-events: none;
+}
+
+.shape-house-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 14px rgba(59, 43, 18, 0.18));
+}
+
+.shape-house-tray {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(82px, 1fr));
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #eadfca;
+  border-radius: 8px;
+  background: rgba(255, 253, 247, 0.94);
+}
+
+.shape-drag-item {
+  min-height: 92px;
+}
+
+.shape-drag-item img {
+  width: min(100%, 92px);
+  height: 54px;
+}
+
 .snap-panel h2 {
   margin: 0;
   color: #151515;
@@ -1100,6 +1213,10 @@
     grid-template-columns: repeat(3, minmax(82px, 1fr));
   }
 
+  .shape-house-tray {
+    grid-template-columns: repeat(2, minmax(82px, 1fr));
+  }
+
   .game-layout {
     grid-template-columns: 1fr;
   }
@@ -1158,6 +1275,10 @@
 
   .snap-board {
     min-height: 380px;
+  }
+
+  .shape-house-board {
+    min-height: 410px;
   }
 
   .snap-tray {

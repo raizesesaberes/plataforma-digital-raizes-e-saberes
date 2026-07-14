@@ -1127,6 +1127,7 @@ const studentGameCatalog = [
   { id: "organizando-cesta", title: "Organizando a Cesta", medal: "Pequeno Organizador", image: "assets/games/organizando-cesta/effects/medal-jogo.png" },
   { id: "jardim-descobertas", title: "O Jardim das Descobertas", medal: "Pequeno Observador", image: "assets/games/jardim-descobertas/rewards/medal-jardim.png" },
   { id: "construindo-ponte", title: "Construindo a Ponte", medal: "Pequeno Construtor", image: "assets/games/construindo-ponte/rewards/medal-pequeno-construtor.png" },
+  { id: "formas-casa", title: "As Formas da Casa", medal: "Pequeno Construtor de Formas", image: "assets/games/formas-casa/rewards/medal-formas.png" },
 ];
 
 const readStudentGameRecords = () => {

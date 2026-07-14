@@ -6,6 +6,8 @@
   const jardimAsset = (path) => `${jardimBase}${path}`;
   const ponteBase = "assets/games/construindo-ponte/";
   const ponteAsset = (path) => `${ponteBase}${path}`;
+  const formasBase = "assets/games/formas-casa/";
+  const formasAsset = (path) => `${formasBase}${path}`;
 
   const gameRepository = {
     games: {
@@ -276,6 +278,58 @@
                 { id: "slot-end", label: "Encaixe final", x: 78, y: 43, width: 10, height: 24, rotate: 90 },
               ],
             },
+          },
+        ],
+      },
+      "formas-casa": {
+        id: "formas-casa",
+        type: "drag-drop",
+        title: "As Formas da Casa",
+        category: "Formas",
+        subtitle: "Montagem da Casa",
+        scenario: "Jardim das Descobertas",
+        character: "Ana",
+        mascot: "Bia e Pipo",
+        xp: 20,
+        medal: "Pequeno Construtor de Formas",
+        unlock: { order: 5, unlocked: true, requires: "construindo-ponte" },
+        assets: {
+          atlas: formasAsset("atlas.png"),
+          card: formasAsset("screens/screen-intro.png"),
+          flow: formasAsset("atlas.png"),
+          library: formasAsset("atlas.png"),
+          scenarios: formasAsset("atlas.png"),
+          screens: {
+            intro: formasAsset("screens/screen-intro.png"),
+            room: formasAsset("screens/screen-observe.png"),
+            choice: formasAsset("screens/screen-build.png"),
+            feedback: formasAsset("screens/screen-build.png"),
+            final: formasAsset("screens/screen-final.png"),
+          },
+        },
+        audio: {
+          narration: 0.9,
+          effects: 0.75,
+          music: 0.35,
+        },
+        rounds: [
+          {
+            id: "casa-formas",
+            layout: "shape-house",
+            hint: "Arraste cada forma para montar a casa.",
+            narration: "Vamos descobrir onde cada forma fica. Monte a casa com quadrado, triangulo, retangulo e circulo.",
+            items: [
+              { id: "square", label: "Quadrado", image: formasAsset("shapes/square.png"), targetId: "window-left" },
+              { id: "triangle", label: "Triangulo", image: formasAsset("shapes/triangle.png"), targetId: "roof" },
+              { id: "rectangle", label: "Retangulo", image: formasAsset("shapes/rectangle.png"), targetId: "window-right" },
+              { id: "circle", label: "Circulo", image: formasAsset("shapes/circle.png"), targetId: "attic" },
+            ],
+            targets: [
+              { id: "roof", label: "Telhado triangular", image: formasAsset("shapes/triangle.png"), x: 52, y: 18, width: 34, height: 24 },
+              { id: "attic", label: "Janela circular", image: formasAsset("shapes/circle.png"), x: 53, y: 38, width: 13, height: 13 },
+              { id: "window-left", label: "Janela quadrada", image: formasAsset("shapes/square.png"), x: 38, y: 59, width: 13, height: 16 },
+              { id: "window-right", label: "Janela retangular", image: formasAsset("shapes/rectangle.png"), x: 69, y: 58, width: 13, height: 17 },
+            ],
           },
         ],
       },
@@ -615,11 +669,12 @@
 
     renderRoomScreen() {
       if (this.game.type === "drag-drop") {
+        const round = this.currentRound();
         return `
-          <section class="game-screen" data-screen="room" aria-label="Observando as frutas">
+          <section class="game-screen" data-screen="room" aria-label="${round.layout === "shape-house" ? "Observando as formas" : "Observando as frutas"}">
             <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
             ${components.particles(18)}
-            <button class="game-primary-button game-observe-button" type="button" data-game-action="begin-drag">Organizar</button>
+            <button class="game-primary-button game-observe-button" type="button" data-game-action="begin-drag">${round.layout === "shape-house" ? "Montar" : "Organizar"}</button>
           </section>
         `;
       }
@@ -677,6 +732,20 @@
 
     renderChoiceScreen() {
       if (this.game.type === "drag-drop") {
+        const round = this.currentRound();
+        if (round.layout === "shape-house") {
+          return `
+            <section class="game-screen" data-screen="choice" aria-label="Montagem da casa com formas">
+              <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.choice}')" aria-hidden="true"></div>
+              <article class="shape-house-panel">
+                <h2>${round.hint}</h2>
+                <div class="snap-state" data-house-state>Casa vazia</div>
+                <div class="shape-house-board" data-shape-house-board></div>
+                <div class="shape-house-tray" data-drag-item-tray></div>
+              </article>
+            </section>
+          `;
+        }
         return `
           <section class="game-screen" data-screen="choice" aria-label="Organizacao da cesta">
             <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.choice}')" aria-hidden="true"></div>
@@ -797,6 +866,7 @@
         const card = event.target.closest("[data-choice-id]");
         const dragItem = event.target.closest("[data-drag-id]");
         const dropTarget = event.target.closest("[data-drop-id]");
+        const shapeBoard = event.target.closest("[data-shape-house-board]");
         const snapPiece = event.target.closest("[data-snap-piece-id]");
         const snapSlot = event.target.closest("[data-snap-slot-id]");
         const snapBoard = event.target.closest("[data-snap-board]");
@@ -825,15 +895,16 @@
         }
       });
       this.root.addEventListener("dragover", (event) => {
-        if (event.target.closest("[data-drop-id]") || event.target.closest("[data-snap-slot-id]") || event.target.closest("[data-snap-board]")) {
+        if (event.target.closest("[data-drop-id]") || event.target.closest("[data-shape-house-board]") || event.target.closest("[data-snap-slot-id]") || event.target.closest("[data-snap-board]")) {
           event.preventDefault();
         }
       });
       this.root.addEventListener("drop", (event) => {
         const dropTarget = event.target.closest("[data-drop-id]");
+        const shapeBoard = event.target.closest("[data-shape-house-board]");
         const snapSlot = event.target.closest("[data-snap-slot-id]");
         const snapBoard = event.target.closest("[data-snap-board]");
-        if (!dropTarget && !snapSlot && !snapBoard) return;
+        if (!dropTarget && !shapeBoard && !snapSlot && !snapBoard) return;
         event.preventDefault();
         const snapId = event.dataTransfer?.getData("application/x-raizes-snap");
         const dragId = event.dataTransfer?.getData("application/x-raizes-drag") || event.dataTransfer?.getData("text/plain");
@@ -844,6 +915,11 @@
         if (snapBoard && snapId) {
           const nearestSlot = this.findNearestSnapSlot(event.clientX, event.clientY);
           if (nearestSlot) this.snapPiece(snapId, nearestSlot.dataset.snapSlotId, nearestSlot);
+          return;
+        }
+        if (shapeBoard && dragId) {
+          const nearestDrop = this.findNearestDropTarget(event.clientX, event.clientY);
+          if (nearestDrop) this.placeDragItem(dragId, nearestDrop.dataset.dropId);
           return;
         }
         if (dropTarget && dragId) this.placeDragItem(dragId, dropTarget.dataset.dropId);
@@ -960,11 +1036,29 @@
       this.state = progressController.place(this.state, dragId, dropId);
       audioPlayer.blip("success");
       this.syncDragDrop();
+      const filledDrop = this.root.querySelector(`[data-drop-id="${dropId}"]`);
+      filledDrop?.classList.add("is-snapped");
+      window.setTimeout(() => filledDrop?.classList.remove("is-snapped"), 700);
       const complete = round.items.every((entry) => this.state.placements[entry.id] === entry.targetId);
       if (complete) {
         this.state = { ...this.state, completedRounds: [round.id] };
+        this.root.querySelector("[data-shape-house-board]")?.classList.add("is-complete");
         window.setTimeout(() => this.go("feedback"), 620);
       }
+    }
+
+    findNearestDropTarget(clientX, clientY) {
+      const tolerance = 82;
+      const drops = [...this.root.querySelectorAll("[data-drop-id]")];
+      return drops.reduce((nearest, drop) => {
+        const box = drop.getBoundingClientRect();
+        const centerX = box.left + box.width / 2;
+        const centerY = box.top + box.height / 2;
+        const distance = Math.hypot(centerX - clientX, centerY - clientY);
+        if (distance > tolerance) return nearest;
+        if (!nearest || distance < nearest.distance) return { drop, distance };
+        return nearest;
+      }, null)?.drop || null;
     }
 
     selectSnapPiece(pieceId) {
@@ -1041,6 +1135,38 @@
     updateRoundContent() {
       const round = this.currentRound();
       if (this.game.type === "drag-drop") {
+        if (round.layout === "shape-house") {
+          const board = this.root.querySelector("[data-shape-house-board]");
+          const tray = this.root.querySelector("[data-drag-item-tray]");
+          const stateLabel = this.root.querySelector("[data-house-state]");
+          const placedCount = round.items.filter((item) => this.state.placements[item.id] === item.targetId).length;
+          if (stateLabel) {
+            stateLabel.textContent = placedCount === 0 ? "Casa vazia" : placedCount === round.items.length ? "Casa completa" : `Casa parcial ${placedCount}/${round.items.length}`;
+          }
+          if (board) {
+            board.innerHTML = round.targets.map((target) => {
+              const placedItem = round.items.find((item) => this.state.placements[item.id] === target.id);
+              const image = placedItem ? target.completeImage || placedItem.image || target.image : "";
+              return `
+                <button class="shape-house-slot${placedItem ? " is-filled" : ""}" type="button" data-drop-id="${target.id}" aria-label="${target.label}" style="--shape-x:${target.x}%;--shape-y:${target.y}%;--shape-w:${target.width}%;--shape-h:${target.height}%">
+                  ${image ? `<img src="${image}" alt="" loading="eager" decoding="async" />` : ""}
+                </button>
+              `;
+            }).join("");
+          }
+          if (tray) {
+            tray.innerHTML = round.items.map((item) => {
+              const placed = Boolean(this.state.placements[item.id]);
+              return `
+                <button class="drag-item shape-drag-item${placed ? " is-placed" : ""}${this.state.selectedDragId === item.id ? " is-selected" : ""}" type="button" draggable="${placed ? "false" : "true"}" data-drag-id="${item.id}" aria-label="${item.label}">
+                  <img src="${item.image}" alt="" loading="eager" decoding="async" />
+                  <span>${item.label}</span>
+                </button>
+              `;
+            }).join("");
+          }
+          return;
+        }
         const dropGrid = this.root.querySelector("[data-drop-zone-grid]");
         const tray = this.root.querySelector("[data-drag-item-tray]");
         if (dropGrid) {
