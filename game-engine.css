@@ -113,6 +113,7 @@
   gap: 18px;
   padding: clamp(12px, 2vw, 24px);
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
   transform: translateY(10px);
   transition: opacity 280ms ease, transform 280ms ease;
@@ -120,16 +121,23 @@
 
 .game-screen.is-active {
   opacity: 1;
+  visibility: visible;
   pointer-events: auto;
   transform: translateY(0);
+}
+
+.game-screen:not(.is-active),
+.game-screen:not(.is-active) * {
+  pointer-events: none !important;
 }
 
 .game-scene {
   position: absolute;
   inset: 0;
-  background-image: var(--atlas);
+  background-image: var(--screen);
   background-repeat: no-repeat;
-  background-size: 1536px 1024px;
+  background-size: cover;
+  background-position: center;
   filter: saturate(1.02);
 }
 
@@ -145,41 +153,29 @@
   z-index: 2;
 }
 
-.game-scene-intro {
-  background-size: 2300px 1533px;
-  background-position: -15px -22px;
-}
-
-.game-scene-room {
-  background-size: 2360px 1573px;
-  background-position: -776px -23px;
-}
-
-.game-scene-hint {
-  background-color: #dff4f7;
-  background-size: 3400px 2267px;
-  background-position: -2649px -40px;
-}
-
-.game-scene-feedback {
-  background-size: 2300px 1533px;
-  background-position: -15px -677px;
-}
-
-.game-scene-final {
-  background-size: 3000px 2000px;
-  background-position: -932px -885px;
-}
-
 .game-hero-copy {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 2;
   display: grid;
   justify-items: center;
-  max-width: 620px;
-  margin-top: auto;
-  padding-top: min(42vh, 360px);
+  max-width: none;
+  margin-top: 0;
+  padding-top: 0;
   text-align: center;
+}
+
+.game-start-button {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(18px, 5vh, 48px);
+  min-width: min(44vw, 300px);
+  transform: translateX(-50%);
+}
+
+.game-start-button:focus-visible {
+  outline: 5px solid #ffcf48;
+  outline-offset: 4px;
 }
 
 .game-primary-button,
@@ -216,10 +212,13 @@
 }
 
 .game-secondary-button {
+  display: inline-flex;
+  align-items: center;
   padding: 0 18px;
   border: 2px solid #0d6b4b;
   background: #fffdf8;
   color: #0d6b4b;
+  text-decoration: none;
 }
 
 .game-audio-button {
@@ -246,10 +245,10 @@
   min-width: 180px;
   aspect-ratio: 1.1;
   margin-top: min(20vh, 190px);
-  background-image: var(--atlas);
-  background-position: -962px -48px;
+  background-image: var(--box);
   background-repeat: no-repeat;
-  background-size: 1536px 1024px;
+  background-size: contain;
+  background-position: center;
   filter: drop-shadow(0 24px 26px rgba(48, 35, 10, 0.32));
   transform-origin: 50% 86%;
 }
@@ -259,7 +258,7 @@
 }
 
 .discovery-box.is-opening {
-  background-position: -964px -191px;
+  background-image: var(--box-open);
   animation: box-open 780ms ease both;
 }
 
@@ -375,16 +374,11 @@
   border-color: #dc604c;
 }
 
-.atlas-sprite {
-  width: var(--w);
-  height: var(--h);
-  max-width: 88%;
-  max-height: 148px;
-  background-image: var(--atlas);
-  background-repeat: no-repeat;
-  background-position: calc(var(--x) * -1px) calc(var(--y) * -1px);
-  background-size: 1536px 1024px;
-  transform: scale(var(--scale, 1));
+.game-object {
+  width: min(78%, 126px);
+  height: 118px;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 16px rgba(60, 48, 22, 0.16));
 }
 
 .game-card span {
@@ -403,6 +397,39 @@
   width: min(92%, 620px);
   margin-bottom: clamp(18px, 5vh, 46px);
   text-align: center;
+}
+
+.final-panel {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+  pointer-events: none;
+}
+
+.final-panel .xp-counter {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(132px, 24%, 178px);
+  transform: translateX(-50%);
+}
+
+.final-actions {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(54px, 12%, 72px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
+.game-restart-button {
+  min-width: clamp(250px, 31vw, 390px);
 }
 
 .feedback-panel strong,
@@ -560,31 +587,8 @@
   }
 
   .game-scene {
-    background-size: 2300px 1533px;
-  }
-
-  .game-scene-intro {
-    background-position: -15px -22px;
-  }
-
-  .game-scene-room {
-    background-size: 2360px 1573px;
-    background-position: -776px -23px;
-  }
-
-  .game-scene-hint {
-    background-size: 5500px 3667px;
-    background-position: -4285px -64px;
-  }
-
-  .game-scene-feedback {
-    background-size: 2600px 1733px;
-    background-position: -17px -766px;
-  }
-
-  .game-scene-final {
-    background-size: 3100px 2067px;
-    background-position: -963px -914px;
+    background-size: cover;
+    background-position: center;
   }
 
   .choice-cards {

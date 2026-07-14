@@ -1,8 +1,7 @@
 (function () {
   const storageKey = "raizes:game-progress:v1";
   const atlasBase = "assets/games/caixa-misteriosa/";
-
-  const sprite = (atlas, x, y, w, h, scale = 1) => ({ atlas, x, y, w, h, scale });
+  const asset = (path) => `${atlasBase}${path}`;
 
   const gameRepository = {
     games: {
@@ -20,6 +19,19 @@
           flow: `${atlasBase}fluxo-assets.png`,
           library: `${atlasBase}biblioteca-assets.png`,
           scenarios: `${atlasBase}cenarios-oficiais.png`,
+          screens: {
+            intro: asset("screens/screen-intro.png"),
+            room: asset("screens/screen-room.png"),
+            hint: asset("screens/screen-hint.png"),
+            choice: asset("screens/screen-choice.png"),
+            feedback: asset("screens/screen-feedback.png"),
+            final: asset("screens/screen-final.png"),
+          },
+          boxes: {
+            closed: asset("boxes/box-closed.png"),
+            glowing: asset("boxes/box-glowing.png"),
+            open: asset("boxes/box-open.png"),
+          },
         },
         audio: {
           narration: 0.9,
@@ -31,11 +43,11 @@
             id: "macio",
             hint: "E bem macio.",
             narration: "Escute a dica: e bem macio. Qual objeto pode estar na caixa?",
-            correctId: "urso",
+            correctId: "algodao",
             choices: [
-              { id: "urso", label: "Ursinho", color: "#6aa351", image: sprite("library", 953, 468, 82, 110, 1.35) },
-              { id: "pena", label: "Pena", color: "#ef8b21", image: sprite("library", 812, 472, 96, 92, 1.35) },
-              { id: "estrela", label: "Estrela", color: "#4b9cc4", image: sprite("library", 886, 80, 118, 110, 1.05) },
+              { id: "pena", label: "Pena", color: "#ef8b21", image: asset("objects/feather.png") },
+              { id: "algodao", label: "Algodao", color: "#6aa351", image: asset("objects/cotton.png") },
+              { id: "esponja", label: "Esponja", color: "#4b9cc4", image: asset("objects/sponge.png") },
             ],
           },
           {
@@ -44,9 +56,9 @@
             narration: "Agora a dica e: e leve e flutua.",
             correctId: "pena",
             choices: [
-              { id: "bola", label: "Bola", color: "#4b9cc4", image: sprite("library", 1045, 468, 70, 76, 1.45) },
-              { id: "pena", label: "Pena", color: "#ef8b21", image: sprite("library", 812, 472, 96, 92, 1.35) },
-              { id: "dado", label: "Dado", color: "#6aa351", image: sprite("library", 889, 468, 54, 54, 1.7) },
+              { id: "bola", label: "Bola", color: "#4b9cc4", image: asset("objects/ball.png") },
+              { id: "pena", label: "Pena", color: "#ef8b21", image: asset("objects/feather.png") },
+              { id: "cubo", label: "Cubo", color: "#6aa351", image: asset("objects/cube.png") },
             ],
           },
           {
@@ -55,9 +67,9 @@
             narration: "Ultima dica: brilha como uma conquista.",
             correctId: "estrela",
             choices: [
-              { id: "flor", label: "Flor", color: "#6aa351", image: sprite("library", 1420, 464, 74, 88, 1.3) },
-              { id: "estrela", label: "Estrela", color: "#ef8b21", image: sprite("library", 886, 80, 118, 110, 1.05) },
-              { id: "folha", label: "Folha", color: "#4b9cc4", image: sprite("library", 1024, 468, 58, 58, 1.55) },
+              { id: "flor", label: "Flor", color: "#6aa351", image: asset("objects/flower.png") },
+              { id: "estrela", label: "Estrela", color: "#ef8b21", image: asset("objects/star.png") },
+              { id: "folha", label: "Folha", color: "#4b9cc4", image: asset("objects/leaf.png") },
             ],
           },
         ],
@@ -159,9 +171,8 @@
   };
 
   const components = {
-    sprite(item) {
-      const atlasVar = item.atlas === "library" ? "--library-atlas" : "--game-atlas";
-      return `<span class="atlas-sprite" aria-hidden="true" style="--atlas:var(${atlasVar});--x:${item.x};--y:${item.y};--w:${item.w}px;--h:${item.h}px;--scale:${item.scale || 1}"></span>`;
+    objectImage(src, alt) {
+      return `<img class="game-object" src="${src}" alt="${alt}" loading="eager" decoding="async" />`;
     },
     particles(count = 26) {
       return `<div class="game-particles" aria-hidden="true">${Array.from({ length: count }, (_, index) => {
@@ -240,10 +251,10 @@
     renderIntroScreen() {
       return `
         <section class="game-screen" data-screen="intro" aria-label="Boas-vindas">
-          <div class="game-scene game-scene-intro" style="--atlas:var(--game-atlas)" aria-hidden="true"></div>
+          <div class="game-scene game-scene-intro" style="--screen:url('${this.game.assets.screens.intro}')" aria-hidden="true"></div>
           ${components.particles(18)}
           <div class="game-hero-copy">
-            <button class="game-primary-button" type="button" data-game-action="start" aria-label="Comecar A Caixa Misteriosa">▶ Comecar</button>
+            <button class="game-primary-button game-start-button" type="button" data-game-action="start" aria-label="Comecar A Caixa Misteriosa">▶ Comecar</button>
           </div>
         </section>
       `;
@@ -252,9 +263,9 @@
     renderRoomScreen() {
       return `
         <section class="game-screen" data-screen="room" aria-label="Sala das Descobertas">
-          <div class="game-scene game-scene-room" style="--atlas:var(--game-atlas)" aria-hidden="true"></div>
+          <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
           ${components.particles(30)}
-          <button class="discovery-box is-glowing" type="button" data-game-action="open-box" aria-label="Abrir caixa misteriosa"></button>
+          <button class="discovery-box is-glowing" type="button" data-game-action="open-box" aria-label="Abrir caixa misteriosa" style="--box:url('${this.game.assets.boxes.glowing}');--box-open:url('${this.game.assets.boxes.open}')"></button>
         </section>
       `;
     }
@@ -263,7 +274,7 @@
       const round = this.currentRound();
       return `
         <section class="game-screen" data-screen="hint" aria-label="Dica narrada">
-          <div class="game-scene game-scene-hint" style="--atlas:var(--game-atlas)" aria-hidden="true"></div>
+          <div class="game-scene game-scene-hint" style="--screen:url('${this.game.assets.screens.hint}')" aria-hidden="true"></div>
           <article class="hint-card">
             <p data-hint-text>${round.hint}</p>
             ${components.audioButton("Repetir dica", round.narration)}
@@ -276,7 +287,7 @@
     renderChoiceScreen() {
       return `
         <section class="game-screen" data-screen="choice" aria-label="Escolha do objeto">
-          <div class="game-scene game-scene-hint" style="--atlas:var(--game-atlas)" aria-hidden="true"></div>
+          <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.choice}')" aria-hidden="true"></div>
           <article class="choice-panel">
             <h2>Qual sera o objeto da nossa caixa?</h2>
             <div class="choice-cards" data-choice-cards></div>
@@ -288,10 +299,9 @@
     renderFeedbackScreen() {
       return `
         <section class="game-screen" data-screen="feedback" aria-label="Feedback positivo">
-          <div class="game-scene game-scene-feedback" style="--atlas:var(--game-atlas)" aria-hidden="true"></div>
+          <div class="game-scene game-scene-feedback" style="--screen:url('${this.game.assets.screens.feedback}')" aria-hidden="true"></div>
           ${components.confetti()}
           <article class="feedback-panel">
-            <strong>Muito bem!</strong>
             <button class="game-primary-button" type="button" data-game-action="next-round">Continuar</button>
           </article>
         </section>
@@ -301,15 +311,13 @@
     renderFinalScreen() {
       return `
         <section class="game-screen" data-screen="final" aria-label="Medalha e XP">
-          <div class="game-scene game-scene-final" style="--atlas:var(--game-atlas)" aria-hidden="true"></div>
+          <div class="game-scene game-scene-final" style="--screen:url('${this.game.assets.screens.final}')" aria-hidden="true"></div>
           ${components.confetti(54)}
           <article class="final-panel">
-            <strong>Parabens!</strong>
-            <span class="medal-popup" aria-label="Medalha ${this.game.medal}"></span>
             <span class="xp-counter" data-xp-counter>⭐ +0 XP</span>
-            <div>
-              <button class="game-primary-button" type="button" data-game-action="restart">↻ Jogar novamente</button>
-              <a class="game-secondary-button" href="aluno.html" style="display:inline-flex;align-items:center;margin-left:8px;text-decoration:none">Voltar ao menu</a>
+            <div class="final-actions">
+              <button class="game-primary-button game-restart-button" type="button" data-game-action="restart" aria-label="Jogar novamente">↻ Jogar novamente</button>
+              <a class="game-secondary-button" href="aluno.html">Voltar ao menu</a>
             </div>
           </article>
         </section>
@@ -442,7 +450,7 @@
       if (cards) {
         cards.innerHTML = round.choices.map((choice) => `
           <button class="game-card" type="button" data-choice-id="${choice.id}" style="--card-color:${choice.color}" aria-label="${choice.label}">
-            ${components.sprite(choice.image)}
+            ${components.objectImage(choice.image, choice.label)}
             <span>${choice.label}</span>
           </button>
         `).join("");
