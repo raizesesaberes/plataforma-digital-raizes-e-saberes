@@ -1268,15 +1268,15 @@ const modules = {
   },
   jogos: {
     title: "Jogos Digitais",
-    subtitle: "Motor de jogos da Educacao Infantil",
-    code: "GAME-ENGINE-1.0",
+    subtitle: "Motor oficial dos jogos digitais da Educacao Infantil",
+    code: "GAME-ENGINE-2.0",
     html: `
       <div class="screen-title">
-        <p>GAME-ENGINE-1.0</p>
-        <h1>A Caixa Misteriosa</h1>
-        <span>Motor reutilizavel por configuracao para a biblioteca de jogos digitais.</span>
+        <p>GAME-ENGINE-2.0</p>
+        <h1>Jogos Digitais</h1>
+        <span>Motor oficial reutilizavel com selecao, drag-and-drop, recompensas e persistencia.</span>
       </div>
-      <div class="game-engine" data-game-engine data-game-id="caixa-misteriosa"></div>
+      <div class="game-engine" data-game-engine></div>
       <section class="wide-panel">
         <div class="panel-head"><h2>Estrutura reutilizavel</h2><a>Sem alterar logica principal</a></div>
         <div class="class-grid">
@@ -1284,6 +1284,8 @@ const modules = {
           <article>ProgressController<span>Controla telas, rodadas e tempo</span></article>
           <article>RewardController<span>Persiste XP, medalhas e progresso</span></article>
           <article>AudioPlayer<span>Narracao, efeitos e volumes independentes</span></article>
+          <article>SelectionController<span>Escolhas, associacao e identificacao</span></article>
+          <article>DragDropController<span>Frutas, objetos, cartas e figuras</span></article>
         </div>
         <pre style="white-space:pre-wrap;margin:16px 0 0;padding:16px;border-radius:8px;background:#f8fbf1;color:#123827;font-weight:800;line-height:1.55">Novo jogo por configuracao:
 {
@@ -1291,6 +1293,7 @@ const modules = {
   title: "Sons da Natureza",
   scenario: "Bosque",
   mascot: "Tito",
+  type: "selection" | "drag-drop",
   rounds: [{ hint, narration, correctId, choices }],
   xp: 25,
   medal: "Guardiao da Natureza",

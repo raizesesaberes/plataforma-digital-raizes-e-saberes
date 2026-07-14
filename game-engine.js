@@ -7,6 +7,7 @@
     games: {
       "caixa-misteriosa": {
         id: "caixa-misteriosa",
+        type: "selection",
         title: "A Caixa Misteriosa",
         subtitle: "Sala das Descobertas",
         scenario: "Sala das Descobertas",
@@ -74,6 +75,52 @@
           },
         ],
       },
+      "organizando-cesta": {
+        id: "organizando-cesta",
+        type: "drag-drop",
+        title: "Organizando a Cesta",
+        subtitle: "Jardim das Descobertas",
+        scenario: "Jardim das Descobertas",
+        character: "Bia",
+        mascot: "Pipo e Tico",
+        xp: 35,
+        medal: "Pequeno Organizador",
+        assets: {
+          atlas: "assets/games/organizando-cesta/atlas.png",
+          flow: "assets/games/organizando-cesta/atlas.png",
+          library: "assets/games/organizando-cesta/atlas.png",
+          scenarios: "assets/games/organizando-cesta/atlas.png",
+          screens: {
+            intro: "assets/games/organizando-cesta/screens/screen-intro.png",
+            room: "assets/games/organizando-cesta/screens/screen-observe.png",
+            choice: "assets/games/organizando-cesta/screens/screen-organize.png",
+            feedback: "assets/games/organizando-cesta/screens/screen-feedback.png",
+            final: "assets/games/organizando-cesta/screens/screen-final.png",
+          },
+        },
+        audio: {
+          narration: 0.9,
+          effects: 0.75,
+          music: 0.35,
+        },
+        rounds: [
+          {
+            id: "frutas",
+            hint: "Arraste cada fruta para o cesto correspondente.",
+            narration: "Observe as frutas. Depois arraste cada fruta para o cesto certo.",
+            items: [
+              { id: "apple", label: "Maca", image: "assets/games/organizando-cesta/objects/apple.png", targetId: "apple" },
+              { id: "banana", label: "Banana", image: "assets/games/organizando-cesta/objects/banana.png", targetId: "banana" },
+              { id: "grape", label: "Uva", image: "assets/games/organizando-cesta/objects/grape.png", targetId: "grape" },
+            ],
+            targets: [
+              { id: "apple", label: "Cesto da maca", image: "assets/games/organizando-cesta/baskets/basket-empty.png", completeImage: "assets/games/organizando-cesta/baskets/basket-apple.png" },
+              { id: "banana", label: "Cesto da banana", image: "assets/games/organizando-cesta/baskets/basket-empty.png", completeImage: "assets/games/organizando-cesta/baskets/basket-banana.png" },
+              { id: "grape", label: "Cesto da uva", image: "assets/games/organizando-cesta/baskets/basket-empty.png", completeImage: "assets/games/organizando-cesta/baskets/basket-complete.png" },
+            ],
+          },
+        ],
+      },
     },
     getGame(id) {
       return this.games[id] || this.games["caixa-misteriosa"];
@@ -87,11 +134,21 @@
         screen: "intro",
         roundIndex: 0,
         completedRounds: [],
+        placements: {},
+        selectedDragId: null,
         xp: 0,
         medal: null,
         startedAt: Date.now(),
         completedAt: null,
         attempts: 0,
+      };
+    },
+    place(state, dragId, dropId) {
+      return {
+        ...state,
+        placements: { ...state.placements, [dragId]: dropId },
+        selectedDragId: null,
+        attempts: state.attempts + 1,
       };
     },
     nextRound(game, state) {
@@ -128,7 +185,28 @@
         },
       };
       localStorage.setItem(storageKey, JSON.stringify([record, ...records.filter((item) => item.gameId !== game.id)].slice(0, 20)));
+      this.syncSupabase(record);
       return record;
+    },
+    syncSupabase(record) {
+      const client = window.supabase;
+      if (!client?.from) return;
+      client
+        .from("student_game_progress")
+        .insert({
+          game_id: record.gameId,
+          xp: record.xp,
+          medal: record.medal,
+          duration_seconds: record.durationSeconds,
+          progress: record.progress,
+          completed_at: record.completedAt,
+          payload: record,
+        })
+        .then(({ error }) => {
+          if (error) {
+            console.warn("Nao foi possivel sincronizar progresso do jogo.", error);
+          }
+        });
     },
     latest(gameId) {
       const records = JSON.parse(localStorage.getItem(storageKey) || "[]");
@@ -212,6 +290,7 @@
     render() {
       return `
         <section class="game-shell" aria-label="Motor de Jogos da Educacao Infantil">
+          ${this.renderGamePicker()}
           ${this.renderTopbar()}
           <div class="game-layout">
             <main class="game-stage" data-game-stage>
@@ -228,6 +307,19 @@
             </aside>
           </div>
         </section>
+      `;
+    }
+
+    renderGamePicker() {
+      return `
+        <nav class="game-picker" aria-label="Jogos digitais disponiveis">
+          ${Object.values(gameRepository.games).map((game) => `
+            <button class="${game.id === this.game.id ? "is-active" : ""}" type="button" data-game-select="${game.id}">
+              <span>${game.type === "drag-drop" ? "Arrastar" : "Escolher"}</span>
+              <strong>${game.title}</strong>
+            </button>
+          `).join("")}
+        </nav>
       `;
     }
 
@@ -261,6 +353,15 @@
     }
 
     renderRoomScreen() {
+      if (this.game.type === "drag-drop") {
+        return `
+          <section class="game-screen" data-screen="room" aria-label="Observando as frutas">
+            <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
+            ${components.particles(18)}
+            <button class="game-primary-button game-observe-button" type="button" data-game-action="begin-drag">Organizar</button>
+          </section>
+        `;
+      }
       return `
         <section class="game-screen" data-screen="room" aria-label="Sala das Descobertas">
           <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
@@ -271,6 +372,9 @@
     }
 
     renderHintScreen() {
+      if (this.game.type === "drag-drop") {
+        return "";
+      }
       const round = this.currentRound();
       return `
         <section class="game-screen" data-screen="hint" aria-label="Dica narrada">
@@ -285,6 +389,18 @@
     }
 
     renderChoiceScreen() {
+      if (this.game.type === "drag-drop") {
+        return `
+          <section class="game-screen" data-screen="choice" aria-label="Organizacao da cesta">
+            <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.choice}')" aria-hidden="true"></div>
+            <article class="drag-panel">
+              <h2>Arraste cada fruta para o cesto certo.</h2>
+              <div class="drop-zone-grid" data-drop-zone-grid></div>
+              <div class="drag-item-tray" data-drag-item-tray></div>
+            </article>
+          </section>
+        `;
+      }
       return `
         <section class="game-screen" data-screen="choice" aria-label="Escolha do objeto">
           <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.choice}')" aria-hidden="true"></div>
@@ -360,25 +476,64 @@
     }
 
     bind() {
+      if (this.bound) return;
+      this.bound = true;
       this.root.addEventListener("click", (event) => {
+        const gameSelect = event.target.closest("[data-game-select]");
         const action = event.target.closest("[data-game-action]")?.dataset.gameAction;
         const card = event.target.closest("[data-choice-id]");
+        const dragItem = event.target.closest("[data-drag-id]");
+        const dropTarget = event.target.closest("[data-drop-id]");
         const speak = event.target.closest("[data-game-speak]");
+        if (gameSelect) this.switchGame(gameSelect.dataset.gameSelect);
         if (action) this.handleAction(action, event.target.closest("button"));
         if (card) this.answer(card.dataset.choiceId, card);
+        if (dragItem) this.selectDragItem(dragItem.dataset.dragId);
+        if (dropTarget) this.dropSelectedItem(dropTarget.dataset.dropId);
         if (speak) audioPlayer.speak(decodeURIComponent(speak.dataset.gameSpeak), speak);
       });
-      this.root.querySelectorAll("[data-volume]").forEach((input) => {
-        input.addEventListener("input", () => {
-          audioPlayer.volumes[input.dataset.volume] = Number(input.value);
-        });
+      this.root.addEventListener("dragstart", (event) => {
+        const dragItem = event.target.closest("[data-drag-id]");
+        if (!dragItem) return;
+        event.dataTransfer?.setData("text/plain", dragItem.dataset.dragId);
       });
+      this.root.addEventListener("dragover", (event) => {
+        if (event.target.closest("[data-drop-id]")) {
+          event.preventDefault();
+        }
+      });
+      this.root.addEventListener("drop", (event) => {
+        const dropTarget = event.target.closest("[data-drop-id]");
+        if (!dropTarget) return;
+        event.preventDefault();
+        const dragId = event.dataTransfer?.getData("text/plain");
+        if (dragId) this.placeDragItem(dragId, dropTarget.dataset.dropId);
+      });
+      this.root.addEventListener("input", (event) => {
+        const input = event.target.closest("[data-volume]");
+        if (!input) return;
+        audioPlayer.volumes[input.dataset.volume] = Number(input.value);
+      });
+    }
+
+    switchGame(gameId) {
+      this.game = gameRepository.getGame(gameId);
+      this.state = progressController.create(this.game);
+      this.record = rewardController.latest(this.game.id);
+      this.root.innerHTML = this.render();
+      this.updateRoundContent();
+      this.go("intro");
     }
 
     handleAction(action, button) {
       if (action === "start") {
         audioPlayer.blip();
         this.go("room");
+      }
+      if (action === "begin-drag") {
+        this.updateRoundContent();
+        audioPlayer.speak(this.currentRound().narration, null);
+        this.go("choice");
       }
       if (action === "open-box") {
         button?.classList.add("is-opening");
@@ -423,6 +578,40 @@
       window.setTimeout(() => this.go("feedback"), 520);
     }
 
+    selectDragItem(dragId) {
+      if (this.game.type !== "drag-drop") return;
+      const alreadyPlaced = Boolean(this.state.placements[dragId]);
+      if (alreadyPlaced) return;
+      this.state = { ...this.state, selectedDragId: this.state.selectedDragId === dragId ? null : dragId };
+      this.syncDragDrop();
+    }
+
+    dropSelectedItem(dropId) {
+      if (!this.state.selectedDragId) return;
+      this.placeDragItem(this.state.selectedDragId, dropId);
+    }
+
+    placeDragItem(dragId, dropId) {
+      if (this.game.type !== "drag-drop") return;
+      const round = this.currentRound();
+      const item = round.items.find((entry) => entry.id === dragId);
+      if (!item || this.state.placements[dragId]) return;
+      if (item.targetId !== dropId) {
+        audioPlayer.blip();
+        this.root.querySelector(`[data-drop-id="${dropId}"]`)?.classList.add("is-wrong");
+        window.setTimeout(() => this.root.querySelector(`[data-drop-id="${dropId}"]`)?.classList.remove("is-wrong"), 520);
+        return;
+      }
+      this.state = progressController.place(this.state, dragId, dropId);
+      audioPlayer.blip("success");
+      this.syncDragDrop();
+      const complete = round.items.every((entry) => this.state.placements[entry.id] === entry.targetId);
+      if (complete) {
+        this.state = { ...this.state, completedRounds: [round.id] };
+        window.setTimeout(() => this.go("feedback"), 620);
+      }
+    }
+
     finish() {
       this.state = rewardController.complete(this.game, this.state);
       this.record = rewardController.persist(this.game, this.state);
@@ -442,6 +631,34 @@
 
     updateRoundContent() {
       const round = this.currentRound();
+      if (this.game.type === "drag-drop") {
+        const dropGrid = this.root.querySelector("[data-drop-zone-grid]");
+        const tray = this.root.querySelector("[data-drag-item-tray]");
+        if (dropGrid) {
+          dropGrid.innerHTML = round.targets.map((target) => {
+            const placedItem = round.items.find((item) => this.state.placements[item.id] === target.id);
+            const image = placedItem ? target.completeImage || placedItem.image : target.image;
+            return `
+              <button class="drop-zone" type="button" data-drop-id="${target.id}" aria-label="${target.label}">
+                <img src="${image}" alt="" loading="eager" decoding="async" />
+                <span>${target.label}</span>
+              </button>
+            `;
+          }).join("");
+        }
+        if (tray) {
+          tray.innerHTML = round.items.map((item) => {
+            const placed = Boolean(this.state.placements[item.id]);
+            return `
+              <button class="drag-item${placed ? " is-placed" : ""}${this.state.selectedDragId === item.id ? " is-selected" : ""}" type="button" draggable="${placed ? "false" : "true"}" data-drag-id="${item.id}" aria-label="${item.label}">
+                <img src="${item.image}" alt="" loading="eager" decoding="async" />
+                <span>${item.label}</span>
+              </button>
+            `;
+          }).join("");
+        }
+        return;
+      }
       const hint = this.root.querySelector("[data-hint-text]");
       if (hint) hint.textContent = round.hint;
       const speak = this.root.querySelector("[data-game-speak]");
@@ -455,6 +672,10 @@
           </button>
         `).join("");
       }
+    }
+
+    syncDragDrop() {
+      this.updateRoundContent();
     }
 
     syncRounds() {
