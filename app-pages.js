@@ -26,6 +26,7 @@ const ecosystemModules = [
   ["arvore.html", "Minha Arvore"],
   ["missao.html", "Missao do Dia"],
   ["jogos.html", "Jogos"],
+  ["perfil.html", "Perfil"],
   ["biblioteca.html", "Biblioteca"],
   ["universidade.html", "Universidade"],
   ["book-viewer.html", "Book Viewer"],
@@ -608,6 +609,7 @@ const routeKeyByHref = {
   "arvore.html": "arvore",
   "missao.html": "missao",
   "jogos.html": "jogos",
+  "perfil.html": "perfil",
   "biblioteca.html": "biblioteca",
   "universidade.html": "universidade",
   "book-viewer.html": "viewer",
@@ -1119,6 +1121,102 @@ const studentDashboardData = {
 const studentLazyImg = (src, alt, className = "") =>
   `<img${className ? ` class="${className}"` : ""} src="${src}" alt="${alt}" loading="lazy" decoding="async" />`;
 
+const studentGameStorageKey = "raizes:game-progress:v1";
+const studentGameCatalog = [
+  { id: "caixa-misteriosa", title: "A Caixa Misteriosa", medal: "Pequeno Explorador", image: "assets/games/caixa-misteriosa/rewards/medal-pequeno-explorador.png" },
+  { id: "organizando-cesta", title: "Organizando a Cesta", medal: "Pequeno Organizador", image: "assets/games/organizando-cesta/effects/medal-jogo.png" },
+  { id: "jardim-descobertas", title: "O Jardim das Descobertas", medal: "Pequeno Observador", image: "assets/games/jardim-descobertas/rewards/medal-jardim.png" },
+  { id: "construindo-ponte", title: "Construindo a Ponte", medal: "Pequeno Construtor", image: "assets/games/construindo-ponte/rewards/medal-pequeno-construtor.png" },
+];
+
+const readStudentGameRecords = () => {
+  try {
+    return JSON.parse(localStorage.getItem(studentGameStorageKey) || "[]");
+  } catch (error) {
+    console.warn("Nao foi possivel ler progresso dos jogos.", error);
+    return [];
+  }
+};
+
+const getStudentGameSummary = () => {
+  const records = readStudentGameRecords();
+  const completed = studentGameCatalog
+    .map((game) => {
+      const record = records.find((item) => item.gameId === game.id);
+      return record ? { ...game, ...record, image: game.image } : null;
+    })
+    .filter(Boolean);
+  const totalXp = completed.reduce((total, item) => total + (Number(item.xp) || 0), 0);
+  const lastActivity = completed
+    .map((item) => item.completedAt)
+    .filter(Boolean)
+    .sort()
+    .at(-1);
+  return {
+    completed,
+    totalXp,
+    completedCount: completed.length,
+    totalGames: studentGameCatalog.length,
+    percent: Math.round((completed.length / studentGameCatalog.length) * 100),
+    streak: completed.length ? Math.min(7, completed.length + 1) : 0,
+    lastActivity,
+  };
+};
+
+const createStudentDashboardView = () => {
+  const gameSummary = getStudentGameSummary();
+  const xp = studentDashboardData.profile.xp + gameSummary.totalXp;
+  const medalTitles = new Set(studentDashboardData.medals.map((medal) => medal.title));
+  const gameMedals = gameSummary.completed
+    .filter((record) => record.medal && !medalTitles.has(record.medal))
+    .map((record) => ({ title: record.medal, image: record.image }));
+  return {
+    ...studentDashboardData,
+    gameSummary,
+    profile: { ...studentDashboardData.profile, xp, progress: Math.max(studentDashboardData.profile.progress, gameSummary.percent) },
+    xpGoal: {
+      ...studentDashboardData.xpGoal,
+      current: xp,
+      nextText: xp >= studentDashboardData.xpGoal.target ? "Voce alcancou o objetivo atual. Continue jogando para ampliar suas conquistas!" : `Conquiste mais ${studentDashboardData.xpGoal.target - xp} XP para alcancar o Nivel 2!`,
+    },
+    medals: [...gameMedals, ...studentDashboardData.medals],
+  };
+};
+
+const renderStudentProfilePage = () => {
+  const view = createStudentDashboardView();
+  const summary = view.gameSummary;
+  const medals = summary.completed.length
+    ? summary.completed.map((record) => `<article>${studentLazyImg(record.image, "", "student-medal-art")}<strong>${record.medal}</strong><small>${record.title}</small></article>`).join("")
+    : `<article>${studentLazyImg("assets/aluno/medalha-explorador.webp", "", "student-medal-art")}<strong>Nenhuma medalha de jogo ainda</strong><small>Complete um jogo para registrar sua primeira conquista.</small></article>`;
+  return `
+    <div class="student-dashboard student-profile-page">
+      ${renderStudentHero(view)}
+      <div class="student-grid">
+        <section class="student-card student-medals-card">
+          <div class="student-card-head"><h2>🏅 Minhas Medalhas</h2><a href="jogos.html">Jogar</a></div>
+          <div>${medals}</div>
+        </section>
+        <section class="student-card student-xp-card">
+          <div class="student-card-head"><h2>Meu Progresso</h2></div>
+          <article>
+            <div><strong>${view.profile.xp} XP</strong><small>${summary.completedCount} jogos concluidos</small></div>
+            ${studentLazyImg(view.xpGoal.image, "", "student-xp-art")}
+          </article>
+          <div class="student-progress-line"><i><span style="width:${summary.percent}%"></span></i><b>${summary.percent}% da experiencia inicial</b></div>
+          <p><strong>Dias consecutivos</strong> ${summary.streak} dias</p>
+          <p><strong>Ultima atividade</strong> ${summary.lastActivity ? new Date(summary.lastActivity).toLocaleDateString("pt-BR") : "Nenhuma atividade concluida"}</p>
+        </section>
+      </div>
+      ${renderStudentQuickAccess([
+        { label: "Jogos", detail: "Continuar explorando", icon: "▶", href: "jogos.html" },
+        { label: "Biblioteca", detail: "Ler e descobrir", icon: "📚", href: "biblioteca.html" },
+        { label: "Conquistas", detail: "Ver medalhas", icon: "🏆", href: "#conquistas" },
+      ])}
+    </div>
+  `;
+};
+
 // Reusable student dashboard components. Each renderer receives data only, ready for Supabase records.
 const renderStudentHero = ({ profile, tree }) => `
   <section class="student-hero" aria-label="Resumo do aluno">
@@ -1233,6 +1331,8 @@ const renderStudentQuickAccess = (items) => `
   </section>
 `;
 
+const studentDashboardView = createStudentDashboardView();
+
 const modules = {
   aluno: {
     title: "Dashboard do Aluno",
@@ -1241,16 +1341,16 @@ const modules = {
     html: `
       <div class="student-dashboard" data-student-dashboard>
         <div class="student-skeleton" aria-hidden="true"></div>
-        ${renderStudentHero(studentDashboardData)}
+        ${renderStudentHero(studentDashboardView)}
         <div class="student-grid">
-          ${renderStudentMission(studentDashboardData.dailyMission)}
-          ${renderStudentCurrentBook(studentDashboardData.currentBook)}
-          ${renderStudentLibrary(studentDashboardData.library)}
-          ${renderStudentEvolution(studentDashboardData.evolution)}
-          ${renderStudentXp(studentDashboardData.xpGoal)}
-          ${renderStudentMedals(studentDashboardData.medals)}
+          ${renderStudentMission(studentDashboardView.dailyMission)}
+          ${renderStudentCurrentBook(studentDashboardView.currentBook)}
+          ${renderStudentLibrary(studentDashboardView.library)}
+          ${renderStudentEvolution(studentDashboardView.evolution)}
+          ${renderStudentXp(studentDashboardView.xpGoal)}
+          ${renderStudentMedals(studentDashboardView.medals)}
         </div>
-        ${renderStudentQuickAccess(studentDashboardData.quickAccess)}
+        ${renderStudentQuickAccess(studentDashboardView.quickAccess)}
       </div>
     `,
   },
@@ -1267,40 +1367,23 @@ const modules = {
     html: renderMissionPlayer(missionFixtures.colorMatch001),
   },
   jogos: {
-    title: "Jogos Digitais",
-    subtitle: "Motor oficial dos jogos digitais da Educacao Infantil",
+    title: "Jogos Educativos",
+    subtitle: "Hub oficial dos jogos digitais",
     code: "GAME-ENGINE-2.0",
     html: `
       <div class="screen-title">
         <p>GAME-ENGINE-2.0</p>
-        <h1>Jogos Digitais</h1>
-        <span>Motor oficial reutilizavel com selecao, drag-and-drop, recompensas e persistencia.</span>
+        <h1>Jogos Educativos</h1>
+        <span>Escolha uma experiencia, conquiste XP e acompanhe suas medalhas.</span>
       </div>
       <div class="game-engine" data-game-engine></div>
-      <section class="wide-panel">
-        <div class="panel-head"><h2>Estrutura reutilizavel</h2><a>Sem alterar logica principal</a></div>
-        <div class="class-grid">
-          <article>GameRepository<span>Registra jogos e assets homologados</span></article>
-          <article>ProgressController<span>Controla telas, rodadas e tempo</span></article>
-          <article>RewardController<span>Persiste XP, medalhas e progresso</span></article>
-          <article>AudioPlayer<span>Narracao, efeitos e volumes independentes</span></article>
-          <article>SelectionController<span>Escolhas, associacao e identificacao</span></article>
-          <article>DragDropController<span>Frutas, objetos, cartas e figuras</span></article>
-        </div>
-        <pre style="white-space:pre-wrap;margin:16px 0 0;padding:16px;border-radius:8px;background:#f8fbf1;color:#123827;font-weight:800;line-height:1.55">Novo jogo por configuracao:
-{
-  id: "sons-da-natureza",
-  title: "Sons da Natureza",
-  scenario: "Bosque",
-  mascot: "Tito",
-  type: "selection" | "drag-drop",
-  rounds: [{ hint, narration, correctId, choices }],
-  xp: 25,
-  medal: "Guardiao da Natureza",
-  assets: { atlas, library, scenarios }
-}</pre>
-      </section>
     `,
+  },
+  perfil: {
+    title: "Perfil",
+    subtitle: "Progresso e conquistas do aluno",
+    code: "ALUNO-PERFIL",
+    html: renderStudentProfilePage(),
   },
   biblioteca: {
     title: "Biblioteca Digital",
@@ -1606,27 +1689,22 @@ const environments = {
     label: "Aluno",
     profile: "Aprendizagem",
     search: "Buscar livros, missoes, atividades...",
-    user: "Pedro<br />Nivel 1 - 125 XP",
+    user: `Pedro<br />Nivel 1 - ${studentDashboardView.profile.xp} XP`,
     avatar: "assets/aluno/avatar-pedro.webp",
     profileImage: "logo-sidebar-dark.png",
     nav: [
-      ["aluno", "Inicio", "aluno.html"],
-      ["arvore", "Minha Arvore", "arvore.html"],
-      ["biblioteca", "Biblioteca", "biblioteca.html"],
-      ["missao", "Missao do Dia", "missao.html"],
-      ["jogos", "Jogos Digitais", "jogos.html"],
-      ["conquistas", "Minhas Conquistas", "#conquistas"],
-      ["atividades", "Atividades", "#atividades"],
-      ["mensagens", "Mensagens", "#mensagens"],
-      ["configuracoes", "Configuracoes", "#configuracoes"],
+      ["aluno", "🏠 Inicio", "aluno.html"],
+      ["biblioteca", "📚 Biblioteca", "biblioteca.html"],
+      ["jogos", "🎮 Jogos", "jogos.html"],
+      ["conquistas", "🏆 Conquistas", "#conquistas"],
+      ["perfil", "👤 Perfil", "perfil.html"],
     ],
     mobile: [
-      ["aluno", "Inicio", "aluno.html"],
-      ["arvore", "Arvore", "arvore.html"],
-      ["biblioteca", "Biblioteca", "biblioteca.html"],
-      ["missao", "Missao", "missao.html"],
-      ["jogos", "Jogos", "jogos.html"],
-      ["conquistas", "Conquistas", "#conquistas"],
+      ["aluno", "🏠 Inicio", "aluno.html"],
+      ["biblioteca", "📚 Biblioteca", "biblioteca.html"],
+      ["jogos", "🎮 Jogos", "jogos.html"],
+      ["conquistas", "🏆 Conquistas", "#conquistas"],
+      ["perfil", "👤 Perfil", "perfil.html"],
     ],
   },
   biblioteca: {
@@ -1808,6 +1886,7 @@ const moduleEnvironment = {
   arvore: "aluno",
   missao: "aluno",
   jogos: "aluno",
+  perfil: "aluno",
   biblioteca: "biblioteca",
   viewer: "biblioteca",
   universidade: "universidade",

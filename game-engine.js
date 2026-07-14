@@ -2,6 +2,10 @@
   const storageKey = "raizes:game-progress:v1";
   const atlasBase = "assets/games/caixa-misteriosa/";
   const asset = (path) => `${atlasBase}${path}`;
+  const jardimBase = "assets/games/jardim-descobertas/";
+  const jardimAsset = (path) => `${jardimBase}${path}`;
+  const ponteBase = "assets/games/construindo-ponte/";
+  const ponteAsset = (path) => `${ponteBase}${path}`;
 
   const gameRepository = {
     games: {
@@ -9,14 +13,17 @@
         id: "caixa-misteriosa",
         type: "selection",
         title: "A Caixa Misteriosa",
+        category: "Descobertas",
         subtitle: "Sala das Descobertas",
         scenario: "Sala das Descobertas",
         character: "Leo, Sofia, Miguel e Bia",
         mascot: "Borboleta Bia",
-        xp: 30,
+        xp: 20,
         medal: "Pequeno Explorador",
+        unlock: { order: 1, unlocked: true, requires: null },
         assets: {
           atlas: `${atlasBase}telas-assets.png`,
+          card: asset("screens/screen-intro.png"),
           flow: `${atlasBase}fluxo-assets.png`,
           library: `${atlasBase}biblioteca-assets.png`,
           scenarios: `${atlasBase}cenarios-oficiais.png`,
@@ -79,14 +86,17 @@
         id: "organizando-cesta",
         type: "drag-drop",
         title: "Organizando a Cesta",
+        category: "Matematica",
         subtitle: "Jardim das Descobertas",
         scenario: "Jardim das Descobertas",
         character: "Bia",
         mascot: "Pipo e Tico",
-        xp: 35,
+        xp: 20,
         medal: "Pequeno Organizador",
+        unlock: { order: 2, unlocked: true, requires: "caixa-misteriosa" },
         assets: {
           atlas: "assets/games/organizando-cesta/atlas.png",
+          card: "assets/games/organizando-cesta/screens/screen-intro.png",
           flow: "assets/games/organizando-cesta/atlas.png",
           library: "assets/games/organizando-cesta/atlas.png",
           scenarios: "assets/games/organizando-cesta/atlas.png",
@@ -121,6 +131,154 @@
           },
         ],
       },
+      "jardim-descobertas": {
+        id: "jardim-descobertas",
+        type: "find",
+        title: "O Jardim das Descobertas",
+        category: "Exploracao",
+        subtitle: "Exploracao do Jardim",
+        scenario: "Jardim das Descobertas",
+        character: "Bia",
+        mascot: "Pipo e Tito",
+        xp: 20,
+        medal: "Pequeno Observador",
+        unlock: { order: 3, unlocked: true, requires: "organizando-cesta" },
+        assets: {
+          atlas: jardimAsset("atlas.png"),
+          card: jardimAsset("screens/screen-intro.png"),
+          flow: jardimAsset("atlas.png"),
+          library: jardimAsset("atlas.png"),
+          scenarios: jardimAsset("atlas.png"),
+          screens: {
+            intro: jardimAsset("screens/screen-intro.png"),
+            room: jardimAsset("screens/screen-explore.png"),
+            choice: jardimAsset("screens/screen-explore.png"),
+            feedback: jardimAsset("screens/screen-final.png"),
+            final: jardimAsset("screens/screen-final.png"),
+          },
+        },
+        audio: {
+          narration: 0.9,
+          effects: 0.75,
+          music: 0.35,
+        },
+        rounds: [
+          {
+            id: "folha",
+            hint: "Encontre a folha.",
+            narration: "Observe o jardim e encontre a folha.",
+            correctId: "folha",
+            choices: [
+              { id: "folha", label: "Folha", color: "#6aa351", image: jardimAsset("objects/leaf.png") },
+              { id: "flor", label: "Flor", color: "#ef8b21", image: jardimAsset("objects/flower.png") },
+              { id: "caracol", label: "Caracol", color: "#4b9cc4", image: jardimAsset("objects/snail.png") },
+            ],
+          },
+          {
+            id: "flor",
+            hint: "Encontre a flor.",
+            narration: "Agora encontre a flor colorida.",
+            correctId: "flor",
+            choices: [
+              { id: "passarinho", label: "Passarinho", color: "#4b9cc4", image: jardimAsset("objects/bird.png") },
+              { id: "flor", label: "Flor", color: "#ef8b21", image: jardimAsset("objects/flower.png") },
+              { id: "gotinha", label: "Gotinha", color: "#6aa351", image: jardimAsset("objects/drop.png") },
+            ],
+          },
+          {
+            id: "caracol",
+            hint: "Encontre o caracol.",
+            narration: "Procure com atencao e encontre o caracol.",
+            correctId: "caracol",
+            choices: [
+              { id: "gotinha", label: "Gotinha", color: "#4b9cc4", image: jardimAsset("objects/drop.png") },
+              { id: "folha", label: "Folha", color: "#6aa351", image: jardimAsset("objects/leaf.png") },
+              { id: "caracol", label: "Caracol", color: "#ef8b21", image: jardimAsset("objects/snail.png") },
+            ],
+          },
+          {
+            id: "gotinha",
+            hint: "Encontre a gotinha.",
+            narration: "Encontre a gotinha no jardim.",
+            correctId: "gotinha",
+            choices: [
+              { id: "flor", label: "Flor", color: "#ef8b21", image: jardimAsset("objects/flower.png") },
+              { id: "gotinha", label: "Gotinha", color: "#4b9cc4", image: jardimAsset("objects/drop.png") },
+              { id: "passarinho", label: "Passarinho", color: "#6aa351", image: jardimAsset("objects/bird.png") },
+            ],
+          },
+          {
+            id: "passarinho",
+            hint: "Encontre o passarinho.",
+            narration: "Para terminar, encontre o passarinho.",
+            correctId: "passarinho",
+            choices: [
+              { id: "passarinho", label: "Passarinho", color: "#4b9cc4", image: jardimAsset("objects/bird.png") },
+              { id: "folha", label: "Folha", color: "#6aa351", image: jardimAsset("objects/leaf.png") },
+              { id: "caracol", label: "Caracol", color: "#ef8b21", image: jardimAsset("objects/snail.png") },
+            ],
+          },
+        ],
+      },
+      "construindo-ponte": {
+        id: "construindo-ponte",
+        type: "snap",
+        title: "Construindo a Ponte",
+        category: "Construcao",
+        subtitle: "Sistema de Encaixe",
+        scenario: "Jardim das Descobertas",
+        character: "Tito",
+        mascot: "Bia e Pipo",
+        xp: 20,
+        medal: "Pequeno Construtor",
+        unlock: { order: 4, unlocked: true, requires: "jardim-descobertas" },
+        assets: {
+          atlas: ponteAsset("atlas.png"),
+          card: ponteAsset("screens/screen-intro.png"),
+          flow: ponteAsset("atlas.png"),
+          library: ponteAsset("atlas.png"),
+          scenarios: ponteAsset("atlas.png"),
+          screens: {
+            intro: ponteAsset("screens/screen-intro.png"),
+            room: ponteAsset("screens/screen-materials.png"),
+            choice: ponteAsset("screens/screen-build.png"),
+            feedback: ponteAsset("screens/screen-feedback.png"),
+            final: ponteAsset("screens/screen-final.png"),
+          },
+        },
+        audio: {
+          narration: 0.9,
+          effects: 0.75,
+          music: 0.35,
+        },
+        rounds: [
+          {
+            id: "ponte",
+            hint: "Encaixe os gravetos nos espacos da ponte.",
+            narration: "Vamos ajudar o Tito a atravessar. Encaixe cada graveto no lugar certo da ponte.",
+            snap: {
+              tolerance: 72,
+              emptyState: "Ponte vazia",
+              partialState: "Ponte parcial",
+              completeState: "Ponte completa",
+              pieces: [
+                { id: "log-top", label: "Graveto de cima", image: ponteAsset("pieces/log-horizontal.png"), targetId: "slot-top" },
+                { id: "log-middle", label: "Graveto do meio", image: ponteAsset("pieces/log-short.png"), targetId: "slot-middle" },
+                { id: "log-left", label: "Graveto diagonal", image: ponteAsset("pieces/log-diagonal-left.png"), targetId: "slot-left" },
+                { id: "log-right", label: "Graveto vertical", image: ponteAsset("pieces/log-vertical.png"), targetId: "slot-right" },
+                { id: "log-end", label: "Graveto final", image: ponteAsset("pieces/log-vertical-2.png"), targetId: "slot-end" },
+              ],
+              slots: [
+                { id: "slot-top", label: "Encaixe de cima", x: 31, y: 36, width: 36, height: 10 },
+                { id: "slot-middle", label: "Encaixe do meio", x: 31, y: 54, width: 36, height: 10 },
+                { id: "slot-left", label: "Encaixe diagonal esquerdo", x: 42, y: 45, width: 18, height: 12, rotate: -32 },
+                { id: "slot-right", label: "Encaixe vertical direito", x: 67, y: 43, width: 10, height: 24, rotate: 90 },
+                { id: "slot-end", label: "Encaixe final", x: 78, y: 43, width: 10, height: 24, rotate: 90 },
+              ],
+            },
+          },
+        ],
+      },
     },
     getGame(id) {
       return this.games[id] || this.games["caixa-misteriosa"];
@@ -136,6 +294,8 @@
         completedRounds: [],
         placements: {},
         selectedDragId: null,
+        snapPlacements: {},
+        selectedSnapId: null,
         xp: 0,
         medal: null,
         startedAt: Date.now(),
@@ -151,6 +311,14 @@
         attempts: state.attempts + 1,
       };
     },
+    snap(state, pieceId, slotId) {
+      return {
+        ...state,
+        snapPlacements: { ...state.snapPlacements, [pieceId]: slotId },
+        selectedSnapId: null,
+        attempts: state.attempts + 1,
+      };
+    },
     nextRound(game, state) {
       const round = game.rounds[state.roundIndex];
       const completedRounds = [...new Set([...state.completedRounds, round.id])];
@@ -162,11 +330,37 @@
   };
 
   const rewardController = {
+    records() {
+      try {
+        return JSON.parse(localStorage.getItem(storageKey) || "[]");
+      } catch (error) {
+        console.warn("Nao foi possivel ler progresso dos jogos.", error);
+        return [];
+      }
+    },
+    summary() {
+      const records = this.records();
+      const latestByGame = Object.values(gameRepository.games).map((game) => records.find((item) => item.gameId === game.id)).filter(Boolean);
+      const totalXp = latestByGame.reduce((total, item) => total + (Number(item.xp) || 0), 0);
+      const medals = latestByGame.map((item) => item.medal).filter(Boolean);
+      const completed = latestByGame.length;
+      const totalGames = Object.keys(gameRepository.games).length;
+      return {
+        records: latestByGame,
+        totalXp,
+        medals,
+        completed,
+        totalGames,
+        percent: totalGames ? Math.round((completed / totalGames) * 100) : 0,
+        streak: completed ? Math.min(7, completed + 1) : 0,
+        lastActivity: latestByGame[0]?.completedAt || null,
+      };
+    },
     complete(game, state) {
       return { ...state, xp: game.xp, medal: game.medal, completedAt: Date.now(), screen: "final" };
     },
     persist(game, state) {
-      const records = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      const records = this.records();
       const duration = Math.max(1, Math.round(((state.completedAt || Date.now()) - state.startedAt) / 1000));
       const record = {
         gameId: game.id,
@@ -186,6 +380,7 @@
       };
       localStorage.setItem(storageKey, JSON.stringify([record, ...records.filter((item) => item.gameId !== game.id)].slice(0, 20)));
       this.syncSupabase(record);
+      window.dispatchEvent(new CustomEvent("raizes:game-progress", { detail: record }));
       return record;
     },
     syncSupabase(record) {
@@ -209,8 +404,7 @@
         });
     },
     latest(gameId) {
-      const records = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      return records.find((item) => item.gameId === gameId) || null;
+      return this.records().find((item) => item.gameId === gameId) || null;
     },
   };
 
@@ -277,6 +471,7 @@
       this.game = gameRepository.getGame(gameId);
       this.state = progressController.create(this.game);
       this.record = rewardController.latest(this.game.id);
+      this.mode = root.dataset.gameId ? "player" : "hub";
     }
 
     mount() {
@@ -284,12 +479,74 @@
       this.root.style.setProperty("--library-atlas", `url("${this.game.assets.library}")`);
       this.root.innerHTML = this.render();
       this.bind();
-      this.go("intro");
+      if (this.mode === "player") {
+        this.go("intro");
+      }
     }
 
     render() {
+      if (this.mode === "hub") {
+        return this.renderHub();
+      }
+      return this.renderPlayer();
+    }
+
+    renderHub() {
+      const summary = rewardController.summary();
       return `
-        <section class="game-shell" aria-label="Motor de Jogos da Educacao Infantil">
+        <section class="game-shell game-hub-shell" aria-label="Hub Oficial dos Jogos Digitais">
+          <header class="game-hub-header">
+            <div>
+              <span>Jogos Educativos</span>
+              <h1>Escolha sua proxima descoberta</h1>
+            </div>
+            <aside class="game-hub-stats" aria-label="Progresso do aluno nos jogos">
+              <strong>${summary.totalXp} XP</strong>
+              <span>${summary.completed}/${summary.totalGames} jogos concluidos</span>
+              <i><b style="width:${summary.percent}%"></b></i>
+            </aside>
+          </header>
+          <div class="game-hub-grid">
+            ${Object.values(gameRepository.games)
+              .sort((a, b) => a.unlock.order - b.unlock.order)
+              .map((game) => this.renderHubCard(game))
+              .join("")}
+          </div>
+          <section class="game-student-sync" aria-label="Resumo sincronizado do aluno">
+            <article><strong>Minhas Medalhas</strong><span>${summary.medals.length ? summary.medals.join(" · ") : "Complete um jogo para conquistar a primeira medalha."}</span></article>
+            <article><strong>Meu Progresso</strong><span>${summary.percent}% da experiencia inicial concluida</span></article>
+            <article><strong>Dias consecutivos</strong><span>${summary.streak} dias</span></article>
+            <article><strong>Ultima atividade</strong><span>${summary.lastActivity ? new Date(summary.lastActivity).toLocaleDateString("pt-BR") : "Nenhuma atividade concluida"}</span></article>
+          </section>
+        </section>
+      `;
+    }
+
+    renderHubCard(game) {
+      const record = rewardController.latest(game.id);
+      const progress = record?.progress || 0;
+      const locked = game.unlock && game.unlock.unlocked === false;
+      return `
+        <article class="game-hub-card${locked ? " is-locked" : ""}">
+          <img src="${game.assets.card || game.assets.screens.intro}" alt="${game.title}" loading="lazy" decoding="async" />
+          <div class="game-hub-card-body">
+            <span>${game.category}</span>
+            <h2>${game.title}</h2>
+            <p>${game.medal}</p>
+            <div class="game-card-meta">
+              <strong>⭐ ${game.xp} XP</strong>
+              <strong>🏅 ${record?.medal || game.medal}</strong>
+            </div>
+            <i class="game-card-progress"><b style="width:${progress}%"></b></i>
+            <button class="game-primary-button" type="button" data-game-play="${game.id}" ${locked ? "disabled" : ""}>${locked ? "Bloqueado" : "Jogar"}</button>
+          </div>
+        </article>
+      `;
+    }
+
+    renderPlayer() {
+      return `
+        <section class="game-shell" aria-label="Motor Oficial dos Jogos Digitais">
           ${this.renderGamePicker()}
           ${this.renderTopbar()}
           <div class="game-layout">
@@ -313,9 +570,13 @@
     renderGamePicker() {
       return `
         <nav class="game-picker" aria-label="Jogos digitais disponiveis">
+          <button type="button" data-game-back>
+            <span>Hub</span>
+            <strong>Jogos Educativos</strong>
+          </button>
           ${Object.values(gameRepository.games).map((game) => `
             <button class="${game.id === this.game.id ? "is-active" : ""}" type="button" data-game-select="${game.id}">
-              <span>${game.type === "drag-drop" ? "Arrastar" : "Escolher"}</span>
+              <span>${game.category}</span>
               <strong>${game.title}</strong>
             </button>
           `).join("")}
@@ -362,6 +623,32 @@
           </section>
         `;
       }
+      if (this.game.type === "snap") {
+        return `
+          <section class="game-screen" data-screen="room" aria-label="Conhecendo os materiais">
+            <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
+            ${components.particles(16)}
+            <article class="garden-prompt snap-prompt">
+              ${components.audioButton("Ouvir instrucao", this.currentRound().narration)}
+              <strong data-hint-text>${this.currentRound().hint}</strong>
+            </article>
+            <button class="game-primary-button game-observe-button" type="button" data-game-action="begin-snap">Construir</button>
+          </section>
+        `;
+      }
+      if (this.game.type === "find") {
+        return `
+          <section class="game-screen" data-screen="room" aria-label="Exploracao do jardim">
+            <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
+            ${components.particles(24)}
+            <article class="garden-prompt">
+              ${components.audioButton("Ouvir instrucao", this.currentRound().narration)}
+              <strong data-hint-text>${this.currentRound().hint}</strong>
+            </article>
+            <button class="game-primary-button game-observe-button" type="button" data-game-action="choose">Explorar</button>
+          </section>
+        `;
+      }
       return `
         <section class="game-screen" data-screen="room" aria-label="Sala das Descobertas">
           <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
@@ -372,7 +659,7 @@
     }
 
     renderHintScreen() {
-      if (this.game.type === "drag-drop") {
+      if (this.game.type === "drag-drop" || this.game.type === "find" || this.game.type === "snap") {
         return "";
       }
       const round = this.currentRound();
@@ -397,6 +684,30 @@
               <h2>Arraste cada fruta para o cesto certo.</h2>
               <div class="drop-zone-grid" data-drop-zone-grid></div>
               <div class="drag-item-tray" data-drag-item-tray></div>
+            </article>
+          </section>
+        `;
+      }
+      if (this.game.type === "snap") {
+        return `
+          <section class="game-screen" data-screen="choice" aria-label="Construcao da ponte por encaixe">
+            <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.choice}')" aria-hidden="true"></div>
+            <article class="snap-panel">
+              <h2>${this.currentRound().hint}</h2>
+              <div class="snap-state" data-snap-state>Ponte vazia</div>
+              <div class="snap-board" data-snap-board></div>
+              <div class="snap-tray" data-snap-tray></div>
+            </article>
+          </section>
+        `;
+      }
+      if (this.game.type === "find") {
+        return `
+          <section class="game-screen" data-screen="choice" aria-label="Encontrar elementos do jardim">
+            <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.choice}')" aria-hidden="true"></div>
+            <article class="choice-panel garden-choice-panel">
+              <h2 data-choice-title>${this.currentRound().hint}</h2>
+              <div class="choice-cards" data-choice-cards></div>
             </article>
           </section>
         `;
@@ -480,34 +791,62 @@
       this.bound = true;
       this.root.addEventListener("click", (event) => {
         const gameSelect = event.target.closest("[data-game-select]");
+        const gamePlay = event.target.closest("[data-game-play]");
+        const gameBack = event.target.closest("[data-game-back]");
         const action = event.target.closest("[data-game-action]")?.dataset.gameAction;
         const card = event.target.closest("[data-choice-id]");
         const dragItem = event.target.closest("[data-drag-id]");
         const dropTarget = event.target.closest("[data-drop-id]");
+        const snapPiece = event.target.closest("[data-snap-piece-id]");
+        const snapSlot = event.target.closest("[data-snap-slot-id]");
+        const snapBoard = event.target.closest("[data-snap-board]");
         const speak = event.target.closest("[data-game-speak]");
-        if (gameSelect) this.switchGame(gameSelect.dataset.gameSelect);
+        if (gamePlay) this.openGame(gamePlay.dataset.gamePlay);
+        if (gameSelect) this.openGame(gameSelect.dataset.gameSelect);
+        if (gameBack) this.openHub();
         if (action) this.handleAction(action, event.target.closest("button"));
         if (card) this.answer(card.dataset.choiceId, card);
         if (dragItem) this.selectDragItem(dragItem.dataset.dragId);
         if (dropTarget) this.dropSelectedItem(dropTarget.dataset.dropId);
+        if (snapPiece) this.selectSnapPiece(snapPiece.dataset.snapPieceId);
+        if (snapSlot) this.snapSelectedPiece(snapSlot.dataset.snapSlotId);
         if (speak) audioPlayer.speak(decodeURIComponent(speak.dataset.gameSpeak), speak);
       });
       this.root.addEventListener("dragstart", (event) => {
         const dragItem = event.target.closest("[data-drag-id]");
-        if (!dragItem) return;
-        event.dataTransfer?.setData("text/plain", dragItem.dataset.dragId);
+        const snapPiece = event.target.closest("[data-snap-piece-id]");
+        if (dragItem) {
+          event.dataTransfer?.setData("text/plain", dragItem.dataset.dragId);
+          event.dataTransfer?.setData("application/x-raizes-drag", dragItem.dataset.dragId);
+        }
+        if (snapPiece) {
+          event.dataTransfer?.setData("text/plain", snapPiece.dataset.snapPieceId);
+          event.dataTransfer?.setData("application/x-raizes-snap", snapPiece.dataset.snapPieceId);
+        }
       });
       this.root.addEventListener("dragover", (event) => {
-        if (event.target.closest("[data-drop-id]")) {
+        if (event.target.closest("[data-drop-id]") || event.target.closest("[data-snap-slot-id]") || event.target.closest("[data-snap-board]")) {
           event.preventDefault();
         }
       });
       this.root.addEventListener("drop", (event) => {
         const dropTarget = event.target.closest("[data-drop-id]");
-        if (!dropTarget) return;
+        const snapSlot = event.target.closest("[data-snap-slot-id]");
+        const snapBoard = event.target.closest("[data-snap-board]");
+        if (!dropTarget && !snapSlot && !snapBoard) return;
         event.preventDefault();
-        const dragId = event.dataTransfer?.getData("text/plain");
-        if (dragId) this.placeDragItem(dragId, dropTarget.dataset.dropId);
+        const snapId = event.dataTransfer?.getData("application/x-raizes-snap");
+        const dragId = event.dataTransfer?.getData("application/x-raizes-drag") || event.dataTransfer?.getData("text/plain");
+        if (snapSlot && snapId) {
+          this.snapPiece(snapId, snapSlot.dataset.snapSlotId, snapSlot);
+          return;
+        }
+        if (snapBoard && snapId) {
+          const nearestSlot = this.findNearestSnapSlot(event.clientX, event.clientY);
+          if (nearestSlot) this.snapPiece(snapId, nearestSlot.dataset.snapSlotId, nearestSlot);
+          return;
+        }
+        if (dropTarget && dragId) this.placeDragItem(dragId, dropTarget.dataset.dropId);
       });
       this.root.addEventListener("input", (event) => {
         const input = event.target.closest("[data-volume]");
@@ -516,21 +855,37 @@
       });
     }
 
-    switchGame(gameId) {
+    openGame(gameId) {
+      this.mode = "player";
       this.game = gameRepository.getGame(gameId);
       this.state = progressController.create(this.game);
       this.record = rewardController.latest(this.game.id);
+      this.root.style.setProperty("--game-atlas", `url("${this.game.assets.atlas}")`);
+      this.root.style.setProperty("--library-atlas", `url("${this.game.assets.library}")`);
       this.root.innerHTML = this.render();
       this.updateRoundContent();
       this.go("intro");
+    }
+
+    openHub() {
+      this.mode = "hub";
+      this.root.innerHTML = this.render();
     }
 
     handleAction(action, button) {
       if (action === "start") {
         audioPlayer.blip();
         this.go("room");
+        if (this.game.type === "find") {
+          audioPlayer.speak(this.currentRound().narration, null);
+        }
       }
       if (action === "begin-drag") {
+        this.updateRoundContent();
+        audioPlayer.speak(this.currentRound().narration, null);
+        this.go("choice");
+      }
+      if (action === "begin-snap") {
         this.updateRoundContent();
         audioPlayer.speak(this.currentRound().narration, null);
         this.go("choice");
@@ -612,6 +967,60 @@
       }
     }
 
+    selectSnapPiece(pieceId) {
+      if (this.game.type !== "snap") return;
+      if (this.state.snapPlacements[pieceId]) return;
+      this.state = { ...this.state, selectedSnapId: this.state.selectedSnapId === pieceId ? null : pieceId };
+      this.syncSnap();
+    }
+
+    snapSelectedPiece(slotId) {
+      if (!this.state.selectedSnapId) return;
+      const slot = this.root.querySelector(`[data-snap-slot-id="${slotId}"]`);
+      this.snapPiece(this.state.selectedSnapId, slotId, slot);
+    }
+
+    snapPiece(pieceId, slotId, slotElement) {
+      if (this.game.type !== "snap") return;
+      const round = this.currentRound();
+      const snap = round.snap;
+      const piece = snap.pieces.find((entry) => entry.id === pieceId);
+      const slot = snap.slots.find((entry) => entry.id === slotId);
+      if (!piece || !slot || this.state.snapPlacements[pieceId]) return;
+      if (piece.targetId !== slotId) {
+        audioPlayer.blip();
+        slotElement?.classList.add("is-wrong");
+        window.setTimeout(() => slotElement?.classList.remove("is-wrong"), 520);
+        return;
+      }
+      this.state = progressController.snap(this.state, pieceId, slotId);
+      audioPlayer.blip("success");
+      this.syncSnap();
+      const placedNode = this.root.querySelector(`[data-snap-slot-id="${slotId}"]`);
+      placedNode?.classList.add("is-snapped");
+      window.setTimeout(() => placedNode?.classList.remove("is-snapped"), 760);
+      const complete = snap.pieces.every((entry) => this.state.snapPlacements[entry.id] === entry.targetId);
+      if (complete) {
+        this.state = { ...this.state, completedRounds: [round.id] };
+        this.root.querySelector("[data-snap-board]")?.classList.add("is-complete");
+        window.setTimeout(() => this.go("feedback"), 980);
+      }
+    }
+
+    findNearestSnapSlot(clientX, clientY) {
+      const tolerance = this.currentRound().snap?.tolerance || 64;
+      const slots = [...this.root.querySelectorAll("[data-snap-slot-id]")];
+      return slots.reduce((nearest, slot) => {
+        const box = slot.getBoundingClientRect();
+        const centerX = box.left + box.width / 2;
+        const centerY = box.top + box.height / 2;
+        const distance = Math.hypot(centerX - clientX, centerY - clientY);
+        if (distance > tolerance) return nearest;
+        if (!nearest || distance < nearest.distance) return { slot, distance };
+        return nearest;
+      }, null)?.slot || null;
+    }
+
     finish() {
       this.state = rewardController.complete(this.game, this.state);
       this.record = rewardController.persist(this.game, this.state);
@@ -659,6 +1068,37 @@
         }
         return;
       }
+      if (this.game.type === "snap") {
+        const board = this.root.querySelector("[data-snap-board]");
+        const tray = this.root.querySelector("[data-snap-tray]");
+        const stateLabel = this.root.querySelector("[data-snap-state]");
+        const snap = round.snap;
+        const placedCount = snap.pieces.filter((piece) => this.state.snapPlacements[piece.id] === piece.targetId).length;
+        const bridgeState = placedCount === 0 ? snap.emptyState : placedCount === snap.pieces.length ? snap.completeState : snap.partialState;
+        if (stateLabel) stateLabel.textContent = bridgeState;
+        if (board) {
+          board.innerHTML = snap.slots.map((slot) => {
+            const piece = snap.pieces.find((entry) => this.state.snapPlacements[entry.id] === slot.id);
+            return `
+              <button class="snap-slot${piece ? " is-filled" : ""}" type="button" data-snap-slot-id="${slot.id}" aria-label="${slot.label}" style="--slot-x:${slot.x}%;--slot-y:${slot.y}%;--slot-w:${slot.width}%;--slot-h:${slot.height}%;--slot-r:${slot.rotate || 0}deg">
+                ${piece ? `<img src="${piece.image}" alt="" loading="eager" decoding="async" />` : ""}
+              </button>
+            `;
+          }).join("");
+        }
+        if (tray) {
+          tray.innerHTML = snap.pieces.map((piece) => {
+            const placed = Boolean(this.state.snapPlacements[piece.id]);
+            return `
+              <button class="snap-piece${placed ? " is-placed" : ""}${this.state.selectedSnapId === piece.id ? " is-selected" : ""}" type="button" draggable="${placed ? "false" : "true"}" data-snap-piece-id="${piece.id}" aria-label="${piece.label}">
+                <img src="${piece.image}" alt="" loading="eager" decoding="async" />
+                <span>${piece.label}</span>
+              </button>
+            `;
+          }).join("");
+        }
+        return;
+      }
       const hint = this.root.querySelector("[data-hint-text]");
       if (hint) hint.textContent = round.hint;
       const speak = this.root.querySelector("[data-game-speak]");
@@ -675,6 +1115,10 @@
     }
 
     syncDragDrop() {
+      this.updateRoundContent();
+    }
+
+    syncSnap() {
       this.updateRoundContent();
     }
 
