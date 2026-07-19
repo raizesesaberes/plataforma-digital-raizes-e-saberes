@@ -10,6 +10,12 @@
   const formasAsset = (path) => `${formasBase}${path}`;
   const caminhoBase = "assets/games/caminho-bia/";
   const caminhoAsset = (path) => `${caminhoBase}${path}`;
+  const atelieBase = "assets/games/atelie-bia/";
+  const atelieAsset = (path) => `${atelieBase}${path}`;
+  const rotinaBase = "assets/games/rotina-pipo/";
+  const rotinaAsset = (path) => `${rotinaBase}${path}`;
+  const festaBase = "assets/games/grande-festa/";
+  const festaAsset = (path) => `${festaBase}${path}`;
 
   const gameRepository = {
     games: {
@@ -432,6 +438,169 @@
           },
         ],
       },
+      "atelie-bia": {
+        id: "atelie-bia",
+        type: "creative-canvas",
+        title: "O Atelie da Bia",
+        category: "Criatividade",
+        subtitle: "Canvas Criativo",
+        scenario: "Atelie de Artes",
+        character: "Bia",
+        mascot: "Pipo",
+        xp: 20,
+        medal: "Pequeno Artista da Natureza",
+        unlock: { order: 8, unlocked: true, requires: "caminho-bia" },
+        assets: {
+          atlas: atelieAsset("atlas.png"),
+          card: atelieAsset("screens/screen-intro.png"),
+          flow: atelieAsset("atlas.png"),
+          library: atelieAsset("atlas.png"),
+          scenarios: atelieAsset("atlas.png"),
+          screens: {
+            intro: atelieAsset("screens/screen-intro.png"),
+            room: atelieAsset("screens/screen-materials.png"),
+            choice: atelieAsset("screens/screen-canvas.png"),
+            feedback: atelieAsset("screens/screen-canvas.png"),
+            final: atelieAsset("screens/screen-final.png"),
+          },
+        },
+        audio: {
+          narration: 0.9,
+          effects: 0.75,
+          music: 0.35,
+        },
+        rounds: [
+          {
+            id: "obra-natureza",
+            hint: "Crie uma obra com elementos da natureza.",
+            narration: "Solte, mova e reorganize os elementos como quiser. Toda criacao e especial.",
+            canvas: {
+              minElements: 1,
+              elements: [
+                { id: "leaf-green", label: "Folha verde", image: atelieAsset("elements/leaf-green.png") },
+                { id: "leaf-brown", label: "Folha marrom", image: atelieAsset("elements/leaf-brown.png") },
+                { id: "flower-yellow", label: "Flor amarela", image: atelieAsset("elements/flower-yellow.png") },
+                { id: "flower-pink", label: "Flor rosa", image: atelieAsset("elements/flower-pink.png") },
+                { id: "twig", label: "Galho", image: atelieAsset("elements/twig.png") },
+                { id: "acorn", label: "Semente", image: atelieAsset("elements/acorn.png") },
+              ],
+            },
+          },
+        ],
+      },
+      "rotina-pipo": {
+        id: "rotina-pipo",
+        type: "timeline-sequence",
+        title: "A Rotina do Pipo",
+        category: "Cuidado",
+        subtitle: "Sequencia Temporal",
+        scenario: "Sala das Descobertas",
+        character: "Ana e Bia",
+        mascot: "Pipo",
+        xp: 20,
+        medal: "Pequeno Cuidador",
+        unlock: { order: 9, unlocked: true, requires: "atelie-bia" },
+        assets: {
+          atlas: rotinaAsset("atlas.png"),
+          card: rotinaAsset("screens/screen-intro.png"),
+          flow: rotinaAsset("atlas.png"),
+          library: rotinaAsset("atlas.png"),
+          scenarios: rotinaAsset("atlas.png"),
+          screens: {
+            intro: rotinaAsset("screens/screen-intro.png"),
+            room: rotinaAsset("screens/screen-routine.png"),
+            choice: rotinaAsset("screens/screen-sequence.png"),
+            feedback: rotinaAsset("screens/screen-sequence.png"),
+            final: rotinaAsset("screens/screen-final.png"),
+          },
+        },
+        audio: {
+          narration: 0.9,
+          effects: 0.75,
+          music: 0.35,
+        },
+        rounds: [
+          {
+            id: "rotina-cuidados",
+            hint: "Organize a rotina do Pipo.",
+            narration: "Arraste os cartoes para montar a rotina. Cada tentativa ajuda a completar a sequencia.",
+            timeline: {
+              tolerance: 92,
+              positivePrompt: "Muito bem! A rotina esta ficando organizada.",
+              slots: [
+                { id: "step-1", label: "1", x: 18, y: 30 },
+                { id: "step-2", label: "2", x: 38, y: 30 },
+                { id: "step-3", label: "3", x: 58, y: 30 },
+                { id: "step-4", label: "4", x: 78, y: 30 },
+              ],
+              cards: [
+                { id: "wash-hands", label: "Lavar as maos", image: rotinaAsset("cards/wash-hands.png"), targetId: "step-1" },
+                { id: "snack", label: "Lanche", image: rotinaAsset("cards/snack.png"), targetId: "step-2" },
+                { id: "brush-teeth", label: "Escovar os dentes", image: rotinaAsset("cards/brush-teeth.png"), targetId: "step-3" },
+                { id: "drink-water", label: "Beber agua", image: rotinaAsset("cards/drink-water.png"), targetId: "step-4" },
+              ],
+            },
+          },
+        ],
+      },
+      "grande-festa": {
+        id: "grande-festa",
+        type: "journey-celebration",
+        title: "A Grande Festa das Descobertas",
+        category: "Volume 1",
+        subtitle: "Encerramento do Volume 1",
+        scenario: "Mapa da Festa",
+        character: "Ana, Bia, Pipo, Tito e Tico",
+        mascot: "Bia e Pipo",
+        xp: 50,
+        medal: "Grande Explorador das Descobertas",
+        permanentMedal: true,
+        volume: "volume-1",
+        unlock: { order: 10, unlocked: true, requires: "rotina-pipo" },
+        assets: {
+          atlas: festaAsset("atlas.png"),
+          card: festaAsset("screens/screen-intro.png"),
+          flow: festaAsset("atlas.png"),
+          library: festaAsset("atlas.png"),
+          scenarios: festaAsset("atlas.png"),
+          screens: {
+            intro: festaAsset("screens/screen-intro.png"),
+            room: festaAsset("screens/screen-map.png"),
+            choice: festaAsset("screens/screen-explore.png"),
+            feedback: festaAsset("screens/screen-explore.png"),
+            final: festaAsset("screens/screen-final.png"),
+          },
+        },
+        audio: {
+          narration: 0.9,
+          effects: 0.75,
+          music: 0.35,
+        },
+        rounds: [
+          {
+            id: "celebracao-volume-1",
+            hint: "Visite os portais e complete a Arvore das Lembrancas.",
+            narration: "Escolha um portal da festa para lembrar nossas descobertas. Toque nos objetos e complete a arvore.",
+            celebration: {
+              completePrompt: "Que festa linda! A Arvore das Lembrancas esta completa.",
+              portals: [
+                { id: "escola", label: "Escola das Descobertas", image: festaAsset("portals/escola.png"), x: 27, y: 30 },
+                { id: "jardim", label: "Jardim das Descobertas", image: festaAsset("portals/jardim.png"), x: 67, y: 30 },
+                { id: "arvore", label: "Arvore das Historias", image: festaAsset("portals/arvore.png"), x: 27, y: 66 },
+                { id: "casinha", label: "Casinha do Tito", image: festaAsset("portals/casinha.png"), x: 67, y: 66 },
+              ],
+              memories: [
+                { id: "caixa", label: "Caixa Misteriosa", image: festaAsset("objects/caixa.png") },
+                { id: "cesta", label: "Cesta", image: festaAsset("objects/cesta.png") },
+                { id: "ponte", label: "Ponte", image: festaAsset("objects/ponte.png") },
+                { id: "atelie", label: "Atelie", image: festaAsset("objects/atelie.png") },
+                { id: "flores", label: "Flores", image: festaAsset("objects/flores.png") },
+                { id: "rotina", label: "Rotina", image: festaAsset("objects/rotina.png") },
+              ],
+            },
+          },
+        ],
+      },
     },
     getGame(id) {
       return this.games[id] || this.games["caixa-misteriosa"];
@@ -452,6 +621,14 @@
         criteriaFound: [],
         pathProgress: 0,
         pathDrawing: false,
+        canvasItems: [],
+        selectedCanvasId: null,
+        canvasSequence: 0,
+        timelinePlacements: {},
+        selectedTimelineId: null,
+        journeyVisited: [],
+        journeyCompleted: [],
+        journeyActivePortal: null,
         xp: 0,
         medal: null,
         startedAt: Date.now(),
@@ -525,13 +702,19 @@
         durationSeconds: duration,
         xp: state.xp,
         medal: state.medal,
+        permanentMedal: Boolean(game.permanentMedal),
+        volume: game.volume || null,
         progress: 100,
         rounds: state.completedRounds,
         attempts: state.attempts,
+        journey: game.type === "journey-celebration" ? {
+          visitedPortals: state.journeyVisited,
+          completedMemories: state.journeyCompleted,
+        } : null,
         completedAt: new Date(state.completedAt || Date.now()).toISOString(),
         supabaseReady: {
           table: "student_game_progress",
-          fields: ["student_id", "game_id", "xp", "medal", "duration_seconds", "progress", "completed_at"],
+          fields: ["student_id", "game_id", "xp", "medal", "duration_seconds", "progress", "completed_at", "payload"],
         },
       };
       localStorage.setItem(storageKey, JSON.stringify([record, ...records.filter((item) => item.gameId !== game.id)].slice(0, 20)));
@@ -548,6 +731,8 @@
           game_id: record.gameId,
           xp: record.xp,
           medal: record.medal,
+          permanent_medal: record.permanentMedal,
+          volume: record.volume,
           duration_seconds: record.durationSeconds,
           progress: record.progress,
           completed_at: record.completedAt,
@@ -819,6 +1004,52 @@
           </section>
         `;
       }
+      if (this.game.type === "creative-canvas") {
+        return `
+          <section class="game-screen" data-screen="room" aria-label="Escolha dos materiais">
+            <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
+            ${components.particles(18)}
+            <article class="garden-prompt">
+              ${components.audioButton("Ouvir instrucao", this.currentRound().narration)}
+              <strong data-hint-text>${this.currentRound().hint}</strong>
+            </article>
+            <button class="game-primary-button game-observe-button" type="button" data-game-action="begin-canvas">Criar</button>
+          </section>
+        `;
+      }
+      if (this.game.type === "timeline-sequence") {
+        return `
+          <section class="game-screen" data-screen="room" aria-label="Conhecendo a rotina">
+            <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
+            ${components.particles(18)}
+            <article class="garden-prompt">
+              ${components.audioButton("Ouvir instrucao", this.currentRound().narration)}
+              <strong data-hint-text>${this.currentRound().hint}</strong>
+            </article>
+            <button class="game-primary-button game-observe-button" type="button" data-game-action="begin-timeline">Organizar</button>
+          </section>
+        `;
+      }
+      if (this.game.type === "journey-celebration") {
+        return `
+          <section class="game-screen" data-screen="room" aria-label="Mapa da festa">
+            <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
+            ${components.particles(24)}
+            <article class="garden-prompt">
+              ${components.audioButton("Ouvir instrucao", this.currentRound().narration)}
+              <strong data-hint-text>${this.currentRound().hint}</strong>
+            </article>
+            <article class="journey-map-panel">
+              <div class="journey-map" data-journey-map></div>
+              <div class="journey-legend">
+                <span><i></i> Disponivel</span>
+                <span><i></i> Visitado</span>
+                <span><i></i> Concluido</span>
+              </div>
+            </article>
+          </section>
+        `;
+      }
       if (this.game.type === "find") {
         return `
           <section class="game-screen" data-screen="room" aria-label="Exploracao do jardim">
@@ -842,7 +1073,7 @@
     }
 
     renderHintScreen() {
-      if (this.game.type === "drag-drop" || this.game.type === "find" || this.game.type === "snap" || this.game.type === "criteria" || this.game.type === "path-follow") {
+      if (this.game.type === "drag-drop" || this.game.type === "find" || this.game.type === "snap" || this.game.type === "criteria" || this.game.type === "path-follow" || this.game.type === "creative-canvas" || this.game.type === "timeline-sequence" || this.game.type === "journey-celebration") {
         return "";
       }
       const round = this.currentRound();
@@ -918,6 +1149,55 @@
               <h2>${this.currentRound().hint}</h2>
               <div class="path-progress"><i><b data-path-progress style="width:0%"></b></i><span data-path-progress-label>0%</span></div>
               <div class="path-board" data-path-board></div>
+            </article>
+          </section>
+        `;
+      }
+      if (this.game.type === "creative-canvas") {
+        return `
+          <section class="game-screen" data-screen="choice" aria-label="Canvas criativo">
+            <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.choice}')" aria-hidden="true"></div>
+            <article class="creative-panel">
+              <h2>${this.currentRound().hint}</h2>
+              <div class="creative-layout">
+                <div class="creative-palette" data-creative-palette></div>
+                <div class="creative-canvas" data-creative-canvas></div>
+                <div class="creative-tools">
+                  <button type="button" data-game-action="add-canvas-element">Adicionar elementos</button>
+                  <button type="button" data-game-action="reorganize-canvas">Reorganizar</button>
+                  <button type="button" data-game-action="clear-canvas">Limpar</button>
+                  <button type="button" data-game-action="finish-canvas">Finalizar</button>
+                </div>
+              </div>
+            </article>
+          </section>
+        `;
+      }
+      if (this.game.type === "timeline-sequence") {
+        return `
+          <section class="game-screen" data-screen="choice" aria-label="Sequencia temporal">
+            <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.choice}')" aria-hidden="true"></div>
+            <article class="timeline-panel">
+              <h2>${this.currentRound().hint}</h2>
+              <div class="timeline-feedback" data-timeline-feedback>${this.currentRound().timeline.positivePrompt}</div>
+              <div class="timeline-board" data-timeline-board></div>
+              <div class="timeline-card-tray" data-timeline-card-tray></div>
+            </article>
+          </section>
+        `;
+      }
+      if (this.game.type === "journey-celebration") {
+        return `
+          <section class="game-screen" data-screen="choice" aria-label="Exploracao dos cenarios">
+            <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.choice}')" aria-hidden="true"></div>
+            <article class="journey-explore-panel">
+              <h2 data-journey-title>Vamos relembrar todas as nossas aventuras!</h2>
+              <div class="journey-objects" data-journey-objects></div>
+              <div class="memory-tree" data-memory-tree></div>
+              <div class="journey-actions">
+                <button class="game-secondary-button" type="button" data-game-action="journey-map">Voltar ao mapa</button>
+                <button class="game-primary-button journey-finish-button" type="button" data-game-action="finish-journey">Celebrar</button>
+              </div>
             </article>
           </section>
         `;
@@ -1018,6 +1298,13 @@
         const card = event.target.closest("[data-choice-id]");
         const criteria = event.target.closest("[data-criteria-id]");
         const pathPoint = event.target.closest("[data-path-point-id]");
+        const creativeElement = event.target.closest("[data-creative-element-id]");
+        const canvasItem = event.target.closest("[data-canvas-item-id]");
+        const removeCanvas = event.target.closest("[data-remove-canvas-id]");
+        const timelineCard = event.target.closest("[data-timeline-card-id]");
+        const timelineSlot = event.target.closest("[data-timeline-slot-id]");
+        const journeyPortal = event.target.closest("[data-journey-portal-id]");
+        const journeyObject = event.target.closest("[data-journey-object-id]");
         const dragItem = event.target.closest("[data-drag-id]");
         const dropTarget = event.target.closest("[data-drop-id]");
         const shapeBoard = event.target.closest("[data-shape-house-board]");
@@ -1032,6 +1319,16 @@
         if (card) this.answer(card.dataset.choiceId, card);
         if (criteria) this.answerCriteria(criteria.dataset.criteriaId, criteria);
         if (pathPoint) this.advancePath(pathPoint.dataset.pathPointId, pathPoint);
+        if (creativeElement) this.addCanvasItem(creativeElement.dataset.creativeElementId);
+        if (removeCanvas) {
+          this.removeCanvasItem(removeCanvas.dataset.removeCanvasId);
+        } else if (canvasItem) {
+          this.selectCanvasItem(canvasItem.dataset.canvasItemId);
+        }
+        if (timelineCard) this.selectTimelineCard(timelineCard.dataset.timelineCardId);
+        if (timelineSlot) this.placeSelectedTimelineCard(timelineSlot.dataset.timelineSlotId);
+        if (journeyPortal) this.visitJourneyPortal(journeyPortal.dataset.journeyPortalId);
+        if (journeyObject) this.collectJourneyMemory(journeyObject.dataset.journeyObjectId);
         if (dragItem) this.selectDragItem(dragItem.dataset.dragId);
         if (dropTarget) this.dropSelectedItem(dropTarget.dataset.dropId);
         if (snapPiece) this.selectSnapPiece(snapPiece.dataset.snapPieceId);
@@ -1041,6 +1338,9 @@
       this.root.addEventListener("dragstart", (event) => {
         const dragItem = event.target.closest("[data-drag-id]");
         const snapPiece = event.target.closest("[data-snap-piece-id]");
+        const creativeElement = event.target.closest("[data-creative-element-id]");
+        const canvasItem = event.target.closest("[data-canvas-item-id]");
+        const timelineCard = event.target.closest("[data-timeline-card-id]");
         if (dragItem) {
           event.dataTransfer?.setData("text/plain", dragItem.dataset.dragId);
           event.dataTransfer?.setData("application/x-raizes-drag", dragItem.dataset.dragId);
@@ -1049,9 +1349,19 @@
           event.dataTransfer?.setData("text/plain", snapPiece.dataset.snapPieceId);
           event.dataTransfer?.setData("application/x-raizes-snap", snapPiece.dataset.snapPieceId);
         }
+        if (creativeElement) {
+          event.dataTransfer?.setData("application/x-raizes-creative", creativeElement.dataset.creativeElementId);
+        }
+        if (canvasItem) {
+          event.dataTransfer?.setData("application/x-raizes-canvas-item", canvasItem.dataset.canvasItemId);
+        }
+        if (timelineCard) {
+          event.dataTransfer?.setData("text/plain", timelineCard.dataset.timelineCardId);
+          event.dataTransfer?.setData("application/x-raizes-timeline", timelineCard.dataset.timelineCardId);
+        }
       });
       this.root.addEventListener("dragover", (event) => {
-        if (event.target.closest("[data-drop-id]") || event.target.closest("[data-shape-house-board]") || event.target.closest("[data-snap-slot-id]") || event.target.closest("[data-snap-board]")) {
+        if (event.target.closest("[data-drop-id]") || event.target.closest("[data-shape-house-board]") || event.target.closest("[data-snap-slot-id]") || event.target.closest("[data-snap-board]") || event.target.closest("[data-creative-canvas]") || event.target.closest("[data-timeline-slot-id]") || event.target.closest("[data-timeline-board]")) {
           event.preventDefault();
         }
       });
@@ -1060,10 +1370,29 @@
         const shapeBoard = event.target.closest("[data-shape-house-board]");
         const snapSlot = event.target.closest("[data-snap-slot-id]");
         const snapBoard = event.target.closest("[data-snap-board]");
-        if (!dropTarget && !shapeBoard && !snapSlot && !snapBoard) return;
+        const creativeCanvas = event.target.closest("[data-creative-canvas]");
+        const timelineSlot = event.target.closest("[data-timeline-slot-id]");
+        const timelineBoard = event.target.closest("[data-timeline-board]");
+        if (!dropTarget && !shapeBoard && !snapSlot && !snapBoard && !creativeCanvas && !timelineSlot && !timelineBoard) return;
         event.preventDefault();
         const snapId = event.dataTransfer?.getData("application/x-raizes-snap");
+        const creativeId = event.dataTransfer?.getData("application/x-raizes-creative");
+        const canvasItemId = event.dataTransfer?.getData("application/x-raizes-canvas-item");
         const dragId = event.dataTransfer?.getData("application/x-raizes-drag") || event.dataTransfer?.getData("text/plain");
+        const timelineId = event.dataTransfer?.getData("application/x-raizes-timeline") || (this.game.type === "timeline-sequence" ? event.dataTransfer?.getData("text/plain") : "");
+        if ((timelineSlot || timelineBoard) && timelineId) {
+          const nearest = timelineSlot || this.findNearestTimelineSlot(event.clientX, event.clientY);
+          this.placeTimelineCard(timelineId, nearest?.dataset.timelineSlotId);
+          return;
+        }
+        if (creativeCanvas && creativeId) {
+          this.addCanvasItem(creativeId, event.clientX, event.clientY);
+          return;
+        }
+        if (creativeCanvas && canvasItemId) {
+          this.moveCanvasItem(canvasItemId, event.clientX, event.clientY);
+          return;
+        }
         if (snapSlot && snapId) {
           this.snapPiece(snapId, snapSlot.dataset.snapSlotId, snapSlot);
           return;
@@ -1121,8 +1450,12 @@
     handleAction(action, button) {
       if (action === "start") {
         audioPlayer.blip();
+        this.updateRoundContent();
         this.go("room");
         if (this.game.type === "find") {
+          audioPlayer.speak(this.currentRound().narration, null);
+        }
+        if (this.game.type === "journey-celebration") {
           audioPlayer.speak(this.currentRound().narration, null);
         }
       }
@@ -1145,6 +1478,37 @@
         this.updateRoundContent();
         audioPlayer.speak(this.currentRound().narration, null);
         this.go("choice");
+      }
+      if (action === "begin-canvas") {
+        this.updateRoundContent();
+        audioPlayer.speak(this.currentRound().narration, null);
+        this.go("choice");
+      }
+      if (action === "begin-timeline") {
+        this.updateRoundContent();
+        audioPlayer.speak(this.currentRound().narration, null);
+        this.go("choice");
+      }
+      if (action === "finish-journey") {
+        this.finishJourney();
+      }
+      if (action === "journey-map") {
+        this.updateRoundContent();
+        this.go("room");
+      }
+      if (action === "add-canvas-element") {
+        const first = this.currentRound().canvas.elements[0];
+        if (first) this.addCanvasItem(first.id);
+      }
+      if (action === "reorganize-canvas") {
+        this.reorganizeCanvas();
+      }
+      if (action === "clear-canvas") {
+        this.state = { ...this.state, canvasItems: [], selectedCanvasId: null };
+        this.syncCanvas();
+      }
+      if (action === "finish-canvas") {
+        this.finishCanvas();
       }
       if (action === "open-box") {
         button?.classList.add("is-opening");
@@ -1243,6 +1607,219 @@
       const box = point.getBoundingClientRect();
       const distance = Math.hypot(box.left + box.width / 2 - clientX, box.top + box.height / 2 - clientY);
       if (distance <= tolerance) this.advancePath(expected.id, point);
+    }
+
+    selectTimelineCard(cardId) {
+      if (this.game.type !== "timeline-sequence") return;
+      const alreadyPlaced = Object.values(this.state.timelinePlacements).includes(cardId);
+      if (alreadyPlaced) return;
+      this.state = { ...this.state, selectedTimelineId: this.state.selectedTimelineId === cardId ? null : cardId };
+      this.syncTimeline();
+    }
+
+    placeSelectedTimelineCard(slotId) {
+      if (!this.state.selectedTimelineId) return;
+      this.placeTimelineCard(this.state.selectedTimelineId, slotId);
+    }
+
+    nextTimelineSlot() {
+      const timeline = this.currentRound().timeline;
+      return timeline.slots.find((slot) => !this.state.timelinePlacements[slot.id]) || null;
+    }
+
+    findNearestTimelineSlot(clientX, clientY) {
+      const tolerance = this.currentRound().timeline?.tolerance || 90;
+      const slots = [...this.root.querySelectorAll("[data-timeline-slot-id]")];
+      return slots.reduce((nearest, slot) => {
+        const box = slot.getBoundingClientRect();
+        const centerX = box.left + box.width / 2;
+        const centerY = box.top + box.height / 2;
+        const distance = Math.hypot(centerX - clientX, centerY - clientY);
+        if (distance > tolerance) return nearest;
+        if (!nearest || distance < nearest.distance) return { slot, distance };
+        return nearest;
+      }, null)?.slot || null;
+    }
+
+    placeTimelineCard(cardId, requestedSlotId) {
+      if (this.game.type !== "timeline-sequence") return;
+      const round = this.currentRound();
+      const timeline = round.timeline;
+      const chosenCard = timeline.cards.find((card) => card.id === cardId);
+      if (!chosenCard || Object.values(this.state.timelinePlacements).includes(cardId)) return;
+      const requestedSlot = timeline.slots.find((slot) => slot.id === requestedSlotId);
+      const nextSlot = this.nextTimelineSlot();
+      const targetSlot = requestedSlot && !this.state.timelinePlacements[requestedSlot.id] ? requestedSlot : nextSlot;
+      if (!targetSlot) return;
+      const expectedCard = timeline.cards.find((card) => card.targetId === targetSlot.id && !Object.values(this.state.timelinePlacements).includes(card.id));
+      const cardToPlace = expectedCard || chosenCard;
+      this.state = {
+        ...this.state,
+        timelinePlacements: { ...this.state.timelinePlacements, [targetSlot.id]: cardToPlace.id },
+        selectedTimelineId: null,
+        attempts: this.state.attempts + 1,
+      };
+      audioPlayer.blip("success");
+      this.syncTimeline();
+      const slotNode = this.root.querySelector(`[data-timeline-slot-id="${targetSlot.id}"]`);
+      slotNode?.classList.add("is-snapped");
+      window.setTimeout(() => slotNode?.classList.remove("is-snapped"), 760);
+      const feedback = this.root.querySelector("[data-timeline-feedback]");
+      if (feedback) feedback.textContent = timeline.positivePrompt;
+      const complete = timeline.slots.every((slot) => Boolean(this.state.timelinePlacements[slot.id]));
+      if (complete) {
+        this.state = { ...this.state, completedRounds: [round.id] };
+        this.root.querySelector("[data-timeline-board]")?.classList.add("is-complete");
+        window.setTimeout(() => this.go("feedback"), 900);
+      }
+    }
+
+    visitJourneyPortal(portalId) {
+      if (this.game.type !== "journey-celebration") return;
+      const portal = this.currentRound().celebration.portals.find((entry) => entry.id === portalId);
+      if (!portal) return;
+      this.state = {
+        ...this.state,
+        journeyActivePortal: portalId,
+        journeyVisited: [...new Set([...this.state.journeyVisited, portalId])],
+        attempts: this.state.attempts + 1,
+      };
+      audioPlayer.blip("success");
+      this.updateRoundContent();
+      this.go("choice");
+      audioPlayer.speak(`Vamos visitar ${portal.label} e lembrar nossas descobertas.`, null);
+    }
+
+    collectJourneyMemory(memoryId) {
+      if (this.game.type !== "journey-celebration") return;
+      const round = this.currentRound();
+      const memory = round.celebration.memories.find((entry) => entry.id === memoryId);
+      if (!memory || this.state.journeyCompleted.includes(memoryId)) return;
+      const activePortal = this.state.journeyActivePortal || round.celebration.portals[0]?.id;
+      const nextVisited = activePortal ? [...new Set([...this.state.journeyVisited, activePortal])] : this.state.journeyVisited;
+      this.state = {
+        ...this.state,
+        journeyActivePortal: activePortal,
+        journeyVisited: nextVisited,
+        journeyCompleted: [...new Set([...this.state.journeyCompleted, memoryId])],
+        attempts: this.state.attempts + 1,
+      };
+      audioPlayer.blip("success");
+      this.updateRoundContent();
+      const allCollected = round.celebration.memories.every((entry) => this.state.journeyCompleted.includes(entry.id));
+      if (allCollected) {
+        this.root.querySelector("[data-memory-tree]")?.classList.add("is-complete");
+      }
+    }
+
+    finishJourney() {
+      if (this.game.type !== "journey-celebration") return;
+      const round = this.currentRound();
+      if (!this.state.journeyCompleted.length) {
+        this.collectJourneyMemory(round.celebration.memories[0]?.id);
+      }
+      this.state = {
+        ...this.state,
+        journeyVisited: round.celebration.portals.map((portal) => portal.id),
+        journeyCompleted: round.celebration.memories.map((memory) => memory.id),
+        completedRounds: [round.id],
+      };
+      this.updateRoundContent();
+      this.go("feedback");
+    }
+
+    canvasCoordinates(clientX, clientY) {
+      const canvas = this.root.querySelector("[data-creative-canvas]");
+      if (!canvas) return { x: 50, y: 50 };
+      if (typeof clientX !== "number" || typeof clientY !== "number") {
+        const index = this.state.canvasItems.length;
+        return { x: 28 + (index * 17) % 46, y: 34 + (index * 13) % 34 };
+      }
+      const box = canvas.getBoundingClientRect();
+      return {
+        x: Math.max(8, Math.min(92, ((clientX - box.left) / box.width) * 100)),
+        y: Math.max(8, Math.min(92, ((clientY - box.top) / box.height) * 100)),
+      };
+    }
+
+    addCanvasItem(elementId, clientX, clientY) {
+      if (this.game.type !== "creative-canvas") return;
+      const element = this.currentRound().canvas.elements.find((entry) => entry.id === elementId);
+      if (!element) return;
+      const point = this.canvasCoordinates(clientX, clientY);
+      const sequence = this.state.canvasSequence + 1;
+      const item = {
+        id: `${element.id}-${Date.now()}-${sequence}`,
+        elementId: element.id,
+        x: point.x,
+        y: point.y,
+        scale: 0.92 + (sequence % 4) * 0.08,
+        rotate: ((sequence % 7) - 3) * 8,
+      };
+      this.state = {
+        ...this.state,
+        canvasItems: [...this.state.canvasItems, item],
+        selectedCanvasId: item.id,
+        canvasSequence: sequence,
+        attempts: this.state.attempts + 1,
+      };
+      audioPlayer.blip("success");
+      this.syncCanvas();
+    }
+
+    selectCanvasItem(itemId) {
+      if (this.game.type !== "creative-canvas") return;
+      this.state = { ...this.state, selectedCanvasId: this.state.selectedCanvasId === itemId ? null : itemId };
+      this.syncCanvas();
+    }
+
+    moveCanvasItem(itemId, clientX, clientY) {
+      if (this.game.type !== "creative-canvas") return;
+      const point = this.canvasCoordinates(clientX, clientY);
+      this.state = {
+        ...this.state,
+        canvasItems: this.state.canvasItems.map((item) => (item.id === itemId ? { ...item, x: point.x, y: point.y } : item)),
+        selectedCanvasId: itemId,
+        attempts: this.state.attempts + 1,
+      };
+      audioPlayer.blip("success");
+      this.syncCanvas();
+    }
+
+    removeCanvasItem(itemId) {
+      if (this.game.type !== "creative-canvas") return;
+      this.state = {
+        ...this.state,
+        canvasItems: this.state.canvasItems.filter((item) => item.id !== itemId),
+        selectedCanvasId: this.state.selectedCanvasId === itemId ? null : this.state.selectedCanvasId,
+      };
+      audioPlayer.blip();
+      this.syncCanvas();
+    }
+
+    reorganizeCanvas() {
+      if (this.game.type !== "creative-canvas") return;
+      this.state = {
+        ...this.state,
+        canvasItems: this.state.canvasItems.map((item, index) => ({
+          ...item,
+          x: 22 + (index * 19) % 58,
+          y: 28 + (index * 17) % 44,
+          rotate: ((index % 5) - 2) * 10,
+        })),
+      };
+      audioPlayer.blip("success");
+      this.syncCanvas();
+    }
+
+    finishCanvas() {
+      if (this.game.type !== "creative-canvas") return;
+      const round = this.currentRound();
+      if (!this.state.canvasItems.length) {
+        this.addCanvasItem(round.canvas.elements[0]?.id);
+      }
+      this.state = { ...this.state, completedRounds: [round.id] };
+      this.go("feedback");
     }
 
     selectDragItem(dragId) {
@@ -1498,6 +2075,116 @@
         }
         return;
       }
+      if (this.game.type === "creative-canvas") {
+        const palette = this.root.querySelector("[data-creative-palette]");
+        const canvas = this.root.querySelector("[data-creative-canvas]");
+        const elements = round.canvas.elements;
+        if (palette) {
+          palette.innerHTML = elements.map((element) => `
+            <button class="creative-element" type="button" draggable="true" data-creative-element-id="${element.id}" aria-label="${element.label}">
+              <img src="${element.image}" alt="" loading="eager" decoding="async" />
+              <span>${element.label}</span>
+            </button>
+          `).join("");
+        }
+        if (canvas) {
+          canvas.innerHTML = this.state.canvasItems.map((item) => {
+            const element = elements.find((entry) => entry.id === item.elementId);
+            if (!element) return "";
+            return `
+              <div class="canvas-item${this.state.selectedCanvasId === item.id ? " is-selected" : ""}" role="button" tabindex="0" draggable="true" data-canvas-item-id="${item.id}" style="--canvas-x:${item.x}%;--canvas-y:${item.y}%;--canvas-r:${item.rotate}deg;--canvas-s:${item.scale}" aria-label="${element.label}">
+                <img src="${element.image}" alt="" loading="eager" decoding="async" />
+                <span>${element.label}</span>
+                <button class="canvas-remove" type="button" data-remove-canvas-id="${item.id}" aria-label="Remover ${element.label}">×</button>
+              </div>
+            `;
+          }).join("");
+        }
+        return;
+      }
+      if (this.game.type === "timeline-sequence") {
+        const board = this.root.querySelector("[data-timeline-board]");
+        const tray = this.root.querySelector("[data-timeline-card-tray]");
+        const timeline = round.timeline;
+        const placedCount = timeline.slots.filter((slot) => this.state.timelinePlacements[slot.id]).length;
+        if (board) {
+          board.style.setProperty("--timeline-progress", `${Math.round((placedCount / timeline.slots.length) * 76)}%`);
+          board.innerHTML = `
+            <div class="timeline-line" aria-hidden="true"></div>
+            ${timeline.slots.map((slot, index) => {
+              const cardId = this.state.timelinePlacements[slot.id];
+              const card = timeline.cards.find((entry) => entry.id === cardId);
+              return `
+                <button class="timeline-slot${card ? " is-filled" : ""}" type="button" data-timeline-slot-id="${slot.id}" aria-label="Etapa ${index + 1}" style="--timeline-x:${slot.x}%;--timeline-y:${slot.y}%">
+                  <b>${index + 1}º</b>
+                  ${card ? `<img src="${card.image}" alt="" loading="eager" decoding="async" /><span>${card.label}</span>` : ""}
+                </button>
+              `;
+            }).join("")}
+          `;
+        }
+        if (tray) {
+          tray.innerHTML = timeline.cards.map((card) => {
+            const placed = Object.values(this.state.timelinePlacements).includes(card.id);
+            return `
+              <button class="timeline-card${placed ? " is-placed" : ""}${this.state.selectedTimelineId === card.id ? " is-selected" : ""}" type="button" draggable="${placed ? "false" : "true"}" data-timeline-card-id="${card.id}" aria-label="${card.label}">
+                <img src="${card.image}" alt="" loading="eager" decoding="async" />
+                <span>${card.label}</span>
+              </button>
+            `;
+          }).join("");
+        }
+        return;
+      }
+      if (this.game.type === "journey-celebration") {
+        const journey = round.celebration;
+        const map = this.root.querySelector("[data-journey-map]");
+        const objects = this.root.querySelector("[data-journey-objects]");
+        const tree = this.root.querySelector("[data-memory-tree]");
+        const title = this.root.querySelector("[data-journey-title]");
+        const activePortal = journey.portals.find((portal) => portal.id === this.state.journeyActivePortal);
+        if (title) title.textContent = activePortal ? `Explorando: ${activePortal.label}` : "Vamos relembrar todas as nossas aventuras!";
+        if (map) {
+          map.innerHTML = journey.portals.map((portal, index) => {
+            const visited = this.state.journeyVisited.includes(portal.id);
+            const completed = visited && this.state.journeyCompleted.length >= Math.ceil(((index + 1) / journey.portals.length) * journey.memories.length);
+            return `
+              <button class="journey-portal${visited ? " is-visited" : ""}${completed ? " is-complete" : ""}${this.state.journeyActivePortal === portal.id ? " is-active" : ""}" type="button" data-journey-portal-id="${portal.id}" aria-label="${portal.label}" style="--portal-x:${portal.x}%;--portal-y:${portal.y}%">
+                <img src="${portal.image}" alt="" loading="eager" decoding="async" />
+                <span>${portal.label}</span>
+              </button>
+            `;
+          }).join("");
+        }
+        if (objects) {
+          objects.innerHTML = journey.memories.map((memory) => {
+            const collected = this.state.journeyCompleted.includes(memory.id);
+            return `
+              <button class="journey-object${collected ? " is-collected" : ""}" type="button" data-journey-object-id="${memory.id}" aria-label="${memory.label}">
+                <img src="${memory.image}" alt="" loading="eager" decoding="async" />
+                <span>${memory.label}</span>
+              </button>
+            `;
+          }).join("");
+        }
+        if (tree) {
+          const total = journey.memories.length;
+          const collected = this.state.journeyCompleted.length;
+          tree.style.setProperty("--memory-progress", `${Math.round((collected / total) * 100)}%`);
+          tree.innerHTML = `
+            <strong>Arvore das Lembrancas</strong>
+            <div class="memory-tree-stage" aria-label="${collected} de ${total} lembrancas">
+              ${journey.memories.map((memory, index) => `
+                <span class="memory-leaf${index < collected ? " is-grown" : ""}">
+                  <img src="${memory.image}" alt="" loading="eager" decoding="async" />
+                </span>
+              `).join("")}
+            </div>
+            <small>${collected}/${total} lembrancas</small>
+          `;
+        }
+        return;
+      }
       const hint = this.root.querySelector("[data-hint-text]");
       if (hint) hint.textContent = round.hint;
       const speak = this.root.querySelector("[data-game-speak]");
@@ -1526,6 +2213,14 @@
     }
 
     syncPath() {
+      this.updateRoundContent();
+    }
+
+    syncCanvas() {
+      this.updateRoundContent();
+    }
+
+    syncTimeline() {
       this.updateRoundContent();
     }
 

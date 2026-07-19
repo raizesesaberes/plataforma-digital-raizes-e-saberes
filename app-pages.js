@@ -1130,6 +1130,9 @@ const studentGameCatalog = [
   { id: "busca-criterios", title: "Descobrindo por Critérios", medal: "Pequeno Investigador", image: "assets/games/caixa-misteriosa/rewards/medal-pequeno-explorador.png" },
   { id: "formas-casa", title: "As Formas da Casa", medal: "Pequeno Construtor de Formas", image: "assets/games/formas-casa/rewards/medal-formas.png" },
   { id: "caminho-bia", title: "O Caminho da Bia", medal: "Pequeno Explorador de Caminhos", image: "assets/games/caminho-bia/rewards/medal-caminhos.png" },
+  { id: "atelie-bia", title: "O Atelie da Bia", medal: "Pequeno Artista da Natureza", image: "assets/games/atelie-bia/rewards/medal-artista.png" },
+  { id: "rotina-pipo", title: "A Rotina do Pipo", medal: "Pequeno Cuidador", image: "assets/games/rotina-pipo/rewards/medal-cuidador.png" },
+  { id: "grande-festa", title: "A Grande Festa das Descobertas", medal: "Grande Explorador das Descobertas", image: "assets/games/grande-festa/rewards/medal-grande-explorador.png" },
 ];
 
 const readStudentGameRecords = () => {
