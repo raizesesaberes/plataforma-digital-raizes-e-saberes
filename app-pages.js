@@ -1137,6 +1137,8 @@ const studentGameCatalog = [
   { id: "sequencia-pipo", title: "A Sequencia do Pipo", medal: "Pequeno Matematico", image: "assets/games/sequencia-pipo/rewards/medal-pequeno-matematico.png" },
   { id: "jardim-vivo", title: "O Jardim Vivo", medal: "Pequeno Observador da Natureza", image: "assets/games/jardim-vivo/rewards/medal-observador-natureza.png" },
   { id: "teatro-bia", title: "O Teatro da Bia", medal: "Pequeno Artista", image: "assets/games/teatro-bia/rewards/medal-pequeno-artista.png" },
+  { id: "caminho-escola", title: "O Caminho da Escola", medal: "Explorador de Caminhos", image: "assets/games/caminho-escola/rewards/medal-explorador-caminhos.png" },
+  { id: "grande-festa-v2", title: "A Grande Festa das Descobertas - Volume 2", medal: "Grande Explorador das Descobertas", image: "assets/games/grande-festa-v2/rewards/medal-volume-2.png" },
 ];
 
 const readStudentGameRecords = () => {

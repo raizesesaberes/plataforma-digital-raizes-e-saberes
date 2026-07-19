@@ -356,6 +356,7 @@
 .game-scene {
   position: absolute;
   inset: 0;
+  pointer-events: none;
   background-image: var(--screen);
   background-repeat: no-repeat;
   background-size: cover;
@@ -933,6 +934,247 @@
 
 .path-point.is-wrong {
   background: #dc604c;
+}
+
+.path-v2-map-preview {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(92px, 1fr));
+  gap: 12px;
+  width: min(88%, 680px);
+  padding: 12px;
+  border: 1px solid rgba(234, 223, 202, 0.8);
+  border-radius: 8px;
+  background: rgba(255, 250, 238, 0.88);
+  box-shadow: 0 18px 42px rgba(40, 66, 44, 0.16);
+}
+
+.path-v2-preview-card,
+.path-v2-reference {
+  border: 3px solid #f4d28d;
+  border-radius: 8px;
+  background: rgba(255, 250, 238, 0.96);
+  color: #173825;
+  font-family: inherit;
+  font-weight: 1000;
+  cursor: pointer;
+}
+
+.path-v2-preview-card {
+  display: grid;
+  min-height: 112px;
+  place-items: center;
+  gap: 5px;
+  padding: 8px;
+}
+
+.path-v2-preview-card img {
+  width: 78px;
+  height: 66px;
+  object-fit: contain;
+}
+
+.game-screen > .path-v2-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+}
+
+.path-v2-prompt {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(58%, 560px);
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(255, 250, 238, 0.94);
+  box-shadow: 0 12px 28px rgba(34, 64, 42, 0.18);
+  transform: translateX(-50%);
+}
+
+.path-v2-prompt strong,
+.path-v2-prompt span {
+  display: block;
+  color: #151515;
+  font-weight: 1000;
+  line-height: 1.12;
+}
+
+.path-v2-prompt span {
+  color: #0f7a46;
+  font-size: 0.78rem;
+}
+
+.path-v2-board {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--path-v2-phase) center/cover no-repeat;
+}
+
+.path-v2-board::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, transparent 38%, rgba(8, 73, 45, 0.1));
+  pointer-events: none;
+}
+
+.path-v2-line {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 10px rgba(255, 223, 88, 0.9));
+  pointer-events: none;
+}
+
+.path-v2-line polyline {
+  fill: none;
+  stroke: rgba(255, 223, 88, 0.84);
+  stroke-dasharray: 5 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.path-v2-reference {
+  position: absolute;
+  z-index: 4;
+  display: grid;
+  width: clamp(58px, 8vw, 92px);
+  min-height: clamp(58px, 8vw, 92px);
+  place-items: center;
+  padding: 4px;
+  translate: -50% -50%;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.path-v2-reference img {
+  width: 100%;
+  height: 58px;
+  object-fit: contain;
+}
+
+.path-v2-reference span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.path-v2-reference.is-next,
+.path-v2-reference.is-active {
+  border-color: #f4b72e;
+  box-shadow: 0 0 0 6px rgba(244, 183, 46, 0.18), 0 0 24px rgba(255, 223, 88, 0.7);
+  animation: box-pulse 1.1s ease-in-out infinite;
+}
+
+.path-v2-reference.is-visited {
+  border-color: #62bd3a;
+  background: rgba(255, 250, 238, 0.98);
+}
+
+.path-v2-reference.is-visited::after {
+  content: "✓";
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 999px;
+  background: #62bd3a;
+  color: #fff;
+  font-weight: 1000;
+}
+
+.path-v2-phases {
+  position: absolute;
+  top: 82px;
+  right: 16px;
+  z-index: 6;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(23, 47, 34, 0.82);
+}
+
+.path-v2-phases::before {
+  content: "Fases";
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 1000;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.path-v2-phases button {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 3px solid rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #6ba934, #9bd44e);
+  color: #fff;
+  font: inherit;
+  font-weight: 1000;
+  cursor: pointer;
+}
+
+.path-v2-phases button.is-active {
+  background: linear-gradient(135deg, #7b3bb1, #ad73e0);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.18);
+}
+
+.path-v2-phases button.is-complete::after {
+  content: "✓";
+  margin-left: 2px;
+  font-size: 0.8rem;
+}
+
+.path-v2-progress {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: min(52%, 360px);
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 250, 238, 0.92);
+  transform: translateX(-50%);
+}
+
+.path-v2-progress i {
+  flex: 1;
+  height: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #d8d1bd;
+}
+
+.path-v2-progress b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #62bd3a, #f4b72e);
+}
+
+.path-v2-progress span {
+  color: #0c4f35;
+  font-weight: 1000;
 }
 
 .creative-panel {
@@ -1729,6 +1971,323 @@
 .journey-actions .game-secondary-button,
 .journey-finish-button {
   min-width: min(100%, 220px);
+}
+
+.journey-v2-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+}
+
+.journey-v2-prompt {
+  position: absolute;
+  top: 7%;
+  left: 50%;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(70%, 520px);
+  min-height: 70px;
+  padding: 10px 16px;
+  border: 2px solid rgba(225, 172, 72, 0.72);
+  border-radius: 8px;
+  background: rgba(255, 253, 246, 0.94);
+  color: #142116;
+  font-weight: 1000;
+  transform: translateX(-50%);
+  box-shadow: 0 12px 26px rgba(57, 48, 19, 0.16);
+  pointer-events: none;
+}
+
+.journey-v2-prompt .game-audio-button {
+  pointer-events: auto;
+}
+
+.journey-v2-map {
+  position: absolute;
+  inset: 0;
+}
+
+.journey-v2-portal {
+  position: absolute;
+  left: var(--portal-x);
+  top: var(--portal-y);
+  z-index: 3;
+  display: grid;
+  width: clamp(108px, 12vw, 148px);
+  min-height: clamp(116px, 13vw, 160px);
+  place-items: center;
+  gap: 4px;
+  padding: 8px;
+  border: 3px solid #f7cf48;
+  border-radius: 8px;
+  background: rgba(255, 252, 239, 0.96);
+  color: #0a3f2d;
+  font-family: inherit;
+  font-weight: 1000;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 6px rgba(255, 224, 88, 0.24), 0 12px 24px rgba(63, 48, 13, 0.2);
+  cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.journey-v2-portal:hover,
+.journey-v2-portal.is-active {
+  transform: translate(-50%, -50%) scale(1.04);
+}
+
+.journey-v2-portal.is-visited {
+  border-color: #2d9bd5;
+}
+
+.journey-v2-portal.is-complete {
+  border-color: #6db347;
+  box-shadow: 0 0 0 6px rgba(109, 179, 71, 0.22), 0 0 28px rgba(255, 222, 83, 0.62);
+}
+
+.journey-v2-portal img {
+  width: 74px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.journey-v2-portal span {
+  font-size: 0.72rem;
+  line-height: 1.05;
+}
+
+.journey-v2-portal small {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(10, 78, 52, 0.12);
+  font-size: 0.58rem;
+  line-height: 1;
+}
+
+.journey-v2-school,
+.journey-v2-tree {
+  position: absolute;
+  z-index: 4;
+  display: grid;
+  gap: 6px;
+  width: clamp(128px, 15vw, 188px);
+  padding: 9px;
+  border: 2px solid rgba(255, 216, 94, 0.62);
+  border-radius: 8px;
+  background: rgba(255, 253, 246, 0.94);
+  color: #0a3f2d;
+  text-align: center;
+  box-shadow: 0 12px 28px rgba(59, 46, 17, 0.18);
+  pointer-events: none;
+}
+
+.journey-v2-school {
+  top: 7%;
+  right: 2.5%;
+}
+
+.journey-v2-tree {
+  right: 2.5%;
+  bottom: 7%;
+}
+
+.journey-v2-school strong,
+.journey-v2-tree strong {
+  font-size: 0.74rem;
+  line-height: 1.05;
+}
+
+.journey-v2-school img,
+.journey-v2-tree img {
+  width: 100%;
+  aspect-ratio: 1.55;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.journey-v2-school span,
+.journey-v2-tree span,
+.journey-v2-school small,
+.journey-v2-tree small {
+  font-weight: 1000;
+  font-size: 0.68rem;
+}
+
+.journey-v2-mission-panel {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  gap: 12px;
+  width: min(94%, 900px);
+  padding: 14px;
+  border-radius: 8px;
+  background: rgba(255, 253, 246, 0.92);
+  box-shadow: 0 18px 44px rgba(57, 45, 17, 0.18);
+}
+
+.journey-v2-mission-card {
+  display: grid;
+  grid-template-columns: 1fr minmax(180px, 260px);
+  gap: 14px;
+  align-items: center;
+}
+
+.journey-v2-mission-card h2,
+.journey-v2-capsule h2 {
+  margin: 0;
+  color: #0a3f2d;
+  font-size: clamp(1.45rem, 3vw, 2.45rem);
+  line-height: 1.02;
+}
+
+.journey-v2-mission-card p,
+.journey-v2-capsule p {
+  margin: 5px 0 0;
+  color: #2f3c2f;
+  font-weight: 900;
+}
+
+.journey-v2-mission-card > img {
+  width: 100%;
+  aspect-ratio: 1.15;
+  border: 3px solid #f4cf5d;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 0 24px rgba(255, 214, 73, 0.32);
+}
+
+.journey-v2-mission-card small {
+  display: inline-block;
+  width: fit-content;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #4d248d;
+  color: #fff;
+  font-weight: 1000;
+}
+
+.journey-v2-progress-stars,
+.journey-v2-actions,
+.journey-v2-decor {
+  grid-column: 1 / -1;
+}
+
+.journey-v2-progress-stars {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(149, 122, 65, 0.34);
+  font-size: 1.5rem;
+}
+
+.journey-v2-progress-stars .is-lit {
+  color: #ffbf22;
+  filter: drop-shadow(0 0 8px rgba(255, 205, 58, 0.62));
+}
+
+.journey-v2-decor {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  justify-items: center;
+  padding: 8px;
+  border: 1px solid #eadfca;
+  border-radius: 8px;
+  background: rgba(255, 249, 232, 0.76);
+}
+
+.journey-v2-decor img {
+  width: 100%;
+  max-width: 72px;
+  height: 48px;
+  object-fit: contain;
+  animation: float-soft 3.2s ease-in-out infinite;
+}
+
+.journey-v2-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.journey-v2-mission-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.journey-v2-mission-grid span {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  padding: 7px;
+  border: 2px solid #eadfca;
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #0a3f2d;
+  font-size: 0.64rem;
+  font-weight: 1000;
+  text-align: center;
+}
+
+.journey-v2-mission-grid span.is-visited {
+  border-color: #2d9bd5;
+}
+
+.journey-v2-mission-grid span.is-complete {
+  border-color: #6db347;
+  box-shadow: 0 0 18px rgba(255, 214, 72, 0.32);
+}
+
+.journey-v2-mission-grid img {
+  width: 100%;
+  height: 46px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.journey-v2-capsule {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  text-align: center;
+}
+
+.journey-v2-capsule > img {
+  width: clamp(112px, 18vw, 188px);
+  filter: drop-shadow(0 0 24px rgba(255, 205, 54, 0.76));
+  animation: medal-pop 0.8s ease both;
+}
+
+.journey-v2-capsule-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.journey-v2-capsule-grid span {
+  display: grid;
+  gap: 3px;
+  min-height: 78px;
+  place-items: center;
+  padding: 10px;
+  border: 2px solid #f0d18b;
+  border-radius: 8px;
+  background: #fff9e8;
+  color: #0a3f2d;
+}
+
+.journey-v2-capsule-grid b {
+  font-size: 1.1rem;
+}
+
+.journey-v2-capsule-grid small {
+  color: #5f5c47;
+  font-weight: 900;
 }
 
 .audio-recognition-listen {
@@ -2730,6 +3289,19 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .journey-v2-school,
+  .journey-v2-tree {
+    width: 132px;
+  }
+
+  .journey-v2-mission-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .journey-v2-capsule-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .audio-choice-cards {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -2815,6 +3387,33 @@
     min-height: 420px;
   }
 
+  .path-v2-map-preview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .path-v2-prompt {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    transform: none;
+  }
+
+  .path-v2-phases {
+    top: auto;
+    right: 12px;
+    bottom: 76px;
+    grid-template-columns: repeat(2, 42px);
+  }
+
+  .path-v2-reference {
+    width: 58px;
+    min-height: 58px;
+  }
+
+  .path-v2-reference img {
+    height: 42px;
+  }
+
   .creative-palette,
   .creative-tools {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2875,6 +3474,74 @@
 
   .journey-legend {
     position: static;
+  }
+
+  .journey-v2-prompt {
+    top: 10px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    min-height: 58px;
+    transform: none;
+  }
+
+  .journey-v2-portal {
+    width: 92px;
+    min-height: 108px;
+    padding: 6px;
+  }
+
+  .journey-v2-portal img {
+    width: 58px;
+    height: 44px;
+  }
+
+  .journey-v2-portal span {
+    font-size: 0.62rem;
+  }
+
+  .journey-v2-school,
+  .journey-v2-tree {
+    position: absolute;
+    right: 8px;
+    width: 104px;
+    padding: 6px;
+  }
+
+  .journey-v2-school {
+    top: 82px;
+  }
+
+  .journey-v2-tree {
+    bottom: 10px;
+  }
+
+  .journey-v2-school strong,
+  .journey-v2-tree strong,
+  .journey-v2-school span,
+  .journey-v2-tree span,
+  .journey-v2-school small,
+  .journey-v2-tree small {
+    font-size: 0.58rem;
+  }
+
+  .journey-v2-mission-panel {
+    width: min(96%, 720px);
+    padding: 10px;
+  }
+
+  .journey-v2-mission-card {
+    grid-template-columns: 1fr;
+  }
+
+  .journey-v2-mission-card > img {
+    max-height: 190px;
+  }
+
+  .journey-v2-decor,
+  .journey-v2-mission-grid,
+  .journey-v2-capsule-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .audio-choice-cards {
@@ -2944,14 +3611,46 @@
   .journey-portal,
   .memory-leaf,
   .memory-tree.is-complete,
+  .journey-v2-portal,
+  .journey-v2-decor img,
+  .journey-v2-capsule > img,
   .audio-play-button::before,
   .audio-play-button::after,
   .exploration-v2-element,
+  .path-v2-reference,
   .story-performer,
   .story-audience i,
   .medal-popup {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes medal-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.72) translateY(18px);
+  }
+
+  70% {
+    opacity: 1;
+    transform: scale(1.08) translateY(-3px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }
 

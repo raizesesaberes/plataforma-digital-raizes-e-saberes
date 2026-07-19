@@ -26,6 +26,8 @@
   const teatroAsset = (path) => `${teatroBase}${path}`;
   const escolaBase = "assets/games/caminho-escola/";
   const escolaAsset = (path) => `${escolaBase}${path}`;
+  const festaV2Base = "assets/games/grande-festa-v2/";
+  const festaV2Asset = (path) => `${festaV2Base}${path}`;
   const storyAlbumKey = "raizes:story-album:v1";
 
   const gameRepository = {
@@ -1001,6 +1003,82 @@
           },
         ],
       },
+      "grande-festa-v2": {
+        id: "grande-festa-v2",
+        type: "journey-celebration-v2",
+        title: "A Grande Festa das Descobertas",
+        category: "Volume 2",
+        subtitle: "Journey Celebration V2",
+        scenario: "Escola das Descobertas",
+        character: "Bia, Ana, Leo, Sofia, Miguel e Tito",
+        mascot: "Bia e Tito",
+        xp: 80,
+        medal: "Grande Explorador das Descobertas",
+        permanentMedal: true,
+        volume: "volume-2",
+        unlock: { order: 16, unlocked: true, requires: "caminho-escola" },
+        assets: {
+          atlas: festaV2Asset("atlas.png"),
+          card: festaV2Asset("screens/screen-intro.png"),
+          flow: festaV2Asset("atlas.png"),
+          library: festaV2Asset("atlas.png"),
+          scenarios: festaV2Asset("atlas.png"),
+          screens: {
+            intro: festaV2Asset("screens/screen-intro.png"),
+            room: festaV2Asset("screens/screen-map.png"),
+            choice: festaV2Asset("screens/screen-map.png"),
+            feedback: festaV2Asset("screens/screen-map.png"),
+            final: festaV2Asset("screens/screen-intro.png"),
+          },
+          reward: festaV2Asset("rewards/medal-volume-2.png"),
+        },
+        audio: {
+          narration: 0.9,
+          effects: 0.82,
+          music: 0.45,
+        },
+        rounds: [
+          {
+            id: "celebracao-volume-2",
+            hint: "Escolha um lugar para comecar a missao!",
+            narration: "Vamos celebrar nossas descobertas. Escolha as missoes da festa e complete o Volume 2.",
+            celebrationV2: {
+              nextCollection: "educacao-infantil-3-anos",
+              capsuleTitle: "Capsula da Jornada",
+              missions: [
+                { id: "biblioteca", label: "Biblioteca", mechanic: "exploration", prompt: "Encontre o livro da Ana.", image: festaV2Asset("missions/biblioteca.png"), x: 22, y: 32 },
+                { id: "sequencias", label: "Sequencias", mechanic: "pattern-recognition", prompt: "Complete a sequencia.", image: festaV2Asset("missions/sequencias.png"), x: 42, y: 30 },
+                { id: "plantinha", label: "Plantinha", mechanic: "exploration", prompt: "Cuide da plantinha.", image: festaV2Asset("missions/plantinha.png"), x: 62, y: 34 },
+                { id: "teatro", label: "Teatro", mechanic: "story-builder", prompt: "Monte sua historia.", image: festaV2Asset("missions/teatro.png"), x: 82, y: 32 },
+                { id: "caminho", label: "Caminho", mechanic: "path-following", prompt: "Siga ate a festa.", image: festaV2Asset("missions/caminho.png"), x: 26, y: 70 },
+                { id: "atelie", label: "Atelie", mechanic: "creative-canvas", prompt: "Crie sua obra da natureza.", image: festaV2Asset("missions/atelie.png"), x: 70, y: 72 },
+              ],
+              schoolStates: [
+                festaV2Asset("school/state-1.png"),
+                festaV2Asset("school/state-2.png"),
+                festaV2Asset("school/state-3.png"),
+                festaV2Asset("school/state-4.png"),
+                festaV2Asset("school/state-5.png"),
+              ],
+              treeStates: [
+                festaV2Asset("tree/state-1.png"),
+                festaV2Asset("tree/state-2.png"),
+                festaV2Asset("tree/state-3.png"),
+                festaV2Asset("tree/state-4.png"),
+                festaV2Asset("tree/state-5.png"),
+              ],
+              decorations: [
+                festaV2Asset("decor/bandeirinhas.png"),
+                festaV2Asset("decor/baloes.png"),
+                festaV2Asset("decor/confetes.png"),
+                festaV2Asset("decor/fitas.png"),
+                festaV2Asset("decor/fogos.png"),
+                festaV2Asset("decor/luzes.png"),
+              ],
+            },
+          },
+        ],
+      },
     },
     getGame(id) {
       return this.games[id] || this.games["caixa-misteriosa"];
@@ -1033,6 +1111,10 @@
         journeyVisited: [],
         journeyCompleted: [],
         journeyActivePortal: null,
+        journeyV2Visited: [],
+        journeyV2Completed: [],
+        journeyV2ActiveMission: null,
+        journeyV2Capsule: null,
         audioPlayed: false,
         audioReplayCount: 0,
         patternAnswers: {},
@@ -1127,6 +1209,13 @@
         journey: game.type === "journey-celebration" ? {
           visitedPortals: state.journeyVisited,
           completedMemories: state.journeyCompleted,
+        } : null,
+        journeyV2: game.type === "journey-celebration-v2" ? {
+          completedVolume: "volume-2",
+          unlockedCollection: "educacao-infantil-3-anos",
+          visitedMissions: state.journeyV2Visited,
+          completedMissions: state.journeyV2Completed,
+          capsule: state.journeyV2Capsule,
         } : null,
         story: game.type === "story-builder" ? {
           character: state.storyCharacter,
@@ -1280,6 +1369,8 @@
       this.state = progressController.create(this.game);
       this.record = rewardController.latest(this.game.id);
       this.mode = root.dataset.gameId ? "player" : "hub";
+      this.journeyV2Visited = new Set();
+      this.journeyV2Completed = new Set();
     }
 
     mount() {
@@ -1531,6 +1622,23 @@
           </section>
         `;
       }
+      if (this.game.type === "journey-celebration-v2") {
+        return `
+          <section class="game-screen" data-screen="room" aria-label="Hub da Festa Volume 2">
+            <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
+            ${components.particles(26)}
+            <article class="journey-v2-panel">
+              <div class="journey-v2-prompt">
+                ${components.audioButton("Ouvir instrucao", this.currentRound().narration)}
+                <strong data-journey-v2-title>${this.currentRound().hint}</strong>
+              </div>
+              <div class="journey-v2-map" data-journey-v2-map></div>
+              <aside class="journey-v2-school" data-journey-v2-school></aside>
+              <aside class="journey-v2-tree" data-journey-v2-tree></aside>
+            </article>
+          </section>
+        `;
+      }
       if (this.game.type === "audio-recognition") {
         return `
           <section class="game-screen" data-screen="room" aria-label="Escutando o som">
@@ -1619,7 +1727,7 @@
     }
 
     renderHintScreen() {
-      if (this.game.type === "drag-drop" || this.game.type === "find" || this.game.type === "snap" || this.game.type === "criteria" || this.game.type === "path-follow" || this.game.type === "path-follow-v2" || this.game.type === "creative-canvas" || this.game.type === "timeline-sequence" || this.game.type === "journey-celebration" || this.game.type === "audio-recognition" || this.game.type === "pattern-recognition" || this.game.type === "exploration-v2" || this.game.type === "story-builder") {
+      if (this.game.type === "drag-drop" || this.game.type === "find" || this.game.type === "snap" || this.game.type === "criteria" || this.game.type === "path-follow" || this.game.type === "path-follow-v2" || this.game.type === "creative-canvas" || this.game.type === "timeline-sequence" || this.game.type === "journey-celebration" || this.game.type === "journey-celebration-v2" || this.game.type === "audio-recognition" || this.game.type === "pattern-recognition" || this.game.type === "exploration-v2" || this.game.type === "story-builder") {
         return "";
       }
       const round = this.currentRound();
@@ -1763,6 +1871,15 @@
                 <button class="game-primary-button journey-finish-button" type="button" data-game-action="finish-journey">Celebrar</button>
               </div>
             </article>
+          </section>
+        `;
+      }
+      if (this.game.type === "journey-celebration-v2") {
+        return `
+          <section class="game-screen" data-screen="choice" aria-label="Missoes da festa">
+            <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
+            ${components.confetti(34)}
+            <article class="journey-v2-mission-panel" data-journey-v2-mission-panel></article>
           </section>
         `;
       }
@@ -1916,6 +2033,7 @@
         const timelineSlot = event.target.closest("[data-timeline-slot-id]");
         const journeyPortal = event.target.closest("[data-journey-portal-id]");
         const journeyObject = event.target.closest("[data-journey-object-id]");
+        const journeyV2Mission = event.target.closest("[data-journey-v2-mission-id]");
         const dragItem = event.target.closest("[data-drag-id]");
         const dropTarget = event.target.closest("[data-drop-id]");
         const shapeBoard = event.target.closest("[data-shape-house-board]");
@@ -1948,6 +2066,7 @@
         if (timelineSlot) this.placeSelectedTimelineCard(timelineSlot.dataset.timelineSlotId);
         if (journeyPortal) this.visitJourneyPortal(journeyPortal.dataset.journeyPortalId);
         if (journeyObject) this.collectJourneyMemory(journeyObject.dataset.journeyObjectId);
+        if (journeyV2Mission) this.visitJourneyV2Mission(journeyV2Mission.dataset.journeyV2MissionId);
         if (dragItem) this.selectDragItem(dragItem.dataset.dragId);
         if (dropTarget) this.dropSelectedItem(dropTarget.dataset.dropId);
         if (snapPiece) this.selectSnapPiece(snapPiece.dataset.snapPieceId);
@@ -2054,6 +2173,8 @@
       this.game = gameRepository.getGame(gameId);
       this.state = progressController.create(this.game);
       this.record = rewardController.latest(this.game.id);
+      this.journeyV2Visited = new Set();
+      this.journeyV2Completed = new Set();
       this.root.style.setProperty("--game-atlas", `url("${this.game.assets.atlas}")`);
       this.root.style.setProperty("--library-atlas", `url("${this.game.assets.library}")`);
       this.root.innerHTML = this.render();
@@ -2075,6 +2196,9 @@
           audioPlayer.speak(this.currentRound().narration, null);
         }
         if (this.game.type === "journey-celebration") {
+          audioPlayer.speak(this.currentRound().narration, null);
+        }
+        if (this.game.type === "journey-celebration-v2") {
           audioPlayer.speak(this.currentRound().narration, null);
         }
         if (this.game.type === "story-builder") {
@@ -2122,6 +2246,19 @@
       if (action === "journey-map") {
         this.updateRoundContent();
         this.go("room");
+      }
+      if (action === "journey-v2-map") {
+        this.updateRoundContent();
+        this.go("room");
+      }
+      if (action === "complete-journey-v2-mission") {
+        this.completeJourneyV2Mission();
+      }
+      if (action === "open-journey-v2-capsule") {
+        this.openJourneyV2Capsule();
+      }
+      if (action === "finish-journey-v2") {
+        this.finishJourneyV2();
       }
       if (action === "play-audio") {
         this.playRoundSound(button);
@@ -2395,10 +2532,11 @@
         window.setTimeout(() => this.go("feedback"), 760);
         return;
       }
+      const nextPhaseIndex = this.state.pathV2PhaseIndex + 1;
       window.setTimeout(() => {
         this.state = {
           ...this.state,
-          pathV2PhaseIndex: this.state.pathV2PhaseIndex + 1,
+          pathV2PhaseIndex: nextPhaseIndex,
           pathV2Visited: [],
           pathV2ActiveReference: null,
         };
@@ -2534,6 +2672,95 @@
         completedRounds: [round.id],
       };
       this.updateRoundContent();
+      this.go("feedback");
+    }
+
+    journeyV2Data() {
+      return this.currentRound().celebrationV2;
+    }
+
+    visitJourneyV2Mission(missionId) {
+      if (this.game.type !== "journey-celebration-v2") return;
+      const mission = this.journeyV2Data().missions.find((entry) => entry.id === missionId);
+      if (!mission) return;
+      this.journeyV2Visited = new Set([...(this.state.journeyV2Visited || []), ...this.journeyV2Visited, missionId]);
+      this.journeyV2Completed = new Set([...(this.state.journeyV2Completed || []), ...this.journeyV2Completed]);
+      this.state = {
+        ...this.state,
+        journeyV2ActiveMission: missionId,
+        journeyV2Visited: [...this.journeyV2Visited],
+        journeyV2Completed: [...this.journeyV2Completed],
+        attempts: this.state.attempts + 1,
+      };
+      audioPlayer.blip("success");
+      audioPlayer.speak(`${mission.label}. ${mission.prompt}`, null);
+      this.updateRoundContent();
+      this.go("choice");
+    }
+
+    completeJourneyV2Mission() {
+      if (this.game.type !== "journey-celebration-v2") return;
+      const data = this.journeyV2Data();
+      const missionId = this.state.journeyV2ActiveMission || data.missions[0]?.id;
+      if (!missionId) return;
+      this.journeyV2Visited = new Set([...(this.state.journeyV2Visited || []), ...this.journeyV2Visited, missionId]);
+      this.journeyV2Completed = new Set([...(this.state.journeyV2Completed || []), ...this.journeyV2Completed, missionId]);
+      const isFinalMission = missionId === data.missions[data.missions.length - 1]?.id;
+      if (isFinalMission) {
+        this.journeyV2Visited = new Set(data.missions.map((mission) => mission.id));
+        this.journeyV2Completed = new Set(data.missions.map((mission) => mission.id));
+      }
+      const completed = [...this.journeyV2Completed];
+      const visited = [...this.journeyV2Visited];
+      this.state = {
+        ...this.state,
+        journeyV2Visited: visited,
+        journeyV2Completed: completed,
+        attempts: this.state.attempts + 1,
+      };
+      audioPlayer.blip("success");
+      this.updateRoundContent();
+      if (completed.length >= data.missions.length) {
+        window.setTimeout(() => this.openJourneyV2Capsule(), 650);
+      }
+    }
+
+    openJourneyV2Capsule() {
+      if (this.game.type !== "journey-celebration-v2") return;
+      const data = this.journeyV2Data();
+      const capsule = {
+        medal: this.game.medal,
+        accumulatedXp: this.game.xp,
+        completedGames: data.missions.length,
+        completedVolume: "Volume 2 concluido",
+        completedStage: "Educacao Infantil 2 anos concluida",
+        unlockedCollection: data.nextCollection,
+        createdAt: new Date().toISOString(),
+      };
+      this.state = {
+        ...this.state,
+        journeyV2Capsule: capsule,
+        completedRounds: [this.currentRound().id],
+      };
+      audioPlayer.blip("success");
+      this.updateRoundContent();
+      this.go("choice");
+    }
+
+    finishJourneyV2() {
+      if (this.game.type !== "journey-celebration-v2") return;
+      const data = this.journeyV2Data();
+      this.journeyV2Visited = new Set(data.missions.map((mission) => mission.id));
+      this.journeyV2Completed = new Set(data.missions.map((mission) => mission.id));
+      this.state = {
+        ...this.state,
+        journeyV2Visited: [...this.journeyV2Visited],
+        journeyV2Completed: [...this.journeyV2Completed],
+        completedRounds: [this.currentRound().id],
+      };
+      if (!this.state.journeyV2Capsule) {
+        this.openJourneyV2Capsule();
+      }
       this.go("feedback");
     }
 
@@ -2976,6 +3203,59 @@
         }
         return;
       }
+      if (this.game.type === "path-follow-v2") {
+        const data = round.pathV2;
+        const phase = data.phases[this.state.pathV2PhaseIndex] || data.phases[0];
+        const preview = this.root.querySelector("[data-path-v2-preview]");
+        const board = this.root.querySelector("[data-path-v2-board]");
+        const phases = this.root.querySelector("[data-path-v2-phases]");
+        const progress = this.root.querySelector("[data-path-v2-progress]");
+        const label = this.root.querySelector("[data-path-v2-progress-label]");
+        const feedback = this.root.querySelector("[data-path-v2-feedback]");
+        const requiredReferences = data.references.filter((reference) => phase.requiredPoints.includes(reference.id));
+        const percent = Math.round((this.state.pathV2Visited.length / phase.requiredPoints.length) * 100);
+        if (preview) {
+          preview.innerHTML = data.references.map((reference) => `
+            <button class="path-v2-preview-card" type="button" data-path-v2-reference-id="${reference.id}" aria-label="${reference.label}">
+              <img src="${reference.image}" alt="" loading="eager" decoding="async" />
+              <span>${reference.label}</span>
+            </button>
+          `).join("");
+        }
+        if (progress) progress.style.width = `${percent}%`;
+        if (label) label.textContent = `${percent}%`;
+        if (feedback) {
+          const active = data.references.find((reference) => reference.id === this.state.pathV2ActiveReference);
+          feedback.textContent = active ? active.speech : phase.title;
+        }
+        if (phases) {
+          phases.innerHTML = data.phases.map((item, index) => {
+            const done = this.state.pathV2CompletedPhases.includes(item.id);
+            const active = index === this.state.pathV2PhaseIndex;
+            return `<button class="${active ? "is-active" : ""}${done ? " is-complete" : ""}" type="button" data-path-v2-phase-index="${index}" aria-label="Fase ${item.label}">${item.label}</button>`;
+          }).join("");
+        }
+        if (board) {
+          board.style.setProperty("--path-v2-phase", `url('${phase.image}')`);
+          board.innerHTML = `
+            <svg class="path-v2-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <polyline points="${requiredReferences.map((point) => `${point.x},${point.y}`).join(" ")}"></polyline>
+            </svg>
+            ${requiredReferences.map((reference, index) => {
+              const visited = this.state.pathV2Visited.includes(reference.id);
+              const active = this.state.pathV2ActiveReference === reference.id;
+              const next = index === this.state.pathV2Visited.length;
+              return `
+                <button class="path-v2-reference${visited ? " is-visited" : ""}${active ? " is-active" : ""}${next ? " is-next" : ""}" type="button" data-path-v2-reference-id="${reference.id}" aria-label="${reference.label}" style="left:${reference.x}%; top:${reference.y}%;">
+                  <img src="${reference.image}" alt="" loading="eager" decoding="async" />
+                  <span>${reference.label}</span>
+                </button>
+              `;
+            }).join("")}
+          `;
+        }
+        return;
+      }
       if (this.game.type === "creative-canvas") {
         const palette = this.root.querySelector("[data-creative-palette]");
         const canvas = this.root.querySelector("[data-creative-canvas]");
@@ -3226,6 +3506,107 @@
             </div>
             <small>${collected}/${total} lembrancas</small>
           `;
+        }
+        return;
+      }
+      if (this.game.type === "journey-celebration-v2") {
+        const data = round.celebrationV2;
+        const missions = data.missions;
+        const total = Math.max(missions.length, 1);
+        const completedCount = this.state.journeyV2Completed.length;
+        const schoolIndex = Math.min(data.schoolStates.length - 1, Math.floor((completedCount / total) * (data.schoolStates.length - 1)));
+        const treeIndex = Math.min(data.treeStates.length - 1, Math.floor((completedCount / total) * (data.treeStates.length - 1)));
+        const schoolLabels = ["Inicial", "Pequena decoracao", "Escola colorida", "Festa quase pronta", "Grande festa"];
+        const treeLabels = ["Inicio", "Folhas", "Flores", "Quase completa", "Totalmente florida"];
+        const activeMission = missions.find((mission) => mission.id === this.state.journeyV2ActiveMission) || missions[0];
+        const map = this.root.querySelector("[data-journey-v2-map]");
+        const school = this.root.querySelector("[data-journey-v2-school]");
+        const tree = this.root.querySelector("[data-journey-v2-tree]");
+        const panel = this.root.querySelector("[data-journey-v2-mission-panel]");
+        if (map) {
+          map.innerHTML = missions.map((mission) => {
+            const visited = this.state.journeyV2Visited.includes(mission.id);
+            const complete = this.state.journeyV2Completed.includes(mission.id);
+            const active = this.state.journeyV2ActiveMission === mission.id;
+            return `
+              <button class="journey-v2-portal${visited ? " is-visited" : ""}${complete ? " is-complete" : ""}${active ? " is-active" : ""}" type="button" data-journey-v2-mission-id="${mission.id}" aria-label="${mission.label}" style="--portal-x:${mission.x}%;--portal-y:${mission.y}%">
+                <img src="${mission.image}" alt="" loading="eager" decoding="async" />
+                <span>${mission.label}</span>
+                <small>${complete ? "Concluido" : visited ? "Visitado" : "Disponivel"}</small>
+              </button>
+            `;
+          }).join("");
+        }
+        if (school) {
+          const schoolState = data.schoolStates[schoolIndex];
+          const schoolImage = typeof schoolState === "string" ? schoolState : schoolState.image;
+          const schoolLabel = typeof schoolState === "string" ? schoolLabels[schoolIndex] : schoolState.label;
+          school.innerHTML = `
+            <strong>Escola das Descobertas</strong>
+            <img src="${schoolImage}" alt="" loading="eager" decoding="async" />
+            <span>${schoolLabel}</span>
+            <small>${completedCount}/${total} missoes</small>
+          `;
+        }
+        if (tree) {
+          const treeState = data.treeStates[treeIndex];
+          const treeImage = typeof treeState === "string" ? treeState : treeState.image;
+          const treeLabel = typeof treeState === "string" ? treeLabels[treeIndex] : treeState.label;
+          tree.innerHTML = `
+            <strong>Arvore das Descobertas</strong>
+            <img src="${treeImage}" alt="" loading="eager" decoding="async" />
+            <span>${treeLabel}</span>
+            <small>${completedCount}/${total} memorias</small>
+          `;
+        }
+        if (panel) {
+          if (this.state.journeyV2Capsule) {
+            const capsule = this.state.journeyV2Capsule;
+            panel.innerHTML = `
+              <div class="journey-v2-capsule">
+                <p>${data.capsuleTitle}</p>
+                <img src="${this.game.assets.reward}" alt="" loading="eager" decoding="async" />
+                <h2>${capsule.medal}</h2>
+                <div class="journey-v2-capsule-grid">
+                  <span><b>${capsule.accumulatedXp} XP</b><small>XP acumulado</small></span>
+                  <span><b>${capsule.completedGames}</b><small>Jogos concluidos</small></span>
+                  <span><b>Volume 2</b><small>concluido</small></span>
+                  <span><b>2 anos</b><small>Educacao Infantil concluida</small></span>
+                </div>
+                <button class="game-primary-button" type="button" data-game-action="finish-journey-v2">Continuar para Educacao Infantil - 3 anos</button>
+              </div>
+            `;
+          } else {
+            const complete = this.state.journeyV2Completed.includes(activeMission.id);
+            panel.innerHTML = `
+              <div class="journey-v2-mission-card">
+                <div>
+                  <small>${activeMission.mechanic}</small>
+                  <h2>${activeMission.label}</h2>
+                  <p>${activeMission.prompt}</p>
+                </div>
+                <img src="${activeMission.image}" alt="" loading="eager" decoding="async" />
+                <div class="journey-v2-progress-stars" aria-label="${completedCount} de ${total} missoes concluidas">
+                  ${missions.map((mission) => `<i class="${this.state.journeyV2Completed.includes(mission.id) ? "is-lit" : ""}">★</i>`).join("")}
+                </div>
+                <div class="journey-v2-decor" aria-hidden="true">
+                  ${data.decorations.map((decor) => `<img src="${typeof decor === "string" ? decor : decor.image}" alt="" loading="lazy" decoding="async" />`).join("")}
+                </div>
+                <div class="journey-v2-actions">
+                  <button class="game-secondary-button" type="button" data-game-action="journey-v2-map">Voltar ao mapa</button>
+                  <button class="game-primary-button" type="button" data-game-action="complete-journey-v2-mission">${complete ? "Missao concluida" : "Concluir missao"}</button>
+                </div>
+              </div>
+              <div class="journey-v2-mission-grid">
+                ${missions.map((mission) => `
+                  <span class="${this.state.journeyV2Completed.includes(mission.id) ? "is-complete" : this.state.journeyV2Visited.includes(mission.id) ? "is-visited" : ""}">
+                    <img src="${mission.image}" alt="" loading="lazy" decoding="async" />
+                    <b>${mission.label}</b>
+                  </span>
+                `).join("")}
+              </div>
+            `;
+          }
         }
         return;
       }
