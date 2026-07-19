@@ -2101,6 +2101,11 @@
         audioPlayer.speak(this.currentRound().narration, null);
         this.go("choice");
       }
+      if (action === "begin-path-v2") {
+        this.updateRoundContent();
+        audioPlayer.speak(this.currentRound().narration, null);
+        this.go("choice");
+      }
       if (action === "begin-canvas") {
         this.updateRoundContent();
         audioPlayer.speak(this.currentRound().narration, null);
@@ -2341,6 +2346,64 @@
         this.root.querySelector("[data-path-board]")?.classList.add("is-complete");
         window.setTimeout(() => this.go("feedback"), 740);
       }
+    }
+
+    setPathV2Phase(phaseIndex) {
+      if (this.game.type !== "path-follow-v2") return;
+      const phases = this.currentRound().pathV2.phases;
+      if (!phases[phaseIndex]) return;
+      this.state = {
+        ...this.state,
+        pathV2PhaseIndex: phaseIndex,
+        pathV2Visited: [],
+        pathV2ActiveReference: null,
+      };
+      audioPlayer.blip("success");
+      this.updateRoundContent();
+    }
+
+    visitPathV2Reference(referenceId, node) {
+      if (this.game.type !== "path-follow-v2") return;
+      const data = this.currentRound().pathV2;
+      const phase = data.phases[this.state.pathV2PhaseIndex] || data.phases[0];
+      const reference = data.references.find((entry) => entry.id === referenceId);
+      if (!reference || !phase.requiredPoints.includes(referenceId)) {
+        audioPlayer.blip();
+        this.state = { ...this.state, pathV2ActiveReference: referenceId };
+        this.updateRoundContent();
+        return;
+      }
+      const visited = [...new Set([...this.state.pathV2Visited, referenceId])];
+      const phaseComplete = phase.requiredPoints.every((id) => visited.includes(id));
+      const completedPhases = phaseComplete
+        ? [...new Set([...this.state.pathV2CompletedPhases, phase.id])]
+        : this.state.pathV2CompletedPhases;
+      this.state = {
+        ...this.state,
+        pathV2Visited: visited,
+        pathV2CompletedPhases: completedPhases,
+        pathV2ActiveReference: referenceId,
+        attempts: this.state.attempts + 1,
+      };
+      node?.classList.add("is-visited");
+      audioPlayer.blip("success");
+      audioPlayer.speak(reference.speech, null);
+      this.updateRoundContent();
+      if (!phaseComplete) return;
+      if (this.state.pathV2PhaseIndex >= data.phases.length - 1) {
+        this.state = { ...this.state, completedRounds: [this.currentRound().id] };
+        window.setTimeout(() => this.go("feedback"), 760);
+        return;
+      }
+      window.setTimeout(() => {
+        this.state = {
+          ...this.state,
+          pathV2PhaseIndex: this.state.pathV2PhaseIndex + 1,
+          pathV2Visited: [],
+          pathV2ActiveReference: null,
+        };
+        this.updateRoundContent();
+      }, 900);
     }
 
     advanceNearestPathPoint(clientX, clientY) {
