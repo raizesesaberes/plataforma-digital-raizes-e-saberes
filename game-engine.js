@@ -16,6 +16,17 @@
   const rotinaAsset = (path) => `${rotinaBase}${path}`;
   const festaBase = "assets/games/grande-festa/";
   const festaAsset = (path) => `${festaBase}${path}`;
+  const somBase = "assets/games/de-quem-e-este-som/";
+  const somAsset = (path) => `${somBase}${path}`;
+  const sequenciaBase = "assets/games/sequencia-pipo/";
+  const sequenciaAsset = (path) => `${sequenciaBase}${path}`;
+  const jardimVivoBase = "assets/games/jardim-vivo/";
+  const jardimVivoAsset = (path) => `${jardimVivoBase}${path}`;
+  const teatroBase = "assets/games/teatro-bia/";
+  const teatroAsset = (path) => `${teatroBase}${path}`;
+  const escolaBase = "assets/games/caminho-escola/";
+  const escolaAsset = (path) => `${escolaBase}${path}`;
+  const storyAlbumKey = "raizes:story-album:v1";
 
   const gameRepository = {
     games: {
@@ -601,6 +612,395 @@
           },
         ],
       },
+      "de-quem-e-este-som": {
+        id: "de-quem-e-este-som",
+        type: "audio-recognition",
+        title: "De Quem e Este Som?",
+        category: "Escuta",
+        subtitle: "Reconhecimento Auditivo",
+        scenario: "Jardim Sonoro",
+        character: "Ana, Leo, Sofia e Miguel",
+        mascot: "Bia",
+        xp: 20,
+        medal: "Pequeno Ouvinte",
+        unlock: { order: 11, unlocked: true, requires: "grande-festa" },
+        assets: {
+          atlas: somAsset("atlas.png"),
+          card: somAsset("screens/screen-intro.png"),
+          flow: somAsset("atlas.png"),
+          library: somAsset("atlas.png"),
+          scenarios: somAsset("atlas.png"),
+          screens: {
+            intro: somAsset("screens/screen-intro.png"),
+            room: somAsset("screens/screen-listen.png"),
+            choice: somAsset("screens/screen-choice.png"),
+            feedback: somAsset("screens/screen-feedback.png"),
+            final: somAsset("screens/screen-final.png"),
+          },
+          audioButton: somAsset("effects/audio-button.png"),
+          waves: somAsset("effects/sound-waves.png"),
+        },
+        audio: {
+          narration: 0.9,
+          effects: 0.75,
+          music: 0.35,
+        },
+        soundLibrary: {
+          passaro: { kind: "bird", duration: 1.2, frequencies: [920, 1240, 1080, 1380] },
+          abelha: { kind: "buzz", duration: 1.35, frequencies: [180, 225, 170, 245] },
+          vento: { kind: "wind", duration: 1.45, frequencies: [330, 420, 360, 500] },
+        },
+        rounds: [
+          {
+            id: "som-passaro",
+            hint: "Quem sera que fez este som?",
+            narration: "Ouça o som com atencao e escolha quem fez esse som.",
+            correctId: "passaro",
+            soundId: "passaro",
+            choices: [
+              { id: "passaro", label: "Passarinho", image: somAsset("choices/passaro.png") },
+              { id: "abelha", label: "Abelha", image: somAsset("choices/abelha.png") },
+              { id: "arvore", label: "Arvore", image: somAsset("choices/arvore.png") },
+            ],
+          },
+          {
+            id: "som-abelha",
+            hint: "Escute novamente e descubra.",
+            narration: "Agora vamos ouvir outro som. Escolha a figura que combina.",
+            correctId: "abelha",
+            soundId: "abelha",
+            choices: [
+              { id: "passaro", label: "Passarinho", image: somAsset("choices/passaro.png") },
+              { id: "abelha", label: "Abelha", image: somAsset("choices/abelha.png") },
+              { id: "sapo", label: "Sapo", image: somAsset("choices/sapo.png") },
+            ],
+          },
+          {
+            id: "som-vento",
+            hint: "Qual imagem combina com o som?",
+            narration: "Ultimo som. Ouça quantas vezes quiser e escolha a resposta.",
+            correctId: "vento",
+            soundId: "vento",
+            choices: [
+              { id: "vento", label: "Vento", image: somAsset("choices/vento.png") },
+              { id: "chuva", label: "Chuva", image: somAsset("choices/chuva.png") },
+              { id: "agua", label: "Agua", image: somAsset("choices/agua.png") },
+            ],
+          },
+        ],
+      },
+      "sequencia-pipo": {
+        id: "sequencia-pipo",
+        type: "pattern-recognition",
+        title: "A Sequencia do Pipo",
+        category: "Matematica",
+        subtitle: "Reconhecimento de Padroes",
+        scenario: "Caminho das Sequencias",
+        character: "Pipo, Bia e amigos",
+        mascot: "Pipo",
+        xp: 20,
+        medal: "Pequeno Matematico",
+        unlock: { order: 12, unlocked: true, requires: "de-quem-e-este-som" },
+        assets: {
+          atlas: sequenciaAsset("atlas.png"),
+          card: sequenciaAsset("screens/screen-intro.png"),
+          flow: sequenciaAsset("atlas.png"),
+          library: sequenciaAsset("atlas.png"),
+          scenarios: sequenciaAsset("atlas.png"),
+          screens: {
+            intro: sequenciaAsset("screens/screen-intro.png"),
+            room: sequenciaAsset("screens/screen-observe.png"),
+            choice: sequenciaAsset("screens/screen-choice.png"),
+            feedback: sequenciaAsset("screens/screen-choice.png"),
+            final: sequenciaAsset("screens/screen-final.png"),
+          },
+          path: {
+            start: sequenciaAsset("path/path-start.png"),
+            progress: sequenciaAsset("path/path-progress.png"),
+            complete: sequenciaAsset("path/path-complete.png"),
+          },
+        },
+        audio: {
+          narration: 0.9,
+          effects: 0.75,
+          music: 0.35,
+        },
+        patternLibrary: {
+          natureza: [
+            { id: "leaf", label: "Folha", image: sequenciaAsset("items/leaf.png") },
+            { id: "rock", label: "Pedras", image: sequenciaAsset("items/rock.png") },
+            { id: "flower", label: "Flor", image: sequenciaAsset("items/flower.png") },
+          ],
+          frutas: [
+            { id: "apple", label: "Maca", image: sequenciaAsset("items/apple.png") },
+            { id: "banana", label: "Banana", image: sequenciaAsset("items/banana.png") },
+            { id: "grape", label: "Uva", image: sequenciaAsset("items/grape.png") },
+          ],
+          brinquedos: [
+            { id: "teddy", label: "Ursinho", image: sequenciaAsset("items/teddy.png") },
+            { id: "car", label: "Carrinho", image: sequenciaAsset("items/car.png") },
+            { id: "ball", label: "Bola", image: sequenciaAsset("items/ball.png") },
+          ],
+          formas: [
+            { id: "star", label: "Estrela", image: sequenciaAsset("items/star.png") },
+            { id: "heart", label: "Coracao", image: sequenciaAsset("items/heart.png") },
+            { id: "leaf", label: "Folha", image: sequenciaAsset("items/leaf.png") },
+          ],
+          cores: [
+            { id: "apple", label: "Vermelho", image: sequenciaAsset("items/apple.png") },
+            { id: "banana", label: "Amarelo", image: sequenciaAsset("items/banana.png") },
+            { id: "leaf", label: "Verde", image: sequenciaAsset("items/leaf.png") },
+          ],
+        },
+        rounds: [
+          {
+            id: "padrao-natureza",
+            category: "Natureza",
+            hint: "Observe a sequencia e escolha qual figura vem a seguir.",
+            narration: "Observe o padrao: folha, pedras, folha, pedras. Qual figura vem depois?",
+            sequence: ["leaf", "rock", "leaf", "rock", null],
+            correctId: "leaf",
+            choices: ["leaf", "rock", "flower"],
+          },
+          {
+            id: "padrao-frutas",
+            category: "Frutas",
+            hint: "Qual fruta completa a sequencia?",
+            narration: "Agora veja: maca, banana, maca, banana. Qual vem depois?",
+            sequence: ["apple", "banana", "apple", "banana", null],
+            correctId: "apple",
+            choices: ["apple", "banana", "grape"],
+          },
+          {
+            id: "padrao-brinquedos",
+            category: "Brinquedos",
+            hint: "Escolha o brinquedo que continua o padrao.",
+            narration: "Ursinho, carrinho, ursinho, carrinho. Qual brinquedo continua?",
+            sequence: ["teddy", "car", "teddy", "car", null],
+            correctId: "teddy",
+            choices: ["teddy", "car", "ball"],
+          },
+        ],
+      },
+      "jardim-vivo": {
+        id: "jardim-vivo",
+        type: "exploration-v2",
+        title: "O Jardim Vivo",
+        category: "Exploracao",
+        subtitle: "Exploracao Nivel 2",
+        scenario: "Jardim Vivo",
+        character: "Bia, Pipo e amigos",
+        mascot: "Bia",
+        xp: 20,
+        medal: "Pequeno Observador da Natureza",
+        unlock: { order: 13, unlocked: true, requires: "sequencia-pipo" },
+        assets: {
+          atlas: jardimVivoAsset("atlas.png"),
+          card: jardimVivoAsset("screens/screen-intro.png"),
+          flow: jardimVivoAsset("atlas.png"),
+          library: jardimVivoAsset("atlas.png"),
+          scenarios: jardimVivoAsset("atlas.png"),
+          screens: {
+            intro: jardimVivoAsset("screens/screen-intro.png"),
+            room: jardimVivoAsset("screens/screen-explore.png"),
+            choice: jardimVivoAsset("screens/screen-explore.png"),
+            feedback: jardimVivoAsset("screens/screen-feedback-correct.png"),
+            final: jardimVivoAsset("screens/screen-final.png"),
+          },
+          feedbackOther: jardimVivoAsset("screens/screen-feedback-other.png"),
+          tree: {
+            empty: jardimVivoAsset("tree/empty.png"),
+            leaves: jardimVivoAsset("tree/leaves.png"),
+            flowers: jardimVivoAsset("tree/flowers.png"),
+            almost: jardimVivoAsset("tree/almost.png"),
+            complete: jardimVivoAsset("tree/complete.png"),
+          },
+        },
+        audio: {
+          narration: 0.9,
+          effects: 0.75,
+          music: 0.35,
+        },
+        exploration: {
+          missionPanelTitle: "Arvore da Natureza",
+          positiveOther: "Que bonito! Continue explorando.",
+          positiveCorrect: "Muito bem! Voce encontrou.",
+          elements: [
+            { id: "ladybug", label: "Joaninha", image: jardimVivoAsset("elements/ladybug.png"), x: 31, y: 39 },
+            { id: "flower", label: "Flor", image: jardimVivoAsset("elements/flower.png"), x: 17, y: 60 },
+            { id: "leaf", label: "Folha", image: jardimVivoAsset("elements/leaf.png"), x: 50, y: 77 },
+            { id: "bird", label: "Passarinho", image: jardimVivoAsset("elements/bird.png"), x: 43, y: 32 },
+            { id: "butterfly", label: "Borboleta", image: jardimVivoAsset("elements/butterfly.png"), x: 65, y: 17 },
+            { id: "worm", label: "Minhoca", image: jardimVivoAsset("elements/worm.png"), x: 11, y: 78 },
+            { id: "sprout", label: "Broto", image: jardimVivoAsset("elements/sprout.png"), x: 53, y: 64 },
+            { id: "mushroom", label: "Cogumelo", image: jardimVivoAsset("elements/mushroom.png"), x: 74, y: 73 },
+            { id: "snail", label: "Caracol", image: jardimVivoAsset("elements/snail.png"), x: 31, y: 70 },
+            { id: "drop", label: "Gota de orvalho", image: jardimVivoAsset("elements/drop.png"), x: 23, y: 50 },
+          ],
+        },
+        rounds: [
+          { id: "missao-joaninha", targetId: "ladybug", hint: "Vamos encontrar a joaninha?", narration: "Procure a joaninha no Jardim Vivo." },
+          { id: "missao-borboleta", targetId: "butterfly", hint: "Vamos encontrar a borboleta?", narration: "Agora encontre a borboleta." },
+          { id: "missao-caracol", targetId: "snail", hint: "Vamos encontrar o caracol?", narration: "Procure o caracol com atencao." },
+          { id: "missao-passarinho", targetId: "bird", hint: "Vamos encontrar o passarinho?", narration: "Encontre o passarinho no jardim." },
+          { id: "missao-flor", targetId: "flower", hint: "Vamos encontrar a flor?", narration: "Toque na flor do Jardim Vivo." },
+          { id: "missao-folha", targetId: "leaf", hint: "Vamos encontrar a folha?", narration: "Encontre a folha destacada pela natureza." },
+          { id: "missao-minhoca", targetId: "worm", hint: "Vamos encontrar a minhoca?", narration: "Procure a minhoca no caminho." },
+          { id: "missao-broto", targetId: "sprout", hint: "Vamos encontrar o broto?", narration: "Encontre o broto que esta crescendo." },
+          { id: "missao-cogumelo", targetId: "mushroom", hint: "Vamos encontrar o cogumelo?", narration: "Toque no cogumelo do jardim." },
+          { id: "missao-gota", targetId: "drop", hint: "Vamos encontrar a gota de orvalho?", narration: "Encontre a gota de orvalho brilhante." },
+        ],
+      },
+      "teatro-bia": {
+        id: "teatro-bia",
+        type: "story-builder",
+        title: "O Teatro da Bia",
+        category: "Criatividade",
+        subtitle: "Story Builder",
+        scenario: "Teatro da Bia",
+        character: "Ana, Leo, Sofia, Miguel e Bia",
+        mascot: "Bia",
+        xp: 20,
+        medal: "Pequeno Artista",
+        unlock: { order: 14, unlocked: true, requires: "jardim-vivo" },
+        assets: {
+          atlas: teatroAsset("atlas.png"),
+          card: teatroAsset("screens/screen-intro.png"),
+          flow: teatroAsset("atlas.png"),
+          library: teatroAsset("atlas.png"),
+          scenarios: teatroAsset("atlas.png"),
+          screens: {
+            intro: teatroAsset("screens/screen-intro.png"),
+            room: teatroAsset("screens/screen-character.png"),
+            choice: teatroAsset("screens/screen-scenario.png"),
+            feedback: teatroAsset("screens/screen-stage.png"),
+            final: teatroAsset("screens/screen-final.png"),
+          },
+          steps: {
+            character: teatroAsset("screens/screen-character.png"),
+            scenario: teatroAsset("screens/screen-scenario.png"),
+            accessories: teatroAsset("screens/screen-accessories.png"),
+            stage: teatroAsset("screens/screen-stage.png"),
+          },
+          reward: teatroAsset("rewards/medal-pequeno-artista.png"),
+        },
+        audio: {
+          narration: 0.9,
+          effects: 0.75,
+          music: 0.35,
+        },
+        rounds: [
+          {
+            id: "historia-palco",
+            hint: "Monte uma historia e apresente no palco.",
+            narration: "Escolha personagem, cenario e acessorios. Depois faca seu espetaculo.",
+            story: {
+              prompts: {
+                character: "Quem sera o protagonista da sua historia?",
+                scenario: "Onde a historia vai acontecer?",
+                accessories: "Escolha acessorios para deixar tudo divertido.",
+                stage: "E hora de brilhar no palco!",
+              },
+              characters: [
+                { id: "ana", label: "Ana", image: teatroAsset("characters/ana.png") },
+                { id: "leo", label: "Leo", image: teatroAsset("characters/leo.png") },
+                { id: "sofia", label: "Sofia", image: teatroAsset("characters/sofia.png") },
+                { id: "miguel", label: "Miguel", image: teatroAsset("characters/miguel.png") },
+                { id: "bia", label: "Bia", image: teatroAsset("characters/bia.png") },
+              ],
+              scenarios: [
+                { id: "castelo", label: "Castelo", image: teatroAsset("scenarios/castelo.png") },
+                { id: "floresta", label: "Floresta", image: teatroAsset("scenarios/floresta.png") },
+                { id: "foguete", label: "Foguete", image: teatroAsset("scenarios/foguete.png") },
+                { id: "casinha", label: "Casinha", image: teatroAsset("scenarios/casinha.png") },
+                { id: "palco", label: "Palco de Festa", image: teatroAsset("scenarios/palco.png") },
+                { id: "jardim", label: "Jardim Encantado", image: teatroAsset("scenarios/jardim.png") },
+                { id: "praia", label: "Praia", image: teatroAsset("scenarios/praia.png") },
+              ],
+              accessories: [
+                { id: "coroa", label: "Coroa", image: teatroAsset("accessories/coroa.png") },
+                { id: "chapeu", label: "Chapeu", image: teatroAsset("accessories/chapeu.png") },
+                { id: "varinha", label: "Varinha", image: teatroAsset("accessories/varinha.png") },
+                { id: "balao", label: "Balao", image: teatroAsset("accessories/balao.png") },
+                { id: "ursinho", label: "Ursinho", image: teatroAsset("accessories/ursinho.png") },
+                { id: "flor", label: "Flor", image: teatroAsset("accessories/flor.png") },
+                { id: "escudo", label: "Escudo", image: teatroAsset("accessories/escudo.png") },
+                { id: "mochila", label: "Mochila", image: teatroAsset("accessories/mochila.png") },
+              ],
+              actions: [
+                { id: "andar", label: "Andar" },
+                { id: "acenar", label: "Acenar" },
+                { id: "dancar", label: "Dancar" },
+                { id: "pular", label: "Pular" },
+                { id: "girar", label: "Girar" },
+                { id: "sorrir", label: "Sorrir" },
+              ],
+            },
+          },
+        ],
+      },
+      "caminho-escola": {
+        id: "caminho-escola",
+        type: "path-follow-v2",
+        title: "O Caminho da Escola",
+        category: "Percurso",
+        subtitle: "Path Following V2",
+        scenario: "Mapa da Escola das Descobertas",
+        character: "Bia",
+        mascot: "Borboleta Bia",
+        xp: 20,
+        medal: "Explorador de Caminhos",
+        unlock: { order: 15, unlocked: true, requires: "teatro-bia" },
+        assets: {
+          atlas: escolaAsset("atlas.png"),
+          card: escolaAsset("screens/screen-intro.png"),
+          flow: escolaAsset("atlas.png"),
+          library: escolaAsset("atlas.png"),
+          scenarios: escolaAsset("atlas.png"),
+          screens: {
+            intro: escolaAsset("screens/screen-intro.png"),
+            room: escolaAsset("screens/screen-map.png"),
+            choice: escolaAsset("screens/screen-explore.png"),
+            feedback: escolaAsset("screens/screen-explore.png"),
+            final: escolaAsset("screens/screen-final.png"),
+          },
+          reward: escolaAsset("rewards/medal-explorador-caminhos.png"),
+        },
+        audio: {
+          narration: 0.9,
+          effects: 0.75,
+          music: 0.35,
+        },
+        rounds: [
+          {
+            id: "mapa-escola",
+            hint: "Leve a Bia ate a Escola! Passe por todos os lugares.",
+            narration: "Siga o caminho iluminado. Visite os pontos de referencia ate chegar a escola.",
+            pathV2: {
+              zoom: 1,
+              mapLayers: [
+                { id: "base", label: "Mapa ilustrado", image: escolaAsset("screens/screen-explore.png") },
+                { id: "trajeto", label: "Caminho iluminado" },
+                { id: "referencias", label: "Pontos de referencia" },
+              ],
+              phases: [
+                { id: "fase-1", label: "1", title: "Percurso curto", image: escolaAsset("phases/phase-1.png"), requiredPoints: ["arvore", "lago"] },
+                { id: "fase-2", label: "2", title: "Curvas", image: escolaAsset("phases/phase-2.png"), requiredPoints: ["arvore", "jardim", "lago"] },
+                { id: "fase-3", label: "3", title: "Mais referencias", image: escolaAsset("phases/phase-3.png"), requiredPoints: ["arvore", "jardim", "ponte", "lago", "banco"] },
+                { id: "fase-4", label: "4", title: "Mapa completo", image: escolaAsset("phases/phase-4.png"), requiredPoints: ["arvore", "jardim", "ponte", "lago", "banco", "escola"] },
+              ],
+              references: [
+                { id: "arvore", label: "Arvore", image: escolaAsset("references/arvore.png"), x: 22, y: 30, speech: "Muito bem! Voce visitou a arvore." },
+                { id: "jardim", label: "Jardim", image: escolaAsset("references/jardim.png"), x: 48, y: 26, speech: "Que lindo jardim no caminho." },
+                { id: "ponte", label: "Ponte", image: escolaAsset("references/ponte.png"), x: 67, y: 36, speech: "A ponte ajuda a continuar." },
+                { id: "lago", label: "Lago", image: escolaAsset("references/lago.png"), x: 36, y: 58, speech: "Voce encontrou o lago." },
+                { id: "banco", label: "Banco", image: escolaAsset("references/banco.png"), x: 58, y: 66, speech: "O banco e um ponto de descanso." },
+                { id: "escola", label: "Escola", image: escolaAsset("references/escola.png"), x: 84, y: 74, speech: "Chegamos a escola!" },
+              ],
+            },
+          },
+        ],
+      },
     },
     getGame(id) {
       return this.games[id] || this.games["caixa-misteriosa"];
@@ -621,6 +1021,10 @@
         criteriaFound: [],
         pathProgress: 0,
         pathDrawing: false,
+        pathV2PhaseIndex: 0,
+        pathV2Visited: [],
+        pathV2CompletedPhases: [],
+        pathV2ActiveReference: null,
         canvasItems: [],
         selectedCanvasId: null,
         canvasSequence: 0,
@@ -629,6 +1033,19 @@
         journeyVisited: [],
         journeyCompleted: [],
         journeyActivePortal: null,
+        audioPlayed: false,
+        audioReplayCount: 0,
+        patternAnswers: {},
+        selectedPatternId: null,
+        explorationFound: [],
+        explorationCelebratingId: null,
+        explorationLastFeedback: "",
+        storyStep: "character",
+        storyCharacter: null,
+        storyScenario: null,
+        storyAccessories: [],
+        storyAction: "sorrir",
+        storyMemory: null,
         xp: 0,
         medal: null,
         startedAt: Date.now(),
@@ -658,7 +1075,7 @@
       if (state.roundIndex >= game.rounds.length - 1) {
         return { ...state, completedRounds, screen: "final", completedAt: Date.now() };
       }
-      return { ...state, completedRounds, roundIndex: state.roundIndex + 1, screen: "room" };
+      return { ...state, completedRounds, roundIndex: state.roundIndex + 1, screen: "room", audioPlayed: false, audioReplayCount: 0, selectedPatternId: null, explorationCelebratingId: null, explorationLastFeedback: "" };
     },
   };
 
@@ -710,6 +1127,19 @@
         journey: game.type === "journey-celebration" ? {
           visitedPortals: state.journeyVisited,
           completedMemories: state.journeyCompleted,
+        } : null,
+        story: game.type === "story-builder" ? {
+          character: state.storyCharacter,
+          scenario: state.storyScenario,
+          accessories: state.storyAccessories,
+          action: state.storyAction,
+          memory: state.storyMemory,
+        } : null,
+        pathV2: game.type === "path-follow-v2" ? {
+          completedPhase: state.pathV2CompletedPhases[state.pathV2CompletedPhases.length - 1] || null,
+          completedPhases: state.pathV2CompletedPhases,
+          visitedReferences: state.pathV2Visited,
+          phaseIndex: state.pathV2PhaseIndex,
         } : null,
         completedAt: new Date(state.completedAt || Date.now()).toISOString(),
         supabaseReady: {
@@ -780,6 +1210,43 @@
       oscillator.start();
       gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.22);
       oscillator.stop(context.currentTime + 0.24);
+    },
+    playConfigured(sound, button) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext || !sound) return Promise.resolve();
+      const previousMusic = this.volumes.music;
+      this.volumes.music = Math.min(previousMusic, 0.08);
+      button?.classList.add("is-playing");
+      button?.setAttribute("aria-busy", "true");
+      const context = new AudioContext();
+      const output = context.createGain();
+      const duration = sound.duration || 1.2;
+      output.gain.value = this.volumes.effects * 0.12;
+      output.connect(context.destination);
+      const now = context.currentTime;
+      const steps = sound.frequencies?.length ? sound.frequencies : [440, 660, 520];
+      steps.forEach((frequency, index) => {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = sound.kind === "buzz" ? "sawtooth" : sound.kind === "wind" ? "triangle" : "sine";
+        oscillator.frequency.setValueAtTime(frequency, now + index * (duration / steps.length));
+        gain.gain.setValueAtTime(0.0001, now + index * (duration / steps.length));
+        gain.gain.exponentialRampToValueAtTime(this.volumes.effects * (sound.kind === "wind" ? 0.035 : 0.08), now + index * (duration / steps.length) + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + (index + 0.82) * (duration / steps.length));
+        oscillator.connect(gain);
+        gain.connect(output);
+        oscillator.start(now + index * (duration / steps.length));
+        oscillator.stop(now + (index + 0.9) * (duration / steps.length));
+      });
+      return new Promise((resolve) => {
+        window.setTimeout(() => {
+          button?.classList.remove("is-playing");
+          button?.setAttribute("aria-busy", "false");
+          this.volumes.music = previousMusic;
+          context.close?.();
+          resolve();
+        }, Math.ceil(duration * 1000) + 80);
+      });
     },
   };
 
@@ -1004,6 +1471,20 @@
           </section>
         `;
       }
+      if (this.game.type === "path-follow-v2") {
+        return `
+          <section class="game-screen" data-screen="room" aria-label="Conhecendo o mapa">
+            <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
+            ${components.particles(18)}
+            <article class="garden-prompt">
+              ${components.audioButton("Ouvir instrucao", this.currentRound().narration)}
+              <strong data-hint-text>Vamos conhecer os lugares do caminho!</strong>
+            </article>
+            <article class="path-v2-map-preview" data-path-v2-preview></article>
+            <button class="game-primary-button game-observe-button" type="button" data-game-action="begin-path-v2">Explorar</button>
+          </section>
+        `;
+      }
       if (this.game.type === "creative-canvas") {
         return `
           <section class="game-screen" data-screen="room" aria-label="Escolha dos materiais">
@@ -1050,6 +1531,71 @@
           </section>
         `;
       }
+      if (this.game.type === "audio-recognition") {
+        return `
+          <section class="game-screen" data-screen="room" aria-label="Escutando o som">
+            <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
+            ${components.particles(20)}
+            <article class="audio-recognition-listen">
+              <button class="audio-play-button" type="button" data-game-action="play-audio" aria-label="Ouvir o som">
+                <img src="${this.game.assets.audioButton}" alt="" loading="eager" decoding="async" />
+                <span>Ouvir</span>
+              </button>
+              <p data-audio-status>Toque para ouvir quantas vezes quiser.</p>
+              <button class="game-primary-button" type="button" data-game-action="begin-audio-choice">Escolher</button>
+            </article>
+          </section>
+        `;
+      }
+      if (this.game.type === "pattern-recognition") {
+        return `
+          <section class="game-screen" data-screen="room" aria-label="Observando a sequencia">
+            <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
+            ${components.particles(18)}
+            <article class="garden-prompt">
+              ${components.audioButton("Ouvir instrucao", this.currentRound().narration)}
+              <strong data-hint-text>${this.currentRound().hint}</strong>
+            </article>
+            <article class="pattern-observe-panel">
+              <div class="pattern-sequence" data-pattern-sequence></div>
+              <button class="game-primary-button" type="button" data-game-action="begin-pattern">Escolher</button>
+            </article>
+          </section>
+        `;
+      }
+      if (this.game.type === "exploration-v2") {
+        return `
+          <section class="game-screen" data-screen="room" aria-label="Explorando o Jardim Vivo">
+            <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
+            ${components.particles(20)}
+            <article class="exploration-v2-prompt">
+              ${components.audioButton("Ouvir missao", this.currentRound().narration)}
+              <div>
+                <strong data-exploration-v2-hint>${this.currentRound().hint}</strong>
+                <span data-exploration-v2-feedback></span>
+              </div>
+            </article>
+            <article class="exploration-v2-stage">
+              <div class="exploration-v2-elements" data-exploration-v2-elements></div>
+              <aside class="nature-tree-panel">
+                <strong>${this.game.exploration.missionPanelTitle}</strong>
+                <div class="nature-tree-visual" data-nature-tree></div>
+                <div class="nature-mission-list" data-nature-mission-list></div>
+                <span data-nature-progress>0/${this.game.rounds.length}</span>
+              </aside>
+            </article>
+          </section>
+        `;
+      }
+      if (this.game.type === "story-builder") {
+        return `
+          <section class="game-screen" data-screen="room" aria-label="Escolha do personagem">
+            <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.steps.character}')" aria-hidden="true"></div>
+            ${components.particles(16)}
+            <article class="story-builder-panel" data-story-panel></article>
+          </section>
+        `;
+      }
       if (this.game.type === "find") {
         return `
           <section class="game-screen" data-screen="room" aria-label="Exploracao do jardim">
@@ -1073,7 +1619,7 @@
     }
 
     renderHintScreen() {
-      if (this.game.type === "drag-drop" || this.game.type === "find" || this.game.type === "snap" || this.game.type === "criteria" || this.game.type === "path-follow" || this.game.type === "creative-canvas" || this.game.type === "timeline-sequence" || this.game.type === "journey-celebration") {
+      if (this.game.type === "drag-drop" || this.game.type === "find" || this.game.type === "snap" || this.game.type === "criteria" || this.game.type === "path-follow" || this.game.type === "path-follow-v2" || this.game.type === "creative-canvas" || this.game.type === "timeline-sequence" || this.game.type === "journey-celebration" || this.game.type === "audio-recognition" || this.game.type === "pattern-recognition" || this.game.type === "exploration-v2" || this.game.type === "story-builder") {
         return "";
       }
       const round = this.currentRound();
@@ -1153,6 +1699,24 @@
           </section>
         `;
       }
+      if (this.game.type === "path-follow-v2") {
+        return `
+          <section class="game-screen" data-screen="choice" aria-label="Explorando o mapa">
+            <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.choice}')" aria-hidden="true"></div>
+            ${components.particles(20)}
+            <article class="path-v2-panel">
+              <div class="path-v2-prompt">
+                ${components.audioButton("Ouvir instrucao", this.currentRound().narration)}
+                <strong data-path-v2-title>${this.currentRound().hint}</strong>
+                <span data-path-v2-feedback></span>
+              </div>
+              <div class="path-v2-board" data-path-v2-board></div>
+              <aside class="path-v2-phases" data-path-v2-phases></aside>
+              <div class="path-v2-progress"><i><b data-path-v2-progress style="width:0%"></b></i><span data-path-v2-progress-label>0%</span></div>
+            </article>
+          </section>
+        `;
+      }
       if (this.game.type === "creative-canvas") {
         return `
           <section class="game-screen" data-screen="choice" aria-label="Canvas criativo">
@@ -1202,6 +1766,40 @@
           </section>
         `;
       }
+      if (this.game.type === "audio-recognition") {
+        return `
+          <section class="game-screen" data-screen="choice" aria-label="Escolha auditiva">
+            <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.choice}')" aria-hidden="true"></div>
+            <article class="audio-choice-panel">
+              <button class="game-audio-button audio-repeat-button" type="button" data-game-action="play-audio" aria-label="Repetir som">🔊</button>
+              <h2 data-audio-title>${this.currentRound().hint}</h2>
+              <div class="audio-choice-cards" data-audio-choice-cards></div>
+            </article>
+          </section>
+        `;
+      }
+      if (this.game.type === "pattern-recognition") {
+        return `
+          <section class="game-screen" data-screen="choice" aria-label="Escolha do padrao">
+            <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.choice}')" aria-hidden="true"></div>
+            <article class="pattern-panel">
+              <h2 data-pattern-title>${this.currentRound().hint}</h2>
+              <div class="pattern-sequence" data-pattern-sequence></div>
+              <div class="pattern-choice-cards" data-pattern-choice-cards></div>
+              <div class="pattern-path" data-pattern-path></div>
+            </article>
+          </section>
+        `;
+      }
+      if (this.game.type === "story-builder") {
+        return `
+          <section class="game-screen" data-screen="choice" aria-label="Construcao da historia">
+            <div class="game-scene game-scene-choice" data-story-screen style="--screen:url('${this.game.assets.steps.scenario}')" aria-hidden="true"></div>
+            ${components.particles(18)}
+            <article class="story-builder-panel" data-story-panel></article>
+          </section>
+        `;
+      }
       if (this.game.type === "find") {
         return `
           <section class="game-screen" data-screen="choice" aria-label="Encontrar elementos do jardim">
@@ -1225,9 +1823,12 @@
     }
 
     renderFeedbackScreen() {
+      const feedbackScreen = this.game.type === "exploration-v2" && this.state.explorationLastFeedback === "other"
+        ? this.game.assets.feedbackOther
+        : this.game.assets.screens.feedback;
       return `
         <section class="game-screen" data-screen="feedback" aria-label="Feedback positivo">
-          <div class="game-scene game-scene-feedback" style="--screen:url('${this.game.assets.screens.feedback}')" aria-hidden="true"></div>
+          <div class="game-scene game-scene-feedback" style="--screen:url('${feedbackScreen}')" aria-hidden="true"></div>
           ${components.confetti()}
           <article class="feedback-panel">
             <button class="game-primary-button" type="button" data-game-action="next-round">Continuar</button>
@@ -1242,6 +1843,8 @@
           <div class="game-scene game-scene-final" style="--screen:url('${this.game.assets.screens.final}')" aria-hidden="true"></div>
           ${components.confetti(54)}
           <article class="final-panel">
+            <strong class="game-sr-only" data-final-medal>${this.game.medal}</strong>
+            <span class="game-sr-only" data-final-story></span>
             <span class="xp-counter" data-xp-counter>⭐ +0 XP</span>
             <div class="final-actions">
               <button class="game-primary-button game-restart-button" type="button" data-game-action="restart" aria-label="Jogar novamente">↻ Jogar novamente</button>
@@ -1296,8 +1899,16 @@
         const gameBack = event.target.closest("[data-game-back]");
         const action = event.target.closest("[data-game-action]")?.dataset.gameAction;
         const card = event.target.closest("[data-choice-id]");
+        const audioChoice = event.target.closest("[data-audio-choice-id]");
+        const patternChoice = event.target.closest("[data-pattern-choice-id]");
+        const explorationElement = event.target.closest("[data-exploration-element-id]");
+        const storyOption = event.target.closest("[data-story-option]");
+        const storyAccessory = event.target.closest("[data-story-accessory-id]");
+        const storyAction = event.target.closest("[data-story-action-id]");
         const criteria = event.target.closest("[data-criteria-id]");
         const pathPoint = event.target.closest("[data-path-point-id]");
+        const pathV2Reference = event.target.closest("[data-path-v2-reference-id]");
+        const pathV2Phase = event.target.closest("[data-path-v2-phase-index]");
         const creativeElement = event.target.closest("[data-creative-element-id]");
         const canvasItem = event.target.closest("[data-canvas-item-id]");
         const removeCanvas = event.target.closest("[data-remove-canvas-id]");
@@ -1316,9 +1927,17 @@
         if (gameSelect) this.openGame(gameSelect.dataset.gameSelect);
         if (gameBack) this.openHub();
         if (action) this.handleAction(action, event.target.closest("button"));
+        if (audioChoice) this.answerAudio(audioChoice.dataset.audioChoiceId, audioChoice);
+        if (patternChoice) this.answerPattern(patternChoice.dataset.patternChoiceId, patternChoice);
+        if (explorationElement) this.answerExplorationV2(explorationElement.dataset.explorationElementId, explorationElement);
+        if (storyOption) this.selectStoryOption(storyOption.dataset.storyOption, storyOption.dataset.storyOptionId);
+        if (storyAccessory) this.toggleStoryAccessory(storyAccessory.dataset.storyAccessoryId);
+        if (storyAction) this.performStoryAction(storyAction.dataset.storyActionId);
         if (card) this.answer(card.dataset.choiceId, card);
         if (criteria) this.answerCriteria(criteria.dataset.criteriaId, criteria);
         if (pathPoint) this.advancePath(pathPoint.dataset.pathPointId, pathPoint);
+        if (pathV2Reference) this.visitPathV2Reference(pathV2Reference.dataset.pathV2ReferenceId, pathV2Reference);
+        if (pathV2Phase) this.setPathV2Phase(Number(pathV2Phase.dataset.pathV2PhaseIndex));
         if (creativeElement) this.addCanvasItem(creativeElement.dataset.creativeElementId);
         if (removeCanvas) {
           this.removeCanvasItem(removeCanvas.dataset.removeCanvasId);
@@ -1458,6 +2077,9 @@
         if (this.game.type === "journey-celebration") {
           audioPlayer.speak(this.currentRound().narration, null);
         }
+        if (this.game.type === "story-builder") {
+          audioPlayer.speak(this.currentRound().narration, null);
+        }
       }
       if (action === "begin-drag") {
         this.updateRoundContent();
@@ -1496,6 +2118,18 @@
         this.updateRoundContent();
         this.go("room");
       }
+      if (action === "play-audio") {
+        this.playRoundSound(button);
+      }
+      if (action === "begin-audio-choice") {
+        this.updateRoundContent();
+        this.go("choice");
+      }
+      if (action === "begin-pattern") {
+        this.updateRoundContent();
+        audioPlayer.speak(this.currentRound().narration, null);
+        this.go("choice");
+      }
       if (action === "add-canvas-element") {
         const first = this.currentRound().canvas.elements[0];
         if (first) this.addCanvasItem(first.id);
@@ -1509,6 +2143,17 @@
       }
       if (action === "finish-canvas") {
         this.finishCanvas();
+      }
+      if (action === "story-next-accessories") {
+        this.state = { ...this.state, storyStep: "accessories" };
+        this.updateRoundContent();
+      }
+      if (action === "story-go-stage") {
+        this.state = { ...this.state, storyStep: "stage" };
+        this.updateRoundContent();
+      }
+      if (action === "finish-story") {
+        this.finishStory();
       }
       if (action === "open-box") {
         button?.classList.add("is-opening");
@@ -1551,6 +2196,107 @@
       card.classList.add("is-correct");
       audioPlayer.blip("success");
       window.setTimeout(() => this.go("feedback"), 520);
+    }
+
+    playRoundSound(button) {
+      if (this.game.type !== "audio-recognition") return;
+      const round = this.currentRound();
+      const sound = this.game.soundLibrary?.[round.soundId];
+      this.state = {
+        ...this.state,
+        audioPlayed: true,
+        audioReplayCount: this.state.audioReplayCount + 1,
+      };
+      const status = this.root.querySelector("[data-audio-status]");
+      if (status) status.textContent = "O som esta tocando. Pode repetir quando quiser.";
+      audioPlayer.playConfigured(sound, button).then(() => {
+        const currentStatus = this.root.querySelector("[data-audio-status]");
+        if (currentStatus) currentStatus.textContent = "Pronto para repetir ou escolher.";
+      });
+    }
+
+    answerAudio(choiceId, card) {
+      if (this.game.type !== "audio-recognition") return;
+      const round = this.currentRound();
+      this.state = { ...this.state, attempts: this.state.attempts + 1 };
+      if (choiceId !== round.correctId) {
+        card.classList.add("is-try-again");
+        const title = this.root.querySelector("[data-audio-title]");
+        if (title) title.textContent = "Vamos ouvir novamente?";
+        audioPlayer.blip("success");
+        window.setTimeout(() => {
+          card.classList.remove("is-try-again");
+          if (title) title.textContent = round.hint;
+        }, 900);
+        this.playRoundSound(this.root.querySelector("[data-screen].is-active [data-game-action='play-audio']"));
+        return;
+      }
+      card.classList.add("is-correct");
+      audioPlayer.blip("success");
+      window.setTimeout(() => this.go("feedback"), 560);
+    }
+
+    patternItem(round, itemId) {
+      return this.game.patternLibrary?.[round.category?.toLowerCase()]?.find((item) => item.id === itemId)
+        || Object.values(this.game.patternLibrary || {}).flat().find((item) => item.id === itemId)
+        || null;
+    }
+
+    answerPattern(choiceId, card) {
+      if (this.game.type !== "pattern-recognition") return;
+      const round = this.currentRound();
+      this.state = { ...this.state, attempts: this.state.attempts + 1, selectedPatternId: choiceId };
+      if (choiceId !== round.correctId) {
+        card.classList.add("is-selected");
+        const title = this.root.querySelector("[data-pattern-title]");
+        if (title) title.textContent = "Observe de novo e escolha com calma.";
+        audioPlayer.blip("success");
+        window.setTimeout(() => {
+          card.classList.remove("is-selected");
+          if (title) title.textContent = round.hint;
+          this.state = { ...this.state, selectedPatternId: null };
+          this.syncPattern();
+        }, 760);
+        return;
+      }
+      this.state = {
+        ...this.state,
+        patternAnswers: { ...this.state.patternAnswers, [round.id]: choiceId },
+        selectedPatternId: choiceId,
+      };
+      card.classList.add("is-correct");
+      audioPlayer.blip("success");
+      this.syncPattern();
+      window.setTimeout(() => this.go("feedback"), 700);
+    }
+
+    answerExplorationV2(elementId, elementNode) {
+      if (this.game.type !== "exploration-v2") return;
+      const round = this.currentRound();
+      const correct = elementId === round.targetId;
+      this.state = {
+        ...this.state,
+        attempts: this.state.attempts + 1,
+        explorationCelebratingId: elementId,
+        explorationLastFeedback: correct ? "correct" : "other",
+      };
+      elementNode?.classList.add(correct ? "is-found" : "is-celebrating");
+      audioPlayer.blip("success");
+      this.syncExplorationV2();
+      if (!correct) {
+        window.setTimeout(() => {
+          this.state = { ...this.state, explorationCelebratingId: null };
+          this.syncExplorationV2();
+        }, 850);
+        return;
+      }
+      this.state = {
+        ...this.state,
+        explorationFound: [...new Set([...this.state.explorationFound, elementId])],
+        completedRounds: [...new Set([...this.state.completedRounds, round.id])],
+      };
+      this.syncExplorationV2();
+      window.setTimeout(() => this.go("feedback"), 760);
     }
 
     answerCriteria(choiceId, card) {
@@ -1822,6 +2568,90 @@
       this.go("feedback");
     }
 
+    storyData() {
+      return this.currentRound().story;
+    }
+
+    selectStoryOption(kind, id) {
+      if (this.game.type !== "story-builder") return;
+      if (kind === "character") {
+        this.state = { ...this.state, storyCharacter: id, storyStep: "scenario", attempts: this.state.attempts + 1 };
+        audioPlayer.blip("success");
+        this.go("choice");
+      }
+      if (kind === "scenario") {
+        this.state = { ...this.state, storyScenario: id, storyStep: "accessories", attempts: this.state.attempts + 1 };
+        audioPlayer.blip("success");
+      }
+      this.updateRoundContent();
+    }
+
+    toggleStoryAccessory(accessoryId) {
+      if (this.game.type !== "story-builder") return;
+      const current = this.state.storyAccessories;
+      const exists = current.includes(accessoryId);
+      const next = exists ? current.filter((id) => id !== accessoryId) : [...current, accessoryId].slice(0, 4);
+      this.state = { ...this.state, storyAccessories: next, attempts: this.state.attempts + 1 };
+      audioPlayer.blip(exists ? "effects" : "success");
+      this.updateRoundContent();
+    }
+
+    performStoryAction(actionId) {
+      if (this.game.type !== "story-builder") return;
+      this.state = { ...this.state, storyAction: actionId, attempts: this.state.attempts + 1 };
+      audioPlayer.blip("success");
+      this.updateRoundContent();
+    }
+
+    saveStoryMemory() {
+      const story = this.storyData();
+      const character = story.characters.find((entry) => entry.id === this.state.storyCharacter) || story.characters[0];
+      const scenario = story.scenarios.find((entry) => entry.id === this.state.storyScenario) || story.scenarios[0];
+      const accessories = this.state.storyAccessories
+        .map((id) => story.accessories.find((entry) => entry.id === id))
+        .filter(Boolean);
+      const memory = {
+        id: `historia-${Date.now()}`,
+        gameId: this.game.id,
+        title: `${character.label} em ${scenario.label}`,
+        character: character.id,
+        characterLabel: character.label,
+        scenario: scenario.id,
+        scenarioLabel: scenario.label,
+        accessories: accessories.map((entry) => entry.id),
+        accessoryLabels: accessories.map((entry) => entry.label),
+        action: this.state.storyAction,
+        image: this.game.assets.screens.final,
+        createdAt: new Date().toISOString(),
+      };
+      let album = [];
+      try {
+        album = JSON.parse(localStorage.getItem(storyAlbumKey) || "[]");
+      } catch (error) {
+        console.warn("Nao foi possivel ler o Album das Historias.", error);
+      }
+      localStorage.setItem(storyAlbumKey, JSON.stringify([memory, ...album].slice(0, 24)));
+      return memory;
+    }
+
+    finishStory() {
+      if (this.game.type !== "story-builder") return;
+      const round = this.currentRound();
+      const story = round.story;
+      const character = this.state.storyCharacter || story.characters[0]?.id;
+      const scenario = this.state.storyScenario || story.scenarios[0]?.id;
+      this.state = {
+        ...this.state,
+        storyCharacter: character,
+        storyScenario: scenario,
+        storyStep: "stage",
+        completedRounds: [round.id],
+      };
+      this.state = { ...this.state, storyMemory: this.saveStoryMemory() };
+      this.updateRoundContent();
+      this.go("feedback");
+    }
+
     selectDragItem(dragId) {
       if (this.game.type !== "drag-drop") return;
       const alreadyPlaced = Boolean(this.state.placements[dragId]);
@@ -1929,12 +2759,20 @@
     }
 
     finish() {
+      if (this.game.type === "story-builder" && !this.state.storyMemory) {
+        this.state = { ...this.state, storyMemory: this.saveStoryMemory() };
+      }
       this.state = rewardController.complete(this.game, this.state);
       this.record = rewardController.persist(this.game, this.state);
       this.go("final");
       this.animateXp();
       this.root.querySelector("[data-game-xp]").textContent = `⭐ ${this.state.xp} XP`;
       this.root.querySelector("[data-game-medal]").textContent = `🏅 ${this.state.medal}`;
+      this.root.querySelector("[data-final-medal]").textContent = this.state.medal;
+      const storySummary = this.state.storyMemory
+        ? `Album das Historias: ${this.state.storyMemory.title}. Acessorios: ${this.state.storyMemory.accessoryLabels.join(", ") || "sem acessorios"}.`
+        : "";
+      this.root.querySelector("[data-final-story]").textContent = storySummary;
     }
 
     go(screen) {
@@ -2102,6 +2940,149 @@
         }
         return;
       }
+      if (this.game.type === "story-builder") {
+        const story = round.story;
+        const panel = this.root.querySelector(".game-screen.is-active [data-story-panel]") || this.root.querySelector("[data-story-panel]");
+        const screen = this.root.querySelector(".game-screen.is-active [data-story-screen]");
+        const character = story.characters.find((entry) => entry.id === this.state.storyCharacter) || story.characters[0];
+        const scenario = story.scenarios.find((entry) => entry.id === this.state.storyScenario) || story.scenarios[0];
+        const selectedAccessories = this.state.storyAccessories
+          .map((id) => story.accessories.find((entry) => entry.id === id))
+          .filter(Boolean);
+        if (screen) {
+          const stepImage = this.state.storyStep === "accessories"
+            ? this.game.assets.steps.accessories
+            : this.state.storyStep === "stage"
+              ? this.game.assets.steps.stage
+              : this.game.assets.steps.scenario;
+          screen.style.setProperty("--screen", `url('${stepImage}')`);
+        }
+        if (!panel) return;
+        if (this.state.storyStep === "character") {
+          panel.innerHTML = `
+            <h2>${story.prompts.character}</h2>
+            <div class="story-card-grid story-character-grid">
+              ${story.characters.map((item) => `
+                <button class="story-card${this.state.storyCharacter === item.id ? " is-selected" : ""}" type="button" data-story-option="character" data-story-option-id="${item.id}" aria-label="${item.label}">
+                  <img src="${item.image}" alt="" loading="eager" decoding="async" />
+                  <span>${item.label}</span>
+                </button>
+              `).join("")}
+            </div>
+          `;
+          return;
+        }
+        if (this.state.storyStep === "scenario") {
+          panel.innerHTML = `
+            <h2>${story.prompts.scenario}</h2>
+            <div class="story-card-grid story-scenario-grid">
+              ${story.scenarios.map((item) => `
+                <button class="story-card${this.state.storyScenario === item.id ? " is-selected" : ""}" type="button" data-story-option="scenario" data-story-option-id="${item.id}" aria-label="${item.label}">
+                  <img src="${item.image}" alt="" loading="eager" decoding="async" />
+                  <span>${item.label}</span>
+                </button>
+              `).join("")}
+            </div>
+          `;
+          return;
+        }
+        if (this.state.storyStep === "accessories") {
+          panel.innerHTML = `
+            <h2>${story.prompts.accessories}</h2>
+            <div class="story-card-grid story-accessory-grid">
+              ${story.accessories.map((item) => `
+                <button class="story-card story-accessory${this.state.storyAccessories.includes(item.id) ? " is-selected" : ""}" type="button" data-story-accessory-id="${item.id}" aria-label="${item.label}">
+                  <img src="${item.image}" alt="" loading="eager" decoding="async" />
+                  <span>${item.label}</span>
+                </button>
+              `).join("")}
+            </div>
+            <button class="game-primary-button story-stage-button" type="button" data-game-action="story-go-stage">Apresentar</button>
+          `;
+          return;
+        }
+        panel.innerHTML = `
+          <h2>${story.prompts.stage}</h2>
+          <div class="story-stage-layout">
+            <div class="story-stage-scene" style="--story-scenario:url('${scenario.image}')">
+              <div class="story-spotlight" aria-hidden="true"></div>
+              <div class="story-performer is-${this.state.storyAction}" aria-live="polite">
+                <img src="${character.image}" alt="" loading="eager" decoding="async" />
+                <span>${character.label}</span>
+              </div>
+              <div class="story-accessory-row">
+                ${selectedAccessories.map((item) => `<img src="${item.image}" alt="${item.label}" loading="eager" decoding="async" />`).join("")}
+              </div>
+              <div class="story-audience" aria-label="Plateia comemorando">
+                <i></i><i></i><i></i><i></i><i></i>
+              </div>
+            </div>
+            <div class="story-actions">
+              ${story.actions.map((item) => `
+                <button class="${this.state.storyAction === item.id ? "is-active" : ""}" type="button" data-story-action-id="${item.id}">${item.label}</button>
+              `).join("")}
+            </div>
+            <aside class="story-album-preview">
+              <strong>Album das Historias</strong>
+              <span>${character.label} em ${scenario.label}</span>
+              <small>${selectedAccessories.length ? selectedAccessories.map((item) => item.label).join(" · ") : "Sem acessorios"}</small>
+            </aside>
+          </div>
+          <button class="game-primary-button story-finish-button" type="button" data-game-action="finish-story">Finalizar historia</button>
+        `;
+        return;
+      }
+      if (this.game.type === "exploration-v2") {
+        const exploration = this.game.exploration;
+        const elementsHost = this.root.querySelector("[data-exploration-v2-elements]");
+        const hint = this.root.querySelector("[data-exploration-v2-hint]");
+        const inlineFeedback = this.root.querySelector("[data-exploration-v2-feedback]");
+        const tree = this.root.querySelector("[data-nature-tree]");
+        const missions = this.root.querySelector("[data-nature-mission-list]");
+        const progress = this.root.querySelector("[data-nature-progress]");
+        const foundCount = this.state.completedRounds.length;
+        const treeImages = [this.game.assets.tree.empty, this.game.assets.tree.leaves, this.game.assets.tree.flowers, this.game.assets.tree.almost, this.game.assets.tree.complete];
+        const treeIndex = Math.min(treeImages.length - 1, Math.floor((foundCount / this.game.rounds.length) * (treeImages.length - 1)));
+        if (hint) hint.textContent = round.hint;
+        if (inlineFeedback) {
+          inlineFeedback.textContent = this.state.explorationLastFeedback === "other"
+            ? exploration.positiveOther
+            : this.state.explorationLastFeedback === "correct"
+              ? exploration.positiveCorrect
+              : "";
+        }
+        if (elementsHost) {
+          elementsHost.innerHTML = exploration.elements.map((element) => {
+            const found = this.state.explorationFound.includes(element.id);
+            const target = element.id === round.targetId;
+            const celebrating = this.state.explorationCelebratingId === element.id;
+            return `
+              <button class="exploration-v2-element${target ? " is-highlighted" : ""}${found ? " is-found" : ""}${celebrating ? " is-celebrating" : ""}" type="button" data-exploration-element-id="${element.id}" aria-label="${element.label}" style="left:${element.x}%; top:${element.y}%;">
+                <img src="${element.image}" alt="" loading="eager" decoding="async" />
+                <span>${element.label}</span>
+              </button>
+            `;
+          }).join("");
+        }
+        if (tree) {
+          tree.innerHTML = `<img src="${treeImages[treeIndex]}" alt="" loading="eager" decoding="async" />`;
+        }
+        if (missions) {
+          missions.innerHTML = this.game.rounds.map((mission, index) => {
+            const element = exploration.elements.find((entry) => entry.id === mission.targetId);
+            const done = this.state.completedRounds.includes(mission.id);
+            const active = mission.id === round.id;
+            return `
+              <div class="nature-mission${done ? " is-done" : ""}${active ? " is-active" : ""}">
+                ${element ? `<img src="${element.image}" alt="" loading="eager" decoding="async" />` : ""}
+                <span>${index + 1}</span>
+              </div>
+            `;
+          }).join("");
+        }
+        if (progress) progress.textContent = `${foundCount}/${this.game.rounds.length}`;
+        return;
+      }
       if (this.game.type === "timeline-sequence") {
         const board = this.root.querySelector("[data-timeline-board]");
         const tray = this.root.querySelector("[data-timeline-card-tray]");
@@ -2185,6 +3166,66 @@
         }
         return;
       }
+      if (this.game.type === "audio-recognition") {
+        const title = this.root.querySelector("[data-audio-title]");
+        const cards = this.root.querySelector("[data-audio-choice-cards]");
+        const status = this.root.querySelector("[data-audio-status]");
+        if (title) title.textContent = round.hint;
+        if (status) status.textContent = this.state.audioPlayed ? "Pronto para repetir ou escolher." : "Toque para ouvir quantas vezes quiser.";
+        if (cards) {
+          cards.innerHTML = round.choices.map((choice) => `
+            <button class="audio-choice-card" type="button" data-audio-choice-id="${choice.id}" aria-label="${choice.label}">
+              <img src="${choice.image}" alt="" loading="eager" decoding="async" />
+              <span>${choice.label}</span>
+            </button>
+          `).join("");
+        }
+        return;
+      }
+      if (this.game.type === "pattern-recognition") {
+        const title = this.root.querySelector("[data-pattern-title]");
+        const sequence = this.root.querySelector("[data-pattern-sequence]");
+        const cards = this.root.querySelector("[data-pattern-choice-cards]");
+        const path = this.root.querySelector("[data-pattern-path]");
+        const completedCount = this.game.rounds.filter((entry) => this.state.completedRounds.includes(entry.id) || this.state.patternAnswers[entry.id]).length;
+        if (title) title.textContent = round.hint;
+        if (sequence) {
+          sequence.innerHTML = round.sequence.map((itemId, index) => {
+            const answerId = itemId || this.state.patternAnswers[round.id] || null;
+            const item = answerId ? this.patternItem(round, answerId) : null;
+            return `
+              <div class="pattern-sequence-slot${itemId ? "" : " is-missing"}${answerId && !itemId ? " is-filled" : ""}" aria-label="Item ${index + 1}">
+                ${item ? `<img src="${item.image}" alt="" loading="eager" decoding="async" /><span>${item.label}</span>` : "<b>?</b>"}
+              </div>
+            `;
+          }).join("");
+        }
+        if (cards) {
+          cards.innerHTML = round.choices.map((choiceId) => {
+            const item = this.patternItem(round, choiceId);
+            if (!item) return "";
+            const selected = this.state.selectedPatternId === choiceId;
+            const correct = this.state.patternAnswers[round.id] === choiceId;
+            return `
+              <button class="pattern-choice-card${selected ? " is-selected" : ""}${correct ? " is-correct" : ""}" type="button" data-pattern-choice-id="${choiceId}" aria-label="${item.label}">
+                <img src="${item.image}" alt="" loading="eager" decoding="async" />
+                <span>${item.label}</span>
+              </button>
+            `;
+          }).join("");
+        }
+        if (path) {
+          const percent = Math.round((completedCount / this.game.rounds.length) * 100);
+          const image = completedCount >= this.game.rounds.length ? this.game.assets.path.complete : completedCount > 0 ? this.game.assets.path.progress : this.game.assets.path.start;
+          path.style.setProperty("--pattern-progress", `${percent}%`);
+          path.innerHTML = `
+            <img src="${image}" alt="" loading="eager" decoding="async" />
+            <div class="pattern-progress-bar"><i style="width:${percent}%"></i></div>
+            <span>${completedCount}/${this.game.rounds.length}</span>
+          `;
+        }
+        return;
+      }
       const hint = this.root.querySelector("[data-hint-text]");
       if (hint) hint.textContent = round.hint;
       const speak = this.root.querySelector("[data-game-speak]");
@@ -2221,6 +3262,14 @@
     }
 
     syncTimeline() {
+      this.updateRoundContent();
+    }
+
+    syncPattern() {
+      this.updateRoundContent();
+    }
+
+    syncExplorationV2() {
       this.updateRoundContent();
     }
 

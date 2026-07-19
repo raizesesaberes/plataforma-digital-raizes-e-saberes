@@ -1133,6 +1133,10 @@ const studentGameCatalog = [
   { id: "atelie-bia", title: "O Atelie da Bia", medal: "Pequeno Artista da Natureza", image: "assets/games/atelie-bia/rewards/medal-artista.png" },
   { id: "rotina-pipo", title: "A Rotina do Pipo", medal: "Pequeno Cuidador", image: "assets/games/rotina-pipo/rewards/medal-cuidador.png" },
   { id: "grande-festa", title: "A Grande Festa das Descobertas", medal: "Grande Explorador das Descobertas", image: "assets/games/grande-festa/rewards/medal-grande-explorador.png" },
+  { id: "de-quem-e-este-som", title: "De Quem e Este Som?", medal: "Pequeno Ouvinte", image: "assets/games/de-quem-e-este-som/rewards/medal-pequeno-ouvinte.png" },
+  { id: "sequencia-pipo", title: "A Sequencia do Pipo", medal: "Pequeno Matematico", image: "assets/games/sequencia-pipo/rewards/medal-pequeno-matematico.png" },
+  { id: "jardim-vivo", title: "O Jardim Vivo", medal: "Pequeno Observador da Natureza", image: "assets/games/jardim-vivo/rewards/medal-observador-natureza.png" },
+  { id: "teatro-bia", title: "O Teatro da Bia", medal: "Pequeno Artista", image: "assets/games/teatro-bia/rewards/medal-pequeno-artista.png" },
 ];
 
 const readStudentGameRecords = () => {
