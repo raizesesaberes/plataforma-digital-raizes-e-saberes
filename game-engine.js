@@ -59,9 +59,20 @@
             final: asset("screens/screen-final.png"),
           },
           boxes: {
-            closed: asset("boxes/box-closed.png"),
-            glowing: asset("boxes/box-glowing.png"),
-            open: asset("boxes/box-open.png"),
+            closed: asset("components/box-closed-clean.png"),
+            glowing: asset("components/box-glowing-clean.png"),
+            open: asset("components/box-open-clean.png"),
+          },
+          components: {
+            room: asset("components/sala-descobertas-bg.png"),
+            celebration: asset("components/celebracao-bg.png"),
+            butterfly: asset("components/borboleta-bia-clean.png"),
+            medal: asset("components/medal-pequeno-explorador-clean.png"),
+            characters: [
+              asset("components/personagem-bia.png"),
+              asset("components/personagem-pipo.png"),
+              asset("components/personagem-tico.png"),
+            ],
           },
         },
         audio: {
@@ -1270,8 +1281,9 @@
 
   const audioPlayer = {
     volumes: { narration: 0.9, effects: 0.75, music: 0.35 },
-    speak(text, button) {
+    speak(text, button, onEnd) {
       if (!("speechSynthesis" in window)) {
+        window.setTimeout(() => onEnd?.(), 1500);
         return;
       }
       window.speechSynthesis.cancel();
@@ -1279,8 +1291,19 @@
       utterance.lang = "pt-BR";
       utterance.rate = 0.86;
       utterance.volume = this.volumes.narration;
+      const originalMusic = this.volumes.music;
+      this.volumes.music = Math.max(0.08, originalMusic * 0.35);
       button?.classList.add("is-playing");
-      utterance.onend = () => button?.classList.remove("is-playing");
+      utterance.onend = () => {
+        this.volumes.music = originalMusic;
+        button?.classList.remove("is-playing");
+        onEnd?.();
+      };
+      utterance.onerror = () => {
+        this.volumes.music = originalMusic;
+        button?.classList.remove("is-playing");
+        onEnd?.();
+      };
       window.speechSynthesis.speak(utterance);
     },
     blip(kind = "effects") {
@@ -1379,6 +1402,7 @@
       this.root.innerHTML = this.render();
       this.bind();
       if (this.mode === "player") {
+        document.body.classList.add("game-immersive-active");
         this.go("intro");
       }
     }
@@ -1445,7 +1469,7 @@
 
     renderPlayer() {
       return `
-        <section class="game-shell" aria-label="Motor Oficial dos Jogos Digitais">
+        <section class="game-shell game-player-shell" aria-label="Motor Oficial dos Jogos Digitais">
           ${this.renderGamePicker()}
           ${this.renderTopbar()}
           <div class="game-layout">
@@ -1501,6 +1525,23 @@
     }
 
     renderIntroScreen() {
+      if (this.game.type === "selection") {
+        return `
+          <section class="game-screen selection-screen selection-intro-screen" data-screen="intro" aria-label="Boas-vindas">
+            <div class="game-scene selection-room-scene" style="--screen:url('${this.game.assets.components.room}')" aria-hidden="true"></div>
+            ${components.particles(18)}
+            <img class="selection-butterfly" src="${this.game.assets.components.butterfly}" alt="" loading="eager" decoding="async" />
+            <div class="selection-hero">
+              <h1>${this.game.title}</h1>
+              <div class="selection-character-row" aria-hidden="true">
+                ${this.game.assets.components.characters.map((src) => `<img src="${src}" alt="" loading="eager" decoding="async" />`).join("")}
+              </div>
+              <img class="selection-hero-box" src="${this.game.assets.boxes.closed}" alt="" loading="eager" decoding="async" />
+              <button class="game-primary-button game-start-button" type="button" data-game-action="start" aria-label="Comecar ${this.game.title}">▶ Comecar</button>
+            </div>
+          </section>
+        `;
+      }
       return `
         <section class="game-screen" data-screen="intro" aria-label="Boas-vindas">
           <div class="game-scene game-scene-intro" style="--screen:url('${this.game.assets.screens.intro}')" aria-hidden="true"></div>
@@ -1717,6 +1758,15 @@
           </section>
         `;
       }
+      if (this.game.type === "selection") {
+        return `
+          <section class="game-screen selection-screen selection-box-screen" data-screen="room" aria-label="Caixa Misteriosa">
+            <div class="game-scene selection-room-scene" style="--screen:url('${this.game.assets.components.room}')" aria-hidden="true"></div>
+            ${components.particles(34)}
+            <button class="discovery-box selection-discovery-box is-glowing" type="button" data-game-action="open-box" aria-label="Abrir caixa misteriosa" style="--box:url('${this.game.assets.boxes.closed}');--box-open:url('${this.game.assets.boxes.open}')"></button>
+          </section>
+        `;
+      }
       return `
         <section class="game-screen" data-screen="room" aria-label="Sala das Descobertas">
           <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
@@ -1731,6 +1781,17 @@
         return "";
       }
       const round = this.currentRound();
+      if (this.game.type === "selection") {
+        return `
+          <section class="game-screen selection-screen selection-hint-screen" data-screen="hint" aria-label="Dica narrada">
+            <div class="game-scene selection-room-scene" style="--screen:url('${this.game.assets.components.room}')" aria-hidden="true"></div>
+            <article class="hint-card selection-hint-card">
+              <p data-hint-text>${round.hint}</p>
+              ${components.audioButton("Repetir dica", round.narration)}
+            </article>
+          </section>
+        `;
+      }
       return `
         <section class="game-screen" data-screen="hint" aria-label="Dica narrada">
           <div class="game-scene game-scene-hint" style="--screen:url('${this.game.assets.screens.hint}')" aria-hidden="true"></div>
@@ -1766,6 +1827,17 @@
               <h2>Arraste cada fruta para o cesto certo.</h2>
               <div class="drop-zone-grid" data-drop-zone-grid></div>
               <div class="drag-item-tray" data-drag-item-tray></div>
+            </article>
+          </section>
+        `;
+      }
+      if (this.game.type === "selection") {
+        return `
+          <section class="game-screen selection-screen selection-choice-screen" data-screen="choice" aria-label="Escolha do objeto">
+            <div class="game-scene selection-room-scene" style="--screen:url('${this.game.assets.components.room}')" aria-hidden="true"></div>
+            <article class="choice-panel selection-choice-panel">
+              <h2>Qual sera o objeto da nossa caixa?</h2>
+              <div class="choice-cards selection-choice-cards" data-choice-cards></div>
             </article>
           </section>
         `;
@@ -1940,6 +2012,19 @@
     }
 
     renderFeedbackScreen() {
+      if (this.game.type === "selection") {
+        return `
+          <section class="game-screen selection-screen selection-feedback-screen" data-screen="feedback" aria-label="Feedback positivo">
+            <div class="game-scene selection-celebration-scene" style="--screen:url('${this.game.assets.components.celebration}')" aria-hidden="true"></div>
+            ${components.confetti(30)}
+            ${components.particles(24)}
+            <article class="feedback-panel selection-feedback-panel">
+              <strong>Muito bem!</strong>
+              <button class="game-primary-button" type="button" data-game-action="next-round">Continuar</button>
+            </article>
+          </section>
+        `;
+      }
       const feedbackScreen = this.game.type === "exploration-v2" && this.state.explorationLastFeedback === "other"
         ? this.game.assets.feedbackOther
         : this.game.assets.screens.feedback;
@@ -1955,6 +2040,26 @@
     }
 
     renderFinalScreen() {
+      if (this.game.type === "selection") {
+        return `
+          <section class="game-screen selection-screen selection-final-screen" data-screen="final" aria-label="Medalha e XP">
+            <div class="game-scene selection-celebration-scene" style="--screen:url('${this.game.assets.components.celebration}')" aria-hidden="true"></div>
+            ${components.confetti(54)}
+            ${components.particles(28)}
+            <article class="final-panel selection-final-panel">
+              <img class="selection-final-medal" src="${this.game.assets.components.medal}" alt="" loading="eager" decoding="async" />
+              <h2>Parabens!</h2>
+              <strong data-final-medal>${this.game.medal}</strong>
+              <span class="game-sr-only" data-final-story></span>
+              <span class="xp-counter" data-xp-counter>⭐ +0 XP</span>
+              <div class="final-actions">
+                <button class="game-primary-button game-restart-button" type="button" data-game-action="restart" aria-label="Jogar novamente">↻ Jogar novamente</button>
+                <a class="game-secondary-button" href="jogos.html">Voltar aos Jogos</a>
+              </div>
+            </article>
+          </section>
+        `;
+      }
       return `
         <section class="game-screen" data-screen="final" aria-label="Medalha e XP">
           <div class="game-scene game-scene-final" style="--screen:url('${this.game.assets.screens.final}')" aria-hidden="true"></div>
@@ -2175,6 +2280,7 @@
       this.record = rewardController.latest(this.game.id);
       this.journeyV2Visited = new Set();
       this.journeyV2Completed = new Set();
+      document.body.classList.add("game-immersive-active");
       this.root.style.setProperty("--game-atlas", `url("${this.game.assets.atlas}")`);
       this.root.style.setProperty("--library-atlas", `url("${this.game.assets.library}")`);
       this.root.innerHTML = this.render();
@@ -2184,6 +2290,7 @@
 
     openHub() {
       this.mode = "hub";
+      document.body.classList.remove("game-immersive-active");
       this.root.innerHTML = this.render();
     }
 
@@ -2303,7 +2410,12 @@
         window.setTimeout(() => {
           this.updateRoundContent();
           this.go("hint");
-          audioPlayer.speak(this.currentRound().narration, this.root.querySelector("[data-game-speak]"));
+          audioPlayer.speak(this.currentRound().narration, this.root.querySelector("[data-game-speak]"), () => {
+            if (this.game.type === "selection" && this.state.screen === "hint") {
+              this.updateRoundContent();
+              this.go("choice");
+            }
+          });
         }, 680);
       }
       if (action === "choose") {
@@ -2320,7 +2432,8 @@
         }
       }
       if (action === "restart") {
-        this.state = progressController.create(this.game);
+      this.state = progressController.create(this.game);
+        if (this.game.type === "selection") this.record = null;
         this.updateRoundContent();
         this.go("intro");
       }
@@ -2330,12 +2443,12 @@
       const round = this.currentRound();
       this.state = { ...this.state, attempts: this.state.attempts + 1 };
       if (choiceId !== round.correctId) {
-        card.classList.add("is-wrong");
+        card.classList.add("is-selected");
         audioPlayer.blip();
-        audioPlayer.speak("Tente novamente. Ouca a dica com carinho.", null);
+        audioPlayer.speak(round.narration, null);
         return;
       }
-      card.classList.add("is-correct");
+      card.classList.add("is-correct", "is-selected");
       audioPlayer.blip("success");
       window.setTimeout(() => this.go("feedback"), 520);
     }
