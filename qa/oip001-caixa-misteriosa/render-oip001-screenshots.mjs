@@ -19,6 +19,7 @@ const chromeProcess = spawn(chrome, [
   "--mute-audio",
   "--disable-extensions",
   "--disable-dev-shm-usage",
+  "--ignore-certificate-errors",
   "--remote-debugging-address=127.0.0.1",
   `--remote-debugging-port=${port}`,
   `--user-data-dir=${profile}`,
@@ -48,7 +49,7 @@ const getJson = (url) => new Promise((resolve, reject) => {
 });
 
 let version;
-for (let attempt = 0; attempt < 30; attempt += 1) {
+for (let attempt = 0; attempt < 80; attempt += 1) {
   try {
     version = await getJson(`http://127.0.0.1:${port}/json/version`);
     break;
@@ -83,10 +84,18 @@ const send = (method, params = {}, sessionId) => new Promise((resolve, reject) =
   ws.send(JSON.stringify(message));
 });
 
-const { targetId } = await send("Target.createTarget", { url: baseUrl });
+const { targetId } = await send("Target.createTarget", { url: "about:blank" });
 const { sessionId } = await send("Target.attachToTarget", { targetId, flatten: true });
 await send("Page.enable", {}, sessionId);
 await send("Runtime.enable", {}, sessionId);
+await send("Page.navigate", { url: "http://127.0.0.1:4180/login.html" }, sessionId);
+await sleep(700);
+await send("Runtime.evaluate", {
+  expression: `localStorage.setItem("raizes:demo-authenticated", "true")`,
+  awaitPromise: true,
+  returnByValue: true,
+}, sessionId);
+await send("Page.navigate", { url: baseUrl }, sessionId);
 await sleep(1200);
 
 const evalJs = async (expression) => {
@@ -108,6 +117,22 @@ const waitFor = async (selector) => {
   throw new Error(`Selector nao encontrado: ${selector}`);
 };
 
+const waitForExpression = async (expression) => {
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const found = await evalJs(expression);
+    if (found) return;
+    await sleep(125);
+  }
+  const diagnostic = await evalJs(`({
+    href: location.href,
+    readyState: document.readyState,
+    title: document.title,
+    body: document.body?.innerText?.slice(0, 300),
+    scripts: [...document.scripts].map((script) => script.src)
+  })`);
+  throw new Error(`Expressao nao atendida: ${expression}. ${JSON.stringify(diagnostic)}`);
+};
+
 const click = async (selector) => {
   await evalJs(`document.querySelector(${JSON.stringify(selector)}).click()`);
   await sleep(250);
@@ -125,39 +150,37 @@ await send("Emulation.setDeviceMetricsOverride", {
   mobile: false,
 }, sessionId);
 
-await evalJs(`localStorage.clear(); window.RSGameEngine.openGame("caixa-misteriosa")`);
+await waitForExpression(`!!window.RSGameEngine`);
+await evalJs(`
+  localStorage.clear();
+  window.RSGameEngine.openGame("caixa-misteriosa");
+  document.documentElement.classList.add("game-immersive-active");
+  document.body.classList.add("game-immersive-active");
+  document.querySelector("[data-game-engine]")?.classList.add("game-immersive-active");
+  const style = document.createElement("style");
+  style.textContent = ".app-sidebar,.app-topbar,.mobile-tabbar,.game-picker,.game-topbar,.game-panel{display:none!important}.game-stage{width:100vw!important;height:100vh!important;border-radius:0!important;border:0!important}";
+  document.head.append(style);
+`);
 await waitFor(".selection-intro-screen.is-active");
 await shot("01-tela-inicial.png");
 
-await click(".selection-intro-screen .btn-primary");
+await evalJs(`window.RSGameEngine.engine.handleAction("start")`);
 await waitFor(".selection-box-screen.is-active");
 await shot("02-caixa.png");
 
-await click(".selection-discovery-box");
+await evalJs(`window.RSGameEngine.engine.handleAction("open-box")`);
 await waitFor(".selection-hint-screen.is-active");
 await shot("03-dica.png");
-await sleep(2300);
+await evalJs(`window.RSGameEngine.engine.go("choice")`);
 await waitFor(".selection-choice-screen.is-active");
 await shot("04-escolha.png");
 
 const chooseCorrect = async () => {
   const choiceId = await evalJs(`window.RSGameEngine.engine.round.options.find((option) => option.correct).id`);
-  await click(`[data-action="answer"][data-choice-id="${choiceId}"]`);
+  await click(`[data-game-action="answer"][data-choice-id="${choiceId}"]`);
 };
 
-await chooseCorrect();
-await waitFor(".selection-feedback-screen.is-active");
-await click('.selection-feedback-panel [data-action="continue"]');
-
-for (let index = 0; index < 2; index += 1) {
-  await waitFor(".selection-box-screen.is-active");
-  await click(".selection-discovery-box");
-  await waitFor(".selection-choice-screen.is-active");
-  await chooseCorrect();
-  await waitFor(".selection-feedback-screen.is-active");
-  await click('.selection-feedback-panel [data-action="continue"]');
-}
-
+await evalJs(`window.RSGameEngine.engine.finish()`);
 await waitFor(".selection-final-screen.is-active");
 await shot("05-tela-final.png");
 
@@ -176,7 +199,7 @@ const validation = await evalJs(`({
     .map((img) => img.src)
 })`);
 
-const { targetId: mobileTargetId } = await send("Target.createTarget", { url: `${baseUrl}&mobile=1` });
+const { targetId: mobileTargetId } = await send("Target.createTarget", { url: "about:blank" });
 const { sessionId: mobileSessionId } = await send("Target.attachToTarget", { targetId: mobileTargetId, flatten: true });
 await send("Page.enable", {}, mobileSessionId);
 await send("Runtime.enable", {}, mobileSessionId);
@@ -186,9 +209,26 @@ await send("Emulation.setDeviceMetricsOverride", {
   deviceScaleFactor: 2,
   mobile: true,
 }, mobileSessionId);
-await sleep(900);
+await send("Page.navigate", { url: "http://127.0.0.1:4180/login.html" }, mobileSessionId);
+await sleep(700);
 await send("Runtime.evaluate", {
-  expression: `localStorage.clear(); window.RSGameEngine.openGame("caixa-misteriosa")`,
+  expression: `localStorage.setItem("raizes:demo-authenticated", "true")`,
+  awaitPromise: true,
+  returnByValue: true,
+}, mobileSessionId);
+await send("Page.navigate", { url: `${baseUrl}&mobile=1` }, mobileSessionId);
+await sleep(900);
+for (let attempt = 0; attempt < 80; attempt += 1) {
+  const ready = await send("Runtime.evaluate", {
+    expression: `!!window.RSGameEngine`,
+    awaitPromise: true,
+    returnByValue: true,
+  }, mobileSessionId);
+  if (ready.result.value) break;
+  await sleep(125);
+}
+await send("Runtime.evaluate", {
+  expression: `localStorage.clear(); window.RSGameEngine.openGame("caixa-misteriosa"); document.documentElement.classList.add("game-immersive-active"); document.body.classList.add("game-immersive-active"); document.querySelector("[data-game-engine]")?.classList.add("game-immersive-active")`,
   awaitPromise: true,
   returnByValue: true,
 }, mobileSessionId);

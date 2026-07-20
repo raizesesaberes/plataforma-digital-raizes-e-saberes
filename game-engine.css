@@ -15,16 +15,24 @@
   box-sizing: border-box;
 }
 
+html.game-immersive-active,
 body.game-immersive-active {
   overflow: hidden;
 }
 
+html.game-immersive-active .app-shell,
 body.game-immersive-active .app-shell {
   display: block;
   min-height: 100vh;
   padding: 0;
 }
 
+html.game-immersive-active .app-sidebar,
+html.game-immersive-active .app-topbar,
+html.game-immersive-active .mobile-tabbar,
+html.game-immersive-active .game-picker,
+html.game-immersive-active .game-topbar,
+html.game-immersive-active .game-panel,
 body.game-immersive-active .app-sidebar,
 body.game-immersive-active .app-topbar,
 body.game-immersive-active .mobile-tabbar,
@@ -34,19 +42,26 @@ body.game-immersive-active .game-panel {
   display: none !important;
 }
 
+html.game-immersive-active .app-main,
 body.game-immersive-active .app-main {
   min-height: 100vh;
 }
 
-body.game-immersive-active .game-engine {
+html.game-immersive-active .game-engine,
+body.game-immersive-active .game-engine,
+.game-engine.game-immersive-active {
   min-height: 100vh;
 }
 
-body.game-immersive-active .game-layout {
+html.game-immersive-active .game-layout,
+body.game-immersive-active .game-layout,
+.game-engine.game-immersive-active .game-layout {
   display: block;
 }
 
-body.game-immersive-active .game-stage {
+html.game-immersive-active .game-stage,
+body.game-immersive-active .game-stage,
+.game-engine.game-immersive-active .game-stage {
   width: 100vw;
   height: 100vh;
   min-height: 100vh;
@@ -711,6 +726,10 @@ body.game-immersive-active .game-stage {
   min-width: 180px;
   aspect-ratio: 1.1;
   margin-top: min(20vh, 190px);
+  padding: 0;
+  border: 0;
+  appearance: none;
+  background-color: transparent;
   background-image: var(--box);
   background-repeat: no-repeat;
   background-size: contain;

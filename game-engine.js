@@ -2280,7 +2280,9 @@
       this.record = rewardController.latest(this.game.id);
       this.journeyV2Visited = new Set();
       this.journeyV2Completed = new Set();
+      document.documentElement.classList.add("game-immersive-active");
       document.body.classList.add("game-immersive-active");
+      this.root.classList.add("game-immersive-active");
       this.root.style.setProperty("--game-atlas", `url("${this.game.assets.atlas}")`);
       this.root.style.setProperty("--library-atlas", `url("${this.game.assets.library}")`);
       this.root.innerHTML = this.render();
@@ -2290,7 +2292,9 @@
 
     openHub() {
       this.mode = "hub";
+      document.documentElement.classList.remove("game-immersive-active");
       document.body.classList.remove("game-immersive-active");
+      this.root.classList.remove("game-immersive-active");
       this.root.innerHTML = this.render();
     }
 
@@ -3850,10 +3854,19 @@
   }
 
   window.RaizesGameEngine = { GameEngine, gameRepository, progressController, rewardController, audioPlayer };
+  window.RSGameEngine = {
+    games: gameRepository.games,
+    engine: null,
+    openGame(gameId) {
+      if (!this.engine) return;
+      this.engine.openGame(gameId);
+    },
+  };
 
   const mountAll = () => {
     document.querySelectorAll("[data-game-engine]").forEach((root) => {
       const engine = new GameEngine(root, root.dataset.gameId || "caixa-misteriosa");
+      if (!window.RSGameEngine.engine) window.RSGameEngine.engine = engine;
       engine.mount();
     });
   };
