@@ -929,6 +929,35 @@ body.game-immersive-active .game-stage,
   font-size: clamp(1.15rem, 3vw, 2rem);
 }
 
+.basket-title {
+  position: absolute;
+  top: clamp(20px, 5vh, 54px);
+  left: 50%;
+  z-index: 4;
+  width: min(92vw, 820px);
+  margin: 0;
+  color: #fff;
+  font-size: clamp(2.4rem, 7vw, 5.8rem);
+  font-weight: 1000;
+  line-height: 0.92;
+  text-align: center;
+  text-shadow:
+    0 4px 0 #54af37,
+    0 -4px 0 #54af37,
+    4px 0 0 #54af37,
+    -4px 0 0 #54af37,
+    0 10px 18px rgba(67, 45, 12, 0.24);
+  transform: translateX(-50%);
+}
+
+.game-engine[data-active-game="organizando-cesta"] .game-hero-copy {
+  transform: translateY(8%);
+}
+
+.game-engine[data-active-game="organizando-cesta"] .game-screen[data-screen="choice"] {
+  transition: opacity 250ms ease, transform 250ms ease;
+}
+
 .drop-zone-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(120px, 1fr));
@@ -3256,6 +3285,7 @@ body.game-immersive-active .game-stage,
 }
 
 .drop-zone {
+  position: relative;
   display: grid;
   min-height: clamp(150px, 20vw, 210px);
   place-items: center;
@@ -3269,6 +3299,51 @@ body.game-immersive-active .game-stage,
   font-weight: 1000;
   cursor: pointer;
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.basket-final-medal {
+  position: absolute;
+  top: clamp(34px, 6vh, 64px);
+  left: 50%;
+  z-index: 3;
+  width: clamp(150px, 18.5vw, 232px);
+  transform: translateX(-50%);
+  filter: drop-shadow(0 0 34px rgba(255, 219, 78, 0.86)) drop-shadow(0 18px 24px rgba(88, 54, 4, 0.22));
+  animation: basket-medal-bounce 900ms cubic-bezier(.2, 1.35, .35, 1) both, medal-glow 1.8s ease-in-out 0.35s infinite;
+  pointer-events: none;
+}
+
+.basket-final-characters {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.basket-final-characters img {
+  position: absolute;
+  width: clamp(82px, 11vw, 138px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 18px rgba(46, 31, 8, 0.2));
+}
+
+.basket-final-bia {
+  left: 16%;
+  bottom: 18%;
+  animation: basket-clap 1.2s ease-in-out infinite;
+}
+
+.basket-final-pipo {
+  left: 8%;
+  bottom: 36%;
+  animation: basket-wing 820ms ease-in-out infinite;
+}
+
+.basket-final-tico {
+  right: 10%;
+  bottom: 18%;
+  animation: basket-wing 920ms ease-in-out infinite;
 }
 
 .drop-zone:hover,
@@ -3288,6 +3363,49 @@ body.game-immersive-active .game-stage,
   height: 118px;
   object-fit: contain;
   filter: drop-shadow(0 12px 16px rgba(60, 48, 22, 0.16));
+}
+
+.game-engine[data-active-game="organizando-cesta"] .drop-zone-grid {
+  gap: clamp(14px, 2.4vw, 24px);
+}
+
+.game-engine[data-active-game="organizando-cesta"] .drop-zone {
+  min-height: clamp(172px, 23vw, 242px);
+  padding: clamp(14px, 2.2vw, 22px);
+}
+
+.game-engine[data-active-game="organizando-cesta"] .drop-zone::after {
+  content: "★";
+  position: absolute;
+  top: 10%;
+  right: 12%;
+  color: #ffd24e;
+  font-size: clamp(1.4rem, 3vw, 2.1rem);
+  opacity: 0;
+  text-shadow: 0 0 14px rgba(255, 238, 130, 0.9);
+  pointer-events: none;
+}
+
+.game-engine[data-active-game="organizando-cesta"] .drop-zone img {
+  width: min(94%, 164px);
+  height: 136px;
+}
+
+.game-engine[data-active-game="organizando-cesta"] .drop-zone.is-filled {
+  border-color: rgba(244, 183, 46, 0.82);
+  box-shadow: 0 0 0 5px rgba(255, 218, 75, 0.16), 0 20px 34px rgba(144, 96, 10, 0.16);
+}
+
+.game-engine[data-active-game="organizando-cesta"] .drop-zone.is-snapped {
+  animation: basket-fill-pulse 860ms ease both;
+}
+
+.game-engine[data-active-game="organizando-cesta"] .drop-zone.is-snapped img {
+  animation: fruit-drop-bounce 760ms ease both;
+}
+
+.game-engine[data-active-game="organizando-cesta"] .drop-zone.is-snapped::after {
+  animation: fruit-star-pop 760ms ease both;
 }
 
 .drag-item-tray {
@@ -3318,6 +3436,16 @@ body.game-immersive-active .game-stage,
   width: 82px;
   height: 64px;
   object-fit: contain;
+}
+
+.game-engine[data-active-game="organizando-cesta"] .drag-item {
+  min-width: 136px;
+  min-height: 132px;
+}
+
+.game-engine[data-active-game="organizando-cesta"] .drag-item img {
+  width: 104px;
+  height: 80px;
 }
 
 .drag-item.is-selected {
@@ -3695,6 +3823,34 @@ body.game-immersive-active .game-stage,
   .game-picker,
   .drop-zone-grid {
     grid-template-columns: 1fr;
+  }
+
+  .basket-title {
+    top: 18px;
+    width: min(94vw, 420px);
+    font-size: clamp(2.15rem, 12vw, 3.8rem);
+  }
+
+  .game-engine[data-active-game="organizando-cesta"] .game-start-button {
+    bottom: clamp(74px, 15vh, 118px);
+  }
+
+  .game-engine[data-active-game="organizando-cesta"] .drop-zone {
+    min-height: 168px;
+  }
+
+  .game-engine[data-active-game="organizando-cesta"] .drag-item {
+    min-width: 128px;
+    min-height: 124px;
+  }
+
+  .basket-final-medal {
+    top: 34px;
+    width: clamp(132px, 36vw, 176px);
+  }
+
+  .basket-final-characters img {
+    width: clamp(70px, 21vw, 96px);
   }
 
   .game-card {
@@ -4110,6 +4266,96 @@ body.game-immersive-active .game-stage,
 
   50% {
     filter: drop-shadow(0 0 46px rgba(255, 232, 102, 1)) drop-shadow(0 18px 24px rgba(85, 55, 8, 0.2));
+  }
+}
+
+@keyframes fruit-drop-bounce {
+  0% {
+    transform: translateY(-12px) scale(0.86);
+    filter: drop-shadow(0 0 0 rgba(255, 221, 75, 0));
+  }
+
+  48% {
+    transform: translateY(4px) scale(1.18);
+    filter: drop-shadow(0 0 22px rgba(255, 221, 75, 0.88));
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 12px 16px rgba(60, 48, 22, 0.16));
+  }
+}
+
+@keyframes fruit-star-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) rotate(-18deg);
+  }
+
+  42% {
+    opacity: 1;
+    transform: scale(1.32) rotate(10deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.9) rotate(22deg);
+  }
+}
+
+@keyframes basket-fill-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(255, 218, 75, 0);
+  }
+
+  45% {
+    transform: scale(1.07);
+    box-shadow: 0 0 0 8px rgba(255, 218, 75, 0.28), 0 0 34px rgba(255, 205, 54, 0.55);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 5px rgba(255, 218, 75, 0.16), 0 20px 34px rgba(144, 96, 10, 0.16);
+  }
+}
+
+@keyframes basket-medal-bounce {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(24px) scale(0.6);
+  }
+
+  62% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-8px) scale(1.12);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+@keyframes basket-wing {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg) scaleX(1);
+  }
+
+  50% {
+    transform: translateY(-9px) rotate(3deg) scaleX(0.96);
+  }
+}
+
+@keyframes basket-clap {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-4px) scale(1.04);
   }
 }
 

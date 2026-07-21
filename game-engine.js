@@ -141,6 +141,12 @@
             feedback: "assets/games/organizando-cesta/screens/screen-feedback.png",
             final: "assets/games/organizando-cesta/screens/screen-final.png",
           },
+          reward: "assets/games/organizando-cesta/effects/medal-jogo.png",
+          characters: {
+            bia: "assets/games/organizando-cesta/characters/bia.png",
+            pipo: "assets/games/organizando-cesta/characters/pipo.png",
+            tico: "assets/games/organizando-cesta/characters/tico.png",
+          },
         },
         audio: {
           narration: 0.9,
@@ -1402,7 +1408,10 @@
       this.root.innerHTML = this.render();
       this.bind();
       if (this.mode === "player") {
+        this.root.dataset.activeGame = this.game.id;
+        document.documentElement.classList.add("game-immersive-active");
         document.body.classList.add("game-immersive-active");
+        this.root.classList.add("game-immersive-active");
         this.go("intro");
       }
     }
@@ -1546,8 +1555,9 @@
         <section class="game-screen" data-screen="intro" aria-label="Boas-vindas">
           <div class="game-scene game-scene-intro" style="--screen:url('${this.game.assets.screens.intro}')" aria-hidden="true"></div>
           ${components.particles(18)}
+          ${this.game.id === "organizando-cesta" ? `<h1 class="basket-title">${this.game.title}</h1>` : ""}
           <div class="game-hero-copy">
-            <button class="game-primary-button game-start-button" type="button" data-game-action="start" aria-label="Comecar A Caixa Misteriosa">▶ Comecar</button>
+            <button class="game-primary-button game-start-button" type="button" data-game-action="start" aria-label="Comecar ${this.game.title}">▶ Comecar</button>
           </div>
         </section>
       `;
@@ -1557,10 +1567,10 @@
       if (this.game.type === "drag-drop") {
         const round = this.currentRound();
         return `
-          <section class="game-screen" data-screen="room" aria-label="${round.layout === "shape-house" ? "Observando as formas" : "Observando as frutas"}">
+          <section class="game-screen${this.game.id === "organizando-cesta" ? " basket-room-screen" : ""}" data-screen="room" aria-label="${round.layout === "shape-house" ? "Observando as formas" : "Observando as frutas"}">
             <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
             ${components.particles(18)}
-            <button class="game-primary-button game-observe-button" type="button" data-game-action="begin-drag">${round.layout === "shape-house" ? "Montar" : "Organizar"}</button>
+            ${this.game.id === "organizando-cesta" ? "" : `<button class="game-primary-button game-observe-button" type="button" data-game-action="begin-drag">${round.layout === "shape-house" ? "Montar" : "Organizar"}</button>`}
           </section>
         `;
       }
@@ -2064,6 +2074,14 @@
         <section class="game-screen" data-screen="final" aria-label="Medalha e XP">
           <div class="game-scene game-scene-final" style="--screen:url('${this.game.assets.screens.final}')" aria-hidden="true"></div>
           ${components.confetti(54)}
+          ${this.game.id === "organizando-cesta" ? `
+            <div class="basket-final-characters" aria-hidden="true">
+              <img class="basket-final-bia" src="${this.game.assets.characters.bia}" alt="" loading="eager" decoding="async" />
+              <img class="basket-final-pipo" src="${this.game.assets.characters.pipo}" alt="" loading="eager" decoding="async" />
+              <img class="basket-final-tico" src="${this.game.assets.characters.tico}" alt="" loading="eager" decoding="async" />
+            </div>
+            <img class="basket-final-medal" src="${this.game.assets.reward}" alt="" loading="eager" decoding="async" />
+          ` : ""}
           <article class="final-panel">
             <strong class="game-sr-only" data-final-medal>${this.game.medal}</strong>
             <span class="game-sr-only" data-final-story></span>
@@ -2280,6 +2298,7 @@
       this.record = rewardController.latest(this.game.id);
       this.journeyV2Visited = new Set();
       this.journeyV2Completed = new Set();
+      this.root.dataset.activeGame = this.game.id;
       document.documentElement.classList.add("game-immersive-active");
       document.body.classList.add("game-immersive-active");
       this.root.classList.add("game-immersive-active");
@@ -2292,6 +2311,7 @@
 
     openHub() {
       this.mode = "hub";
+      delete this.root.dataset.activeGame;
       document.documentElement.classList.remove("game-immersive-active");
       document.body.classList.remove("game-immersive-active");
       this.root.classList.remove("game-immersive-active");
@@ -2303,6 +2323,14 @@
         audioPlayer.blip();
         this.updateRoundContent();
         this.go("room");
+        if (this.game.id === "organizando-cesta") {
+          window.setTimeout(() => {
+            if (this.state.screen !== "room") return;
+            this.updateRoundContent();
+            audioPlayer.speak(this.currentRound().narration, null);
+            this.go("choice");
+          }, 1100);
+        }
         if (this.game.type === "find") {
           audioPlayer.speak(this.currentRound().narration, null);
         }
@@ -3088,7 +3116,7 @@
       this.syncDragDrop();
       const filledDrop = this.root.querySelector(`[data-drop-id="${dropId}"]`);
       filledDrop?.classList.add("is-snapped");
-      window.setTimeout(() => filledDrop?.classList.remove("is-snapped"), 700);
+      window.setTimeout(() => filledDrop?.classList.remove("is-snapped"), 900);
       const complete = round.items.every((entry) => this.state.placements[entry.id] === entry.targetId);
       if (complete) {
         this.state = { ...this.state, completedRounds: [round.id] };
@@ -3098,7 +3126,7 @@
     }
 
     findNearestDropTarget(clientX, clientY) {
-      const tolerance = 82;
+      const tolerance = this.game.id === "organizando-cesta" ? 132 : 82;
       const drops = [...this.root.querySelectorAll("[data-drop-id]")];
       return drops.reduce((nearest, drop) => {
         const box = drop.getBoundingClientRect();
@@ -3232,7 +3260,7 @@
             const placedItem = round.items.find((item) => this.state.placements[item.id] === target.id);
             const image = placedItem ? target.completeImage || placedItem.image : target.image;
             return `
-              <button class="drop-zone" type="button" data-drop-id="${target.id}" aria-label="${target.label}">
+              <button class="drop-zone${placedItem ? " is-filled" : ""}" type="button" data-drop-id="${target.id}" aria-label="${target.label}">
                 <img src="${image}" alt="" loading="eager" decoding="async" />
                 <span>${target.label}</span>
               </button>
