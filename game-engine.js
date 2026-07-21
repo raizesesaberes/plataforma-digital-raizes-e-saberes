@@ -2016,7 +2016,7 @@
         return `
           <section class="game-screen selection-screen selection-feedback-screen" data-screen="feedback" aria-label="Feedback positivo">
             <div class="game-scene selection-celebration-scene" style="--screen:url('${this.game.assets.components.celebration}')" aria-hidden="true"></div>
-            ${components.confetti(30)}
+            ${components.confetti(48)}
             ${components.particles(24)}
             <article class="feedback-panel selection-feedback-panel">
               <strong>Muito bem!</strong>
@@ -2044,7 +2044,7 @@
         return `
           <section class="game-screen selection-screen selection-final-screen" data-screen="final" aria-label="Medalha e XP">
             <div class="game-scene selection-celebration-scene" style="--screen:url('${this.game.assets.components.celebration}')" aria-hidden="true"></div>
-            ${components.confetti(54)}
+            ${components.confetti(78)}
             ${components.particles(28)}
             <article class="final-panel selection-final-panel">
               <img class="selection-final-medal" src="${this.game.assets.components.medal}" alt="" loading="eager" decoding="async" />
