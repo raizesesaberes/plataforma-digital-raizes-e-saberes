@@ -1196,6 +1196,7 @@
         startedAt: Date.now(),
         completedAt: null,
         attempts: 0,
+        discoveryPrompt: "",
       };
     },
     place(state, dragId, dropId) {
@@ -1220,7 +1221,7 @@
       if (state.roundIndex >= game.rounds.length - 1) {
         return { ...state, completedRounds, screen: "final", completedAt: Date.now() };
       }
-      return { ...state, completedRounds, roundIndex: state.roundIndex + 1, screen: "room", audioPlayed: false, audioReplayCount: 0, selectedPatternId: null, explorationCelebratingId: null, explorationLastFeedback: "" };
+      return { ...state, completedRounds, roundIndex: state.roundIndex + 1, screen: "room", audioPlayed: false, audioReplayCount: 0, selectedPatternId: null, explorationCelebratingId: null, explorationLastFeedback: "", discoveryPrompt: "Abra a caixa para fazer uma nova descoberta!" };
     },
   };
 
@@ -1588,10 +1589,12 @@
             <img class="selection-butterfly" src="${this.game.assets.components.butterfly}" alt="" loading="eager" decoding="async" />
             <div class="selection-hero">
               ${this.game.assets.components.title ? `<img class="selection-title-asset" src="${this.game.assets.components.title}" alt="${this.game.title}" loading="eager" decoding="async" />` : `<h1>${this.game.title}</h1>`}
-              <div class="selection-character-row" aria-hidden="true">
-                ${this.game.assets.components.characters.map((src) => `<img src="${src}" alt="" loading="eager" decoding="async" />`).join("")}
+              <div class="selection-hero-composition" aria-hidden="true">
+                <img class="selection-hero-character selection-hero-character-left" src="${this.game.assets.components.characters[0]}" alt="" loading="eager" decoding="async" />
+                <img class="selection-hero-box" src="${this.game.assets.boxes.closed}" alt="" loading="eager" decoding="async" />
+                <img class="selection-hero-character selection-hero-character-center" src="${this.game.assets.components.characters[1]}" alt="" loading="eager" decoding="async" />
+                <img class="selection-hero-character selection-hero-character-right" src="${this.game.assets.components.characters[2]}" alt="" loading="eager" decoding="async" />
               </div>
-              <img class="selection-hero-box" src="${this.game.assets.boxes.closed}" alt="" loading="eager" decoding="async" />
               <button class="game-primary-button game-start-button" type="button" data-game-action="start" aria-label="Comecar ${this.game.title}">▶ Comecar</button>
             </div>
           </section>
@@ -1853,6 +1856,9 @@
           <section class="game-screen selection-screen selection-box-screen" data-screen="room" aria-label="Caixa Misteriosa">
             <div class="game-scene selection-room-scene" style="--screen:url('${this.game.assets.components.room}')" aria-hidden="true"></div>
             ${components.particles(34)}
+            <article class="selection-open-prompt">
+              <strong>${this.state.discoveryPrompt || "Abra a caixa para fazer uma descoberta!"}</strong>
+            </article>
             <button class="discovery-box selection-discovery-box is-glowing" type="button" data-game-action="open-box" aria-label="Abrir caixa misteriosa" style="--box:url('${this.game.assets.boxes.closed}');--box-open:url('${this.game.assets.boxes.open}');--box-opening:url('${this.game.assets.boxes.opening || this.game.assets.boxes.open}')"></button>
           </section>
         `;
@@ -1875,6 +1881,7 @@
         return `
           <section class="game-screen selection-screen selection-hint-screen" data-screen="hint" aria-label="Dica narrada">
             <div class="game-scene selection-room-scene" style="--screen:url('${this.game.assets.components.room}')" aria-hidden="true"></div>
+            <img class="selection-hint-box" src="${this.game.assets.boxes.open}" alt="" loading="eager" decoding="async" />
             <article class="hint-card selection-hint-card">
               <p data-hint-text>${round.hint}</p>
               ${components.audioButton("Repetir dica", round.narration)}
@@ -1926,6 +1933,7 @@
           <section class="game-screen selection-screen selection-choice-screen" data-screen="choice" aria-label="Escolha do objeto">
             <div class="game-scene selection-room-scene" style="--screen:url('${this.game.assets.components.room}')" aria-hidden="true"></div>
             <article class="choice-panel selection-choice-panel">
+              <p class="selection-choice-hint" data-choice-hint>${this.currentRound().hint}</p>
               <h2>Qual sera o objeto da nossa caixa?</h2>
               <div class="choice-cards selection-choice-cards" data-choice-cards></div>
             </article>
@@ -2109,6 +2117,7 @@
             ${components.confetti(48)}
             ${components.particles(24)}
             <article class="feedback-panel selection-feedback-panel">
+              <img class="selection-feedback-medal" src="${this.game.assets.components.medal}" alt="" loading="eager" decoding="async" />
               <strong>Muito bem!</strong>
               <button class="game-primary-button" type="button" data-game-action="next-round">Proxima descoberta</button>
             </article>
@@ -2557,6 +2566,7 @@
         this.finishStory();
       }
       if (action === "open-box") {
+        this.state = { ...this.state, discoveryPrompt: "" };
         button?.classList.add("is-opening");
         audioPlayer.blip("success");
         window.setTimeout(() => {
@@ -3942,6 +3952,8 @@
       }
       const hint = this.root.querySelector("[data-hint-text]");
       if (hint) hint.textContent = round.hint;
+      const choiceHint = this.root.querySelector("[data-choice-hint]");
+      if (choiceHint) choiceHint.textContent = round.hint;
       const speak = this.root.querySelector("[data-game-speak]");
       if (speak) speak.dataset.gameSpeak = encodeURIComponent(round.narration);
       const cards = this.root.querySelector("[data-choice-cards]");
