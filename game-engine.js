@@ -4,6 +4,8 @@
   const asset = (path) => `${atlasBase}${path}`;
   const ge2CaixaBase = "assets/game-engine-2/assets/caixa-misteriosa/";
   const ge2CaixaAsset = (path) => `${ge2CaixaBase}${path}`;
+  const ge2CestaBase = "assets/game-engine-2/assets/organizando-cesta/";
+  const ge2CestaAsset = (path) => `${ge2CestaBase}${path}`;
   const jardimBase = "assets/games/jardim-descobertas/";
   const jardimAsset = (path) => `${jardimBase}${path}`;
   const ponteBase = "assets/games/construindo-ponte/";
@@ -148,23 +150,48 @@
         medal: "Pequeno Organizador",
         unlock: { order: 2, unlocked: true, requires: "caixa-misteriosa" },
         assets: {
-          atlas: "assets/games/organizando-cesta/atlas.png",
-          card: "assets/games/organizando-cesta/screens/screen-intro.png",
-          flow: "assets/games/organizando-cesta/atlas.png",
-          library: "assets/games/organizando-cesta/atlas.png",
-          scenarios: "assets/games/organizando-cesta/atlas.png",
+          atlas: ge2CestaAsset("scenarios/intro.png"),
+          card: ge2CestaAsset("scenarios/intro.png"),
+          flow: ge2CestaAsset("scenarios/organize.png"),
+          library: ge2CestaAsset("scenarios/organize.png"),
+          scenarios: ge2CestaAsset("scenarios/organize.png"),
           screens: {
-            intro: "assets/games/organizando-cesta/screens/screen-intro.png",
-            room: "assets/games/organizando-cesta/screens/screen-observe.png",
-            choice: "assets/games/organizando-cesta/screens/screen-organize.png",
-            feedback: "assets/games/organizando-cesta/screens/screen-feedback.png",
-            final: "assets/games/organizando-cesta/screens/screen-final.png",
+            intro: ge2CestaAsset("scenarios/intro.png"),
+            room: ge2CestaAsset("scenarios/observe.png"),
+            choice: ge2CestaAsset("scenarios/organize.png"),
+            feedback: ge2CestaAsset("scenarios/feedback.png"),
+            final: ge2CestaAsset("scenarios/final.png"),
           },
-          reward: "assets/games/organizando-cesta/effects/medal-jogo.png",
+          reward: ge2CestaAsset("medals/glowing.png"),
           characters: {
-            bia: "assets/games/organizando-cesta/characters/bia.png",
-            pipo: "assets/games/organizando-cesta/characters/pipo.png",
-            tico: "assets/games/organizando-cesta/characters/tico.png",
+            ana: ge2CestaAsset("characters/ana-presenting-basket.png"),
+            anaCelebrating: ge2CestaAsset("characters/ana-celebrating.png"),
+            anaClapping: ge2CestaAsset("characters/ana-clapping.png"),
+            bia: ge2CestaAsset("characters/bia-flying.png"),
+            biaCelebrating: ge2CestaAsset("characters/bia-celebrating.png"),
+            pipo: ge2CestaAsset("characters/pipo-celebrating.png"),
+            turtle: ge2CestaAsset("characters/turtle-happy.png"),
+            turtleCelebrating: ge2CestaAsset("characters/turtle-celebrating.png"),
+          },
+          components: {
+            title: ge2CestaAsset("titles/organizando-a-cesta.png"),
+            fullBasket: ge2CestaAsset("baskets/complete.png"),
+            emptyBasket: ge2CestaAsset("baskets/empty.png"),
+            highlightBasket: ge2CestaAsset("baskets/highlight.png"),
+          },
+          fruits: {
+            apple: ge2CestaAsset("fruits/apple.png"),
+            banana: ge2CestaAsset("fruits/banana.png"),
+            grape: ge2CestaAsset("fruits/grape.png"),
+            pear: ge2CestaAsset("fruits/pear.png"),
+          },
+          effects: {
+            basketGlow: ge2CestaAsset("effects/basket-glow.png"),
+            fruitShine: ge2CestaAsset("effects/fruit-shine.png"),
+            stars: ge2CestaAsset("effects/stars.png"),
+            confetti: ge2CestaAsset("effects/confetti.png"),
+            particles: ge2CestaAsset("effects/particles.png"),
+            lightBurst: ge2CestaAsset("effects/light-burst.png"),
           },
         },
         audio: {
@@ -176,16 +203,16 @@
           {
             id: "frutas",
             hint: "Arraste cada fruta para o cesto correspondente.",
-            narration: "Observe as frutas. Depois arraste cada fruta para o cesto certo.",
+            narration: "Observe as frutas. Temos maca, banana, uva e pera.",
             items: [
-              { id: "apple", label: "Maca", image: "assets/games/organizando-cesta/objects/apple.png", targetId: "apple" },
-              { id: "banana", label: "Banana", image: "assets/games/organizando-cesta/objects/banana.png", targetId: "banana" },
-              { id: "grape", label: "Uva", image: "assets/games/organizando-cesta/objects/grape.png", targetId: "grape" },
+              { id: "apple", label: "Maca", image: ge2CestaAsset("fruits/apple.png"), selectedImage: ge2CestaAsset("fruits/apple-selected.png"), targetId: "apple" },
+              { id: "banana", label: "Banana", image: ge2CestaAsset("fruits/banana.png"), selectedImage: ge2CestaAsset("fruits/banana-selected.png"), targetId: "banana" },
+              { id: "grape", label: "Uva", image: ge2CestaAsset("fruits/grape.png"), selectedImage: ge2CestaAsset("fruits/grape-selected.png"), targetId: "grape" },
             ],
             targets: [
-              { id: "apple", label: "Cesto da maca", image: "assets/games/organizando-cesta/baskets/basket-empty.png", completeImage: "assets/games/organizando-cesta/baskets/basket-apple.png" },
-              { id: "banana", label: "Cesto da banana", image: "assets/games/organizando-cesta/baskets/basket-empty.png", completeImage: "assets/games/organizando-cesta/baskets/basket-banana.png" },
-              { id: "grape", label: "Cesto da uva", image: "assets/games/organizando-cesta/baskets/basket-empty.png", completeImage: "assets/games/organizando-cesta/baskets/basket-complete.png" },
+              { id: "apple", label: "Cesto da maca", icon: ge2CestaAsset("icons/apple.png"), image: ge2CestaAsset("baskets/empty.png"), highlightImage: ge2CestaAsset("baskets/highlight.png"), completeImage: ge2CestaAsset("fruits/apple-in-basket.png") },
+              { id: "banana", label: "Cesto da banana", icon: ge2CestaAsset("icons/banana.png"), image: ge2CestaAsset("baskets/empty.png"), highlightImage: ge2CestaAsset("baskets/highlight.png"), completeImage: ge2CestaAsset("fruits/banana-in-basket.png") },
+              { id: "grape", label: "Cesto da uva", icon: ge2CestaAsset("icons/grape.png"), image: ge2CestaAsset("baskets/empty.png"), highlightImage: ge2CestaAsset("baskets/highlight.png"), completeImage: ge2CestaAsset("fruits/grape-in-basket.png") },
             ],
           },
         ],
@@ -1570,6 +1597,21 @@
           </section>
         `;
       }
+      if (this.game.id === "organizando-cesta") {
+        return `
+          <section class="game-screen basket-intro-screen" data-screen="intro" aria-label="Boas-vindas">
+            <div class="game-scene game-scene-intro" style="--screen:url('${this.game.assets.screens.intro}')" aria-hidden="true"></div>
+            ${components.particles(18)}
+            <div class="basket-intro-composition">
+              <img class="basket-official-title" src="${this.game.assets.components.title}" alt="${this.game.title}" loading="eager" decoding="async" />
+              <img class="basket-intro-ana" src="${this.game.assets.characters.ana}" alt="" loading="eager" decoding="async" />
+              <img class="basket-intro-basket" src="${this.game.assets.components.fullBasket}" alt="" loading="eager" decoding="async" />
+              <img class="basket-intro-bia" src="${this.game.assets.characters.bia}" alt="" loading="eager" decoding="async" />
+              <button class="game-primary-button game-start-button" type="button" data-game-action="start" aria-label="Comecar ${this.game.title}">▶ Comecar</button>
+            </div>
+          </section>
+        `;
+      }
       return `
         <section class="game-screen" data-screen="intro" aria-label="Boas-vindas">
           <div class="game-scene game-scene-intro" style="--screen:url('${this.game.assets.screens.intro}')" aria-hidden="true"></div>
@@ -1585,6 +1627,25 @@
     renderRoomScreen() {
       if (this.game.type === "drag-drop") {
         const round = this.currentRound();
+        if (this.game.id === "organizando-cesta") {
+          return `
+            <section class="game-screen basket-room-screen" data-screen="room" aria-label="Observando as frutas">
+              <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
+              ${components.particles(12)}
+              <article class="basket-observe-panel">
+                ${components.audioButton("Ouvir frutas", round.narration)}
+                <strong>Observe as frutas</strong>
+                <span>Temos maca, banana, uva e pera.</span>
+              </article>
+              <div class="basket-fruit-stage" aria-hidden="true">
+                <img src="${this.game.assets.fruits.apple}" alt="" loading="eager" decoding="async" />
+                <img src="${this.game.assets.fruits.banana}" alt="" loading="eager" decoding="async" />
+                <img src="${this.game.assets.fruits.grape}" alt="" loading="eager" decoding="async" />
+                <img src="${this.game.assets.fruits.pear}" alt="" loading="eager" decoding="async" />
+              </div>
+            </section>
+          `;
+        }
         return `
           <section class="game-screen${this.game.id === "organizando-cesta" ? " basket-room-screen" : ""}" data-screen="room" aria-label="${round.layout === "shape-house" ? "Observando as formas" : "Observando as frutas"}">
             <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
@@ -1850,7 +1911,7 @@
           `;
         }
         return `
-          <section class="game-screen" data-screen="choice" aria-label="Organizacao da cesta">
+          <section class="game-screen basket-choice-screen" data-screen="choice" aria-label="Organizacao da cesta">
             <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.choice}')" aria-hidden="true"></div>
             <article class="drag-panel">
               <h2>Arraste cada fruta para o cesto certo.</h2>
@@ -2057,6 +2118,21 @@
       const feedbackScreen = this.game.type === "exploration-v2" && this.state.explorationLastFeedback === "other"
         ? this.game.assets.feedbackOther
         : this.game.assets.screens.feedback;
+      if (this.game.id === "organizando-cesta") {
+        return `
+          <section class="game-screen basket-feedback-screen" data-screen="feedback" aria-label="Feedback positivo">
+            <div class="game-scene game-scene-feedback" style="--screen:url('${feedbackScreen}')" aria-hidden="true"></div>
+            ${components.confetti(40)}
+            <img class="basket-feedback-turtle" src="${this.game.assets.characters.turtleCelebrating}" alt="" loading="eager" decoding="async" />
+            <img class="basket-feedback-bia" src="${this.game.assets.characters.biaCelebrating}" alt="" loading="eager" decoding="async" />
+            <article class="basket-speech-bubble">
+              <strong>Muito bem!</strong>
+              <span>A cesta ficou organizada!</span>
+              <button class="game-primary-button" type="button" data-game-action="next-round">Continuar</button>
+            </article>
+          </section>
+        `;
+      }
       return `
         <section class="game-screen" data-screen="feedback" aria-label="Feedback positivo">
           <div class="game-scene game-scene-feedback" style="--screen:url('${feedbackScreen}')" aria-hidden="true"></div>
@@ -2077,6 +2153,31 @@
             ${components.particles(28)}
             <article class="final-panel selection-final-panel">
               <img class="selection-final-medal" src="${this.game.assets.components.medal}" alt="" loading="eager" decoding="async" />
+              <h2>Parabens!</h2>
+              <strong data-final-medal>${this.game.medal}</strong>
+              <span class="game-sr-only" data-final-story></span>
+              <span class="xp-counter" data-xp-counter>⭐ +0 XP</span>
+              <div class="final-actions">
+                <button class="game-primary-button game-restart-button" type="button" data-game-action="restart" aria-label="Jogar novamente">↻ Jogar novamente</button>
+                <a class="game-secondary-button" href="jogos.html">Voltar aos Jogos</a>
+              </div>
+            </article>
+          </section>
+        `;
+      }
+      if (this.game.id === "organizando-cesta") {
+        return `
+          <section class="game-screen basket-final-screen" data-screen="final" aria-label="Medalha e XP">
+            <div class="game-scene game-scene-final" style="--screen:url('${this.game.assets.screens.final}')" aria-hidden="true"></div>
+            ${components.confetti(72)}
+            <div class="basket-final-characters" aria-hidden="true">
+              <img class="basket-final-ana" src="${this.game.assets.characters.anaClapping}" alt="" loading="eager" decoding="async" />
+              <img class="basket-final-bia" src="${this.game.assets.characters.biaCelebrating}" alt="" loading="eager" decoding="async" />
+              <img class="basket-final-pipo" src="${this.game.assets.characters.pipo}" alt="" loading="eager" decoding="async" />
+              <img class="basket-final-turtle" src="${this.game.assets.characters.turtleCelebrating}" alt="" loading="eager" decoding="async" />
+            </div>
+            <article class="final-panel basket-final-panel">
+              <img class="basket-final-medal" src="${this.game.assets.reward}" alt="" loading="eager" decoding="async" />
               <h2>Parabens!</h2>
               <strong data-final-medal>${this.game.medal}</strong>
               <span class="game-sr-only" data-final-story></span>
@@ -2348,7 +2449,7 @@
             this.updateRoundContent();
             audioPlayer.speak(this.currentRound().narration, null);
             this.go("choice");
-          }, 1100);
+          }, 1800);
         }
         if (this.game.type === "find") {
           audioPlayer.speak(this.currentRound().narration, null);
@@ -3126,8 +3227,12 @@
       if (!item || this.state.placements[dragId]) return;
       if (item.targetId !== dropId) {
         audioPlayer.blip();
-        this.root.querySelector(`[data-drop-id="${dropId}"]`)?.classList.add("is-wrong");
-        window.setTimeout(() => this.root.querySelector(`[data-drop-id="${dropId}"]`)?.classList.remove("is-wrong"), 520);
+        const wrongDrop = this.root.querySelector(`[data-drop-id="${dropId}"]`);
+        wrongDrop?.classList.add(this.game.id === "organizando-cesta" ? "is-guiding" : "is-wrong");
+        if (this.game.id === "organizando-cesta") {
+          audioPlayer.speak("Vamos observar mais uma vez.", null);
+        }
+        window.setTimeout(() => wrongDrop?.classList.remove("is-wrong", "is-guiding"), 620);
         return;
       }
       this.state = progressController.place(this.state, dragId, dropId);
@@ -3280,6 +3385,7 @@
             const image = placedItem ? target.completeImage || placedItem.image : target.image;
             return `
               <button class="drop-zone${placedItem ? " is-filled" : ""}" type="button" data-drop-id="${target.id}" aria-label="${target.label}">
+                ${target.icon ? `<img class="drop-zone-icon" src="${target.icon}" alt="" loading="eager" decoding="async" />` : ""}
                 <img src="${image}" alt="" loading="eager" decoding="async" />
                 <span>${target.label}</span>
               </button>

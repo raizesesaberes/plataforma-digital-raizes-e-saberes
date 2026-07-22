@@ -1104,6 +1104,112 @@ body.game-immersive-active .game-stage,
   transition: opacity 250ms ease, transform 250ms ease;
 }
 
+.basket-intro-composition {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+}
+
+.basket-official-title {
+  position: absolute;
+  top: clamp(20px, 5vh, 54px);
+  left: 50%;
+  width: clamp(300px, 42vw, 560px);
+  max-width: 88vw;
+  height: auto;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 10px 14px rgba(67, 45, 12, 0.2));
+}
+
+.basket-intro-ana,
+.basket-intro-basket,
+.basket-intro-bia {
+  position: absolute;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 16px 18px rgba(55, 42, 18, 0.2));
+}
+
+.basket-intro-ana {
+  left: clamp(24px, 11vw, 170px);
+  bottom: clamp(88px, 16vh, 148px);
+  width: clamp(120px, 18vw, 230px);
+  animation: basket-clap 1.6s ease-in-out infinite;
+}
+
+.basket-intro-basket {
+  left: 50%;
+  bottom: clamp(98px, 17vh, 156px);
+  width: clamp(150px, 21vw, 286px);
+  transform: translateX(-50%);
+}
+
+.basket-intro-bia {
+  right: clamp(28px, 12vw, 190px);
+  top: clamp(108px, 18vh, 170px);
+  width: clamp(90px, 12vw, 168px);
+  animation: basket-wing 1.1s ease-in-out infinite;
+}
+
+.basket-intro-screen .game-start-button {
+  bottom: clamp(32px, 7vh, 62px);
+}
+
+.basket-observe-panel {
+  position: absolute;
+  top: clamp(18px, 4vh, 42px);
+  left: 50%;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 4px 12px;
+  align-items: center;
+  min-width: min(88vw, 430px);
+  padding: 12px 18px;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  background: rgba(255, 250, 238, 0.94);
+  box-shadow: 0 16px 30px rgba(53, 74, 38, 0.18);
+  color: #102f24;
+  text-align: left;
+  transform: translateX(-50%);
+}
+
+.basket-observe-panel .game-audio-button {
+  grid-row: span 2;
+}
+
+.basket-observe-panel strong {
+  font-size: clamp(1rem, 2.4vw, 1.45rem);
+}
+
+.basket-observe-panel span {
+  font-size: clamp(0.9rem, 1.9vw, 1.1rem);
+  font-weight: 900;
+}
+
+.basket-fruit-stage {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(58px, 12vh, 110px);
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(86px, 1fr));
+  gap: clamp(18px, 4vw, 58px);
+  align-items: end;
+  width: min(88vw, 920px);
+  padding: clamp(12px, 2vw, 20px);
+  transform: translateX(-50%);
+}
+
+.basket-fruit-stage img {
+  width: min(100%, 150px);
+  height: clamp(96px, 15vw, 156px);
+  object-fit: contain;
+  filter: drop-shadow(0 18px 18px rgba(73, 52, 16, 0.2));
+  animation: fruit-drop-bounce 900ms ease both;
+}
+
 .drop-zone-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(120px, 1fr));
@@ -3449,10 +3555,10 @@ body.game-immersive-active .game-stage,
 
 .basket-final-medal {
   position: absolute;
-  top: clamp(34px, 6vh, 64px);
+  top: clamp(22px, 4vh, 44px);
   left: 50%;
-  z-index: 3;
-  width: clamp(150px, 18.5vw, 232px);
+  z-index: 5;
+  width: clamp(132px, 15vw, 198px);
   transform: translateX(-50%);
   filter: drop-shadow(0 0 34px rgba(255, 219, 78, 0.86)) drop-shadow(0 18px 24px rgba(88, 54, 4, 0.22));
   animation: basket-medal-bounce 900ms cubic-bezier(.2, 1.35, .35, 1) both, medal-glow 1.8s ease-in-out 0.35s infinite;
@@ -3468,28 +3574,125 @@ body.game-immersive-active .game-stage,
 
 .basket-final-characters img {
   position: absolute;
-  width: clamp(82px, 11vw, 138px);
+  width: clamp(82px, 10vw, 136px);
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 14px 18px rgba(46, 31, 8, 0.2));
 }
 
-.basket-final-bia {
-  left: 16%;
-  bottom: 18%;
+.basket-final-ana {
+  left: clamp(18px, 7vw, 108px);
+  bottom: clamp(72px, 13vh, 128px);
   animation: basket-clap 1.2s ease-in-out infinite;
 }
 
-.basket-final-pipo {
-  left: 8%;
-  bottom: 36%;
+.basket-final-bia {
+  left: clamp(72px, 16vw, 240px);
+  top: clamp(70px, 13vh, 126px);
   animation: basket-wing 820ms ease-in-out infinite;
 }
 
-.basket-final-tico {
-  right: 10%;
-  bottom: 18%;
+.basket-final-pipo {
+  right: clamp(88px, 16vw, 242px);
+  bottom: clamp(82px, 15vh, 134px);
+  animation: basket-wing 820ms ease-in-out infinite;
+}
+
+.basket-final-turtle {
+  right: clamp(18px, 7vw, 112px);
+  bottom: clamp(72px, 13vh, 126px);
   animation: basket-wing 920ms ease-in-out infinite;
+}
+
+.basket-feedback-turtle,
+.basket-feedback-bia {
+  position: absolute;
+  z-index: 3;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 18px rgba(46, 31, 8, 0.2));
+}
+
+.basket-feedback-turtle {
+  left: clamp(34px, 12vw, 190px);
+  bottom: clamp(50px, 12vh, 108px);
+  width: clamp(116px, 16vw, 210px);
+  animation: basket-clap 1.25s ease-in-out infinite;
+}
+
+.basket-feedback-bia {
+  right: clamp(40px, 14vw, 220px);
+  top: clamp(48px, 10vh, 96px);
+  width: clamp(88px, 12vw, 160px);
+  animation: basket-wing 950ms ease-in-out infinite;
+}
+
+.basket-speech-bubble {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: min(86vw, 520px);
+  padding: clamp(16px, 3vw, 26px);
+  border: 3px solid rgba(231, 173, 75, 0.86);
+  border-radius: 28px;
+  background: rgba(255, 250, 238, 0.95);
+  box-shadow: 0 18px 36px rgba(66, 47, 15, 0.16);
+  color: #102f24;
+  text-align: center;
+}
+
+.basket-speech-bubble strong {
+  font-size: clamp(1.7rem, 4vw, 3.2rem);
+  line-height: 1;
+}
+
+.basket-speech-bubble span {
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  font-weight: 1000;
+}
+
+.basket-final-panel {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 4;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 8px;
+  padding-top: clamp(158px, 22vh, 214px);
+  pointer-events: none;
+}
+
+.basket-final-panel h2 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  line-height: 0.92;
+  text-shadow:
+    0 3px 0 #54af37,
+    0 -3px 0 #54af37,
+    3px 0 0 #54af37,
+    -3px 0 0 #54af37,
+    0 10px 18px rgba(67, 45, 12, 0.24);
+}
+
+.basket-final-panel strong {
+  padding: 6px 18px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f08a21, #f6c342);
+  font-size: clamp(1.25rem, 3vw, 2.15rem);
+}
+
+.basket-final-panel .xp-counter {
+  position: static;
+  transform: none;
+  margin-top: 2px;
+}
+
+.basket-final-panel .final-actions {
+  bottom: clamp(36px, 8vh, 62px);
 }
 
 .drop-zone:hover,
@@ -3515,26 +3718,68 @@ body.game-immersive-active .game-stage,
   gap: clamp(14px, 2.4vw, 24px);
 }
 
+.game-engine[data-active-game="organizando-cesta"] .drag-panel {
+  width: min(94%, 1040px);
+  padding: clamp(14px, 2.2vw, 24px);
+  background: rgba(255, 250, 238, 0.92);
+}
+
 .game-engine[data-active-game="organizando-cesta"] .drop-zone {
-  min-height: clamp(172px, 23vw, 242px);
+  min-height: clamp(190px, 24vw, 258px);
   padding: clamp(14px, 2.2vw, 22px);
+  border-style: solid;
+  border-color: rgba(112, 172, 83, 0.78);
+  background: rgba(255, 253, 246, 0.9);
+}
+
+.game-engine[data-active-game="organizando-cesta"] .drop-zone::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  border-radius: 22px;
+  pointer-events: none;
+}
+
+.game-engine[data-active-game="organizando-cesta"] .drop-zone:hover,
+.game-engine[data-active-game="organizando-cesta"] .drop-zone:focus-visible,
+.game-engine[data-active-game="organizando-cesta"] .drop-zone.is-guiding {
+  border-color: #f4b72e;
+  box-shadow: 0 0 0 7px rgba(244, 183, 46, 0.18), 0 22px 36px rgba(144, 96, 10, 0.16);
+  transform: translateY(-3px) scale(1.02);
 }
 
 .game-engine[data-active-game="organizando-cesta"] .drop-zone::after {
-  content: "★";
+  content: "";
   position: absolute;
   top: 10%;
   right: 12%;
-  color: #ffd24e;
-  font-size: clamp(1.4rem, 3vw, 2.1rem);
+  width: clamp(42px, 6vw, 72px);
+  aspect-ratio: 1;
+  background: url("assets/game-engine-2/assets/organizando-cesta/effects/stars.png") center / contain no-repeat;
   opacity: 0;
-  text-shadow: 0 0 14px rgba(255, 238, 130, 0.9);
   pointer-events: none;
 }
 
 .game-engine[data-active-game="organizando-cesta"] .drop-zone img {
-  width: min(94%, 164px);
-  height: 136px;
+  width: min(96%, 178px);
+  height: 128px;
+  object-fit: contain;
+}
+
+.game-engine[data-active-game="organizando-cesta"] .drop-zone .drop-zone-icon {
+  width: clamp(58px, 8vw, 92px);
+  height: clamp(54px, 7vw, 82px);
+  margin-bottom: -8px;
+  order: -1;
+  filter: drop-shadow(0 10px 12px rgba(64, 45, 12, 0.16));
+}
+
+.game-engine[data-active-game="organizando-cesta"] .drop-zone span {
+  display: block;
+  color: #073b2a;
+  font-size: clamp(0.82rem, 1.7vw, 1rem);
+  line-height: 1.05;
+  text-transform: none;
 }
 
 .game-engine[data-active-game="organizando-cesta"] .drop-zone.is-filled {
@@ -3585,13 +3830,16 @@ body.game-immersive-active .game-stage,
 }
 
 .game-engine[data-active-game="organizando-cesta"] .drag-item {
-  min-width: 136px;
-  min-height: 132px;
+  min-width: clamp(140px, 16vw, 184px);
+  min-height: clamp(132px, 15vw, 170px);
+  border-color: rgba(244, 183, 46, 0.48);
+  background: rgba(255, 253, 247, 0.96);
+  box-shadow: 0 14px 24px rgba(78, 56, 18, 0.1);
 }
 
 .game-engine[data-active-game="organizando-cesta"] .drag-item img {
-  width: 104px;
-  height: 80px;
+  width: clamp(116px, 14vw, 158px);
+  height: clamp(88px, 11vw, 124px);
 }
 
 .drag-item.is-selected {
@@ -3981,6 +4229,38 @@ body.game-immersive-active .game-stage,
     bottom: clamp(74px, 15vh, 118px);
   }
 
+  .basket-official-title {
+    top: 18px;
+    width: min(86vw, 360px);
+  }
+
+  .basket-intro-ana {
+    left: 18px;
+    bottom: 132px;
+    width: clamp(92px, 28vw, 126px);
+  }
+
+  .basket-intro-basket {
+    bottom: 118px;
+    width: clamp(126px, 38vw, 174px);
+  }
+
+  .basket-intro-bia {
+    right: 18px;
+    top: 118px;
+    width: clamp(76px, 22vw, 104px);
+  }
+
+  .basket-fruit-stage {
+    grid-template-columns: repeat(2, minmax(100px, 1fr));
+    bottom: 50px;
+    gap: 10px 22px;
+  }
+
+  .basket-fruit-stage img {
+    height: clamp(86px, 22vw, 116px);
+  }
+
   .game-engine[data-active-game="organizando-cesta"] .drop-zone {
     min-height: 168px;
   }
@@ -3997,6 +4277,15 @@ body.game-immersive-active .game-stage,
 
   .basket-final-characters img {
     width: clamp(70px, 21vw, 96px);
+  }
+
+  .basket-final-panel {
+    padding-top: 150px;
+  }
+
+  .basket-final-panel .final-actions {
+    display: grid;
+    width: min(92vw, 340px);
   }
 
   .game-card {

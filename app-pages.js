@@ -1124,7 +1124,7 @@ const studentLazyImg = (src, alt, className = "") =>
 const studentGameStorageKey = "raizes:game-progress:v1";
 const studentGameCatalog = [
   { id: "caixa-misteriosa", title: "A Caixa Misteriosa", medal: "Pequeno Explorador", image: "assets/games/caixa-misteriosa/rewards/medal-pequeno-explorador.png" },
-  { id: "organizando-cesta", title: "Organizando a Cesta", medal: "Pequeno Organizador", image: "assets/games/organizando-cesta/effects/medal-jogo.png" },
+  { id: "organizando-cesta", title: "Organizando a Cesta", medal: "Pequeno Organizador", image: "assets/game-engine-2/assets/organizando-cesta/medals/glowing.png" },
   { id: "jardim-descobertas", title: "O Jardim das Descobertas", medal: "Pequeno Observador", image: "assets/games/jardim-descobertas/rewards/medal-jardim.png" },
   { id: "construindo-ponte", title: "Construindo a Ponte", medal: "Pequeno Construtor", image: "assets/games/construindo-ponte/rewards/medal-pequeno-construtor.png" },
   { id: "busca-criterios", title: "Descobrindo por Critérios", medal: "Pequeno Investigador", image: "assets/games/caixa-misteriosa/rewards/medal-pequeno-explorador.png" },
