@@ -2,6 +2,8 @@
   const storageKey = "raizes:game-progress:v1";
   const atlasBase = "assets/games/caixa-misteriosa/";
   const asset = (path) => `${atlasBase}${path}`;
+  const ge2CaixaBase = "assets/game-engine-2/assets/caixa-misteriosa/";
+  const ge2CaixaAsset = (path) => `${ge2CaixaBase}${path}`;
   const jardimBase = "assets/games/jardim-descobertas/";
   const jardimAsset = (path) => `${jardimBase}${path}`;
   const ponteBase = "assets/games/construindo-ponte/";
@@ -59,20 +61,37 @@
             final: asset("screens/screen-final.png"),
           },
           boxes: {
-            closed: asset("components/box-closed-clean.png"),
-            glowing: asset("components/box-glowing-clean.png"),
-            open: asset("components/box-open-clean.png"),
+            closed: ge2CaixaAsset("boxes/closed.png"),
+            glowing: ge2CaixaAsset("boxes/glowing.png"),
+            opening: ge2CaixaAsset("boxes/opening.png"),
+            open: ge2CaixaAsset("boxes/open.png"),
+            openInsert: ge2CaixaAsset("boxes/open-insert.png"),
           },
           components: {
             room: asset("components/sala-descobertas-bg.png"),
             celebration: asset("components/celebracao-bg.png"),
-            butterfly: asset("components/borboleta-bia-clean.png"),
-            medal: asset("components/medal-pequeno-explorador-clean.png"),
+            title: ge2CaixaAsset("titles/a-caixa-misteriosa.png"),
+            butterfly: ge2CaixaAsset("characters/bia-smile.png"),
+            medal: ge2CaixaAsset("medals/glowing.png"),
             characters: [
-              asset("components/personagem-bia.png"),
-              asset("components/personagem-pipo.png"),
-              asset("components/personagem-tico.png"),
+              ge2CaixaAsset("characters/ana-smile.png"),
+              ge2CaixaAsset("characters/pipo-smile.png"),
+              ge2CaixaAsset("characters/dog-smile.png"),
             ],
+            cards: {
+              normal: ge2CaixaAsset("cards/normal.png"),
+              hover: ge2CaixaAsset("cards/hover.png"),
+              selected: ge2CaixaAsset("cards/selected.png"),
+              correct: ge2CaixaAsset("cards/correct.png"),
+              incorrect: ge2CaixaAsset("cards/incorrect.png"),
+            },
+            effects: {
+              stars: ge2CaixaAsset("effects/stars.png"),
+              confetti: ge2CaixaAsset("effects/confetti.png"),
+              particles: ge2CaixaAsset("effects/particles.png"),
+              glow: ge2CaixaAsset("effects/glow-circle.png"),
+              twinkle: ge2CaixaAsset("effects/twinkle.png"),
+            },
           },
         },
         audio: {
@@ -87,9 +106,9 @@
             narration: "Escute a dica: e bem macio. Qual objeto pode estar na caixa?",
             correctId: "algodao",
             choices: [
-              { id: "pena", label: "Pena", color: "#ef8b21", image: asset("objects/feather.png") },
-              { id: "algodao", label: "Algodao", color: "#6aa351", image: asset("objects/cotton.png") },
-              { id: "esponja", label: "Esponja", color: "#4b9cc4", image: asset("objects/sponge.png") },
+              { id: "pena", label: "Pena", color: "#ef8b21", image: ge2CaixaAsset("objects/feather.png") },
+              { id: "algodao", label: "Algodao", color: "#6aa351", image: ge2CaixaAsset("objects/cotton.png") },
+              { id: "esponja", label: "Esponja", color: "#4b9cc4", image: ge2CaixaAsset("objects/sponge.png") },
             ],
           },
           {
@@ -98,9 +117,9 @@
             narration: "Agora a dica e: e leve e flutua.",
             correctId: "pena",
             choices: [
-              { id: "bola", label: "Bola", color: "#4b9cc4", image: asset("objects/ball.png") },
-              { id: "pena", label: "Pena", color: "#ef8b21", image: asset("objects/feather.png") },
-              { id: "cubo", label: "Cubo", color: "#6aa351", image: asset("objects/cube.png") },
+              { id: "bola", label: "Bola", color: "#4b9cc4", image: ge2CaixaAsset("objects/ball.png") },
+              { id: "pena", label: "Pena", color: "#ef8b21", image: ge2CaixaAsset("objects/feather.png") },
+              { id: "cubo", label: "Cubo", color: "#6aa351", image: ge2CaixaAsset("objects/cube.png") },
             ],
           },
           {
@@ -109,9 +128,9 @@
             narration: "Ultima dica: brilha como uma conquista.",
             correctId: "estrela",
             choices: [
-              { id: "flor", label: "Flor", color: "#6aa351", image: asset("objects/flower.png") },
-              { id: "estrela", label: "Estrela", color: "#ef8b21", image: asset("objects/star.png") },
-              { id: "folha", label: "Folha", color: "#4b9cc4", image: asset("objects/leaf.png") },
+              { id: "flor", label: "Flor", color: "#6aa351", image: ge2CaixaAsset("objects/flower.png") },
+              { id: "estrela", label: "Estrela", color: "#ef8b21", image: ge2CaixaAsset("effects/stars.png") },
+              { id: "folha", label: "Folha", color: "#4b9cc4", image: ge2CaixaAsset("objects/leaf.png") },
             ],
           },
         ],
@@ -1541,7 +1560,7 @@
             ${components.particles(18)}
             <img class="selection-butterfly" src="${this.game.assets.components.butterfly}" alt="" loading="eager" decoding="async" />
             <div class="selection-hero">
-              <h1>${this.game.title}</h1>
+              ${this.game.assets.components.title ? `<img class="selection-title-asset" src="${this.game.assets.components.title}" alt="${this.game.title}" loading="eager" decoding="async" />` : `<h1>${this.game.title}</h1>`}
               <div class="selection-character-row" aria-hidden="true">
                 ${this.game.assets.components.characters.map((src) => `<img src="${src}" alt="" loading="eager" decoding="async" />`).join("")}
               </div>
@@ -1773,7 +1792,7 @@
           <section class="game-screen selection-screen selection-box-screen" data-screen="room" aria-label="Caixa Misteriosa">
             <div class="game-scene selection-room-scene" style="--screen:url('${this.game.assets.components.room}')" aria-hidden="true"></div>
             ${components.particles(34)}
-            <button class="discovery-box selection-discovery-box is-glowing" type="button" data-game-action="open-box" aria-label="Abrir caixa misteriosa" style="--box:url('${this.game.assets.boxes.closed}');--box-open:url('${this.game.assets.boxes.open}')"></button>
+            <button class="discovery-box selection-discovery-box is-glowing" type="button" data-game-action="open-box" aria-label="Abrir caixa misteriosa" style="--box:url('${this.game.assets.boxes.closed}');--box-open:url('${this.game.assets.boxes.open}');--box-opening:url('${this.game.assets.boxes.opening || this.game.assets.boxes.open}')"></button>
           </section>
         `;
       }
@@ -2030,7 +2049,7 @@
             ${components.particles(24)}
             <article class="feedback-panel selection-feedback-panel">
               <strong>Muito bem!</strong>
-              <button class="game-primary-button" type="button" data-game-action="next-round">Continuar</button>
+              <button class="game-primary-button" type="button" data-game-action="next-round">Proxima descoberta</button>
             </article>
           </section>
         `;
