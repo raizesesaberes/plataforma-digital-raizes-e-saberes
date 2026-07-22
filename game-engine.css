@@ -568,6 +568,7 @@ body.game-immersive-active .game-stage,
   z-index: 3;
   width: clamp(210px, 30vw, 340px);
   transform: translateX(-50%);
+  animation: hero-box-float 2.8s ease-in-out infinite;
 }
 
 .selection-hero-character {
@@ -4326,7 +4327,7 @@ body.game-immersive-active .game-stage,
 
   .selection-hero-composition {
     min-height: 270px;
-    width: min(96vw, 420px);
+    width: min(88vw, 360px);
   }
 
   .selection-hero-composition .selection-hero-box {
@@ -4751,6 +4752,17 @@ body.game-immersive-active .game-stage,
 
   50% {
     transform: translateY(-12px);
+  }
+}
+
+@keyframes hero-box-float {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  50% {
+    transform: translateX(-50%) translateY(-12px);
   }
 }
 

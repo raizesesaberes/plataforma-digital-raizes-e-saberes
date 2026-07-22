@@ -1857,7 +1857,7 @@
             <div class="game-scene selection-room-scene" style="--screen:url('${this.game.assets.components.room}')" aria-hidden="true"></div>
             ${components.particles(34)}
             <article class="selection-open-prompt">
-              <strong>${this.state.discoveryPrompt || "Abra a caixa para fazer uma descoberta!"}</strong>
+              <strong data-discovery-prompt>${this.state.discoveryPrompt || "Abra a caixa para fazer uma descoberta!"}</strong>
             </article>
             <button class="discovery-box selection-discovery-box is-glowing" type="button" data-game-action="open-box" aria-label="Abrir caixa misteriosa" style="--box:url('${this.game.assets.boxes.closed}');--box-open:url('${this.game.assets.boxes.open}');--box-opening:url('${this.game.assets.boxes.opening || this.game.assets.boxes.open}')"></button>
           </section>
@@ -3954,6 +3954,8 @@
       if (hint) hint.textContent = round.hint;
       const choiceHint = this.root.querySelector("[data-choice-hint]");
       if (choiceHint) choiceHint.textContent = round.hint;
+      const discoveryPrompt = this.root.querySelector("[data-discovery-prompt]");
+      if (discoveryPrompt) discoveryPrompt.textContent = this.state.discoveryPrompt || "Abra a caixa para fazer uma descoberta!";
       const speak = this.root.querySelector("[data-game-speak]");
       if (speak) speak.dataset.gameSpeak = encodeURIComponent(round.narration);
       const cards = this.root.querySelector("[data-choice-cards]");
