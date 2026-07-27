@@ -1586,14 +1586,10 @@
           <section class="game-screen selection-screen selection-intro-screen" data-screen="intro" aria-label="Boas-vindas">
             <div class="game-scene selection-room-scene" style="--screen:url('${this.game.assets.components.room}')" aria-hidden="true"></div>
             ${components.particles(18)}
-            <img class="selection-butterfly" src="${this.game.assets.components.butterfly}" alt="" loading="eager" decoding="async" />
             <div class="selection-hero">
-              ${this.game.assets.components.title ? `<img class="selection-title-asset" src="${this.game.assets.components.title}" alt="${this.game.title}" loading="eager" decoding="async" />` : `<h1>${this.game.title}</h1>`}
+              <h1>${this.game.title}</h1>
               <div class="selection-hero-composition" aria-hidden="true">
-                <img class="selection-hero-character selection-hero-character-left" src="${this.game.assets.components.characters[0]}" alt="" loading="eager" decoding="async" />
                 <img class="selection-hero-box" src="${this.game.assets.boxes.closed}" alt="" loading="eager" decoding="async" />
-                <img class="selection-hero-character selection-hero-character-center" src="${this.game.assets.components.characters[1]}" alt="" loading="eager" decoding="async" />
-                <img class="selection-hero-character selection-hero-character-right" src="${this.game.assets.components.characters[2]}" alt="" loading="eager" decoding="async" />
               </div>
               <button class="game-primary-button game-start-button" type="button" data-game-action="start" aria-label="Comecar ${this.game.title}">▶ Comecar</button>
             </div>

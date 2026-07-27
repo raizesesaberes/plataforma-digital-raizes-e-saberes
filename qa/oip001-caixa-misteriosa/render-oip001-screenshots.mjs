@@ -96,7 +96,7 @@ await send("Runtime.evaluate", {
   returnByValue: true,
 }, sessionId);
 await send("Page.navigate", { url: baseUrl }, sessionId);
-await sleep(1200);
+await sleep(2000);
 
 const evalJs = async (expression) => {
   const result = await send("Runtime.evaluate", {
@@ -162,6 +162,11 @@ await evalJs(`
   document.head.append(style);
 `);
 await waitFor(".selection-intro-screen.is-active");
+await evalJs(`Promise.all([...document.querySelectorAll(".selection-intro-screen img")].map((img) => img.complete ? true : new Promise((resolve) => {
+  img.addEventListener("load", resolve, { once: true });
+  img.addEventListener("error", resolve, { once: true });
+})))`);
+await sleep(500);
 await shot("01-tela-inicial.png");
 
 await evalJs(`window.RSGameEngine.engine.handleAction("start")`);
@@ -169,6 +174,8 @@ await waitFor(".selection-box-screen.is-active");
 await shot("02-caixa.png");
 
 await evalJs(`window.RSGameEngine.engine.handleAction("open-box")`);
+await sleep(900);
+await evalJs(`window.RSGameEngine.engine.go("hint")`);
 await waitFor(".selection-hint-screen.is-active");
 await shot("03-dica.png");
 await evalJs(`window.RSGameEngine.engine.go("choice")`);
@@ -182,6 +189,7 @@ const chooseCorrect = async () => {
 
 await evalJs(`window.RSGameEngine.engine.finish()`);
 await waitFor(".selection-final-screen.is-active");
+await sleep(1200);
 await shot("05-tela-final.png");
 
 const validation = await evalJs(`({
