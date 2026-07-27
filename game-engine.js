@@ -1591,7 +1591,7 @@
               <div class="selection-hero-composition" aria-hidden="true">
                 <img class="selection-hero-box" src="${this.game.assets.boxes.closed}" alt="" loading="eager" decoding="async" />
               </div>
-              <button class="game-primary-button game-start-button" type="button" data-game-action="start" aria-label="Comecar ${this.game.title}">▶ Comecar</button>
+              <button class="game-primary-button game-start-button" type="button" data-game-action="start" aria-label="Iniciar ${this.game.title}">▶ Iniciar</button>
             </div>
           </section>
         `;

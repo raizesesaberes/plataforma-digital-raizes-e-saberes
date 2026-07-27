@@ -4363,6 +4363,116 @@ body.game-immersive-active .game-stage,
   list-style: none;
 }
 
+.game-engine[data-active-game="caixa-misteriosa"] .selection-intro-screen .selection-butterfly,
+.game-engine[data-active-game="caixa-misteriosa"] .selection-intro-screen .selection-hero-character,
+.game-engine[data-active-game="caixa-misteriosa"] .selection-intro-screen .selection-title-asset,
+.game-engine[data-active-game="caixa-misteriosa"] .selection-intro-screen .selection-hero-composition {
+  display: none !important;
+}
+
+.game-engine[data-active-game="caixa-misteriosa"] .selection-intro-screen .selection-hero {
+  width: min(92vw, 760px) !important;
+  min-height: 100% !important;
+  align-content: center !important;
+  justify-items: center !important;
+  gap: clamp(30px, 5vh, 54px) !important;
+  padding: clamp(24px, 4vh, 44px) clamp(18px, 4vw, 40px) clamp(62px, 10vh, 96px) !important;
+}
+
+.game-engine[data-active-game="caixa-misteriosa"] .selection-intro-screen .selection-hero h1 {
+  max-width: 11ch !important;
+  margin: 0 !important;
+  color: #5bbd36 !important;
+  background: none !important;
+  font-size: clamp(3.4rem, 7.8vw, 6.4rem) !important;
+  font-weight: 1000 !important;
+  line-height: 0.88 !important;
+  letter-spacing: 0 !important;
+  text-align: center !important;
+  transform: none !important;
+  -webkit-text-stroke: 0 !important;
+  text-shadow:
+    0 4px 0 #fff,
+    0 -4px 0 #fff,
+    4px 0 0 #fff,
+    -4px 0 0 #fff,
+    4px 4px 0 #fff,
+    -4px 4px 0 #fff,
+    0 12px 0 rgba(255, 176, 38, 0.28),
+    0 20px 34px rgba(63, 39, 10, 0.24) !important;
+}
+
+.game-engine[data-active-game="caixa-misteriosa"] .selection-intro-screen .selection-hero h1::first-line {
+  color: #58b934 !important;
+}
+
+.game-engine[data-active-game="caixa-misteriosa"] .selection-intro-screen .game-start-button {
+  position: relative !important;
+  left: auto !important;
+  bottom: auto !important;
+  width: auto !important;
+  min-width: clamp(210px, 22vw, 290px) !important;
+  min-height: 68px !important;
+  aspect-ratio: auto !important;
+  margin: 0 !important;
+  padding: 13px 30px 15px !important;
+  border: 4px solid rgba(255, 238, 156, 0.96) !important;
+  border-radius: 24px !important;
+  background-image: none !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 35%),
+    linear-gradient(180deg, #76d84b, #2aa32e 68%, #177c22) !important;
+  color: #fff !important;
+  font-size: clamp(1.35rem, 2.2vw, 1.8rem) !important;
+  line-height: 1 !important;
+  text-shadow: 0 3px 0 rgba(11, 83, 23, 0.48) !important;
+  box-shadow:
+    inset 0 5px 0 rgba(255, 255, 255, 0.44),
+    inset 0 -7px 0 rgba(5, 78, 25, 0.26),
+    0 9px 0 #08601b,
+    0 20px 30px rgba(3, 70, 25, 0.3),
+    0 0 24px rgba(255, 228, 96, 0.36) !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+.game-engine[data-active-game="caixa-misteriosa"] .selection-intro-screen .game-start-button::after {
+  inset: 7% 12% 55% !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0)) !important;
+  opacity: 0.72 !important;
+}
+
+.game-engine[data-active-game="caixa-misteriosa"] .selection-box-screen .selection-open-prompt {
+  left: 0 !important;
+  right: 0 !important;
+  top: clamp(92px, 18vh, 150px) !important;
+  width: min(72vw, 560px) !important;
+  min-height: 76px !important;
+  margin-inline: auto !important;
+  padding: 12px clamp(22px, 4vw, 42px) !important;
+  border: 2px solid rgba(255, 232, 148, 0.82) !important;
+  border-radius: 28px !important;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0) 58%),
+    linear-gradient(180deg, rgba(255, 248, 221, 0.74), rgba(255, 226, 144, 0.46)) !important;
+  backdrop-filter: blur(4px) saturate(1.08) !important;
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.48),
+    0 10px 0 rgba(150, 100, 30, 0.14),
+    0 20px 38px rgba(83, 56, 16, 0.16),
+    0 0 36px rgba(255, 226, 98, 0.34) !important;
+  transform: none !important;
+}
+
+.game-engine[data-active-game="caixa-misteriosa"] .selection-box-screen .selection-open-prompt strong {
+  max-width: 28ch !important;
+  color: #143b2c !important;
+  font-size: clamp(1.2rem, 2vw, 1.7rem) !important;
+  line-height: 1.05 !important;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.76) !important;
+}
+
 .round-list li {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr);
