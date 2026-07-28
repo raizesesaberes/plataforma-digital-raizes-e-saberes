@@ -2202,6 +2202,8 @@ const modules = {
               <div class="qb-builder-grid">
                 <label><span>Titulo</span><input data-qb-assessment-title value="Avaliacao diagnostica demonstrativa" /></label>
                 <label><span>Turma</span><select><option>2o Ano A</option><option>5o Ano B</option></select></label>
+                <label><span>Componente curricular</span><select data-qb-assessment-component><option>Lingua Portuguesa</option><option>Matematica</option></select></label>
+                <label><span>Ano escolar</span><select data-qb-assessment-year><option>2o ano</option><option>5o ano</option></select></label>
                 <label><span>Data de aplicacao</span><input type="date" value="2026-08-05" /></label>
                 <label><span>Capa</span><select><option>Raizes e Saberes - padrao</option><option>Sem capa</option></select></label>
                 <label class="span-2"><span>Orientacoes</span><textarea>Leia com atencao e marque apenas uma alternativa por questao.</textarea></label>
@@ -2808,27 +2810,45 @@ const initQuestionBank = () => {
   const usedFilter = root.querySelector("[data-qb-used]");
   const sort = root.querySelector("[data-qb-sort]");
   const loading = root.querySelector("[data-qb-loading]");
+  const errorNode = root.querySelector("[data-qb-error]");
   const empty = root.querySelector("[data-qb-empty]");
   const cartList = root.querySelector("[data-qb-cart-list]");
   const cartTime = root.querySelector("[data-qb-cart-time]");
   const saved = root.querySelector("[data-qb-saved]");
   const access = root.querySelector("[data-qb-access]");
-  let selectedId = demoQuestionBankItems[0]?.id;
-  let cart = demoQuestionBankItems.slice(0, 2).map((item) => item.id);
+  const titleInput = root.querySelector("[data-qb-assessment-title]");
+  const builderFields = [...root.querySelectorAll(".qb-builder input, .qb-builder select, .qb-builder textarea")];
+  let questions = [];
+  let assessments = [];
+  let selectedId = null;
+  let activeAssessmentId = null;
+  let cart = [];
+  let mode = questionBankDataService.mode();
 
   const uniq = (key) => [...new Set(demoQuestionBankItems.map((item) => item[key]).filter(Boolean))].sort();
-  filters.forEach((select) => {
-    const key = select.dataset.qbFilter;
-    uniq(key).forEach((value) => {
-      const option = document.createElement("option");
-      option.value = value;
-      option.textContent = value;
-      select.append(option);
-    });
-  });
+  const localDevNotice = () =>
+    mode === "fallback"
+      ? "Modo desenvolvimento: Supabase nao configurado; usando seed local somente como fallback."
+      : "Conectado ao Supabase real com anon key publica e RLS ativo.";
 
-  const itemById = (id) => demoQuestionBankItems.find((item) => item.id === id);
-  const sourceById = (id) => questionSourcesDemo.find((source) => source.id === id);
+  const populateFilterOptions = () => {
+    filters.forEach((select) => {
+      const key = select.dataset.qbFilter;
+      const current = select.value;
+      select.querySelectorAll("option:not(:first-child)").forEach((option) => option.remove());
+      [...new Set(questions.map((item) => item[key]).filter(Boolean))]
+        .sort()
+        .forEach((value) => {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = value;
+          select.append(option);
+        });
+      select.value = [...select.options].some((option) => option.value === current) ? current : "";
+    });
+  };
+
+  const itemById = (id) => questions.find((item) => item.id === id || item.uuid === id);
 
   const matchesSearch = (item) => {
     const term = search.value.trim().toLowerCase();
@@ -2853,7 +2873,7 @@ const initQuestionBank = () => {
   const getFilteredItems = () => {
     const filterValues = Object.fromEntries(filters.map((select) => [select.dataset.qbFilter, select.value]));
     const usedValue = usedFilter.value;
-    const items = demoQuestionBankItems.filter((item) => {
+    const items = questions.filter((item) => {
       const fieldMatches = Object.entries(filterValues).every(([key, value]) => !value || item[key] === value);
       const useMatches = !usedValue || (usedValue === "used" ? item.usedCount > 0 : item.usedCount === 0);
       return fieldMatches && useMatches && matchesSearch(item);
@@ -2870,9 +2890,9 @@ const initQuestionBank = () => {
   };
 
   const renderMetrics = (items) => {
-    root.querySelector("[data-qb-total]").textContent = demoQuestionBankItems.length;
-    root.querySelector("[data-qb-published]").textContent = demoQuestionBankItems.filter((item) => item.publicationStatus === "PUBLICADO").length;
-    root.querySelector("[data-qb-review]").textContent = demoQuestionBankItems.filter((item) => !["HOMOLOGADO", "APROVADO"].includes(item.curationStatus)).length;
+    root.querySelector("[data-qb-total]").textContent = questions.length;
+    root.querySelector("[data-qb-published]").textContent = questions.filter((item) => item.publicationStatus === "PUBLICADO").length;
+    root.querySelector("[data-qb-review]").textContent = questions.filter((item) => !["HOMOLOGADO", "APROVADO"].includes(item.curationStatus)).length;
     root.querySelectorAll("[data-qb-cart-count]").forEach((node) => {
       node.textContent = cart.length;
     });
@@ -2882,13 +2902,13 @@ const initQuestionBank = () => {
   const renderCard = (item) => `
     <article class="qb-card ${item.id === selectedId ? "is-selected" : ""}">
       <div class="qb-card-top">
-        <span>${item.id}</span>
-        <mark>${item.originType}</mark>
+        <span>${htmlEscape(item.id)}</span>
+        <mark>${htmlEscape(item.originType)}</mark>
       </div>
-      <h3>${item.title}</h3>
-      <p>${item.component} &middot; ${item.year} &middot; ${item.skill}</p>
-      <div class="qb-tags"><span>${item.type}</span><span>${item.difficulty}</span><span>${item.proficiency}</span><span>${item.estimatedTime} min</span></div>
-      <small>${item.legalClassification}</small>
+      <h3>${htmlEscape(item.title)}</h3>
+      <p>${htmlEscape(item.component)} &middot; ${htmlEscape(item.year)} &middot; ${htmlEscape(item.skill)}</p>
+      <div class="qb-tags"><span>${htmlEscape(item.type)}</span><span>${htmlEscape(item.difficulty)}</span><span>${htmlEscape(item.proficiency)}</span><span>${item.estimatedTime} min</span></div>
+      <small>${htmlEscape(item.legalClassification)}</small>
       <div class="qb-card-actions">
         <button type="button" data-qb-view="${item.id}">Detalhes</button>
         <button type="button" data-qb-add="${item.id}" ${item.publicationStatus !== "PUBLICADO" ? "disabled" : ""}>Adicionar</button>
@@ -2896,48 +2916,69 @@ const initQuestionBank = () => {
     </article>
   `;
 
-  const renderDetail = () => {
-    const item = itemById(selectedId) || demoQuestionBankItems[0];
-    const source = sourceById(item.sourceId);
+  const renderDetail = async () => {
+    const item = itemById(selectedId) || questions[0];
+    if (!item) {
+      detail.innerHTML = `<div class="qb-state">Selecione uma questao para ver os detalhes.</div>`;
+      return;
+    }
+    let history = [];
+    try {
+      history = await questionBankDataService.getCurationHistory(item.uuid || item.id);
+    } catch (error) {
+      history = [];
+    }
     detail.innerHTML = `
       <div class="panel-head"><h2>Detalhes da questao</h2><span>${item.curationStatus}</span></div>
       <div class="qb-detail-grid">
         <div>
-          <strong>${item.id}</strong>
-          <h3>${item.title}</h3>
-          <p>${item.statement}</p>
-          ${item.baseText ? `<blockquote>${item.baseText}</blockquote>` : ""}
+          <strong>${htmlEscape(item.id)}</strong>
+          <h3>${htmlEscape(item.title)}</h3>
+          <p>${htmlEscape(item.statement)}</p>
+          ${item.baseText ? `<blockquote>${htmlEscape(item.baseText)}</blockquote>` : ""}
           <ol class="qb-alternatives">
-            ${item.alternatives.map((alternative, index) => `<li class="${index === item.correctAlternative ? "is-correct" : ""}">${String.fromCharCode(65 + index)}. ${alternative}</li>`).join("")}
+            ${item.alternatives.map((alternative, index) => `<li class="${index === item.correctAlternative ? "is-correct" : ""}">${String.fromCharCode(65 + index)}. ${htmlEscape(alternative)}</li>`).join("")}
           </ol>
         </div>
         <div class="qb-detail-meta">
-          <span><b>BNCC</b>${item.skill}</span>
-          <span><b>Descritor</b>${item.descriptor}</span>
-          <span><b>Unidade</b>${item.unit}</span>
-          <span><b>Objeto</b>${item.object}</span>
-          <span><b>Processo</b>${item.cognitiveProcess}</span>
-          <span><b>Acessibilidade</b>${item.accessibility}</span>
+          <span><b>BNCC</b>${htmlEscape(item.skill)}</span>
+          <span><b>Descritor</b>${htmlEscape(item.descriptor)}</span>
+          <span><b>Unidade</b>${htmlEscape(item.unit)}</span>
+          <span><b>Objeto</b>${htmlEscape(item.object)}</span>
+          <span><b>Processo</b>${htmlEscape(item.cognitiveProcess)}</span>
+          <span><b>Acessibilidade</b>${htmlEscape(item.accessibility)}</span>
         </div>
       </div>
       <div class="qb-trace">
-        <article><strong>Justificativa</strong><p>${item.justification}</p></article>
-        <article><strong>Distratores</strong><p>${item.distractors.join(" ")}</p></article>
-        <article><strong>Feedback</strong><p>${item.rightFeedback} ${item.wrongFeedback}</p></article>
-        <article><strong>Intervencao</strong><p>${item.intervention}</p></article>
-        <article><strong>Fonte e licenca</strong><p>${source.name}. ${source.license}. ${source.legalStatus}.</p></article>
-        <article><strong>Historico</strong><p>Versao ${item.version}. Revisado por ${item.reviewer} em ${item.reviewedAt}. Usos: ${item.usedCount}${item.lastUsedClass ? ` (${item.lastUsedClass})` : ""}.</p></article>
+        <article><strong>Justificativa</strong><p>${htmlEscape(item.justification)}</p></article>
+        <article><strong>Distratores</strong><p>${htmlEscape(item.distractors.join(" "))}</p></article>
+        <article><strong>Feedback</strong><p>${htmlEscape(`${item.rightFeedback} ${item.wrongFeedback}`)}</p></article>
+        <article><strong>Intervencao</strong><p>${htmlEscape(item.intervention)}</p></article>
+        <article><strong>Fonte e licenca</strong><p>${htmlEscape(`${item.sourceName || "Fonte nao informada"}. ${item.license}. ${item.legalStatus || ""}`)}</p></article>
+        <article><strong>Historico</strong><p>Versao ${htmlEscape(item.version)}. Revisado por ${htmlEscape(item.reviewer)} em ${htmlEscape(item.reviewedAt)}. Usos: ${item.usedCount}${item.lastUsedClass ? ` (${htmlEscape(item.lastUsedClass)})` : ""}. ${htmlEscape(history[0]?.comment || "Historico de curadoria disponivel apos carga remota.")}</p></article>
       </div>
     `;
+    if (mode === "supabase" && item.uuid) {
+      questionBankDataService.registerUsage(item.uuid, null, "visualizada").catch(() => {});
+    }
   };
 
-  const moveCartItem = (id, direction) => {
+  const saveOrder = async () => {
+    if (!activeAssessmentId) return;
+    await questionBankDataService.reorderQuestions(
+      activeAssessmentId,
+      cart.map((id) => itemById(id)?.uuid || id)
+    );
+  };
+
+  const moveCartItem = async (id, direction) => {
     const index = cart.indexOf(id);
     const nextIndex = index + direction;
     if (index < 0 || nextIndex < 0 || nextIndex >= cart.length) {
       return;
     }
     [cart[index], cart[nextIndex]] = [cart[nextIndex], cart[index]];
+    await saveOrder();
   };
 
   const renderCart = () => {
@@ -2965,66 +3006,160 @@ const initQuestionBank = () => {
   };
 
   const renderSaved = () => {
-    saved.innerHTML = savedAssessmentDemo
-      .map((assessment) => `<article><strong>${assessment.title}</strong><span>${assessment.status} &middot; ${assessment.items} itens &middot; ${assessment.className} &middot; ${assessment.date}</span></article>`)
-      .join("");
+    saved.innerHTML = assessments.length
+      ? assessments
+          .map((assessment) => `<article><strong>${htmlEscape(assessment.title)}</strong><span>${htmlEscape(assessment.status)} &middot; ${assessment.items} itens &middot; ${htmlEscape(assessment.className)} &middot; ${htmlEscape(assessment.date)}</span><button type="button" data-qb-open-assessment="${assessment.id}">Abrir</button><button type="button" data-qb-duplicate-assessment="${assessment.id}">Duplicar</button><button type="button" data-qb-archive-assessment="${assessment.id}">Arquivar</button></article>`)
+          .join("")
+      : `<div class="qb-state">Nenhuma avaliacao salva encontrada.</div>`;
   };
 
   const renderAccess = () => {
     access.innerHTML = questionAccessRules.map(([role, rule]) => `<article><strong>${role}</strong><span>${rule}</span></article>`).join("");
   };
 
-  const render = () => {
+  const render = async () => {
     const items = getFilteredItems();
     loading.hidden = true;
+    errorNode.hidden = true;
     grid.innerHTML = items.map(renderCard).join("");
     empty.hidden = items.length > 0;
     renderMetrics(items);
-    renderDetail();
+    await renderDetail();
     renderCart();
     renderSaved();
     renderAccess();
   };
 
-  root.addEventListener("click", (event) => {
+  const setError = (message) => {
+    loading.hidden = true;
+    errorNode.hidden = false;
+    errorNode.textContent = message;
+  };
+
+  const assessmentPayloadFromBuilder = () => ({
+    title: titleInput?.value?.trim() || "Avaliacao sem titulo",
+    description: root.querySelector(".qb-builder textarea")?.value || "",
+    instructions: root.querySelector(".qb-builder textarea")?.value || "",
+    component: root.querySelector("[data-qb-assessment-component]")?.value || "",
+    school_year: root.querySelector("[data-qb-assessment-year]")?.value || "",
+    class_name: root.querySelectorAll(".qb-builder select")[0]?.value || "",
+    cover_template: root.querySelectorAll(".qb-builder select")[3]?.value || "Raizes e Saberes - padrao",
+    application_date: root.querySelector(".qb-builder input[type='date']")?.value || null,
+  });
+
+  const ensureAssessment = async () => {
+    if (activeAssessmentId) {
+      return questionBankDataService.updateAssessment(activeAssessmentId, assessmentPayloadFromBuilder());
+    }
+    const assessment = await questionBankDataService.createAssessment(assessmentPayloadFromBuilder());
+    activeAssessmentId = assessment.id;
+    return assessment;
+  };
+
+  const refresh = async () => {
+    loading.hidden = false;
+    errorNode.hidden = true;
+    mode = questionBankDataService.mode();
+    try {
+      questions = await questionBankDataService.listQuestions();
+      assessments = await questionBankDataService.listAssessments();
+      selectedId = selectedId || questions[0]?.id;
+      cart = activeAssessmentId
+        ? (await questionBankDataService.getAssessmentById(activeAssessmentId))?.questions?.map((entry) => entry.question?.code || entry.question_id) || cart
+        : cart.filter((id) => itemById(id));
+      populateFilterOptions();
+      root.querySelector(".qb-notice span").textContent = localDevNotice();
+      await render();
+    } catch (error) {
+      questions = mode === "fallback" ? await questionBankDataService.listQuestions() : [];
+      assessments = [];
+      populateFilterOptions();
+      await render();
+      setError(error.message);
+    }
+  };
+
+  root.addEventListener("click", async (event) => {
     const button = event.target.closest("button");
     if (!button) {
       return;
     }
-    if (button.dataset.qbView) {
-      selectedId = button.dataset.qbView;
+    try {
+      if (button.dataset.qbView) {
+        selectedId = button.dataset.qbView;
+      }
+      if (button.dataset.qbAdd && !cart.includes(button.dataset.qbAdd)) {
+        const assessment = await ensureAssessment();
+        const item = itemById(button.dataset.qbAdd);
+        await questionBankDataService.addQuestionToAssessment(assessment.id, item.uuid || item.id);
+        cart.push(button.dataset.qbAdd);
+        assessments = await questionBankDataService.listAssessments();
+      }
+      if (button.dataset.qbRemove) {
+        const item = itemById(button.dataset.qbRemove);
+        if (activeAssessmentId && item) {
+          await questionBankDataService.removeQuestionFromAssessment(activeAssessmentId, item.uuid || item.id);
+        }
+        cart = cart.filter((id) => id !== button.dataset.qbRemove);
+      }
+      if (button.dataset.qbUp) {
+        await moveCartItem(button.dataset.qbUp, -1);
+      }
+      if (button.dataset.qbDown) {
+        await moveCartItem(button.dataset.qbDown, 1);
+      }
+      if (button.hasAttribute("data-qb-clear")) {
+        search.value = "";
+        filters.forEach((select) => {
+          select.value = "";
+        });
+        usedFilter.value = "";
+      }
+      if (button.hasAttribute("data-qb-clear-cart")) {
+        cart = [];
+      }
+      if (button.hasAttribute("data-qb-save-draft")) {
+        await ensureAssessment();
+        assessments = await questionBankDataService.listAssessments();
+      }
+      if (button.dataset.qbOpenAssessment) {
+        const assessment = await questionBankDataService.getAssessmentById(button.dataset.qbOpenAssessment);
+        activeAssessmentId = assessment.id;
+        titleInput.value = assessment.title;
+        root.querySelector(".qb-builder textarea").value = assessment.instructions || assessment.description || "";
+        root.querySelector(".qb-builder input[type='date']").value = assessment.date === "Sem data" ? "" : assessment.date;
+        root.querySelector("[data-qb-assessment-component]").value = assessment.component || root.querySelector("[data-qb-assessment-component]").value;
+        root.querySelector("[data-qb-assessment-year]").value = assessment.year || root.querySelector("[data-qb-assessment-year]").value;
+        cart = assessment.questions.map((entry) => entry.question?.code || entry.question_id).filter(Boolean);
+      }
+      if (button.dataset.qbDuplicateAssessment) {
+        await questionBankDataService.duplicateAssessment(button.dataset.qbDuplicateAssessment);
+        assessments = await questionBankDataService.listAssessments();
+      }
+      if (button.dataset.qbArchiveAssessment) {
+        await questionBankDataService.archiveAssessment(button.dataset.qbArchiveAssessment);
+        assessments = await questionBankDataService.listAssessments();
+      }
+      await render();
+    } catch (error) {
+      setError(error.message);
     }
-    if (button.dataset.qbAdd && !cart.includes(button.dataset.qbAdd)) {
-      cart.push(button.dataset.qbAdd);
-    }
-    if (button.dataset.qbRemove) {
-      cart = cart.filter((id) => id !== button.dataset.qbRemove);
-    }
-    if (button.dataset.qbUp) {
-      moveCartItem(button.dataset.qbUp, -1);
-    }
-    if (button.dataset.qbDown) {
-      moveCartItem(button.dataset.qbDown, 1);
-    }
-    if (button.hasAttribute("data-qb-clear")) {
-      search.value = "";
-      filters.forEach((select) => {
-        select.value = "";
-      });
-      usedFilter.value = "";
-    }
-    if (button.hasAttribute("data-qb-clear-cart")) {
-      cart = [];
-    }
-    render();
   });
 
   [search, usedFilter, sort, ...filters].forEach((control) => {
-    control.addEventListener("input", render);
-    control.addEventListener("change", render);
+    control.addEventListener("input", () => render());
+    control.addEventListener("change", () => render());
   });
 
-  window.setTimeout(render, 180);
+  builderFields.forEach((control) => {
+    control.addEventListener("change", () => {
+      if (activeAssessmentId) {
+        ensureAssessment().catch((error) => setError(error.message));
+      }
+    });
+  });
+
+  refresh();
 };
 
 const htmlEscape = (value) =>
@@ -3034,6 +3169,396 @@ const htmlEscape = (value) =>
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+
+const getSupabaseConfig = () => window.RAIZES_SUPABASE || {};
+
+const decodeJwtPayload = (token) => {
+  try {
+    const [, payload] = String(token || "").split(".");
+    if (!payload) return {};
+    return JSON.parse(atob(payload.replaceAll("-", "+").replaceAll("_", "/")));
+  } catch (error) {
+    return {};
+  }
+};
+
+const getSupabaseAccessToken = (config = getSupabaseConfig()) =>
+  config.accessToken || localStorage.getItem("raizes:supabase-access-token") || config.anonKey;
+
+const getSupabaseUserContext = () => {
+  const config = getSupabaseConfig();
+  const token = getSupabaseAccessToken(config);
+  const payload = decodeJwtPayload(token);
+  return {
+    token,
+    userId: payload.sub || null,
+    role:
+      payload.app_role ||
+      payload.app_metadata?.app_role ||
+      payload.user_metadata?.app_role ||
+      payload.role ||
+      localStorage.getItem("raizes:question-bank-role") ||
+      "professor",
+  };
+};
+
+const mapSupabaseError = (response, body) => {
+  const text = body ? ` - ${body}` : "";
+  if (response.status === 401) return `Sessao expirada ou token ausente.${text}`;
+  if (response.status === 403) return `Usuario sem permissao para esta acao.${text}`;
+  if (response.status === 404) return `Tabela, rota ou registro inexistente no Supabase.${text}`;
+  if (body?.includes("PGRST205") || body?.includes("Could not find the table")) {
+    return `Tabela inexistente ou migration nao aplicada no Supabase.${text}`;
+  }
+  return `Falha Supabase ${response.status} ${response.statusText}${text}`;
+};
+
+const createSupabaseRestClient = () => {
+  const config = getSupabaseConfig();
+  const baseUrl = config.url?.replace(/\/$/, "");
+  const context = getSupabaseUserContext();
+  const isConfigured = Boolean(baseUrl && config.anonKey);
+
+  const request = async (table, params = "", options = {}) => {
+    if (!isConfigured) {
+      throw new Error("Supabase nao configurado. Crie supabase-config.js com URL e anon key publica.");
+    }
+    const response = await fetch(`${baseUrl}/rest/v1/${table}${params}`, {
+      ...options,
+      headers: {
+        apikey: config.anonKey,
+        Authorization: `Bearer ${context.token}`,
+        "Content-Type": "application/json",
+        Prefer: options.prefer || "return=representation",
+        ...(options.headers || {}),
+      },
+    });
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(mapSupabaseError(response, body));
+    }
+    if (response.status === 204) return null;
+    return response.json();
+  };
+
+  return { isConfigured, request, context };
+};
+
+const questionBankFallbackStore = {
+  questions: demoQuestionBankItems.map((item) => ({ ...item })),
+  assessments: savedAssessmentDemo.map((assessment, index) => ({
+    id: `demo-assessment-${index + 1}`,
+    ...assessment,
+    title: assessment.title,
+    description: "Avaliacao demonstrativa local.",
+    component: index === 0 ? "Lingua Portuguesa" : "Matematica",
+    year: index === 0 ? "2o ano" : "5o ano",
+    instructions: "Leia com atencao e marque apenas uma alternativa por questao.",
+    questions: [],
+  })),
+};
+
+const mapQuestionFromSupabase = (row) => {
+  const alternatives = [...(row.alternatives || [])].sort((a, b) => a.position - b.position);
+  const correctIndex = alternatives.findIndex((alternative) => alternative.is_correct);
+  return {
+    id: row.code,
+    uuid: row.id,
+    title: row.internal_title,
+    component: row.component,
+    stage: row.stage,
+    year: row.school_year,
+    unit: row.thematic_unit || "",
+    object: row.knowledge_object || "",
+    skill: row.bncc_skill || "",
+    descriptor: row.reference_matrix || "",
+    proficiency: row.proficiency_level || "",
+    difficulty: row.difficulty || "",
+    cognitiveProcess: row.cognitive_process || "",
+    type: row.question_type,
+    resource: row.media?.[0]?.media_type || (row.base_text ? "Texto-base" : "Texto-base"),
+    estimatedTime: row.estimated_minutes || 0,
+    accessibility: row.accessibility_notes || "",
+    originType: row.source?.source_type || "Autoral",
+    legalClassification: row.legal_classification,
+    sourceId: row.source_id,
+    sourceName: row.source?.name || "Fonte nao informada",
+    author: row.author_name,
+    license: row.license?.name || row.source?.license?.name || "Licenca nao informada",
+    legalStatus: row.source?.legal_status || "",
+    createdAt: row.created_at,
+    reviewedAt: row.last_reviewed_at || row.updated_at || row.created_at,
+    version: row.version,
+    reviewer: row.reviewer_name || "Revisao pendente",
+    curationStatus: row.curation_status,
+    publicationStatus: row.publication_status,
+    statement: row.statement,
+    baseText: row.base_text || "",
+    alternatives: alternatives.map((alternative) => alternative.body),
+    alternativeRows: alternatives,
+    correctAlternative: correctIndex >= 0 ? correctIndex : 0,
+    justification: row.justification || "",
+    distractors: alternatives.flatMap((alternative) => (alternative.distractor || []).map((entry) => entry.analysis)),
+    rightFeedback: row.success_feedback || "",
+    wrongFeedback: row.error_feedback || "",
+    intervention: row.recommended_intervention || "",
+    usedCount: row.usage_count || 0,
+    lastUsedClass: row.last_used_class || "",
+    raw: row,
+  };
+};
+
+const mapAssessmentFromSupabase = (row) => ({
+  id: row.id,
+  title: row.title,
+  status: row.status,
+  items: row.questions?.length || row.question_count || 0,
+  className: row.class_name || "Sem turma",
+  date: row.application_date || "Sem data",
+  description: row.description || "",
+  component: row.component || "",
+  year: row.school_year || "",
+  instructions: row.instructions || "",
+  questions: [...(row.questions || [])].sort((a, b) => a.position - b.position),
+  raw: row,
+});
+
+const questionBankDataService = (() => {
+  const client = () => createSupabaseRestClient();
+  const questionSelect =
+    "*,source:question_sources(*,license:question_licenses(*)),license:question_licenses(*),alternatives:question_alternatives(*,distractor:question_distractor_analyses(*)),media:question_media(*)";
+  const assessmentSelect = "*,questions:assessment_questions(*,question:question_items(code,internal_title,estimated_minutes,publication_status,curation_status))";
+
+  const fallback = {
+    async listQuestions() {
+      return questionBankFallbackStore.questions;
+    },
+    async getQuestionById(id) {
+      return questionBankFallbackStore.questions.find((item) => item.id === id || item.uuid === id);
+    },
+    async listAlternatives(questionId) {
+      return (await this.getQuestionById(questionId))?.alternatives || [];
+    },
+    async listSources() {
+      return questionSourcesDemo;
+    },
+    async listLicenses() {
+      return [{ id: "demo-license", name: "Uso interno demonstrativo Raizes e Saberes" }];
+    },
+    async listAssessments() {
+      return questionBankFallbackStore.assessments;
+    },
+    async getAssessmentById(id) {
+      return questionBankFallbackStore.assessments.find((assessment) => assessment.id === id);
+    },
+    async createAssessment(payload) {
+      const assessment = {
+        id: `demo-assessment-${Date.now()}`,
+        status: "RASCUNHO",
+        items: 0,
+        className: payload.class_name || "Turma demonstrativa",
+        date: payload.application_date || "",
+        questions: [],
+        ...payload,
+        year: payload.school_year,
+      };
+      questionBankFallbackStore.assessments.unshift(assessment);
+      return assessment;
+    },
+    async updateAssessment(id, payload) {
+      const assessment = questionBankFallbackStore.assessments.find((entry) => entry.id === id);
+      Object.assign(assessment, payload, { year: payload.school_year || assessment.year });
+      return assessment;
+    },
+    async archiveAssessment(id) {
+      return this.updateAssessment(id, { status: "ARQUIVADA", archived_at: new Date().toISOString() });
+    },
+    async duplicateAssessment(id) {
+      const assessment = await this.getAssessmentById(id);
+      return this.createAssessment({ ...assessment, title: `${assessment.title} - copia`, duplicated_from_id: id });
+    },
+    async addQuestionToAssessment(assessmentId, questionId, points = 1) {
+      const assessment = await this.getAssessmentById(assessmentId);
+      const question = await this.getQuestionById(questionId);
+      if (!assessment || !question || question.publicationStatus !== "PUBLICADO") return null;
+      assessment.questions.push({ id: `${assessmentId}-${questionId}`, question_id: question.uuid || question.id, position: assessment.questions.length + 1, points, question });
+      assessment.items = assessment.questions.length;
+      return assessment.questions.at(-1);
+    },
+    async removeQuestionFromAssessment(assessmentId, questionId) {
+      const assessment = await this.getAssessmentById(assessmentId);
+      assessment.questions = assessment.questions.filter((entry) => entry.question_id !== questionId && entry.question?.id !== questionId);
+      assessment.items = assessment.questions.length;
+      return assessment;
+    },
+    async reorderQuestions(assessmentId, orderedQuestionIds) {
+      const assessment = await this.getAssessmentById(assessmentId);
+      assessment.questions = orderedQuestionIds
+        .map((id, index) => ({ ...assessment.questions.find((entry) => entry.question_id === id || entry.question?.id === id), position: index + 1 }))
+        .filter((entry) => entry.question_id || entry.question);
+      return assessment.questions;
+    },
+    async registerUsage() {
+      return null;
+    },
+    async getCurationHistory(questionId) {
+      return [{ comment: "Historico local demonstrativo.", question_id: questionId, created_at: new Date().toISOString() }];
+    },
+  };
+
+  const remote = {
+    async listQuestions() {
+      const { request } = client();
+      const rows = await request("question_items", `?select=${questionSelect}&order=last_reviewed_at.desc.nullslast&order=created_at.desc`);
+      return rows.map(mapQuestionFromSupabase);
+    },
+    async getQuestionById(id) {
+      const { request } = client();
+      const column = String(id).startsWith("RS-") ? "code" : "id";
+      const rows = await request("question_items", `?${column}=eq.${encodeURIComponent(id)}&select=${questionSelect}&limit=1`);
+      return rows[0] ? mapQuestionFromSupabase(rows[0]) : null;
+    },
+    async listAlternatives(questionId) {
+      const { request } = client();
+      return request("question_alternatives", `?question_id=eq.${encodeURIComponent(questionId)}&select=*,distractor:question_distractor_analyses(*)&order=position.asc`);
+    },
+    async listSources() {
+      const { request } = client();
+      return request("question_sources", "?select=*,license:question_licenses(*)&order=name.asc");
+    },
+    async listLicenses() {
+      const { request } = client();
+      return request("question_licenses", "?select=*&order=name.asc");
+    },
+    async listAssessments() {
+      const { request } = client();
+      const rows = await request("assessments", `?select=${assessmentSelect}&status=neq.ARQUIVADA&order=updated_at.desc`);
+      return rows.map(mapAssessmentFromSupabase);
+    },
+    async getAssessmentById(id) {
+      const { request } = client();
+      const rows = await request("assessments", `?id=eq.${encodeURIComponent(id)}&select=${assessmentSelect}&limit=1`);
+      return rows[0] ? mapAssessmentFromSupabase(rows[0]) : null;
+    },
+    async createAssessment(payload) {
+      const { request, context } = client();
+      const [row] = await request("assessments", "", {
+        method: "POST",
+        body: JSON.stringify({
+          owner_user_id: context.userId,
+          owner_role: context.role,
+          status: "RASCUNHO",
+          ...payload,
+        }),
+      });
+      return mapAssessmentFromSupabase(row);
+    },
+    async updateAssessment(id, payload) {
+      const { request } = client();
+      const [row] = await request("assessments", `?id=eq.${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ ...payload, updated_at: new Date().toISOString() }),
+      });
+      return mapAssessmentFromSupabase(row);
+    },
+    async archiveAssessment(id) {
+      return this.updateAssessment(id, { status: "ARQUIVADA", archived_at: new Date().toISOString() });
+    },
+    async duplicateAssessment(id) {
+      const assessment = await this.getAssessmentById(id);
+      const copy = await this.createAssessment({
+        title: `${assessment.title} - copia`,
+        description: assessment.description,
+        component: assessment.component,
+        school_year: assessment.year,
+        class_name: assessment.className,
+        instructions: assessment.instructions,
+        application_date: assessment.date === "Sem data" ? null : assessment.date,
+        duplicated_from_id: id,
+      });
+      for (const item of assessment.questions) {
+        await this.addQuestionToAssessment(copy.id, item.question_id, item.points);
+      }
+      return this.getAssessmentById(copy.id);
+    },
+    async addQuestionToAssessment(assessmentId, questionId, points = 1) {
+      const { request } = client();
+      const current = await request("assessment_questions", `?assessment_id=eq.${encodeURIComponent(assessmentId)}&select=position&order=position.desc&limit=1`);
+      const nextPosition = (current[0]?.position || 0) + 1;
+      const question = await this.getQuestionById(questionId);
+      const [row] = await request("assessment_questions", "", {
+        method: "POST",
+        body: JSON.stringify({
+          assessment_id: assessmentId,
+          question_id: question.uuid || questionId,
+          position: nextPosition,
+          points,
+          version_snapshot: question.raw || {},
+        }),
+      });
+      await this.registerUsage(question.uuid || questionId, assessmentId, "adicionada_em_avaliacao");
+      return row;
+    },
+    async removeQuestionFromAssessment(assessmentId, questionId) {
+      const { request } = client();
+      await request("assessment_questions", `?assessment_id=eq.${encodeURIComponent(assessmentId)}&question_id=eq.${encodeURIComponent(questionId)}`, {
+        method: "DELETE",
+        prefer: "return=minimal",
+      });
+      return this.getAssessmentById(assessmentId);
+    },
+    async reorderQuestions(assessmentId, orderedQuestionIds) {
+      const { request } = client();
+      for (const [index, questionId] of orderedQuestionIds.entries()) {
+        await request("assessment_questions", `?assessment_id=eq.${encodeURIComponent(assessmentId)}&question_id=eq.${encodeURIComponent(questionId)}`, {
+          method: "PATCH",
+          body: JSON.stringify({ position: index + 1 }),
+        });
+      }
+      return this.getAssessmentById(assessmentId);
+    },
+    async registerUsage(questionId, assessmentId, usageType = "visualizada") {
+      const { request, context } = client();
+      return request("question_usage_logs", "", {
+        method: "POST",
+        body: JSON.stringify({
+          question_id: questionId,
+          assessment_id: assessmentId || null,
+          user_id: context.userId,
+          user_role: context.role,
+          usage_type: usageType,
+          metadata: { module: "banco-questoes" },
+        }),
+      });
+    },
+    async getCurationHistory(questionId) {
+      const question = await this.getQuestionById(questionId);
+      const { request } = client();
+      return request("question_curation_history", `?question_id=eq.${encodeURIComponent(question.uuid || questionId)}&select=*&order=created_at.desc&limit=8`);
+    },
+  };
+
+  const active = () => (client().isConfigured ? remote : fallback);
+  return {
+    mode: () => (client().isConfigured ? "supabase" : "fallback"),
+    listQuestions: (...args) => active().listQuestions(...args),
+    getQuestionById: (...args) => active().getQuestionById(...args),
+    listAlternatives: (...args) => active().listAlternatives(...args),
+    listSources: (...args) => active().listSources(...args),
+    listLicenses: (...args) => active().listLicenses(...args),
+    listAssessments: (...args) => active().listAssessments(...args),
+    getAssessmentById: (...args) => active().getAssessmentById(...args),
+    createAssessment: (...args) => active().createAssessment(...args),
+    updateAssessment: (...args) => active().updateAssessment(...args),
+    archiveAssessment: (...args) => active().archiveAssessment(...args),
+    duplicateAssessment: (...args) => active().duplicateAssessment(...args),
+    addQuestionToAssessment: (...args) => active().addQuestionToAssessment(...args),
+    removeQuestionFromAssessment: (...args) => active().removeQuestionFromAssessment(...args),
+    reorderQuestions: (...args) => active().reorderQuestions(...args),
+    registerUsage: (...args) => active().registerUsage(...args),
+    getCurationHistory: (...args) => active().getCurationHistory(...args),
+  };
+})();
 
 const initCurationBatches = () => {
   const root = document.querySelector("[data-route-screen='curadoria'] [data-batch-summary]")?.closest("#lotes");
