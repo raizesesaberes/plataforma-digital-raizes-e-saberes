@@ -259,3 +259,299 @@ Nao ha IA nesta fase. A busca usa correspondencia local demonstrativa e deixa a 
 ### Conteudo demonstrativo
 
 Foram criados centros demonstrativos para Educacao Inclusiva, BNCC, Alfabetizacao, Tecnologias Educacionais, Gestao Escolar e Avaliacao Formativa. Nenhum livro, legislacao, evento, especialista ou material real foi cadastrado. Esses blocos ficam estruturados para expansao e aparecem individualmente apenas quando houver conteudo curado.
+
+## Fase 04 - Experiencia de aprendizagem
+
+### Mapa do Conhecimento
+
+Cada Centro de Conhecimento possui um roteiro visual demonstrativo, em formato de jornada, com etapas como conceito, contexto, curso introdutorio, materiais, videos, aprofundamento, comunidade e continuidade. O mapa mostra tipo, tempo estimado e status preparado/disponivel/futuro.
+
+### Trilhas de Aprendizagem
+
+Foram preparadas trilhas por perfil:
+
+- Professor da Educacao Infantil;
+- Coordenador Pedagogico;
+- Gestor Escolar.
+
+Cada trilha exibe resumo, progresso demonstrativo, tempo estimado e etapas com icone, tipo, tempo e status. A estrutura ainda nao integra progresso real do usuario.
+
+### Niveis
+
+Cada Centro passa a organizar a experiencia em:
+
+- Iniciante;
+- Intermediario;
+- Avancado.
+
+Os niveis sao demonstrativos e preparados para receber regras futuras de classificacao.
+
+### Recomendacoes
+
+O bloco `Voce tambem pode aprender` recomenda Centros relacionados por categoria e tags demonstrativas. Nao ha IA nesta fase.
+
+### Busca unificada
+
+A busca principal apresenta grupos separados:
+
+- Centros;
+- Cursos;
+- Trilhas;
+- Materiais;
+- Instituicoes;
+- Especialistas;
+- Eventos.
+
+Especialistas e eventos permanecem como estrutura preparada, sem conteudo real.
+
+### SEO e compartilhamento
+
+Cada Centro exibe estrutura preparada para:
+
+- slug;
+- title;
+- description;
+- keywords;
+- canonical;
+- Open Graph futuro;
+- JSON-LD futuro;
+- breadcrumb futuro;
+- compartilhar centro;
+- copiar link;
+- QR Code.
+
+Esses componentes sao demonstrativos e nao publicam metadados dinamicos reais no documento HTML nesta fase.
+
+## Fase 05 - Central de Curadoria
+
+### Rota administrativa
+
+- `curadoria.html`: ambiente interno demonstrativo para administradores e curadores.
+- A pagina nao fica publica. Ela exige autenticacao e credencial demonstrativa de curadoria.
+
+Credencial demonstrativa:
+
+- E-mail: `curadoria@raizesesaberes.com.br`
+- Senha: `Curadoria2026`
+
+### Dashboard
+
+A Central exibe indicadores demonstrativos para:
+
+- instituicoes cadastradas;
+- cursos cadastrados;
+- Centros de Conhecimento;
+- materiais;
+- livros;
+- videos;
+- eventos;
+- especialistas;
+- links pendentes de verificacao;
+- cursos aguardando revisao;
+- cursos publicados;
+- cursos arquivados;
+- ultima atualizacao;
+- usuarios curadores;
+- atividades recentes.
+
+### Navegacao da curadoria
+
+Menu proprio com:
+
+- Dashboard;
+- Instituicoes;
+- Cursos;
+- Centros de Conhecimento;
+- Categorias;
+- Tags;
+- Trilhas;
+- Materiais;
+- Legislacao;
+- Livros;
+- Videos;
+- Podcasts;
+- Eventos;
+- Especialistas;
+- Usuarios;
+- Relatorios;
+- Configuracoes;
+- Logs.
+
+### Formularios e estruturas preparadas
+
+Foram criados blocos demonstrativos para:
+
+- cadastro completo de instituicoes;
+- formulario editorial de cursos;
+- gerenciamento de Centros de Conhecimento;
+- tags e categorias;
+- editor visual de trilhas;
+- materiais;
+- legislacao;
+- livros;
+- videos;
+- podcasts;
+- especialistas;
+- eventos;
+- status editorial;
+- historico/auditoria;
+- verificacao de links e revisoes.
+
+### Fluxo editorial
+
+Status preparados:
+
+- Rascunho;
+- Em revisao;
+- Aguardando publicacao;
+- Publicado;
+- Arquivado;
+- Link quebrado;
+- Revisao necessaria.
+
+### Limitacoes da fase
+
+- Sem importacao automatica.
+- Sem IA.
+- Sem crawler.
+- Sem robos.
+- Sem integracoes externas.
+- Sem conteudo real.
+- Sem usuarios reais.
+- Sem banco definitivo.
+- Os formularios sao demonstrativos e ainda nao persistem dados em backend.
+
+## Fase 05B - Esteira Automatizada de Curadoria e Primeiro Lote Real
+
+### Objetivo operacional
+
+A Central de Curadoria recebeu uma esteira controlada para administrar lotes reais de cursos gratuitos antes da publicacao.
+
+O fluxo foi preparado para:
+
+- descoberta manual/assistida em paginas oficiais publicas;
+- coleta de metadados;
+- normalizacao;
+- classificacao;
+- verificacao;
+- revisao humana;
+- aprovacao;
+- publicacao posterior apenas por decisao administrativa.
+
+### Status da esteira
+
+Status oficiais preparados:
+
+- DESCOBERTO;
+- COLETADO;
+- NORMALIZADO;
+- CLASSIFICADO;
+- VERIFICADO;
+- AGUARDANDO_REVISAO;
+- APROVADO;
+- PUBLICADO;
+- REJEITADO;
+- REVISAO_NECESSARIA;
+- LINK_COM_PROBLEMA;
+- ARQUIVADO.
+
+### Banco e persistencia
+
+Foi criada a migration Supabase:
+
+- `supabase/migrations/202607280001_curation_pipeline.sql`
+
+A migration prepara:
+
+- `course_providers`;
+- `curated_courses`;
+- `course_categories`;
+- `course_tags`;
+- `course_tag_relations`;
+- `course_verifications`;
+- `curation_batches`;
+- `curation_batch_items`;
+- `curation_sources`;
+- `curation_logs`;
+- `curation_issues`;
+- `course_change_history`.
+
+Tambem foram incluidos:
+
+- RLS para separar leitura publica de cursos publicados e operacao restrita a curadores;
+- funcao `public.is_university_curator()`;
+- indices de status, fornecedor, lote e URL oficial;
+- validacao basica de URL HTTPS para cursos curados.
+
+### Primeiro lote real
+
+Arquivo do lote:
+
+- `data/curation_batches/2026-07-28-educacao-lote-001.json`
+
+Seed SQL:
+
+- `data/curation_batches/2026-07-28-educacao-lote-001.seed.sql`
+
+Relatorio:
+
+- `docs/RELATORIO-LOTE-CURADORIA-EDU-001.md`
+
+Resumo do EDU-001:
+
+- 25 cursos encontrados;
+- 22 cursos importados para revisao;
+- 3 itens descartados ou adiados;
+- 0 cursos publicados;
+- 1 possivel duplicidade;
+- 9 alertas de metadados.
+
+Todos os cursos importados permanecem em `AGUARDANDO_REVISAO`.
+
+### Central de Curadoria
+
+A rota `curadoria.html` recebeu a secao `#lotes`.
+
+O menu administrativo agora inclui:
+
+- Lotes de Curadoria.
+
+A tela mostra:
+
+- resumo do lote EDU-001;
+- status de revisao;
+- alertas;
+- duplicidades;
+- acoes administrativas;
+- lista inicial de itens para homologacao.
+
+### Ferramenta local
+
+Foi criado o script:
+
+- `scripts/curation-pipeline.mjs`
+
+Comandos:
+
+```bash
+node scripts/curation-pipeline.mjs validate data/curation_batches/2026-07-28-educacao-lote-001.json
+node scripts/curation-pipeline.mjs report data/curation_batches/2026-07-28-educacao-lote-001.json
+node scripts/curation-pipeline.mjs rollback-sql EDU-001
+```
+
+### Limites preservados
+
+- Sem publicacao automatica.
+- Sem coleta agressiva.
+- Sem crawler.
+- Sem IA classificando sozinha.
+- Sem copia de conteudo didatico.
+- Sem imagens oficiais copiadas sem permissao.
+- Sem comentarios, avaliacoes ou acessos ficticios.
+- Sem conclusao automatica de cursos externos.
+
+### Limitacao tecnica atual
+
+O workspace nao contem URL, chave ou configuracao de projeto Supabase.
+
+Por isso, a migration e o seed foram entregues prontos para aplicacao, mas nao foram executados contra um banco remoto nesta etapa.

@@ -1,5 +1,6 @@
 const platformAuth = {
   key: "raizes:demo-authenticated",
+  curatorKey: "raizes:demo-curator",
   loginPage: "login.html",
 };
 
@@ -15,7 +16,9 @@ const requirePlatformAuth = () => {
   }
 
   const isAuthenticated = localStorage.getItem(platformAuth.key) === "true";
-  if (isAuthenticated) {
+  const isCuratorArea = currentPath.startsWith("curadoria.html");
+  const isCurator = localStorage.getItem(platformAuth.curatorKey) === "true";
+  if (isAuthenticated && (!isCuratorArea || isCurator)) {
     return;
   }
 
@@ -37,9 +40,224 @@ const ecosystemModules = [
   ["book-viewer.html", "Book Viewer"],
   ["professor.html", "Professor"],
   ["avalia.html", "Avalia+"],
+  ["banco-questoes.html", "Banco de Questoes"],
   ["secretaria.html", "Secretaria"],
   ["gestor.html", "Gestor"],
   ["familia.html", "Familia"],
+];
+
+const questionLegalClassifications = [
+  "ITEM OFICIAL PUBLICAMENTE LIBERADO PELA INSTITUICAO RESPONSAVEL",
+  "ITEM AUTORAL RAIZES E SABERES ALINHADO A MATRIZ DO SAEB",
+  "ITEM ADAPTADO COM LICENCA COMPATIVEL",
+  "ITEM EM ANALISE DE DIREITOS",
+  "ITEM BLOQUEADO PARA PUBLICACAO",
+];
+
+const questionCurationStates = [
+  "RASCUNHO",
+  "COLETADO",
+  "LICENCA EM ANALISE",
+  "BLOQUEADO POR LICENCA",
+  "AGUARDANDO REVISAO PEDAGOGICA",
+  "EM REVISAO",
+  "CORRECAO SOLICITADA",
+  "APROVADO",
+  "PUBLICADO",
+  "HOMOLOGADO",
+  "DESATUALIZADO",
+  "ARQUIVADO",
+  "REPROVADO",
+];
+
+const questionAccessRules = [
+  ["Administrador nacional", "Acesso total, publica somente itens aprovados/homologados e audita fontes."],
+  ["Gestor da rede", "Visualiza indicadores, avaliacoes salvas e uso por escola/rede."],
+  ["Curador", "Cadastra fontes, analisa licencas e bloqueia itens com risco juridico."],
+  ["Revisor pedagogico", "Revisa habilidade, descritor, gabarito, distratores e intervencao."],
+  ["Professor", "Pesquisa itens publicados, monta avaliacoes e envia itens autorais para curadoria."],
+  ["Aplicador", "Aplica avaliacoes atribuidas e registra data/status de aplicacao."],
+  ["Visualizador", "Consulta metadados liberados, sem editar, publicar ou aplicar."],
+];
+
+const questionSourcesDemo = [
+  {
+    id: "fonte-rs-autoral",
+    name: "Raizes e Saberes - Banco Demonstrativo Ficticio",
+    origin: "Autoral",
+    author: "Equipe Pedagogica Raizes e Saberes",
+    license: "Uso interno demonstrativo",
+    legalStatus: "Autorizado para demonstracao",
+    curationStatus: "HOMOLOGADO",
+  },
+];
+
+const demoQuestionBankItems = [
+  {
+    id: "RS-DEMO-LP2-001",
+    title: "Localizar informacao explicita em bilhete",
+    component: "Lingua Portuguesa",
+    stage: "Ensino Fundamental - Anos Iniciais",
+    year: "2o ano",
+    unit: "Leitura/escuta",
+    object: "Compreensao em leitura",
+    skill: "EF02LP12",
+    descriptor: "Matriz SAEB - localizar informacao explicita em texto curto",
+    proficiency: "Basico",
+    difficulty: "Facil",
+    cognitiveProcess: "Localizar informacao",
+    type: "Multipla escolha",
+    resource: "Texto-base",
+    estimatedTime: 4,
+    accessibility: "Texto curto, linguagem simples e alternativas objetivas",
+    originType: "Autoral",
+    legalClassification: questionLegalClassifications[1],
+    sourceId: "fonte-rs-autoral",
+    author: "Equipe Pedagogica Raizes e Saberes",
+    license: "Uso interno demonstrativo",
+    createdAt: "2026-07-28",
+    reviewedAt: "2026-07-28",
+    version: "1.0",
+    reviewer: "Revisao pedagogica demonstrativa",
+    curationStatus: "HOMOLOGADO",
+    publicationStatus: "PUBLICADO",
+    statement: "Leia o bilhete e responda.",
+    baseText: "Lia, leve seu caderno azul para a aula de leitura. Professora Ana.",
+    alternatives: ["O caderno azul", "A mochila vermelha", "O livro de matematica", "A tesoura sem ponta"],
+    correctAlternative: 0,
+    justification: "O bilhete pede que Lia leve o caderno azul.",
+    distractors: ["Mochila vermelha nao aparece no texto.", "Livro de matematica nao e solicitado.", "Tesoura sem ponta nao aparece no bilhete."],
+    rightFeedback: "Voce localizou a informacao pedida no bilhete.",
+    wrongFeedback: "Volte ao bilhete e procure o objeto que Lia deve levar.",
+    intervention: "Reler bilhetes curtos destacando palavras-chave.",
+    usedCount: 8,
+    lastUsedClass: "2o Ano B",
+  },
+  {
+    id: "RS-DEMO-MA2-001",
+    title: "Resolver adicao com dezenas exatas",
+    component: "Matematica",
+    stage: "Ensino Fundamental - Anos Iniciais",
+    year: "2o ano",
+    unit: "Numeros",
+    object: "Calculo de adicao",
+    skill: "EF02MA05",
+    descriptor: "Matriz SAEB - resolver problema envolvendo adicao",
+    proficiency: "Basico",
+    difficulty: "Facil",
+    cognitiveProcess: "Resolver problema",
+    type: "Multipla escolha",
+    resource: "Texto-base",
+    estimatedTime: 5,
+    accessibility: "Numeros inteiros pequenos e enunciado direto",
+    originType: "Autoral",
+    legalClassification: questionLegalClassifications[1],
+    sourceId: "fonte-rs-autoral",
+    author: "Equipe Pedagogica Raizes e Saberes",
+    license: "Uso interno demonstrativo",
+    createdAt: "2026-07-28",
+    reviewedAt: "2026-07-28",
+    version: "1.0",
+    reviewer: "Revisao pedagogica demonstrativa",
+    curationStatus: "HOMOLOGADO",
+    publicationStatus: "PUBLICADO",
+    statement: "Em uma caixa havia 20 lapis. A professora colocou mais 10 lapis. Quantos lapis ficaram na caixa?",
+    baseText: "",
+    alternatives: ["10", "20", "30", "40"],
+    correctAlternative: 2,
+    justification: "20 + 10 = 30.",
+    distractors: ["10 considera apenas a quantidade acrescentada.", "20 considera apenas a quantidade inicial.", "40 acrescenta uma dezena a mais."],
+    rightFeedback: "Voce somou as dezenas corretamente.",
+    wrongFeedback: "Monte a conta 20 + 10 e conte as dezenas.",
+    intervention: "Usar material dourado ou quadro de dezenas para compor 20 + 10.",
+    usedCount: 5,
+    lastUsedClass: "2o Ano A",
+  },
+  {
+    id: "RS-DEMO-LP5-001",
+    title: "Inferir sentido de expressao em conto curto",
+    component: "Lingua Portuguesa",
+    stage: "Ensino Fundamental - Anos Iniciais",
+    year: "5o ano",
+    unit: "Leitura/escuta",
+    object: "Estrategias de leitura",
+    skill: "EF35LP04",
+    descriptor: "Matriz SAEB - inferir sentido de palavra ou expressao",
+    proficiency: "Adequado",
+    difficulty: "Media",
+    cognitiveProcess: "Inferir",
+    type: "Multipla escolha",
+    resource: "Texto-base",
+    estimatedTime: 6,
+    accessibility: "Texto curto, alternativas sem ambiguidade e contraste semantico",
+    originType: "Autoral",
+    legalClassification: questionLegalClassifications[1],
+    sourceId: "fonte-rs-autoral",
+    author: "Equipe Pedagogica Raizes e Saberes",
+    license: "Uso interno demonstrativo",
+    createdAt: "2026-07-28",
+    reviewedAt: "2026-07-28",
+    version: "1.0",
+    reviewer: "Revisao pedagogica demonstrativa",
+    curationStatus: "APROVADO",
+    publicationStatus: "PUBLICADO",
+    statement: "No trecho, o que significa a expressao destacada?",
+    baseText: "Quando viu o resultado da feira de ciencias, Bia ficou com os olhos brilhando.",
+    alternatives: ["Bia ficou com sono.", "Bia ficou muito animada.", "Bia ficou com medo.", "Bia ficou sem entender."],
+    correctAlternative: 1,
+    justification: "A expressao indica entusiasmo e alegria com o resultado.",
+    distractors: ["Sono nao combina com o contexto de conquista.", "Medo nao aparece no texto.", "Nao ha indicio de duvida no trecho."],
+    rightFeedback: "Voce usou o contexto para entender a expressao.",
+    wrongFeedback: "Observe o que aconteceu antes da expressao e o sentimento esperado.",
+    intervention: "Comparar expressoes figuradas com situacoes do cotidiano.",
+    usedCount: 0,
+    lastUsedClass: "",
+  },
+  {
+    id: "RS-DEMO-MA5-001",
+    title: "Ler grafico de barras simples",
+    component: "Matematica",
+    stage: "Ensino Fundamental - Anos Iniciais",
+    year: "5o ano",
+    unit: "Probabilidade e estatistica",
+    object: "Leitura de grafico",
+    skill: "EF05MA24",
+    descriptor: "Matriz SAEB - ler informacoes em graficos e tabelas",
+    proficiency: "Adequado",
+    difficulty: "Media",
+    cognitiveProcess: "Interpretar informacao",
+    type: "Leitura de grafico",
+    resource: "Grafico",
+    estimatedTime: 7,
+    accessibility: "Grafico descrito em texto alternativo e dados em tabela",
+    originType: "Autoral",
+    legalClassification: questionLegalClassifications[1],
+    sourceId: "fonte-rs-autoral",
+    author: "Equipe Pedagogica Raizes e Saberes",
+    license: "Uso interno demonstrativo",
+    createdAt: "2026-07-28",
+    reviewedAt: "2026-07-28",
+    version: "1.0",
+    reviewer: "Revisao pedagogica demonstrativa",
+    curationStatus: "AGUARDANDO REVISAO PEDAGOGICA",
+    publicationStatus: "NAO PUBLICADO",
+    statement: "A turma registrou os livros lidos no mes: aventura 12, poesia 8, conto 10. Qual tipo teve mais leituras?",
+    baseText: "Dados demonstrativos em formato textual para representar um grafico de barras.",
+    alternatives: ["Aventura", "Poesia", "Conto", "Todos tiveram a mesma quantidade"],
+    correctAlternative: 0,
+    justification: "Aventura tem 12 leituras, maior valor entre os dados.",
+    distractors: ["Poesia tem 8, menor que 12.", "Conto tem 10, menor que 12.", "Os valores sao diferentes."],
+    rightFeedback: "Voce comparou os valores do grafico corretamente.",
+    wrongFeedback: "Compare os tres numeros e encontre o maior.",
+    intervention: "Construir grafico com barras fisicas e ordenar os valores.",
+    usedCount: 0,
+    lastUsedClass: "",
+  },
+];
+
+const savedAssessmentDemo = [
+  { title: "Diagnostico 2o ano - leitura e numeros", status: "Rascunho", items: 2, className: "2o Ano A", date: "2026-08-05" },
+  { title: "Simulado 5o ano - LP e Matematica", status: "Pronto para aplicar", items: 8, className: "5o Ano B", date: "2026-08-12" },
 ];
 
 const masterBook001 = {
@@ -617,6 +835,7 @@ const routeKeyByHref = {
   "perfil.html": "perfil",
   "biblioteca.html": "biblioteca",
   "universidade.html": "universidade",
+  "curadoria.html": "curadoria",
   "book-viewer.html": "viewer",
   "professor.html": "professor",
   "avalia.html": "avalia",
@@ -1509,6 +1728,7 @@ const modules = {
               <p>Temas demonstrativos preparados para reunir, no futuro, cursos, livros, guias, legislacao, videos, especialistas, eventos e ferramentas em uma unica pagina de assunto.</p>
             </div>
           </header>
+          <div class="knowledge-category-grid" data-knowledge-categories></div>
           <div class="knowledge-center-grid" data-knowledge-centers></div>
         </section>
 
@@ -1626,6 +1846,194 @@ const modules = {
       </div>
     `,
   },
+  curadoria: {
+    title: "Central de Curadoria",
+    subtitle: "Operacao interna da Universidade",
+    code: "ADM-UNI",
+    html: `
+      <div class="curation-console">
+        <section class="curation-hero" id="dashboard">
+          <div>
+            <span>Area administrativa protegida</span>
+            <h1>Central de Curadoria da Universidade</h1>
+            <p>Ambiente interno demonstrativo para administrar instituicoes, cursos, Centros de Conhecimento e recursos editoriais da Universidade Raizes e Saberes.</p>
+          </div>
+          <aside>
+            <strong>Ultima atualizacao</strong>
+            <span>28/07/2026 - 09h40</span>
+            <small>Dados demonstrativos para homologacao operacional.</small>
+          </aside>
+        </section>
+
+        <section class="curation-metric-grid" aria-label="Indicadores da curadoria">
+          <article><span>Instituicoes cadastradas</span><strong>24</strong></article>
+          <article><span>Cursos cadastrados</span><strong>186</strong></article>
+          <article><span>Centros de Conhecimento</span><strong>18</strong></article>
+          <article><span>Materiais</span><strong>342</strong></article>
+          <article><span>Livros</span><strong>64</strong></article>
+          <article><span>Videos</span><strong>128</strong></article>
+          <article><span>Eventos</span><strong>17</strong></article>
+          <article><span>Especialistas</span><strong>42</strong></article>
+          <article><span>Links pendentes</span><strong>31</strong></article>
+          <article><span>Aguardando revisao</span><strong>46</strong></article>
+          <article><span>Cursos publicados</span><strong>118</strong></article>
+          <article><span>Cursos arquivados</span><strong>22</strong></article>
+          <article><span>Usuarios curadores</span><strong>8</strong></article>
+        </section>
+
+        <div class="curation-layout">
+          <section class="curation-panel span-2">
+            <header><span>Atividades recentes</span><h2>Historico operacional</h2></header>
+            <div class="curation-activity-list">
+              <article><strong>Curso atualizado</strong><span>Mariana Curadora - alterou carga horaria - hoje, 09h12</span></article>
+              <article><strong>Link verificado</strong><span>Equipe Editorial - marcou URL como valida - hoje, 08h44</span></article>
+              <article><strong>Centro relacionado</strong><span>Rafael Curador - adicionou curso a Educacao Inclusiva - ontem, 17h20</span></article>
+              <article><strong>Tag mesclada</strong><span>Coord. Curadoria - unificou tags alfabetizacao/letramento - ontem, 15h02</span></article>
+            </div>
+          </section>
+
+          <section class="curation-panel">
+            <header><span>Status editorial</span><h2>Fluxo padrao</h2></header>
+            <div class="editorial-status-list">
+              <span>Rascunho</span><span>Em revisao</span><span>Aguardando publicacao</span><span>Publicado</span><span>Arquivado</span><span>Link quebrado</span><span>Revisao necessaria</span>
+            </div>
+          </section>
+
+          <section class="curation-panel span-3" id="lotes">
+            <header><span>Lotes de Curadoria</span><h2>Esteira automatizada controlada pelo Codex</h2></header>
+            <div class="batch-summary-grid">
+              <article><strong>Lote EDU-001</strong><span>Primeiro lote real - Educacao</span><small>25 cursos encontrados · 22 importados · 3 descartados · 0 publicados</small></article>
+              <article><strong>Status</strong><span>Aguardando revisao</span><small>Publicacao bloqueada ate aprovacao da equipe.</small></article>
+              <article><strong>Alertas</strong><span>9 alertas de metadados</span><small>Carga horaria, URL individual ou classificacao exigem revisao.</small></article>
+              <article><strong>Duplicidades</strong><span>1 possivel duplicidade</span><small>Curso similar localizado por titulo e instituicao.</small></article>
+            </div>
+            <div class="batch-actions">
+              <button type="button">Visualizar lote</button>
+              <button type="button">Aprovar selecionados</button>
+              <button type="button">Rejeitar itens</button>
+              <button type="button">Solicitar correcao</button>
+              <button type="button">Publicar aprovados</button>
+              <button type="button">Exportar relatorio</button>
+              <button type="button">Reprocessar erros</button>
+            </div>
+            <div class="batch-review-table">
+              <article><strong>Docencia Plural - Formacao em Interculturalidade e Bilinguismo</strong><span>EV.G / Enap · 40h · certificado confirmado · confianca alta</span><small>Centro: Educacao Inclusiva · Status: AGUARDANDO_REVISAO</small></article>
+              <article><strong>Alfabetizacao, Letramento e Tecnologias Digitais</strong><span>ESKADA/UEMA · carga horaria nao informada · certificado confirmado pela plataforma</span><small>Centro: Alfabetizacao · Status: AGUARDANDO_REVISAO</small></article>
+              <article><strong>Transtorno do Espectro Autista</strong><span>Mundi/IFSul · 30h · certificado pela plataforma · confianca media</span><small>Centro: Educacao Inclusiva · Status: AGUARDANDO_REVISAO · classificacao requer revisao</small></article>
+            </div>
+          </section>
+
+          <section class="curation-panel span-3" id="instituicoes">
+            <header><span>Instituicoes</span><h2>Cadastro completo</h2></header>
+            <form class="curation-form">
+              <label><span>Nome</span><input value="Instituto Demonstrativo de Formacao" /></label>
+              <label><span>Sigla</span><input value="IDF" /></label>
+              <label><span>Tipo</span><select><option>Organizacao demonstrativa</option><option>Universidade</option><option>Orgao publico</option></select></label>
+              <label><span>Pais</span><input value="Brasil" /></label>
+              <label><span>Estado</span><input value="SP" /></label>
+              <label><span>Cidade</span><input value="Sao Paulo" /></label>
+              <label><span>Site oficial</span><input value="https://example.org" /></label>
+              <label><span>Logotipo</span><input value="logo-demonstrativo.webp" /></label>
+              <label><span>Imagem</span><input value="capa-instituicao-demo.webp" /></label>
+              <label><span>Contato</span><input value="curadoria@example.org" /></label>
+              <label><span>Status</span><select><option>Ativo</option><option>Em revisao</option><option>Arquivado</option></select></label>
+              <label><span>Ultima verificacao</span><input value="28/07/2026" /></label>
+              <label><span>Responsavel</span><input value="Equipe Curadoria" /></label>
+              <label><span>Categorias</span><input value="Educacao, Formacao continuada" /></label>
+              <label><span>Tags</span><input value="demo, curso gratuito, professores" /></label>
+              <label class="span-2"><span>Descricao</span><textarea>Registro demonstrativo para validar cadastro editorial de instituicoes.</textarea></label>
+              <label><span>Observacoes</span><textarea>Sem conteudo real nesta fase.</textarea></label>
+            </form>
+          </section>
+
+          <section class="curation-panel span-3" id="cursos">
+            <header><span>Cursos</span><h2>Formulario editorial</h2></header>
+            <form class="curation-form">
+              <label><span>Titulo</span><input value="Avaliacao Formativa na Pratica" /></label>
+              <label><span>Instituicao</span><input value="Instituto Demonstrativo de Formacao" /></label>
+              <label><span>Carga horaria</span><input value="20h" /></label>
+              <label><span>Categoria</span><input value="Praticas pedagogicas" /></label>
+              <label><span>Tema</span><input value="Avaliacao" /></label>
+              <label><span>Nivel</span><select><option>Introdutorio</option><option>Intermediario</option><option>Avancado</option></select></label>
+              <label><span>Idioma</span><input value="pt-BR" /></label>
+              <label><span>Modalidade</span><select><option>Online</option><option>Hibrido</option><option>Presencial</option></select></label>
+              <label><span>Certificado</span><select><option>Disponivel</option><option>Nao informado</option></select></label>
+              <label><span>URL oficial</span><input value="https://example.org/curso-demonstrativo" /></label>
+              <label><span>Prazo</span><input value="Sem prazo" /></label>
+              <label><span>Status</span><select><option>Em revisao</option><option>Publicado</option><option>Arquivado</option></select></label>
+              <label><span>Tags</span><input value="avaliacao, rubricas, professores" /></label>
+              <label><span>Centro de Conhecimento</span><input value="Avaliacao Formativa" /></label>
+              <label><span>Trilhas relacionadas</span><input value="Professor, Coordenador" /></label>
+              <label><span>Ultima revisao</span><input value="28/07/2026" /></label>
+              <label class="span-2"><span>Descricao curta</span><textarea>Ficha demonstrativa para validar curadoria editorial de cursos gratuitos.</textarea></label>
+              <label><span>Descricao completa</span><textarea>Conteudo demonstrativo. Curso real sera cadastrado apos verificacao manual.</textarea></label>
+              <label><span>Observacoes da Curadoria</span><textarea>Validar link oficial antes de publicar.</textarea></label>
+              <label class="span-3"><span>Historico de alteracoes</span><textarea>28/07/2026 - Criado por Curadoria Demo. 28/07/2026 - Status alterado para Em revisao.</textarea></label>
+            </form>
+          </section>
+
+          <section class="curation-panel span-2" id="centros">
+            <header><span>Centros de Conhecimento</span><h2>Gerenciamento</h2></header>
+            <div class="curation-action-grid">
+              <article>Criar Centro</article><article>Editar Centro</article><article>Arquivar</article><article>Relacionar cursos</article><article>Relacionar materiais</article><article>Relacionar especialistas</article><article>Relacionar legislacao</article><article>Relacionar eventos</article><article>Relacionar trilhas</article>
+            </div>
+          </section>
+
+          <section class="curation-panel" id="tags">
+            <header><span>Tags e categorias</span><h2>Taxonomia</h2></header>
+            <div class="curation-action-grid single">
+              <article>Criar tag</article><article>Editar tag</article><article>Mesclar tags</article><article>Excluir tag</article><article>Relacionamentos</article><article>Criar categoria</article><article>Editar categoria</article>
+            </div>
+          </section>
+
+          <section class="curation-panel span-3" id="trilhas">
+            <header><span>Trilhas</span><h2>Editor visual demonstrativo</h2></header>
+            <div class="trail-editor-demo">
+              <article><span>01</span><strong>Resumo</strong><small>20 min - Professor</small></article>
+              <article><span>02</span><strong>Livro</strong><small>2h - leitura</small></article>
+              <article><span>03</span><strong>Curso</strong><small>20h - online</small></article>
+              <article><span>04</span><strong>Video</strong><small>15 min</small></article>
+              <article><span>05</span><strong>Guia</strong><small>40 min</small></article>
+              <article><span>06</span><strong>Conclusao</strong><small>10 min</small></article>
+            </div>
+            <div class="curation-action-row"><button type="button">Adicionar etapa</button><button type="button">Mover</button><button type="button">Ordenar</button><button type="button">Definir perfil</button></div>
+          </section>
+
+          <section class="curation-panel span-3" id="recursos">
+            <header><span>Recursos</span><h2>Cadastros preparados</h2></header>
+            <div class="resource-admin-grid">
+              <article><strong>Materiais</strong><span>PDF, Guia, Cartilha, Modelo, Checklist, Manual, Ferramenta, Link externo</span></article>
+              <article><strong>Legislacao</strong><span>Lei, Decreto, Resolucao, Parecer, Nota Tecnica, Manual</span></article>
+              <article><strong>Livros</strong><span>Titulo, autor, capa, descricao, temas, status</span></article>
+              <article><strong>Videos</strong><span>Titulo, URL, duracao, transcricao futura, status</span></article>
+              <article><strong>Podcasts</strong><span>Episodio, audio, duracao, apresentador, status</span></article>
+              <article><strong>Especialistas</strong><span>Foto, nome, especialidade, instituicao, biografia, links</span></article>
+              <article><strong>Eventos</strong><span>Nome, data, formato, inscricao, status, materiais</span></article>
+            </div>
+          </section>
+
+          <section class="curation-panel span-2" id="verificacao">
+            <header><span>Verificacao</span><h2>Conferencia editorial</h2></header>
+            <div class="verification-table">
+              <article><strong>Curso demonstrativo</strong><span>Link valido</span><small>Responsavel: Marina - proxima revisao 12/08/2026</small></article>
+              <article><strong>Instituicao demonstrativa</strong><span>Revisao necessaria</span><small>Responsavel: Rafael - proxima revisao 05/08/2026</small></article>
+              <article><strong>Material futuro</strong><span>Link pendente</span><small>Responsavel: Equipe - proxima revisao 01/08/2026</small></article>
+            </div>
+          </section>
+
+          <section class="curation-panel">
+            <header><span>Auditoria</span><h2>Historico</h2></header>
+            <div class="audit-list">
+              <article><strong>Quem criou</strong><span>Curadoria Demo</span></article>
+              <article><strong>Quem alterou</strong><span>Coord. Curadoria</span></article>
+              <article><strong>Quando alterou</strong><span>28/07/2026 09h40</span></article>
+              <article><strong>O que alterou</strong><span>Status, tags, relacionamento com centro</span></article>
+            </div>
+          </section>
+        </div>
+      </div>
+    `,
+  },
   viewer: {
     title: "Book Viewer",
     subtitle: `${activeBook.title} - ${activeBook.subtitle}`,
@@ -1729,6 +2137,100 @@ const modules = {
         <section class="panel span-2"><h2>Diagnosticos</h2><table><tr><td>EF04LP01</td><td>82,1%</td><td>Adequado</td></tr><tr><td>EF04MA05</td><td>71,4%</td><td>Basico</td></tr><tr><td>EF04CI03</td><td>68,7%</td><td>Basico</td></tr></table></section>
         <section class="panel"><h2>Atividades Recentes</h2><ul class="clean-list"><li>Avaliacao de Matematica</li><li>Diagnostico de Leitura</li><li>Avaliacao de Ciencias</li></ul></section>
       </div>
+    `,
+  },
+  bancoQuestoes: {
+    title: "Banco de Questoes",
+    subtitle: "Banco inteligente de questoes, atividades e avaliacoes",
+    code: "MS-004-BQ",
+    html: `
+      <div class="dashboard-head blue">
+        <div>
+          <p>MS-004-BQ</p>
+          <h1>Banco Inteligente de Questoes</h1>
+          <span>Itens autorais, adaptados e oficiais com origem, licenca, curadoria e historico de uso.</span>
+        </div>
+      </div>
+      <section class="question-bank" data-question-bank>
+        <div class="qb-notice" role="note">
+          <strong>Regra de publicacao</strong>
+          <span>Nenhum conteudo externo e publicado automaticamente. Materiais sem licenca aberta ficam bloqueados ou servem apenas como referencia pedagogica para itens novos e autorais.</span>
+        </div>
+        <div class="metric-row qb-metrics">
+          <article>Itens demonstrativos<strong data-qb-total>0</strong><span>Base ficticia autoral</span></article>
+          <article>Publicados<strong data-qb-published>0</strong><span>Com curadoria concluida</span></article>
+          <article>Em revisao<strong data-qb-review>0</strong><span>Sem publicacao automatica</span></article>
+          <article>No carrinho<strong data-qb-cart-count>0</strong><span>Avaliacao em montagem</span></article>
+        </div>
+        <div class="qb-layout">
+          <aside class="panel qb-filters" aria-label="Filtros do banco de questoes">
+            <div class="panel-head"><h2>Pesquisa e filtros</h2><button type="button" data-qb-clear>Limpar</button></div>
+            <label><span>Buscar</span><input type="search" data-qb-search placeholder="Codigo, habilidade, enunciado..." /></label>
+            <label><span>Etapa</span><select data-qb-filter="stage"><option value="">Todas</option></select></label>
+            <label><span>Ano</span><select data-qb-filter="year"><option value="">Todos</option></select></label>
+            <label><span>Componente curricular</span><select data-qb-filter="component"><option value="">Todos</option></select></label>
+            <label><span>Habilidade BNCC</span><select data-qb-filter="skill"><option value="">Todas</option></select></label>
+            <label><span>Matriz ou descritor</span><select data-qb-filter="descriptor"><option value="">Todos</option></select></label>
+            <label><span>Unidade tematica</span><select data-qb-filter="unit"><option value="">Todas</option></select></label>
+            <label><span>Objeto de conhecimento</span><select data-qb-filter="object"><option value="">Todos</option></select></label>
+            <label><span>Dificuldade</span><select data-qb-filter="difficulty"><option value="">Todas</option></select></label>
+            <label><span>Nivel de proficiencia</span><select data-qb-filter="proficiency"><option value="">Todos</option></select></label>
+            <label><span>Tipo de questao</span><select data-qb-filter="type"><option value="">Todos</option></select></label>
+            <label><span>Recurso utilizado</span><select data-qb-filter="resource"><option value="">Todos</option></select></label>
+            <label><span>Origem</span><select data-qb-filter="originType"><option value="">Todas</option></select></label>
+            <label><span>Status de revisao</span><select data-qb-filter="curationStatus"><option value="">Todos</option></select></label>
+            <label><span>Acessibilidade</span><select data-qb-filter="accessibility"><option value="">Todas</option></select></label>
+            <label><span>Uso</span><select data-qb-used><option value="">Todas</option><option value="used">Ja utilizadas</option><option value="unused">Ineditas para a turma</option></select></label>
+          </aside>
+          <main class="qb-results">
+            <div class="qb-toolbar">
+              <div><strong data-qb-result-count>0 itens</strong><span>Filtros combinaveis e resposta local rapida.</span></div>
+              <select data-qb-sort aria-label="Ordenar questoes">
+                <option value="recent">Ultima revisao</option>
+                <option value="difficulty">Dificuldade</option>
+                <option value="time">Tempo estimado</option>
+              </select>
+            </div>
+            <div class="qb-state" data-qb-loading>Carregando banco demonstrativo...</div>
+            <div class="qb-state error" data-qb-error hidden>Nao foi possivel carregar os itens demonstrativos.</div>
+            <div class="qb-grid" data-qb-grid></div>
+            <div class="qb-state" data-qb-empty hidden>Nenhuma questao encontrada com os filtros atuais.</div>
+            <section class="panel qb-detail" data-qb-detail aria-live="polite"></section>
+            <section class="panel qb-builder">
+              <div class="panel-head"><h2>Construtor de Avaliacoes</h2><button type="button" data-qb-save-draft>Salvar rascunho</button></div>
+              <div class="qb-builder-grid">
+                <label><span>Titulo</span><input data-qb-assessment-title value="Avaliacao diagnostica demonstrativa" /></label>
+                <label><span>Turma</span><select><option>2o Ano A</option><option>5o Ano B</option></select></label>
+                <label><span>Data de aplicacao</span><input type="date" value="2026-08-05" /></label>
+                <label><span>Capa</span><select><option>Raizes e Saberes - padrao</option><option>Sem capa</option></select></label>
+                <label class="span-2"><span>Orientacoes</span><textarea>Leia com atencao e marque apenas uma alternativa por questao.</textarea></label>
+              </div>
+              <div class="qb-builder-actions">
+                <button type="button">Visualizar prova</button>
+                <button type="button">Gerar gabarito</button>
+                <button type="button">Duplicar</button>
+                <button type="button">Gerar versoes</button>
+                <button type="button">Aplicar digitalmente</button>
+                <button type="button">Preparar PDF futuro</button>
+              </div>
+            </section>
+            <section class="panel qb-saved">
+              <div class="panel-head"><h2>Avaliacoes salvas</h2><a href="#avaliacoes">Ver historico</a></div>
+              <div data-qb-saved></div>
+            </section>
+            <section class="panel qb-access">
+              <div class="panel-head"><h2>Controle de acesso</h2><a href="#perfis">Perfis</a></div>
+              <div data-qb-access></div>
+            </section>
+          </main>
+          <aside class="panel qb-cart" aria-label="Carrinho da avaliacao">
+            <div class="panel-head"><h2>Avaliacao</h2><button type="button" data-qb-clear-cart>Limpar</button></div>
+            <div class="qb-cart-list" data-qb-cart-list></div>
+            <div class="qb-cart-summary"><strong data-qb-cart-time>0 min</strong><span>tempo estimado</span></div>
+            <button type="button" class="qb-primary-action" data-qb-generate>Gerar avaliacao</button>
+          </aside>
+        </div>
+      </section>
     `,
   },
   secretaria: {
@@ -1860,6 +2362,41 @@ const environments = {
       ["biblioteca", "Biblioteca", "biblioteca.html"],
     ],
   },
+  curadoria: {
+    label: "Central de Curadoria",
+    profile: "Administracao da Universidade",
+    search: "Buscar conteudos, cursos, instituicoes, logs...",
+    user: "Equipe Curadoria<br />Acesso administrativo",
+    profileImage: "logo-sidebar-dark.png",
+    nav: [
+      ["curadoria", "Dashboard", "curadoria.html#dashboard"],
+      ["lotes", "Lotes de Curadoria", "#lotes"],
+      ["instituicoes", "Instituicoes", "#instituicoes"],
+      ["cursos", "Cursos", "#cursos"],
+      ["centros", "Centros de Conhecimento", "#centros"],
+      ["categorias", "Categorias", "#tags"],
+      ["tags", "Tags", "#tags"],
+      ["trilhas", "Trilhas", "#trilhas"],
+      ["materiais", "Materiais", "#recursos"],
+      ["legislacao", "Legislacao", "#recursos"],
+      ["livros", "Livros", "#recursos"],
+      ["videos", "Videos", "#recursos"],
+      ["podcasts", "Podcasts", "#recursos"],
+      ["eventos", "Eventos", "#recursos"],
+      ["especialistas", "Especialistas", "#recursos"],
+      ["usuarios", "Usuarios", "#dashboard"],
+      ["relatorios", "Relatorios", "#dashboard"],
+      ["configuracoes", "Configuracoes", "#dashboard"],
+      ["logs", "Logs", "#verificacao"],
+    ],
+    mobile: [
+      ["curadoria", "Dashboard", "curadoria.html"],
+      ["instituicoes", "Instituicoes", "#instituicoes"],
+      ["cursos", "Cursos", "#cursos"],
+      ["centros", "Centros", "#centros"],
+      ["logs", "Logs", "#verificacao"],
+    ],
+  },
   professor: {
     label: "Painel do Professor",
     profile: "Professor",
@@ -1899,13 +2436,13 @@ const environments = {
       ["escolas", "Escolas", "#"],
       ["disciplinas", "Disciplinas", "#"],
       ["relatorios", "Relatorios", "#"],
-      ["banco", "Banco de Itens", "#"],
+      ["bancoQuestoes", "Banco de Questoes", "banco-questoes.html"],
     ],
     mobile: [
       ["avalia", "Inicio", "avalia.html"],
       ["diagnosticos", "Diagnosticos", "#"],
       ["turmas", "Turmas", "#"],
-      ["relatorios", "Relatorios", "#"],
+      ["bancoQuestoes", "Banco", "banco-questoes.html"],
       ["mais", "Mais", "#"],
     ],
   },
@@ -1996,8 +2533,10 @@ const moduleEnvironment = {
   biblioteca: "biblioteca",
   viewer: "biblioteca",
   universidade: "universidade",
+  curadoria: "curadoria",
   professor: "professor",
   avalia: "avalia",
+  bancoQuestoes: "avalia",
   secretaria: "secretaria",
   gestor: "gestor",
   familia: "familia",
@@ -2255,6 +2794,238 @@ const initMissionPlayer = () => {
   bind();
 };
 
+const initQuestionBank = () => {
+  const root = document.querySelector("[data-question-bank]");
+  if (!root) {
+    return;
+  }
+
+  const grid = root.querySelector("[data-qb-grid]");
+  const detail = root.querySelector("[data-qb-detail]");
+  const search = root.querySelector("[data-qb-search]");
+  const filters = [...root.querySelectorAll("[data-qb-filter]")];
+  const usedFilter = root.querySelector("[data-qb-used]");
+  const sort = root.querySelector("[data-qb-sort]");
+  const loading = root.querySelector("[data-qb-loading]");
+  const empty = root.querySelector("[data-qb-empty]");
+  const cartList = root.querySelector("[data-qb-cart-list]");
+  const cartTime = root.querySelector("[data-qb-cart-time]");
+  const saved = root.querySelector("[data-qb-saved]");
+  const access = root.querySelector("[data-qb-access]");
+  let selectedId = demoQuestionBankItems[0]?.id;
+  let cart = demoQuestionBankItems.slice(0, 2).map((item) => item.id);
+
+  const uniq = (key) => [...new Set(demoQuestionBankItems.map((item) => item[key]).filter(Boolean))].sort();
+  filters.forEach((select) => {
+    const key = select.dataset.qbFilter;
+    uniq(key).forEach((value) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = value;
+      select.append(option);
+    });
+  });
+
+  const itemById = (id) => demoQuestionBankItems.find((item) => item.id === id);
+  const sourceById = (id) => questionSourcesDemo.find((source) => source.id === id);
+
+  const matchesSearch = (item) => {
+    const term = search.value.trim().toLowerCase();
+    if (!term) {
+      return true;
+    }
+    return [
+      item.id,
+      item.title,
+      item.component,
+      item.skill,
+      item.descriptor,
+      item.statement,
+      item.baseText,
+      item.legalClassification,
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(term);
+  };
+
+  const getFilteredItems = () => {
+    const filterValues = Object.fromEntries(filters.map((select) => [select.dataset.qbFilter, select.value]));
+    const usedValue = usedFilter.value;
+    const items = demoQuestionBankItems.filter((item) => {
+      const fieldMatches = Object.entries(filterValues).every(([key, value]) => !value || item[key] === value);
+      const useMatches = !usedValue || (usedValue === "used" ? item.usedCount > 0 : item.usedCount === 0);
+      return fieldMatches && useMatches && matchesSearch(item);
+    });
+    return items.sort((a, b) => {
+      if (sort.value === "difficulty") {
+        return a.difficulty.localeCompare(b.difficulty);
+      }
+      if (sort.value === "time") {
+        return a.estimatedTime - b.estimatedTime;
+      }
+      return b.reviewedAt.localeCompare(a.reviewedAt);
+    });
+  };
+
+  const renderMetrics = (items) => {
+    root.querySelector("[data-qb-total]").textContent = demoQuestionBankItems.length;
+    root.querySelector("[data-qb-published]").textContent = demoQuestionBankItems.filter((item) => item.publicationStatus === "PUBLICADO").length;
+    root.querySelector("[data-qb-review]").textContent = demoQuestionBankItems.filter((item) => !["HOMOLOGADO", "APROVADO"].includes(item.curationStatus)).length;
+    root.querySelectorAll("[data-qb-cart-count]").forEach((node) => {
+      node.textContent = cart.length;
+    });
+    root.querySelector("[data-qb-result-count]").textContent = `${items.length} ${items.length === 1 ? "item" : "itens"}`;
+  };
+
+  const renderCard = (item) => `
+    <article class="qb-card ${item.id === selectedId ? "is-selected" : ""}">
+      <div class="qb-card-top">
+        <span>${item.id}</span>
+        <mark>${item.originType}</mark>
+      </div>
+      <h3>${item.title}</h3>
+      <p>${item.component} &middot; ${item.year} &middot; ${item.skill}</p>
+      <div class="qb-tags"><span>${item.type}</span><span>${item.difficulty}</span><span>${item.proficiency}</span><span>${item.estimatedTime} min</span></div>
+      <small>${item.legalClassification}</small>
+      <div class="qb-card-actions">
+        <button type="button" data-qb-view="${item.id}">Detalhes</button>
+        <button type="button" data-qb-add="${item.id}" ${item.publicationStatus !== "PUBLICADO" ? "disabled" : ""}>Adicionar</button>
+      </div>
+    </article>
+  `;
+
+  const renderDetail = () => {
+    const item = itemById(selectedId) || demoQuestionBankItems[0];
+    const source = sourceById(item.sourceId);
+    detail.innerHTML = `
+      <div class="panel-head"><h2>Detalhes da questao</h2><span>${item.curationStatus}</span></div>
+      <div class="qb-detail-grid">
+        <div>
+          <strong>${item.id}</strong>
+          <h3>${item.title}</h3>
+          <p>${item.statement}</p>
+          ${item.baseText ? `<blockquote>${item.baseText}</blockquote>` : ""}
+          <ol class="qb-alternatives">
+            ${item.alternatives.map((alternative, index) => `<li class="${index === item.correctAlternative ? "is-correct" : ""}">${String.fromCharCode(65 + index)}. ${alternative}</li>`).join("")}
+          </ol>
+        </div>
+        <div class="qb-detail-meta">
+          <span><b>BNCC</b>${item.skill}</span>
+          <span><b>Descritor</b>${item.descriptor}</span>
+          <span><b>Unidade</b>${item.unit}</span>
+          <span><b>Objeto</b>${item.object}</span>
+          <span><b>Processo</b>${item.cognitiveProcess}</span>
+          <span><b>Acessibilidade</b>${item.accessibility}</span>
+        </div>
+      </div>
+      <div class="qb-trace">
+        <article><strong>Justificativa</strong><p>${item.justification}</p></article>
+        <article><strong>Distratores</strong><p>${item.distractors.join(" ")}</p></article>
+        <article><strong>Feedback</strong><p>${item.rightFeedback} ${item.wrongFeedback}</p></article>
+        <article><strong>Intervencao</strong><p>${item.intervention}</p></article>
+        <article><strong>Fonte e licenca</strong><p>${source.name}. ${source.license}. ${source.legalStatus}.</p></article>
+        <article><strong>Historico</strong><p>Versao ${item.version}. Revisado por ${item.reviewer} em ${item.reviewedAt}. Usos: ${item.usedCount}${item.lastUsedClass ? ` (${item.lastUsedClass})` : ""}.</p></article>
+      </div>
+    `;
+  };
+
+  const moveCartItem = (id, direction) => {
+    const index = cart.indexOf(id);
+    const nextIndex = index + direction;
+    if (index < 0 || nextIndex < 0 || nextIndex >= cart.length) {
+      return;
+    }
+    [cart[index], cart[nextIndex]] = [cart[nextIndex], cart[index]];
+  };
+
+  const renderCart = () => {
+    const items = cart.map(itemById).filter(Boolean);
+    cartList.innerHTML = items.length
+      ? items
+          .map(
+            (item, index) => `
+              <article>
+                <span>${index + 1}</span>
+                <div><strong>${item.title}</strong><small>${item.id} &middot; ${item.estimatedTime} min</small></div>
+                <input type="number" min="0" step="0.5" value="1" aria-label="Pontuacao da questao ${item.id}" />
+                <button type="button" data-qb-up="${item.id}" aria-label="Mover para cima">^</button>
+                <button type="button" data-qb-down="${item.id}" aria-label="Mover para baixo">v</button>
+                <button type="button" data-qb-remove="${item.id}" aria-label="Remover">x</button>
+              </article>
+            `
+          )
+          .join("")
+      : `<div class="qb-state">Selecione questoes publicadas para montar uma avaliacao.</div>`;
+    cartTime.textContent = `${items.reduce((sum, item) => sum + item.estimatedTime, 0)} min`;
+    root.querySelectorAll("[data-qb-cart-count]").forEach((node) => {
+      node.textContent = cart.length;
+    });
+  };
+
+  const renderSaved = () => {
+    saved.innerHTML = savedAssessmentDemo
+      .map((assessment) => `<article><strong>${assessment.title}</strong><span>${assessment.status} &middot; ${assessment.items} itens &middot; ${assessment.className} &middot; ${assessment.date}</span></article>`)
+      .join("");
+  };
+
+  const renderAccess = () => {
+    access.innerHTML = questionAccessRules.map(([role, rule]) => `<article><strong>${role}</strong><span>${rule}</span></article>`).join("");
+  };
+
+  const render = () => {
+    const items = getFilteredItems();
+    loading.hidden = true;
+    grid.innerHTML = items.map(renderCard).join("");
+    empty.hidden = items.length > 0;
+    renderMetrics(items);
+    renderDetail();
+    renderCart();
+    renderSaved();
+    renderAccess();
+  };
+
+  root.addEventListener("click", (event) => {
+    const button = event.target.closest("button");
+    if (!button) {
+      return;
+    }
+    if (button.dataset.qbView) {
+      selectedId = button.dataset.qbView;
+    }
+    if (button.dataset.qbAdd && !cart.includes(button.dataset.qbAdd)) {
+      cart.push(button.dataset.qbAdd);
+    }
+    if (button.dataset.qbRemove) {
+      cart = cart.filter((id) => id !== button.dataset.qbRemove);
+    }
+    if (button.dataset.qbUp) {
+      moveCartItem(button.dataset.qbUp, -1);
+    }
+    if (button.dataset.qbDown) {
+      moveCartItem(button.dataset.qbDown, 1);
+    }
+    if (button.hasAttribute("data-qb-clear")) {
+      search.value = "";
+      filters.forEach((select) => {
+        select.value = "";
+      });
+      usedFilter.value = "";
+    }
+    if (button.hasAttribute("data-qb-clear-cart")) {
+      cart = [];
+    }
+    render();
+  });
+
+  [search, usedFilter, sort, ...filters].forEach((control) => {
+    control.addEventListener("input", render);
+    control.addEventListener("change", render);
+  });
+
+  window.setTimeout(render, 180);
+};
+
 const renderAppPage = () => {
   const mount = document.querySelector("[data-app-page]");
   if (!mount) {
@@ -2313,6 +3084,7 @@ const renderAppPage = () => {
   initBookReader();
   initLibrarySearch();
   initMissionPlayer();
+  initQuestionBank();
 };
 
 renderAppPage();

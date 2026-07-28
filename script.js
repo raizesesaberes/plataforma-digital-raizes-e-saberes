@@ -524,6 +524,23 @@ const demoKnowledgeCenters = [
   },
 ];
 
+const demoKnowledgeCategories = [
+  ["infantil", "Educacao Infantil", "Base para praticas, acolhimento e desenvolvimento integral.", "EI", "#3f6f34", 18],
+  ["fundamental", "Ensino Fundamental", "Percursos futuros por areas, habilidades e recomposicao.", "EF", "#07543d", 12],
+  ["inclusao", "Inclusao", "Conhecimento organizado para acessibilidade, autismo e diversidade.", "IN", "#0d6b4b", 16],
+  ["avaliacao", "Avaliacao", "Diagnostico, rubricas, devolutivas e acompanhamento.", "AV", "#7a812e", 14],
+  ["tecnologia", "Tecnologia", "Recursos digitais, ferramentas e boas praticas.", "TE", "#1f6f73", 10],
+  ["gestao", "Gestao", "Indicadores, lideranca pedagogica e planejamento.", "GE", "#745d21", 13],
+  ["alfabetizacao", "Alfabetizacao", "Leitura, escrita, letramento e fundamentos.", "AL", "#3f6f34", 11],
+  ["bncc", "BNCC", "Curriculo, competencias, planejamento e referencias.", "BN", "#0d6b4b", 9],
+];
+
+const learningLevels = [
+  ["beginner", "Iniciante", "Primeiros conceitos e vocabulario essencial.", "#2e7d32"],
+  ["intermediate", "Intermediario", "Aplicacao pedagogica e conexao entre recursos.", "#c49a1f"],
+  ["advanced", "Avancado", "Aprofundamento, especializacao e multiplicacao.", "#a34d3f"],
+];
+
 const syncHeader = () => {
   if (!header) {
     return;
@@ -982,6 +999,26 @@ const getKnowledgeCenterResourceCount = (center) => {
   return courses + preparedBlocks;
 };
 
+const renderKnowledgeCategoryCards = () => {
+  const target = document.querySelector("[data-knowledge-categories]");
+  if (!target) {
+    return;
+  }
+
+  target.innerHTML = demoKnowledgeCategories
+    .map(
+      ([id, title, description, icon, color, count]) => `
+        <article style="--category-color:${color}" data-knowledge-category="${id}">
+          <span>${icon}</span>
+          <strong>${title}</strong>
+          <p>${description}</p>
+          <small>${count} conteudos preparados</small>
+        </article>
+      `
+    )
+    .join("");
+};
+
 const renderKnowledgeCenterCards = () => {
   const target = document.querySelector("[data-knowledge-centers]");
   if (!target) {
@@ -1006,6 +1043,188 @@ const renderKnowledgeCenterCards = () => {
     )
     .join("");
 };
+
+const getKnowledgeJourney = (center) => [
+  ["Conceito", "Entenda o tema", "25 min", "preparado"],
+  ["Contexto", "Conheca referencias e criterios", "35 min", "preparado"],
+  ["Curso", getKnowledgeCenterCourses(center)[0]?.title || "Curso introdutorio demonstrativo", `${getKnowledgeCenterCourses(center)[0]?.workloadHours || 2}h`, "disponivel"],
+  ["Materiais", "Baixe materiais de apoio", "40 min", "futuro"],
+  ["Video", "Assista exemplos comentados", "15 min", "futuro"],
+  ["Aprofundamento", "Avance para aplicacoes praticas", "1h", "preparado"],
+  ["Comunidade", "Compare experiencias e duvidas", "20 min", "futuro"],
+  ["Continuar", "Receba recomendacoes relacionadas", "continuo", "preparado"],
+];
+
+const getKnowledgeLearningPaths = (center) => {
+  const courses = getKnowledgeCenterCourses(center);
+  const primaryCourse = courses[0];
+  const secondaryCourse = courses[1] || courses[0];
+  return [
+    {
+      name: "Professor da Educacao Infantil",
+      description: "Percurso demonstrativo para compreender o tema e aplicar em planejamento de aula.",
+      progress: 35,
+      steps: [
+        ["Resumo", "Leitura guiada", "20 min", "preparado"],
+        ["Livro", "Referencia futura", "2h de leitura", "futuro"],
+        ["Curso", primaryCourse?.title || "Curso introdutorio", `${primaryCourse?.workloadHours || 2}h`, "disponivel"],
+        ["Video", "Exemplo comentado", "15 min", "futuro"],
+        ["Guia", "Roteiro pratico", "40 min", "futuro"],
+        ["Conclusao", "Autoavaliacao preparada", "10 min", "preparado"],
+      ],
+    },
+    {
+      name: "Coordenador Pedagogico",
+      description: "Percurso demonstrativo para orientar equipes e organizar acompanhamento.",
+      progress: 20,
+      steps: [
+        ["Resumo", "Panorama do tema", "25 min", "preparado"],
+        ["Curso", secondaryCourse?.title || "Curso de aprofundamento", `${secondaryCourse?.workloadHours || 3}h`, "disponivel"],
+        ["Legislacao", "Estrutura futura", "30 min", "futuro"],
+        ["Material", "Instrumento de apoio", "45 min", "futuro"],
+        ["Evento", "Encontro futuro", "1h", "futuro"],
+      ],
+    },
+    {
+      name: "Gestor Escolar",
+      description: "Percurso demonstrativo para decisao institucional, indicadores e comunicacao.",
+      progress: 15,
+      steps: [
+        ["Diagnostico", "Leitura inicial", "20 min", "preparado"],
+        ["Curso", primaryCourse?.title || "Curso relacionado", `${primaryCourse?.workloadHours || 2}h`, "disponivel"],
+        ["Ferramenta", "Painel futuro", "30 min", "futuro"],
+        ["Guia", "Procedimento institucional", "40 min", "futuro"],
+        ["Conclusao", "Plano de continuidade", "25 min", "preparado"],
+      ],
+    },
+  ];
+};
+
+const getPathTotalTime = (steps) =>
+  steps
+    .map(([, , time]) => time)
+    .join(" + ");
+
+const renderLearningMap = (center) => `
+  <section class="knowledge-learning-map">
+    <header><span>Mapa do Conhecimento</span><strong>Roteiro visual de aprendizagem</strong></header>
+    <div>
+      ${getKnowledgeJourney(center)
+        .map(
+          ([type, title, time, status], index) => `
+            <article class="is-${status}">
+              <i>${String(index + 1).padStart(2, "0")}</i>
+              <span>${type}</span>
+              <strong>${title}</strong>
+              <small>${time} - ${status}</small>
+            </article>
+          `
+        )
+        .join("")}
+    </div>
+  </section>
+`;
+
+const renderLearningLevels = (center) => {
+  const courses = getKnowledgeCenterCourses(center);
+  return `
+    <section class="knowledge-levels-panel">
+      <header><span>Niveis</span><strong>Conteudos organizados por maturidade</strong></header>
+      <div>
+        ${learningLevels
+          .map(
+            ([key, label, description, color], index) => `
+              <article style="--level-color:${color}">
+                <span>${label}</span>
+                <p>${description}</p>
+                <strong>${index === 0 ? courses.length : index === 1 ? 2 : 1} recursos preparados</strong>
+              </article>
+            `
+          )
+          .join("")}
+      </div>
+    </section>
+  `;
+};
+
+const renderModernLearningPaths = (center) => `
+  <section class="knowledge-modern-paths">
+    <header><span>Trilhas de Aprendizagem</span><strong>Percursos por perfil</strong></header>
+    <div>
+      ${getKnowledgeLearningPaths(center)
+        .map(
+          (path) => `
+            <article>
+              <div class="path-head">
+                <div><h3>${path.name}</h3><p>${path.description}</p></div>
+                <strong>${path.progress}%</strong>
+              </div>
+              <div class="path-progress"><i style="width:${path.progress}%"></i></div>
+              <small>Tempo estimado: ${getPathTotalTime(path.steps)}</small>
+              <ol>
+                ${path.steps
+                  .map(
+                    ([type, title, time, status]) => `
+                      <li class="is-${status}">
+                        <span>${type.slice(0, 2).toUpperCase()}</span>
+                        <div><strong>${title}</strong><small>${type} - ${time} - ${status}</small></div>
+                      </li>
+                    `
+                  )
+                  .join("")}
+              </ol>
+            </article>
+          `
+        )
+        .join("")}
+    </div>
+  </section>
+`;
+
+const renderKnowledgeRecommendations = (center) => {
+  const recommendations = demoKnowledgeCenters
+    .filter((item) => item.id !== center.id && (item.category === center.category || item.relatedCategories.some((category) => center.relatedCategories.includes(category))))
+    .slice(0, 3);
+
+  return `
+    <section class="knowledge-recommendations">
+      <header><span>Voce tambem pode aprender</span><strong>Recomendacoes por tema, categoria e tags</strong></header>
+      <div>${recommendations.length ? recommendations.map((item) => `<button type="button" data-open-knowledge-center="${item.id}"><strong>${item.title}</strong><span>${item.shortDescription}</span></button>`).join("") : "<p>Novas recomendacoes aparecerao quando houver mais centros relacionados.</p>"}</div>
+    </section>
+  `;
+};
+
+const renderKnowledgeSeoShare = (center) => `
+  <section class="knowledge-seo-share">
+    <article>
+      <span>SEO preparado</span>
+      <dl>
+        <div><dt>Slug</dt><dd>${center.slug}</dd></div>
+        <div><dt>Title</dt><dd>${center.title} | Universidade Raizes e Saberes</dd></div>
+        <div><dt>Description</dt><dd>${center.shortDescription}</dd></div>
+        <div><dt>Keywords</dt><dd>${center.keywords.join(", ")}</dd></div>
+        <div><dt>Canonical</dt><dd>universidade.html#centro-${center.slug}</dd></div>
+        <div><dt>JSON-LD</dt><dd>Estrutura preparada para WebPage e BreadcrumbList.</dd></div>
+      </dl>
+    </article>
+    <article>
+      <span>Compartilhamento preparado</span>
+      <div class="share-action-grid">
+        <button type="button" data-share-placeholder="center">Compartilhar Centro</button>
+        <button type="button" data-share-placeholder="copy">Copiar link</button>
+        <button type="button" data-share-placeholder="qr">QR Code</button>
+      </div>
+    </article>
+  </section>
+`;
+
+const renderGuidedExperience = (center) => `
+  ${renderLearningMap(center)}
+  ${renderLearningLevels(center)}
+  ${renderModernLearningPaths(center)}
+  ${renderKnowledgeRecommendations(center)}
+  ${renderKnowledgeSeoShare(center)}
+`;
 
 const renderPreparedResourceBlocks = (center) => {
   const courses = getKnowledgeCenterCourses(center);
@@ -1107,6 +1326,7 @@ const renderKnowledgeCenterDetail = (centerId) => {
       <h3>Visao demonstrativa do tema</h3>
       <p>Este resumo sera produzido futuramente pela equipe Raizes e Saberes. Nesta homologacao, o texto demonstra como o centro apresentara contexto, criterios de organizacao e caminhos de estudo para o tema ${center.title}.</p>
     </section>
+    ${renderGuidedExperience(center)}
     <div class="knowledge-resource-list" id="conteudo-${center.slug}">
       ${renderPreparedResourceBlocks(center)}
     </div>
@@ -1134,6 +1354,7 @@ const renderSmartDiscovery = () => {
   );
   const providerMatches = demoCourseProviders.filter((provider) => normalize(provider.name).includes(searchTerm));
   const pathMatches = demoKnowledgeCenters.filter((center) => normalize(center.audience).includes(searchTerm));
+  const materialMatches = demoKnowledgeCenters.filter((center) => normalize([center.title, center.category, ...center.keywords].join(" ")).includes(searchTerm));
 
   panel.hidden = false;
   panel.innerHTML = `
@@ -1141,8 +1362,11 @@ const renderSmartDiscovery = () => {
     <div>
       <article><h3>Centros</h3>${centerMatches.length ? centerMatches.map((center) => `<button type="button" data-open-knowledge-center="${center.id}">${center.title}</button>`).join("") : "<p>Nenhum centro encontrado.</p>"}</article>
       <article><h3>Cursos</h3>${courseMatches.length ? renderCompactCourseList(courseMatches.slice(0, 4)) : "<p>Nenhum curso encontrado.</p>"}</article>
+      <article><h3>Trilhas</h3>${pathMatches.length ? pathMatches.map((center) => `<p>${center.title} - trilhas por perfil preparadas</p>`).join("") : "<p>Nenhuma trilha encontrada.</p>"}</article>
+      <article><h3>Materiais</h3>${materialMatches.length ? materialMatches.map((center) => `<p>${center.title} - materiais futuros preparados</p>`).join("") : "<p>Estrutura preparada para materiais futuros.</p>"}</article>
       <article><h3>Instituicoes</h3>${providerMatches.length ? providerMatches.map((provider) => `<p>${provider.name}</p>`).join("") : "<p>Nenhuma instituicao encontrada.</p>"}</article>
-      <article><h3>Trilhas e materiais</h3>${pathMatches.length ? pathMatches.map((center) => `<p>${center.title} - estrutura preparada</p>`).join("") : "<p>Estrutura preparada para materiais futuros.</p>"}</article>
+      <article><h3>Especialistas</h3><p>Estrutura preparada para especialistas demonstrativos.</p></article>
+      <article><h3>Eventos</h3><p>Estrutura preparada para eventos demonstrativos.</p></article>
     </div>
   `;
 };
@@ -1735,6 +1959,7 @@ document.addEventListener("keydown", (event) => {
 
 syncHeader();
 renderUniversityLive();
+renderKnowledgeCategoryCards();
 renderKnowledgeCenterCards();
 renderCourseCatalog();
 renderSmartDiscovery();
