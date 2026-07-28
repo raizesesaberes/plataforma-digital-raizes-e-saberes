@@ -10,14 +10,14 @@ const demoAccess = {
 const getNextPage = () => {
   const requestedPage = new URLSearchParams(window.location.search).get("next");
   if (!requestedPage) {
-    return "biblioteca.html";
+    return "plataforma.html";
   }
 
   try {
     const decodedPage = decodeURIComponent(requestedPage);
-    return decodedPage.startsWith("http") ? "biblioteca.html" : decodedPage;
+    return decodedPage.startsWith("http") ? "plataforma.html" : decodedPage;
   } catch (error) {
-    return "biblioteca.html";
+    return "plataforma.html";
   }
 };
 

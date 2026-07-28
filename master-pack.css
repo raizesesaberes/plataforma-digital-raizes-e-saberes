@@ -70,6 +70,20 @@
     linear-gradient(180deg, #06422f 0%, #053125 100%);
 }
 
+.app-shell[data-environment="plataforma"] {
+  background: #f8faf8;
+}
+
+.app-shell[data-environment="plataforma"] .app-sidebar {
+  background:
+    radial-gradient(circle at 45% 0%, rgba(57, 151, 92, 0.5), transparent 34%),
+    linear-gradient(180deg, #064530 0%, #052f24 100%);
+}
+
+.app-shell[data-environment="plataforma"] .app-topbar {
+  background: rgba(255, 255, 255, 0.94);
+}
+
 .app-shell[data-environment="universidade"] {
   background: #fbf8ef;
 }
@@ -6171,6 +6185,462 @@ td {
   }
 }
 
+.ecosystem-home {
+  display: grid;
+  gap: 24px;
+}
+
+.ecosystem-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+  gap: 24px;
+  min-height: 272px;
+  overflow: hidden;
+  padding: 34px;
+  border-radius: var(--rs-radius);
+  background:
+    radial-gradient(circle at 78% 36%, rgba(215, 169, 40, 0.36), transparent 26%),
+    linear-gradient(135deg, #063f2f 0%, #07543d 58%, #0d6b4b 100%);
+  color: #fff;
+  box-shadow: 0 28px 78px rgba(6, 63, 47, 0.24);
+}
+
+.ecosystem-hero-copy {
+  z-index: 1;
+  display: grid;
+  align-content: center;
+  gap: 12px;
+}
+
+.ecosystem-hero-copy > span {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.ecosystem-hero h1 {
+  max-width: 620px;
+  margin: 0;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: clamp(2rem, 4vw, 3.7rem);
+  line-height: 0.98;
+}
+
+.ecosystem-hero p {
+  max-width: 520px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.ecosystem-hero img {
+  width: 100%;
+  max-height: 250px;
+  align-self: end;
+  object-fit: contain;
+  filter: drop-shadow(0 22px 34px rgba(0, 0, 0, 0.26));
+}
+
+.ecosystem-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.ecosystem-hero-actions a,
+.journey-card a,
+.mission-widget > a,
+.metric-feature a,
+.certificate-feature a,
+.aside-link {
+  display: inline-grid;
+  min-height: 38px;
+  place-items: center;
+  padding: 0 14px;
+  border-radius: var(--rs-radius);
+  color: #fff;
+  background: var(--rs-green-700);
+  font-size: 0.84rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.ecosystem-hero-actions a {
+  min-height: 48px;
+  grid-auto-flow: column;
+  gap: 10px;
+  padding: 0 18px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.16);
+}
+
+.is-purple { --resource-color: #6f48c9; }
+.is-orange { --resource-color: #e86913; }
+.is-blue { --resource-color: #2e72c8; }
+.is-teal { --resource-color: #087477; }
+.is-mint { --resource-color: #239d74; }
+.is-green { --resource-color: var(--rs-green-700); }
+
+.ecosystem-hero-actions a.is-purple,
+.journey-card.is-purple a { background: #6f48c9; }
+.ecosystem-hero-actions a.is-orange,
+.journey-card.is-orange a { background: #e86913; }
+.ecosystem-hero-actions a.is-blue,
+.journey-card.is-blue a { background: #2e72c8; }
+.ecosystem-hero-actions a.is-teal { background: #087477; }
+
+.ecosystem-home-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 22px;
+  align-items: start;
+}
+
+.ecosystem-home-main {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+
+.ecosystem-home-aside {
+  position: sticky;
+  top: 96px;
+  display: grid;
+  gap: 18px;
+}
+
+.ecosystem-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.ecosystem-section-head h2 {
+  margin: 0;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 1.05rem;
+}
+
+.ecosystem-section-head a,
+.ecosystem-section-head span {
+  color: var(--rs-green-700);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.journey-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.journey-card,
+.resource-card,
+.ecosystem-panel,
+.ecosystem-news,
+.ecosystem-smart-footer {
+  border: 1px solid var(--rs-line);
+  border-radius: var(--rs-radius);
+  background: #fff;
+  box-shadow: var(--rs-shadow);
+}
+
+.journey-card {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px;
+}
+
+.journey-card img {
+  width: 78px;
+  height: 112px;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 16px rgba(18, 32, 51, 0.14));
+}
+
+.journey-card div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.journey-card span {
+  color: var(--resource-color, var(--rs-green-700));
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.journey-card h3,
+.journey-card p {
+  margin: 0;
+}
+
+.journey-card h3 {
+  font-size: 0.92rem;
+}
+
+.journey-card p,
+.journey-card small {
+  color: var(--rs-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.journey-card i,
+.course-progress-list i {
+  display: block;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf1f3;
+}
+
+.journey-card i b,
+.course-progress-list i b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--resource-color, var(--rs-green-700));
+}
+
+.ecosystem-resource-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.resource-card {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  min-height: 112px;
+  padding: 16px;
+  color: var(--rs-ink);
+  text-decoration: none;
+}
+
+.resource-card > span {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 8px;
+  background: #eef7f1;
+  font-size: 1.5rem;
+}
+
+.resource-card strong,
+.resource-card small {
+  display: block;
+}
+
+.resource-card small {
+  margin-top: 5px;
+  color: var(--rs-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.ecosystem-panels {
+  display: grid;
+  grid-template-columns: 1.4fr 0.85fr 0.85fr 1.35fr;
+  gap: 16px;
+}
+
+.ecosystem-panel,
+.ecosystem-news {
+  padding: 18px;
+}
+
+.course-progress-list,
+.recommendation-list,
+.activity-list {
+  display: grid;
+  gap: 12px;
+}
+
+.course-progress-list p {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(80px, 110px) auto;
+  gap: 12px;
+  align-items: center;
+  margin: 0;
+  color: var(--rs-muted);
+  font-size: 0.82rem;
+}
+
+.course-progress-list strong {
+  color: var(--rs-ink);
+}
+
+.metric-feature,
+.certificate-feature {
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-feature > strong,
+.certificate-feature > strong {
+  display: block;
+  font: 800 2rem Poppins, Inter, sans-serif;
+}
+
+.metric-feature p,
+.certificate-feature p {
+  margin: 4px 0 16px;
+  color: var(--rs-muted);
+  font-weight: 700;
+}
+
+.mini-donut {
+  display: grid;
+  width: 96px;
+  height: 96px;
+  place-items: center;
+  margin-left: auto;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #fff 0 52%, transparent 53%),
+    conic-gradient(var(--rs-green-700) var(--value), #e8edf1 var(--value));
+  color: var(--rs-ink);
+  font-weight: 900;
+}
+
+.certificate-feature > span {
+  position: absolute;
+  right: 18px;
+  bottom: 48px;
+  display: grid;
+  width: 72px;
+  height: 72px;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7652cc, #b17ae9);
+  color: #fff;
+  font-size: 2rem;
+  box-shadow: 0 16px 34px rgba(92, 56, 148, 0.24);
+}
+
+.recommendation-list a,
+.activity-list a,
+.ecosystem-news a {
+  display: grid;
+  gap: 3px;
+  padding: 10px 0;
+  border-top: 1px solid var(--rs-line);
+  color: var(--rs-ink);
+  text-decoration: none;
+}
+
+.recommendation-list span,
+.activity-list span,
+.ecosystem-news span {
+  color: var(--rs-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.ecosystem-news > div {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ecosystem-news a {
+  min-height: 86px;
+  padding: 16px;
+  border: 1px solid var(--rs-line);
+  border-radius: var(--rs-radius);
+  background: #f8fbf9;
+}
+
+.mission-widget {
+  display: grid;
+  gap: 14px;
+}
+
+.mission-widget-title {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.mission-widget-title > span {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff4e0;
+  font-size: 1.5rem;
+}
+
+.mission-widget h2,
+.mission-widget p {
+  margin: 0;
+}
+
+.mission-widget p {
+  color: var(--rs-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.mission-widget label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.mission-widget input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--rs-green-700);
+}
+
+.aside-link {
+  width: 100%;
+  margin-top: 14px;
+  color: var(--rs-green-700);
+  background: #fff;
+  border: 1px solid var(--rs-line);
+}
+
+.ecosystem-smart-footer {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.ecosystem-smart-footer article {
+  display: grid;
+  gap: 4px;
+  min-height: 76px;
+  place-items: center;
+  border-radius: var(--rs-radius);
+  background: #f8fbf9;
+  text-align: center;
+}
+
+.ecosystem-smart-footer strong {
+  color: var(--rs-green-700);
+  font: 800 1.45rem Poppins, Inter, sans-serif;
+}
+
+.ecosystem-smart-footer span {
+  color: var(--rs-muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
 .mobile-tabbar {
   display: none;
 }
@@ -7206,5 +7676,92 @@ td {
     min-width: 38px;
     min-height: 36px;
     font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 1280px) {
+  .journey-grid,
+  .ecosystem-resource-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ecosystem-panels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1080px) {
+  .ecosystem-home-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ecosystem-home-aside {
+    position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ecosystem-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .ecosystem-hero img {
+    max-height: 210px;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 820px) {
+  .journey-grid,
+  .ecosystem-resource-grid,
+  .ecosystem-panels,
+  .ecosystem-news > div,
+  .ecosystem-smart-footer,
+  .ecosystem-home-aside {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ecosystem-hero {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 560px) {
+  .ecosystem-hero,
+  .journey-grid,
+  .ecosystem-resource-grid,
+  .ecosystem-panels,
+  .ecosystem-news > div,
+  .ecosystem-smart-footer,
+  .ecosystem-home-aside {
+    grid-template-columns: 1fr;
+  }
+
+  .ecosystem-hero {
+    padding: 20px;
+  }
+
+  .ecosystem-hero h1 {
+    font-size: 2.05rem;
+  }
+
+  .ecosystem-hero-actions a {
+    width: 100%;
+  }
+
+  .journey-card {
+    grid-template-columns: 70px minmax(0, 1fr);
+  }
+
+  .journey-card img {
+    width: 70px;
+    height: 102px;
+  }
+
+  .course-progress-list p {
+    grid-template-columns: 1fr auto;
+  }
+
+  .course-progress-list i {
+    grid-column: 1 / -1;
   }
 }
