@@ -1901,26 +1901,27 @@ const modules = {
 
           <section class="curation-panel span-3" id="lotes">
             <header><span>Lotes de Curadoria</span><h2>Esteira automatizada controlada pelo Codex</h2></header>
-            <div class="batch-summary-grid">
+            <div class="batch-runtime-state" data-curation-state role="status">Carregando lote EDU-001...</div>
+            <div class="batch-summary-grid" data-batch-summary aria-live="polite">
               <article><strong>Lote EDU-001</strong><span>Primeiro lote real - Educacao</span><small>25 cursos encontrados · 22 importados · 3 descartados · 0 publicados</small></article>
               <article><strong>Status</strong><span>Aguardando revisao</span><small>Publicacao bloqueada ate aprovacao da equipe.</small></article>
               <article><strong>Alertas</strong><span>9 alertas de metadados</span><small>Carga horaria, URL individual ou classificacao exigem revisao.</small></article>
               <article><strong>Duplicidades</strong><span>1 possivel duplicidade</span><small>Curso similar localizado por titulo e instituicao.</small></article>
             </div>
-            <div class="batch-actions">
-              <button type="button">Visualizar lote</button>
-              <button type="button">Aprovar selecionados</button>
-              <button type="button">Rejeitar itens</button>
-              <button type="button">Solicitar correcao</button>
-              <button type="button">Publicar aprovados</button>
-              <button type="button">Exportar relatorio</button>
-              <button type="button">Reprocessar erros</button>
+            <div class="batch-toolbar" data-batch-toolbar>
+              <label><span>Filtro</span><select data-batch-filter><option value="all">Todos os itens</option><option value="alerts">Somente alertas</option><option value="duplicates">Possivel duplicidade</option><option value="approved">Aprovados</option><option value="published">Publicados</option></select></label>
+              <label><span>Observacao do curador</span><input data-curator-note placeholder="Registrar observacao antes da acao" /></label>
             </div>
-            <div class="batch-review-table">
-              <article><strong>Docencia Plural - Formacao em Interculturalidade e Bilinguismo</strong><span>EV.G / Enap · 40h · certificado confirmado · confianca alta</span><small>Centro: Educacao Inclusiva · Status: AGUARDANDO_REVISAO</small></article>
-              <article><strong>Alfabetizacao, Letramento e Tecnologias Digitais</strong><span>ESKADA/UEMA · carga horaria nao informada · certificado confirmado pela plataforma</span><small>Centro: Alfabetizacao · Status: AGUARDANDO_REVISAO</small></article>
-              <article><strong>Transtorno do Espectro Autista</strong><span>Mundi/IFSul · 30h · certificado pela plataforma · confianca media</span><small>Centro: Educacao Inclusiva · Status: AGUARDANDO_REVISAO · classificacao requer revisao</small></article>
+            <div class="batch-actions" data-batch-actions>
+              <button type="button" data-batch-refresh>Atualizar lote</button>
+              <button type="button" data-batch-approve-selected>Aprovar selecionados</button>
+              <button type="button" data-batch-reject-selected>Rejeitar selecionados</button>
+              <button type="button" data-batch-correction-selected>Solicitar correcao</button>
+              <button type="button" data-batch-publish-selected>Publicar aprovado selecionado</button>
+              <button type="button" data-batch-unpublish-selected>Despublicar selecionado</button>
             </div>
+            <div class="batch-review-table" data-batch-items></div>
+            <aside class="batch-course-detail" data-batch-detail hidden></aside>
           </section>
 
           <section class="curation-panel span-3" id="instituicoes">
@@ -3026,6 +3027,280 @@ const initQuestionBank = () => {
   window.setTimeout(render, 180);
 };
 
+const htmlEscape = (value) =>
+  String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+const initCurationBatches = () => {
+  const root = document.querySelector("[data-route-screen='curadoria'] [data-batch-summary]")?.closest("#lotes");
+  if (!root) return;
+
+  const stateNode = root.querySelector("[data-curation-state]");
+  const summaryNode = root.querySelector("[data-batch-summary]");
+  const itemsNode = root.querySelector("[data-batch-items]");
+  const detailNode = root.querySelector("[data-batch-detail]");
+  const filterNode = root.querySelector("[data-batch-filter]");
+  const noteNode = root.querySelector("[data-curator-note]");
+  const batchCode = "EDU-001";
+  const config = window.RAIZES_SUPABASE || {};
+  const token = config.accessToken || localStorage.getItem("raizes:supabase-access-token") || config.anonKey;
+  let batch = null;
+  let items = [];
+  let selectedIds = new Set();
+
+  const setState = (message, tone = "info") => {
+    if (!stateNode) return;
+    stateNode.textContent = message;
+    stateNode.dataset.tone = tone;
+  };
+
+  const api = async (table, params = "", options = {}) => {
+    if (!config.url || !config.anonKey) {
+      throw new Error("Supabase nao configurado. Defina SUPABASE_URL e SUPABASE_ANON_KEY no ambiente e exponha somente valores publicos em supabase-config.js.");
+    }
+    const baseUrl = config.url.replace(/\/$/, "");
+    const response = await fetch(`${baseUrl}/rest/v1/${table}${params}`, {
+      ...options,
+      headers: {
+        apikey: config.anonKey,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Prefer: options.prefer || "return=representation",
+        ...(options.headers || {}),
+      },
+    });
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`${response.status} ${response.statusText}${body ? ` - ${body}` : ""}`);
+    }
+    if (response.status === 204) return null;
+    return response.json();
+  };
+
+  const loadBatch = async () => {
+    setState("Carregando lote EDU-001...", "loading");
+    const batches = await api("curation_batches", `?batch_code=eq.${encodeURIComponent(batchCode)}&select=*`);
+    if (!batches.length) {
+      batch = null;
+      items = [];
+      render();
+      setState("Nenhum registro encontrado para o lote EDU-001.", "empty");
+      return;
+    }
+    batch = batches[0];
+    items = await api(
+      "curation_batch_items",
+      `?batch_id=eq.${batch.id}&select=*,course:curated_courses(*,provider:course_providers(name,acronym),category:course_categories(name,slug))&order=created_at.asc`
+    );
+    render();
+    setState(`Lote ${batch.batch_code} carregado do Supabase real. ${items.length} itens encontrados.`, "success");
+  };
+
+  const confidenceLabel = (item) => {
+    const confidence = item.confidence || {};
+    const parts = ["url", "workload", "certificate", "classification"]
+      .map((key) => `${key}: ${confidence[key] || item.course?.[`${key}_confidence`] || "NAO_CONFIRMADA"}`);
+    return parts.join(" · ");
+  };
+
+  const hasAlert = (item) => {
+    const confidence = item.confidence || {};
+    return Object.values(confidence).includes("NAO_CONFIRMADA") || Object.values(confidence).includes("MEDIA") || Boolean(item.discard_reason);
+  };
+
+  const isDuplicateCandidate = (item) => {
+    const title = `${item.normalized_title || ""} ${item.course?.theme || ""}`.toLowerCase();
+    return title.includes("metodologias ativas") || item.issue_type === "POSSIBLE_DUPLICATE";
+  };
+
+  const filteredItems = () => {
+    const filter = filterNode?.value || "all";
+    if (filter === "alerts") return items.filter(hasAlert);
+    if (filter === "duplicates") return items.filter(isDuplicateCandidate);
+    if (filter === "approved") return items.filter((item) => item.status === "APROVADO" || item.course?.status === "APROVADO");
+    if (filter === "published") return items.filter((item) => item.status === "PUBLICADO" || item.course?.status === "PUBLICADO");
+    return items;
+  };
+
+  const renderSummary = () => {
+    if (!batch) {
+      summaryNode.innerHTML = "";
+      return;
+    }
+    const imported = items.filter((item) => item.course_id).length;
+    const published = items.filter((item) => item.status === "PUBLICADO" || item.course?.status === "PUBLICADO").length;
+    const alerts = items.filter(hasAlert).length;
+    const duplicates = items.filter(isDuplicateCandidate).length;
+    summaryNode.innerHTML = `
+      <article><strong>${htmlEscape(batch.batch_code)}</strong><span>${htmlEscape(batch.title)}</span><small>${batch.found_count} encontrados · ${imported} importados · ${batch.discarded_count} descartados · ${published} publicados</small></article>
+      <article><strong>Status</strong><span>${htmlEscape(batch.status)}</span><small>Publicacao controlada por item aprovado.</small></article>
+      <article><strong>Alertas</strong><span>${alerts} alertas de metadados</span><small>Use o filtro para revisar campos pendentes.</small></article>
+      <article><strong>Duplicidades</strong><span>${duplicates} possiveis relacoes</span><small>Decisao editorial exigida antes de destacar.</small></article>
+    `;
+  };
+
+  const renderItems = () => {
+    const visible = filteredItems();
+    if (!visible.length) {
+      itemsNode.innerHTML = `<div class="batch-empty-state">Nenhum item corresponde ao filtro atual.</div>`;
+      return;
+    }
+    itemsNode.innerHTML = visible
+      .map((item) => {
+        const course = item.course || {};
+        const provider = course.provider?.acronym || course.provider?.name || item.provider_name || "Instituicao pendente";
+        const category = course.category?.name || course.knowledge_center || "Categoria pendente";
+        const checked = selectedIds.has(item.id) ? "checked" : "";
+        const workload = course.workload_text || (course.workload_hours ? `${course.workload_hours}h` : "Carga nao confirmada");
+        return `
+          <article class="${hasAlert(item) ? "has-alert" : ""}">
+            <label class="batch-select"><input type="checkbox" data-batch-select="${item.id}" ${checked} /><span>Selecionar</span></label>
+            <div>
+              <strong>${htmlEscape(item.normalized_title)}</strong>
+              <span>${htmlEscape(provider)} · ${htmlEscape(category)} · ${htmlEscape(workload)} · ${htmlEscape(course.certificate_text || "Certificado em revisao")}</span>
+              <small>Centro: ${htmlEscape(course.knowledge_center || category)} · Status: ${htmlEscape(item.status)} · ${htmlEscape(confidenceLabel(item))}</small>
+            </div>
+            <div class="batch-row-actions">
+              <button type="button" data-batch-view="${item.id}">Ficha</button>
+              <button type="button" data-batch-approve="${item.id}">Aprovar</button>
+              <button type="button" data-batch-correction="${item.id}">Correcao</button>
+              <button type="button" data-batch-reject="${item.id}">Rejeitar</button>
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+  };
+
+  const renderDetail = (item) => {
+    if (!detailNode || !item) return;
+    const course = item.course || {};
+    detailNode.hidden = false;
+    detailNode.innerHTML = `
+      <header><span>Ficha completa</span><h3>${htmlEscape(item.normalized_title)}</h3></header>
+      <div class="batch-detail-grid">
+        <article><strong>Instituicao</strong><span>${htmlEscape(course.provider?.name || item.provider_name || "Pendente")}</span></article>
+        <article><strong>Categoria</strong><span>${htmlEscape(course.category?.name || "Pendente")}</span></article>
+        <article><strong>Centro</strong><span>${htmlEscape(course.knowledge_center || "Pendente")}</span></article>
+        <article><strong>URL oficial</strong><a href="${htmlEscape(course.official_url || item.source_url)}" target="_blank" rel="noopener">Abrir origem</a></article>
+        <article><strong>Coleta</strong><span>${htmlEscape(batch?.verification_date || item.created_at || "Pendente")}</span></article>
+        <article><strong>Status</strong><span>${htmlEscape(item.status)}</span></article>
+        <article class="span-2"><strong>Confianca</strong><span>${htmlEscape(confidenceLabel(item))}</span></article>
+        <article class="span-2"><strong>Observacao da curadoria</strong><span>${htmlEscape(course.curator_notes || item.action_required || "Sem observacao registrada.")}</span></article>
+      </div>
+    `;
+  };
+
+  const render = () => {
+    renderSummary();
+    renderItems();
+  };
+
+  const logAction = async (item, action, previousStatus, newStatus, note) => {
+    await api("curation_logs", "", {
+      method: "POST",
+      body: JSON.stringify({
+        batch_id: batch.id,
+        entity_table: "curation_batch_items",
+        entity_id: item.id,
+        action,
+        previous_status: previousStatus,
+        new_status: newStatus,
+        details: { note: note || null, course_id: item.course_id || null },
+      }),
+    });
+  };
+
+  const updateItemStatus = async (itemId, status) => {
+    const item = items.find((entry) => entry.id === itemId);
+    if (!item) return;
+    const note = noteNode?.value?.trim() || "";
+    const previousStatus = item.status;
+    await api("curation_batch_items", `?id=eq.${itemId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status, action_required: note || item.action_required, updated_at: new Date().toISOString() }),
+    });
+    if (item.course_id) {
+      await api("curated_courses", `?id=eq.${item.course_id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          status,
+          pipeline_status: status,
+          curator_notes: note || item.course?.curator_notes,
+          updated_at: new Date().toISOString(),
+        }),
+      });
+    }
+    await logAction(item, `CURATION_ITEM_${status}`, previousStatus, status, note);
+  };
+
+  const runSelected = async (status, onlyOne = false) => {
+    const ids = Array.from(selectedIds);
+    if (!ids.length) {
+      setState("Selecione pelo menos um item para executar a acao.", "error");
+      return;
+    }
+    if (onlyOne && ids.length !== 1) {
+      setState("Selecione exatamente um item para publicacao/despublicacao controlada.", "error");
+      return;
+    }
+    setState("Registrando acao editorial no Supabase...", "loading");
+    for (const id of ids) {
+      await updateItemStatus(id, status);
+    }
+    selectedIds = new Set();
+    await loadBatch();
+  };
+
+  root.addEventListener("click", async (event) => {
+    const button = event.target.closest("button");
+    if (!button) return;
+    try {
+      if (button.hasAttribute("data-batch-refresh")) await loadBatch();
+      if (button.dataset.batchView) renderDetail(items.find((item) => item.id === button.dataset.batchView));
+      if (button.dataset.batchApprove) {
+        await updateItemStatus(button.dataset.batchApprove, "APROVADO");
+        await loadBatch();
+      }
+      if (button.dataset.batchCorrection) {
+        await updateItemStatus(button.dataset.batchCorrection, "REVISAO_NECESSARIA");
+        await loadBatch();
+      }
+      if (button.dataset.batchReject) {
+        await updateItemStatus(button.dataset.batchReject, "REJEITADO");
+        await loadBatch();
+      }
+      if (button.hasAttribute("data-batch-approve-selected")) await runSelected("APROVADO");
+      if (button.hasAttribute("data-batch-reject-selected")) await runSelected("REJEITADO");
+      if (button.hasAttribute("data-batch-correction-selected")) await runSelected("REVISAO_NECESSARIA");
+      if (button.hasAttribute("data-batch-publish-selected")) await runSelected("PUBLICADO", true);
+      if (button.hasAttribute("data-batch-unpublish-selected")) await runSelected("REVISAO_NECESSARIA", true);
+    } catch (error) {
+      setState(`Erro de permissao ou conexao: ${error.message}`, "error");
+    }
+  });
+
+  root.addEventListener("change", (event) => {
+    if (event.target.matches("[data-batch-select]")) {
+      if (event.target.checked) selectedIds.add(event.target.dataset.batchSelect);
+      else selectedIds.delete(event.target.dataset.batchSelect);
+    }
+    if (event.target.matches("[data-batch-filter]")) {
+      renderItems();
+    }
+  });
+
+  loadBatch().catch((error) => {
+    summaryNode.innerHTML = "";
+    itemsNode.innerHTML = `<div class="batch-empty-state">A Central de Curadoria ainda nao esta conectada ao Supabase real.</div>`;
+    setState(error.message, "error");
+  });
+};
+
 const renderAppPage = () => {
   const mount = document.querySelector("[data-app-page]");
   if (!mount) {
@@ -3085,6 +3360,7 @@ const renderAppPage = () => {
   initLibrarySearch();
   initMissionPlayer();
   initQuestionBank();
+  initCurationBatches();
 };
 
 renderAppPage();

@@ -555,3 +555,66 @@ node scripts/curation-pipeline.mjs rollback-sql EDU-001
 O workspace nao contem URL, chave ou configuracao de projeto Supabase.
 
 Por isso, a migration e o seed foram entregues prontos para aplicacao, mas nao foram executados contra um banco remoto nesta etapa.
+
+## Fase 05.1 - Implantacao Real e Homologacao do EDU-001
+
+Documento de homologacao:
+
+- `docs/HOMOLOGACAO-FASE-05-1-EDU-001.md`
+
+### Resultado da investigacao
+
+Foram verificados:
+
+- variaveis de ambiente;
+- arquivos `.env`;
+- arquivos de configuracao Supabase;
+- cliente Supabase existente;
+- CLI Supabase;
+- `psql`.
+
+Nao foram encontradas credenciais, project ref, URL de banco ou cliente Supabase configurado para a Universidade.
+
+### Preparacao feita
+
+Arquivos adicionados:
+
+- `.env.example`;
+- `supabase-config.example.js`.
+
+Arquivo runtime protegido:
+
+- `supabase-config.js`, ignorado pelo Git.
+
+### Central ligada ao banco real
+
+A secao `curadoria.html#lotes` foi preparada para consultar o Supabase real quando `window.RAIZES_SUPABASE` estiver configurado.
+
+Estados implementados:
+
+- carregamento;
+- erro de conexao;
+- falta de permissao;
+- ausencia de registros;
+- filtro de alertas;
+- filtro de duplicidades;
+- ficha completa;
+- aprovar;
+- rejeitar;
+- solicitar correcao;
+- publicar um item aprovado;
+- despublicar um item.
+
+### Status da conclusao
+
+A Fase 05.1 ainda depende de aplicacao no Supabase remoto.
+
+Ela nao deve ser considerada concluida em producao ate que:
+
+- a migration seja aplicada no projeto correto;
+- o seed EDU-001 seja executado;
+- os 22 cursos sejam confirmados no banco;
+- RLS seja testado com visitante, usuario comum, curador e administrador;
+- a Central leia o banco real;
+- o fluxo aprovacao/publicacao/despublicacao seja validado;
+- rollback seja testado em ambiente seguro.

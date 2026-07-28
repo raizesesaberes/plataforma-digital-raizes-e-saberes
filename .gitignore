@@ -5,3 +5,7 @@ dist/
 build/
 tmp/
 assets/video/*.mp4
+.env
+.env.*
+!.env.example
+supabase-config.js

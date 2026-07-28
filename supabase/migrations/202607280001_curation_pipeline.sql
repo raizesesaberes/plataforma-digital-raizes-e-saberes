@@ -42,6 +42,16 @@ as $$
   select coalesce(auth.jwt() ->> 'app_role', auth.jwt() ->> 'role', '') in ('admin', 'curator', 'service_role');
 $$;
 
+create or replace function public.touch_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
 create table if not exists public.course_providers (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -249,6 +259,33 @@ create index if not exists idx_sources_url on public.curation_sources (lower(sou
 create index if not exists idx_verifications_course on public.course_verifications using btree (course_id);
 create unique index if not exists idx_curation_issues_unique on public.curation_issues (batch_id, issue_type, description);
 create unique index if not exists idx_curation_logs_unique_action on public.curation_logs (batch_id, action);
+
+do $$
+declare
+  touch_table text;
+begin
+  foreach touch_table in array array[
+    'course_providers',
+    'course_categories',
+    'course_tags',
+    'curated_courses',
+    'curation_batches',
+    'curation_batch_items'
+  ]
+  loop
+    if not exists (
+      select 1
+      from pg_trigger
+      where tgname = 'touch_updated_at_' || touch_table
+    ) then
+      execute format(
+        'create trigger %I before update on public.%I for each row execute function public.touch_updated_at()',
+        'touch_updated_at_' || touch_table,
+        touch_table
+      );
+    end if;
+  end loop;
+end $$;
 
 alter table public.course_providers enable row level security;
 alter table public.course_categories enable row level security;
