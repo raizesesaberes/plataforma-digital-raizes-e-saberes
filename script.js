@@ -132,6 +132,257 @@ const universityTrails = [
 
 let activeUniversityFilter = "all";
 
+const demoCourseProviders = [
+  { id: "prov-demo-instituto", name: "Instituto Demonstrativo de Formacao", type: "Organizacao demonstrativa", highlighted: true },
+  { id: "prov-demo-universidade", name: "Universidade Parceira Demonstrativa", type: "Ensino superior demonstrativo", highlighted: true },
+  { id: "prov-demo-escola", name: "Escola Aberta Demonstrativa", type: "Projeto publico demonstrativo", highlighted: false },
+  { id: "prov-demo-lab", name: "Laboratorio Educacional Demonstrativo", type: "Pesquisa e inovacao demonstrativa", highlighted: true },
+];
+
+const demoCuratedCourses = [
+  {
+    id: "demo-avaliacao-formativa",
+    title: "Avaliacao Formativa na Pratica",
+    slug: "avaliacao-formativa-na-pratica",
+    providerId: "prov-demo-instituto",
+    area: "Educacao",
+    theme: "Avaliacao",
+    category: "Praticas pedagogicas",
+    workloadHours: 20,
+    modality: "Online",
+    level: "Introdutorio",
+    audience: "Professores e coordenadores",
+    certificateAvailable: true,
+    selfPaced: true,
+    enrollmentStatus: "Inscricoes abertas",
+    enrollmentDeadline: null,
+    isFree: true,
+    language: "pt-BR",
+    rating: 4.8,
+    reviewsCount: 124,
+    accessCount: 1830,
+    addedAt: "2026-07-20",
+    lastVerifiedAt: "2026-07-26",
+    verificationStatus: "verificado",
+    status: "publicado",
+    featured: true,
+    imageUrl: "assets/universidade/video-planejamento.webp",
+    courseUrl: "https://example.org/curso-demonstrativo-avaliacao-formativa",
+    summary: "Curso demonstrativo para validar a apresentacao de criterios, carga horaria, certificado e acesso externo.",
+    fullDescription: "Item de homologacao. Representa como a curadoria da Raizes e Saberes exibira cursos gratuitos mantidos por instituicoes externas, sem hospedar aulas ou materiais de terceiros.",
+    objectives: ["Planejar instrumentos simples de acompanhamento", "Organizar devolutivas orientadas por evidencias", "Comparar cursos por criterios objetivos"],
+    syllabus: ["Diagnostico inicial", "Rubricas", "Devolutivas", "Acompanhamento pedagogico"],
+    requirements: "Acesso a internet e atuacao ou interesse na area educacional.",
+    curatorNotes: "Demonstracao: substituir por dados reais apos validacao da curadoria.",
+    tags: ["avaliacao", "professores", "certificado"],
+    comments: ["Ficha clara e objetiva para comparar cursos.", "Gostei de ver a data de verificacao."],
+  },
+  {
+    id: "demo-educacao-inclusiva",
+    title: "Educacao Inclusiva e Acolhimento",
+    slug: "educacao-inclusiva-e-acolhimento",
+    providerId: "prov-demo-universidade",
+    area: "Educacao",
+    theme: "Inclusao",
+    category: "Inclusao e diversidade",
+    workloadHours: 30,
+    modality: "Online",
+    level: "Intermediario",
+    audience: "Professores, gestores e equipes de apoio",
+    certificateAvailable: true,
+    selfPaced: false,
+    enrollmentStatus: "Inscricoes abertas",
+    enrollmentDeadline: "2026-08-30",
+    isFree: true,
+    language: "pt-BR",
+    rating: 4.9,
+    reviewsCount: 98,
+    accessCount: 1510,
+    addedAt: "2026-07-18",
+    lastVerifiedAt: "2026-07-25",
+    verificationStatus: "verificado",
+    status: "publicado",
+    featured: true,
+    imageUrl: "assets/universidade/curso-educacao-inclusiva.webp",
+    courseUrl: "https://example.org/curso-demonstrativo-educacao-inclusiva",
+    summary: "Modelo de ficha para cursos gratuitos sobre acolhimento, adaptacoes e praticas inclusivas.",
+    fullDescription: "Curso demonstrativo usado para validar a separacao entre informacoes oficiais, classificacao da curadoria e avaliacoes de usuarios.",
+    objectives: ["Mapear barreiras de aprendizagem", "Planejar acolhimento escolar", "Selecionar praticas inclusivas"],
+    syllabus: ["Direitos de aprendizagem", "Adaptacoes razoaveis", "Convivencia", "Acompanhamento"],
+    requirements: "Nao ha requisitos obrigatorios.",
+    curatorNotes: "Prioridade alta para curadoria inicial da area educacional.",
+    tags: ["inclusao", "gestao", "certificado"],
+    comments: ["A separacao de fontes ajuda bastante.", "Boa opcao para equipes escolares."],
+  },
+  {
+    id: "demo-tecnologias-educacionais",
+    title: "Tecnologias Educacionais para Rotinas de Aula",
+    slug: "tecnologias-educacionais-para-rotinas-de-aula",
+    providerId: "prov-demo-lab",
+    area: "Educacao",
+    theme: "Tecnologia",
+    category: "Tecnologias educacionais",
+    workloadHours: 12,
+    modality: "Online",
+    level: "Introdutorio",
+    audience: "Professores",
+    certificateAvailable: false,
+    selfPaced: true,
+    enrollmentStatus: "Inscricoes abertas",
+    enrollmentDeadline: null,
+    isFree: true,
+    language: "pt-BR",
+    rating: 4.6,
+    reviewsCount: 76,
+    accessCount: 1325,
+    addedAt: "2026-07-23",
+    lastVerifiedAt: "2026-07-24",
+    verificationStatus: "verificado",
+    status: "publicado",
+    featured: false,
+    imageUrl: "assets/universidade/video-tecnologias.webp",
+    courseUrl: "https://example.org/curso-demonstrativo-tecnologias",
+    summary: "Ficha demonstrativa para cursos curtos, autoinstrucionais e sem certificado.",
+    fullDescription: "Mostra como a plataforma informa claramente quando um curso externo gratuito nao oferece certificado.",
+    objectives: ["Selecionar ferramentas simples", "Integrar recursos digitais ao planejamento", "Registrar evidencias de aprendizagem"],
+    syllabus: ["Ambientes digitais", "Recursos interativos", "Cuidados de uso", "Rotinas"],
+    requirements: "Conhecimentos basicos de navegacao web.",
+    curatorNotes: "Bom candidato para ranking de cursos autoinstrucionais.",
+    tags: ["tecnologia", "autoinstrucional"],
+    comments: ["Carga horaria facil de encaixar na rotina."],
+  },
+  {
+    id: "demo-gestao-pedagogica",
+    title: "Gestao Pedagogica Orientada por Indicadores",
+    slug: "gestao-pedagogica-orientada-por-indicadores",
+    providerId: "prov-demo-escola",
+    area: "Educacao",
+    theme: "Gestao",
+    category: "Gestao escolar",
+    workloadHours: 40,
+    modality: "Hibrido",
+    level: "Avancado",
+    audience: "Gestores e coordenadores pedagogicos",
+    certificateAvailable: true,
+    selfPaced: false,
+    enrollmentStatus: "Inscricoes encerradas",
+    enrollmentDeadline: "2026-07-10",
+    isFree: true,
+    language: "pt-BR",
+    rating: 4.7,
+    reviewsCount: 54,
+    accessCount: 890,
+    addedAt: "2026-07-08",
+    lastVerifiedAt: "2026-07-21",
+    verificationStatus: "aguardando revisao",
+    status: "inscricoes encerradas",
+    featured: false,
+    imageUrl: "assets/universidade/trilha-gestao.webp",
+    courseUrl: "https://example.org/curso-demonstrativo-gestao",
+    summary: "Demonstra cursos gratuitos com inscricoes encerradas, mantendo a ficha para comparacao e historico.",
+    fullDescription: "A ficha permanece acessivel, mas o estado do curso informa que novas inscricoes nao estao abertas.",
+    objectives: ["Ler indicadores escolares", "Priorizar intervencoes", "Acompanhar planos de acao"],
+    syllabus: ["Indicadores", "Reunioes pedagogicas", "Plano de intervencao", "Monitoramento"],
+    requirements: "Atuacao em gestao escolar ou coordenacao.",
+    curatorNotes: "Exemplo de estado: inscricoes encerradas.",
+    tags: ["gestao", "indicadores", "certificado"],
+    comments: ["Importante manter estado de inscricao visivel."],
+  },
+  {
+    id: "demo-socioemocional",
+    title: "Convivencia e Aprendizagem Socioemocional",
+    slug: "convivencia-e-aprendizagem-socioemocional",
+    providerId: "prov-demo-universidade",
+    area: "Educacao",
+    theme: "Socioemocional",
+    category: "Convivencia",
+    workloadHours: 18,
+    modality: "Online",
+    level: "Introdutorio",
+    audience: "Professores e orientadores",
+    certificateAvailable: true,
+    selfPaced: true,
+    enrollmentStatus: "Inscricoes abertas",
+    enrollmentDeadline: null,
+    isFree: true,
+    language: "pt-BR",
+    rating: 4.5,
+    reviewsCount: 43,
+    accessCount: 710,
+    addedAt: "2026-07-22",
+    lastVerifiedAt: "2026-07-23",
+    verificationStatus: "verificado",
+    status: "publicado",
+    featured: false,
+    imageUrl: "assets/universidade/trilha-socioemocional.webp",
+    courseUrl: "https://example.org/curso-demonstrativo-socioemocional",
+    summary: "Exemplo de curso gratuito com certificado para profissionais da educacao.",
+    fullDescription: "Demonstra como cursos relacionados podem aparecer no detalhe e em rankings tematicos.",
+    objectives: ["Identificar necessidades de convivencia", "Planejar rodas de conversa", "Acompanhar clima escolar"],
+    syllabus: ["Escuta", "Convivencia", "Mediacao", "Rotinas de cuidado"],
+    requirements: "Nao ha requisitos obrigatorios.",
+    curatorNotes: "Relacionar com trilhas futuras da Formacao Raizes.",
+    tags: ["convivencia", "socioemocional", "certificado"],
+    comments: ["Tema essencial para equipes escolares."],
+  },
+  {
+    id: "demo-alfabetizacao",
+    title: "Alfabetizacao e Letramento: Fundamentos",
+    slug: "alfabetizacao-e-letramento-fundamentos",
+    providerId: "prov-demo-instituto",
+    area: "Educacao",
+    theme: "Alfabetizacao",
+    category: "Praticas pedagogicas",
+    workloadHours: 25,
+    modality: "Online",
+    level: "Introdutorio",
+    audience: "Professores da educacao infantil e anos iniciais",
+    certificateAvailable: true,
+    selfPaced: true,
+    enrollmentStatus: "Inscricoes abertas",
+    enrollmentDeadline: null,
+    isFree: true,
+    language: "pt-BR",
+    rating: 4.4,
+    reviewsCount: 67,
+    accessCount: 980,
+    addedAt: "2026-07-12",
+    lastVerifiedAt: "2026-07-19",
+    verificationStatus: "verificado",
+    status: "publicado",
+    featured: false,
+    imageUrl: "assets/biblioteca/RAIZES_GUIA_ALFABETIZADOR_INFANTIL5_BIBLIOTECA.webp",
+    courseUrl: "https://example.org/curso-demonstrativo-alfabetizacao",
+    summary: "Curso demonstrativo para validar expansao por temas e publico recomendado.",
+    fullDescription: "Mostra como o catalogo pode receber cursos de areas educacionais especificas sem misturar com conteudos proprios da plataforma.",
+    objectives: ["Revisar fundamentos", "Selecionar estrategias", "Organizar acompanhamento"],
+    syllabus: ["Consciencia fonologica", "Leitura", "Escrita", "Intervencoes"],
+    requirements: "Atuacao ou interesse em alfabetizacao.",
+    curatorNotes: "Exemplo de tema prioritario para busca.",
+    tags: ["alfabetizacao", "professores", "certificado"],
+    comments: ["Bom para validar filtros por publico."],
+  },
+];
+
+const courseFilterConfig = [
+  ["area", "Area"],
+  ["theme", "Tema"],
+  ["providerId", "Instituicao"],
+  ["workload", "Carga horaria"],
+  ["modality", "Modalidade"],
+  ["level", "Nivel"],
+  ["audience", "Publico"],
+  ["certificate", "Certificado"],
+  ["selfPaced", "Autoinstrucional"],
+  ["enrollment", "Inscricao"],
+  ["added", "Data de inclusao"],
+  ["rating", "Avaliacao"],
+  ["free", "Gratuidade"],
+];
+
+let activeCourseFilters = {};
+let visibleCourseLimit = 4;
+
 const syncHeader = () => {
   if (!header) {
     return;
@@ -365,6 +616,300 @@ if (videoModal) {
     }
   });
 }
+
+const getProviderName = (providerId) =>
+  demoCourseProviders.find((provider) => provider.id === providerId)?.name || "Instituicao demonstrativa";
+
+const getProviderType = (providerId) =>
+  demoCourseProviders.find((provider) => provider.id === providerId)?.type || "Provedor demonstrativo";
+
+const isDemoAuthenticated = () => localStorage.getItem(platformAuth.key) === "true";
+
+const requestCatalogLogin = () => {
+  const currentPath = `${window.location.pathname.split("/").pop() || "universidade.html"}${window.location.search}${window.location.hash}`;
+  window.location.href = `${platformAuth.loginPage}?next=${encodeURIComponent(currentPath)}`;
+};
+
+const renderStars = (rating) => `Nota ${rating.toFixed(1)}`;
+
+const compactDate = (value) => {
+  if (!value) {
+    return "Sem prazo";
+  }
+  const [year, month, day] = value.split("-");
+  return `${day}/${month}/${year}`;
+};
+
+const getCourseFilterOptions = (key) => {
+  if (key === "providerId") {
+    return demoCourseProviders.map((provider) => [provider.id, provider.name]);
+  }
+  if (key === "workload") {
+    return [["short", "Ate 15h"], ["medium", "16h a 30h"], ["long", "31h ou mais"]];
+  }
+  if (key === "certificate") {
+    return [["yes", "Com certificado"], ["no", "Sem certificado"]];
+  }
+  if (key === "selfPaced") {
+    return [["yes", "Autoinstrucional"], ["no", "Com turma ou prazo"]];
+  }
+  if (key === "enrollment") {
+    return [["open", "Inscricao aberta"], ["closed", "Inscricao encerrada"]];
+  }
+  if (key === "added") {
+    return [["recent", "Ultimos 15 dias"], ["older", "Mais antigos"]];
+  }
+  if (key === "rating") {
+    return [["4.8", "4,8 ou mais"], ["4.5", "4,5 ou mais"]];
+  }
+  if (key === "free") {
+    return [["free", "Gratuito"]];
+  }
+
+  const valueKey = {
+    area: "area",
+    theme: "theme",
+    modality: "modality",
+    level: "level",
+    audience: "audience",
+  }[key];
+
+  return [...new Set(demoCuratedCourses.map((course) => course[valueKey]))]
+    .filter(Boolean)
+    .map((value) => [value, value]);
+};
+
+const matchesCourseFilter = (course, key, value) => {
+  if (!value) {
+    return true;
+  }
+  if (["area", "theme", "modality", "level", "audience", "providerId"].includes(key)) {
+    return course[key] === value;
+  }
+  if (key === "workload") {
+    return (
+      (value === "short" && course.workloadHours <= 15) ||
+      (value === "medium" && course.workloadHours > 15 && course.workloadHours <= 30) ||
+      (value === "long" && course.workloadHours >= 31)
+    );
+  }
+  if (key === "certificate") {
+    return value === "yes" ? course.certificateAvailable : !course.certificateAvailable;
+  }
+  if (key === "selfPaced") {
+    return value === "yes" ? course.selfPaced : !course.selfPaced;
+  }
+  if (key === "enrollment") {
+    return value === "open" ? course.enrollmentStatus === "Inscricoes abertas" : course.enrollmentStatus !== "Inscricoes abertas";
+  }
+  if (key === "added") {
+    return value === "recent" ? course.addedAt >= "2026-07-15" : course.addedAt < "2026-07-15";
+  }
+  if (key === "rating") {
+    return course.rating >= Number(value);
+  }
+  if (key === "free") {
+    return course.isFree;
+  }
+  return true;
+};
+
+const getFilteredDemoCourses = () => {
+  const searchTerm = normalize(document.querySelector("[data-course-search]")?.value);
+  const sortMode = document.querySelector("[data-course-sort]")?.value || "featured";
+  const filtered = demoCuratedCourses.filter((course) => {
+    const searchable = normalize([
+      course.title,
+      course.summary,
+      course.theme,
+      course.category,
+      course.audience,
+      getProviderName(course.providerId),
+      ...course.tags,
+    ].join(" "));
+    const matchesSearch = !searchTerm || searchable.includes(searchTerm);
+    return matchesSearch && Object.entries(activeCourseFilters).every(([key, value]) => matchesCourseFilter(course, key, value));
+  });
+
+  return filtered.sort((firstCourse, secondCourse) => {
+    if (sortMode === "rating") {
+      return secondCourse.rating - firstCourse.rating;
+    }
+    if (sortMode === "access") {
+      return secondCourse.accessCount - firstCourse.accessCount;
+    }
+    if (sortMode === "recent") {
+      return secondCourse.addedAt.localeCompare(firstCourse.addedAt);
+    }
+    if (sortMode === "hours") {
+      return firstCourse.workloadHours - secondCourse.workloadHours;
+    }
+    return Number(secondCourse.featured) - Number(firstCourse.featured) || secondCourse.rating - firstCourse.rating;
+  });
+};
+
+const renderCourseCard = (course) => `
+  <article class="public-course-card" data-course-id="${course.id}">
+    <img src="${course.imageUrl}" alt="" loading="lazy" />
+    <div class="course-card-body">
+      <div class="course-card-topline">
+        <span>${course.category}</span>
+        <small>${course.isFree ? "Gratuito" : "Pago"}</small>
+      </div>
+      <h3>${course.title}</h3>
+      <p>${course.summary}</p>
+      <dl>
+        <div><dt>Instituicao</dt><dd>${getProviderName(course.providerId)}</dd></div>
+        <div><dt>Carga</dt><dd>${course.workloadHours}h</dd></div>
+        <div><dt>Modalidade</dt><dd>${course.modality}</dd></div>
+        <div><dt>Certificado</dt><dd>${course.certificateAvailable ? "Disponivel" : "Nao informado"}</dd></div>
+      </dl>
+      <div class="course-card-metrics">
+        <span>${renderStars(course.rating)}</span>
+        <span>${course.reviewsCount} avaliacoes</span>
+        <span>${course.accessCount.toLocaleString("pt-BR")} acessos</span>
+      </div>
+      <button type="button" data-open-course-detail="${course.id}">Ver detalhes</button>
+    </div>
+  </article>
+`;
+
+const renderCompactCourseList = (courses) =>
+  courses.map((course) => `<button type="button" data-open-course-detail="${course.id}"><strong>${course.title}</strong><span>${getProviderName(course.providerId)} - ${course.rating.toFixed(1)}</span></button>`).join("");
+
+const renderCourseDetail = (courseId) => {
+  const course = demoCuratedCourses.find((item) => item.id === courseId) || demoCuratedCourses[0];
+  const detail = document.querySelector("[data-course-detail]");
+  if (!detail || !course) {
+    return;
+  }
+  const viewKey = `catalog:detail-view:${course.id}`;
+  const previousViews = Number(localStorage.getItem(viewKey) || "0");
+  localStorage.setItem(viewKey, String(previousViews + 1));
+
+  const related = demoCuratedCourses
+    .filter((item) => item.id !== course.id && (item.theme === course.theme || item.area === course.area))
+    .slice(0, 3);
+
+  detail.hidden = false;
+  detail.innerHTML = `
+    <header class="course-detail-hero">
+      <img src="${course.imageUrl}" alt="" />
+      <div>
+        <span>${course.verificationStatus} - ultima verificacao ${compactDate(course.lastVerifiedAt)}</span>
+        <h2>${course.title}</h2>
+        <p>${course.fullDescription}</p>
+        <div class="course-detail-actions">
+          <a href="${course.courseUrl}" target="_blank" rel="noopener" data-external-course="${course.id}">Acessar curso na instituicao</a>
+          <button type="button" data-auth-course-action="favorite" data-course-id="${course.id}">Salvar</button>
+          <button type="button" data-auth-course-action="review" data-course-id="${course.id}">Avaliar</button>
+        </div>
+      </div>
+    </header>
+    <div class="course-detail-grid">
+      <section>
+        <h3>Informacoes oficiais da instituicao</h3>
+        <p><strong>Instituicao responsavel:</strong> ${getProviderName(course.providerId)} (${getProviderType(course.providerId)})</p>
+        <p><strong>Descricao:</strong> ${course.summary}</p>
+        <p><strong>Objetivos:</strong></p>
+        <ul>${course.objectives.map((item) => `<li>${item}</li>`).join("")}</ul>
+        <p><strong>Conteudos abordados:</strong></p>
+        <ul>${course.syllabus.map((item) => `<li>${item}</li>`).join("")}</ul>
+        <p><strong>Publico recomendado:</strong> ${course.audience}</p>
+        <p><strong>Requisitos:</strong> ${course.requirements}</p>
+      </section>
+      <aside>
+        <h3>Classificacao da curadoria</h3>
+        <dl>
+          <div><dt>Area</dt><dd>${course.area}</dd></div>
+          <div><dt>Tema</dt><dd>${course.theme}</dd></div>
+          <div><dt>Carga horaria</dt><dd>${course.workloadHours}h</dd></div>
+          <div><dt>Modalidade</dt><dd>${course.modality}</dd></div>
+          <div><dt>Nivel</dt><dd>${course.level}</dd></div>
+          <div><dt>Certificado</dt><dd>${course.certificateAvailable ? "Sim" : "Nao"}</dd></div>
+          <div><dt>Gratuidade</dt><dd>${course.isFree ? "Gratuito" : "Nao gratuito"}</dd></div>
+          <div><dt>Inscricao</dt><dd>${course.enrollmentStatus}</dd></div>
+        </dl>
+        <p>${course.curatorNotes}</p>
+      </aside>
+      <section>
+        <h3>Avaliacoes dos usuarios</h3>
+        <div class="detail-rating"><strong>${course.rating.toFixed(1)}</strong><span>${renderStars(course.rating)}</span><small>${course.reviewsCount} avaliacoes</small></div>
+        <div class="detail-comments">${course.comments.map((comment) => `<blockquote>${comment}</blockquote>`).join("")}</div>
+        <div class="course-progress-actions">
+          <button type="button" data-auth-course-action="started" data-course-id="${course.id}">Informar que iniciei</button>
+          <button type="button" data-auth-course-action="completed" data-course-id="${course.id}">Informar conclusao</button>
+          <button type="button" data-auth-course-action="certificate" data-course-id="${course.id}">Enviar certificado externo</button>
+        </div>
+      </section>
+      <section>
+        <h3>Cursos relacionados</h3>
+        <div class="related-course-list">${related.length ? renderCompactCourseList(related) : "<p>Nenhum curso relacionado nesta demonstracao.</p>"}</div>
+      </section>
+    </div>
+  `;
+  detail.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+const renderCourseCatalog = () => {
+  const catalog = document.querySelector("[data-course-catalog]");
+  if (!catalog) {
+    return;
+  }
+
+  const filtersTarget = document.querySelector("[data-course-filters]");
+  if (filtersTarget && !filtersTarget.innerHTML) {
+    filtersTarget.innerHTML = courseFilterConfig
+      .map(([key, label]) => `
+        <label>
+          <span>${label}</span>
+          <select data-course-filter="${key}">
+            <option value="">Todos</option>
+            ${getCourseFilterOptions(key).map(([value, optionLabel]) => `<option value="${value}">${optionLabel}</option>`).join("")}
+          </select>
+        </label>
+      `)
+      .join("");
+  }
+
+  const courses = getFilteredDemoCourses();
+  const visibleCourses = courses.slice(0, visibleCourseLimit);
+  const totalAccess = demoCuratedCourses.reduce((sum, course) => sum + course.accessCount, 0);
+
+  const kpis = document.querySelector("[data-catalog-kpis]");
+  if (kpis) {
+    kpis.innerHTML = `
+      <span><strong>${demoCuratedCourses.length}</strong><small>cursos demo</small></span>
+      <span><strong>${demoCourseProviders.length}</strong><small>instituicoes</small></span>
+      <span><strong>${totalAccess.toLocaleString("pt-BR")}</strong><small>acessos demo</small></span>
+    `;
+  }
+
+  const resultCount = document.querySelector("[data-course-result-count]");
+  if (resultCount) {
+    resultCount.textContent = `${courses.length} curso${courses.length === 1 ? "" : "s"} encontrado${courses.length === 1 ? "" : "s"}`;
+  }
+
+  const results = document.querySelector("[data-course-results]");
+  if (results) {
+    results.innerHTML = visibleCourses.length ? visibleCourses.map(renderCourseCard).join("") : `<article class="catalog-empty">Nenhum curso encontrado para os filtros selecionados.</article>`;
+  }
+
+  const loadMore = document.querySelector("[data-course-load-more]");
+  if (loadMore) {
+    loadMore.hidden = visibleCourseLimit >= courses.length;
+  }
+
+  document.querySelector("[data-featured-courses]").innerHTML = renderCompactCourseList(demoCuratedCourses.filter((course) => course.featured));
+  document.querySelector("[data-featured-providers]").innerHTML = demoCourseProviders
+    .filter((provider) => provider.highlighted)
+    .map((provider) => `<article><strong>${provider.name}</strong><span>${provider.type}</span></article>`)
+    .join("");
+  document.querySelector("[data-most-accessed]").innerHTML = renderCompactCourseList([...demoCuratedCourses].sort((a, b) => b.accessCount - a.accessCount).slice(0, 3));
+  document.querySelector("[data-best-rated]").innerHTML = renderCompactCourseList([...demoCuratedCourses].sort((a, b) => b.rating - a.rating).slice(0, 3));
+  document.querySelector("[data-recent-courses]").innerHTML = renderCompactCourseList([...demoCuratedCourses].sort((a, b) => b.addedAt.localeCompare(a.addedAt)).slice(0, 3));
+  document.querySelector("[data-certificate-courses]").innerHTML = renderCompactCourseList(demoCuratedCourses.filter((course) => course.certificateAvailable).slice(0, 3));
+};
 
 const getFeaturedUniversityCourse = () =>
   universityCourses.find((course) => course.featured) ||
@@ -625,6 +1170,80 @@ document.querySelectorAll("[data-university-filter]").forEach((filterButton) => 
   });
 });
 
+document.querySelector("[data-course-search]")?.addEventListener("input", () => {
+  visibleCourseLimit = 4;
+  renderCourseCatalog();
+});
+
+document.querySelector("[data-course-sort]")?.addEventListener("change", () => {
+  visibleCourseLimit = 4;
+  renderCourseCatalog();
+});
+
+document.addEventListener("change", (event) => {
+  const filter = event.target.closest?.("[data-course-filter]");
+  if (!filter) {
+    return;
+  }
+
+  const key = filter.dataset.courseFilter;
+  if (filter.value) {
+    activeCourseFilters[key] = filter.value;
+  } else {
+    delete activeCourseFilters[key];
+  }
+  visibleCourseLimit = 4;
+  renderCourseCatalog();
+});
+
+document.querySelector("[data-clear-course-filters]")?.addEventListener("click", () => {
+  activeCourseFilters = {};
+  visibleCourseLimit = 4;
+  document.querySelectorAll("[data-course-filter]").forEach((filter) => {
+    filter.value = "";
+  });
+  const search = document.querySelector("[data-course-search]");
+  if (search) {
+    search.value = "";
+  }
+  renderCourseCatalog();
+});
+
+document.querySelector("[data-course-load-more]")?.addEventListener("click", () => {
+  visibleCourseLimit += 4;
+  renderCourseCatalog();
+});
+
+document.addEventListener("click", (event) => {
+  const detailButton = event.target.closest?.("[data-open-course-detail]");
+  if (detailButton) {
+    renderCourseDetail(detailButton.dataset.openCourseDetail);
+    history.replaceState(null, "", `#detalhes-${detailButton.dataset.openCourseDetail}`);
+    return;
+  }
+
+  const authAction = event.target.closest?.("[data-auth-course-action]");
+  if (authAction) {
+    if (!isDemoAuthenticated()) {
+      requestCatalogLogin();
+      return;
+    }
+    const actionKey = `catalog:${authAction.dataset.authCourseAction}:${authAction.dataset.courseId}`;
+    localStorage.setItem(actionKey, new Date().toISOString());
+    authAction.textContent = "Registrado";
+    authAction.disabled = true;
+    return;
+  }
+
+  const externalLink = event.target.closest?.("[data-external-course]");
+  if (externalLink) {
+    const courseId = externalLink.dataset.externalCourse;
+    const clickKey = `catalog:external-click:${courseId}`;
+    const previousCount = Number(localStorage.getItem(clickKey) || "0");
+    localStorage.setItem(clickKey, String(previousCount + 1));
+  }
+});
+
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && videoModal && !videoModal.hidden) {
     closeVideoModal();
@@ -633,5 +1252,6 @@ document.addEventListener("keydown", (event) => {
 
 syncHeader();
 renderUniversityLive();
+renderCourseCatalog();
 window.addEventListener("scroll", syncHeader, { passive: true });
 syncLibrary();

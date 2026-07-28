@@ -8,12 +8,17 @@ const requirePlatformAuth = () => {
     return;
   }
 
+  const currentPath = `${window.location.pathname.split("/").pop() || "biblioteca.html"}${window.location.search}${window.location.hash}`;
+  const publicPages = new Set(["universidade.html", "index.html", "login.html"]);
+  if (publicPages.has(window.location.pathname.split("/").pop() || "biblioteca.html")) {
+    return;
+  }
+
   const isAuthenticated = localStorage.getItem(platformAuth.key) === "true";
   if (isAuthenticated) {
     return;
   }
 
-  const currentPath = `${window.location.pathname.split("/").pop() || "biblioteca.html"}${window.location.search}${window.location.hash}`;
   document.documentElement.style.display = "none";
   window.location.replace(`${platformAuth.loginPage}?next=${encodeURIComponent(currentPath)}`);
 };
@@ -1455,98 +1460,125 @@ const modules = {
   },
   universidade: {
     title: "Universidade Raizes e Saberes",
-    subtitle: "Formacao que transforma",
+    subtitle: "Catalogo publico de cursos gratuitos",
     code: "MS-008",
     html: `
-      <div class="university-platform" data-university-platform>
-        <section class="university-platform-hero">
+      <div class="university-catalog-platform" data-course-catalog>
+        <section class="university-public-hero" id="universidade">
           <div>
             <span>Universidade Raizes e Saberes</span>
-            <h1>Bem-vinda de volta, Ana Carolina!</h1>
-            <p>Seu aprendizado transforma voce, sua escola e o futuro.</p>
-            <button type="button" data-complete-university-lesson>Continuar Aprendendo</button>
+            <h1>Descubra cursos gratuitos confiaveis para sua formacao profissional.</h1>
+            <p>Um nucleo publico de curadoria para pesquisar, comparar e acessar cursos gratuitos oferecidos por instituicoes externas.</p>
+            <div class="university-hero-actions">
+              <a href="#catalogo" data-catalog-section="catalogo">Encontrar cursos gratuitos</a>
+              <a href="#formacao-raizes" data-catalog-section="formacao-raizes">Formacao Raizes e Saberes</a>
+            </div>
           </div>
-          <img class="university-hero-art" src="assets/universidade/banner-principal.webp" alt="" aria-hidden="true" />
+          <img src="assets/universidade/banner-principal.webp" alt="" />
         </section>
 
-        <aside class="university-progress-card">
-          <h2>Seu Progresso Geral</h2>
-          <div class="university-progress-ring"><strong>78%</strong></div>
-          <p>Voce esta indo <strong>muito bem!</strong></p>
-          <i><span style="width: 78%"></span></i>
-          <small>12 cursos concluidos</small>
-        </aside>
+        <nav class="university-gateway" aria-label="Areas da Universidade">
+          <a href="#formacao-raizes" data-catalog-section="formacao-raizes">
+            <strong>Formacao Raizes e Saberes</strong>
+            <span>Cursos proprios, trilhas, assessorias, encontros, historico e certificados em preparacao.</span>
+          </a>
+          <a href="#catalogo" data-catalog-section="catalogo" class="is-primary">
+            <strong>Encontre Cursos Gratuitos</strong>
+            <span>Catalogo publico com busca, filtros, rankings, comparacao e acesso ao curso na instituicao.</span>
+          </a>
+        </nav>
 
-        <aside class="university-achievement-card">
-          <article><span><img src="assets/universidade/icone-certificado.webp" alt="" /></span><strong>7</strong><small>Certificados Conquistados</small><a href="#">Ver certificados</a></article>
-          <article><span><img src="assets/universidade/icone-horas.webp" alt="" /></span><strong>120 h</strong><small>Horas de Formacao</small><a href="#">Ver historico</a></article>
-        </aside>
-
-        <section class="university-card university-trails-card span-2">
-          <div class="university-card-head"><h2>Trilhas de Aprendizagem</h2><a href="#">Ver todas</a></div>
-          <div class="university-trail-strip">
-            <article><img src="assets/universidade/trilha-praticas-pedagogicas.webp" alt="" /><strong>Praticas Pedagogicas</strong><small>12 cursos</small></article>
-            <article><img src="assets/universidade/trilha-inclusao-diversidade.webp" alt="" /><strong>Inclusao e Diversidade</strong><small>10 cursos</small></article>
-            <article><img src="assets/universidade/trilha-tecnologias.webp" alt="" /><strong>Tecnologias Educacionais</strong><small>8 cursos</small></article>
-            <article><img src="assets/universidade/trilha-gestao.webp" alt="" /><strong>Gestao Escolar e Lideranca</strong><small>9 cursos</small></article>
-            <article><img src="assets/universidade/trilha-socioemocional.webp" alt="" /><strong>Socioemocional e Convivencia</strong><small>7 cursos</small></article>
+        <section class="university-prep-panel" id="formacao-raizes">
+          <div>
+            <span>Area institucional</span>
+            <h2>Formacao Raizes e Saberes</h2>
+            <p>Espaco reservado para o LMS proprio da plataforma: cursos internos, formacao continuada, implantacao das colecoes, assessorias, webinarios, encontros, certificados e historico formativo.</p>
           </div>
+          <ul>
+            <li>Cursos proprios em preparacao</li>
+            <li>Historico e certificados internos futuros</li>
+            <li>Sem emissao de certificados nesta fase</li>
+          </ul>
         </section>
 
-        <section class="university-card university-current-course" id="curso-relacionado">
-          <div class="university-card-head"><h2>Meus Cursos em Andamento</h2><a href="#">Ver todos</a></div>
-          <div class="current-course-body">
-            <img class="course-portrait" src="assets/universidade/curso-educacao-inclusiva.webp" alt="" />
+        <section class="course-catalog-shell" id="catalogo">
+          <header class="catalog-head">
             <div>
-              <h3>Educacao Inclusiva: Praticas que Acolhem</h3>
-              <div class="course-progress-line"><i><span style="width: 65%"></span></i><strong>65%</strong></div>
-              <button type="button" data-complete-university-lesson>Continuar Curso</button>
-              <aside class="ecosystem-link-panel university-material-link">
-                <span>📚 ${relatedMaterial.label}</span>
-                <strong>${relatedMaterial.title}</strong>
-                <p>${relatedMaterial.description}</p>
-                <a href="${relatedMaterial.href}">Abrir no Book Viewer</a>
-              </aside>
+              <span>Catalogo publico gratuito</span>
+              <h2>Encontre cursos gratuitos</h2>
+              <p>Dados abaixo sao demonstrativos e marcados como homologacao. Os cursos reais serao cadastrados pela curadoria apos validacao da estrutura.</p>
+            </div>
+            <div class="catalog-kpis" data-catalog-kpis></div>
+          </header>
+
+          <div class="catalog-tools">
+            <label class="catalog-search">
+              <span>Busca</span>
+              <input type="search" data-course-search placeholder="Buscar por curso, tema, instituicao ou publico" />
+            </label>
+            <div class="catalog-sort">
+              <span>Ordenar</span>
+              <select data-course-sort>
+                <option value="featured">Destaques da curadoria</option>
+                <option value="rating">Mais bem avaliados</option>
+                <option value="access">Mais acessados</option>
+                <option value="recent">Adicionados recentemente</option>
+                <option value="hours">Menor carga horaria</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="catalog-layout">
+            <aside class="catalog-filters" aria-label="Filtros do catalogo">
+              <div data-course-filters></div>
+              <button type="button" data-clear-course-filters>Limpar filtros</button>
+            </aside>
+            <div class="catalog-results">
+              <section class="catalog-featured">
+                <div><span>Cursos em destaque</span><div data-featured-courses></div></div>
+                <div><span>Instituicoes em destaque</span><div data-featured-providers></div></div>
+              </section>
+              <section class="catalog-ranking-grid" aria-label="Rankings">
+                <article><h3>Mais acessados</h3><div data-most-accessed></div></article>
+                <article><h3>Mais bem avaliados</h3><div data-best-rated></div></article>
+                <article><h3>Adicionados recentemente</h3><div data-recent-courses></div></article>
+                <article><h3>Com certificado</h3><div data-certificate-courses></div></article>
+              </section>
+              <div class="catalog-result-head"><strong data-course-result-count></strong><span data-course-demo-note>Todos os itens sao demonstrativos.</span></div>
+              <div class="course-card-grid-public" data-course-results></div>
+              <button class="catalog-load-more" type="button" data-course-load-more>Carregar mais</button>
             </div>
           </div>
         </section>
 
-        <section class="university-card university-next-courses">
-          <div class="university-card-head"><h2>Proximos Cursos</h2></div>
-          <article><strong>Avaliacao Formativa na Pratica</strong><small>Inicio: 15/06/2025</small><span>□</span></article>
-          <article><strong>Neurociencia e Aprendizagem</strong><small>Inicio: 22/06/2025</small><span>□</span></article>
-          <a href="#">Ver agenda completa</a>
-        </section>
+        <section class="course-detail-panel" id="detalhes" data-course-detail hidden></section>
 
-        <section class="university-card university-teacher-card">
-          <div class="university-card-head"><h2>Professor em Destaque</h2></div>
-          <div class="teacher-highlight">
-            <img src="assets/universidade/professor-ricardo-mendes.webp" alt="" />
-            <div><strong>Prof. Ricardo Mendes</strong><p>Doutor em Educacao. Especialista em praticas inovadoras e gestao pedagogica.</p><a href="#">Ver perfil</a></div>
+        <section class="curation-admin-panel" id="administracao">
+          <header>
+            <span>Administracao e curadoria</span>
+            <h2>Estrutura inicial para gestao do catalogo</h2>
+          </header>
+          <div class="admin-action-grid">
+            <article>Cadastrar instituicao</article>
+            <article>Cadastrar e editar curso</article>
+            <article>Publicar e despublicar</article>
+            <article>Verificar link oficial</article>
+            <article>Adicionar categorias e tags</article>
+            <article>Destacar ou arquivar curso</article>
+            <article>Registrar notas internas</article>
+            <article>Atualizar informacoes verificadas</article>
+            <article>Validar certificado externo enviado</article>
           </div>
         </section>
 
-        <section class="university-card university-video-card span-2">
-          <div class="university-card-head"><h2>Videoaulas em Destaque</h2><a href="#">Ver todas</a></div>
-          <div class="university-video-grid">
-            <article><img src="assets/universidade/video-acolhimento.webp" alt="" /><strong>Acolhimento e Escuta Ativa na Escola</strong></article>
-            <article><img src="assets/universidade/video-planejamento.webp" alt="" /><strong>Planejamento com Foco na Aprendizagem</strong></article>
-            <article><img src="assets/universidade/video-tecnologias.webp" alt="" /><strong>Tecnologias que Transformam</strong></article>
+        <section class="catalog-data-panel" id="estrutura-dados">
+          <header>
+            <span>Base escalavel</span>
+            <h2>Entidades preparadas para a proxima fase</h2>
+          </header>
+          <div class="data-table-list">
+            <code>course_providers</code><code>curated_courses</code><code>course_categories</code><code>course_tags</code><code>course_tag_relations</code><code>course_reviews</code><code>course_favorites</code><code>course_clicks</code><code>course_verifications</code><code>learning_paths</code><code>learning_path_courses</code>
           </div>
-        </section>
-
-        <section class="university-card university-materials-card">
-          <div class="university-card-head"><h2>Materiais Complementares</h2><a href="#">Ver todos</a></div>
-          <article><img src="assets/universidade/material-pdf.webp" alt="" /><strong>Guia Pratico da BNCC</strong><small>PDF - 2.4 MB</small></article>
-          <article><img src="assets/universidade/material-checklist.webp" alt="" /><strong>Checklist de Planejamento</strong><small>PDF - 1.1 MB</small></article>
-          <article><img src="assets/universidade/material-doc.webp" alt="" /><strong>Modelo de Plano de Aula</strong><small>DOCX - 880 KB</small></article>
-        </section>
-
-        <section class="university-card university-assessments-card">
-          <div class="university-card-head"><h2>Avaliacoes</h2><a href="#">Ver todas</a></div>
-          <article><strong>Avaliacao: Inclusao Escolar</strong><small>Concluida</small><span class="done">✓</span></article>
-          <article><strong>Avaliacao: Metodologias Ativas</strong><small>Em andamento</small><span></span></article>
-          <article><strong>Avaliacao: Gestao da Sala de Aula</strong><small>Pendente</small><span></span></article>
         </section>
       </div>
     `,
