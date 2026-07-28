@@ -1501,6 +1501,19 @@ const modules = {
           </ul>
         </section>
 
+        <section class="knowledge-center-shell" id="centros-conhecimento">
+          <header class="knowledge-center-head">
+            <div>
+              <span>Motor de descoberta do conhecimento</span>
+              <h2>Centros de Conhecimento</h2>
+              <p>Temas demonstrativos preparados para reunir, no futuro, cursos, livros, guias, legislacao, videos, especialistas, eventos e ferramentas em uma unica pagina de assunto.</p>
+            </div>
+          </header>
+          <div class="knowledge-center-grid" data-knowledge-centers></div>
+        </section>
+
+        <section class="knowledge-center-detail" id="centro-conhecimento" data-knowledge-center-detail hidden></section>
+
         <section class="course-catalog-shell" id="catalogo">
           <header class="catalog-head">
             <div>
@@ -1526,6 +1539,8 @@ const modules = {
               </select>
             </div>
           </div>
+
+          <section class="smart-discovery-panel" data-smart-discovery hidden></section>
 
           <div class="catalog-quick-themes" aria-label="Temas rapidos" data-quick-themes></div>
 
@@ -1828,6 +1843,7 @@ const environments = {
       ["avaliacoes", "Avaliacoes", "#formacao-raizes"],
       ["eventos", "Eventos", "#formacao-raizes"],
       ["historico", "Historico Formativo", "#formacao-raizes"],
+      ["centros", "Centros de Conhecimento", "#centros-conhecimento"],
       ["heading", "Catalogo Gratuito", "#"],
       ["encontrar", "Encontrar Cursos", "#catalogo"],
       ["categorias", "Categorias", "#catalogo"],

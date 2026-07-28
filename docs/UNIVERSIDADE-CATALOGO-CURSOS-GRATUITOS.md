@@ -193,3 +193,69 @@ Ao clicar em `Acessar curso na instituicao`, a interface registra localmente:
 - contador local por curso.
 
 Esse evento nao altera inicio, conclusao ou certificado.
+
+## Fase 03 - Motor de descoberta do conhecimento
+
+### Nova entidade: Centro de Conhecimento
+
+Campos preparados:
+
+- `title`
+- `slug`
+- `short_description`
+- `full_description`
+- `image_url`
+- `category`
+- `keywords`
+- `level`
+- `audience`
+- `color`
+- `icon`
+- `featured`
+- `status`
+- `created_at`
+- `updated_at`
+
+### Rotas
+
+- `universidade.html#centros-conhecimento`: lista de temas demonstrativos.
+- `universidade.html#centro-{slug}`: pagina individual do Centro de Conhecimento.
+
+### Tabelas futuras
+
+- `knowledge_centers`
+- `knowledge_categories`
+- `knowledge_resources`
+- `knowledge_resource_types`
+- `knowledge_tags`
+- `knowledge_relations`
+- `knowledge_books`
+- `knowledge_videos`
+- `knowledge_podcasts`
+- `knowledge_laws`
+- `knowledge_events`
+- `knowledge_experts`
+- `knowledge_faq`
+- `knowledge_guides`
+- `knowledge_documents`
+
+### Relacionamentos preparados
+
+Centro de Conhecimento -> Cursos -> Categorias -> Instituicoes -> Tags -> Materiais -> Especialistas -> Eventos -> Legislacao -> Videos -> Livros.
+
+### Busca inteligente preparada
+
+A busca principal passa a preparar resultados por tipo:
+
+- Centros de Conhecimento;
+- Cursos;
+- Instituicoes;
+- Categorias;
+- Trilhas;
+- Materiais futuros.
+
+Nao ha IA nesta fase. A busca usa correspondencia local demonstrativa e deixa a arquitetura pronta para evolucao.
+
+### Conteudo demonstrativo
+
+Foram criados centros demonstrativos para Educacao Inclusiva, BNCC, Alfabetizacao, Tecnologias Educacionais, Gestao Escolar e Avaliacao Formativa. Nenhum livro, legislacao, evento, especialista ou material real foi cadastrado. Esses blocos ficam estruturados para expansao e aparecem individualmente apenas quando houver conteudo curado.

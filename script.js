@@ -384,6 +384,146 @@ let activeCourseFilters = {};
 let visibleCourseLimit = 4;
 let areAdvancedCourseFiltersVisible = false;
 
+const demoKnowledgeResourceTypes = [
+  ["courses", "Cursos"],
+  ["books", "Livros"],
+  ["guides", "Guias"],
+  ["booklets", "Cartilhas"],
+  ["laws", "Legislacao"],
+  ["articles", "Artigos"],
+  ["videos", "Videos"],
+  ["podcasts", "Podcasts"],
+  ["events", "Eventos"],
+  ["experts", "Especialistas"],
+  ["faq", "Perguntas Frequentes"],
+  ["tools", "Ferramentas"],
+  ["paths", "Trilhas"],
+  ["materials", "Materiais complementares"],
+];
+
+const demoKnowledgeCenters = [
+  {
+    id: "kc-educacao-inclusiva",
+    title: "Educacao Inclusiva",
+    slug: "educacao-inclusiva",
+    shortDescription: "Praticas, cursos e referencias para acolher diferentes necessidades de aprendizagem.",
+    fullDescription: "Centro demonstrativo preparado para organizar conhecimento sobre inclusao, acessibilidade pedagogica e acompanhamento escolar.",
+    imageUrl: "assets/universidade/curso-educacao-inclusiva.webp",
+    category: "Inclusao e diversidade",
+    keywords: ["educacao inclusiva", "autismo", "acolhimento", "adaptacoes"],
+    level: "Introdutorio a intermediario",
+    audience: "Professores, gestores e equipes de apoio",
+    color: "#07543d",
+    icon: "IN",
+    featured: true,
+    status: "demonstracao",
+    createdAt: "2026-07-27",
+    updatedAt: "2026-07-27",
+    relatedCourseIds: ["demo-educacao-inclusiva", "demo-socioemocional"],
+    relatedCategories: ["Inclusao", "Convivencia", "Gestao escolar"],
+  },
+  {
+    id: "kc-bncc",
+    title: "BNCC",
+    slug: "bncc",
+    shortDescription: "Organizacao futura de guias, materiais e trilhas sobre fundamentos curriculares.",
+    fullDescription: "Centro demonstrativo sem conteudos reais, criado para validar a arquitetura de temas estruturantes da Universidade.",
+    imageUrl: "assets/universidade/material-pdf.webp",
+    category: "Curriculo",
+    keywords: ["bncc", "curriculo", "planejamento", "competencias"],
+    level: "Introdutorio",
+    audience: "Professores e coordenadores",
+    color: "#0d6b4b",
+    icon: "BN",
+    featured: true,
+    status: "demonstracao",
+    createdAt: "2026-07-27",
+    updatedAt: "2026-07-27",
+    relatedCourseIds: ["demo-avaliacao-formativa", "demo-alfabetizacao"],
+    relatedCategories: ["Curriculo", "Planejamento", "Avaliacao"],
+  },
+  {
+    id: "kc-alfabetizacao",
+    title: "Alfabetizacao",
+    slug: "alfabetizacao",
+    shortDescription: "Percursos futuros para fundamentos, praticas e acompanhamento da alfabetizacao.",
+    fullDescription: "Centro demonstrativo preparado para receber cursos, guias e materiais complementares sobre alfabetizacao e letramento.",
+    imageUrl: "assets/biblioteca/RAIZES_GUIA_ALFABETIZADOR_INFANTIL5_BIBLIOTECA.webp",
+    category: "Praticas pedagogicas",
+    keywords: ["alfabetizacao", "letramento", "leitura", "escrita"],
+    level: "Introdutorio",
+    audience: "Professores da educacao infantil e anos iniciais",
+    color: "#3f6f34",
+    icon: "AL",
+    featured: true,
+    status: "demonstracao",
+    createdAt: "2026-07-27",
+    updatedAt: "2026-07-27",
+    relatedCourseIds: ["demo-alfabetizacao", "demo-avaliacao-formativa"],
+    relatedCategories: ["Leitura", "Escrita", "Avaliacao"],
+  },
+  {
+    id: "kc-tecnologias",
+    title: "Tecnologias Educacionais",
+    slug: "tecnologias-educacionais",
+    shortDescription: "Recursos e percursos futuros para uso pedagogico de tecnologias na escola.",
+    fullDescription: "Centro demonstrativo para validar descoberta por tema, cursos autoinstrucionais e materiais de apoio.",
+    imageUrl: "assets/universidade/video-tecnologias.webp",
+    category: "Tecnologia",
+    keywords: ["tecnologia", "aula digital", "ferramentas", "recursos digitais"],
+    level: "Introdutorio",
+    audience: "Professores e gestores",
+    color: "#1f6f73",
+    icon: "TE",
+    featured: false,
+    status: "demonstracao",
+    createdAt: "2026-07-27",
+    updatedAt: "2026-07-27",
+    relatedCourseIds: ["demo-tecnologias-educacionais"],
+    relatedCategories: ["Ferramentas", "Videos", "Cursos"],
+  },
+  {
+    id: "kc-gestao-escolar",
+    title: "Gestao Escolar",
+    slug: "gestao-escolar",
+    shortDescription: "Temas futuros para indicadores, planejamento, lideranca e acompanhamento pedagogico.",
+    fullDescription: "Centro demonstrativo preparado para organizar recursos por perfil de gestor, coordenador e equipe tecnica.",
+    imageUrl: "assets/universidade/trilha-gestao.webp",
+    category: "Gestao",
+    keywords: ["gestao escolar", "indicadores", "lideranca", "planejamento"],
+    level: "Intermediario",
+    audience: "Gestores e coordenadores pedagogicos",
+    color: "#745d21",
+    icon: "GE",
+    featured: false,
+    status: "demonstracao",
+    createdAt: "2026-07-27",
+    updatedAt: "2026-07-27",
+    relatedCourseIds: ["demo-gestao-pedagogica", "demo-avaliacao-formativa"],
+    relatedCategories: ["Indicadores", "Avaliacao", "Lideranca"],
+  },
+  {
+    id: "kc-avaliacao",
+    title: "Avaliacao Formativa",
+    slug: "avaliacao-formativa",
+    shortDescription: "Organizacao futura de conteudos sobre diagnostico, devolutivas e acompanhamento.",
+    fullDescription: "Centro demonstrativo para reunir cursos, trilhas, ferramentas e perguntas frequentes sobre avaliacao para aprendizagem.",
+    imageUrl: "assets/universidade/video-planejamento.webp",
+    category: "Avaliacao",
+    keywords: ["avaliacao formativa", "diagnostico", "rubricas", "devolutivas"],
+    level: "Introdutorio",
+    audience: "Professores e coordenadores",
+    color: "#7a812e",
+    icon: "AV",
+    featured: false,
+    status: "demonstracao",
+    createdAt: "2026-07-27",
+    updatedAt: "2026-07-27",
+    relatedCourseIds: ["demo-avaliacao-formativa", "demo-gestao-pedagogica"],
+    relatedCategories: ["Rubricas", "Diagnostico", "Devolutivas"],
+  },
+];
+
 const syncHeader = () => {
   if (!header) {
     return;
@@ -830,6 +970,182 @@ const renderMiniCourseCards = (courses) =>
       `
     )
     .join("");
+
+const getKnowledgeCenterCourses = (center) =>
+  center.relatedCourseIds
+    .map((courseId) => demoCuratedCourses.find((course) => course.id === courseId))
+    .filter(Boolean);
+
+const getKnowledgeCenterResourceCount = (center) => {
+  const courses = getKnowledgeCenterCourses(center).length;
+  const preparedBlocks = 8;
+  return courses + preparedBlocks;
+};
+
+const renderKnowledgeCenterCards = () => {
+  const target = document.querySelector("[data-knowledge-centers]");
+  if (!target) {
+    return;
+  }
+
+  target.innerHTML = demoKnowledgeCenters
+    .map(
+      (center) => `
+        <article class="knowledge-center-card" style="--center-color:${center.color}">
+          <img src="${center.imageUrl}" alt="Imagem demonstrativa do centro ${center.title}" loading="lazy" />
+          <div>
+            <span>${center.icon}</span>
+            <h3>${center.title}</h3>
+            <p>${center.shortDescription}</p>
+            <small>${getKnowledgeCenterResourceCount(center)} recursos preparados</small>
+            <div>${center.relatedCategories.map((category) => `<b>${category}</b>`).join("")}</div>
+            <button type="button" data-open-knowledge-center="${center.id}">Explorar</button>
+          </div>
+        </article>
+      `
+    )
+    .join("");
+};
+
+const renderPreparedResourceBlocks = (center) => {
+  const courses = getKnowledgeCenterCourses(center);
+  const demoBlocks = {
+    courses,
+    paths: [
+      ["Professor", "Percurso demonstrativo para estudo individual e aplicacao em sala.", courses.length],
+      ["Coordenador", "Percurso demonstrativo para orientar planejamento e acompanhamento.", courses.length],
+      ["Gestor", "Percurso demonstrativo para decisao pedagogica e leitura de indicadores.", courses.length],
+      ["Familia", "Percurso demonstrativo para comunicacao e apoio ao estudante.", 0],
+      ["Administrador Escolar", "Percurso demonstrativo para organizacao institucional.", 0],
+    ],
+    faq: [
+      ["Este centro possui conteudo real?", "Nao. Os dados atuais sao demonstrativos e servem para homologar a estrutura."],
+      ["Os cursos sao da Raizes e Saberes?", "Nao. Cursos externos pertencem as instituicoes ofertantes; a Universidade organiza a descoberta."],
+      ["A curadoria substitui a instituicao?", "Nao. A curadoria classifica e contextualiza informacoes para facilitar a busca."],
+    ],
+  };
+  const preparedLabels = demoKnowledgeResourceTypes
+    .filter(([type]) => !["courses", "paths", "faq"].includes(type))
+    .map(([, label]) => label);
+
+  return `
+    ${
+      courses.length
+        ? `
+          <section class="knowledge-resource-block">
+            <header><span>Cursos</span><strong>${courses.length} cursos demonstrativos</strong></header>
+            <div class="knowledge-course-grid">${courses.map(renderCourseCard).join("")}</div>
+          </section>
+        `
+        : ""
+    }
+    <section class="knowledge-resource-block">
+      <header><span>Trilhas</span><strong>Trilhas recomendadas</strong></header>
+      <div class="knowledge-path-grid">
+        ${demoBlocks.paths
+          .map(
+            ([name, description, count]) => `
+              <article>
+                <strong>${name}</strong>
+                <p>${description}</p>
+                <span>${count} curso${count === 1 ? "" : "s"}</span>
+              </article>
+            `
+          )
+          .join("")}
+      </div>
+    </section>
+    <section class="knowledge-resource-block">
+      <header><span>Perguntas Frequentes</span><strong>FAQ demonstrativo</strong></header>
+      <div class="knowledge-faq-list">
+        ${demoBlocks.faq
+          .map(
+            ([question, answer]) => `
+              <details>
+                <summary>${question}</summary>
+                <p>${answer}</p>
+              </details>
+            `
+          )
+          .join("")}
+      </div>
+    </section>
+    <section class="knowledge-resource-block is-prepared">
+      <header><span>Estruturas preparadas</span><strong>Sem conteudo real nesta fase</strong></header>
+      <p>Blocos reservados para: ${preparedLabels.join(", ")}. Eles serao exibidos individualmente quando houver conteudo curado.</p>
+    </section>
+  `;
+};
+
+const renderKnowledgeCenterDetail = (centerId) => {
+  const center = demoKnowledgeCenters.find((item) => item.id === centerId || item.slug === centerId);
+  const detail = document.querySelector("[data-knowledge-center-detail]");
+  if (!center || !detail) {
+    return;
+  }
+
+  const courses = getKnowledgeCenterCourses(center);
+  detail.hidden = false;
+  detail.innerHTML = `
+    <header class="knowledge-center-hero" style="--center-color:${center.color}">
+      <img src="${center.imageUrl}" alt="Imagem demonstrativa do centro ${center.title}" />
+      <div>
+        <span>Centro de Conhecimento</span>
+        <h2>${center.title}</h2>
+        <p>${center.fullDescription}</p>
+        <dl>
+          <div><dt>Recursos</dt><dd>${getKnowledgeCenterResourceCount(center)}</dd></div>
+          <div><dt>Nivel</dt><dd>${center.level}</dd></div>
+          <div><dt>Publico</dt><dd>${center.audience}</dd></div>
+        </dl>
+        <div>${center.relatedCategories.map((category) => `<b>${category}</b>`).join("")}</div>
+        <a href="#conteudo-${center.slug}">Explorar conteudo</a>
+      </div>
+    </header>
+    <section class="knowledge-curation-summary">
+      <span>Resumo da Curadoria</span>
+      <h3>Visao demonstrativa do tema</h3>
+      <p>Este resumo sera produzido futuramente pela equipe Raizes e Saberes. Nesta homologacao, o texto demonstra como o centro apresentara contexto, criterios de organizacao e caminhos de estudo para o tema ${center.title}.</p>
+    </section>
+    <div class="knowledge-resource-list" id="conteudo-${center.slug}">
+      ${renderPreparedResourceBlocks(center)}
+    </div>
+  `;
+  detail.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+const renderSmartDiscovery = () => {
+  const panel = document.querySelector("[data-smart-discovery]");
+  const searchTerm = normalize(document.querySelector("[data-course-search]")?.value);
+  if (!panel) {
+    return;
+  }
+  if (!searchTerm) {
+    panel.hidden = true;
+    panel.innerHTML = "";
+    return;
+  }
+
+  const centerMatches = demoKnowledgeCenters.filter((center) =>
+    normalize([center.title, center.shortDescription, center.category, center.audience, ...center.keywords].join(" ")).includes(searchTerm)
+  );
+  const courseMatches = demoCuratedCourses.filter((course) =>
+    normalize([course.title, course.theme, course.category, getProviderName(course.providerId), ...course.tags].join(" ")).includes(searchTerm)
+  );
+  const providerMatches = demoCourseProviders.filter((provider) => normalize(provider.name).includes(searchTerm));
+  const pathMatches = demoKnowledgeCenters.filter((center) => normalize(center.audience).includes(searchTerm));
+
+  panel.hidden = false;
+  panel.innerHTML = `
+    <header><span>Busca inteligente preparada</span><strong>Resultados organizados por tipo</strong></header>
+    <div>
+      <article><h3>Centros</h3>${centerMatches.length ? centerMatches.map((center) => `<button type="button" data-open-knowledge-center="${center.id}">${center.title}</button>`).join("") : "<p>Nenhum centro encontrado.</p>"}</article>
+      <article><h3>Cursos</h3>${courseMatches.length ? renderCompactCourseList(courseMatches.slice(0, 4)) : "<p>Nenhum curso encontrado.</p>"}</article>
+      <article><h3>Instituicoes</h3>${providerMatches.length ? providerMatches.map((provider) => `<p>${provider.name}</p>`).join("") : "<p>Nenhuma instituicao encontrada.</p>"}</article>
+      <article><h3>Trilhas e materiais</h3>${pathMatches.length ? pathMatches.map((center) => `<p>${center.title} - estrutura preparada</p>`).join("") : "<p>Estrutura preparada para materiais futuros.</p>"}</article>
+    </div>
+  `;
+};
 
 const renderCourseDetail = (courseId) => {
   const course = demoCuratedCourses.find((item) => item.id === courseId) || demoCuratedCourses[0];
@@ -1280,6 +1596,7 @@ document.querySelectorAll("[data-university-filter]").forEach((filterButton) => 
 
 document.querySelector("[data-course-search]")?.addEventListener("input", () => {
   visibleCourseLimit = 4;
+  renderSmartDiscovery();
   renderCourseCatalog();
 });
 
@@ -1314,6 +1631,7 @@ document.querySelector("[data-clear-course-filters]")?.addEventListener("click",
   if (search) {
     search.value = "";
   }
+  renderSmartDiscovery();
   renderCourseCatalog();
 });
 
@@ -1340,6 +1658,16 @@ document.querySelector("[data-course-load-more]")?.addEventListener("click", () 
 });
 
 document.addEventListener("click", (event) => {
+  const knowledgeButton = event.target.closest?.("[data-open-knowledge-center]");
+  if (knowledgeButton) {
+    const center = demoKnowledgeCenters.find((item) => item.id === knowledgeButton.dataset.openKnowledgeCenter);
+    renderKnowledgeCenterDetail(knowledgeButton.dataset.openKnowledgeCenter);
+    if (center) {
+      history.replaceState(null, "", `#centro-${center.slug}`);
+    }
+    return;
+  }
+
   const quickTheme = event.target.closest?.("[data-quick-theme]");
   if (quickTheme) {
     const theme = quickTheme.dataset.quickTheme;
@@ -1407,12 +1735,21 @@ document.addEventListener("keydown", (event) => {
 
 syncHeader();
 renderUniversityLive();
+renderKnowledgeCenterCards();
 renderCourseCatalog();
+renderSmartDiscovery();
 if (window.location.hash.startsWith("#curso-")) {
   const slug = window.location.hash.replace("#curso-", "");
   const course = demoCuratedCourses.find((item) => item.slug === slug || item.id === slug);
   if (course) {
     renderCourseDetail(course.id);
+  }
+}
+if (window.location.hash.startsWith("#centro-")) {
+  const slug = window.location.hash.replace("#centro-", "");
+  const center = demoKnowledgeCenters.find((item) => item.slug === slug || item.id === slug);
+  if (center) {
+    renderKnowledgeCenterDetail(center.id);
   }
 }
 window.addEventListener("scroll", syncHeader, { passive: true });
