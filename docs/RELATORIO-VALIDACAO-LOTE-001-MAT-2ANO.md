@@ -1,0 +1,239 @@
+# Relatorio de Validacao - Lote 001 MAT 2o Ano
+
+Gerado em: 2026-07-28T22:36:02.052Z
+
+## Arquivos
+- /Users/danielhenrique/Downloads/questoes_mat_2ano_lote_001.json
+- /Users/danielhenrique/Downloads/questoes_mat_2ano_lote_002.json
+- /Users/danielhenrique/Downloads/questoes_mat_2ano_lote_003.json
+- /Users/danielhenrique/Downloads/questoes_mat_2ano_lote_004.json
+
+## Resumo
+- Total real de registros: 100
+- Aprovadas: 100
+- Aprovadas com ajuste tecnico: 100
+- Rejeitadas: 0
+- Duplicadas: 0
+- Incompletas: 0
+
+## Ajustes Tecnicos Aplicados
+- `disciplina` mapeada para `component = Matematica`.
+- `ano` mapeado para `school_year = 2o ano`.
+- tempo estimado ausente ou em segundos convertido para `estimated_minutes` com minimo de 1 minuto.
+- `tags`, `eixo` ou `bloco` preservados em `thematic_unit`, `knowledge_object` e `reference_matrix` quando disponiveis.
+- Codigos ausentes foram padronizados somente quando necessario: `RS-MA2-001...`.
+- Justificativa ausente foi preenchida apenas com base no gabarito e no texto da alternativa correta.
+- Fonte, autoria, licenca e classificacao juridica autoral padronizadas para Raizes e Saberes.
+
+## Aprovadas
+- RS-MA2-001 (EF02MA01, Fácil)
+- RS-MA2-002 (EF02MA01, Fácil)
+- RS-MA2-003 (EF02MA01, Fácil)
+- RS-MA2-004 (EF02MA01, Fácil)
+- RS-MA2-005 (EF02MA01, Fácil)
+- RS-MA2-006 (EF02MA01, Fácil)
+- RS-MA2-007 (EF02MA01, Fácil)
+- RS-MA2-008 (EF02MA01, Fácil)
+- RS-MA2-009 (EF02MA01, Fácil)
+- RS-MA2-010 (EF02MA01, Fácil)
+- RS-MA2-011 (EF02MA02, Fácil)
+- RS-MA2-012 (EF02MA02, Fácil)
+- RS-MA2-013 (EF02MA02, Fácil)
+- RS-MA2-014 (EF02MA02, Fácil)
+- RS-MA2-015 (EF02MA02, Fácil)
+- RS-MA2-016 (EF02MA02, Fácil)
+- RS-MA2-017 (EF02MA02, Fácil)
+- RS-MA2-018 (EF02MA02, Fácil)
+- RS-MA2-019 (EF02MA02, Fácil)
+- RS-MA2-020 (EF02MA02, Fácil)
+- RS-MA2-021 (EF02MA01, Fácil)
+- RS-MA2-022 (EF02MA01, Fácil)
+- RS-MA2-023 (EF02MA01, Fácil)
+- RS-MA2-024 (EF02MA01, Fácil)
+- RS-MA2-025 (EF02MA01, Fácil)
+- RS-MA2-026 (EF02MA03, Fácil)
+- RS-MA2-027 (EF02MA03, Fácil)
+- RS-MA2-028 (EF02MA03, Fácil)
+- RS-MA2-029 (EF02MA03, Fácil)
+- RS-MA2-030 (EF02MA03, Fácil)
+- RS-MA2-031 (EF02MA03, Média)
+- RS-MA2-032 (EF02MA03, Média)
+- RS-MA2-033 (EF02MA03, Fácil)
+- RS-MA2-034 (EF02MA03, Fácil)
+- RS-MA2-035 (EF02MA03, Média)
+- RS-MA2-036 (EF02MA03, Fácil)
+- RS-MA2-037 (EF02MA03, Fácil)
+- RS-MA2-038 (EF02MA03, Fácil)
+- RS-MA2-039 (EF02MA03, Fácil)
+- RS-MA2-040 (EF02MA03, Média)
+- RS-MA2-041 (EF02MA03, Fácil)
+- RS-MA2-042 (EF02MA03, Fácil)
+- RS-MA2-043 (EF02MA03, Média)
+- RS-MA2-044 (EF02MA03, Fácil)
+- RS-MA2-045 (EF02MA03, Média)
+- RS-MA2-046 (EF02MA06, Média)
+- RS-MA2-047 (EF02MA06, Média)
+- RS-MA2-048 (EF02MA06, Média)
+- RS-MA2-049 (EF02MA06, Média)
+- RS-MA2-050 (EF02MA06, Média)
+- RS-MA2-051 (EF02MA15, Fácil)
+- RS-MA2-052 (EF02MA15, Fácil)
+- RS-MA2-053 (EF02MA15, Fácil)
+- RS-MA2-054 (EF02MA15, Fácil)
+- RS-MA2-055 (EF02MA15, Média)
+- RS-MA2-056 (EF02MA16, Fácil)
+- RS-MA2-057 (EF02MA16, Fácil)
+- RS-MA2-058 (EF02MA16, Fácil)
+- RS-MA2-059 (EF02MA16, Média)
+- RS-MA2-060 (EF02MA16, Fácil)
+- RS-MA2-061 (EF02MA17, Fácil)
+- RS-MA2-062 (EF02MA17, Fácil)
+- RS-MA2-063 (EF02MA17, Fácil)
+- RS-MA2-064 (EF02MA18, Fácil)
+- RS-MA2-065 (EF02MA18, Fácil)
+- RS-MA2-066 (EF02MA20, Fácil)
+- RS-MA2-067 (EF02MA20, Fácil)
+- RS-MA2-068 (EF02MA20, Média)
+- RS-MA2-069 (EF02MA20, Fácil)
+- RS-MA2-070 (EF02MA20, Média)
+- RS-MA2-071 (EF02MA22, Fácil)
+- RS-MA2-072 (EF02MA22, Fácil)
+- RS-MA2-073 (EF02MA22, Média)
+- RS-MA2-074 (EF02MA22, Fácil)
+- RS-MA2-075 (EF02MA22, Média)
+- RS-MA2-076 (EF02MA01, Fácil)
+- RS-MA2-077 (EF02MA01, Fácil)
+- RS-MA2-078 (EF02MA01, Média)
+- RS-MA2-079 (EF02MA01, Fácil)
+- RS-MA2-080 (EF02MA01, Fácil)
+- RS-MA2-081 (EF02MA06, Média)
+- RS-MA2-082 (EF02MA06, Média)
+- RS-MA2-083 (EF02MA06, Média)
+- RS-MA2-084 (EF02MA06, Média)
+- RS-MA2-085 (EF02MA06, Média)
+- RS-MA2-086 (EF02MA06, Média)
+- RS-MA2-087 (EF02MA06, Fácil)
+- RS-MA2-088 (EF02MA06, Média)
+- RS-MA2-089 (EF02MA06, Média)
+- RS-MA2-090 (EF02MA06, Fácil)
+- RS-MA2-091 (EF02MA03, Fácil)
+- RS-MA2-092 (EF02MA03, Fácil)
+- RS-MA2-093 (EF02MA02, Fácil)
+- RS-MA2-094 (EF02MA15, Fácil)
+- RS-MA2-095 (EF02MA17, Fácil)
+- RS-MA2-096 (EF02MA20, Fácil)
+- RS-MA2-097 (EF02MA18, Fácil)
+- RS-MA2-098 (EF02MA01, Média)
+- RS-MA2-099 (EF02MA03, Média)
+- RS-MA2-100 (EF02MA03, Média)
+
+## Rejeitadas
+- Nenhuma.
+
+## Duplicadas
+- Nenhuma.
+
+## Incompletas
+- Nenhuma.
+
+## Mapeamento de Codigos
+- 1 -> RS-MA2-001
+- 2 -> RS-MA2-002
+- 3 -> RS-MA2-003
+- 4 -> RS-MA2-004
+- 5 -> RS-MA2-005
+- 6 -> RS-MA2-006
+- 7 -> RS-MA2-007
+- 8 -> RS-MA2-008
+- 9 -> RS-MA2-009
+- 10 -> RS-MA2-010
+- 11 -> RS-MA2-011
+- 12 -> RS-MA2-012
+- 13 -> RS-MA2-013
+- 14 -> RS-MA2-014
+- 15 -> RS-MA2-015
+- 16 -> RS-MA2-016
+- 17 -> RS-MA2-017
+- 18 -> RS-MA2-018
+- 19 -> RS-MA2-019
+- 20 -> RS-MA2-020
+- 21 -> RS-MA2-021
+- 22 -> RS-MA2-022
+- 23 -> RS-MA2-023
+- 24 -> RS-MA2-024
+- 25 -> RS-MA2-025
+- 26 -> RS-MA2-026
+- 27 -> RS-MA2-027
+- 28 -> RS-MA2-028
+- 29 -> RS-MA2-029
+- 30 -> RS-MA2-030
+- 31 -> RS-MA2-031
+- 32 -> RS-MA2-032
+- 33 -> RS-MA2-033
+- 34 -> RS-MA2-034
+- 35 -> RS-MA2-035
+- 36 -> RS-MA2-036
+- 37 -> RS-MA2-037
+- 38 -> RS-MA2-038
+- 39 -> RS-MA2-039
+- 40 -> RS-MA2-040
+- 41 -> RS-MA2-041
+- 42 -> RS-MA2-042
+- 43 -> RS-MA2-043
+- 44 -> RS-MA2-044
+- 45 -> RS-MA2-045
+- 46 -> RS-MA2-046
+- 47 -> RS-MA2-047
+- 48 -> RS-MA2-048
+- 49 -> RS-MA2-049
+- 50 -> RS-MA2-050
+- 51 -> RS-MA2-051
+- 52 -> RS-MA2-052
+- 53 -> RS-MA2-053
+- 54 -> RS-MA2-054
+- 55 -> RS-MA2-055
+- 56 -> RS-MA2-056
+- 57 -> RS-MA2-057
+- 58 -> RS-MA2-058
+- 59 -> RS-MA2-059
+- 60 -> RS-MA2-060
+- 61 -> RS-MA2-061
+- 62 -> RS-MA2-062
+- 63 -> RS-MA2-063
+- 64 -> RS-MA2-064
+- 65 -> RS-MA2-065
+- 66 -> RS-MA2-066
+- 67 -> RS-MA2-067
+- 68 -> RS-MA2-068
+- 69 -> RS-MA2-069
+- 70 -> RS-MA2-070
+- 71 -> RS-MA2-071
+- 72 -> RS-MA2-072
+- 73 -> RS-MA2-073
+- 74 -> RS-MA2-074
+- 75 -> RS-MA2-075
+- 76 -> RS-MA2-076
+- 77 -> RS-MA2-077
+- 78 -> RS-MA2-078
+- 79 -> RS-MA2-079
+- 80 -> RS-MA2-080
+- 81 -> RS-MA2-081
+- 82 -> RS-MA2-082
+- 83 -> RS-MA2-083
+- 84 -> RS-MA2-084
+- 85 -> RS-MA2-085
+- 86 -> RS-MA2-086
+- 87 -> RS-MA2-087
+- 88 -> RS-MA2-088
+- 89 -> RS-MA2-089
+- 90 -> RS-MA2-090
+- 91 -> RS-MA2-091
+- 92 -> RS-MA2-092
+- 93 -> RS-MA2-093
+- 94 -> RS-MA2-094
+- 95 -> RS-MA2-095
+- 96 -> RS-MA2-096
+- 97 -> RS-MA2-097
+- 98 -> RS-MA2-098
+- 99 -> RS-MA2-099
+- 100 -> RS-MA2-100

@@ -4,7 +4,16 @@ import { resolve } from "node:path";
 
 const root = process.cwd();
 const lotPrefix = process.argv[2] || "LP2-L";
-const assessmentTitle = "SIMULADO DEMONSTRATIVO — LÍNGUA PORTUGUESA — 2º ANO";
+const inferredComponent = lotPrefix.startsWith("RS-MA2") ? "Matematica" : "Lingua Portuguesa";
+const assessmentTitle =
+  process.env.QUESTION_LOT_ASSESSMENT_TITLE ||
+  (inferredComponent === "Matematica"
+    ? "SIMULADO DEMONSTRATIVO — MATEMÁTICA — 2º ANO"
+    : "SIMULADO DEMONSTRATIVO — LÍNGUA PORTUGUESA — 2º ANO");
+const usageType =
+  inferredComponent === "Matematica"
+    ? "simulado_demonstrativo_mat2_lote_001"
+    : "simulado_demonstrativo_lp2_lote_001";
 
 const readLocalPublicConfig = () => {
   const configPath = resolve(root, "supabase-config.js");
@@ -96,7 +105,7 @@ const main = async () => {
 
   const lotQuestions = await rest(
     "question_items",
-    `?code=like.${encodeURIComponent(`${lotPrefix}*`)}&component=eq.Lingua%20Portuguesa&school_year=eq.2o%20ano&publication_status=eq.PUBLICADO&select=id,code,publication_status,curation_status&order=code.asc`,
+    `?code=like.${encodeURIComponent(`${lotPrefix}*`)}&component=eq.${encodeURIComponent(inferredComponent)}&school_year=eq.2o%20ano&publication_status=eq.PUBLICADO&select=id,code,publication_status,curation_status&order=code.asc`,
     token
   );
   const selected = lotQuestions.body.slice(0, 10);
@@ -108,7 +117,7 @@ const main = async () => {
       owner_user_id: profile.userId,
       owner_role: profile.role,
       title: assessmentTitle,
-      component: "Lingua Portuguesa",
+      component: inferredComponent,
       school_year: "2o ano",
       instructions: "Leia cada questao com atencao e marque apenas uma alternativa.",
       status: "RASCUNHO",
@@ -134,7 +143,7 @@ const main = async () => {
         assessment_id: assessment.id,
         user_id: profile.userId,
         user_role: profile.role,
-        usage_type: "simulado_demonstrativo_lp2_lote_001",
+        usage_type: usageType,
         metadata: { code: question.code, lot_prefix: lotPrefix },
       }),
     });
@@ -154,6 +163,7 @@ const main = async () => {
       {
         authenticatedRole: profile.role,
         lotPrefix,
+        component: inferredComponent,
         professorVisiblePublishedLotQuestions: lotQuestions.body.length,
         assessmentId: assessment.id,
         title: assessment.title,
