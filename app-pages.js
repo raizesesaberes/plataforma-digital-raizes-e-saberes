@@ -3189,16 +3189,17 @@ const getSupabaseUserContext = () => {
   const config = getSupabaseConfig();
   const token = getSupabaseAccessToken(config);
   const payload = decodeJwtPayload(token);
+  const appMetadata = payload.app_metadata || {};
   return {
     token,
     userId: payload.sub || null,
     role:
+      appMetadata.question_bank_role ||
+      appMetadata.app_role ||
+      appMetadata.role ||
+      payload.question_bank_role ||
       payload.app_role ||
-      payload.app_metadata?.app_role ||
-      payload.user_metadata?.app_role ||
-      payload.role ||
-      localStorage.getItem("raizes:question-bank-role") ||
-      "professor",
+      (payload.role === "service_role" ? "service_role" : "anonymous"),
   };
 };
 
@@ -3228,11 +3229,12 @@ const createSupabaseRestClient = () => {
     if (!isConfigured) {
       throw new Error("Supabase nao configurado. Crie supabase-config.js com URL e anon key publica.");
     }
+    const authHeaders = context.token && !String(context.token).startsWith("sb_") ? { Authorization: `Bearer ${context.token}` } : {};
     const response = await fetch(`${baseUrl}/rest/v1/${table}${params}`, {
       ...options,
       headers: {
         apikey: config.anonKey,
-        Authorization: `Bearer ${context.token}`,
+        ...authHeaders,
         "Content-Type": "application/json",
         Prefer: options.prefer || "return=representation",
         ...(options.headers || {}),
@@ -3287,9 +3289,9 @@ const mapQuestionFromSupabase = (row) => {
     originType: row.source?.source_type || "Autoral",
     legalClassification: row.legal_classification,
     sourceId: row.source_id,
-    sourceName: row.source?.name || "Fonte nao informada",
+    sourceName: row.source?.name || "Conteudo autoral Raizes e Saberes",
     author: row.author_name,
-    license: row.license?.name || row.source?.license?.name || "Licenca nao informada",
+    license: row.license?.name || row.source?.license?.name || "Uso interno demonstrativo Raizes e Saberes",
     legalStatus: row.source?.legal_status || "",
     createdAt: row.created_at,
     reviewedAt: row.last_reviewed_at || row.updated_at || row.created_at,
@@ -3607,11 +3609,12 @@ const initCurationBatches = () => {
       throw new Error("Supabase nao configurado. Defina SUPABASE_URL e SUPABASE_ANON_KEY no ambiente e exponha somente valores publicos em supabase-config.js.");
     }
     const baseUrl = config.url.replace(/\/$/, "");
+    const authHeaders = token && !String(token).startsWith("sb_") ? { Authorization: `Bearer ${token}` } : {};
     const response = await fetch(`${baseUrl}/rest/v1/${table}${params}`, {
       ...options,
       headers: {
         apikey: config.anonKey,
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
         "Content-Type": "application/json",
         Prefer: options.prefer || "return=representation",
         ...(options.headers || {}),
