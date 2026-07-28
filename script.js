@@ -365,23 +365,24 @@ const demoCuratedCourses = [
 ];
 
 const courseFilterConfig = [
-  ["area", "Area"],
-  ["theme", "Tema"],
-  ["providerId", "Instituicao"],
-  ["workload", "Carga horaria"],
-  ["modality", "Modalidade"],
-  ["level", "Nivel"],
-  ["audience", "Publico"],
-  ["certificate", "Certificado"],
-  ["selfPaced", "Autoinstrucional"],
-  ["enrollment", "Inscricao"],
-  ["added", "Data de inclusao"],
-  ["rating", "Avaliacao"],
-  ["free", "Gratuidade"],
+  ["area", "Area", "basic"],
+  ["theme", "Tema", "basic"],
+  ["workload", "Carga horaria", "basic"],
+  ["certificate", "Certificado", "basic"],
+  ["providerId", "Instituicao", "advanced"],
+  ["modality", "Modalidade", "advanced"],
+  ["level", "Nivel", "advanced"],
+  ["audience", "Publico", "advanced"],
+  ["selfPaced", "Autoinstrucional", "advanced"],
+  ["enrollment", "Situacao da inscricao", "advanced"],
+  ["rating", "Avaliacao", "advanced"],
+  ["added", "Data de inclusao", "advanced"],
+  ["free", "Gratuidade", "advanced"],
 ];
 
 let activeCourseFilters = {};
 let visibleCourseLimit = 4;
+let areAdvancedCourseFiltersVisible = false;
 
 const syncHeader = () => {
   if (!header) {
@@ -630,7 +631,11 @@ const requestCatalogLogin = () => {
   window.location.href = `${platformAuth.loginPage}?next=${encodeURIComponent(currentPath)}`;
 };
 
-const renderStars = (rating) => `Nota ${rating.toFixed(1)}`;
+const renderStars = (rating) => `
+  <span class="rating-stars" aria-label="Avaliacao media ${rating.toFixed(1)} de 5">
+    ${Array.from({ length: 5 }, (_, index) => `<i style="--fill:${Math.max(0, Math.min(1, rating - index))}"></i>`).join("")}
+  </span>
+`;
 
 const compactDate = (value) => {
   if (!value) {
@@ -638,6 +643,33 @@ const compactDate = (value) => {
   }
   const [year, month, day] = value.split("-");
   return `${day}/${month}/${year}`;
+};
+
+const getCourseCuration = (course) => ({
+  recommendedFor: course.curatorRecommendedFor || course.audience,
+  strengths: course.curatorStrengths || [
+    "Ficha adequada para comparacao rapida entre ofertas gratuitas.",
+    course.certificateAvailable ? "Informa certificado disponivel." : "Deixa clara a ausencia de certificado.",
+    course.selfPaced ? "Pode ser cursado no ritmo do profissional." : "Possui acompanhamento por turma ou prazo.",
+  ],
+  estimatedLevel: course.curatorEstimatedLevel || course.level,
+  observations: course.curatorNotes || "Informacoes demonstrativas para homologacao visual.",
+  updatedAt: course.lastVerifiedAt,
+});
+
+const getRatingDistribution = (course) => {
+  const five = Math.max(1, Math.round(course.reviewsCount * Math.min(course.rating / 5, 0.9)));
+  const four = Math.max(1, Math.round(course.reviewsCount * 0.16));
+  const three = Math.max(0, Math.round(course.reviewsCount * 0.05));
+  const two = Math.max(0, Math.round(course.reviewsCount * 0.02));
+  const one = Math.max(0, course.reviewsCount - five - four - three - two);
+  return [five, four, three, two, one];
+};
+
+const getFilterLabel = (key, value) => {
+  const config = courseFilterConfig.find(([filterKey]) => filterKey === key);
+  const option = getCourseFilterOptions(key).find(([optionValue]) => optionValue === value);
+  return `${config?.[1] || key}: ${option?.[1] || value}`;
 };
 
 const getCourseFilterOptions = (key) => {
@@ -750,22 +782,26 @@ const getFilteredDemoCourses = () => {
 
 const renderCourseCard = (course) => `
   <article class="public-course-card" data-course-id="${course.id}">
-    <img src="${course.imageUrl}" alt="" loading="lazy" />
+    <figure>
+      <img src="${course.imageUrl}" alt="Capa demonstrativa do curso ${course.title}" loading="lazy" />
+      <span>Gratuito</span>
+    </figure>
     <div class="course-card-body">
       <div class="course-card-topline">
         <span>${course.category}</span>
-        <small>${course.isFree ? "Gratuito" : "Pago"}</small>
+        <button type="button" data-auth-course-action="favorite" data-course-id="${course.id}" aria-label="Favoritar ${course.title}">Favoritar</button>
       </div>
       <h3>${course.title}</h3>
+      <strong class="course-provider-name">${getProviderName(course.providerId)}</strong>
       <p>${course.summary}</p>
       <dl>
-        <div><dt>Instituicao</dt><dd>${getProviderName(course.providerId)}</dd></div>
         <div><dt>Carga</dt><dd>${course.workloadHours}h</dd></div>
         <div><dt>Modalidade</dt><dd>${course.modality}</dd></div>
         <div><dt>Certificado</dt><dd>${course.certificateAvailable ? "Disponivel" : "Nao informado"}</dd></div>
+        <div><dt>Inscricao</dt><dd>${course.enrollmentStatus}</dd></div>
       </dl>
       <div class="course-card-metrics">
-        <span>${renderStars(course.rating)}</span>
+        <span>${renderStars(course.rating)}<b>${course.rating.toFixed(1)}</b></span>
         <span>${course.reviewsCount} avaliacoes</span>
         <span>${course.accessCount.toLocaleString("pt-BR")} acessos</span>
       </div>
@@ -775,7 +811,25 @@ const renderCourseCard = (course) => `
 `;
 
 const renderCompactCourseList = (courses) =>
-  courses.map((course) => `<button type="button" data-open-course-detail="${course.id}"><strong>${course.title}</strong><span>${getProviderName(course.providerId)} - ${course.rating.toFixed(1)}</span></button>`).join("");
+  courses.map((course) => `<button type="button" data-open-course-detail="${course.id}"><strong>${course.title}</strong><span>${getProviderName(course.providerId)} - ${course.workloadHours}h - ${course.rating.toFixed(1)}</span></button>`).join("");
+
+const renderMiniCourseCards = (courses) =>
+  courses
+    .map(
+      (course) => `
+        <article class="mini-course-card">
+          <img src="${course.imageUrl}" alt="Capa demonstrativa do curso ${course.title}" loading="lazy" />
+          <div>
+            <span>Gratuito</span>
+            <h4>${course.title}</h4>
+            <p>${getProviderName(course.providerId)}</p>
+            <div>${renderStars(course.rating)}<strong>${course.rating.toFixed(1)}</strong></div>
+            <button type="button" data-open-course-detail="${course.id}">Ver detalhes</button>
+          </div>
+        </article>
+      `
+    )
+    .join("");
 
 const renderCourseDetail = (courseId) => {
   const course = demoCuratedCourses.find((item) => item.id === courseId) || demoCuratedCourses[0];
@@ -790,15 +844,25 @@ const renderCourseDetail = (courseId) => {
   const related = demoCuratedCourses
     .filter((item) => item.id !== course.id && (item.theme === course.theme || item.area === course.area))
     .slice(0, 3);
+  const curation = getCourseCuration(course);
+  const distribution = getRatingDistribution(course);
+  const maxDistribution = Math.max(...distribution, 1);
 
   detail.hidden = false;
   detail.innerHTML = `
     <header class="course-detail-hero">
-      <img src="${course.imageUrl}" alt="" />
+      <img src="${course.imageUrl}" alt="Capa demonstrativa do curso ${course.title}" />
       <div>
-        <span>${course.verificationStatus} - ultima verificacao ${compactDate(course.lastVerifiedAt)}</span>
+        <span>Ficha demonstrativa - ${course.verificationStatus}</span>
         <h2>${course.title}</h2>
-        <p>${course.fullDescription}</p>
+        <p>${getProviderName(course.providerId)}</p>
+        <div class="course-detail-badges">
+          <strong>Gratuito</strong>
+          <span>${renderStars(course.rating)} ${course.rating.toFixed(1)} (${course.reviewsCount} avaliacoes)</span>
+          <span>${course.workloadHours}h</span>
+          <span>${course.modality}</span>
+          <span>${course.certificateAvailable ? "Certificado disponivel" : "Sem certificado informado"}</span>
+        </div>
         <div class="course-detail-actions">
           <a href="${course.courseUrl}" target="_blank" rel="noopener" data-external-course="${course.id}">Acessar curso na instituicao</a>
           <button type="button" data-auth-course-action="favorite" data-course-id="${course.id}">Salvar</button>
@@ -806,11 +870,14 @@ const renderCourseDetail = (courseId) => {
         </div>
       </div>
     </header>
+    <aside class="course-transparency-note">
+      Este curso e oferecido e administrado pela instituicao indicada. A Universidade Raizes e Saberes organiza as informacoes e direciona o usuario para o ambiente oficial do curso.
+    </aside>
     <div class="course-detail-grid">
       <section>
         <h3>Informacoes oficiais da instituicao</h3>
         <p><strong>Instituicao responsavel:</strong> ${getProviderName(course.providerId)} (${getProviderType(course.providerId)})</p>
-        <p><strong>Descricao:</strong> ${course.summary}</p>
+        <p><strong>Descricao:</strong> ${course.fullDescription}</p>
         <p><strong>Objetivos:</strong></p>
         <ul>${course.objectives.map((item) => `<li>${item}</li>`).join("")}</ul>
         <p><strong>Conteudos abordados:</strong></p>
@@ -819,32 +886,46 @@ const renderCourseDetail = (courseId) => {
         <p><strong>Requisitos:</strong> ${course.requirements}</p>
       </section>
       <aside>
-        <h3>Classificacao da curadoria</h3>
+        <h3>Dados do curso</h3>
         <dl>
           <div><dt>Area</dt><dd>${course.area}</dd></div>
           <div><dt>Tema</dt><dd>${course.theme}</dd></div>
           <div><dt>Carga horaria</dt><dd>${course.workloadHours}h</dd></div>
           <div><dt>Modalidade</dt><dd>${course.modality}</dd></div>
           <div><dt>Nivel</dt><dd>${course.level}</dd></div>
+          <div><dt>Idioma</dt><dd>${course.language}</dd></div>
           <div><dt>Certificado</dt><dd>${course.certificateAvailable ? "Sim" : "Nao"}</dd></div>
           <div><dt>Gratuidade</dt><dd>${course.isFree ? "Gratuito" : "Nao gratuito"}</dd></div>
           <div><dt>Inscricao</dt><dd>${course.enrollmentStatus}</dd></div>
+          <div><dt>Ultima verificacao</dt><dd>${compactDate(course.lastVerifiedAt)}</dd></div>
         </dl>
-        <p>${course.curatorNotes}</p>
       </aside>
+      <section class="curation-analysis-block">
+        <h3>Analise da curadoria Raizes e Saberes</h3>
+        <p><strong>Para quem e recomendado:</strong> ${curation.recommendedFor}</p>
+        <p><strong>Principais pontos positivos:</strong></p>
+        <ul>${curation.strengths.map((item) => `<li>${item}</li>`).join("")}</ul>
+        <p><strong>Nivel estimado:</strong> ${curation.estimatedLevel}</p>
+        <p><strong>Observacoes:</strong> ${curation.observations}</p>
+        <p><strong>Atualizacao das informacoes:</strong> ${compactDate(curation.updatedAt)}</p>
+      </section>
       <section>
-        <h3>Avaliacoes dos usuarios</h3>
+        <h3>Comunidade</h3>
         <div class="detail-rating"><strong>${course.rating.toFixed(1)}</strong><span>${renderStars(course.rating)}</span><small>${course.reviewsCount} avaliacoes</small></div>
+        <div class="rating-distribution">
+          ${distribution.map((count, index) => `<span><b>${5 - index}</b><i><em style="width:${Math.round((count / maxDistribution) * 100)}%"></em></i><small>${count}</small></span>`).join("")}
+        </div>
         <div class="detail-comments">${course.comments.map((comment) => `<blockquote>${comment}</blockquote>`).join("")}</div>
         <div class="course-progress-actions">
+          <button type="button" data-auth-course-action="review" data-course-id="${course.id}">Avaliar</button>
+          <button type="button" data-auth-course-action="favorite" data-course-id="${course.id}">Favoritar</button>
           <button type="button" data-auth-course-action="started" data-course-id="${course.id}">Informar que iniciei</button>
           <button type="button" data-auth-course-action="completed" data-course-id="${course.id}">Informar conclusao</button>
-          <button type="button" data-auth-course-action="certificate" data-course-id="${course.id}">Enviar certificado externo</button>
         </div>
       </section>
       <section>
         <h3>Cursos relacionados</h3>
-        <div class="related-course-list">${related.length ? renderCompactCourseList(related) : "<p>Nenhum curso relacionado nesta demonstracao.</p>"}</div>
+        <div class="related-course-list">${related.length ? renderMiniCourseCards(related) : "<p>Nenhum curso relacionado nesta demonstracao.</p>"}</div>
       </section>
     </div>
   `;
@@ -860,8 +941,8 @@ const renderCourseCatalog = () => {
   const filtersTarget = document.querySelector("[data-course-filters]");
   if (filtersTarget && !filtersTarget.innerHTML) {
     filtersTarget.innerHTML = courseFilterConfig
-      .map(([key, label]) => `
-        <label>
+      .map(([key, label, group]) => `
+        <label data-filter-group="${group}">
           <span>${label}</span>
           <select data-course-filter="${key}">
             <option value="">Todos</option>
@@ -871,6 +952,25 @@ const renderCourseCatalog = () => {
       `)
       .join("");
   }
+  document.querySelector("[data-filter-panel]")?.classList.toggle("show-advanced", areAdvancedCourseFiltersVisible);
+
+  const themeTarget = document.querySelector("[data-quick-themes]");
+  if (themeTarget && !themeTarget.innerHTML) {
+    themeTarget.innerHTML = [
+      ["", "Todos"],
+      ...getCourseFilterOptions("theme"),
+    ]
+      .map(([value, label]) => `<button type="button" class="${activeCourseFilters.theme === value || (!value && !activeCourseFilters.theme) ? "is-active" : ""}" data-quick-theme="${value}">${label}</button>`)
+      .join("");
+  } else if (themeTarget) {
+    themeTarget.querySelectorAll("[data-quick-theme]").forEach((button) => {
+      button.classList.toggle("is-active", activeCourseFilters.theme === button.dataset.quickTheme || (!button.dataset.quickTheme && !activeCourseFilters.theme));
+    });
+  }
+
+  document.querySelectorAll("[data-course-filter]").forEach((filter) => {
+    filter.value = activeCourseFilters[filter.dataset.courseFilter] || "";
+  });
 
   const courses = getFilteredDemoCourses();
   const visibleCourses = courses.slice(0, visibleCourseLimit);
@@ -890,6 +990,14 @@ const renderCourseCatalog = () => {
     resultCount.textContent = `${courses.length} curso${courses.length === 1 ? "" : "s"} encontrado${courses.length === 1 ? "" : "s"}`;
   }
 
+  const activeFilterRow = document.querySelector("[data-active-course-filters]");
+  if (activeFilterRow) {
+    const chips = Object.entries(activeCourseFilters);
+    activeFilterRow.innerHTML = chips.length
+      ? chips.map(([key, value]) => `<button type="button" data-remove-course-filter="${key}">${getFilterLabel(key, value)} <span>remover</span></button>`).join("")
+      : `<span>Nenhum filtro ativo alem da busca.</span>`;
+  }
+
   const results = document.querySelector("[data-course-results]");
   if (results) {
     results.innerHTML = visibleCourses.length ? visibleCourses.map(renderCourseCard).join("") : `<article class="catalog-empty">Nenhum curso encontrado para os filtros selecionados.</article>`;
@@ -900,7 +1008,7 @@ const renderCourseCatalog = () => {
     loadMore.hidden = visibleCourseLimit >= courses.length;
   }
 
-  document.querySelector("[data-featured-courses]").innerHTML = renderCompactCourseList(demoCuratedCourses.filter((course) => course.featured));
+  document.querySelector("[data-featured-courses]").innerHTML = renderMiniCourseCards(demoCuratedCourses.filter((course) => course.featured));
   document.querySelector("[data-featured-providers]").innerHTML = demoCourseProviders
     .filter((provider) => provider.highlighted)
     .map((provider) => `<article><strong>${provider.name}</strong><span>${provider.type}</span></article>`)
@@ -1209,16 +1317,55 @@ document.querySelector("[data-clear-course-filters]")?.addEventListener("click",
   renderCourseCatalog();
 });
 
+document.querySelector("[data-toggle-more-filters]")?.addEventListener("click", (event) => {
+  areAdvancedCourseFiltersVisible = !areAdvancedCourseFiltersVisible;
+  event.currentTarget.setAttribute("aria-expanded", String(areAdvancedCourseFiltersVisible));
+  event.currentTarget.textContent = areAdvancedCourseFiltersVisible ? "Menos filtros" : "Mais filtros";
+  renderCourseCatalog();
+});
+
+document.querySelector("[data-open-mobile-filters]")?.addEventListener("click", () => {
+  document.querySelector("[data-filter-panel]")?.classList.add("is-mobile-open");
+  document.body.classList.add("modal-open");
+});
+
+document.querySelector("[data-close-mobile-filters]")?.addEventListener("click", () => {
+  document.querySelector("[data-filter-panel]")?.classList.remove("is-mobile-open");
+  document.body.classList.remove("modal-open");
+});
+
 document.querySelector("[data-course-load-more]")?.addEventListener("click", () => {
   visibleCourseLimit += 4;
   renderCourseCatalog();
 });
 
 document.addEventListener("click", (event) => {
+  const quickTheme = event.target.closest?.("[data-quick-theme]");
+  if (quickTheme) {
+    const theme = quickTheme.dataset.quickTheme;
+    if (theme) {
+      activeCourseFilters.theme = theme;
+    } else {
+      delete activeCourseFilters.theme;
+    }
+    visibleCourseLimit = 4;
+    renderCourseCatalog();
+    return;
+  }
+
+  const removeFilter = event.target.closest?.("[data-remove-course-filter]");
+  if (removeFilter) {
+    delete activeCourseFilters[removeFilter.dataset.removeCourseFilter];
+    visibleCourseLimit = 4;
+    renderCourseCatalog();
+    return;
+  }
+
   const detailButton = event.target.closest?.("[data-open-course-detail]");
   if (detailButton) {
     renderCourseDetail(detailButton.dataset.openCourseDetail);
-    history.replaceState(null, "", `#detalhes-${detailButton.dataset.openCourseDetail}`);
+    const course = demoCuratedCourses.find((item) => item.id === detailButton.dataset.openCourseDetail);
+    history.replaceState(null, "", `#curso-${course?.slug || detailButton.dataset.openCourseDetail}`);
     return;
   }
 
@@ -1241,6 +1388,14 @@ document.addEventListener("click", (event) => {
     const clickKey = `catalog:external-click:${courseId}`;
     const previousCount = Number(localStorage.getItem(clickKey) || "0");
     localStorage.setItem(clickKey, String(previousCount + 1));
+    const logKey = "catalog:external-click-log";
+    const previousLog = JSON.parse(localStorage.getItem(logKey) || "[]");
+    previousLog.push({
+      courseId,
+      clickedAt: new Date().toISOString(),
+      user: isDemoAuthenticated() ? "demo-authenticated-user" : null,
+    });
+    localStorage.setItem(logKey, JSON.stringify(previousLog.slice(-50)));
   }
 });
 
@@ -1253,5 +1408,12 @@ document.addEventListener("keydown", (event) => {
 syncHeader();
 renderUniversityLive();
 renderCourseCatalog();
+if (window.location.hash.startsWith("#curso-")) {
+  const slug = window.location.hash.replace("#curso-", "");
+  const course = demoCuratedCourses.find((item) => item.slug === slug || item.id === slug);
+  if (course) {
+    renderCourseDetail(course.id);
+  }
+}
 window.addEventListener("scroll", syncHeader, { passive: true });
 syncLibrary();

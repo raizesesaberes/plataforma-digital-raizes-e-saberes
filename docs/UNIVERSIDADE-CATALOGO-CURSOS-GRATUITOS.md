@@ -152,3 +152,44 @@ Registrar separadamente:
 7. Confirmar que clique externo nao registra conclusao.
 8. Revisar responsividade em desktop e mobile.
 9. Substituir demonstracoes por cursos reais apenas apos verificacao manual.
+
+## Fase 02 - Homologacao visual
+
+### Catalogo
+
+- A apresentacao do catalogo prioriza busca, temas rapidos, cursos em destaque, rankings, cursos com certificado, instituicoes em destaque e catalogo completo.
+- Os indicadores demonstrativos permanecem, mas com peso visual menor que a busca e os cursos.
+- Os cards do catalogo exibem capa, selo gratuito, titulo, instituicao, categoria, carga horaria, modalidade, certificado, avaliacao visual, total de avaliacoes, acessos, detalhe e favoritar.
+
+### Filtros
+
+- Desktop mostra inicialmente: area, tema, carga horaria e certificado.
+- O botao `Mais filtros` revela: instituicao, modalidade, nivel, publico, autoinstrucional, situacao da inscricao, avaliacao, data de inclusao e gratuidade.
+- Mobile usa painel inferior de filtros com todos os criterios disponiveis.
+- Filtros ativos aparecem como etiquetas removiveis.
+- `Limpar filtros` zera filtros e busca.
+
+### Menu da Universidade
+
+O menu lateral foi separado em dois blocos:
+
+- Formacao Raizes e Saberes: inicio, trilhas, meus cursos, certificados, videoaulas, avaliacoes, eventos e historico formativo.
+- Catalogo Gratuito: encontrar cursos, categorias, instituicoes, rankings, favoritos e cursos acessados.
+
+### Ficha do curso
+
+- Rota por hash: `universidade.html#curso-{slug}`.
+- A ficha inclui cabecalho com imagem, titulo, instituicao, selo gratuito, avaliacao, avaliacoes, carga, modalidade, certificado e CTA externo.
+- Conteudo separado em informacoes oficiais da instituicao, dados do curso, transparencia, analise da curadoria, comunidade e cursos relacionados.
+- As acoes de comunidade continuam restritas a usuarios autenticados.
+
+### Clique externo
+
+Ao clicar em `Acessar curso na instituicao`, a interface registra localmente:
+
+- `courseId`;
+- data do clique;
+- usuario demonstrativo quando autenticado;
+- contador local por curso.
+
+Esse evento nao altera inicio, conclusao ou certificado.

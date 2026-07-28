@@ -1508,7 +1508,6 @@ const modules = {
               <h2>Encontre cursos gratuitos</h2>
               <p>Dados abaixo sao demonstrativos e marcados como homologacao. Os cursos reais serao cadastrados pela curadoria apos validacao da estrutura.</p>
             </div>
-            <div class="catalog-kpis" data-catalog-kpis></div>
           </header>
 
           <div class="catalog-tools">
@@ -1528,23 +1527,52 @@ const modules = {
             </div>
           </div>
 
+          <div class="catalog-quick-themes" aria-label="Temas rapidos" data-quick-themes></div>
+
+          <section class="catalog-showcase" aria-label="Cursos em destaque">
+            <div class="catalog-section-head">
+              <div><span>Cursos em destaque</span><h3>Selecao da curadoria</h3></div>
+              <div class="catalog-kpis" data-catalog-kpis></div>
+            </div>
+            <div class="showcase-course-grid" data-featured-courses></div>
+          </section>
+
+          <section class="catalog-ranking-grid" aria-label="Rankings">
+            <article><h3>Mais acessados</h3><div data-most-accessed></div></article>
+            <article><h3>Mais bem avaliados</h3><div data-best-rated></div></article>
+            <article><h3>Adicionados recentemente</h3><div data-recent-courses></div></article>
+            <article><h3>Com certificado</h3><div data-certificate-courses></div></article>
+          </section>
+
+          <section class="catalog-provider-strip">
+            <div class="catalog-section-head"><div><span>Instituicoes em destaque</span><h3>Ofertantes demonstrativos</h3></div></div>
+            <div data-featured-providers></div>
+          </section>
+
+          <div class="catalog-full-head">
+            <div>
+              <span>Catalogo completo</span>
+              <h3>Filtre e compare cursos gratuitos</h3>
+            </div>
+            <button class="mobile-filter-open" type="button" data-open-mobile-filters>Filtros</button>
+          </div>
+
           <div class="catalog-layout">
-            <aside class="catalog-filters" aria-label="Filtros do catalogo">
+            <aside class="catalog-filters" aria-label="Filtros do catalogo" data-filter-panel>
+              <div class="catalog-filter-panel-head">
+                <strong>Filtros</strong>
+                <button type="button" data-close-mobile-filters aria-label="Fechar filtros">Fechar</button>
+              </div>
               <div data-course-filters></div>
+              <button class="more-filters-button" type="button" data-toggle-more-filters aria-expanded="false">Mais filtros</button>
               <button type="button" data-clear-course-filters>Limpar filtros</button>
             </aside>
             <div class="catalog-results">
-              <section class="catalog-featured">
-                <div><span>Cursos em destaque</span><div data-featured-courses></div></div>
-                <div><span>Instituicoes em destaque</span><div data-featured-providers></div></div>
-              </section>
-              <section class="catalog-ranking-grid" aria-label="Rankings">
-                <article><h3>Mais acessados</h3><div data-most-accessed></div></article>
-                <article><h3>Mais bem avaliados</h3><div data-best-rated></div></article>
-                <article><h3>Adicionados recentemente</h3><div data-recent-courses></div></article>
-                <article><h3>Com certificado</h3><div data-certificate-courses></div></article>
-              </section>
+              <div class="active-filter-row" data-active-course-filters></div>
               <div class="catalog-result-head"><strong data-course-result-count></strong><span data-course-demo-note>Todos os itens sao demonstrativos.</span></div>
+              <div class="catalog-loading" data-course-loading aria-hidden="true">
+                <span></span><span></span><span></span>
+              </div>
               <div class="course-card-grid-public" data-course-results></div>
               <button class="catalog-load-more" type="button" data-course-load-more>Carregar mais</button>
             </div>
@@ -1791,16 +1819,22 @@ const environments = {
     avatar: "assets/universidade/avatar-ana-carolina.webp",
     profileImage: "logo-sidebar-dark.png",
     nav: [
-      ["universidade", "Inicio", "universidade.html"],
-      ["trilhas", "Trilhas de Aprendizagem", "#"],
-      ["cursos", "Meus Cursos", "#"],
-      ["certificados", "Certificados", "#"],
-      ["biblioteca", "Biblioteca", "biblioteca.html"],
-      ["videoaulas", "Videoaulas", "#"],
-      ["avaliacoes", "Avaliacoes", "#"],
-      ["comunidade", "Comunidade", "#"],
-      ["eventos", "Eventos", "#"],
-      ["favoritos", "Favoritos", "#"],
+      ["heading", "Formacao Raizes e Saberes", "#"],
+      ["universidade", "Inicio", "universidade.html#formacao-raizes"],
+      ["trilhas", "Trilhas de Aprendizagem", "#formacao-raizes"],
+      ["cursos", "Meus Cursos", "#formacao-raizes"],
+      ["certificados", "Certificados", "#formacao-raizes"],
+      ["videoaulas", "Videoaulas", "#formacao-raizes"],
+      ["avaliacoes", "Avaliacoes", "#formacao-raizes"],
+      ["eventos", "Eventos", "#formacao-raizes"],
+      ["historico", "Historico Formativo", "#formacao-raizes"],
+      ["heading", "Catalogo Gratuito", "#"],
+      ["encontrar", "Encontrar Cursos", "#catalogo"],
+      ["categorias", "Categorias", "#catalogo"],
+      ["instituicoes", "Instituicoes", "#catalogo"],
+      ["rankings", "Rankings", "#catalogo"],
+      ["favoritos", "Favoritos", "#catalogo"],
+      ["acessados", "Cursos Acessados", "#catalogo"],
     ],
     mobile: [
       ["universidade", "Inicio", "universidade.html"],
@@ -2218,7 +2252,11 @@ const renderAppPage = () => {
   document.title = `${activeModule.title} | Raizes e Saberes`;
 
   const nav = environment.nav
-    .map(([key, label, href]) => `<a class="${key === activeKey ? "is-active" : ""}" href="${href}">${label}</a>`)
+    .map(([key, label, href]) =>
+      key === "heading"
+        ? `<strong class="app-nav-heading">${label}</strong>`
+        : `<a class="${key === activeKey ? "is-active" : ""}" href="${href}">${label}</a>`
+    )
     .join("");
   const mobileNav = environment.mobile
     .map(([key, label, href]) => `<a class="${key === activeKey ? "is-active" : ""}" href="${href}">${label}</a>`)
