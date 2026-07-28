@@ -3218,6 +3218,11 @@ const createSupabaseRestClient = () => {
   const baseUrl = config.url?.replace(/\/$/, "");
   const context = getSupabaseUserContext();
   const isConfigured = Boolean(baseUrl && config.anonKey);
+  const isLocalDevelopment =
+    config.allowLocalFallback === true ||
+    ["localhost", "127.0.0.1", ""].includes(window.location.hostname) ||
+    window.location.protocol === "file:";
+  const canUseFallback = !isConfigured && isLocalDevelopment;
 
   const request = async (table, params = "", options = {}) => {
     if (!isConfigured) {
@@ -3241,7 +3246,7 @@ const createSupabaseRestClient = () => {
     return response.json();
   };
 
-  return { isConfigured, request, context };
+  return { isConfigured, canUseFallback, request, context };
 };
 
 const questionBankFallbackStore = {
@@ -3538,9 +3543,23 @@ const questionBankDataService = (() => {
     },
   };
 
-  const active = () => (client().isConfigured ? remote : fallback);
+  const productionMissingConfig = {
+    async listQuestions() {
+      throw new Error("Banco de Questoes sem conexao Supabase em ambiente de producao. Configure supabase-config.js com URL e anon key publica.");
+    },
+  };
+  const active = () => {
+    const currentClient = client();
+    if (currentClient.isConfigured) return remote;
+    if (currentClient.canUseFallback) return fallback;
+    return productionMissingConfig;
+  };
   return {
-    mode: () => (client().isConfigured ? "supabase" : "fallback"),
+    mode: () => {
+      const currentClient = client();
+      if (currentClient.isConfigured) return "supabase";
+      return currentClient.canUseFallback ? "fallback" : "missing-config";
+    },
     listQuestions: (...args) => active().listQuestions(...args),
     getQuestionById: (...args) => active().getQuestionById(...args),
     listAlternatives: (...args) => active().listAlternatives(...args),

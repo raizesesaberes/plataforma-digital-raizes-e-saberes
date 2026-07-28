@@ -4,4 +4,7 @@
 window.RAIZES_SUPABASE = {
   url: "https://SEU_PROJECT_REF.supabase.co",
   anonKey: "SUPABASE_ANON_KEY_PUBLICA",
+  // Opcional: use apenas em desenvolvimento local. Em producao, deixe false/ausente
+  // para que falhas de conexao aparecam como erro explicito.
+  allowLocalFallback: false,
 };
