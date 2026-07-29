@@ -8390,3 +8390,161 @@ td {
     grid-column: 1 / -1;
   }
 }
+
+.digital-student-panel,
+.digital-results-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.digital-assessment-list,
+.digital-results-grid,
+.digital-options,
+.digital-attempt-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.digital-assessment-card,
+.digital-results-grid article,
+.digital-result-card,
+.digital-question-player {
+  padding: 12px;
+  border: 1px solid var(--rs-line);
+  border-radius: var(--rs-radius);
+  background: #f9fbfa;
+}
+
+.digital-assessment-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px 12px;
+  align-items: center;
+}
+
+.digital-assessment-card small {
+  grid-column: 1 / -1;
+  color: var(--rs-muted);
+  font-weight: 700;
+}
+
+.digital-assessment-card mark {
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #17235d;
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.digital-attempt-stage {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rs-line);
+}
+
+.digital-attempt-head,
+.digital-results-grid article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.digital-question-player blockquote {
+  margin: 0 0 10px;
+  padding: 10px;
+  border-left: 4px solid #17235d;
+  background: #f4f7ff;
+  font-weight: 700;
+}
+
+.digital-options label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--rs-line);
+  border-radius: var(--rs-radius);
+  background: #fff;
+  font-weight: 800;
+}
+
+.digital-options b {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  place-items: center;
+  border-radius: 50%;
+  background: #eef2f7;
+  color: #17235d;
+}
+
+.digital-attempt-actions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.digital-attempt-actions button,
+.digital-assessment-card button,
+.digital-results-grid button {
+  min-height: 36px;
+  border: 1px solid var(--rs-line);
+  border-radius: var(--rs-radius);
+  background: #fff;
+  color: var(--rs-ink);
+  font-weight: 900;
+}
+
+.digital-feedback {
+  margin: 10px 0 0;
+  color: var(--rs-green-700);
+  font-weight: 800;
+}
+
+.digital-results-detail {
+  overflow-x: auto;
+}
+
+.digital-results-detail table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.digital-results-detail th,
+.digital-results-detail td {
+  padding: 8px;
+  border: 1px solid var(--rs-line);
+  text-align: left;
+}
+
+.digital-skill-report {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.digital-skill-report span {
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #17235d;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+@media (max-width: 720px) {
+  .digital-assessment-card,
+  .digital-attempt-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .digital-attempt-head,
+  .digital-results-grid article {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

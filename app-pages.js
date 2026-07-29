@@ -3166,6 +3166,310 @@ const initMissionPlayer = () => {
   bind();
 };
 
+const digitalAssessmentStorageKey = "raizes:digital-assessments";
+const digitalStudentProfile = {
+  id: "student-demo-pedro",
+  name: "Pedro Silva",
+  classId: "2ano-a",
+  className: "2o Ano A",
+};
+
+const readDigitalAssessmentState = () => {
+  try {
+    const state = JSON.parse(localStorage.getItem(digitalAssessmentStorageKey) || "{}");
+    return { assignments: [], attempts: [], notifications: [], ...state };
+  } catch (error) {
+    return { assignments: [], attempts: [], notifications: [] };
+  }
+};
+
+const writeDigitalAssessmentState = (state) => {
+  localStorage.setItem(digitalAssessmentStorageKey, JSON.stringify(state));
+};
+
+const digitalStatusLabel = (assignment, attempt) => {
+  if (!attempt) return "NAO INICIADA";
+  if (attempt.status === "EM_ANDAMENTO") return "EM ANDAMENTO";
+  if (attempt.status === "CORRIGIDA") return "CORRIGIDA";
+  if (attempt.status === "ENVIADA") return "ENVIADA";
+  return attempt.status || assignment.status || "DISPONIVEL";
+};
+
+const digitalResultVisibility = (assignment, attempt) => {
+  if (!attempt || attempt.status !== "CORRIGIDA") return "hidden";
+  if (assignment.resultReleaseMode === "hidden" || assignment.resultReleaseMode === "manual") return "hidden";
+  if (assignment.resultReleaseMode === "after_due" && assignment.dueAt && Date.now() < new Date(assignment.dueAt).getTime()) return "hidden";
+  if (assignment.resultReleaseMode === "score_only") return "score_only";
+  return "commented";
+};
+
+const getDigitalAssignmentForStudent = () => {
+  const state = readDigitalAssessmentState();
+  const assignments = state.assignments.filter(
+    (assignment) =>
+      assignment.status !== "ARQUIVADA" &&
+      (assignment.studentId === digitalStudentProfile.id || assignment.classId === digitalStudentProfile.classId)
+  );
+  return { state, assignments };
+};
+
+const publishDigitalAssessmentDemo = (payload) => {
+  const state = readDigitalAssessmentState();
+  const assignmentId = `assign-${Date.now()}`;
+  const assessmentId = payload.assessmentId || `assessment-${Date.now()}`;
+  const assignment = {
+    id: assignmentId,
+    assessmentId,
+    title: payload.title,
+    component: payload.component,
+    year: payload.year,
+    teacher: "Prof. Marcos Silva",
+    classId: "2ano-a",
+    className: payload.className || "2o Ano A",
+    status: "DISPONIVEL",
+    availableFrom: payload.availableFrom || new Date().toISOString(),
+    dueAt: payload.dueAt || new Date(Date.now() + 7 * 86400000).toISOString(),
+    timeLimitMinutes: Number(payload.timeLimitMinutes || 50),
+    maxAttempts: Number(payload.maxAttempts || 1),
+    shuffleQuestions: payload.shuffleQuestions,
+    shuffleAlternatives: payload.shuffleAlternatives,
+    resultReleaseMode: payload.resultReleaseMode || "immediate",
+    totalPoints: payload.questions.reduce((sum, question) => sum + Number(question.points || 1), 0),
+    questions: payload.questions,
+    publishedAt: new Date().toISOString(),
+  };
+  state.assignments = [assignment, ...state.assignments.filter((item) => item.assessmentId !== assessmentId)];
+  state.notifications.unshift({
+    id: `notification-${Date.now()}`,
+    type: "avaliacao_disponivel",
+    message: `${assignment.title} disponivel para ${assignment.className}.`,
+    createdAt: new Date().toISOString(),
+  });
+  writeDigitalAssessmentState(state);
+  return assignment;
+};
+
+const scoreDigitalAttempt = (assignment, attempt) => {
+  let objectiveScore = 0;
+  let answered = 0;
+  const responses = { ...attempt.responses };
+  assignment.questions.forEach((question) => {
+    const response = responses[question.id] || {};
+    const selectedIndex = Number(response.selectedIndex);
+    const isAnswered = Number.isInteger(selectedIndex);
+    const isCorrect = isAnswered && selectedIndex === Number(question.correctAlternative);
+    if (isAnswered) answered += 1;
+    if (isCorrect) objectiveScore += Number(question.points || 1);
+    responses[question.id] = {
+      ...response,
+      isCorrect,
+      automaticScore: isCorrect ? Number(question.points || 1) : 0,
+      answeredAt: response.answeredAt || new Date().toISOString(),
+    };
+  });
+  const percentage = assignment.totalPoints ? Math.round((objectiveScore / assignment.totalPoints) * 10000) / 100 : 0;
+  return {
+    ...attempt,
+    responses,
+    answered,
+    objectiveScore,
+    manualScore: attempt.manualScore || 0,
+    totalScore: objectiveScore + Number(attempt.manualScore || 0),
+    percentage,
+    status: "CORRIGIDA",
+    submittedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+};
+
+const initDigitalStudentAssessments = () => {
+  const root = document.querySelector("[data-digital-student-app]");
+  if (!root) return;
+  const list = root.querySelector("[data-digital-student-list]");
+  const count = root.querySelector("[data-digital-student-count]");
+  const stage = root.querySelector("[data-digital-attempt-stage]");
+  let activeAssignmentId = null;
+  let activeQuestionIndex = 0;
+
+  const renderCards = () => {
+    const { state, assignments } = getDigitalAssignmentForStudent();
+    count.textContent = `${assignments.length} ${assignments.length === 1 ? "disponivel" : "disponiveis"}`;
+    list.innerHTML = assignments.length
+      ? assignments
+          .map((assignment) => {
+            const attempt = state.attempts.find((item) => item.assignmentId === assignment.id && item.studentId === digitalStudentProfile.id);
+            const action = !attempt ? "Iniciar" : attempt.status === "EM_ANDAMENTO" ? "Continuar" : "Ver resultado";
+            return `
+              <article class="digital-assessment-card">
+                <div><strong>${htmlEscape(assignment.title)}</strong><span>${htmlEscape(assignment.component)} · ${htmlEscape(assignment.teacher)} · ${assignment.questions.length} questoes</span></div>
+                <small>${htmlEscape(assignment.className)} · prazo ${htmlEscape(new Date(assignment.dueAt).toLocaleString("pt-BR"))} · ${assignment.timeLimitMinutes} min · ${assignment.maxAttempts} tentativa</small>
+                <mark>${digitalStatusLabel(assignment, attempt)}</mark>
+                <button type="button" data-digital-open="${assignment.id}">${action}</button>
+              </article>
+            `;
+          })
+          .join("")
+      : `<div class="qb-state">Nenhuma avaliacao digital disponivel para sua turma.</div>`;
+  };
+
+  const getOrCreateAttempt = (assignment) => {
+    const state = readDigitalAssessmentState();
+    let attempt = state.attempts.find((item) => item.assignmentId === assignment.id && item.studentId === digitalStudentProfile.id);
+    if (!attempt) {
+      attempt = {
+        id: `attempt-${Date.now()}`,
+        assignmentId: assignment.id,
+        assessmentId: assignment.assessmentId,
+        studentId: digitalStudentProfile.id,
+        studentName: digitalStudentProfile.name,
+        classId: digitalStudentProfile.classId,
+        className: digitalStudentProfile.className,
+        attemptNumber: 1,
+        status: "EM_ANDAMENTO",
+        startedAt: new Date().toISOString(),
+        lastSavedAt: new Date().toISOString(),
+        elapsedSeconds: 0,
+        responses: {},
+      };
+      state.attempts.push(attempt);
+      writeDigitalAssessmentState(state);
+    }
+    return attempt;
+  };
+
+  const renderAttempt = (assignment, attempt) => {
+    const question = assignment.questions[activeQuestionIndex];
+    if (!question) return;
+    const response = attempt.responses[question.id] || {};
+    const resultVisibility = digitalResultVisibility(assignment, attempt);
+    const answeredCount = assignment.questions.filter((item) => Number.isInteger(Number(attempt.responses[item.id]?.selectedIndex))).length;
+    stage.hidden = false;
+    stage.innerHTML = `
+      <div class="digital-attempt-head">
+        <div><strong>${htmlEscape(assignment.title)}</strong><span>${activeQuestionIndex + 1}/${assignment.questions.length} · ${answeredCount} respondidas · ${assignment.timeLimitMinutes} min</span></div>
+        <button type="button" data-digital-close>Fechar</button>
+      </div>
+      ${
+        attempt.status === "CORRIGIDA" && resultVisibility !== "hidden"
+          ? `<div class="digital-result-card"><strong>Resultado liberado</strong><span>Nota ${attempt.totalScore}/${assignment.totalPoints} · ${attempt.percentage}%</span><p>${attempt.answered} respostas registradas. Revise as habilidades indicadas pelo professor.</p></div>`
+          : attempt.status === "CORRIGIDA"
+            ? `<div class="digital-result-card"><strong>Avaliacao entregue</strong><span>Resultado aguardando liberacao do professor.</span></div>`
+          : ""
+      }
+      <article class="digital-question-player">
+        ${question.baseText ? `<blockquote>${htmlEscape(question.baseText)}</blockquote>` : ""}
+        <h3>${htmlEscape(question.statement)}</h3>
+        <div class="digital-options">
+          ${question.alternatives
+            .map(
+              (alternative, index) => `
+                <label>
+                  <input type="radio" name="digital-answer" value="${index}" ${Number(response.selectedIndex) === index ? "checked" : ""} ${attempt.status !== "EM_ANDAMENTO" ? "disabled" : ""} />
+                  <span><b>${String.fromCharCode(65 + index)}</b>${htmlEscape(alternative)}</span>
+                </label>
+              `
+            )
+            .join("")}
+        </div>
+        ${
+          attempt.status === "CORRIGIDA" && resultVisibility === "commented"
+            ? `<p class="digital-feedback"><strong>${response.isCorrect ? "Acerto" : "Erro"}</strong> · Habilidade ${htmlEscape(question.skill)} · ${htmlEscape(question.justification || "Resultado corrigido automaticamente.")}</p>`
+            : attempt.status === "CORRIGIDA" && resultVisibility === "score_only"
+              ? `<p class="digital-feedback"><strong>Nota registrada.</strong> O gabarito permanece oculto nesta configuracao.</p>`
+            : ""
+        }
+      </article>
+      <div class="digital-attempt-actions">
+        <button type="button" data-digital-prev ${activeQuestionIndex === 0 ? "disabled" : ""}>Anterior</button>
+        <button type="button" data-digital-next ${activeQuestionIndex === assignment.questions.length - 1 ? "disabled" : ""}>Proxima</button>
+        <button type="button" data-digital-submit ${attempt.status !== "EM_ANDAMENTO" ? "disabled" : ""}>Entregar avaliacao</button>
+      </div>
+    `;
+  };
+
+  root.addEventListener("click", (event) => {
+    const button = event.target.closest("button");
+    if (!button) return;
+    const state = readDigitalAssessmentState();
+    if (button.dataset.digitalOpen) {
+      activeAssignmentId = button.dataset.digitalOpen;
+      activeQuestionIndex = 0;
+      const assignment = state.assignments.find((item) => item.id === activeAssignmentId);
+      if (!assignment) return;
+      const attempt = getOrCreateAttempt(assignment);
+      renderAttempt(assignment, attempt);
+      renderCards();
+    }
+    const assignment = state.assignments.find((item) => item.id === activeAssignmentId);
+    const attemptIndex = state.attempts.findIndex((item) => item.assignmentId === activeAssignmentId && item.studentId === digitalStudentProfile.id);
+    const attempt = state.attempts[attemptIndex];
+    if (!assignment || !attempt) return;
+    if (button.hasAttribute("data-digital-close")) stage.hidden = true;
+    if (button.hasAttribute("data-digital-prev")) activeQuestionIndex = Math.max(0, activeQuestionIndex - 1);
+    if (button.hasAttribute("data-digital-next")) activeQuestionIndex = Math.min(assignment.questions.length - 1, activeQuestionIndex + 1);
+    if (button.hasAttribute("data-digital-submit") && window.confirm("Entregar avaliacao agora?")) {
+      state.attempts[attemptIndex] = scoreDigitalAttempt(assignment, attempt);
+      state.notifications.unshift({ id: `notification-${Date.now()}`, type: "avaliacao_entregue", message: `${digitalStudentProfile.name} entregou ${assignment.title}.`, createdAt: new Date().toISOString() });
+      writeDigitalAssessmentState(state);
+    }
+    renderAttempt(assignment, readDigitalAssessmentState().attempts[attemptIndex]);
+    renderCards();
+  });
+
+  root.addEventListener("change", (event) => {
+    if (!event.target.matches("input[name='digital-answer']")) return;
+    const state = readDigitalAssessmentState();
+    const assignment = state.assignments.find((item) => item.id === activeAssignmentId);
+    const attempt = state.attempts.find((item) => item.assignmentId === activeAssignmentId && item.studentId === digitalStudentProfile.id);
+    const question = assignment?.questions[activeQuestionIndex];
+    if (!assignment || !attempt || !question || attempt.status !== "EM_ANDAMENTO") return;
+    attempt.responses[question.id] = { selectedIndex: Number(event.target.value), answeredAt: new Date().toISOString() };
+    attempt.lastSavedAt = new Date().toISOString();
+    writeDigitalAssessmentState(state);
+    renderCards();
+  });
+
+  renderCards();
+};
+
+const initDigitalResultsPanel = () => {
+  const root = document.querySelector("[data-digital-results]");
+  if (!root) return;
+  const grid = root.querySelector("[data-digital-results-grid]");
+  const summary = root.querySelector("[data-digital-results-summary]");
+  const detail = root.querySelector("[data-digital-results-detail]");
+  const state = readDigitalAssessmentState();
+  const assignments = state.assignments;
+  const attempts = state.attempts;
+  summary.textContent = `${assignments.length} aplicacoes · ${attempts.length} tentativas`;
+  grid.innerHTML = assignments.length
+    ? assignments
+        .map((assignment) => {
+          const related = attempts.filter((attempt) => attempt.assignmentId === assignment.id);
+          const delivered = related.filter((attempt) => attempt.status === "CORRIGIDA" || attempt.status === "ENVIADA").length;
+          const average = related.length ? Math.round(related.reduce((sum, attempt) => sum + Number(attempt.percentage || 0), 0) / related.length) : 0;
+          return `<article><strong>${htmlEscape(assignment.title)}</strong><span>${htmlEscape(assignment.className)} · ${related.length} iniciadas · ${delivered} entregues</span><b>${average}%</b><button type="button" data-result-assignment="${assignment.id}">Ver respostas</button></article>`;
+        })
+        .join("")
+    : `<div class="qb-state">Publique uma avaliacao no Banco de Questoes para acompanhar resultados aqui.</div>`;
+  root.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-result-assignment]");
+    if (!button) return;
+    const assignment = assignments.find((item) => item.id === button.dataset.resultAssignment);
+    const related = attempts.filter((attempt) => attempt.assignmentId === assignment.id);
+    detail.innerHTML = `
+      <h3>${htmlEscape(assignment.title)}</h3>
+      <table>
+        <tr><th>Aluno</th><th>Status</th><th>Acertos</th><th>Nota</th><th>%</th><th>Tempo</th></tr>
+        ${related
+          .map((attempt) => `<tr><td>${htmlEscape(attempt.studentName)}</td><td>${htmlEscape(attempt.status)}</td><td>${Object.values(attempt.responses || {}).filter((response) => response.isCorrect).length}</td><td>${attempt.totalScore || 0}/${assignment.totalPoints}</td><td>${attempt.percentage || 0}%</td><td>${Math.round((attempt.elapsedSeconds || 0) / 60)} min</td></tr>`)
+          .join("")}
+      </table>
+      <div class="digital-skill-report">${assignment.questions.map((question) => `<span>${htmlEscape(question.skill)} · ${htmlEscape(question.descriptor || "Descritor")}</span>`).join("")}</div>
+    `;
+  });
+};
+
 const initQuestionBank = () => {
   const root = document.querySelector("[data-question-bank]");
   if (!root) {
@@ -3771,6 +4075,59 @@ const initQuestionBank = () => {
     window.setTimeout(() => window.print(), 80);
   };
 
+  const publishCurrentAssessmentDigitally = async () => {
+    syncPointInputs();
+    const items = cart.map(itemById).filter(Boolean);
+    if (!items.length) {
+      setSelectionStatus("Selecione questoes antes de aplicar digitalmente.", "error");
+      return null;
+    }
+    let savedAssessment = null;
+    if (mode === "supabase") {
+      try {
+        savedAssessment = await syncCartToAssessment();
+      } catch (error) {
+        const message = String(error.message || "");
+        if (message.includes("Sessao Supabase ausente") || message.includes("Sessao expirada") || message.includes("row-level security")) {
+          showSessionRequired("Selecao preservada. Entre novamente para salvar antes da aplicacao digital oficial.");
+          return null;
+        }
+        throw error;
+      }
+    }
+    const shuffle = root.querySelector("[data-qb-shuffle]")?.value || "none";
+    const assignment = publishDigitalAssessmentDemo({
+      assessmentId: savedAssessment?.id || activeAssessmentId,
+      title: titleInput?.value?.trim() || "Avaliacao digital",
+      component: root.querySelector("[data-qb-assessment-component]")?.value || "",
+      year: root.querySelector("[data-qb-assessment-year]")?.value || "",
+      className: root.querySelectorAll(".qb-builder select")[0]?.value || "2o Ano A",
+      availableFrom: root.querySelector("[data-qb-available-from]")?.value ? new Date(root.querySelector("[data-qb-available-from]").value).toISOString() : new Date().toISOString(),
+      dueAt: root.querySelector("[data-qb-due-at]")?.value ? new Date(root.querySelector("[data-qb-due-at]").value).toISOString() : new Date(Date.now() + 7 * 86400000).toISOString(),
+      timeLimitMinutes: root.querySelector("[data-qb-time-limit]")?.value || 50,
+      maxAttempts: root.querySelector("[data-qb-max-attempts]")?.value || 1,
+      resultReleaseMode: root.querySelector("[data-qb-result-mode]")?.value || "immediate",
+      shuffleQuestions: shuffle === "questions" || shuffle === "all",
+      shuffleAlternatives: shuffle === "all",
+      questions: items.map((item) => ({
+        id: item.id,
+        uuid: item.uuid,
+        statement: item.statement,
+        baseText: item.baseText,
+        alternatives: item.alternatives,
+        correctAlternative: item.correctAlternative,
+        points: Number(cartPoints[item.id] ?? 1),
+        skill: item.skill,
+        descriptor: item.descriptor,
+        component: item.component,
+        justification: item.justification,
+        intervention: item.intervention,
+      })),
+    });
+    setSelectionStatus(`Avaliacao publicada para ${assignment.className}. Aluno ja pode responder em Minhas Avaliacoes.`, "success");
+    return assignment;
+  };
+
   const selectQuestion = (id) => {
     const item = itemById(id);
     if (!item) return;
@@ -3928,6 +4285,9 @@ const initQuestionBank = () => {
           renderPreview("student");
           setSelectionStatus("Avaliacao salva e aberta em pre-visualizacao.", "success");
         }
+      }
+      if (button.hasAttribute("data-qb-publish-digital")) {
+        await publishCurrentAssessmentDigitally();
       }
       if (button.dataset.qbOpenAssessment) {
         const assessment = await questionBankDataService.getAssessmentById(button.dataset.qbOpenAssessment);
@@ -4889,6 +5249,8 @@ const renderAppPage = () => {
   initLibrarySearch();
   initMissionPlayer();
   initQuestionBank();
+  initDigitalStudentAssessments();
+  initDigitalResultsPanel();
   initCurationBatches();
 };
 
