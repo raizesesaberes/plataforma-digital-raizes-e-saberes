@@ -5426,17 +5426,17 @@ td {
 }
 
 .student-current-book article {
-  grid-template-columns: minmax(132px, 42%) minmax(0, 1fr);
+  grid-template-columns: 92px minmax(0, 1fr);
 }
 
 .student-book-cover {
   display: block;
-  width: 100%;
-  aspect-ratio: 625 / 213;
-  object-fit: contain;
+  width: 92px;
+  aspect-ratio: 9 / 12.5;
+  object-fit: cover;
   object-position: center;
-  border-radius: 8px;
-  box-shadow: 0 10px 22px rgba(30, 67, 43, 0.13);
+  border-radius: 6px;
+  box-shadow: 0 10px 22px rgba(30, 67, 43, 0.16);
 }
 
 .student-current-book h3 {
@@ -5583,7 +5583,7 @@ td {
 .student-medals-card > div:last-child {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 18px;
   align-items: start;
   text-align: center;
 }
@@ -5595,7 +5595,7 @@ td {
 }
 
 .student-medal-art {
-  width: min(156px, 100%);
+  width: min(132px, 100%);
   aspect-ratio: 370 / 472;
   object-fit: contain;
   border-radius: 8px;

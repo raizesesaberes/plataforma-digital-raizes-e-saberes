@@ -1360,15 +1360,15 @@ const studentDashboardData = {
     title: "Linguagem",
     subtitle: "Educacao Infantil 2 anos",
     progress: 45,
-    cover: "assets/aluno/oficial-card-livro.png",
+    cover: "assets/biblioteca/RAIZES_INFANTIL2_VOL1_BIBLIOTECA.webp",
     href: "book-viewer.html?book=livro-mestre-001",
   },
   libraryBanner: "assets/aluno/oficial-banner-biblioteca.png",
   library: [
-    { title: "Linguagem", cover: "assets/aluno/oficial-card-livro.png", href: "book-viewer.html?book=livro-mestre-001" },
-    { title: "Matematica", cover: "assets/aluno/oficial-card-livro.png", href: "book-viewer.html?book=livro-002" },
-    { title: "Natureza e Sociedade", cover: "assets/aluno/oficial-card-livro.png", href: "book-viewer.html?book=laboratorio-sensorial-002" },
-    { title: "Caderno de Atividades", cover: "assets/aluno/oficial-card-livro.png", href: "biblioteca.html" },
+    { title: "Linguagem", cover: "assets/biblioteca/RAIZES_INFANTIL2_VOL1_BIBLIOTECA.webp", href: "book-viewer.html?book=livro-mestre-001" },
+    { title: "Matematica", cover: "assets/biblioteca/RAIZES_INFANTIL2_VOL2_BIBLIOTECA.webp", href: "book-viewer.html?book=livro-002" },
+    { title: "Natureza e Sociedade", cover: "assets/biblioteca/RAIZES_LAB_SENSORIAL_INFANTIL2_BIBLIOTECA.webp", href: "book-viewer.html?book=laboratorio-sensorial-002" },
+    { title: "Caderno de Atividades", cover: "assets/biblioteca/RAIZES_INFANTIL3_VOL1_BIBLIOTECA.webp", href: "biblioteca.html" },
   ],
   xpGoal: {
     current: 125,
@@ -1455,10 +1455,6 @@ const getStudentGameSummary = () => {
 const createStudentDashboardView = () => {
   const gameSummary = getStudentGameSummary();
   const xp = studentDashboardData.profile.xp + gameSummary.totalXp;
-  const medalTitles = new Set(studentDashboardData.medals.map((medal) => medal.title));
-  const gameMedals = gameSummary.completed
-    .filter((record) => record.medal && !medalTitles.has(record.medal))
-    .map((record) => ({ title: record.medal, image: record.image }));
   return {
     ...studentDashboardData,
     gameSummary,
@@ -1468,7 +1464,7 @@ const createStudentDashboardView = () => {
       current: xp,
       nextText: xp >= studentDashboardData.xpGoal.target ? "Voce alcancou o objetivo atual. Continue jogando para ampliar suas conquistas!" : `Conquiste mais ${studentDashboardData.xpGoal.target - xp} XP para alcancar o Nivel 2!`,
     },
-    medals: [...gameMedals, ...studentDashboardData.medals],
+    medals: studentDashboardData.medals,
   };
 };
 
