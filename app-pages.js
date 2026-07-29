@@ -2455,6 +2455,9 @@ const modules = {
               <select data-qb-sort aria-label="Ordenar questoes">
                 <option value="recent">Ultima revisao</option>
                 <option value="difficulty">Dificuldade</option>
+                <option value="skill">Habilidade</option>
+                <option value="year">Ano</option>
+                <option value="code">Codigo</option>
                 <option value="time">Tempo estimado</option>
               </select>
             </div>
@@ -2475,8 +2478,8 @@ const modules = {
                 <label class="span-2"><span>Orientacoes</span><textarea>Leia com atencao e marque apenas uma alternativa por questao.</textarea></label>
               </div>
               <div class="qb-builder-actions">
-                <button type="button">Visualizar prova</button>
-                <button type="button">Gerar gabarito</button>
+                <button type="button" data-qb-preview="student">Pre-visualizar avaliacao</button>
+                <button type="button" data-qb-preview="teacher">Visualizar gabarito do professor</button>
                 <button type="button">Duplicar</button>
                 <button type="button">Gerar versoes</button>
                 <button type="button">Aplicar digitalmente</button>
@@ -2494,8 +2497,10 @@ const modules = {
           </main>
           <aside class="panel qb-cart" aria-label="Carrinho da avaliacao">
             <div class="panel-head"><h2>Avaliacao</h2><button type="button" data-qb-clear-cart>Limpar</button></div>
+            <div class="qb-selection-status" data-qb-selection-status aria-live="polite"></div>
             <div class="qb-cart-list" data-qb-cart-list></div>
             <div class="qb-cart-summary"><strong data-qb-cart-time>0 min</strong><span>tempo estimado</span></div>
+            <div class="qb-preview" data-qb-preview-panel hidden></div>
             <button type="button" class="qb-primary-action" data-qb-generate>Gerar avaliacao</button>
           </aside>
         </div>
@@ -3113,6 +3118,8 @@ const initQuestionBank = () => {
   const cartTime = root.querySelector("[data-qb-cart-time]");
   const saved = root.querySelector("[data-qb-saved]");
   const access = root.querySelector("[data-qb-access]");
+  const selectionStatus = root.querySelector("[data-qb-selection-status]");
+  const previewPanel = root.querySelector("[data-qb-preview-panel]");
   const titleInput = root.querySelector("[data-qb-assessment-title]");
   const builderFields = [...root.querySelectorAll(".qb-builder input, .qb-builder select, .qb-builder textarea")];
   let questions = [];
@@ -3121,6 +3128,12 @@ const initQuestionBank = () => {
   let activeAssessmentId = null;
   let cart = [];
   let mode = questionBankDataService.mode();
+  const cartStorageKey = "raizes:question-bank-cart";
+  try {
+    cart = JSON.parse(localStorage.getItem(cartStorageKey) || "[]");
+  } catch (error) {
+    cart = [];
+  }
 
   const uniq = (key) => [...new Set(demoQuestionBankItems.map((item) => item[key]).filter(Boolean))].sort();
   const localDevNotice = () =>
@@ -3146,6 +3159,18 @@ const initQuestionBank = () => {
   };
 
   const itemById = (id) => questions.find((item) => item.id === id || item.uuid === id);
+  const shortText = (value, limit = 150) => {
+    const text = String(value || "").replace(/\s+/g, " ").trim();
+    return text.length > limit ? `${text.slice(0, limit - 1)}...` : text;
+  };
+  const isSelected = (id) => cart.includes(id);
+  const optionLabel = (index) => String.fromCharCode(65 + index);
+  const setSelectionStatus = (message, tone = "info") => {
+    if (!selectionStatus) return;
+    selectionStatus.textContent = message || "";
+    selectionStatus.dataset.tone = tone;
+    selectionStatus.hidden = !message;
+  };
 
   const matchesSearch = (item) => {
     const term = search.value.trim().toLowerCase();
@@ -3179,6 +3204,15 @@ const initQuestionBank = () => {
       if (sort.value === "difficulty") {
         return a.difficulty.localeCompare(b.difficulty);
       }
+      if (sort.value === "skill") {
+        return a.skill.localeCompare(b.skill) || a.id.localeCompare(b.id);
+      }
+      if (sort.value === "year") {
+        return a.year.localeCompare(b.year) || a.id.localeCompare(b.id);
+      }
+      if (sort.value === "code") {
+        return a.id.localeCompare(b.id);
+      }
       if (sort.value === "time") {
         return a.estimatedTime - b.estimatedTime;
       }
@@ -3196,19 +3230,37 @@ const initQuestionBank = () => {
     root.querySelector("[data-qb-result-count]").textContent = `${items.length} ${items.length === 1 ? "item" : "itens"}`;
   };
 
+  const renderQuestionMiniature = (item, { showAnswer = false } = {}) => `
+    <div class="qb-miniature" aria-label="Miniatura pedagogica da questao ${htmlEscape(item.id)}">
+      <div class="qb-mini-head"><strong>${htmlEscape(item.id)}</strong><span>${htmlEscape(item.resource || "Texto")}</span></div>
+      ${item.baseText ? `<blockquote>${htmlEscape(shortText(item.baseText, 130))}</blockquote>` : ""}
+      <p>${htmlEscape(shortText(item.statement, 170))}</p>
+      <ol>
+        ${item.alternatives
+          .slice(0, 4)
+          .map(
+            (alternative, index) =>
+              `<li class="${showAnswer && index === item.correctAlternative ? "is-correct" : ""}"><b>${optionLabel(index)}</b><span>${htmlEscape(shortText(alternative, 80))}</span></li>`
+          )
+          .join("")}
+      </ol>
+    </div>
+  `;
+
   const renderCard = (item) => `
-    <article class="qb-card ${item.id === selectedId ? "is-selected" : ""}">
+    <article class="qb-card ${item.id === selectedId ? "is-focused" : ""} ${isSelected(item.id) ? "is-selected" : ""}" data-qb-card="${htmlEscape(item.id)}">
       <div class="qb-card-top">
         <span>${htmlEscape(item.id)}</span>
-        <mark>${htmlEscape(item.originType)}</mark>
+        <mark>${item.publicationStatus === "PUBLICADO" ? "Publicada" : htmlEscape(item.publicationStatus)}</mark>
       </div>
-      <h3>${htmlEscape(item.title)}</h3>
+      <h3>${htmlEscape(shortText(item.statement || item.title, 110))}</h3>
       <p>${htmlEscape(item.component)} &middot; ${htmlEscape(item.year)} &middot; ${htmlEscape(item.skill)}</p>
-      <div class="qb-tags"><span>${htmlEscape(item.type)}</span><span>${htmlEscape(item.difficulty)}</span><span>${htmlEscape(item.proficiency)}</span><span>${item.estimatedTime} min</span></div>
-      <small>${htmlEscape(item.legalClassification)}</small>
+      <p class="qb-card-descriptor">${htmlEscape(shortText(item.descriptor || item.object || item.unit, 130))}</p>
+      ${renderQuestionMiniature(item)}
+      <div class="qb-tags"><span>${htmlEscape(item.type)}</span><span>${htmlEscape(item.difficulty)}</span><span>${htmlEscape(item.proficiency)}</span><span>${item.estimatedTime} min</span><span>${htmlEscape(item.resource)}</span></div>
       <div class="qb-card-actions">
-        <button type="button" data-qb-view="${item.id}">Detalhes</button>
-        <button type="button" data-qb-add="${item.id}" ${item.publicationStatus !== "PUBLICADO" ? "disabled" : ""}>Adicionar</button>
+        <button type="button" data-qb-view="${item.id}" aria-label="Ver questao ${htmlEscape(item.id)}">Ver questao</button>
+        <button type="button" data-qb-add="${item.id}" class="${isSelected(item.id) ? "is-selected" : ""}" aria-pressed="${isSelected(item.id)}" ${item.publicationStatus !== "PUBLICADO" || isSelected(item.id) ? "disabled" : ""}>${isSelected(item.id) ? "Selecionada" : "Selecionar"}</button>
       </div>
     </article>
   `;
@@ -3226,33 +3278,36 @@ const initQuestionBank = () => {
       history = [];
     }
     detail.innerHTML = `
-      <div class="panel-head"><h2>Detalhes da questao</h2><span>${item.curationStatus}</span></div>
-      <div class="qb-detail-grid">
-        <div>
+      <div class="panel-head">
+        <h2>Visualizacao da questao</h2>
+        <button type="button" data-qb-add="${item.id}" class="${isSelected(item.id) ? "is-selected" : ""}" aria-pressed="${isSelected(item.id)}" ${item.publicationStatus !== "PUBLICADO" || isSelected(item.id) ? "disabled" : ""}>${isSelected(item.id) ? "Selecionada" : "Selecionar esta questao"}</button>
+      </div>
+      <div class="qb-proof-page">
+        <div class="qb-proof-header">
           <strong>${htmlEscape(item.id)}</strong>
-          <h3>${htmlEscape(item.title)}</h3>
-          <p>${htmlEscape(item.statement)}</p>
-          ${item.baseText ? `<blockquote>${htmlEscape(item.baseText)}</blockquote>` : ""}
-          <ol class="qb-alternatives">
-            ${item.alternatives.map((alternative, index) => `<li class="${index === item.correctAlternative ? "is-correct" : ""}">${String.fromCharCode(65 + index)}. ${htmlEscape(alternative)}</li>`).join("")}
-          </ol>
+          <span>${htmlEscape(item.component)} &middot; ${htmlEscape(item.year)} &middot; ${item.estimatedTime} min</span>
         </div>
+        ${item.baseText ? `<blockquote>${htmlEscape(item.baseText)}</blockquote>` : ""}
+        <h3>${htmlEscape(item.statement)}</h3>
+        <ol class="qb-alternatives">
+          ${item.alternatives.map((alternative, index) => `<li class="${index === item.correctAlternative ? "is-correct" : ""}"><b>${optionLabel(index)}</b> ${htmlEscape(alternative)}${index === item.correctAlternative ? " <em>Gabarito</em>" : ""}</li>`).join("")}
+        </ol>
+      </div>
+      <div class="qb-detail-grid">
         <div class="qb-detail-meta">
           <span><b>BNCC</b>${htmlEscape(item.skill)}</span>
-          <span><b>Descritor</b>${htmlEscape(item.descriptor)}</span>
-          <span><b>Unidade</b>${htmlEscape(item.unit)}</span>
+          <span><b>Matriz ou descritor</b>${htmlEscape(item.descriptor)}</span>
           <span><b>Objeto</b>${htmlEscape(item.object)}</span>
-          <span><b>Processo</b>${htmlEscape(item.cognitiveProcess)}</span>
-          <span><b>Acessibilidade</b>${htmlEscape(item.accessibility)}</span>
+          <span><b>Dificuldade</b>${htmlEscape(item.difficulty)}</span>
+          <span><b>Tempo estimado</b>${item.estimatedTime} min</span>
+          <span><b>Fonte e licenca</b>${htmlEscape(`${item.sourceName}. ${item.license}. ${item.legalStatus || ""}`)}</span>
         </div>
-      </div>
-      <div class="qb-trace">
-        <article><strong>Justificativa</strong><p>${htmlEscape(item.justification)}</p></article>
-        <article><strong>Distratores</strong><p>${htmlEscape(item.distractors.join(" "))}</p></article>
-        <article><strong>Feedback</strong><p>${htmlEscape(`${item.rightFeedback} ${item.wrongFeedback}`)}</p></article>
-        <article><strong>Intervencao</strong><p>${htmlEscape(item.intervention)}</p></article>
-        <article><strong>Fonte e licenca</strong><p>${htmlEscape(`${item.sourceName || "Fonte nao informada"}. ${item.license}. ${item.legalStatus || ""}`)}</p></article>
-        <article><strong>Historico</strong><p>Versao ${htmlEscape(item.version)}. Revisado por ${htmlEscape(item.reviewer)} em ${htmlEscape(item.reviewedAt)}. Usos: ${item.usedCount}${item.lastUsedClass ? ` (${htmlEscape(item.lastUsedClass)})` : ""}. ${htmlEscape(history[0]?.comment || "Historico de curadoria disponivel apos carga remota.")}</p></article>
+        <div class="qb-trace">
+          <article><strong>Justificativa pedagogica</strong><p>${htmlEscape(item.justification)}</p></article>
+          <article><strong>Analise dos distratores</strong><p>${htmlEscape(item.distractors.join(" "))}</p></article>
+          <article><strong>Intervencao</strong><p>${htmlEscape(item.intervention)}</p></article>
+          <article><strong>Historico</strong><p>Versao ${htmlEscape(item.version)}. Revisado por ${htmlEscape(item.reviewer)} em ${htmlEscape(item.reviewedAt)}. ${htmlEscape(history[0]?.comment || "Historico de curadoria disponivel apos carga remota.")}</p></article>
+        </div>
       </div>
     `;
     if (mode === "supabase" && item.uuid) {
@@ -3280,17 +3335,24 @@ const initQuestionBank = () => {
 
   const renderCart = () => {
     const items = cart.map(itemById).filter(Boolean);
+    localStorage.setItem(cartStorageKey, JSON.stringify(items.map((item) => item.id)));
     cartList.innerHTML = items.length
       ? items
           .map(
             (item, index) => `
-              <article>
+              <article class="qb-cart-item">
                 <span>${index + 1}</span>
-                <div><strong>${item.title}</strong><small>${item.id} &middot; ${item.estimatedTime} min</small></div>
+                <div>
+                  <strong>${htmlEscape(item.id)}</strong>
+                  <p>${htmlEscape(shortText(item.statement, 92))}</p>
+                  <small>${htmlEscape(item.component)} &middot; ${htmlEscape(item.skill)} &middot; ${item.estimatedTime} min</small>
+                  <div class="qb-cart-mini">${item.alternatives.slice(0, 4).map((alternative, optionIndex) => `<i>${optionLabel(optionIndex)} ${htmlEscape(shortText(alternative, 34))}</i>`).join("")}</div>
+                </div>
                 <input type="number" min="0" step="0.5" value="1" aria-label="Pontuacao da questao ${item.id}" />
-                <button type="button" data-qb-up="${item.id}" aria-label="Mover para cima">^</button>
-                <button type="button" data-qb-down="${item.id}" aria-label="Mover para baixo">v</button>
-                <button type="button" data-qb-remove="${item.id}" aria-label="Remover">x</button>
+                <button type="button" data-qb-view="${item.id}" aria-label="Ver ${item.id}">Ver</button>
+                <button type="button" data-qb-up="${item.id}" aria-label="Mover ${item.id} para cima">^</button>
+                <button type="button" data-qb-down="${item.id}" aria-label="Mover ${item.id} para baixo">v</button>
+                <button type="button" data-qb-remove="${item.id}" aria-label="Remover ${item.id}">Remover</button>
               </article>
             `
           )
@@ -3300,6 +3362,47 @@ const initQuestionBank = () => {
     root.querySelectorAll("[data-qb-cart-count]").forEach((node) => {
       node.textContent = cart.length;
     });
+  };
+
+  const renderPreview = (kind = "student") => {
+    const items = cart.map(itemById).filter(Boolean);
+    if (!previewPanel || !items.length) {
+      if (previewPanel) previewPanel.hidden = true;
+      return;
+    }
+    const isTeacher = kind === "teacher";
+    const totalTime = items.reduce((sum, item) => sum + item.estimatedTime, 0);
+    previewPanel.hidden = false;
+    previewPanel.innerHTML = `
+      <div class="panel-head"><h2>${isTeacher ? "Gabarito do professor" : "Previa da avaliacao"}</h2><button type="button" data-qb-close-preview>Fechar</button></div>
+      <div class="qb-preview-sheet">
+        <header>
+          <strong>${htmlEscape(titleInput?.value || "Avaliacao")}</strong>
+          <span>${items.length} questoes &middot; ${totalTime} min</span>
+        </header>
+        <p>${htmlEscape(root.querySelector(".qb-builder textarea")?.value || "Leia com atencao e marque apenas uma alternativa por questao.")}</p>
+        ${items
+          .map(
+            (item, index) => `
+              <article>
+                <h3>${index + 1}. ${htmlEscape(item.statement)}</h3>
+                ${item.baseText ? `<blockquote>${htmlEscape(item.baseText)}</blockquote>` : ""}
+                <ol class="qb-alternatives">
+                  ${item.alternatives
+                    .map((alternative, optionIndex) => `<li class="${isTeacher && optionIndex === item.correctAlternative ? "is-correct" : ""}"><b>${optionLabel(optionIndex)}</b> ${htmlEscape(alternative)}</li>`)
+                    .join("")}
+                </ol>
+                ${
+                  isTeacher
+                    ? `<p><strong>Gabarito:</strong> ${optionLabel(item.correctAlternative)} &middot; ${htmlEscape(item.justification)}<br><strong>Habilidade:</strong> ${htmlEscape(item.skill)}</p>`
+                    : `<p>${item.estimatedTime} min &middot; ${htmlEscape(item.component)} &middot; ${htmlEscape(item.skill)}</p>`
+                }
+              </article>
+            `
+          )
+          .join("")}
+      </div>
+    `;
   };
 
   const renderSaved = () => {
@@ -3353,6 +3456,39 @@ const initQuestionBank = () => {
     return assessment;
   };
 
+  const syncCartToAssessment = async () => {
+    if (!cart.length) return null;
+    const assessment = await ensureAssessment();
+    const remote = await questionBankDataService.getAssessmentById(assessment.id);
+    const remoteIds = new Set(
+      (remote?.questions || []).map((entry) => entry.question?.code || entry.question_id).filter(Boolean)
+    );
+    for (const id of cart) {
+      const item = itemById(id);
+      if (!item) continue;
+      if (!remoteIds.has(item.id) && !remoteIds.has(item.uuid)) {
+        await questionBankDataService.addQuestionToAssessment(assessment.id, item.uuid || item.id);
+      }
+    }
+    return questionBankDataService.getAssessmentById(assessment.id);
+  };
+
+  const selectQuestion = (id) => {
+    const item = itemById(id);
+    if (!item) return;
+    selectedId = item.id;
+    if (item.publicationStatus !== "PUBLICADO") {
+      setSelectionStatus(`${item.id} indisponivel para selecao.`, "error");
+      return;
+    }
+    if (cart.includes(item.id)) {
+      setSelectionStatus(`${item.id} ja esta selecionada.`, "info");
+      return;
+    }
+    cart.push(item.id);
+    setSelectionStatus(`${item.id} selecionada para a avaliacao.`, "success");
+  };
+
   const refresh = async () => {
     loading.hidden = false;
     errorNode.hidden = true;
@@ -3385,12 +3521,9 @@ const initQuestionBank = () => {
       if (button.dataset.qbView) {
         selectedId = button.dataset.qbView;
       }
-      if (button.dataset.qbAdd && !cart.includes(button.dataset.qbAdd)) {
-        const assessment = await ensureAssessment();
-        const item = itemById(button.dataset.qbAdd);
-        await questionBankDataService.addQuestionToAssessment(assessment.id, item.uuid || item.id);
-        cart.push(button.dataset.qbAdd);
-        assessments = await questionBankDataService.listAssessments();
+      if (button.dataset.qbAdd) {
+        button.textContent = "Selecionando";
+        selectQuestion(button.dataset.qbAdd);
       }
       if (button.dataset.qbRemove) {
         const item = itemById(button.dataset.qbRemove);
@@ -3398,6 +3531,7 @@ const initQuestionBank = () => {
           await questionBankDataService.removeQuestionFromAssessment(activeAssessmentId, item.uuid || item.id);
         }
         cart = cart.filter((id) => id !== button.dataset.qbRemove);
+        setSelectionStatus(`${button.dataset.qbRemove} removida da avaliacao.`, "info");
       }
       if (button.dataset.qbUp) {
         await moveCartItem(button.dataset.qbUp, -1);
@@ -3414,10 +3548,25 @@ const initQuestionBank = () => {
       }
       if (button.hasAttribute("data-qb-clear-cart")) {
         cart = [];
+        previewPanel.hidden = true;
+        setSelectionStatus("Carrinho limpo.", "info");
       }
       if (button.hasAttribute("data-qb-save-draft")) {
-        await ensureAssessment();
+        await syncCartToAssessment();
         assessments = await questionBankDataService.listAssessments();
+        setSelectionStatus("Rascunho salvo com as questoes selecionadas.", "success");
+      }
+      if (button.dataset.qbPreview) {
+        renderPreview(button.dataset.qbPreview);
+      }
+      if (button.hasAttribute("data-qb-close-preview")) {
+        previewPanel.hidden = true;
+      }
+      if (button.hasAttribute("data-qb-generate")) {
+        await syncCartToAssessment();
+        assessments = await questionBankDataService.listAssessments();
+        renderPreview("student");
+        setSelectionStatus("Avaliacao gerada em pre-visualizacao.", "success");
       }
       if (button.dataset.qbOpenAssessment) {
         const assessment = await questionBankDataService.getAssessmentById(button.dataset.qbOpenAssessment);
