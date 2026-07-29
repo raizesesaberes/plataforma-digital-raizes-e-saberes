@@ -1907,6 +1907,11 @@ const modules = {
         <div class="student-skeleton" aria-hidden="true"></div>
         ${renderStudentHero(studentDashboardView)}
         <div class="student-grid">
+          <section class="panel span-2 digital-student-panel" data-digital-student-app>
+            <div class="panel-head"><h2>Minhas Avaliacoes</h2><span data-digital-student-count>0 disponiveis</span></div>
+            <div class="digital-assessment-list" data-digital-student-list></div>
+            <div class="digital-attempt-stage" data-digital-attempt-stage hidden></div>
+          </section>
           ${renderStudentMission(studentDashboardView.dailyMission)}
           ${renderStudentCurrentBook(studentDashboardView.currentBook)}
           ${renderStudentLibrary(studentDashboardView.library)}
@@ -2449,6 +2454,11 @@ const modules = {
       <div class="metric-row"><article>Participacoes<strong>18.742</strong><span>95,4%</span></article><article>Desempenho Medio<strong>72,6%</strong><span>▲ 6,3 p.p.</span></article><article>Acertos<strong>16.842</strong><span>▲ 8,7%</span></article><article>Aprendizado Adequado<strong>68,4%</strong><span>▲ 7,1 p.p.</span></article><article>Atencao Especial<strong>24,8%</strong><span>▼ 3,2 p.p.</span></article><article>Critico<strong>6,8%</strong><span>▼ 3,9 p.p.</span></article></div>
       <div class="analytics-grid">
         <section class="panel span-2"><h2>Evolucao da Aprendizagem</h2><div class="line-chart blue-line"></div></section>
+        <section class="panel span-2 digital-results-panel" data-digital-results>
+          <div class="panel-head"><h2>Aplicacoes Digitais</h2><span data-digital-results-summary>Sem dados</span></div>
+          <div class="digital-results-grid" data-digital-results-grid></div>
+          <div class="digital-results-detail" data-digital-results-detail></div>
+        </section>
         <section class="panel"><h2>Desempenho por Disciplina</h2><div class="bar-list blue-bars"><p>Lingua Portuguesa<i style="--value:78%"></i></p><p>Matematica<i style="--value:71%"></i></p><p>Ciencias<i style="--value:69%"></i></p><p>Historia<i style="--value:66%"></i></p><p>Geografia<i style="--value:65%"></i></p></div></section>
         <section class="panel chart-card"><h2>Niveis de Aprendizagem</h2><div class="donut">18.742</div><ul class="legend"><li>Adequado 68,4%</li><li>Basico 24,8%</li><li>Critico 6,8%</li></ul></section>
         <section class="panel span-2"><h2>Diagnosticos</h2><table><tr><td>EF04LP01</td><td>82,1%</td><td>Adequado</td></tr><tr><td>EF04MA05</td><td>71,4%</td><td>Basico</td></tr><tr><td>EF04CI03</td><td>68,7%</td><td>Basico</td></tr></table></section>
@@ -2526,6 +2536,12 @@ const modules = {
                 <label><span>Data de aplicacao</span><input type="date" value="2026-08-05" /></label>
                 <label><span>Capa</span><select><option>Raizes e Saberes - padrao</option><option>Sem capa</option></select></label>
                 <label class="span-2"><span>Orientacoes</span><textarea>Leia com atencao e marque apenas uma alternativa por questao.</textarea></label>
+                <label><span>Inicio digital</span><input type="datetime-local" data-qb-available-from /></label>
+                <label><span>Prazo final</span><input type="datetime-local" data-qb-due-at /></label>
+                <label><span>Tempo limite</span><input type="number" min="5" step="5" value="50" data-qb-time-limit /></label>
+                <label><span>Tentativas</span><input type="number" min="1" step="1" value="1" data-qb-max-attempts /></label>
+                <label><span>Resultado</span><select data-qb-result-mode><option value="immediate">Imediato</option><option value="score_only">Somente nota</option><option value="after_due">Apos o prazo</option><option value="manual">Liberacao manual</option><option value="hidden">Oculto</option></select></label>
+                <label><span>Embaralhar</span><select data-qb-shuffle><option value="none">Nao embaralhar</option><option value="questions">Questoes</option><option value="all">Questoes e alternativas</option></select></label>
               </div>
               <div class="qb-builder-actions">
                 <button type="button" data-qb-preview-local>Previa rapida - nao salva</button>
@@ -2533,7 +2549,7 @@ const modules = {
                 <button type="button" data-qb-preview="teacher">Visualizar gabarito do professor</button>
                 <button type="button">Duplicar</button>
                 <button type="button">Gerar versoes</button>
-                <button type="button">Aplicar digitalmente</button>
+                <button type="button" data-qb-publish-digital>Aplicar digitalmente</button>
                 <button type="button">Preparar PDF futuro</button>
               </div>
             </section>
@@ -3319,7 +3335,7 @@ const initQuestionBank = () => {
     saveDraftSnapshot("login-required");
     const nextPath = `${window.location.pathname || "/banco-questoes.html"}?qbResume=1${window.location.hash || ""}`;
     const next = encodeURIComponent(nextPath);
-    selectionStatus.innerHTML = `${htmlEscape(message)} <a href="login.html?auth=supabase&next=${next}">Entrar novamente</a>`;
+    selectionStatus.innerHTML = `${htmlEscape(message)} <a href="login.html?auth=supabase&next=${next}">Entrar novamente</a> <a href="login.html?auth=supabase&demo=1&next=${next}">Entrar em modo demonstracao</a>`;
     selectionStatus.dataset.tone = "error";
     selectionStatus.hidden = false;
   };

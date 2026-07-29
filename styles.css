@@ -5181,6 +5181,13 @@ h3 {
   box-shadow: 0 16px 34px rgba(6, 70, 47, 0.22);
 }
 
+.login-form button[type="button"] {
+  border: 1px solid rgba(6, 70, 47, 0.18);
+  color: #06462f;
+  background: #f4faf6;
+  box-shadow: none;
+}
+
 .login-back {
   display: inline-flex;
   margin-top: 22px;
