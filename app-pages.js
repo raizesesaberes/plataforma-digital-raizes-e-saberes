@@ -2035,7 +2035,7 @@ const modules = {
             <div>
               <span>Motor de descoberta do conhecimento</span>
               <h2>Centros de Conhecimento</h2>
-              <p>Temas demonstrativos preparados para reunir, no futuro, cursos, livros, guias, legislacao, videos, especialistas, eventos e ferramentas em uma unica pagina de assunto.</p>
+              <p>Temas preparados para reunir cursos reais selecionados, livros, guias, legislacao, videos, especialistas, eventos e ferramentas em uma unica pagina de assunto.</p>
             </div>
           </header>
           <div class="knowledge-category-grid" data-knowledge-categories></div>
@@ -2049,7 +2049,7 @@ const modules = {
             <div>
               <span>Catalogo publico gratuito</span>
               <h2>Encontre cursos gratuitos</h2>
-              <p>Dados abaixo sao demonstrativos e marcados como homologacao. Os cursos reais serao cadastrados pela curadoria apos validacao da estrutura.</p>
+              <p>Cursos reais selecionados para apresentacao, com curadoria da Raizes e Saberes e acesso ao ambiente oficial da instituicao ofertante.</p>
             </div>
           </header>
 
@@ -2090,7 +2090,7 @@ const modules = {
           </section>
 
           <section class="catalog-provider-strip">
-            <div class="catalog-section-head"><div><span>Instituicoes em destaque</span><h3>Ofertantes demonstrativos</h3></div></div>
+            <div class="catalog-section-head"><div><span>Instituicoes em destaque</span><h3>Ofertantes publicos reconhecidos</h3></div></div>
             <div data-featured-providers></div>
           </section>
 
@@ -2114,7 +2114,7 @@ const modules = {
             </aside>
             <div class="catalog-results">
               <div class="active-filter-row" data-active-course-filters></div>
-              <div class="catalog-result-head"><strong data-course-result-count></strong><span data-course-demo-note>Todos os itens sao demonstrativos.</span></div>
+              <div class="catalog-result-head"><strong data-course-result-count></strong><span data-course-demo-note>Cursos reais selecionados para apresentacao.</span></div>
               <div class="catalog-loading" data-course-loading aria-hidden="true">
                 <span></span><span></span><span></span>
               </div>

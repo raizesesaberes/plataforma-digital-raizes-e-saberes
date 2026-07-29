@@ -133,234 +133,232 @@ const universityTrails = [
 let activeUniversityFilter = "all";
 
 const demoCourseProviders = [
-  { id: "prov-demo-instituto", name: "Instituto Demonstrativo de Formacao", type: "Organizacao demonstrativa", highlighted: true },
-  { id: "prov-demo-universidade", name: "Universidade Parceira Demonstrativa", type: "Ensino superior demonstrativo", highlighted: true },
-  { id: "prov-demo-escola", name: "Escola Aberta Demonstrativa", type: "Projeto publico demonstrativo", highlighted: false },
-  { id: "prov-demo-lab", name: "Laboratorio Educacional Demonstrativo", type: "Pesquisa e inovacao demonstrativa", highlighted: true },
+  { id: "prov-evg", name: "EV.G - Escola Virtual.Gov", type: "Plataforma publica federal", highlighted: true },
+  { id: "prov-ufrgs-lumina", name: "Lumina/UFRGS", type: "Universidade federal publica", highlighted: true },
+  { id: "prov-ifsul-mundi", name: "Mundi/IFSul", type: "Instituto federal publico", highlighted: true },
+  { id: "prov-uema-eskada", name: "ESKADA/UEMA", type: "Universidade estadual publica", highlighted: true },
 ];
 
 const demoCuratedCourses = [
   {
-    id: "demo-avaliacao-formativa",
-    title: "Avaliacao Formativa na Pratica",
-    slug: "avaliacao-formativa-na-pratica",
-    providerId: "prov-demo-instituto",
+    id: "real-docencia-plural",
+    title: "Docencia Plural - Formacao em Interculturalidade e Bilinguismo",
+    slug: "docencia-plural-interculturalidade-bilinguismo",
+    providerId: "prov-evg",
     area: "Educacao",
-    theme: "Avaliacao",
-    category: "Praticas pedagogicas",
-    workloadHours: 20,
-    modality: "Online",
-    level: "Introdutorio",
-    audience: "Professores e coordenadores",
-    certificateAvailable: true,
-    selfPaced: true,
-    enrollmentStatus: "Inscricoes abertas",
-    enrollmentDeadline: null,
-    isFree: true,
-    language: "pt-BR",
-    rating: 4.8,
-    reviewsCount: 124,
-    accessCount: 1830,
-    addedAt: "2026-07-20",
-    lastVerifiedAt: "2026-07-26",
-    verificationStatus: "verificado",
-    status: "publicado",
-    featured: true,
-    imageUrl: "assets/universidade/video-planejamento.webp",
-    courseUrl: "https://example.org/curso-demonstrativo-avaliacao-formativa",
-    summary: "Curso demonstrativo para validar a apresentacao de criterios, carga horaria, certificado e acesso externo.",
-    fullDescription: "Item de homologacao. Representa como a curadoria da Raizes e Saberes exibira cursos gratuitos mantidos por instituicoes externas, sem hospedar aulas ou materiais de terceiros.",
-    objectives: ["Planejar instrumentos simples de acompanhamento", "Organizar devolutivas orientadas por evidencias", "Comparar cursos por criterios objetivos"],
-    syllabus: ["Diagnostico inicial", "Rubricas", "Devolutivas", "Acompanhamento pedagogico"],
-    requirements: "Acesso a internet e atuacao ou interesse na area educacional.",
-    curatorNotes: "Demonstracao: substituir por dados reais apos validacao da curadoria.",
-    tags: ["avaliacao", "professores", "certificado"],
-    comments: ["Ficha clara e objetiva para comparar cursos.", "Gostei de ver a data de verificacao."],
-  },
-  {
-    id: "demo-educacao-inclusiva",
-    title: "Educacao Inclusiva e Acolhimento",
-    slug: "educacao-inclusiva-e-acolhimento",
-    providerId: "prov-demo-universidade",
-    area: "Educacao",
-    theme: "Inclusao",
+    theme: "Educacao Inclusiva",
     category: "Inclusao e diversidade",
-    workloadHours: 30,
+    knowledgeCenter: "Educacao Inclusiva",
+    relatedTrail: "Formacao Docente",
+    workloadHours: 40,
+    workloadLabel: "40h",
     modality: "Online",
     level: "Intermediario",
-    audience: "Professores, gestores e equipes de apoio",
+    audience: "Professores, formadores e gestores educacionais",
     certificateAvailable: true,
-    selfPaced: false,
-    enrollmentStatus: "Inscricoes abertas",
-    enrollmentDeadline: "2026-08-30",
-    isFree: true,
-    language: "pt-BR",
-    rating: 4.9,
-    reviewsCount: 98,
-    accessCount: 1510,
-    addedAt: "2026-07-18",
-    lastVerifiedAt: "2026-07-25",
-    verificationStatus: "verificado",
-    status: "publicado",
-    featured: true,
-    imageUrl: "assets/universidade/curso-educacao-inclusiva.webp",
-    courseUrl: "https://example.org/curso-demonstrativo-educacao-inclusiva",
-    summary: "Modelo de ficha para cursos gratuitos sobre acolhimento, adaptacoes e praticas inclusivas.",
-    fullDescription: "Curso demonstrativo usado para validar a separacao entre informacoes oficiais, classificacao da curadoria e avaliacoes de usuarios.",
-    objectives: ["Mapear barreiras de aprendizagem", "Planejar acolhimento escolar", "Selecionar praticas inclusivas"],
-    syllabus: ["Direitos de aprendizagem", "Adaptacoes razoaveis", "Convivencia", "Acompanhamento"],
-    requirements: "Nao ha requisitos obrigatorios.",
-    curatorNotes: "Prioridade alta para curadoria inicial da area educacional.",
-    tags: ["inclusao", "gestao", "certificado"],
-    comments: ["A separacao de fontes ajuda bastante.", "Boa opcao para equipes escolares."],
-  },
-  {
-    id: "demo-tecnologias-educacionais",
-    title: "Tecnologias Educacionais para Rotinas de Aula",
-    slug: "tecnologias-educacionais-para-rotinas-de-aula",
-    providerId: "prov-demo-lab",
-    area: "Educacao",
-    theme: "Tecnologia",
-    category: "Tecnologias educacionais",
-    workloadHours: 12,
-    modality: "Online",
-    level: "Introdutorio",
-    audience: "Professores",
-    certificateAvailable: false,
+    certificateLabel: "Certificado Enap informado pela EV.G",
     selfPaced: true,
     enrollmentStatus: "Inscricoes abertas",
     enrollmentDeadline: null,
     isFree: true,
     language: "pt-BR",
     rating: 4.6,
-    reviewsCount: 76,
-    accessCount: 1325,
-    addedAt: "2026-07-23",
-    lastVerifiedAt: "2026-07-24",
-    verificationStatus: "verificado",
+    reviewsCount: 48,
+    accessCount: 0,
+    addedAt: "2026-07-29",
+    lastVerifiedAt: "2026-07-29",
+    verificationStatus: "link oficial testado",
     status: "publicado",
-    featured: false,
-    imageUrl: "assets/universidade/video-tecnologias.webp",
-    courseUrl: "https://example.org/curso-demonstrativo-tecnologias",
-    summary: "Ficha demonstrativa para cursos curtos, autoinstrucionais e sem certificado.",
-    fullDescription: "Mostra como a plataforma informa claramente quando um curso externo gratuito nao oferece certificado.",
-    objectives: ["Selecionar ferramentas simples", "Integrar recursos digitais ao planejamento", "Registrar evidencias de aprendizagem"],
-    syllabus: ["Ambientes digitais", "Recursos interativos", "Cuidados de uso", "Rotinas"],
-    requirements: "Conhecimentos basicos de navegacao web.",
-    curatorNotes: "Bom candidato para ranking de cursos autoinstrucionais.",
-    tags: ["tecnologia", "autoinstrucional"],
-    comments: ["Carga horaria facil de encaixar na rotina."],
+    featured: true,
+    imageUrl: "assets/universidade/curso-educacao-inclusiva.webp",
+    courseUrl: "https://www.escolavirtual.gov.br/curso/918",
+    summary: "Curso aberto e gratuito da EV.G sobre docencia em contextos linguisticos e culturais diversos.",
+    fullDescription: "A pagina oficial informa curso aberto, gratuito e com certificado, voltado a professores e equipes educacionais que atuam em contextos plurais.",
+    objectives: ["Compreender contextos linguisticos e culturais diversos", "Apoiar uma docencia plural", "Relacionar interculturalidade e educacao linguistica"],
+    syllabus: ["Fronteiras linguisticas e culturais", "Interculturalidade", "Fenomenos linguisticos", "Gestao de linguas na escola"],
+    requirements: "Curso aberto. A inscricao e realizada no ambiente oficial da EV.G.",
+    curatorRecommendedFor: "Professores e gestores que buscam referencias para diversidade linguistica, cultural e inclusao.",
+    curatorStrengths: ["Instituicao publica reconhecida", "Carga horaria e certificado informados oficialmente", "Tema aderente a Educacao Inclusiva"],
+    curatorEstimatedLevel: "Intermediario",
+    curatorNotes: "Usar como primeiro exemplo da narrativa de curadoria: a Raizes organiza a descoberta e direciona para a instituicao ofertante.",
+    tags: ["educacao inclusiva", "bilinguismo", "formacao docente", "certificado"],
+    comments: [],
   },
   {
-    id: "demo-gestao-pedagogica",
-    title: "Gestao Pedagogica Orientada por Indicadores",
-    slug: "gestao-pedagogica-orientada-por-indicadores",
-    providerId: "prov-demo-escola",
+    id: "real-aprender-valor",
+    title: "Formacao de Professores do Programa Aprender Valor",
+    slug: "formacao-professores-programa-aprender-valor",
+    providerId: "prov-evg",
     area: "Educacao",
-    theme: "Gestao",
-    category: "Gestao escolar",
+    theme: "Educacao Financeira",
+    category: "Educacao financeira",
+    knowledgeCenter: "BNCC",
+    relatedTrail: "Formacao Docente",
     workloadHours: 40,
-    modality: "Hibrido",
-    level: "Avancado",
-    audience: "Gestores e coordenadores pedagogicos",
-    certificateAvailable: true,
-    selfPaced: false,
-    enrollmentStatus: "Inscricoes encerradas",
-    enrollmentDeadline: "2026-07-10",
-    isFree: true,
-    language: "pt-BR",
-    rating: 4.7,
-    reviewsCount: 54,
-    accessCount: 890,
-    addedAt: "2026-07-08",
-    lastVerifiedAt: "2026-07-21",
-    verificationStatus: "aguardando revisao",
-    status: "inscricoes encerradas",
-    featured: false,
-    imageUrl: "assets/universidade/trilha-gestao.webp",
-    courseUrl: "https://example.org/curso-demonstrativo-gestao",
-    summary: "Demonstra cursos gratuitos com inscricoes encerradas, mantendo a ficha para comparacao e historico.",
-    fullDescription: "A ficha permanece acessivel, mas o estado do curso informa que novas inscricoes nao estao abertas.",
-    objectives: ["Ler indicadores escolares", "Priorizar intervencoes", "Acompanhar planos de acao"],
-    syllabus: ["Indicadores", "Reunioes pedagogicas", "Plano de intervencao", "Monitoramento"],
-    requirements: "Atuacao em gestao escolar ou coordenacao.",
-    curatorNotes: "Exemplo de estado: inscricoes encerradas.",
-    tags: ["gestao", "indicadores", "certificado"],
-    comments: ["Importante manter estado de inscricao visivel."],
-  },
-  {
-    id: "demo-socioemocional",
-    title: "Convivencia e Aprendizagem Socioemocional",
-    slug: "convivencia-e-aprendizagem-socioemocional",
-    providerId: "prov-demo-universidade",
-    area: "Educacao",
-    theme: "Socioemocional",
-    category: "Convivencia",
-    workloadHours: 18,
+    workloadLabel: "40h",
     modality: "Online",
     level: "Introdutorio",
-    audience: "Professores e orientadores",
+    audience: "Professores da educacao basica",
     certificateAvailable: true,
+    certificateLabel: "Certificado Enap informado pela EV.G",
     selfPaced: true,
     enrollmentStatus: "Inscricoes abertas",
     enrollmentDeadline: null,
     isFree: true,
     language: "pt-BR",
-    rating: 4.5,
-    reviewsCount: 43,
-    accessCount: 710,
-    addedAt: "2026-07-22",
-    lastVerifiedAt: "2026-07-23",
-    verificationStatus: "verificado",
+    rating: 4.1,
+    reviewsCount: 263,
+    accessCount: 0,
+    addedAt: "2026-07-29",
+    lastVerifiedAt: "2026-07-29",
+    verificationStatus: "link oficial testado",
     status: "publicado",
-    featured: false,
-    imageUrl: "assets/universidade/trilha-socioemocional.webp",
-    courseUrl: "https://example.org/curso-demonstrativo-socioemocional",
-    summary: "Exemplo de curso gratuito com certificado para profissionais da educacao.",
-    fullDescription: "Demonstra como cursos relacionados podem aparecer no detalhe e em rankings tematicos.",
-    objectives: ["Identificar necessidades de convivencia", "Planejar rodas de conversa", "Acompanhar clima escolar"],
-    syllabus: ["Escuta", "Convivencia", "Mediacao", "Rotinas de cuidado"],
-    requirements: "Nao ha requisitos obrigatorios.",
-    curatorNotes: "Relacionar com trilhas futuras da Formacao Raizes.",
-    tags: ["convivencia", "socioemocional", "certificado"],
-    comments: ["Tema essencial para equipes escolares."],
+    featured: true,
+    imageUrl: "assets/universidade/trilha-praticas-pedagogicas.webp",
+    courseUrl: "https://www.escolavirtual.gov.br/curso/1072",
+    summary: "Curso gratuito da EV.G para professores interessados em educacao financeira na escola.",
+    fullDescription: "A pagina oficial apresenta curso aberto, gratuito e com certificado para docentes que desejam implementar o Programa Aprender Valor em sala de aula.",
+    objectives: ["Conhecer o Programa Aprender Valor", "Planejar projetos pedagogicos contextualizados", "Integrar educacao financeira ao curriculo"],
+    syllabus: ["Introducao ao Aprender Valor", "Aprender Valor na sala de aula"],
+    requirements: "Curso aberto. A inscricao e realizada no ambiente oficial da EV.G.",
+    curatorRecommendedFor: "Professores da educacao basica e coordenadores que organizam projetos interdisciplinares.",
+    curatorStrengths: ["Oferta de instituicao publica", "Certificado e carga horaria confirmados", "Boa conexao com BNCC e projetos escolares"],
+    curatorEstimatedLevel: "Introdutorio",
+    curatorNotes: "Bom curso para demonstrar busca por tema, detalhe do curso e redirecionamento externo confiavel.",
+    tags: ["educacao financeira", "bncc", "professores", "certificado"],
+    comments: [],
   },
   {
-    id: "demo-alfabetizacao",
-    title: "Alfabetizacao e Letramento: Fundamentos",
-    slug: "alfabetizacao-e-letramento-fundamentos",
-    providerId: "prov-demo-instituto",
+    id: "real-alimentacao-saudavel-escola",
+    title: "Alimentacao Saudavel na Escola - Edicao 2023",
+    slug: "alimentacao-saudavel-na-escola-ufrgs",
+    providerId: "prov-ufrgs-lumina",
+    area: "Educacao",
+    theme: "Educacao Alimentar",
+    category: "Saude e escola",
+    knowledgeCenter: "Educacao Infantil",
+    relatedTrail: "Gestao Pedagogica",
+    workloadHours: 0,
+    workloadLabel: "Nao informada na ficha aberta",
+    modality: "Online",
+    level: "Introdutorio",
+    audience: "Profissionais da educacao, nutricao e comunidade escolar",
+    certificateAvailable: false,
+    certificateLabel: "Pagina oficial informa que nao oferece certificado",
+    selfPaced: true,
+    enrollmentStatus: "Disponivel no Lumina",
+    enrollmentDeadline: null,
+    isFree: true,
+    language: "pt-BR",
+    rating: 0,
+    reviewsCount: 0,
+    accessCount: 0,
+    addedAt: "2026-07-29",
+    lastVerifiedAt: "2026-07-29",
+    verificationStatus: "link oficial testado",
+    status: "publicado",
+    featured: false,
+    imageUrl: "assets/universidade/material-pdf.webp",
+    courseUrl: "https://lumina.ufrgs.br/course/view.php?id=221",
+    summary: "Curso do Lumina/UFRGS sobre promocao da alimentacao saudavel no ambiente escolar.",
+    fullDescription: "A pagina oficial descreve uma formacao voltada a profissionais e interessados na promocao da alimentacao saudavel na escola, sem certificado informado para esta edicao.",
+    objectives: ["Sensibilizar para a educacao alimentar e nutricional", "Relacionar alimentacao escolar e aprendizagem", "Apoiar acoes de promocao da saude na escola"],
+    syllabus: ["Promocao da alimentacao saudavel", "Educacao alimentar e nutricional", "Avaliacao"],
+    requirements: "Nao ha pre-requisitos informados na pagina oficial.",
+    curatorRecommendedFor: "Gestores, coordenadores e professores que trabalham projetos de saude, alimentacao e rotina escolar.",
+    curatorStrengths: ["Instituicao federal reconhecida", "Tema com aplicacao direta na escola", "Certificado sinalizado com transparencia"],
+    curatorEstimatedLevel: "Introdutorio",
+    curatorNotes: "Manter a etiqueta de certificado ausente para demonstrar transparencia da curadoria.",
+    tags: ["alimentacao escolar", "saude", "educacao infantil", "sem certificado"],
+    comments: [],
+  },
+  {
+    id: "real-inclusao-acessibilidade-ifsul",
+    title: "Inclusao e Acessibilidade na Educacao",
+    slug: "inclusao-acessibilidade-educacao-ifsul",
+    providerId: "prov-ifsul-mundi",
+    area: "Educacao",
+    theme: "Educacao Inclusiva",
+    category: "Inclusao e diversidade",
+    knowledgeCenter: "Educacao Inclusiva",
+    relatedTrail: "Formacao Docente",
+    workloadHours: 30,
+    workloadLabel: "30h",
+    modality: "Online",
+    level: "Basico",
+    audience: "Educadores e profissionais interessados em inclusao",
+    certificateAvailable: true,
+    certificateLabel: "Plataforma Mundi informa cursos livres com certificado",
+    selfPaced: true,
+    enrollmentStatus: "Disponivel na plataforma Mundi",
+    enrollmentDeadline: null,
+    isFree: true,
+    language: "pt-BR",
+    rating: 0,
+    reviewsCount: 0,
+    accessCount: 0,
+    addedAt: "2026-07-29",
+    lastVerifiedAt: "2026-07-29",
+    verificationStatus: "link oficial testado",
+    status: "publicado",
+    featured: true,
+    imageUrl: "assets/universidade/trilha-inclusao-diversidade.webp",
+    courseUrl: "https://mundi.ifsul.edu.br/portal/inclusao-e-acessibilidade-na-educacao.php",
+    summary: "Curso MOOC do IFSul sobre necessidades educacionais, acessibilidade e adaptacoes pedagogicas.",
+    fullDescription: "A pagina oficial do Mundi/IFSul informa curso de 30h, nivel basico e pre-requisito nenhum, com foco em inclusao e acessibilidade na educacao.",
+    objectives: ["Diferenciar necessidades educacionais", "Reconhecer aspectos de acessibilidade", "Adaptar atividades pedagogicas ao contexto"],
+    syllabus: ["Necessidades especiais", "Inclusao e acessibilidade", "Atendimento educacional especializado"],
+    requirements: "Nenhum pre-requisito informado na pagina oficial.",
+    curatorRecommendedFor: "Professores e equipes de apoio que precisam de uma introducao pratica a inclusao.",
+    curatorStrengths: ["Instituto federal reconhecido", "Carga horaria clara", "Tema prioritario para escolas"],
+    curatorEstimatedLevel: "Basico",
+    curatorNotes: "Excelente curso para demonstrar diversidade de instituicoes publicas e Centro de Conhecimento de Educacao Inclusiva.",
+    tags: ["educacao inclusiva", "acessibilidade", "ifsul", "certificado"],
+    comments: [],
+  },
+  {
+    id: "real-alfabetizacao-letramento-tecnologias",
+    title: "Alfabetizacao, Letramento e Tecnologias Digitais",
+    slug: "alfabetizacao-letramento-tecnologias-digitais-uema",
+    providerId: "prov-uema-eskada",
     area: "Educacao",
     theme: "Alfabetizacao",
     category: "Praticas pedagogicas",
-    workloadHours: 25,
+    knowledgeCenter: "Alfabetizacao",
+    relatedTrail: "Tecnologias Educacionais",
+    workloadHours: 0,
+    workloadLabel: "Nao informada na ficha aberta",
     modality: "Online",
     level: "Introdutorio",
-    audience: "Professores da educacao infantil e anos iniciais",
+    audience: "Professores e interessados em alfabetizacao",
     certificateAvailable: true,
+    certificateLabel: "Curso gratuito na plataforma ESKADA; certificado requer verificacao da plataforma",
     selfPaced: true,
-    enrollmentStatus: "Inscricoes abertas",
+    enrollmentStatus: "Disponivel na ESKADA",
     enrollmentDeadline: null,
     isFree: true,
     language: "pt-BR",
-    rating: 4.4,
-    reviewsCount: 67,
-    accessCount: 980,
-    addedAt: "2026-07-12",
-    lastVerifiedAt: "2026-07-19",
-    verificationStatus: "verificado",
+    rating: 0,
+    reviewsCount: 0,
+    accessCount: 0,
+    addedAt: "2026-07-29",
+    lastVerifiedAt: "2026-07-29",
+    verificationStatus: "link oficial testado",
     status: "publicado",
-    featured: false,
+    featured: true,
     imageUrl: "assets/biblioteca/RAIZES_GUIA_ALFABETIZADOR_INFANTIL5_BIBLIOTECA.webp",
-    courseUrl: "https://example.org/curso-demonstrativo-alfabetizacao",
-    summary: "Curso demonstrativo para validar expansao por temas e publico recomendado.",
-    fullDescription: "Mostra como o catalogo pode receber cursos de areas educacionais especificas sem misturar com conteudos proprios da plataforma.",
-    objectives: ["Revisar fundamentos", "Selecionar estrategias", "Organizar acompanhamento"],
-    syllabus: ["Consciencia fonologica", "Leitura", "Escrita", "Intervencoes"],
-    requirements: "Atuacao ou interesse em alfabetizacao.",
-    curatorNotes: "Exemplo de tema prioritario para busca.",
-    tags: ["alfabetizacao", "professores", "certificado"],
-    comments: ["Bom para validar filtros por publico."],
+    courseUrl: "https://eskadauema.com/course/view.php?id=94",
+    summary: "Curso gratuito da ESKADA/UEMA que conecta alfabetizacao, letramento e tecnologias digitais.",
+    fullDescription: "A pagina oficial da ESKADA apresenta o curso como gratuito e direciona o usuario para o ambiente oficial da Universidade Estadual do Maranhao.",
+    objectives: ["Relacionar alfabetizacao e letramento", "Explorar tecnologias digitais no ensino", "Apoiar praticas pedagogicas de professores"],
+    syllabus: ["Alfabetizacao", "Letramento", "Tecnologias digitais aplicadas ao ensino"],
+    requirements: "Acesso ao ambiente oficial da ESKADA/UEMA.",
+    curatorRecommendedFor: "Professores dos anos iniciais e equipes que buscam integrar tecnologia ao processo de alfabetizacao.",
+    curatorStrengths: ["Universidade estadual publica", "Tema central para a Universidade", "Boa ponte entre alfabetizacao e tecnologia educacional"],
+    curatorEstimatedLevel: "Introdutorio",
+    curatorNotes: "Manter em destaque para demonstrar diversidade institucional e percurso por Centro de Conhecimento.",
+    tags: ["alfabetizacao", "letramento", "tecnologia", "uema"],
+    comments: [],
   },
 ];
 
@@ -381,7 +379,8 @@ const courseFilterConfig = [
 ];
 
 let activeCourseFilters = {};
-let visibleCourseLimit = 4;
+const initialCourseLimit = 5;
+let visibleCourseLimit = initialCourseLimit;
 let areAdvancedCourseFiltersVisible = false;
 
 const demoKnowledgeResourceTypes = [
@@ -416,18 +415,18 @@ const demoKnowledgeCenters = [
     color: "#07543d",
     icon: "IN",
     featured: true,
-    status: "demonstracao",
+    status: "com cursos reais",
     createdAt: "2026-07-27",
-    updatedAt: "2026-07-27",
-    relatedCourseIds: ["demo-educacao-inclusiva", "demo-socioemocional"],
+    updatedAt: "2026-07-29",
+    relatedCourseIds: ["real-docencia-plural", "real-inclusao-acessibilidade-ifsul"],
     relatedCategories: ["Inclusao", "Convivencia", "Gestao escolar"],
   },
   {
     id: "kc-bncc",
     title: "BNCC",
     slug: "bncc",
-    shortDescription: "Organizacao futura de guias, materiais e trilhas sobre fundamentos curriculares.",
-    fullDescription: "Centro demonstrativo sem conteudos reais, criado para validar a arquitetura de temas estruturantes da Universidade.",
+    shortDescription: "Cursos e referencias para curriculo, projetos escolares e formacao docente.",
+    fullDescription: "Centro preparado para organizar cursos reais e materiais sobre fundamentos curriculares, projetos escolares e praticas alinhadas a escola.",
     imageUrl: "assets/universidade/material-pdf.webp",
     category: "Curriculo",
     keywords: ["bncc", "curriculo", "planejamento", "competencias"],
@@ -436,18 +435,18 @@ const demoKnowledgeCenters = [
     color: "#0d6b4b",
     icon: "BN",
     featured: true,
-    status: "demonstracao",
+    status: "com cursos reais",
     createdAt: "2026-07-27",
-    updatedAt: "2026-07-27",
-    relatedCourseIds: ["demo-avaliacao-formativa", "demo-alfabetizacao"],
+    updatedAt: "2026-07-29",
+    relatedCourseIds: ["real-aprender-valor"],
     relatedCategories: ["Curriculo", "Planejamento", "Avaliacao"],
   },
   {
     id: "kc-alfabetizacao",
     title: "Alfabetizacao",
     slug: "alfabetizacao",
-    shortDescription: "Percursos futuros para fundamentos, praticas e acompanhamento da alfabetizacao.",
-    fullDescription: "Centro demonstrativo preparado para receber cursos, guias e materiais complementares sobre alfabetizacao e letramento.",
+    shortDescription: "Percursos para fundamentos, praticas e tecnologias ligadas a alfabetizacao.",
+    fullDescription: "Centro preparado para organizar cursos, guias e materiais complementares sobre alfabetizacao, letramento e tecnologias digitais.",
     imageUrl: "assets/biblioteca/RAIZES_GUIA_ALFABETIZADOR_INFANTIL5_BIBLIOTECA.webp",
     category: "Praticas pedagogicas",
     keywords: ["alfabetizacao", "letramento", "leitura", "escrita"],
@@ -456,10 +455,10 @@ const demoKnowledgeCenters = [
     color: "#3f6f34",
     icon: "AL",
     featured: true,
-    status: "demonstracao",
+    status: "com cursos reais",
     createdAt: "2026-07-27",
-    updatedAt: "2026-07-27",
-    relatedCourseIds: ["demo-alfabetizacao", "demo-avaliacao-formativa"],
+    updatedAt: "2026-07-29",
+    relatedCourseIds: ["real-alfabetizacao-letramento-tecnologias"],
     relatedCategories: ["Leitura", "Escrita", "Avaliacao"],
   },
   {
@@ -476,18 +475,18 @@ const demoKnowledgeCenters = [
     color: "#1f6f73",
     icon: "TE",
     featured: false,
-    status: "demonstracao",
+    status: "com cursos reais",
     createdAt: "2026-07-27",
-    updatedAt: "2026-07-27",
-    relatedCourseIds: ["demo-tecnologias-educacionais"],
+    updatedAt: "2026-07-29",
+    relatedCourseIds: ["real-alfabetizacao-letramento-tecnologias"],
     relatedCategories: ["Ferramentas", "Videos", "Cursos"],
   },
   {
     id: "kc-gestao-escolar",
     title: "Gestao Escolar",
     slug: "gestao-escolar",
-    shortDescription: "Temas futuros para indicadores, planejamento, lideranca e acompanhamento pedagogico.",
-    fullDescription: "Centro demonstrativo preparado para organizar recursos por perfil de gestor, coordenador e equipe tecnica.",
+    shortDescription: "Temas para planejamento, rotina escolar, projetos e acompanhamento pedagogico.",
+    fullDescription: "Centro preparado para organizar recursos por perfil de gestor, coordenador e equipe tecnica.",
     imageUrl: "assets/universidade/trilha-gestao.webp",
     category: "Gestao",
     keywords: ["gestao escolar", "indicadores", "lideranca", "planejamento"],
@@ -496,10 +495,10 @@ const demoKnowledgeCenters = [
     color: "#745d21",
     icon: "GE",
     featured: false,
-    status: "demonstracao",
+    status: "com curso real",
     createdAt: "2026-07-27",
-    updatedAt: "2026-07-27",
-    relatedCourseIds: ["demo-gestao-pedagogica", "demo-avaliacao-formativa"],
+    updatedAt: "2026-07-29",
+    relatedCourseIds: ["real-alimentacao-saudavel-escola", "real-aprender-valor"],
     relatedCategories: ["Indicadores", "Avaliacao", "Lideranca"],
   },
   {
@@ -516,10 +515,10 @@ const demoKnowledgeCenters = [
     color: "#7a812e",
     icon: "AV",
     featured: false,
-    status: "demonstracao",
+    status: "preparado",
     createdAt: "2026-07-27",
-    updatedAt: "2026-07-27",
-    relatedCourseIds: ["demo-avaliacao-formativa", "demo-gestao-pedagogica"],
+    updatedAt: "2026-07-29",
+    relatedCourseIds: ["real-aprender-valor"],
     relatedCategories: ["Rubricas", "Diagnostico", "Devolutivas"],
   },
 ];
@@ -776,10 +775,10 @@ if (videoModal) {
 }
 
 const getProviderName = (providerId) =>
-  demoCourseProviders.find((provider) => provider.id === providerId)?.name || "Instituicao demonstrativa";
+  demoCourseProviders.find((provider) => provider.id === providerId)?.name || "Instituicao ofertante";
 
 const getProviderType = (providerId) =>
-  demoCourseProviders.find((provider) => provider.id === providerId)?.type || "Provedor demonstrativo";
+  demoCourseProviders.find((provider) => provider.id === providerId)?.type || "Instituicao ofertante";
 
 const isDemoAuthenticated = () => localStorage.getItem(platformAuth.key) === "true";
 
@@ -802,6 +801,11 @@ const compactDate = (value) => {
   return `${day}/${month}/${year}`;
 };
 
+const getCourseWorkloadLabel = (course) => course.workloadLabel || (course.workloadHours ? `${course.workloadHours}h` : "Nao informada");
+
+const getCourseRatingLabel = (course) =>
+  course.reviewsCount > 0 ? `${renderStars(course.rating)}<b>${course.rating.toFixed(1)}</b>` : "<span>Sem avaliacoes na plataforma</span>";
+
 const getCourseCuration = (course) => ({
   recommendedFor: course.curatorRecommendedFor || course.audience,
   strengths: course.curatorStrengths || [
@@ -810,11 +814,14 @@ const getCourseCuration = (course) => ({
     course.selfPaced ? "Pode ser cursado no ritmo do profissional." : "Possui acompanhamento por turma ou prazo.",
   ],
   estimatedLevel: course.curatorEstimatedLevel || course.level,
-  observations: course.curatorNotes || "Informacoes demonstrativas para homologacao visual.",
+  observations: course.curatorNotes || "Informacoes organizadas pela curadoria Raizes e Saberes.",
   updatedAt: course.lastVerifiedAt,
 });
 
 const getRatingDistribution = (course) => {
+  if (!course.reviewsCount) {
+    return [0, 0, 0, 0, 0];
+  }
   const five = Math.max(1, Math.round(course.reviewsCount * Math.min(course.rating / 5, 0.9)));
   const four = Math.max(1, Math.round(course.reviewsCount * 0.16));
   const three = Math.max(0, Math.round(course.reviewsCount * 0.05));
@@ -877,7 +884,7 @@ const matchesCourseFilter = (course, key, value) => {
   }
   if (key === "workload") {
     return (
-      (value === "short" && course.workloadHours <= 15) ||
+      (value === "short" && course.workloadHours > 0 && course.workloadHours <= 15) ||
       (value === "medium" && course.workloadHours > 15 && course.workloadHours <= 30) ||
       (value === "long" && course.workloadHours >= 31)
     );
@@ -930,8 +937,8 @@ const getFilteredDemoCourses = () => {
     if (sortMode === "recent") {
       return secondCourse.addedAt.localeCompare(firstCourse.addedAt);
     }
-    if (sortMode === "hours") {
-      return firstCourse.workloadHours - secondCourse.workloadHours;
+  if (sortMode === "hours") {
+      return (firstCourse.workloadHours || 999) - (secondCourse.workloadHours || 999);
     }
     return Number(secondCourse.featured) - Number(firstCourse.featured) || secondCourse.rating - firstCourse.rating;
   });
@@ -940,7 +947,7 @@ const getFilteredDemoCourses = () => {
 const renderCourseCard = (course) => `
   <article class="public-course-card" data-course-id="${course.id}">
     <figure>
-      <img src="${course.imageUrl}" alt="Capa demonstrativa do curso ${course.title}" loading="lazy" />
+      <img src="${course.imageUrl}" alt="Capa institucional do curso ${course.title}" loading="lazy" />
       <span>Gratuito</span>
     </figure>
     <div class="course-card-body">
@@ -952,15 +959,15 @@ const renderCourseCard = (course) => `
       <strong class="course-provider-name">${getProviderName(course.providerId)}</strong>
       <p>${course.summary}</p>
       <dl>
-        <div><dt>Carga</dt><dd>${course.workloadHours}h</dd></div>
+        <div><dt>Carga</dt><dd>${getCourseWorkloadLabel(course)}</dd></div>
         <div><dt>Modalidade</dt><dd>${course.modality}</dd></div>
-        <div><dt>Certificado</dt><dd>${course.certificateAvailable ? "Disponivel" : "Nao informado"}</dd></div>
+        <div><dt>Certificado</dt><dd>${course.certificateAvailable ? "Informado" : "Nao oferece"}</dd></div>
         <div><dt>Inscricao</dt><dd>${course.enrollmentStatus}</dd></div>
       </dl>
       <div class="course-card-metrics">
-        <span>${renderStars(course.rating)}<b>${course.rating.toFixed(1)}</b></span>
-        <span>${course.reviewsCount} avaliacoes</span>
-        <span>${course.accessCount.toLocaleString("pt-BR")} acessos</span>
+        <span>${getCourseRatingLabel(course)}</span>
+        <span>${course.reviewsCount ? `${course.reviewsCount} avaliacoes oficiais` : "Sem avaliacoes locais"}</span>
+        <span>${course.accessCount.toLocaleString("pt-BR")} acessos pela plataforma</span>
       </div>
       <button type="button" data-open-course-detail="${course.id}">Ver detalhes</button>
     </div>
@@ -968,19 +975,19 @@ const renderCourseCard = (course) => `
 `;
 
 const renderCompactCourseList = (courses) =>
-  courses.map((course) => `<button type="button" data-open-course-detail="${course.id}"><strong>${course.title}</strong><span>${getProviderName(course.providerId)} - ${course.workloadHours}h - ${course.rating.toFixed(1)}</span></button>`).join("");
+  courses.map((course) => `<button type="button" data-open-course-detail="${course.id}"><strong>${course.title}</strong><span>${getProviderName(course.providerId)} - ${getCourseWorkloadLabel(course)} - ${course.reviewsCount ? course.rating.toFixed(1) : "sem avaliacao local"}</span></button>`).join("");
 
 const renderMiniCourseCards = (courses) =>
   courses
     .map(
       (course) => `
         <article class="mini-course-card">
-          <img src="${course.imageUrl}" alt="Capa demonstrativa do curso ${course.title}" loading="lazy" />
+          <img src="${course.imageUrl}" alt="Capa institucional do curso ${course.title}" loading="lazy" />
           <div>
             <span>Gratuito</span>
             <h4>${course.title}</h4>
             <p>${getProviderName(course.providerId)}</p>
-            <div>${renderStars(course.rating)}<strong>${course.rating.toFixed(1)}</strong></div>
+            <div>${course.reviewsCount ? `${renderStars(course.rating)}<strong>${course.rating.toFixed(1)}</strong>` : "<strong>Sem avaliacao local</strong>"}</div>
             <button type="button" data-open-course-detail="${course.id}">Ver detalhes</button>
           </div>
         </article>
@@ -1029,7 +1036,7 @@ const renderKnowledgeCenterCards = () => {
     .map(
       (center) => `
         <article class="knowledge-center-card" style="--center-color:${center.color}">
-          <img src="${center.imageUrl}" alt="Imagem demonstrativa do centro ${center.title}" loading="lazy" />
+          <img src="${center.imageUrl}" alt="Imagem do centro ${center.title}" loading="lazy" />
           <div>
             <span>${center.icon}</span>
             <h3>${center.title}</h3>
@@ -1047,7 +1054,7 @@ const renderKnowledgeCenterCards = () => {
 const getKnowledgeJourney = (center) => [
   ["Conceito", "Entenda o tema", "25 min", "preparado"],
   ["Contexto", "Conheca referencias e criterios", "35 min", "preparado"],
-  ["Curso", getKnowledgeCenterCourses(center)[0]?.title || "Curso introdutorio demonstrativo", `${getKnowledgeCenterCourses(center)[0]?.workloadHours || 2}h`, "disponivel"],
+  ["Curso", getKnowledgeCenterCourses(center)[0]?.title || "Curso introdutorio", getKnowledgeCenterCourses(center)[0] ? getCourseWorkloadLabel(getKnowledgeCenterCourses(center)[0]) : "disponivel", "disponivel"],
   ["Materiais", "Baixe materiais de apoio", "40 min", "futuro"],
   ["Video", "Assista exemplos comentados", "15 min", "futuro"],
   ["Aprofundamento", "Avance para aplicacoes praticas", "1h", "preparado"],
@@ -1062,12 +1069,12 @@ const getKnowledgeLearningPaths = (center) => {
   return [
     {
       name: "Professor da Educacao Infantil",
-      description: "Percurso demonstrativo para compreender o tema e aplicar em planejamento de aula.",
+      description: "Percurso para compreender o tema e aplicar em planejamento de aula.",
       progress: 35,
       steps: [
         ["Resumo", "Leitura guiada", "20 min", "preparado"],
         ["Livro", "Referencia futura", "2h de leitura", "futuro"],
-        ["Curso", primaryCourse?.title || "Curso introdutorio", `${primaryCourse?.workloadHours || 2}h`, "disponivel"],
+        ["Curso", primaryCourse?.title || "Curso introdutorio", primaryCourse ? getCourseWorkloadLabel(primaryCourse) : "disponivel", "disponivel"],
         ["Video", "Exemplo comentado", "15 min", "futuro"],
         ["Guia", "Roteiro pratico", "40 min", "futuro"],
         ["Conclusao", "Autoavaliacao preparada", "10 min", "preparado"],
@@ -1075,11 +1082,11 @@ const getKnowledgeLearningPaths = (center) => {
     },
     {
       name: "Coordenador Pedagogico",
-      description: "Percurso demonstrativo para orientar equipes e organizar acompanhamento.",
+      description: "Percurso para orientar equipes e organizar acompanhamento.",
       progress: 20,
       steps: [
         ["Resumo", "Panorama do tema", "25 min", "preparado"],
-        ["Curso", secondaryCourse?.title || "Curso de aprofundamento", `${secondaryCourse?.workloadHours || 3}h`, "disponivel"],
+        ["Curso", secondaryCourse?.title || "Curso de aprofundamento", secondaryCourse ? getCourseWorkloadLabel(secondaryCourse) : "disponivel", "disponivel"],
         ["Legislacao", "Estrutura futura", "30 min", "futuro"],
         ["Material", "Instrumento de apoio", "45 min", "futuro"],
         ["Evento", "Encontro futuro", "1h", "futuro"],
@@ -1087,7 +1094,7 @@ const getKnowledgeLearningPaths = (center) => {
     },
     {
       name: "Gestor Escolar",
-      description: "Percurso demonstrativo para decisao institucional, indicadores e comunicacao.",
+      description: "Percurso para decisao institucional, indicadores e comunicacao.",
       progress: 15,
       steps: [
         ["Diagnostico", "Leitura inicial", "20 min", "preparado"],
@@ -1231,14 +1238,14 @@ const renderPreparedResourceBlocks = (center) => {
   const demoBlocks = {
     courses,
     paths: [
-      ["Professor", "Percurso demonstrativo para estudo individual e aplicacao em sala.", courses.length],
-      ["Coordenador", "Percurso demonstrativo para orientar planejamento e acompanhamento.", courses.length],
-      ["Gestor", "Percurso demonstrativo para decisao pedagogica e leitura de indicadores.", courses.length],
-      ["Familia", "Percurso demonstrativo para comunicacao e apoio ao estudante.", 0],
-      ["Administrador Escolar", "Percurso demonstrativo para organizacao institucional.", 0],
+      ["Professor", "Percurso para estudo individual e aplicacao em sala.", courses.length],
+      ["Coordenador", "Percurso para orientar planejamento e acompanhamento.", courses.length],
+      ["Gestor", "Percurso para decisao pedagogica e leitura de indicadores.", courses.length],
+      ["Familia", "Percurso futuro para comunicacao e apoio ao estudante.", 0],
+      ["Administrador Escolar", "Percurso futuro para organizacao institucional.", 0],
     ],
     faq: [
-      ["Este centro possui conteudo real?", "Nao. Os dados atuais sao demonstrativos e servem para homologar a estrutura."],
+      ["Este centro possui conteudo real?", "Sim. Os cursos exibidos nesta apresentacao sao ofertas reais de instituicoes externas reconhecidas."],
       ["Os cursos sao da Raizes e Saberes?", "Nao. Cursos externos pertencem as instituicoes ofertantes; a Universidade organiza a descoberta."],
       ["A curadoria substitui a instituicao?", "Nao. A curadoria classifica e contextualiza informacoes para facilitar a busca."],
     ],
@@ -1252,7 +1259,7 @@ const renderPreparedResourceBlocks = (center) => {
       courses.length
         ? `
           <section class="knowledge-resource-block">
-            <header><span>Cursos</span><strong>${courses.length} cursos demonstrativos</strong></header>
+            <header><span>Cursos</span><strong>${courses.length} curso${courses.length === 1 ? "" : "s"} real${courses.length === 1 ? "" : "is"} selecionado${courses.length === 1 ? "" : "s"}</strong></header>
             <div class="knowledge-course-grid">${courses.map(renderCourseCard).join("")}</div>
           </section>
         `
@@ -1275,7 +1282,7 @@ const renderPreparedResourceBlocks = (center) => {
       </div>
     </section>
     <section class="knowledge-resource-block">
-      <header><span>Perguntas Frequentes</span><strong>FAQ demonstrativo</strong></header>
+      <header><span>Perguntas Frequentes</span><strong>FAQ da curadoria</strong></header>
       <div class="knowledge-faq-list">
         ${demoBlocks.faq
           .map(
@@ -1290,7 +1297,7 @@ const renderPreparedResourceBlocks = (center) => {
       </div>
     </section>
     <section class="knowledge-resource-block is-prepared">
-      <header><span>Estruturas preparadas</span><strong>Sem conteudo real nesta fase</strong></header>
+      <header><span>Estruturas preparadas</span><strong>Conteudos futuros</strong></header>
       <p>Blocos reservados para: ${preparedLabels.join(", ")}. Eles serao exibidos individualmente quando houver conteudo curado.</p>
     </section>
   `;
@@ -1307,7 +1314,7 @@ const renderKnowledgeCenterDetail = (centerId) => {
   detail.hidden = false;
   detail.innerHTML = `
     <header class="knowledge-center-hero" style="--center-color:${center.color}">
-      <img src="${center.imageUrl}" alt="Imagem demonstrativa do centro ${center.title}" />
+      <img src="${center.imageUrl}" alt="Imagem do centro ${center.title}" />
       <div>
         <span>Centro de Conhecimento</span>
         <h2>${center.title}</h2>
@@ -1323,8 +1330,8 @@ const renderKnowledgeCenterDetail = (centerId) => {
     </header>
     <section class="knowledge-curation-summary">
       <span>Resumo da Curadoria</span>
-      <h3>Visao demonstrativa do tema</h3>
-      <p>Este resumo sera produzido futuramente pela equipe Raizes e Saberes. Nesta homologacao, o texto demonstra como o centro apresentara contexto, criterios de organizacao e caminhos de estudo para o tema ${center.title}.</p>
+      <h3>Visao da curadoria</h3>
+      <p>Este centro organiza cursos gratuitos de instituicoes reconhecidas e ajuda o professor a encontrar uma formacao adequada antes de seguir para o ambiente oficial do curso.</p>
     </section>
     ${renderGuidedExperience(center)}
     <div class="knowledge-resource-list" id="conteudo-${center.slug}">
@@ -1391,17 +1398,17 @@ const renderCourseDetail = (courseId) => {
   detail.hidden = false;
   detail.innerHTML = `
     <header class="course-detail-hero">
-      <img src="${course.imageUrl}" alt="Capa demonstrativa do curso ${course.title}" />
+      <img src="${course.imageUrl}" alt="Capa institucional do curso ${course.title}" />
       <div>
-        <span>Ficha demonstrativa - ${course.verificationStatus}</span>
+        <span>Ficha de curadoria - ${course.verificationStatus}</span>
         <h2>${course.title}</h2>
         <p>${getProviderName(course.providerId)}</p>
         <div class="course-detail-badges">
           <strong>Gratuito</strong>
-          <span>${renderStars(course.rating)} ${course.rating.toFixed(1)} (${course.reviewsCount} avaliacoes)</span>
-          <span>${course.workloadHours}h</span>
+          <span>${course.reviewsCount ? `${renderStars(course.rating)} ${course.rating.toFixed(1)} (${course.reviewsCount} avaliacoes oficiais)` : "Sem avaliacao local"}</span>
+          <span>${getCourseWorkloadLabel(course)}</span>
           <span>${course.modality}</span>
-          <span>${course.certificateAvailable ? "Certificado disponivel" : "Sem certificado informado"}</span>
+          <span>${course.certificateLabel || (course.certificateAvailable ? "Certificado informado" : "Sem certificado informado")}</span>
         </div>
         <div class="course-detail-actions">
           <a href="${course.courseUrl}" target="_blank" rel="noopener" data-external-course="${course.id}">Acessar curso na instituicao</a>
@@ -1430,11 +1437,11 @@ const renderCourseDetail = (courseId) => {
         <dl>
           <div><dt>Area</dt><dd>${course.area}</dd></div>
           <div><dt>Tema</dt><dd>${course.theme}</dd></div>
-          <div><dt>Carga horaria</dt><dd>${course.workloadHours}h</dd></div>
+          <div><dt>Carga horaria</dt><dd>${getCourseWorkloadLabel(course)}</dd></div>
           <div><dt>Modalidade</dt><dd>${course.modality}</dd></div>
           <div><dt>Nivel</dt><dd>${course.level}</dd></div>
           <div><dt>Idioma</dt><dd>${course.language}</dd></div>
-          <div><dt>Certificado</dt><dd>${course.certificateAvailable ? "Sim" : "Nao"}</dd></div>
+          <div><dt>Certificado</dt><dd>${course.certificateLabel || (course.certificateAvailable ? "Sim" : "Nao")}</dd></div>
           <div><dt>Gratuidade</dt><dd>${course.isFree ? "Gratuito" : "Nao gratuito"}</dd></div>
           <div><dt>Inscricao</dt><dd>${course.enrollmentStatus}</dd></div>
           <div><dt>Ultima verificacao</dt><dd>${compactDate(course.lastVerifiedAt)}</dd></div>
@@ -1451,11 +1458,11 @@ const renderCourseDetail = (courseId) => {
       </section>
       <section>
         <h3>Comunidade</h3>
-        <div class="detail-rating"><strong>${course.rating.toFixed(1)}</strong><span>${renderStars(course.rating)}</span><small>${course.reviewsCount} avaliacoes</small></div>
+        <div class="detail-rating"><strong>${course.reviewsCount ? course.rating.toFixed(1) : "-"}</strong><span>${course.reviewsCount ? renderStars(course.rating) : "Sem avaliacoes locais"}</span><small>${course.reviewsCount ? `${course.reviewsCount} avaliacoes oficiais` : "A comunidade da plataforma ainda nao avaliou este curso"}</small></div>
         <div class="rating-distribution">
           ${distribution.map((count, index) => `<span><b>${5 - index}</b><i><em style="width:${Math.round((count / maxDistribution) * 100)}%"></em></i><small>${count}</small></span>`).join("")}
         </div>
-        <div class="detail-comments">${course.comments.map((comment) => `<blockquote>${comment}</blockquote>`).join("")}</div>
+        <div class="detail-comments">${course.comments.length ? course.comments.map((comment) => `<blockquote>${comment}</blockquote>`).join("") : "<p>Sem comentarios da comunidade nesta apresentacao.</p>"}</div>
         <div class="course-progress-actions">
           <button type="button" data-auth-course-action="review" data-course-id="${course.id}">Avaliar</button>
           <button type="button" data-auth-course-action="favorite" data-course-id="${course.id}">Favoritar</button>
@@ -1465,7 +1472,7 @@ const renderCourseDetail = (courseId) => {
       </section>
       <section>
         <h3>Cursos relacionados</h3>
-        <div class="related-course-list">${related.length ? renderMiniCourseCards(related) : "<p>Nenhum curso relacionado nesta demonstracao.</p>"}</div>
+        <div class="related-course-list">${related.length ? renderMiniCourseCards(related) : "<p>Nenhum curso relacionado nesta selecao.</p>"}</div>
       </section>
     </div>
   `;
@@ -1519,9 +1526,9 @@ const renderCourseCatalog = () => {
   const kpis = document.querySelector("[data-catalog-kpis]");
   if (kpis) {
     kpis.innerHTML = `
-      <span><strong>${demoCuratedCourses.length}</strong><small>cursos demo</small></span>
+      <span><strong>${demoCuratedCourses.length}</strong><small>cursos reais</small></span>
       <span><strong>${demoCourseProviders.length}</strong><small>instituicoes</small></span>
-      <span><strong>${totalAccess.toLocaleString("pt-BR")}</strong><small>acessos demo</small></span>
+      <span><strong>${totalAccess.toLocaleString("pt-BR")}</strong><small>acessos pela plataforma</small></span>
     `;
   }
 
@@ -1819,13 +1826,13 @@ document.querySelectorAll("[data-university-filter]").forEach((filterButton) => 
 });
 
 document.querySelector("[data-course-search]")?.addEventListener("input", () => {
-  visibleCourseLimit = 4;
+  visibleCourseLimit = initialCourseLimit;
   renderSmartDiscovery();
   renderCourseCatalog();
 });
 
 document.querySelector("[data-course-sort]")?.addEventListener("change", () => {
-  visibleCourseLimit = 4;
+  visibleCourseLimit = initialCourseLimit;
   renderCourseCatalog();
 });
 
@@ -1841,13 +1848,13 @@ document.addEventListener("change", (event) => {
   } else {
     delete activeCourseFilters[key];
   }
-  visibleCourseLimit = 4;
+  visibleCourseLimit = initialCourseLimit;
   renderCourseCatalog();
 });
 
 document.querySelector("[data-clear-course-filters]")?.addEventListener("click", () => {
   activeCourseFilters = {};
-  visibleCourseLimit = 4;
+  visibleCourseLimit = initialCourseLimit;
   document.querySelectorAll("[data-course-filter]").forEach((filter) => {
     filter.value = "";
   });
@@ -1877,7 +1884,7 @@ document.querySelector("[data-close-mobile-filters]")?.addEventListener("click",
 });
 
 document.querySelector("[data-course-load-more]")?.addEventListener("click", () => {
-  visibleCourseLimit += 4;
+  visibleCourseLimit += initialCourseLimit;
   renderCourseCatalog();
 });
 
@@ -1900,7 +1907,7 @@ document.addEventListener("click", (event) => {
     } else {
       delete activeCourseFilters.theme;
     }
-    visibleCourseLimit = 4;
+    visibleCourseLimit = initialCourseLimit;
     renderCourseCatalog();
     return;
   }
@@ -1908,7 +1915,7 @@ document.addEventListener("click", (event) => {
   const removeFilter = event.target.closest?.("[data-remove-course-filter]");
   if (removeFilter) {
     delete activeCourseFilters[removeFilter.dataset.removeCourseFilter];
-    visibleCourseLimit = 4;
+    visibleCourseLimit = initialCourseLimit;
     renderCourseCatalog();
     return;
   }
