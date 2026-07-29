@@ -77,6 +77,13 @@ if (
 const form = document.querySelector("[data-login-form]");
 const errorMessage = document.querySelector("[data-login-error]");
 
+if (requiresSupabaseAuth) {
+  const copy = document.querySelector(".login-copy span");
+  if (copy) {
+    copy.textContent = "Entre com o usuario Supabase Auth do professor para salvar e liberar a pre-visualizacao oficial.";
+  }
+}
+
 const saveSupabaseSession = (authData) => {
   if (!authData?.access_token) {
     return null;
@@ -149,6 +156,18 @@ form?.addEventListener("submit", async (event) => {
     }
   } catch (error) {
     // Mantem o fallback demonstrativo sem expor detalhes sensiveis.
+  }
+
+  if (requiresSupabaseAuth) {
+    if (errorMessage) {
+      errorMessage.hidden = false;
+      errorMessage.textContent = "Entre com um usuario Supabase Auth valido e com perfil question_bank_role para salvar a avaliacao.";
+    }
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = "Acessar Plataforma";
+    }
+    return;
   }
 
   const isDemo = email === demoAccess.email && password === demoAccess.password;
