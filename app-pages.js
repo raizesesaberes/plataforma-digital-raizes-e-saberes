@@ -1694,7 +1694,6 @@ const ecosystemHomeJourney = [
     title: masterBook001.catalogTitle,
     detail: masterBook001.level,
     progress: 65,
-    image: homeOfficialAsset("thumb_livro"),
     href: masterBook001.href,
     action: "Continuar leitura",
     tone: "green",
@@ -1704,7 +1703,6 @@ const ecosystemHomeJourney = [
     title: "BNCC na Pratica",
     detail: "20h",
     progress: 40,
-    image: homeOfficialAsset("thumb_curso"),
     href: "universidade.html#formacao-raizes",
     action: "Continuar curso",
     tone: "purple",
@@ -1714,7 +1712,6 @@ const ecosystemHomeJourney = [
     title: savedAssessmentDemo[1]?.title || "Simulado",
     detail: savedAssessmentDemo[1]?.className || "Lingua Portuguesa",
     progress: 30,
-    image: homeOfficialAsset("thumb_simulado"),
     href: "banco-questoes.html",
     action: "Continuar simulado",
     tone: "blue",
@@ -1724,7 +1721,6 @@ const ecosystemHomeJourney = [
     title: studentDashboardView.dailyMission.title,
     detail: "Jogo educativo",
     progress: Math.max(75, studentDashboardView.gameSummary.percent),
-    image: homeOfficialAsset("thumb_jogo"),
     href: "jogos.html",
     action: "Continuar jogando",
     tone: "orange",
@@ -1784,7 +1780,7 @@ const renderEcosystemHome = () => {
               .map(
                 (item) => `
                   <article class="journey-card is-${item.tone}">
-                    <img src="${item.image}" alt="${item.title}" loading="lazy" onerror="this.hidden=true" />
+                    <div class="journey-art" aria-hidden="true"><strong>${item.label}</strong><span>${item.progress}%</span></div>
                     <div>
                       <span>${item.label}</span>
                       <h3>${item.title}</h3>
@@ -1857,10 +1853,10 @@ const renderEcosystemHome = () => {
           <section class="ecosystem-panel mission-widget">
             <div class="mission-widget-title"><div><h2>Missao do dia</h2><p>Complete suas atividades diarias</p></div></div>
             <div class="mission-static-list">
-              <p><strong>Leitura diaria</strong><span>20 paginas concluídas</span></p>
-              <p><strong>Formacao</strong><span>1 curso em andamento</span></p>
-              <p><strong>Avalia+</strong><span>10 questoes recomendadas</span></p>
-              <p><strong>Jogos</strong><span>Aprendizagem ativa</span></p>
+              <article><strong>Leitura diaria</strong><small>20 paginas concluidas</small></article>
+              <article><strong>Formacao</strong><small>1 curso em andamento</small></article>
+              <article><strong>Avalia+</strong><small>10 questoes recomendadas</small></article>
+              <article><strong>Jogos</strong><small>Aprendizagem ativa</small></article>
             </div>
             <span class="mission-static-action">Central de missoes</span>
           </section>
@@ -3871,6 +3867,9 @@ const initQuestionBank = () => {
     const className = root.querySelectorAll(".qb-builder select")[0]?.value || "";
     const applicationDate = root.querySelector(".qb-builder input[type='date']")?.value || "";
     const versionCode = activeAssessmentId ? String(activeAssessmentId).slice(0, 8) : `LOCAL-${Date.now().toString().slice(-6)}`;
+    if (previewPanel.parentElement !== document.body) {
+      document.body.append(previewPanel);
+    }
     previewPanel.hidden = false;
     previewPanel.innerHTML = `
       <div class="panel-head">
@@ -4070,6 +4069,17 @@ const initQuestionBank = () => {
     renderPreview(kind);
     window.setTimeout(() => window.print(), 80);
   };
+
+  previewPanel?.addEventListener("click", (event) => {
+    const button = event.target.closest("button");
+    if (!button) return;
+    if (button.hasAttribute("data-qb-close-preview")) {
+      previewPanel.hidden = true;
+    }
+    if (button.dataset.qbPrint) {
+      printPreview(button.dataset.qbPrint);
+    }
+  });
 
   const publishCurrentAssessmentDigitally = async () => {
     syncPointInputs();
