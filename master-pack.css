@@ -2497,6 +2497,30 @@ td {
   color: #17235d;
 }
 
+.qb-answer-sheet {
+  width: 100%;
+  margin: 12px 0;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.qb-answer-sheet td {
+  padding: 9px 10px;
+  border: 1px solid var(--rs-line);
+}
+
+.qb-local-preview-warning {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid #f1d17a;
+  border-radius: var(--rs-radius);
+  background: #fff8df;
+  color: #79540a;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
 .qb-preview-sheet article {
   display: grid;
   gap: 8px;

@@ -575,6 +575,36 @@ const bookCatalog = [
       ["Encerramento", 63],
     ],
   },
+  {
+    id: "avalia-portugues-2ano",
+    title: "AVALIA+ PORTUGUÊS",
+    subtitle: "LÍNGUA PORTUGUESA - 2º ANO",
+    catalogTitle: "AVALIA+ PORTUGUÊS",
+    level: "2º Ano",
+    type: "Livro do Aluno",
+    collection: "Avalia+",
+    stage: "Ensino Fundamental - Anos Iniciais",
+    component: "Língua Portuguesa",
+    totalPages: 160,
+    basePath: "assets",
+    cover: "assets/avalia-portugues-2ano/pages/page-001.jpg",
+    catalogCover: "assets/biblioteca/RAIZES_AVALIA_PORTUGUES_2ANO_BIBLIOTECA.jpg",
+    pdf: "assets/avalia-portugues-2ano/pdf/2-anos-portugues-reduzida.pdf",
+    href: "book-viewer.html?book=avalia-portugues-2ano",
+    thumb: (page) => `assets/avalia-portugues-2ano/thumbs/page-${String(page).padStart(3, "0")}.jpg`,
+    page: (page) => `assets/avalia-portugues-2ano/pages/page-${String(page).padStart(3, "0")}.jpg`,
+    summary: [
+      ["Capa", 1],
+      ["Apresentacao", 2],
+      ["Orientacoes de uso", 6],
+      ["Unidades", 12],
+      ["Avaliacoes", 42],
+      ["Simulados", 86],
+      ["Revisao", 118],
+      ["Recomposicao", 134],
+      ["Producao escrita", 150],
+    ],
+  },
 ];
 
 const defaultBook = masterBook001;
@@ -649,6 +679,22 @@ const libraryBooks = [
   { src: "assets/biblioteca/RAIZES_INFANTIL5_VOL2_BIBLIOTECA.webp", year: "Infantil 5", title: "Volume 2", type: "Livro do Aluno", href: "book-viewer.html?book=livro-008", collection: "Educacao Infantil", publishedAt: "2026-07-11" },
   { src: "assets/biblioteca/RAIZES_LAB_SENSORIAL_INFANTIL5_BIBLIOTECA.webp", year: "Infantil 5", title: "Lab Sensorial", type: "Experiencias", href: "book-viewer.html?book=laboratorio-sensorial-005", collection: "Laboratorio Sensorial", publishedAt: "2026-07-11" },
   { src: "assets/biblioteca/RAIZES_GUIA_ALFABETIZADOR_INFANTIL5_BIBLIOTECA.webp", year: "Infantil 5", title: "Guia do Alfabetizador", type: "Professor", href: "professor.html", collection: "Guias do Professor", publishedAt: "2026-07-11" },
+  {
+    src: "assets/biblioteca/RAIZES_AVALIA_PORTUGUES_2ANO_BIBLIOTECA.jpg",
+    year: "2º Ano",
+    title: "AVALIA+ PORTUGUÊS",
+    type: "Livro do Aluno",
+    component: "LÍNGUA PORTUGUESA",
+    pages: "160 PÁGINAS",
+    href: "book-viewer.html?book=avalia-portugues-2ano",
+    downloadHref: "assets/avalia-portugues-2ano/pdf/2-anos-portugues-reduzida.pdf",
+    collection: "Avalia+",
+    stage: "Ensino Fundamental - Anos Iniciais",
+    hierarchy: "Ensino Fundamental > 2º Ano > Língua Portuguesa > Avalia+ > Livro do Aluno",
+    publishedAt: "2026-07-28",
+    actionLabel: "Ler Agora",
+    searchTerms: "Avalia+ Português Portugues Língua Portuguesa Lingua Portuguesa 2º Ano 2o Ano Ensino Fundamental Livro do Aluno Aluno Avalia",
+  },
   { src: "assets/colecoes/colecao-ensino-fundamental-provisorio.webp", year: "Fundamental", title: "Colecao Ensino Fundamental", type: "Acervo em expansao", href: "#acervo-completo", collection: "Ensino Fundamental", publishedAt: "2026-07-11", status: "Em expansao" },
   { src: "assets/colecoes/colecao-avalia-provisorio.webp", year: "Avalia+", title: "Colecao Avalia+", type: "Avaliacoes", href: "avalia.html", collection: "Avalia+", publishedAt: "2026-07-11", status: "Em expansao" },
 ];
@@ -768,7 +814,7 @@ const collectionShowcaseCards = [
   },
   {
     title: "Avalia+",
-    count: `${countMaterialsByCollection("Avalia+")} colecao`,
+    count: `${countMaterialsByCollection("Avalia+")} materiais`,
     description: "Avaliacoes diagnosticas, formativas e somativas para acompanhar resultados e orientar intervencoes.",
     icon: "✓",
     href: "avalia.html",
@@ -821,7 +867,11 @@ const libraryBookCards = sortedLibraryBooks
           <span>${book.year}</span>
           <strong>${book.title}</strong>
           <small>${book.status || book.type}</small>
-          <a href="${book.href}">Abrir</a>
+          ${book.component ? `<small>${book.component}</small>` : ""}
+          ${book.pages ? `<small>${book.pages}</small>` : ""}
+          ${book.searchTerms || book.hierarchy ? `<span hidden>${[book.searchTerms, book.hierarchy, book.stage].filter(Boolean).join(" ")}</span>` : ""}
+          <a href="${book.href}">${book.actionLabel || "Abrir"}</a>
+          ${book.downloadHref ? `<a href="${book.downloadHref}" download>Baixar PDF</a>` : ""}
         </div>
       </article>
     `
@@ -2478,6 +2528,7 @@ const modules = {
                 <label class="span-2"><span>Orientacoes</span><textarea>Leia com atencao e marque apenas uma alternativa por questao.</textarea></label>
               </div>
               <div class="qb-builder-actions">
+                <button type="button" data-qb-preview-local>Previa rapida - nao salva</button>
                 <button type="button" data-qb-preview="student">Pre-visualizar avaliacao</button>
                 <button type="button" data-qb-preview="teacher">Visualizar gabarito do professor</button>
                 <button type="button">Duplicar</button>
@@ -3127,19 +3178,34 @@ const initQuestionBank = () => {
   let selectedId = null;
   let activeAssessmentId = null;
   let cart = [];
+  let cartPoints = {};
   let mode = questionBankDataService.mode();
   const cartStorageKey = "raizes:question-bank-cart";
+  const draftStorageKey = "raizes:question-bank-draft";
+  let didAttemptLoginResume = false;
   try {
-    cart = JSON.parse(localStorage.getItem(cartStorageKey) || "[]");
+    const savedDraft = JSON.parse(localStorage.getItem(draftStorageKey) || "null");
+    cart = Array.isArray(savedDraft?.cart) ? savedDraft.cart : JSON.parse(localStorage.getItem(cartStorageKey) || "[]");
+    cartPoints = savedDraft?.points || {};
   } catch (error) {
     cart = [];
+    cartPoints = {};
   }
 
   const uniq = (key) => [...new Set(demoQuestionBankItems.map((item) => item[key]).filter(Boolean))].sort();
   const localDevNotice = () =>
     mode === "fallback"
       ? "Modo desenvolvimento: Supabase nao configurado; usando seed local somente como fallback."
-      : "Conectado ao Supabase real com anon key publica e RLS ativo.";
+      : (() => {
+          const context = getSupabaseUserContext();
+          if (context.userId && allowedAssessmentRoles.includes(context.role)) {
+            return `Professor autenticado no Supabase Auth. Perfil: ${context.role}.`;
+          }
+          if (context.userId) {
+            return `Sessao Supabase ativa, mas perfil ${context.role || "sem perfil"} nao pode salvar avaliacoes.`;
+          }
+          return "Modo demonstracao: leitura conectada ao Supabase real, mas salvamento exige login do professor.";
+        })();
 
   const populateFilterOptions = () => {
     filters.forEach((select) => {
@@ -3154,7 +3220,10 @@ const initQuestionBank = () => {
           option.textContent = value;
           select.append(option);
         });
-      select.value = [...select.options].some((option) => option.value === current) ? current : "";
+      const pendingValue = select.dataset.pendingValue;
+      const nextValue = pendingValue || current;
+      select.value = [...select.options].some((option) => option.value === nextValue) ? nextValue : "";
+      delete select.dataset.pendingValue;
     });
   };
 
@@ -3171,10 +3240,86 @@ const initQuestionBank = () => {
     selectionStatus.dataset.tone = tone;
     selectionStatus.hidden = !message;
   };
+  const getBuilderDraft = () => ({
+    title: titleInput?.value || "",
+    instructions: root.querySelector(".qb-builder textarea")?.value || "",
+    date: root.querySelector(".qb-builder input[type='date']")?.value || "",
+    className: root.querySelectorAll(".qb-builder select")[0]?.value || "",
+    cover: root.querySelectorAll(".qb-builder select")[3]?.value || "",
+    component: root.querySelector("[data-qb-assessment-component]")?.value || "",
+    year: root.querySelector("[data-qb-assessment-year]")?.value || "",
+  });
+  const getFilterDraft = () => ({
+    search: search.value,
+    used: usedFilter.value,
+    sort: sort.value,
+    filters: Object.fromEntries(filters.map((select) => [select.dataset.qbFilter, select.value])),
+  });
+  const syncPointInputs = () => {
+    cartList?.querySelectorAll("[data-qb-points]").forEach((input) => {
+      cartPoints[input.dataset.qbPoints] = Number(input.value || 1);
+    });
+  };
+  const saveDraftSnapshot = (reason = "autosave") => {
+    syncPointInputs();
+    localStorage.setItem(
+      draftStorageKey,
+      JSON.stringify({
+        reason,
+        cart,
+        points: cartPoints,
+        selectedId,
+        activeAssessmentId,
+        builder: getBuilderDraft(),
+        filters: getFilterDraft(),
+        savedAt: new Date().toISOString(),
+      })
+    );
+    localStorage.setItem(cartStorageKey, JSON.stringify(cart));
+  };
+  const restoreDraftSnapshot = () => {
+    let draft = null;
+    try {
+      draft = JSON.parse(localStorage.getItem(draftStorageKey) || "null");
+    } catch (error) {
+      draft = null;
+    }
+    if (!draft) return false;
+    cart = Array.isArray(draft.cart) ? draft.cart : cart;
+    cartPoints = draft.points || {};
+    selectedId = draft.selectedId || selectedId;
+    activeAssessmentId = draft.activeAssessmentId || activeAssessmentId;
+    if (draft.builder) {
+      if (titleInput) titleInput.value = draft.builder.title || titleInput.value;
+      const textarea = root.querySelector(".qb-builder textarea");
+      if (textarea) textarea.value = draft.builder.instructions || textarea.value;
+      const dateInput = root.querySelector(".qb-builder input[type='date']");
+      if (dateInput) dateInput.value = draft.builder.date || dateInput.value;
+      const classSelect = root.querySelectorAll(".qb-builder select")[0];
+      if (classSelect && draft.builder.className) classSelect.value = draft.builder.className;
+      const coverSelect = root.querySelectorAll(".qb-builder select")[3];
+      if (coverSelect && draft.builder.cover) coverSelect.value = draft.builder.cover;
+      const componentSelect = root.querySelector("[data-qb-assessment-component]");
+      if (componentSelect && draft.builder.component) componentSelect.value = draft.builder.component;
+      const yearSelect = root.querySelector("[data-qb-assessment-year]");
+      if (yearSelect && draft.builder.year) yearSelect.value = draft.builder.year;
+    }
+    if (draft.filters) {
+      search.value = draft.filters.search || "";
+      usedFilter.value = draft.filters.used || "";
+      sort.value = draft.filters.sort || sort.value;
+      filters.forEach((select) => {
+        select.dataset.pendingValue = draft.filters.filters?.[select.dataset.qbFilter] || "";
+      });
+    }
+    return true;
+  };
   const showSessionRequired = (message = "Entre novamente para salvar a avaliacao no Supabase.") => {
     if (!selectionStatus) return;
-    const next = encodeURIComponent(`${window.location.pathname}${window.location.search}${window.location.hash}`);
-    selectionStatus.innerHTML = `${htmlEscape(message)} <a href="login.html?next=${next}">Entrar novamente</a>`;
+    saveDraftSnapshot("login-required");
+    const nextPath = `${window.location.pathname || "/banco-questoes.html"}?qbResume=1${window.location.hash || ""}`;
+    const next = encodeURIComponent(nextPath);
+    selectionStatus.innerHTML = `${htmlEscape(message)} <a href="login.html?auth=supabase&next=${next}">Entrar novamente</a>`;
     selectionStatus.dataset.tone = "error";
     selectionStatus.hidden = false;
   };
@@ -3382,7 +3527,7 @@ const initQuestionBank = () => {
                   <small>${htmlEscape(item.component)} &middot; ${htmlEscape(item.skill)} &middot; ${item.estimatedTime} min</small>
                   <div class="qb-cart-mini">${item.alternatives.slice(0, 4).map((alternative, optionIndex) => `<i>${optionLabel(optionIndex)} ${htmlEscape(shortText(alternative, 34))}</i>`).join("")}</div>
                 </div>
-                <input type="number" min="0" step="0.5" value="1" aria-label="Pontuacao da questao ${item.id}" />
+                <input type="number" min="0" step="0.5" value="${cartPoints[item.id] ?? 1}" data-qb-points="${item.id}" aria-label="Pontuacao da questao ${item.id}" />
                 <button type="button" data-qb-view="${item.id}" aria-label="Ver ${item.id}">Ver</button>
                 <button type="button" data-qb-up="${item.id}" aria-label="Mover ${item.id} para cima">^</button>
                 <button type="button" data-qb-down="${item.id}" aria-label="Mover ${item.id} para baixo">v</button>
@@ -3398,15 +3543,17 @@ const initQuestionBank = () => {
     });
   };
 
-  const renderPreview = (kind = "student") => {
+  const renderPreview = (kind = "student", options = {}) => {
     const items = cart.map(itemById).filter(Boolean);
     if (!previewPanel || !items.length) {
       if (previewPanel) previewPanel.hidden = true;
       return;
     }
     const isTeacher = kind === "teacher";
+    const isAnswerSheet = kind === "answers";
+    const isLocalPreview = options.local === true;
     const totalTime = items.reduce((sum, item) => sum + item.estimatedTime, 0);
-    const totalPoints = items.length;
+    const totalPoints = items.reduce((sum, item) => sum + Number(cartPoints[item.id] ?? 1), 0);
     const assessmentTitle = titleInput?.value || "Avaliacao";
     const component = root.querySelector("[data-qb-assessment-component]")?.value || "";
     const year = root.querySelector("[data-qb-assessment-year]")?.value || "";
@@ -3416,16 +3563,21 @@ const initQuestionBank = () => {
     previewPanel.hidden = false;
     previewPanel.innerHTML = `
       <div class="panel-head">
-        <h2>${isTeacher ? "Gabarito do professor" : "Previa da avaliacao"}</h2>
-        <button type="button" data-qb-print="${isTeacher ? "teacher" : "student"}">${isTeacher ? "Gerar PDF do gabarito" : "Gerar PDF do aluno"}</button>
-        ${isTeacher ? `<button type="button" data-qb-print="answers">Gerar folha de respostas</button>` : ""}
+        <h2>${isLocalPreview ? "Previa rapida - nao salva" : isTeacher ? "Gabarito do professor" : isAnswerSheet ? "Folha de respostas" : "Previa da avaliacao"}</h2>
+        ${
+          isLocalPreview
+            ? ""
+            : `<button type="button" data-qb-print="${isTeacher ? "teacher" : isAnswerSheet ? "answers" : "student"}">${isTeacher ? "Gerar PDF do gabarito" : isAnswerSheet ? "Gerar folha de respostas" : "Gerar PDF do aluno"}</button>
+               ${isTeacher ? `<button type="button" data-qb-print="answers">Gerar folha de respostas</button>` : ""}`
+        }
         <button type="button" data-qb-close-preview>Fechar</button>
       </div>
-      <div class="qb-preview-sheet" data-qb-print-area="${isTeacher ? "teacher" : "student"}">
+      <div class="qb-preview-sheet" data-qb-print-area="${isTeacher ? "teacher" : isAnswerSheet ? "answers" : "student"}">
+        ${isLocalPreview ? `<div class="qb-local-preview-warning">Esta e uma previa local. Entre para salvar, gerar PDF e acessar o gabarito oficial.</div>` : ""}
         <header class="qb-preview-cover">
-          <strong>${isTeacher ? "GABARITO DO PROFESSOR" : "CADERNO DO ALUNO"}</strong>
+          <strong>${isTeacher ? "GABARITO DO PROFESSOR" : isAnswerSheet ? "FOLHA DE RESPOSTAS" : "CADERNO DO ALUNO"}</strong>
           <span>RAIZES E SABERES EDUCACIONAL</span>
-          <small>${isTeacher ? "AVALIA+ - GABARITO E ORIENTACOES DE CORRECAO" : "AVALIA+ - AVALIACAO DA APRENDIZAGEM"}</small>
+          <small>${isTeacher ? "AVALIA+ - GABARITO E ORIENTACOES DE CORRECAO" : isAnswerSheet ? "AVALIA+ - REGISTRO DE RESPOSTAS" : "AVALIA+ - AVALIACAO DA APRENDIZAGEM"}</small>
         </header>
         ${
           isTeacher
@@ -3444,7 +3596,7 @@ const initQuestionBank = () => {
               <table class="qb-answer-summary">
                 <thead><tr><th>Questao</th><th>Resposta</th><th>Valor</th><th>Habilidade</th><th>Descritor</th></tr></thead>
                 <tbody>${items
-                  .map((item, index) => `<tr><td>${index + 1}</td><td>${optionLabel(item.correctAlternative)}</td><td>1</td><td>${htmlEscape(item.skill)}</td><td>${htmlEscape(shortText(item.descriptor, 80))}</td></tr>`)
+                  .map((item, index) => `<tr><td>${index + 1}</td><td>${optionLabel(item.correctAlternative)}</td><td>${htmlEscape(cartPoints[item.id] ?? 1)}</td><td>${htmlEscape(item.skill)}</td><td>${htmlEscape(shortText(item.descriptor, 80))}</td></tr>`)
                   .join("")}</tbody>
               </table>`
             : `<div class="qb-preview-meta">
@@ -3461,8 +3613,18 @@ const initQuestionBank = () => {
                 <span><b>NOTA:</b> __________________</span>
               </div>`
         }
+        ${
+          isAnswerSheet
+            ? `<table class="qb-answer-sheet"><tbody>${items
+                .map(
+                  (item, index) =>
+                    `<tr><td>${index + 1}</td><td>A ( )</td><td>B ( )</td><td>C ( )</td><td>D ( )</td><td>Valor ${htmlEscape(cartPoints[item.id] ?? 1)}</td></tr>`
+                )
+                .join("")}</tbody></table>`
+            : ""
+        }
         <p>${htmlEscape(root.querySelector(".qb-builder textarea")?.value || "Leia com atencao e marque apenas uma alternativa por questao.")}</p>
-        ${items
+        ${isAnswerSheet ? "" : items
           .map(
             (item, index) => `
               <article>
@@ -3476,7 +3638,7 @@ const initQuestionBank = () => {
                 ${
                   isTeacher
                     ? `<p><strong>Gabarito:</strong> ${optionLabel(item.correctAlternative)} &middot; ${htmlEscape(item.justification)}<br><strong>Habilidade:</strong> ${htmlEscape(item.skill)}<br><strong>Descritor:</strong> ${htmlEscape(item.descriptor)}<br><strong>Distratores:</strong> ${htmlEscape(item.distractors.join(" "))}<br><strong>Orientacao de correcao:</strong> ${htmlEscape(item.intervention || "Retomar a habilidade indicada com atividade de recomposicao.")}</p>`
-                    : `<p>${item.estimatedTime} min &middot; ${htmlEscape(item.component)} &middot; ${htmlEscape(item.skill)}</p>`
+                    : `<p>${item.estimatedTime} min &middot; ${htmlEscape(item.component)} &middot; ${htmlEscape(item.skill)} &middot; Valor ${htmlEscape(cartPoints[item.id] ?? 1)}</p>`
                 }
                 <footer>Pagina simulada ${index + 1} de ${items.length} &middot; Versao ${htmlEscape(versionCode)}</footer>
               </article>
@@ -3541,6 +3703,7 @@ const initQuestionBank = () => {
 
   const syncCartToAssessment = async () => {
     if (!cart.length) return null;
+    syncPointInputs();
     const assessment = await ensureAssessment();
     const remote = await questionBankDataService.getAssessmentById(assessment.id);
     const remoteIds = new Set(
@@ -3550,9 +3713,15 @@ const initQuestionBank = () => {
       const item = itemById(id);
       if (!item) continue;
       if (!remoteIds.has(item.id) && !remoteIds.has(item.uuid)) {
-        await questionBankDataService.addQuestionToAssessment(assessment.id, item.uuid || item.id);
+        await questionBankDataService.addQuestionToAssessment(assessment.id, item.uuid || item.id, Number(cartPoints[item.id] ?? 1));
+      } else {
+        await questionBankDataService.updateQuestionPoints(assessment.id, item.uuid || item.id, Number(cartPoints[item.id] ?? 1));
       }
     }
+    await questionBankDataService.reorderQuestions(
+      assessment.id,
+      cart.map((id) => itemById(id)?.uuid || id)
+    );
     return questionBankDataService.getAssessmentById(assessment.id);
   };
 
@@ -3582,8 +3751,7 @@ const initQuestionBank = () => {
       setSelectionStatus("Selecione questoes antes de gerar PDF.", "error");
       return;
     }
-    const printKind = kind === "answers" ? "teacher" : kind;
-    renderPreview(printKind);
+    renderPreview(kind);
     window.setTimeout(() => window.print(), 80);
   };
 
@@ -3600,6 +3768,8 @@ const initQuestionBank = () => {
       return;
     }
     cart.push(item.id);
+    cartPoints[item.id] = cartPoints[item.id] ?? 1;
+    saveDraftSnapshot("question-selected");
     setSelectionStatus(`${item.id} selecionada para a avaliacao.`, "success");
   };
 
@@ -3617,12 +3787,38 @@ const initQuestionBank = () => {
       populateFilterOptions();
       root.querySelector(".qb-notice span").textContent = localDevNotice();
       await render();
+      await attemptLoginResume();
     } catch (error) {
       questions = mode === "fallback" ? await questionBankDataService.listQuestions() : [];
       assessments = [];
       populateFilterOptions();
       await render();
       setError(error.message);
+    }
+  };
+
+  const attemptLoginResume = async () => {
+    const params = new URLSearchParams(window.location.search);
+    if (didAttemptLoginResume || params.get("qbResume") !== "1") return;
+    didAttemptLoginResume = true;
+    restoreDraftSnapshot();
+    cart = cart.filter((id) => itemById(id));
+    await render();
+    try {
+      const savedAssessment = await ensureSavedForPreview();
+      if (savedAssessment) {
+        assessments = await questionBankDataService.listAssessments();
+        activeAssessmentId = savedAssessment.id;
+        saveDraftSnapshot("login-resumed-saved");
+        renderPreview("student");
+        setSelectionStatus(`Avaliacao salva e pre-visualizacao oficial liberada. ID ${savedAssessment.id}.`, "success");
+        params.delete("qbResume");
+        const nextSearch = params.toString();
+        window.history.replaceState(null, "", `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}${window.location.hash}`);
+        await render();
+      }
+    } catch (error) {
+      showSessionRequired("Login concluido, mas a sessao ainda nao autorizou o salvamento. Entre novamente com perfil professor.");
     }
   };
 
@@ -3641,17 +3837,34 @@ const initQuestionBank = () => {
       }
       if (button.dataset.qbRemove) {
         const item = itemById(button.dataset.qbRemove);
-        if (activeAssessmentId && item) {
-          await questionBankDataService.removeQuestionFromAssessment(activeAssessmentId, item.uuid || item.id);
-        }
+        let needsRemoteSync = false;
         cart = cart.filter((id) => id !== button.dataset.qbRemove);
-        setSelectionStatus(`${button.dataset.qbRemove} removida da avaliacao.`, "info");
+        delete cartPoints[button.dataset.qbRemove];
+        saveDraftSnapshot("question-removed");
+        if (activeAssessmentId && item) {
+          try {
+            await questionBankDataService.removeQuestionFromAssessment(activeAssessmentId, item.uuid || item.id);
+          } catch (error) {
+            const message = String(error.message || "");
+            if (message.includes("Sessao Supabase ausente") || message.includes("Sessao expirada")) {
+              showSessionRequired("Questao removida localmente. Entre novamente para sincronizar no Supabase.");
+              needsRemoteSync = true;
+            } else {
+              throw error;
+            }
+          }
+        }
+        if (!needsRemoteSync) {
+          setSelectionStatus(`${button.dataset.qbRemove} removida da avaliacao.`, "info");
+        }
       }
       if (button.dataset.qbUp) {
         await moveCartItem(button.dataset.qbUp, -1);
+        saveDraftSnapshot("question-reordered");
       }
       if (button.dataset.qbDown) {
         await moveCartItem(button.dataset.qbDown, 1);
+        saveDraftSnapshot("question-reordered");
       }
       if (button.hasAttribute("data-qb-clear")) {
         search.value = "";
@@ -3662,6 +3875,9 @@ const initQuestionBank = () => {
       }
       if (button.hasAttribute("data-qb-clear-cart")) {
         cart = [];
+        cartPoints = {};
+        activeAssessmentId = null;
+        saveDraftSnapshot("cart-cleared");
         previewPanel.hidden = true;
         setSelectionStatus("Carrinho limpo.", "info");
       }
@@ -3677,6 +3893,11 @@ const initQuestionBank = () => {
         if (savedAssessment || mode !== "supabase") {
           renderPreview(button.dataset.qbPreview);
         }
+      }
+      if (button.hasAttribute("data-qb-preview-local")) {
+        saveDraftSnapshot("local-preview");
+        renderPreview("student", { local: true });
+        setSelectionStatus("Previa local aberta sem salvar no Supabase.", "info");
       }
       if (button.hasAttribute("data-qb-close-preview")) {
         previewPanel.hidden = true;
@@ -3701,6 +3922,12 @@ const initQuestionBank = () => {
         root.querySelector("[data-qb-assessment-component]").value = assessment.component || root.querySelector("[data-qb-assessment-component]").value;
         root.querySelector("[data-qb-assessment-year]").value = assessment.year || root.querySelector("[data-qb-assessment-year]").value;
         cart = assessment.questions.map((entry) => entry.question?.code || entry.question_id).filter(Boolean);
+        cartPoints = Object.fromEntries(
+          assessment.questions
+            .map((entry) => [entry.question?.code || entry.question_id, entry.points || 1])
+            .filter(([id]) => Boolean(id))
+        );
+        saveDraftSnapshot("assessment-opened");
       }
       if (button.dataset.qbDuplicateAssessment) {
         await questionBankDataService.duplicateAssessment(button.dataset.qbDuplicateAssessment);
@@ -3717,18 +3944,34 @@ const initQuestionBank = () => {
   });
 
   [search, usedFilter, sort, ...filters].forEach((control) => {
-    control.addEventListener("input", () => render());
-    control.addEventListener("change", () => render());
+    control.addEventListener("input", () => {
+      saveDraftSnapshot("filters-changed");
+      render();
+    });
+    control.addEventListener("change", () => {
+      saveDraftSnapshot("filters-changed");
+      render();
+    });
   });
 
   builderFields.forEach((control) => {
     control.addEventListener("change", () => {
+      saveDraftSnapshot("builder-changed");
       if (activeAssessmentId) {
         ensureAssessment().catch((error) => setError(error.message));
       }
     });
+    control.addEventListener("input", () => saveDraftSnapshot("builder-changed"));
   });
 
+  cartList.addEventListener("input", (event) => {
+    if (event.target.matches("[data-qb-points]")) {
+      cartPoints[event.target.dataset.qbPoints] = Number(event.target.value || 1);
+      saveDraftSnapshot("points-changed");
+    }
+  });
+
+  restoreDraftSnapshot();
   installSupabaseSessionListener();
   refresh();
 };
@@ -4086,6 +4329,12 @@ const questionBankDataService = (() => {
         .filter((entry) => entry.question_id || entry.question);
       return assessment.questions;
     },
+    async updateQuestionPoints(assessmentId, questionId, points = 1) {
+      const assessment = await this.getAssessmentById(assessmentId);
+      const entry = assessment?.questions.find((item) => item.question_id === questionId || item.question?.id === questionId || item.question?.uuid === questionId);
+      if (entry) entry.points = points;
+      return entry || null;
+    },
     async registerUsage() {
       return null;
     },
@@ -4228,6 +4477,16 @@ const questionBankDataService = (() => {
       }
       return this.getAssessmentById(assessmentId);
     },
+    async updateQuestionPoints(assessmentId, questionId, points = 1) {
+      const { request } = client();
+      await request("assessment_questions", `?assessment_id=eq.${encodeURIComponent(assessmentId)}&question_id=eq.${encodeURIComponent(questionId)}`, {
+        method: "PATCH",
+        requireAuthenticated: true,
+        allowedRoles: allowedAssessmentRoles,
+        body: JSON.stringify({ points }),
+      });
+      return this.getAssessmentById(assessmentId);
+    },
     async registerUsage(questionId, assessmentId, usageType = "visualizada") {
       const { request, getContext } = client();
       const context = await getContext();
@@ -4282,6 +4541,7 @@ const questionBankDataService = (() => {
     addQuestionToAssessment: (...args) => active().addQuestionToAssessment(...args),
     removeQuestionFromAssessment: (...args) => active().removeQuestionFromAssessment(...args),
     reorderQuestions: (...args) => active().reorderQuestions(...args),
+    updateQuestionPoints: (...args) => active().updateQuestionPoints(...args),
     registerUsage: (...args) => active().registerUsage(...args),
     getCurationHistory: (...args) => active().getCurationHistory(...args),
   };

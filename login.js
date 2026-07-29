@@ -8,6 +8,18 @@ const demoAccess = {
 };
 
 const supabaseSessionKey = "raizes:supabase-auth-session";
+const loginParams = new URLSearchParams(window.location.search);
+const requiresSupabaseAuth = loginParams.get("auth") === "supabase";
+
+const decodeJwtPayload = (token) => {
+  try {
+    const [, payload] = String(token || "").split(".");
+    if (!payload) return {};
+    return JSON.parse(atob(payload.replaceAll("-", "+").replaceAll("_", "/")));
+  } catch (error) {
+    return {};
+  }
+};
 
 const getNextPage = () => {
   const requestedPage = new URLSearchParams(window.location.search).get("next");
@@ -26,7 +38,36 @@ const getNextPage = () => {
 const nextPage = getNextPage();
 const needsCuratorAccess = nextPage.startsWith("curadoria.html");
 
+const getStoredSupabaseContext = () => {
+  try {
+    const session = JSON.parse(localStorage.getItem(supabaseSessionKey) || "null");
+    const payload = decodeJwtPayload(session?.access_token);
+    const appMetadata = payload.app_metadata || {};
+    return {
+      userId: payload.sub || session?.user?.id || null,
+      role:
+        appMetadata.question_bank_role ||
+        appMetadata.app_role ||
+        appMetadata.role ||
+        payload.question_bank_role ||
+        payload.app_role ||
+        null,
+      expiresAt: payload.exp || session?.expires_at || 0,
+    };
+  } catch (error) {
+    return { userId: null, role: null, expiresAt: 0 };
+  }
+};
+
+if (requiresSupabaseAuth) {
+  const context = getStoredSupabaseContext();
+  if (context.userId && context.role && Number(context.expiresAt || 0) > Math.floor(Date.now() / 1000) + 60) {
+    window.location.replace(getNextPage());
+  }
+}
+
 if (
+  !requiresSupabaseAuth &&
   localStorage.getItem(demoAccess.key) === "true" &&
   (!needsCuratorAccess || localStorage.getItem(demoAccess.curatorKey) === "true")
 ) {
@@ -38,8 +79,17 @@ const errorMessage = document.querySelector("[data-login-error]");
 
 const saveSupabaseSession = (authData) => {
   if (!authData?.access_token) {
-    return;
+    return null;
   }
+  const payload = decodeJwtPayload(authData.access_token);
+  const appMetadata = payload.app_metadata || {};
+  const questionBankRole =
+    appMetadata.question_bank_role ||
+    appMetadata.app_role ||
+    appMetadata.role ||
+    payload.question_bank_role ||
+    payload.app_role ||
+    null;
   localStorage.setItem(
     supabaseSessionKey,
     JSON.stringify({
@@ -48,9 +98,11 @@ const saveSupabaseSession = (authData) => {
       expires_at: authData.expires_at || Math.floor(Date.now() / 1000) + Number(authData.expires_in || 3600),
       token_type: authData.token_type || "bearer",
       user: authData.user || null,
+      question_bank_role: questionBankRole,
     })
   );
   localStorage.setItem("raizes:supabase-access-token", authData.access_token);
+  return { userId: payload.sub || authData.user?.id || null, questionBankRole };
 };
 
 const authenticateWithSupabase = async (email, password) => {
@@ -70,8 +122,8 @@ const authenticateWithSupabase = async (email, password) => {
   if (!response.ok) {
     return false;
   }
-  saveSupabaseSession(await response.json());
-  return true;
+  const context = saveSupabaseSession(await response.json());
+  return Boolean(context?.userId && context?.questionBankRole);
 };
 
 form?.addEventListener("submit", async (event) => {
