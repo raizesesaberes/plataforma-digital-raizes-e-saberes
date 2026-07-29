@@ -634,6 +634,33 @@ const bookCatalog = [
       ["Encerramento", 56],
     ],
   },
+  {
+    id: "avalia-matematica-6ano",
+    title: "AVALIA+ MATEMÁTICA",
+    subtitle: "MATEMÁTICA - 6º ANO",
+    catalogTitle: "AVALIA+ MATEMÁTICA",
+    level: "6º Ano",
+    type: "Livro do Aluno",
+    collection: "Avalia+",
+    stage: "Ensino Fundamental - Anos Finais",
+    component: "Matemática",
+    totalPages: 13,
+    basePath: "assets",
+    cover: "assets/avalia-matematica-6ano/pages/page-001.jpg",
+    catalogCover: "assets/biblioteca/RAIZES_AVALIA_MATEMATICA_6ANO_BIBLIOTECA.jpg",
+    pdf: "assets/avalia-matematica-6ano/pdf/6-anos-matematica.pdf",
+    href: "book-viewer.html?book=avalia-matematica-6ano",
+    thumb: (page) => `assets/avalia-matematica-6ano/thumbs/page-${String(page).padStart(3, "0")}.jpg`,
+    page: (page) => `assets/avalia-matematica-6ano/pages/page-${String(page).padStart(3, "0")}.jpg`,
+    summary: [
+      ["Capa", 1],
+      ["Apresentacao", 2],
+      ["Orientacoes de uso", 3],
+      ["Atividades", 5],
+      ["Simulado", 9],
+      ["Encerramento", 13],
+    ],
+  },
 ];
 
 const defaultBook = masterBook001;
@@ -739,6 +766,22 @@ const libraryBooks = [
     publishedAt: "2026-07-29",
     actionLabel: "Ler Agora",
     searchTerms: "Avalia+ Matemática Matematica 2º Ano 2o Ano Ensino Fundamental Livro do Aluno Aluno Avalia",
+  },
+  {
+    src: "assets/biblioteca/RAIZES_AVALIA_MATEMATICA_6ANO_BIBLIOTECA.jpg",
+    year: "6º Ano",
+    title: "AVALIA+ MATEMÁTICA",
+    type: "Livro do Aluno",
+    component: "MATEMÁTICA",
+    pages: "13 PÁGINAS",
+    href: "book-viewer.html?book=avalia-matematica-6ano",
+    downloadHref: "assets/avalia-matematica-6ano/pdf/6-anos-matematica.pdf",
+    collection: "Avalia+",
+    stage: "Ensino Fundamental - Anos Finais",
+    hierarchy: "Ensino Fundamental > 6º Ano > Matemática > Avalia+ > Livro do Aluno",
+    publishedAt: "2026-07-29",
+    actionLabel: "Ler Agora",
+    searchTerms: "Avalia+ Matemática Matematica 6º Ano 6o Ano Ensino Fundamental Anos Finais Livro do Aluno Aluno Avalia",
   },
   { src: "assets/colecoes/colecao-ensino-fundamental-provisorio.webp", year: "Fundamental", title: "Colecao Ensino Fundamental", type: "Acervo em expansao", href: "#acervo-completo", collection: "Ensino Fundamental", publishedAt: "2026-07-11", status: "Em expansao" },
   { src: "assets/colecoes/colecao-avalia-provisorio.webp", year: "Avalia+", title: "Colecao Avalia+", type: "Avaliacoes", href: "avalia.html", collection: "Avalia+", publishedAt: "2026-07-11", status: "Em expansao" },
@@ -1757,6 +1800,69 @@ const renderProfessorDashboard = () => {
   `;
 };
 
+const familySoonLabels = {
+  filhos: "Acompanhamento dos Filhos",
+  frequencia: "Historico de Frequencia",
+  aprendizagem: "Evolucao da Aprendizagem",
+  alertas: "Alertas e Comunicados",
+  eventos: "Agenda da Familia",
+  materiais: "Materiais da Escola",
+};
+
+const familyDashboardHotspots = [
+  { className: "family-hotspot-avatar", href: "familia.html?soon=filhos", label: "Abrir perfil da responsavel Ana Paula" },
+  { className: "family-hotspot-filhos-top", href: "familia.html?soon=filhos", label: "Abrir filhos cadastrados" },
+  { className: "family-hotspot-frequencia-top", href: "familia.html?soon=frequencia", label: "Abrir frequencia media" },
+  { className: "family-hotspot-tarefas-top", href: "familia.html?soon=alertas", label: "Abrir tarefas acompanhadas" },
+  { className: "family-hotspot-participacao-top", href: "familia.html?soon=filhos", label: "Abrir participacao da familia" },
+  { className: "family-hotspot-pedro", href: "aluno.html", label: "Abrir painel do aluno Pedro Silva" },
+  { className: "family-hotspot-maria", href: "aluno.html", label: "Abrir painel da aluna Maria Silva" },
+  { className: "family-hotspot-frequencia", href: "familia.html?soon=frequencia", label: "Abrir historico de frequencia" },
+  { className: "family-hotspot-aprendizagem", href: "familia.html?soon=aprendizagem", label: "Abrir evolucao da aprendizagem" },
+  { className: "family-hotspot-alerta-reuniao", href: "familia.html?soon=alertas", label: "Abrir alerta Reuniao de Pais e Mestres" },
+  { className: "family-hotspot-alerta-atividades", href: "familia.html?soon=alertas", label: "Abrir atividades para casa" },
+  { className: "family-hotspot-alerta-comunicado", href: "familia.html?soon=alertas", label: "Abrir comunicado da escola" },
+  { className: "family-hotspot-evento-passeio", href: "familia.html?soon=eventos", label: "Abrir evento Passeio Pedagogico" },
+  { className: "family-hotspot-evento-avaliacao", href: "familia.html?soon=eventos", label: "Abrir evento Avaliacao Bimestral" },
+  { className: "family-hotspot-evento-reuniao", href: "familia.html?soon=eventos", label: "Abrir evento Reuniao de Pais e Mestres" },
+  { className: "family-hotspot-book-1", href: "book-viewer.html?book=livro-008", label: "Abrir Lingua Portuguesa 5 anos Volume 2" },
+  { className: "family-hotspot-book-2", href: "book-viewer.html?book=livro-008", label: "Abrir Matematica 5 anos Volume 2" },
+  { className: "family-hotspot-book-3", href: "book-viewer.html?book=laboratorio-sensorial-005", label: "Abrir Natureza e Sociedade 5 anos Volume 2" },
+  { className: "family-hotspot-book-4", href: "book-viewer.html?book=livro-008", label: "Abrir Historia 5 anos Volume 2" },
+  { className: "family-hotspot-leitura", href: "book-viewer.html?book=livro-008", label: "Abrir Leitura em Familia" },
+  { className: "family-hotspot-materiais", href: "familia.html?soon=materiais", label: "Abrir materiais da escola" },
+];
+
+const renderFamilySoon = (key) => {
+  const title = familySoonLabels[key] || "Modulo em breve";
+  return `
+    <section class="coming-soon-panel">
+      <span>Em breve</span>
+      <h1>${title}</h1>
+      <p>Este recurso da area da Familia ja esta planejado e sera liberado nas proximas etapas.</p>
+      <a href="familia.html">Voltar ao Painel da Familia</a>
+    </section>
+  `;
+};
+
+const renderFamilyDashboard = () => {
+  const params = typeof window === "undefined" ? new URLSearchParams() : new URLSearchParams(window.location.search);
+  const soon = params.get("soon");
+  if (soon) return renderFamilySoon(soon);
+  return `
+    <section class="family-dashboard" aria-label="Painel da Familia Ana Paula">
+      <img
+        src="assets/familia/familia-dashboard.png"
+        alt="Painel da Familia de Ana Paula com filhos, frequencia, aprendizagem, alertas, eventos e biblioteca"
+        loading="eager"
+        decoding="async"
+        onerror="this.hidden=true"
+      />
+      ${familyDashboardHotspots.map((hotspot) => `<a class="family-hotspot ${hotspot.className}" href="${hotspot.href}" aria-label="${hotspot.label}"></a>`).join("")}
+    </section>
+  `;
+};
+
 const studentDashboardView = createStudentDashboardView();
 const homeOfficialAsset = (name) => `assets/home-official/${name}.png`;
 
@@ -2665,17 +2771,7 @@ const modules = {
     title: "Painel da Familia",
     subtitle: "Acompanhe a jornada escolar dos seus filhos",
     code: "MS-007",
-    html: `
-      <div class="dashboard-head family"><div><p>MS-007</p><h1>Ola, Ana Paula!</h1><span>Acompanhe a jornada escolar dos seus filhos</span></div></div>
-      <div class="family-grid">
-        <section class="panel span-2"><div class="panel-head"><h2>Meus Filhos</h2><a>Ver todos</a></div><div class="child-row"><article><span>Pedro Silva</span><strong>95,2%</strong><i style="--value:95%"></i></article><article><span>Maria Silva</span><strong>92,1%</strong><i style="--value:92%"></i></article></div></section>
-        <section class="family-banner">Acompanhe cada conquista.<br />Participe de cada passo.</section>
-        <section class="panel chart-card"><h2>Frequencia dos Filhos</h2><div class="donut">93,6%</div></section>
-        <section class="panel span-2"><h2>Evolucao da Aprendizagem</h2><div class="bar-list"><p>Lingua Portuguesa<i style="--value:85%"></i></p><p>Matematica<i style="--value:92%"></i></p><p>Ciencias<i style="--value:80%"></i></p><p>Historia<i style="--value:78%"></i></p></div></section>
-        <section class="panel"><h2>Alertas Importantes</h2><ul class="clean-list"><li>Reuniao de Pais e Mestres</li><li>Entrega de atividades</li><li>Comunicado da escola</li></ul></section>
-        <section class="panel"><h2>Proximos Eventos</h2><ul class="clean-list"><li>Passeio Pedagogico</li><li>Avaliacao de Matematica</li><li>Entrega de Boletins</li></ul></section>
-      </div>
-    `,
+    html: renderFamilyDashboard(),
   },
 };
 
