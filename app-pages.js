@@ -29,7 +29,7 @@ const requirePlatformAuth = () => {
 requirePlatformAuth();
 
 const ecosystemModules = [
-  ["index.html", "🏠 Site"],
+  ["index.html", "Site"],
   ["plataforma.html", "Inicio"],
   ["aluno.html", "Aluno"],
   ["arvore.html", "Minha Arvore"],
@@ -1582,6 +1582,7 @@ const renderStudentQuickAccess = (items) => `
 `;
 
 const studentDashboardView = createStudentDashboardView();
+const homeOfficialAsset = (name) => `assets/home-official/${name}.png`;
 
 const ecosystemHomeStats = {
   xp: studentDashboardView.profile.xp,
@@ -1596,42 +1597,42 @@ const ecosystemHomeResources = [
   {
     title: "Biblioteca",
     description: `${publishedMaterialsCount} materiais, colecoes e livros digitais.`,
-    icon: "📚",
+    icon: homeOfficialAsset("icon_biblioteca"),
     href: "biblioteca.html",
     tone: "green",
   },
   {
     title: "Universidade",
     description: "Cursos, trilhas, formacoes e certificados.",
-    icon: "🎓",
+    icon: homeOfficialAsset("icon_universidade"),
     href: "universidade.html",
     tone: "purple",
   },
   {
     title: "Jogos Educativos",
     description: `${studentGameCatalog.length} jogos com XP e medalhas.`,
-    icon: "🎮",
+    icon: homeOfficialAsset("icon_jogos"),
     href: "jogos.html",
     tone: "orange",
   },
   {
     title: "Avalia+",
     description: "Diagnosticos, relatorios e intervencoes.",
-    icon: "📊",
+    icon: homeOfficialAsset("icon_avalia"),
     href: "avalia.html",
     tone: "blue",
   },
   {
     title: "Banco de Questoes",
     description: `${demoQuestionBankItems.length} itens demonstrativos homologados.`,
-    icon: "▦",
+    icon: homeOfficialAsset("icon_banco_questoes"),
     href: "banco-questoes.html",
     tone: "teal",
   },
   {
     title: "Laboratorios",
     description: `${countMaterialsByCollection("Laboratorio Sensorial")} materiais sensoriais integrados.`,
-    icon: "⚗",
+    icon: homeOfficialAsset("icon_laboratorios"),
     href: "biblioteca.html#acervo-completo",
     tone: "mint",
   },
@@ -1643,7 +1644,7 @@ const ecosystemHomeJourney = [
     title: masterBook001.catalogTitle,
     detail: masterBook001.level,
     progress: 65,
-    image: masterBook001.catalogCover,
+    image: homeOfficialAsset("thumb_livro"),
     href: masterBook001.href,
     action: "Continuar leitura",
     tone: "green",
@@ -1653,7 +1654,7 @@ const ecosystemHomeJourney = [
     title: "BNCC na Pratica",
     detail: "20h",
     progress: 40,
-    image: "assets/universidade/banner-principal.webp",
+    image: homeOfficialAsset("thumb_curso"),
     href: "universidade.html#formacao-raizes",
     action: "Continuar curso",
     tone: "purple",
@@ -1663,7 +1664,7 @@ const ecosystemHomeJourney = [
     title: savedAssessmentDemo[1]?.title || "Simulado",
     detail: savedAssessmentDemo[1]?.className || "Lingua Portuguesa",
     progress: 30,
-    image: "assets/colecoes/colecao-avalia-provisorio.webp",
+    image: homeOfficialAsset("thumb_simulado"),
     href: "banco-questoes.html",
     action: "Continuar simulado",
     tone: "blue",
@@ -1673,11 +1674,20 @@ const ecosystemHomeJourney = [
     title: studentDashboardView.dailyMission.title,
     detail: "Jogo educativo",
     progress: Math.max(75, studentDashboardView.gameSummary.percent),
-    image: studentDashboardView.dailyMission.image,
+    image: homeOfficialAsset("thumb_jogo"),
     href: "jogos.html",
     action: "Continuar jogando",
     tone: "orange",
   },
+];
+
+const ecosystemHomeIndicators = [
+  { value: ecosystemHomeStats.xp, label: "XP", icon: homeOfficialAsset("indicator_xp") },
+  { value: ecosystemHomeStats.medals, label: "Medalhas", icon: homeOfficialAsset("indicator_certificado") },
+  { value: `${ecosystemHomeStats.trainingHours}h`, label: "Horas de formacao", icon: homeOfficialAsset("indicator_horas") },
+  { value: ecosystemHomeStats.certificates, label: "Certificados", icon: homeOfficialAsset("indicator_cursos") },
+  { value: ecosystemHomeStats.booksRead, label: "Livros lidos", icon: homeOfficialAsset("indicator_livros") },
+  { value: ecosystemHomeStats.gamesCompleted, label: "Jogos concluidos", icon: homeOfficialAsset("indicator_jogos") },
 ];
 
 const renderHomeSectionHeader = (title, action = "") => `
@@ -1690,9 +1700,9 @@ const renderHomeSectionHeader = (title, action = "") => `
 const renderEcosystemHome = () => {
   const nextMission = missionFixtures.colorMatch001;
   const recentActivities = [
-    { title: "Voce concluiu o curso Avaliacao Diagnostica", meta: "ha 2 horas", href: "universidade.html" },
-    { title: "Voce ganhou uma medalha Explorador do Conhecimento", meta: "ha 5 horas", href: "perfil.html" },
-    { title: "Voce leu 15 paginas do Volume 1", meta: "ontem", href: masterBook001.href },
+    { title: "Voce concluiu o curso Avaliacao Diagnostica", meta: "ha 2 horas", href: "universidade.html", icon: homeOfficialAsset("activity_curso") },
+    { title: "Voce ganhou uma medalha Explorador do Conhecimento", meta: "ha 5 horas", href: "perfil.html", icon: homeOfficialAsset("activity_medalha") },
+    { title: "Voce leu 15 paginas do Volume 1", meta: "ontem", href: masterBook001.href, icon: homeOfficialAsset("activity_leitura") },
   ];
   const recommendations = [
     { title: "Trilha: Alfabetizacao", meta: "5 cursos", href: "universidade.html#catalogo" },
@@ -1708,10 +1718,21 @@ const renderEcosystemHome = () => {
           <h1>Ecossistema Raizes e Saberes</h1>
           <p>Tudo o que voce precisa para ensinar, aprender e transformar a educacao em uma unica jornada.</p>
           <div class="ecosystem-hero-actions">
-            ${ecosystemHomeResources.slice(0, 5).map((item) => `<a class="is-${item.tone}" href="${item.href}"><span>${item.icon}</span>${item.title}</a>`).join("")}
+            ${ecosystemHomeResources.slice(0, 5).map((item) => `<a class="is-${item.tone}" href="${item.href}"><img src="${item.icon}" alt="" loading="eager" />${item.title}</a>`).join("")}
           </div>
         </div>
-        <img src="${studentDashboardView.profile.heroArt}" alt="" loading="eager" />
+        <div class="ecosystem-hero-stage" aria-hidden="true">
+          <img class="hero-layer hero-scene" src="${homeOfficialAsset("hero_scene")}" alt="" loading="eager" />
+          <img class="hero-layer hero-light" src="${homeOfficialAsset("hero_light")}" alt="" loading="eager" />
+          <img class="hero-layer hero-tree" src="${homeOfficialAsset("hero_tree")}" alt="" loading="eager" />
+          <img class="hero-layer hero-children" src="${homeOfficialAsset("hero_children")}" alt="" loading="eager" />
+          <img class="hero-layer hero-mascots" src="${homeOfficialAsset("hero_mascots")}" alt="" loading="eager" />
+          <img class="hero-layer hero-book" src="${homeOfficialAsset("hero_book")}" alt="" loading="eager" />
+          <img class="hero-layer hero-tablet" src="${homeOfficialAsset("hero_tablet")}" alt="" loading="eager" />
+          <img class="hero-layer hero-particles-back" src="${homeOfficialAsset("hero_particles_back")}" alt="" loading="eager" />
+          <img class="hero-layer hero-particles-front" src="${homeOfficialAsset("hero_particles_front")}" alt="" loading="eager" />
+          <img class="hero-layer hero-plants" src="${homeOfficialAsset("hero_foreground_plants")}" alt="" loading="eager" />
+        </div>
       </section>
 
       <div class="ecosystem-home-grid">
@@ -1722,7 +1743,7 @@ const renderEcosystemHome = () => {
               .map(
                 (item) => `
                   <article class="journey-card is-${item.tone}">
-                    <img src="${item.image}" alt="" loading="lazy" />
+                    <img src="${item.image}" alt="${item.title}" loading="lazy" />
                     <div>
                       <span>${item.label}</span>
                       <h3>${item.title}</h3>
@@ -1743,7 +1764,7 @@ const renderEcosystemHome = () => {
               .map(
                 (item) => `
                   <a class="resource-card is-${item.tone}" href="${item.href}">
-                    <span>${item.icon}</span>
+                    <img src="${item.icon}" alt="" loading="lazy" />
                     <div><strong>${item.title}</strong><small>${item.description}</small></div>
                   </a>
                 `
@@ -1771,7 +1792,7 @@ const renderEcosystemHome = () => {
               ${renderHomeSectionHeader("Certificados", `<a href="universidade.html">Ver todos</a>`)}
               <strong>${ecosystemHomeStats.certificates}</strong>
               <p>certificados conquistados</p>
-              <span>✦</span>
+              <img class="certificate-badge" src="${homeOfficialAsset("indicator_certificado")}" alt="" loading="lazy" />
               <a href="universidade.html#formacao-raizes">Ver certificados</a>
             </article>
             <article class="ecosystem-panel">
@@ -1795,7 +1816,7 @@ const renderEcosystemHome = () => {
 
         <aside class="ecosystem-home-aside">
           <section class="ecosystem-panel mission-widget">
-            <div class="mission-widget-title"><span>🎯</span><div><h2>Missao do dia</h2><p>Complete suas atividades diarias</p></div></div>
+            <div class="mission-widget-title"><img src="${homeOfficialAsset("icon_missao")}" alt="" loading="lazy" /><div><h2>Missao do dia</h2><p>Complete suas atividades diarias</p></div></div>
             <label><input type="checkbox" checked /> Ler 20 paginas</label>
             <label><input type="checkbox" checked /> Concluir 1 curso</label>
             <label><input type="checkbox" /> Responder 10 questoes</label>
@@ -1806,7 +1827,7 @@ const renderEcosystemHome = () => {
           <section class="ecosystem-panel">
             ${renderHomeSectionHeader("Atividades recentes")}
             <div class="activity-list">
-              ${recentActivities.map((item) => `<a href="${item.href}"><strong>${item.title}</strong><span>${item.meta}</span></a>`).join("")}
+              ${recentActivities.map((item) => `<a href="${item.href}"><img src="${item.icon}" alt="" loading="lazy" /><span><strong>${item.title}</strong><small>${item.meta}</small></span></a>`).join("")}
             </div>
             <a class="aside-link" href="perfil.html">Ver historico completo</a>
           </section>
@@ -1814,12 +1835,7 @@ const renderEcosystemHome = () => {
       </div>
 
       <section class="ecosystem-smart-footer" aria-label="Indicadores do ecossistema">
-        <article><strong>${ecosystemHomeStats.xp}</strong><span>XP</span></article>
-        <article><strong>${ecosystemHomeStats.medals}</strong><span>Medalhas</span></article>
-        <article><strong>${ecosystemHomeStats.trainingHours}h</strong><span>Horas de formacao</span></article>
-        <article><strong>${ecosystemHomeStats.certificates}</strong><span>Certificados</span></article>
-        <article><strong>${ecosystemHomeStats.booksRead}</strong><span>Livros lidos</span></article>
-        <article><strong>${ecosystemHomeStats.gamesCompleted}</strong><span>Jogos concluidos</span></article>
+        ${ecosystemHomeIndicators.map((item) => `<article><img src="${item.icon}" alt="" loading="lazy" /><strong>${item.value}</strong><span>${item.label}</span></article>`).join("")}
       </section>
     </div>
   `;
@@ -2547,19 +2563,19 @@ const environments = {
     avatar: "assets/universidade/avatar-ana-carolina.webp",
     profileImage: "logo-sidebar-dark.png",
     nav: [
-      ["plataforma", "🏠 Inicio", "plataforma.html"],
-      ["biblioteca", "📚 Biblioteca", "biblioteca.html"],
-      ["universidade", "🎓 Universidade", "universidade.html"],
-      ["jogos", "🎮 Jogos Educativos", "jogos.html"],
-      ["avalia", "📊 Avalia+", "avalia.html"],
-      ["bancoQuestoes", "▦ Banco de Questoes", "banco-questoes.html"],
-      ["professor", "👤 Professor", "professor.html"],
-      ["aluno", "👥 Aluno", "aluno.html"],
-      ["familia", "👨‍👩‍👧 Familia", "familia.html"],
-      ["secretaria", "▣ Secretaria", "secretaria.html"],
-      ["gestor", "◎ Gestor", "gestor.html"],
-      ["arvore", "🌳 Minha Arvore", "arvore.html"],
-      ["missao", "✅ Missao do Dia", "missao.html"],
+      ["plataforma", "Inicio", "plataforma.html"],
+      ["biblioteca", "Biblioteca", "biblioteca.html"],
+      ["universidade", "Universidade", "universidade.html"],
+      ["jogos", "Jogos Educativos", "jogos.html"],
+      ["avalia", "Avalia+", "avalia.html"],
+      ["bancoQuestoes", "Banco de Questoes", "banco-questoes.html"],
+      ["professor", "Professor", "professor.html"],
+      ["aluno", "Aluno", "aluno.html"],
+      ["familia", "Familia", "familia.html"],
+      ["secretaria", "Secretaria", "secretaria.html"],
+      ["gestor", "Gestor", "gestor.html"],
+      ["arvore", "Minha Arvore", "arvore.html"],
+      ["missao", "Missao do Dia", "missao.html"],
     ],
     mobile: [
       ["plataforma", "Inicio", "plataforma.html"],
