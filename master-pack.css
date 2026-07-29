@@ -6773,6 +6773,25 @@ td {
   min-width: 0;
 }
 
+.home-presentation-panel {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--rs-line);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--rs-shadow);
+}
+
+.home-presentation-panel img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: center top;
+}
+
 .ecosystem-home-aside {
   position: sticky;
   top: 96px;

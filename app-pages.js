@@ -1772,104 +1772,47 @@ const renderEcosystemHome = () => {
         </div>
       </section>
 
-      <div class="ecosystem-home-grid">
-        <main class="ecosystem-home-main">
-          ${renderHomeSectionHeader("Continue de onde parou")}
-          <section class="journey-grid">
-            ${ecosystemHomeJourney
-              .map(
-                (item) => `
-                  <article class="journey-card is-${item.tone}">
-                    <div class="journey-art" aria-hidden="true"><strong>${item.label}</strong><span>${item.progress}%</span></div>
-                    <div>
-                      <span>${item.label}</span>
-                      <h3>${item.title}</h3>
-                      <p>${item.detail}</p>
-                      <i><b style="width:${item.progress}%"></b></i>
-                      <small>${item.progress}%</small>
-                      <a href="${item.href}">${item.action}</a>
-                    </div>
-                  </article>
-                `
-              )
-              .join("")}
-          </section>
+      <main class="ecosystem-home-main">
+        ${renderHomeSectionHeader("Continue de onde parou")}
+        <section class="journey-grid">
+          ${ecosystemHomeJourney
+            .map(
+              (item) => `
+                <article class="journey-card is-${item.tone}">
+                  <div class="journey-art" aria-hidden="true"><strong>${item.label}</strong><span>${item.progress}%</span></div>
+                  <div>
+                    <span>${item.label}</span>
+                    <h3>${item.title}</h3>
+                    <p>${item.detail}</p>
+                    <i><b style="width:${item.progress}%"></b></i>
+                    <small>${item.progress}%</small>
+                    <a href="${item.href}">${item.action}</a>
+                  </div>
+                </article>
+              `
+            )
+            .join("")}
+        </section>
 
-          ${renderHomeSectionHeader("Explore os recursos do ecossistema", `<a href="biblioteca.html">Ver todos</a>`)}
-          <section class="ecosystem-resource-grid">
-            ${ecosystemHomeResources
-              .map(
-                (item) => `
-                  <a class="resource-card is-${item.tone}" href="${item.href}">
-                    <div><strong>${item.title}</strong><small>${item.description}</small></div>
-                  </a>
-                `
-              )
-              .join("")}
-          </section>
+        <section class="home-presentation-panel">
+          <img
+            src="assets/d1cbda35-0da3-4dcc-90c1-44395cebd20c.png"
+            alt="Recursos do Ecossistema, Painel de Formacao, Central de Missoes e Atividades Recentes"
+            loading="eager"
+            onerror="this.hidden=true"
+          />
+        </section>
 
-          <section class="ecosystem-panels">
-            <article class="ecosystem-panel">
-              ${renderHomeSectionHeader("Cursos em andamento", `<a href="universidade.html">Ver todos</a>`)}
-              <div class="course-progress-list">
-                <p><strong>BNCC na Pratica</strong><span>20h</span><i><b style="width:40%"></b></i><em>40%</em></p>
-                <p><strong>Avaliacao Diagnostica</strong><span>20h</span><i><b style="width:70%"></b></i><em>70%</em></p>
-                <p><strong>SAEB - Matematica</strong><span>20h</span><i><b style="width:20%"></b></i><em>20%</em></p>
-              </div>
-            </article>
-            <article class="ecosystem-panel metric-feature">
-              ${renderHomeSectionHeader("Horas de formacao", `<span>Este ano</span>`)}
-              <strong>${ecosystemHomeStats.trainingHours}h</strong>
-              <p>de 400h concluidas</p>
-              <div class="mini-donut" style="--value:30%">30%</div>
-              <a href="universidade.html">Ver relatorio completo</a>
-            </article>
-            <article class="ecosystem-panel certificate-feature">
-              ${renderHomeSectionHeader("Certificados", `<a href="universidade.html">Ver todos</a>`)}
-              <strong>${ecosystemHomeStats.certificates}</strong>
-              <p>certificados conquistados</p>
-              <a href="universidade.html#formacao-raizes">Ver certificados</a>
-            </article>
-            <article class="ecosystem-panel">
-              ${renderHomeSectionHeader("Recomendacoes para voce")}
-              <div class="recommendation-list">
-                ${recommendations.map((item) => `<a href="${item.href}"><strong>${item.title}</strong><span>${item.meta}</span></a>`).join("")}
-              </div>
-            </article>
-          </section>
-
-          <section class="ecosystem-news">
-            ${renderHomeSectionHeader("Novidades e destaques")}
-            <div>
-              <a href="universidade.html#formacao-raizes"><strong>Novo curso disponivel!</strong><span>Planejamento por Habilidades</span></a>
-              <a href="avalia.html"><strong>Live hoje as 19h</strong><span>Avaliacao e intervencao</span></a>
-              <a href="jogos.html"><strong>Novo jogo lancado!</strong><span>Organizando a Cesta</span></a>
-              <a href="universidade.html"><strong>Webinar ao vivo</strong><span>BNCC e praticas na sala de aula</span></a>
-            </div>
-          </section>
-        </main>
-
-        <aside class="ecosystem-home-aside">
-          <section class="ecosystem-panel mission-widget">
-            <div class="mission-widget-title"><div><h2>Missao do dia</h2><p>Complete suas atividades diarias</p></div></div>
-            <div class="mission-static-list">
-              <article><strong>Leitura diaria</strong><small>20 paginas concluidas</small></article>
-              <article><strong>Formacao</strong><small>1 curso em andamento</small></article>
-              <article><strong>Avalia+</strong><small>10 questoes recomendadas</small></article>
-              <article><strong>Jogos</strong><small>Aprendizagem ativa</small></article>
-            </div>
-            <div class="mission-static-action">Central de missoes</div>
-          </section>
-
-          <section class="ecosystem-panel">
-            ${renderHomeSectionHeader("Atividades recentes")}
-            <div class="activity-list">
-              ${recentActivities.map((item) => `<a href="${item.href}"><span><strong>${item.title}</strong><small>${item.meta}</small></span></a>`).join("")}
-            </div>
-            <a class="aside-link" href="perfil.html">Ver historico completo</a>
-          </section>
-        </aside>
-      </div>
+        <section class="ecosystem-news">
+          ${renderHomeSectionHeader("Novidades e destaques")}
+          <div>
+            <a href="universidade.html#formacao-raizes"><strong>Novo curso disponivel!</strong><span>Planejamento por Habilidades</span></a>
+            <a href="avalia.html"><strong>Live hoje as 19h</strong><span>Avaliacao e intervencao</span></a>
+            <a href="jogos.html"><strong>Novo jogo lancado!</strong><span>Organizando a Cesta</span></a>
+            <a href="universidade.html"><strong>Webinar ao vivo</strong><span>BNCC e praticas na sala de aula</span></a>
+          </div>
+        </section>
+      </main>
 
       <section class="ecosystem-smart-footer" aria-label="Indicadores do ecossistema">
         ${ecosystemHomeIndicators.map((item) => `<article><strong>${item.value}</strong><span>${item.label}</span></article>`).join("")}
