@@ -1743,19 +1743,38 @@ const renderHomeSectionHeader = (title, action = "") => `
   </div>
 `;
 
-const renderEcosystemHome = () => {
-  const nextMission = missionFixtures.colorMatch001;
-  const recentActivities = [
-    { title: "Voce concluiu o curso Avaliacao Diagnostica", meta: "ha 2 horas", href: "universidade.html", icon: homeOfficialAsset("activity_curso") },
-    { title: "Voce ganhou uma medalha Explorador do Conhecimento", meta: "ha 5 horas", href: "perfil.html", icon: homeOfficialAsset("activity_medalha") },
-    { title: "Voce leu 15 paginas do Volume 1", meta: "ontem", href: masterBook001.href, icon: homeOfficialAsset("activity_leitura") },
-  ];
-  const recommendations = [
-    { title: "Trilha: Alfabetizacao", meta: "5 cursos", href: "universidade.html#catalogo" },
-    { title: "Curso: Intervencao Pedagogica", meta: "20h", href: "universidade.html#formacao-raizes" },
-    { title: "Livro: Praticas Pedagogicas", meta: "Infantil 5", href: "biblioteca.html" },
-  ];
+const homePresentationHotspots = [
+  { className: "hotspot-resource-library", href: "biblioteca.html", label: "Abrir Biblioteca Digital" },
+  { className: "hotspot-resource-university", href: "universidade.html", label: "Abrir Universidade" },
+  { className: "hotspot-resource-games", href: "jogos.html", label: "Abrir Jogos Educativos" },
+  { className: "hotspot-resource-avalia", href: "avalia.html", label: "Abrir Avalia+" },
+  { className: "hotspot-resource-bank", href: "banco-questoes.html", label: "Abrir Banco de Questoes" },
+  { className: "hotspot-resource-labs", href: "biblioteca.html#acervo-completo", label: "Abrir Laboratorios" },
+  { className: "hotspot-mission-reading", href: masterBook001.href, label: "Abrir missao de leitura diaria" },
+  { className: "hotspot-mission-training", href: "universidade.html#formacao-raizes", label: "Abrir formacao em andamento" },
+  { className: "hotspot-mission-avalia", href: "banco-questoes.html", label: "Abrir questoes recomendadas" },
+  { className: "hotspot-mission-games", href: "jogos.html", label: "Abrir jogos recomendados" },
+  { className: "hotspot-mission-all", href: "missao.html", label: "Ver todas as missoes" },
+  { className: "hotspot-activity-course", href: "universidade.html#formacao-raizes", label: "Abrir historico do curso Avaliacao Diagnostica" },
+  { className: "hotspot-activity-medal", href: "perfil.html", label: "Abrir medalhas e conquistas" },
+  { className: "hotspot-activity-reading", href: masterBook001.href, label: "Abrir leitura do Volume 1" },
+  { className: "hotspot-activity-history", href: "perfil.html", label: "Ver historico completo" },
+  { className: "hotspot-training-bncc", href: "universidade.html#formacao-raizes", label: "Abrir curso BNCC na Pratica" },
+  { className: "hotspot-training-diagnostic", href: "universidade.html#formacao-raizes", label: "Abrir curso Avaliacao Diagnostica" },
+  { className: "hotspot-training-saeb", href: "universidade.html#formacao-raizes", label: "Abrir curso SAEB Matematica" },
+  { className: "hotspot-training-hours", href: "universidade.html", label: "Abrir relatorio de formacao" },
+  { className: "hotspot-training-certificates", href: "universidade.html#formacao-raizes", label: "Ver certificados" },
+  { className: "hotspot-training-literacy", href: "universidade.html#catalogo", label: "Abrir trilha Alfabetizacao" },
+  { className: "hotspot-training-intervention", href: "universidade.html#formacao-raizes", label: "Abrir curso Intervencao Pedagogica" },
+  { className: "hotspot-training-book", href: "biblioteca.html", label: "Abrir livro Praticas Pedagogicas" },
+];
 
+const renderHomePresentationHotspots = () =>
+  homePresentationHotspots
+    .map((hotspot) => `<a class="home-hotspot ${hotspot.className}" href="${hotspot.href}" aria-label="${hotspot.label}"></a>`)
+    .join("");
+
+const renderEcosystemHome = () => {
   return `
     <div class="ecosystem-home">
       <section class="ecosystem-hero">
@@ -1795,12 +1814,15 @@ const renderEcosystemHome = () => {
         </section>
 
         <section class="home-presentation-panel">
-          <img
-            src="assets/d1cbda35-0da3-4dcc-90c1-44395cebd20c.png"
-            alt="Recursos do Ecossistema, Painel de Formacao, Central de Missoes e Atividades Recentes"
-            loading="eager"
-            onerror="this.hidden=true"
-          />
+          <div class="home-static-map">
+            <img
+              src="assets/d1cbda35-0da3-4dcc-90c1-44395cebd20c.png"
+              alt="Recursos do Ecossistema, Painel de Formacao, Central de Missoes e Atividades Recentes"
+              loading="eager"
+              onerror="this.hidden=true"
+            />
+            ${renderHomePresentationHotspots()}
+          </div>
         </section>
 
         <section class="ecosystem-news">

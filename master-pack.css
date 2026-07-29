@@ -6784,13 +6784,66 @@ td {
   box-shadow: var(--rs-shadow);
 }
 
-.home-presentation-panel img {
+.home-static-map {
+  position: relative;
+  width: 100%;
+}
+
+.home-static-map > img {
   display: block;
   width: 100%;
   height: auto;
   object-fit: contain;
   object-position: center top;
 }
+
+.home-hotspot {
+  position: absolute;
+  display: block;
+  border-radius: 14px;
+  background: transparent;
+  cursor: pointer;
+  transition: background 180ms ease, box-shadow 180ms ease;
+}
+
+.home-hotspot:hover,
+.home-hotspot:focus-visible {
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18);
+  outline: none;
+}
+
+.home-static-map[data-debug-hotspots="true"] .home-hotspot {
+  background: rgba(255, 0, 0, 0.12);
+  box-shadow: inset 0 0 0 2px rgba(255, 0, 0, 0.72);
+}
+
+.hotspot-resource-library { left: 1.7%; top: 10.2%; width: 10.9%; height: 38.3%; }
+.hotspot-resource-university { left: 13.5%; top: 10.2%; width: 11.1%; height: 38.3%; }
+.hotspot-resource-games { left: 25.5%; top: 10.2%; width: 10.7%; height: 38.3%; }
+.hotspot-resource-avalia { left: 36.8%; top: 10.2%; width: 10.5%; height: 38.3%; }
+.hotspot-resource-bank { left: 48.2%; top: 10.2%; width: 10.8%; height: 38.3%; }
+.hotspot-resource-labs { left: 59.9%; top: 10.2%; width: 10.3%; height: 38.3%; }
+
+.hotspot-mission-reading { left: 72.9%; top: 9.8%; width: 25.4%; height: 9.6%; }
+.hotspot-mission-training { left: 72.9%; top: 19.6%; width: 25.4%; height: 9.9%; }
+.hotspot-mission-avalia { left: 72.9%; top: 29.7%; width: 25.4%; height: 9.6%; }
+.hotspot-mission-games { left: 72.9%; top: 39.4%; width: 25.4%; height: 9.1%; }
+.hotspot-mission-all { left: 73.4%; top: 48.8%; width: 24.7%; height: 5.2%; }
+
+.hotspot-activity-course { left: 72.9%; top: 60.6%; width: 25.4%; height: 8.9%; }
+.hotspot-activity-medal { left: 72.9%; top: 69.5%; width: 25.4%; height: 8.8%; }
+.hotspot-activity-reading { left: 72.9%; top: 78.5%; width: 25.4%; height: 8.8%; }
+.hotspot-activity-history { left: 73.4%; top: 90.1%; width: 24.7%; height: 4.8%; }
+
+.hotspot-training-bncc { left: 2.0%; top: 64.1%; width: 16.9%; height: 8.8%; }
+.hotspot-training-diagnostic { left: 2.0%; top: 73.2%; width: 16.9%; height: 8.8%; }
+.hotspot-training-saeb { left: 2.0%; top: 82.2%; width: 16.9%; height: 8.6%; }
+.hotspot-training-hours { left: 20.2%; top: 57.5%; width: 16.0%; height: 37.9%; }
+.hotspot-training-certificates { left: 37.1%; top: 57.5%; width: 15.8%; height: 37.9%; }
+.hotspot-training-literacy { left: 54.4%; top: 64.3%; width: 15.9%; height: 8.6%; }
+.hotspot-training-intervention { left: 54.4%; top: 73.2%; width: 15.9%; height: 8.8%; }
+.hotspot-training-book { left: 54.4%; top: 82.3%; width: 15.9%; height: 8.8%; }
 
 .ecosystem-home-aside {
   position: sticky;
