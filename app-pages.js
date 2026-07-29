@@ -1627,15 +1627,21 @@ const renderStudentQuickAccess = (items) => `
 `;
 
 const renderStudentPresentationDashboard = () => `
-  <section class="student-presentation-dashboard" aria-label="Dashboard do Aluno">
-    <img
-      src="assets/aluno/oficial-dashboard-aluno.png"
-      alt="Dashboard oficial do aluno com saudacao, missoes, livro em andamento, evolucao, XP e biblioteca"
-      loading="eager"
-      decoding="async"
-      onerror="this.hidden=true"
-    />
-  </section>
+  <div class="student-dashboard student-presentation-mode" data-student-dashboard>
+    <section class="student-presentation-dashboard" aria-label="Dashboard do Aluno">
+      <img
+        src="assets/aluno/oficial-dashboard-aluno.png"
+        alt="Dashboard oficial do aluno com saudacao, missoes, livro em andamento, evolucao, XP e biblioteca"
+        loading="eager"
+        decoding="async"
+        onerror="this.hidden=true"
+      />
+    </section>
+    <div class="student-grid student-restored-grid">
+      ${renderStudentMedals(studentDashboardView.medals)}
+    </div>
+    ${renderStudentQuickAccess(studentDashboardView.quickAccess)}
+  </div>
 `;
 
 const studentDashboardView = createStudentDashboardView();

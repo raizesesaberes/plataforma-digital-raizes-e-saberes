@@ -5165,6 +5165,23 @@ td {
   object-position: center top;
 }
 
+.student-presentation-mode {
+  gap: 16px;
+}
+
+.student-restored-grid .student-medals-card {
+  grid-column: 1 / -1;
+}
+
+.student-presentation-mode .student-medals-card > div:last-child {
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  align-items: start;
+}
+
+.student-presentation-mode .student-medal-art {
+  width: min(170px, 100%);
+}
+
 .student-skeleton {
   position: absolute;
   inset: 0;
