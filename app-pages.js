@@ -1683,6 +1683,80 @@ const renderStudentPresentationDashboard = () => `
   </div>
 `;
 
+const professorSoonLabels = {
+  perfil: "Perfil da Professora",
+  xp: "Historico de XP",
+  turmas: "Turmas da Professora",
+  atividades: "Atividades",
+  planejamento: "Planejamento",
+  aulas: "Proximas Aulas",
+  correcoes: "Relatorios de Correcao",
+};
+
+const professorDashboardHotspots = [
+  { className: "professor-hotspot-avatar", href: "professor.html?soon=perfil", label: "Abrir perfil da Professora Helena" },
+  { className: "professor-hotspot-turmas-top", href: "professor.html?soon=turmas", label: "Abrir turmas ativas" },
+  { className: "professor-hotspot-planejadas-top", href: "professor.html?soon=atividades", label: "Abrir atividades planejadas" },
+  { className: "professor-hotspot-concluidas-top", href: "professor.html?soon=atividades", label: "Abrir atividades concluidas" },
+  { className: "professor-hotspot-xp-top", href: "professor.html?soon=xp", label: "Abrir XP da professora" },
+  { className: "professor-hotspot-turma-a", href: "professor.html?soon=turmas", label: "Abrir turma Infantil 5 anos A" },
+  { className: "professor-hotspot-turma-b", href: "professor.html?soon=turmas", label: "Abrir turma Infantil 5 anos B" },
+  { className: "professor-hotspot-turma-4a", href: "professor.html?soon=turmas", label: "Abrir turma 4 Ano A" },
+  { className: "professor-hotspot-turma-2a", href: "professor.html?soon=turmas", label: "Abrir turma 2 Ano A" },
+  { className: "professor-hotspot-turma-3b", href: "professor.html?soon=turmas", label: "Abrir turma 3 Ano B" },
+  { className: "professor-hotspot-seg", href: "professor.html?soon=planejamento", label: "Abrir planejamento de segunda-feira" },
+  { className: "professor-hotspot-ter", href: "professor.html?soon=planejamento", label: "Abrir planejamento de terca-feira" },
+  { className: "professor-hotspot-qua", href: "professor.html?soon=planejamento", label: "Abrir planejamento de quarta-feira" },
+  { className: "professor-hotspot-qui", href: "professor.html?soon=planejamento", label: "Abrir planejamento de quinta-feira" },
+  { className: "professor-hotspot-sex", href: "professor.html?soon=planejamento", label: "Abrir planejamento de sexta-feira" },
+  { className: "professor-hotspot-aula-1", href: "professor.html?soon=aulas", label: "Abrir aula de Linguagem" },
+  { className: "professor-hotspot-aula-2", href: "professor.html?soon=aulas", label: "Abrir aula de Matematica" },
+  { className: "professor-hotspot-aula-3", href: "professor.html?soon=aulas", label: "Abrir aula de Ciencias" },
+  { className: "professor-hotspot-aula-4", href: "professor.html?soon=aulas", label: "Abrir aula de Historia" },
+  { className: "professor-hotspot-aula-5", href: "professor.html?soon=aulas", label: "Abrir aula de Projeto" },
+  { className: "professor-hotspot-pendente-corrigir", href: "professor.html?soon=atividades", label: "Abrir atividades para corrigir" },
+  { className: "professor-hotspot-pendente-revisar", href: "professor.html?soon=atividades", label: "Abrir atividades para revisar" },
+  { className: "professor-hotspot-pendente-devolutivas", href: "professor.html?soon=atividades", label: "Abrir devolutivas para enviar" },
+  { className: "professor-hotspot-pendente-publicar", href: "professor.html?soon=atividades", label: "Abrir atividades para publicar" },
+  { className: "professor-hotspot-correcoes", href: "professor.html?soon=correcoes", label: "Abrir relatorios de correcao" },
+  { className: "professor-hotspot-book-1", href: "book-viewer.html?book=livro-007", label: "Abrir Educacao Infantil 5 anos Volume 1" },
+  { className: "professor-hotspot-book-2", href: "book-viewer.html?book=livro-008", label: "Abrir Educacao Infantil 5 anos Volume 2" },
+  { className: "professor-hotspot-book-3", href: "book-viewer.html?book=avalia-portugues-2ano", label: "Abrir Lingua Portuguesa 2 Ano Volume 1" },
+  { className: "professor-hotspot-book-4", href: "book-viewer.html?book=avalia-matematica-2ano", label: "Abrir Matematica 2 Ano Volume 1" },
+  { className: "professor-hotspot-book-5", href: "book-viewer.html?book=livro-003", label: "Abrir Natureza e Sociedade 3 Ano Volume 1" },
+  { className: "professor-hotspot-bncc", href: "biblioteca.html", label: "Abrir conteudos alinhados a BNCC" },
+];
+
+const renderProfessorSoon = (key) => {
+  const title = professorSoonLabels[key] || "Modulo em breve";
+  return `
+    <section class="coming-soon-panel">
+      <span>Em breve</span>
+      <h1>${title}</h1>
+      <p>Este recurso ja esta previsto no Ecossistema Raizes e Saberes e sera liberado nas proximas etapas.</p>
+      <a href="professor.html">Voltar ao Painel do Professor</a>
+    </section>
+  `;
+};
+
+const renderProfessorDashboard = () => {
+  const params = typeof window === "undefined" ? new URLSearchParams() : new URLSearchParams(window.location.search);
+  const soon = params.get("soon");
+  if (soon) return renderProfessorSoon(soon);
+  return `
+    <section class="professor-dashboard" aria-label="Painel da Professora Helena">
+      <img
+        src="assets/professor/professor-dashboard.png"
+        alt="Painel da Professora Helena com turmas, planejamento, proximas aulas, atividades, correcoes e biblioteca integrada"
+        loading="eager"
+        decoding="async"
+        onerror="this.hidden=true"
+      />
+      ${professorDashboardHotspots.map((hotspot) => `<a class="professor-hotspot ${hotspot.className}" href="${hotspot.href}" aria-label="${hotspot.label}"></a>`).join("")}
+    </section>
+  `;
+};
+
 const studentDashboardView = createStudentDashboardView();
 const homeOfficialAsset = (name) => `assets/home-official/${name}.png`;
 
@@ -2420,19 +2494,9 @@ const modules = {
   },
   professor: {
     title: "Painel do Professor",
-    subtitle: "Que bom te ver por aqui. Vamos transformar o dia dos nossos alunos.",
+    subtitle: "Painel da Professora Helena",
     code: "MS-003",
-    html: `
-      <div class="dashboard-head"><div><p>MS-003</p><h1>Ola, Professor Marcos!</h1><span>Que bom te ver por aqui. Vamos transformar o dia dos nossos alunos.</span></div></div>
-      <div class="teacher-layout">
-        <section class="panel"><div class="panel-head"><h2>Minhas Turmas</h2><a>Ver todas</a></div><div class="class-grid"><article>4º Ano A<span>28 alunos</span></article><article>5º Ano B<span>27 alunos</span></article><article>6º Ano A<span>30 alunos</span></article><article>3º Ano C<span>25 alunos</span></article></div></section>
-        <section class="panel span-2"><div class="panel-head"><h2>Planejamento Semanal</h2><a>Ver semana completa</a></div><div class="week-grid"><article>Seg 20<strong>Matematica</strong><span>8h - 9h40</span></article><article>Ter 21<strong>Portugues</strong><span>8h - 9h40</span></article><article class="today">Qua 22<strong>Geografia</strong><span>8h - 9h40</span></article><article>Qui 23<strong>Ciencias</strong><span>10h - 11h40</span></article><article>Sex 24<strong>Ed. Fisica</strong><span>10h - 11h40</span></article></div></section>
-        <section class="panel"><h2>Proximas Aulas</h2><ul class="clean-list"><li>Geografia <span>Hoje - 8h00</span></li><li>Arte <span>Hoje - 10h00</span></li><li>Matematica <span>Amanha - 8h00</span></li></ul></section>
-        <section class="panel"><h2>Atividades Pendentes</h2><ul class="clean-list"><li>Atividade de Matematica <span>15 entregas</span></li><li>Leitura e Interpretacao <span>8 entregas</span></li><li>Experimento: Ciclo da Agua <span>12 entregas</span></li></ul></section>
-        <section class="panel chart-card"><h2>Correcoes</h2><div class="donut">68%</div><strong>24</strong><span>Atividades para corrigir</span></section>
-        <section class="panel book-mini"><h2>Biblioteca Integrada</h2><img src="assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.webp" alt="" /><div><strong>Ciencias</strong><span>4º Ano</span><button>Continuar leitura</button></div></section>
-      </div>
-    `,
+    html: renderProfessorDashboard(),
   },
   avalia: {
     title: "Avalia+",
@@ -2761,7 +2825,7 @@ const environments = {
     label: "Painel do Professor",
     profile: "Professor",
     search: "Buscar turmas, alunos, atividades, livros...",
-    user: "Prof. Marcos Silva<br />Ver perfil",
+    user: "Professora Helena<br />Ver perfil",
     nav: [
       ["professor", "Inicio", "professor.html"],
       ["turmas", "Turmas", "#"],
