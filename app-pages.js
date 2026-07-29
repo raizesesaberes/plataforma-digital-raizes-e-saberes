@@ -1469,50 +1469,44 @@ const createStudentDashboardView = () => {
 };
 
 const renderStudentProfilePage = () => {
-  const view = createStudentDashboardView();
-  const summary = view.gameSummary;
-  const medals = summary.completed.length
-    ? summary.completed.map((record) => `<article>${studentLazyImg(record.image, "", "student-medal-art")}<strong>${record.medal}</strong><small>${record.title}</small></article>`).join("")
-    : `<article>${studentLazyImg("assets/aluno/oficial-medalha-explorador.png", "", "student-medal-art")}<strong>Nenhuma medalha de jogo ainda</strong><small>Complete um jogo para registrar sua primeira conquista.</small></article>`;
-  const completedGames = summary.completed.length
-    ? summary.completed.map((record) => `<li><strong>${record.title}</strong><span>${record.xp} XP · ${record.medal}</span></li>`).join("")
-    : `<li><strong>Nenhum jogo concluido ainda</strong><span>Comece pelo Hub dos Jogos.</span></li>`;
   return `
-    <div class="student-dashboard student-profile-page">
-      ${renderStudentHero(view)}
-      <div class="student-grid">
-        <section class="student-card student-medals-card">
-          <div class="student-card-head"><h2>🏅 Minhas Medalhas</h2><a href="jogos.html">Jogar</a></div>
-          <div>${medals}</div>
-        </section>
-        <section class="student-card student-xp-card">
-          <div class="student-card-head"><h2>Meu Progresso</h2></div>
-          <article>
-            <div><strong>${view.profile.xp} XP</strong><small>${summary.completedCount} jogos concluidos</small></div>
-            ${studentLazyImg(view.xpGoal.image, "", "student-xp-art")}
-          </article>
-          <div class="student-progress-line"><i><span style="width:${summary.percent}%"></span></i><b>${summary.percent}% da experiencia inicial</b></div>
-          <p><strong>Dias consecutivos</strong> ${summary.streak} dias</p>
-          <p><strong>Ultima atividade</strong> ${summary.lastActivity ? new Date(summary.lastActivity).toLocaleDateString("pt-BR") : "Nenhuma atividade concluida"}</p>
-        </section>
-        <section class="student-card">
-          <div class="student-card-head"><h2>Minhas Conquistas</h2></div>
-          <p><strong>${summary.completedCount}</strong> jogos concluidos de ${summary.totalGames} disponiveis.</p>
-          <p><strong>${summary.totalXp} XP</strong> conquistados em jogos digitais.</p>
-        </section>
-        <section class="student-card">
-          <div class="student-card-head"><h2>Jogos Concluidos</h2><a href="jogos.html">Hub</a></div>
-          <ul class="clean-list">${completedGames}</ul>
-        </section>
-      </div>
-      ${renderStudentQuickAccess([
-        { label: "Jogos", detail: "Continuar explorando", icon: "▶", href: "jogos.html" },
-        { label: "Biblioteca", detail: "Ler e descobrir", icon: "📚", href: "biblioteca.html" },
-        { label: "Conquistas", detail: "Ver medalhas", icon: "🏆", href: "#conquistas" },
-      ])}
-    </div>
+    <main class="student-profile-page">
+      <section class="student-profile-static-map" aria-label="Perfil do aluno Pedro">
+        <img
+          src="assets/aluno/perfil-aluno-dashboard.png"
+          alt="Perfil do aluno Pedro com medalhas, progresso, conquistas e jogos concluidos"
+          loading="eager"
+          decoding="async"
+          onerror="this.hidden=true"
+        />
+        ${studentProfileHotspots.map((hotspot) => `<a class="profile-hotspot ${hotspot.className}" href="${hotspot.href}" aria-label="${hotspot.label}"></a>`).join("")}
+      </section>
+    </main>
   `;
 };
+
+const studentProfileHotspots = [
+  { className: "profile-hotspot-avatar", href: "perfil.html", label: "Abrir detalhes do perfil de Pedro" },
+  { className: "profile-hotspot-xp-top", href: "perfil.html", label: "Abrir historico de XP" },
+  { className: "profile-hotspot-tree-top", href: "arvore.html", label: "Abrir Minha Arvore" },
+  { className: "profile-hotspot-streak-top", href: "missao.html", label: "Abrir sequencia diaria" },
+  { className: "profile-hotspot-medal-organizador", href: "perfil.html", label: "Abrir conquista Pequeno Organizador" },
+  { className: "profile-hotspot-medal-construtor", href: "perfil.html", label: "Abrir conquista Pequeno Construtor" },
+  { className: "profile-hotspot-medal-caminhos", href: "perfil.html", label: "Abrir conquista Pequeno Explorador de Caminhos" },
+  { className: "profile-hotspot-medal-explorador", href: "perfil.html", label: "Abrir conquista Pequeno Explorador" },
+  { className: "profile-hotspot-medal-leitor", href: "book-viewer.html?book=livro-mestre-001", label: "Abrir conquista Leitor Iniciante" },
+  { className: "profile-hotspot-medal-natureza", href: "perfil.html", label: "Abrir conquista Curioso por Natureza" },
+  { className: "profile-hotspot-xp-panel", href: "perfil.html", label: "Abrir painel de XP e proximo nivel" },
+  { className: "profile-hotspot-last-activity", href: "book-viewer.html?book=livro-mestre-001", label: "Abrir ultima atividade Leitura Linguagem" },
+  { className: "profile-hotspot-games-summary", href: "jogos.html", label: "Abrir jogos concluidos" },
+  { className: "profile-hotspot-xp-summary", href: "perfil.html", label: "Abrir XP total" },
+  { className: "profile-hotspot-achievements-summary", href: "perfil.html", label: "Abrir conquistas" },
+  { className: "profile-hotspot-game-caixa", href: "jogos.html", label: "Abrir jogo A Caixa Misteriosa" },
+  { className: "profile-hotspot-game-cesta", href: "jogos.html", label: "Abrir jogo Organizando a Cesta" },
+  { className: "profile-hotspot-game-jardim", href: "jogos.html", label: "Abrir jogo Jardim das Descobertas" },
+  { className: "profile-hotspot-game-ponte", href: "jogos.html", label: "Abrir jogo Construindo a Ponte" },
+  { className: "profile-hotspot-game-cores", href: "jogos.html", label: "Abrir jogo As Cores do Jardim" },
+];
 
 // Reusable student dashboard components. Each renderer receives data only, ready for Supabase records.
 const renderStudentHero = ({ profile, tree }) => `
