@@ -3171,6 +3171,32 @@ const initQuestionBank = () => {
     selectionStatus.dataset.tone = tone;
     selectionStatus.hidden = !message;
   };
+  const showSessionRequired = (message = "Entre novamente para salvar a avaliacao no Supabase.") => {
+    if (!selectionStatus) return;
+    const next = encodeURIComponent(`${window.location.pathname}${window.location.search}${window.location.hash}`);
+    selectionStatus.innerHTML = `${htmlEscape(message)} <a href="login.html?next=${next}">Entrar novamente</a>`;
+    selectionStatus.dataset.tone = "error";
+    selectionStatus.hidden = false;
+  };
+  const installSupabaseSessionListener = () => {
+    if (mode !== "supabase") return;
+    const refreshIfNeeded = () => {
+      const session = getStoredSupabaseSession();
+      if (session && isStoredSessionExpired(session, 180)) {
+        refreshStoredSupabaseSession().catch(() => {});
+      }
+    };
+    window.addEventListener("storage", (event) => {
+      if (event.key === supabaseSessionStorageKey) {
+        refresh().catch(() => {});
+      }
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) refreshIfNeeded();
+    });
+    window.setInterval(refreshIfNeeded, 4 * 60 * 1000);
+    refreshIfNeeded();
+  };
 
   const matchesSearch = (item) => {
     const term = search.value.trim().toLowerCase();
@@ -3317,10 +3343,18 @@ const initQuestionBank = () => {
 
   const saveOrder = async () => {
     if (!activeAssessmentId) return;
-    await questionBankDataService.reorderQuestions(
-      activeAssessmentId,
-      cart.map((id) => itemById(id)?.uuid || id)
-    );
+    try {
+      await questionBankDataService.reorderQuestions(
+        activeAssessmentId,
+        cart.map((id) => itemById(id)?.uuid || id)
+      );
+    } catch (error) {
+      if (String(error.message || "").includes("Sessao Supabase ausente") || String(error.message || "").includes("Sessao expirada")) {
+        showSessionRequired("Ordem preservada localmente. Entre novamente para sincronizar no Supabase.");
+        return;
+      }
+      throw error;
+    }
   };
 
   const moveCartItem = async (id, direction) => {
@@ -3372,14 +3406,61 @@ const initQuestionBank = () => {
     }
     const isTeacher = kind === "teacher";
     const totalTime = items.reduce((sum, item) => sum + item.estimatedTime, 0);
+    const totalPoints = items.length;
+    const assessmentTitle = titleInput?.value || "Avaliacao";
+    const component = root.querySelector("[data-qb-assessment-component]")?.value || "";
+    const year = root.querySelector("[data-qb-assessment-year]")?.value || "";
+    const className = root.querySelectorAll(".qb-builder select")[0]?.value || "";
+    const applicationDate = root.querySelector(".qb-builder input[type='date']")?.value || "";
+    const versionCode = activeAssessmentId ? String(activeAssessmentId).slice(0, 8) : `LOCAL-${Date.now().toString().slice(-6)}`;
     previewPanel.hidden = false;
     previewPanel.innerHTML = `
-      <div class="panel-head"><h2>${isTeacher ? "Gabarito do professor" : "Previa da avaliacao"}</h2><button type="button" data-qb-close-preview>Fechar</button></div>
-      <div class="qb-preview-sheet">
-        <header>
-          <strong>${htmlEscape(titleInput?.value || "Avaliacao")}</strong>
-          <span>${items.length} questoes &middot; ${totalTime} min</span>
+      <div class="panel-head">
+        <h2>${isTeacher ? "Gabarito do professor" : "Previa da avaliacao"}</h2>
+        <button type="button" data-qb-print="${isTeacher ? "teacher" : "student"}">${isTeacher ? "Gerar PDF do gabarito" : "Gerar PDF do aluno"}</button>
+        ${isTeacher ? `<button type="button" data-qb-print="answers">Gerar folha de respostas</button>` : ""}
+        <button type="button" data-qb-close-preview>Fechar</button>
+      </div>
+      <div class="qb-preview-sheet" data-qb-print-area="${isTeacher ? "teacher" : "student"}">
+        <header class="qb-preview-cover">
+          <strong>${isTeacher ? "GABARITO DO PROFESSOR" : "CADERNO DO ALUNO"}</strong>
+          <span>RAIZES E SABERES EDUCACIONAL</span>
+          <small>${isTeacher ? "AVALIA+ - GABARITO E ORIENTACOES DE CORRECAO" : "AVALIA+ - AVALIACAO DA APRENDIZAGEM"}</small>
         </header>
+        ${
+          isTeacher
+            ? `<div class="qb-preview-meta">
+                <span><b>AVALIACAO:</b> ${htmlEscape(assessmentTitle)}</span>
+                <span><b>COMPONENTE:</b> ${htmlEscape(component)}</span>
+                <span><b>ANO/TURMA:</b> ${htmlEscape(`${year} ${className}`.trim())}</span>
+                <span><b>PROFESSOR(A):</b> Prof. Marcos Silva</span>
+                <span><b>DATA DE APLICACAO:</b> ${htmlEscape(applicationDate || "____/____/______")}</span>
+                <span><b>TOTAL DE QUESTOES:</b> ${items.length}</span>
+                <span><b>VALOR TOTAL:</b> ${totalPoints}</span>
+                <span><b>CODIGO DA AVALIACAO:</b> ${htmlEscape(activeAssessmentId || "Aguardando salvamento")}</span>
+                <span><b>VERSAO:</b> ${htmlEscape(versionCode)}</span>
+                <span><b>USO DO PROFESSOR</b></span>
+              </div>
+              <table class="qb-answer-summary">
+                <thead><tr><th>Questao</th><th>Resposta</th><th>Valor</th><th>Habilidade</th><th>Descritor</th></tr></thead>
+                <tbody>${items
+                  .map((item, index) => `<tr><td>${index + 1}</td><td>${optionLabel(item.correctAlternative)}</td><td>1</td><td>${htmlEscape(item.skill)}</td><td>${htmlEscape(shortText(item.descriptor, 80))}</td></tr>`)
+                  .join("")}</tbody>
+              </table>`
+            : `<div class="qb-preview-meta">
+                <span><b>ESCOLA:</b> ________________________________________________</span>
+                <span><b>ESTUDANTE:</b> _____________________________________________</span>
+                <span><b>TURMA:</b> ${htmlEscape(className)}</span>
+                <span><b>TURNO:</b> __________________</span>
+                <span><b>PROFESSOR(A):</b> Prof. Marcos Silva</span>
+                <span><b>COMPONENTE CURRICULAR:</b> ${htmlEscape(component)}</span>
+                <span><b>ANO:</b> ${htmlEscape(year)}</span>
+                <span><b>DATA:</b> ${htmlEscape(applicationDate || "____/____/______")}</span>
+                <span><b>AVALIACAO:</b> ${htmlEscape(assessmentTitle)}</span>
+                <span><b>VALOR:</b> ${totalPoints}</span>
+                <span><b>NOTA:</b> __________________</span>
+              </div>`
+        }
         <p>${htmlEscape(root.querySelector(".qb-builder textarea")?.value || "Leia com atencao e marque apenas uma alternativa por questao.")}</p>
         ${items
           .map(
@@ -3394,13 +3475,15 @@ const initQuestionBank = () => {
                 </ol>
                 ${
                   isTeacher
-                    ? `<p><strong>Gabarito:</strong> ${optionLabel(item.correctAlternative)} &middot; ${htmlEscape(item.justification)}<br><strong>Habilidade:</strong> ${htmlEscape(item.skill)}</p>`
+                    ? `<p><strong>Gabarito:</strong> ${optionLabel(item.correctAlternative)} &middot; ${htmlEscape(item.justification)}<br><strong>Habilidade:</strong> ${htmlEscape(item.skill)}<br><strong>Descritor:</strong> ${htmlEscape(item.descriptor)}<br><strong>Distratores:</strong> ${htmlEscape(item.distractors.join(" "))}<br><strong>Orientacao de correcao:</strong> ${htmlEscape(item.intervention || "Retomar a habilidade indicada com atividade de recomposicao.")}</p>`
                     : `<p>${item.estimatedTime} min &middot; ${htmlEscape(item.component)} &middot; ${htmlEscape(item.skill)}</p>`
                 }
+                <footer>Pagina simulada ${index + 1} de ${items.length} &middot; Versao ${htmlEscape(versionCode)}</footer>
               </article>
             `
           )
           .join("")}
+        <footer class="qb-preview-footer">RAIZES E SABERES EDUCACIONAL &middot; ${items.length} questoes &middot; ${totalTime} min &middot; Versao ${htmlEscape(versionCode)}</footer>
       </div>
     `;
   };
@@ -3471,6 +3554,33 @@ const initQuestionBank = () => {
       }
     }
     return questionBankDataService.getAssessmentById(assessment.id);
+  };
+
+  const ensureSavedForPreview = async () => {
+    if (mode !== "supabase") {
+      return null;
+    }
+    try {
+      return await syncCartToAssessment();
+    } catch (error) {
+      const message = String(error.message || "");
+      if (message.includes("Sessao Supabase ausente") || message.includes("Sessao expirada") || message.includes("row-level security")) {
+        showSessionRequired("Selecao preservada. Entre novamente para salvar e liberar a pre-visualizacao oficial.");
+        return null;
+      }
+      throw error;
+    }
+  };
+
+  const printPreview = (kind) => {
+    const items = cart.map(itemById).filter(Boolean);
+    if (!items.length) {
+      setSelectionStatus("Selecione questoes antes de gerar PDF.", "error");
+      return;
+    }
+    const printKind = kind === "answers" ? "teacher" : kind;
+    renderPreview(printKind);
+    window.setTimeout(() => window.print(), 80);
   };
 
   const selectQuestion = (id) => {
@@ -3617,6 +3727,8 @@ const htmlEscape = (value) =>
     .replaceAll("'", "&#039;");
 
 const getSupabaseConfig = () => window.RAIZES_SUPABASE || {};
+const supabaseSessionStorageKey = "raizes:supabase-auth-session";
+const allowedAssessmentRoles = ["admin", "professor"];
 
 const decodeJwtPayload = (token) => {
   try {
@@ -3628,8 +3740,66 @@ const decodeJwtPayload = (token) => {
   }
 };
 
+const getStoredSupabaseSession = () => {
+  try {
+    return JSON.parse(localStorage.getItem(supabaseSessionStorageKey) || "null");
+  } catch (error) {
+    return null;
+  }
+};
+
+const storeSupabaseSession = (session) => {
+  if (!session?.access_token) return;
+  localStorage.setItem(
+    supabaseSessionStorageKey,
+    JSON.stringify({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token || getStoredSupabaseSession()?.refresh_token || "",
+      expires_at: session.expires_at || Math.floor(Date.now() / 1000) + Number(session.expires_in || 3600),
+      token_type: session.token_type || "bearer",
+      user: session.user || getStoredSupabaseSession()?.user || null,
+    })
+  );
+  localStorage.setItem("raizes:supabase-access-token", session.access_token);
+};
+
+const clearSupabaseSession = () => {
+  localStorage.removeItem(supabaseSessionStorageKey);
+  localStorage.removeItem("raizes:supabase-access-token");
+};
+
+const isStoredSessionExpired = (session, skewSeconds = 60) =>
+  !session?.access_token || Number(session.expires_at || 0) <= Math.floor(Date.now() / 1000) + skewSeconds;
+
+const refreshStoredSupabaseSession = async () => {
+  const config = getSupabaseConfig();
+  const session = getStoredSupabaseSession();
+  const baseUrl = config.url?.replace(/\/$/, "");
+  if (!baseUrl || !config.anonKey || !session?.refresh_token) {
+    return null;
+  }
+  const response = await fetch(`${baseUrl}/auth/v1/token?grant_type=refresh_token`, {
+    method: "POST",
+    headers: {
+      apikey: config.anonKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ refresh_token: session.refresh_token }),
+  });
+  if (!response.ok) {
+    clearSupabaseSession();
+    return null;
+  }
+  const nextSession = await response.json();
+  storeSupabaseSession(nextSession);
+  return getStoredSupabaseSession();
+};
+
 const getSupabaseAccessToken = (config = getSupabaseConfig()) =>
-  config.accessToken || localStorage.getItem("raizes:supabase-access-token") || config.anonKey;
+  getStoredSupabaseSession()?.access_token ||
+  config.accessToken ||
+  localStorage.getItem("raizes:supabase-access-token") ||
+  config.anonKey;
 
 const getSupabaseUserContext = () => {
   const config = getSupabaseConfig();
@@ -3647,6 +3817,41 @@ const getSupabaseUserContext = () => {
       payload.app_role ||
       (payload.role === "service_role" ? "service_role" : "anonymous"),
   };
+};
+
+const resolveSupabaseUserContext = async ({ requireAuthenticated = false, allowedRoles = [] } = {}) => {
+  let session = getStoredSupabaseSession();
+  if (session && isStoredSessionExpired(session)) {
+    session = await refreshStoredSupabaseSession();
+  }
+  const config = getSupabaseConfig();
+  const token = session?.access_token || config.accessToken || localStorage.getItem("raizes:supabase-access-token") || config.anonKey;
+  const payload = decodeJwtPayload(token);
+  const appMetadata = payload.app_metadata || {};
+  const role =
+    appMetadata.question_bank_role ||
+    appMetadata.app_role ||
+    appMetadata.role ||
+    payload.question_bank_role ||
+    payload.app_role ||
+    (payload.role === "service_role" ? "service_role" : "anonymous");
+  const context = {
+    token,
+    userId: payload.sub || null,
+    role,
+    expiresAt: payload.exp || session?.expires_at || null,
+    hasRefreshToken: Boolean(session?.refresh_token),
+  };
+  if (!requireAuthenticated) {
+    return context;
+  }
+  if (!context.userId || !context.token || String(context.token).startsWith("sb_")) {
+    throw new Error("Sessao Supabase ausente. Entre novamente para salvar a avaliacao.");
+  }
+  if (allowedRoles.length && !allowedRoles.includes(context.role)) {
+    throw new Error("Seu perfil nao tem permissao para salvar avaliacoes neste modulo.");
+  }
+  return context;
 };
 
 const mapSupabaseError = (response, body) => {
@@ -3675,7 +3880,14 @@ const createSupabaseRestClient = () => {
     if (!isConfigured) {
       throw new Error("Supabase nao configurado. Crie supabase-config.js com URL e anon key publica.");
     }
-    const authHeaders = context.token && !String(context.token).startsWith("sb_") ? { Authorization: `Bearer ${context.token}` } : {};
+    const requestContext = await resolveSupabaseUserContext({
+      requireAuthenticated: options.requireAuthenticated === true,
+      allowedRoles: options.allowedRoles || [],
+    });
+    const authHeaders =
+      requestContext.token && !String(requestContext.token).startsWith("sb_")
+        ? { Authorization: `Bearer ${requestContext.token}` }
+        : {};
     const response = await fetch(`${baseUrl}/rest/v1/${table}${params}`, {
       ...options,
       headers: {
@@ -3686,6 +3898,12 @@ const createSupabaseRestClient = () => {
         ...(options.headers || {}),
       },
     });
+    if (response.status === 401 && options.retryOnAuth !== false) {
+      const refreshed = await refreshStoredSupabaseSession();
+      if (refreshed?.access_token) {
+        return request(table, params, { ...options, retryOnAuth: false });
+      }
+    }
     if (!response.ok) {
       const body = await response.text();
       throw new Error(mapSupabaseError(response, body));
@@ -3694,7 +3912,9 @@ const createSupabaseRestClient = () => {
     return response.json();
   };
 
-  return { isConfigured, canUseFallback, request, context };
+  const getContext = (options) => resolveSupabaseUserContext(options);
+
+  return { isConfigured, canUseFallback, request, context, getContext };
 };
 
 const questionBankFallbackStore = {
@@ -3885,8 +4105,15 @@ const questionBankDataService = (() => {
     },
     async listAssessments() {
       const { request } = client();
-      const rows = await request("assessments", `?select=${assessmentSelect}&status=neq.ARQUIVADA&order=updated_at.desc`);
-      return rows.map(mapAssessmentFromSupabase);
+      try {
+        const rows = await request("assessments", `?select=${assessmentSelect}&status=neq.ARQUIVADA&order=updated_at.desc`);
+        return rows.map(mapAssessmentFromSupabase);
+      } catch (error) {
+        if (String(error.message || "").includes("Sessao expirada")) {
+          return [];
+        }
+        throw error;
+      }
     },
     async getAssessmentById(id) {
       const { request } = client();
@@ -3894,9 +4121,12 @@ const questionBankDataService = (() => {
       return rows[0] ? mapAssessmentFromSupabase(rows[0]) : null;
     },
     async createAssessment(payload) {
-      const { request, context } = client();
+      const { request, getContext } = client();
+      const context = await getContext({ requireAuthenticated: true, allowedRoles: allowedAssessmentRoles });
       const [row] = await request("assessments", "", {
         method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: allowedAssessmentRoles,
         body: JSON.stringify({
           owner_user_id: context.userId,
           owner_role: context.role,
@@ -3910,6 +4140,8 @@ const questionBankDataService = (() => {
       const { request } = client();
       const [row] = await request("assessments", `?id=eq.${encodeURIComponent(id)}`, {
         method: "PATCH",
+        requireAuthenticated: true,
+        allowedRoles: allowedAssessmentRoles,
         body: JSON.stringify({ ...payload, updated_at: new Date().toISOString() }),
       });
       return mapAssessmentFromSupabase(row);
@@ -3936,11 +4168,17 @@ const questionBankDataService = (() => {
     },
     async addQuestionToAssessment(assessmentId, questionId, points = 1) {
       const { request } = client();
-      const current = await request("assessment_questions", `?assessment_id=eq.${encodeURIComponent(assessmentId)}&select=position&order=position.desc&limit=1`);
+      await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedAssessmentRoles });
+      const current = await request("assessment_questions", `?assessment_id=eq.${encodeURIComponent(assessmentId)}&select=position&order=position.desc&limit=1`, {
+        requireAuthenticated: true,
+        allowedRoles: allowedAssessmentRoles,
+      });
       const nextPosition = (current[0]?.position || 0) + 1;
       const question = await this.getQuestionById(questionId);
       const [row] = await request("assessment_questions", "", {
         method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: allowedAssessmentRoles,
         body: JSON.stringify({
           assessment_id: assessmentId,
           question_id: question.uuid || questionId,
@@ -3956,22 +4194,28 @@ const questionBankDataService = (() => {
       const { request } = client();
       await request("assessment_questions", `?assessment_id=eq.${encodeURIComponent(assessmentId)}&question_id=eq.${encodeURIComponent(questionId)}`, {
         method: "DELETE",
+        requireAuthenticated: true,
+        allowedRoles: allowedAssessmentRoles,
         prefer: "return=minimal",
       });
       return this.getAssessmentById(assessmentId);
     },
     async reorderQuestions(assessmentId, orderedQuestionIds) {
       const { request } = client();
+      await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedAssessmentRoles });
       for (const [index, questionId] of orderedQuestionIds.entries()) {
         await request("assessment_questions", `?assessment_id=eq.${encodeURIComponent(assessmentId)}&question_id=eq.${encodeURIComponent(questionId)}`, {
           method: "PATCH",
+          requireAuthenticated: true,
+          allowedRoles: allowedAssessmentRoles,
           body: JSON.stringify({ position: index + 1 }),
         });
       }
       return this.getAssessmentById(assessmentId);
     },
     async registerUsage(questionId, assessmentId, usageType = "visualizada") {
-      const { request, context } = client();
+      const { request, getContext } = client();
+      const context = await getContext();
       if (!context.userId || context.role === "anonymous") return null;
       return request("question_usage_logs", "", {
         method: "POST",

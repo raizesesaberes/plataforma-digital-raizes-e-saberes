@@ -208,16 +208,22 @@
 
 .app-nav button,
 .app-nav a {
+  position: relative;
   display: flex;
   align-items: center;
   min-height: 42px;
-  padding: 0 14px;
+  padding: 0 14px 0 16px;
   border-radius: var(--rs-radius);
   color: rgba(255, 255, 255, 0.86);
   background: transparent;
   text-align: left;
   font-weight: 700;
   text-decoration: none;
+  transition:
+    background 200ms ease,
+    box-shadow 200ms ease,
+    color 200ms ease,
+    transform 200ms ease;
 }
 
 .app-nav button.is-active,
@@ -226,6 +232,28 @@
 .app-nav a:hover {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.12));
   color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 12px 24px rgba(0, 0, 0, 0.08);
+  transform: translateX(2px);
+}
+
+.app-nav button.is-active::before,
+.app-nav a.is-active::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 50%;
+  width: 3px;
+  height: 18px;
+  border-radius: 999px;
+  background: #f2a900;
+  box-shadow: 0 0 12px rgba(242, 169, 0, 0.38);
+  transform: translateY(-50%);
+}
+
+.app-nav button:focus-visible,
+.app-nav a:focus-visible {
+  outline: 2px solid rgba(242, 169, 0, 0.76);
+  outline-offset: 2px;
 }
 
 .sidebar-profile {
@@ -6402,6 +6430,8 @@ td {
 .ecosystem-home {
   display: grid;
   gap: 24px;
+  color: var(--rs-ink);
+  text-rendering: geometricPrecision;
 }
 
 .ecosystem-hero {
@@ -6414,10 +6444,22 @@ td {
   padding: 34px;
   border-radius: var(--rs-radius);
   background:
+    linear-gradient(90deg, rgba(6, 63, 47, 0.96) 0%, rgba(6, 63, 47, 0.9) 34%, rgba(6, 63, 47, 0.42) 58%, rgba(6, 63, 47, 0.08) 100%),
     radial-gradient(circle at 78% 36%, rgba(215, 169, 40, 0.36), transparent 26%),
     linear-gradient(135deg, #063f2f 0%, #07543d 58%, #0d6b4b 100%);
   color: #fff;
-  box-shadow: 0 28px 78px rgba(6, 63, 47, 0.24);
+  box-shadow: 0 30px 82px rgba(6, 63, 47, 0.26);
+}
+
+.ecosystem-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 44% 76%, rgba(242, 169, 0, 0.16), transparent 28%),
+    linear-gradient(90deg, rgba(6, 63, 47, 0.36), transparent 62%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .ecosystem-hero-copy {
@@ -6454,8 +6496,10 @@ td {
   min-height: 248px;
   align-self: stretch;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 18px;
   isolation: isolate;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 13%, #000 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 13%, #000 100%);
 }
 
 .ecosystem-hero-stage::after {
@@ -6480,11 +6524,11 @@ td {
 
 .hero-scene {
   inset: 0;
-  width: 110%;
+  width: 112%;
   height: 100%;
   object-fit: cover;
   object-position: right center;
-  transform: translateX(-4%);
+  transform: translateX(-3%);
   z-index: 0;
 }
 
@@ -6594,6 +6638,11 @@ td {
   font-size: 0.84rem;
   font-weight: 900;
   text-decoration: none;
+  transition:
+    background 200ms ease,
+    box-shadow 200ms ease,
+    color 200ms ease,
+    transform 200ms ease;
 }
 
 .ecosystem-hero-actions a {
@@ -6602,6 +6651,16 @@ td {
   gap: 10px;
   padding: 0 18px;
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.16);
+}
+
+.ecosystem-hero-actions a:hover,
+.journey-card a:hover,
+.mission-widget > a:hover,
+.metric-feature a:hover,
+.certificate-feature a:hover,
+.aside-link:hover {
+  box-shadow: 0 16px 32px rgba(3, 39, 29, 0.18);
+  transform: translateY(-1px);
 }
 
 .ecosystem-hero-actions img {
@@ -6708,13 +6767,27 @@ td {
   border-radius: var(--rs-radius);
   background: #fff;
   box-shadow: var(--rs-shadow);
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    transform 200ms ease;
+}
+
+.journey-card:hover,
+.resource-card:hover,
+.ecosystem-panel:hover,
+.ecosystem-news:hover,
+.ecosystem-smart-footer:hover {
+  border-color: rgba(13, 107, 75, 0.16);
+  box-shadow: 0 18px 46px rgba(18, 32, 51, 0.1);
+  transform: translateY(-2px);
 }
 
 .journey-card {
   display: grid;
   grid-template-columns: 78px minmax(0, 1fr);
   gap: 14px;
-  padding: 14px;
+  padding: 16px;
 }
 
 .journey-card img {
@@ -6743,6 +6816,7 @@ td {
 
 .journey-card h3 {
   font-size: 0.92rem;
+  line-height: 1.2;
 }
 
 .journey-card p,
@@ -6767,6 +6841,8 @@ td {
   height: 100%;
   border-radius: inherit;
   background: var(--resource-color, var(--rs-green-700));
+  transform-origin: left center;
+  animation: progressGrow 520ms ease both;
 }
 
 .ecosystem-resource-grid {
@@ -6781,7 +6857,7 @@ td {
   gap: 14px;
   align-items: center;
   min-height: 112px;
-  padding: 16px;
+  padding: 18px;
   color: var(--rs-ink);
   text-decoration: none;
 }
@@ -6791,6 +6867,12 @@ td {
   height: 48px;
   object-fit: contain;
   filter: drop-shadow(0 10px 12px rgba(12, 59, 46, 0.12));
+  transition: transform 200ms ease, filter 200ms ease;
+}
+
+.resource-card:hover > img {
+  filter: drop-shadow(0 12px 14px rgba(12, 59, 46, 0.18));
+  transform: scale(1.035);
 }
 
 .resource-card strong,
@@ -6802,7 +6884,7 @@ td {
   margin-top: 5px;
   color: var(--rs-muted);
   font-size: 0.78rem;
-  line-height: 1.35;
+  line-height: 1.42;
 }
 
 .ecosystem-panels {
@@ -6813,7 +6895,7 @@ td {
 
 .ecosystem-panel,
 .ecosystem-news {
-  padding: 18px;
+  padding: 20px;
 }
 
 .course-progress-list,
@@ -6868,6 +6950,7 @@ td {
     conic-gradient(var(--rs-green-700) var(--value), #e8edf1 var(--value));
   color: var(--rs-ink);
   font-weight: 900;
+  box-shadow: inset 0 0 0 1px rgba(13, 107, 75, 0.06), 0 14px 28px rgba(13, 107, 75, 0.1);
 }
 
 .certificate-badge {
@@ -6888,6 +6971,14 @@ td {
   border-top: 1px solid var(--rs-line);
   color: var(--rs-ink);
   text-decoration: none;
+  transition: color 200ms ease, transform 200ms ease;
+}
+
+.recommendation-list a:hover,
+.activity-list a:hover,
+.ecosystem-news a:hover {
+  color: var(--rs-green-700);
+  transform: translateX(2px);
 }
 
 .recommendation-list span,
@@ -6901,17 +6992,19 @@ td {
 .activity-list a {
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);
-  gap: 10px;
+  gap: 12px;
   align-items: center;
-  padding: 10px 0;
+  min-height: 58px;
+  padding: 11px 0;
   border-top: 1px solid var(--rs-line);
   color: var(--rs-ink);
   text-decoration: none;
+  transition: color 200ms ease, transform 200ms ease;
 }
 
 .activity-list img {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
   filter: drop-shadow(0 8px 10px rgba(12, 59, 46, 0.12));
 }
@@ -6933,6 +7026,7 @@ td {
   border: 1px solid var(--rs-line);
   border-radius: var(--rs-radius);
   background: #f8fbf9;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86);
 }
 
 .mission-widget {
@@ -6996,29 +7090,52 @@ td {
 .ecosystem-smart-footer article {
   display: grid;
   gap: 4px;
-  min-height: 76px;
+  min-height: 116px;
   place-items: center;
+  align-content: center;
   border-radius: var(--rs-radius);
   background: #f8fbf9;
   text-align: center;
+  transition: background 200ms ease, transform 200ms ease;
 }
 
 .ecosystem-smart-footer img {
-  width: 46px;
-  height: 46px;
+  width: 54px;
+  height: 54px;
   object-fit: contain;
   filter: drop-shadow(0 10px 12px rgba(12, 59, 46, 0.12));
 }
 
 .ecosystem-smart-footer strong {
   color: var(--rs-green-700);
-  font: 800 1.45rem Poppins, Inter, sans-serif;
+  font: 800 1.38rem Poppins, Inter, sans-serif;
+  line-height: 1;
 }
 
 .ecosystem-smart-footer span {
   color: var(--rs-muted);
   font-size: 0.76rem;
   font-weight: 800;
+  line-height: 1.2;
+}
+
+@keyframes progressGrow {
+  from { transform: scaleX(0.62); }
+  to { transform: scaleX(1); }
+}
+
+.ecosystem-home a:focus-visible {
+  outline: 2px solid rgba(242, 169, 0, 0.82);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ecosystem-home *,
+  .app-nav a,
+  .app-nav button {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
 }
 
 .mobile-tabbar {
