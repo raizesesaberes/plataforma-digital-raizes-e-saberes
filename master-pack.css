@@ -5149,6 +5149,22 @@ td {
   color: #123321;
 }
 
+.student-presentation-dashboard {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #fffdf7;
+  box-shadow: 0 18px 42px rgba(30, 67, 43, 0.08);
+}
+
+.student-presentation-dashboard img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: center top;
+}
+
 .student-skeleton {
   position: absolute;
   inset: 0;

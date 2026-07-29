@@ -1363,7 +1363,7 @@ const studentDashboardData = {
     cover: "assets/biblioteca/RAIZES_INFANTIL2_VOL1_BIBLIOTECA.webp",
     href: "book-viewer.html?book=livro-mestre-001",
   },
-  libraryBanner: "assets/aluno/oficial-banner-biblioteca.png",
+  libraryBanner: "assets/aluno/oficial-biblioteca-banner-v2.png",
   library: [
     { title: "Linguagem", cover: "assets/biblioteca/RAIZES_INFANTIL2_VOL1_BIBLIOTECA.webp", href: "book-viewer.html?book=livro-mestre-001" },
     { title: "Matematica", cover: "assets/biblioteca/RAIZES_INFANTIL2_VOL2_BIBLIOTECA.webp", href: "book-viewer.html?book=livro-002" },
@@ -1626,6 +1626,18 @@ const renderStudentQuickAccess = (items) => `
   </section>
 `;
 
+const renderStudentPresentationDashboard = () => `
+  <section class="student-presentation-dashboard" aria-label="Dashboard do Aluno">
+    <img
+      src="assets/aluno/oficial-dashboard-aluno.png"
+      alt="Dashboard oficial do aluno com saudacao, missoes, livro em andamento, evolucao, XP e biblioteca"
+      loading="eager"
+      decoding="async"
+      onerror="this.hidden=true"
+    />
+  </section>
+`;
+
 const studentDashboardView = createStudentDashboardView();
 const homeOfficialAsset = (name) => `assets/home-official/${name}.png`;
 
@@ -1853,26 +1865,7 @@ const modules = {
     title: "Dashboard do Aluno",
     subtitle: "Home principal do aluno",
     code: "PLAT-V2-005",
-    html: `
-      <div class="student-dashboard" data-student-dashboard>
-        <div class="student-skeleton" aria-hidden="true"></div>
-        ${renderStudentHero(studentDashboardView)}
-        <div class="student-grid">
-          <section class="panel span-2 digital-student-panel" data-digital-student-app>
-            <div class="panel-head"><h2>Minhas Avaliacoes</h2><span data-digital-student-count>0 disponiveis</span></div>
-            <div class="digital-assessment-list" data-digital-student-list></div>
-            <div class="digital-attempt-stage" data-digital-attempt-stage hidden></div>
-          </section>
-          ${renderStudentMission(studentDashboardView.dailyMission)}
-          ${renderStudentCurrentBook(studentDashboardView.currentBook)}
-          ${renderStudentLibrary(studentDashboardView.library, studentDashboardView.libraryBanner)}
-          ${renderStudentEvolution(studentDashboardView.evolution)}
-          ${renderStudentXp(studentDashboardView.xpGoal)}
-          ${renderStudentMedals(studentDashboardView.medals)}
-        </div>
-        ${renderStudentQuickAccess(studentDashboardView.quickAccess)}
-      </div>
-    `,
+    html: renderStudentPresentationDashboard(),
   },
   arvore: {
     title: "Minha Arvore",
