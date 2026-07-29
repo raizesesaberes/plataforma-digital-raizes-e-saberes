@@ -2326,6 +2326,12 @@ td {
   color: #9d1c1c;
 }
 
+.qb-selection-status a {
+  color: inherit;
+  font-weight: 900;
+  text-decoration: underline;
+}
+
 .qb-cart-list {
   display: grid;
   gap: 10px;
@@ -2441,6 +2447,56 @@ td {
   overflow: auto;
 }
 
+.qb-preview-cover {
+  display: grid;
+  gap: 4px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #17235d;
+  text-align: center;
+}
+
+.qb-preview-cover strong,
+.qb-preview-cover span,
+.qb-preview-cover small {
+  display: block;
+}
+
+.qb-preview-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 12px;
+  margin: 12px 0;
+  padding: 10px;
+  border: 1px solid var(--rs-line);
+  background: #f9fbfa;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.qb-preview-meta span {
+  min-width: 0;
+}
+
+.qb-answer-summary {
+  width: 100%;
+  margin: 12px 0;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+
+.qb-answer-summary th,
+.qb-answer-summary td {
+  padding: 7px 8px;
+  border: 1px solid var(--rs-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.qb-answer-summary th {
+  background: #eef2f7;
+  color: #17235d;
+}
+
 .qb-preview-sheet article {
   display: grid;
   gap: 8px;
@@ -2454,6 +2510,14 @@ td {
   margin: 0;
   font-size: 0.86rem;
   line-height: 1.5;
+}
+
+.qb-preview-sheet article footer,
+.qb-preview-footer {
+  color: var(--rs-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-align: right;
 }
 
 @media (max-width: 1180px) {
@@ -2489,6 +2553,39 @@ td {
   .qb-toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .qb-preview,
+  .qb-preview * {
+    visibility: visible;
+  }
+
+  .qb-preview {
+    position: absolute;
+    inset: 0;
+    display: block;
+    background: #fff;
+  }
+
+  .qb-preview > .panel-head {
+    display: none;
+  }
+
+  .qb-preview-sheet {
+    max-height: none;
+    overflow: visible;
+    box-shadow: none;
+  }
+
+  .qb-preview-sheet article {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
 
