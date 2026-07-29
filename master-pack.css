@@ -5222,9 +5222,10 @@ td {
 
 .student-hero-art {
   width: 100%;
-  max-height: 145px;
+  max-height: 170px;
   object-fit: contain;
   align-self: end;
+  filter: drop-shadow(0 16px 28px rgba(30, 67, 43, 0.14));
 }
 
 .student-status {
@@ -5369,7 +5370,7 @@ td {
 }
 
 .student-mission-card article {
-  grid-template-columns: minmax(0, 1fr) 92px;
+  grid-template-columns: minmax(0, 1fr) 112px;
   padding: 12px;
   border-radius: 8px;
   background: linear-gradient(135deg, #fff8e8, #fff);
@@ -5400,8 +5401,8 @@ td {
 }
 
 .student-mission-art {
-  width: 86px;
-  height: 86px;
+  width: 112px;
+  height: 142px;
   object-fit: contain;
 }
 
@@ -5425,15 +5426,17 @@ td {
 }
 
 .student-current-book article {
-  grid-template-columns: 92px minmax(0, 1fr);
+  grid-template-columns: minmax(132px, 42%) minmax(0, 1fr);
 }
 
 .student-book-cover {
-  width: 92px;
-  aspect-ratio: 9 / 12.5;
-  object-fit: cover;
-  border-radius: 6px;
-  box-shadow: 0 10px 22px rgba(30, 67, 43, 0.16);
+  display: block;
+  width: 100%;
+  aspect-ratio: 625 / 213;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 8px;
+  box-shadow: 0 10px 22px rgba(30, 67, 43, 0.13);
 }
 
 .student-current-book h3 {
@@ -5496,6 +5499,21 @@ td {
   transform: translateY(-3px) scale(1.02);
 }
 
+.student-library-banner {
+  display: block;
+  overflow: hidden;
+  border-radius: 8px;
+  line-height: 0;
+  box-shadow: 0 12px 24px rgba(30, 67, 43, 0.11);
+}
+
+.student-library-banner img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
 .student-chart {
   display: grid;
   gap: 6px;
@@ -5533,8 +5551,8 @@ td {
 }
 
 .student-xp-art {
-  width: 78px;
-  height: 72px;
+  width: 94px;
+  height: 78px;
   object-fit: contain;
 }
 
@@ -5577,9 +5595,10 @@ td {
 }
 
 .student-medal-art {
-  width: min(112px, 100%);
-  aspect-ratio: 1;
+  width: min(156px, 100%);
+  aspect-ratio: 370 / 472;
   object-fit: contain;
+  border-radius: 8px;
   filter: drop-shadow(0 10px 16px rgba(30, 67, 43, 0.12));
 }
 
@@ -8162,7 +8181,7 @@ td {
   }
 
   .student-library-card {
-    margin-top: 74px;
+    margin-top: 0;
   }
 
   .student-card {
@@ -8180,13 +8199,13 @@ td {
   }
 
   .student-medals-card article {
-    grid-template-columns: 72px minmax(0, 1fr);
-    justify-items: start;
-    text-align: left;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
   }
 
   .student-medal-art {
-    width: 68px;
+    width: min(138px, 100%);
   }
 
   .student-quick-card {

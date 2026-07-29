@@ -1342,44 +1342,45 @@ const studentDashboardData = {
   profile: {
     name: "Pedro",
     greeting: "Que alegria ter voce aqui hoje!",
-    avatar: "assets/aluno/avatar-pedro.webp",
+    avatar: "assets/aluno/oficial-avatar-aluno.png",
     xp: 125,
     level: "Nivel 1",
     notifications: 3,
     progress: 24,
-    heroArt: "assets/aluno/hero-arvore-livro.webp",
+    heroArt: "assets/aluno/oficial-hero-aluno.png",
   },
   dailyMission: {
     code: "Missao 012",
     title: "A Caixa Misteriosa",
     description: "Ouca a dica, descubra o objeto e ganhe XP!",
-    image: "assets/games/caixa-misteriosa/telas-assets.png",
+    image: "assets/aluno/oficial-card-missao.png",
     href: "jogos.html",
   },
   currentBook: {
     title: "Linguagem",
     subtitle: "Educacao Infantil 2 anos",
     progress: 45,
-    cover: "assets/aluno/livro-linguagem.webp",
+    cover: "assets/aluno/oficial-card-livro.png",
     href: "book-viewer.html?book=livro-mestre-001",
   },
+  libraryBanner: "assets/aluno/oficial-banner-biblioteca.png",
   library: [
-    { title: "Linguagem", cover: "assets/aluno/livro-biblioteca-linguagem.webp", href: "book-viewer.html?book=livro-mestre-001" },
-    { title: "Matematica", cover: "assets/aluno/livro-biblioteca-matematica.webp", href: "book-viewer.html?book=livro-002" },
-    { title: "Natureza e Sociedade", cover: "assets/aluno/livro-biblioteca-natureza.webp", href: "book-viewer.html?book=laboratorio-sensorial-002" },
-    { title: "Caderno de Atividades", cover: "assets/aluno/livro-biblioteca-caderno.webp", href: "biblioteca.html" },
+    { title: "Linguagem", cover: "assets/aluno/oficial-card-livro.png", href: "book-viewer.html?book=livro-mestre-001" },
+    { title: "Matematica", cover: "assets/aluno/oficial-card-livro.png", href: "book-viewer.html?book=livro-002" },
+    { title: "Natureza e Sociedade", cover: "assets/aluno/oficial-card-livro.png", href: "book-viewer.html?book=laboratorio-sensorial-002" },
+    { title: "Caderno de Atividades", cover: "assets/aluno/oficial-card-livro.png", href: "biblioteca.html" },
   ],
   xpGoal: {
     current: 125,
     target: 200,
     level: "Nivel 1",
-    image: "assets/aluno/bau-xp.webp",
+    image: "assets/aluno/oficial-bau-xp.png",
     nextText: "Conquiste mais 75 XP para alcancar o Nivel 2!",
   },
   medals: [
-    { title: "Pequeno Explorador", image: "assets/aluno/medalha-explorador.webp" },
-    { title: "Leitor Iniciante", image: "assets/aluno/medalha-leitor.webp" },
-    { title: "Curioso por Natureza", image: "assets/aluno/medalha-curioso.webp" },
+    { title: "Pequeno Explorador", image: "assets/aluno/oficial-medalha-explorador.png" },
+    { title: "Leitor Iniciante", image: "assets/aluno/oficial-medalha-leitor.png" },
+    { title: "Curioso por Natureza", image: "assets/aluno/oficial-medalha-curioso.png" },
   ],
   evolution: {
     title: "Voce esta indo muito bem!",
@@ -1395,7 +1396,7 @@ const studentDashboardData = {
 };
 
 const studentLazyImg = (src, alt, className = "") =>
-  `<img${className ? ` class="${className}"` : ""} src="${src}" alt="${alt}" loading="lazy" decoding="async" />`;
+  `<img${className ? ` class="${className}"` : ""} src="${src}" alt="${alt}" loading="lazy" decoding="async" onerror="this.hidden=true" />`;
 
 const studentGameStorageKey = "raizes:game-progress:v1";
 const studentGameCatalog = [
@@ -1476,7 +1477,7 @@ const renderStudentProfilePage = () => {
   const summary = view.gameSummary;
   const medals = summary.completed.length
     ? summary.completed.map((record) => `<article>${studentLazyImg(record.image, "", "student-medal-art")}<strong>${record.medal}</strong><small>${record.title}</small></article>`).join("")
-    : `<article>${studentLazyImg("assets/aluno/medalha-explorador.webp", "", "student-medal-art")}<strong>Nenhuma medalha de jogo ainda</strong><small>Complete um jogo para registrar sua primeira conquista.</small></article>`;
+    : `<article>${studentLazyImg("assets/aluno/oficial-medalha-explorador.png", "", "student-medal-art")}<strong>Nenhuma medalha de jogo ainda</strong><small>Complete um jogo para registrar sua primeira conquista.</small></article>`;
   const completedGames = summary.completed.length
     ? summary.completed.map((record) => `<li><strong>${record.title}</strong><span>${record.xp} XP · ${record.medal}</span></li>`).join("")
     : `<li><strong>Nenhum jogo concluido ainda</strong><span>Comece pelo Hub dos Jogos.</span></li>`;
@@ -1563,12 +1564,10 @@ const renderStudentCurrentBook = (book) => `
   </section>
 `;
 
-const renderStudentLibrary = (books) => `
+const renderStudentLibrary = (books, banner) => `
   <section class="student-card student-library-card" aria-labelledby="student-library-title">
     <div class="student-card-head"><h2 id="student-library-title">📚 Biblioteca</h2><a href="biblioteca.html">Ver tudo</a></div>
-    <div class="student-book-strip">
-      ${books.map((book) => `<a href="${book.href}" aria-label="Abrir ${book.title}">${studentLazyImg(book.cover, book.title)}</a>`).join("")}
-    </div>
+    <a class="student-library-banner" href="biblioteca.html" aria-label="Abrir Biblioteca">${studentLazyImg(banner, "Banner da Biblioteca")}</a>
   </section>
 `;
 
@@ -1870,7 +1869,7 @@ const modules = {
           </section>
           ${renderStudentMission(studentDashboardView.dailyMission)}
           ${renderStudentCurrentBook(studentDashboardView.currentBook)}
-          ${renderStudentLibrary(studentDashboardView.library)}
+          ${renderStudentLibrary(studentDashboardView.library, studentDashboardView.libraryBanner)}
           ${renderStudentEvolution(studentDashboardView.evolution)}
           ${renderStudentXp(studentDashboardView.xpGoal)}
           ${renderStudentMedals(studentDashboardView.medals)}
@@ -2618,7 +2617,7 @@ const environments = {
     profile: "Aprendizagem",
     search: "Buscar livros, missoes, atividades...",
     user: `Pedro<br />Nivel 1 - ${studentDashboardView.profile.xp} XP`,
-    avatar: "assets/aluno/avatar-pedro.webp",
+    avatar: "assets/aluno/oficial-avatar-aluno.png",
     profileImage: "logo-sidebar-dark.png",
     nav: [
       ["aluno", "🏠 Inicio", "aluno.html"],
