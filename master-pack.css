@@ -2442,8 +2442,28 @@ td {
   display: none;
 }
 
+.qb-preview:not([hidden]) {
+  position: fixed;
+  inset: 24px;
+  z-index: 10000;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(1120px, calc(100vw - 48px));
+  max-height: calc(100vh - 48px);
+  margin: auto;
+  padding: 16px;
+  border: 1px solid rgba(23, 35, 93, 0.16);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 0 0 9999px rgba(12, 18, 38, 0.46), 0 24px 80px rgba(12, 18, 38, 0.28);
+}
+
+.qb-preview:not([hidden]) > .panel-head {
+  margin-bottom: 4px;
+}
+
 .qb-preview-sheet {
-  max-height: 62vh;
+  max-height: 100%;
   overflow: auto;
 }
 
@@ -8451,6 +8471,13 @@ td {
 }
 
 @media (max-width: 720px) {
+  .qb-preview:not([hidden]) {
+    inset: 10px;
+    width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+    padding: 12px;
+  }
+
   .digital-assessment-card,
   .digital-attempt-actions {
     grid-template-columns: 1fr;
