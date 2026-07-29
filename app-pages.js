@@ -3557,6 +3557,10 @@ const initQuestionBank = () => {
   };
 
   const ensureSavedForPreview = async () => {
+    if (!cart.length) {
+      setSelectionStatus("Selecione questoes antes de salvar ou pre-visualizar.", "error");
+      return null;
+    }
     if (mode !== "supabase") {
       return null;
     }
@@ -3662,21 +3666,31 @@ const initQuestionBank = () => {
         setSelectionStatus("Carrinho limpo.", "info");
       }
       if (button.hasAttribute("data-qb-save-draft")) {
-        await syncCartToAssessment();
-        assessments = await questionBankDataService.listAssessments();
-        setSelectionStatus("Rascunho salvo com as questoes selecionadas.", "success");
+        const savedAssessment = await ensureSavedForPreview();
+        if (savedAssessment) {
+          assessments = await questionBankDataService.listAssessments();
+          setSelectionStatus("Rascunho salvo com as questoes selecionadas.", "success");
+        }
       }
       if (button.dataset.qbPreview) {
-        renderPreview(button.dataset.qbPreview);
+        const savedAssessment = await ensureSavedForPreview();
+        if (savedAssessment || mode !== "supabase") {
+          renderPreview(button.dataset.qbPreview);
+        }
       }
       if (button.hasAttribute("data-qb-close-preview")) {
         previewPanel.hidden = true;
       }
+      if (button.dataset.qbPrint) {
+        printPreview(button.dataset.qbPrint);
+      }
       if (button.hasAttribute("data-qb-generate")) {
-        await syncCartToAssessment();
-        assessments = await questionBankDataService.listAssessments();
-        renderPreview("student");
-        setSelectionStatus("Avaliacao gerada em pre-visualizacao.", "success");
+        const savedAssessment = await ensureSavedForPreview();
+        if (savedAssessment || mode !== "supabase") {
+          assessments = await questionBankDataService.listAssessments();
+          renderPreview("student");
+          setSelectionStatus("Avaliacao salva e aberta em pre-visualizacao.", "success");
+        }
       }
       if (button.dataset.qbOpenAssessment) {
         const assessment = await questionBankDataService.getAssessmentById(button.dataset.qbOpenAssessment);
@@ -3715,6 +3729,7 @@ const initQuestionBank = () => {
     });
   });
 
+  installSupabaseSessionListener();
   refresh();
 };
 
