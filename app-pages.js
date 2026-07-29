@@ -3959,6 +3959,11 @@ const initQuestionBank = () => {
         <footer class="qb-preview-footer">RAIZES E SABERES EDUCACIONAL &middot; ${items.length} questoes &middot; ${totalTime} min &middot; Versao ${htmlEscape(versionCode)}</footer>
       </div>
     `;
+    previewPanel.setAttribute("tabindex", "-1");
+    window.setTimeout(() => {
+      previewPanel.focus({ preventScroll: true });
+      previewPanel.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 0);
   };
 
   const renderSaved = () => {
