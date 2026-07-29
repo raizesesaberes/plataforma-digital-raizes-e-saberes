@@ -2587,7 +2587,7 @@ const environments = {
     label: "Ecossistema",
     profile: "Central de Comando",
     search: "Buscar livros, cursos, jogos, colecoes e mais...",
-    user: "Marcos Silva<br />Professor",
+    user: "Helena<br />Professora",
     avatar: "assets/universidade/avatar-ana-carolina.webp",
     profileImage: "logo-sidebar-dark.png",
     nav: [
