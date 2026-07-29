@@ -1694,6 +1694,7 @@ const ecosystemHomeJourney = [
     title: masterBook001.catalogTitle,
     detail: masterBook001.level,
     progress: 65,
+    image: homeOfficialAsset("continue-card-livro"),
     href: masterBook001.href,
     action: "Continuar leitura",
     tone: "green",
@@ -1703,6 +1704,7 @@ const ecosystemHomeJourney = [
     title: "BNCC na Pratica",
     detail: "20h",
     progress: 40,
+    image: homeOfficialAsset("continue-card-curso"),
     href: "universidade.html#formacao-raizes",
     action: "Continuar curso",
     tone: "purple",
@@ -1712,6 +1714,7 @@ const ecosystemHomeJourney = [
     title: savedAssessmentDemo[1]?.title || "Simulado",
     detail: savedAssessmentDemo[1]?.className || "Lingua Portuguesa",
     progress: 30,
+    image: homeOfficialAsset("continue-card-simulado"),
     href: "banco-questoes.html",
     action: "Continuar simulado",
     tone: "blue",
@@ -1721,6 +1724,7 @@ const ecosystemHomeJourney = [
     title: studentDashboardView.dailyMission.title,
     detail: "Jogo educativo",
     progress: Math.max(75, studentDashboardView.gameSummary.percent),
+    image: homeOfficialAsset("continue-card-jogos"),
     href: "jogos.html",
     action: "Continuar jogando",
     tone: "orange",
@@ -1798,7 +1802,7 @@ const renderEcosystemHome = () => {
             .map(
               (item) => `
                 <article class="journey-card is-${item.tone}">
-                  <div class="journey-art" aria-hidden="true"><strong>${item.label}</strong><span>${item.progress}%</span></div>
+                  <img class="journey-art" src="${item.image}" alt="" loading="lazy" onerror="this.hidden=true" />
                   <div>
                     <span>${item.label}</span>
                     <h3>${item.title}</h3>
