@@ -7019,6 +7019,16 @@ td {
 
 .course-progress-list span,
 .course-progress-list em {
+  display: block !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
   color: var(--rs-muted);
   font-style: normal;
   font-size: 0.82rem;
@@ -7084,6 +7094,16 @@ td {
 .recommendation-list span,
 .activity-list small,
 .ecosystem-news span {
+  display: block !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
   color: var(--rs-muted);
   font-size: 0.78rem;
   font-weight: 700;
@@ -7189,6 +7209,16 @@ td {
 }
 
 .mission-static-list small {
+  display: block !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
   color: var(--rs-muted);
   font-size: 0.78rem;
   font-weight: 800;
@@ -7197,13 +7227,17 @@ td {
 
 .mission-static-action {
   display: grid;
-  min-height: 38px;
+  width: 100% !important;
+  height: auto !important;
+  padding: 0 14px !important;
+  min-height: 42px;
   place-items: center;
   border-radius: var(--rs-radius);
-  background: var(--rs-green-700);
-  color: #fff;
+  background: var(--rs-green-700) !important;
+  color: #fff !important;
   font-size: 0.84rem;
   font-weight: 900;
+  box-shadow: none !important;
 }
 
 .aside-link {

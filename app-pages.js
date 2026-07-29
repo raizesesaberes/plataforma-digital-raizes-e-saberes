@@ -1858,7 +1858,7 @@ const renderEcosystemHome = () => {
               <article><strong>Avalia+</strong><small>10 questoes recomendadas</small></article>
               <article><strong>Jogos</strong><small>Aprendizagem ativa</small></article>
             </div>
-            <span class="mission-static-action">Central de missoes</span>
+            <div class="mission-static-action">Central de missoes</div>
           </section>
 
           <section class="ecosystem-panel">
