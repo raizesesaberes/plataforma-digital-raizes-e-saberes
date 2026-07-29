@@ -1732,12 +1732,12 @@ const ecosystemHomeJourney = [
 ];
 
 const ecosystemHomeIndicators = [
-  { value: ecosystemHomeStats.xp, label: "XP", icon: homeOfficialAsset("indicator_xp") },
-  { value: ecosystemHomeStats.medals, label: "Medalhas", icon: homeOfficialAsset("indicator_certificado") },
-  { value: `${ecosystemHomeStats.trainingHours}h`, label: "Horas de formacao", icon: homeOfficialAsset("indicator_horas") },
-  { value: ecosystemHomeStats.certificates, label: "Certificados", icon: homeOfficialAsset("indicator_cursos") },
-  { value: ecosystemHomeStats.booksRead, label: "Livros lidos", icon: homeOfficialAsset("indicator_livros") },
-  { value: ecosystemHomeStats.gamesCompleted, label: "Jogos concluidos", icon: homeOfficialAsset("indicator_jogos") },
+  { value: ecosystemHomeStats.xp, label: "XP" },
+  { value: ecosystemHomeStats.medals, label: "Medalhas" },
+  { value: `${ecosystemHomeStats.trainingHours}h`, label: "Horas de formacao" },
+  { value: ecosystemHomeStats.certificates, label: "Certificados" },
+  { value: ecosystemHomeStats.booksRead, label: "Livros lidos" },
+  { value: ecosystemHomeStats.gamesCompleted, label: "Jogos concluidos" },
 ];
 
 const renderHomeSectionHeader = (title, action = "") => `
@@ -1768,20 +1768,11 @@ const renderEcosystemHome = () => {
           <h1>Ecossistema Raizes e Saberes</h1>
           <p>Tudo o que voce precisa para ensinar, aprender e transformar a educacao em uma unica jornada.</p>
           <div class="ecosystem-hero-actions">
-            ${ecosystemHomeResources.slice(0, 5).map((item) => `<a class="is-${item.tone}" href="${item.href}"><img src="${item.icon}" alt="" loading="eager" />${item.title}</a>`).join("")}
+            ${ecosystemHomeResources.slice(0, 5).map((item) => `<a class="is-${item.tone}" href="${item.href}">${item.title}</a>`).join("")}
           </div>
         </div>
         <div class="ecosystem-hero-stage" aria-hidden="true">
-          <img class="hero-layer hero-scene" src="${homeOfficialAsset("hero_scene")}" alt="" loading="eager" />
-          <img class="hero-layer hero-light" src="${homeOfficialAsset("hero_light")}" alt="" loading="eager" />
-          <img class="hero-layer hero-tree" src="${homeOfficialAsset("hero_tree")}" alt="" loading="eager" />
-          <img class="hero-layer hero-children" src="${homeOfficialAsset("hero_children")}" alt="" loading="eager" />
-          <img class="hero-layer hero-mascots" src="${homeOfficialAsset("hero_mascots")}" alt="" loading="eager" />
-          <img class="hero-layer hero-book" src="${homeOfficialAsset("hero_book")}" alt="" loading="eager" />
-          <img class="hero-layer hero-tablet" src="${homeOfficialAsset("hero_tablet")}" alt="" loading="eager" />
-          <img class="hero-layer hero-particles-back" src="${homeOfficialAsset("hero_particles_back")}" alt="" loading="eager" />
-          <img class="hero-layer hero-particles-front" src="${homeOfficialAsset("hero_particles_front")}" alt="" loading="eager" />
-          <img class="hero-layer hero-plants" src="${homeOfficialAsset("hero_foreground_plants")}" alt="" loading="eager" />
+          <img class="hero-static-art" src="assets/brand/RS-001-HeroMockup.webp" alt="" loading="eager" onerror="this.hidden=true" />
         </div>
       </section>
 
@@ -1793,7 +1784,7 @@ const renderEcosystemHome = () => {
               .map(
                 (item) => `
                   <article class="journey-card is-${item.tone}">
-                    <img src="${item.image}" alt="${item.title}" loading="lazy" />
+                    <img src="${item.image}" alt="${item.title}" loading="lazy" onerror="this.hidden=true" />
                     <div>
                       <span>${item.label}</span>
                       <h3>${item.title}</h3>
@@ -1814,7 +1805,6 @@ const renderEcosystemHome = () => {
               .map(
                 (item) => `
                   <a class="resource-card is-${item.tone}" href="${item.href}">
-                    <img src="${item.icon}" alt="" loading="lazy" />
                     <div><strong>${item.title}</strong><small>${item.description}</small></div>
                   </a>
                 `
@@ -1842,7 +1832,6 @@ const renderEcosystemHome = () => {
               ${renderHomeSectionHeader("Certificados", `<a href="universidade.html">Ver todos</a>`)}
               <strong>${ecosystemHomeStats.certificates}</strong>
               <p>certificados conquistados</p>
-              <img class="certificate-badge" src="${homeOfficialAsset("indicator_certificado")}" alt="" loading="lazy" />
               <a href="universidade.html#formacao-raizes">Ver certificados</a>
             </article>
             <article class="ecosystem-panel">
@@ -1866,18 +1855,20 @@ const renderEcosystemHome = () => {
 
         <aside class="ecosystem-home-aside">
           <section class="ecosystem-panel mission-widget">
-            <div class="mission-widget-title"><img src="${homeOfficialAsset("icon_missao")}" alt="" loading="lazy" /><div><h2>Missao do dia</h2><p>Complete suas atividades diarias</p></div></div>
-            <label><input type="checkbox" checked /> Ler 20 paginas</label>
-            <label><input type="checkbox" checked /> Concluir 1 curso</label>
-            <label><input type="checkbox" /> Responder 10 questoes</label>
-            <label><input type="checkbox" /> Jogar e aprender</label>
-            <a href="missao.html">Ver todas as missoes</a>
+            <div class="mission-widget-title"><div><h2>Missao do dia</h2><p>Complete suas atividades diarias</p></div></div>
+            <div class="mission-static-list">
+              <p><strong>Leitura diaria</strong><span>20 paginas concluídas</span></p>
+              <p><strong>Formacao</strong><span>1 curso em andamento</span></p>
+              <p><strong>Avalia+</strong><span>10 questoes recomendadas</span></p>
+              <p><strong>Jogos</strong><span>Aprendizagem ativa</span></p>
+            </div>
+            <span class="mission-static-action">Central de missoes</span>
           </section>
 
           <section class="ecosystem-panel">
             ${renderHomeSectionHeader("Atividades recentes")}
             <div class="activity-list">
-              ${recentActivities.map((item) => `<a href="${item.href}"><img src="${item.icon}" alt="" loading="lazy" /><span><strong>${item.title}</strong><small>${item.meta}</small></span></a>`).join("")}
+              ${recentActivities.map((item) => `<a href="${item.href}"><span><strong>${item.title}</strong><small>${item.meta}</small></span></a>`).join("")}
             </div>
             <a class="aside-link" href="perfil.html">Ver historico completo</a>
           </section>
@@ -1885,7 +1876,7 @@ const renderEcosystemHome = () => {
       </div>
 
       <section class="ecosystem-smart-footer" aria-label="Indicadores do ecossistema">
-        ${ecosystemHomeIndicators.map((item) => `<article><img src="${item.icon}" alt="" loading="lazy" /><strong>${item.value}</strong><span>${item.label}</span></article>`).join("")}
+        ${ecosystemHomeIndicators.map((item) => `<article><strong>${item.value}</strong><span>${item.label}</span></article>`).join("")}
       </section>
     </div>
   `;
