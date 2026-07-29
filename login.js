@@ -10,7 +10,6 @@ const demoAccess = {
 const supabaseSessionKey = "raizes:supabase-auth-session";
 const loginParams = new URLSearchParams(window.location.search);
 const requiresSupabaseAuth = loginParams.get("auth") === "supabase";
-const shouldAutoStartDemo = loginParams.get("demo") === "1";
 
 const decodeJwtPayload = (token) => {
   try {
@@ -77,7 +76,6 @@ if (
 
 const form = document.querySelector("[data-login-form]");
 const errorMessage = document.querySelector("[data-login-error]");
-const demoLoginButton = document.querySelector("[data-demo-login]");
 
 if (requiresSupabaseAuth) {
   const copy = document.querySelector(".login-copy span");
@@ -114,7 +112,7 @@ const saveSupabaseSession = (authData) => {
   return { userId: payload.sub || authData.user?.id || null, questionBankRole };
 };
 
-const authenticateWithSupabase = async (email, password) => {
+const authenticateWithSupabase = async (email, password, { requireQuestionBankRole = false } = {}) => {
   const config = window.RAIZES_SUPABASE || {};
   const baseUrl = config.url?.replace(/\/$/, "");
   if (!baseUrl || !config.anonKey) {
@@ -132,7 +130,7 @@ const authenticateWithSupabase = async (email, password) => {
     return false;
   }
   const context = saveSupabaseSession(await response.json());
-  return Boolean(context?.userId && context?.questionBankRole);
+  return Boolean(context?.userId && (!requireQuestionBankRole || context.questionBankRole));
 };
 
 const setLoginBusy = (isBusy, label = "Acessar Plataforma") => {
@@ -140,9 +138,6 @@ const setLoginBusy = (isBusy, label = "Acessar Plataforma") => {
   if (submitButton) {
     submitButton.disabled = isBusy;
     submitButton.textContent = isBusy ? "Entrando..." : label;
-  }
-  if (demoLoginButton) {
-    demoLoginButton.disabled = isBusy;
   }
 };
 
@@ -152,41 +147,6 @@ const showLoginError = (message) => {
     errorMessage.textContent = message;
   }
 };
-
-const getDemoAuthConfig = () => {
-  const config = window.RAIZES_SUPABASE || {};
-  return config.demoAuth || {};
-};
-
-const startDemoLogin = async () => {
-  const demoAuth = getDemoAuthConfig();
-  if (errorMessage) {
-    errorMessage.hidden = true;
-  }
-  if (!demoAuth.enabled || !demoAuth.email || !demoAuth.password) {
-    showLoginError("Modo demonstracao Supabase nao configurado. Defina RAIZES_SUPABASE.demoAuth com email e senha do professor demo.");
-    return;
-  }
-  setLoginBusy(true);
-  try {
-    if (await authenticateWithSupabase(demoAuth.email, demoAuth.password)) {
-      localStorage.setItem(demoAccess.key, "true");
-      localStorage.setItem("raizes:demo-supabase-auth", "true");
-      window.location.replace(getNextPage());
-      return;
-    }
-    showLoginError("Nao foi possivel autenticar o professor de demonstracao no Supabase Auth.");
-  } catch (error) {
-    showLoginError("Falha ao iniciar modo demonstracao. Verifique as credenciais do professor demo.");
-  }
-  setLoginBusy(false);
-};
-
-demoLoginButton?.addEventListener("click", startDemoLogin);
-
-if (shouldAutoStartDemo) {
-  window.setTimeout(startDemoLogin, 80);
-}
 
 form?.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -200,7 +160,7 @@ form?.addEventListener("submit", async (event) => {
   setLoginBusy(true);
 
   try {
-    if (await authenticateWithSupabase(email, password)) {
+    if (await authenticateWithSupabase(email, password, { requireQuestionBankRole: requiresSupabaseAuth })) {
       localStorage.setItem(demoAccess.key, "true");
       window.location.replace(getNextPage());
       return;

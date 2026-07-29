@@ -3831,7 +3831,7 @@ const initQuestionBank = () => {
     saveDraftSnapshot("login-required");
     const nextPath = `${window.location.pathname || "/banco-questoes.html"}?qbResume=1${window.location.hash || ""}`;
     const next = encodeURIComponent(nextPath);
-    selectionStatus.innerHTML = `${htmlEscape(message)} <a href="login.html?auth=supabase&next=${next}">Entrar novamente</a> <a href="login.html?auth=supabase&demo=1&next=${next}">Entrar em modo demonstracao</a>`;
+    selectionStatus.innerHTML = `${htmlEscape(message)} <a href="login.html?auth=supabase&next=${next}">Entrar novamente</a>`;
     selectionStatus.dataset.tone = "error";
     selectionStatus.hidden = false;
   };
