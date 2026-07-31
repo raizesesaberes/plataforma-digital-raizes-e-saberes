@@ -9,6 +9,30 @@ A Biblioteca Viva funciona como um modulo front-end estatico da plataforma. O ca
 
 Nao ha, nesta fase, banco Supabase especifico da Biblioteca, bucket privado, PDF.js ou IA conectada ao conteudo dos PDFs.
 
+## Laboratorio de experiencias digitais infantis
+
+A infraestrutura oficial das experiencias digitais da Educacao Infantil fica em `infantil-experience-catalog.js`.
+
+Ela define:
+
+- faixas etarias `EI2`, `EI3`, `EI4` e `EI5`;
+- volumes `V1` e `V2`;
+- experiencias `RS-EI*-V*-EXP-001`;
+- ativos exclusivos de volume `RS-EI*-V*-001`;
+- ativos compartilhados por faixa etaria `RS-EI*-C-001`;
+- ativos universais da Educacao Infantil `RS-EI-C-001`;
+- funcoes `getExperienceAsset`, `getAssetsByAgeGroup`, `getAssetsByVolume` e `getSharedInfantilAssets`.
+
+As paginas `biblioteca.html`, `jogos.html` e `missao.html` carregam esse catalogo antes dos scripts principais. O motor de jogos expoe `window.RSGameEngine.infantilExperiences` e `window.RSGameEngine.getExperienceAsset(code)` para que novos componentes resolvam arquivos por codigo, sem receber caminho solto.
+
+A estrutura oficial de assets foi criada em `assets/experiencias/infantil/`, com pastas compartilhadas e volumes para `EI2`, `EI3`, `EI4` e `EI5`. Arquivos ainda nao enviados permanecem no catalogo com status `awaiting-upload`.
+
+Para validar a camada de experiencias:
+
+```bash
+node tools/validate-infantil-experience-catalog.js
+```
+
 ## Onde esta o catalogo
 
 O catalogo ativo fica em `app-pages.js`:

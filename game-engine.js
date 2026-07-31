@@ -4019,7 +4019,11 @@
   window.RaizesGameEngine = { GameEngine, gameRepository, progressController, rewardController, audioPlayer };
   window.RSGameEngine = {
     games: gameRepository.games,
+    infantilExperiences: window.RaizesInfantilExperiences || null,
     engine: null,
+    getExperienceAsset(code) {
+      return this.infantilExperiences?.getExperienceAsset(code) || null;
+    },
     openGame(gameId) {
       if (!this.engine) return;
       this.engine.openGame(gameId);
