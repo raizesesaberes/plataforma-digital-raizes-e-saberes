@@ -290,7 +290,7 @@ const masterBook001 = {
   ],
 };
 
-const bookCatalog = [
+const legacyInfantilBookCatalog = [
   masterBook001,
   {
     id: "livro-002",
@@ -896,7 +896,11 @@ const renewedProfessorGuideBooks = [
   },
 ];
 
-bookCatalog.splice(0, 12, ...renewedInfantilBooks, ...renewedProfessorGuideBooks);
+const bookCatalog = [
+  ...renewedInfantilBooks,
+  ...renewedProfessorGuideBooks,
+  ...legacyInfantilBookCatalog.filter((book) => book.collection === "Avalia+"),
+];
 
 const defaultBook = renewedInfantilBooks[0];
 
@@ -909,6 +913,39 @@ const getActiveBook = () => {
 };
 
 const activeBook = getActiveBook();
+
+const createLibraryAssetFallback = ({ title = "Biblioteca Viva", note = "CAPA EM ATUALIZACAO", page = "" } = {}) => {
+  const fallback = document.createElement("div");
+  fallback.className = "library-asset-fallback";
+  fallback.setAttribute("role", "img");
+  fallback.setAttribute("aria-label", page ? `Miniatura da pagina ${page} indisponivel` : `${title} - ${note}`);
+  fallback.innerHTML = page
+    ? `<strong>${page}</strong><span>MINIATURA INDISPONIVEL</span>`
+    : `<span>Biblioteca Viva</span><strong>${title}</strong><small>${note}</small>`;
+  return fallback;
+};
+
+const replaceBrokenImage = (image, fallback) => {
+  if (!image || image.dataset.assetFallbackApplied === "true") {
+    return;
+  }
+  image.dataset.assetFallbackApplied = "true";
+  image.hidden = true;
+  image.insertAdjacentElement("afterend", fallback);
+};
+
+const initLibraryAssetFallbacks = () => {
+  document.querySelectorAll(".library-2-hero img, .library-2-card img, .library-book-card img, .reader-book-profile img").forEach((image) => {
+    image.addEventListener("error", () => {
+      replaceBrokenImage(
+        image,
+        createLibraryAssetFallback({
+          title: image.alt || image.closest("[data-book-id]")?.querySelector("h3, strong")?.textContent || "Livro",
+        })
+      );
+    });
+  });
+};
 
 const getRecentBookIds = () => {
   try {
@@ -953,7 +990,7 @@ const buildRecentReadingCards = () => {
     .join("");
 };
 
-const libraryBooks = [
+const legacyLibraryBooks = [
   { src: "assets/biblioteca/RAIZES_INFANTIL2_VOL1_BIBLIOTECA.webp", year: "Infantil 2", title: "Volume 1", type: "Livro do Aluno", href: "book-viewer.html?book=livro-mestre-001", collection: "Educacao Infantil", publishedAt: "2026-07-01" },
   { src: "assets/biblioteca/RAIZES_INFANTIL2_VOL2_BIBLIOTECA.webp", year: "Infantil 2", title: "Volume 2", type: "Livro do Aluno", href: "book-viewer.html?book=livro-002", collection: "Educacao Infantil", publishedAt: "2026-07-01" },
   { src: "assets/biblioteca/RAIZES_LAB_SENSORIAL_INFANTIL2_BIBLIOTECA.webp", year: "Infantil 2", title: "Laboratorio Sensorial", type: "Material Sensorial", href: "book-viewer.html?book=laboratorio-sensorial-002", collection: "Laboratorio Sensorial", publishedAt: "2026-07-01" },
@@ -978,7 +1015,6 @@ const libraryBooks = [
     component: "LÍNGUA PORTUGUESA",
     pages: "160 PÁGINAS",
     href: "book-viewer.html?book=avalia-portugues-2ano",
-    downloadHref: "assets/avalia-portugues-2ano/pdf/2-anos-portugues-reduzida.pdf",
     collection: "Avalia+",
     stage: "Ensino Fundamental - Anos Iniciais",
     hierarchy: "Ensino Fundamental > 2º Ano > Língua Portuguesa > Avalia+ > Livro do Aluno",
@@ -994,7 +1030,6 @@ const libraryBooks = [
     component: "MATEMÁTICA",
     pages: "56 PÁGINAS",
     href: "book-viewer.html?book=avalia-matematica-2ano",
-    downloadHref: "assets/avalia-matematica-2ano/pdf/2-anos-matematica-reduzida.pdf",
     collection: "Avalia+",
     stage: "Ensino Fundamental - Anos Iniciais",
     hierarchy: "Ensino Fundamental > 2º Ano > Matemática > Avalia+ > Livro do Aluno",
@@ -1010,7 +1045,6 @@ const libraryBooks = [
     component: "MATEMÁTICA",
     pages: "13 PÁGINAS",
     href: "book-viewer.html?book=avalia-matematica-6ano",
-    downloadHref: "assets/avalia-matematica-6ano/pdf/6-anos-matematica.pdf",
     collection: "Avalia+",
     stage: "Ensino Fundamental - Anos Finais",
     hierarchy: "Ensino Fundamental > 6º Ano > Matemática > Avalia+ > Livro do Aluno",
@@ -1026,7 +1060,6 @@ const libraryBooks = [
     component: "LÍNGUA PORTUGUESA",
     pages: "19 PÁGINAS",
     href: "book-viewer.html?book=avalia-portugues-6ano",
-    downloadHref: "assets/avalia-portugues-6ano/pdf/6-anos-portugues.pdf",
     collection: "Avalia+",
     stage: "Ensino Fundamental - Anos Finais",
     hierarchy: "Ensino Fundamental > 6º Ano > Língua Portuguesa > Avalia+ > Livro do Aluno",
@@ -1047,7 +1080,6 @@ const renewedInfantilLibraryBooks = [
     component: "EDUCACAO INFANTIL",
     pages: "120 PAGINAS",
     href: "book-viewer.html?book=livro-005",
-    downloadHref: "assets/livro-005/pdf/infantil-4-volume-1.pdf",
     collection: "Educacao Infantil",
     stage: "Educacao Infantil",
     hierarchy: "Educacao Infantil > 4 anos > Livro do Aluno > Volume 1",
@@ -1063,7 +1095,6 @@ const renewedInfantilLibraryBooks = [
     component: "EDUCACAO INFANTIL",
     pages: "122 PAGINAS",
     href: "book-viewer.html?book=livro-006",
-    downloadHref: "assets/livro-006/pdf/infantil-4-volume-2.pdf",
     collection: "Educacao Infantil",
     stage: "Educacao Infantil",
     hierarchy: "Educacao Infantil > 4 anos > Livro do Aluno > Volume 2",
@@ -1079,7 +1110,6 @@ const renewedInfantilLibraryBooks = [
     component: "EDUCACAO INFANTIL",
     pages: "128 PAGINAS",
     href: "book-viewer.html?book=livro-007",
-    downloadHref: "assets/livro-007/pdf/infantil-5-volume-1.pdf",
     collection: "Educacao Infantil",
     stage: "Educacao Infantil",
     hierarchy: "Educacao Infantil > 5 anos > Livro do Aluno > Volume 1",
@@ -1095,7 +1125,6 @@ const renewedInfantilLibraryBooks = [
     component: "EDUCACAO INFANTIL",
     pages: "155 PAGINAS",
     href: "book-viewer.html?book=livro-008",
-    downloadHref: "assets/livro-008/pdf/infantil-5-volume-2.pdf",
     collection: "Educacao Infantil",
     stage: "Educacao Infantil",
     hierarchy: "Educacao Infantil > 5 anos > Livro do Aluno > Volume 2",
@@ -1168,7 +1197,13 @@ const renewedProfessorGuideLibraryBooks = [
   },
 ];
 
-libraryBooks.splice(0, 16, ...renewedInfantilLibraryBooks, ...renewedProfessorGuideLibraryBooks);
+const libraryBooks = [
+  ...renewedInfantilLibraryBooks,
+  ...renewedProfessorGuideLibraryBooks,
+  ...legacyLibraryBooks.filter(
+    (book) => !["Educacao Infantil", "Laboratorio Sensorial", "Guias do Professor"].includes(book.collection)
+  ),
+];
 
 const publishedMaterialsCount = libraryBooks.length;
 const sortedLibraryBooks = [...libraryBooks].sort((firstBook, secondBook) => secondBook.publishedAt.localeCompare(firstBook.publishedAt));
@@ -2621,6 +2656,11 @@ const modules = {
         <section class="wide-panel recent-books library-catalog-panel" id="acervo-completo">
           <div class="panel-head"><h2>Acervo Completo</h2><a>${publishedMaterialsCount} materiais</a></div>
           <div class="library-catalog">${libraryBookCards}</div>
+          <div class="library-empty-state" data-library-empty hidden>
+            <strong>NENHUM LIVRO ENCONTRADO</strong>
+            <span>Tente pesquisar por outro titulo, colecao, ano ou componente curricular.</span>
+            <button type="button" data-clear-library-search>LIMPAR BUSCA</button>
+          </div>
         </section>
       </div>
     `,
@@ -3017,10 +3057,10 @@ const modules = {
           <button type="button" data-reader-favorite aria-pressed="false">Favoritar</button>
         </section>
         <nav class="reader-tabs" aria-label="Ferramentas do livro">
-          <button type="button" class="is-active" data-reader-tab="sumario">Indice</button>
-          <button type="button" data-reader-tab="busca">Busca</button>
-          <button type="button" data-reader-tab="pergunte">Pergunte ao Livro</button>
-          <button type="button" data-reader-tab="conquistas">Conquistas</button>
+          <button type="button" class="is-active" data-reader-tab="sumario" aria-selected="true">Indice</button>
+          <button type="button" data-reader-tab="busca" aria-selected="false">Busca</button>
+          <button type="button" data-reader-tab="pergunte" aria-selected="false">Pergunte ao Livro</button>
+          <button type="button" data-reader-tab="conquistas" aria-selected="false">Conquistas</button>
         </nav>
 
         <div class="reader-layout">
@@ -3033,6 +3073,15 @@ const modules = {
             <button class="reader-turn previous" type="button" data-prev-page aria-label="Pagina anterior">&lsaquo;</button>
             <figure class="reader-page" data-reader-page style="--zoom: 1">
               <img data-page-image src="${activeBook.page(1)}" alt="${activeBook.title} pagina 1" loading="eager" />
+              <figcaption class="reader-page-error" data-page-error hidden>
+                <strong>NAO FOI POSSIVEL CARREGAR ESTA PAGINA</strong>
+                <span data-page-error-detail></span>
+                <div>
+                  <button type="button" data-page-error-retry>TENTAR NOVAMENTE</button>
+                  <button type="button" data-prev-page>PAGINA ANTERIOR</button>
+                  <button type="button" data-next-page>PROXIMA PAGINA</button>
+                </div>
+              </figcaption>
             </figure>
             <button class="reader-turn next" type="button" data-next-page aria-label="Proxima pagina">&rsaquo;</button>
           </section>
@@ -3575,6 +3624,8 @@ const initBookReader = () => {
   const storageKey = `${book.id}:bookmark`;
   const image = reader.querySelector("[data-page-image]");
   const pageFrame = reader.querySelector("[data-reader-page]");
+  const pageError = reader.querySelector("[data-page-error]");
+  const pageErrorDetail = reader.querySelector("[data-page-error-detail]");
   const thumbnailList = reader.querySelector("[data-thumbnail-list]");
   const summaryList = reader.querySelector("[data-summary-list]");
   const pageLabel = reader.querySelector("[data-page-label]");
@@ -3598,9 +3649,14 @@ const initBookReader = () => {
   const readerParams = typeof window === "undefined" ? new URLSearchParams() : new URLSearchParams(window.location.search);
   const hasRequestedPage = readerParams.has("page");
   const requestedPage = hasRequestedPage ? Number(readerParams.get("page")) || 1 : 1;
+  const lastPageStorageKey = `library:reading:${book.id}:lastPage`;
+  const legacyLastPageStorageKey = `${book.id}:lastPage`;
+  const getSavedLastPage = () =>
+    Number(localStorage.getItem(lastPageStorageKey)) || Number(localStorage.getItem(legacyLastPageStorageKey)) || 0;
   let page = clamp(requestedPage, 1, book.totalPages);
   let zoom = 1;
   let bookmarkedPage = Number(localStorage.getItem(storageKey)) || 0;
+  let lastReadPage = getSavedLastPage();
   const preloadedPages = new Set();
   updateRecentBook(book.id);
   const readHistoryKey = "library:readingHistory";
@@ -3672,10 +3728,23 @@ const initBookReader = () => {
     button.type = "button";
     button.dataset.gotoPage = String(currentPage);
     button.setAttribute("aria-label", `Abrir pagina ${currentPage}`);
-    button.innerHTML = `<img src="${book.thumb(currentPage)}" alt="" loading="lazy" /><span>${currentPage}</span>`;
+    button.innerHTML = `<img src="${book.thumb(currentPage)}" alt="Miniatura da pagina ${currentPage}" loading="lazy" /><span>${currentPage}</span>`;
     pageTemplate.appendChild(button);
   }
   thumbnailList.appendChild(pageTemplate);
+
+  thumbnailList.addEventListener(
+    "error",
+    (event) => {
+      const thumbImage = event.target.closest?.("img");
+      const thumbButton = thumbImage?.closest("[data-goto-page]");
+      if (!thumbImage || !thumbButton) {
+        return;
+      }
+      replaceBrokenImage(thumbImage, createLibraryAssetFallback({ page: thumbButton.dataset.gotoPage }));
+    },
+    true
+  );
 
   summaryList.innerHTML = book.summary
     .map(
@@ -3721,8 +3790,15 @@ const initBookReader = () => {
 
   const renderPage = (nextPage) => {
     page = clamp(nextPage, 1, book.totalPages);
+    const pageAssetPath = book.page(page);
+    pageFrame.classList.add("is-loading");
+    pageFrame.classList.remove("has-page-error");
+    if (pageError) {
+      pageError.hidden = true;
+    }
     image.classList.add("is-loading");
-    image.src = book.page(page);
+    image.hidden = false;
+    image.src = pageAssetPath;
     image.alt = `${book.title} pagina ${page}`;
 
     const progress = Math.round((page / book.totalPages) * 100);
@@ -3730,8 +3806,10 @@ const initBookReader = () => {
     pageCount.textContent = `${page}/${book.totalPages}`;
     progressLabel.textContent = `${progress}%`;
     progressBar.style.width = `${progress}%`;
-    localStorage.setItem(`${book.id}:lastPage`, String(page));
+    localStorage.setItem(lastPageStorageKey, String(page));
+    localStorage.setItem(legacyLastPageStorageKey, String(page));
     localStorage.setItem("library:lastActiveBook", book.id);
+    lastReadPage = page;
     syncReadingHistory();
     updateReaderStats();
     updateActiveItems();
@@ -3793,12 +3871,17 @@ const initBookReader = () => {
     if (target.dataset.readerTab) {
       reader.querySelectorAll("[data-reader-tab]").forEach((tab) => {
         tab.classList.toggle("is-active", tab === target);
+        tab.setAttribute("aria-selected", String(tab === target));
       });
       const activeTab = target.dataset.readerTab;
       reader.querySelector(".summary-list").hidden = activeTab !== "sumario";
       reader.querySelectorAll("[data-reader-panel]").forEach((panel) => {
         panel.hidden = panel.dataset.readerPanel !== activeTab;
       });
+      return;
+    }
+    if (target.matches("[data-page-error-retry]")) {
+      renderPage(page);
       return;
     }
     if (target.matches("[data-ask-book-button]") && askOutput) {
@@ -3832,24 +3915,82 @@ const initBookReader = () => {
       : `<p>Nenhum resultado no indice demonstrativo. A busca textual completa sera ativada com a IA do PDF.</p>`;
   });
 
+  const isTextInput = (target) =>
+    target?.matches?.("input, textarea, select, [contenteditable='true'], [contenteditable='']");
+
   document.addEventListener("keydown", (event) => {
     if (!reader.isConnected) {
       return;
     }
+    if (isTextInput(event.target) && event.key !== "Escape") {
+      return;
+    }
     if (event.key === "ArrowLeft") {
+      event.preventDefault();
       renderPage(page - 1);
     }
     if (event.key === "ArrowRight") {
+      event.preventDefault();
       renderPage(page + 1);
+    }
+    if (event.key === "+" || event.key === "=") {
+      event.preventDefault();
+      setZoom(zoom + 0.1);
+    }
+    if (event.key === "-" || event.key === "_") {
+      event.preventDefault();
+      setZoom(zoom - 0.1);
+    }
+    if (event.key.toLowerCase() === "f") {
+      event.preventDefault();
+      if (stage?.requestFullscreen) {
+        stage.requestFullscreen();
+      }
+    }
+    if (event.key === "/") {
+      event.preventDefault();
+      reader.querySelector('[data-reader-tab="busca"]')?.click();
+      searchInput?.focus();
+    }
+    if (event.key === "Escape" && document.fullscreenElement) {
+      document.exitFullscreen?.();
     }
   });
 
   image.addEventListener("load", () => {
     image.classList.remove("is-loading");
+    pageFrame.classList.remove("is-loading");
+    pageFrame.classList.remove("has-page-error");
+    if (pageError) {
+      pageError.hidden = true;
+    }
   });
 
-  if (bookmarkedPage && !hasRequestedPage) {
+  image.addEventListener("error", () => {
+    const failedPath = image.getAttribute("src") || "";
+    console.error("Erro ao carregar pagina do livro", {
+      bookId: book.id,
+      page,
+      assetPath: failedPath,
+    });
+    image.classList.remove("is-loading");
+    pageFrame.classList.remove("is-loading");
+    pageFrame.classList.add("has-page-error");
+    image.hidden = true;
+    if (pageError) {
+      pageError.hidden = false;
+    }
+    if (pageErrorDetail) {
+      pageErrorDetail.textContent = `${book.id} - pagina ${page}`;
+    }
+  });
+
+  if (hasRequestedPage) {
+    page = clamp(requestedPage, 1, book.totalPages);
+  } else if (bookmarkedPage) {
     page = clamp(bookmarkedPage, 1, book.totalPages);
+  } else if (lastReadPage) {
+    page = clamp(lastReadPage, 1, book.totalPages);
   }
   setZoom(1);
   syncFavoriteButton();
@@ -3859,20 +4000,37 @@ const initBookReader = () => {
 const initLibrarySearch = () => {
   const searchInput = document.querySelector(".app-search input");
   const catalogCards = [...document.querySelectorAll("[data-library-book-card]")];
+  const emptyState = document.querySelector("[data-library-empty]");
+  const clearButton = document.querySelector("[data-clear-library-search]");
   if (!searchInput || !catalogCards.length) {
     return;
   }
 
-  searchInput.addEventListener("input", () => {
+  const syncSearch = () => {
     const query = searchInput.value.trim().toLowerCase().replace(/\s+/g, " ");
     const terms = query.split(/\s+/).filter(Boolean);
+    let visibleCards = 0;
     catalogCards.forEach((card) => {
       const searchableText = card.textContent.toLowerCase().replace(/\s+/g, " ");
       const phraseMatch = searchableText.includes(query);
       const termMatch = terms.every((term) => searchableText.includes(term));
       const hasNumberTerm = terms.some((term) => /^\d+$/.test(term));
       card.hidden = terms.length > 0 && !(phraseMatch || (!hasNumberTerm && termMatch));
+      if (!card.hidden) {
+        visibleCards += 1;
+      }
     });
+    if (emptyState) {
+      emptyState.hidden = !(terms.length > 0 && visibleCards === 0);
+    }
+  };
+
+  searchInput.addEventListener("input", syncSearch);
+
+  clearButton?.addEventListener("click", () => {
+    searchInput.value = "";
+    syncSearch();
+    searchInput.focus();
   });
 
   document.querySelectorAll("[data-toggle-book-favorite]").forEach((button) => {
@@ -6052,6 +6210,7 @@ const renderAppPage = () => {
 
   initBookReader();
   initLibrarySearch();
+  initLibraryAssetFallbacks();
   initMissionPlayer();
   initQuestionBank();
   initDigitalStudentAssessments();
