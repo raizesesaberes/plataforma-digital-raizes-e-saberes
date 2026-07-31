@@ -2611,7 +2611,6 @@ const modules = {
         ${buildBookCarousel("Recomendados para voce", "perfil demonstrativo", libraryRecommendedBooks)}
         ${buildBookCarousel("Guias do Professor", "indicacao para turmas", libraryTeacherBooks)}
         ${libraryFavoriteBooks.length ? buildBookCarousel("Favoritos", `${libraryFavoriteBooks.length} salvos`, libraryFavoriteBooks.map((item) => item.libraryBook)) : ""}
-        ${buildFeaturedBookCard()}
         <section class="wide-panel">
           <div class="panel-head"><h2>Colecoes</h2><a>Ver todos</a></div>
           <div class="collection-showcase-grid">
