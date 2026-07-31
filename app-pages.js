@@ -1440,6 +1440,47 @@ const library2StatsHtml = `
     <article><strong>${Math.max(120, libraryContinueBooks.length * 35)}</strong><span>XP de leitura</span></article>
   </section>
 `;
+const infantilExperienceCatalog = typeof window === "undefined" ? null : window.RaizesInfantilExperiences;
+const featuredInfantilExperience = infantilExperienceCatalog?.getExperienceDefinition?.("RS-EI4-V1-EXP-001");
+const getExperiencePlaybackAsset = (experience) =>
+  experience ? infantilExperienceCatalog?.getExperienceAsset?.(experience.openingAssetCode) : null;
+const buildFeaturedExperiencePanel = () => {
+  if (!featuredInfantilExperience) {
+    return "";
+  }
+  const asset = getExperiencePlaybackAsset(featuredInfantilExperience);
+  const progress = typeof window === "undefined" ? null : window.RSGameEngine?.getExperienceProgress?.(featuredInfantilExperience.id);
+  const state = infantilExperienceCatalog?.EXPERIENCE_STATES?.[featuredInfantilExperience.availability] || infantilExperienceCatalog?.EXPERIENCE_STATES?.available;
+  const pages = featuredInfantilExperience.pages || [];
+  return `
+    <section class="wide-panel library-experience-panel" aria-labelledby="library-experience-title" data-library-experience="${featuredInfantilExperience.id}">
+      <div class="library-experience-media">
+        <img src="${asset?.coverPath || featuredLibraryBook.src}" alt="${featuredInfantilExperience.title}" loading="lazy" />
+        <span>${featuredInfantilExperience.id}</span>
+      </div>
+      <div class="library-experience-content">
+        <div class="panel-head">
+          <h2 id="library-experience-title">Experiencia digital vinculada</h2>
+          <a href="book-viewer.html?book=${featuredInfantilExperience.bookId}&page=${pages[0] || 1}">Paginas ${pages.join(", ")}</a>
+        </div>
+        <span class="library-experience-status">${state?.label || "Disponivel"}</span>
+        <h3>${featuredInfantilExperience.title}</h3>
+        <p>${featuredInfantilExperience.description}</p>
+        <dl>
+          <div><dt>Livro</dt><dd>${featuredInfantilExperience.bookTitle}</dd></div>
+          <div><dt>Objetivo</dt><dd>${featuredInfantilExperience.objective}</dd></div>
+          <div><dt>Campo</dt><dd>${featuredInfantilExperience.fieldOfExperience}</dd></div>
+          <div><dt>Progresso</dt><dd>${progress?.percentWatched || 0}% assistido</dd></div>
+        </dl>
+        ${asset?.provisionalFilePath ? `<p class="library-experience-note">${asset.note}</p>` : ""}
+        <div class="library-experience-actions">
+          <button type="button" data-open-experience="${featuredInfantilExperience.id}">Viver esta experiencia</button>
+          <a href="book-viewer.html?book=${featuredInfantilExperience.bookId}&page=${pages[0] || 1}">Localizar atividade</a>
+        </div>
+      </div>
+    </section>
+  `;
+};
 const library2TeacherPanel = `
   <section class="wide-panel library-2-ops">
     <div class="panel-head"><h2>Professor e Familia</h2><a>acompanhamento</a></div>
@@ -2636,6 +2677,7 @@ const modules = {
       <div class="library-grid">
         ${library2HeroHtml}
         ${library2StatsHtml}
+        ${buildFeaturedExperiencePanel()}
         <section class="wide-panel">
           <div class="panel-head"><h2>Continuar Leitura</h2><a href="book-viewer.html">Ver todos</a></div>
           <div class="reading-row">
@@ -4046,6 +4088,19 @@ const initLibrarySearch = () => {
         favoriteButton.setAttribute("aria-pressed", String(isFavorite));
         favoriteButton.textContent = isFavorite ? "Favorito" : "Favoritar";
       });
+    });
+  });
+};
+
+const initLibraryExperiences = () => {
+  document.querySelectorAll("[data-open-experience]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const code = button.dataset.openExperience;
+      if (!window.RSGameEngine?.openExperience) {
+        console.warn("Player de experiencias indisponivel.", { code });
+        return;
+      }
+      window.RSGameEngine.openExperience(code);
     });
   });
 };
@@ -6210,6 +6265,7 @@ const renderAppPage = () => {
 
   initBookReader();
   initLibrarySearch();
+  initLibraryExperiences();
   initLibraryAssetFallbacks();
   initMissionPlayer();
   initQuestionBank();

@@ -21,6 +21,7 @@ const allowedCategories = new Set(["opening", "instruction", "transition", "succ
 const allowedSharedScopes = new Set(["collection", "age-group", "volume", "exclusive"]);
 const allowedAssetStatuses = new Set(["awaiting-upload", "available", "review", "approved"]);
 const allowedExperienceStatuses = new Set(["draft", "review", "published"]);
+const allowedAvailability = new Set(["unavailable", "in-production", "available"]);
 
 const volumeCodePattern = /^RS-EI[2-5]-V[12]-\d{3}$/;
 const sharedAgeCodePattern = /^RS-EI[2-5]-C-\d{3}$/;
@@ -63,8 +64,12 @@ for (const asset of catalog.experienceAssets) {
   if (!allowedAssetStatuses.has(asset.status)) addError(`${asset.code}: status invalido`);
   if (!Array.isArray(asset.tags)) addError(`${asset.code}: tags precisa ser array`);
 
-  if (asset.status !== "awaiting-upload" && asset.filePath && !exists(asset.filePath)) {
+  if (asset.status !== "awaiting-upload" && asset.filePath && !exists(asset.filePath) && !asset.provisionalFilePath) {
     addError(`${asset.code}: arquivo aprovado/disponivel nao encontrado em ${asset.filePath}`);
+  }
+
+  if (asset.provisionalFilePath && !exists(asset.provisionalFilePath)) {
+    addError(`${asset.code}: arquivo provisorio nao encontrado em ${asset.provisionalFilePath}`);
   }
 
   if (asset.status === "awaiting-upload" && asset.filePath && exists(asset.filePath)) {
@@ -88,6 +93,10 @@ for (const experience of catalog.experienceDefinitions) {
     addError(`${experience.id}: reward invalido`);
   }
   if (!allowedExperienceStatuses.has(experience.status)) addError(`${experience.id}: status invalido`);
+  if (experience.availability && !allowedAvailability.has(experience.availability)) addError(`${experience.id}: availability invalida`);
+  if (experience.pages && (!Array.isArray(experience.pages) || experience.pages.some((page) => !Number.isInteger(page)))) {
+    addError(`${experience.id}: pages precisa ser array de inteiros`);
+  }
 
   for (const key of ["openingAssetCode", "instructionAudioCode", "successAssetCode", "retryAssetCode", "completionAssetCode"]) {
     if (experience[key] && !catalog.getExperienceAsset(experience[key])) {

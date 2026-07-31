@@ -2244,6 +2244,344 @@
   width: min(100%, 240px);
 }
 
+.library-experience-panel {
+  display: grid;
+  grid-template-columns: minmax(180px, 280px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+.library-experience-media {
+  position: relative;
+  min-height: 220px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #0d6b4b;
+}
+
+.library-experience-media img {
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  object-fit: cover;
+  display: block;
+}
+
+.library-experience-media span {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #083f2d;
+  font-weight: 800;
+  font-size: 0.72rem;
+}
+
+.library-experience-content {
+  min-width: 0;
+}
+
+.library-experience-status {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0 12px;
+  background: #fff3d6;
+  color: #725017;
+  font-weight: 800;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+}
+
+.library-experience-content h3 {
+  margin: 10px 0;
+  color: #083f2d;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 1.45rem;
+  line-height: 1.15;
+}
+
+.library-experience-content p {
+  color: #49695d;
+  margin: 0 0 12px;
+}
+
+.library-experience-content dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.library-experience-content dl div {
+  border: 1px solid rgba(6, 70, 47, 0.1);
+  border-radius: 12px;
+  padding: 10px;
+  background: #f8fbf8;
+}
+
+.library-experience-content dt {
+  color: #0d6b4b;
+  font-weight: 800;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.library-experience-content dd {
+  margin: 4px 0 0;
+  color: #263f36;
+  font-size: 0.9rem;
+}
+
+.library-experience-note {
+  border-left: 4px solid #d99d1d;
+  padding: 10px 12px;
+  background: #fff8e8;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.library-experience-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.library-experience-actions button,
+.library-experience-actions a {
+  min-height: 42px;
+  border-radius: 999px;
+  border: 0;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Poppins, Inter, sans-serif;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.library-experience-actions button {
+  background: #0d6b4b;
+  color: #fff;
+}
+
+.library-experience-actions a {
+  background: #e7f1ea;
+  color: #0d6b4b;
+}
+
+.experience-player-open {
+  overflow: hidden;
+}
+
+.experience-player-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(4, 23, 18, 0.74);
+}
+
+.experience-player-dialog {
+  position: relative;
+  width: min(1120px, 100%);
+  max-height: min(92vh, 860px);
+  overflow: auto;
+  border-radius: 18px;
+  background: #f8fbf8;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.36);
+  color: #083f2d;
+}
+
+.experience-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.94);
+  color: #083f2d;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.experience-player-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  padding: 22px 72px 18px 22px;
+}
+
+.experience-player-header span,
+.experience-player-header strong {
+  color: #0d6b4b;
+  font-weight: 800;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+}
+
+.experience-player-header h2 {
+  margin: 6px 0;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: clamp(1.4rem, 3vw, 2.4rem);
+  line-height: 1.05;
+}
+
+.experience-player-header p,
+.experience-player-header small {
+  margin: 0;
+  color: #557066;
+}
+
+.experience-provisional-alert {
+  margin: 0 22px 14px;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #fff8e8;
+  color: #6d4d17;
+  font-weight: 800;
+}
+
+.experience-video-frame {
+  position: relative;
+  margin: 0 22px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #061f17;
+  aspect-ratio: 16 / 9;
+}
+
+.experience-video-frame video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  background: #061f17;
+}
+
+.experience-loading,
+.experience-error {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  text-align: center;
+  background: rgba(6, 31, 23, 0.84);
+  color: #fff;
+  font-weight: 800;
+}
+
+.experience-loading[hidden],
+.experience-error[hidden] {
+  display: none;
+}
+
+.experience-error {
+  gap: 8px;
+}
+
+.experience-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 18px 22px 12px;
+}
+
+.experience-controls button,
+.experience-controls a {
+  min-height: 40px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e7f1ea;
+  color: #0d6b4b;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.experience-controls button:first-child {
+  background: #0d6b4b;
+  color: #fff;
+}
+
+.experience-progress-line {
+  height: 8px;
+  margin: 0 22px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #d8e8df;
+}
+
+.experience-progress-line span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: #0d6b4b;
+}
+
+.experience-instructions {
+  margin: 14px 22px 22px;
+  color: #49695d;
+}
+
+.experience-error-panel {
+  padding: 44px 28px 28px;
+}
+
+.experience-error-panel h2 {
+  font-family: Poppins, Inter, sans-serif;
+}
+
+@media (max-width: 760px) {
+  .library-experience-panel,
+  .library-experience-content dl,
+  .experience-player-header {
+    grid-template-columns: 1fr;
+  }
+
+  .experience-player-overlay {
+    padding: 10px;
+  }
+
+  .experience-player-dialog {
+    max-height: 94vh;
+    border-radius: 14px;
+  }
+
+  .experience-player-header {
+    padding: 20px 58px 14px 16px;
+  }
+
+  .experience-video-frame,
+  .experience-provisional-alert,
+  .experience-progress-line,
+  .experience-instructions {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
+  .experience-controls {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
 .library-grid > .library-2-ops .library-2-ops-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }

@@ -1650,7 +1650,7 @@
       });
       this.video.addEventListener("canplay", () => {
         if (loading) loading.hidden = true;
-        this.setState("paused");
+        this.setState(this.video.paused ? "paused" : "running");
       });
       this.video.addEventListener("play", () => this.setState("running"));
       this.video.addEventListener("pause", () => {

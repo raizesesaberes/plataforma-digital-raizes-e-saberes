@@ -33,6 +33,103 @@ Para validar a camada de experiencias:
 node tools/validate-infantil-experience-catalog.js
 ```
 
+### Fase 02 - primeira experiencia funcional
+
+A experiencia piloto real e:
+
+- codigo: `RS-EI4-V1-EXP-001`;
+- titulo: `A Caixa Misteriosa`;
+- livro: `livro-005` (`Educacao Infantil 4 anos - Volume 1`);
+- paginas vinculadas: 18, 19, 20 e 21;
+- campo de experiencia: escuta, fala, pensamento e imaginacao; espacos, tempos, quantidades, relacoes e transformacoes;
+- objetivo: estimular observacao, escuta atenta, formulacao de hipoteses e ampliacao de vocabulario;
+- tipo: `video-guided-exploration`;
+- ativo oficial definitivo: `RS-EI4-V1-001`;
+- caminho definitivo preparado: `assets/experiencias/infantil/ei4/volume-1/videos/rs-ei4-v1-001-caixa-misteriosa.mp4`;
+- MP4 provisorio para homologacao: `assets/video/RS-020-video-institucional.mp4`;
+- status: `review`;
+- disponibilidade: `in-production`.
+
+O MP4 institucional e usado apenas como ativo provisorio identificado. A experiencia nao deve ser tratada como publicada enquanto o video definitivo nao estiver no caminho oficial.
+
+### Player oficial de experiencias
+
+O player reutilizavel fica em `game-engine.js`, no controlador `experiencePlayerController`. Ele abre qualquer experiencia cadastrada em `infantil-experience-catalog.js`, desde que exista um `openingAssetCode`.
+
+Controles implementados:
+
+- reproduzir;
+- pausar;
+- reiniciar;
+- ativar/desativar audio;
+- tela cheia;
+- fechar;
+- repetir experiencia;
+- link para localizar a atividade no Book Viewer.
+
+Estados centralizados no catalogo:
+
+- `unavailable`;
+- `in-production`;
+- `available`;
+- `loading`;
+- `running`;
+- `paused`;
+- `completed`;
+- `error`.
+
+### Metodos publicos
+
+`window.RSGameEngine` expoe:
+
+- `openExperience(code)`;
+- `closeExperience()`;
+- `startExperience(code)`;
+- `pauseExperience(code)`;
+- `restartExperience(code)`;
+- `completeExperience(code)`;
+- `getExperienceProgress(code)`;
+- `getExperienceAsset(code)`.
+
+As paginas nao devem duplicar logica do player. A Biblioteca apenas renderiza o card e chama `openExperience(code)`.
+
+### Armazenamento local de progresso
+
+Enquanto a persistencia remota nao existe, o progresso usa:
+
+```text
+raizes:infantil-experience-progress:v1
+```
+
+Cada registro armazena codigo da experiencia, usuario local demonstrativo, inicio, ultimo inicio, conclusao, quantidade de inicios, conclusoes, repeticoes, percentual assistido, status e data de atualizacao.
+
+Essa camada fica isolada em `experienceProgressStore`, preparada para ser trocada por Supabase depois.
+
+### Como cadastrar a segunda experiencia
+
+1. Adicionar ou atualizar o ativo em `experienceAssets`, mantendo o codigo oficial.
+2. Definir `filePath` no caminho oficial da pasta da faixa/volume.
+3. Usar `provisionalFilePath` somente se o MP4 definitivo ainda nao existir.
+4. Atualizar a experiencia em `experienceDefinitions` com titulo, descricao, objetivo, campo, paginas, livro, tipo, duracao, disponibilidade e instrucoes.
+5. Vincular `openingAssetCode`, `successAssetCode`, `retryAssetCode` e `completionAssetCode`.
+6. Rodar `node tools/validate-infantil-experience-catalog.js` quando o Node do ambiente estiver normal.
+7. Abrir `biblioteca.html`, localizar o card e testar abrir, reproduzir, pausar, reiniciar, fechar e recarregar.
+
+Nao e necessario alterar o player para a segunda experiencia.
+
+### Validacao da Fase 02
+
+No ambiente atual, o binario externo do Node responde a `node --version` (`v24.14.0`), mas fica preso ate com `node -e "console.log('node-ok')"`. O mesmo ocorre com `node --check` e com os validadores. A execucao com subprocesso Python e timeout confirma que o travamento acontece antes da logica dos validadores.
+
+A validacao do catalogo foi executada no runtime JS do Codex (`node_repl`) e retornou:
+
+- 36 ativos;
+- 8 experiencias;
+- nenhum codigo duplicado;
+- nenhum caminho provisorio ausente;
+- referencias de ativos validas;
+- piloto `RS-EI4-V1-EXP-001` vinculado a `RS-EI4-V1-001`.
+
 ## Onde esta o catalogo
 
 O catalogo ativo fica em `app-pages.js`:
