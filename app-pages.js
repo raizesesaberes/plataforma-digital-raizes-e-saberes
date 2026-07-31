@@ -690,7 +690,112 @@ const bookCatalog = [
   },
 ];
 
-const defaultBook = masterBook001;
+const renewedInfantilBooks = [
+  {
+    id: "livro-005",
+    title: "Educacao Infantil 4 anos",
+    subtitle: "Livro do Aluno - Volume 1",
+    catalogTitle: "Volume 1",
+    level: "Infantil 4",
+    type: "Livro do Aluno",
+    collection: "Colecao Raizes e Saberes",
+    totalPages: 120,
+    basePath: "assets",
+    cover: "assets/livro-005/pages/page-001.jpg",
+    catalogCover: "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg",
+    pdf: "assets/livro-005/pdf/infantil-4-volume-1.pdf",
+    href: "book-viewer.html?book=livro-005",
+    thumb: (page) => `assets/livro-005/thumbs/page-${String(page).padStart(3, "0")}.jpg`,
+    page: (page) => `assets/livro-005/pages/page-${String(page).padStart(3, "0")}.jpg`,
+    summary: [
+      ["Capa", 1],
+      ["Apresentacao", 2],
+      ["Volume 1 - 1o semestre", 3],
+      ["Atividades", 10],
+      ["Projetos", 60],
+      ["Encerramento", 120],
+    ],
+  },
+  {
+    id: "livro-006",
+    title: "Educacao Infantil 4 anos",
+    subtitle: "Livro do Aluno - Volume 2",
+    catalogTitle: "Volume 2",
+    level: "Infantil 4",
+    type: "Livro do Aluno",
+    collection: "Colecao Raizes e Saberes",
+    totalPages: 122,
+    basePath: "assets",
+    cover: "assets/livro-006/pages/page-001.jpg",
+    catalogCover: "assets/biblioteca/RAIZES_INFANTIL4_VOL2_BIBLIOTECA.jpg",
+    pdf: "assets/livro-006/pdf/infantil-4-volume-2.pdf",
+    href: "book-viewer.html?book=livro-006",
+    thumb: (page) => `assets/livro-006/thumbs/page-${String(page).padStart(3, "0")}.jpg`,
+    page: (page) => `assets/livro-006/pages/page-${String(page).padStart(3, "0")}.jpg`,
+    summary: [
+      ["Capa", 1],
+      ["Apresentacao", 2],
+      ["Volume 2 - 2o semestre", 3],
+      ["Atividades", 10],
+      ["Projetos", 60],
+      ["Encerramento", 122],
+    ],
+  },
+  {
+    id: "livro-007",
+    title: "Educacao Infantil 5 anos",
+    subtitle: "Livro do Aluno - Volume 1",
+    catalogTitle: "Volume 1",
+    level: "Infantil 5",
+    type: "Livro do Aluno",
+    collection: "Colecao Raizes e Saberes",
+    totalPages: 128,
+    basePath: "assets",
+    cover: "assets/livro-007/pages/page-001.jpg",
+    catalogCover: "assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.jpg",
+    pdf: "assets/livro-007/pdf/infantil-5-volume-1.pdf",
+    href: "book-viewer.html?book=livro-007",
+    thumb: (page) => `assets/livro-007/thumbs/page-${String(page).padStart(3, "0")}.jpg`,
+    page: (page) => `assets/livro-007/pages/page-${String(page).padStart(3, "0")}.jpg`,
+    summary: [
+      ["Capa", 1],
+      ["Apresentacao", 2],
+      ["Volume 1 - 1o semestre", 3],
+      ["Atividades", 10],
+      ["Projetos", 64],
+      ["Encerramento", 128],
+    ],
+  },
+  {
+    id: "livro-008",
+    title: "Educacao Infantil 5 anos",
+    subtitle: "Livro do Aluno - Volume 2",
+    catalogTitle: "Volume 2",
+    level: "Infantil 5",
+    type: "Livro do Aluno",
+    collection: "Colecao Raizes e Saberes",
+    totalPages: 155,
+    basePath: "assets",
+    cover: "assets/livro-008/pages/page-001.jpg",
+    catalogCover: "assets/biblioteca/RAIZES_INFANTIL5_VOL2_BIBLIOTECA.jpg",
+    pdf: "assets/livro-008/pdf/infantil-5-volume-2.pdf",
+    href: "book-viewer.html?book=livro-008",
+    thumb: (page) => `assets/livro-008/thumbs/page-${String(page).padStart(3, "0")}.jpg`,
+    page: (page) => `assets/livro-008/pages/page-${String(page).padStart(3, "0")}.jpg`,
+    summary: [
+      ["Capa", 1],
+      ["Apresentacao", 2],
+      ["Volume 2 - 2o semestre", 3],
+      ["Atividades", 10],
+      ["Projetos", 78],
+      ["Encerramento", 155],
+    ],
+  },
+];
+
+bookCatalog.splice(0, 12, ...renewedInfantilBooks);
+
+const defaultBook = renewedInfantilBooks[0];
 
 const getActiveBook = () => {
   if (typeof window === "undefined") {
@@ -830,6 +935,75 @@ const libraryBooks = [
   { src: "assets/colecoes/colecao-avalia-provisorio.webp", year: "Avalia+", title: "Colecao Avalia+", type: "Avaliacoes", href: "avalia.html", collection: "Avalia+", publishedAt: "2026-07-11", status: "Em expansao" },
 ];
 
+const renewedInfantilLibraryBooks = [
+  {
+    src: "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg",
+    year: "Infantil 4",
+    title: "Volume 1",
+    type: "Livro do Aluno",
+    component: "EDUCACAO INFANTIL",
+    pages: "120 PAGINAS",
+    href: "book-viewer.html?book=livro-005",
+    downloadHref: "assets/livro-005/pdf/infantil-4-volume-1.pdf",
+    collection: "Educacao Infantil",
+    stage: "Educacao Infantil",
+    hierarchy: "Educacao Infantil > 4 anos > Livro do Aluno > Volume 1",
+    publishedAt: "2026-07-30",
+    actionLabel: "Ler Agora",
+    searchTerms: "Educacao Infantil Educação Infantil Infantil 4 anos 4 Anos Livro do Aluno Volume 1 Primeiro Semestre",
+  },
+  {
+    src: "assets/biblioteca/RAIZES_INFANTIL4_VOL2_BIBLIOTECA.jpg",
+    year: "Infantil 4",
+    title: "Volume 2",
+    type: "Livro do Aluno",
+    component: "EDUCACAO INFANTIL",
+    pages: "122 PAGINAS",
+    href: "book-viewer.html?book=livro-006",
+    downloadHref: "assets/livro-006/pdf/infantil-4-volume-2.pdf",
+    collection: "Educacao Infantil",
+    stage: "Educacao Infantil",
+    hierarchy: "Educacao Infantil > 4 anos > Livro do Aluno > Volume 2",
+    publishedAt: "2026-07-30",
+    actionLabel: "Ler Agora",
+    searchTerms: "Educacao Infantil Educação Infantil Infantil 4 anos 4 Anos Livro do Aluno Volume 2 Segundo Semestre",
+  },
+  {
+    src: "assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.jpg",
+    year: "Infantil 5",
+    title: "Volume 1",
+    type: "Livro do Aluno",
+    component: "EDUCACAO INFANTIL",
+    pages: "128 PAGINAS",
+    href: "book-viewer.html?book=livro-007",
+    downloadHref: "assets/livro-007/pdf/infantil-5-volume-1.pdf",
+    collection: "Educacao Infantil",
+    stage: "Educacao Infantil",
+    hierarchy: "Educacao Infantil > 5 anos > Livro do Aluno > Volume 1",
+    publishedAt: "2026-07-30",
+    actionLabel: "Ler Agora",
+    searchTerms: "Educacao Infantil Educação Infantil Infantil 5 anos 5 Anos Livro do Aluno Volume 1 Primeiro Semestre",
+  },
+  {
+    src: "assets/biblioteca/RAIZES_INFANTIL5_VOL2_BIBLIOTECA.jpg",
+    year: "Infantil 5",
+    title: "Volume 2",
+    type: "Livro do Aluno",
+    component: "EDUCACAO INFANTIL",
+    pages: "155 PAGINAS",
+    href: "book-viewer.html?book=livro-008",
+    downloadHref: "assets/livro-008/pdf/infantil-5-volume-2.pdf",
+    collection: "Educacao Infantil",
+    stage: "Educacao Infantil",
+    hierarchy: "Educacao Infantil > 5 anos > Livro do Aluno > Volume 2",
+    publishedAt: "2026-07-30",
+    actionLabel: "Ler Agora",
+    searchTerms: "Educacao Infantil Educação Infantil Infantil 5 anos 5 Anos Livro do Aluno Volume 2 Segundo Semestre",
+  },
+];
+
+libraryBooks.splice(0, 16, ...renewedInfantilLibraryBooks);
+
 const publishedMaterialsCount = libraryBooks.length;
 const sortedLibraryBooks = [...libraryBooks].sort((firstBook, secondBook) => secondBook.publishedAt.localeCompare(firstBook.publishedAt));
 const latestLibraryBooks = sortedLibraryBooks.slice(0, 4);
@@ -898,40 +1072,14 @@ const collectionShowcaseCards = [
   {
     title: "Educacao Infantil",
     count: `${countMaterialsByCollection("Educacao Infantil")} livros`,
-    description: "Colecao completa para a Educacao Infantil, com atividades ludicas, experiencias sensoriais e guias para cada etapa.",
+    description: "Colecao renovada para a Educacao Infantil, iniciando pelos Livros do Aluno de 4 e 5 anos.",
     icon: "⌂",
     href: "#acervo-completo",
     covers: [
-      "assets/biblioteca/RAIZES_INFANTIL2_VOL1_BIBLIOTECA.webp",
-      "assets/biblioteca/RAIZES_INFANTIL3_VOL2_BIBLIOTECA.webp",
-      "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.webp",
-      "assets/biblioteca/RAIZES_INFANTIL5_VOL2_BIBLIOTECA.webp",
-    ],
-  },
-  {
-    title: "Laboratorio Sensorial",
-    count: `${countMaterialsByCollection("Laboratorio Sensorial")} livros`,
-    description: "Experiencias praticas para explorar sentidos, natureza, materiais, criatividade e registros pedagogicos.",
-    icon: "◎",
-    href: "#acervo-completo",
-    covers: [
-      "assets/biblioteca/RAIZES_LAB_SENSORIAL_INFANTIL2_BIBLIOTECA.webp",
-      "assets/biblioteca/RAIZES_LAB_SENSORIAL_INFANTIL3_BIBLIOTECA.webp",
-      "assets/biblioteca/RAIZES_LAB_SENSORIAL_INFANTIL4_BIBLIOTECA.webp",
-      "assets/biblioteca/RAIZES_LAB_SENSORIAL_INFANTIL5_BIBLIOTECA.webp",
-    ],
-  },
-  {
-    title: "Guias do Professor",
-    count: `${countMaterialsByCollection("Guias do Professor")} guias`,
-    description: "Materiais de apoio para planejamento, mediacao das propostas e acompanhamento do desenvolvimento infantil.",
-    icon: "♙",
-    href: "#acervo-completo",
-    covers: [
-      "assets/biblioteca/RAIZES_GUIA_ALFABETIZADOR_INFANTIL2_BIBLIOTECA.webp",
-      "assets/biblioteca/RAIZES_GUIA_ALFABETIZADOR_INFANTIL3_BIBLIOTECA.webp",
-      "assets/biblioteca/RAIZES_GUIA_ALFABETIZADOR_INFANTIL4_BIBLIOTECA.webp",
-      "assets/biblioteca/RAIZES_GUIA_ALFABETIZADOR_INFANTIL5_BIBLIOTECA.webp",
+      "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg",
+      "assets/biblioteca/RAIZES_INFANTIL4_VOL2_BIBLIOTECA.jpg",
+      "assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.jpg",
+      "assets/biblioteca/RAIZES_INFANTIL5_VOL2_BIBLIOTECA.jpg",
     ],
   },
   {
@@ -1002,7 +1150,6 @@ const libraryBookCards = sortedLibraryBooks
           ${book.pages ? `<small>${book.pages}</small>` : ""}
           ${book.searchTerms || book.hierarchy ? `<span hidden>${[book.searchTerms, book.hierarchy, book.stage].filter(Boolean).join(" ")}</span>` : ""}
           <a href="${book.href}">${book.actionLabel || "Abrir"}</a>
-          ${book.downloadHref ? `<a href="${book.downloadHref}" download>Baixar PDF</a>` : ""}
         </div>
       </article>
     `
@@ -1488,18 +1635,18 @@ const studentDashboardData = {
     href: "jogos.html",
   },
   currentBook: {
-    title: "Linguagem",
-    subtitle: "Educacao Infantil 2 anos",
+    title: "Volume 1",
+    subtitle: "Educacao Infantil 4 anos",
     progress: 45,
-    cover: "assets/biblioteca/RAIZES_INFANTIL2_VOL1_BIBLIOTECA.webp",
-    href: "book-viewer.html?book=livro-mestre-001",
+    cover: "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg",
+    href: "book-viewer.html?book=livro-005",
   },
   libraryBanner: "assets/aluno/oficial-biblioteca-banner-v2.png",
   library: [
-    { title: "Linguagem", cover: "assets/biblioteca/RAIZES_INFANTIL2_VOL1_BIBLIOTECA.webp", href: "book-viewer.html?book=livro-mestre-001" },
-    { title: "Matematica", cover: "assets/biblioteca/RAIZES_INFANTIL2_VOL2_BIBLIOTECA.webp", href: "book-viewer.html?book=livro-002" },
-    { title: "Natureza e Sociedade", cover: "assets/biblioteca/RAIZES_LAB_SENSORIAL_INFANTIL2_BIBLIOTECA.webp", href: "book-viewer.html?book=laboratorio-sensorial-002" },
-    { title: "Caderno de Atividades", cover: "assets/biblioteca/RAIZES_INFANTIL3_VOL1_BIBLIOTECA.webp", href: "biblioteca.html" },
+    { title: "Infantil 4 - Volume 1", cover: "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg", href: "book-viewer.html?book=livro-005" },
+    { title: "Infantil 4 - Volume 2", cover: "assets/biblioteca/RAIZES_INFANTIL4_VOL2_BIBLIOTECA.jpg", href: "book-viewer.html?book=livro-006" },
+    { title: "Infantil 5 - Volume 1", cover: "assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.jpg", href: "book-viewer.html?book=livro-007" },
+    { title: "Infantil 5 - Volume 2", cover: "assets/biblioteca/RAIZES_INFANTIL5_VOL2_BIBLIOTECA.jpg", href: "book-viewer.html?book=livro-008" },
   ],
   xpGoal: {
     current: 125,
@@ -1519,7 +1666,7 @@ const studentDashboardData = {
     values: [22, 34, 48, 51, 62, 70, 86],
   },
   quickAccess: [
-    { label: "Continuar Leitura", detail: "Retome onde parou", icon: "📖", href: "book-viewer.html?book=livro-mestre-001" },
+    { label: "Continuar Leitura", detail: "Retome onde parou", icon: "📖", href: "book-viewer.html?book=livro-005" },
     { label: "Minha Arvore", detail: "Veja seu crescimento", icon: "🌱", href: "arvore.html" },
     { label: "Jogos Digitais", detail: "Acesse as descobertas", icon: "▶", href: "jogos.html" },
     { label: "Explorar Biblioteca", detail: "Descubra novos livros", icon: "📚", href: "biblioteca.html" },
@@ -1625,10 +1772,10 @@ const studentProfileHotspots = [
   { className: "profile-hotspot-medal-construtor", href: "perfil.html", label: "Abrir conquista Pequeno Construtor" },
   { className: "profile-hotspot-medal-caminhos", href: "perfil.html", label: "Abrir conquista Pequeno Explorador de Caminhos" },
   { className: "profile-hotspot-medal-explorador", href: "perfil.html", label: "Abrir conquista Pequeno Explorador" },
-  { className: "profile-hotspot-medal-leitor", href: "book-viewer.html?book=livro-mestre-001", label: "Abrir conquista Leitor Iniciante" },
+  { className: "profile-hotspot-medal-leitor", href: "book-viewer.html?book=livro-005", label: "Abrir conquista Leitor Iniciante" },
   { className: "profile-hotspot-medal-natureza", href: "perfil.html", label: "Abrir conquista Curioso por Natureza" },
   { className: "profile-hotspot-xp-panel", href: "perfil.html", label: "Abrir painel de XP e proximo nivel" },
-  { className: "profile-hotspot-last-activity", href: "book-viewer.html?book=livro-mestre-001", label: "Abrir ultima atividade Leitura Linguagem" },
+  { className: "profile-hotspot-last-activity", href: "book-viewer.html?book=livro-005", label: "Abrir ultima atividade Leitura Linguagem" },
   { className: "profile-hotspot-games-summary", href: "jogos.html", label: "Abrir jogos concluidos" },
   { className: "profile-hotspot-xp-summary", href: "perfil.html", label: "Abrir XP total" },
   { className: "profile-hotspot-achievements-summary", href: "perfil.html", label: "Abrir conquistas" },
@@ -1809,7 +1956,7 @@ const professorDashboardHotspots = [
   { className: "professor-hotspot-book-2", href: "book-viewer.html?book=livro-008", label: "Abrir Educacao Infantil 5 anos Volume 2" },
   { className: "professor-hotspot-book-3", href: "book-viewer.html?book=avalia-portugues-2ano", label: "Abrir Lingua Portuguesa 2 Ano Volume 1" },
   { className: "professor-hotspot-book-4", href: "book-viewer.html?book=avalia-matematica-2ano", label: "Abrir Matematica 2 Ano Volume 1" },
-  { className: "professor-hotspot-book-5", href: "book-viewer.html?book=livro-003", label: "Abrir Natureza e Sociedade 3 Ano Volume 1" },
+  { className: "professor-hotspot-book-5", href: "book-viewer.html?book=livro-005", label: "Abrir Educacao Infantil 4 anos Volume 1" },
   { className: "professor-hotspot-bncc", href: "biblioteca.html", label: "Abrir conteudos alinhados a BNCC" },
 ];
 
@@ -1870,7 +2017,7 @@ const familyDashboardHotspots = [
   { className: "family-hotspot-evento-reuniao", href: "familia.html?soon=eventos", label: "Abrir evento Reuniao de Pais e Mestres" },
   { className: "family-hotspot-book-1", href: "book-viewer.html?book=livro-008", label: "Abrir Lingua Portuguesa 5 anos Volume 2" },
   { className: "family-hotspot-book-2", href: "book-viewer.html?book=livro-008", label: "Abrir Matematica 5 anos Volume 2" },
-  { className: "family-hotspot-book-3", href: "book-viewer.html?book=laboratorio-sensorial-005", label: "Abrir Natureza e Sociedade 5 anos Volume 2" },
+  { className: "family-hotspot-book-3", href: "book-viewer.html?book=livro-008", label: "Abrir Educacao Infantil 5 anos Volume 2" },
   { className: "family-hotspot-book-4", href: "book-viewer.html?book=livro-008", label: "Abrir Historia 5 anos Volume 2" },
   { className: "family-hotspot-leitura", href: "book-viewer.html?book=livro-008", label: "Abrir Leitura em Familia" },
   { className: "family-hotspot-materiais", href: "familia.html?soon=materiais", label: "Abrir materiais da escola" },
@@ -1966,11 +2113,11 @@ const ecosystemHomeResources = [
 const ecosystemHomeJourney = [
   {
     label: "Livro",
-    title: masterBook001.catalogTitle,
-    detail: masterBook001.level,
+    title: defaultBook.catalogTitle,
+    detail: defaultBook.level,
     progress: 65,
     image: homeOfficialAsset("continue-card-livro"),
-    href: masterBook001.href,
+    href: defaultBook.href,
     action: "Continuar leitura",
     tone: "green",
   },
@@ -2029,14 +2176,14 @@ const homePresentationHotspots = [
   { className: "hotspot-resource-avalia", href: "avalia.html", label: "Abrir Avalia+" },
   { className: "hotspot-resource-bank", href: "banco-questoes.html", label: "Abrir Banco de Questoes" },
   { className: "hotspot-resource-labs", href: "biblioteca.html#acervo-completo", label: "Abrir Laboratorios" },
-  { className: "hotspot-mission-reading", href: masterBook001.href, label: "Abrir missao de leitura diaria" },
+  { className: "hotspot-mission-reading", href: defaultBook.href, label: "Abrir missao de leitura diaria" },
   { className: "hotspot-mission-training", href: "universidade.html#formacao-raizes", label: "Abrir formacao em andamento" },
   { className: "hotspot-mission-avalia", href: "banco-questoes.html", label: "Abrir questoes recomendadas" },
   { className: "hotspot-mission-games", href: "jogos.html", label: "Abrir jogos recomendados" },
   { className: "hotspot-mission-all", href: "missao.html", label: "Ver todas as missoes" },
   { className: "hotspot-activity-course", href: "universidade.html#formacao-raizes", label: "Abrir historico do curso Avaliacao Diagnostica" },
   { className: "hotspot-activity-medal", href: "perfil.html", label: "Abrir medalhas e conquistas" },
-  { className: "hotspot-activity-reading", href: masterBook001.href, label: "Abrir leitura do Volume 1" },
+  { className: "hotspot-activity-reading", href: defaultBook.href, label: "Abrir leitura do Volume 1" },
   { className: "hotspot-activity-history", href: "perfil.html", label: "Ver historico completo" },
   { className: "hotspot-training-bncc", href: "universidade.html#formacao-raizes", label: "Abrir curso BNCC na Pratica" },
   { className: "hotspot-training-diagnostic", href: "universidade.html#formacao-raizes", label: "Abrir curso Avaliacao Diagnostica" },
@@ -2805,7 +2952,7 @@ const modules = {
         <section class="panel"><h2>Desempenho por Turma</h2><div class="bar-list"><p>6º Ano A<i style="--value:76%"></i></p><p>6º Ano B<i style="--value:72%"></i></p><p>7º Ano A<i style="--value:69%"></i></p><p>8º Ano A<i style="--value:74%"></i></p></div></section>
         <section class="panel chart-card"><h2>Frequencia por Turma</h2><div class="donut">94,1%</div></section>
         <section class="panel"><h2>Alertas Pedagogicos</h2><ul class="clean-list"><li>5 turmas com desempenho abaixo de 60%</li><li>12 estudantes com baixa frequencia</li><li>3 atividades atrasadas</li></ul></section>
-        <section class="panel span-2"><h2>Biblioteca Digital</h2><div class="book-strip small"><img src="assets/biblioteca/RAIZES_INFANTIL3_VOL1_BIBLIOTECA.webp" alt="" /><img src="assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.webp" alt="" /><img src="assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.webp" alt="" /></div></section>
+        <section class="panel span-2"><h2>Biblioteca Digital</h2><div class="book-strip small"><img src="assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg" alt="" /><img src="assets/biblioteca/RAIZES_INFANTIL4_VOL2_BIBLIOTECA.jpg" alt="" /><img src="assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.jpg" alt="" /></div></section>
         <section class="panel"><h2>Atalhos Rapidos</h2><div class="shortcut-grid"><button>Lancar Frequencia</button><button>Registrar Atividade</button><button>Plano de Aula</button><button>Relatorios</button></div></section>
       </div>
     `,
