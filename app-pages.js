@@ -1306,7 +1306,7 @@ const collectionShowcaseCardsHtml = collectionShowcaseCards
 const libraryBookCards = sortedLibraryBooks
   .map(
     (book) => `
-      <article class="library-book-card">
+      <article class="library-book-card" data-library-book-card data-book-href="${book.href}" data-book-collection="${book.collection || ""}" data-book-type="${book.type || ""}">
         <img src="${book.src}" alt="${book.year} ${book.title}" loading="lazy" />
         <div>
           <span>${book.year}</span>
@@ -1321,6 +1321,115 @@ const libraryBookCards = sortedLibraryBooks
     `
   )
   .join("");
+
+const getBookIdFromHref = (href = "") => new URLSearchParams((href.split("?")[1] || "").split("#")[0]).get("book") || "";
+const getCatalogBookFromLibraryBook = (book) => bookCatalog.find((candidate) => candidate.id === getBookIdFromHref(book.href));
+const getReadingProgress = (bookId, totalPages = 1) => {
+  if (typeof localStorage === "undefined") {
+    return 0;
+  }
+  const lastPage = Number(localStorage.getItem(`${bookId}:lastPage`)) || 0;
+  return Math.max(0, Math.min(100, Math.round((lastPage / totalPages) * 100)));
+};
+const getLibraryFavorites = () => {
+  if (typeof localStorage === "undefined") {
+    return [];
+  }
+  try {
+    return JSON.parse(localStorage.getItem("library:favorites") || "[]");
+  } catch (error) {
+    return [];
+  }
+};
+const isFavoriteBook = (bookId) => getLibraryFavorites().includes(bookId);
+const withCatalogBook = (books) =>
+  books
+    .map((libraryBook) => ({ libraryBook, catalogBook: getCatalogBookFromLibraryBook(libraryBook) }))
+    .filter((item) => item.catalogBook);
+const libraryShelfCard = ({ libraryBook, catalogBook }, label = "Ler Agora") => {
+  const progress = getReadingProgress(catalogBook.id, catalogBook.totalPages);
+  const isFavorite = isFavoriteBook(catalogBook.id);
+  return `
+    <article class="library-2-card" data-library-book-card data-book-id="${catalogBook.id}" data-book-href="${libraryBook.href}" data-book-collection="${libraryBook.collection || ""}" data-book-type="${libraryBook.type || ""}">
+      <img src="${libraryBook.src}" alt="${libraryBook.year} ${libraryBook.title}" loading="lazy" />
+      <div>
+        <span>${libraryBook.year}</span>
+        <h3>${libraryBook.title}</h3>
+        <p>${libraryBook.type} &middot; ${libraryBook.pages || `${catalogBook.totalPages} paginas`}</p>
+        <i style="--value:${progress}%"><b style="width:${progress}%"></b></i>
+        <small>${progress ? `${progress}% lido` : "Novo na biblioteca"}</small>
+        <a href="${libraryBook.href}">${label}</a>
+        <button type="button" data-toggle-book-favorite="${catalogBook.id}" aria-pressed="${isFavorite ? "true" : "false"}">${isFavorite ? "Favorito" : "Favoritar"}</button>
+      </div>
+    </article>
+  `;
+};
+const buildBookCarousel = (title, subtitle, books, label = "Ler Agora") => `
+  <section class="wide-panel library-2-shelf">
+    <div class="panel-head"><h2>${title}</h2><a>${subtitle}</a></div>
+    <div class="library-2-rail">
+      ${withCatalogBook(books).map((item) => libraryShelfCard(item, label)).join("")}
+    </div>
+  </section>
+`;
+const allReadableBooks = sortedLibraryBooks.filter((book) => book.href.startsWith("book-viewer.html"));
+const libraryContinueBooks = withCatalogBook(allReadableBooks)
+  .filter(({ catalogBook }) => getReadingProgress(catalogBook.id, catalogBook.totalPages) > 0)
+  .sort((first, second) => getReadingProgress(second.catalogBook.id, second.catalogBook.totalPages) - getReadingProgress(first.catalogBook.id, first.catalogBook.totalPages))
+  .slice(0, 6);
+const libraryFavoriteBooks = withCatalogBook(allReadableBooks).filter(({ catalogBook }) => isFavoriteBook(catalogBook.id));
+const libraryRecommendedBooks = allReadableBooks.filter((book) => book.collection === "Educacao Infantil").slice(0, 8);
+const libraryTeacherBooks = allReadableBooks.filter((book) => book.type === "Guia do Professor").slice(0, 4);
+const libraryFeaturedBook = getCatalogBookFromLibraryBook(featuredLibraryBook) || defaultBook;
+const libraryFeaturedProgress = getReadingProgress(libraryFeaturedBook.id, libraryFeaturedBook.totalPages);
+const library2HeroHtml = `
+  <section class="library-2-hero">
+    <div>
+      <span>Biblioteca Viva 2.0</span>
+      <h1>${featuredLibraryBook.title}</h1>
+      <p>${featuredLibraryBook.year} &middot; ${featuredLibraryBook.type} &middot; ${featuredLibraryBook.pages || `${libraryFeaturedBook.totalPages} paginas`}</p>
+      <div class="library-2-hero-actions">
+        <a href="${featuredLibraryBook.href}">Ler destaque</a>
+        <a href="#acervo-completo">Ver acervo</a>
+      </div>
+      <div class="library-2-progress"><i style="--value:${libraryFeaturedProgress}%"><b style="width:${libraryFeaturedProgress}%"></b></i><strong>${libraryFeaturedProgress}%</strong><small>progresso salvo neste dispositivo</small></div>
+    </div>
+    <img src="${featuredLibraryBook.src}" alt="${featuredLibraryBook.year} ${featuredLibraryBook.title}" loading="eager" />
+  </section>
+`;
+const library2StatsHtml = `
+  <section class="library-2-stats" aria-label="Indicadores da Biblioteca Viva">
+    <article><strong>${publishedMaterialsCount}</strong><span>materiais</span></article>
+    <article><strong>${libraryFavoriteBooks.length}</strong><span>favoritos</span></article>
+    <article><strong>${libraryContinueBooks.length}</strong><span>em leitura</span></article>
+    <article><strong>${Math.max(120, libraryContinueBooks.length * 35)}</strong><span>XP de leitura</span></article>
+  </section>
+`;
+const library2TeacherPanel = `
+  <section class="wide-panel library-2-ops">
+    <div class="panel-head"><h2>Professor e Familia</h2><a>acompanhamento</a></div>
+    <div class="library-2-ops-grid">
+      <article>
+        <span>Professor</span>
+        <h3>Indique livros para turmas</h3>
+        <p>Selecione materiais, acompanhe progresso e conecte o guia do professor ao planejamento semanal.</p>
+        <a href="professor.html">Abrir painel do professor</a>
+      </article>
+      <article>
+        <span>Familia</span>
+        <h3>Acompanhe a leitura em casa</h3>
+        <p>Veja livros iniciados, progresso, conquistas e proximas recomendacoes para cada estudante.</p>
+        <a href="familia.html">Abrir painel da familia</a>
+      </article>
+      <article>
+        <span>Universidade</span>
+        <h3>Materiais ligados aos cursos</h3>
+        <p>Use a formacao docente para sugerir livros, guias e trilhas de leitura relacionadas.</p>
+        <a href="universidade.html">Abrir Universidade</a>
+      </article>
+    </div>
+  </section>
+`;
 
 const routeKeyByHref = {
   "plataforma.html": "plataforma",
@@ -2480,29 +2589,28 @@ const modules = {
     html: renderStudentProfilePage(),
   },
   biblioteca: {
-    title: "Biblioteca Digital",
-    subtitle: "Sua jornada de conhecimento comeca aqui",
+    title: "Biblioteca Viva 2.0",
+    subtitle: "Leitura, acompanhamento e aprendizagem integrados",
     code: "MS-001",
     html: `
       <div class="screen-title">
         <p>MS-001</p>
-        <h1>Biblioteca Digital</h1>
-        <span>Sua jornada de conhecimento comeca aqui</span>
+        <h1>Biblioteca Viva</h1>
+        <span>Leitura digital, acompanhamento pedagogico, recomendacoes e conquistas em um so ambiente.</span>
       </div>
       <div class="library-grid">
+        ${library2HeroHtml}
+        ${library2StatsHtml}
         <section class="wide-panel">
           <div class="panel-head"><h2>Continuar Leitura</h2><a href="book-viewer.html">Ver todos</a></div>
           <div class="reading-row">
-            ${buildRecentReadingCards()}
+            ${libraryContinueBooks.length ? libraryContinueBooks.map((item) => libraryShelfCard(item, "Continuar")).join("") : buildRecentReadingCards()}
           </div>
         </section>
-        <aside class="quick-card"><h2>Biblioteca Viva</h2><a>${publishedMaterialsCount} materiais publicados</a><a>Novidades da Semana</a><a>Destaque Curado</a><a>Colecoes em Expansao</a></aside>
-        <section class="wide-panel living-library-panel">
-          <div class="panel-head"><h2>Novidades da Semana</h2><a>${latestLibraryBooks.length} publicados</a></div>
-          <div class="latest-materials-grid">
-            ${buildLatestMaterialsCards()}
-          </div>
-        </section>
+        <aside class="quick-card library-2-achievements"><h2>Conquistas</h2><a>Leitor em Movimento</a><a>Curador da Semana</a><a>Sequencia de Leitura</a><a>Trilha Professor-Familia</a></aside>
+        ${buildBookCarousel("Recomendados para voce", "perfil demonstrativo", libraryRecommendedBooks)}
+        ${buildBookCarousel("Guias do Professor", "indicacao para turmas", libraryTeacherBooks)}
+        ${libraryFavoriteBooks.length ? buildBookCarousel("Favoritos", `${libraryFavoriteBooks.length} salvos`, libraryFavoriteBooks.map((item) => item.libraryBook)) : ""}
         ${buildFeaturedBookCard()}
         <section class="wide-panel">
           <div class="panel-head"><h2>Colecoes</h2><a>Ver todos</a></div>
@@ -2510,14 +2618,9 @@ const modules = {
             ${collectionShowcaseCardsHtml}
           </div>
         </section>
-        <aside class="ecosystem-video-card">
-          <span>🎬</span>
-          <h2>Conheca o Ecossistema</h2>
-          <p>Assista ao video institucional e veja como os modulos se conectam em uma experiencia unica.</p>
-          <a href="index.html#video-institucional">Assistir video</a>
-        </aside>
+        ${library2TeacherPanel}
         <section class="wide-panel recent-books library-catalog-panel" id="acervo-completo">
-          <div class="panel-head"><h2>Ultimos Materiais</h2><a>${publishedMaterialsCount} materiais</a></div>
+          <div class="panel-head"><h2>Acervo Completo</h2><a>${publishedMaterialsCount} materiais</a></div>
           <div class="library-catalog">${libraryBookCards}</div>
         </section>
       </div>
@@ -2899,6 +3002,27 @@ const modules = {
             <i><span data-progress-bar style="width: 1%"></span></i>
           </div>
         </header>
+        <section class="reader-book-profile" aria-label="Metadados do livro">
+          <img src="${activeBook.catalogCover || activeBook.cover}" alt="${activeBook.title}" />
+          <div>
+            <span>${activeBook.level}</span>
+            <h2>${activeBook.catalogTitle || activeBook.title}</h2>
+            <p>${activeBook.type} &middot; ${activeBook.totalPages} paginas &middot; ${activeBook.collection}</p>
+            <div class="reader-meta-grid">
+              <strong>Ultima pagina salva <b data-last-page-meta>1</b></strong>
+              <strong>Favorito <b data-favorite-meta>Nao</b></strong>
+              <strong>XP de leitura <b data-xp-meta>0</b></strong>
+              <strong>Historico <b data-history-meta>0 acessos</b></strong>
+            </div>
+          </div>
+          <button type="button" data-reader-favorite aria-pressed="false">Favoritar</button>
+        </section>
+        <nav class="reader-tabs" aria-label="Ferramentas do livro">
+          <button type="button" class="is-active" data-reader-tab="sumario">Indice</button>
+          <button type="button" data-reader-tab="busca">Busca</button>
+          <button type="button" data-reader-tab="pergunte">Pergunte ao Livro</button>
+          <button type="button" data-reader-tab="conquistas">Conquistas</button>
+        </nav>
 
         <div class="reader-layout">
           <aside class="page-rail reader-rail" aria-label="Miniaturas das paginas">
@@ -2917,6 +3041,27 @@ const modules = {
           <aside class="summary-rail reader-summary" aria-label="Sumario do livro">
             <div class="rail-title"><h2>Sumario</h2><button type="button" data-bookmark-page>&#9734; Marcar</button></div>
             <div class="summary-list" data-summary-list></div>
+            <div class="reader-tool-panel" data-reader-panel="busca" hidden>
+              <label>Buscar no livro
+                <input type="search" data-book-search placeholder="Digite tema, unidade ou pagina" />
+              </label>
+              <div class="reader-search-results" data-book-search-results></div>
+            </div>
+            <div class="reader-tool-panel" data-reader-panel="pergunte" hidden>
+              <h3>Pergunte ao Livro</h3>
+              <p>Espaco preparado para futura IA com base no conteudo do PDF. Nesta versao, a busca usa metadados, sumario e paginas renderizadas.</p>
+              <textarea data-ask-book-input placeholder="Ex.: quais atividades trabalham linguagem oral?"></textarea>
+              <button type="button" data-ask-book-button>Preparar pergunta</button>
+              <output data-ask-book-output>Integre o motor de IA ao Supabase/Storage para responder com citacoes do PDF.</output>
+            </div>
+            <div class="reader-tool-panel" data-reader-panel="conquistas" hidden>
+              <h3>Conquistas de leitura</h3>
+              <div class="reader-achievement-list">
+                <article><strong>Primeira pagina</strong><span data-achievement-start>Pendente</span></article>
+                <article><strong>Metade do livro</strong><span data-achievement-half>Pendente</span></article>
+                <article><strong>Livro concluido</strong><span data-achievement-finish>Pendente</span></article>
+              </div>
+            </div>
           </aside>
         </div>
 
@@ -3440,6 +3585,15 @@ const initBookReader = () => {
   const zoomLabel = reader.querySelector("[data-zoom-label]");
   const bookmarkButton = reader.querySelector("[data-bookmark-page]");
   const stage = reader.querySelector("[data-book-stage]");
+  const favoriteButton = reader.querySelector("[data-reader-favorite]");
+  const favoriteMeta = reader.querySelector("[data-favorite-meta]");
+  const lastPageMeta = reader.querySelector("[data-last-page-meta]");
+  const xpMeta = reader.querySelector("[data-xp-meta]");
+  const historyMeta = reader.querySelector("[data-history-meta]");
+  const searchInput = reader.querySelector("[data-book-search]");
+  const searchResults = reader.querySelector("[data-book-search-results]");
+  const askInput = reader.querySelector("[data-ask-book-input]");
+  const askOutput = reader.querySelector("[data-ask-book-output]");
   const pageTemplate = document.createDocumentFragment();
 
   const readerParams = typeof window === "undefined" ? new URLSearchParams() : new URLSearchParams(window.location.search);
@@ -3450,6 +3604,69 @@ const initBookReader = () => {
   let bookmarkedPage = Number(localStorage.getItem(storageKey)) || 0;
   const preloadedPages = new Set();
   updateRecentBook(book.id);
+  const readHistoryKey = "library:readingHistory";
+  const favoritesKey = "library:favorites";
+  const getJsonList = (key) => {
+    try {
+      return JSON.parse(localStorage.getItem(key) || "[]");
+    } catch (error) {
+      return [];
+    }
+  };
+  const setJsonList = (key, value) => {
+    localStorage.setItem(key, JSON.stringify(value));
+  };
+  const syncReadingHistory = () => {
+    const history = getJsonList(readHistoryKey).filter((item) => item.bookId !== book.id);
+    const nextHistory = [
+      {
+        bookId: book.id,
+        title: book.title,
+        subtitle: book.subtitle,
+        page,
+        totalPages: book.totalPages,
+        progress: Math.round((page / book.totalPages) * 100),
+        updatedAt: new Date().toISOString(),
+      },
+      ...history,
+    ].slice(0, 20);
+    setJsonList(readHistoryKey, nextHistory);
+    if (historyMeta) {
+      historyMeta.textContent = `${nextHistory.length} acessos`;
+    }
+  };
+  const syncFavoriteButton = () => {
+    const favorites = getJsonList(favoritesKey);
+    const isFavorite = favorites.includes(book.id);
+    if (favoriteButton) {
+      favoriteButton.setAttribute("aria-pressed", String(isFavorite));
+      favoriteButton.textContent = isFavorite ? "Favorito" : "Favoritar";
+      favoriteButton.classList.toggle("is-active", isFavorite);
+    }
+    if (favoriteMeta) {
+      favoriteMeta.textContent = isFavorite ? "Sim" : "Nao";
+    }
+  };
+  const toggleFavorite = () => {
+    const favorites = getJsonList(favoritesKey);
+    const nextFavorites = favorites.includes(book.id)
+      ? favorites.filter((favoriteId) => favoriteId !== book.id)
+      : [book.id, ...favorites].slice(0, 40);
+    setJsonList(favoritesKey, nextFavorites);
+    syncFavoriteButton();
+  };
+  const updateReaderStats = () => {
+    const progress = Math.round((page / book.totalPages) * 100);
+    if (lastPageMeta) {
+      lastPageMeta.textContent = `${page}/${book.totalPages}`;
+    }
+    if (xpMeta) {
+      xpMeta.textContent = String(Math.max(10, progress * 2));
+    }
+    reader.querySelector("[data-achievement-start]").textContent = page >= 1 ? "Conquistado" : "Pendente";
+    reader.querySelector("[data-achievement-half]").textContent = progress >= 50 ? "Conquistado" : "Pendente";
+    reader.querySelector("[data-achievement-finish]").textContent = progress >= 100 ? "Conquistado" : "Pendente";
+  };
 
   for (let currentPage = 1; currentPage <= book.totalPages; currentPage += 1) {
     const button = document.createElement("button");
@@ -3515,6 +3732,9 @@ const initBookReader = () => {
     progressLabel.textContent = `${progress}%`;
     progressBar.style.width = `${progress}%`;
     localStorage.setItem(`${book.id}:lastPage`, String(page));
+    localStorage.setItem("library:lastActiveBook", book.id);
+    syncReadingHistory();
+    updateReaderStats();
     updateActiveItems();
     updateBookmark();
     preload(page + 1);
@@ -3565,7 +3785,52 @@ const initBookReader = () => {
     }
     if (target.matches("[data-fullscreen-reader]") && stage?.requestFullscreen) {
       stage.requestFullscreen();
+      return;
     }
+    if (target.matches("[data-reader-favorite]")) {
+      toggleFavorite();
+      return;
+    }
+    if (target.dataset.readerTab) {
+      reader.querySelectorAll("[data-reader-tab]").forEach((tab) => {
+        tab.classList.toggle("is-active", tab === target);
+      });
+      const activeTab = target.dataset.readerTab;
+      reader.querySelector(".summary-list").hidden = activeTab !== "sumario";
+      reader.querySelectorAll("[data-reader-panel]").forEach((panel) => {
+        panel.hidden = panel.dataset.readerPanel !== activeTab;
+      });
+      return;
+    }
+    if (target.matches("[data-ask-book-button]") && askOutput) {
+      const question = askInput?.value.trim();
+      askOutput.value = question
+        ? `Pergunta preparada: "${question}". A proxima etapa conecta este campo ao indice vetorial do PDF.`
+        : "Digite uma pergunta para preparar a consulta ao livro.";
+    }
+  });
+
+  searchInput?.addEventListener("input", () => {
+    const query = searchInput.value.trim().toLowerCase();
+    if (!query) {
+      searchResults.innerHTML = "";
+      return;
+    }
+    const summaryMatches = book.summary
+      .filter(([label, summaryPage]) => `${label} ${summaryPage} ${book.title} ${book.subtitle}`.toLowerCase().includes(query))
+      .slice(0, 8);
+    searchResults.innerHTML = summaryMatches.length
+      ? summaryMatches
+          .map(
+            ([label, summaryPage]) => `
+              <button type="button" data-goto-page="${summaryPage}">
+                <strong>${label}</strong>
+                <span>Pagina ${summaryPage}</span>
+              </button>
+            `
+          )
+          .join("")
+      : `<p>Nenhum resultado no indice demonstrativo. A busca textual completa sera ativada com a IA do PDF.</p>`;
   });
 
   document.addEventListener("keydown", (event) => {
@@ -3588,12 +3853,13 @@ const initBookReader = () => {
     page = clamp(bookmarkedPage, 1, book.totalPages);
   }
   setZoom(1);
+  syncFavoriteButton();
   renderPage(page);
 };
 
 const initLibrarySearch = () => {
   const searchInput = document.querySelector(".app-search input");
-  const catalogCards = [...document.querySelectorAll(".library-book-card")];
+  const catalogCards = [...document.querySelectorAll("[data-library-book-card]")];
   if (!searchInput || !catalogCards.length) {
     return;
   }
@@ -3607,6 +3873,22 @@ const initLibrarySearch = () => {
       const termMatch = terms.every((term) => searchableText.includes(term));
       const hasNumberTerm = terms.some((term) => /^\d+$/.test(term));
       card.hidden = terms.length > 0 && !(phraseMatch || (!hasNumberTerm && termMatch));
+    });
+  });
+
+  document.querySelectorAll("[data-toggle-book-favorite]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const bookId = button.dataset.toggleBookFavorite;
+      const favorites = getLibraryFavorites();
+      const nextFavorites = favorites.includes(bookId)
+        ? favorites.filter((favoriteId) => favoriteId !== bookId)
+        : [bookId, ...favorites].slice(0, 40);
+      localStorage.setItem("library:favorites", JSON.stringify(nextFavorites));
+      document.querySelectorAll(`[data-toggle-book-favorite="${bookId}"]`).forEach((favoriteButton) => {
+        const isFavorite = nextFavorites.includes(bookId);
+        favoriteButton.setAttribute("aria-pressed", String(isFavorite));
+        favoriteButton.textContent = isFavorite ? "Favorito" : "Favoritar";
+      });
     });
   });
 };
