@@ -1438,6 +1438,305 @@
     },
   };
 
+  const experienceStorageKey = "raizes:infantil-experience-progress:v1";
+
+  const experienceProgressStore = {
+    getUserId() {
+      try {
+        return localStorage.getItem("raizes:active-user-id") || localStorage.getItem("raizes:user:id") || "local-demo";
+      } catch (error) {
+        return "local-demo";
+      }
+    },
+    records() {
+      try {
+        return JSON.parse(localStorage.getItem(experienceStorageKey) || "[]");
+      } catch (error) {
+        console.warn("Nao foi possivel ler progresso das experiencias.", error);
+        return [];
+      }
+    },
+    write(records) {
+      try {
+        localStorage.setItem(experienceStorageKey, JSON.stringify(records.slice(0, 80)));
+      } catch (error) {
+        console.warn("Nao foi possivel salvar progresso das experiencias.", error);
+      }
+    },
+    latest(code) {
+      return this.records().find((record) => record.code === code) || null;
+    },
+    upsert(code, patch) {
+      const records = this.records();
+      const current = records.find((record) => record.code === code) || {
+        code,
+        userId: this.getUserId(),
+        startedAt: null,
+        completedAt: null,
+        starts: 0,
+        completions: 0,
+        repeats: 0,
+        percentWatched: 0,
+        status: "unavailable",
+      };
+      const next = { ...current, ...patch, updatedAt: new Date().toISOString() };
+      this.write([next, ...records.filter((record) => record.code !== code)]);
+      return next;
+    },
+  };
+
+  const experiencePlayerController = {
+    overlay: null,
+    video: null,
+    activeCode: null,
+    activeExperience: null,
+    state: "unavailable",
+    startedOnce: false,
+    completedOnce: false,
+    get catalog() {
+      return window.RaizesInfantilExperiences || null;
+    },
+    labels() {
+      return this.catalog?.EXPERIENCE_STATES || {};
+    },
+    getExperience(code) {
+      return this.catalog?.getExperienceDefinition?.(code) || null;
+    },
+    getVideoAsset(experience) {
+      return this.catalog?.getExperienceAsset?.(experience?.openingAssetCode) || null;
+    },
+    getPlaybackPath(asset) {
+      return asset?.provisionalFilePath || asset?.filePath || "";
+    },
+    getProgress(code) {
+      return experienceProgressStore.latest(code);
+    },
+    setState(state) {
+      this.state = state;
+      if (!this.overlay) return;
+      const stateMeta = this.overlay.querySelector("[data-experience-state]");
+      const stateMessage = this.overlay.querySelector("[data-experience-state-message]");
+      const labels = this.labels();
+      if (stateMeta) stateMeta.textContent = labels[state]?.label || state;
+      if (stateMessage) stateMessage.textContent = labels[state]?.message || "";
+      this.overlay.dataset.experienceState = state;
+    },
+    renderUnavailable(code) {
+      const labels = this.labels();
+      return `
+        <section class="experience-player-dialog" role="dialog" aria-modal="true" aria-labelledby="experience-player-title">
+          <button class="experience-close" type="button" data-experience-close aria-label="Fechar experiencia">×</button>
+          <div class="experience-error-panel">
+            <span data-experience-state>${labels.unavailable?.label || "Indisponivel"}</span>
+            <h2 id="experience-player-title">Experiencia nao encontrada</h2>
+            <p data-experience-state-message>${labels.unavailable?.message || "Esta experiencia ainda nao esta disponivel."}</p>
+            <small>${code || "codigo ausente"}</small>
+          </div>
+        </section>
+      `;
+    },
+    render(experience, asset) {
+      const source = this.getPlaybackPath(asset);
+      const progress = this.getProgress(experience.id);
+      const labels = this.labels();
+      const isProvisional = Boolean(asset?.provisionalFilePath);
+      return `
+        <section class="experience-player-dialog" role="dialog" aria-modal="true" aria-labelledby="experience-player-title" aria-describedby="experience-player-description">
+          <button class="experience-close" type="button" data-experience-close aria-label="Fechar experiencia">×</button>
+          <header class="experience-player-header">
+            <div>
+              <span>${experience.id}</span>
+              <h2 id="experience-player-title">${experience.title}</h2>
+              <p id="experience-player-description">${experience.bookTitle || ""} · paginas ${(experience.pages || []).join(", ")}</p>
+            </div>
+            <aside>
+              <strong data-experience-state>${labels[experience.availability]?.label || labels.available?.label || "Disponivel"}</strong>
+              <small>${progress?.percentWatched || 0}% assistido</small>
+            </aside>
+          </header>
+          ${isProvisional ? `<div class="experience-provisional-alert">${asset.note || "Video provisorio em uso para homologacao."}</div>` : ""}
+          <div class="experience-video-frame">
+            <video data-experience-video src="${source}" poster="${asset?.coverPath || ""}" preload="metadata" playsinline></video>
+            <div class="experience-loading" data-experience-loading>${labels.loading?.message || "Carregando..."}</div>
+            <div class="experience-error" data-experience-error hidden>
+              <strong>${labels.error?.label || "Erro de carregamento"}</strong>
+              <span>${labels.error?.message || "Nao foi possivel carregar o video."}</span>
+            </div>
+          </div>
+          <footer class="experience-controls" aria-label="Controles da experiencia">
+            <button type="button" data-experience-play>Reproduzir</button>
+            <button type="button" data-experience-pause>Pausar</button>
+            <button type="button" data-experience-restart>Reiniciar</button>
+            <button type="button" data-experience-mute aria-pressed="false">Audio</button>
+            <button type="button" data-experience-fullscreen>Tela cheia</button>
+            <button type="button" data-experience-repeat>Repetir experiencia</button>
+            <a href="book-viewer.html?book=${experience.bookId || "livro-005"}&page=${experience.pages?.[0] || 1}">Abrir atividade</a>
+          </footer>
+          <div class="experience-progress-line" aria-label="Progresso do video"><span data-experience-progress style="width:${progress?.percentWatched || 0}%"></span></div>
+          <p class="experience-instructions">${experience.instructions}</p>
+        </section>
+      `;
+    },
+    open(code) {
+      this.close();
+      this.activeCode = code;
+      this.activeExperience = this.getExperience(code);
+      this.overlay = document.createElement("div");
+      this.overlay.className = "experience-player-overlay";
+      this.overlay.dataset.experienceCode = code || "";
+      if (!this.activeExperience) {
+        this.overlay.innerHTML = this.renderUnavailable(code);
+        document.body.appendChild(this.overlay);
+        this.bindOverlay();
+        this.setState("unavailable");
+        return null;
+      }
+      const asset = this.getVideoAsset(this.activeExperience);
+      this.overlay.innerHTML = this.render(this.activeExperience, asset);
+      document.body.appendChild(this.overlay);
+      document.body.classList.add("experience-player-open");
+      this.video = this.overlay.querySelector("[data-experience-video]");
+      this.startedOnce = false;
+      this.completedOnce = false;
+      this.bindOverlay();
+      this.bindVideo();
+      this.setState(this.activeExperience.availability || "available");
+      this.overlay.querySelector("[data-experience-play]")?.focus();
+      window.dispatchEvent(new CustomEvent("raizes:experience-open", { detail: { code } }));
+      return this.activeExperience;
+    },
+    close() {
+      if (this.video) {
+        this.video.pause();
+      }
+      this.overlay?.remove();
+      this.overlay = null;
+      this.video = null;
+      this.activeCode = null;
+      this.activeExperience = null;
+      document.body.classList.remove("experience-player-open");
+      document.removeEventListener("keydown", this.handleKeydown);
+    },
+    bindOverlay() {
+      this.overlay.addEventListener("click", (event) => {
+        if (event.target === this.overlay || event.target.closest("[data-experience-close]")) this.close();
+        if (event.target.closest("[data-experience-play]")) this.start(this.activeCode);
+        if (event.target.closest("[data-experience-pause]")) this.pause(this.activeCode);
+        if (event.target.closest("[data-experience-restart], [data-experience-repeat]")) this.restart(this.activeCode);
+        if (event.target.closest("[data-experience-mute]")) this.toggleMute(event.target.closest("[data-experience-mute]"));
+        if (event.target.closest("[data-experience-fullscreen]")) this.fullscreen();
+      });
+      this.handleKeydown = (event) => {
+        if (!this.overlay) return;
+        if (event.key === "Escape") {
+          event.preventDefault();
+          this.close();
+        }
+        if ((event.key === " " || event.key === "Enter") && event.target === this.overlay) {
+          event.preventDefault();
+          if (this.video?.paused) this.start(this.activeCode);
+          else this.pause(this.activeCode);
+        }
+      };
+      document.addEventListener("keydown", this.handleKeydown);
+    },
+    bindVideo() {
+      if (!this.video) return;
+      const loading = this.overlay.querySelector("[data-experience-loading]");
+      const error = this.overlay.querySelector("[data-experience-error]");
+      this.video.addEventListener("loadstart", () => {
+        if (loading) loading.hidden = false;
+        this.setState("loading");
+      });
+      this.video.addEventListener("canplay", () => {
+        if (loading) loading.hidden = true;
+        this.setState("paused");
+      });
+      this.video.addEventListener("play", () => this.setState("running"));
+      this.video.addEventListener("pause", () => {
+        if (!this.completedOnce) this.setState("paused");
+      });
+      this.video.addEventListener("timeupdate", () => this.syncPercent());
+      this.video.addEventListener("ended", () => this.complete(this.activeCode));
+      this.video.addEventListener("error", () => {
+        if (loading) loading.hidden = true;
+        if (error) error.hidden = false;
+        this.setState("error");
+        experienceProgressStore.upsert(this.activeCode, { status: "error", errorAt: new Date().toISOString() });
+      });
+    },
+    syncPercent() {
+      if (!this.video || !this.activeCode) return;
+      const percent = this.video.duration ? Math.min(100, Math.round((this.video.currentTime / this.video.duration) * 100)) : 0;
+      this.overlay?.querySelector("[data-experience-progress]")?.style.setProperty("width", `${percent}%`);
+      experienceProgressStore.upsert(this.activeCode, { percentWatched: percent, status: this.state });
+      if (percent >= 95 && !this.completedOnce) this.complete(this.activeCode);
+    },
+    start(code) {
+      if (!this.video || code !== this.activeCode) {
+        this.open(code);
+      }
+      if (!this.video) return null;
+      if (!this.startedOnce) {
+        const now = new Date().toISOString();
+        const current = experienceProgressStore.latest(code);
+        experienceProgressStore.upsert(code, {
+          startedAt: current?.startedAt || now,
+          lastStartedAt: now,
+          starts: (current?.starts || 0) + 1,
+          status: "running",
+        });
+        this.startedOnce = true;
+      }
+      this.video.play().catch(() => this.setState("paused"));
+      return experienceProgressStore.latest(code);
+    },
+    pause(code) {
+      if (code === this.activeCode && this.video) {
+        this.video.pause();
+        experienceProgressStore.upsert(code, { status: "paused" });
+      }
+      return experienceProgressStore.latest(code);
+    },
+    restart(code) {
+      if (!this.video || code !== this.activeCode) {
+        this.open(code);
+      }
+      if (!this.video) return null;
+      const current = experienceProgressStore.latest(code);
+      this.video.currentTime = 0;
+      this.completedOnce = false;
+      experienceProgressStore.upsert(code, {
+        repeats: (current?.repeats || 0) + 1,
+        percentWatched: 0,
+        status: "running",
+      });
+      this.startedOnce = false;
+      return this.start(code);
+    },
+    complete(code) {
+      if (!code || this.completedOnce) return experienceProgressStore.latest(code);
+      this.completedOnce = true;
+      this.setState("completed");
+      return experienceProgressStore.upsert(code, {
+        completedAt: new Date().toISOString(),
+        completions: (experienceProgressStore.latest(code)?.completions || 0) + 1,
+        percentWatched: 100,
+        status: "completed",
+      });
+    },
+    toggleMute(button) {
+      if (!this.video) return;
+      this.video.muted = !this.video.muted;
+      button?.setAttribute("aria-pressed", String(this.video.muted));
+      if (button) button.textContent = this.video.muted ? "Sem audio" : "Audio";
+    },
+    fullscreen() {
+      const target = this.overlay?.querySelector(".experience-player-dialog");
+      if (target?.requestFullscreen) target.requestFullscreen();
+    },
+  };
+
   class GameEngine {
     constructor(root, gameId) {
       this.root = root;
@@ -4016,13 +4315,34 @@
     }
   }
 
-  window.RaizesGameEngine = { GameEngine, gameRepository, progressController, rewardController, audioPlayer };
+  window.RaizesGameEngine = { GameEngine, gameRepository, progressController, rewardController, audioPlayer, experiencePlayerController, experienceProgressStore };
   window.RSGameEngine = {
     games: gameRepository.games,
     infantilExperiences: window.RaizesInfantilExperiences || null,
     engine: null,
     getExperienceAsset(code) {
       return this.infantilExperiences?.getExperienceAsset(code) || null;
+    },
+    openExperience(code) {
+      return experiencePlayerController.open(code);
+    },
+    closeExperience() {
+      return experiencePlayerController.close();
+    },
+    startExperience(code) {
+      return experiencePlayerController.start(code);
+    },
+    pauseExperience(code) {
+      return experiencePlayerController.pause(code);
+    },
+    restartExperience(code) {
+      return experiencePlayerController.restart(code);
+    },
+    completeExperience(code) {
+      return experiencePlayerController.complete(code);
+    },
+    getExperienceProgress(code) {
+      return experiencePlayerController.getProgress(code);
     },
     openGame(gameId) {
       if (!this.engine) return;
