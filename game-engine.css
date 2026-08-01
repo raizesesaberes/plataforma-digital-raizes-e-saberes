@@ -424,7 +424,275 @@ body.game-immersive-active .game-stage,
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 250, 228, 0.18));
 }
 
-.game-screen > :not(.game-scene) {
+.victory-screen {
+  isolation: isolate;
+  overflow: hidden;
+  background: #123626;
+}
+
+.victory-screen-floating {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+}
+
+.victory-layer,
+.victory-content,
+.victory-medal,
+.victory-xp,
+.victory-message,
+.victory-character,
+.victory-actions {
+  position: absolute;
+}
+
+.victory-layer {
+  inset: 0;
+  pointer-events: none;
+}
+
+.victory-overlay {
+  z-index: 1;
+  background: rgba(5, 20, 14, 0.74);
+}
+
+.victory-particles {
+  z-index: 2;
+}
+
+.victory-confetti {
+  z-index: 3;
+}
+
+.victory-stars {
+  z-index: 4;
+}
+
+.victory-layer img,
+.victory-layer video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.victory-layer video:not([src]) {
+  display: none;
+}
+
+.victory-content {
+  inset: 0;
+  z-index: 5;
+  display: block;
+  pointer-events: none;
+}
+
+.victory-medal {
+  z-index: 5;
+  top: clamp(28px, 8vh, 74px);
+  left: 50%;
+  width: clamp(112px, 16vw, 178px);
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  display: grid;
+  place-items: center;
+}
+
+.victory-medal img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 32px rgba(255, 217, 78, 0.82)) drop-shadow(0 16px 20px rgba(26, 20, 6, 0.22));
+  animation: medal-in 0.86s cubic-bezier(.2, 1.42, .34, 1) both, medal-glow 1.8s ease-in-out 0.35s infinite;
+}
+
+.victory-medal span {
+  width: 100%;
+  height: 100%;
+  visibility: hidden;
+}
+
+.victory-xp {
+  z-index: 6;
+  top: clamp(140px, 27vh, 220px);
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.victory-message {
+  z-index: 7;
+  top: clamp(202px, 38vh, 304px);
+  left: 50%;
+  width: min(86vw, 720px);
+  transform: translateX(-50%);
+  color: #fff7df;
+  font-size: clamp(1.55rem, 4vw, 3.35rem);
+  line-height: 1.02;
+  text-align: center;
+  text-shadow: 0 4px 0 rgba(6, 44, 29, 0.7), 0 18px 28px rgba(0, 0, 0, 0.28);
+}
+
+.victory-character {
+  z-index: 8;
+  left: 50%;
+  bottom: clamp(110px, 18vh, 158px);
+  width: clamp(136px, 22vw, 250px);
+  aspect-ratio: 0.78;
+  transform: translateX(-50%);
+  display: grid;
+  place-items: end center;
+}
+
+.victory-character img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 22px rgba(0, 0, 0, 0.26));
+}
+
+.victory-character-placeholder {
+  width: 82%;
+  height: 92%;
+  visibility: hidden;
+}
+
+.victory-actions {
+  z-index: 9;
+  left: 50%;
+  bottom: clamp(28px, 7vh, 58px);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 260px));
+  gap: 12px;
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
+.victory-actions .game-primary-button,
+.victory-actions .game-secondary-button {
+  justify-content: center;
+  min-height: 58px;
+  padding: 12px 18px;
+  text-align: center;
+  text-decoration: none;
+  white-space: normal;
+}
+
+.victory-actions .game-restart-button {
+  min-width: 0;
+}
+
+.encouragement-screen {
+  isolation: isolate;
+  overflow: hidden;
+  background: rgba(8, 45, 32, 0.88);
+}
+
+.encouragement-screen-floating {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+}
+
+.encouragement-layer,
+.encouragement-content,
+.encouragement-character,
+.encouragement-message,
+.encouragement-actions {
+  position: absolute;
+}
+
+.encouragement-layer {
+  inset: 0;
+  pointer-events: none;
+}
+
+.encouragement-overlay {
+  z-index: 1;
+  background: rgba(255, 253, 244, 0.2);
+  backdrop-filter: blur(1px);
+}
+
+.encouragement-particles {
+  z-index: 2;
+}
+
+.encouragement-particles img,
+.encouragement-particles video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.encouragement-particles video:not([src]) {
+  display: none;
+}
+
+.encouragement-content {
+  inset: 0;
+  z-index: 3;
+  display: block;
+  pointer-events: none;
+}
+
+.encouragement-character {
+  z-index: 3;
+  left: 50%;
+  bottom: clamp(214px, 34vh, 278px);
+  width: clamp(142px, 22vw, 252px);
+  aspect-ratio: 0.78;
+  transform: translateX(-50%);
+  display: grid;
+  place-items: end center;
+}
+
+.encouragement-character img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 22px rgba(0, 0, 0, 0.22));
+}
+
+.encouragement-character-placeholder {
+  width: 82%;
+  height: 92%;
+  visibility: hidden;
+}
+
+.encouragement-message {
+  z-index: 4;
+  top: clamp(280px, 54vh, 410px);
+  left: 50%;
+  width: min(86vw, 680px);
+  transform: translateX(-50%);
+  color: #fff7df;
+  font-size: clamp(1.45rem, 3.6vw, 3rem);
+  line-height: 1.04;
+  text-align: center;
+  text-shadow: 0 4px 0 rgba(7, 54, 36, 0.62), 0 16px 26px rgba(0, 0, 0, 0.24);
+}
+
+.encouragement-actions {
+  z-index: 5;
+  left: 50%;
+  bottom: clamp(34px, 8vh, 66px);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 270px));
+  gap: 12px;
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
+.encouragement-actions .game-primary-button,
+.encouragement-actions .game-secondary-button {
+  justify-content: center;
+  min-height: 58px;
+  padding: 12px 18px;
+  text-align: center;
+  text-decoration: none;
+  white-space: normal;
+}
+
+.game-screen > :not(.game-scene):not(.victory-layer):not(.victory-content):not(.encouragement-layer):not(.encouragement-content) {
   position: relative;
   z-index: 2;
 }
@@ -469,6 +737,32 @@ body.game-immersive-active .game-stage,
 .selection-room-scene {
   background-size: cover;
   background-position: center;
+}
+
+.background-video-layer {
+  z-index: 0;
+  overflow: hidden;
+  background-color: #fff6df;
+}
+
+.background-video,
+.background-video-fallback {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.background-video-fallback {
+  z-index: 0;
+}
+
+.background-video {
+  z-index: 1;
+  transform: translateZ(0);
 }
 
 .game-engine[data-active-game="caixa-misteriosa"] .selection-intro-screen .selection-room-scene {
@@ -666,6 +960,57 @@ body.game-immersive-active .game-stage,
   border-radius: 999px;
   filter: drop-shadow(0 12px 14px rgba(81, 48, 18, 0.24));
   animation: box-float 3s ease-in-out infinite;
+}
+
+.reactive-character-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.reactive-character {
+  position: absolute;
+  right: clamp(20px, 9vw, 128px);
+  bottom: clamp(74px, 14vh, 138px);
+  width: clamp(92px, 13vw, 152px);
+  aspect-ratio: 0.78;
+}
+
+.reactive-character-state {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: end center;
+  opacity: 0;
+}
+
+.reactive-character[data-character-state="idle"] [data-character-state-slot="idle"],
+.reactive-character[data-character-state="looking"] [data-character-state-slot="looking"],
+.reactive-character[data-character-state="inviting"] [data-character-state-slot="inviting"],
+.reactive-character[data-character-state="celebrating"] [data-character-state-slot="celebrating"] {
+  opacity: 1;
+}
+
+.reactive-character-state img,
+.reactive-character-state video,
+.reactive-character-sprite {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 14px rgba(50, 36, 14, 0.24));
+}
+
+.reactive-character-state img[hidden] {
+  display: none;
+}
+
+.reactive-character-sprite {
+  display: block;
+  background-image: var(--character-sprite);
+  background-repeat: no-repeat;
+  background-size: calc(var(--character-steps, 1) * 100%) 100%;
+  animation: reactive-character-sprite-play 700ms steps(var(--character-steps, 1)) both;
 }
 
 .selection-discovery-box {
@@ -1205,7 +1550,7 @@ body.game-immersive-active .game-stage,
   border: 0;
   appearance: none;
   background-color: transparent;
-  background-image: var(--box);
+  background-image: var(--box, var(--box-idle));
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center;
@@ -1229,7 +1574,7 @@ body.game-immersive-active .game-stage,
   content: "";
   position: absolute;
   inset: 0 0 48% 0;
-  background-image: var(--box);
+  background-image: var(--box, var(--box-idle));
   background-repeat: no-repeat;
   background-size: 100% auto;
   background-position: top center;
@@ -1240,6 +1585,138 @@ body.game-immersive-active .game-stage,
 
 .discovery-box.is-glowing {
   animation: box-float 2.4s ease-in-out infinite, box-pulse 1.25s ease-in-out infinite;
+}
+
+.mystery-box-component {
+  background-image: var(--box-idle);
+}
+
+.mystery-box-component:disabled {
+  cursor: default;
+}
+
+.mystery-box-animation-slot {
+  position: absolute;
+  inset: 0;
+  display: block;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.magic-box {
+  overflow: hidden;
+}
+
+.magic-box-animation-slot {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.magic-box[data-magic-box-state="idle"] [data-magic-box-animation-slot="idle"],
+.magic-box[data-magic-box-state="breathing"] [data-magic-box-animation-slot="breathing"],
+.magic-box[data-magic-box-state="touch"] [data-magic-box-animation-slot="touch"],
+.magic-box[data-magic-box-state="shake"] [data-magic-box-animation-slot="shake"],
+.magic-box[data-magic-box-state="glow"] [data-magic-box-animation-slot="glow"],
+.magic-box[data-magic-box-state="anticipation"] [data-magic-box-animation-slot="anticipation"] {
+  opacity: 1;
+}
+
+.magic-box-animation-slot img,
+.magic-box-animation-slot video,
+.magic-box-sprite {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.magic-box-animation-slot img[hidden] {
+  display: none;
+}
+
+.magic-box-sprite {
+  display: block;
+  background-image: var(--magic-box-sprite);
+  background-repeat: no-repeat;
+  background-size: calc(var(--magic-box-steps, 1) * 100%) 100%;
+  animation: magic-box-sprite-play 700ms steps(var(--magic-box-steps, 1)) both;
+}
+
+.magic-box[data-magic-box-state="breathing"] {
+  animation: magic-box-breathing 320ms ease-in-out both;
+}
+
+.magic-box[data-magic-box-state="touch"] {
+  animation: mystery-box-touch 90ms ease-out both;
+}
+
+.magic-box[data-magic-box-state="shake"] {
+  animation: mystery-box-shake 360ms ease-in-out both;
+}
+
+.magic-box[data-magic-box-state="glow"],
+.magic-box[data-magic-box-state="anticipation"] {
+  animation: box-float 2.4s ease-in-out infinite, box-pulse 1.25s ease-in-out infinite;
+}
+
+.mystery-box-component[data-box-state="IDLE"] {
+  background-image: var(--box-idle);
+  animation: box-float 2.4s ease-in-out infinite;
+}
+
+.mystery-box-component.magic-box[data-box-state="IDLE"] {
+  animation: none;
+}
+
+.mystery-box-component[data-box-state="TOUCH"] {
+  background-image: var(--box-touch, var(--box-idle));
+  animation: mystery-box-touch 90ms ease-out both;
+}
+
+.mystery-box-component[data-box-state="SHAKE"] {
+  background-image: var(--box-shake, var(--box-idle));
+  animation: mystery-box-shake 360ms ease-in-out both;
+}
+
+.mystery-box-component[data-box-state="GLOW"] {
+  background-image: var(--box-glow, var(--box-idle));
+  animation: box-float 2.4s ease-in-out infinite, box-pulse 1.25s ease-in-out infinite;
+}
+
+.mystery-box-component[data-box-state="OPENING"] {
+  background-image: var(--box-opening, var(--box-open));
+  animation: box-open 680ms cubic-bezier(.2, .72, .22, 1) both;
+}
+
+.mystery-box-component[data-box-state="OPENING"]::before {
+  opacity: 1;
+  background-image: var(--box-opening, var(--box-open));
+  animation: box-lid-open 680ms cubic-bezier(.2, .72, .22, 1) both;
+}
+
+.mystery-box-component[data-box-state="OPENING"]::after {
+  animation: box-inner-glow 680ms ease both;
+}
+
+.mystery-box-component[data-box-state="OPEN"],
+.mystery-box-component[data-box-state="REVEAL"] {
+  animation: none;
+}
+
+.mystery-box-component[data-box-state="OPEN"] {
+  background-image: var(--box-open);
+}
+
+.mystery-box-component[data-box-state="REVEAL"] {
+  background-image: var(--box-reveal, var(--box-open));
+}
+
+.mystery-box-component[data-box-state="REVEAL"]::after {
+  opacity: 1;
+  animation: box-inner-glow 260ms ease both;
 }
 
 .discovery-box.is-opening {
@@ -4543,6 +5020,70 @@ body.game-immersive-active .game-stage,
   object-fit: cover;
 }
 
+.game-engine[data-active-game] .victory-actions .game-primary-button,
+.game-engine[data-active-game] .victory-actions .game-secondary-button {
+  position: relative !important;
+  display: inline-flex !important;
+  place-items: center;
+  border-radius: 8px !important;
+  background-repeat: initial !important;
+  background-position: initial !important;
+  background-size: initial !important;
+  color: #fff !important;
+  font-size: clamp(0.95rem, 2vw, 1.25rem) !important;
+  line-height: 1.05 !important;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.18) !important;
+}
+
+.game-engine[data-active-game] .victory-actions .game-primary-button {
+  border: 3px solid #1c842f !important;
+  background: linear-gradient(180deg, #75cf43, #239126) !important;
+  box-shadow: 0 10px 0 #07611a, 0 22px 38px rgba(3, 70, 25, 0.28) !important;
+}
+
+.game-engine[data-active-game] .victory-actions .game-secondary-button {
+  border: 3px solid #d9921f !important;
+  background: linear-gradient(180deg, #ffd66b, #f08a21) !important;
+  box-shadow: 0 10px 0 #9a5311, 0 22px 38px rgba(92, 48, 9, 0.26) !important;
+}
+
+.game-engine[data-active-game] .victory-actions .game-primary-button::after,
+.game-engine[data-active-game] .victory-actions .game-secondary-button::after {
+  content: none !important;
+}
+
+.game-engine[data-active-game] .encouragement-actions .game-primary-button,
+.game-engine[data-active-game] .encouragement-actions .game-secondary-button {
+  position: relative !important;
+  display: inline-flex !important;
+  place-items: center;
+  border-radius: 8px !important;
+  background-repeat: initial !important;
+  background-position: initial !important;
+  background-size: initial !important;
+  color: #fff !important;
+  font-size: clamp(0.95rem, 2vw, 1.25rem) !important;
+  line-height: 1.05 !important;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.18) !important;
+}
+
+.game-engine[data-active-game] .encouragement-actions .game-primary-button {
+  border: 3px solid #1c842f !important;
+  background: linear-gradient(180deg, #75cf43, #239126) !important;
+  box-shadow: 0 10px 0 #07611a, 0 22px 38px rgba(3, 70, 25, 0.28) !important;
+}
+
+.game-engine[data-active-game] .encouragement-actions .game-secondary-button {
+  border: 3px solid #d9921f !important;
+  background: linear-gradient(180deg, #ffd66b, #f08a21) !important;
+  box-shadow: 0 10px 0 #9a5311, 0 22px 38px rgba(92, 48, 9, 0.26) !important;
+}
+
+.game-engine[data-active-game] .encouragement-actions .game-primary-button::after,
+.game-engine[data-active-game] .encouragement-actions .game-secondary-button::after {
+  content: none !important;
+}
+
 @media (max-width: 1100px) {
   .game-hub-grid,
   .game-student-sync {
@@ -4644,6 +5185,47 @@ body.game-immersive-active .game-stage,
     min-height: 640px;
   }
 
+  .victory-medal {
+    top: 24px;
+    width: clamp(92px, 30vw, 132px);
+  }
+
+  .victory-xp {
+    top: 142px;
+  }
+
+  .victory-message {
+    top: 208px;
+    width: min(90vw, 420px);
+    font-size: clamp(1.45rem, 8vw, 2.35rem);
+  }
+
+  .victory-character {
+    bottom: 148px;
+    width: clamp(128px, 42vw, 190px);
+  }
+
+  .victory-actions {
+    bottom: 28px;
+    grid-template-columns: minmax(220px, 82vw);
+  }
+
+  .encouragement-character {
+    bottom: 238px;
+    width: clamp(132px, 42vw, 194px);
+  }
+
+  .encouragement-message {
+    top: 334px;
+    width: min(90vw, 420px);
+    font-size: clamp(1.35rem, 7.2vw, 2.2rem);
+  }
+
+  .encouragement-actions {
+    bottom: 28px;
+    grid-template-columns: minmax(220px, 82vw);
+  }
+
   .game-scene {
     background-size: cover;
     background-position: center;
@@ -4675,6 +5257,12 @@ body.game-immersive-active .game-stage,
     top: 16px;
     right: 18px;
     width: 78px;
+  }
+
+  .reactive-character {
+    right: clamp(10px, 5vw, 28px);
+    bottom: clamp(126px, 20vh, 170px);
+    width: clamp(72px, 20vw, 104px);
   }
 
   .selection-hero-box,
@@ -5131,6 +5719,74 @@ body.game-immersive-active .game-stage,
 
   50% {
     filter: drop-shadow(0 28px 32px rgba(48, 35, 10, 0.36)) drop-shadow(0 0 28px rgba(255, 221, 91, 0.9));
+  }
+}
+
+@keyframes mystery-box-touch {
+  0% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(0.96) translateY(4px);
+  }
+}
+
+@keyframes magic-box-breathing {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.025) translateY(-3px);
+  }
+}
+
+@keyframes magic-box-sprite-play {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 100% 0;
+  }
+}
+
+@keyframes reactive-character-sprite-play {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 100% 0;
+  }
+}
+
+@keyframes mystery-box-shake {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+
+  16% {
+    transform: translateX(-8px) rotate(-3deg);
+  }
+
+  32% {
+    transform: translateX(8px) rotate(3deg);
+  }
+
+  48% {
+    transform: translateX(-6px) rotate(-2deg);
+  }
+
+  64% {
+    transform: translateX(6px) rotate(2deg);
+  }
+
+  80% {
+    transform: translateX(-3px) rotate(-1deg);
   }
 }
 

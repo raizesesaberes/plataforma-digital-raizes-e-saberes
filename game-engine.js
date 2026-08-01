@@ -95,6 +95,37 @@
               twinkle: ge2CaixaAsset("effects/twinkle.png"),
             },
           },
+          backgroundVideo: {
+            room: {
+              version: "v1-homologada",
+              src: "assets/video/RS-020-video-institucional.mp4",
+              poster: asset("components/sala-descobertas-bg.png"),
+              fallback: asset("components/sala-descobertas-bg.png"),
+            },
+          },
+          magicBox: {
+            version: "V1",
+            animations: {
+              idle: { type: "image", src: ge2CaixaAsset("boxes/closed.png") },
+              breathing: { type: "image", src: ge2CaixaAsset("boxes/closed.png") },
+              touch: { type: "image", src: ge2CaixaAsset("boxes/closed.png") },
+              shake: { type: "image", src: ge2CaixaAsset("boxes/closed.png") },
+              glow: { type: "image", src: ge2CaixaAsset("boxes/glowing.png") },
+              anticipation: { type: "image", src: ge2CaixaAsset("boxes/glowing.png") },
+            },
+          },
+          reactiveCharacters: {
+            bia: {
+              name: "Bia",
+              version: "V1",
+              states: {
+                idle: { type: "image", src: ge2CaixaAsset("characters/bia-smile.png") },
+                looking: { type: "image", src: ge2CaixaAsset("characters/bia-point.png") },
+                inviting: { type: "image", src: ge2CaixaAsset("characters/bia-neutral.png") },
+                celebrating: { type: "image", src: ge2CaixaAsset("characters/bia-celebrate.png") },
+              },
+            },
+          },
         },
         audio: {
           narration: 0.9,
@@ -1148,6 +1179,365 @@
     },
   };
 
+  const escapeHtml = (value) => String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+  const normalizeVictoryAsset = (assetValue, fallbackAlt = "") => {
+    if (!assetValue) return null;
+    if (typeof assetValue === "string") {
+      return { src: assetValue, alt: fallbackAlt };
+    }
+    return {
+      src: assetValue.src || "",
+      alt: assetValue.alt || fallbackAlt,
+    };
+  };
+
+  const VictoryScreen = {
+    render(options = {}) {
+      const character = normalizeVictoryAsset(options.characterAsset, options.characterName || options.character || "Personagem");
+      const medal = normalizeVictoryAsset(options.medalAsset, options.medal || "Medalha");
+      const effects = options.effects || {};
+      const message = options.message || "VOCE FOI INCRIVEL!";
+      const xpValue = Number(options.xp) || 0;
+      const initialXp = options.animateXp ? 0 : xpValue;
+      const continueLabel = options.continueLabel || "CONTINUAR";
+      const restartLabel = options.restartLabel || "JOGAR NOVAMENTE";
+      const continueAttrs = options.continueHref
+        ? `href="${escapeHtml(options.continueHref)}"`
+        : `type="button" data-victory-action="continue"${options.continueAction ? ` data-game-action="${escapeHtml(options.continueAction)}"` : ""}`;
+      const restartAttrs = options.restartHref
+        ? `href="${escapeHtml(options.restartHref)}"`
+        : `type="button" data-victory-action="restart"${options.restartAction ? ` data-game-action="${escapeHtml(options.restartAction)}"` : ""}`;
+
+      return `
+        <section class="game-screen victory-screen" data-screen="final" aria-label="Tela de vitoria">
+          <div class="victory-layer victory-overlay" aria-hidden="true"></div>
+          <div class="victory-layer victory-particles" data-victory-slot="particles" aria-hidden="true">
+            ${effects.particles ? `<img src="${escapeHtml(effects.particles)}" alt="" loading="eager" decoding="async" />` : `<video muted playsinline preload="none" data-victory-placeholder="particles"></video>`}
+          </div>
+          <div class="victory-layer victory-confetti" data-victory-slot="confetti" aria-hidden="true">
+            ${effects.confetti ? `<img src="${escapeHtml(effects.confetti)}" alt="" loading="eager" decoding="async" />` : `<video muted playsinline preload="none" data-victory-placeholder="confetti"></video>`}
+          </div>
+          <div class="victory-layer victory-stars" data-victory-slot="stars" aria-hidden="true">
+            ${effects.stars ? `<img src="${escapeHtml(effects.stars)}" alt="" loading="eager" decoding="async" />` : `<video muted playsinline preload="none" data-victory-placeholder="stars"></video>`}
+          </div>
+          <article class="victory-content">
+            <div class="victory-medal" data-victory-slot="medal">
+              ${medal?.src ? `<img src="${escapeHtml(medal.src)}" alt="${escapeHtml(medal.alt)}" loading="eager" decoding="async" />` : `<span aria-hidden="true"></span>`}
+            </div>
+            <span class="victory-xp xp-counter" data-xp-counter>+${initialXp} XP</span>
+            <strong class="victory-message">${escapeHtml(message)}</strong>
+            <span class="game-sr-only" data-final-medal>${escapeHtml(options.medal || "")}</span>
+            <span class="game-sr-only" data-final-story></span>
+            <div class="victory-character" data-victory-character="${escapeHtml(options.characterName || options.character || "")}">
+              ${character?.src ? `<img src="${escapeHtml(character.src)}" alt="${escapeHtml(character.alt)}" loading="eager" decoding="async" />` : `<div class="victory-character-placeholder" aria-label="${escapeHtml(options.characterName || options.character || "Personagem")}"></div>`}
+            </div>
+            <div class="victory-actions">
+              <${options.continueHref ? "a" : "button"} class="game-secondary-button victory-continue-button" ${continueAttrs}>${escapeHtml(continueLabel)}</${options.continueHref ? "a" : "button"}>
+              <${options.restartHref ? "a" : "button"} class="game-primary-button game-restart-button victory-restart-button" ${restartAttrs}>${escapeHtml(restartLabel)}</${options.restartHref ? "a" : "button"}>
+            </div>
+          </article>
+        </section>
+      `;
+    },
+    show(options = {}) {
+      const hasExplicitContainer = Boolean(options.container);
+      const host = options.container || document.querySelector("[data-game-stage]") || document.body;
+      const wrapper = document.createElement("div");
+      wrapper.className = "victory-screen-host";
+      wrapper.innerHTML = this.render({ ...options, continueAction: "", restartAction: "" });
+      const node = wrapper.firstElementChild;
+      if (!hasExplicitContainer) node.classList.add("victory-screen-floating");
+      host.appendChild(node);
+      requestAnimationFrame(() => node.classList.add("is-active"));
+      node.addEventListener("click", (event) => {
+        const action = event.target.closest("[data-victory-action]")?.dataset.victoryAction;
+        if (action === "continue") options.onContinue?.(event);
+        if (action === "restart") options.onRestart?.(event);
+      });
+      return node;
+    },
+  };
+
+  const showVictory = (options = {}) => VictoryScreen.show(options);
+
+  const EncouragementScreen = {
+    render(options = {}) {
+      const character = normalizeVictoryAsset(options.characterAsset, options.characterName || options.character || "Personagem");
+      const effects = options.effects || {};
+      const audio = normalizeVictoryAsset(options.audioAsset || options.audio, "Audio de incentivo");
+      const message = options.message || "VOCE ESTA QUASE LA!";
+      const primaryLabel = options.primaryButton || "TENTAR NOVAMENTE";
+      const secondaryLabel = options.secondaryButton || "OUVIR A DICA";
+      const primaryAttrs = options.primaryHref
+        ? `href="${escapeHtml(options.primaryHref)}"`
+        : `type="button" data-encouragement-action="primary"${options.primaryAction ? ` data-game-action="${escapeHtml(options.primaryAction)}"` : ""}`;
+      const secondaryAttrs = options.secondaryHref
+        ? `href="${escapeHtml(options.secondaryHref)}"`
+        : `type="button" data-encouragement-action="secondary"${options.secondaryAction ? ` data-game-action="${escapeHtml(options.secondaryAction)}"` : ""}`;
+
+      return `
+        <section class="game-screen encouragement-screen" data-screen="${escapeHtml(options.screenName || "encouragement")}" aria-label="Tela de incentivo">
+          <div class="encouragement-layer encouragement-overlay" aria-hidden="true"></div>
+          <div class="encouragement-layer encouragement-particles" data-encouragement-slot="particles" aria-hidden="true">
+            ${effects.particles ? `<img src="${escapeHtml(effects.particles)}" alt="" loading="eager" decoding="async" />` : `<video muted playsinline preload="none" data-encouragement-placeholder="particles"></video>`}
+          </div>
+          <article class="encouragement-content">
+            <div class="encouragement-character" data-encouragement-character="${escapeHtml(options.characterName || options.character || "")}">
+              ${character?.src ? `<img src="${escapeHtml(character.src)}" alt="${escapeHtml(character.alt)}" loading="eager" decoding="async" />` : `<div class="encouragement-character-placeholder" aria-label="${escapeHtml(options.characterName || options.character || "Personagem")}"></div>`}
+            </div>
+            <strong class="encouragement-message">${escapeHtml(message)}</strong>
+            <audio data-encouragement-audio preload="none"${audio?.src ? ` src="${escapeHtml(audio.src)}"` : ""}></audio>
+            <div class="encouragement-actions">
+              <${options.primaryHref ? "a" : "button"} class="game-primary-button encouragement-primary-button" ${primaryAttrs}>${escapeHtml(primaryLabel)}</${options.primaryHref ? "a" : "button"}>
+              <${options.secondaryHref ? "a" : "button"} class="game-secondary-button encouragement-secondary-button" ${secondaryAttrs}>${escapeHtml(secondaryLabel)}</${options.secondaryHref ? "a" : "button"}>
+            </div>
+          </article>
+        </section>
+      `;
+    },
+    show(options = {}) {
+      const hasExplicitContainer = Boolean(options.container);
+      const host = options.container || document.querySelector("[data-game-stage]") || document.body;
+      const wrapper = document.createElement("div");
+      wrapper.className = "encouragement-screen-host";
+      wrapper.innerHTML = this.render({ ...options, primaryAction: "", secondaryAction: "" });
+      const node = wrapper.firstElementChild;
+      if (!hasExplicitContainer) node.classList.add("encouragement-screen-floating");
+      host.appendChild(node);
+      requestAnimationFrame(() => node.classList.add("is-active"));
+      node.addEventListener("click", (event) => {
+        const action = event.target.closest("[data-encouragement-action]")?.dataset.encouragementAction;
+        if (action === "primary") options.onPrimary?.(event);
+        if (action === "secondary") {
+          const audioNode = node.querySelector("[data-encouragement-audio]");
+          if (audioNode?.getAttribute("src")) audioNode.play?.().catch(() => {});
+          options.onSecondary?.(event);
+        }
+      });
+      return node;
+    },
+  };
+
+  const showEncouragement = (options = {}) => EncouragementScreen.show(options);
+
+  const mysteryBoxStates = {
+    IDLE: "IDLE",
+    TOUCH: "TOUCH",
+    SHAKE: "SHAKE",
+    GLOW: "GLOW",
+    OPENING: "OPENING",
+    OPEN: "OPEN",
+    REVEAL: "REVEAL",
+  };
+
+  const mysteryBoxTransitionMs = {
+    TOUCH: 90,
+    SHAKE: 360,
+    GLOW: 260,
+    OPENING: 680,
+    OPEN: 180,
+    REVEAL: 120,
+  };
+
+  const magicBoxStates = {
+    IDLE: "idle",
+    BREATHING: "breathing",
+    TOUCH: "touch",
+    SHAKE: "shake",
+    GLOW: "glow",
+    ANTICIPATION: "anticipation",
+  };
+
+  const magicBoxTransitionMs = {
+    breathing: 320,
+    touch: 90,
+    shake: 360,
+    glow: 280,
+    anticipation: 240,
+    idle: 0,
+  };
+
+  const reactiveCharacterStates = {
+    IDLE: "idle",
+    LOOKING: "looking",
+    INVITING: "inviting",
+    CELEBRATING: "celebrating",
+  };
+
+  class ReactiveCharacter {
+    constructor({ id, initialState = reactiveCharacterStates.IDLE, onStateChange = () => {} } = {}) {
+      this.id = id;
+      this.state = initialState;
+      this.onStateChange = onStateChange;
+      this.listeners = [];
+    }
+
+    setState(nextState) {
+      if (!Object.values(reactiveCharacterStates).includes(nextState)) return this.state;
+      this.state = nextState;
+      this.onStateChange(nextState, this);
+      this.listeners.forEach((callback) => callback({ id: this.id, state: nextState }));
+      return this.state;
+    }
+
+    onChange(callback) {
+      if (typeof callback === "function") this.listeners.push(callback);
+      return this;
+    }
+  }
+
+  class MagicBox {
+    constructor({ timings = magicBoxTransitionMs, onStateChange = () => {}, onTouch = () => {}, onAnimationEnd = () => {}, onReveal = () => {} } = {}) {
+      this.timings = timings;
+      this.onStateChange = onStateChange;
+      this.listeners = {
+        touch: [onTouch].filter(Boolean),
+        animationEnd: [onAnimationEnd].filter(Boolean),
+        reveal: [onReveal].filter(Boolean),
+      };
+      this.state = magicBoxStates.IDLE;
+      this.locked = false;
+      this.timers = [];
+    }
+
+    onTouch(callback) {
+      if (typeof callback === "function") this.listeners.touch.push(callback);
+      return this;
+    }
+
+    onAnimationEnd(callback) {
+      if (typeof callback === "function") this.listeners.animationEnd.push(callback);
+      return this;
+    }
+
+    onReveal(callback) {
+      if (typeof callback === "function") this.listeners.reveal.push(callback);
+      return this;
+    }
+
+    reset() {
+      this.clearTimers();
+      this.locked = false;
+      this.setState(magicBoxStates.IDLE);
+    }
+
+    start() {
+      if (this.locked) return false;
+      this.locked = true;
+      this.clearTimers();
+      this.emit("touch");
+      this.runSequence([
+        magicBoxStates.BREATHING,
+        magicBoxStates.TOUCH,
+        magicBoxStates.SHAKE,
+        magicBoxStates.GLOW,
+        magicBoxStates.ANTICIPATION,
+        magicBoxStates.IDLE,
+      ]);
+      return true;
+    }
+
+    runSequence(states) {
+      let elapsed = 0;
+      states.forEach((state, index) => {
+        const timer = window.setTimeout(() => {
+          this.setState(state);
+          if (state === magicBoxStates.ANTICIPATION) this.emit("reveal");
+          if (index === states.length - 1) {
+            this.locked = false;
+            this.emit("animationEnd");
+          }
+        }, elapsed);
+        this.timers.push(timer);
+        elapsed += this.timings[state] || 0;
+      });
+    }
+
+    setState(nextState) {
+      this.state = nextState;
+      this.onStateChange(nextState, this.locked);
+    }
+
+    clearTimers() {
+      this.timers.forEach((timer) => window.clearTimeout(timer));
+      this.timers = [];
+    }
+
+    emit(eventName) {
+      (this.listeners[eventName] || []).forEach((callback) => callback({ state: this.state, locked: this.locked }));
+    }
+  }
+
+  class MysteryBoxStateMachine {
+    constructor({ timings = mysteryBoxTransitionMs, onStateChange = () => {}, onReveal = () => {} } = {}) {
+      this.timings = timings;
+      this.onStateChange = onStateChange;
+      this.onReveal = onReveal;
+      this.state = mysteryBoxStates.IDLE;
+      this.locked = false;
+      this.timers = [];
+    }
+
+    reset() {
+      this.clearTimers();
+      this.locked = false;
+      this.setState(mysteryBoxStates.IDLE);
+    }
+
+    start() {
+      if (this.locked) return false;
+      this.locked = true;
+      this.clearTimers();
+      this.runSequence([
+        mysteryBoxStates.TOUCH,
+        mysteryBoxStates.SHAKE,
+        mysteryBoxStates.GLOW,
+        mysteryBoxStates.OPENING,
+        mysteryBoxStates.OPEN,
+        mysteryBoxStates.REVEAL,
+      ]);
+      return true;
+    }
+
+    runSequence(states) {
+      const [firstState, ...nextStates] = states;
+      if (!firstState) return;
+      this.setState(firstState);
+      let elapsed = this.timings[firstState] || 0;
+      nextStates.forEach((state, index) => {
+        const timer = window.setTimeout(() => {
+          this.setState(state);
+          if (state === mysteryBoxStates.REVEAL) {
+            this.locked = false;
+            this.onReveal();
+          }
+        }, elapsed);
+        this.timers.push(timer);
+        elapsed += this.timings[state] || 0;
+        if (index === nextStates.length - 1) {
+          const cleanupTimer = window.setTimeout(() => this.clearTimers(), elapsed);
+          this.timers.push(cleanupTimer);
+        }
+      });
+    }
+
+    setState(nextState) {
+      this.state = nextState;
+      this.onStateChange(nextState, this.locked);
+    }
+
+    clearTimers() {
+      this.timers.forEach((timer) => window.clearTimeout(timer));
+      this.timers = [];
+    }
+  }
+
   const progressController = {
     create(game) {
       return {
@@ -1197,6 +1587,8 @@
         completedAt: null,
         attempts: 0,
         discoveryPrompt: "",
+        mysteryBoxState: mysteryBoxStates.IDLE,
+        magicBoxState: magicBoxStates.IDLE,
       };
     },
     place(state, dragId, dropId) {
@@ -1439,18 +1831,22 @@
   };
 
   const experienceStorageKey = "raizes:infantil-experience-progress:v1";
+  const interactiveActivityStorageKey = "raizes:interactive-activity-progress:v1";
+  const experienceCompletionThreshold = 90;
 
   const experienceProgressStore = {
     getUserId() {
       try {
-        return localStorage.getItem("raizes:active-user-id") || localStorage.getItem("raizes:user:id") || "local-demo";
+        const session = JSON.parse(localStorage.getItem("raizes:supabase-auth-session") || "null");
+        return session?.user?.id || localStorage.getItem("raizes:active-user-id") || localStorage.getItem("raizes:user:id") || "local-demo";
       } catch (error) {
         return "local-demo";
       }
     },
     records() {
       try {
-        return JSON.parse(localStorage.getItem(experienceStorageKey) || "[]");
+        const records = JSON.parse(localStorage.getItem(experienceStorageKey) || "[]");
+        return Array.isArray(records) ? records.map((record) => this.normalize(record)).filter(Boolean) : [];
       } catch (error) {
         console.warn("Nao foi possivel ler progresso das experiencias.", error);
         return [];
@@ -1458,30 +1854,129 @@
     },
     write(records) {
       try {
-        localStorage.setItem(experienceStorageKey, JSON.stringify(records.slice(0, 80)));
+        localStorage.setItem(experienceStorageKey, JSON.stringify(records.map((record) => this.normalize(record)).filter(Boolean).slice(0, 160)));
       } catch (error) {
         console.warn("Nao foi possivel salvar progresso das experiencias.", error);
       }
     },
-    latest(code) {
-      return this.records().find((record) => record.code === code) || null;
+    normalize(record = {}) {
+      const experienceCode = record.experienceCode || record.code;
+      if (!experienceCode) return null;
+      const progressPercent = Math.max(0, Math.min(100, Math.round(Number(record.progressPercent ?? record.percentWatched ?? 0) || 0)));
+      const completedAt = record.completedAt || null;
+      const status = completedAt || progressPercent >= experienceCompletionThreshold || record.status === "completed"
+        ? "completed"
+        : record.startedAt || progressPercent > 0 || record.status === "in_progress" || record.status === "running" || record.status === "paused"
+          ? "in_progress"
+          : "not_started";
+      return {
+        userId: record.userId || this.getUserId(),
+        experienceCode,
+        code: experienceCode,
+        status,
+        progressPercent: status === "completed" ? 100 : progressPercent,
+        percentWatched: status === "completed" ? 100 : progressPercent,
+        currentTime: Math.max(0, Number(record.currentTime || 0) || 0),
+        duration: Math.max(0, Number(record.duration || 0) || 0),
+        startedAt: record.startedAt || null,
+        lastAccessedAt: record.lastAccessedAt || record.updatedAt || record.lastStartedAt || record.startedAt || null,
+        completedAt: status === "completed" ? completedAt || new Date().toISOString() : null,
+        repeatCount: Math.max(0, Number(record.repeatCount ?? record.repeats ?? 0) || 0),
+        isFavorite: Boolean(record.isFavorite),
+        accessCount: Math.max(0, Number(record.accessCount ?? record.starts ?? 0) || 0),
+        history: Array.isArray(record.history) ? record.history.slice(-80) : [],
+        updatedAt: record.updatedAt || record.lastAccessedAt || new Date().toISOString(),
+      };
+    },
+    recordsForUser(userId = this.getUserId()) {
+      return this.records().filter((record) => record.userId === userId);
+    },
+    latest(code, userId = this.getUserId()) {
+      return this.getUserExperienceProgress(userId, code);
+    },
+    getUserExperienceProgress(userId, experienceCode) {
+      return this.records().find((record) => record.userId === userId && record.experienceCode === experienceCode) || null;
+    },
+    saveUserExperienceProgress(userId, experienceCode, data = {}) {
+      const records = this.records();
+      const current = records.find((record) => record.userId === userId && record.experienceCode === experienceCode) || {
+        userId,
+        experienceCode,
+        code: experienceCode,
+        status: "not_started",
+        progressPercent: 0,
+        percentWatched: 0,
+        currentTime: 0,
+        duration: 0,
+        startedAt: null,
+        lastAccessedAt: null,
+        completedAt: null,
+        repeatCount: 0,
+        isFavorite: false,
+        accessCount: 0,
+        history: [],
+      };
+      const now = new Date().toISOString();
+      const historyEvent = data.event
+        ? {
+            event: data.event,
+            at: now,
+            progressPercent: data.progressPercent ?? data.percentWatched ?? current.progressPercent,
+            currentTime: data.currentTime ?? current.currentTime,
+          }
+        : null;
+      const next = this.normalize({
+        ...current,
+        ...data,
+        userId,
+        experienceCode,
+        code: experienceCode,
+        lastAccessedAt: data.lastAccessedAt || now,
+        history: historyEvent ? [...(current.history || []), historyEvent] : current.history,
+        updatedAt: now,
+      });
+      this.write([next, ...records.filter((record) => !(record.userId === userId && record.experienceCode === experienceCode))]);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("raizes:experience-progress", { detail: next }));
+      }
+      return next;
     },
     upsert(code, patch) {
-      const records = this.records();
-      const current = records.find((record) => record.code === code) || {
-        code,
-        userId: this.getUserId(),
-        startedAt: null,
-        completedAt: null,
-        starts: 0,
-        completions: 0,
-        repeats: 0,
-        percentWatched: 0,
-        status: "unavailable",
+      return this.saveUserExperienceProgress(this.getUserId(), code, patch);
+    },
+    getUserExperienceHistory(userId = this.getUserId()) {
+      return this.recordsForUser(userId)
+        .filter((record) => record.lastAccessedAt || record.startedAt)
+        .sort((first, second) => String(second.lastAccessedAt || second.startedAt).localeCompare(String(first.lastAccessedAt || first.startedAt)));
+    },
+    getUserFavorites(userId = this.getUserId()) {
+      return this.recordsForUser(userId).filter((record) => record.isFavorite).map((record) => record.experienceCode);
+    },
+    toggleExperienceFavorite(userId, experienceCode) {
+      const current = this.getUserExperienceProgress(userId, experienceCode);
+      return this.saveUserExperienceProgress(userId, experienceCode, {
+        isFavorite: !current?.isFavorite,
+        event: current?.isFavorite ? "favorite_removed" : "favorite_added",
+      });
+    },
+    getContinueWatching(userId = this.getUserId()) {
+      return this.getUserExperienceHistory(userId).filter((record) => record.status === "in_progress");
+    },
+    getSummary(userId = this.getUserId(), experiences = []) {
+      const available = experiences.filter((experience) => experience.availability !== "unavailable");
+      const availableCodes = new Set(available.map((experience) => experience.id));
+      const records = this.recordsForUser(userId).filter((record) => availableCodes.has(record.experienceCode));
+      const started = records.filter((record) => record.status !== "not_started");
+      const completed = records.filter((record) => record.status === "completed");
+      const favorites = records.filter((record) => record.isFavorite);
+      return {
+        available: available.length,
+        started: started.length,
+        completed: completed.length,
+        inProgress: records.filter((record) => record.status === "in_progress").length,
+        favorites: favorites.length,
+        percent: available.length ? Math.round((completed.length / available.length) * 100) : 0,
       };
-      const next = { ...current, ...patch, updatedAt: new Date().toISOString() };
-      this.write([next, ...records.filter((record) => record.code !== code)]);
-      return next;
     },
   };
 
@@ -1493,6 +1988,7 @@
     state: "unavailable",
     startedOnce: false,
     completedOnce: false,
+    lastSavedSecond: -1,
     get catalog() {
       return window.RaizesInfantilExperiences || null;
     },
@@ -1503,7 +1999,10 @@
       return this.catalog?.getExperienceDefinition?.(code) || null;
     },
     getVideoAsset(experience) {
-      return this.catalog?.getExperienceAsset?.(experience?.openingAssetCode) || null;
+      const videoResource = (experience?.resources || []).find((resource) =>
+        (resource.role === "opening" || resource.role === "main") && resource.type === "video"
+      );
+      return this.catalog?.getExperienceAsset?.(videoResource?.assetCode || experience?.openingAssetCode) || null;
     },
     getPlaybackPath(asset) {
       return asset?.provisionalFilePath || asset?.filePath || "";
@@ -1551,7 +2050,7 @@
             </div>
             <aside>
               <strong data-experience-state>${labels[experience.availability]?.label || labels.available?.label || "Disponivel"}</strong>
-              <small>${progress?.percentWatched || 0}% assistido</small>
+              <small>${progress?.progressPercent || 0}% assistido</small>
             </aside>
           </header>
           ${isProvisional ? `<div class="experience-provisional-alert">${asset.note || "Video provisorio em uso para homologacao."}</div>` : ""}
@@ -1569,10 +2068,11 @@
             <button type="button" data-experience-restart>Reiniciar</button>
             <button type="button" data-experience-mute aria-pressed="false">Audio</button>
             <button type="button" data-experience-fullscreen>Tela cheia</button>
+            <button type="button" data-experience-favorite aria-pressed="${progress?.isFavorite ? "true" : "false"}">${progress?.isFavorite ? "Favorita" : "Favoritar"}</button>
             <button type="button" data-experience-repeat>Repetir experiencia</button>
             <a href="book-viewer.html?book=${experience.bookId || "livro-005"}&page=${experience.pages?.[0] || 1}">Abrir atividade</a>
           </footer>
-          <div class="experience-progress-line" aria-label="Progresso do video"><span data-experience-progress style="width:${progress?.percentWatched || 0}%"></span></div>
+          <div class="experience-progress-line" aria-label="Progresso do video"><span data-experience-progress style="width:${progress?.progressPercent || 0}%"></span></div>
           <p class="experience-instructions">${experience.instructions}</p>
         </section>
       `;
@@ -1598,6 +2098,7 @@
       this.video = this.overlay.querySelector("[data-experience-video]");
       this.startedOnce = false;
       this.completedOnce = false;
+      this.lastSavedSecond = -1;
       this.bindOverlay();
       this.bindVideo();
       this.setState(this.activeExperience.availability || "available");
@@ -1607,6 +2108,7 @@
     },
     close() {
       if (this.video) {
+        this.persistPlayback("close");
         this.video.pause();
       }
       this.overlay?.remove();
@@ -1624,6 +2126,7 @@
         if (event.target.closest("[data-experience-pause]")) this.pause(this.activeCode);
         if (event.target.closest("[data-experience-restart], [data-experience-repeat]")) this.restart(this.activeCode);
         if (event.target.closest("[data-experience-mute]")) this.toggleMute(event.target.closest("[data-experience-mute]"));
+        if (event.target.closest("[data-experience-favorite]")) this.toggleFavorite(event.target.closest("[data-experience-favorite]"));
         if (event.target.closest("[data-experience-fullscreen]")) this.fullscreen();
       });
       this.handleKeydown = (event) => {
@@ -1642,35 +2145,72 @@
     },
     bindVideo() {
       if (!this.video) return;
+      const video = this.video;
       const loading = this.overlay.querySelector("[data-experience-loading]");
       const error = this.overlay.querySelector("[data-experience-error]");
-      this.video.addEventListener("loadstart", () => {
+      video.addEventListener("loadstart", () => {
+        if (this.video !== video) return;
         if (loading) loading.hidden = false;
         this.setState("loading");
       });
-      this.video.addEventListener("canplay", () => {
+      video.addEventListener("canplay", () => {
+        if (this.video !== video) return;
         if (loading) loading.hidden = true;
-        this.setState(this.video.paused ? "paused" : "running");
+        this.setState(video.paused ? "paused" : "running");
+        const progress = this.getProgress(this.activeCode);
+        if (progress?.currentTime && progress.status === "in_progress" && video.currentTime < 1) {
+          video.currentTime = Math.min(progress.currentTime, Math.max(0, video.duration - 1));
+        }
       });
-      this.video.addEventListener("play", () => this.setState("running"));
-      this.video.addEventListener("pause", () => {
+      video.addEventListener("play", () => {
+        if (this.video !== video) return;
+        this.setState("running");
+      });
+      video.addEventListener("pause", () => {
+        if (this.video !== video) return;
         if (!this.completedOnce) this.setState("paused");
+        this.persistPlayback("pause");
       });
-      this.video.addEventListener("timeupdate", () => this.syncPercent());
-      this.video.addEventListener("ended", () => this.complete(this.activeCode));
-      this.video.addEventListener("error", () => {
+      video.addEventListener("timeupdate", () => {
+        if (this.video !== video) return;
+        this.syncPercent();
+      });
+      video.addEventListener("ended", () => {
+        if (this.video !== video) return;
+        this.complete(this.activeCode);
+      });
+      video.addEventListener("error", () => {
+        if (this.video !== video) return;
         if (loading) loading.hidden = true;
         if (error) error.hidden = false;
         this.setState("error");
-        experienceProgressStore.upsert(this.activeCode, { status: "error", errorAt: new Date().toISOString() });
+        experienceProgressStore.upsert(this.activeCode, { event: "error" });
+      });
+    },
+    persistPlayback(event = "progress") {
+      if (!this.video || !this.activeCode) return null;
+      const progressPercent = this.video.duration ? Math.min(100, Math.round((this.video.currentTime / this.video.duration) * 100)) : 0;
+      const current = experienceProgressStore.latest(this.activeCode);
+      const hasStarted = this.startedOnce || current?.startedAt || current?.status === "in_progress" || progressPercent > 0 || this.video.currentTime > 0;
+      return experienceProgressStore.upsert(this.activeCode, {
+        event,
+        status: progressPercent >= experienceCompletionThreshold ? "completed" : hasStarted ? "in_progress" : current?.status || "not_started",
+        progressPercent,
+        percentWatched: progressPercent,
+        currentTime: this.video.currentTime || 0,
+        duration: this.video.duration || 0,
       });
     },
     syncPercent() {
       if (!this.video || !this.activeCode) return;
       const percent = this.video.duration ? Math.min(100, Math.round((this.video.currentTime / this.video.duration) * 100)) : 0;
       this.overlay?.querySelector("[data-experience-progress]")?.style.setProperty("width", `${percent}%`);
-      experienceProgressStore.upsert(this.activeCode, { percentWatched: percent, status: this.state });
-      if (percent >= 95 && !this.completedOnce) this.complete(this.activeCode);
+      const currentSecond = Math.floor(this.video.currentTime || 0);
+      if (currentSecond !== this.lastSavedSecond && currentSecond % 5 === 0) {
+        this.lastSavedSecond = currentSecond;
+        this.persistPlayback("progress");
+      }
+      if (percent >= experienceCompletionThreshold && !this.completedOnce) this.complete(this.activeCode);
     },
     start(code) {
       if (!this.video || code !== this.activeCode) {
@@ -1682,9 +2222,10 @@
         const current = experienceProgressStore.latest(code);
         experienceProgressStore.upsert(code, {
           startedAt: current?.startedAt || now,
-          lastStartedAt: now,
-          starts: (current?.starts || 0) + 1,
-          status: "running",
+          lastAccessedAt: now,
+          accessCount: (current?.accessCount || 0) + 1,
+          status: "in_progress",
+          event: current?.startedAt ? "resume" : "start",
         });
         this.startedOnce = true;
       }
@@ -1694,7 +2235,7 @@
     pause(code) {
       if (code === this.activeCode && this.video) {
         this.video.pause();
-        experienceProgressStore.upsert(code, { status: "paused" });
+        this.persistPlayback("pause");
       }
       return experienceProgressStore.latest(code);
     },
@@ -1707,9 +2248,12 @@
       this.video.currentTime = 0;
       this.completedOnce = false;
       experienceProgressStore.upsert(code, {
-        repeats: (current?.repeats || 0) + 1,
-        percentWatched: 0,
-        status: "running",
+        repeatCount: (current?.repeatCount || 0) + 1,
+        progressPercent: current?.status === "completed" ? 100 : 0,
+        percentWatched: current?.status === "completed" ? 100 : 0,
+        currentTime: 0,
+        status: current?.status === "completed" ? "completed" : "in_progress",
+        event: "repeat",
       });
       this.startedOnce = false;
       return this.start(code);
@@ -1720,10 +2264,20 @@
       this.setState("completed");
       return experienceProgressStore.upsert(code, {
         completedAt: new Date().toISOString(),
-        completions: (experienceProgressStore.latest(code)?.completions || 0) + 1,
+        progressPercent: 100,
         percentWatched: 100,
+        currentTime: this.video?.duration || experienceProgressStore.latest(code)?.currentTime || 0,
+        duration: this.video?.duration || experienceProgressStore.latest(code)?.duration || 0,
         status: "completed",
+        event: "complete",
       });
+    },
+    toggleFavorite(button) {
+      if (!this.activeCode) return null;
+      const record = experienceProgressStore.toggleExperienceFavorite(experienceProgressStore.getUserId(), this.activeCode);
+      button?.setAttribute("aria-pressed", String(record.isFavorite));
+      if (button) button.textContent = record.isFavorite ? "Favorita" : "Favoritar";
+      return record;
     },
     toggleMute(button) {
       if (!this.video) return;
@@ -1737,6 +2291,710 @@
     },
   };
 
+  const interactiveActivityProgressStore = {
+    getUserId() {
+      return experienceProgressStore.getUserId();
+    },
+    records() {
+      try {
+        const records = JSON.parse(localStorage.getItem(interactiveActivityStorageKey) || "[]");
+        return Array.isArray(records) ? records.map((record) => this.normalize(record)).filter(Boolean) : [];
+      } catch (error) {
+        console.warn("Nao foi possivel ler progresso das atividades interativas.", error);
+        return [];
+      }
+    },
+    write(records) {
+      try {
+        localStorage.setItem(interactiveActivityStorageKey, JSON.stringify(records.map((record) => this.normalize(record)).filter(Boolean).slice(0, 180)));
+      } catch (error) {
+        console.warn("Nao foi possivel salvar progresso das atividades interativas.", error);
+      }
+    },
+    normalize(record = {}) {
+      const activityCode = record.activityCode || record.code;
+      if (!activityCode) return null;
+      return {
+        userId: record.userId || this.getUserId(),
+        activityCode,
+        code: activityCode,
+        experienceCode: record.experienceCode || "",
+        state: record.state || "not_started",
+        status: record.status || (record.completedAt ? "completed" : record.startedAt ? "in_progress" : "not_started"),
+        selectedAnswer: record.selectedAnswer ?? null,
+        correctAnswer: record.correctAnswer ?? null,
+        answers: Array.isArray(record.answers) ? record.answers.slice(-80) : [],
+        correctCount: Math.max(0, Number(record.correctCount || 0) || 0),
+        incorrectCount: Math.max(0, Number(record.incorrectCount || 0) || 0),
+        attempts: Math.max(0, Number(record.attempts || 0) || 0),
+        hintsUsed: Math.max(0, Number(record.hintsUsed || 0) || 0),
+        score: Math.max(0, Number(record.score || 0) || 0),
+        startedAt: record.startedAt || null,
+        lastAccessedAt: record.lastAccessedAt || record.updatedAt || record.startedAt || null,
+        completedAt: record.completedAt || null,
+        durationMs: Math.max(0, Number(record.durationMs || 0) || 0),
+        restartCount: Math.max(0, Number(record.restartCount || 0) || 0),
+        abandonedCount: Math.max(0, Number(record.abandonedCount || 0) || 0),
+        history: Array.isArray(record.history) ? record.history.slice(-80) : [],
+        updatedAt: record.updatedAt || new Date().toISOString(),
+      };
+    },
+    get(activityCode, userId = this.getUserId()) {
+      return this.records().find((record) => record.userId === userId && record.activityCode === activityCode) || null;
+    },
+    save(activityCode, data = {}, userId = this.getUserId()) {
+      const records = this.records();
+      const current = records.find((record) => record.userId === userId && record.activityCode === activityCode) || {
+        userId,
+        activityCode,
+        code: activityCode,
+        state: "not_started",
+        status: "not_started",
+        attempts: 0,
+        answers: [],
+        correctCount: 0,
+        incorrectCount: 0,
+        hintsUsed: 0,
+        score: 0,
+        history: [],
+      };
+      const now = new Date().toISOString();
+      const historyEvent = data.event
+        ? {
+            event: data.event,
+            at: now,
+        state: data.state || current.state,
+        selectedAnswer: data.selectedAnswer ?? current.selectedAnswer ?? null,
+            result: data.result || null,
+          }
+        : null;
+      const next = this.normalize({
+        ...current,
+        ...data,
+        userId,
+        activityCode,
+        code: activityCode,
+        lastAccessedAt: data.lastAccessedAt || now,
+        history: historyEvent ? [...(current.history || []), historyEvent] : current.history,
+        updatedAt: now,
+      });
+      this.write([next, ...records.filter((record) => !(record.userId === userId && record.activityCode === activityCode))]);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("raizes:interactive-progress", { detail: next }));
+      }
+      return next;
+    },
+  };
+
+  const interactiveActivityController = {
+    overlay: null,
+    activeCode: null,
+    activeActivity: null,
+    state: "not_started",
+    startedAtMs: 0,
+    answerLocked: false,
+    workingState: null,
+    get catalog() {
+      return window.RaizesInfantilExperiences || null;
+    },
+    getActivity(code) {
+      return this.catalog?.getInteractiveActivityDefinition?.(code) || null;
+    },
+    getState(code) {
+      return interactiveActivityProgressStore.get(code);
+    },
+    setState(state, patch = {}) {
+      this.state = state;
+      if (this.overlay) {
+        this.overlay.dataset.interactiveState = state;
+        const stateNode = this.overlay.querySelector("[data-interactive-state]");
+        if (stateNode) stateNode.textContent = this.getStateLabel(state);
+      }
+      if (this.activeCode) {
+        interactiveActivityProgressStore.save(this.activeCode, {
+          ...patch,
+          state,
+          status: state === "completed" ? "completed" : state === "not_started" ? "not_started" : "in_progress",
+          experienceCode: this.activeActivity?.experienceCode,
+        });
+      }
+    },
+    getStateLabel(state) {
+      const labels = {
+        not_started: "NAO INICIADA",
+        ready: "PRONTA",
+        playing_intro: "OBSERVANDO",
+        presenting_question: "PERGUNTA",
+        waiting_answer: "RESPONDA",
+        checking_answer: "VERIFICANDO",
+        correct: "CERTO",
+        incorrect: "TENTE NOVAMENTE",
+        completed: "CONCLUIDA",
+        paused: "PAUSADA",
+        error: "ERRO",
+      };
+      return labels[state] || state;
+    },
+    renderUnavailable(code) {
+      return `
+        <section class="interactive-dialog" role="dialog" aria-modal="true" aria-labelledby="interactive-title">
+          <button class="experience-close" type="button" data-interactive-close aria-label="Fechar atividade">×</button>
+          <div class="experience-error-panel">
+            <span data-interactive-state>ERRO</span>
+            <h2 id="interactive-title">ATIVIDADE NAO ENCONTRADA</h2>
+            <p>NAO ENCONTRAMOS ESTA ATIVIDADE INTERATIVA.</p>
+            <small>${code || "codigo ausente"}</small>
+          </div>
+        </section>
+      `;
+    },
+    renderObject(object) {
+      const style = `--x:${object.x}%;--y:${object.y}%;--w:${object.width}%;--h:${object.height}%;--delay:${object.animation?.delay || 0}ms`;
+      const classes = ["interactive-object", object.asset === "css:ladybug" ? "is-ladybug" : "", object.animation?.type === "fly_away" ? "will-fly" : ""]
+        .filter(Boolean)
+        .join(" ");
+      return `
+        <button class="${classes}" data-interactive-object="${object.id}" data-animation="${object.animation?.type || "stay"}" style="${style}" type="button" aria-label="${object.accessibilityLabel || object.id}">
+          ${object.asset === "css:ladybug" ? "<i></i>" : `<span>${object.label || object.accessibilityLabel || object.id}</span>`}
+        </button>
+      `;
+    },
+    renderChoiceButtons(options = [], disabled = true) {
+      return `
+        <div class="interactive-options" role="group" aria-label="OPCOES DE RESPOSTA">
+          ${options.map((option, index) => `
+            <button type="button" data-interactive-answer="${index}" ${disabled ? "disabled" : ""}>${typeof option === "object" ? option.label : option}</button>
+          `).join("")}
+        </div>
+      `;
+    },
+    renderComponent(activity) {
+      const type = activity.type;
+      if (type === "count_and_select" || type === "select_option" || type === "complete_word") {
+        const options = type === "complete_word" ? activity.word?.choices || [] : activity.question?.options || [];
+        const prompt = type === "complete_word" ? activity.word?.prompt : activity.question?.text;
+        return `
+          <div class="interactive-question" data-interactive-question>
+            <p>${prompt || ""}</p>
+            ${this.renderChoiceButtons(options)}
+          </div>
+        `;
+      }
+      if (type === "tap_objects") {
+        return `
+          <div class="interactive-question" data-interactive-question>
+            <p>${activity.question?.text || activity.instruction}</p>
+            <button class="interactive-confirm" type="button" data-interactive-confirm disabled>CONFIRMAR</button>
+          </div>
+        `;
+      }
+      if (type === "drag_and_drop" || type === "classify") {
+        const items = type === "classify" ? activity.items || [] : activity.draggables || [];
+        const targets = type === "classify" ? activity.categories || [] : activity.dropTargets || [];
+        return `
+          <div class="interactive-board" data-interactive-board>
+            <div class="interactive-pieces" aria-label="ITENS">
+              ${items.map((item) => `<button type="button" data-interactive-item="${item.id}" disabled>${item.label}</button>`).join("")}
+            </div>
+            <div class="interactive-targets" aria-label="DESTINOS">
+              ${targets.map((target) => `<button type="button" data-interactive-target="${target.id}" disabled>${target.label}</button>`).join("")}
+            </div>
+            <button class="interactive-confirm" type="button" data-interactive-confirm disabled>CONFIRMAR</button>
+          </div>
+        `;
+      }
+      if (type === "match_pairs" || type === "memory_game") {
+        const cards = type === "memory_game"
+          ? activity.memory?.cards || []
+          : (activity.pairs || []).flatMap((pair) => [
+              { ...pair.left, pairId: pair.id },
+              { ...pair.right, pairId: pair.id },
+            ]);
+        return `
+          <div class="interactive-card-grid" data-interactive-card-grid>
+            ${cards.map((card) => `<button type="button" data-interactive-card="${card.id}" data-pair-id="${card.pairId}" disabled>${card.label}</button>`).join("")}
+          </div>
+        `;
+      }
+      if (type === "sort_sequence") {
+        const order = activity.sequence?.initialOrder || (activity.sequence?.items || []).map((item) => item.id);
+        const itemById = new Map((activity.sequence?.items || []).map((item) => [item.id, item]));
+        return `
+          <div class="interactive-sequence" data-interactive-sequence>
+            ${order.map((id, index) => `<div data-sequence-row="${id}"><strong>${itemById.get(id)?.label || id}</strong><button type="button" data-sequence-move="${id}" data-direction="up" disabled>SUBIR</button><button type="button" data-sequence-move="${id}" data-direction="down" disabled>DESCER</button></div>`).join("")}
+            <button class="interactive-confirm" type="button" data-interactive-confirm disabled>CONFIRMAR</button>
+          </div>
+        `;
+      }
+      if (type === "trace_path") {
+        return `
+          <div class="interactive-path" data-interactive-path>
+            ${(activity.path?.points || []).map((point, index) => `<button type="button" data-path-point="${point.id}" data-path-index="${index}" style="--x:${point.x}%;--y:${point.y}%" disabled>${point.label || index + 1}</button>`).join("")}
+          </div>
+        `;
+      }
+      return `<p class="interactive-feedback is-incorrect">TIPO DE ATIVIDADE EM PREPARACAO.</p>`;
+    },
+    render(activity) {
+      const saved = this.getState(activity.code);
+      const attempts = saved?.attempts || 0;
+      const hasScene = activity.scene?.objects?.length;
+      return `
+        <section class="interactive-dialog" role="dialog" aria-modal="true" aria-labelledby="interactive-title" aria-describedby="interactive-instruction">
+          <button class="experience-close" type="button" data-interactive-close aria-label="Fechar atividade">×</button>
+          <header class="experience-player-header interactive-header">
+            <div>
+              <span>${activity.code}</span>
+              <h2 id="interactive-title">${activity.title}</h2>
+              <p id="interactive-instruction">${activity.instruction}</p>
+            </div>
+            <aside>
+              <strong data-interactive-state>${this.getStateLabel(saved?.state || "ready")}</strong>
+              <small data-interactive-attempts>${attempts} TENTATIVA${attempts === 1 ? "" : "S"}</small>
+            </aside>
+          </header>
+          <div class="interactive-stage" data-interactive-stage data-activity-type="${activity.type}">
+            <div class="interactive-story">
+              <strong>${activity.question?.context || activity.instruction || ""}</strong>
+              <span>${activity.question?.text || activity.title}</span>
+            </div>
+            ${hasScene ? `<div class="interactive-scene" data-interactive-scene aria-label="${activity.narrationText || activity.title}">${(activity.scene?.objects || []).map((object) => this.renderObject(object)).join("")}</div>` : ""}
+            ${this.renderComponent(activity)}
+            <div class="interactive-feedback" data-interactive-feedback hidden aria-live="polite"></div>
+          </div>
+          <footer class="experience-controls interactive-controls" aria-label="Controles da atividade">
+            <button type="button" data-interactive-start>INICIAR</button>
+            <button type="button" data-interactive-repeat>NARRACAO</button>
+            <button type="button" data-interactive-hint>DICA</button>
+            <button type="button" data-interactive-restart>REINICIAR</button>
+            <button type="button" data-interactive-mute aria-pressed="false">AUDIO</button>
+          </footer>
+        </section>
+      `;
+    },
+    open(code) {
+      this.close({ silent: true });
+      this.activeCode = code;
+      this.activeActivity = this.getActivity(code);
+      this.overlay = document.createElement("div");
+      this.overlay.className = "experience-player-overlay interactive-overlay";
+      this.overlay.dataset.interactiveCode = code || "";
+      this.overlay.innerHTML = this.activeActivity ? this.render(this.activeActivity) : this.renderUnavailable(code);
+      document.body.appendChild(this.overlay);
+      document.body.classList.add("experience-player-open");
+      this.answerLocked = false;
+      this.workingState = null;
+      this.startedAtMs = Date.now();
+      this.bind();
+      const saved = this.activeActivity ? interactiveActivityProgressStore.get(code) : null;
+      const initialState = saved?.status === "completed" ? "completed" : this.activeActivity ? "ready" : "error";
+      this.setState(initialState, { event: this.activeActivity ? "open" : "error" });
+      if (initialState === "completed") {
+        const feedback = this.overlay.querySelector("[data-interactive-feedback]");
+        if (feedback) {
+          feedback.hidden = false;
+          feedback.className = "interactive-feedback is-correct";
+          feedback.textContent = "ATIVIDADE CONCLUIDA!";
+        }
+      }
+      this.overlay.querySelector("[data-interactive-start]")?.focus();
+      return this.activeActivity;
+    },
+    bind() {
+      this.overlay.addEventListener("click", (event) => {
+        if (event.target === this.overlay || event.target.closest("[data-interactive-close]")) this.close();
+        if (event.target.closest("[data-interactive-start]")) this.start(this.activeCode);
+        if (event.target.closest("[data-interactive-restart]")) this.restart(this.activeCode);
+        if (event.target.closest("[data-interactive-repeat]")) this.repeatNarration();
+        if (event.target.closest("[data-interactive-hint]")) this.useHint();
+        if (event.target.closest("[data-interactive-mute]")) this.toggleMute(event.target.closest("[data-interactive-mute]"));
+        if (event.target.closest("[data-interactive-confirm]")) this.submit(this.activeCode, "__confirm__");
+        const objectButton = event.target.closest("[data-interactive-object]");
+        if (objectButton) this.handleComponentAction("object", objectButton.dataset.interactiveObject, objectButton);
+        const itemButton = event.target.closest("[data-interactive-item]");
+        if (itemButton) this.handleComponentAction("item", itemButton.dataset.interactiveItem, itemButton);
+        const targetButton = event.target.closest("[data-interactive-target]");
+        if (targetButton) this.handleComponentAction("target", targetButton.dataset.interactiveTarget, targetButton);
+        const cardButton = event.target.closest("[data-interactive-card]");
+        if (cardButton) this.handleComponentAction("card", cardButton.dataset.interactiveCard, cardButton);
+        const moveButton = event.target.closest("[data-sequence-move]");
+        if (moveButton) this.handleComponentAction("sequence", moveButton.dataset.sequenceMove, moveButton);
+        const pathButton = event.target.closest("[data-path-point]");
+        if (pathButton) this.handleComponentAction("path", pathButton.dataset.pathPoint, pathButton);
+        const answerButton = event.target.closest("[data-interactive-answer]");
+        if (answerButton) this.submit(this.activeCode, Number(answerButton.dataset.interactiveAnswer));
+      });
+      this.handleKeydown = (event) => {
+        if (!this.overlay) return;
+        if (event.key === "Escape") {
+          event.preventDefault();
+          this.close();
+        }
+      };
+      document.addEventListener("keydown", this.handleKeydown);
+    },
+    start(code) {
+      if (!this.activeActivity || code !== this.activeCode) return null;
+      this.startedAtMs = Date.now();
+      const current = interactiveActivityProgressStore.get(code);
+      this.workingState = null;
+      interactiveActivityProgressStore.save(code, {
+        event: current?.startedAt ? "resume" : "start",
+        state: "playing_intro",
+        status: "in_progress",
+        experienceCode: this.activeActivity.experienceCode,
+        startedAt: current?.startedAt || new Date().toISOString(),
+      });
+      this.setState("playing_intro");
+      this.overlay.querySelectorAll("[data-animation='fly_away']").forEach((object) => object.classList.add("is-flying"));
+      const enableControls = () => {
+        this.setState("waiting_answer", { event: "question_ready" });
+        this.overlay.querySelectorAll("[data-interactive-answer], [data-interactive-object], [data-interactive-item], [data-interactive-target], [data-interactive-card], [data-sequence-move], [data-path-point], [data-interactive-confirm]").forEach((button) => {
+          button.disabled = false;
+        });
+        this.overlay.querySelector("[data-interactive-answer], [data-interactive-object], [data-interactive-item], [data-interactive-card], [data-path-point]")?.focus();
+      };
+      if (!this.overlay.querySelector("[data-animation='fly_away']")) {
+        enableControls();
+        return this.getState(code);
+      }
+      window.setTimeout(() => {
+        if (!this.overlay || this.activeCode !== code) return;
+        enableControls();
+      }, window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ? 120 : 1100);
+      return this.getState(code);
+    },
+    ensureWorkingState() {
+      if (this.workingState) return this.workingState;
+      const activity = this.activeActivity || {};
+      this.workingState = {
+        selectedObjects: new Set(),
+        selectedItem: null,
+        placements: {},
+        selectedCards: [],
+        matchedPairs: new Set(),
+        sequenceOrder: [...(activity.sequence?.initialOrder || (activity.sequence?.items || []).map((item) => item.id))],
+        pathIndex: 0,
+      };
+      return this.workingState;
+    },
+    handleComponentAction(kind, value, button) {
+      if (!this.activeActivity || this.state !== "waiting_answer") return;
+      const state = this.ensureWorkingState();
+      if (kind === "object") {
+        if (state.selectedObjects.has(value)) state.selectedObjects.delete(value);
+        else state.selectedObjects.add(value);
+        button?.classList.toggle("is-selected", state.selectedObjects.has(value));
+      }
+      if (kind === "item") {
+        state.selectedItem = value;
+        this.overlay.querySelectorAll("[data-interactive-item]").forEach((item) => item.classList.toggle("is-selected", item.dataset.interactiveItem === value));
+      }
+      if (kind === "target" && state.selectedItem) {
+        state.placements[state.selectedItem] = value;
+        button?.classList.add("is-selected");
+        state.selectedItem = null;
+        this.overlay.querySelectorAll("[data-interactive-item]").forEach((item) => item.classList.remove("is-selected"));
+      }
+      if (kind === "card") {
+        if (button?.classList.contains("is-matched")) return;
+        state.selectedCards.push({ id: value, pairId: button?.dataset.pairId, button });
+        button?.classList.add("is-selected");
+        if (state.selectedCards.length === 2) this.submit(this.activeCode, "__pair__");
+      }
+      if (kind === "sequence") {
+        const direction = button?.dataset.direction;
+        const index = state.sequenceOrder.indexOf(value);
+        const swapIndex = direction === "up" ? index - 1 : index + 1;
+        if (index >= 0 && swapIndex >= 0 && swapIndex < state.sequenceOrder.length) {
+          [state.sequenceOrder[index], state.sequenceOrder[swapIndex]] = [state.sequenceOrder[swapIndex], state.sequenceOrder[index]];
+          this.renderSequenceOrder();
+        }
+      }
+      if (kind === "path") {
+        const expected = this.activeActivity.path?.points?.[state.pathIndex]?.id;
+        if (value === expected) {
+          button?.classList.add("is-selected");
+          state.pathIndex += 1;
+          if (state.pathIndex >= (this.activeActivity.path?.points || []).length) this.submit(this.activeCode, "__path__");
+        } else {
+          this.submit(this.activeCode, "__path_error__");
+        }
+      }
+    },
+    renderSequenceOrder() {
+      const container = this.overlay?.querySelector("[data-interactive-sequence]");
+      if (!container || !this.activeActivity?.sequence) return;
+      const itemById = new Map(this.activeActivity.sequence.items.map((item) => [item.id, item]));
+      container.querySelectorAll("[data-sequence-row]").forEach((row) => row.remove());
+      const confirm = container.querySelector("[data-interactive-confirm]");
+      this.ensureWorkingState().sequenceOrder.forEach((id) => {
+        const row = document.createElement("div");
+        row.dataset.sequenceRow = id;
+        row.innerHTML = `<strong>${itemById.get(id)?.label || id}</strong><button type="button" data-sequence-move="${id}" data-direction="up">SUBIR</button><button type="button" data-sequence-move="${id}" data-direction="down">DESCER</button>`;
+        container.insertBefore(row, confirm);
+      });
+    },
+    submit(code, answerIndex) {
+      if (!this.activeActivity || code !== this.activeCode || this.answerLocked) return null;
+      const result = this.evaluateAnswer(answerIndex);
+      if (!result) return null;
+      const option = result.selectedAnswer;
+      if (result.partial) {
+        const current = interactiveActivityProgressStore.get(code);
+        const answerRecord = {
+          selectedAnswer: option,
+          correctAnswer: result.correctAnswer,
+          isCorrect: true,
+          partial: true,
+          at: new Date().toISOString(),
+        };
+        interactiveActivityProgressStore.save(code, {
+          event: "partial_correct",
+          state: "waiting_answer",
+          status: "in_progress",
+          selectedAnswer: option,
+          attempts: current?.attempts || 0,
+          answers: [...(current?.answers || []), answerRecord],
+          correctCount: (current?.correctCount || 0) + 1,
+          score: (current?.score || 0) + 1,
+          result: "partial_correct",
+          experienceCode: this.activeActivity.experienceCode,
+        });
+        this.showFeedback(true, this.activeActivity.feedback?.partial?.message || "PAR ENCONTRADO!");
+        window.setTimeout(() => {
+          if (!this.overlay || this.activeCode !== code) return;
+          this.answerLocked = false;
+          this.setState("waiting_answer");
+          this.overlay.querySelectorAll("[data-interactive-card]").forEach((button) => {
+            if (!button.classList.contains("is-matched")) {
+              button.disabled = false;
+              button.classList.remove("is-selected");
+            }
+          });
+          this.ensureWorkingState().selectedCards = [];
+        }, 700);
+        return this.getState(code);
+      }
+      this.answerLocked = true;
+      this.setState("checking_answer");
+      const current = interactiveActivityProgressStore.get(code);
+      const attempts = (current?.attempts || 0) + 1;
+      const isCorrect = result.isCorrect;
+      const answerRecord = {
+        selectedAnswer: option,
+        correctAnswer: result.correctAnswer,
+        isCorrect,
+        partial: false,
+        at: new Date().toISOString(),
+      };
+      interactiveActivityProgressStore.save(code, {
+        event: "answer",
+        state: isCorrect ? "correct" : "incorrect",
+        status: "in_progress",
+        selectedAnswer: option,
+        correctAnswer: isCorrect ? result.correctAnswer : null,
+        answers: [...(current?.answers || []), answerRecord],
+        correctCount: (current?.correctCount || 0) + (isCorrect ? 1 : 0),
+        incorrectCount: (current?.incorrectCount || 0) + (isCorrect ? 0 : 1),
+        score: (current?.score || 0) + (isCorrect ? 1 : 0),
+        result: isCorrect ? "correct" : "incorrect",
+        attempts,
+        experienceCode: this.activeActivity.experienceCode,
+      });
+      const attemptsNode = this.overlay?.querySelector("[data-interactive-attempts]");
+      if (attemptsNode) attemptsNode.textContent = `${attempts} TENTATIVA${attempts === 1 ? "" : "S"}`;
+      this.showFeedback(isCorrect);
+      if (isCorrect) {
+        window.setTimeout(() => this.complete(code), 650);
+      } else {
+        window.setTimeout(() => {
+          if (!this.overlay || this.activeCode !== code) return;
+          this.answerLocked = false;
+          this.setState("waiting_answer");
+          this.overlay.querySelectorAll("[data-interactive-answer], [data-interactive-object], [data-interactive-item], [data-interactive-target], [data-interactive-card], [data-sequence-move], [data-path-point], [data-interactive-confirm]").forEach((button) => {
+            button.disabled = false;
+          });
+          this.overlay.querySelectorAll("[data-interactive-answer], [data-interactive-card]").forEach((button) => button.classList.remove("is-selected"));
+          this.ensureWorkingState().selectedCards = [];
+        }, 950);
+      }
+      return this.getState(code);
+    },
+    evaluateAnswer(answerIndex) {
+      const activity = this.activeActivity;
+      const state = this.ensureWorkingState();
+      if (activity.type === "count_and_select" || activity.type === "select_option") {
+        const option = activity.question.options[answerIndex];
+        if (typeof option === "undefined") return null;
+        return { selectedAnswer: option, correctAnswer: activity.question.correctAnswer, isCorrect: String(option) === String(activity.question.correctAnswer) };
+      }
+      if (activity.type === "complete_word") {
+        const option = activity.word.choices[answerIndex];
+        if (typeof option === "undefined") return null;
+        return { selectedAnswer: option, correctAnswer: activity.word.answer, isCorrect: String(option).toUpperCase() === String(activity.word.answer).toUpperCase() };
+      }
+      if (activity.type === "tap_objects") {
+        const selected = [...state.selectedObjects].sort();
+        const correct = [...(activity.selection?.correctObjectIds || [])].sort();
+        return { selectedAnswer: selected, correctAnswer: correct, isCorrect: selected.length === correct.length && selected.every((id, index) => id === correct[index]) };
+      }
+      if (activity.type === "drag_and_drop") {
+        const correct = Object.fromEntries((activity.dropTargets || []).flatMap((target) => (target.accepts || []).map((id) => [id, target.id])));
+        const isCorrect = Object.entries(correct).every(([itemId, targetId]) => state.placements[itemId] === targetId);
+        return { selectedAnswer: state.placements, correctAnswer: correct, isCorrect };
+      }
+      if (activity.type === "classify") {
+        const correct = Object.fromEntries((activity.items || []).map((item) => [item.id, item.category]));
+        const isCorrect = Object.entries(correct).every(([itemId, category]) => state.placements[itemId] === category);
+        return { selectedAnswer: state.placements, correctAnswer: correct, isCorrect };
+      }
+      if (activity.type === "match_pairs" || activity.type === "memory_game") {
+        if (answerIndex === "__pair__") {
+          const [first, second] = state.selectedCards;
+          const isCorrect = first?.pairId && first.pairId === second?.pairId && first.id !== second.id;
+          if (isCorrect) {
+            state.matchedPairs.add(first.pairId);
+            first.button?.classList.add("is-matched");
+            second.button?.classList.add("is-matched");
+          }
+          const totalPairs = activity.type === "memory_game" ? new Set((activity.memory?.cards || []).map((card) => card.pairId)).size : (activity.pairs || []).length;
+          const completed = state.matchedPairs.size >= totalPairs;
+          return { selectedAnswer: [first?.id, second?.id], correctAnswer: [...state.matchedPairs], isCorrect: isCorrect && completed, partial: isCorrect && !completed };
+        }
+      }
+      if (activity.type === "sort_sequence") {
+        const correct = activity.sequence?.correctOrder || [];
+        return { selectedAnswer: state.sequenceOrder, correctAnswer: correct, isCorrect: state.sequenceOrder.length === correct.length && state.sequenceOrder.every((id, index) => id === correct[index]) };
+      }
+      if (activity.type === "trace_path") {
+        return { selectedAnswer: state.pathIndex, correctAnswer: activity.path?.points?.length || 0, isCorrect: answerIndex === "__path__" };
+      }
+      return null;
+    },
+    showFeedback(isCorrect, overrideMessage) {
+      const feedback = this.overlay?.querySelector("[data-interactive-feedback]");
+      if (!feedback) return;
+      const meta = isCorrect ? this.activeActivity.feedback.correct : this.activeActivity.feedback.incorrect;
+      feedback.hidden = false;
+      feedback.className = `interactive-feedback ${isCorrect ? "is-correct" : "is-incorrect"}`;
+      feedback.textContent = overrideMessage || meta.message;
+      this.overlay.querySelectorAll("[data-interactive-answer], [data-interactive-object], [data-interactive-item], [data-interactive-target], [data-interactive-card], [data-sequence-move], [data-path-point], [data-interactive-confirm]").forEach((button) => {
+        button.disabled = true;
+      });
+      this.setState(isCorrect ? "correct" : "incorrect");
+    },
+    restart(code) {
+      if (!this.activeActivity || code !== this.activeCode) {
+        this.open(code);
+      }
+      const current = interactiveActivityProgressStore.get(code);
+      interactiveActivityProgressStore.save(code, {
+        event: "restart",
+        state: "ready",
+        status: "in_progress",
+        restartCount: (current?.restartCount || 0) + 1,
+        experienceCode: this.activeActivity?.experienceCode,
+      });
+      this.overlay.querySelectorAll("[data-animation='fly_away']").forEach((object) => object.classList.remove("is-flying"));
+      this.overlay.querySelectorAll("[data-interactive-answer]").forEach((button) => {
+        button.disabled = true;
+        button.classList.remove("is-selected");
+      });
+      const feedback = this.overlay.querySelector("[data-interactive-feedback]");
+      if (feedback) feedback.hidden = true;
+      this.answerLocked = false;
+      this.setState("ready");
+      return this.getState(code);
+    },
+    complete(code) {
+      if (!this.activeActivity || code !== this.activeCode) return null;
+      const current = interactiveActivityProgressStore.get(code);
+      const durationMs = (current?.durationMs || 0) + Math.max(0, Date.now() - this.startedAtMs);
+      const record = interactiveActivityProgressStore.save(code, {
+        event: "complete",
+        state: "completed",
+        status: "completed",
+        completedAt: new Date().toISOString(),
+        durationMs,
+        correctAnswer: current?.correctAnswer ?? this.activeActivity.question?.correctAnswer ?? this.activeActivity.word?.answer ?? null,
+        experienceCode: this.activeActivity.experienceCode,
+      });
+      experienceProgressStore.upsert(this.activeActivity.experienceCode, {
+        event: "interactive_complete",
+        status: "completed",
+        progressPercent: 100,
+        percentWatched: 100,
+        completedAt: new Date().toISOString(),
+      });
+      this.setState("completed");
+      const feedback = this.overlay?.querySelector("[data-interactive-feedback]");
+      if (feedback) {
+        feedback.hidden = false;
+        feedback.className = "interactive-feedback is-correct";
+        feedback.textContent = "ATIVIDADE CONCLUIDA!";
+      }
+      return record;
+    },
+    repeatNarration() {
+      const feedback = this.overlay?.querySelector("[data-interactive-feedback]");
+      if (feedback && this.activeActivity?.narrationText) {
+        feedback.hidden = false;
+        feedback.className = "interactive-feedback";
+        feedback.textContent = this.activeActivity.narrationText;
+      }
+    },
+    useHint() {
+      if (!this.activeActivity || !this.activeCode) return null;
+      const current = interactiveActivityProgressStore.get(this.activeCode);
+      const nextHintsUsed = (current?.hintsUsed || 0) + 1;
+      const hint = this.activeActivity.hints?.[Math.min(nextHintsUsed - 1, (this.activeActivity.hints?.length || 1) - 1)];
+      const message = hint?.text || this.activeActivity.feedback?.hint?.message || this.activeActivity.instruction || "OBSERVE COM CALMA E TENTE DE NOVO.";
+      const feedback = this.overlay?.querySelector("[data-interactive-feedback]");
+      if (feedback) {
+        feedback.hidden = false;
+        feedback.className = "interactive-feedback";
+        feedback.textContent = message;
+      }
+      return interactiveActivityProgressStore.save(this.activeCode, {
+        event: "hint",
+        state: this.state,
+        status: current?.status || "in_progress",
+        hintsUsed: nextHintsUsed,
+        result: "hint_used",
+        experienceCode: this.activeActivity.experienceCode,
+      });
+    },
+    toggleMute(button) {
+      const pressed = button?.getAttribute("aria-pressed") === "true";
+      button?.setAttribute("aria-pressed", String(!pressed));
+      if (button) button.textContent = pressed ? "AUDIO" : "SEM AUDIO";
+    },
+    close({ silent = false } = {}) {
+      if (this.activeCode && !silent) {
+        const current = interactiveActivityProgressStore.get(this.activeCode);
+        if (current?.status !== "completed") {
+          interactiveActivityProgressStore.save(this.activeCode, {
+            event: "close",
+            state: "paused",
+            status: current?.status || "in_progress",
+            abandonedCount: (current?.abandonedCount || 0) + 1,
+            durationMs: (current?.durationMs || 0) + Math.max(0, Date.now() - this.startedAtMs),
+            experienceCode: this.activeActivity?.experienceCode,
+          });
+        }
+      }
+      this.overlay?.remove();
+      this.overlay = null;
+      this.activeCode = null;
+      this.activeActivity = null;
+      this.answerLocked = false;
+      this.workingState = null;
+      document.body.classList.remove("experience-player-open");
+      document.removeEventListener("keydown", this.handleKeydown);
+    },
+  };
+
   class GameEngine {
     constructor(root, gameId) {
       this.root = root;
@@ -1746,6 +3004,23 @@
       this.mode = root.dataset.gameId ? "player" : "hub";
       this.journeyV2Visited = new Set();
       this.journeyV2Completed = new Set();
+      this.mysteryBoxMachine = new MysteryBoxStateMachine({
+        onStateChange: (boxState, locked) => this.syncMysteryBoxState(boxState, locked),
+        onReveal: () => this.revealMysteryBoxHint(),
+      });
+      this.magicBox = new MagicBox({
+        onStateChange: (boxState, locked) => this.syncMagicBoxState(boxState, locked),
+        onTouch: () => this.handleMagicBoxTouch(),
+        onAnimationEnd: () => this.handleMagicBoxAnimationEnd(),
+        onReveal: () => this.handleMagicBoxReveal(),
+      });
+      this.characters = {
+        bia: new ReactiveCharacter({
+          id: "bia",
+          onStateChange: (characterState, character) => this.syncReactiveCharacterState(character.id, characterState),
+        }),
+      };
+      this.magicBoxFrameTimer = null;
     }
 
     mount() {
@@ -2149,12 +3424,13 @@
       if (this.game.type === "selection") {
         return `
           <section class="game-screen selection-screen selection-box-screen" data-screen="room" aria-label="Caixa Misteriosa">
-            <div class="game-scene selection-room-scene" style="--screen:url('${this.game.assets.components.room}')" aria-hidden="true"></div>
+            ${this.renderBackgroundVideoLayer("room", this.game.assets.components.room)}
             ${components.particles(34)}
+            ${this.renderReactiveCharacterLayer("bia")}
             <article class="selection-open-prompt">
               <strong data-discovery-prompt>${this.state.discoveryPrompt || "Abra a caixa para fazer uma descoberta!"}</strong>
             </article>
-            <button class="discovery-box selection-discovery-box is-glowing" type="button" data-game-action="open-box" aria-label="Abrir caixa misteriosa" style="--box:url('${this.game.assets.boxes.closed}');--box-open:url('${this.game.assets.boxes.open}');--box-opening:url('${this.game.assets.boxes.opening || this.game.assets.boxes.open}')"></button>
+            ${this.renderMysteryBoxComponent()}
           </section>
         `;
       }
@@ -2165,6 +3441,131 @@
           <button class="discovery-box is-glowing" type="button" data-game-action="open-box" aria-label="Abrir caixa misteriosa" style="--box:url('${this.game.assets.boxes.glowing}');--box-open:url('${this.game.assets.boxes.open}')"></button>
         </section>
       `;
+    }
+
+    getBackgroundVideoConfig(slot, fallbackImage) {
+      const gameConfig = window.RaizesGameConfig?.games?.[this.game.id]?.backgroundVideo?.[slot]
+        || window.RaizesGameConfig?.backgroundVideos?.[this.game.id]?.[slot]
+        || this.game.assets.backgroundVideo?.[slot]
+        || null;
+      if (!gameConfig) {
+        return { src: "", poster: fallbackImage, fallback: fallbackImage, version: "" };
+      }
+      if (typeof gameConfig === "string") {
+        return { src: gameConfig, poster: fallbackImage, fallback: fallbackImage, version: "" };
+      }
+      return {
+        src: gameConfig.src || "",
+        poster: gameConfig.poster || gameConfig.fallback || fallbackImage,
+        fallback: gameConfig.fallback || gameConfig.poster || fallbackImage,
+        version: gameConfig.version || "",
+      };
+    }
+
+    renderBackgroundVideoLayer(slot, fallbackImage) {
+      const config = this.getBackgroundVideoConfig(slot, fallbackImage);
+      return `
+        <div class="game-scene selection-room-scene background-video-layer" data-background-video-layer="${escapeHtml(slot)}" data-background-video-version="${escapeHtml(config.version)}" style="--screen:url('${escapeHtml(config.fallback)}')" aria-hidden="true">
+          <img class="background-video-fallback" src="${escapeHtml(config.fallback)}" alt="" loading="eager" decoding="async" />
+          ${config.src ? `<video class="background-video" src="${escapeHtml(config.src)}" poster="${escapeHtml(config.poster)}" autoplay muted loop playsinline preload="metadata" disablepictureinpicture></video>` : ""}
+        </div>
+      `;
+    }
+
+    getReactiveCharacterConfig(characterId) {
+      const config = window.RaizesGameConfig?.games?.[this.game.id]?.reactiveCharacters?.[characterId]
+        || window.RaizesGameConfig?.reactiveCharacters?.[this.game.id]?.[characterId]
+        || this.game.assets.reactiveCharacters?.[characterId]
+        || {};
+      return {
+        name: config.name || characterId,
+        version: config.version || "V1",
+        states: config.states || {},
+      };
+    }
+
+    renderReactiveCharacterLayer(characterId) {
+      const character = this.characters?.[characterId];
+      const config = this.getReactiveCharacterConfig(characterId);
+      const state = character?.state || reactiveCharacterStates.IDLE;
+      return `
+        <div class="reactive-character-layer" data-reactive-character-layer aria-hidden="true">
+          <div class="reactive-character" data-character-id="${escapeHtml(characterId)}" data-character-state="${escapeHtml(state)}" data-character-version="${escapeHtml(config.version)}">
+            ${Object.values(reactiveCharacterStates).map((characterState) => {
+              const animation = config.states?.[characterState] || null;
+              return `<span class="reactive-character-state" data-character-state-slot="${escapeHtml(characterState)}" data-character-frame-ms="${Number(animation?.frameMs || 100)}">${this.renderReactiveCharacterAsset(animation)}</span>`;
+            }).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    renderReactiveCharacterAsset(animation) {
+      if (!animation?.src && !animation?.frames?.length && !animation?.sprite) return "";
+      if (animation.type === "video") {
+        return `<video src="${escapeHtml(animation.src)}" muted playsinline preload="metadata" loop></video>`;
+      }
+      if (animation.type === "sprite" || animation.sprite) {
+        return `<span class="reactive-character-sprite" style="--character-sprite:url('${escapeHtml(animation.src || animation.sprite)}');--character-steps:${Number(animation.steps || 1)}"></span>`;
+      }
+      if (animation.type === "sequence" || animation.frames?.length) {
+        return animation.frames.map((frame, index) => `<img src="${escapeHtml(frame)}" alt="" loading="lazy" decoding="async" data-character-frame="${index}" />`).join("");
+      }
+      return `<img src="${escapeHtml(animation.src)}" alt="" loading="eager" decoding="async" />`;
+    }
+
+    renderMysteryBoxComponent() {
+      const boxes = this.game.assets.boxes || {};
+      const boxState = this.state.mysteryBoxState || mysteryBoxStates.IDLE;
+      const magicBoxState = this.state.magicBoxState || magicBoxStates.IDLE;
+      const magicBoxConfig = this.getMagicBoxConfig();
+      return `
+        <button
+          class="discovery-box selection-discovery-box mystery-box-component magic-box"
+          type="button"
+          data-game-action="open-box"
+          data-box-state="${boxState}"
+          data-magic-box-state="${escapeHtml(magicBoxState)}"
+          data-magic-box-version="${escapeHtml(magicBoxConfig.version)}"
+          aria-label="Abrir caixa misteriosa"
+          aria-busy="${boxState !== mysteryBoxStates.IDLE || magicBoxState !== magicBoxStates.IDLE ? "true" : "false"}"
+          style="--box-idle:url('${boxes.closed}');--box-touch:url('${boxes.closed}');--box-shake:url('${boxes.closed}');--box-glow:url('${boxes.glowing || boxes.closed}');--box-opening:url('${boxes.opening || boxes.open}');--box-open:url('${boxes.open}');--box-reveal:url('${boxes.openInsert || boxes.open}');"
+        >
+          ${this.renderMagicBoxAnimationSlots(magicBoxConfig)}
+        </button>
+      `;
+    }
+
+    getMagicBoxConfig() {
+      const config = window.RaizesGameConfig?.games?.[this.game.id]?.magicBox
+        || window.RaizesGameConfig?.magicBox?.[this.game.id]
+        || this.game.assets.magicBox
+        || {};
+      return {
+        version: config.version || "V1",
+        animations: config.animations || {},
+      };
+    }
+
+    renderMagicBoxAnimationSlots(config) {
+      return Object.values(magicBoxStates).map((state) => {
+        const animation = config.animations?.[state] || null;
+        return `<span class="magic-box-animation-slot" data-magic-box-animation-slot="${escapeHtml(state)}" data-magic-box-frame-ms="${Number(animation?.frameMs || 90)}" aria-hidden="true">${this.renderMagicBoxAnimationAsset(animation)}</span>`;
+      }).join("");
+    }
+
+    renderMagicBoxAnimationAsset(animation) {
+      if (!animation?.src && !animation?.frames?.length && !animation?.sprite) return "";
+      if (animation.type === "video") {
+        return `<video src="${escapeHtml(animation.src)}" muted playsinline preload="metadata" loop></video>`;
+      }
+      if (animation.type === "sprite" || animation.sprite) {
+        return `<span class="magic-box-sprite" style="--magic-box-sprite:url('${escapeHtml(animation.src || animation.sprite)}');--magic-box-steps:${Number(animation.steps || 1)}"></span>`;
+      }
+      if (animation.type === "sequence" || animation.frames?.length) {
+        return animation.frames.map((frame, index) => `<img src="${escapeHtml(frame)}" alt="" loading="lazy" decoding="async" data-magic-box-frame="${index}" />`).join("");
+      }
+      return `<img src="${escapeHtml(animation.src)}" alt="" loading="eager" decoding="async" />`;
     }
 
     renderHintScreen() {
@@ -2448,75 +3849,34 @@
       `;
     }
 
+    getVictoryOptions() {
+      const componentsAssets = this.game.assets.components || {};
+      const characterMap = this.game.assets.characters || {};
+      const characterAsset = this.game.id === "organizando-cesta"
+        ? characterMap.biaCelebrating || characterMap.bia || characterMap.anaCelebrating
+        : componentsAssets.butterfly || characterMap.biaCelebrating || characterMap.bia || characterMap.ana;
+      const effectAssets = componentsAssets.effects || this.game.assets.effects || {};
+      return {
+        character: this.game.character,
+        characterAsset,
+        characterName: this.game.character,
+        medal: this.game.medal,
+        medalAsset: componentsAssets.medal || this.game.assets.reward,
+        xp: this.game.xp,
+        animateXp: true,
+        message: "VOCE FOI INCRIVEL!",
+        continueHref: "jogos.html",
+        restartAction: "restart",
+        effects: {
+          particles: effectAssets.particles,
+          confetti: effectAssets.confetti,
+          stars: effectAssets.stars,
+        },
+      };
+    }
+
     renderFinalScreen() {
-      if (this.game.type === "selection") {
-        return `
-          <section class="game-screen selection-screen selection-final-screen" data-screen="final" aria-label="Medalha e XP">
-            <div class="game-scene selection-celebration-scene" style="--screen:url('${this.game.assets.components.celebration}')" aria-hidden="true"></div>
-            ${components.confetti(78)}
-            ${components.particles(28)}
-            <article class="final-panel selection-final-panel">
-              <img class="selection-final-medal" src="${this.game.assets.components.medal}" alt="" loading="eager" decoding="async" />
-              <h2>Parabens!</h2>
-              <strong data-final-medal>${this.game.medal}</strong>
-              <span class="game-sr-only" data-final-story></span>
-              <span class="xp-counter" data-xp-counter>⭐ +0 XP</span>
-              <div class="final-actions">
-                <button class="game-primary-button game-restart-button" type="button" data-game-action="restart" aria-label="Jogar novamente">↻ Jogar novamente</button>
-                <a class="game-secondary-button" href="jogos.html">Voltar aos Jogos</a>
-              </div>
-            </article>
-          </section>
-        `;
-      }
-      if (this.game.id === "organizando-cesta") {
-        return `
-          <section class="game-screen basket-final-screen" data-screen="final" aria-label="Medalha e XP">
-            <div class="game-scene game-scene-final" style="--screen:url('${this.game.assets.screens.final}')" aria-hidden="true"></div>
-            ${components.confetti(72)}
-            <div class="basket-final-characters" aria-hidden="true">
-              <img class="basket-final-ana" src="${this.game.assets.characters.anaClapping}" alt="" loading="eager" decoding="async" />
-              <img class="basket-final-bia" src="${this.game.assets.characters.biaCelebrating}" alt="" loading="eager" decoding="async" />
-              <img class="basket-final-pipo" src="${this.game.assets.characters.pipo}" alt="" loading="eager" decoding="async" />
-              <img class="basket-final-turtle" src="${this.game.assets.characters.turtleCelebrating}" alt="" loading="eager" decoding="async" />
-            </div>
-            <article class="final-panel basket-final-panel">
-              <img class="basket-final-medal" src="${this.game.assets.reward}" alt="" loading="eager" decoding="async" />
-              <h2>Parabens!</h2>
-              <strong data-final-medal>${this.game.medal}</strong>
-              <span class="game-sr-only" data-final-story></span>
-              <span class="xp-counter" data-xp-counter>⭐ +0 XP</span>
-              <div class="final-actions">
-                <button class="game-primary-button game-restart-button" type="button" data-game-action="restart" aria-label="Jogar novamente">↻ Jogar novamente</button>
-                <a class="game-secondary-button" href="jogos.html">Voltar aos Jogos</a>
-              </div>
-            </article>
-          </section>
-        `;
-      }
-      return `
-        <section class="game-screen" data-screen="final" aria-label="Medalha e XP">
-          <div class="game-scene game-scene-final" style="--screen:url('${this.game.assets.screens.final}')" aria-hidden="true"></div>
-          ${components.confetti(54)}
-          ${this.game.id === "organizando-cesta" ? `
-            <div class="basket-final-characters" aria-hidden="true">
-              <img class="basket-final-bia" src="${this.game.assets.characters.bia}" alt="" loading="eager" decoding="async" />
-              <img class="basket-final-pipo" src="${this.game.assets.characters.pipo}" alt="" loading="eager" decoding="async" />
-              <img class="basket-final-tico" src="${this.game.assets.characters.tico}" alt="" loading="eager" decoding="async" />
-            </div>
-            <img class="basket-final-medal" src="${this.game.assets.reward}" alt="" loading="eager" decoding="async" />
-          ` : ""}
-          <article class="final-panel">
-            <strong class="game-sr-only" data-final-medal>${this.game.medal}</strong>
-            <span class="game-sr-only" data-final-story></span>
-            <span class="xp-counter" data-xp-counter>⭐ +0 XP</span>
-            <div class="final-actions">
-              <button class="game-primary-button game-restart-button" type="button" data-game-action="restart" aria-label="Jogar novamente">↻ Jogar novamente</button>
-              <a class="game-secondary-button" href="aluno.html">Voltar ao menu</a>
-            </div>
-          </article>
-        </section>
-      `;
+      return VictoryScreen.render(this.getVictoryOptions());
     }
 
     renderRoundPanel() {
@@ -2717,6 +4077,9 @@
 
     openGame(gameId) {
       this.mode = "player";
+      this.clearMagicBoxFrameTimer();
+      this.mysteryBoxMachine.reset();
+      this.magicBox.reset();
       this.game = gameRepository.getGame(gameId);
       this.state = progressController.create(this.game);
       this.record = rewardController.latest(this.game.id);
@@ -2735,6 +4098,9 @@
 
     openHub() {
       this.mode = "hub";
+      this.clearMagicBoxFrameTimer();
+      this.mysteryBoxMachine.reset();
+      this.magicBox.reset();
       delete this.root.dataset.activeGame;
       document.documentElement.classList.remove("game-immersive-active");
       document.body.classList.remove("game-immersive-active");
@@ -2861,25 +4227,18 @@
         this.finishStory();
       }
       if (action === "open-box") {
-        this.state = { ...this.state, discoveryPrompt: "" };
-        button?.classList.add("is-opening");
-        audioPlayer.blip("success");
-        window.setTimeout(() => {
-          this.updateRoundContent();
-          this.go("hint");
-          audioPlayer.speak(this.currentRound().narration, this.root.querySelector("[data-game-speak]"), () => {
-            if (this.game.type === "selection" && this.state.screen === "hint") {
-              this.updateRoundContent();
-              this.go("choice");
-            }
-          });
-        }, 680);
+        this.startMysteryBoxOpening();
       }
       if (action === "choose") {
         this.updateRoundContent();
         this.go("choice");
       }
       if (action === "next-round") {
+        if (this.game.type === "selection") {
+          this.clearMagicBoxFrameTimer();
+          this.mysteryBoxMachine.reset();
+          this.magicBox.reset();
+        }
         this.state = progressController.nextRound(this.game, this.state);
         if (this.state.screen === "final") {
           this.finish();
@@ -2889,11 +4248,116 @@
         }
       }
       if (action === "restart") {
-      this.state = progressController.create(this.game);
+        this.clearMagicBoxFrameTimer();
+        this.mysteryBoxMachine.reset();
+        this.magicBox.reset();
+        this.state = progressController.create(this.game);
         if (this.game.type === "selection") this.record = null;
         this.updateRoundContent();
         this.go("intro");
       }
+    }
+
+    startMysteryBoxOpening() {
+      if (this.game.type !== "selection") {
+        this.updateRoundContent();
+        this.go("hint");
+        return;
+      }
+      if (this.magicBox.locked || this.mysteryBoxMachine.locked) return;
+      this.state = { ...this.state, discoveryPrompt: "" };
+      this.magicBox.start();
+    }
+
+    syncMagicBoxState(boxState, locked = false) {
+      if (this.game.type !== "selection") return;
+      this.state = { ...this.state, magicBoxState: boxState };
+      const box = this.root.querySelector("[data-magic-box-state]");
+      if (box) {
+        box.dataset.magicBoxState = boxState;
+        box.disabled = locked || this.mysteryBoxMachine.locked;
+        box.setAttribute("aria-busy", String(locked || this.mysteryBoxMachine.locked));
+        this.syncMagicBoxMedia(box, boxState);
+      }
+    }
+
+    syncMagicBoxMedia(box, boxState) {
+      this.clearMagicBoxFrameTimer();
+      box.querySelectorAll("[data-magic-box-animation-slot] video").forEach((video) => {
+        const active = video.closest("[data-magic-box-animation-slot]")?.dataset.magicBoxAnimationSlot === boxState;
+        if (active) {
+          video.currentTime = 0;
+          video.play?.().catch(() => {});
+        } else {
+          video.pause?.();
+        }
+      });
+      const activeSlot = box.querySelector(`[data-magic-box-animation-slot="${boxState}"]`);
+      const frames = [...(activeSlot?.querySelectorAll("[data-magic-box-frame]") || [])];
+      frames.forEach((frame, index) => {
+        frame.hidden = index !== 0;
+      });
+      if (frames.length > 1) {
+        let frameIndex = 0;
+        const frameMs = Math.max(40, Number(activeSlot.dataset.magicBoxFrameMs || 90));
+        this.magicBoxFrameTimer = window.setInterval(() => {
+          frameIndex = (frameIndex + 1) % frames.length;
+          frames.forEach((frame, index) => {
+            frame.hidden = index !== frameIndex;
+          });
+        }, frameMs);
+      }
+    }
+
+    clearMagicBoxFrameTimer() {
+      if (!this.magicBoxFrameTimer) return;
+      window.clearInterval(this.magicBoxFrameTimer);
+      this.magicBoxFrameTimer = null;
+    }
+
+    handleMagicBoxTouch() {
+      audioPlayer.blip("success");
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("raizes:magic-box-touch", { detail: { gameId: this.game.id } }));
+      }
+    }
+
+    handleMagicBoxAnimationEnd() {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("raizes:magic-box-animation-end", { detail: { gameId: this.game.id } }));
+      }
+    }
+
+    handleMagicBoxReveal() {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("raizes:magic-box-reveal", { detail: { gameId: this.game.id } }));
+      }
+      this.mysteryBoxMachine.start();
+    }
+
+    syncMysteryBoxState(boxState, locked = false) {
+      if (this.game.type !== "selection") return;
+      this.state = { ...this.state, mysteryBoxState: boxState };
+      const box = this.root.querySelector("[data-box-state]");
+      if (box) {
+        box.dataset.boxState = boxState;
+        box.disabled = locked || this.magicBox.locked;
+        box.setAttribute("aria-busy", String(locked || this.magicBox.locked));
+      }
+      const prompt = this.root.querySelector("[data-discovery-prompt]");
+      if (prompt) prompt.textContent = this.state.discoveryPrompt || (boxState === mysteryBoxStates.IDLE ? "Abra a caixa para fazer uma descoberta!" : "");
+    }
+
+    revealMysteryBoxHint() {
+      if (this.game.type !== "selection" || this.state.screen !== "room") return;
+      this.updateRoundContent();
+      this.go("hint");
+      audioPlayer.speak(this.currentRound().narration, this.root.querySelector("[data-game-speak]"), () => {
+        if (this.game.type === "selection" && this.state.screen === "hint") {
+          this.updateRoundContent();
+          this.go("choice");
+        }
+      });
     }
 
     answer(choiceId, card) {
@@ -3644,7 +5108,62 @@
       this.root.querySelectorAll("[data-screen]").forEach((item) => {
         item.classList.toggle("is-active", item.dataset.screen === screen);
       });
+      this.syncBackgroundVideos();
+      this.syncReactiveCharactersForScreen(screen);
       this.syncRounds();
+    }
+
+    syncBackgroundVideos() {
+      this.root.querySelectorAll("[data-background-video-layer]").forEach((layer) => {
+        const video = layer.querySelector("video");
+        if (!video) return;
+        if (!video.dataset.backgroundVideoBound) {
+          video.dataset.backgroundVideoBound = "true";
+          video.addEventListener("error", () => {
+            video.hidden = true;
+          });
+          video.addEventListener("canplay", () => {
+            video.hidden = false;
+          });
+        }
+        const active = layer.closest("[data-screen]")?.classList.contains("is-active");
+        if (active) {
+          video.play?.().catch(() => {});
+        } else {
+          video.pause?.();
+        }
+      });
+    }
+
+    syncReactiveCharactersForScreen(screen) {
+      if (this.game.type !== "selection") return;
+      const bia = this.characters?.bia;
+      if (!bia) return;
+      if (screen === "room") bia.setState(reactiveCharacterStates.INVITING);
+      if (screen === "hint") bia.setState(reactiveCharacterStates.LOOKING);
+      if (screen === "choice") bia.setState(reactiveCharacterStates.LOOKING);
+      if (screen === "feedback" || screen === "final") bia.setState(reactiveCharacterStates.CELEBRATING);
+      if (screen === "intro") bia.setState(reactiveCharacterStates.IDLE);
+    }
+
+    syncReactiveCharacterState(characterId, characterState) {
+      const node = this.root.querySelector(`[data-character-id="${characterId}"]`);
+      if (!node) return;
+      node.dataset.characterState = characterState;
+      node.querySelectorAll("[data-character-state-slot] video").forEach((video) => {
+        const active = video.closest("[data-character-state-slot]")?.dataset.characterStateSlot === characterState;
+        if (active) {
+          video.currentTime = 0;
+          video.play?.().catch(() => {});
+        } else {
+          video.pause?.();
+        }
+      });
+      const activeSlot = node.querySelector(`[data-character-state-slot="${characterState}"]`);
+      const frames = [...(activeSlot?.querySelectorAll("[data-character-frame]") || [])];
+      frames.forEach((frame, index) => {
+        frame.hidden = index !== 0;
+      });
     }
 
     updateRoundContent() {
@@ -4315,13 +5834,75 @@
     }
   }
 
-  window.RaizesGameEngine = { GameEngine, gameRepository, progressController, rewardController, audioPlayer, experiencePlayerController, experienceProgressStore };
+  window.VictoryScreen = VictoryScreen;
+  window.showVictory = showVictory;
+  window.EncouragementScreen = EncouragementScreen;
+  window.showEncouragement = showEncouragement;
+  window.MagicBox = MagicBox;
+  window.ReactiveCharacter = ReactiveCharacter;
+  window.RaizesGameEngine = { GameEngine, gameRepository, progressController, rewardController, audioPlayer, experiencePlayerController, experienceProgressStore, interactiveActivityController, interactiveActivityProgressStore, VictoryScreen, showVictory, EncouragementScreen, showEncouragement, MagicBox, magicBoxStates, ReactiveCharacter, reactiveCharacterStates };
   window.RSGameEngine = {
     games: gameRepository.games,
     infantilExperiences: window.RaizesInfantilExperiences || null,
+    experienceProgressStore,
+    interactiveActivityProgressStore,
     engine: null,
     getExperienceAsset(code) {
       return this.infantilExperiences?.getExperienceAsset(code) || null;
+    },
+    getOfficialBook(bookId) {
+      return this.infantilExperiences?.getOfficialBook?.(bookId) || null;
+    },
+    getExperiencesByBook(bookId) {
+      return this.infantilExperiences?.getExperiencesByBook?.(bookId) || [];
+    },
+    getExperiencesByPage(bookId, page) {
+      return this.infantilExperiences?.getExperiencesByPage?.(bookId, page) || [];
+    },
+    getBookUnits(bookId) {
+      return this.infantilExperiences?.getBookUnits?.(bookId) || [];
+    },
+    getExperiencePublicUrl(code, baseUrl) {
+      return this.infantilExperiences?.getExperiencePublicUrl?.(code, baseUrl) || "";
+    },
+    getExperienceQrPayload(code, baseUrl) {
+      return this.infantilExperiences?.getExperienceQrPayload?.(code, baseUrl) || this.getExperiencePublicUrl(code, baseUrl);
+    },
+    getExperienceResources(code) {
+      const experience = this.infantilExperiences?.getExperienceDefinition?.(code);
+      const resources = experience?.resources?.length ? experience.resources : [{ type: "video", role: "opening", assetCode: experience?.openingAssetCode }];
+      return resources.filter((resource) => resource.assetCode || resource.activityCode).map((resource) => ({
+        ...resource,
+        asset: this.getExperienceAsset(resource.assetCode),
+        activity: resource.activityCode ? this.getInteractiveActivity(resource.activityCode) : null,
+      }));
+    },
+    getInteractiveActivity(code) {
+      return this.infantilExperiences?.getInteractiveActivityDefinition?.(code) || null;
+    },
+    getInteractiveActivitiesByExperience(experienceCode) {
+      return this.infantilExperiences?.getInteractiveActivitiesByExperience?.(experienceCode) || [];
+    },
+    openInteractiveActivity(code) {
+      return interactiveActivityController.open(code);
+    },
+    startInteractiveActivity(code) {
+      return interactiveActivityController.start(code);
+    },
+    submitInteractiveAnswer(code, answer) {
+      return interactiveActivityController.submit(code, answer);
+    },
+    restartInteractiveActivity(code) {
+      return interactiveActivityController.restart(code);
+    },
+    completeInteractiveActivity(code) {
+      return interactiveActivityController.complete(code);
+    },
+    closeInteractiveActivity() {
+      return interactiveActivityController.close();
+    },
+    getInteractiveActivityState(code) {
+      return interactiveActivityController.getState(code);
     },
     openExperience(code) {
       return experiencePlayerController.open(code);
@@ -4343,6 +5924,27 @@
     },
     getExperienceProgress(code) {
       return experiencePlayerController.getProgress(code);
+    },
+    getUserExperienceProgress(userId, experienceCode) {
+      return experienceProgressStore.getUserExperienceProgress(userId || experienceProgressStore.getUserId(), experienceCode);
+    },
+    saveUserExperienceProgress(userId, experienceCode, data) {
+      return experienceProgressStore.saveUserExperienceProgress(userId || experienceProgressStore.getUserId(), experienceCode, data);
+    },
+    getUserExperienceHistory(userId) {
+      return experienceProgressStore.getUserExperienceHistory(userId || experienceProgressStore.getUserId());
+    },
+    getUserFavorites(userId) {
+      return experienceProgressStore.getUserFavorites(userId || experienceProgressStore.getUserId());
+    },
+    toggleExperienceFavorite(userId, experienceCode) {
+      return experienceProgressStore.toggleExperienceFavorite(userId || experienceProgressStore.getUserId(), experienceCode);
+    },
+    getContinueWatching(userId) {
+      return experienceProgressStore.getContinueWatching(userId || experienceProgressStore.getUserId());
+    },
+    getExperienceSummary(userId, experiences) {
+      return experienceProgressStore.getSummary(userId || experienceProgressStore.getUserId(), experiences || Object.values(this.infantilExperiences?.experienceDefinitions || []));
     },
     openGame(gameId) {
       if (!this.engine) return;

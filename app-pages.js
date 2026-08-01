@@ -1484,18 +1484,22 @@ const buildFeaturedExperiencePanel = () => {
 
 const getInfantilExperienceAsset = (experience) =>
   experience ? infantilExperienceCatalog?.getExperienceAsset?.(experience.coverAssetCode || experience.openingAssetCode) : null;
+const getInfantilUserId = () =>
+  typeof window === "undefined" ? "local-demo" : window.RSGameEngine?.experienceProgressStore?.getUserId?.() || "local-demo";
 const getInfantilExperienceProgress = (experienceId) =>
   typeof window === "undefined" ? null : window.RSGameEngine?.getExperienceProgress?.(experienceId) || null;
 const getInfantilExperienceStatus = (experience) => {
   const progress = getInfantilExperienceProgress(experience.id);
-  if (progress?.status === "completed" || progress?.percentWatched >= 95) {
+  if (progress?.status === "completed" || progress?.progressPercent >= 90 || progress?.percentWatched >= 90) {
     return { key: "completed", label: "Concluida", percent: 100 };
   }
-  if (progress?.startedAt || progress?.percentWatched > 0) {
-    return { key: "in-progress", label: "Em andamento", percent: Math.max(1, progress.percentWatched || 1) };
+  if (progress?.status === "in_progress" || progress?.startedAt || progress?.progressPercent > 0 || progress?.percentWatched > 0) {
+    return { key: "in-progress", label: "Em andamento", percent: Math.max(1, progress.progressPercent ?? progress.percentWatched ?? 1) };
   }
   return { key: "not-started", label: experience.availability === "unavailable" ? "Indisponivel" : "Nao iniciada", percent: 0 };
 };
+const getInfantilExperienceAction = (status) =>
+  status.key === "completed" ? "Viver novamente" : status.key === "in-progress" ? "Continuar experiencia" : "Viver esta experiencia";
 const getInfantilExperienceSearch = (experience) =>
   [
     experience.id,
@@ -1504,11 +1508,19 @@ const getInfantilExperienceSearch = (experience) =>
     experience.ageGroup,
     experience.volume,
     experience.unit,
+    experience.unitCode,
+    experience.unitTitle,
+    experience.activityTitle,
+    experience.sequenceTitle,
     experience.bookTitle,
     experience.objective,
+    experience.pedagogicalObjective,
     experience.fieldOfExperience,
     experience.experienceType,
+    experience.pageStart,
+    experience.pageEnd,
     ...(experience.bnccSkills || []),
+    ...(experience.bnccCodes || []),
     ...(experience.keywords || []),
   ]
     .filter(Boolean)
@@ -1516,19 +1528,81 @@ const getInfantilExperienceSearch = (experience) =>
     .toLowerCase();
 const getInfantilExperienceUrl = (experienceId) => `biblioteca.html?experience=${encodeURIComponent(experienceId)}`;
 const allInfantilExperiences = infantilExperienceCatalog?.experienceDefinitions || [];
-const availableInfantilExperiences = allInfantilExperiences.filter((experience) => experience.availability !== "unavailable");
+const officialInfantilBooks = infantilExperienceCatalog?.officialBooks || [];
+const availableInfantilExperiences = allInfantilExperiences.filter((experience) => experience.availability === "available" && experience.status === "published");
 const featuredPremiumExperience = featuredInfantilExperience || availableInfantilExperiences[0] || allInfantilExperiences[0];
+const getOfficialInfantilBook = (bookId) => infantilExperienceCatalog?.getOfficialBook?.(bookId) || officialInfantilBooks.find((book) => book.bookId === bookId || book.id === bookId);
+const getExperienceOfficialBook = (experience) => getOfficialInfantilBook(experience?.bookId);
+const getExperiencePagesLabel = (experience) => {
+  if (experience?.pageStart && experience?.pageEnd) {
+    return experience.pageStart === experience.pageEnd ? `Pagina ${experience.pageStart}` : `Paginas ${experience.pageStart} a ${experience.pageEnd}`;
+  }
+  return experience?.pages?.length ? `Paginas ${experience.pages.join(", ")}` : "Paginas em curadoria";
+};
+const getBookLibraryUrl = (bookId, page) =>
+  `biblioteca.html?book=${encodeURIComponent(bookId)}${page ? `&page=${encodeURIComponent(page)}` : ""}`;
+const getBookViewerUrl = (bookId, page) =>
+  `book-viewer.html?book=${encodeURIComponent(bookId)}${page ? `&page=${encodeURIComponent(page)}` : ""}`;
+const getBookExperiences = (bookId) => infantilExperienceCatalog?.getExperiencesByBook?.(bookId) || allInfantilExperiences.filter((experience) => experience.bookId === bookId);
+const getBookPageExperiences = (bookId, page) =>
+  page ? infantilExperienceCatalog?.getExperiencesByPage?.(bookId, page) || [] : [];
+const getBookUnits = (bookId) => infantilExperienceCatalog?.getBookUnits?.(bookId) || [];
+const getExperiencePublicUrl = (code) => infantilExperienceCatalog?.getExperiencePublicUrl?.(code) || `https://app.raizesesaberes.com.br/biblioteca.html?experience=${encodeURIComponent(code)}`;
+const getExperienceQrPayload = (code) => infantilExperienceCatalog?.getExperienceQrPayload?.(code) || getExperiencePublicUrl(code);
+const getExperienceEditorialLocation = (experience) => {
+  const book = getExperienceOfficialBook(experience);
+  return {
+    book,
+    bookTitle: book?.title || experience.bookTitle || "Livro em curadoria",
+    volume: book?.volume || experience.volume,
+    semester: book?.semester || experience.semester,
+    unit: experience.unitTitle || experience.unit || "Unidade em curadoria",
+    pages: getExperiencePagesLabel(experience),
+    activity: experience.activityTitle || experience.title,
+  };
+};
+const getExperienceResources = (experience) =>
+  (experience.resources?.length ? experience.resources : [{ type: "video", assetCode: experience.openingAssetCode, role: "opening" }])
+    .map((resource) => ({
+      ...resource,
+      asset: resource.assetCode ? infantilExperienceCatalog?.getExperienceAsset?.(resource.assetCode) : null,
+      activity: resource.activityCode ? infantilExperienceCatalog?.getInteractiveActivityDefinition?.(resource.activityCode) : null,
+    }))
+    .filter((resource) => resource.assetCode || resource.activityCode);
+const renderExperienceResourceActions = (experience, resources) => {
+  const hasVideo = resources.some((resource) => resource.type === "video");
+  const interactiveResources = resources.filter((resource) => resource.type === "interactive" && resource.activityCode);
+  return `
+    <div class="bv-profile-actions">
+      ${hasVideo ? `<button type="button" data-open-experience="${experience.id}">ASSISTIR HISTORIA</button>` : ""}
+      ${interactiveResources.map((resource) => `<button type="button" data-open-interactive-activity="${resource.activityCode}">REALIZAR ATIVIDADE</button>`).join("")}
+      ${interactiveResources.map((resource) => `<button type="button" data-open-interactive-activity="${resource.activityCode}" data-interactive-repeat-entry>REPETIR</button>`).join("")}
+    </div>
+  `;
+};
+const getProgressSummaryForExperiences = (experiences) =>
+  window.RSGameEngine?.getExperienceSummary?.(getInfantilUserId(), experiences) || {
+    available: experiences.filter((experience) => experience.availability === "available" && experience.status === "published").length,
+    started: 0,
+    completed: 0,
+    inProgress: 0,
+    favorites: 0,
+    percent: 0,
+  };
 const renderExperienceOfficialCard = (experience, { compact = false } = {}) => {
   const asset = getInfantilExperienceAsset(experience);
   const status = getInfantilExperienceStatus(experience);
+  const progress = getInfantilExperienceProgress(experience.id);
+  const isFavorite = Boolean(progress?.isFavorite);
+  const location = getExperienceEditorialLocation(experience);
   const duration = experience.duration ? `${experience.duration}s` : "Em curadoria";
-  const pages = experience.pages?.length ? `Paginas ${experience.pages.join(", ")}` : "Paginas em curadoria";
   return `
-    <article class="bv-experience-card ${compact ? "is-compact" : ""}" data-bv-experience-card data-experience-code="${experience.id}" data-age-group="${experience.ageGroup}" data-volume="${experience.volume}" data-unit="${experience.unit || ""}" data-type="${experience.experienceType || ""}" data-status="${status.key}" data-search="${getInfantilExperienceSearch(experience)}">
+    <article class="bv-experience-card ${compact ? "is-compact" : ""} ${isFavorite ? "is-favorite" : ""}" data-bv-experience-card data-experience-code="${experience.id}" data-age-group="${experience.ageGroup}" data-volume="${experience.volume}" data-unit="${experience.unit || ""}" data-type="${experience.experienceType || ""}" data-status="${status.key}" data-favorite="${isFavorite ? "true" : "false"}" data-recent="${progress?.lastAccessedAt || ""}" data-search="${getInfantilExperienceSearch(experience)}">
       <a class="bv-experience-cover" href="${getInfantilExperienceUrl(experience.id)}" aria-label="Abrir perfil da experiencia ${experience.title}">
         <img src="${asset?.coverPath || "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg"}" alt="${experience.title}" loading="lazy" />
         <span>${status.label}</span>
       </a>
+      <button class="bv-favorite-button" type="button" data-bv-toggle-favorite="${experience.id}" aria-pressed="${isFavorite ? "true" : "false"}">${isFavorite ? "Favorita" : "Favoritar"}</button>
       <div class="bv-experience-body">
         <div class="bv-card-meta">
           <span>${experience.ageGroup.replace("EI", "")} anos</span>
@@ -1537,12 +1611,13 @@ const renderExperienceOfficialCard = (experience, { compact = false } = {}) => {
         </div>
         <h3><a href="${getInfantilExperienceUrl(experience.id)}">${experience.title}</a></h3>
         <p>${experience.objective}</p>
-        <small>${experience.unit || "Unidade em curadoria"} · ${pages}</small>
+        <small>Livro: ${location.bookTitle} · ${location.unit} · ${location.pages}</small>
+        <small>Atividade: ${location.activity}</small>
         <div class="bv-card-progress" aria-label="Progresso de ${experience.title}">
           <i><b style="width:${status.percent}%"></b></i>
           <strong>${status.percent}%</strong>
         </div>
-        <a class="bv-card-action" href="${getInfantilExperienceUrl(experience.id)}">Viver esta experiencia</a>
+        <a class="bv-card-action" href="${getInfantilExperienceUrl(experience.id)}">${getInfantilExperienceAction(status)}</a>
       </div>
     </article>
   `;
@@ -1570,18 +1645,190 @@ const renderPremiumLibraryHierarchy = () =>
       </article>
     `;
   }).join("");
+
+const renderBookNotFoundPage = (bookId) => `
+  <div class="bv-premium">
+    <section class="bv-section">
+      <div class="panel-head"><h2>Livro nao encontrado</h2><a>Biblioteca Viva</a></div>
+      <p class="bv-empty-state">Nao encontramos o livro ${bookId || ""} no catalogo oficial da colecao.</p>
+      <div class="bv-profile-actions"><a class="bv-card-action" href="biblioteca.html">Voltar para a Biblioteca</a></div>
+    </section>
+  </div>
+`;
+
+const renderBookUnit = (unit, requestedPage) => {
+  const unitExperiences = unit.experiences || [];
+  const publishedExperiences = unitExperiences.filter((experience) => experience.availability === "available" && experience.status === "published");
+  const summary = getProgressSummaryForExperiences(unitExperiences);
+  const pageExperiences = requestedPage
+    ? unitExperiences.filter((experience) => getBookPageExperiences(experience.bookId, requestedPage).some((item) => item.id === experience.id))
+    : [];
+  const isPageMatch = pageExperiences.length > 0;
+  const stateLabel = publishedExperiences.length ? "Disponivel" : unitExperiences.length ? "Em producao" : "Planejada";
+  return `
+    <details class="bv-book-unit" ${isPageMatch || !requestedPage ? "open" : ""} data-bv-book-unit="${unit.code}">
+      <summary>
+        <span>${unit.code}</span>
+        <strong>${unit.title}</strong>
+        <small>${stateLabel} · ${unitExperiences.length} experiencia${unitExperiences.length === 1 ? "" : "s"} · ${summary.percent}% concluido</small>
+      </summary>
+      <div class="bv-book-unit-body">
+        <p>${unit.description || "Unidade vinculada ao percurso editorial do livro."}</p>
+        <div class="bv-profile-progress">
+          <i><b style="width:${summary.percent}%"></b></i>
+          <strong>${summary.percent}%</strong>
+          <span>${summary.completed} concluidas</span>
+          <span>${summary.available} disponiveis</span>
+        </div>
+        ${unitExperiences.length ? `
+          <div class="bv-experience-grid">
+            ${unitExperiences.map((experience) => renderExperienceOfficialCard(experience)).join("")}
+          </div>
+        ` : `<p class="bv-empty-state">Esta unidade ainda nao possui experiencias publicadas para o aluno.</p>`}
+      </div>
+    </details>
+  `;
+};
+
+const renderBookPage = (book, requestedPage) => {
+  if (!book) return renderBookNotFoundPage(new URLSearchParams(window.location.search).get("book"));
+  const bookExperiences = getBookExperiences(book.bookId);
+  const publishedExperiences = bookExperiences.filter((experience) => experience.availability === "available" && experience.status === "published");
+  const pageExperiences = requestedPage ? getBookPageExperiences(book.bookId, requestedPage) : [];
+  const units = getBookUnits(book.bookId);
+  const summary = getProgressSummaryForExperiences(bookExperiences);
+  const continueRecord = window.RSGameEngine?.getContinueWatching?.(getInfantilUserId())?.find((record) =>
+    bookExperiences.some((experience) => experience.id === record.experienceCode)
+  );
+  const continueExperience = continueRecord
+    ? bookExperiences.find((experience) => experience.id === continueRecord.experienceCode)
+    : publishedExperiences[0];
+  const highlightExperience = pageExperiences.find((experience) => experience.availability === "available" && experience.status === "published") || pageExperiences[0] || continueExperience;
+  return `
+    <div class="bv-premium bv-book-page" data-bv-premium data-bv-book-page="${book.bookId}">
+      <nav class="bv-profile-breadcrumb" aria-label="Caminho do livro">
+        <a href="biblioteca.html">Biblioteca Viva</a>
+        <span>Educacao Infantil</span>
+        <span>${book.ageGroup.replace("EI", "")} anos</span>
+        <strong>${book.subtitle}</strong>
+      </nav>
+
+      <section class="bv-book-hero">
+        <figure>
+          <img src="${book.coverAsset || featuredLibraryBook.src}" alt="${book.title}" />
+        </figure>
+        <div>
+          <span>${book.collectionCode} · ${book.segment}</span>
+          <h1>${book.title}</h1>
+          <p>${book.subtitle}</p>
+          <div class="bv-card-meta">
+            <span>${book.ageGroup.replace("EI", "")} anos</span>
+            <span>${book.volume.replace("V", "Volume ")}</span>
+            <span>${book.semester}o semestre</span>
+            <span>${book.status === "available" ? "Disponivel" : "Planejado"}</span>
+          </div>
+          <div class="bv-profile-progress">
+            <i><b style="width:${summary.percent}%"></b></i>
+            <strong>${summary.percent}%</strong>
+            <span>${summary.completed} concluidas</span>
+            <span>${summary.available} disponiveis</span>
+          </div>
+          <div class="bv-profile-actions">
+            ${continueExperience ? `<a class="bv-card-action" href="${getInfantilExperienceUrl(continueExperience.id)}">${getInfantilExperienceStatus(continueExperience).key === "in-progress" ? "Continuar percurso" : "Abrir primeira experiencia"}</a>` : ""}
+            <a class="bv-card-action is-secondary" href="${getBookViewerUrl(book.bookId, requestedPage || 1)}">Abrir livro digital</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="bv-progress-panel" aria-label="Progresso do livro">
+        <article><strong>${units.length}</strong><span>unidades</span></article>
+        <article><strong>${bookExperiences.length}</strong><span>experiencias</span></article>
+        <article><strong>${summary.started}</strong><span>iniciadas</span></article>
+        <article><strong>${summary.completed}</strong><span>concluidas</span></article>
+        <article><strong>${summary.available}</strong><span>disponiveis</span></article>
+      </section>
+
+      ${requestedPage ? `
+        <section class="bv-section bv-page-match">
+          <div class="panel-head"><h2>Pagina ${requestedPage}</h2><a>${pageExperiences.length ? `${pageExperiences.length} experiencia${pageExperiences.length === 1 ? "" : "s"}` : "sem experiencia"}</a></div>
+          ${pageExperiences.length ? `
+            <p>A Biblioteca localizou os recursos digitais vinculados a esta pagina do livro.</p>
+            <div class="bv-experience-grid">
+              ${pageExperiences.map((experience, index) => renderExperienceOfficialCard(experience, { compact: index > 0 })).join("")}
+            </div>
+          ` : `<p class="bv-empty-state">Ainda nao existe experiencia digital vinculada a pagina ${requestedPage} deste livro.</p>`}
+        </section>
+      ` : ""}
+
+      ${highlightExperience ? `
+        <section class="bv-section">
+          <div class="panel-head"><h2>Experiencia principal</h2><a>${getExperiencePagesLabel(highlightExperience)}</a></div>
+          <div class="bv-experience-grid">
+            ${renderExperienceOfficialCard(highlightExperience)}
+          </div>
+        </section>
+      ` : ""}
+
+      <section class="bv-section">
+        <div class="panel-head"><h2>Unidades do livro</h2><a>${book.catalogTitle || book.subtitle}</a></div>
+        <div class="bv-book-units">
+          ${units.map((unit) => renderBookUnit(unit, requestedPage)).join("")}
+        </div>
+      </section>
+    </div>
+  `;
+};
+
 const renderPremiumLibraryHome = () => {
-  const totalExperiences = allInfantilExperiences.length;
-  const startedCount = allInfantilExperiences.filter((experience) => getInfantilExperienceProgress(experience.id)?.startedAt).length;
-  const completedCount = allInfantilExperiences.filter((experience) => getInfantilExperienceStatus(experience).key === "completed").length;
-  const availableCount = allInfantilExperiences.filter((experience) => experience.availability !== "unavailable").length;
-  const heroAsset = getInfantilExperienceAsset(featuredPremiumExperience);
-  const recommended = [featuredPremiumExperience, ...availableInfantilExperiences.filter((experience) => experience.id !== featuredPremiumExperience?.id), ...allInfantilExperiences.filter((experience) => experience.id !== featuredPremiumExperience?.id)].filter(Boolean).slice(0, 6);
-  const recent = allInfantilExperiences
-    .map((experience) => ({ experience, progress: getInfantilExperienceProgress(experience.id) }))
-    .filter((item) => item.progress?.updatedAt || item.progress?.startedAt)
-    .sort((first, second) => String(second.progress.updatedAt || second.progress.startedAt).localeCompare(String(first.progress.updatedAt || first.progress.startedAt)))
+  const userId = getInfantilUserId();
+  const summary = window.RSGameEngine?.getExperienceSummary?.(userId, allInfantilExperiences) || {
+    available: availableInfantilExperiences.length,
+    started: 0,
+    completed: 0,
+    inProgress: 0,
+    favorites: 0,
+    percent: 0,
+  };
+  const historyRecords = window.RSGameEngine?.getUserExperienceHistory?.(userId) || [];
+  const continueRecords = window.RSGameEngine?.getContinueWatching?.(userId) || [];
+  const favoriteCodes = window.RSGameEngine?.getUserFavorites?.(userId) || [];
+  const continueExperiences = continueRecords
+    .map((record) => allInfantilExperiences.find((experience) => experience.id === record.experienceCode))
+    .filter(Boolean)
+    .slice(0, 3);
+  const favoriteExperiences = favoriteCodes
+    .map((code) => allInfantilExperiences.find((experience) => experience.id === code))
+    .filter(Boolean)
     .slice(0, 4);
+  const recent = historyRecords
+    .map((record) => ({ experience: allInfantilExperiences.find((experience) => experience.id === record.experienceCode), progress: record }))
+    .filter((item) => item.experience)
+    .slice(0, 4);
+  const lastExperience = recent[0]?.experience || featuredPremiumExperience;
+  const heroAsset = getInfantilExperienceAsset(featuredPremiumExperience);
+  const featuredBook = getExperienceOfficialBook(featuredPremiumExperience) || officialInfantilBooks[0];
+  const relatedRecommendations = (lastExperience.relatedExperienceCodes || [])
+    .map((code) => allInfantilExperiences.find((experience) => experience.id === code))
+    .filter((experience) => experience && experience.availability !== "unavailable");
+  const recommended = [
+    ...relatedRecommendations,
+    ...availableInfantilExperiences.filter((experience) =>
+      experience.id !== lastExperience.id &&
+      experience.ageGroup === lastExperience.ageGroup &&
+      experience.volume === lastExperience.volume &&
+      getInfantilExperienceStatus(experience).key !== "completed"
+    ),
+    ...availableInfantilExperiences.filter((experience) =>
+      experience.id !== lastExperience.id &&
+      experience.ageGroup === lastExperience.ageGroup &&
+      getInfantilExperienceStatus(experience).key !== "completed"
+    ),
+    featuredPremiumExperience,
+  ]
+    .filter(Boolean)
+    .filter((experience, index, list) => list.findIndex((item) => item.id === experience.id) === index)
+    .slice(0, 6);
+  const continueList = continueExperiences.length ? continueExperiences : [featuredPremiumExperience];
   return `
     <div class="bv-premium" data-bv-premium>
       <section class="bv-hero">
@@ -1590,7 +1837,7 @@ const renderPremiumLibraryHome = () => {
           <h1>Ola, Pedro. Sua proxima descoberta esta pronta.</h1>
           <p>Livros, videos, jogos e atividades organizados por idade, volume e unidade para voce nunca se perder.</p>
           <div class="bv-hero-actions">
-            <a href="${getInfantilExperienceUrl(featuredPremiumExperience.id)}">Continuar experiencia</a>
+            <a href="${getInfantilExperienceUrl((continueExperiences[0] || featuredPremiumExperience).id)}">${continueExperiences.length ? "Continuar experiencia" : "Comecar jornada"}</a>
             <button type="button" data-bv-focus-search>Buscar</button>
           </div>
         </div>
@@ -1603,10 +1850,12 @@ const renderPremiumLibraryHome = () => {
       </section>
 
       <section class="bv-progress-panel" aria-label="Progresso visual da Biblioteca Viva">
-        <article><strong>${Math.round((completedCount / Math.max(totalExperiences, 1)) * 100)}%</strong><span>concluido</span><i><b style="width:${Math.round((completedCount / Math.max(totalExperiences, 1)) * 100)}%"></b></i></article>
-        <article><strong>${startedCount}</strong><span>iniciadas</span></article>
-        <article><strong>${completedCount}</strong><span>concluidas</span></article>
-        <article><strong>${availableCount}</strong><span>disponiveis</span></article>
+        <article data-bv-summary="percent"><strong>${summary.percent}%</strong><span>concluido</span><i><b style="width:${summary.percent}%"></b></i></article>
+        <article data-bv-summary="started"><strong>${summary.started}</strong><span>iniciadas</span></article>
+        <article data-bv-summary="completed"><strong>${summary.completed}</strong><span>concluidas</span></article>
+        <article data-bv-summary="inProgress"><strong>${summary.inProgress}</strong><span>em andamento</span></article>
+        <article data-bv-summary="favorites"><strong>${summary.favorites}</strong><span>favoritas</span></article>
+        <article data-bv-summary="available"><strong>${summary.available}</strong><span>disponiveis</span></article>
       </section>
 
       <section class="bv-control-panel" aria-label="Busca e filtros da Biblioteca Viva">
@@ -1620,17 +1869,18 @@ const renderPremiumLibraryHome = () => {
           ${infantilExperienceCatalog.INFANTIL_VOLUMES.map((volume) => `<button type="button" data-bv-filter-volume="${volume}">${volume.replace("V", "Volume ")}</button>`).join("")}
           <button type="button" data-bv-filter-status="completed">Concluidas</button>
           <button type="button" data-bv-filter-status="in-progress">Em andamento</button>
+          <button type="button" data-bv-filter-status="favorite">Favoritas</button>
           <button type="button" data-bv-filter-status="recent">Recentes</button>
         </div>
       </section>
 
       <section class="bv-section bv-continue">
-        <div class="panel-head"><h2>Continuar de onde parou</h2><a href="${featuredLibraryBook.href}">Abrir livro</a></div>
+        <div class="panel-head"><h2>Continuar de onde parou</h2><a href="${featuredBook ? getBookLibraryUrl(featuredBook.bookId) : featuredLibraryBook.href}">Abrir livro</a></div>
         <div class="bv-continue-grid">
-          ${renderExperienceOfficialCard(featuredPremiumExperience)}
+          ${continueList.map((experience) => renderExperienceOfficialCard(experience)).join("")}
           <article class="bv-reading-card">
-            <img src="${featuredLibraryBook.src}" alt="${featuredLibraryBook.title}" />
-            <div><span>Leitura vinculada</span><h3>${featuredLibraryBook.title}</h3><p>${featuredLibraryBook.year} · ${featuredLibraryBook.type}</p><a href="${featuredLibraryBook.href}">Continuar leitura</a></div>
+            <img src="${featuredBook?.coverAsset || featuredLibraryBook.src}" alt="${featuredBook?.title || featuredLibraryBook.title}" />
+            <div><span>Leitura vinculada</span><h3>${featuredBook?.title || featuredLibraryBook.title}</h3><p>${featuredBook?.subtitle || `${featuredLibraryBook.year} · ${featuredLibraryBook.type}`}</p><a href="${featuredBook ? getBookLibraryUrl(featuredBook.bookId) : featuredLibraryBook.href}">Continuar leitura</a></div>
           </article>
         </div>
       </section>
@@ -1647,13 +1897,13 @@ const renderPremiumLibraryHome = () => {
         <div>
           <div class="panel-head"><h2>Ultimas acessadas</h2><a>recentes</a></div>
           <div class="bv-mini-list">
-            ${(recent.length ? recent.map(({ experience }) => experience) : recommended.slice(0, 3)).map((experience) => renderExperienceOfficialCard(experience, { compact: true })).join("")}
+            ${(recent.length ? recent.map(({ experience }) => experience) : [featuredPremiumExperience]).map((experience) => renderExperienceOfficialCard(experience, { compact: true })).join("")}
           </div>
         </div>
         <div>
-          <div class="panel-head"><h2>Favoritos</h2><a>salvos</a></div>
+          <div class="panel-head"><h2>Favoritos</h2><a>${favoriteExperiences.length} salvos</a></div>
           <div class="bv-mini-list">
-            ${recommended.slice(0, 3).map((experience) => renderExperienceOfficialCard(experience, { compact: true })).join("")}
+            ${favoriteExperiences.length ? favoriteExperiences.map((experience) => renderExperienceOfficialCard(experience, { compact: true })).join("") : `<p class="bv-empty-state">Toque em Favoritar para guardar suas experiencias preferidas.</p>`}
           </div>
         </div>
       </section>
@@ -1675,13 +1925,21 @@ const renderExperienceProfilePage = (experience) => {
     .map((code) => infantilExperienceCatalog?.getExperienceDefinition?.(code))
     .filter(Boolean);
   const status = getInfantilExperienceStatus(experience);
+  const progress = getInfantilExperienceProgress(experience.id);
+  const primaryAction = getInfantilExperienceAction(status);
+  const lastAccessed = progress?.lastAccessedAt ? new Date(progress.lastAccessedAt).toLocaleDateString("pt-BR") : "Ainda nao acessada";
+  const location = getExperienceEditorialLocation(experience);
+  const resources = getExperienceResources(experience);
+  const publicUrl = getExperiencePublicUrl(experience.id);
+  const qrPayload = getExperienceQrPayload(experience.id);
   return `
     <div class="bv-profile" data-bv-profile="${experience.id}">
       <nav class="bv-profile-breadcrumb" aria-label="Caminho da experiencia">
         <a href="biblioteca.html">Biblioteca Viva</a>
-        <span>Educacao Infantil</span>
+        <a href="${location.book ? getBookLibraryUrl(location.book.bookId) : "biblioteca.html"}">${location.bookTitle}</a>
         <span>${experience.ageGroup.replace("EI", "")} anos</span>
         <span>${experience.volume.replace("V", "Volume ")}</span>
+        <span>${location.unit}</span>
         <strong>${experience.title}</strong>
       </nav>
       <section class="bv-profile-hero">
@@ -1695,7 +1953,17 @@ const renderExperienceProfilePage = (experience) => {
             <span>${experience.duration || 0}s</span>
             <span>${status.label}</span>
           </div>
-          <button type="button" data-open-experience="${experience.id}">Iniciar experiencia</button>
+          <div class="bv-profile-progress">
+            <i><b style="width:${status.percent}%"></b></i>
+            <strong>${status.percent}%</strong>
+            <span>Ultimo acesso: ${lastAccessed}</span>
+            <span>Repeticoes: ${progress?.repeatCount || 0}</span>
+          </div>
+          <div class="bv-profile-actions">
+            <button type="button" data-open-experience="${experience.id}">${primaryAction}</button>
+            ${resources.filter((resource) => resource.type === "interactive" && resource.activityCode).map((resource) => `<button type="button" data-open-interactive-activity="${resource.activityCode}">REALIZAR ATIVIDADE</button>`).join("")}
+            <button type="button" data-bv-toggle-favorite="${experience.id}" aria-pressed="${progress?.isFavorite ? "true" : "false"}">${progress?.isFavorite ? "Favorita" : "Favoritar"}</button>
+          </div>
         </div>
         <figure>
           <img src="${asset?.coverPath || featuredLibraryBook.src}" alt="${experience.title}" />
@@ -1703,10 +1971,17 @@ const renderExperienceProfilePage = (experience) => {
         </figure>
       </section>
       <section class="bv-profile-grid">
-        <article><h2>Objetivo pedagogico</h2><p>${experience.objective}</p></article>
-        <article><h2>Paginas do livro</h2><p>${experience.bookTitle}</p><a href="book-viewer.html?book=${experience.bookId || "livro-005"}&page=${experience.pages?.[0] || 1}">Abrir paginas ${(experience.pages || []).join(", ") || "relacionadas"}</a></article>
-        <article><h2>Habilidades BNCC</h2><ul>${(experience.bnccSkills?.length ? experience.bnccSkills : ["Em curadoria"]).map((skill) => `<li>${skill}</li>`).join("")}</ul></article>
+        <article><h2>Localizacao editorial</h2><p>Livro: ${location.bookTitle}</p><p>${location.volume?.replace("V", "Volume ")} · ${location.unit} · ${location.pages}</p><p>Atividade: ${location.activity}</p><a href="${getBookLibraryUrl(experience.bookId, experience.pageStart || experience.pages?.[0] || 1)}">Ver no percurso do livro</a></article>
+        <article><h2>Atividade original</h2><p>${experience.activityDescription || experience.description}</p><p>${experience.sequenceTitle || ""}</p><a href="${getBookViewerUrl(experience.bookId || "livro-005", experience.pageStart || experience.pages?.[0] || 1)}">Abrir paginas no livro digital</a></article>
+        <article><h2>Comando para o aluno</h2><p>${experience.studentInstruction || experience.instructions}</p></article>
+        <article><h2>Objetivo pedagogico</h2><p>${experience.pedagogicalObjective || experience.objective}</p></article>
+        <article><h2>Campos de experiencia</h2><ul>${(experience.experienceFields?.length ? experience.experienceFields : [experience.fieldOfExperience || "Em curadoria"]).map((field) => `<li>${field}</li>`).join("")}</ul></article>
+        <article><h2>Habilidades BNCC</h2><ul>${((experience.bnccCodes?.length ? experience.bnccCodes : experience.bnccSkills)?.length ? (experience.bnccCodes?.length ? experience.bnccCodes : experience.bnccSkills) : ["Em curadoria"]).map((skill) => `<li>${skill}</li>`).join("")}</ul></article>
+        <article><h2>Recursos digitais</h2><ul>${resources.map((resource) => `<li>${resource.role} · ${resource.type} · ${resource.activity?.title || resource.asset?.title || resource.activityCode || resource.assetCode}</li>`).join("")}</ul>${renderExperienceResourceActions(experience, resources)}</article>
         <article><h2>Materiais complementares</h2><ul>${(experience.materials?.length ? experience.materials : ["Materiais em curadoria"]).map((material) => `<li>${material}</li>`).join("")}</ul></article>
+        <article><h2>URL publica e QR Code</h2><p>${publicUrl}</p><small>Payload QR: ${qrPayload}</small></article>
+        <article><h2>Livro do Professor</h2><p>${experience.teacherGuidance?.teacherBookId || "Vinculo em preparacao"}</p><ul>${(experience.teacherGuidance?.materials || ["Orientacoes em curadoria"]).map((item) => `<li>${item}</li>`).join("")}</ul></article>
+        <article><h2>Historico resumido</h2><ul>${(progress?.history?.length ? progress.history.slice(-4).reverse().map((item) => `${item.event} · ${new Date(item.at).toLocaleDateString("pt-BR")} · ${item.progressPercent || 0}%`) : ["Sem historico para esta experiencia"]).map((item) => `<li>${item}</li>`).join("")}</ul></article>
       </section>
       <section class="bv-section">
         <div class="panel-head"><h2>Experiencias relacionadas</h2><a>${related.length || "em curadoria"}</a></div>
@@ -1728,8 +2003,21 @@ const renderPremiumLibrary = () => {
   }
   const params = typeof window === "undefined" ? new URLSearchParams() : new URLSearchParams(window.location.search);
   const requestedExperience = params.get("experience");
+  const requestedBook = params.get("book");
+  const requestedPage = Number(params.get("page")) || null;
   const experience = requestedExperience ? infantilExperienceCatalog?.getExperienceDefinition?.(requestedExperience) : null;
-  return experience ? renderExperienceProfilePage(experience) : renderPremiumLibraryHome();
+  if (requestedExperience) {
+    return experience ? renderExperienceProfilePage(experience) : `
+      <section class="bv-section">
+        <div class="panel-head"><h2>Experiencia nao encontrada</h2><a>${requestedExperience}</a></div>
+        <p class="bv-empty-state">Esta experiencia ainda nao existe no catalogo oficial.</p>
+      </section>
+    `;
+  }
+  if (requestedBook) {
+    return renderBookPage(getOfficialInfantilBook(requestedBook), requestedPage);
+  }
+  return renderPremiumLibraryHome();
 };
 const library2TeacherPanel = `
   <section class="wide-panel library-2-ops">
@@ -2517,76 +2805,272 @@ const renderStudentPresentationDashboard = () => `
   </div>
 `;
 
-const professorSoonLabels = {
-  perfil: "Perfil da Professora",
-  xp: "Historico de XP",
-  turmas: "Turmas da Professora",
-  atividades: "Atividades",
-  planejamento: "Planejamento",
-  aulas: "Proximas Aulas",
-  correcoes: "Relatorios de Correcao",
-};
-
-const professorDashboardHotspots = [
-  { className: "professor-hotspot-avatar", href: "professor.html?soon=perfil", label: "Abrir perfil da Professora Helena" },
-  { className: "professor-hotspot-turmas-top", href: "professor.html?soon=turmas", label: "Abrir turmas ativas" },
-  { className: "professor-hotspot-planejadas-top", href: "professor.html?soon=atividades", label: "Abrir atividades planejadas" },
-  { className: "professor-hotspot-concluidas-top", href: "professor.html?soon=atividades", label: "Abrir atividades concluidas" },
-  { className: "professor-hotspot-xp-top", href: "professor.html?soon=xp", label: "Abrir XP da professora" },
-  { className: "professor-hotspot-turma-a", href: "professor.html?soon=turmas", label: "Abrir turma Infantil 5 anos A" },
-  { className: "professor-hotspot-turma-b", href: "professor.html?soon=turmas", label: "Abrir turma Infantil 5 anos B" },
-  { className: "professor-hotspot-turma-4a", href: "professor.html?soon=turmas", label: "Abrir turma 4 Ano A" },
-  { className: "professor-hotspot-turma-2a", href: "professor.html?soon=turmas", label: "Abrir turma 2 Ano A" },
-  { className: "professor-hotspot-turma-3b", href: "professor.html?soon=turmas", label: "Abrir turma 3 Ano B" },
-  { className: "professor-hotspot-seg", href: "professor.html?soon=planejamento", label: "Abrir planejamento de segunda-feira" },
-  { className: "professor-hotspot-ter", href: "professor.html?soon=planejamento", label: "Abrir planejamento de terca-feira" },
-  { className: "professor-hotspot-qua", href: "professor.html?soon=planejamento", label: "Abrir planejamento de quarta-feira" },
-  { className: "professor-hotspot-qui", href: "professor.html?soon=planejamento", label: "Abrir planejamento de quinta-feira" },
-  { className: "professor-hotspot-sex", href: "professor.html?soon=planejamento", label: "Abrir planejamento de sexta-feira" },
-  { className: "professor-hotspot-aula-1", href: "professor.html?soon=aulas", label: "Abrir aula de Linguagem" },
-  { className: "professor-hotspot-aula-2", href: "professor.html?soon=aulas", label: "Abrir aula de Matematica" },
-  { className: "professor-hotspot-aula-3", href: "professor.html?soon=aulas", label: "Abrir aula de Ciencias" },
-  { className: "professor-hotspot-aula-4", href: "professor.html?soon=aulas", label: "Abrir aula de Historia" },
-  { className: "professor-hotspot-aula-5", href: "professor.html?soon=aulas", label: "Abrir aula de Projeto" },
-  { className: "professor-hotspot-pendente-corrigir", href: "professor.html?soon=atividades", label: "Abrir atividades para corrigir" },
-  { className: "professor-hotspot-pendente-revisar", href: "professor.html?soon=atividades", label: "Abrir atividades para revisar" },
-  { className: "professor-hotspot-pendente-devolutivas", href: "professor.html?soon=atividades", label: "Abrir devolutivas para enviar" },
-  { className: "professor-hotspot-pendente-publicar", href: "professor.html?soon=atividades", label: "Abrir atividades para publicar" },
-  { className: "professor-hotspot-correcoes", href: "professor.html?soon=correcoes", label: "Abrir relatorios de correcao" },
-  { className: "professor-hotspot-book-1", href: "book-viewer.html?book=livro-007", label: "Abrir Educacao Infantil 5 anos Volume 1" },
-  { className: "professor-hotspot-book-2", href: "book-viewer.html?book=livro-008", label: "Abrir Educacao Infantil 5 anos Volume 2" },
-  { className: "professor-hotspot-book-3", href: "book-viewer.html?book=avalia-portugues-2ano", label: "Abrir Lingua Portuguesa 2 Ano Volume 1" },
-  { className: "professor-hotspot-book-4", href: "book-viewer.html?book=avalia-matematica-2ano", label: "Abrir Matematica 2 Ano Volume 1" },
-  { className: "professor-hotspot-book-5", href: "book-viewer.html?book=livro-005", label: "Abrir Educacao Infantil 4 anos Volume 1" },
-  { className: "professor-hotspot-bncc", href: "biblioteca.html", label: "Abrir conteudos alinhados a BNCC" },
+const teacherWorkspaceNav = [
+  ["inicio", "Inicio"],
+  ["planejamentos", "Planejamentos"],
+  ["turmas", "Minhas Turmas"],
+  ["alunos", "Alunos"],
+  ["biblioteca", "Biblioteca Viva"],
+  ["experiencias", "Experiencias"],
+  ["jogos", "Jogos"],
+  ["avaliacoes", "Avaliacoes"],
+  ["relatorios", "Relatorios"],
+  ["universidade", "Universidade"],
+  ["configuracoes", "Configuracoes"],
 ];
 
-const renderProfessorSoon = (key) => {
-  const title = professorSoonLabels[key] || "Modulo em breve";
-  return `
-    <section class="coming-soon-panel">
-      <span>Em breve</span>
-      <h1>${title}</h1>
-      <p>Este recurso ja esta previsto no Ecossistema Raizes e Saberes e sera liberado nas proximas etapas.</p>
-      <a href="professor.html">Voltar ao Painel do Professor</a>
-    </section>
-  `;
+const teacherWorkspaceClasses = [
+  { id: "infantil-4a", name: "Infantil 4 A", students: 22, progress: 68, next: "Sala das Descobertas", alert: "3 registros pendentes" },
+  { id: "infantil-5a", name: "Infantil 5 A", students: 24, progress: 74, next: "Sequencia e rotina", alert: "2 avaliacoes para corrigir" },
+  { id: "infantil-5b", name: "Infantil 5 B", students: 21, progress: 61, next: "Numerais no cotidiano", alert: "1 familia aguardando retorno" },
+];
+
+const teacherWorkspaceLessons = [
+  { time: "07:30", title: "Roda de conversa", className: "Infantil 4 A", status: "pronta", resource: "A Caixa Misteriosa" },
+  { time: "09:10", title: "Matematica investigativa", className: "Infantil 5 A", status: "em preparo", resource: "Memoria das quantidades" },
+  { time: "13:20", title: "Projeto leitura viva", className: "Infantil 5 B", status: "pronta", resource: "Livro do Aluno" },
+];
+
+const teacherWorkspaceStudents = [
+  { name: "Pedro Henrique", className: "Infantil 4 A", progress: 82, note: "participativo" },
+  { name: "Lia Martins", className: "Infantil 5 A", progress: 76, note: "boa oralidade" },
+  { name: "Ana Clara", className: "Infantil 5 B", progress: 64, note: "acompanhar registro" },
+];
+
+const teacherWorkspaceTasks = [
+  { label: "Avaliacoes para corrigir", count: 7, view: "avaliacoes" },
+  { label: "Atividades pendentes", count: 12, view: "planejamentos" },
+  { label: "Mensagens de familias", count: 4, view: "inicio" },
+  { label: "Planos para revisar", count: 3, view: "planejamentos" },
+];
+
+const getTeacherBibliotecaResources = () => {
+  const catalog = typeof window === "undefined" ? null : window.RaizesInfantilExperiences;
+  const books = (catalog?.officialBooks || []).filter((book) => book.status === "available").slice(0, 4);
+  const experiences = (catalog?.experienceDefinitions || []).filter((experience) => experience.status === "published").slice(0, 4);
+  const activities = (catalog?.interactiveActivityDefinitions || []).slice(0, 6);
+  return { books, experiences, activities };
+};
+
+const renderTeacherCard = () => `
+  <article class="tw-teacher-card">
+    <div><span>Professora</span><strong>Helena Martins</strong><small>Educacao Infantil · Manha e tarde</small></div>
+    <b>Hoje</b>
+  </article>
+`;
+
+const renderPlanningCard = (lesson) => `
+  <article class="tw-planning-card" data-teacher-search-item>
+    <span>${lesson.time}</span>
+    <strong>${lesson.title}</strong>
+    <small>${lesson.className} · ${lesson.resource}</small>
+    <em>${lesson.status}</em>
+  </article>
+`;
+
+const renderClassCard = (classItem) => `
+  <article class="tw-class-card" data-teacher-search-item>
+    <div><strong>${classItem.name}</strong><span>${classItem.students} alunos</span></div>
+    <i><b style="width:${classItem.progress}%"></b></i>
+    <small>${classItem.progress}% do percurso · ${classItem.alert}</small>
+  </article>
+`;
+
+const renderStudentCard = (student) => `
+  <article class="tw-student-card" data-teacher-search-item>
+    <span>${student.name.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span>
+    <div><strong>${student.name}</strong><small>${student.className} · ${student.note}</small></div>
+    <b>${student.progress}%</b>
+  </article>
+`;
+
+const renderLessonCard = (lesson) => `
+  <article class="tw-lesson-card" data-teacher-search-item>
+    <span>${lesson.time}</span>
+    <div><strong>${lesson.title}</strong><small>${lesson.className}</small></div>
+    <button type="button" data-teacher-view="planejamentos">Abrir</button>
+  </article>
+`;
+
+const renderRecommendationCard = (item) => `
+  <article class="tw-recommendation-card" data-teacher-search-item>
+    <span>${item.type}</span>
+    <strong>${item.title}</strong>
+    <small>${item.detail}</small>
+    <button type="button" data-teacher-view="${item.view}">${item.action}</button>
+  </article>
+`;
+
+const renderResourceCard = (resource) => `
+  <article class="tw-resource-card" data-teacher-search-item>
+    ${resource.cover ? `<img src="${resource.cover}" alt="" loading="lazy" />` : `<span>${resource.kind}</span>`}
+    <div><strong>${resource.title}</strong><small>${resource.detail}</small></div>
+    <button type="button" data-teacher-view="${resource.view || "biblioteca"}">Usar</button>
+  </article>
+`;
+
+const renderTeacherWorkspaceView = (view) => {
+  const { books, experiences, activities } = getTeacherBibliotecaResources();
+  const resourceCards = [
+    ...books.map((book) => ({ kind: "Livro", title: book.title, detail: `${book.subtitle} · ${book.ageGroup.replace("EI", "")} anos`, cover: book.coverAsset, view: "biblioteca" })),
+    ...experiences.map((experience) => ({ kind: "Exp", title: experience.title, detail: `${experience.unitTitle || experience.unit} · ${experience.pageStart || ""}-${experience.pageEnd || ""}`, view: "experiencias" })),
+    ...activities.slice(0, 3).map((activity) => ({ kind: "Ativ", title: activity.title, detail: activity.type, view: "experiencias" })),
+  ];
+  const viewMap = {
+    inicio: `
+      <section class="tw-overview-grid">
+        <div class="tw-column">
+          <div class="tw-section-head"><h2>Aulas de hoje</h2><button type="button" data-teacher-view="planejamentos">Ver semana</button></div>
+          ${teacherWorkspaceLessons.map(renderLessonCard).join("")}
+        </div>
+        <div class="tw-column">
+          <div class="tw-section-head"><h2>Pendencias</h2><button type="button" data-teacher-view="avaliacoes">Corrigir</button></div>
+          ${teacherWorkspaceTasks.map((task) => `<button class="tw-task-row" type="button" data-teacher-view="${task.view}"><span>${task.label}</span><strong>${task.count}</strong></button>`).join("")}
+        </div>
+        <div class="tw-column">
+          <div class="tw-section-head"><h2>Turmas</h2><button type="button" data-teacher-view="turmas">Abrir</button></div>
+          ${teacherWorkspaceClasses.map(renderClassCard).join("")}
+        </div>
+      </section>
+    `,
+    notificacoes: `
+      <section class="tw-board">
+        <div class="tw-section-head"><h2>Notificacoes</h2><button type="button" data-teacher-view="inicio">Voltar</button></div>
+        ${[
+          "Infantil 5 A concluiu 74% do percurso da semana",
+          "Nova experiencia publicada na Biblioteca Viva",
+          "Familia de Pedro Henrique enviou uma mensagem",
+        ].map((title) => `<article class="tw-planning-card" data-teacher-search-item><span>Agora</span><strong>${title}</strong><small>Prioridade normal</small></article>`).join("")}
+      </section>
+    `,
+    calendario: `
+      <section class="tw-board">
+        <div class="tw-section-head"><h2>Calendario</h2><button type="button" data-teacher-view="planejamentos">Planejar</button></div>
+        ${teacherWorkspaceLessons.map((lesson) => `<article class="tw-lesson-card" data-teacher-search-item><span>${lesson.time}</span><div><strong>${lesson.title}</strong><small>${lesson.className} · hoje</small></div><button type="button" data-teacher-view="planejamentos">Abrir</button></article>`).join("")}
+      </section>
+    `,
+    mensagens: `
+      <section class="tw-board">
+        <div class="tw-section-head"><h2>Mensagens</h2><button type="button">Nova mensagem</button></div>
+        ${["Coordenacao pedagogica", "Familia de Lia Martins", "Secretaria escolar"].map((sender) => `<article class="tw-student-card" data-teacher-search-item><span>${sender.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span><div><strong>${sender}</strong><small>Mensagem aguardando leitura</small></div><b>1</b></article>`).join("")}
+      </section>
+    `,
+    acesso: `
+      <section class="tw-board tw-card-grid">
+        ${[
+          { title: "Abrir Biblioteca Viva", detail: "Livros, experiencias e atividades", view: "biblioteca" },
+          { title: "Corrigir avaliacoes", detail: "7 registros pendentes", view: "avaliacoes" },
+          { title: "Ver relatorios", detail: "Progresso das turmas", view: "relatorios" },
+        ].map((item) => renderRecommendationCard({ type: "Atalho", title: item.title, detail: item.detail, view: item.view, action: "Abrir" })).join("")}
+      </section>
+    `,
+    perfil: `
+      <section class="tw-board tw-card-grid">
+        ${renderTeacherCard()}
+        <article class="tw-metric-card"><span>Agenda</span><strong>Manha e tarde</strong><small>Educacao Infantil</small></article>
+        <article class="tw-metric-card"><span>Turmas</span><strong>${teacherWorkspaceClasses.length}</strong><small>ativas no workspace</small></article>
+      </section>
+    `,
+    planejamentos: `
+      <section class="tw-board">
+        <div class="tw-section-head"><h2>Planejamentos</h2><button type="button">Novo plano</button></div>
+        ${teacherWorkspaceLessons.map(renderPlanningCard).join("")}
+      </section>
+    `,
+    turmas: `
+      <section class="tw-board tw-card-grid">
+        ${teacherWorkspaceClasses.map(renderClassCard).join("")}
+      </section>
+    `,
+    alunos: `
+      <section class="tw-board">
+        <div class="tw-section-head"><h2>Alunos</h2><button type="button">Adicionar observacao</button></div>
+        ${teacherWorkspaceStudents.map(renderStudentCard).join("")}
+      </section>
+    `,
+    biblioteca: `
+      <section class="tw-board">
+        <div class="tw-section-head"><h2>Biblioteca Viva</h2><span>${books.length} livros oficiais</span></div>
+        <div class="tw-resource-grid">${resourceCards.filter((item) => item.kind === "Livro").map(renderResourceCard).join("")}</div>
+      </section>
+    `,
+    experiencias: `
+      <section class="tw-board">
+        <div class="tw-section-head"><h2>Experiencias e atividades</h2><span>${experiences.length} experiencias · ${activities.length} atividades</span></div>
+        <div class="tw-resource-grid">${resourceCards.filter((item) => item.kind !== "Livro").map(renderResourceCard).join("")}</div>
+      </section>
+    `,
+    jogos: `
+      <section class="tw-board tw-placeholder"><h2>Jogos</h2><p>Jogos pedagogicos serao organizados aqui, usando o mesmo workspace.</p></section>
+    `,
+    avaliacoes: `
+      <section class="tw-board tw-card-grid">
+        ${["Diagnostica Infantil 4", "Registro de oralidade", "Sequencia numerica"].map((title, index) => `<article class="tw-metric-card"><span>${index + 2}</span><strong>${title}</strong><small>pendente de correcao</small></article>`).join("")}
+      </section>
+    `,
+    relatorios: `
+      <section class="tw-board tw-card-grid">
+        ${teacherWorkspaceClasses.map((item) => `<article class="tw-metric-card"><span>${item.progress}%</span><strong>${item.name}</strong><small>progresso da turma</small></article>`).join("")}
+      </section>
+    `,
+    universidade: `
+      <section class="tw-board tw-placeholder"><h2>Universidade</h2><p>Formacao docente, trilhas e certificados abrirao neste painel.</p></section>
+    `,
+    configuracoes: `
+      <section class="tw-board tw-placeholder"><h2>Configuracoes</h2><p>Preferencias do workspace, notificacoes e atalhos ficarao aqui.</p></section>
+    `,
+  };
+  return viewMap[view] || viewMap.inicio;
 };
 
 const renderProfessorDashboard = () => {
-  const params = typeof window === "undefined" ? new URLSearchParams() : new URLSearchParams(window.location.search);
-  const soon = params.get("soon");
-  if (soon) return renderProfessorSoon(soon);
+  const { books, experiences, activities } = getTeacherBibliotecaResources();
+  const recommendations = [
+    { type: "Biblioteca", title: books[0]?.title || "Livro oficial", detail: books[0]?.subtitle || "Colecao Raizes e Saberes", view: "biblioteca", action: "Abrir" },
+    { type: "Experiencia", title: experiences[0]?.title || "Experiencia publicada", detail: experiences[0]?.unitTitle || "Percurso editorial", view: "experiencias", action: "Preparar" },
+    { type: "Atividade", title: activities[0]?.title || "Atividade interativa", detail: activities[0]?.type || "Motor universal", view: "experiencias", action: "Ver" },
+  ];
   return `
-    <section class="professor-dashboard" aria-label="Painel da Professora Helena">
-      <img
-        src="assets/professor/professor-dashboard.png"
-        alt="Painel da Professora Helena com turmas, planejamento, proximas aulas, atividades, correcoes e biblioteca integrada"
-        loading="eager"
-        decoding="async"
-        onerror="this.hidden=true"
-      />
-      ${professorDashboardHotspots.map((hotspot) => `<a class="professor-hotspot ${hotspot.className}" href="${hotspot.href}" aria-label="${hotspot.label}"></a>`).join("")}
+    <section class="teacher-workspace" data-teacher-workspace>
+      <aside class="tw-sidebar" aria-label="Areas do Workspace Pedagogico">
+        ${renderTeacherCard()}
+        <nav>
+          ${teacherWorkspaceNav.map(([key, label], index) => `<button type="button" data-teacher-view="${key}" class="${index === 0 ? "is-active" : ""}">${label}</button>`).join("")}
+        </nav>
+      </aside>
+      <div class="tw-main">
+        <header class="tw-topbar">
+          <label><span>Pesquisa global</span><input data-teacher-search type="search" placeholder="Buscar aulas, alunos, recursos..." /></label>
+          <div class="tw-top-actions">
+            ${[
+              ["notificacoes", "Notificacoes"],
+              ["calendario", "Calendario"],
+              ["mensagens", "Mensagens"],
+              ["acesso", "Acesso rapido"],
+              ["perfil", "Perfil"],
+              ["configuracoes", "Configuracoes"],
+            ].map(([view, label]) => `<button type="button" data-teacher-view="${view}">${label}</button>`).join("")}
+          </div>
+        </header>
+        <section class="tw-hero">
+          <div>
+            <span>Workspace Pedagogico</span>
+            <h1>Tudo que voce precisa para o dia de aula.</h1>
+            <p>Planejamento, turmas, recursos da Biblioteca Viva e pendencias em uma unica mesa de trabalho.</p>
+          </div>
+          <div class="tw-hero-metrics">
+            <article><strong>${teacherWorkspaceLessons.length}</strong><span>aulas hoje</span></article>
+            <article><strong>${teacherWorkspaceTasks.reduce((total, item) => total + item.count, 0)}</strong><span>pendencias</span></article>
+            <article><strong>${books.length + experiences.length + activities.length}</strong><span>recursos vivos</span></article>
+          </div>
+        </section>
+        <section class="tw-recommendations">
+          ${recommendations.map(renderRecommendationCard).join("")}
+        </section>
+        <main class="tw-content" data-teacher-content>
+          ${renderTeacherWorkspaceView("inicio")}
+        </main>
+      </div>
     </section>
   `;
 };
@@ -3729,21 +4213,22 @@ const environments = {
     ],
   },
   professor: {
-    label: "Painel do Professor",
-    profile: "Professor",
-    search: "Buscar turmas, alunos, atividades, livros...",
+    label: "Workspace Pedagogico",
+    profile: "Ambiente do Professor",
+    search: "Buscar no workspace pedagogico...",
     user: "Professora Helena<br />Ver perfil",
     nav: [
       ["professor", "Inicio", "professor.html"],
-      ["turmas", "Turmas", "#"],
-      ["planejamento", "Planejamento", "#"],
-      ["aulas", "Aulas", "#"],
-      ["atividades", "Atividades", "#"],
+      ["planejamentos", "Planejamentos", "#"],
+      ["turmas", "Minhas Turmas", "#"],
+      ["alunos", "Alunos", "#"],
+      ["biblioteca", "Biblioteca Viva", "#"],
+      ["experiencias", "Experiencias", "#"],
+      ["jogos", "Jogos", "#"],
       ["avaliacoes", "Avaliacoes", "#"],
-      ["correcoes", "Correcoes", "#"],
-      ["biblioteca", "Biblioteca Digital", "biblioteca.html"],
-      ["mensagens", "Mensagens", "#"],
       ["relatorios", "Relatorios", "#"],
+      ["universidade", "Universidade", "#"],
+      ["configuracoes", "Configuracoes", "#"],
     ],
     mobile: [
       ["professor", "Inicio", "professor.html"],
@@ -4323,6 +4808,52 @@ const initLibraryExperiences = () => {
       window.RSGameEngine.openExperience(code);
     });
   });
+
+  document.querySelectorAll("[data-open-interactive-activity]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const code = button.dataset.openInteractiveActivity;
+      if (!window.RSGameEngine?.openInteractiveActivity) {
+        console.warn("Motor de atividades interativas indisponivel.", { code });
+        return;
+      }
+      window.RSGameEngine.openInteractiveActivity(code);
+    });
+  });
+
+  const profile = document.querySelector("[data-bv-profile]");
+  if (profile?.dataset.bvProfile && window.RSGameEngine?.saveUserExperienceProgress) {
+    window.RSGameEngine.saveUserExperienceProgress(getInfantilUserId(), profile.dataset.bvProfile, {
+      event: "profile_open",
+      lastAccessedAt: new Date().toISOString(),
+    });
+  }
+
+  const syncFavoriteControls = (code, isFavorite) => {
+    document.querySelectorAll(`[data-bv-toggle-favorite="${code}"]`).forEach((favoriteButton) => {
+      favoriteButton.setAttribute("aria-pressed", String(isFavorite));
+      favoriteButton.textContent = isFavorite ? "Favorita" : "Favoritar";
+    });
+    document.querySelectorAll(`[data-experience-code="${code}"]`).forEach((card) => {
+      card.dataset.favorite = String(isFavorite);
+      card.classList.toggle("is-favorite", isFavorite);
+    });
+  };
+
+  document.querySelectorAll("[data-bv-toggle-favorite]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      const code = button.dataset.bvToggleFavorite;
+      const record = window.RSGameEngine?.toggleExperienceFavorite?.(getInfantilUserId(), code);
+      if (!record) return;
+      syncFavoriteControls(code, record.isFavorite);
+    });
+  });
+
+  window.addEventListener("raizes:experience-progress", (event) => {
+    if (event.detail?.experienceCode && typeof event.detail.isFavorite === "boolean") {
+      syncFavoriteControls(event.detail.experienceCode, event.detail.isFavorite);
+    }
+  });
 };
 
 const initPremiumLibrary = () => {
@@ -4356,7 +4887,8 @@ const initPremiumLibrary = () => {
       const matchesStatus =
         state.status === "all" ||
         card.dataset.status === state.status ||
-        (state.status === "recent" && card.dataset.status !== "not-started");
+        (state.status === "favorite" && card.dataset.favorite === "true") ||
+        (state.status === "recent" && Boolean(card.dataset.recent));
       const haystack = card.dataset.search || card.textContent.toLowerCase();
       const matchesQuery = terms.every((term) => haystack.includes(term));
       card.hidden = !(matchesAge && matchesVolume && matchesStatus && matchesQuery);
@@ -4368,6 +4900,44 @@ const initPremiumLibrary = () => {
       empty.hidden = visible > 0;
     }
     syncButtons();
+  };
+
+  const syncSummary = () => {
+    const summary = window.RSGameEngine?.getExperienceSummary?.(getInfantilUserId(), allInfantilExperiences);
+    if (!summary) return;
+    Object.entries(summary).forEach(([key, value]) => {
+      const node = root.querySelector(`[data-bv-summary="${key}"] strong`);
+      if (node) node.textContent = key === "percent" ? `${value}%` : String(value);
+      const bar = root.querySelector(`[data-bv-summary="${key}"] i b`);
+      if (bar) bar.style.width = `${summary.percent}%`;
+    });
+  };
+
+  const syncCardProgress = (record) => {
+    const status = record.status === "completed" ? "completed" : record.status === "in_progress" ? "in-progress" : "not-started";
+    const label = status === "completed" ? "Concluida" : status === "in-progress" ? "Em andamento" : "Nao iniciada";
+    const action = status === "completed" ? "Viver novamente" : status === "in-progress" ? "Continuar experiencia" : "Viver esta experiencia";
+    document.querySelectorAll(`[data-experience-code="${record.experienceCode}"]`).forEach((card) => {
+      card.dataset.status = status;
+      card.dataset.favorite = String(record.isFavorite);
+      card.dataset.recent = record.lastAccessedAt || "";
+      card.classList.toggle("is-favorite", record.isFavorite);
+      const badge = card.querySelector(".bv-experience-cover span");
+      const bar = card.querySelector(".bv-card-progress b");
+      const percent = card.querySelector(".bv-card-progress strong");
+      const actionLink = card.querySelector(".bv-card-action");
+      const favorite = card.querySelector("[data-bv-toggle-favorite]");
+      if (badge) badge.textContent = label;
+      if (bar) bar.style.width = `${record.progressPercent}%`;
+      if (percent) percent.textContent = `${record.progressPercent}%`;
+      if (actionLink) actionLink.textContent = action;
+      if (favorite) {
+        favorite.setAttribute("aria-pressed", String(record.isFavorite));
+        favorite.textContent = record.isFavorite ? "Favorita" : "Favoritar";
+      }
+    });
+    syncSummary();
+    sync();
   };
 
   search?.addEventListener("input", () => {
@@ -4398,6 +4968,10 @@ const initPremiumLibrary = () => {
       state.status = state.status === status.dataset.bvFilterStatus ? "all" : status.dataset.bvFilterStatus;
       sync();
     }
+  });
+
+  window.addEventListener("raizes:experience-progress", (event) => {
+    if (event.detail?.experienceCode) syncCardProgress(event.detail);
   });
 
   sync();
@@ -6506,6 +7080,36 @@ const initCurationBatches = () => {
   });
 };
 
+const initTeacherWorkspace = () => {
+  const workspace = document.querySelector("[data-teacher-workspace]");
+  if (!workspace) return;
+  const content = workspace.querySelector("[data-teacher-content]");
+  const search = workspace.querySelector("[data-teacher-search]");
+
+  const openView = (view) => {
+    if (!content) return;
+    content.innerHTML = renderTeacherWorkspaceView(view);
+    workspace.querySelectorAll("[data-teacher-view]").forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.teacherView === view);
+    });
+    if (search) search.value = "";
+  };
+
+  workspace.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-teacher-view]");
+    if (!button) return;
+    event.preventDefault();
+    openView(button.dataset.teacherView || "inicio");
+  });
+
+  search?.addEventListener("input", () => {
+    const query = search.value.trim().toLowerCase();
+    content?.querySelectorAll("[data-teacher-search-item]").forEach((item) => {
+      item.hidden = Boolean(query) && !item.textContent.toLowerCase().includes(query);
+    });
+  });
+};
+
 const renderAppPage = () => {
   const mount = document.querySelector("[data-app-page]");
   if (!mount) {
@@ -6517,6 +7121,15 @@ const renderAppPage = () => {
   const environmentKey = moduleEnvironment[activeKey] || activeKey;
   const environment = environments[environmentKey] || environments.biblioteca;
   document.title = `${activeModule.title} | Raizes e Saberes`;
+
+  if (activeKey === "professor") {
+    mount.innerHTML = activeModule.html;
+    requestAnimationFrame(() => {
+      document.querySelector(".teacher-workspace")?.classList.add("is-mounted");
+    });
+    initTeacherWorkspace();
+    return;
+  }
 
   const nav = environment.nav
     .map(([key, label, href]) =>
@@ -6571,6 +7184,7 @@ const renderAppPage = () => {
   initDigitalStudentAssessments();
   initDigitalResultsPanel();
   initCurationBatches();
+  initTeacherWorkspace();
 };
 
 renderAppPage();
