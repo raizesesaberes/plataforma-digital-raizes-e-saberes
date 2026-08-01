@@ -1,0 +1,10 @@
+Video nao gerado no ambiente atual.
+
+Comando tentado:
+screencapture -v -V 35 -x docs/evidencias/caixa-misteriosa-build-01-playthrough.mov
+
+Resultado:
+screencapture: capture error A operacao nao pode ser concluida
+
+Validacao substituta:
+O fluxo completo foi jogado no navegador integrado e as capturas inicial, escolhas e final foram exportadas em PNG.

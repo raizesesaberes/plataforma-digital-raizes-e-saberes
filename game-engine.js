@@ -1231,6 +1231,9 @@
     return {
       src: assetValue.src || "",
       alt: assetValue.alt || fallbackAlt,
+      type: assetValue.type || "",
+      poster: assetValue.poster || "",
+      loop: assetValue.loop !== false,
     };
   };
 
@@ -1641,6 +1644,13 @@
   const VictoryScreen = {
     version: "1",
     componentType: "COMPONENTE UNIVERSAL",
+    renderMediaAsset(asset, slot) {
+      if (!asset?.src) return `<video muted playsinline preload="none" data-victory-placeholder="${escapeHtml(slot)}"></video>`;
+      if (asset.type === "video" || /\.mp4($|\?)/.test(asset.src) || /\.webm($|\?)/.test(asset.src)) {
+        return `<video src="${escapeHtml(asset.src)}"${asset.poster ? ` poster="${escapeHtml(asset.poster)}"` : ""} muted playsinline preload="metadata" ${asset.loop ? "loop" : ""} autoplay></video>`;
+      }
+      return `<img src="${escapeHtml(asset.src)}" alt="${escapeHtml(asset.alt)}" loading="eager" decoding="async" />`;
+    },
     render(options = {}) {
       const character = normalizeVictoryAsset(options.characterAsset, options.characterName || options.character || "Personagem");
       const medal = normalizeVictoryAsset(options.medalAsset, options.medal || "Medalha");
@@ -1652,21 +1662,25 @@
       const initialXp = options.animateXp ? 0 : xpValue;
       const continueLabel = options.continueLabel || "CONTINUAR";
       const restartLabel = options.restartLabel || "JOGAR NOVAMENTE";
+      const backLabel = options.backLabel || "VOLTAR AO SITE";
       const continueAttrs = options.continueHref
         ? `href="${escapeHtml(options.continueHref)}"`
         : `type="button" data-victory-action="continue"${options.continueAction ? ` data-game-action="${escapeHtml(options.continueAction)}"` : ""}`;
       const restartAttrs = options.restartHref
         ? `href="${escapeHtml(options.restartHref)}"`
         : `type="button" data-victory-action="restart"${options.restartAction ? ` data-game-action="${escapeHtml(options.restartAction)}"` : ""}`;
+      const backAttrs = options.backHref
+        ? `href="${escapeHtml(options.backHref)}"`
+        : `type="button" data-victory-action="back"${options.backAction ? ` data-game-action="${escapeHtml(options.backAction)}"` : ""}`;
 
       return `
         <section class="game-screen victory-screen" data-screen="final" data-universal-component="VictoryScreen" data-component-version="1" aria-label="Tela de vitoria">
           <div class="victory-layer victory-overlay" aria-hidden="true"></div>
           <div class="victory-layer victory-background-fx" data-victory-slot="background-fx" aria-hidden="true">
-            ${backgroundFx?.src ? `<img src="${escapeHtml(backgroundFx.src)}" alt="" loading="eager" decoding="async" />` : `<video muted playsinline preload="none" data-victory-placeholder="background-fx"></video>`}
+            ${this.renderMediaAsset(backgroundFx, "background-fx")}
           </div>
           <div class="victory-layer victory-animation" data-victory-slot="victory-animation" aria-hidden="true">
-            ${victoryAnimation?.src ? `<img src="${escapeHtml(victoryAnimation.src)}" alt="" loading="eager" decoding="async" />` : `<video muted playsinline preload="none" data-victory-placeholder="victory-animation"></video>`}
+            ${this.renderMediaAsset(victoryAnimation, "victory-animation")}
           </div>
           <article class="victory-content">
             <div class="victory-medal" data-victory-slot="medal">
@@ -1682,6 +1696,7 @@
             <div class="victory-actions">
               <${options.continueHref ? "a" : "button"} class="game-secondary-button victory-continue-button" ${continueAttrs}>${escapeHtml(continueLabel)}</${options.continueHref ? "a" : "button"}>
               <${options.restartHref ? "a" : "button"} class="game-primary-button game-restart-button victory-restart-button" ${restartAttrs}>${escapeHtml(restartLabel)}</${options.restartHref ? "a" : "button"}>
+              ${options.backHref || options.backAction ? `<${options.backHref ? "a" : "button"} class="game-secondary-button victory-back-button" ${backAttrs}>${escapeHtml(backLabel)}</${options.backHref ? "a" : "button"}>` : ""}
             </div>
           </article>
         </section>
@@ -5101,24 +5116,28 @@
     getVictoryOptions() {
       const componentsAssets = this.game.assets.components || {};
       const characterMap = this.game.assets.characters || {};
+      const victoryConfig = window.RaizesGameConfig?.games?.[this.game.id]?.victory || {};
       const characterAsset = this.game.id === "organizando-cesta"
         ? characterMap.biaCelebrating || characterMap.bia || characterMap.anaCelebrating
         : componentsAssets.butterfly || characterMap.biaCelebrating || characterMap.bia || characterMap.ana;
       const effectAssets = componentsAssets.effects || this.game.assets.effects || {};
       return {
         character: this.game.character,
-        characterAsset,
+        characterAsset: victoryConfig.characterAsset || characterAsset,
         characterName: this.game.character,
         medal: this.game.medal,
-        medalAsset: componentsAssets.medal || this.game.assets.reward,
+        medalAsset: victoryConfig.medalAsset || componentsAssets.medal || this.game.assets.reward,
         xp: this.game.xp,
         animateXp: true,
-        message: "VOCE FOI INCRIVEL!",
-        continueHref: "jogos.html",
+        message: victoryConfig.message || "VOCE FOI INCRIVEL!",
+        continueHref: victoryConfig.continueHref || "jogos.html",
+        continueLabel: victoryConfig.continueLabel || "CONTINUAR",
+        backHref: victoryConfig.backHref || "",
+        backLabel: victoryConfig.backLabel || "VOLTAR AO SITE",
         restartAction: "restart",
         effects: {
-          backgroundFx: effectAssets.confetti || effectAssets.particles,
-          victoryAnimation: effectAssets.stars || effectAssets.twinkle,
+          backgroundFx: victoryConfig.backgroundFx || effectAssets.confetti || effectAssets.particles,
+          victoryAnimation: victoryConfig.victoryAnimation || effectAssets.stars || effectAssets.twinkle,
         },
       };
     }
