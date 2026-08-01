@@ -532,13 +532,31 @@ Tipos entregues no pacote oficial:
 - `memory_game`: cartas com pares;
 - `count_and_select`: cena contavel e resposta por opcoes.
 
+Componentes universais registrados:
+
+- COMPONENTE UNIVERSAL 001: `Victory Screen` V1. Componente reutilizavel de conclusao/vitoria, com camadas independentes na ordem `Background FX`, `Victory Animation`, `Medalha`, `XP`, `Mensagem`, `Personagem`, `Botoes`. O Codex preenche apenas medalha, XP, personagem e mensagem.
+- COMPONENTE UNIVERSAL 002: `TransitionFX` V1. Componente opcional de transicao antes de mudancas de tela, com duracao, velocidade, ponto de troca e video parametrizaveis. Aceita videos transparentes, videos com fundo removivel e fallback CSS.
+- COMPONENTE UNIVERSAL 003: `MagicAmbienceLayer` V1. Camada opcional de ambiencia magica sobre cenarios, com ativacao por tela, intensidade controlavel, suporte a videos transparentes ou com fundo removivel e otimizacao por pausa/remocao de video quando desativada.
+- COMPONENTE UNIVERSAL 004: `MagicTouchFX` V1. Efeito pontual de toque/clique executado na posicao exata do evento, com suporte a videos transparentes, multiplas execucoes simultaneas, escala automatica por objeto e `pointer-events: none`.
+- COMPONENTE UNIVERSAL 005: `MagicGlowLayer` V1. Camada independente de brilho sobre a caixa, com troca facil de video, intensidade, ativacao/desativacao e velocidade. A caixa fisica permanece como componente separado.
+- COMPONENTE UNIVERSAL 006: `SmartButton` V1. Botao reutilizavel com estados `idle`, `hover`, `pressed` e `disabled`, aceitando imagem, video ou sprite por estado, brilho independente e texto preservado em HTML.
+- COMPONENTE UNIVERSAL 007: `StarBurstFX` V1. Efeito pontual de explosao de estrelas para qualquer posicao da tela, com multiplas execucoes simultaneas, escala, intensidade, duracao e suporte a videos transparentes.
+- COMPONENTE UNIVERSAL 008: `UniversalLoader` V1. Loader reutilizavel com estrutura `Loader Animation`, `Logo`, `Texto` e `Progress Bar`, aceitando videos transparentes ou com fundo removivel, troca de logotipo/mensagem e barra de progresso opcional.
+- COMPONENTE UNIVERSAL 009: `LivingCard` V1. Sistema universal de cartas interativas com estados `idle`, `hover`, `pressed`, `selected`, `correct` e `disabled`, controlando escala, sombra, brilho, borda, animacao, som, `MagicTouchFX` e `StarBurstFX`, com conteudo dinamico.
+- COMPONENTE UNIVERSAL 010: `LivingObject` V1. Sistema reutilizavel de microanimacoes leves para objetos em cartas de escolha, com estados `idle`, `hover`, `pressed`, `selected`, `celebrating` e `disabled`, perfis `float`, `sway`, `pulse`, `shine`, `bounce`, `sparkle`, `breathe` e `static`, configuracao externa por objeto e respeito a `prefers-reduced-motion`.
+
 Componentes especificos registrados:
 
 - COMPONENTE ESPECIFICO 001: `Magic Box` V1. Componente reutilizavel da Caixa Misteriosa, preparado para animacoes por video, sprite ou sequencia de imagens, com maquina de estados propria (`idle`, `breathing`, `touch`, `shake`, `glow`, `anticipation`, `idle`) e eventos `onTouch`, `onAnimationEnd` e `onReveal`.
 
+Infraestrutura audiovisual registrada:
+
+- INTRO CINEMATOGRAFICA V1: introducao opcional antes da tela inicial do jogo, exibida automaticamente apenas na primeira entrada da experiencia, com botao de pular, finalizacao automatica para a tela inicial e pre-carregamento dos assets durante a reproducao.
+- REVEAL STAGE V1: palco reutilizavel de revelacao com camadas independentes na ordem `Magic Box`, `Reveal FX`, `Objeto`, `Glow Overlay`. O objeto e inserido dinamicamente e nunca faz parte da animacao.
+
 Personagens registrados:
 
-- PERSONAGEM: `Bia`. Estados homologados para personagem reativo: `Idle`, `Looking`, `Inviting`, `Celebrating`.
+- PERSONAGEM: `Bia`. Estados homologados para personagem animado reativo: `idle`, `looking`, `pointing`, `celebrating`, `talking`. O personagem pode trocar de estado sem recarregar a tela, com assets substituiveis por versao em imagem, video, sprite ou sequencia de frames. O estado legado `inviting` segue aceito como alias de `pointing`.
 
 Atividades de homologacao vinculadas a `RS-EI4-V1-EXP-001`:
 

@@ -2,6 +2,9 @@
   const storageKey = "raizes:game-progress:v1";
   const atlasBase = "assets/games/caixa-misteriosa/";
   const asset = (path) => `${atlasBase}${path}`;
+  const caixaEi2Base = "assets/jogos/ei2/caixa-misteriosa/";
+  const caixaEi2Object = (name) => `${caixaEi2Base}objects/${name}.png`;
+  const caixaEi2Card = (name) => `${caixaEi2Base}references/card-${name}.png`;
   const ge2CaixaBase = "assets/game-engine-2/assets/caixa-misteriosa/";
   const ge2CaixaAsset = (path) => `${ge2CaixaBase}${path}`;
   const ge2CestaBase = "assets/game-engine-2/assets/organizando-cesta/";
@@ -33,6 +36,7 @@
   const festaV2Base = "assets/games/grande-festa-v2/";
   const festaV2Asset = (path) => `${festaV2Base}${path}`;
   const storyAlbumKey = "raizes:story-album:v1";
+  const cinematicIntroStorageKey = "raizes:cinematic-intro-seen:v1";
 
   const gameRepository = {
     games: {
@@ -93,6 +97,8 @@
               particles: ge2CaixaAsset("effects/particles.png"),
               glow: ge2CaixaAsset("effects/glow-circle.png"),
               twinkle: ge2CaixaAsset("effects/twinkle.png"),
+              revealFx: ge2CaixaAsset("reveal-fx/reveal-fx.png"),
+              glowOverlay: ge2CaixaAsset("effects/glow-circle.png"),
             },
           },
           backgroundVideo: {
@@ -103,6 +109,14 @@
               fallback: asset("components/sala-descobertas-bg.png"),
             },
           },
+          cinematicIntro: {
+            version: "V1",
+            src: "assets/video/RS-020-video-institucional.mp4",
+            poster: asset("screens/screen-intro.png"),
+            fallback: asset("screens/screen-intro.png"),
+            title: "A Caixa Misteriosa",
+            skipLabel: "Pular introducao",
+          },
           magicBox: {
             version: "V1",
             animations: {
@@ -110,8 +124,30 @@
               breathing: { type: "image", src: ge2CaixaAsset("boxes/closed.png") },
               touch: { type: "image", src: ge2CaixaAsset("boxes/closed.png") },
               shake: { type: "image", src: ge2CaixaAsset("boxes/closed.png") },
-              glow: { type: "image", src: ge2CaixaAsset("boxes/glowing.png") },
-              anticipation: { type: "image", src: ge2CaixaAsset("boxes/glowing.png") },
+              glow: { type: "image", src: ge2CaixaAsset("boxes/closed.png") },
+              anticipation: { type: "image", src: ge2CaixaAsset("boxes/closed.png") },
+            },
+          },
+          magicGlowLayer: {
+            enabled: true,
+            image: ge2CaixaAsset("effects/glow-circle.png"),
+            intensity: 0.68,
+            speed: 1,
+            transparent: true,
+          },
+          smartButtons: {
+            start: {
+              variant: "caixa-start",
+              states: {
+                idle: { type: "image", src: ge2CaixaAsset("buttons/start-normal.png") },
+                hover: { type: "image", src: ge2CaixaAsset("buttons/start-hover.png") },
+                pressed: { type: "image", src: ge2CaixaAsset("buttons/start-pressed.png") },
+                disabled: { type: "image", src: ge2CaixaAsset("buttons/start-disabled.png") },
+              },
+              glow: {
+                image: ge2CaixaAsset("effects/glow-circle.png"),
+                intensity: 0.34,
+              },
             },
           },
           reactiveCharacters: {
@@ -121,8 +157,9 @@
               states: {
                 idle: { type: "image", src: ge2CaixaAsset("characters/bia-smile.png") },
                 looking: { type: "image", src: ge2CaixaAsset("characters/bia-point.png") },
-                inviting: { type: "image", src: ge2CaixaAsset("characters/bia-neutral.png") },
+                pointing: { type: "image", src: ge2CaixaAsset("characters/bia-point.png") },
                 celebrating: { type: "image", src: ge2CaixaAsset("characters/bia-celebrate.png") },
+                talking: { type: "image", src: ge2CaixaAsset("characters/bia-neutral.png") },
               },
             },
           },
@@ -139,9 +176,9 @@
             narration: "Escute a dica: e bem macio. Qual objeto pode estar na caixa?",
             correctId: "algodao",
             choices: [
-              { id: "pena", label: "Pena", color: "#ef8b21", image: ge2CaixaAsset("objects/feather.png") },
-              { id: "algodao", label: "Algodao", color: "#6aa351", image: ge2CaixaAsset("objects/cotton.png") },
-              { id: "esponja", label: "Esponja", color: "#4b9cc4", image: ge2CaixaAsset("objects/sponge.png") },
+              { id: "pena", label: "Pena", color: "#ef8b21", image: caixaEi2Object("pena"), cardImage: caixaEi2Card("pena"), fallbackImage: ge2CaixaAsset("objects/feather.png") },
+              { id: "algodao", label: "Algodao", color: "#6aa351", image: caixaEi2Object("algodao"), cardImage: caixaEi2Card("algodao"), fallbackImage: ge2CaixaAsset("objects/cotton.png") },
+              { id: "esponja", label: "Esponja", color: "#4b9cc4", image: caixaEi2Object("esponja"), cardImage: caixaEi2Card("esponja"), fallbackImage: ge2CaixaAsset("objects/sponge.png") },
             ],
           },
           {
@@ -150,9 +187,9 @@
             narration: "Agora a dica e: e leve e flutua.",
             correctId: "pena",
             choices: [
-              { id: "bola", label: "Bola", color: "#4b9cc4", image: ge2CaixaAsset("objects/ball.png") },
-              { id: "pena", label: "Pena", color: "#ef8b21", image: ge2CaixaAsset("objects/feather.png") },
-              { id: "cubo", label: "Cubo", color: "#6aa351", image: ge2CaixaAsset("objects/cube.png") },
+              { id: "bola", label: "Bola", color: "#4b9cc4", image: caixaEi2Object("bola"), cardImage: caixaEi2Card("bola"), fallbackImage: ge2CaixaAsset("objects/ball.png") },
+              { id: "pena", label: "Pena", color: "#ef8b21", image: caixaEi2Object("pena"), cardImage: caixaEi2Card("pena"), fallbackImage: ge2CaixaAsset("objects/feather.png") },
+              { id: "cubo", label: "Cubo", color: "#6aa351", image: caixaEi2Object("cubo"), cardImage: caixaEi2Card("cubo"), fallbackImage: ge2CaixaAsset("objects/cube.png") },
             ],
           },
           {
@@ -161,9 +198,9 @@
             narration: "Ultima dica: brilha como uma conquista.",
             correctId: "estrela",
             choices: [
-              { id: "flor", label: "Flor", color: "#6aa351", image: ge2CaixaAsset("objects/flower.png") },
-              { id: "estrela", label: "Estrela", color: "#ef8b21", image: ge2CaixaAsset("effects/stars.png") },
-              { id: "folha", label: "Folha", color: "#4b9cc4", image: ge2CaixaAsset("objects/leaf.png") },
+              { id: "flor", label: "Flor", color: "#6aa351", image: caixaEi2Object("flor"), cardImage: caixaEi2Card("flor"), fallbackImage: ge2CaixaAsset("objects/flower.png") },
+              { id: "estrela", label: "Estrela", color: "#ef8b21", image: caixaEi2Object("estrela"), cardImage: caixaEi2Card("estrela"), fallbackImage: ge2CaixaAsset("effects/stars.png") },
+              { id: "folha", label: "Folha", color: "#4b9cc4", image: caixaEi2Object("folha"), cardImage: caixaEi2Card("folha"), fallbackImage: ge2CaixaAsset("objects/leaf.png") },
             ],
           },
         ],
@@ -1197,11 +1234,419 @@
     };
   };
 
+  const objectAnimationProfiles = {
+    pena: {
+      idle: ["float", "sway"],
+      hover: ["float", "sway"],
+      pressed: ["sway"],
+      selected: ["float", "sparkle"],
+      celebrating: ["float", "sparkle"],
+      disabled: ["static"],
+    },
+    algodao: {
+      idle: ["breathe"],
+      hover: ["breathe"],
+      pressed: ["pulse"],
+      selected: ["pulse", "sparkle"],
+      celebrating: ["pulse", "sparkle"],
+      disabled: ["static"],
+    },
+    esponja: {
+      idle: ["pulse"],
+      hover: ["pulse"],
+      pressed: ["bounce"],
+      selected: ["bounce", "sparkle"],
+      celebrating: ["bounce", "sparkle"],
+      disabled: ["static"],
+    },
+    flor: {
+      idle: ["sway"],
+      hover: ["sway"],
+      pressed: ["pulse"],
+      selected: ["pulse", "sparkle"],
+      celebrating: ["pulse", "sparkle"],
+      disabled: ["static"],
+    },
+    estrela: {
+      idle: ["shine"],
+      hover: ["shine"],
+      pressed: ["pulse"],
+      selected: ["sparkle", "pulse"],
+      celebrating: ["sparkle", "pulse"],
+      disabled: ["static"],
+    },
+    folha: {
+      idle: ["sway"],
+      hover: ["sway"],
+      pressed: ["float"],
+      selected: ["float", "sparkle"],
+      celebrating: ["float", "sparkle"],
+      disabled: ["static"],
+    },
+    bola: {
+      idle: ["breathe"],
+      hover: ["breathe"],
+      pressed: ["bounce"],
+      selected: ["bounce", "sparkle"],
+      celebrating: ["bounce", "sparkle"],
+      disabled: ["static"],
+    },
+    cubo: {
+      idle: ["shine"],
+      hover: ["shine"],
+      pressed: ["pulse"],
+      selected: ["pulse", "sparkle"],
+      celebrating: ["pulse", "sparkle"],
+      disabled: ["static"],
+    },
+  };
+
+  const objectDisplayLabels = {
+    pena: "PENA",
+    algodao: "ALGODÃO",
+    esponja: "ESPONJA",
+    flor: "FLOR",
+    estrela: "ESTRELA",
+    folha: "FOLHA",
+    bola: "BOLA",
+    cubo: "CUBO",
+  };
+
+  const normalizeObjectProfileId = (value = "") => String(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  const SmartButton = {
+    version: "1",
+    componentType: "COMPONENTE UNIVERSAL",
+    states: ["idle", "hover", "pressed", "disabled"],
+    defaults: {
+      tag: "button",
+      type: "button",
+      label: "Continuar",
+      className: "game-primary-button",
+      variant: "default",
+      disabled: false,
+      glow: null,
+      states: {},
+    },
+    normalize(options = {}) {
+      return {
+        ...this.defaults,
+        ...options,
+        tag: options.href ? "a" : (options.tag || this.defaults.tag),
+        states: options.states || options.assets || {},
+        glow: options.glow || options.glowLayer || null,
+      };
+    },
+    attrs(options = {}) {
+      const attrs = [];
+      const tag = options.href ? "a" : (options.tag || "button");
+      if (tag === "button") attrs.push(`type="${escapeHtml(options.type || "button")}"`);
+      if (options.href) attrs.push(`href="${escapeHtml(options.href)}"`);
+      if (options.action) attrs.push(`data-game-action="${escapeHtml(options.action)}"`);
+      if (options.ariaLabel) attrs.push(`aria-label="${escapeHtml(options.ariaLabel)}"`);
+      if (options.disabled) attrs.push("disabled", `aria-disabled="true"`);
+      Object.entries(options.data || {}).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) attrs.push(`data-${escapeHtml(key)}="${escapeHtml(value)}"`);
+      });
+      return attrs.join(" ");
+    },
+    renderAsset(asset, state) {
+      if (!asset) return "";
+      const normalized = typeof asset === "string" ? { type: "image", src: asset } : asset;
+      if (normalized.type === "video") {
+        return `<video src="${escapeHtml(normalized.src)}"${normalized.poster ? ` poster="${escapeHtml(normalized.poster)}"` : ""} muted loop playsinline preload="metadata" disablepictureinpicture></video>`;
+      }
+      if (normalized.type === "sprite" || normalized.sprite) {
+        const steps = Math.max(1, Number(normalized.steps || 1) || 1);
+        const frameMs = Math.max(40, Number(normalized.frameMs || 90) || 90);
+        return `<span class="smart-button-sprite" style="--smart-button-sprite:url('${escapeHtml(normalized.src || normalized.sprite)}');--smart-button-steps:${steps};--smart-button-duration:${steps * frameMs}ms"></span>`;
+      }
+      return `<img src="${escapeHtml(normalized.src)}" alt="" loading="eager" decoding="async" />`;
+    },
+    renderGlow(glow) {
+      if (!glow) return `<span class="smart-button-glow" data-smart-button-glow aria-hidden="true"></span>`;
+      const normalized = typeof glow === "string" ? { image: glow } : glow;
+      const intensity = Math.max(0, Math.min(1, Number(normalized.intensity ?? normalized.opacity ?? 0.6) || 0));
+      return `
+        <span class="smart-button-glow" data-smart-button-glow data-smart-button-glow-transparent="${normalized.transparent !== false ? "true" : "false"}" data-smart-button-glow-removable-background="${normalized.removableBackground ? "true" : "false"}" style="--smart-button-glow-intensity:${intensity};--smart-button-glow-blend:${escapeHtml(normalized.blendMode || "screen")};" aria-hidden="true">
+          ${normalized.src || normalized.video ? `<video src="${escapeHtml(normalized.src || normalized.video)}"${normalized.poster ? ` poster="${escapeHtml(normalized.poster)}"` : ""} muted loop playsinline preload="metadata" disablepictureinpicture></video>` : ""}
+          ${normalized.image ? `<img src="${escapeHtml(normalized.image)}" alt="" loading="eager" decoding="async" />` : ""}
+        </span>
+      `;
+    },
+    render(options = {}) {
+      const config = this.normalize(options);
+      const tag = config.tag;
+      const states = this.states.map((state) => {
+        const asset = config.states[state] || (state !== "idle" ? config.states.idle : null);
+        return `<span class="smart-button-media-slot" data-smart-button-state-slot="${state}" aria-hidden="true">${this.renderAsset(asset, state)}</span>`;
+      }).join("");
+      return `
+        <${tag} class="smart-button smart-button-${escapeHtml(config.variant)} ${escapeHtml(config.className)}" data-universal-component="SmartButton" data-component-version="1" data-smart-button data-smart-button-state="idle" ${this.attrs(config)}>
+          <span class="smart-button-media" aria-hidden="true">${states}</span>
+          ${this.renderGlow(config.glow)}
+          <span class="smart-button-label">${escapeHtml(config.label)}</span>
+        </${tag}>
+      `;
+    },
+  };
+
+  const LivingObject = {
+    version: "1",
+    componentType: "COMPONENTE UNIVERSAL",
+    states: ["idle", "hover", "pressed", "selected", "celebrating", "disabled"],
+    movements: ["float", "sway", "pulse", "shine", "bounce", "sparkle", "breathe", "static"],
+    defaults: {
+      id: "",
+      image: "",
+      label: "",
+      state: "idle",
+      animationProfile: "",
+      profiles: objectAnimationProfiles,
+      className: "",
+    },
+    isLowPower() {
+      if (typeof window === "undefined" || typeof navigator === "undefined") return false;
+      return Boolean(navigator.connection?.saveData) || Number(navigator.hardwareConcurrency || 8) <= 4;
+    },
+    normalize(options = {}) {
+      const id = normalizeObjectProfileId(options.id || options.profileId || options.animationProfile || options.label || "");
+      const state = this.states.includes(options.state) ? options.state : this.defaults.state;
+      const profiles = options.profiles || this.defaults.profiles;
+      const profile = profiles[id] || profiles[normalizeObjectProfileId(options.label || "")] || {};
+      const movements = options.movements || profile[state] || profile.idle || [options.animationProfile || "static"];
+      const safeMovements = movements.filter((movement) => this.movements.includes(movement));
+      return {
+        ...this.defaults,
+        ...options,
+        id,
+        state,
+        profiles,
+        movements: this.isLowPower() ? safeMovements.filter((movement) => !["sparkle", "bounce"].includes(movement)) : safeMovements,
+      };
+    },
+    render(options = {}) {
+      const config = this.normalize(options);
+      const movementAttrs = config.movements.map((movement) => `data-living-object-${movement}="true"`).join(" ");
+      return `
+        <span class="living-object ${escapeHtml(config.className)}" data-universal-component="LivingObject" data-component-version="1" data-living-object data-living-object-id="${escapeHtml(config.id)}" data-living-object-state="${escapeHtml(config.state)}" data-living-object-low-power="${this.isLowPower() ? "true" : "false"}" ${movementAttrs}>
+          <span class="living-object-shine" aria-hidden="true"></span>
+          <img class="living-object-image game-object" src="${escapeHtml(config.image)}" alt="${escapeHtml(config.label)}" loading="eager" decoding="async" />
+          <span class="living-object-sparkle" aria-hidden="true"></span>
+        </span>
+      `;
+    },
+    setState(node, stateName = "idle") {
+      if (!node) return false;
+      const target = node.matches?.("[data-living-object]") ? node : node.querySelector?.("[data-living-object]");
+      if (!target) return false;
+      const id = target.dataset.livingObjectId || "";
+      const current = this.normalize({ id, state: stateName });
+      this.movements.forEach((movement) => {
+        target.toggleAttribute(`data-living-object-${movement}`, current.movements.includes(movement));
+      });
+      target.dataset.livingObjectState = current.state;
+      return true;
+    },
+  };
+
+  const LivingCard = {
+    version: "1",
+    componentType: "COMPONENTE UNIVERSAL",
+    states: ["idle", "hover", "pressed", "selected", "correct", "disabled"],
+    stateDefaults: {
+      idle: { scale: 1, shadow: "0 14px 24px rgba(36, 70, 45, 0.12)", glow: 0, border: "rgba(134, 179, 119, 0.95)", animation: "none", sound: "", magicTouch: false, starBurst: false },
+      hover: { scale: 1.025, shadow: "0 20px 34px rgba(36, 70, 45, 0.18)", glow: 0.28, border: "#f4c44f", animation: "living-card-hover", sound: "", magicTouch: true, starBurst: false },
+      pressed: { scale: 0.98, shadow: "0 10px 18px rgba(36, 70, 45, 0.16)", glow: 0.18, border: "#e58b32", animation: "none", sound: "effects", magicTouch: true, starBurst: false },
+      selected: { scale: 1.035, shadow: "0 0 0 8px rgba(255, 216, 77, 0.28), 0 18px 30px rgba(52, 39, 16, 0.18)", glow: 0.42, border: "#f4b72e", animation: "living-card-selected", sound: "effects", magicTouch: true, starBurst: { intensity: "medium", scale: 0.82, duration: 680 } },
+      correct: { scale: 1.045, shadow: "0 0 0 8px rgba(98, 189, 58, 0.24), 0 0 32px rgba(255, 214, 67, 0.46)", glow: 0.62, border: "#62bd3a", animation: "living-card-correct", sound: "success", magicTouch: true, starBurst: true },
+      disabled: { scale: 1, shadow: "0 8px 18px rgba(36, 70, 45, 0.08)", glow: 0, border: "rgba(134, 179, 119, 0.42)", animation: "none", sound: "", magicTouch: false, starBurst: false },
+    },
+    defaults: {
+      tag: "button",
+      type: "button",
+      state: "idle",
+      className: "",
+      variant: "default",
+      disabled: false,
+      image: "",
+      imageAlt: "",
+      cardImage: "",
+      fallbackImage: "",
+      text: "",
+      html: "",
+      style: "",
+      object: null,
+      objectId: "",
+      states: {},
+      magicTouch: {},
+      starBurst: {},
+    },
+    normalize(options = {}) {
+      const state = this.states.includes(options.state) ? options.state : this.defaults.state;
+      const customStates = options.states || {};
+      const states = this.states.reduce((acc, stateName) => {
+        acc[stateName] = { ...this.stateDefaults[stateName], ...(customStates[stateName] || {}) };
+        return acc;
+      }, {});
+      const object = options.object || (!options.cardImage && options.image ? {
+        id: options.objectId || options.id || options.text,
+        image: options.image,
+        label: options.imageAlt || options.text,
+        animationProfile: options.animationProfile,
+      } : null);
+      return {
+        ...this.defaults,
+        ...options,
+        tag: options.href ? "a" : (options.tag || this.defaults.tag),
+        state,
+        disabled: options.disabled === true || state === "disabled",
+        object,
+        states,
+      };
+    },
+    attrs(options = {}) {
+      const attrs = [];
+      const tag = options.href ? "a" : (options.tag || "button");
+      if (tag === "button") attrs.push(`type="${escapeHtml(options.type || "button")}"`);
+      if (options.href) attrs.push(`href="${escapeHtml(options.href)}"`);
+      if (options.id) attrs.push(`id="${escapeHtml(options.id)}"`);
+      if (options.name) attrs.push(`name="${escapeHtml(options.name)}"`);
+      if (options.value) attrs.push(`value="${escapeHtml(options.value)}"`);
+      if (options.action) attrs.push(`data-game-action="${escapeHtml(options.action)}"`);
+      if (options.ariaLabel) attrs.push(`aria-label="${escapeHtml(options.ariaLabel)}"`);
+      if (options.disabled) attrs.push("disabled", `aria-disabled="true"`);
+      if (typeof options.attrs === "string") attrs.push(options.attrs);
+      Object.entries(options.data || {}).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) attrs.push(`data-${escapeHtml(key)}="${escapeHtml(value)}"`);
+      });
+      return attrs.join(" ");
+    },
+    styleFor(config) {
+      const state = config.states[config.state] || this.stateDefaults.idle;
+      return [
+        `--living-card-scale:${state.scale ?? 1}`,
+        `--living-card-shadow:${state.shadow || this.stateDefaults.idle.shadow}`,
+        `--living-card-glow:${Math.max(0, Math.min(1, Number(state.glow ?? 0) || 0))}`,
+        `--living-card-border:${escapeHtml(state.border || this.stateDefaults.idle.border)}`,
+        `--living-card-animation:${escapeHtml(state.animation || "none")}`,
+        config.style || "",
+      ].join(";");
+    },
+    render(options = {}) {
+      const config = this.normalize(options);
+      const tag = config.tag;
+      const completeCardFallback = config.fallbackImage ? ` onerror="this.onerror=null;this.src='${escapeHtml(config.fallbackImage)}';"` : "";
+      const completeCardHtml = config.cardImage
+        ? `<span class="living-card-complete-art" data-living-card-complete-art><img src="${escapeHtml(config.cardImage)}" alt="${escapeHtml(config.imageAlt || config.text)}" loading="eager" decoding="async"${completeCardFallback} /></span>`
+        : "";
+      const objectHtml = config.object ? LivingObject.render({
+        ...config.object,
+        state: config.state === "correct" ? "celebrating" : config.state,
+      }) : "";
+      return `
+        <${tag} class="living-card living-card-${escapeHtml(config.variant)} ${config.cardImage ? "is-complete-art" : ""} ${escapeHtml(config.className)}" data-universal-component="LivingCard" data-component-version="1" data-living-card data-living-card-complete="${config.cardImage ? "true" : "false"}" data-living-card-state="${escapeHtml(config.state)}" style="${this.styleFor(config)}" ${this.attrs(config)}>
+          <span class="living-card-glow" aria-hidden="true"></span>
+          <span class="living-card-content">
+            ${completeCardHtml || objectHtml || (config.image ? `<img class="living-card-image" src="${escapeHtml(config.image)}" alt="${escapeHtml(config.imageAlt || config.text)}" loading="eager" decoding="async" />` : "")}
+            ${config.html || (config.text ? `<span class="living-card-text">${escapeHtml(config.text)}</span>` : "")}
+          </span>
+        </${tag}>
+      `;
+    },
+    mount(container = document.body, options = {}) {
+      const host = container || document.body;
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = this.render(options);
+      const node = wrapper.firstElementChild;
+      host.appendChild(node);
+      this.bind(node, options);
+      return node;
+    },
+    bind(node, options = {}) {
+      if (!node || node.dataset.livingCardBound === "true") return node;
+      node.dataset.livingCardBound = "true";
+      node.__livingCardOptions = options;
+      LivingObject.setState(node, node.dataset.livingCardState === "correct" ? "celebrating" : node.dataset.livingCardState || "idle");
+      node.addEventListener("pointerenter", () => this.previewState(node, "hover"));
+      node.addEventListener("pointerdown", (event) => this.playState(node, "pressed", { event }));
+      node.addEventListener("pointerup", () => this.previewState(node, node.dataset.livingCardState || "idle"));
+      node.addEventListener("pointerleave", () => this.previewState(node, node.dataset.livingCardState || "idle"));
+      return node;
+    },
+    previewState(node, stateName) {
+      if (!node || node.disabled || node.getAttribute("aria-disabled") === "true") return false;
+      const options = node.__livingCardOptions || {};
+      const config = this.normalize({ ...options, state: stateName });
+      node.style.cssText += `;${this.styleFor(config)}`;
+      LivingObject.setState(node, stateName === "correct" ? "celebrating" : stateName);
+      return true;
+    },
+    playSound(sound) {
+      if (!sound) return;
+      if (typeof sound === "function") {
+        sound();
+        return;
+      }
+      if (typeof sound === "string" && audioPlayer?.blip) audioPlayer.blip(sound);
+    },
+    playState(node, stateName, context = {}) {
+      if (!node) return false;
+      const options = node.__livingCardOptions || {};
+      const config = this.normalize({ ...options, state: stateName });
+      const state = config.states[stateName] || config.states.idle;
+      node.dataset.livingCardState = stateName;
+      node.classList.toggle("is-selected", stateName === "selected" || stateName === "correct");
+      node.classList.toggle("is-correct", stateName === "correct");
+      node.disabled = stateName === "disabled";
+      node.style.cssText += `;${this.styleFor(config)}`;
+      LivingObject.setState(node, stateName === "correct" ? "celebrating" : stateName);
+      this.syncSiblings(node, stateName);
+      this.playSound(state.sound);
+      if (state.magicTouch) playMagicTouch({ target: node, ...(config.magicTouch || {}), ...(state.magicTouch === true ? {} : state.magicTouch), x: context.event?.clientX, y: context.event?.clientY });
+      if (state.starBurst) playStarBurst({ target: node, ...(config.starBurst || {}), ...(state.starBurst === true ? {} : state.starBurst) });
+      return true;
+    },
+    syncSiblings(node, stateName) {
+      const group = node.closest?.("[data-choice-cards], [data-audio-choice-cards], [data-pattern-choice-cards], [data-interactive-card-grid]");
+      if (!group) return;
+      const shouldDim = ["selected", "correct"].includes(stateName);
+      group.querySelectorAll("[data-living-card]").forEach((card) => {
+        if (card !== node) card.classList.toggle("is-dimmed", shouldDim);
+        if (!shouldDim) card.classList.remove("is-dimmed");
+      });
+    },
+    lockSelection(node, duration = 620) {
+      if (!node) return true;
+      if (node.dataset.livingCardSelectLocked === "true") return false;
+      node.dataset.livingCardSelectLocked = "true";
+      window.setTimeout(() => {
+        delete node.dataset.livingCardSelectLocked;
+      }, duration);
+      return true;
+    },
+    setState(node, stateName, context = {}) {
+      return this.playState(node, stateName, context);
+    },
+    hydrate(root = document) {
+      root.querySelectorAll("[data-living-card]").forEach((node) => this.bind(node));
+    },
+  };
+
   const VictoryScreen = {
+    version: "1",
+    componentType: "COMPONENTE UNIVERSAL",
     render(options = {}) {
       const character = normalizeVictoryAsset(options.characterAsset, options.characterName || options.character || "Personagem");
       const medal = normalizeVictoryAsset(options.medalAsset, options.medal || "Medalha");
       const effects = options.effects || {};
+      const backgroundFx = normalizeVictoryAsset(options.backgroundFx || effects.backgroundFx || effects.particles || effects.confetti, "Background FX");
+      const victoryAnimation = normalizeVictoryAsset(options.victoryAnimation || effects.victoryAnimation || effects.stars || effects.twinkle, "Victory Animation");
       const message = options.message || "VOCE FOI INCRIVEL!";
       const xpValue = Number(options.xp) || 0;
       const initialXp = options.animateXp ? 0 : xpValue;
@@ -1215,16 +1660,13 @@
         : `type="button" data-victory-action="restart"${options.restartAction ? ` data-game-action="${escapeHtml(options.restartAction)}"` : ""}`;
 
       return `
-        <section class="game-screen victory-screen" data-screen="final" aria-label="Tela de vitoria">
+        <section class="game-screen victory-screen" data-screen="final" data-universal-component="VictoryScreen" data-component-version="1" aria-label="Tela de vitoria">
           <div class="victory-layer victory-overlay" aria-hidden="true"></div>
-          <div class="victory-layer victory-particles" data-victory-slot="particles" aria-hidden="true">
-            ${effects.particles ? `<img src="${escapeHtml(effects.particles)}" alt="" loading="eager" decoding="async" />` : `<video muted playsinline preload="none" data-victory-placeholder="particles"></video>`}
+          <div class="victory-layer victory-background-fx" data-victory-slot="background-fx" aria-hidden="true">
+            ${backgroundFx?.src ? `<img src="${escapeHtml(backgroundFx.src)}" alt="" loading="eager" decoding="async" />` : `<video muted playsinline preload="none" data-victory-placeholder="background-fx"></video>`}
           </div>
-          <div class="victory-layer victory-confetti" data-victory-slot="confetti" aria-hidden="true">
-            ${effects.confetti ? `<img src="${escapeHtml(effects.confetti)}" alt="" loading="eager" decoding="async" />` : `<video muted playsinline preload="none" data-victory-placeholder="confetti"></video>`}
-          </div>
-          <div class="victory-layer victory-stars" data-victory-slot="stars" aria-hidden="true">
-            ${effects.stars ? `<img src="${escapeHtml(effects.stars)}" alt="" loading="eager" decoding="async" />` : `<video muted playsinline preload="none" data-victory-placeholder="stars"></video>`}
+          <div class="victory-layer victory-animation" data-victory-slot="victory-animation" aria-hidden="true">
+            ${victoryAnimation?.src ? `<img src="${escapeHtml(victoryAnimation.src)}" alt="" loading="eager" decoding="async" />` : `<video muted playsinline preload="none" data-victory-placeholder="victory-animation"></video>`}
           </div>
           <article class="victory-content">
             <div class="victory-medal" data-victory-slot="medal">
@@ -1265,6 +1707,580 @@
   };
 
   const showVictory = (options = {}) => VictoryScreen.show(options);
+
+  const UniversalLoader = {
+    version: "1",
+    componentType: "COMPONENTE UNIVERSAL",
+    defaults: {
+      enabled: true,
+      message: "Carregando...",
+      progress: null,
+      showProgress: true,
+      variant: "premium",
+      logo: "",
+      logoAlt: "Raizes e Saberes",
+      label: "Carregamento",
+      transparent: true,
+      removableBackground: false,
+      blendMode: "screen",
+      speed: 1,
+      allowMultiple: false,
+    },
+    normalize(options = {}) {
+      const hasProgress = options.progress !== undefined || options.value !== undefined;
+      const progressValue = Number(options.progress ?? options.value ?? 0);
+      return {
+        ...this.defaults,
+        ...options,
+        enabled: options.enabled !== false,
+        message: options.message || options.text || this.defaults.message,
+        logo: options.logo || options.logoSrc || options.logoUrl || this.defaults.logo,
+        logoAlt: options.logoAlt || options.alt || this.defaults.logoAlt,
+        src: options.src || options.video || options.videoSrc || options.animation || "",
+        poster: options.poster || "",
+        progress: hasProgress && Number.isFinite(progressValue) ? Math.max(0, Math.min(100, progressValue)) : null,
+        indeterminate: options.indeterminate === true || !hasProgress,
+        showProgress: options.progressBar !== false && options.showProgress !== false,
+        transparent: options.transparent !== false,
+        removableBackground: Boolean(options.removableBackground || options.backgroundRemovable || options.removeBackground),
+        blendMode: options.blendMode || this.defaults.blendMode,
+        speed: Math.max(0.25, Math.min(4, Number(options.speed || options.playbackRate || this.defaults.speed) || this.defaults.speed)),
+        allowMultiple: options.allowMultiple === true,
+      };
+    },
+    render(options = {}) {
+      const config = this.normalize(options);
+      const progressStyle = config.progress === null ? "" : `--universal-loader-progress:${config.progress}%;`;
+      const progressAttrs = config.indeterminate
+        ? `role="progressbar" aria-valuemin="0" aria-valuemax="100"`
+        : `role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${config.progress}"`;
+      return `
+        <section class="universal-loader universal-loader-${escapeHtml(config.variant)}" data-universal-component="UniversalLoader" data-component-version="1" data-universal-loader data-loader-active="${config.enabled ? "true" : "false"}" data-loader-transparent="${config.transparent ? "true" : "false"}" data-loader-removable-background="${config.removableBackground ? "true" : "false"}" data-loader-indeterminate="${config.indeterminate ? "true" : "false"}" aria-label="${escapeHtml(config.label)}" aria-live="polite" role="status" style="${progressStyle}--universal-loader-blend:${escapeHtml(config.blendMode)};">
+          <div class="universal-loader-animation" data-loader-slot="loader-animation" aria-hidden="true">
+            <span class="universal-loader-fallback"></span>
+            ${config.src ? `<video class="universal-loader-video" data-universal-loader-video src="${escapeHtml(config.src)}"${config.poster ? ` poster="${escapeHtml(config.poster)}"` : ""} muted loop playsinline preload="auto"></video>` : ""}
+          </div>
+          <div class="universal-loader-logo" data-loader-slot="logo">
+            ${config.logo ? `<img src="${escapeHtml(config.logo)}" alt="${escapeHtml(config.logoAlt)}" loading="eager" decoding="async" />` : `<span aria-label="${escapeHtml(config.logoAlt)}">RS</span>`}
+          </div>
+          <strong class="universal-loader-text" data-universal-loader-text data-loader-slot="texto">${escapeHtml(config.message)}</strong>
+          ${config.showProgress ? `<div class="universal-loader-progress" data-loader-slot="progress-bar" ${progressAttrs}><i data-universal-loader-progress-bar></i></div>` : ""}
+        </section>
+      `;
+    },
+    mount(container = document.body, options = {}) {
+      const config = this.normalize(options);
+      const host = container || document.body;
+      if (!config.allowMultiple) host.querySelectorAll("[data-universal-loader]").forEach((node) => node.remove());
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = this.render(config);
+      const node = wrapper.firstElementChild;
+      host.appendChild(node);
+      this.update(node, config);
+      requestAnimationFrame(() => node.classList.add("is-active"));
+      return node;
+    },
+    show(options = {}) {
+      return this.mount(options.container || document.body, options);
+    },
+    update(node, options = {}) {
+      if (!node) return false;
+      const config = this.normalize(options);
+      const animation = node.querySelector("[data-loader-slot='loader-animation']");
+      let video = node.querySelector("[data-universal-loader-video]");
+      const text = node.querySelector("[data-universal-loader-text]");
+      const logo = node.querySelector("[data-loader-slot='logo']");
+      const bar = node.querySelector("[data-universal-loader-progress-bar]");
+      node.dataset.loaderActive = config.enabled ? "true" : "false";
+      node.dataset.loaderTransparent = config.transparent ? "true" : "false";
+      node.dataset.loaderRemovableBackground = config.removableBackground ? "true" : "false";
+      node.dataset.loaderIndeterminate = config.indeterminate ? "true" : "false";
+      node.style.setProperty("--universal-loader-blend", config.blendMode);
+      if (config.progress !== null) node.style.setProperty("--universal-loader-progress", `${config.progress}%`);
+      if (text) text.textContent = config.message;
+      if (logo) {
+        logo.innerHTML = config.logo
+          ? `<img src="${escapeHtml(config.logo)}" alt="${escapeHtml(config.logoAlt)}" loading="eager" decoding="async" />`
+          : `<span aria-label="${escapeHtml(config.logoAlt)}">RS</span>`;
+      }
+      if (bar) {
+        if (config.progress === null) bar.parentElement?.removeAttribute("aria-valuenow");
+        else bar.parentElement?.setAttribute("aria-valuenow", String(Math.round(config.progress)));
+      }
+      if (!video && animation && config.src) {
+        animation.insertAdjacentHTML("beforeend", `<video class="universal-loader-video" data-universal-loader-video muted loop playsinline preload="auto"></video>`);
+        video = node.querySelector("[data-universal-loader-video]");
+      }
+      if (video) {
+        video.playbackRate = config.speed;
+        if (config.src && video.getAttribute("src") !== config.src) {
+          video.src = config.src;
+          if (config.poster) video.poster = config.poster;
+          else video.removeAttribute("poster");
+        }
+        if (config.src) {
+          node.classList.add("has-video");
+          video.play?.().catch(() => {});
+        } else {
+          node.classList.remove("has-video");
+          video.pause?.();
+        }
+      }
+      return true;
+    },
+    setProgress(node, progress, message) {
+      return this.update(node, { progress, message });
+    },
+    hide(node, options = {}) {
+      const target = node || document.querySelector("[data-universal-loader]");
+      if (!target) return false;
+      const duration = Math.max(80, Math.min(800, Number(options.duration || 180) || 180));
+      target.classList.add("is-leaving");
+      window.setTimeout(() => {
+        target.querySelector("[data-universal-loader-video]")?.pause?.();
+        target.remove();
+      }, duration);
+      return true;
+    },
+  };
+
+  const showUniversalLoader = (options = {}) => UniversalLoader.show(options);
+  const updateUniversalLoader = (options = {}, node = document.querySelector("[data-universal-loader]")) => UniversalLoader.update(node, options);
+  const hideUniversalLoader = (nodeOrOptions, options = {}) => {
+    const node = nodeOrOptions?.nodeType ? nodeOrOptions : document.querySelector("[data-universal-loader]");
+    return UniversalLoader.hide(node, nodeOrOptions?.nodeType ? options : nodeOrOptions || {});
+  };
+
+  const TransitionFX = {
+    version: "1",
+    componentType: "COMPONENTE UNIVERSAL",
+    defaults: {
+      enabled: false,
+      duration: 520,
+      speed: 1,
+      changeAt: 0.48,
+      variant: "soft-light",
+      background: "rgba(255, 248, 226, 0.82)",
+      label: "Transicao de tela",
+    },
+    normalize(options = {}) {
+      const duration = Math.max(120, Math.min(3000, Number(options.duration || this.defaults.duration) || this.defaults.duration));
+      const speed = Math.max(0.25, Math.min(4, Number(options.speed || options.playbackRate || this.defaults.speed) || this.defaults.speed));
+      return {
+        ...this.defaults,
+        ...options,
+        enabled: options.enabled !== false,
+        duration,
+        speed,
+        changeAt: Math.max(0.1, Math.min(0.9, Number(options.changeAt || this.defaults.changeAt) || this.defaults.changeAt)),
+        src: options.src || options.video || options.videoSrc || "",
+        poster: options.poster || "",
+        transparent: options.transparent !== false,
+        removableBackground: Boolean(options.removableBackground || options.backgroundRemovable || options.removeBackground),
+      };
+    },
+    render(options = {}) {
+      const config = this.normalize(options);
+      const style = `--transition-duration:${config.duration}ms;--transition-fade:${Math.max(80, Math.round(config.duration * 0.24))}ms;--transition-speed:${config.speed};--transition-bg:${escapeHtml(config.background)};`;
+      return `
+        <div class="transition-fx transition-fx-${escapeHtml(config.variant)}" data-universal-component="TransitionFX" data-component-version="1" data-transition-fx data-transition-transparent="${config.transparent ? "true" : "false"}" data-transition-removable-background="${config.removableBackground ? "true" : "false"}" aria-label="${escapeHtml(config.label)}" role="presentation" style="${style}">
+          <div class="transition-fx-fallback" aria-hidden="true"></div>
+          ${config.src ? `<video class="transition-fx-video" data-transition-fx-video src="${escapeHtml(config.src)}"${config.poster ? ` poster="${escapeHtml(config.poster)}"` : ""} muted playsinline preload="auto"></video>` : ""}
+        </div>
+      `;
+    },
+    show(options = {}) {
+      const config = this.normalize(options);
+      if (!config.enabled) return Promise.resolve(false);
+      const host = config.container || document.querySelector("[data-game-stage]") || document.body;
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = this.render(config);
+      const node = wrapper.firstElementChild;
+      host.appendChild(node);
+      const video = node.querySelector("[data-transition-fx-video]");
+      const enterDelay = Math.max(40, Math.round(config.duration * config.changeAt));
+      let entered = false;
+      const runEnter = () => {
+        if (entered) return;
+        entered = true;
+        config.onEnter?.(node);
+      };
+      if (video) {
+        node.classList.add("has-video");
+        video.addEventListener("error", () => {
+          node.classList.remove("has-video");
+          video.remove();
+        }, { once: true });
+        video.playbackRate = config.speed;
+        video.currentTime = 0;
+        video.play?.().catch(() => {});
+      }
+      requestAnimationFrame(() => node.classList.add("is-active"));
+      window.setTimeout(runEnter, enterDelay);
+      return new Promise((resolve) => {
+        window.setTimeout(() => {
+          runEnter();
+          node.classList.add("is-leaving");
+          window.setTimeout(() => {
+            video?.pause?.();
+            node.remove();
+            resolve(true);
+          }, 120);
+        }, config.duration);
+      });
+    },
+  };
+
+  const showTransitionFX = (options = {}) => TransitionFX.show(options);
+
+  const MagicAmbienceLayer = {
+    version: "1",
+    componentType: "COMPONENTE UNIVERSAL",
+    defaults: {
+      enabled: false,
+      intensity: 0.34,
+      speed: 1,
+      variant: "magic-dust",
+      label: "Camada de ambiencia magica",
+      transparent: true,
+      removableBackground: false,
+      blendMode: "screen",
+    },
+    normalize(options = {}) {
+      const intensity = Math.max(0, Math.min(1, Number(options.intensity ?? options.opacity ?? this.defaults.intensity) || 0));
+      const speed = Math.max(0.25, Math.min(4, Number(options.speed || options.playbackRate || this.defaults.speed) || this.defaults.speed));
+      return {
+        ...this.defaults,
+        ...options,
+        enabled: options.enabled === true,
+        intensity,
+        speed,
+        src: options.src || options.video || options.videoSrc || "",
+        poster: options.poster || "",
+        transparent: options.transparent !== false,
+        removableBackground: Boolean(options.removableBackground || options.backgroundRemovable || options.removeBackground),
+        blendMode: options.blendMode || this.defaults.blendMode,
+      };
+    },
+    render(options = {}) {
+      const config = this.normalize(options);
+      return `
+        <div class="magic-ambience-layer magic-ambience-${escapeHtml(config.variant)}" data-universal-component="MagicAmbienceLayer" data-component-version="1" data-magic-ambience-layer data-magic-ambience-active="false" data-magic-ambience-transparent="${config.transparent ? "true" : "false"}" data-magic-ambience-removable-background="${config.removableBackground ? "true" : "false"}" aria-label="${escapeHtml(config.label)}" role="presentation" style="--magic-ambience-intensity:${config.intensity};--magic-ambience-blend:${escapeHtml(config.blendMode)};">
+          <div class="magic-ambience-fallback" aria-hidden="true"></div>
+          <video class="magic-ambience-video" data-magic-ambience-video muted loop playsinline preload="none" disablepictureinpicture></video>
+        </div>
+      `;
+    },
+    mount(container = document.body, options = {}) {
+      const host = container || document.body;
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = this.render(options);
+      const node = wrapper.firstElementChild;
+      host.appendChild(node);
+      this.update(node, options);
+      return node;
+    },
+    update(node, options = {}) {
+      if (!node) return false;
+      const config = this.normalize(options);
+      const video = node.querySelector("[data-magic-ambience-video]");
+      node.dataset.magicAmbienceActive = config.enabled ? "true" : "false";
+      node.dataset.magicAmbienceTransparent = config.transparent ? "true" : "false";
+      node.dataset.magicAmbienceRemovableBackground = config.removableBackground ? "true" : "false";
+      node.style.setProperty("--magic-ambience-intensity", String(config.intensity));
+      node.style.setProperty("--magic-ambience-blend", config.blendMode);
+      node.classList.toggle("is-active", config.enabled);
+      node.classList.toggle("has-video", Boolean(config.enabled && config.src));
+      if (!video) return config.enabled;
+      video.playbackRate = config.speed;
+      if (!config.enabled || !config.src) {
+        video.pause?.();
+        video.removeAttribute("src");
+        video.load?.();
+        return config.enabled;
+      }
+      if (video.getAttribute("src") !== config.src) {
+        video.src = config.src;
+        if (config.poster) video.poster = config.poster;
+        else video.removeAttribute("poster");
+        video.preload = "metadata";
+      }
+      if (!video.dataset.magicAmbienceBound) {
+        video.dataset.magicAmbienceBound = "true";
+        video.addEventListener("error", () => {
+          node.classList.remove("has-video");
+          video.pause?.();
+          video.removeAttribute("src");
+        });
+      }
+      video.play?.().catch(() => {});
+      return true;
+    },
+  };
+
+  const MagicTouchFX = {
+    version: "1",
+    componentType: "COMPONENTE UNIVERSAL",
+    defaults: {
+      enabled: true,
+      duration: 620,
+      scale: 1,
+      minSize: 42,
+      maxSize: 180,
+      variant: "spark",
+      label: "Toque magico",
+      transparent: true,
+      removableBackground: false,
+      blendMode: "screen",
+    },
+    normalize(options = {}) {
+      const duration = Math.max(120, Math.min(2400, Number(options.duration || this.defaults.duration) || this.defaults.duration));
+      return {
+        ...this.defaults,
+        ...options,
+        enabled: options.enabled !== false,
+        duration,
+        scale: Math.max(0.2, Math.min(4, Number(options.scale || this.defaults.scale) || this.defaults.scale)),
+        minSize: Math.max(16, Number(options.minSize || this.defaults.minSize) || this.defaults.minSize),
+        maxSize: Math.max(32, Number(options.maxSize || this.defaults.maxSize) || this.defaults.maxSize),
+        src: options.src || options.video || options.videoSrc || "",
+        poster: options.poster || "",
+        transparent: options.transparent !== false,
+        removableBackground: Boolean(options.removableBackground || options.backgroundRemovable || options.removeBackground),
+        blendMode: options.blendMode || this.defaults.blendMode,
+      };
+    },
+    resolvePosition(options = {}) {
+      if (Number.isFinite(options.x) && Number.isFinite(options.y)) return { x: options.x, y: options.y };
+      const target = options.target?.closest ? options.target : null;
+      const box = target?.getBoundingClientRect?.();
+      if (box) return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+      return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    },
+    resolveSize(options = {}, config = this.normalize(options)) {
+      const target = options.target?.closest ? options.target : null;
+      const box = target?.getBoundingClientRect?.();
+      const base = box ? Math.max(box.width, box.height) * 0.72 : 72;
+      return Math.max(config.minSize, Math.min(config.maxSize, base * config.scale));
+    },
+    render(options = {}) {
+      const config = this.normalize(options);
+      const position = this.resolvePosition(options);
+      const size = this.resolveSize(options, config);
+      return `
+        <span class="magic-touch-fx magic-touch-${escapeHtml(config.variant)}" data-universal-component="MagicTouchFX" data-component-version="1" data-magic-touch-fx data-magic-touch-transparent="${config.transparent ? "true" : "false"}" data-magic-touch-removable-background="${config.removableBackground ? "true" : "false"}" aria-label="${escapeHtml(config.label)}" role="presentation" style="--magic-touch-x:${position.x}px;--magic-touch-y:${position.y}px;--magic-touch-size:${size}px;--magic-touch-duration:${config.duration}ms;--magic-touch-blend:${escapeHtml(config.blendMode)};">
+          <span class="magic-touch-fallback" aria-hidden="true"></span>
+          ${config.src ? `<video class="magic-touch-video" data-magic-touch-video src="${escapeHtml(config.src)}"${config.poster ? ` poster="${escapeHtml(config.poster)}"` : ""} muted playsinline preload="auto"></video>` : ""}
+        </span>
+      `;
+    },
+    play(options = {}) {
+      const config = this.normalize(options);
+      if (!config.enabled) return null;
+      const host = options.container || document.body;
+      const wrapper = document.createElement("span");
+      wrapper.innerHTML = this.render(config);
+      const node = wrapper.firstElementChild;
+      host.appendChild(node);
+      const video = node.querySelector("[data-magic-touch-video]");
+      if (video) {
+        node.classList.add("has-video");
+        video.addEventListener("error", () => {
+          node.classList.remove("has-video");
+          video.remove();
+        }, { once: true });
+        video.playbackRate = Math.max(0.25, Math.min(4, Number(config.speed || config.playbackRate || 1) || 1));
+        video.currentTime = 0;
+        video.play?.().catch(() => {});
+      }
+      requestAnimationFrame(() => node.classList.add("is-active"));
+      window.setTimeout(() => {
+        video?.pause?.();
+        node.remove();
+      }, config.duration + 120);
+      return node;
+    },
+  };
+
+  const playMagicTouch = (options = {}) => MagicTouchFX.play(options);
+
+  const StarBurstFX = {
+    version: "1",
+    componentType: "COMPONENTE UNIVERSAL",
+    intensityMap: {
+      low: 0.42,
+      medium: 0.74,
+      high: 1,
+    },
+    defaults: {
+      enabled: true,
+      duration: 760,
+      scale: 1,
+      size: 132,
+      intensity: "medium",
+      variant: "gold",
+      label: "Explosao de estrelas",
+      transparent: true,
+      removableBackground: false,
+      blendMode: "screen",
+    },
+    normalize(options = {}) {
+      const duration = Math.max(120, Math.min(3000, Number(options.duration || this.defaults.duration) || this.defaults.duration));
+      const scale = Math.max(0.2, Math.min(5, Number(options.scale || this.defaults.scale) || this.defaults.scale));
+      const rawIntensity = options.intensity ?? this.defaults.intensity;
+      const intensity = typeof rawIntensity === "number"
+        ? Math.max(0, Math.min(1, rawIntensity))
+        : this.intensityMap[String(rawIntensity)] ?? this.intensityMap.medium;
+      return {
+        ...this.defaults,
+        ...options,
+        enabled: options.enabled !== false,
+        duration,
+        scale,
+        intensity,
+        intensityName: typeof rawIntensity === "string" ? rawIntensity : "custom",
+        size: Math.max(32, Math.min(420, Number(options.size || this.defaults.size) || this.defaults.size)),
+        src: options.src || options.video || options.videoSrc || "",
+        poster: options.poster || "",
+        transparent: options.transparent !== false,
+        removableBackground: Boolean(options.removableBackground || options.backgroundRemovable || options.removeBackground),
+        blendMode: options.blendMode || this.defaults.blendMode,
+      };
+    },
+    resolvePosition(options = {}) {
+      if (Number.isFinite(options.x) && Number.isFinite(options.y)) return { x: options.x, y: options.y };
+      const target = options.target?.closest ? options.target : null;
+      const box = target?.getBoundingClientRect?.();
+      if (box) return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+      return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    },
+    render(options = {}) {
+      const config = this.normalize(options);
+      const position = this.resolvePosition(options);
+      const size = config.size * config.scale;
+      return `
+        <span class="star-burst-fx star-burst-${escapeHtml(config.variant)}" data-universal-component="StarBurstFX" data-component-version="1" data-star-burst-fx data-star-burst-intensity="${escapeHtml(config.intensityName)}" data-star-burst-transparent="${config.transparent ? "true" : "false"}" data-star-burst-removable-background="${config.removableBackground ? "true" : "false"}" aria-label="${escapeHtml(config.label)}" role="presentation" style="--star-burst-x:${position.x}px;--star-burst-y:${position.y}px;--star-burst-size:${size}px;--star-burst-duration:${config.duration}ms;--star-burst-intensity:${config.intensity};--star-burst-blend:${escapeHtml(config.blendMode)};">
+          <span class="star-burst-fallback" aria-hidden="true"></span>
+          ${config.src ? `<video class="star-burst-video" data-star-burst-video src="${escapeHtml(config.src)}"${config.poster ? ` poster="${escapeHtml(config.poster)}"` : ""} muted playsinline preload="auto"></video>` : ""}
+        </span>
+      `;
+    },
+    play(options = {}) {
+      const config = this.normalize(options);
+      if (!config.enabled) return null;
+      const host = options.container || document.body;
+      const wrapper = document.createElement("span");
+      wrapper.innerHTML = this.render(config);
+      const node = wrapper.firstElementChild;
+      host.appendChild(node);
+      const video = node.querySelector("[data-star-burst-video]");
+      if (video) {
+        node.classList.add("has-video");
+        video.addEventListener("error", () => {
+          node.classList.remove("has-video");
+          video.remove();
+        }, { once: true });
+        video.playbackRate = Math.max(0.25, Math.min(4, Number(config.speed || config.playbackRate || 1) || 1));
+        video.currentTime = 0;
+        video.play?.().catch(() => {});
+      }
+      requestAnimationFrame(() => node.classList.add("is-active"));
+      window.setTimeout(() => {
+        video?.pause?.();
+        node.remove();
+      }, config.duration + 140);
+      return node;
+    },
+  };
+
+  const playStarBurst = (options = {}) => StarBurstFX.play(options);
+
+  const MagicGlowLayer = {
+    version: "1",
+    componentType: "COMPONENTE UNIVERSAL",
+    defaults: {
+      enabled: true,
+      active: false,
+      intensity: 0.72,
+      speed: 1,
+      variant: "box-glow",
+      label: "Brilho magico",
+      transparent: true,
+      removableBackground: false,
+      blendMode: "screen",
+    },
+    normalize(options = {}) {
+      const intensity = Math.max(0, Math.min(1, Number(options.intensity ?? options.opacity ?? this.defaults.intensity) || 0));
+      const speed = Math.max(0.25, Math.min(4, Number(options.speed || options.playbackRate || this.defaults.speed) || this.defaults.speed));
+      return {
+        ...this.defaults,
+        ...options,
+        enabled: options.enabled !== false,
+        active: options.active === true,
+        intensity,
+        speed,
+        src: options.src || options.video || options.videoSrc || "",
+        image: options.image || options.imageSrc || "",
+        poster: options.poster || "",
+        transparent: options.transparent !== false,
+        removableBackground: Boolean(options.removableBackground || options.backgroundRemovable || options.removeBackground),
+        blendMode: options.blendMode || this.defaults.blendMode,
+      };
+    },
+    render(options = {}) {
+      const config = this.normalize(options);
+      return `
+        <span class="magic-glow-layer magic-glow-${escapeHtml(config.variant)}" data-universal-component="MagicGlowLayer" data-component-version="1" data-magic-glow-layer data-magic-glow-active="${config.active ? "true" : "false"}" data-magic-glow-transparent="${config.transparent ? "true" : "false"}" data-magic-glow-removable-background="${config.removableBackground ? "true" : "false"}" aria-label="${escapeHtml(config.label)}" role="presentation" style="--magic-glow-intensity:${config.intensity};--magic-glow-blend:${escapeHtml(config.blendMode)};">
+          <span class="magic-glow-fallback" aria-hidden="true"></span>
+          <img class="magic-glow-image" data-magic-glow-image alt="" loading="eager" decoding="async" />
+          <video class="magic-glow-video" data-magic-glow-video muted loop playsinline preload="none" disablepictureinpicture></video>
+        </span>
+      `;
+    },
+    update(node, options = {}) {
+      if (!node) return false;
+      const config = this.normalize(options);
+      const active = Boolean(config.enabled && config.active);
+      const image = node.querySelector("[data-magic-glow-image]");
+      const video = node.querySelector("[data-magic-glow-video]");
+      node.dataset.magicGlowActive = active ? "true" : "false";
+      node.dataset.magicGlowTransparent = config.transparent ? "true" : "false";
+      node.dataset.magicGlowRemovableBackground = config.removableBackground ? "true" : "false";
+      node.style.setProperty("--magic-glow-intensity", String(config.intensity));
+      node.style.setProperty("--magic-glow-blend", config.blendMode);
+      node.classList.toggle("is-active", active);
+      node.classList.toggle("has-video", Boolean(active && config.src));
+      node.classList.toggle("has-image", Boolean(active && config.image && !config.src));
+      if (image) {
+        if (active && config.image && !config.src) image.src = config.image;
+        else image.removeAttribute("src");
+      }
+      if (!video) return active;
+      video.playbackRate = config.speed;
+      if (!active || !config.src) {
+        video.pause?.();
+        video.removeAttribute("src");
+        video.load?.();
+        return active;
+      }
+      if (video.getAttribute("src") !== config.src) {
+        video.src = config.src;
+        if (config.poster) video.poster = config.poster;
+        else video.removeAttribute("poster");
+        video.preload = "metadata";
+      }
+      if (!video.dataset.magicGlowBound) {
+        video.dataset.magicGlowBound = "true";
+        video.addEventListener("error", () => {
+          node.classList.remove("has-video");
+          video.pause?.();
+          video.removeAttribute("src");
+        });
+      }
+      video.play?.().catch(() => {});
+      return true;
+    },
+  };
 
   const EncouragementScreen = {
     render(options = {}) {
@@ -1366,23 +2382,35 @@
   const reactiveCharacterStates = {
     IDLE: "idle",
     LOOKING: "looking",
-    INVITING: "inviting",
+    POINTING: "pointing",
     CELEBRATING: "celebrating",
+    TALKING: "talking",
+  };
+  const reactiveCharacterStateAliases = {
+    inviting: reactiveCharacterStates.POINTING,
+    point: reactiveCharacterStates.POINTING,
+    celebrate: reactiveCharacterStates.CELEBRATING,
+    talk: reactiveCharacterStates.TALKING,
+  };
+  const normalizeReactiveCharacterState = (state) => {
+    const normalized = String(state || reactiveCharacterStates.IDLE).toLowerCase();
+    return reactiveCharacterStateAliases[normalized] || normalized;
   };
 
   class ReactiveCharacter {
     constructor({ id, initialState = reactiveCharacterStates.IDLE, onStateChange = () => {} } = {}) {
       this.id = id;
-      this.state = initialState;
+      this.state = normalizeReactiveCharacterState(initialState);
       this.onStateChange = onStateChange;
       this.listeners = [];
     }
 
     setState(nextState) {
-      if (!Object.values(reactiveCharacterStates).includes(nextState)) return this.state;
-      this.state = nextState;
-      this.onStateChange(nextState, this);
-      this.listeners.forEach((callback) => callback({ id: this.id, state: nextState }));
+      const normalizedState = normalizeReactiveCharacterState(nextState);
+      if (!Object.values(reactiveCharacterStates).includes(normalizedState)) return this.state;
+      this.state = normalizedState;
+      this.onStateChange(normalizedState, this);
+      this.listeners.forEach((callback) => callback({ id: this.id, state: normalizedState }));
       return this.state;
     }
 
@@ -1808,8 +2836,8 @@
   };
 
   const components = {
-    objectImage(src, alt) {
-      return `<img class="game-object" src="${src}" alt="${alt}" loading="eager" decoding="async" />`;
+    objectImage(src, alt, id = "") {
+      return LivingObject.render({ id: id || alt, image: src, label: alt });
     },
     particles(count = 26) {
       return `<div class="game-particles" aria-hidden="true">${Array.from({ length: count }, (_, index) => {
@@ -3021,6 +4049,10 @@
         }),
       };
       this.magicBoxFrameTimer = null;
+      this.reactiveCharacterFrameTimers = new Map();
+      this.preloadedAssetUrls = new Set();
+      this.preloadNodes = [];
+      this.transitionToken = 0;
     }
 
     mount() {
@@ -3033,7 +4065,17 @@
         document.documentElement.classList.add("game-immersive-active");
         document.body.classList.add("game-immersive-active");
         this.root.classList.add("game-immersive-active");
-        this.go("intro");
+        this.startPlayerEntry();
+      }
+    }
+
+    startPlayerEntry() {
+      this.preloadGameAssets();
+      if (this.shouldPlayCinematicIntro()) {
+        this.go("cinematic-intro", { transition: false });
+        this.playCinematicIntro();
+      } else {
+        this.go("intro", { transition: false });
       }
     }
 
@@ -3104,12 +4146,14 @@
           ${this.renderTopbar()}
           <div class="game-layout">
             <main class="game-stage" data-game-stage>
+              ${this.renderCinematicIntroScreen()}
               ${this.renderIntroScreen()}
               ${this.renderRoomScreen()}
               ${this.renderHintScreen()}
               ${this.renderChoiceScreen()}
               ${this.renderFeedbackScreen()}
               ${this.renderFinalScreen()}
+              ${MagicAmbienceLayer.render()}
             </main>
             <aside class="game-panel" aria-label="Painel do jogo">
               ${this.renderRoundPanel()}
@@ -3154,6 +4198,155 @@
       `;
     }
 
+    getCinematicIntroConfig() {
+      const config = window.RaizesGameConfig?.games?.[this.game.id]?.cinematicIntro
+        || window.RaizesGameConfig?.cinematicIntro?.[this.game.id]
+        || this.game.assets.cinematicIntro
+        || null;
+      if (!config) return null;
+      if (typeof config === "string") {
+        return { src: config, poster: this.game.assets.screens?.intro || this.game.assets.card || "", fallback: this.game.assets.screens?.intro || this.game.assets.card || "", title: this.game.title, skipLabel: "Pular introducao", version: "V1" };
+      }
+      return {
+        enabled: config.enabled !== false,
+        src: config.src || "",
+        poster: config.poster || config.fallback || this.game.assets.screens?.intro || this.game.assets.card || "",
+        fallback: config.fallback || config.poster || this.game.assets.screens?.intro || this.game.assets.card || "",
+        title: config.title || this.game.title,
+        skipLabel: config.skipLabel || "Pular introducao",
+        version: config.version || "V1",
+      };
+    }
+
+    getCinematicIntroSeenKey() {
+      const config = this.getCinematicIntroConfig();
+      return `${cinematicIntroStorageKey}:${this.game.id}:${config?.version || "V1"}`;
+    }
+
+    hasSeenCinematicIntro() {
+      try {
+        return localStorage.getItem(this.getCinematicIntroSeenKey()) === "true";
+      } catch (error) {
+        return false;
+      }
+    }
+
+    markCinematicIntroSeen() {
+      try {
+        localStorage.setItem(this.getCinematicIntroSeenKey(), "true");
+      } catch (error) {}
+    }
+
+    shouldPlayCinematicIntro() {
+      const config = this.getCinematicIntroConfig();
+      return Boolean(config?.enabled && (config.src || config.fallback) && !this.hasSeenCinematicIntro());
+    }
+
+    getTransitionFXConfig(override = null) {
+      const globalConfig = window.RaizesGameConfig?.transitionFX || {};
+      const gameConfig = window.RaizesGameConfig?.games?.[this.game.id]?.transitionFX
+        || window.RaizesGameConfig?.transitionFXByGame?.[this.game.id]
+        || this.game.assets.transitionFX
+        || {};
+      const overrideConfig = override && typeof override === "object" ? override : {};
+      const enabled = override === true
+        || overrideConfig.enabled === true
+        || gameConfig.enabled === true
+        || globalConfig.enabled === true;
+      return TransitionFX.normalize({
+        ...globalConfig,
+        ...gameConfig,
+        ...overrideConfig,
+        enabled,
+      });
+    }
+
+    shouldPlayTransitionFX(nextScreen, options = {}) {
+      if (this.mode !== "player") return false;
+      if (options.transition === false) return false;
+      if (!nextScreen || nextScreen === this.state.screen) return false;
+      if (this.state.screen === "cinematic-intro" || nextScreen === "cinematic-intro") return false;
+      const config = this.getTransitionFXConfig(options.transition);
+      return Boolean(config.enabled);
+    }
+
+    getMagicTouchFXConfig(override = null) {
+      const globalConfig = window.RaizesGameConfig?.magicTouchFX
+        || window.RaizesGameConfig?.magicTouch
+        || {};
+      const gameConfig = window.RaizesGameConfig?.games?.[this.game.id]?.magicTouchFX
+        || window.RaizesGameConfig?.magicTouchByGame?.[this.game.id]
+        || this.game.assets.magicTouchFX
+        || {};
+      const overrideConfig = override && typeof override === "object" ? override : {};
+      const enabled = override === true
+        || overrideConfig.enabled === true
+        || gameConfig.enabled === true
+        || globalConfig.enabled === true;
+      return MagicTouchFX.normalize({
+        ...globalConfig,
+        ...gameConfig,
+        ...overrideConfig,
+        enabled,
+      });
+    }
+
+    playMagicTouchFX(event, target, override = null) {
+      const config = this.getMagicTouchFXConfig(override);
+      if (!config.enabled) return null;
+      return playMagicTouch({
+        ...config,
+        x: event?.clientX,
+        y: event?.clientY,
+        target,
+      });
+    }
+
+    getMagicAmbienceLayerConfig(screen) {
+      const globalConfig = window.RaizesGameConfig?.magicAmbienceLayer
+        || window.RaizesGameConfig?.magicAmbience
+        || {};
+      const gameConfig = window.RaizesGameConfig?.games?.[this.game.id]?.magicAmbienceLayer
+        || window.RaizesGameConfig?.magicAmbienceByGame?.[this.game.id]
+        || this.game.assets.magicAmbienceLayer
+        || {};
+      const screenConfig = gameConfig.screens?.[screen]
+        ?? globalConfig.screens?.[screen]
+        ?? null;
+      if (screenConfig === false) {
+        return MagicAmbienceLayer.normalize({ ...globalConfig, ...gameConfig, enabled: false });
+      }
+      const screenOverrides = screenConfig && typeof screenConfig === "object" ? screenConfig : {};
+      const enabledScreens = gameConfig.enabledScreens || globalConfig.enabledScreens || null;
+      const disabledScreens = gameConfig.disabledScreens || globalConfig.disabledScreens || [];
+      const enabled = screenConfig === true
+        || screenOverrides.enabled === true
+        || (Array.isArray(enabledScreens) && enabledScreens.includes(screen))
+        || ((gameConfig.enabled === true || globalConfig.enabled === true) && !disabledScreens.includes(screen));
+      return MagicAmbienceLayer.normalize({
+        ...globalConfig,
+        ...gameConfig,
+        ...screenOverrides,
+        enabled,
+      });
+    }
+
+    renderCinematicIntroScreen() {
+      const config = this.getCinematicIntroConfig();
+      if (!config?.enabled || (!config.src && !config.fallback)) return "";
+      return `
+        <section class="game-screen cinematic-intro-screen" data-screen="cinematic-intro" data-cinematic-intro-version="${escapeHtml(config.version)}" aria-label="Introducao cinematografica">
+          <img class="cinematic-intro-fallback" src="${escapeHtml(config.fallback)}" alt="" loading="eager" decoding="async" />
+          ${config.src ? `<video class="cinematic-intro-video" data-cinematic-intro-video src="${escapeHtml(config.src)}" poster="${escapeHtml(config.poster)}" preload="auto" playsinline muted></video>` : ""}
+          <div class="cinematic-intro-copy">
+            <span>Introducao</span>
+            <strong>${escapeHtml(config.title)}</strong>
+          </div>
+          <button class="cinematic-skip-button" type="button" data-game-action="skip-cinematic-intro">${escapeHtml(config.skipLabel)}</button>
+        </section>
+      `;
+    }
+
     renderIntroScreen() {
       if (this.game.type === "selection") {
         return `
@@ -3165,7 +4358,13 @@
               <div class="selection-hero-composition" aria-hidden="true">
                 <img class="selection-hero-box" src="${this.game.assets.boxes.closed}" alt="" loading="eager" decoding="async" />
               </div>
-              <button class="game-primary-button game-start-button" type="button" data-game-action="start" aria-label="Iniciar ${this.game.title}">▶ Iniciar</button>
+              ${SmartButton.render({
+                ...this.getSmartButtonConfig("start"),
+                label: "Iniciar",
+                action: "start",
+                ariaLabel: `Iniciar ${this.game.title}`,
+                className: "game-primary-button game-start-button",
+              })}
             </div>
           </section>
         `;
@@ -3477,10 +4676,17 @@
         || window.RaizesGameConfig?.reactiveCharacters?.[this.game.id]?.[characterId]
         || this.game.assets.reactiveCharacters?.[characterId]
         || {};
+      const states = config.states || {};
       return {
         name: config.name || characterId,
         version: config.version || "V1",
-        states: config.states || {},
+        states: {
+          idle: states.idle || states.neutral || states.default || null,
+          looking: states.looking || states.look || states.idle || states.neutral || null,
+          pointing: states.pointing || states.point || states.inviting || states.looking || states.idle || null,
+          celebrating: states.celebrating || states.celebrate || states.success || states.idle || null,
+          talking: states.talking || states.talk || states.speaking || states.inviting || states.idle || null,
+        },
       };
     }
 
@@ -3506,12 +4712,29 @@
         return `<video src="${escapeHtml(animation.src)}" muted playsinline preload="metadata" loop></video>`;
       }
       if (animation.type === "sprite" || animation.sprite) {
-        return `<span class="reactive-character-sprite" style="--character-sprite:url('${escapeHtml(animation.src || animation.sprite)}');--character-steps:${Number(animation.steps || 1)}"></span>`;
+        const steps = Math.max(1, Number(animation.steps || 1) || 1);
+        const frameMs = Math.max(60, Number(animation.frameMs || 100) || 100);
+        return `<span class="reactive-character-sprite" data-character-loop="${animation.loop === false ? "false" : "true"}" style="--character-sprite:url('${escapeHtml(animation.src || animation.sprite)}');--character-steps:${steps};--character-duration:${steps * frameMs}ms"></span>`;
       }
       if (animation.type === "sequence" || animation.frames?.length) {
-        return animation.frames.map((frame, index) => `<img src="${escapeHtml(frame)}" alt="" loading="lazy" decoding="async" data-character-frame="${index}" />`).join("");
+        return animation.frames.map((frame, index) => `<img src="${escapeHtml(frame)}" alt="" loading="lazy" decoding="async" data-character-frame="${index}" data-character-loop="${animation.loop === false ? "false" : "true"}" />`).join("");
       }
       return `<img src="${escapeHtml(animation.src)}" alt="" loading="eager" decoding="async" />`;
+    }
+
+    renderRevealStage({ object = null } = {}) {
+      const effects = this.game.assets.components?.effects || {};
+      const objectAsset = normalizeVictoryAsset(object, "Objeto revelado");
+      return `
+        <div class="selection-reveal-stage" data-reveal-stage aria-hidden="${objectAsset?.src ? "false" : "true"}">
+          <img class="selection-hint-box selection-reveal-box-layer" data-reveal-stage-layer="magic-box" src="${escapeHtml(this.game.assets.boxes.open)}" alt="" loading="eager" decoding="async" />
+          ${effects.revealFx ? `<img class="selection-reveal-fx-layer" data-reveal-stage-layer="reveal-fx" src="${effects.revealFx}" alt="" loading="eager" decoding="async" />` : ""}
+          <span class="selection-reveal-object-layer" data-reveal-stage-layer="object" data-reveal-object-layer>
+            ${objectAsset?.src ? `<img src="${escapeHtml(objectAsset.src)}" alt="${escapeHtml(objectAsset.alt)}" loading="eager" decoding="async" />` : ""}
+          </span>
+          ${effects.glowOverlay ? `<img class="selection-reveal-glow-layer" data-reveal-stage-layer="glow-overlay" src="${effects.glowOverlay}" alt="" loading="eager" decoding="async" />` : ""}
+        </div>
+      `;
     }
 
     renderMysteryBoxComponent() {
@@ -3529,9 +4752,10 @@
           data-magic-box-version="${escapeHtml(magicBoxConfig.version)}"
           aria-label="Abrir caixa misteriosa"
           aria-busy="${boxState !== mysteryBoxStates.IDLE || magicBoxState !== magicBoxStates.IDLE ? "true" : "false"}"
-          style="--box-idle:url('${boxes.closed}');--box-touch:url('${boxes.closed}');--box-shake:url('${boxes.closed}');--box-glow:url('${boxes.glowing || boxes.closed}');--box-opening:url('${boxes.opening || boxes.open}');--box-open:url('${boxes.open}');--box-reveal:url('${boxes.openInsert || boxes.open}');"
+          style="--box-idle:url('${boxes.closed}');--box-touch:url('${boxes.closed}');--box-shake:url('${boxes.closed}');--box-glow:url('${boxes.closed}');--box-opening:url('${boxes.opening || boxes.open}');--box-open:url('${boxes.open}');--box-reveal:url('${boxes.openInsert || boxes.open}');"
         >
           ${this.renderMagicBoxAnimationSlots(magicBoxConfig)}
+          ${MagicGlowLayer.render(this.getMagicGlowLayerConfig(magicBoxState))}
         </button>
       `;
     }
@@ -3545,6 +4769,31 @@
         version: config.version || "V1",
         animations: config.animations || {},
       };
+    }
+
+    getMagicGlowLayerConfig(boxState = this.state.magicBoxState) {
+      const globalConfig = window.RaizesGameConfig?.magicGlowLayer
+        || window.RaizesGameConfig?.magicGlow
+        || {};
+      const gameConfig = window.RaizesGameConfig?.games?.[this.game.id]?.magicGlowLayer
+        || window.RaizesGameConfig?.magicGlowByGame?.[this.game.id]
+        || this.game.assets.magicGlowLayer
+        || {};
+      const activeStates = gameConfig.activeStates || globalConfig.activeStates || [magicBoxStates.GLOW, magicBoxStates.ANTICIPATION];
+      const active = (gameConfig.active === true || globalConfig.active === true || activeStates.includes(boxState))
+        && boxState !== magicBoxStates.IDLE;
+      return MagicGlowLayer.normalize({
+        ...globalConfig,
+        ...gameConfig,
+        active,
+      });
+    }
+
+    getSmartButtonConfig(buttonId) {
+      return window.RaizesGameConfig?.games?.[this.game.id]?.smartButtons?.[buttonId]
+        || window.RaizesGameConfig?.smartButtons?.[this.game.id]?.[buttonId]
+        || this.game.assets.smartButtons?.[buttonId]
+        || {};
     }
 
     renderMagicBoxAnimationSlots(config) {
@@ -3577,7 +4826,7 @@
         return `
           <section class="game-screen selection-screen selection-hint-screen" data-screen="hint" aria-label="Dica narrada">
             <div class="game-scene selection-room-scene" style="--screen:url('${this.game.assets.components.room}')" aria-hidden="true"></div>
-            <img class="selection-hint-box" src="${this.game.assets.boxes.open}" alt="" loading="eager" decoding="async" />
+            ${this.renderRevealStage()}
             <article class="hint-card selection-hint-card">
               <p data-hint-text>${round.hint}</p>
               ${components.audioButton("Repetir dica", round.narration)}
@@ -3868,9 +5117,8 @@
         continueHref: "jogos.html",
         restartAction: "restart",
         effects: {
-          particles: effectAssets.particles,
-          confetti: effectAssets.confetti,
-          stars: effectAssets.stars,
+          backgroundFx: effectAssets.confetti || effectAssets.particles,
+          victoryAnimation: effectAssets.stars || effectAssets.twinkle,
         },
       };
     }
@@ -3912,6 +5160,39 @@
 
     currentRound() {
       return this.game.rounds[this.state.roundIndex];
+    }
+
+    getMagicTouchTarget(event) {
+      return event.target.closest([
+        "[data-game-play]",
+        "[data-game-select]",
+        "[data-game-back]",
+        "[data-game-action]",
+        "[data-choice-id]",
+        "[data-audio-choice-id]",
+        "[data-pattern-choice-id]",
+        "[data-exploration-element-id]",
+        "[data-story-option]",
+        "[data-story-accessory-id]",
+        "[data-story-action-id]",
+        "[data-criteria-id]",
+        "[data-path-point-id]",
+        "[data-path-v2-reference-id]",
+        "[data-path-v2-phase-index]",
+        "[data-creative-element-id]",
+        "[data-canvas-item-id]",
+        "[data-remove-canvas-id]",
+        "[data-timeline-card-id]",
+        "[data-timeline-slot-id]",
+        "[data-journey-portal-id]",
+        "[data-journey-object-id]",
+        "[data-journey-v2-mission-id]",
+        "[data-drag-id]",
+        "[data-drop-id]",
+        "[data-snap-piece-id]",
+        "[data-snap-slot-id]",
+        "[data-game-speak]",
+      ].join(","));
     }
 
     bind() {
@@ -4055,6 +5336,8 @@
         if (dropTarget && dragId) this.placeDragItem(dragId, dropTarget.dataset.dropId);
       });
       this.root.addEventListener("pointerdown", (event) => {
+        const magicTouchTarget = this.getMagicTouchTarget(event);
+        if (magicTouchTarget) this.playMagicTouchFX(event, magicTouchTarget);
         const board = event.target.closest("[data-path-board]");
         if (!board) return;
         this.state = { ...this.state, pathDrawing: true };
@@ -4092,8 +5375,7 @@
       this.root.style.setProperty("--game-atlas", `url("${this.game.assets.atlas}")`);
       this.root.style.setProperty("--library-atlas", `url("${this.game.assets.library}")`);
       this.root.innerHTML = this.render();
-      this.updateRoundContent();
-      this.go("intro");
+      this.startPlayerEntry();
     }
 
     openHub() {
@@ -4108,7 +5390,99 @@
       this.root.innerHTML = this.render();
     }
 
+    playCinematicIntro() {
+      const screen = this.root.querySelector('[data-screen="cinematic-intro"]');
+      if (!screen) {
+        this.finishCinematicIntro();
+        return;
+      }
+      const video = screen.querySelector("[data-cinematic-intro-video]");
+      if (!video) {
+        window.setTimeout(() => this.finishCinematicIntro(), 1600);
+        return;
+      }
+      const finishOnce = () => this.finishCinematicIntro();
+      video.addEventListener("ended", finishOnce, { once: true });
+      video.addEventListener("error", finishOnce, { once: true });
+      video.currentTime = 0;
+      video.play?.().catch(() => {
+        window.setTimeout(() => this.finishCinematicIntro(), 1200);
+      });
+    }
+
+    finishCinematicIntro() {
+      if (this.state.screen !== "cinematic-intro") return;
+      this.markCinematicIntroSeen();
+      const video = this.root.querySelector("[data-cinematic-intro-video]");
+      video?.pause?.();
+      this.go("intro", { transition: false });
+    }
+
+    setRevealStageObject(object) {
+      const stage = this.root.querySelector("[data-reveal-stage]");
+      const layer = this.root.querySelector("[data-reveal-object-layer]");
+      if (!stage || !layer) return false;
+      const objectAsset = normalizeVictoryAsset(object, "Objeto revelado");
+      if (!objectAsset?.src) {
+        this.clearRevealStageObject();
+        return false;
+      }
+      layer.innerHTML = `<img src="${escapeHtml(objectAsset.src)}" alt="${escapeHtml(objectAsset.alt)}" loading="eager" decoding="async" />`;
+      stage.setAttribute("aria-hidden", "false");
+      stage.dataset.revealObject = objectAsset.src;
+      return true;
+    }
+
+    clearRevealStageObject() {
+      const stage = this.root.querySelector("[data-reveal-stage]");
+      const layer = this.root.querySelector("[data-reveal-object-layer]");
+      if (layer) layer.innerHTML = "";
+      if (stage) {
+        stage.setAttribute("aria-hidden", "true");
+        delete stage.dataset.revealObject;
+      }
+    }
+
+    collectAssetUrls(value, urls = new Set()) {
+      if (!value) return urls;
+      if (typeof value === "string") {
+        if (/\.(png|jpe?g|webp|gif|svg|mp4|webm|mov)(\?.*)?$/i.test(value)) urls.add(value);
+        return urls;
+      }
+      if (Array.isArray(value)) {
+        value.forEach((item) => this.collectAssetUrls(item, urls));
+        return urls;
+      }
+      if (typeof value === "object") {
+        Object.values(value).forEach((item) => this.collectAssetUrls(item, urls));
+      }
+      return urls;
+    }
+
+    preloadGameAssets() {
+      const urls = this.collectAssetUrls(this.game.assets);
+      urls.forEach((url) => {
+        if (this.preloadedAssetUrls.has(url)) return;
+        this.preloadedAssetUrls.add(url);
+        if (/\.(mp4|webm|mov)(\?.*)?$/i.test(url)) {
+          const video = document.createElement("video");
+          video.preload = "metadata";
+          video.src = url;
+          video.muted = true;
+          this.preloadNodes.push(video);
+          return;
+        }
+        const image = new Image();
+        image.decoding = "async";
+        image.src = url;
+        this.preloadNodes.push(image);
+      });
+    }
+
     handleAction(action, button) {
+      if (action === "skip-cinematic-intro") {
+        this.finishCinematicIntro();
+      }
       if (action === "start") {
         audioPlayer.blip();
         this.updateRoundContent();
@@ -4278,7 +5652,14 @@
         box.disabled = locked || this.mysteryBoxMachine.locked;
         box.setAttribute("aria-busy", String(locked || this.mysteryBoxMachine.locked));
         this.syncMagicBoxMedia(box, boxState);
+        this.syncMagicGlowLayer(box, boxState);
       }
+    }
+
+    syncMagicGlowLayer(box, boxState) {
+      const layer = box?.querySelector("[data-magic-glow-layer]");
+      if (!layer) return;
+      MagicGlowLayer.update(layer, this.getMagicGlowLayerConfig(boxState));
     }
 
     syncMagicBoxMedia(box, boxState) {
@@ -4361,16 +5742,15 @@
     }
 
     answer(choiceId, card) {
+      if (!LivingCard.lockSelection(card)) return;
       const round = this.currentRound();
       this.state = { ...this.state, attempts: this.state.attempts + 1 };
       if (choiceId !== round.correctId) {
-        card.classList.add("is-selected");
-        audioPlayer.blip();
+        LivingCard.setState(card, "selected");
         audioPlayer.speak(round.narration, null);
         return;
       }
-      card.classList.add("is-correct", "is-selected");
-      audioPlayer.blip("success");
+      LivingCard.setState(card, "correct");
       window.setTimeout(() => this.go("feedback"), 520);
     }
 
@@ -4393,22 +5773,23 @@
 
     answerAudio(choiceId, card) {
       if (this.game.type !== "audio-recognition") return;
+      if (!LivingCard.lockSelection(card)) return;
       const round = this.currentRound();
       this.state = { ...this.state, attempts: this.state.attempts + 1 };
       if (choiceId !== round.correctId) {
         card.classList.add("is-try-again");
         const title = this.root.querySelector("[data-audio-title]");
         if (title) title.textContent = "Vamos ouvir novamente?";
-        audioPlayer.blip("success");
+        LivingCard.setState(card, "selected");
         window.setTimeout(() => {
           card.classList.remove("is-try-again");
+          LivingCard.setState(card, "idle");
           if (title) title.textContent = round.hint;
         }, 900);
         this.playRoundSound(this.root.querySelector("[data-screen].is-active [data-game-action='play-audio']"));
         return;
       }
-      card.classList.add("is-correct");
-      audioPlayer.blip("success");
+      LivingCard.setState(card, "correct");
       window.setTimeout(() => this.go("feedback"), 560);
     }
 
@@ -4420,15 +5801,15 @@
 
     answerPattern(choiceId, card) {
       if (this.game.type !== "pattern-recognition") return;
+      if (!LivingCard.lockSelection(card)) return;
       const round = this.currentRound();
       this.state = { ...this.state, attempts: this.state.attempts + 1, selectedPatternId: choiceId };
       if (choiceId !== round.correctId) {
-        card.classList.add("is-selected");
+        LivingCard.setState(card, "selected");
         const title = this.root.querySelector("[data-pattern-title]");
         if (title) title.textContent = "Observe de novo e escolha com calma.";
-        audioPlayer.blip("success");
         window.setTimeout(() => {
-          card.classList.remove("is-selected");
+          LivingCard.setState(card, "idle");
           if (title) title.textContent = round.hint;
           this.state = { ...this.state, selectedPatternId: null };
           this.syncPattern();
@@ -4440,8 +5821,7 @@
         patternAnswers: { ...this.state.patternAnswers, [round.id]: choiceId },
         selectedPatternId: choiceId,
       };
-      card.classList.add("is-correct");
-      audioPlayer.blip("success");
+      LivingCard.setState(card, "correct");
       this.syncPattern();
       window.setTimeout(() => this.go("feedback"), 700);
     }
@@ -5103,14 +6483,33 @@
       this.root.querySelector("[data-final-story]").textContent = storySummary;
     }
 
-    go(screen) {
+    applyScreen(screen) {
       this.state.screen = screen;
       this.root.querySelectorAll("[data-screen]").forEach((item) => {
         item.classList.toggle("is-active", item.dataset.screen === screen);
       });
       this.syncBackgroundVideos();
+      this.syncMagicAmbienceLayer(screen);
       this.syncReactiveCharactersForScreen(screen);
       this.syncRounds();
+    }
+
+    go(screen, options = {}) {
+      if (!this.shouldPlayTransitionFX(screen, options)) {
+        this.applyScreen(screen);
+        return Promise.resolve(false);
+      }
+      const token = ++this.transitionToken;
+      const config = this.getTransitionFXConfig(options.transition);
+      const stage = this.root.querySelector("[data-game-stage]") || this.root;
+      return TransitionFX.show({
+        ...config,
+        container: stage,
+        onEnter: () => {
+          if (token !== this.transitionToken) return;
+          this.applyScreen(screen);
+        },
+      });
     }
 
     syncBackgroundVideos() {
@@ -5135,11 +6534,17 @@
       });
     }
 
+    syncMagicAmbienceLayer(screen = this.state.screen) {
+      const layer = this.root.querySelector("[data-magic-ambience-layer]");
+      if (!layer) return;
+      MagicAmbienceLayer.update(layer, this.getMagicAmbienceLayerConfig(screen));
+    }
+
     syncReactiveCharactersForScreen(screen) {
       if (this.game.type !== "selection") return;
       const bia = this.characters?.bia;
       if (!bia) return;
-      if (screen === "room") bia.setState(reactiveCharacterStates.INVITING);
+      if (screen === "room") bia.setState(reactiveCharacterStates.POINTING);
       if (screen === "hint") bia.setState(reactiveCharacterStates.LOOKING);
       if (screen === "choice") bia.setState(reactiveCharacterStates.LOOKING);
       if (screen === "feedback" || screen === "final") bia.setState(reactiveCharacterStates.CELEBRATING);
@@ -5149,9 +6554,11 @@
     syncReactiveCharacterState(characterId, characterState) {
       const node = this.root.querySelector(`[data-character-id="${characterId}"]`);
       if (!node) return;
-      node.dataset.characterState = characterState;
+      const normalizedState = normalizeReactiveCharacterState(characterState);
+      node.dataset.characterState = normalizedState;
+      this.stopReactiveCharacterFrameLoop(characterId);
       node.querySelectorAll("[data-character-state-slot] video").forEach((video) => {
-        const active = video.closest("[data-character-state-slot]")?.dataset.characterStateSlot === characterState;
+        const active = video.closest("[data-character-state-slot]")?.dataset.characterStateSlot === normalizedState;
         if (active) {
           video.currentTime = 0;
           video.play?.().catch(() => {});
@@ -5159,11 +6566,32 @@
           video.pause?.();
         }
       });
-      const activeSlot = node.querySelector(`[data-character-state-slot="${characterState}"]`);
+      const activeSlot = node.querySelector(`[data-character-state-slot="${normalizedState}"]`);
       const frames = [...(activeSlot?.querySelectorAll("[data-character-frame]") || [])];
       frames.forEach((frame, index) => {
         frame.hidden = index !== 0;
       });
+      if (frames.length > 1 && frames[0]?.dataset.characterLoop !== "false") {
+        this.startReactiveCharacterFrameLoop(characterId, activeSlot, frames);
+      }
+    }
+
+    stopReactiveCharacterFrameLoop(characterId) {
+      const timer = this.reactiveCharacterFrameTimers?.get(characterId);
+      if (timer) window.clearInterval(timer);
+      this.reactiveCharacterFrameTimers?.delete(characterId);
+    }
+
+    startReactiveCharacterFrameLoop(characterId, activeSlot, frames) {
+      let activeIndex = 0;
+      const frameMs = Math.max(60, Number(activeSlot?.dataset.characterFrameMs || 100) || 100);
+      const timer = window.setInterval(() => {
+        activeIndex = (activeIndex + 1) % frames.length;
+        frames.forEach((frame, index) => {
+          frame.hidden = index !== activeIndex;
+        });
+      }, frameMs);
+      this.reactiveCharacterFrameTimers.set(characterId, timer);
     }
 
     updateRoundContent() {
@@ -5711,12 +7139,21 @@
         if (title) title.textContent = round.hint;
         if (status) status.textContent = this.state.audioPlayed ? "Pronto para repetir ou escolher." : "Toque para ouvir quantas vezes quiser.";
         if (cards) {
-          cards.innerHTML = round.choices.map((choice) => `
-            <button class="audio-choice-card" type="button" data-audio-choice-id="${choice.id}" aria-label="${choice.label}">
-              <img src="${choice.image}" alt="" loading="eager" decoding="async" />
-              <span>${choice.label}</span>
-            </button>
-          `).join("");
+          cards.innerHTML = round.choices.map((choice) => LivingCard.render({
+            className: "audio-choice-card",
+            objectId: choice.id,
+            data: { "audio-choice-id": choice.id },
+            ariaLabel: choice.label,
+            image: choice.image,
+            cardImage: choice.cardImage,
+            fallbackImage: choice.fallbackImage,
+            imageAlt: choice.label,
+            text: objectDisplayLabels[choice.id] || choice.label,
+            states: {
+              correct: { ...LivingCard.stateDefaults.correct, starBurst: { intensity: "high", scale: 1.05 } },
+            },
+          })).join("");
+          LivingCard.hydrate(cards);
         }
         return;
       }
@@ -5744,13 +7181,20 @@
             if (!item) return "";
             const selected = this.state.selectedPatternId === choiceId;
             const correct = this.state.patternAnswers[round.id] === choiceId;
-            return `
-              <button class="pattern-choice-card${selected ? " is-selected" : ""}${correct ? " is-correct" : ""}" type="button" data-pattern-choice-id="${choiceId}" aria-label="${item.label}">
-                <img src="${item.image}" alt="" loading="eager" decoding="async" />
-                <span>${item.label}</span>
-              </button>
-            `;
+            return LivingCard.render({
+              className: `pattern-choice-card${selected ? " is-selected" : ""}${correct ? " is-correct" : ""}`,
+              state: correct ? "correct" : selected ? "selected" : "idle",
+              objectId: item.id || choiceId,
+              data: { "pattern-choice-id": choiceId },
+              ariaLabel: item.label,
+              image: item.image,
+              cardImage: item.cardImage,
+              fallbackImage: item.fallbackImage,
+              imageAlt: item.label,
+              text: objectDisplayLabels[item.id || choiceId] || item.label,
+            });
           }).join("");
+          LivingCard.hydrate(cards);
         }
         if (path) {
           const percent = Math.round((completedCount / this.game.rounds.length) * 100);
@@ -5774,12 +7218,19 @@
       if (speak) speak.dataset.gameSpeak = encodeURIComponent(round.narration);
       const cards = this.root.querySelector("[data-choice-cards]");
       if (cards) {
-        cards.innerHTML = round.choices.map((choice) => `
-          <button class="game-card" type="button" data-choice-id="${choice.id}" style="--card-color:${choice.color}" aria-label="${choice.label}">
-            ${components.objectImage(choice.image, choice.label)}
-            <span>${choice.label}</span>
-          </button>
-        `).join("");
+        cards.innerHTML = round.choices.map((choice) => LivingCard.render({
+          className: "game-card",
+          objectId: choice.id,
+          data: { "choice-id": choice.id },
+          style: `--card-color:${escapeHtml(choice.color)};--living-card-border:${escapeHtml(choice.color)};`,
+          ariaLabel: choice.label,
+          image: choice.image,
+          cardImage: choice.cardImage,
+          fallbackImage: choice.fallbackImage,
+          imageAlt: choice.label,
+          text: objectDisplayLabels[choice.id] || choice.label,
+        })).join("");
+        LivingCard.hydrate(cards);
       }
     }
 
@@ -5836,11 +7287,27 @@
 
   window.VictoryScreen = VictoryScreen;
   window.showVictory = showVictory;
+  window.UniversalLoader = UniversalLoader;
+  window.showUniversalLoader = showUniversalLoader;
+  window.updateUniversalLoader = updateUniversalLoader;
+  window.hideUniversalLoader = hideUniversalLoader;
+  window.objectAnimationProfiles = objectAnimationProfiles;
+  window.LivingObject = LivingObject;
+  window.LivingCard = LivingCard;
+  window.SmartButton = SmartButton;
+  window.TransitionFX = TransitionFX;
+  window.showTransitionFX = showTransitionFX;
+  window.MagicAmbienceLayer = MagicAmbienceLayer;
+  window.MagicTouchFX = MagicTouchFX;
+  window.playMagicTouch = playMagicTouch;
+  window.StarBurstFX = StarBurstFX;
+  window.playStarBurst = playStarBurst;
+  window.MagicGlowLayer = MagicGlowLayer;
   window.EncouragementScreen = EncouragementScreen;
   window.showEncouragement = showEncouragement;
   window.MagicBox = MagicBox;
   window.ReactiveCharacter = ReactiveCharacter;
-  window.RaizesGameEngine = { GameEngine, gameRepository, progressController, rewardController, audioPlayer, experiencePlayerController, experienceProgressStore, interactiveActivityController, interactiveActivityProgressStore, VictoryScreen, showVictory, EncouragementScreen, showEncouragement, MagicBox, magicBoxStates, ReactiveCharacter, reactiveCharacterStates };
+  window.RaizesGameEngine = { GameEngine, gameRepository, progressController, rewardController, audioPlayer, experiencePlayerController, experienceProgressStore, interactiveActivityController, interactiveActivityProgressStore, VictoryScreen, showVictory, UniversalLoader, showUniversalLoader, updateUniversalLoader, hideUniversalLoader, objectAnimationProfiles, LivingObject, LivingCard, SmartButton, TransitionFX, showTransitionFX, MagicAmbienceLayer, MagicTouchFX, playMagicTouch, StarBurstFX, playStarBurst, MagicGlowLayer, EncouragementScreen, showEncouragement, MagicBox, magicBoxStates, ReactiveCharacter, reactiveCharacterStates };
   window.RSGameEngine = {
     games: gameRepository.games,
     infantilExperiences: window.RaizesInfantilExperiences || null,
@@ -5949,6 +7416,47 @@
     openGame(gameId) {
       if (!this.engine) return;
       this.engine.openGame(gameId);
+    },
+    showTransitionFX(options) {
+      return showTransitionFX(options);
+    },
+    showUniversalLoader(options) {
+      return showUniversalLoader(options);
+    },
+    updateUniversalLoader(options, node) {
+      return updateUniversalLoader(options, node);
+    },
+    hideUniversalLoader(node, options) {
+      return hideUniversalLoader(node, options);
+    },
+    renderLivingCard(options) {
+      return LivingCard.render(options);
+    },
+    setLivingCardState(node, state, context) {
+      return LivingCard.setState(node, state, context);
+    },
+    renderLivingObject(options) {
+      return LivingObject.render(options);
+    },
+    setLivingObjectState(node, state) {
+      return LivingObject.setState(node, state);
+    },
+    updateMagicAmbienceLayer(options) {
+      const layer = document.querySelector("[data-magic-ambience-layer]");
+      return MagicAmbienceLayer.update(layer, options);
+    },
+    playMagicTouch(options) {
+      return playMagicTouch(options);
+    },
+    playStarBurst(options) {
+      return playStarBurst(options);
+    },
+    updateMagicGlowLayer(options) {
+      const layer = document.querySelector("[data-magic-glow-layer]");
+      return MagicGlowLayer.update(layer, options);
+    },
+    renderSmartButton(options) {
+      return SmartButton.render(options);
     },
   };
 
