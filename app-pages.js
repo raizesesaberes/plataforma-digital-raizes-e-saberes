@@ -1481,6 +1481,256 @@ const buildFeaturedExperiencePanel = () => {
     </section>
   `;
 };
+
+const getInfantilExperienceAsset = (experience) =>
+  experience ? infantilExperienceCatalog?.getExperienceAsset?.(experience.coverAssetCode || experience.openingAssetCode) : null;
+const getInfantilExperienceProgress = (experienceId) =>
+  typeof window === "undefined" ? null : window.RSGameEngine?.getExperienceProgress?.(experienceId) || null;
+const getInfantilExperienceStatus = (experience) => {
+  const progress = getInfantilExperienceProgress(experience.id);
+  if (progress?.status === "completed" || progress?.percentWatched >= 95) {
+    return { key: "completed", label: "Concluida", percent: 100 };
+  }
+  if (progress?.startedAt || progress?.percentWatched > 0) {
+    return { key: "in-progress", label: "Em andamento", percent: Math.max(1, progress.percentWatched || 1) };
+  }
+  return { key: "not-started", label: experience.availability === "unavailable" ? "Indisponivel" : "Nao iniciada", percent: 0 };
+};
+const getInfantilExperienceSearch = (experience) =>
+  [
+    experience.id,
+    experience.title,
+    experience.description,
+    experience.ageGroup,
+    experience.volume,
+    experience.unit,
+    experience.bookTitle,
+    experience.objective,
+    experience.fieldOfExperience,
+    experience.experienceType,
+    ...(experience.bnccSkills || []),
+    ...(experience.keywords || []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+const getInfantilExperienceUrl = (experienceId) => `biblioteca.html?experience=${encodeURIComponent(experienceId)}`;
+const allInfantilExperiences = infantilExperienceCatalog?.experienceDefinitions || [];
+const availableInfantilExperiences = allInfantilExperiences.filter((experience) => experience.availability !== "unavailable");
+const featuredPremiumExperience = featuredInfantilExperience || availableInfantilExperiences[0] || allInfantilExperiences[0];
+const renderExperienceOfficialCard = (experience, { compact = false } = {}) => {
+  const asset = getInfantilExperienceAsset(experience);
+  const status = getInfantilExperienceStatus(experience);
+  const duration = experience.duration ? `${experience.duration}s` : "Em curadoria";
+  const pages = experience.pages?.length ? `Paginas ${experience.pages.join(", ")}` : "Paginas em curadoria";
+  return `
+    <article class="bv-experience-card ${compact ? "is-compact" : ""}" data-bv-experience-card data-experience-code="${experience.id}" data-age-group="${experience.ageGroup}" data-volume="${experience.volume}" data-unit="${experience.unit || ""}" data-type="${experience.experienceType || ""}" data-status="${status.key}" data-search="${getInfantilExperienceSearch(experience)}">
+      <a class="bv-experience-cover" href="${getInfantilExperienceUrl(experience.id)}" aria-label="Abrir perfil da experiencia ${experience.title}">
+        <img src="${asset?.coverPath || "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg"}" alt="${experience.title}" loading="lazy" />
+        <span>${status.label}</span>
+      </a>
+      <div class="bv-experience-body">
+        <div class="bv-card-meta">
+          <span>${experience.ageGroup.replace("EI", "")} anos</span>
+          <span>${experience.volume.replace("V", "Volume ")}</span>
+          <span>${duration}</span>
+        </div>
+        <h3><a href="${getInfantilExperienceUrl(experience.id)}">${experience.title}</a></h3>
+        <p>${experience.objective}</p>
+        <small>${experience.unit || "Unidade em curadoria"} · ${pages}</small>
+        <div class="bv-card-progress" aria-label="Progresso de ${experience.title}">
+          <i><b style="width:${status.percent}%"></b></i>
+          <strong>${status.percent}%</strong>
+        </div>
+        <a class="bv-card-action" href="${getInfantilExperienceUrl(experience.id)}">Viver esta experiencia</a>
+      </div>
+    </article>
+  `;
+};
+const renderPremiumLibraryHierarchy = () =>
+  infantilExperienceCatalog.INFANTIL_AGE_GROUPS.map((ageGroup) => {
+    const experiencesByAge = allInfantilExperiences.filter((experience) => experience.ageGroup === ageGroup);
+    return `
+      <article class="bv-age-column" data-bv-age-column="${ageGroup}">
+        <button type="button" data-bv-filter-age="${ageGroup}">${ageGroup.replace("EI", "")} anos</button>
+        ${infantilExperienceCatalog.INFANTIL_VOLUMES.map((volume) => {
+          const volumeExperiences = experiencesByAge.filter((experience) => experience.volume === volume);
+          return `
+            <div class="bv-volume-node">
+              <button type="button" data-bv-filter-volume="${volume}">${volume.replace("V", "Volume ")}</button>
+              ${volumeExperiences.map((experience) => `
+                <a href="${getInfantilExperienceUrl(experience.id)}">
+                  <strong>${experience.unit || "Unidade"}</strong>
+                  <span>${experience.title}</span>
+                </a>
+              `).join("")}
+            </div>
+          `;
+        }).join("")}
+      </article>
+    `;
+  }).join("");
+const renderPremiumLibraryHome = () => {
+  const totalExperiences = allInfantilExperiences.length;
+  const startedCount = allInfantilExperiences.filter((experience) => getInfantilExperienceProgress(experience.id)?.startedAt).length;
+  const completedCount = allInfantilExperiences.filter((experience) => getInfantilExperienceStatus(experience).key === "completed").length;
+  const availableCount = allInfantilExperiences.filter((experience) => experience.availability !== "unavailable").length;
+  const heroAsset = getInfantilExperienceAsset(featuredPremiumExperience);
+  const recommended = [featuredPremiumExperience, ...availableInfantilExperiences.filter((experience) => experience.id !== featuredPremiumExperience?.id), ...allInfantilExperiences.filter((experience) => experience.id !== featuredPremiumExperience?.id)].filter(Boolean).slice(0, 6);
+  const recent = allInfantilExperiences
+    .map((experience) => ({ experience, progress: getInfantilExperienceProgress(experience.id) }))
+    .filter((item) => item.progress?.updatedAt || item.progress?.startedAt)
+    .sort((first, second) => String(second.progress.updatedAt || second.progress.startedAt).localeCompare(String(first.progress.updatedAt || first.progress.startedAt)))
+    .slice(0, 4);
+  return `
+    <div class="bv-premium" data-bv-premium>
+      <section class="bv-hero">
+        <div class="bv-hero-copy">
+          <span>Biblioteca Viva Premium</span>
+          <h1>Ola, Pedro. Sua proxima descoberta esta pronta.</h1>
+          <p>Livros, videos, jogos e atividades organizados por idade, volume e unidade para voce nunca se perder.</p>
+          <div class="bv-hero-actions">
+            <a href="${getInfantilExperienceUrl(featuredPremiumExperience.id)}">Continuar experiencia</a>
+            <button type="button" data-bv-focus-search>Buscar</button>
+          </div>
+        </div>
+        <a class="bv-hero-feature" href="${getInfantilExperienceUrl(featuredPremiumExperience.id)}">
+          <img src="${heroAsset?.coverPath || featuredLibraryBook.src}" alt="${featuredPremiumExperience.title}" />
+          <span>Destaque da semana</span>
+          <strong>${featuredPremiumExperience.title}</strong>
+          <small>${featuredPremiumExperience.bookTitle}</small>
+        </a>
+      </section>
+
+      <section class="bv-progress-panel" aria-label="Progresso visual da Biblioteca Viva">
+        <article><strong>${Math.round((completedCount / Math.max(totalExperiences, 1)) * 100)}%</strong><span>concluido</span><i><b style="width:${Math.round((completedCount / Math.max(totalExperiences, 1)) * 100)}%"></b></i></article>
+        <article><strong>${startedCount}</strong><span>iniciadas</span></article>
+        <article><strong>${completedCount}</strong><span>concluidas</span></article>
+        <article><strong>${availableCount}</strong><span>disponiveis</span></article>
+      </section>
+
+      <section class="bv-control-panel" aria-label="Busca e filtros da Biblioteca Viva">
+        <label class="bv-search"><span>Buscar experiencia</span><input data-bv-search type="search" placeholder="Titulo, codigo, idade, volume, unidade, habilidade..." /></label>
+        <div class="bv-filter-row" aria-label="Filtros por faixa etaria">
+          <button type="button" data-bv-filter-age="all" class="is-active">Todas</button>
+          ${infantilExperienceCatalog.INFANTIL_AGE_GROUPS.map((ageGroup) => `<button type="button" data-bv-filter-age="${ageGroup}">${ageGroup.replace("EI", "")} anos</button>`).join("")}
+        </div>
+        <div class="bv-filter-row" aria-label="Filtros por volume e status">
+          <button type="button" data-bv-filter-volume="all" class="is-active">Todos volumes</button>
+          ${infantilExperienceCatalog.INFANTIL_VOLUMES.map((volume) => `<button type="button" data-bv-filter-volume="${volume}">${volume.replace("V", "Volume ")}</button>`).join("")}
+          <button type="button" data-bv-filter-status="completed">Concluidas</button>
+          <button type="button" data-bv-filter-status="in-progress">Em andamento</button>
+          <button type="button" data-bv-filter-status="recent">Recentes</button>
+        </div>
+      </section>
+
+      <section class="bv-section bv-continue">
+        <div class="panel-head"><h2>Continuar de onde parou</h2><a href="${featuredLibraryBook.href}">Abrir livro</a></div>
+        <div class="bv-continue-grid">
+          ${renderExperienceOfficialCard(featuredPremiumExperience)}
+          <article class="bv-reading-card">
+            <img src="${featuredLibraryBook.src}" alt="${featuredLibraryBook.title}" />
+            <div><span>Leitura vinculada</span><h3>${featuredLibraryBook.title}</h3><p>${featuredLibraryBook.year} · ${featuredLibraryBook.type}</p><a href="${featuredLibraryBook.href}">Continuar leitura</a></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="bv-section">
+        <div class="panel-head"><h2>Experiencias recomendadas</h2><a>${recommended.length} itens</a></div>
+        <div class="bv-experience-grid" data-bv-results>
+          ${recommended.map((experience) => renderExperienceOfficialCard(experience)).join("")}
+        </div>
+        <p class="bv-empty-state" data-bv-empty hidden>Nenhuma experiencia encontrada com estes filtros.</p>
+      </section>
+
+      <section class="bv-section bv-two-columns">
+        <div>
+          <div class="panel-head"><h2>Ultimas acessadas</h2><a>recentes</a></div>
+          <div class="bv-mini-list">
+            ${(recent.length ? recent.map(({ experience }) => experience) : recommended.slice(0, 3)).map((experience) => renderExperienceOfficialCard(experience, { compact: true })).join("")}
+          </div>
+        </div>
+        <div>
+          <div class="panel-head"><h2>Favoritos</h2><a>salvos</a></div>
+          <div class="bv-mini-list">
+            ${recommended.slice(0, 3).map((experience) => renderExperienceOfficialCard(experience, { compact: true })).join("")}
+          </div>
+        </div>
+      </section>
+
+      <section class="bv-section">
+        <div class="panel-head"><h2>Navegacao por colecao</h2><a>Educacao Infantil</a></div>
+        <div class="bv-breadcrumb-map" aria-label="Educacao Infantil organizada por idade, volume, unidade e experiencia">
+          <strong>Educacao Infantil</strong>
+          <span>↓</span>
+          <div class="bv-age-map">${renderPremiumLibraryHierarchy()}</div>
+        </div>
+      </section>
+    </div>
+  `;
+};
+const renderExperienceProfilePage = (experience) => {
+  const asset = getInfantilExperienceAsset(experience);
+  const related = (experience.relatedExperienceCodes || [])
+    .map((code) => infantilExperienceCatalog?.getExperienceDefinition?.(code))
+    .filter(Boolean);
+  const status = getInfantilExperienceStatus(experience);
+  return `
+    <div class="bv-profile" data-bv-profile="${experience.id}">
+      <nav class="bv-profile-breadcrumb" aria-label="Caminho da experiencia">
+        <a href="biblioteca.html">Biblioteca Viva</a>
+        <span>Educacao Infantil</span>
+        <span>${experience.ageGroup.replace("EI", "")} anos</span>
+        <span>${experience.volume.replace("V", "Volume ")}</span>
+        <strong>${experience.title}</strong>
+      </nav>
+      <section class="bv-profile-hero">
+        <div>
+          <span>${experience.id}</span>
+          <h1>${experience.title}</h1>
+          <p>${experience.description}</p>
+          <div class="bv-card-meta">
+            <span>${experience.ageGroup.replace("EI", "")} anos</span>
+            <span>${experience.volume.replace("V", "Volume ")}</span>
+            <span>${experience.duration || 0}s</span>
+            <span>${status.label}</span>
+          </div>
+          <button type="button" data-open-experience="${experience.id}">Iniciar experiencia</button>
+        </div>
+        <figure>
+          <img src="${asset?.coverPath || featuredLibraryBook.src}" alt="${experience.title}" />
+          <figcaption>${experience.unit || "Unidade em curadoria"}</figcaption>
+        </figure>
+      </section>
+      <section class="bv-profile-grid">
+        <article><h2>Objetivo pedagogico</h2><p>${experience.objective}</p></article>
+        <article><h2>Paginas do livro</h2><p>${experience.bookTitle}</p><a href="book-viewer.html?book=${experience.bookId || "livro-005"}&page=${experience.pages?.[0] || 1}">Abrir paginas ${(experience.pages || []).join(", ") || "relacionadas"}</a></article>
+        <article><h2>Habilidades BNCC</h2><ul>${(experience.bnccSkills?.length ? experience.bnccSkills : ["Em curadoria"]).map((skill) => `<li>${skill}</li>`).join("")}</ul></article>
+        <article><h2>Materiais complementares</h2><ul>${(experience.materials?.length ? experience.materials : ["Materiais em curadoria"]).map((material) => `<li>${material}</li>`).join("")}</ul></article>
+      </section>
+      <section class="bv-section">
+        <div class="panel-head"><h2>Experiencias relacionadas</h2><a>${related.length || "em curadoria"}</a></div>
+        <div class="bv-experience-grid">
+          ${(related.length ? related : allInfantilExperiences.filter((candidate) => candidate.id !== experience.id).slice(0, 3)).map((item) => renderExperienceOfficialCard(item)).join("")}
+        </div>
+      </section>
+    </div>
+  `;
+};
+const renderPremiumLibrary = () => {
+  if (!infantilExperienceCatalog || !featuredPremiumExperience) {
+    return `
+      <section class="bv-section">
+        <div class="panel-head"><h2>Biblioteca Viva</h2><a>catalogo carregando</a></div>
+        <p class="bv-empty-state">O catalogo de experiencias infantis precisa ser carregado antes da Biblioteca Viva Premium.</p>
+      </section>
+    `;
+  }
+  const params = typeof window === "undefined" ? new URLSearchParams() : new URLSearchParams(window.location.search);
+  const requestedExperience = params.get("experience");
+  const experience = requestedExperience ? infantilExperienceCatalog?.getExperienceDefinition?.(requestedExperience) : null;
+  return experience ? renderExperienceProfilePage(experience) : renderPremiumLibraryHome();
+};
 const library2TeacherPanel = `
   <section class="wide-panel library-2-ops">
     <div class="panel-head"><h2>Professor e Familia</h2><a>acompanhamento</a></div>
@@ -2672,39 +2922,9 @@ const modules = {
       <div class="screen-title">
         <p>MS-001</p>
         <h1>Biblioteca Viva</h1>
-        <span>Leitura digital, acompanhamento pedagogico, recomendacoes e conquistas em um so ambiente.</span>
+        <span>Experiencias, livros, videos e atividades organizados para aprender sem se perder.</span>
       </div>
-      <div class="library-grid">
-        ${library2HeroHtml}
-        ${library2StatsHtml}
-        ${buildFeaturedExperiencePanel()}
-        <section class="wide-panel">
-          <div class="panel-head"><h2>Continuar Leitura</h2><a href="book-viewer.html">Ver todos</a></div>
-          <div class="reading-row">
-            ${libraryContinueBooks.length ? libraryContinueBooks.map((item) => libraryShelfCard(item, "Continuar")).join("") : buildRecentReadingCards()}
-          </div>
-        </section>
-        <aside class="quick-card library-2-achievements"><h2>Conquistas</h2><a>Leitor em Movimento</a><a>Curador da Semana</a><a>Sequencia de Leitura</a><a>Trilha Professor-Familia</a></aside>
-        ${buildBookCarousel("Recomendados para voce", "perfil demonstrativo", libraryRecommendedBooks)}
-        ${buildBookCarousel("Guias do Professor", "indicacao para turmas", libraryTeacherBooks)}
-        ${libraryFavoriteBooks.length ? buildBookCarousel("Favoritos", `${libraryFavoriteBooks.length} salvos`, libraryFavoriteBooks.map((item) => item.libraryBook)) : ""}
-        <section class="wide-panel">
-          <div class="panel-head"><h2>Colecoes</h2><a>Ver todos</a></div>
-          <div class="collection-showcase-grid">
-            ${collectionShowcaseCardsHtml}
-          </div>
-        </section>
-        ${library2TeacherPanel}
-        <section class="wide-panel recent-books library-catalog-panel" id="acervo-completo">
-          <div class="panel-head"><h2>Acervo Completo</h2><a>${publishedMaterialsCount} materiais</a></div>
-          <div class="library-catalog">${libraryBookCards}</div>
-          <div class="library-empty-state" data-library-empty hidden>
-            <strong>NENHUM LIVRO ENCONTRADO</strong>
-            <span>Tente pesquisar por outro titulo, colecao, ano ou componente curricular.</span>
-            <button type="button" data-clear-library-search>LIMPAR BUSCA</button>
-          </div>
-        </section>
-      </div>
+      ${renderPremiumLibrary()}
     `,
   },
   universidade: {
@@ -4103,6 +4323,84 @@ const initLibraryExperiences = () => {
       window.RSGameEngine.openExperience(code);
     });
   });
+};
+
+const initPremiumLibrary = () => {
+  const root = document.querySelector("[data-bv-premium]");
+  if (!root) {
+    return;
+  }
+  const state = { age: "all", volume: "all", status: "all", query: "" };
+  const cards = [...root.querySelectorAll("[data-bv-experience-card]")];
+  const empty = root.querySelector("[data-bv-empty]");
+  const search = root.querySelector("[data-bv-search]");
+
+  const syncButtons = () => {
+    root.querySelectorAll("[data-bv-filter-age]").forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.bvFilterAge === state.age);
+    });
+    root.querySelectorAll("[data-bv-filter-volume]").forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.bvFilterVolume === state.volume);
+    });
+    root.querySelectorAll("[data-bv-filter-status]").forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.bvFilterStatus === state.status);
+    });
+  };
+
+  const sync = () => {
+    let visible = 0;
+    const terms = state.query.toLowerCase().split(/\s+/).filter(Boolean);
+    cards.forEach((card) => {
+      const matchesAge = state.age === "all" || card.dataset.ageGroup === state.age;
+      const matchesVolume = state.volume === "all" || card.dataset.volume === state.volume;
+      const matchesStatus =
+        state.status === "all" ||
+        card.dataset.status === state.status ||
+        (state.status === "recent" && card.dataset.status !== "not-started");
+      const haystack = card.dataset.search || card.textContent.toLowerCase();
+      const matchesQuery = terms.every((term) => haystack.includes(term));
+      card.hidden = !(matchesAge && matchesVolume && matchesStatus && matchesQuery);
+      if (!card.hidden && card.closest("[data-bv-results]")) {
+        visible += 1;
+      }
+    });
+    if (empty) {
+      empty.hidden = visible > 0;
+    }
+    syncButtons();
+  };
+
+  search?.addEventListener("input", () => {
+    state.query = search.value.trim();
+    sync();
+  });
+
+  root.addEventListener("click", (event) => {
+    const focusSearch = event.target.closest("[data-bv-focus-search]");
+    const age = event.target.closest("[data-bv-filter-age]");
+    const volume = event.target.closest("[data-bv-filter-volume]");
+    const status = event.target.closest("[data-bv-filter-status]");
+    if (focusSearch) {
+      search?.focus();
+      return;
+    }
+    if (age) {
+      state.age = age.dataset.bvFilterAge;
+      sync();
+      return;
+    }
+    if (volume) {
+      state.volume = volume.dataset.bvFilterVolume;
+      sync();
+      return;
+    }
+    if (status) {
+      state.status = state.status === status.dataset.bvFilterStatus ? "all" : status.dataset.bvFilterStatus;
+      sync();
+    }
+  });
+
+  sync();
 };
 
 const getMissionById = (missionId) =>
@@ -6266,6 +6564,7 @@ const renderAppPage = () => {
   initBookReader();
   initLibrarySearch();
   initLibraryExperiences();
+  initPremiumLibrary();
   initLibraryAssetFallbacks();
   initMissionPlayer();
   initQuestionBank();

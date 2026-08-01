@@ -130,6 +130,50 @@ A validacao do catalogo foi executada no runtime JS do Codex (`node_repl`) e ret
 - referencias de ativos validas;
 - piloto `RS-EI4-V1-EXP-001` vinculado a `RS-EI4-V1-001`.
 
+### Fase 03 - ambiente premium
+
+A Biblioteca Viva passou a ter uma home premium orientada por experiencias, renderizada por `renderPremiumLibrary()` em `app-pages.js`.
+
+Fluxo atual:
+
+1. `biblioteca.html` abre a home premium.
+2. O aluno ve saudacao personalizada, destaque da semana, progresso visual, busca, filtros, continuar de onde parou, recomendadas, recentes, favoritos e mapa hierarquico.
+3. Cada experiencia usa o mesmo componente `renderExperienceOfficialCard()`.
+4. O clique em `Viver esta experiencia` abre a pagina propria da experiencia em `biblioteca.html?experience=CODIGO`.
+5. A pagina propria exibe descricao, objetivo pedagogico, paginas do livro, habilidades BNCC, materiais complementares, experiencias relacionadas e botao `Iniciar experiencia`.
+6. Somente o botao `Iniciar experiencia` abre o player audiovisual.
+
+Busca e filtros:
+
+- titulo;
+- codigo;
+- idade;
+- volume;
+- unidade;
+- livro;
+- habilidade BNCC;
+- palavra-chave;
+- status visual (`nao iniciada`, `em andamento`, `concluida`, `recentes`).
+
+Navegacao hierarquica:
+
+```text
+Educacao Infantil -> idade -> volume -> unidade -> experiencia
+```
+
+O mapa ja nasce com `EI2`, `EI3`, `EI4` e `EI5`, `V1` e `V2`, usando os mesmos dados do catalogo.
+
+Validacao da Fase 03:
+
+- home premium carregada em `biblioteca.html`;
+- 11 cards renderizados na home com o componente oficial;
+- busca por `caixa` retornou somente `RS-EI4-V1-EXP-001`;
+- perfil proprio abriu em `biblioteca.html?experience=RS-EI4-V1-EXP-001`;
+- perfil nao renderiza video antes do inicio;
+- botao `Iniciar experiencia` abriu o player;
+- mobile 390px sem overflow horizontal;
+- console sem erros ou avisos durante o fluxo testado.
+
 ## Onde esta o catalogo
 
 O catalogo ativo fica em `app-pages.js`:
