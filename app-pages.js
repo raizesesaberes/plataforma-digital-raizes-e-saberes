@@ -3388,6 +3388,7 @@ const modules = {
         <p>GAME-ENGINE-2.0</p>
         <h1>Jogos Educativos</h1>
         <span>Escolha uma experiencia, conquiste XP e acompanhe suas medalhas.</span>
+        <a class="game-primary-button" href="caixa-misteriosa-build-01.html">Abrir Build de Avaliacao 01</a>
       </div>
       <div class="game-engine" data-game-engine></div>
     `,
