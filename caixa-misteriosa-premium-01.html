@@ -7,24 +7,31 @@
   <link rel="stylesheet" href="assets/builds/caixa-misteriosa-premium-01/capitulo-01.css" />
 </head>
 <body>
-  <main class="premium-chapter" data-premium-chapter aria-label="A Caixa Misteriosa Premium">
-    <img class="premium-layer premium-background-master" src="assets/builds/caixa-misteriosa-premium-01/png/background_sala_descobertas_master.png" alt="" />
+  <main class="premium-chapter is-chapter-01" data-premium-chapter aria-label="A Caixa Misteriosa Premium">
+    <img class="premium-layer premium-background-master" data-layer="background-master" src="assets/builds/caixa-misteriosa-premium-01/png/background_sala_descobertas_master.png" alt="" />
+    <video class="premium-layer premium-background-video" data-layer="background-video" src="assets/builds/caixa-misteriosa-premium-01/videos/D_gYXzwTrkNrZ8icCmXPu_video_0.mp4" autoplay muted loop playsinline preload="metadata" data-premium-loop></video>
+    <video class="premium-layer premium-magic-ambience" data-layer="magic-ambience" src="assets/builds/caixa-misteriosa-premium-01/videos/wklNA0P4IIjwrJ5E_ewud_video_0.mp4" autoplay muted loop playsinline preload="metadata" data-premium-loop></video>
 
-    <video class="premium-layer premium-background-video" src="assets/builds/caixa-misteriosa-premium-01/videos/D_gYXzwTrkNrZ8icCmXPu_video_0.mp4" autoplay muted loop playsinline preload="metadata" data-premium-loop></video>
+    <img class="premium-layer premium-logo" data-layer="logo" src="assets/builds/caixa-misteriosa-premium-01/png/logo_caixa_misteriosa.png" alt="A Caixa Misteriosa" />
 
-    <video class="premium-layer premium-magic-ambience" src="assets/builds/caixa-misteriosa-premium-01/videos/wklNA0P4IIjwrJ5E_ewud_video_0.mp4" autoplay muted loop playsinline preload="metadata" data-premium-loop></video>
-
-    <img class="premium-layer premium-logo" src="assets/builds/caixa-misteriosa-premium-01/png/logo_caixa_misteriosa.png" alt="A Caixa Misteriosa" />
-
-    <div class="premium-layer premium-box-wrap" aria-hidden="true">
+    <div class="premium-layer premium-box-wrap" data-premium-box data-layer="box" aria-label="Caixa misteriosa">
       <img class="premium-box-master" src="assets/builds/caixa-misteriosa-premium-01/png/magic_box_master.png" alt="" />
-      <video class="premium-box-video" src="assets/builds/caixa-misteriosa-premium-01/videos/6bb33AISm260APF4RUNlQ_video_0.mp4" autoplay muted loop playsinline preload="metadata" data-premium-loop></video>
+      <video class="premium-box-video is-active" data-box-video="idle" src="assets/builds/caixa-misteriosa-premium-01/videos/6bb33AISm260APF4RUNlQ_video_0.mp4" autoplay muted loop playsinline preload="metadata" data-premium-loop></video>
+      <video class="premium-box-video" data-box-video="breathing" src="assets/builds/caixa-misteriosa-premium-01/videos/BCo6YvvLU2PmMfND_b_4v_video_0.mp4" muted loop playsinline preload="metadata"></video>
+      <video class="premium-box-video" data-box-video="touch" src="assets/builds/caixa-misteriosa-premium-01/videos/bls5a3oOCNusVPiGJIfrO_video_0.mp4" muted playsinline preload="metadata"></video>
+      <video class="premium-box-video" data-box-video="shake" src="assets/builds/caixa-misteriosa-premium-01/videos/ByCgmsdpl5z7iWWTx13Bj_video_0.mp4" muted playsinline preload="metadata"></video>
+      <video class="premium-box-video" data-box-video="glow" src="assets/builds/caixa-misteriosa-premium-01/videos/c8lMyZ7f2_S1UDihV5kuc_video_0.mp4" muted playsinline preload="metadata"></video>
+      <video class="premium-box-video" data-box-video="opening" src="assets/builds/caixa-misteriosa-premium-01/videos/c9UROclf_gw-tw2PCeKzM_video_0.mp4" muted playsinline preload="metadata"></video>
+      <button class="premium-box-hit" type="button" data-box-touch aria-label="Tocar na caixa"></button>
     </div>
 
-    <div class="premium-layer premium-bia-wrap" data-premium-bia aria-hidden="true">
+    <div class="premium-layer premium-bia-wrap" data-premium-bia data-layer="bia" aria-hidden="true">
       <img class="premium-bia-master" src="assets/builds/caixa-misteriosa-premium-01/png/bia_borboleta_master.png" alt="" />
-      <video class="premium-bia-video" src="assets/builds/caixa-misteriosa-premium-01/videos/Hh-6tytYNKGPrmAK8EJ_g_video_0.mp4" muted loop playsinline preload="metadata" data-bia-idle-video></video>
-      <video class="premium-bia-video" src="assets/builds/caixa-misteriosa-premium-01/videos/HZNe_8LcOOKR37DtdvjC__video_0.mp4" muted playsinline preload="metadata" data-bia-speaking-video></video>
+      <video class="premium-bia-video is-active" data-bia-video="idle" src="assets/builds/caixa-misteriosa-premium-01/videos/Hh-6tytYNKGPrmAK8EJ_g_video_0.mp4" muted loop playsinline preload="metadata"></video>
+      <video class="premium-bia-video" data-bia-video="speaking" src="assets/builds/caixa-misteriosa-premium-01/videos/HZNe_8LcOOKR37DtdvjC__video_0.mp4" muted playsinline preload="metadata"></video>
+      <video class="premium-bia-video" data-bia-video="encouraging" src="assets/builds/caixa-misteriosa-premium-01/videos/QatqMiXYgaWk2vlCoikJx_video_0.mp4" muted playsinline preload="metadata"></video>
+      <video class="premium-bia-video" data-bia-video="talking" src="assets/builds/caixa-misteriosa-premium-01/videos/URhMToaei3JpQG1PD3oas_video_0.mp4" muted playsinline preload="metadata"></video>
+      <video class="premium-bia-video" data-bia-video="celebrating" src="assets/builds/caixa-misteriosa-premium-01/videos/tiLYRN3ywobzQneuyTtB3_video_0(1).mp4" muted playsinline preload="metadata"></video>
     </div>
 
     <div class="premium-layer premium-balloon" data-premium-balloon>VAMOS BRINCAR DE DESCOBRIR?</div>
@@ -33,9 +40,38 @@
       <img src="assets/builds/caixa-misteriosa-premium-01/png/btn_comecar_premium.png" alt="Comecar" />
     </button>
 
+    <section class="premium-layer premium-hint-panel" data-hint-panel aria-live="polite">
+      <p data-hint-text></p>
+      <button class="premium-action-button premium-audio-button" type="button" data-hear-hint>OUVIR DICA</button>
+    </section>
+
+    <section class="premium-layer premium-card-stage" data-card-stage aria-label="Escolha uma carta"></section>
+
+    <section class="premium-layer premium-feedback-panel" data-feedback-panel aria-live="polite">
+      <strong data-feedback-message></strong>
+      <div class="premium-feedback-actions" data-feedback-actions></div>
+    </section>
+
+    <section class="premium-layer premium-victory-screen" data-victory-screen aria-label="Tela final">
+      <video class="premium-victory-video" data-victory-video src="assets/builds/caixa-misteriosa-premium-01/videos/YgBq_0BZUE0gxHvqrYrb-_video_0.mp4" muted playsinline preload="metadata"></video>
+      <img class="premium-victory-panel" src="assets/builds/caixa-misteriosa-premium-01/png/painel_vitoria_premium.png" alt="" />
+      <img class="premium-victory-medal" src="assets/builds/caixa-misteriosa-premium-01/png/medalha_pequeno_explorador.png" alt="Medalha Pequeno Explorador" />
+      <strong class="premium-victory-title">PARABENS!</strong>
+      <span class="premium-victory-xp">+120 XP</span>
+      <img class="premium-victory-tito" src="assets/builds/caixa-misteriosa-premium-01/png/tito_master.png" alt="" />
+      <img class="premium-victory-pipo" src="assets/builds/caixa-misteriosa-premium-01/png/pipo_master.png" alt="" />
+      <div class="premium-victory-actions">
+        <button class="premium-action-button" type="button" data-restart>JOGAR NOVAMENTE</button>
+        <button class="premium-action-button" type="button" data-continue>CONTINUAR</button>
+        <a class="premium-action-button" href="index.html">VOLTAR AO SITE</a>
+      </div>
+    </section>
+
     <div class="premium-layer premium-intro-player" data-premium-intro-layer aria-hidden="true">
       <video src="assets/builds/caixa-misteriosa-premium-01/videos/1jy891KtSNoTXHJMDoRci_video_0.mp4" muted playsinline preload="none" data-premium-intro-video></video>
     </div>
+
+    <div class="premium-layer premium-fx-layer" data-fx-layer aria-hidden="true"></div>
   </main>
 
   <script src="assets/builds/caixa-misteriosa-premium-01/video-order.js"></script>
