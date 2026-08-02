@@ -8,12 +8,12 @@
       question: "QUAL SERA O OBJETO DA CAIXA?",
       correctId: "algodao",
       successTitle: "PARABENS, VOCE ACERTOU!",
-      successImage: "assets/builds/caixa-misteriosa-premium-01/png/card_algodao_premium_crop.png",
+      successImage: "assets/builds/caixa-misteriosa-premium-01/png/card_algodao_premium_clean.png",
       successAlt: "Algodao",
       choices: [
-        ["bola", "BOLA", "assets/builds/caixa-misteriosa-premium-01/png/card_bola_premium_crop.png"],
-        ["cubo", "CUBO", "assets/builds/caixa-misteriosa-premium-01/png/card_cubo_premium_crop.png"],
-        ["algodao", "ALGODAO", "assets/builds/caixa-misteriosa-premium-01/png/card_algodao_premium_crop.png"],
+        ["bola", "BOLA", "assets/builds/caixa-misteriosa-premium-01/png/card_bola_premium_clean.png"],
+        ["cubo", "CUBO", "assets/builds/caixa-misteriosa-premium-01/png/card_cubo_premium_clean.png"],
+        ["algodao", "ALGODAO", "assets/builds/caixa-misteriosa-premium-01/png/card_algodao_premium_clean.png"],
       ],
     },
     {
@@ -21,12 +21,12 @@
       question: "QUAL SERA O OBJETO DA CAIXA?",
       correctId: "pena",
       successTitle: "VOCE ACERTOU!",
-      successImage: "assets/builds/caixa-misteriosa-premium-01/png/card_pena_premium_crop.png",
+      successImage: "assets/builds/caixa-misteriosa-premium-01/png/card_pena_premium_clean.png",
       successAlt: "Pena",
       choices: [
-        ["flor", "FLOR", "assets/builds/caixa-misteriosa-premium-01/png/card_flor_premium_crop.png"],
-        ["pena", "PENA", "assets/builds/caixa-misteriosa-premium-01/png/card_pena_premium_crop.png"],
-        ["esponja", "ESPONJA", "assets/builds/caixa-misteriosa-premium-01/png/card_esponja_premium_crop.png"],
+        ["flor", "FLOR", "assets/builds/caixa-misteriosa-premium-01/png/card_flor_premium_clean.png"],
+        ["pena", "PENA", "assets/builds/caixa-misteriosa-premium-01/png/card_pena_premium_clean.png"],
+        ["esponja", "ESPONJA", "assets/builds/caixa-misteriosa-premium-01/png/card_esponja_premium_clean.png"],
       ],
     },
     {
@@ -34,12 +34,12 @@
       question: "QUAL SERA O OBJETO DA CAIXA?",
       correctId: "estrela",
       successTitle: "VOCE ACERTOU!",
-      successImage: "assets/builds/caixa-misteriosa-premium-01/png/card_estrela_premium_crop.png",
+      successImage: "assets/builds/caixa-misteriosa-premium-01/png/card_estrela_premium_clean.png",
       successAlt: "Estrela",
       choices: [
-        ["estrela", "ESTRELA", "assets/builds/caixa-misteriosa-premium-01/png/card_estrela_premium_crop.png"],
-        ["folha", "FOLHA", "assets/builds/caixa-misteriosa-premium-01/png/card_folha_premium_crop.png"],
-        ["flor", "FLOR", "assets/builds/caixa-misteriosa-premium-01/png/card_flor_premium_crop.png"],
+        ["estrela", "ESTRELA", "assets/builds/caixa-misteriosa-premium-01/png/card_estrela_premium_clean.png"],
+        ["folha", "FOLHA", "assets/builds/caixa-misteriosa-premium-01/png/card_folha_premium_clean.png"],
+        ["flor", "FLOR", "assets/builds/caixa-misteriosa-premium-01/png/card_flor_premium_clean.png"],
       ],
     },
   ];
@@ -47,7 +47,7 @@
   const qs = (selector) => root.querySelector(selector);
   const qsa = (selector) => Array.from(root.querySelectorAll(selector));
   const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
-  const state = { roundIndex: 0, locked: true, openingReady: false, sceneBoxReady: false };
+  const state = { roundIndex: 0, locked: true, openingReady: false, sceneBoxReady: false, audioUnlocked: false };
   const openingScenes = [
     "assets/builds/caixa-misteriosa-premium-01/videos/9k6XOiV-UlozZTSyeEDEX_video_0.mp4",
     "assets/builds/caixa-misteriosa-premium-01/videos/qUZnfWGxlAMfmh-TvB4YS_video_0.mp4",
@@ -56,11 +56,9 @@
   const discoveryScenes = [
     "assets/builds/caixa-misteriosa-premium-01/videos/BCo6YvvLU2PmMfND_b_4v_video_0.mp4",
     "assets/builds/caixa-misteriosa-premium-01/videos/bls5a3oOCNusVPiGJIfrO_video_0.mp4",
-    "assets/builds/caixa-misteriosa-premium-01/videos/URhMToaei3JpQG1PD3oas_video_0.mp4",
+    "assets/builds/caixa-misteriosa-premium-01/videos/c9UROclf_gw-tw2PCeKzM_video_0.mp4",
   ];
   const correctCottonScenes = [
-    "assets/builds/caixa-misteriosa-premium-01/videos/Hh-6tytYNKGPrmAK8EJ_g_video_0.mp4",
-    "assets/builds/caixa-misteriosa-premium-01/videos/1jy891KtSNoTXHJMDoRci_video_0.mp4",
     "assets/builds/caixa-misteriosa-premium-01/videos/c9UROclf_gw-tw2PCeKzM_video_0.mp4",
   ];
   const finalVictoryScenes = [
@@ -127,6 +125,22 @@
     window.setTimeout(() => fx.remove(), 900);
   }
 
+  function sceneVideos() {
+    return qsa("video");
+  }
+
+  function prepareVideoAudio(video) {
+    if (!video) return;
+    video.volume = 1;
+    video.muted = !state.audioUnlocked;
+  }
+
+  function unlockSceneAudio() {
+    if (state.audioUnlocked) return;
+    state.audioUnlocked = true;
+    sceneVideos().forEach(prepareVideoAudio);
+  }
+
   function playMagicTouch(event) {
     const x = event?.clientX ?? window.innerWidth / 2;
     const y = event?.clientY ?? window.innerHeight / 2;
@@ -140,6 +154,7 @@
 
   function playVideo(video, { loop = false, timeout = 900 } = {}) {
     if (!video) return sleep(timeout);
+    prepareVideoAudio(video);
     return new Promise((resolve) => {
       let done = false;
       const finish = () => {
@@ -197,6 +212,7 @@
   function setOpeningSource(src, target = getActiveOpeningVideo()) {
     refs.openingVideo = target;
     target.src = src;
+    prepareVideoAudio(target);
     target.load();
   }
 
@@ -230,17 +246,16 @@
       video.loop = false;
       waitForVideoReady(video).then(() => {
         video.currentTime = 0;
+        video.classList.add("is-active");
+        if (shouldSwitch && current) {
+          window.setTimeout(() => {
+            current.classList.remove("is-active");
+            current.pause?.();
+          }, 180);
+        }
         video.addEventListener("ended", finish);
         video.addEventListener("error", finish);
-        video.play?.().then(() => {
-          video.classList.add("is-active");
-          if (shouldSwitch && current) {
-            window.setTimeout(() => {
-              current.classList.remove("is-active");
-              current.pause?.();
-            }, 180);
-          }
-        }).catch(() => window.setTimeout(finish, fallback));
+        video.play?.().catch(() => window.setTimeout(finish, fallback));
         window.setTimeout(finish, fallback);
       });
     });
@@ -269,6 +284,7 @@
 
   async function playPostIntroScene() {
     setMode("sequencia-02-pos-introducao");
+    hideRoundUi();
     root.classList.remove("is-opening-ready");
     refs.startButton?.classList.add("is-hidden");
     refs.openingLayer?.classList.remove("is-hidden");
@@ -293,6 +309,7 @@
 
   async function playDiscoverySequence() {
     setMode("sequencia-03-descoberta");
+    hideRoundUi();
     refs.sceneCommand?.classList.remove("is-visible");
     refs.sceneBoxButton?.classList.remove("is-ready");
     refs.finalCommand?.classList.remove("is-visible");
@@ -300,10 +317,10 @@
     refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
     refs.successStage?.classList.remove("is-visible");
     state.sceneBoxReady = false;
-    await playOpeningClip(discoveryScenes[0]);
-    await playOpeningClip(discoveryScenes[1]);
-    await playOpeningClip(discoveryScenes[2]);
-    await holdDiscoveryFinalFrame(discoveryScenes[2]);
+    for (const scene of discoveryScenes) {
+      await playOpeningClip(scene);
+    }
+    await holdDiscoveryFinalFrame(discoveryScenes[discoveryScenes.length - 1]);
   }
 
   async function holdDiscoveryFinalFrame(src) {
@@ -328,9 +345,7 @@
     }
     refs.openingLayer?.classList.remove("is-hidden");
     await playOpeningClip(correctCottonScenes[0]);
-    await playOpeningClip(correctCottonScenes[1]);
-    await playOpeningClip(correctCottonScenes[2]);
-    await holdCorrectCottonFinalFrame(correctCottonScenes[2]);
+    await holdCorrectCottonFinalFrame(correctCottonScenes[0]);
   }
 
   async function holdCorrectCottonFinalFrame(src) {
@@ -357,9 +372,10 @@
 
   async function holdFinalVictoryFrame(src) {
     pauseOpeningAtCommandFrame();
-    refs.finalCommand?.classList.add("is-visible");
-    refs.finalMedalButton?.classList.add("is-ready");
-    state.locked = false;
+    refs.finalCommand?.classList.remove("is-visible");
+    refs.finalMedalButton?.classList.remove("is-ready");
+    await sleep(220);
+    await showScoreScene();
   }
 
   function switchBoxVideo(name) {
@@ -367,8 +383,10 @@
       const active = video.dataset.boxVideo === name;
       video.classList.toggle("is-active", active);
       if (!active) video.pause?.();
+      prepareVideoAudio(video);
     });
     const activeVideo = qs(`[data-box-video="${name}"]`);
+    prepareVideoAudio(activeVideo);
     activeVideo?.play?.().catch(() => {});
     return activeVideo;
   }
@@ -378,8 +396,10 @@
       const active = video.dataset.biaVideo === name;
       video.classList.toggle("is-active", active);
       if (!active) video.pause?.();
+      prepareVideoAudio(video);
     });
     const activeVideo = qs(`[data-bia-video="${name}"]`);
+    prepareVideoAudio(activeVideo);
     activeVideo?.play?.().catch(() => {});
     if (!options.once) return activeVideo;
     return playVideo(activeVideo, { timeout: options.timeout || 1200 });
@@ -420,6 +440,7 @@
 
   async function playIntroAfterStart(event) {
     if (state.locked || !state.openingReady) return;
+    unlockSceneAudio();
     state.locked = true;
     setMode("sequencia-02-pos-introducao");
     playMagicTouch(event);
@@ -429,6 +450,7 @@
 
   async function handleSceneBoxTouch(event) {
     if (state.locked || !state.sceneBoxReady) return;
+    unlockSceneAudio();
     playMagicTouch(event);
     state.locked = true;
     state.sceneBoxReady = false;
@@ -439,6 +461,7 @@
 
   async function playBoxOpening(event) {
     if (state.locked || !refs.box.classList.contains("is-clickable")) return;
+    unlockSceneAudio();
     state.locked = true;
     refs.box.classList.remove("is-clickable");
     setBalloon("", false);
@@ -500,6 +523,7 @@
 
   async function handleChoice(card) {
     if (state.locked) return;
+    unlockSceneAudio();
     state.locked = true;
     const id = card.dataset.cardId;
     const round = rounds[state.roundIndex];
@@ -513,24 +537,22 @@
       return;
     }
 
-    setMode("tela-10b-resposta-incorreta");
     card.classList.add("is-retry");
     await sleep(520);
     card.classList.remove("is-selected", "is-retry");
-    await switchBiaVideo("encouraging", { once: true, timeout: 1200 });
-    showFeedback("VAMOS DESCOBRIR JUNTOS?", [
-      { kind: "hint", label: "OUVIR DICA" },
-      { kind: "retry", label: "TENTAR NOVAMENTE" },
-    ]);
+    setMode("sequencia-03-descoberta");
+    showCards({ keepCurrentMode: true });
     state.locked = false;
   }
 
   async function nextRound() {
     if (state.locked) return;
+    unlockSceneAudio();
     state.locked = true;
     refs.feedbackPanel.classList.remove("is-visible");
     refs.hintPanel.classList.remove("is-visible");
     refs.cardStage.classList.remove("is-visible");
+    refs.cardStage.innerHTML = "";
     refs.successStage?.classList.remove("is-visible");
     refs.finalCommand?.classList.remove("is-visible");
     refs.finalMedalButton?.classList.remove("is-ready");
@@ -636,6 +658,7 @@
 
   async function handleFinalMedalTouch(event) {
     if (state.locked || root.dataset.mode !== "sequencia-final-vitoria") return;
+    unlockSceneAudio();
     playMagicTouch(event);
     state.locked = true;
     refs.finalCommand?.classList.remove("is-visible");
@@ -653,10 +676,14 @@
   });
   root.addEventListener("click", (event) => {
     if (event.target.closest("[data-hear-hint]")) {
+      unlockSceneAudio();
       switchBiaVideo("speaking", { once: true, timeout: 1100 });
       showHintPanel();
     }
-    if (event.target.closest("[data-retry-round]")) retryRound();
+    if (event.target.closest("[data-retry-round]")) {
+      unlockSceneAudio();
+      retryRound();
+    }
     if (event.target.closest("[data-next-round]")) nextRound();
     if (event.target.closest("[data-restart]")) restart();
     if (event.target.closest("[data-score-restart]")) restart();

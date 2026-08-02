@@ -101,12 +101,10 @@ window.CaixaMisteriosaPremiumVideoOrder = [
   },
   {
     order: 15,
-    file: "tiLYRN3ywobzQneuyTtB3_video_0(1).mp4",
+    file: "tiLYRN3ywobzQneuyTtB3_video_0.mp4",
     officialFunction: "Bia comemorando",
     state: "Bia Celebrating",
     executionGroup: "Tela Final",
     startsAfter: "YgBq_0BZUE0gxHvqrYrb-_video_0.mp4",
-    missing: true,
-    similarAvailableFile: "tiLYRN3ywobzQneuyTtB3_video_0.mp4",
   },
 ];
