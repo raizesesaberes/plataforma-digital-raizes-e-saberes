@@ -731,3 +731,384 @@ body {
     animation-iteration-count: 1;
   }
 }
+
+/* Storyboard oficial: enquadramento por quadro da prancha de referencia. */
+.premium-chapter::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 58%, rgba(255, 185, 42, 0.16), rgba(9, 8, 28, 0) 34%),
+    linear-gradient(90deg, rgba(3, 5, 18, 0.68), rgba(8, 8, 30, 0.18) 48%, rgba(4, 4, 18, 0.62)),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.08) 38%, rgba(0, 0, 0, 0.38));
+}
+
+.premium-chapter[data-mode="tela-02-introducao"]::after,
+.premium-chapter[data-mode="tela-11-vitoria"]::after {
+  opacity: 0;
+}
+
+.premium-chapter[data-mode="tela-01-inicial"] .premium-logo {
+  top: 5%;
+  width: min(36vw, 560px);
+}
+
+.premium-chapter[data-mode="tela-01-inicial"] .premium-box-wrap {
+  bottom: 11%;
+  width: min(30vw, 440px);
+}
+
+.premium-chapter[data-mode="tela-01-inicial"] .premium-bia-wrap {
+  top: 25%;
+  right: 8%;
+  width: min(17vw, 250px);
+}
+
+.premium-chapter[data-mode="tela-01-inicial"] .premium-start-button {
+  bottom: 3.5%;
+  width: min(20vw, 300px);
+}
+
+.premium-chapter[data-mode="tela-03-entrada-sala"] .premium-logo,
+.premium-chapter[data-mode^="tela-04"] .premium-logo,
+.premium-chapter[data-mode^="tela-05"] .premium-logo,
+.premium-chapter[data-mode^="tela-06"] .premium-logo,
+.premium-chapter[data-mode^="tela-07"] .premium-logo,
+.premium-chapter[data-mode^="tela-08"] .premium-logo,
+.premium-chapter[data-mode^="tela-09"] .premium-logo,
+.premium-chapter[data-mode^="tela-10"] .premium-logo {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.premium-chapter[data-mode="tela-03-entrada-sala"] .premium-box-wrap {
+  width: min(31vw, 470px);
+  bottom: 16%;
+}
+
+.premium-chapter[data-mode="tela-03-entrada-sala"] .premium-bia-wrap {
+  top: 22%;
+  right: 5%;
+  width: min(18vw, 270px);
+}
+
+.premium-chapter[data-mode="tela-03-entrada-sala"] .premium-balloon {
+  top: 11%;
+  right: 18%;
+  max-width: min(28vw, 360px);
+}
+
+.premium-chapter[data-mode="tela-04-toque-caixa"] .premium-box-wrap,
+.premium-chapter[data-mode="tela-05-reacao-caixa-01"] .premium-box-wrap,
+.premium-chapter[data-mode="tela-06-reacao-caixa-02"] .premium-box-wrap,
+.premium-chapter[data-mode="tela-07-abertura-caixa"] .premium-box-wrap {
+  z-index: 9;
+  left: 50%;
+  bottom: 9%;
+  width: min(52vw, 760px);
+  transform: translateX(-50%) scale(1);
+  opacity: 1;
+  filter: drop-shadow(0 0 44px rgba(255, 202, 40, 0.72));
+}
+
+.premium-chapter[data-mode="tela-04-toque-caixa"] .premium-bia-wrap,
+.premium-chapter[data-mode="tela-05-reacao-caixa-01"] .premium-bia-wrap,
+.premium-chapter[data-mode="tela-06-reacao-caixa-02"] .premium-bia-wrap,
+.premium-chapter[data-mode="tela-07-abertura-caixa"] .premium-bia-wrap,
+.premium-chapter[data-mode="tela-04-toque-caixa"] .premium-balloon,
+.premium-chapter[data-mode="tela-05-reacao-caixa-01"] .premium-balloon,
+.premium-chapter[data-mode="tela-06-reacao-caixa-02"] .premium-balloon,
+.premium-chapter[data-mode="tela-07-abertura-caixa"] .premium-balloon {
+  opacity: 0;
+}
+
+.premium-chapter[data-mode="tela-05-reacao-caixa-01"] .premium-box-wrap {
+  animation: premium-storyboard-shake 440ms ease-in-out infinite;
+}
+
+.premium-chapter[data-mode="tela-06-reacao-caixa-02"] .premium-box-wrap,
+.premium-chapter[data-mode="tela-07-abertura-caixa"] .premium-box-wrap {
+  filter: drop-shadow(0 0 60px rgba(255, 230, 92, 0.9));
+}
+
+.premium-chapter[data-mode="tela-08-explicacao-bia"] .premium-box-wrap {
+  opacity: 0;
+}
+
+.premium-chapter[data-mode="tela-08-explicacao-bia"] .premium-bia-wrap {
+  top: 20%;
+  right: 3.5%;
+  width: min(24vw, 340px);
+}
+
+.premium-chapter[data-mode="tela-08-explicacao-bia"] .premium-balloon {
+  top: 18%;
+  right: 27%;
+  max-width: min(36vw, 460px);
+}
+
+.premium-chapter[data-mode="tela-08-explicacao-bia"] .premium-hint-panel {
+  left: 33%;
+  bottom: 17%;
+  width: min(420px, 38vw);
+  transform: translateX(-50%) translateY(20px) scale(0.98);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.premium-chapter[data-mode="tela-08-explicacao-bia"] .premium-hint-panel.is-visible {
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+.premium-chapter[data-mode="tela-08-explicacao-bia"] .premium-hint-panel p {
+  display: none;
+}
+
+.premium-chapter[data-mode="tela-08-explicacao-bia"] .premium-audio-button {
+  min-width: 230px;
+  background: linear-gradient(#ffd54b, #f3a90b);
+  color: #24190a;
+  box-shadow: 0 9px 0 #a36a06, 0 18px 28px rgba(23, 14, 5, 0.28);
+}
+
+.premium-chapter[data-mode="tela-09-opcoes-resposta"] .premium-box-wrap {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.premium-chapter[data-mode="tela-09-opcoes-resposta"] .premium-bia-wrap,
+.premium-chapter[data-mode^="tela-10"] .premium-bia-wrap {
+  top: 24%;
+  right: 2.5%;
+  width: min(20vw, 310px);
+}
+
+.premium-card-stage {
+  display: block;
+  bottom: 11%;
+  left: 4%;
+  width: min(68vw, 980px);
+  transform: translateY(18px) scale(0.98);
+}
+
+.premium-card-stage.is-visible {
+  transform: translateY(0) scale(1);
+}
+
+.premium-question {
+  margin: 0 0 22px;
+  color: #fff;
+  font-size: clamp(1rem, 1.8vw, 1.85rem);
+  font-weight: 1000;
+  text-align: center;
+  text-shadow: 0 3px 0 rgba(22, 13, 56, 0.65);
+}
+
+.premium-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(170px, 1fr));
+  gap: clamp(20px, 2.4vw, 36px);
+}
+
+.premium-card img {
+  filter: drop-shadow(0 20px 24px rgba(0, 0, 0, 0.3));
+}
+
+.premium-chapter[data-mode="tela-10a-resposta-correta"] .premium-card:not(.is-selected),
+.premium-chapter[data-mode="tela-10b-resposta-incorreta"] .premium-card:not(.is-selected) {
+  opacity: 0.38;
+  transform: scale(0.94);
+}
+
+.premium-chapter[data-mode="tela-10a-resposta-correta"] .premium-feedback-panel,
+.premium-chapter[data-mode="tela-10b-resposta-incorreta"] .premium-feedback-panel {
+  left: 46%;
+  bottom: 8%;
+  width: min(650px, 52vw);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.premium-chapter[data-mode="tela-10a-resposta-correta"] .premium-feedback-panel strong {
+  color: #ffd847;
+  font-size: clamp(2.1rem, 4.2vw, 5rem);
+  text-shadow: 0 5px 0 #6d3b11, 0 0 24px rgba(255, 224, 77, 0.6);
+}
+
+.premium-chapter[data-mode="tela-10b-resposta-incorreta"] .premium-feedback-panel {
+  left: 38%;
+  top: 15%;
+  bottom: auto;
+  width: min(430px, 38vw);
+  padding: 18px 22px;
+  border: 4px solid rgba(86, 49, 125, 0.4);
+  border-radius: 28px;
+  background: rgba(255, 248, 222, 0.96);
+}
+
+.premium-chapter[data-mode="tela-10b-resposta-incorreta"] .premium-feedback-panel strong {
+  color: #3e2c22;
+  font-size: clamp(1rem, 1.8vw, 1.9rem);
+}
+
+.premium-chapter[data-mode="tela-10b-resposta-incorreta"] .premium-card-stage {
+  opacity: 0;
+}
+
+.premium-chapter[data-mode="tela-11-vitoria"] .premium-background-master,
+.premium-chapter[data-mode="tela-11-vitoria"] .premium-background-video,
+.premium-chapter[data-mode="tela-11-vitoria"] .premium-magic-ambience,
+.premium-chapter[data-mode="tela-11-vitoria"] .premium-box-wrap,
+.premium-chapter[data-mode="tela-11-vitoria"] .premium-bia-wrap {
+  opacity: 0;
+}
+
+.premium-victory-screen.is-complete .premium-victory-panel {
+  width: min(94vw, 1260px);
+}
+
+.premium-victory-title {
+  top: 10%;
+}
+
+.premium-victory-medal {
+  left: 45%;
+  top: 28%;
+  width: min(19vw, 250px);
+  transform: translateX(-50%) scale(0.9);
+}
+
+.premium-victory-xp {
+  left: 50%;
+  top: 54%;
+  transform: translateX(-50%);
+  color: #fff;
+  text-shadow: 0 4px 0 #332062, 0 0 18px rgba(104, 88, 255, 0.55);
+}
+
+.premium-victory-tito {
+  right: 12%;
+  bottom: 19%;
+}
+
+.premium-victory-pipo {
+  right: 3%;
+  left: auto;
+  bottom: 19%;
+}
+
+@keyframes premium-storyboard-shake {
+  0%,
+  100% {
+    transform: translateX(-50%) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translateX(-51%) rotate(-2deg) scale(1.015);
+  }
+  75% {
+    transform: translateX(-49%) rotate(2deg) scale(1.015);
+  }
+}
+
+@media (max-width: 1024px) {
+  .premium-chapter[data-mode="tela-01-inicial"] .premium-logo {
+    width: 44vw;
+  }
+
+  .premium-chapter[data-mode="tela-01-inicial"] .premium-box-wrap,
+  .premium-chapter[data-mode="tela-03-entrada-sala"] .premium-box-wrap {
+    width: 36vw;
+  }
+
+  .premium-chapter[data-mode="tela-01-inicial"] .premium-bia-wrap,
+  .premium-chapter[data-mode="tela-03-entrada-sala"] .premium-bia-wrap,
+  .premium-chapter[data-mode="tela-08-explicacao-bia"] .premium-bia-wrap,
+  .premium-chapter[data-mode="tela-09-opcoes-resposta"] .premium-bia-wrap,
+  .premium-chapter[data-mode^="tela-10"] .premium-bia-wrap {
+    width: 22vw;
+  }
+
+  .premium-card-stage {
+    width: min(72vw, 760px);
+  }
+
+  .premium-card-grid {
+    grid-template-columns: repeat(3, minmax(130px, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .premium-chapter[data-mode="tela-01-inicial"] .premium-logo {
+    width: 62vw;
+    top: 4%;
+  }
+
+  .premium-chapter[data-mode="tela-01-inicial"] .premium-box-wrap,
+  .premium-chapter[data-mode="tela-03-entrada-sala"] .premium-box-wrap {
+    width: 48vw;
+    bottom: 18%;
+  }
+
+  .premium-chapter[data-mode="tela-01-inicial"] .premium-bia-wrap,
+  .premium-chapter[data-mode="tela-03-entrada-sala"] .premium-bia-wrap {
+    top: 28%;
+    width: 25vw;
+  }
+
+  .premium-chapter[data-mode="tela-04-toque-caixa"] .premium-box-wrap,
+  .premium-chapter[data-mode="tela-05-reacao-caixa-01"] .premium-box-wrap,
+  .premium-chapter[data-mode="tela-06-reacao-caixa-02"] .premium-box-wrap,
+  .premium-chapter[data-mode="tela-07-abertura-caixa"] .premium-box-wrap {
+    width: 78vw;
+    bottom: 18%;
+  }
+
+  .premium-chapter[data-mode="tela-08-explicacao-bia"] .premium-bia-wrap,
+  .premium-chapter[data-mode="tela-09-opcoes-resposta"] .premium-bia-wrap,
+  .premium-chapter[data-mode^="tela-10"] .premium-bia-wrap {
+    top: 7%;
+    width: 28vw;
+  }
+
+  .premium-chapter[data-mode="tela-08-explicacao-bia"] .premium-balloon,
+  .premium-chapter[data-mode="tela-03-entrada-sala"] .premium-balloon {
+    top: 8%;
+    right: 33%;
+    max-width: 54vw;
+  }
+
+  .premium-chapter[data-mode="tela-08-explicacao-bia"] .premium-hint-panel {
+    left: 39%;
+    bottom: 12%;
+    width: 52vw;
+  }
+
+  .premium-card-stage {
+    left: 3vw;
+    bottom: 8%;
+    width: 94vw;
+  }
+
+  .premium-card-grid {
+    grid-template-columns: repeat(3, minmax(88px, 1fr));
+    gap: 10px;
+  }
+
+  .premium-question {
+    margin-bottom: 10px;
+    font-size: 0.98rem;
+  }
+
+  .premium-chapter[data-mode="tela-10a-resposta-correta"] .premium-feedback-panel,
+  .premium-chapter[data-mode="tela-10b-resposta-incorreta"] .premium-feedback-panel {
+    left: 50%;
+    top: auto;
+    bottom: 4%;
+    width: 88vw;
+  }
+}

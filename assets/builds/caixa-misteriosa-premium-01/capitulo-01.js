@@ -60,6 +60,7 @@
 
   const loopingVideos = qsa("[data-premium-loop]");
   loopingVideos.forEach((video) => video.play?.().catch(() => {}));
+  setMode("tela-01-inicial");
 
   function setMode(mode) {
     root.dataset.mode = mode;
@@ -142,7 +143,7 @@
   }
 
   async function enterBoxScene() {
-    setMode("chapter-02-box-scene");
+    setMode("tela-03-entrada-sala");
     refs.introLayer.classList.remove("is-active");
     refs.introVideo.pause?.();
     loopingVideos.forEach((video) => video.play?.().catch(() => {}));
@@ -165,6 +166,7 @@
   async function playIntroAfterStart(event) {
     if (state.locked) return;
     state.locked = true;
+    setMode("tela-02-introducao");
     playMagicTouch(event);
     refs.startButton.classList.add("is-hidden");
     refs.logo.classList.add("is-exiting");
@@ -183,11 +185,17 @@
     setBalloon("", false);
     hideRoundUi();
     playMagicTouch(event);
+    setMode("tela-04-toque-caixa");
     await playVideo(switchBoxVideo("touch"), { timeout: 900 });
+    setMode("tela-05-reacao-caixa-01");
     await playVideo(switchBoxVideo("shake"), { timeout: 1100 });
+    setMode("tela-06-reacao-caixa-02");
     await playVideo(switchBoxVideo("glow"), { timeout: 1200 });
+    setMode("tela-07-abertura-caixa");
     await playVideo(switchBoxVideo("opening"), { timeout: 1500 });
+    setMode("tela-08-explicacao-bia");
     await switchBiaVideo("talking", { once: true, timeout: 1100 });
+    setBalloon("VAMOS DESCOBRIR O QUE E ISSO? OUCA A DICA!");
     showHintPanel();
     await sleep(1000);
     showCards();
@@ -202,11 +210,19 @@
 
   function showCards() {
     const round = rounds[state.roundIndex];
-    refs.cardStage.innerHTML = round.choices.map(([id, label, src]) => `
+    setMode("tela-09-opcoes-resposta");
+    refs.hintPanel.classList.remove("is-visible");
+    setBalloon("", false);
+    refs.cardStage.innerHTML = `
+      <h2 class="premium-question">QUAL OBJETO ESTAMOS DESCOBRINDO?</h2>
+      <div class="premium-card-grid">
+        ${round.choices.map(([id, label, src]) => `
       <button class="premium-card" type="button" data-card-id="${id}" aria-label="${label}">
         <img src="${src}" alt="${label}" />
       </button>
-    `).join("");
+        `).join("")}
+      </div>
+    `;
     refs.cardStage.classList.add("is-visible");
   }
 
@@ -228,6 +244,7 @@
     card.classList.add("is-selected");
 
     if (id === round.correctId) {
+      setMode("tela-10a-resposta-correta");
       playStarBurst(card);
       await switchBiaVideo("celebrating", { once: true, timeout: 1300 });
       showFeedback("MUITO BEM!", [{ kind: "next", label: "PROXIMA DESCOBERTA" }]);
@@ -235,6 +252,7 @@
       return;
     }
 
+    setMode("tela-10b-resposta-incorreta");
     card.classList.add("is-retry");
     await sleep(520);
     card.classList.remove("is-selected", "is-retry");
@@ -260,17 +278,19 @@
     await sleep(450);
     switchBoxVideo("idle");
     refs.box.classList.add("is-clickable");
+    setMode("tela-03-entrada-sala");
     setBalloon("TOQUE NA CAIXA PARA FAZER UMA DESCOBERTA!");
     state.locked = false;
   }
 
   function retryRound() {
+    setMode("tela-09-opcoes-resposta");
     refs.feedbackPanel.classList.remove("is-visible");
     refs.cardStage.querySelectorAll(".premium-card").forEach((card) => card.classList.remove("is-selected", "is-retry"));
   }
 
   async function showVictory() {
-    setMode("chapter-05-victory");
+    setMode("tela-11-vitoria");
     hideRoundUi();
     setBalloon("", false);
     refs.victoryScreen.classList.add("is-visible");
@@ -305,6 +325,7 @@
   }, 1500);
 
   window.setTimeout(() => {
+    if (root.dataset.mode !== "tela-01-inicial") return;
     switchBiaVideo("speaking", { once: true, timeout: 1000 });
     setBalloon("VAMOS BRINCAR DE DESCOBRIR?");
   }, 4000);
