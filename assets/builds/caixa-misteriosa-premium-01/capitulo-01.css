@@ -1083,6 +1083,16 @@ body {
   }
 }
 
+@keyframes premium-card-float-from-box {
+  0%,
+  100% {
+    transform: translateY(var(--card-y, 0)) rotate(var(--card-rotate, 0deg)) scale(var(--card-scale, 1));
+  }
+  50% {
+    transform: translateY(calc(var(--card-y, 0px) - 10px)) rotate(var(--card-rotate, 0deg)) scale(calc(var(--card-scale, 1) + 0.015));
+  }
+}
+
 @keyframes premium-fx-pop {
   from {
     opacity: 1;
@@ -1871,9 +1881,9 @@ body {
   display: block !important;
   visibility: visible !important;
   left: 50% !important;
-  top: 55% !important;
+  top: 57% !important;
   bottom: auto !important;
-  width: min(1440px, 97vw) !important;
+  width: min(1120px, 90vw) !important;
   opacity: 0 !important;
   pointer-events: none !important;
   transform: translate(-50%, -50%) !important;
@@ -1887,9 +1897,10 @@ body {
 
 .premium-card-grid {
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(260px, 1fr)) !important;
-  gap: clamp(30px, 4vw, 64px) !important;
-  align-items: end !important;
+  grid-template-columns: repeat(3, minmax(210px, 1fr)) !important;
+  gap: clamp(22px, 3vw, 48px) !important;
+  align-items: center !important;
+  perspective: 900px !important;
 }
 
 .premium-card {
@@ -1901,6 +1912,29 @@ body {
   box-shadow: none !important;
   background: transparent !important;
   overflow: visible !important;
+}
+
+.premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card {
+  transform-origin: 50% 78% !important;
+  animation: premium-card-float-from-box 3.8s ease-in-out infinite !important;
+}
+
+.premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card:nth-child(1) {
+  --card-y: 18px;
+  --card-rotate: -3deg;
+  --card-scale: 0.92;
+}
+
+.premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card:nth-child(2) {
+  --card-y: -8px;
+  --card-rotate: 0deg;
+  --card-scale: 1.02;
+}
+
+.premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card:nth-child(3) {
+  --card-y: 18px;
+  --card-rotate: 3deg;
+  --card-scale: 0.92;
 }
 
 .premium-card img {
@@ -1916,15 +1950,16 @@ body {
 
 .premium-question {
   margin-bottom: clamp(18px, 2.8vh, 40px) !important;
-  font-size: clamp(1.7rem, 3vw, 3.1rem) !important;
+  font-size: clamp(1.45rem, 2.4vw, 2.75rem) !important;
+  transform: translateY(-2.5vh);
 }
 
 .premium-question span {
-  font-size: clamp(2.25rem, 4.2vw, 5.1rem) !important;
+  font-size: clamp(2rem, 3.5vw, 4.35rem) !important;
 }
 
 .premium-question small {
-  font-size: clamp(1.55rem, 2.7vw, 3rem) !important;
+  font-size: clamp(1.35rem, 2.2vw, 2.6rem) !important;
 }
 
 .premium-success-card::before,
@@ -1936,6 +1971,9 @@ body {
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
+  width: min(27vw, 380px) !important;
+  transform: translateY(-1.5vh);
+  animation: none !important;
 }
 
 .premium-success-card img {

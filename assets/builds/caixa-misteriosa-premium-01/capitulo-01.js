@@ -216,13 +216,17 @@
     target.load();
   }
 
-  function pauseOpeningAtCommandFrame() {
+  function pauseOpeningAtCommandFrame(options = {}) {
     const video = getActiveOpeningVideo();
     if (!video) return;
     video.loop = false;
     video.pause?.();
     if (Number.isFinite(video.duration) && video.duration > 0) {
-      const finalFrame = Math.max(0, video.duration - 0.08);
+      const offset = Number.isFinite(options.offset) ? options.offset : 0.08;
+      const fraction = Number.isFinite(options.fraction) ? options.fraction : null;
+      const finalFrame = fraction
+        ? Math.min(video.duration - 0.04, Math.max(0, video.duration * fraction))
+        : Math.max(0, video.duration - offset);
       if (!Number.isNaN(finalFrame)) video.currentTime = finalFrame;
     }
   }
@@ -324,7 +328,7 @@
   }
 
   async function holdDiscoveryFinalFrame(src) {
-    pauseOpeningAtCommandFrame();
+    pauseOpeningAtCommandFrame({ fraction: 0.86 });
     showCards({ keepCurrentMode: true });
     state.locked = false;
   }
@@ -349,7 +353,7 @@
   }
 
   async function holdCorrectCottonFinalFrame(src) {
-    pauseOpeningAtCommandFrame();
+    pauseOpeningAtCommandFrame({ fraction: 0.72 });
     refs.successStage?.classList.add("is-visible");
   }
 
