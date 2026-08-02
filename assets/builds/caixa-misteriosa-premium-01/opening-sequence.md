@@ -72,6 +72,7 @@ Sequencia Final - vitoria:
 - Video 01: `Hh-6tytYNKGPrmAK8EJ_g_video_0.mp4`.
 - Video 02: `c8lMyZ7f2_S1UDihV5kuc_video_0.mp4`.
 - Video 03: `ByCgmsdpl5z7iWWTx13Bj_video_0.mp4`.
+- Bia comemorando usa o arquivo presente na build: `tiLYRN3ywobzQneuyTtB3_video_0.mp4`.
 - Ao terminar o Video 03, a build mantem os ultimos 2 segundos em loop.
 - Texto final: `PARABENS PELA CONQUISTA, CLIQUE NA MEDALHA PRA VER SUA PONTUACAO.`
 - A plataforma adiciona um hotspot/click invisivel sobre a medalha.

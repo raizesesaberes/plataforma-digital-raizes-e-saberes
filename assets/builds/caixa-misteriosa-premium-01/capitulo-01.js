@@ -105,8 +105,8 @@
   };
 
   const loopingVideos = qsa("[data-premium-loop]");
-  const previewMode = new URLSearchParams(window.location.search).get("reset");
-  if (previewMode === "cena-04-pontuacao") {
+  const previewMode = new URLSearchParams(window.location.search).get("preview");
+  if (previewMode === "score") {
     state.locked = true;
     window.setTimeout(() => showScoreScene(), 0);
   } else {
