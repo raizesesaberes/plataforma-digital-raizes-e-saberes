@@ -4,10 +4,37 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Caixa Misteriosa Premium 01 - Storyboard Oficial</title>
-  <link rel="stylesheet" href="assets/builds/caixa-misteriosa-premium-01/capitulo-01.css?v=storyboard-oficial-20260802-01" />
+  <link rel="stylesheet" href="assets/builds/caixa-misteriosa-premium-01/capitulo-01.css?v=cena-04-pontuacao-20260802-15" />
 </head>
 <body>
   <main class="premium-chapter is-chapter-01" data-premium-chapter aria-label="A Caixa Misteriosa Premium">
+    <section class="premium-layer premium-opening-sequence" data-opening-sequence aria-label="Abertura da Caixa Misteriosa">
+      <video class="premium-opening-video" data-opening-video muted playsinline preload="auto"></video>
+      <div class="premium-scene-command" data-scene-command>TOQUE NA CAIXA PARA FAZER UMA DESCOBERTA!</div>
+      <button class="premium-scene-box-hotspot" type="button" data-scene-box-touch aria-label="Tocar na caixa"></button>
+      <div class="premium-final-command" data-final-command>PARABENS PELA CONQUISTA, CLIQUE NA MEDALHA PRA VER SUA PONTUACAO.</div>
+      <button class="premium-final-medal-hotspot" type="button" data-final-medal-touch aria-label="Ver pontuacao"></button>
+      <section class="premium-success-stage" data-success-stage aria-live="polite">
+        <h2 data-success-title>PARABENS, VOCE ACERTOU!</h2>
+        <div class="premium-success-card">
+          <img data-success-card-image src="assets/builds/caixa-misteriosa-premium-01/png/card_algodao_premium_crop.png" alt="Algodao" />
+        </div>
+        <button class="premium-next-discovery-button" type="button" data-next-round>PROXIMA DESCOBERTA</button>
+      </section>
+      <section class="premium-score-stage" data-score-stage aria-live="polite">
+        <div class="premium-score-board">
+          <img class="premium-score-panel" src="assets/builds/caixa-misteriosa-premium-01/png/painel_pontuacao_premium.png" alt="Parabens, voce completou a descoberta" />
+          <div class="premium-score-stars" data-score-stars aria-hidden="true"></div>
+          <span class="premium-score-time" data-score-time>00:00</span>
+          <span class="premium-score-xp" data-score-xp>+0</span>
+          <button class="premium-score-hotspot premium-score-restart" type="button" data-score-restart aria-label="Jogar novamente"></button>
+          <button class="premium-score-hotspot premium-score-next" type="button" data-score-home aria-label="Continuar"></button>
+          <button class="premium-score-hotspot premium-score-retry" type="button" data-score-restart aria-label="Tentar novamente"></button>
+          <button class="premium-score-hotspot premium-score-home" type="button" data-score-home aria-label="Voltar ao site"></button>
+        </div>
+      </section>
+    </section>
+
     <img class="premium-layer premium-background-master" data-layer="background-master" src="assets/builds/caixa-misteriosa-premium-01/png/background_sala_descobertas_master.png" alt="" />
     <video class="premium-layer premium-background-video" data-layer="background-video" src="assets/builds/caixa-misteriosa-premium-01/videos/D_gYXzwTrkNrZ8icCmXPu_video_0.mp4" autoplay muted loop playsinline preload="metadata" data-premium-loop></video>
     <video class="premium-layer premium-magic-ambience" data-layer="magic-ambience" src="assets/builds/caixa-misteriosa-premium-01/videos/wklNA0P4IIjwrJ5E_ewud_video_0.mp4" autoplay muted loop playsinline preload="metadata" data-premium-loop></video>
@@ -74,7 +101,7 @@
     <div class="premium-layer premium-fx-layer" data-fx-layer aria-hidden="true"></div>
   </main>
 
-  <script src="assets/builds/caixa-misteriosa-premium-01/video-order.js?v=storyboard-oficial-20260802-01"></script>
-  <script src="assets/builds/caixa-misteriosa-premium-01/capitulo-01.js?v=storyboard-oficial-20260802-01"></script>
+  <script src="assets/builds/caixa-misteriosa-premium-01/video-order.js?v=cena-04-pontuacao-20260802-15"></script>
+  <script src="assets/builds/caixa-misteriosa-premium-01/capitulo-01.js?v=cena-04-pontuacao-20260802-15"></script>
 </body>
 </html>

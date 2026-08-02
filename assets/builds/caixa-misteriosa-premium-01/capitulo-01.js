@@ -4,30 +4,42 @@
 
   const rounds = [
     {
-      hint: "E bem macio.",
+      hint: "É BEM MACIO",
+      question: "QUAL SERA O OBJETO DA CAIXA?",
       correctId: "algodao",
+      successTitle: "PARABENS, VOCE ACERTOU!",
+      successImage: "assets/builds/caixa-misteriosa-premium-01/png/card_algodao_premium_crop.png",
+      successAlt: "Algodao",
       choices: [
-        ["pena", "PENA", "assets/jogos/ei2/caixa-misteriosa/references/card-pena.png"],
-        ["algodao", "ALGODAO", "assets/jogos/ei2/caixa-misteriosa/references/card-algodao.png"],
-        ["esponja", "ESPONJA", "assets/jogos/ei2/caixa-misteriosa/references/card-esponja.png"],
+        ["bola", "BOLA", "assets/builds/caixa-misteriosa-premium-01/png/card_bola_premium_crop.png"],
+        ["cubo", "CUBO", "assets/builds/caixa-misteriosa-premium-01/png/card_cubo_premium_crop.png"],
+        ["algodao", "ALGODAO", "assets/builds/caixa-misteriosa-premium-01/png/card_algodao_premium_crop.png"],
       ],
     },
     {
-      hint: "E leve e flutua.",
+      hint: "É LEVE E FLUTUA",
+      question: "QUAL SERA O OBJETO DA CAIXA?",
       correctId: "pena",
+      successTitle: "VOCE ACERTOU!",
+      successImage: "assets/builds/caixa-misteriosa-premium-01/png/card_pena_premium_crop.png",
+      successAlt: "Pena",
       choices: [
-        ["bola", "BOLA", "assets/jogos/ei2/caixa-misteriosa/references/card-bola.png"],
-        ["pena", "PENA", "assets/jogos/ei2/caixa-misteriosa/references/card-pena.png"],
-        ["cubo", "CUBO", "assets/jogos/ei2/caixa-misteriosa/references/card-cubo.png"],
+        ["flor", "FLOR", "assets/builds/caixa-misteriosa-premium-01/png/card_flor_premium_crop.png"],
+        ["pena", "PENA", "assets/builds/caixa-misteriosa-premium-01/png/card_pena_premium_crop.png"],
+        ["esponja", "ESPONJA", "assets/builds/caixa-misteriosa-premium-01/png/card_esponja_premium_crop.png"],
       ],
     },
     {
-      hint: "Brilha como uma conquista.",
+      hint: "BRILHA COMO UMA CONQUISTA",
+      question: "QUAL SERA O OBJETO DA CAIXA?",
       correctId: "estrela",
+      successTitle: "VOCE ACERTOU!",
+      successImage: "assets/builds/caixa-misteriosa-premium-01/png/card_estrela_premium_crop.png",
+      successAlt: "Estrela",
       choices: [
-        ["flor", "FLOR", "assets/jogos/ei2/caixa-misteriosa/references/card-flor.png"],
-        ["estrela", "ESTRELA", "assets/jogos/ei2/caixa-misteriosa/references/card-estrela.png"],
-        ["folha", "FOLHA", "assets/jogos/ei2/caixa-misteriosa/references/card-folha.png"],
+        ["estrela", "ESTRELA", "assets/builds/caixa-misteriosa-premium-01/png/card_estrela_premium_crop.png"],
+        ["folha", "FOLHA", "assets/builds/caixa-misteriosa-premium-01/png/card_folha_premium_crop.png"],
+        ["flor", "FLOR", "assets/builds/caixa-misteriosa-premium-01/png/card_flor_premium_crop.png"],
       ],
     },
   ];
@@ -35,9 +47,43 @@
   const qs = (selector) => root.querySelector(selector);
   const qsa = (selector) => Array.from(root.querySelectorAll(selector));
   const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
-  const state = { roundIndex: 0, locked: false };
+  const state = { roundIndex: 0, locked: true, openingReady: false, sceneBoxReady: false };
+  const openingScenes = [
+    "assets/builds/caixa-misteriosa-premium-01/videos/9k6XOiV-UlozZTSyeEDEX_video_0.mp4",
+    "assets/builds/caixa-misteriosa-premium-01/videos/qUZnfWGxlAMfmh-TvB4YS_video_0.mp4",
+  ];
+  const postIntroScene = "assets/builds/caixa-misteriosa-premium-01/videos/wScAhtsi_Gxw8Wmmi1uH1_video_0.mp4";
+  const discoveryScenes = [
+    "assets/builds/caixa-misteriosa-premium-01/videos/BCo6YvvLU2PmMfND_b_4v_video_0.mp4",
+    "assets/builds/caixa-misteriosa-premium-01/videos/bls5a3oOCNusVPiGJIfrO_video_0.mp4",
+    "assets/builds/caixa-misteriosa-premium-01/videos/URhMToaei3JpQG1PD3oas_video_0.mp4",
+  ];
+  const correctCottonScenes = [
+    "assets/builds/caixa-misteriosa-premium-01/videos/Hh-6tytYNKGPrmAK8EJ_g_video_0.mp4",
+    "assets/builds/caixa-misteriosa-premium-01/videos/1jy891KtSNoTXHJMDoRci_video_0.mp4",
+    "assets/builds/caixa-misteriosa-premium-01/videos/c9UROclf_gw-tw2PCeKzM_video_0.mp4",
+  ];
+  const finalVictoryScenes = [
+    "assets/builds/caixa-misteriosa-premium-01/videos/Hh-6tytYNKGPrmAK8EJ_g_video_0.mp4",
+    "assets/builds/caixa-misteriosa-premium-01/videos/c8lMyZ7f2_S1UDihV5kuc_video_0.mp4",
+    "assets/builds/caixa-misteriosa-premium-01/videos/ByCgmsdpl5z7iWWTx13Bj_video_0.mp4",
+  ];
+  const scoreSceneVideo = "assets/builds/caixa-misteriosa-premium-01/videos/D_gYXzwTrkNrZ8icCmXPu_video_0.mp4";
 
   const refs = {
+    openingLayer: qs("[data-opening-sequence]"),
+    openingVideo: qs("[data-opening-video]"),
+    sceneCommand: qs("[data-scene-command]"),
+    sceneBoxButton: qs("[data-scene-box-touch]"),
+    finalCommand: qs("[data-final-command]"),
+    finalMedalButton: qs("[data-final-medal-touch]"),
+    successStage: qs("[data-success-stage]"),
+    successTitle: qs("[data-success-title]"),
+    successCardImage: qs("[data-success-card-image]"),
+    scoreStage: qs("[data-score-stage]"),
+    scoreStars: qs("[data-score-stars]"),
+    scoreXp: qs("[data-score-xp]"),
+    scoreTime: qs("[data-score-time]"),
     logo: qs(".premium-logo"),
     startButton: qs("[data-premium-start]"),
     introLayer: qs("[data-premium-intro-layer]"),
@@ -59,8 +105,14 @@
   };
 
   const loopingVideos = qsa("[data-premium-loop]");
-  loopingVideos.forEach((video) => video.play?.().catch(() => {}));
-  setMode("tela-01-inicial");
+  const previewMode = new URLSearchParams(window.location.search).get("reset");
+  if (previewMode === "cena-04-pontuacao") {
+    state.locked = true;
+    window.setTimeout(() => showScoreScene(), 0);
+  } else {
+    setMode("tela-01-abertura");
+    playOpeningSequence();
+  }
 
   function setMode(mode) {
     root.dataset.mode = mode;
@@ -106,6 +158,253 @@
     });
   }
 
+  function setOpeningSource(src) {
+    refs.openingVideo.src = src;
+    refs.openingVideo.load();
+  }
+
+  function playOpeningClip(src, { fallback = 12000 } = {}) {
+    const video = refs.openingVideo;
+    if (!video) return sleep(fallback);
+    setOpeningSource(src);
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        video.removeEventListener("ended", finish);
+        video.removeEventListener("error", finish);
+        resolve();
+      };
+      video.loop = false;
+      video.addEventListener("ended", finish);
+      video.addEventListener("error", finish);
+      video.play?.().catch(() => window.setTimeout(finish, fallback));
+      window.setTimeout(finish, fallback);
+    });
+  }
+
+  async function holdOpeningFinalFrame(src) {
+    const video = refs.openingVideo;
+    if (!video) return;
+    setOpeningSource(src);
+    await new Promise((resolve) => {
+      if (Number.isFinite(video.duration) && video.duration > 0) {
+        resolve();
+        return;
+      }
+      video.addEventListener("loadedmetadata", resolve, { once: true });
+      video.addEventListener("error", resolve, { once: true });
+      window.setTimeout(resolve, 1800);
+    });
+    const loopStart = Number.isFinite(video.duration) && video.duration > 2 ? video.duration - 2 : 0;
+    const enforceLoop = () => {
+      if (video.currentTime < loopStart) return;
+      if (video.duration - video.currentTime <= 0.12) video.currentTime = loopStart;
+    };
+    video.currentTime = loopStart;
+    video.loop = false;
+    video.addEventListener("timeupdate", enforceLoop);
+    video.play?.().catch(() => {});
+    state.openingReady = true;
+    state.locked = false;
+    root.classList.add("is-opening-ready");
+    refs.startButton?.classList.remove("is-hidden");
+  }
+
+  async function playOpeningSequence() {
+    refs.startButton?.classList.add("is-hidden");
+    refs.sceneCommand?.classList.remove("is-visible");
+    refs.sceneBoxButton?.classList.remove("is-ready");
+    refs.finalCommand?.classList.remove("is-visible");
+    refs.finalMedalButton?.classList.remove("is-ready");
+    refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
+    refs.successStage?.classList.remove("is-visible");
+    loopingVideos.forEach((video) => video.pause?.());
+    await playOpeningClip(openingScenes[0]);
+    await playOpeningClip(openingScenes[1]);
+    await holdOpeningFinalFrame(openingScenes[1]);
+  }
+
+  async function playPostIntroScene() {
+    setMode("sequencia-02-pos-introducao");
+    root.classList.remove("is-opening-ready");
+    refs.startButton?.classList.add("is-hidden");
+    refs.openingLayer?.classList.remove("is-hidden");
+    refs.sceneCommand?.classList.remove("is-visible");
+    refs.sceneBoxButton?.classList.remove("is-ready");
+    refs.finalCommand?.classList.remove("is-visible");
+    refs.finalMedalButton?.classList.remove("is-ready");
+    refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
+    refs.successStage?.classList.remove("is-visible");
+    state.sceneBoxReady = false;
+    await playOpeningClip(postIntroScene);
+    await holdPostIntroFrame(postIntroScene);
+  }
+
+  async function holdPostIntroFrame(src) {
+    const video = refs.openingVideo;
+    if (!video) return;
+    setOpeningSource(src);
+    await new Promise((resolve) => {
+      if (Number.isFinite(video.duration) && video.duration > 0) {
+        resolve();
+        return;
+      }
+      video.addEventListener("loadedmetadata", resolve, { once: true });
+      video.addEventListener("error", resolve, { once: true });
+      window.setTimeout(resolve, 1800);
+    });
+    const loopStart = Number.isFinite(video.duration) && video.duration > 2 ? video.duration - 2 : 0;
+    const enforceLoop = () => {
+      if (root.dataset.mode !== "sequencia-02-pos-introducao") return;
+      if (video.currentTime < loopStart) return;
+      if (video.duration - video.currentTime <= 0.12) video.currentTime = loopStart;
+    };
+    video.currentTime = loopStart;
+    video.loop = false;
+    video.addEventListener("timeupdate", enforceLoop);
+    video.play?.().catch(() => {});
+    refs.sceneCommand?.classList.add("is-visible");
+    refs.sceneBoxButton?.classList.add("is-ready");
+    state.sceneBoxReady = true;
+    state.locked = false;
+  }
+
+  async function playDiscoverySequence() {
+    setMode("sequencia-03-descoberta");
+    refs.sceneCommand?.classList.remove("is-visible");
+    refs.sceneBoxButton?.classList.remove("is-ready");
+    refs.finalCommand?.classList.remove("is-visible");
+    refs.finalMedalButton?.classList.remove("is-ready");
+    refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
+    refs.successStage?.classList.remove("is-visible");
+    state.sceneBoxReady = false;
+    await playOpeningClip(discoveryScenes[0]);
+    await playOpeningClip(discoveryScenes[1]);
+    await playOpeningClip(discoveryScenes[2]);
+    await holdDiscoveryFinalFrame(discoveryScenes[2]);
+  }
+
+  async function holdDiscoveryFinalFrame(src) {
+    const video = refs.openingVideo;
+    if (!video) return;
+    setOpeningSource(src);
+    await new Promise((resolve) => {
+      if (Number.isFinite(video.duration) && video.duration > 0) {
+        resolve();
+        return;
+      }
+      video.addEventListener("loadedmetadata", resolve, { once: true });
+      video.addEventListener("error", resolve, { once: true });
+      window.setTimeout(resolve, 1800);
+    });
+    const loopStart = Number.isFinite(video.duration) && video.duration > 2 ? video.duration - 2 : 0;
+    const enforceLoop = () => {
+      if (root.dataset.mode !== "sequencia-03-descoberta") return;
+      if (video.currentTime < loopStart) return;
+      if (video.duration - video.currentTime <= 0.12) video.currentTime = loopStart;
+    };
+    video.currentTime = loopStart;
+    video.loop = false;
+    video.addEventListener("timeupdate", enforceLoop);
+    video.play?.().catch(() => {});
+    showCards({ keepCurrentMode: true });
+    state.locked = false;
+  }
+
+  async function playCorrectCottonSequence() {
+    const round = rounds[state.roundIndex];
+    setMode("sequencia-04-acerto-algodao");
+    refs.cardStage.classList.remove("is-visible");
+    refs.feedbackPanel.classList.remove("is-visible");
+    refs.successStage?.classList.remove("is-visible");
+    refs.finalCommand?.classList.remove("is-visible");
+    refs.finalMedalButton?.classList.remove("is-ready");
+    refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
+    if (refs.successTitle) refs.successTitle.textContent = round.successTitle || "VOCE ACERTOU!";
+    if (refs.successCardImage) {
+      refs.successCardImage.src = round.successImage;
+      refs.successCardImage.alt = round.successAlt || "";
+    }
+    refs.openingLayer?.classList.remove("is-hidden");
+    await playOpeningClip(correctCottonScenes[0]);
+    await playOpeningClip(correctCottonScenes[1]);
+    await playOpeningClip(correctCottonScenes[2]);
+    await holdCorrectCottonFinalFrame(correctCottonScenes[2]);
+  }
+
+  async function holdCorrectCottonFinalFrame(src) {
+    const video = refs.openingVideo;
+    if (!video) return;
+    setOpeningSource(src);
+    await new Promise((resolve) => {
+      if (Number.isFinite(video.duration) && video.duration > 0) {
+        resolve();
+        return;
+      }
+      video.addEventListener("loadedmetadata", resolve, { once: true });
+      video.addEventListener("error", resolve, { once: true });
+      window.setTimeout(resolve, 1800);
+    });
+    const loopStart = Number.isFinite(video.duration) && video.duration > 2 ? video.duration - 2 : 0;
+    const enforceLoop = () => {
+      if (root.dataset.mode !== "sequencia-04-acerto-algodao") return;
+      if (video.currentTime < loopStart) return;
+      if (video.duration - video.currentTime <= 0.12) video.currentTime = loopStart;
+    };
+    video.currentTime = loopStart;
+    video.loop = false;
+    video.addEventListener("timeupdate", enforceLoop);
+    video.play?.().catch(() => {});
+    refs.successStage?.classList.add("is-visible");
+  }
+
+  async function playFinalVictorySequence() {
+    setMode("sequencia-final-vitoria");
+    hideRoundUi();
+    setBalloon("", false);
+    refs.successStage?.classList.remove("is-visible");
+    refs.sceneCommand?.classList.remove("is-visible");
+    refs.sceneBoxButton?.classList.remove("is-ready");
+    refs.finalCommand?.classList.remove("is-visible");
+    refs.finalMedalButton?.classList.remove("is-ready");
+    refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
+    refs.openingLayer?.classList.remove("is-hidden");
+    await playOpeningClip(finalVictoryScenes[0]);
+    await playOpeningClip(finalVictoryScenes[1]);
+    await playOpeningClip(finalVictoryScenes[2]);
+    await holdFinalVictoryFrame(finalVictoryScenes[2]);
+  }
+
+  async function holdFinalVictoryFrame(src) {
+    const video = refs.openingVideo;
+    if (!video) return;
+    setOpeningSource(src);
+    await new Promise((resolve) => {
+      if (Number.isFinite(video.duration) && video.duration > 0) {
+        resolve();
+        return;
+      }
+      video.addEventListener("loadedmetadata", resolve, { once: true });
+      video.addEventListener("error", resolve, { once: true });
+      window.setTimeout(resolve, 1800);
+    });
+    const loopStart = Number.isFinite(video.duration) && video.duration > 2 ? video.duration - 2 : 0;
+    const enforceLoop = () => {
+      if (root.dataset.mode !== "sequencia-final-vitoria") return;
+      if (video.currentTime < loopStart) return;
+      if (video.duration - video.currentTime <= 0.12) video.currentTime = loopStart;
+    };
+    video.currentTime = loopStart;
+    video.loop = false;
+    video.addEventListener("timeupdate", enforceLoop);
+    video.play?.().catch(() => {});
+    refs.finalCommand?.classList.add("is-visible");
+    refs.finalMedalButton?.classList.add("is-ready");
+    state.locked = false;
+  }
+
   function switchBoxVideo(name) {
     qsa("[data-box-video]").forEach((video) => {
       const active = video.dataset.boxVideo === name;
@@ -143,7 +442,7 @@
   }
 
   async function enterBoxScene() {
-    setMode("tela-03-entrada-sala");
+    setMode("sequencia-02-pos-introducao");
     refs.introLayer.classList.remove("is-active");
     refs.introVideo.pause?.();
     loopingVideos.forEach((video) => video.play?.().catch(() => {}));
@@ -164,18 +463,22 @@
   }
 
   async function playIntroAfterStart(event) {
-    if (state.locked) return;
+    if (state.locked || !state.openingReady) return;
     state.locked = true;
-    setMode("tela-02-introducao");
+    setMode("sequencia-02-pos-introducao");
     playMagicTouch(event);
     refs.startButton.classList.add("is-hidden");
-    refs.logo.classList.add("is-exiting");
-    await sleep(500);
-    refs.introLayer.classList.add("is-active");
-    loopingVideos.forEach((video) => video.pause?.());
-    await playVideo(refs.introVideo, { timeout: 5000 });
-    await sleep(300);
-    await enterBoxScene();
+    await playPostIntroScene();
+  }
+
+  async function handleSceneBoxTouch(event) {
+    if (state.locked || !state.sceneBoxReady) return;
+    playMagicTouch(event);
+    state.locked = true;
+    state.sceneBoxReady = false;
+    refs.sceneBoxButton?.classList.remove("is-ready");
+    refs.sceneCommand?.classList.remove("is-visible");
+    await playDiscoverySequence();
   }
 
   async function playBoxOpening(event) {
@@ -208,17 +511,21 @@
     refs.hintPanel.classList.add("is-visible");
   }
 
-  function showCards() {
+  function showCards(options = {}) {
     const round = rounds[state.roundIndex];
-    setMode("tela-09-opcoes-resposta");
+    if (!options.keepCurrentMode) setMode("tela-09-opcoes-resposta");
     refs.hintPanel.classList.remove("is-visible");
     setBalloon("", false);
     refs.cardStage.innerHTML = `
-      <h2 class="premium-question">QUAL OBJETO ESTAMOS DESCOBRINDO?</h2>
+      <h2 class="premium-question">
+        <span>${round.hint}</span>
+        <small>${round.question}</small>
+      </h2>
       <div class="premium-card-grid">
         ${round.choices.map(([id, label, src]) => `
       <button class="premium-card" type="button" data-card-id="${id}" aria-label="${label}">
         <img src="${src}" alt="${label}" />
+        <span>${label}</span>
       </button>
         `).join("")}
       </div>
@@ -244,10 +551,8 @@
     card.classList.add("is-selected");
 
     if (id === round.correctId) {
-      setMode("tela-10a-resposta-correta");
       playStarBurst(card);
-      await switchBiaVideo("celebrating", { once: true, timeout: 1300 });
-      showFeedback("MUITO BEM!", [{ kind: "next", label: "PROXIMA DESCOBERTA" }]);
+      await playCorrectCottonSequence();
       state.locked = false;
       return;
     }
@@ -270,17 +575,17 @@
     refs.feedbackPanel.classList.remove("is-visible");
     refs.hintPanel.classList.remove("is-visible");
     refs.cardStage.classList.remove("is-visible");
+    refs.successStage?.classList.remove("is-visible");
+    refs.finalCommand?.classList.remove("is-visible");
+    refs.finalMedalButton?.classList.remove("is-ready");
+    refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
     state.roundIndex += 1;
     if (state.roundIndex >= rounds.length) {
-      await showVictory();
+      await playFinalVictorySequence();
       return;
     }
-    await sleep(450);
-    switchBoxVideo("idle");
-    refs.box.classList.add("is-clickable");
-    setMode("tela-03-entrada-sala");
-    setBalloon("TOQUE NA CAIXA PARA FAZER UMA DESCOBERTA!");
-    state.locked = false;
+    refs.openingLayer?.classList.remove("is-hidden");
+    await playPostIntroScene();
   }
 
   function retryRound() {
@@ -304,7 +609,88 @@
     window.location.reload();
   }
 
+  function formatElapsed(seconds) {
+    const minutes = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const rest = Math.floor(seconds % 60).toString().padStart(2, "0");
+    return `${minutes}:${rest}`;
+  }
+
+  function emitScoreStar() {
+    if (!refs.scoreStars) return;
+    const star = document.createElement("span");
+    star.className = "premium-score-star";
+    star.style.left = `${48 + Math.random() * 33}%`;
+    star.style.top = `${39 + Math.random() * 26}%`;
+    star.style.animationDelay = `${Math.random() * 120}ms`;
+    refs.scoreStars.appendChild(star);
+    window.setTimeout(() => star.remove(), 950);
+  }
+
+  function animateScoreCounter() {
+    refs.scoreXp.textContent = "+0";
+    refs.scoreTime.textContent = "00:00";
+    refs.scoreStars.innerHTML = "";
+    const duration = 2200;
+    const targetXp = 120;
+    const targetSeconds = 105;
+    let lastStar = 0;
+
+    return new Promise((resolve) => {
+      const startedAt = performance.now();
+      const frame = (now) => {
+        const progress = Math.min((now - startedAt) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        refs.scoreXp.textContent = `+${Math.round(targetXp * eased)}`;
+        refs.scoreTime.textContent = formatElapsed(targetSeconds * eased);
+
+        if (now - lastStar > 115 && progress < 1) {
+          emitScoreStar();
+          lastStar = now;
+        }
+
+        if (progress < 1) {
+          requestAnimationFrame(frame);
+          return;
+        }
+
+        refs.scoreXp.textContent = "+120";
+        refs.scoreTime.textContent = "01:45";
+        resolve();
+      };
+      requestAnimationFrame(frame);
+    });
+  }
+
+  async function showScoreScene() {
+    setMode("sequencia-final-score");
+    refs.openingLayer?.classList.remove("is-hidden");
+    refs.finalCommand?.classList.remove("is-visible");
+    refs.finalMedalButton?.classList.remove("is-ready");
+    refs.successStage?.classList.remove("is-visible");
+    hideRoundUi();
+    setOpeningSource(scoreSceneVideo);
+    refs.openingVideo.loop = true;
+    refs.openingVideo.play?.().catch(() => {});
+    refs.scoreStage?.classList.add("is-visible", "is-counting");
+    await sleep(260);
+    await animateScoreCounter();
+    refs.scoreStage?.classList.remove("is-counting");
+    refs.scoreStage?.classList.add("is-complete");
+    state.locked = false;
+  }
+
+  async function handleFinalMedalTouch(event) {
+    if (state.locked || root.dataset.mode !== "sequencia-final-vitoria") return;
+    playMagicTouch(event);
+    state.locked = true;
+    refs.finalCommand?.classList.remove("is-visible");
+    refs.finalMedalButton?.classList.remove("is-ready");
+    await showScoreScene();
+  }
+
   refs.startButton?.addEventListener("click", playIntroAfterStart);
+  refs.sceneBoxButton?.addEventListener("click", handleSceneBoxTouch);
+  refs.finalMedalButton?.addEventListener("click", handleFinalMedalTouch);
   refs.boxButton?.addEventListener("click", playBoxOpening);
   refs.cardStage?.addEventListener("click", (event) => {
     const card = event.target.closest("[data-card-id]");
@@ -318,6 +704,8 @@
     if (event.target.closest("[data-retry-round]")) retryRound();
     if (event.target.closest("[data-next-round]")) nextRound();
     if (event.target.closest("[data-restart]")) restart();
+    if (event.target.closest("[data-score-restart]")) restart();
+    if (event.target.closest("[data-score-home]")) window.location.href = "index.html";
   });
 
   window.setTimeout(() => {
