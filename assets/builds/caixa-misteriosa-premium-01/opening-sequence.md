@@ -8,7 +8,7 @@ Ordem oficial da primeira tela da build:
 Comportamento:
 
 - A abertura reproduz a Cena 01 e depois a Cena 03.
-- Ao terminar a Cena 03, a build mantem os ultimos 2 segundos da Cena 03 em loop.
+- Ao terminar a Cena 03, a build pausa no frame final e aguarda o comando da crianca.
 - O botao visual fica dentro do proprio video final.
 - A plataforma adiciona apenas um hotspot/click invisivel sobre o botao do video.
 - Ao clicar, inicia a Sequencia 02 pos-introducao.
@@ -18,7 +18,7 @@ Sequencia 02:
 - Video: `wScAhtsi_Gxw8Wmmi1uH1_video_0.mp4`.
 - Texto de comando: `TOQUE NA CAIXA PARA FAZER UMA DESCOBERTA!`.
 - O texto fica proximo da Bia e nao deve cobrir a caixa.
-- Ao terminar o video, a build mantem os ultimos 2 segundos em loop.
+- Ao terminar o video, a build pausa no frame final e aguarda o clique na caixa.
 - A plataforma adiciona apenas um hotspot/click invisivel sobre a caixa.
 - Apos o clique, a Sequencia 03 sera elaborada.
 
@@ -29,7 +29,7 @@ Sequencia 03:
 - Cena 03.2: `bls5a3oOCNusVPiGJIfrO_video_0.mp4`.
 - Cena 03.3: `URhMToaei3JpQG1PD3oas_video_0.mp4`.
 - As cenas rodam em sequencia.
-- Ao terminar a Cena 03.3, a build mantem os ultimos 2 segundos em loop ate a proxima etapa ser definida.
+- Ao terminar a Cena 03.3, a build pausa no frame final e mostra os cards da rodada.
 
 Sequencia 04 - acerto do algodao:
 
@@ -37,7 +37,7 @@ Sequencia 04 - acerto do algodao:
 - Cena 04.1: `Hh-6tytYNKGPrmAK8EJ_g_video_0.mp4`.
 - Cena 04.2: `1jy891KtSNoTXHJMDoRci_video_0.mp4`.
 - Cena 04.3: `c9UROclf_gw-tw2PCeKzM_video_0.mp4`.
-- Ao terminar a Cena 04.3, a build mantem os ultimos 2 segundos em loop.
+- Ao terminar a Cena 04.3, a build pausa no frame final.
 - A composicao final mostra o card do `ALGODAO` no interior do efeito circular de estrelas.
 - Texto final: `PARABENS, VOCE ACERTOU!`.
 - Botao final: `PROXIMA DESCOBERTA`.
@@ -73,7 +73,7 @@ Sequencia Final - vitoria:
 - Video 02: `c8lMyZ7f2_S1UDihV5kuc_video_0.mp4`.
 - Video 03: `ByCgmsdpl5z7iWWTx13Bj_video_0.mp4`.
 - Bia comemorando usa o arquivo presente na build: `tiLYRN3ywobzQneuyTtB3_video_0.mp4`.
-- Ao terminar o Video 03, a build mantem os ultimos 2 segundos em loop.
+- Ao terminar o Video 03, a build pausa no frame final.
 - Texto final: `PARABENS PELA CONQUISTA, CLIQUE NA MEDALHA PRA VER SUA PONTUACAO.`
 - A plataforma adiciona um hotspot/click invisivel sobre a medalha.
 - Ao clicar na medalha, a build segue para a Cena 04 de pontuacao.

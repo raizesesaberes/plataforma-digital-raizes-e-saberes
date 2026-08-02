@@ -72,6 +72,7 @@
 
   const refs = {
     openingLayer: qs("[data-opening-sequence]"),
+    openingVideos: qsa("[data-opening-video]"),
     openingVideo: qs("[data-opening-video]"),
     sceneCommand: qs("[data-scene-command]"),
     sceneBoxButton: qs("[data-scene-box-touch]"),
@@ -104,7 +105,6 @@
     fxLayer: qs("[data-fx-layer]"),
   };
 
-  const loopingVideos = qsa("[data-premium-loop]");
   const previewMode = new URLSearchParams(window.location.search).get("preview");
   if (previewMode === "score") {
     state.locked = true;
@@ -158,15 +158,65 @@
     });
   }
 
-  function setOpeningSource(src) {
-    refs.openingVideo.src = src;
-    refs.openingVideo.load();
+  function getActiveOpeningVideo() {
+    return refs.openingVideos.find((video) => video.classList.contains("is-active")) || refs.openingVideo;
   }
 
-  function playOpeningClip(src, { fallback = 12000 } = {}) {
-    const video = refs.openingVideo;
+  function getNextOpeningVideo() {
+    if (refs.openingVideos.length < 2) return getActiveOpeningVideo();
+    const active = getActiveOpeningVideo();
+    return refs.openingVideos.find((video) => video !== active) || active;
+  }
+
+  function waitForVideoReady(video, timeout = 2200) {
+    return new Promise((resolve) => {
+      if (!video) {
+        resolve();
+        return;
+      }
+      if (video.readyState >= 2) {
+        resolve();
+        return;
+      }
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        video.removeEventListener("loadeddata", finish);
+        video.removeEventListener("canplay", finish);
+        video.removeEventListener("error", finish);
+        resolve();
+      };
+      video.addEventListener("loadeddata", finish, { once: true });
+      video.addEventListener("canplay", finish, { once: true });
+      video.addEventListener("error", finish, { once: true });
+      window.setTimeout(finish, timeout);
+    });
+  }
+
+  function setOpeningSource(src, target = getActiveOpeningVideo()) {
+    refs.openingVideo = target;
+    target.src = src;
+    target.load();
+  }
+
+  function pauseOpeningAtCommandFrame() {
+    const video = getActiveOpeningVideo();
+    if (!video) return;
+    video.loop = false;
+    video.pause?.();
+    if (Number.isFinite(video.duration) && video.duration > 0) {
+      const finalFrame = Math.max(0, video.duration - 0.08);
+      if (!Number.isNaN(finalFrame)) video.currentTime = finalFrame;
+    }
+  }
+
+  function playOpeningClip(src, { fallback = 60000 } = {}) {
+    const current = getActiveOpeningVideo();
+    const video = getNextOpeningVideo();
     if (!video) return sleep(fallback);
-    setOpeningSource(src);
+    const shouldSwitch = video !== current;
+    setOpeningSource(src, video);
     return new Promise((resolve) => {
       let done = false;
       const finish = () => {
@@ -174,38 +224,30 @@
         done = true;
         video.removeEventListener("ended", finish);
         video.removeEventListener("error", finish);
+        video.pause?.();
         resolve();
       };
       video.loop = false;
-      video.addEventListener("ended", finish);
-      video.addEventListener("error", finish);
-      video.play?.().catch(() => window.setTimeout(finish, fallback));
-      window.setTimeout(finish, fallback);
+      waitForVideoReady(video).then(() => {
+        video.currentTime = 0;
+        video.addEventListener("ended", finish);
+        video.addEventListener("error", finish);
+        video.play?.().then(() => {
+          video.classList.add("is-active");
+          if (shouldSwitch && current) {
+            window.setTimeout(() => {
+              current.classList.remove("is-active");
+              current.pause?.();
+            }, 180);
+          }
+        }).catch(() => window.setTimeout(finish, fallback));
+        window.setTimeout(finish, fallback);
+      });
     });
   }
 
   async function holdOpeningFinalFrame(src) {
-    const video = refs.openingVideo;
-    if (!video) return;
-    setOpeningSource(src);
-    await new Promise((resolve) => {
-      if (Number.isFinite(video.duration) && video.duration > 0) {
-        resolve();
-        return;
-      }
-      video.addEventListener("loadedmetadata", resolve, { once: true });
-      video.addEventListener("error", resolve, { once: true });
-      window.setTimeout(resolve, 1800);
-    });
-    const loopStart = Number.isFinite(video.duration) && video.duration > 2 ? video.duration - 2 : 0;
-    const enforceLoop = () => {
-      if (video.currentTime < loopStart) return;
-      if (video.duration - video.currentTime <= 0.12) video.currentTime = loopStart;
-    };
-    video.currentTime = loopStart;
-    video.loop = false;
-    video.addEventListener("timeupdate", enforceLoop);
-    video.play?.().catch(() => {});
+    pauseOpeningAtCommandFrame();
     state.openingReady = true;
     state.locked = false;
     root.classList.add("is-opening-ready");
@@ -220,7 +262,6 @@
     refs.finalMedalButton?.classList.remove("is-ready");
     refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
     refs.successStage?.classList.remove("is-visible");
-    loopingVideos.forEach((video) => video.pause?.());
     await playOpeningClip(openingScenes[0]);
     await playOpeningClip(openingScenes[1]);
     await holdOpeningFinalFrame(openingScenes[1]);
@@ -243,28 +284,7 @@
   }
 
   async function holdPostIntroFrame(src) {
-    const video = refs.openingVideo;
-    if (!video) return;
-    setOpeningSource(src);
-    await new Promise((resolve) => {
-      if (Number.isFinite(video.duration) && video.duration > 0) {
-        resolve();
-        return;
-      }
-      video.addEventListener("loadedmetadata", resolve, { once: true });
-      video.addEventListener("error", resolve, { once: true });
-      window.setTimeout(resolve, 1800);
-    });
-    const loopStart = Number.isFinite(video.duration) && video.duration > 2 ? video.duration - 2 : 0;
-    const enforceLoop = () => {
-      if (root.dataset.mode !== "sequencia-02-pos-introducao") return;
-      if (video.currentTime < loopStart) return;
-      if (video.duration - video.currentTime <= 0.12) video.currentTime = loopStart;
-    };
-    video.currentTime = loopStart;
-    video.loop = false;
-    video.addEventListener("timeupdate", enforceLoop);
-    video.play?.().catch(() => {});
+    pauseOpeningAtCommandFrame();
     refs.sceneCommand?.classList.add("is-visible");
     refs.sceneBoxButton?.classList.add("is-ready");
     state.sceneBoxReady = true;
@@ -287,28 +307,7 @@
   }
 
   async function holdDiscoveryFinalFrame(src) {
-    const video = refs.openingVideo;
-    if (!video) return;
-    setOpeningSource(src);
-    await new Promise((resolve) => {
-      if (Number.isFinite(video.duration) && video.duration > 0) {
-        resolve();
-        return;
-      }
-      video.addEventListener("loadedmetadata", resolve, { once: true });
-      video.addEventListener("error", resolve, { once: true });
-      window.setTimeout(resolve, 1800);
-    });
-    const loopStart = Number.isFinite(video.duration) && video.duration > 2 ? video.duration - 2 : 0;
-    const enforceLoop = () => {
-      if (root.dataset.mode !== "sequencia-03-descoberta") return;
-      if (video.currentTime < loopStart) return;
-      if (video.duration - video.currentTime <= 0.12) video.currentTime = loopStart;
-    };
-    video.currentTime = loopStart;
-    video.loop = false;
-    video.addEventListener("timeupdate", enforceLoop);
-    video.play?.().catch(() => {});
+    pauseOpeningAtCommandFrame();
     showCards({ keepCurrentMode: true });
     state.locked = false;
   }
@@ -335,28 +334,7 @@
   }
 
   async function holdCorrectCottonFinalFrame(src) {
-    const video = refs.openingVideo;
-    if (!video) return;
-    setOpeningSource(src);
-    await new Promise((resolve) => {
-      if (Number.isFinite(video.duration) && video.duration > 0) {
-        resolve();
-        return;
-      }
-      video.addEventListener("loadedmetadata", resolve, { once: true });
-      video.addEventListener("error", resolve, { once: true });
-      window.setTimeout(resolve, 1800);
-    });
-    const loopStart = Number.isFinite(video.duration) && video.duration > 2 ? video.duration - 2 : 0;
-    const enforceLoop = () => {
-      if (root.dataset.mode !== "sequencia-04-acerto-algodao") return;
-      if (video.currentTime < loopStart) return;
-      if (video.duration - video.currentTime <= 0.12) video.currentTime = loopStart;
-    };
-    video.currentTime = loopStart;
-    video.loop = false;
-    video.addEventListener("timeupdate", enforceLoop);
-    video.play?.().catch(() => {});
+    pauseOpeningAtCommandFrame();
     refs.successStage?.classList.add("is-visible");
   }
 
@@ -378,28 +356,7 @@
   }
 
   async function holdFinalVictoryFrame(src) {
-    const video = refs.openingVideo;
-    if (!video) return;
-    setOpeningSource(src);
-    await new Promise((resolve) => {
-      if (Number.isFinite(video.duration) && video.duration > 0) {
-        resolve();
-        return;
-      }
-      video.addEventListener("loadedmetadata", resolve, { once: true });
-      video.addEventListener("error", resolve, { once: true });
-      window.setTimeout(resolve, 1800);
-    });
-    const loopStart = Number.isFinite(video.duration) && video.duration > 2 ? video.duration - 2 : 0;
-    const enforceLoop = () => {
-      if (root.dataset.mode !== "sequencia-final-vitoria") return;
-      if (video.currentTime < loopStart) return;
-      if (video.duration - video.currentTime <= 0.12) video.currentTime = loopStart;
-    };
-    video.currentTime = loopStart;
-    video.loop = false;
-    video.addEventListener("timeupdate", enforceLoop);
-    video.play?.().catch(() => {});
+    pauseOpeningAtCommandFrame();
     refs.finalCommand?.classList.add("is-visible");
     refs.finalMedalButton?.classList.add("is-ready");
     state.locked = false;
@@ -445,7 +402,6 @@
     setMode("sequencia-02-pos-introducao");
     refs.introLayer.classList.remove("is-active");
     refs.introVideo.pause?.();
-    loopingVideos.forEach((video) => video.play?.().catch(() => {}));
     await sleep(700);
     root.classList.add("is-box-ready");
     await sleep(700);
@@ -668,9 +624,8 @@
     refs.finalMedalButton?.classList.remove("is-ready");
     refs.successStage?.classList.remove("is-visible");
     hideRoundUi();
-    setOpeningSource(scoreSceneVideo);
-    refs.openingVideo.loop = true;
-    refs.openingVideo.play?.().catch(() => {});
+    await playOpeningClip(scoreSceneVideo);
+    pauseOpeningAtCommandFrame();
     refs.scoreStage?.classList.add("is-visible", "is-counting");
     await sleep(260);
     await animateScoreCounter();
