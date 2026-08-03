@@ -54,16 +54,12 @@
   ];
   const postIntroScene = "assets/builds/caixa-misteriosa-premium-01/videos/wScAhtsi_Gxw8Wmmi1uH1_video_0.mp4";
   const discoveryScenes = [
-    "assets/builds/caixa-misteriosa-premium-01/videos/BCo6YvvLU2PmMfND_b_4v_video_0.mp4",
     "assets/builds/caixa-misteriosa-premium-01/videos/bls5a3oOCNusVPiGJIfrO_video_0.mp4",
-    "assets/builds/caixa-misteriosa-premium-01/videos/c9UROclf_gw-tw2PCeKzM_video_0.mp4",
   ];
   const correctCottonScenes = [
     "assets/builds/caixa-misteriosa-premium-01/videos/c9UROclf_gw-tw2PCeKzM_video_0.mp4",
   ];
   const finalVictoryScenes = [
-    "assets/builds/caixa-misteriosa-premium-01/videos/Hh-6tytYNKGPrmAK8EJ_g_video_0.mp4",
-    "assets/builds/caixa-misteriosa-premium-01/videos/c8lMyZ7f2_S1UDihV5kuc_video_0.mp4",
     "assets/builds/caixa-misteriosa-premium-01/videos/ByCgmsdpl5z7iWWTx13Bj_video_0.mp4",
   ];
   const scoreSceneVideo = "assets/builds/caixa-misteriosa-premium-01/videos/D_gYXzwTrkNrZ8icCmXPu_video_0.mp4";
@@ -76,6 +72,7 @@
     sceneBoxButton: qs("[data-scene-box-touch]"),
     finalCommand: qs("[data-final-command]"),
     finalMedalButton: qs("[data-final-medal-touch]"),
+    finalXpCounter: qs("[data-final-xp-counter]"),
     successStage: qs("[data-success-stage]"),
     successTitle: qs("[data-success-title]"),
     successCardImage: qs("[data-success-card-image]"),
@@ -279,6 +276,7 @@
     refs.sceneBoxButton?.classList.remove("is-ready");
     refs.finalCommand?.classList.remove("is-visible");
     refs.finalMedalButton?.classList.remove("is-ready");
+    refs.finalXpCounter?.classList.remove("is-visible");
     refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
     refs.successStage?.classList.remove("is-visible");
     await playOpeningClip(openingScenes[0]);
@@ -296,6 +294,7 @@
     refs.sceneBoxButton?.classList.remove("is-ready");
     refs.finalCommand?.classList.remove("is-visible");
     refs.finalMedalButton?.classList.remove("is-ready");
+    refs.finalXpCounter?.classList.remove("is-visible");
     refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
     refs.successStage?.classList.remove("is-visible");
     state.sceneBoxReady = false;
@@ -318,6 +317,7 @@
     refs.sceneBoxButton?.classList.remove("is-ready");
     refs.finalCommand?.classList.remove("is-visible");
     refs.finalMedalButton?.classList.remove("is-ready");
+    refs.finalXpCounter?.classList.remove("is-visible");
     refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
     refs.successStage?.classList.remove("is-visible");
     state.sceneBoxReady = false;
@@ -341,6 +341,7 @@
     refs.successStage?.classList.remove("is-visible");
     refs.finalCommand?.classList.remove("is-visible");
     refs.finalMedalButton?.classList.remove("is-ready");
+    refs.finalXpCounter?.classList.remove("is-visible");
     refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
     if (refs.successTitle) refs.successTitle.textContent = round.successTitle || "VOCE ACERTOU!";
     if (refs.successCardImage) {
@@ -366,12 +367,13 @@
     refs.sceneBoxButton?.classList.remove("is-ready");
     refs.finalCommand?.classList.remove("is-visible");
     refs.finalMedalButton?.classList.remove("is-ready");
+    refs.finalXpCounter?.classList.remove("is-visible");
     refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
     refs.openingLayer?.classList.remove("is-hidden");
-    await playOpeningClip(finalVictoryScenes[0]);
-    await playOpeningClip(finalVictoryScenes[1]);
-    await playOpeningClip(finalVictoryScenes[2]);
-    await holdFinalVictoryFrame(finalVictoryScenes[2]);
+    for (const scene of finalVictoryScenes) {
+      await playOpeningClip(scene);
+    }
+    await holdFinalVictoryFrame(finalVictoryScenes[finalVictoryScenes.length - 1]);
   }
 
   async function holdFinalVictoryFrame(src) {
@@ -379,6 +381,7 @@
     refs.finalCommand?.classList.remove("is-visible");
     refs.finalMedalButton?.classList.remove("is-ready");
     await sleep(220);
+    await animateFinalMedalXpCounter();
     await showScoreScene();
   }
 
@@ -643,11 +646,38 @@
     });
   }
 
+  function animateFinalMedalXpCounter() {
+    if (!refs.finalXpCounter) return sleep(1200);
+    refs.finalXpCounter.textContent = "+0 XP";
+    refs.finalXpCounter.classList.add("is-visible");
+    const duration = 1800;
+    const targetXp = 120;
+
+    return new Promise((resolve) => {
+      const startedAt = performance.now();
+      const frame = (now) => {
+        const progress = Math.min((now - startedAt) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        refs.finalXpCounter.textContent = `+${Math.round(targetXp * eased)} XP`;
+
+        if (progress < 1) {
+          requestAnimationFrame(frame);
+          return;
+        }
+
+        refs.finalXpCounter.textContent = "+120 XP";
+        window.setTimeout(resolve, 420);
+      };
+      requestAnimationFrame(frame);
+    });
+  }
+
   async function showScoreScene() {
     setMode("sequencia-final-score");
     refs.openingLayer?.classList.remove("is-hidden");
     refs.finalCommand?.classList.remove("is-visible");
     refs.finalMedalButton?.classList.remove("is-ready");
+    refs.finalXpCounter?.classList.remove("is-visible");
     refs.successStage?.classList.remove("is-visible");
     hideRoundUi();
     await playOpeningClip(scoreSceneVideo);
