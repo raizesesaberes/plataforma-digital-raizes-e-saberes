@@ -263,7 +263,7 @@
             lightBurst: ge2CestaAsset("effects/light-burst.png"),
           },
           videos: {
-            intro: ge2CestaAsset("videos/intro-loop.mp4"),
+            intro: ge2CestaAsset("videos/girl-interacting-with-butterfly-202608042019.mp4?v=basket-start-click-20260804-04"),
             room: ge2CestaAsset("videos/room-transition.mp4"),
             victory: ge2CestaAsset("videos/victory-loop.mp4"),
           },
@@ -4075,6 +4075,7 @@
       this.preloadNodes = [];
       this.transitionToken = 0;
       this.basketIntroStartTimer = null;
+      this.basketRoomAdvanceTimer = null;
     }
 
     mount() {
@@ -4398,7 +4399,7 @@
         return `
           <section class="game-screen basket-intro-screen" data-screen="intro" aria-label="Boas-vindas">
             <video class="basket-intro-video" src="${this.game.assets.videos.intro}" autoplay playsinline preload="auto" data-basket-intro-video aria-hidden="true"></video>
-            <button class="basket-intro-hitarea" type="button" data-game-action="start" aria-label="Comecar ${this.game.title}" disabled data-basket-intro-start></button>
+            <button class="basket-intro-hitarea" type="button" data-game-action="start" aria-label="Comecar ${this.game.title}" data-ready="true" data-basket-intro-start></button>
           </section>
         `;
       }
@@ -6540,6 +6541,7 @@
       this.syncReactiveCharactersForScreen(screen);
       this.syncRounds();
       this.syncBasketIntroStart(screen);
+      this.syncBasketRoomAdvance(screen);
     }
 
     syncBasketIntroStart(screen) {
@@ -6551,12 +6553,11 @@
       const video = this.root.querySelector("[data-basket-intro-video]");
       const startButton = this.root.querySelector("[data-basket-intro-start]");
       if (!video || !startButton) return;
-      startButton.disabled = true;
-      delete startButton.dataset.ready;
       const releaseStartButton = () => {
         startButton.disabled = false;
         startButton.dataset.ready = "true";
       };
+      releaseStartButton();
       const scheduleRelease = () => {
         if (this.basketIntroStartTimer) window.clearTimeout(this.basketIntroStartTimer);
         const duration = Number.isFinite(video.duration) && video.duration > 1 ? video.duration : 6.5;
@@ -6567,6 +6568,32 @@
       } else {
         video.addEventListener("loadedmetadata", scheduleRelease, { once: true });
         this.basketIntroStartTimer = window.setTimeout(releaseStartButton, 6500);
+      }
+    }
+
+    syncBasketRoomAdvance(screen) {
+      if (this.basketRoomAdvanceTimer) {
+        window.clearTimeout(this.basketRoomAdvanceTimer);
+        this.basketRoomAdvanceTimer = null;
+      }
+      if (this.game.id !== "organizando-cesta" || screen !== "room") return;
+      const video = this.root.querySelector("[data-basket-room-video]");
+      if (!video) return;
+      const advanceToChoice = () => {
+        if (this.game.id !== "organizando-cesta" || this.state.screen !== "room") return;
+        this.updateRoundContent();
+        this.go("choice");
+      };
+      const scheduleAdvance = () => {
+        if (this.basketRoomAdvanceTimer) window.clearTimeout(this.basketRoomAdvanceTimer);
+        const duration = Number.isFinite(video.duration) && video.duration > 1 ? video.duration : 7;
+        this.basketRoomAdvanceTimer = window.setTimeout(advanceToChoice, Math.max(1200, duration * 1000 + 150));
+      };
+      if (Number.isFinite(video.duration) && video.duration > 1) {
+        scheduleAdvance();
+      } else {
+        video.addEventListener("loadedmetadata", scheduleAdvance, { once: true });
+        this.basketRoomAdvanceTimer = window.setTimeout(advanceToChoice, 7000);
       }
     }
 

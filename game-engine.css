@@ -3120,15 +3120,14 @@ body.game-immersive-active .game-stage,
 
 .basket-victory-actions {
   position: absolute;
-  left: 50%;
+  right: clamp(24px, 7vw, 112px);
   bottom: clamp(34px, 8vh, 76px);
   z-index: 5;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: clamp(12px, 2vw, 20px);
-  width: min(92%, 760px);
-  transform: translateX(-50%);
+  width: min(48vw, 760px);
 }
 
 .basket-victory-actions .game-primary-button,
