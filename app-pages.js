@@ -3391,6 +3391,14 @@ const modules = {
         <a class="game-primary-button" href="caixa-misteriosa-premium-01.html">Abrir Caixa Misteriosa Premium 01</a>
         <a class="game-primary-button" href="caixa-misteriosa-build-01.html">Abrir Build de Avaliacao 01</a>
       </div>
+      <section class="premium-game-embed" aria-label="A Caixa Misteriosa Premium">
+        <iframe
+          src="caixa-misteriosa-premium-01.html"
+          title="A Caixa Misteriosa Premium"
+          loading="eager"
+          allow="autoplay; fullscreen"
+        ></iframe>
+      </section>
       <div class="game-engine" data-game-engine></div>
     `,
   },

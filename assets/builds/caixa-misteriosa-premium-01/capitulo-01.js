@@ -11,9 +11,9 @@
       successImage: "assets/builds/caixa-misteriosa-premium-01/png/card_algodao_premium_clean.png",
       successAlt: "Algodao",
       choices: [
+        ["algodao", "ALGODAO", "assets/builds/caixa-misteriosa-premium-01/png/card_algodao_premium_clean.png"],
         ["bola", "BOLA", "assets/builds/caixa-misteriosa-premium-01/png/card_bola_premium_clean.png"],
         ["cubo", "CUBO", "assets/builds/caixa-misteriosa-premium-01/png/card_cubo_premium_clean.png"],
-        ["algodao", "ALGODAO", "assets/builds/caixa-misteriosa-premium-01/png/card_algodao_premium_clean.png"],
       ],
     },
     {
@@ -49,19 +49,23 @@
   const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
   const state = { roundIndex: 0, locked: true, openingReady: false, sceneBoxReady: false, audioUnlocked: false };
   const openingScenes = [
-    "assets/builds/caixa-misteriosa-premium-01/videos/9k6XOiV-UlozZTSyeEDEX_video_0.mp4",
-    "assets/builds/caixa-misteriosa-premium-01/videos/qUZnfWGxlAMfmh-TvB4YS_video_0.mp4",
+    "assets/builds/caixa-misteriosa-premium-01/videos/personagens-convidam-crianca-202608031928.mp4",
   ];
-  const postIntroScene = "assets/builds/caixa-misteriosa-premium-01/videos/wScAhtsi_Gxw8Wmmi1uH1_video_0.mp4";
-  const discoveryScenes = [
-    "assets/builds/caixa-misteriosa-premium-01/videos/bls5a3oOCNusVPiGJIfrO_video_0.mp4",
+  const postIntroScene = "assets/builds/caixa-misteriosa-premium-01/videos/magical-box-vibrating-playroom-202608032255.mp4";
+  const discoveryScenesByRound = [
+    ["assets/builds/caixa-misteriosa-premium-01/videos/magical-box-opens-with-cards-202608032004.mp4"],
+    ["assets/builds/caixa-misteriosa-premium-01/videos/magical-box-opens-with-cards-pena-202608032316.mp4"],
+    ["assets/builds/caixa-misteriosa-premium-01/videos/magical-box-opens-with-cards-estrela-202608040038.mp4"],
   ];
   const correctCottonScenes = [
-    "assets/builds/caixa-misteriosa-premium-01/videos/c9UROclf_gw-tw2PCeKzM_video_0.mp4",
+    "assets/builds/caixa-misteriosa-premium-01/videos/confetti-stars-success-202608032308.mp4",
   ];
   const finalVictoryScenes = [
+    "assets/builds/caixa-misteriosa-premium-01/videos/Hh-6tytYNKGPrmAK8EJ_g_video_0.mp4",
+    "assets/builds/caixa-misteriosa-premium-01/videos/c8lMyZ7f2_S1UDihV5kuc_video_0.mp4",
     "assets/builds/caixa-misteriosa-premium-01/videos/ByCgmsdpl5z7iWWTx13Bj_video_0.mp4",
   ];
+  const discoveryCardsPauseFractions = [0.72, 0.9, 0.9];
   const scoreSceneVideo = "assets/builds/caixa-misteriosa-premium-01/videos/D_gYXzwTrkNrZ8icCmXPu_video_0.mp4";
 
   const refs = {
@@ -279,9 +283,10 @@
     refs.finalXpCounter?.classList.remove("is-visible");
     refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
     refs.successStage?.classList.remove("is-visible");
-    await playOpeningClip(openingScenes[0]);
-    await playOpeningClip(openingScenes[1]);
-    await holdOpeningFinalFrame(openingScenes[1]);
+    for (const scene of openingScenes) {
+      await playOpeningClip(scene);
+    }
+    await holdOpeningFinalFrame(openingScenes[openingScenes.length - 1]);
   }
 
   async function playPostIntroScene() {
@@ -304,7 +309,7 @@
 
   async function holdPostIntroFrame(src) {
     pauseOpeningAtCommandFrame();
-    refs.sceneCommand?.classList.add("is-visible");
+    refs.sceneCommand?.classList.remove("is-visible");
     refs.sceneBoxButton?.classList.add("is-ready");
     state.sceneBoxReady = true;
     state.locked = false;
@@ -321,6 +326,7 @@
     refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
     refs.successStage?.classList.remove("is-visible");
     state.sceneBoxReady = false;
+    const discoveryScenes = discoveryScenesByRound[state.roundIndex] || discoveryScenesByRound[0];
     for (const scene of discoveryScenes) {
       await playOpeningClip(scene);
     }
@@ -328,7 +334,8 @@
   }
 
   async function holdDiscoveryFinalFrame(src) {
-    pauseOpeningAtCommandFrame({ fraction: 0.86 });
+    const fraction = discoveryCardsPauseFractions[state.roundIndex] || discoveryCardsPauseFractions[0];
+    pauseOpeningAtCommandFrame({ fraction });
     showCards({ keepCurrentMode: true });
     state.locked = false;
   }
@@ -349,8 +356,10 @@
       refs.successCardImage.alt = round.successAlt || "";
     }
     refs.openingLayer?.classList.remove("is-hidden");
-    await playOpeningClip(correctCottonScenes[0]);
-    await holdCorrectCottonFinalFrame(correctCottonScenes[0]);
+    for (const scene of correctCottonScenes) {
+      await playOpeningClip(scene);
+    }
+    await holdCorrectCottonFinalFrame(correctCottonScenes[correctCottonScenes.length - 1]);
   }
 
   async function holdCorrectCottonFinalFrame(src) {
@@ -380,9 +389,8 @@
     pauseOpeningAtCommandFrame();
     refs.finalCommand?.classList.remove("is-visible");
     refs.finalMedalButton?.classList.remove("is-ready");
-    await sleep(220);
-    await animateFinalMedalXpCounter();
-    await showScoreScene();
+    refs.successStage?.classList.add("is-visible");
+    state.locked = false;
   }
 
   function switchBoxVideo(name) {
@@ -545,7 +553,7 @@
     }
 
     card.classList.add("is-retry");
-    await sleep(520);
+    await sleep(760);
     card.classList.remove("is-selected", "is-retry");
     setMode("sequencia-03-descoberta");
     showCards({ keepCurrentMode: true });
@@ -570,7 +578,7 @@
       return;
     }
     refs.openingLayer?.classList.remove("is-hidden");
-    await playPostIntroScene();
+    await playDiscoverySequence();
   }
 
   function retryRound() {
@@ -718,7 +726,13 @@
       unlockSceneAudio();
       retryRound();
     }
-    if (event.target.closest("[data-next-round]")) nextRound();
+    if (event.target.closest("[data-next-round]")) {
+      if (root.dataset.mode === "sequencia-final-vitoria") {
+        window.location.href = "jogos.html";
+        return;
+      }
+      nextRound();
+    }
     if (event.target.closest("[data-restart]")) restart();
     if (event.target.closest("[data-score-restart]")) restart();
     if (event.target.closest("[data-score-home]")) window.location.href = "index.html";

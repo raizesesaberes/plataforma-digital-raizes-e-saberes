@@ -11388,7 +11388,36 @@ td {
   font-weight: 800;
 }
 
+.premium-game-embed {
+  width: min(1180px, 100%);
+  margin: 18px auto 28px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 18px;
+  background: #070704;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+}
+
+.premium-game-embed iframe {
+  display: block;
+  width: 100%;
+  height: min(760px, 78vh);
+  min-height: 560px;
+  border: 0;
+  background: #070704;
+}
+
 @media (max-width: 720px) {
+  .premium-game-embed {
+    margin: 12px auto 20px;
+    border-radius: 12px;
+  }
+
+  .premium-game-embed iframe {
+    height: 76vh;
+    min-height: 480px;
+  }
+
   .qb-preview:not([hidden]) {
     inset: 10px;
     width: calc(100vw - 20px);
