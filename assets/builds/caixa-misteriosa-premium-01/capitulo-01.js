@@ -55,6 +55,7 @@
     sceneBoxReady: false,
     audioUnlocked: true,
   };
+  let openingLoopCleanup = null;
   const openingScenes = [
     "assets/builds/caixa-misteriosa-premium-01/videos/personagens-convidam-crianca-202608031928.mp4",
   ];
@@ -222,7 +223,14 @@
     target.load();
   }
 
+  function stopOpeningLoop() {
+    if (!openingLoopCleanup) return;
+    openingLoopCleanup();
+    openingLoopCleanup = null;
+  }
+
   function pauseOpeningAtCommandFrame(options = {}) {
+    stopOpeningLoop();
     const video = getActiveOpeningVideo();
     if (!video) return;
     video.loop = false;
@@ -238,6 +246,7 @@
   }
 
   function playOpeningClip(src, { fallback = 60000 } = {}) {
+    stopOpeningLoop();
     const current = getActiveOpeningVideo();
     const video = getNextOpeningVideo();
     if (!video) return sleep(fallback);
@@ -280,19 +289,32 @@
   }
 
   async function startOpeningLoop(src, options = {}) {
+    stopOpeningLoop();
     const video = getActiveOpeningVideo();
     if (!video) return;
     setOpeningSource(src, video);
     await waitForVideoReady(video);
     video.currentTime = 0;
-    video.loop = true;
+    video.loop = false;
     video.autoplay = true;
     video.playsInline = true;
     video.classList.add("is-active");
+    let passCount = 0;
     const playLoop = () => {
       state.audioUnlocked = true;
       prepareVideoAudio(video);
       video.play?.().catch(() => {});
+    };
+    const handleEnded = () => {
+      passCount += 1;
+      if (passCount === 1) options.onFirstPass?.();
+      video.currentTime = 0;
+      playLoop();
+    };
+    video.addEventListener("ended", handleEnded);
+    openingLoopCleanup = () => {
+      video.removeEventListener("ended", handleEnded);
+      video.loop = false;
     };
     playLoop();
     if (options.retry) {
@@ -302,11 +324,19 @@
   }
 
   async function playOpeningLoop(src) {
-    await startOpeningLoop(src, { retry: true });
-    state.openingReady = true;
-    state.locked = false;
-    root.classList.add("is-opening-ready");
-    refs.startButton?.classList.remove("is-hidden");
+    state.openingReady = false;
+    state.locked = true;
+    root.classList.remove("is-opening-ready");
+    refs.startButton?.classList.add("is-hidden");
+    await startOpeningLoop(src, {
+      retry: true,
+      onFirstPass: () => {
+        state.openingReady = true;
+        state.locked = false;
+        root.classList.add("is-opening-ready");
+        refs.startButton?.classList.remove("is-hidden");
+      },
+    });
   }
 
   async function playOpeningSequence() {
@@ -477,6 +507,7 @@
     unlockSceneAudio();
     state.locked = true;
     state.openingReady = false;
+    stopOpeningLoop();
     const introVideo = getActiveOpeningVideo();
     introVideo?.pause?.();
     if (introVideo) introVideo.loop = false;

@@ -1541,7 +1541,6 @@ body {
 .premium-chapter[data-mode="sequencia-final-vitoria"] .premium-card-stage,
 .premium-chapter[data-mode="sequencia-final-vitoria"] .premium-feedback-panel,
 .premium-chapter[data-mode="sequencia-final-vitoria"] .premium-start-button,
-.premium-chapter[data-mode="sequencia-final-vitoria"] .premium-success-stage,
 .premium-chapter[data-mode="sequencia-final-score"] .premium-background-master,
 .premium-chapter[data-mode="sequencia-final-score"] .premium-background-video,
 .premium-chapter[data-mode="sequencia-final-score"] .premium-magic-ambience,
@@ -2193,6 +2192,37 @@ body {
 
 .premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card-stage[data-round="3"] .premium-card[data-card-id="flor"] {
   transform: translate(1.8%, -2.5%) !important;
+}
+
+.premium-chapter[data-mode="sequencia-final-vitoria"] .premium-success-stage.is-visible {
+  z-index: 30 !important;
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+}
+
+.premium-chapter[data-mode="sequencia-final-vitoria"] .premium-success-actions {
+  position: absolute !important;
+  left: 50% !important;
+  bottom: clamp(26px, 6vh, 72px) !important;
+  z-index: 31 !important;
+  display: flex !important;
+  width: min(920px, 92vw) !important;
+  transform: translateX(-50%) !important;
+  pointer-events: auto !important;
+}
+
+.premium-chapter[data-mode="sequencia-final-vitoria"] .premium-final-restart-button,
+.premium-chapter[data-mode="sequencia-final-vitoria"] .premium-next-discovery-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: min(42vw, 400px) !important;
+  margin-top: 0 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 @media (max-width: 1024px) {
