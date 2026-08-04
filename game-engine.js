@@ -51,6 +51,7 @@
         mascot: "Borboleta Bia",
         xp: 20,
         medal: "Pequeno Explorador",
+        launchHref: "caixa-misteriosa-premium-01.html",
         unlock: { order: 1, unlocked: true, requires: null },
         assets: {
           atlas: `${atlasBase}telas-assets.png`,
@@ -4136,6 +4137,9 @@
       const record = rewardController.latest(game.id);
       const progress = record?.progress || 0;
       const locked = game.unlock && game.unlock.unlocked === false;
+      const action = game.launchHref
+        ? `<a class="game-primary-button" href="${game.launchHref}">${locked ? "Bloqueado" : "Jogar"}</a>`
+        : `<button class="game-primary-button" type="button" data-game-play="${game.id}" ${locked ? "disabled" : ""}>${locked ? "Bloqueado" : "Jogar"}</button>`;
       return `
         <article class="game-hub-card${locked ? " is-locked" : ""}">
           <img src="${game.assets.card || game.assets.screens.intro}" alt="${game.title}" loading="lazy" decoding="async" />
@@ -4148,7 +4152,7 @@
               <strong>🏅 ${record?.medal || game.medal}</strong>
             </div>
             <i class="game-card-progress"><b style="width:${progress}%"></b></i>
-            <button class="game-primary-button" type="button" data-game-play="${game.id}" ${locked ? "disabled" : ""}>${locked ? "Bloqueado" : "Jogar"}</button>
+            ${action}
           </div>
         </article>
       `;

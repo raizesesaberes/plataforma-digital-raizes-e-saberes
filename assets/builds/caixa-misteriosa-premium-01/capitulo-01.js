@@ -57,16 +57,12 @@
     ["assets/builds/caixa-misteriosa-premium-01/videos/magical-box-opens-with-cards-pena-202608032316.mp4"],
     ["assets/builds/caixa-misteriosa-premium-01/videos/magical-box-opens-with-cards-estrela-202608040038.mp4"],
   ];
-  const correctCottonScenes = [
-    "assets/builds/caixa-misteriosa-premium-01/videos/confetti-stars-success-202608032308.mp4",
-  ];
-  const finalVictoryScenes = [
-    "assets/builds/caixa-misteriosa-premium-01/videos/Hh-6tytYNKGPrmAK8EJ_g_video_0.mp4",
-    "assets/builds/caixa-misteriosa-premium-01/videos/c8lMyZ7f2_S1UDihV5kuc_video_0.mp4",
-    "assets/builds/caixa-misteriosa-premium-01/videos/ByCgmsdpl5z7iWWTx13Bj_video_0.mp4",
+  const correctScenesByRound = [
+    ["assets/builds/caixa-misteriosa-premium-01/videos/confetti-stars-success-202608032308.mp4"],
+    ["assets/builds/caixa-misteriosa-premium-01/videos/confetti-stars-success-202608032308.mp4"],
+    ["assets/builds/caixa-misteriosa-premium-01/videos/children-celebrate-victory-screen-202608040014.mp4"],
   ];
   const discoveryCardsPauseFractions = [0.72, 0.9, 0.9];
-  const scoreSceneVideo = "assets/builds/caixa-misteriosa-premium-01/videos/D_gYXzwTrkNrZ8icCmXPu_video_0.mp4";
 
   const refs = {
     openingLayer: qs("[data-opening-sequence]"),
@@ -340,9 +336,10 @@
     state.locked = false;
   }
 
-  async function playCorrectCottonSequence() {
+  async function playCorrectSequence() {
     const round = rounds[state.roundIndex];
-    setMode("sequencia-04-acerto-algodao");
+    const isFinalRound = state.roundIndex >= rounds.length - 1;
+    setMode(isFinalRound ? "sequencia-final-vitoria" : "sequencia-04-acerto");
     refs.cardStage.classList.remove("is-visible");
     refs.feedbackPanel.classList.remove("is-visible");
     refs.successStage?.classList.remove("is-visible");
@@ -356,40 +353,17 @@
       refs.successCardImage.alt = round.successAlt || "";
     }
     refs.openingLayer?.classList.remove("is-hidden");
-    for (const scene of correctCottonScenes) {
+    const correctScenes = correctScenesByRound[state.roundIndex] || correctScenesByRound[0];
+    for (const scene of correctScenes) {
       await playOpeningClip(scene);
     }
-    await holdCorrectCottonFinalFrame(correctCottonScenes[correctCottonScenes.length - 1]);
+    await holdCorrectFinalFrame(correctScenes[correctScenes.length - 1], { final: isFinalRound });
   }
 
-  async function holdCorrectCottonFinalFrame(src) {
+  async function holdCorrectFinalFrame(src, options = {}) {
     pauseOpeningAtCommandFrame({ fraction: 0.72 });
     refs.successStage?.classList.add("is-visible");
-  }
-
-  async function playFinalVictorySequence() {
-    setMode("sequencia-final-vitoria");
-    hideRoundUi();
-    setBalloon("", false);
-    refs.successStage?.classList.remove("is-visible");
-    refs.sceneCommand?.classList.remove("is-visible");
-    refs.sceneBoxButton?.classList.remove("is-ready");
-    refs.finalCommand?.classList.remove("is-visible");
-    refs.finalMedalButton?.classList.remove("is-ready");
-    refs.finalXpCounter?.classList.remove("is-visible");
-    refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
-    refs.openingLayer?.classList.remove("is-hidden");
-    for (const scene of finalVictoryScenes) {
-      await playOpeningClip(scene);
-    }
-    await holdFinalVictoryFrame(finalVictoryScenes[finalVictoryScenes.length - 1]);
-  }
-
-  async function holdFinalVictoryFrame(src) {
-    pauseOpeningAtCommandFrame();
-    refs.finalCommand?.classList.remove("is-visible");
-    refs.finalMedalButton?.classList.remove("is-ready");
-    refs.successStage?.classList.add("is-visible");
+    if (options.final && refs.successTitle) refs.successTitle.textContent = "";
     state.locked = false;
   }
 
@@ -428,6 +402,7 @@
   function hideRoundUi() {
     refs.hintPanel.classList.remove("is-visible");
     refs.cardStage.classList.remove("is-visible");
+    delete refs.cardStage.dataset.round;
     refs.feedbackPanel.classList.remove("is-visible");
     refs.feedbackActions.innerHTML = "";
     refs.cardStage.innerHTML = "";
@@ -510,6 +485,7 @@
     if (!options.keepCurrentMode) setMode("tela-09-opcoes-resposta");
     refs.hintPanel.classList.remove("is-visible");
     setBalloon("", false);
+    refs.cardStage.dataset.round = String(state.roundIndex + 1);
     refs.cardStage.innerHTML = `
       <h2 class="premium-question">
         <span>${round.hint}</span>
@@ -547,7 +523,7 @@
 
     if (id === round.correctId) {
       playStarBurst(card);
-      await playCorrectCottonSequence();
+      await playCorrectSequence();
       state.locked = false;
       return;
     }
@@ -574,7 +550,7 @@
     refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
     state.roundIndex += 1;
     if (state.roundIndex >= rounds.length) {
-      await playFinalVictorySequence();
+      window.location.href = "jogos.html";
       return;
     }
     refs.openingLayer?.classList.remove("is-hidden");
@@ -688,7 +664,6 @@
     refs.finalXpCounter?.classList.remove("is-visible");
     refs.successStage?.classList.remove("is-visible");
     hideRoundUi();
-    await playOpeningClip(scoreSceneVideo);
     pauseOpeningAtCommandFrame();
     refs.scoreStage?.classList.add("is-visible", "is-counting");
     await sleep(260);

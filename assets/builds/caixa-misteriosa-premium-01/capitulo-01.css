@@ -229,35 +229,21 @@ body {
   pointer-events: auto;
 }
 
-.premium-chapter[data-mode="sequencia-04-acerto-algodao"] .premium-success-stage {
-  z-index: 14;
-  grid-template-rows: 1fr auto;
-  padding: 0 6vw 7vh;
-}
-
-.premium-chapter[data-mode="sequencia-04-acerto-algodao"] .premium-success-stage h2,
-.premium-chapter[data-mode="sequencia-04-acerto-algodao"] .premium-success-card {
-  display: none;
-}
-
-.premium-chapter[data-mode="sequencia-04-acerto-algodao"] .premium-next-discovery-button {
-  grid-row: 2;
-  align-self: end;
-  margin-top: 0;
-  pointer-events: auto;
-}
-
+.premium-chapter[data-mode="sequencia-04-acerto"] .premium-success-stage,
 .premium-chapter[data-mode="sequencia-final-vitoria"] .premium-success-stage {
   z-index: 14;
   grid-template-rows: 1fr auto;
   padding: 0 6vw 7vh;
 }
 
+.premium-chapter[data-mode="sequencia-04-acerto"] .premium-success-stage h2,
+.premium-chapter[data-mode="sequencia-04-acerto"] .premium-success-card,
 .premium-chapter[data-mode="sequencia-final-vitoria"] .premium-success-stage h2,
 .premium-chapter[data-mode="sequencia-final-vitoria"] .premium-success-card {
   display: none;
 }
 
+.premium-chapter[data-mode="sequencia-04-acerto"] .premium-next-discovery-button,
 .premium-chapter[data-mode="sequencia-final-vitoria"] .premium-next-discovery-button {
   grid-row: 2;
   align-self: end;
@@ -2154,6 +2140,33 @@ body {
 .premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card img,
 .premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card span {
   display: none !important;
+}
+
+.premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card-stage[data-round="3"] {
+  top: 43.5% !important;
+  width: min(980px, 82vw) !important;
+}
+
+.premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card-stage[data-round="3"] .premium-card-grid {
+  grid-template-columns: repeat(3, minmax(160px, 1fr)) !important;
+  gap: clamp(18px, 2.4vw, 34px) !important;
+}
+
+.premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card-stage[data-round="3"] .premium-card {
+  aspect-ratio: 1 / 0.78 !important;
+  border-radius: 24px !important;
+}
+
+.premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card-stage[data-round="3"] .premium-card[data-card-id="estrela"] {
+  transform: translate(-1.8%, -2.5%) !important;
+}
+
+.premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card-stage[data-round="3"] .premium-card[data-card-id="folha"] {
+  transform: translate(0, -5.5%) !important;
+}
+
+.premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card-stage[data-round="3"] .premium-card[data-card-id="flor"] {
+  transform: translate(1.8%, -2.5%) !important;
 }
 
 @media (max-width: 1024px) {
