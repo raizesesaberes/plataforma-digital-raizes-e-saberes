@@ -279,23 +279,34 @@
     refs.startButton?.classList.remove("is-hidden");
   }
 
-  async function playOpeningLoop(src) {
+  async function startOpeningLoop(src, options = {}) {
     const video = getActiveOpeningVideo();
     if (!video) return;
     setOpeningSource(src, video);
     await waitForVideoReady(video);
     video.currentTime = 0;
     video.loop = true;
+    video.autoplay = true;
+    video.playsInline = true;
     video.classList.add("is-active");
+    const playLoop = () => {
+      state.audioUnlocked = true;
+      prepareVideoAudio(video);
+      video.play?.().catch(() => {});
+    };
+    playLoop();
+    if (options.retry) {
+      window.setTimeout(playLoop, 350);
+      window.setTimeout(playLoop, 1100);
+    }
+  }
+
+  async function playOpeningLoop(src) {
+    await startOpeningLoop(src, { retry: true });
     state.openingReady = true;
     state.locked = false;
     root.classList.add("is-opening-ready");
     refs.startButton?.classList.remove("is-hidden");
-    video.play?.().catch(() => {
-      state.audioUnlocked = true;
-      prepareVideoAudio(video);
-      video.play?.().catch(() => {});
-    });
   }
 
   async function playOpeningSequence() {
@@ -379,6 +390,11 @@
     }
     refs.openingLayer?.classList.remove("is-hidden");
     const correctScenes = correctScenesByRound[state.roundIndex] || correctScenesByRound[0];
+    if (isFinalRound) {
+      await startOpeningLoop(correctScenes[correctScenes.length - 1], { retry: true });
+      await holdCorrectFinalFrame(correctScenes[correctScenes.length - 1], { final: true, keepPlaying: true });
+      return;
+    }
     for (const scene of correctScenes) {
       await playOpeningClip(scene);
     }
@@ -386,7 +402,7 @@
   }
 
   async function holdCorrectFinalFrame(src, options = {}) {
-    pauseOpeningAtCommandFrame({ fraction: 0.72 });
+    if (!options.keepPlaying) pauseOpeningAtCommandFrame({ fraction: 0.72 });
     refs.successStage?.classList.add("is-visible");
     if (options.final && refs.successTitle) refs.successTitle.textContent = "";
     if (refs.nextRoundButton) {
