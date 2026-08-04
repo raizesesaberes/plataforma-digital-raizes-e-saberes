@@ -54,6 +54,7 @@
     openingReady: false,
     sceneBoxReady: false,
     audioUnlocked: true,
+    openingPlaybackStarted: false,
   };
   let openingLoopCleanup = null;
   const openingScenes = [
@@ -299,11 +300,22 @@
     video.autoplay = true;
     video.playsInline = true;
     video.classList.add("is-active");
+    state.openingPlaybackStarted = false;
     let passCount = 0;
     const playLoop = () => {
       state.audioUnlocked = true;
       prepareVideoAudio(video);
-      video.play?.().catch(() => {});
+      const playPromise = video.play?.();
+      if (playPromise?.then) {
+        playPromise
+          .then(() => {
+            state.openingPlaybackStarted = true;
+          })
+          .catch(() => {
+            state.openingPlaybackStarted = false;
+            options.onPlaybackBlocked?.();
+          });
+      }
     };
     const handleEnded = () => {
       passCount += 1;
@@ -340,6 +352,12 @@
       retry: true,
       onFirstPass: () => {
         state.openingReady = true;
+        state.locked = false;
+        root.classList.add("is-opening-ready");
+        refs.startButton?.classList.remove("is-hidden");
+      },
+      onPlaybackBlocked: () => {
+        if (state.openingReady) return;
         state.locked = false;
         root.classList.add("is-opening-ready");
         refs.startButton?.classList.remove("is-hidden");
@@ -511,8 +529,23 @@
   }
 
   async function playIntroAfterStart(event) {
-    if (state.locked || !state.openingReady) return;
+    if (state.locked) return;
     unlockSceneAudio();
+    if (!state.openingReady) {
+      const introVideo = getActiveOpeningVideo();
+      if (!introVideo) return;
+      state.locked = true;
+      state.openingPlaybackStarted = false;
+      introVideo.currentTime = 0;
+      prepareVideoAudio(introVideo);
+      introVideo.play?.()
+        .then(() => {
+          state.openingPlaybackStarted = true;
+        })
+        .catch(() => {});
+      state.locked = false;
+      return;
+    }
     state.locked = true;
     state.openingReady = false;
     stopOpeningLoop();
