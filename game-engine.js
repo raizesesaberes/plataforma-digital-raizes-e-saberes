@@ -4074,6 +4074,7 @@
       this.preloadedAssetUrls = new Set();
       this.preloadNodes = [];
       this.transitionToken = 0;
+      this.basketIntroStartTimer = null;
     }
 
     mount() {
@@ -6538,6 +6539,35 @@
       this.syncMagicAmbienceLayer(screen);
       this.syncReactiveCharactersForScreen(screen);
       this.syncRounds();
+      this.syncBasketIntroStart(screen);
+    }
+
+    syncBasketIntroStart(screen) {
+      if (this.basketIntroStartTimer) {
+        window.clearTimeout(this.basketIntroStartTimer);
+        this.basketIntroStartTimer = null;
+      }
+      if (this.game.id !== "organizando-cesta" || screen !== "intro") return;
+      const video = this.root.querySelector("[data-basket-intro-video]");
+      const startButton = this.root.querySelector("[data-basket-intro-start]");
+      if (!video || !startButton) return;
+      startButton.disabled = true;
+      delete startButton.dataset.ready;
+      const releaseStartButton = () => {
+        startButton.disabled = false;
+        startButton.dataset.ready = "true";
+      };
+      const scheduleRelease = () => {
+        if (this.basketIntroStartTimer) window.clearTimeout(this.basketIntroStartTimer);
+        const duration = Number.isFinite(video.duration) && video.duration > 1 ? video.duration : 6.5;
+        this.basketIntroStartTimer = window.setTimeout(releaseStartButton, Math.max(1200, duration * 1000 - 150));
+      };
+      if (Number.isFinite(video.duration) && video.duration > 1) {
+        scheduleRelease();
+      } else {
+        video.addEventListener("loadedmetadata", scheduleRelease, { once: true });
+        this.basketIntroStartTimer = window.setTimeout(releaseStartButton, 6500);
+      }
     }
 
     go(screen, options = {}) {
