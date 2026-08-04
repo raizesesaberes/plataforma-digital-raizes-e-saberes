@@ -48,13 +48,12 @@
   const qsa = (selector) => Array.from(root.querySelectorAll(selector));
   const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
   const previewMode = new URLSearchParams(window.location.search).get("preview");
-  const introAudioRequested = new URLSearchParams(window.location.search).get("introAudio") === "1";
   const state = {
     roundIndex: 0,
     locked: true,
     openingReady: false,
     sceneBoxReady: false,
-    audioUnlocked: introAudioRequested,
+    audioUnlocked: true,
   };
   const openingScenes = [
     "assets/builds/caixa-misteriosa-premium-01/videos/personagens-convidam-crianca-202608031928.mp4",
@@ -137,6 +136,7 @@
   function prepareVideoAudio(video) {
     if (!video) return;
     video.volume = 1;
+    video.defaultMuted = false;
     video.muted = !state.audioUnlocked;
     video.removeAttribute("muted");
   }
@@ -292,7 +292,7 @@
     root.classList.add("is-opening-ready");
     refs.startButton?.classList.remove("is-hidden");
     video.play?.().catch(() => {
-      state.audioUnlocked = false;
+      state.audioUnlocked = true;
       prepareVideoAudio(video);
       video.play?.().catch(() => {});
     });
