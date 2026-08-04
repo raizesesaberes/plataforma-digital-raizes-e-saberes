@@ -2167,6 +2167,33 @@ body {
   display: none !important;
 }
 
+.premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card-stage[data-round="1"] {
+  top: 47% !important;
+  width: min(1040px, 86vw) !important;
+}
+
+.premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card-stage[data-round="1"] .premium-card-grid {
+  grid-template-columns: repeat(3, minmax(170px, 1fr)) !important;
+  gap: clamp(18px, 2.6vw, 38px) !important;
+}
+
+.premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card-stage[data-round="1"] .premium-card {
+  aspect-ratio: 1 / 0.8 !important;
+  border-radius: 26px !important;
+}
+
+.premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card-stage[data-round="1"] .premium-card[data-card-id="algodao"] {
+  transform: translate(-1.2%, -1.5%) !important;
+}
+
+.premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card-stage[data-round="1"] .premium-card[data-card-id="bola"] {
+  transform: translate(0, -4%) !important;
+}
+
+.premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card-stage[data-round="1"] .premium-card[data-card-id="cubo"] {
+  transform: translate(1.2%, -1.5%) !important;
+}
+
 .premium-chapter[data-mode="sequencia-03-descoberta"] .premium-card-stage[data-round="3"] {
   top: 43.5% !important;
   width: min(980px, 82vw) !important;
