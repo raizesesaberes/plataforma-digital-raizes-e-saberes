@@ -243,12 +243,20 @@ body {
   display: none;
 }
 
-.premium-chapter[data-mode="sequencia-04-acerto"] .premium-next-discovery-button,
-.premium-chapter[data-mode="sequencia-final-vitoria"] .premium-next-discovery-button {
+.premium-chapter[data-mode="sequencia-04-acerto"] .premium-success-actions,
+.premium-chapter[data-mode="sequencia-final-vitoria"] .premium-success-actions {
   grid-row: 2;
   align-self: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(12px, 2vw, 22px);
+  justify-content: center;
   margin-top: 0;
   pointer-events: auto;
+}
+
+.premium-chapter[data-mode="sequencia-04-acerto"] .premium-final-restart-button {
+  display: none;
 }
 
 .premium-score-stage {
@@ -433,10 +441,19 @@ body {
   filter: drop-shadow(0 22px 26px rgba(22, 12, 36, 0.35));
 }
 
-.premium-next-discovery-button {
+.premium-success-actions {
+  grid-row: 4;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}
+
+.premium-next-discovery-button,
+.premium-final-restart-button {
   grid-row: 4;
   align-self: start;
-  min-width: min(72vw, 430px);
+  min-width: min(72vw, 390px);
   min-height: clamp(58px, 7vw, 86px);
   margin-top: clamp(16px, 2.4vh, 30px);
   border: 5px solid #f7c536;
@@ -458,12 +475,21 @@ body {
   cursor: pointer;
 }
 
-.premium-next-discovery-button::after {
+.premium-final-restart-button {
+  background:
+    linear-gradient(180deg, rgba(66, 205, 122, 0.96), rgba(17, 129, 68, 0.97)),
+    #128043;
+  text-shadow: 0 3px 0 #07502a;
+}
+
+.premium-next-discovery-button::after,
+.premium-final-restart-button::after {
   content: "  >";
   color: #ffe772;
 }
 
-.premium-next-discovery-button:active {
+.premium-next-discovery-button:active,
+.premium-final-restart-button:active {
   transform: translateY(5px);
   box-shadow:
     0 3px 0 #8a520a,

@@ -47,7 +47,15 @@
   const qs = (selector) => root.querySelector(selector);
   const qsa = (selector) => Array.from(root.querySelectorAll(selector));
   const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
-  const state = { roundIndex: 0, locked: true, openingReady: false, sceneBoxReady: false, audioUnlocked: false };
+  const previewMode = new URLSearchParams(window.location.search).get("preview");
+  const introAudioRequested = new URLSearchParams(window.location.search).get("introAudio") === "1";
+  const state = {
+    roundIndex: 0,
+    locked: true,
+    openingReady: false,
+    sceneBoxReady: false,
+    audioUnlocked: introAudioRequested,
+  };
   const openingScenes = [
     "assets/builds/caixa-misteriosa-premium-01/videos/personagens-convidam-crianca-202608031928.mp4",
   ];
@@ -76,6 +84,7 @@
     successStage: qs("[data-success-stage]"),
     successTitle: qs("[data-success-title]"),
     successCardImage: qs("[data-success-card-image]"),
+    nextRoundButton: qs("[data-next-round]"),
     scoreStage: qs("[data-score-stage]"),
     scoreStars: qs("[data-score-stars]"),
     scoreXp: qs("[data-score-xp]"),
@@ -100,7 +109,6 @@
     fxLayer: qs("[data-fx-layer]"),
   };
 
-  const previewMode = new URLSearchParams(window.location.search).get("preview");
   if (previewMode === "score") {
     state.locked = true;
     window.setTimeout(() => showScoreScene(), 0);
@@ -130,6 +138,7 @@
     if (!video) return;
     video.volume = 1;
     video.muted = !state.audioUnlocked;
+    video.removeAttribute("muted");
   }
 
   function unlockSceneAudio() {
@@ -270,6 +279,25 @@
     refs.startButton?.classList.remove("is-hidden");
   }
 
+  async function playOpeningLoop(src) {
+    const video = getActiveOpeningVideo();
+    if (!video) return;
+    setOpeningSource(src, video);
+    await waitForVideoReady(video);
+    video.currentTime = 0;
+    video.loop = true;
+    video.classList.add("is-active");
+    state.openingReady = true;
+    state.locked = false;
+    root.classList.add("is-opening-ready");
+    refs.startButton?.classList.remove("is-hidden");
+    video.play?.().catch(() => {
+      state.audioUnlocked = false;
+      prepareVideoAudio(video);
+      video.play?.().catch(() => {});
+    });
+  }
+
   async function playOpeningSequence() {
     refs.startButton?.classList.add("is-hidden");
     refs.sceneCommand?.classList.remove("is-visible");
@@ -279,10 +307,7 @@
     refs.finalXpCounter?.classList.remove("is-visible");
     refs.scoreStage?.classList.remove("is-visible", "is-counting", "is-complete");
     refs.successStage?.classList.remove("is-visible");
-    for (const scene of openingScenes) {
-      await playOpeningClip(scene);
-    }
-    await holdOpeningFinalFrame(openingScenes[openingScenes.length - 1]);
+    await playOpeningLoop(openingScenes[0]);
   }
 
   async function playPostIntroScene() {
@@ -364,6 +389,9 @@
     pauseOpeningAtCommandFrame({ fraction: 0.72 });
     refs.successStage?.classList.add("is-visible");
     if (options.final && refs.successTitle) refs.successTitle.textContent = "";
+    if (refs.nextRoundButton) {
+      refs.nextRoundButton.textContent = options.final ? "FAZER UMA NOVA DESCOBERTA" : "PROXIMA DESCOBERTA";
+    }
     state.locked = false;
   }
 
@@ -432,6 +460,10 @@
     if (state.locked || !state.openingReady) return;
     unlockSceneAudio();
     state.locked = true;
+    state.openingReady = false;
+    const introVideo = getActiveOpeningVideo();
+    introVideo?.pause?.();
+    if (introVideo) introVideo.loop = false;
     setMode("sequencia-02-pos-introducao");
     playMagicTouch(event);
     refs.startButton.classList.add("is-hidden");
@@ -707,6 +739,9 @@
         return;
       }
       nextRound();
+    }
+    if (event.target.closest("[data-final-restart]")) {
+      restart();
     }
     if (event.target.closest("[data-restart]")) restart();
     if (event.target.closest("[data-score-restart]")) restart();
