@@ -51,7 +51,7 @@
         mascot: "Borboleta Bia",
         xp: 20,
         medal: "Pequeno Explorador",
-        launchHref: "caixa-misteriosa-premium-01.html?introAudio=1&v=intro-attempt-4-20260804-01",
+        launchHref: "caixa-misteriosa-premium-01.html?introAudio=1&v=intro-button-gate-20260804-01",
         unlock: { order: 1, unlocked: true, requires: null },
         assets: {
           atlas: `${atlasBase}telas-assets.png`,

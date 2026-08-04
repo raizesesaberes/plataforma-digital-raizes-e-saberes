@@ -536,14 +536,20 @@
       if (!introVideo) return;
       state.locked = true;
       state.openingPlaybackStarted = false;
+      root.classList.remove("is-opening-ready");
+      refs.startButton?.classList.add("is-hidden");
       introVideo.currentTime = 0;
       prepareVideoAudio(introVideo);
       introVideo.play?.()
         .then(() => {
           state.openingPlaybackStarted = true;
+          state.locked = false;
         })
-        .catch(() => {});
-      state.locked = false;
+        .catch(() => {
+          state.locked = false;
+          root.classList.add("is-opening-ready");
+          refs.startButton?.classList.remove("is-hidden");
+        });
       return;
     }
     state.locked = true;
