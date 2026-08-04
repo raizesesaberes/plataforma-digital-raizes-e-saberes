@@ -62,7 +62,7 @@
   ];
   const postIntroScene = "assets/builds/caixa-misteriosa-premium-01/videos/magical-box-vibrating-playroom-202608032255.mp4";
   const discoveryScenesByRound = [
-    ["assets/builds/caixa-misteriosa-premium-01/videos/magical-box-opens-with-cards-202608032004.mp4"],
+    ["assets/builds/caixa-misteriosa-premium-01/videos/magical-box-opens-with-cards-202608041040.mp4"],
     ["assets/builds/caixa-misteriosa-premium-01/videos/magical-box-opens-with-cards-pena-202608032316.mp4"],
     ["assets/builds/caixa-misteriosa-premium-01/videos/magical-box-opens-with-cards-estrela-202608040038.mp4"],
   ];

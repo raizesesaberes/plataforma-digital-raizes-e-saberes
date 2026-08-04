@@ -15,7 +15,7 @@ window.CaixaMisteriosaPremiumVideoOrder = [
   },
   {
     order: 3,
-    file: "magical-box-opens-with-cards-202608032004.mp4",
+    file: "magical-box-opens-with-cards-202608041040.mp4",
     officialFunction: "Rodada 1 - pergunta do algodao; hotspots invisiveis sobre os cards",
     state: "Question Cotton",
     executionGroup: "Rodada 1",
