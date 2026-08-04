@@ -227,7 +227,7 @@
           screens: {
             intro: ge2CestaAsset("scenarios/intro.png"),
             room: ge2CestaAsset("scenarios/observe.png"),
-            choice: ge2CestaAsset("scenarios/organize.png"),
+            choice: ge2CestaAsset("custom/interaction-board.png"),
             feedback: ge2CestaAsset("scenarios/feedback.png"),
             final: ge2CestaAsset("scenarios/final.png"),
           },
@@ -249,9 +249,9 @@
             highlightBasket: ge2CestaAsset("baskets/highlight.png"),
           },
           fruits: {
-            apple: ge2CestaAsset("fruits/apple.png"),
-            banana: ge2CestaAsset("fruits/banana.png"),
-            grape: ge2CestaAsset("fruits/grape.png"),
+            apple: ge2CestaAsset("custom/items/apple.png"),
+            banana: ge2CestaAsset("custom/items/banana.png"),
+            grape: ge2CestaAsset("custom/items/grape.png"),
             pear: ge2CestaAsset("fruits/pear.png"),
           },
           effects: {
@@ -261,6 +261,11 @@
             confetti: ge2CestaAsset("effects/confetti.png"),
             particles: ge2CestaAsset("effects/particles.png"),
             lightBurst: ge2CestaAsset("effects/light-burst.png"),
+          },
+          videos: {
+            intro: ge2CestaAsset("videos/intro-loop.mp4"),
+            room: ge2CestaAsset("videos/room-transition.mp4"),
+            victory: ge2CestaAsset("videos/victory-loop.mp4"),
           },
         },
         audio: {
@@ -274,14 +279,14 @@
             hint: "Arraste cada fruta para o cesto correspondente.",
             narration: "Observe as frutas. Temos maca, banana, uva e pera.",
             items: [
-              { id: "apple", label: "Maca", image: ge2CestaAsset("fruits/apple.png"), selectedImage: ge2CestaAsset("fruits/apple-selected.png"), targetId: "apple" },
-              { id: "banana", label: "Banana", image: ge2CestaAsset("fruits/banana.png"), selectedImage: ge2CestaAsset("fruits/banana-selected.png"), targetId: "banana" },
-              { id: "grape", label: "Uva", image: ge2CestaAsset("fruits/grape.png"), selectedImage: ge2CestaAsset("fruits/grape-selected.png"), targetId: "grape" },
+              { id: "apple", label: "Maca", image: ge2CestaAsset("custom/items/apple.png"), selectedImage: ge2CestaAsset("custom/items/apple.png"), targetId: "apple" },
+              { id: "banana", label: "Banana", image: ge2CestaAsset("custom/items/banana.png"), selectedImage: ge2CestaAsset("custom/items/banana.png"), targetId: "banana" },
+              { id: "grape", label: "Uva", image: ge2CestaAsset("custom/items/grape.png"), selectedImage: ge2CestaAsset("custom/items/grape.png"), targetId: "grape" },
             ],
             targets: [
-              { id: "apple", label: "Cesto da maca", icon: ge2CestaAsset("icons/apple.png"), image: ge2CestaAsset("baskets/empty.png"), highlightImage: ge2CestaAsset("baskets/highlight.png"), completeImage: ge2CestaAsset("fruits/apple-in-basket.png") },
-              { id: "banana", label: "Cesto da banana", icon: ge2CestaAsset("icons/banana.png"), image: ge2CestaAsset("baskets/empty.png"), highlightImage: ge2CestaAsset("baskets/highlight.png"), completeImage: ge2CestaAsset("fruits/banana-in-basket.png") },
-              { id: "grape", label: "Cesto da uva", icon: ge2CestaAsset("icons/grape.png"), image: ge2CestaAsset("baskets/empty.png"), highlightImage: ge2CestaAsset("baskets/highlight.png"), completeImage: ge2CestaAsset("fruits/grape-in-basket.png") },
+              { id: "apple", label: "Cesto da maca", image: ge2CestaAsset("custom/items/apple-empty.png"), highlightImage: ge2CestaAsset("custom/items/apple-empty.png"), completeImage: ge2CestaAsset("custom/items/apple-full.png") },
+              { id: "banana", label: "Cesto da banana", image: ge2CestaAsset("custom/items/banana-empty.png"), highlightImage: ge2CestaAsset("custom/items/banana-empty.png"), completeImage: ge2CestaAsset("custom/items/banana-full.png") },
+              { id: "grape", label: "Cesto da uva", image: ge2CestaAsset("custom/items/grape-empty.png"), highlightImage: ge2CestaAsset("custom/items/grape-empty.png"), completeImage: ge2CestaAsset("custom/items/grape-full.png") },
             ],
           },
         ],
@@ -4391,15 +4396,8 @@
       if (this.game.id === "organizando-cesta") {
         return `
           <section class="game-screen basket-intro-screen" data-screen="intro" aria-label="Boas-vindas">
-            <div class="game-scene game-scene-intro" style="--screen:url('${this.game.assets.screens.intro}')" aria-hidden="true"></div>
-            ${components.particles(18)}
-            <div class="basket-intro-composition">
-              <img class="basket-official-title" src="${this.game.assets.components.title}" alt="${this.game.title}" loading="eager" decoding="async" />
-              <img class="basket-intro-ana" src="${this.game.assets.characters.ana}" alt="" loading="eager" decoding="async" />
-              <img class="basket-intro-basket" src="${this.game.assets.components.fullBasket}" alt="" loading="eager" decoding="async" />
-              <img class="basket-intro-bia" src="${this.game.assets.characters.bia}" alt="" loading="eager" decoding="async" />
-              <button class="game-primary-button game-start-button" type="button" data-game-action="start" aria-label="Comecar ${this.game.title}">▶ Comecar</button>
-            </div>
+            <video class="basket-intro-video" src="${this.game.assets.videos.intro}" autoplay playsinline preload="auto" data-basket-intro-video aria-hidden="true"></video>
+            <button class="basket-intro-hitarea" type="button" data-game-action="start" aria-label="Comecar ${this.game.title}" disabled data-basket-intro-start></button>
           </section>
         `;
       }
@@ -4421,19 +4419,7 @@
         if (this.game.id === "organizando-cesta") {
           return `
             <section class="game-screen basket-room-screen" data-screen="room" aria-label="Observando as frutas">
-              <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
-              ${components.particles(12)}
-              <article class="basket-observe-panel">
-                ${components.audioButton("Ouvir frutas", round.narration)}
-                <strong>Observe as frutas</strong>
-                <span>Temos maca, banana, uva e pera.</span>
-              </article>
-              <div class="basket-fruit-stage" aria-hidden="true">
-                <img src="${this.game.assets.fruits.apple}" alt="" loading="eager" decoding="async" />
-                <img src="${this.game.assets.fruits.banana}" alt="" loading="eager" decoding="async" />
-                <img src="${this.game.assets.fruits.grape}" alt="" loading="eager" decoding="async" />
-                <img src="${this.game.assets.fruits.pear}" alt="" loading="eager" decoding="async" />
-              </div>
+              <video class="basket-room-video" src="${this.game.assets.videos.room}" autoplay playsinline preload="auto" data-basket-room-video aria-hidden="true"></video>
             </section>
           `;
         }
@@ -5147,6 +5133,17 @@
     }
 
     renderFinalScreen() {
+      if (this.game.id === "organizando-cesta") {
+        return `
+          <section class="game-screen basket-victory-screen" data-screen="final" aria-label="Tela de comemoracao">
+            <video class="basket-victory-video" src="${this.game.assets.videos.victory}" autoplay loop playsinline preload="auto" aria-hidden="true"></video>
+            <div class="basket-victory-actions">
+              <button class="game-primary-button game-restart-button" type="button" data-game-action="restart">Jogar novamente</button>
+              <button class="game-secondary-button basket-next-discovery-button" type="button" data-game-action="next-discovery">Proxima descoberta</button>
+            </div>
+          </section>
+        `;
+      }
       return VictoryScreen.render(this.getVictoryOptions());
     }
 
@@ -5284,6 +5281,26 @@
         if (snapSlot) this.snapSelectedPiece(snapSlot.dataset.snapSlotId);
         if (speak) audioPlayer.speak(decodeURIComponent(speak.dataset.gameSpeak), speak);
       });
+      this.root.addEventListener("ended", (event) => {
+        const video = event.target.closest?.("[data-basket-intro-video]");
+        if (video) {
+          const loops = Number(video.dataset.loopCount || "0") + 1;
+          video.dataset.loopCount = String(loops);
+          const startButton = this.root.querySelector("[data-basket-intro-start]");
+          if (loops >= 1 && startButton) {
+            startButton.disabled = false;
+            startButton.dataset.ready = "true";
+          }
+          video.currentTime = 0;
+          video.play?.().catch(() => {});
+          return;
+        }
+        const roomVideo = event.target.closest?.("[data-basket-room-video]");
+        if (roomVideo && this.game.id === "organizando-cesta" && this.state.screen === "room") {
+          this.updateRoundContent();
+          this.go("choice");
+        }
+      }, true);
       this.root.addEventListener("dragstart", (event) => {
         const dragItem = event.target.closest("[data-drag-id]");
         const snapPiece = event.target.closest("[data-snap-piece-id]");
@@ -5510,14 +5527,6 @@
         audioPlayer.blip();
         this.updateRoundContent();
         this.go("room");
-        if (this.game.id === "organizando-cesta") {
-          window.setTimeout(() => {
-            if (this.state.screen !== "room") return;
-            this.updateRoundContent();
-            audioPlayer.speak(this.currentRound().narration, null);
-            this.go("choice");
-          }, 1800);
-        }
         if (this.game.type === "find") {
           audioPlayer.speak(this.currentRound().narration, null);
         }
@@ -5643,6 +5652,9 @@
           this.updateRoundContent();
           this.go("room");
         }
+      }
+      if (action === "next-discovery") {
+        window.location.href = "jogos.html";
       }
       if (action === "restart") {
         this.clearMagicBoxFrameTimer();
