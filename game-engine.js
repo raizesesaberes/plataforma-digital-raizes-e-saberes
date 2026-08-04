@@ -219,8 +219,8 @@
         medal: "Pequeno Organizador",
         unlock: { order: 2, unlocked: true, requires: "caixa-misteriosa" },
         assets: {
-          atlas: ge2CestaAsset("scenarios/intro.png"),
-          card: ge2CestaAsset("scenarios/intro.png"),
+          atlas: ge2CestaAsset("custom/intro-banner.png"),
+          card: ge2CestaAsset("custom/intro-banner.png"),
           flow: ge2CestaAsset("scenarios/organize.png"),
           library: ge2CestaAsset("scenarios/organize.png"),
           scenarios: ge2CestaAsset("scenarios/organize.png"),
@@ -5299,6 +5299,17 @@
         if (roomVideo && this.game.id === "organizando-cesta" && this.state.screen === "room") {
           this.updateRoundContent();
           this.go("choice");
+        }
+      }, true);
+      this.root.addEventListener("timeupdate", (event) => {
+        const video = event.target.closest?.("[data-basket-intro-video]");
+        if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
+        if (video.dataset.loopCount === "1" || video.currentTime < Math.max(0.2, video.duration - 0.35)) return;
+        video.dataset.loopCount = "1";
+        const startButton = this.root.querySelector("[data-basket-intro-start]");
+        if (startButton) {
+          startButton.disabled = false;
+          startButton.dataset.ready = "true";
         }
       }, true);
       this.root.addEventListener("dragstart", (event) => {
