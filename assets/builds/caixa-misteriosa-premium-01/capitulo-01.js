@@ -311,9 +311,17 @@
       video.currentTime = 0;
       playLoop();
     };
+    const unlockAfterRealPlayback = () => {
+      if (!options.onFirstPass || passCount > 0) return;
+      if (Number.isFinite(video.duration) && video.duration > 0 && video.currentTime >= Math.max(0.8, video.duration - 0.35)) {
+        handleEnded();
+      }
+    };
     video.addEventListener("ended", handleEnded);
+    video.addEventListener("timeupdate", unlockAfterRealPlayback);
     openingLoopCleanup = () => {
       video.removeEventListener("ended", handleEnded);
+      video.removeEventListener("timeupdate", unlockAfterRealPlayback);
       video.loop = false;
     };
     playLoop();
