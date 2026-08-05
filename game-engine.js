@@ -5186,13 +5186,15 @@
       if (this.game.id === "organizando-cesta") {
         return `
           <section class="game-screen basket-victory-screen" data-screen="final" aria-label="Tela de comemoracao">
-            <video class="basket-victory-video" src="${this.game.assets.videos.victory}" autoplay playsinline preload="auto" data-basket-victory-video aria-hidden="true"></video>
-            <div class="basket-victory-xp" aria-label="Conquista de experiencia">+${this.game.xp} XP</div>
-            <span class="game-sr-only" data-final-medal>${this.game.medal}</span>
-            <span class="game-sr-only" data-final-story></span>
-            <div class="basket-victory-actions">
-              <button class="game-primary-button game-restart-button" type="button" data-game-action="restart">Jogar novamente</button>
-              <button class="game-secondary-button basket-next-discovery-button" type="button" data-game-action="next-discovery">Proxima descoberta</button>
+            <div class="basket-victory-stage">
+              <video class="basket-victory-video" src="${this.game.assets.videos.victory}" autoplay playsinline preload="auto" data-basket-victory-video aria-hidden="true"></video>
+              <div class="basket-victory-xp" aria-label="Conquista de experiencia">+${this.game.xp} XP</div>
+              <span class="game-sr-only" data-final-medal>${this.game.medal}</span>
+              <span class="game-sr-only" data-final-story></span>
+              <div class="basket-victory-actions">
+                <button class="game-primary-button game-restart-button" type="button" data-game-action="restart">Jogar novamente</button>
+                <button class="game-secondary-button basket-next-discovery-button" type="button" data-game-action="next-discovery">Proxima descoberta</button>
+              </div>
             </div>
           </section>
         `;
