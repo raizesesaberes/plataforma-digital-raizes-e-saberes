@@ -4399,7 +4399,7 @@
         return `
           <section class="game-screen basket-intro-screen" data-screen="intro" aria-label="Boas-vindas">
             <video class="basket-intro-video" src="${this.game.assets.videos.intro}" autoplay playsinline preload="auto" data-basket-intro-video aria-hidden="true"></video>
-            <button class="basket-intro-hitarea" type="button" data-game-action="start" aria-label="Comecar ${this.game.title}" data-ready="true" data-basket-intro-start></button>
+            <button class="basket-intro-hitarea" type="button" data-game-action="start" aria-label="Comecar ${this.game.title}" data-ready="true" data-basket-intro-start style="position:fixed;inset:0;z-index:999;width:100vw;height:100vh;padding:0;border:0;background:transparent;color:transparent;appearance:none;cursor:pointer;"></button>
           </section>
         `;
       }
@@ -4421,7 +4421,7 @@
         if (this.game.id === "organizando-cesta") {
           return `
             <section class="game-screen basket-room-screen" data-screen="room" aria-label="Observando as frutas">
-              <video class="basket-room-video" src="${this.game.assets.videos.room}" autoplay playsinline preload="auto" data-basket-room-video aria-hidden="true"></video>
+              <video class="basket-room-video" src="${this.game.assets.videos.room}" playsinline preload="auto" data-basket-room-video aria-hidden="true"></video>
             </section>
           `;
         }
@@ -5139,6 +5139,9 @@
         return `
           <section class="game-screen basket-victory-screen" data-screen="final" aria-label="Tela de comemoracao">
             <video class="basket-victory-video" src="${this.game.assets.videos.victory}" autoplay loop playsinline preload="auto" aria-hidden="true"></video>
+            <div class="basket-victory-xp" aria-label="Conquista de experiencia">+${this.game.xp} XP</div>
+            <span class="game-sr-only" data-final-medal>${this.game.medal}</span>
+            <span class="game-sr-only" data-final-story></span>
             <div class="basket-victory-actions">
               <button class="game-primary-button game-restart-button" type="button" data-game-action="restart">Jogar novamente</button>
               <button class="game-secondary-button basket-next-discovery-button" type="button" data-game-action="next-discovery">Proxima descoberta</button>
@@ -5225,6 +5228,7 @@
         const gamePlay = event.target.closest("[data-game-play]");
         const gameBack = event.target.closest("[data-game-back]");
         const action = event.target.closest("[data-game-action]")?.dataset.gameAction;
+        const basketIntroVideo = event.target.closest("[data-basket-intro-video]");
         const card = event.target.closest("[data-choice-id]");
         const audioChoice = event.target.closest("[data-audio-choice-id]");
         const patternChoice = event.target.closest("[data-pattern-choice-id]");
@@ -5254,6 +5258,10 @@
         if (gamePlay) this.openGame(gamePlay.dataset.gamePlay);
         if (gameSelect) this.openGame(gameSelect.dataset.gameSelect);
         if (gameBack) this.openHub();
+        if (!action && basketIntroVideo && this.game.id === "organizando-cesta" && this.state.screen === "intro") {
+          this.handleAction("start", this.root.querySelector("[data-basket-intro-start]"));
+          return;
+        }
         if (action) this.handleAction(action, event.target.closest("button"));
         if (audioChoice) this.answerAudio(audioChoice.dataset.audioChoiceId, audioChoice);
         if (patternChoice) this.answerPattern(patternChoice.dataset.patternChoiceId, patternChoice);
@@ -6442,7 +6450,13 @@
       if (complete) {
         this.state = { ...this.state, completedRounds: [round.id] };
         this.root.querySelector("[data-shape-house-board]")?.classList.add("is-complete");
-        window.setTimeout(() => this.go("feedback"), 620);
+        window.setTimeout(() => {
+          if (this.game.id === "organizando-cesta") {
+            this.finish();
+            return;
+          }
+          this.go("feedback");
+        }, 620);
       }
     }
 
@@ -6524,11 +6538,13 @@
       this.animateXp();
       this.root.querySelector("[data-game-xp]").textContent = `⭐ ${this.state.xp} XP`;
       this.root.querySelector("[data-game-medal]").textContent = `🏅 ${this.state.medal}`;
-      this.root.querySelector("[data-final-medal]").textContent = this.state.medal;
+      const finalMedal = this.root.querySelector("[data-final-medal]");
+      if (finalMedal) finalMedal.textContent = this.state.medal;
       const storySummary = this.state.storyMemory
         ? `Album das Historias: ${this.state.storyMemory.title}. Acessorios: ${this.state.storyMemory.accessoryLabels.join(", ") || "sem acessorios"}.`
         : "";
-      this.root.querySelector("[data-final-story]").textContent = storySummary;
+      const finalStory = this.root.querySelector("[data-final-story]");
+      if (finalStory) finalStory.textContent = storySummary;
     }
 
     applyScreen(screen) {
@@ -6584,16 +6600,20 @@
         this.updateRoundContent();
         this.go("choice");
       };
-      const scheduleAdvance = () => {
+      const startRoomVideo = () => {
         if (this.basketRoomAdvanceTimer) window.clearTimeout(this.basketRoomAdvanceTimer);
-        const duration = Number.isFinite(video.duration) && video.duration > 1 ? video.duration : 7;
-        this.basketRoomAdvanceTimer = window.setTimeout(advanceToChoice, Math.max(1200, duration * 1000 + 150));
+        try {
+          video.pause?.();
+          video.currentTime = 0;
+        } catch (error) {}
+        video.play?.().catch(() => {});
+        this.basketRoomAdvanceTimer = window.setTimeout(advanceToChoice, 6000);
       };
-      if (Number.isFinite(video.duration) && video.duration > 1) {
-        scheduleAdvance();
+      if (video.readyState >= 1) {
+        startRoomVideo();
       } else {
-        video.addEventListener("loadedmetadata", scheduleAdvance, { once: true });
-        this.basketRoomAdvanceTimer = window.setTimeout(advanceToChoice, 7000);
+        video.addEventListener("loadedmetadata", startRoomVideo, { once: true });
+        this.basketRoomAdvanceTimer = window.setTimeout(startRoomVideo, 500);
       }
     }
 
