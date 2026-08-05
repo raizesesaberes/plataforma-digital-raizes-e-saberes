@@ -5954,9 +5954,12 @@ body.game-immersive-active .game-stage,
   filter: drop-shadow(0 14px 15px rgba(74, 48, 14, 0.24));
 }
 
-.game-engine[data-active-game="organizando-cesta"] .drop-zone:not(.is-filled)[data-drop-id="apple"] > img,
+.game-engine[data-active-game="organizando-cesta"] .drop-zone:not(.is-filled)[data-drop-id="apple"] > img {
+  transform: translateY(-16%);
+}
+
 .game-engine[data-active-game="organizando-cesta"] .drop-zone:not(.is-filled)[data-drop-id="grape"] > img {
-  transform: translateY(-12%);
+  transform: translateY(-26%);
 }
 
 .game-engine[data-active-game="organizando-cesta"] .drop-zone .drop-zone-icon {
