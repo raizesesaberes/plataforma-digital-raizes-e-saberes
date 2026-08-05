@@ -227,7 +227,7 @@
           screens: {
             intro: ge2CestaAsset("scenarios/intro.png"),
             room: ge2CestaAsset("scenarios/observe.png"),
-            choice: ge2CestaAsset("custom/interaction-board.png"),
+            choice: ge2CestaAsset("custom/interaction-board-6-slots.png?v=basket-choice-six-slots-20260804-06"),
             feedback: ge2CestaAsset("scenarios/feedback.png"),
             final: ge2CestaAsset("scenarios/final.png"),
           },
@@ -263,7 +263,7 @@
             lightBurst: ge2CestaAsset("effects/light-burst.png"),
           },
           videos: {
-            intro: ge2CestaAsset("videos/girl-interacting-with-butterfly-202608042019.mp4?v=basket-start-click-20260804-04"),
+            intro: ge2CestaAsset("videos/girl-interacting-with-butterfly-202608042019.mp4?v=basket-choice-six-slots-20260804-06"),
             room: ge2CestaAsset("videos/room-transition.mp4"),
             victory: ge2CestaAsset("videos/victory-loop.mp4"),
           },
@@ -279,14 +279,14 @@
             hint: "Arraste cada fruta para o cesto correspondente.",
             narration: "Observe as frutas. Temos maca, banana, uva e pera.",
             items: [
-              { id: "apple", label: "Maca", image: ge2CestaAsset("custom/items/apple.png"), selectedImage: ge2CestaAsset("custom/items/apple.png"), targetId: "apple" },
-              { id: "banana", label: "Banana", image: ge2CestaAsset("custom/items/banana.png"), selectedImage: ge2CestaAsset("custom/items/banana.png"), targetId: "banana" },
-              { id: "grape", label: "Uva", image: ge2CestaAsset("custom/items/grape.png"), selectedImage: ge2CestaAsset("custom/items/grape.png"), targetId: "grape" },
+              { id: "apple", label: "Maca", image: ge2CestaAsset("custom/items/apple-clean.png?v=basket-choice-six-slots-20260804-06"), selectedImage: ge2CestaAsset("custom/items/apple-clean.png?v=basket-choice-six-slots-20260804-06"), targetId: "apple" },
+              { id: "banana", label: "Banana", image: ge2CestaAsset("custom/items/banana-clean.png?v=basket-choice-six-slots-20260804-06"), selectedImage: ge2CestaAsset("custom/items/banana-clean.png?v=basket-choice-six-slots-20260804-06"), targetId: "banana" },
+              { id: "grape", label: "Uva", image: ge2CestaAsset("custom/items/grape-clean.png?v=basket-choice-six-slots-20260804-06"), selectedImage: ge2CestaAsset("custom/items/grape-clean.png?v=basket-choice-six-slots-20260804-06"), targetId: "grape" },
             ],
             targets: [
-              { id: "apple", label: "Cesto da maca", image: ge2CestaAsset("custom/items/apple-empty.png"), highlightImage: ge2CestaAsset("custom/items/apple-empty.png"), completeImage: ge2CestaAsset("custom/items/apple-full.png") },
-              { id: "banana", label: "Cesto da banana", image: ge2CestaAsset("custom/items/banana-empty.png"), highlightImage: ge2CestaAsset("custom/items/banana-empty.png"), completeImage: ge2CestaAsset("custom/items/banana-full.png") },
-              { id: "grape", label: "Cesto da uva", image: ge2CestaAsset("custom/items/grape-empty.png"), highlightImage: ge2CestaAsset("custom/items/grape-empty.png"), completeImage: ge2CestaAsset("custom/items/grape-full.png") },
+              { id: "apple", label: "Cesto da maca", image: ge2CestaAsset("custom/items/apple-basket-only-clean.png?v=basket-choice-six-slots-20260804-06"), highlightImage: ge2CestaAsset("custom/items/apple-basket-only-clean.png?v=basket-choice-six-slots-20260804-06"), completeImage: ge2CestaAsset("custom/items/apple-basket-only-clean.png?v=basket-choice-six-slots-20260804-06") },
+              { id: "banana", label: "Cesto da banana", image: ge2CestaAsset("custom/items/banana-basket-only-clean.png?v=basket-choice-six-slots-20260804-06"), highlightImage: ge2CestaAsset("custom/items/banana-basket-only-clean.png?v=basket-choice-six-slots-20260804-06"), completeImage: ge2CestaAsset("custom/items/banana-basket-only-clean.png?v=basket-choice-six-slots-20260804-06") },
+              { id: "grape", label: "Cesto da uva", image: ge2CestaAsset("custom/items/grape-basket-only-clean.png?v=basket-choice-six-slots-20260804-06"), highlightImage: ge2CestaAsset("custom/items/grape-basket-only-clean.png?v=basket-choice-six-slots-20260804-06"), completeImage: ge2CestaAsset("custom/items/grape-basket-only-clean.png?v=basket-choice-six-slots-20260804-06") },
             ],
           },
         ],
@@ -2775,12 +2775,34 @@
 
   const audioPlayer = {
     volumes: { narration: 0.9, effects: 0.75, music: 0.35 },
+    activeContexts: new Set(),
+    activeButtons: new Set(),
+    activeTimers: new Set(),
+    speechToken: 0,
+    stopAll() {
+      this.speechToken += 1;
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+      this.activeTimers.forEach((timer) => window.clearTimeout(timer));
+      this.activeTimers.clear();
+      this.activeContexts.forEach((context) => context.close?.());
+      this.activeContexts.clear();
+      this.activeButtons.forEach((button) => {
+        button.classList.remove("is-playing");
+        button.setAttribute("aria-busy", "false");
+      });
+      this.activeButtons.clear();
+    },
     speak(text, button, onEnd) {
+      this.stopAll();
       if (!("speechSynthesis" in window)) {
-        window.setTimeout(() => onEnd?.(), 1500);
+        const fallbackTimer = window.setTimeout(() => {
+          this.activeTimers.delete(fallbackTimer);
+          onEnd?.();
+        }, 1500);
+        this.activeTimers.add(fallbackTimer);
         return;
       }
-      window.speechSynthesis.cancel();
+      const token = this.speechToken;
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "pt-BR";
       utterance.rate = 0.86;
@@ -2788,14 +2810,19 @@
       const originalMusic = this.volumes.music;
       this.volumes.music = Math.max(0.08, originalMusic * 0.35);
       button?.classList.add("is-playing");
+      if (button) this.activeButtons.add(button);
       utterance.onend = () => {
+        if (token !== this.speechToken) return;
         this.volumes.music = originalMusic;
         button?.classList.remove("is-playing");
+        if (button) this.activeButtons.delete(button);
         onEnd?.();
       };
       utterance.onerror = () => {
+        if (token !== this.speechToken) return;
         this.volumes.music = originalMusic;
         button?.classList.remove("is-playing");
+        if (button) this.activeButtons.delete(button);
         onEnd?.();
       };
       window.speechSynthesis.speak(utterance);
@@ -2820,11 +2847,14 @@
     playConfigured(sound, button) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (!AudioContext || !sound) return Promise.resolve();
+      this.stopAll();
       const previousMusic = this.volumes.music;
       this.volumes.music = Math.min(previousMusic, 0.08);
       button?.classList.add("is-playing");
       button?.setAttribute("aria-busy", "true");
+      if (button) this.activeButtons.add(button);
       const context = new AudioContext();
+      this.activeContexts.add(context);
       const output = context.createGain();
       const duration = sound.duration || 1.2;
       output.gain.value = this.volumes.effects * 0.12;
@@ -2845,13 +2875,17 @@
         oscillator.stop(now + (index + 0.9) * (duration / steps.length));
       });
       return new Promise((resolve) => {
-        window.setTimeout(() => {
+        const timer = window.setTimeout(() => {
+          this.activeTimers.delete(timer);
           button?.classList.remove("is-playing");
           button?.setAttribute("aria-busy", "false");
+          if (button) this.activeButtons.delete(button);
           this.volumes.music = previousMusic;
+          this.activeContexts.delete(context);
           context.close?.();
           resolve();
         }, Math.ceil(duration * 1000) + 80);
+        this.activeTimers.add(timer);
       });
     },
   };
@@ -5301,8 +5335,7 @@
             startButton.disabled = false;
             startButton.dataset.ready = "true";
           }
-          video.currentTime = 0;
-          video.play?.().catch(() => {});
+          video.pause?.();
           return;
         }
         const roomVideo = event.target.closest?.("[data-basket-room-video]");
@@ -6553,11 +6586,29 @@
         item.classList.toggle("is-active", item.dataset.screen === screen);
       });
       this.syncBackgroundVideos();
+      this.syncBasketIntroMedia(screen);
       this.syncMagicAmbienceLayer(screen);
       this.syncReactiveCharactersForScreen(screen);
       this.syncRounds();
       this.syncBasketIntroStart(screen);
       this.syncBasketRoomAdvance(screen);
+    }
+
+    syncBasketIntroMedia(screen) {
+      if (this.game.id !== "organizando-cesta") return;
+      const video = this.root.querySelector("[data-basket-intro-video]");
+      if (!video) return;
+      if (screen === "intro") {
+        if (video.paused) video.play?.().catch(() => {});
+        return;
+      }
+      audioPlayer.stopAll?.();
+      video.pause?.();
+      try {
+        video.currentTime = 0;
+      } catch (error) {
+        // Some browsers can reject seeking while metadata is still loading.
+      }
     }
 
     syncBasketIntroStart(screen) {
