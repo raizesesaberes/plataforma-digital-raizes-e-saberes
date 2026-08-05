@@ -227,7 +227,7 @@
           screens: {
             intro: ge2CestaAsset("scenarios/intro.png"),
             room: ge2CestaAsset("scenarios/observe.png"),
-            choice: ge2CestaAsset("custom/interaction-board-fruit-top-basket-bottom.png?v=basket-fit-fullscreen-20260804-10"),
+            choice: ge2CestaAsset("custom/interaction-board-fruit-top-basket-bottom.png?v=basket-audio-board-fit-20260804-11"),
             feedback: ge2CestaAsset("scenarios/feedback.png"),
             final: ge2CestaAsset("scenarios/final.png"),
           },
@@ -263,7 +263,7 @@
             lightBurst: ge2CestaAsset("effects/light-burst.png"),
           },
           videos: {
-            intro: ge2CestaAsset("videos/girl-interacting-with-butterfly-202608042019.mp4?v=basket-fit-fullscreen-20260804-10"),
+            intro: ge2CestaAsset("videos/girl-interacting-with-butterfly-202608042019.mp4?v=basket-audio-board-fit-20260804-11"),
             room: ge2CestaAsset("videos/room-transition.mp4"),
             victory: ge2CestaAsset("videos/victory-loop.mp4"),
           },
@@ -279,14 +279,14 @@
             hint: "Arraste cada fruta para o cesto correspondente.",
             narration: "Observe as frutas. Temos maca, banana, uva e pera.",
             items: [
-              { id: "apple", label: "Maca", image: ge2CestaAsset("custom/items/apple-clean.png?v=basket-fit-fullscreen-20260804-10"), selectedImage: ge2CestaAsset("custom/items/apple-clean.png?v=basket-fit-fullscreen-20260804-10"), targetId: "apple" },
-              { id: "banana", label: "Banana", image: ge2CestaAsset("custom/items/banana-clean.png?v=basket-fit-fullscreen-20260804-10"), selectedImage: ge2CestaAsset("custom/items/banana-clean.png?v=basket-fit-fullscreen-20260804-10"), targetId: "banana" },
-              { id: "grape", label: "Uva", image: ge2CestaAsset("custom/items/grape-clean.png?v=basket-fit-fullscreen-20260804-10"), selectedImage: ge2CestaAsset("custom/items/grape-clean.png?v=basket-fit-fullscreen-20260804-10"), targetId: "grape" },
+              { id: "apple", label: "Maca", image: ge2CestaAsset("custom/items/apple-clean.png?v=basket-audio-board-fit-20260804-11"), selectedImage: ge2CestaAsset("custom/items/apple-clean.png?v=basket-audio-board-fit-20260804-11"), targetId: "apple" },
+              { id: "banana", label: "Banana", image: ge2CestaAsset("custom/items/banana-clean.png?v=basket-audio-board-fit-20260804-11"), selectedImage: ge2CestaAsset("custom/items/banana-clean.png?v=basket-audio-board-fit-20260804-11"), targetId: "banana" },
+              { id: "grape", label: "Uva", image: ge2CestaAsset("custom/items/grape-clean.png?v=basket-audio-board-fit-20260804-11"), selectedImage: ge2CestaAsset("custom/items/grape-clean.png?v=basket-audio-board-fit-20260804-11"), targetId: "grape" },
             ],
             targets: [
-              { id: "apple", label: "Cesto da maca", image: ge2CestaAsset("custom/items/apple-basket-empty-labeled.png?v=basket-fit-fullscreen-20260804-10"), highlightImage: ge2CestaAsset("custom/items/apple-basket-empty-labeled.png?v=basket-fit-fullscreen-20260804-10"), completeImage: ge2CestaAsset("custom/items/apple-basket-full-labeled.png?v=basket-fit-fullscreen-20260804-10") },
-              { id: "banana", label: "Cesto da banana", image: ge2CestaAsset("custom/items/banana-basket-empty-labeled.png?v=basket-fit-fullscreen-20260804-10"), highlightImage: ge2CestaAsset("custom/items/banana-basket-empty-labeled.png?v=basket-fit-fullscreen-20260804-10"), completeImage: ge2CestaAsset("custom/items/banana-basket-full-labeled.png?v=basket-fit-fullscreen-20260804-10") },
-              { id: "grape", label: "Cesto da uva", image: ge2CestaAsset("custom/items/grape-basket-empty-labeled.png?v=basket-fit-fullscreen-20260804-10"), highlightImage: ge2CestaAsset("custom/items/grape-basket-empty-labeled.png?v=basket-fit-fullscreen-20260804-10"), completeImage: ge2CestaAsset("custom/items/grape-basket-full-labeled.png?v=basket-fit-fullscreen-20260804-10") },
+              { id: "apple", label: "Cesto da maca", image: ge2CestaAsset("custom/items/apple-basket-empty-labeled.png?v=basket-audio-board-fit-20260804-11"), highlightImage: ge2CestaAsset("custom/items/apple-basket-empty-labeled.png?v=basket-audio-board-fit-20260804-11"), completeImage: ge2CestaAsset("custom/items/apple-basket-full-labeled.png?v=basket-audio-board-fit-20260804-11") },
+              { id: "banana", label: "Cesto da banana", image: ge2CestaAsset("custom/items/banana-basket-empty-labeled.png?v=basket-audio-board-fit-20260804-11"), highlightImage: ge2CestaAsset("custom/items/banana-basket-empty-labeled.png?v=basket-audio-board-fit-20260804-11"), completeImage: ge2CestaAsset("custom/items/banana-basket-full-labeled.png?v=basket-audio-board-fit-20260804-11") },
+              { id: "grape", label: "Cesto da uva", image: ge2CestaAsset("custom/items/grape-basket-empty-labeled.png?v=basket-audio-board-fit-20260804-11"), highlightImage: ge2CestaAsset("custom/items/grape-basket-empty-labeled.png?v=basket-audio-board-fit-20260804-11"), completeImage: ge2CestaAsset("custom/items/grape-basket-full-labeled.png?v=basket-audio-board-fit-20260804-11") },
             ],
           },
         ],
@@ -4903,6 +4903,20 @@
             </section>
           `;
         }
+        if (this.game.id === "organizando-cesta") {
+          return `
+            <section class="game-screen basket-choice-screen" data-screen="choice" aria-label="Organizacao da cesta">
+              <div class="basket-board-stage">
+                <img class="basket-board-image" src="${this.game.assets.screens.choice}" alt="" loading="eager" decoding="async" />
+                <article class="drag-panel">
+                  <h2>Arraste cada fruta para o cesto certo.</h2>
+                  <div class="drag-item-tray" data-drag-item-tray></div>
+                  <div class="drop-zone-grid" data-drop-zone-grid></div>
+                </article>
+              </div>
+            </section>
+          `;
+        }
         return `
           <section class="game-screen basket-choice-screen" data-screen="choice" aria-label="Organizacao da cesta">
             <div class="game-scene game-scene-choice" style="--screen:url('${this.game.assets.screens.choice}')" aria-hidden="true"></div>
@@ -5172,7 +5186,7 @@
       if (this.game.id === "organizando-cesta") {
         return `
           <section class="game-screen basket-victory-screen" data-screen="final" aria-label="Tela de comemoracao">
-            <video class="basket-victory-video" src="${this.game.assets.videos.victory}" autoplay loop playsinline preload="auto" aria-hidden="true"></video>
+            <video class="basket-victory-video" src="${this.game.assets.videos.victory}" autoplay playsinline preload="auto" data-basket-victory-video aria-hidden="true"></video>
             <div class="basket-victory-xp" aria-label="Conquista de experiencia">+${this.game.xp} XP</div>
             <span class="game-sr-only" data-final-medal>${this.game.medal}</span>
             <span class="game-sr-only" data-final-story></span>
@@ -5335,11 +5349,19 @@
             startButton.disabled = false;
             startButton.dataset.ready = "true";
           }
-          video.pause?.();
+          if (this.game.id === "organizando-cesta" && this.state.screen === "intro") {
+            try {
+              video.currentTime = 0;
+            } catch (error) {}
+            video.play?.().catch(() => {});
+          } else {
+            video.pause?.();
+          }
           return;
         }
         const roomVideo = event.target.closest?.("[data-basket-room-video]");
         if (roomVideo && this.game.id === "organizando-cesta" && this.state.screen === "room") {
+          roomVideo.pause?.();
           this.updateRoundContent();
           this.go("choice");
         }
@@ -6586,7 +6608,7 @@
         item.classList.toggle("is-active", item.dataset.screen === screen);
       });
       this.syncBackgroundVideos();
-      this.syncBasketIntroMedia(screen);
+      this.syncBasketSceneMedia(screen);
       this.syncMagicAmbienceLayer(screen);
       this.syncReactiveCharactersForScreen(screen);
       this.syncRounds();
@@ -6594,20 +6616,35 @@
       this.syncBasketRoomAdvance(screen);
     }
 
-    syncBasketIntroMedia(screen) {
+    syncBasketSceneMedia(screen) {
       if (this.game.id !== "organizando-cesta") return;
-      const video = this.root.querySelector("[data-basket-intro-video]");
-      if (!video) return;
+      const introVideo = this.root.querySelector("[data-basket-intro-video]");
+      const roomVideo = this.root.querySelector("[data-basket-room-video]");
+      const victoryVideo = this.root.querySelector("[data-basket-victory-video]");
+      const stopVideo = (video) => {
+        if (!video) return;
+        video.pause?.();
+        try {
+          video.currentTime = 0;
+        } catch (error) {
+          // Some browsers can reject seeking while metadata is still loading.
+        }
+      };
       if (screen === "intro") {
-        if (video.paused) video.play?.().catch(() => {});
-        return;
+        if (introVideo?.paused) introVideo.play?.().catch(() => {});
+      } else {
+        stopVideo(introVideo);
       }
-      audioPlayer.stopAll?.();
-      video.pause?.();
-      try {
-        video.currentTime = 0;
-      } catch (error) {
-        // Some browsers can reject seeking while metadata is still loading.
+      if (screen !== "room") {
+        stopVideo(roomVideo);
+      }
+      if (screen === "final") {
+        if (victoryVideo?.paused) victoryVideo.play?.().catch(() => {});
+      } else {
+        stopVideo(victoryVideo);
+      }
+      if (!["intro", "room", "final"].includes(screen)) {
+        audioPlayer.stopAll?.();
       }
     }
 
@@ -6652,6 +6689,7 @@
         this.go("choice");
       };
       const startRoomVideo = () => {
+        if (this.game.id !== "organizando-cesta" || this.state.screen !== "room") return;
         if (this.basketRoomAdvanceTimer) window.clearTimeout(this.basketRoomAdvanceTimer);
         try {
           video.pause?.();

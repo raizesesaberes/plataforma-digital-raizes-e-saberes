@@ -3127,6 +3127,30 @@ body.game-immersive-active .game-stage,
   background: #0b6b42;
 }
 
+.game-engine[data-active-game="organizando-cesta"] .basket-choice-screen {
+  padding: 0;
+  overflow: hidden;
+  background: #0b6b42;
+}
+
+.game-engine[data-active-game="organizando-cesta"] .basket-board-stage {
+  position: relative;
+  z-index: 2;
+  width: min(100vw, calc(100vh * 1448 / 1086));
+  height: min(100vh, calc(100vw * 1086 / 1448));
+  overflow: hidden;
+}
+
+.game-engine[data-active-game="organizando-cesta"] .basket-board-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
 .basket-victory-xp {
   position: absolute;
   left: 50%;
@@ -5822,12 +5846,13 @@ body.game-immersive-active .game-stage,
 
 .game-engine[data-active-game="organizando-cesta"] .drop-zone-grid {
   position: absolute;
-  left: 13.6%;
-  right: 13.6%;
-  bottom: 11.8%;
+  left: 13.75%;
+  right: 14.05%;
+  bottom: 11.85%;
   z-index: 4;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8.5%;
+  gap: 3.9%;
+  height: 25.8%;
 }
 
 .game-engine[data-active-game="organizando-cesta"] .drag-panel {
@@ -5852,8 +5877,9 @@ body.game-immersive-active .game-stage,
 
 .game-engine[data-active-game="organizando-cesta"] .drop-zone {
   min-width: 0;
-  min-height: clamp(138px, 24vh, 260px);
-  padding: clamp(7px, 1vw, 12px);
+  min-height: 0;
+  height: 100%;
+  padding: 0;
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -5873,7 +5899,7 @@ body.game-immersive-active .game-stage,
 .game-engine[data-active-game="organizando-cesta"] .drop-zone:focus-visible,
 .game-engine[data-active-game="organizando-cesta"] .drop-zone.is-guiding {
   box-shadow: 0 0 0 8px rgba(244, 183, 46, 0.16);
-  transform: translateY(-3px) scale(1.02);
+  transform: none;
 }
 
 .game-engine[data-active-game="organizando-cesta"] .drop-zone::after {
@@ -5889,8 +5915,8 @@ body.game-immersive-active .game-stage,
 }
 
 .game-engine[data-active-game="organizando-cesta"] .drop-zone img {
-  width: 100%;
-  height: clamp(116px, 21.5vh, 232px);
+  width: 82%;
+  height: 82%;
   object-fit: contain;
   filter: drop-shadow(0 14px 15px rgba(74, 48, 14, 0.24));
 }
@@ -5962,8 +5988,9 @@ body.game-immersive-active .game-stage,
 .game-engine[data-active-game="organizando-cesta"] .drag-item {
   width: 100%;
   min-width: 0;
-  min-height: clamp(78px, 14vh, 152px);
-  padding: clamp(5px, 0.8vw, 10px);
+  min-height: 0;
+  height: 100%;
+  padding: 0;
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -5972,8 +5999,8 @@ body.game-immersive-active .game-stage,
 }
 
 .game-engine[data-active-game="organizando-cesta"] .drag-item img {
-  width: 100%;
-  height: clamp(66px, 12.8vh, 138px);
+  width: 72%;
+  height: 76%;
   object-fit: contain;
   filter: drop-shadow(0 14px 14px rgba(42, 54, 24, 0.2));
 }
@@ -5989,13 +6016,18 @@ body.game-immersive-active .game-stage,
 
 .game-engine[data-active-game="organizando-cesta"] .drag-item-tray {
   position: absolute;
-  top: 22%;
-  left: 16.2%;
-  right: 16.2%;
+  top: 21.75%;
+  left: 16.25%;
+  right: 16.8%;
   z-index: 4;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 13.4%;
+  gap: 7.3%;
+  height: 13.45%;
+}
+
+.game-engine[data-active-game="organizando-cesta"] .drag-item.is-selected {
+  transform: none;
 }
 
 .drag-item.is-selected {
@@ -6757,35 +6789,39 @@ body.game-immersive-active .game-stage,
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drop-zone {
-    min-height: clamp(92px, 22vh, 156px);
-    padding: 4px;
+    min-height: 0;
+    padding: 0;
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drop-zone-grid {
-    left: 13.6%;
-    right: 13.6%;
-    bottom: 11.8%;
-    gap: 8.5%;
+    left: 13.75%;
+    right: 14.05%;
+    bottom: 11.85%;
+    gap: 3.9%;
+    height: 25.8%;
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drop-zone img {
-    height: clamp(76px, 19vh, 132px);
+    width: 82%;
+    height: 82%;
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drag-item {
-    min-height: clamp(54px, 12.5vh, 92px);
-    padding: 4px;
+    min-height: 0;
+    padding: 0;
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drag-item-tray {
-    top: 22%;
-    left: 16.2%;
-    right: 16.2%;
-    gap: 13.4%;
+    top: 21.75%;
+    left: 16.25%;
+    right: 16.8%;
+    gap: 7.3%;
+    height: 13.45%;
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drag-item img {
-    height: clamp(44px, 11vh, 80px);
+    width: 72%;
+    height: 76%;
   }
 
   .basket-final-medal {
