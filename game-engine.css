@@ -1389,6 +1389,15 @@ body.game-immersive-active .game-stage,
   transform: translateY(0);
 }
 
+.game-engine[data-active-game="organizando-cesta"].game-immersive-active .game-screen {
+  transform: translateY(10px) scale(0.8);
+  transform-origin: center center;
+}
+
+.game-engine[data-active-game="organizando-cesta"].game-immersive-active .game-screen.is-active {
+  transform: translateY(0) scale(0.8);
+}
+
 .game-screen:not(.is-active),
 .game-screen:not(.is-active) * {
   pointer-events: none !important;
@@ -5813,12 +5822,12 @@ body.game-immersive-active .game-stage,
 
 .game-engine[data-active-game="organizando-cesta"] .drop-zone-grid {
   position: absolute;
-  top: 21.2%;
-  left: 13.9%;
-  right: 13.9%;
+  top: 21.6%;
+  left: 14.4%;
+  right: 14.4%;
   z-index: 4;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 9.8%;
+  gap: 10.6%;
 }
 
 .game-engine[data-active-game="organizando-cesta"] .drag-panel {
@@ -5843,7 +5852,7 @@ body.game-immersive-active .game-stage,
 
 .game-engine[data-active-game="organizando-cesta"] .drop-zone {
   min-width: 0;
-  min-height: clamp(138px, 23.5vh, 260px);
+  min-height: clamp(126px, 23vh, 252px);
   padding: clamp(8px, 1.2vw, 14px);
   border: 0;
   border-radius: 8px;
@@ -5881,7 +5890,7 @@ body.game-immersive-active .game-stage,
 
 .game-engine[data-active-game="organizando-cesta"] .drop-zone img {
   width: 100%;
-  height: clamp(128px, 22vh, 246px);
+  height: clamp(104px, 20.5vh, 224px);
   object-fit: contain;
   filter: drop-shadow(0 14px 15px rgba(74, 48, 14, 0.24));
 }
@@ -5953,7 +5962,7 @@ body.game-immersive-active .game-stage,
 .game-engine[data-active-game="organizando-cesta"] .drag-item {
   width: 100%;
   min-width: 0;
-  min-height: clamp(104px, 17vh, 184px);
+  min-height: clamp(92px, 16vh, 170px);
   padding: clamp(5px, 0.8vw, 10px);
   border: 0;
   border-radius: 8px;
@@ -5964,7 +5973,7 @@ body.game-immersive-active .game-stage,
 
 .game-engine[data-active-game="organizando-cesta"] .drag-item img {
   width: 100%;
-  height: clamp(94px, 16vh, 170px);
+  height: clamp(78px, 14.5vh, 154px);
   object-fit: contain;
   filter: drop-shadow(0 14px 14px rgba(42, 54, 24, 0.2));
 }
@@ -5980,13 +5989,13 @@ body.game-immersive-active .game-stage,
 
 .game-engine[data-active-game="organizando-cesta"] .drag-item-tray {
   position: absolute;
-  left: 16.2%;
-  right: 16.2%;
-  bottom: 14.2%;
+  left: 17%;
+  right: 17%;
+  bottom: 15.2%;
   z-index: 4;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14.2%;
+  gap: 15.2%;
 }
 
 .drag-item.is-selected {
@@ -5995,8 +6004,9 @@ body.game-immersive-active .game-stage,
 }
 
 .drag-item.is-placed {
-  opacity: 0.38;
+  opacity: 0;
   cursor: default;
+  pointer-events: none;
 }
 
 .game-card {
@@ -6742,35 +6752,35 @@ body.game-immersive-active .game-stage,
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drop-zone {
-    min-height: clamp(92px, 23vh, 156px);
+    min-height: clamp(82px, 21vh, 148px);
     padding: 4px;
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drop-zone-grid {
-    top: 21.2%;
-    left: 13.9%;
-    right: 13.9%;
-    gap: 9.8%;
+    top: 21.6%;
+    left: 14.4%;
+    right: 14.4%;
+    gap: 10.6%;
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drop-zone img {
-    height: clamp(82px, 21vh, 142px);
+    height: clamp(66px, 18.5vh, 126px);
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drag-item {
-    min-height: clamp(72px, 17vh, 118px);
+    min-height: clamp(58px, 15vh, 104px);
     padding: 4px;
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drag-item-tray {
-    left: 16.2%;
-    right: 16.2%;
-    bottom: 14.2%;
-    gap: 14.2%;
+    left: 17%;
+    right: 17%;
+    bottom: 15.2%;
+    gap: 15.2%;
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drag-item img {
-    height: clamp(64px, 15vh, 104px);
+    height: clamp(52px, 13vh, 92px);
   }
 
   .basket-final-medal {
