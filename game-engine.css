@@ -5822,12 +5822,12 @@ body.game-immersive-active .game-stage,
 
 .game-engine[data-active-game="organizando-cesta"] .drop-zone-grid {
   position: absolute;
-  top: 21.6%;
-  left: 14.4%;
-  right: 14.4%;
+  top: 21.9%;
+  left: 14.6%;
+  right: 14.6%;
   z-index: 4;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10.6%;
+  gap: 11.2%;
 }
 
 .game-engine[data-active-game="organizando-cesta"] .drag-panel {
@@ -5852,8 +5852,8 @@ body.game-immersive-active .game-stage,
 
 .game-engine[data-active-game="organizando-cesta"] .drop-zone {
   min-width: 0;
-  min-height: clamp(126px, 23vh, 252px);
-  padding: clamp(8px, 1.2vw, 14px);
+  min-height: clamp(132px, 24.5vh, 266px);
+  padding: clamp(6px, 1vw, 12px);
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -5890,7 +5890,7 @@ body.game-immersive-active .game-stage,
 
 .game-engine[data-active-game="organizando-cesta"] .drop-zone img {
   width: 100%;
-  height: clamp(104px, 20.5vh, 224px);
+  height: clamp(118px, 23vh, 250px);
   object-fit: contain;
   filter: drop-shadow(0 14px 15px rgba(74, 48, 14, 0.24));
 }
@@ -5989,13 +5989,13 @@ body.game-immersive-active .game-stage,
 
 .game-engine[data-active-game="organizando-cesta"] .drag-item-tray {
   position: absolute;
-  left: 17%;
-  right: 17%;
-  bottom: 15.2%;
+  left: 17.1%;
+  right: 17.1%;
+  bottom: 15.7%;
   z-index: 4;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 15.2%;
+  gap: 15.8%;
 }
 
 .drag-item.is-selected {
@@ -6752,19 +6752,19 @@ body.game-immersive-active .game-stage,
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drop-zone {
-    min-height: clamp(82px, 21vh, 148px);
+    min-height: clamp(92px, 22.5vh, 156px);
     padding: 4px;
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drop-zone-grid {
-    top: 21.6%;
-    left: 14.4%;
-    right: 14.4%;
-    gap: 10.6%;
+    top: 21.9%;
+    left: 14.6%;
+    right: 14.6%;
+    gap: 11.2%;
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drop-zone img {
-    height: clamp(66px, 18.5vh, 126px);
+    height: clamp(78px, 20vh, 138px);
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drag-item {
@@ -6773,10 +6773,10 @@ body.game-immersive-active .game-stage,
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drag-item-tray {
-    left: 17%;
-    right: 17%;
-    bottom: 15.2%;
-    gap: 15.2%;
+    left: 17.1%;
+    right: 17.1%;
+    bottom: 15.7%;
+    gap: 15.8%;
   }
 
   .game-engine[data-active-game="organizando-cesta"] .drag-item img {

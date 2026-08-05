@@ -227,7 +227,7 @@
           screens: {
             intro: ge2CestaAsset("scenarios/intro.png"),
             room: ge2CestaAsset("scenarios/observe.png"),
-            choice: ge2CestaAsset("custom/interaction-board-6-slots.png?v=basket-choice-refine-20260804-07"),
+            choice: ge2CestaAsset("custom/interaction-board-6-slots.png?v=basket-layout-standard-20260804-08"),
             feedback: ge2CestaAsset("scenarios/feedback.png"),
             final: ge2CestaAsset("scenarios/final.png"),
           },
@@ -263,7 +263,7 @@
             lightBurst: ge2CestaAsset("effects/light-burst.png"),
           },
           videos: {
-            intro: ge2CestaAsset("videos/girl-interacting-with-butterfly-202608042019.mp4?v=basket-choice-refine-20260804-07"),
+            intro: ge2CestaAsset("videos/girl-interacting-with-butterfly-202608042019.mp4?v=basket-layout-standard-20260804-08"),
             room: ge2CestaAsset("videos/room-transition.mp4"),
             victory: ge2CestaAsset("videos/victory-loop.mp4"),
           },
@@ -279,14 +279,14 @@
             hint: "Arraste cada fruta para o cesto correspondente.",
             narration: "Observe as frutas. Temos maca, banana, uva e pera.",
             items: [
-              { id: "apple", label: "Maca", image: ge2CestaAsset("custom/items/apple-clean.png?v=basket-choice-refine-20260804-07"), selectedImage: ge2CestaAsset("custom/items/apple-clean.png?v=basket-choice-refine-20260804-07"), targetId: "apple" },
-              { id: "banana", label: "Banana", image: ge2CestaAsset("custom/items/banana-clean.png?v=basket-choice-refine-20260804-07"), selectedImage: ge2CestaAsset("custom/items/banana-clean.png?v=basket-choice-refine-20260804-07"), targetId: "banana" },
-              { id: "grape", label: "Uva", image: ge2CestaAsset("custom/items/grape-clean.png?v=basket-choice-refine-20260804-07"), selectedImage: ge2CestaAsset("custom/items/grape-clean.png?v=basket-choice-refine-20260804-07"), targetId: "grape" },
+              { id: "apple", label: "Maca", image: ge2CestaAsset("custom/items/apple-clean.png?v=basket-layout-standard-20260804-08"), selectedImage: ge2CestaAsset("custom/items/apple-clean.png?v=basket-layout-standard-20260804-08"), targetId: "apple" },
+              { id: "banana", label: "Banana", image: ge2CestaAsset("custom/items/banana-clean.png?v=basket-layout-standard-20260804-08"), selectedImage: ge2CestaAsset("custom/items/banana-clean.png?v=basket-layout-standard-20260804-08"), targetId: "banana" },
+              { id: "grape", label: "Uva", image: ge2CestaAsset("custom/items/grape-clean.png?v=basket-layout-standard-20260804-08"), selectedImage: ge2CestaAsset("custom/items/grape-clean.png?v=basket-layout-standard-20260804-08"), targetId: "grape" },
             ],
             targets: [
-              { id: "apple", label: "Cesto da maca", image: ge2CestaAsset("baskets/empty.png?v=basket-choice-refine-20260804-07"), highlightImage: ge2CestaAsset("baskets/empty.png?v=basket-choice-refine-20260804-07"), completeImage: ge2CestaAsset("custom/items/apple-basket-only-clean.png?v=basket-choice-refine-20260804-07") },
-              { id: "banana", label: "Cesto da banana", image: ge2CestaAsset("baskets/empty.png?v=basket-choice-refine-20260804-07"), highlightImage: ge2CestaAsset("baskets/empty.png?v=basket-choice-refine-20260804-07"), completeImage: ge2CestaAsset("custom/items/banana-basket-only-clean.png?v=basket-choice-refine-20260804-07") },
-              { id: "grape", label: "Cesto da uva", image: ge2CestaAsset("baskets/empty.png?v=basket-choice-refine-20260804-07"), highlightImage: ge2CestaAsset("baskets/empty.png?v=basket-choice-refine-20260804-07"), completeImage: ge2CestaAsset("custom/items/grape-basket-only-clean.png?v=basket-choice-refine-20260804-07") },
+              { id: "apple", label: "Cesto da maca", image: ge2CestaAsset("custom/items/apple-basket-empty-labeled.png?v=basket-layout-standard-20260804-08"), highlightImage: ge2CestaAsset("custom/items/apple-basket-empty-labeled.png?v=basket-layout-standard-20260804-08"), completeImage: ge2CestaAsset("custom/items/apple-basket-full-labeled.png?v=basket-layout-standard-20260804-08") },
+              { id: "banana", label: "Cesto da banana", image: ge2CestaAsset("custom/items/banana-basket-empty-labeled.png?v=basket-layout-standard-20260804-08"), highlightImage: ge2CestaAsset("custom/items/banana-basket-empty-labeled.png?v=basket-layout-standard-20260804-08"), completeImage: ge2CestaAsset("custom/items/banana-basket-full-labeled.png?v=basket-layout-standard-20260804-08") },
+              { id: "grape", label: "Cesto da uva", image: ge2CestaAsset("custom/items/grape-basket-empty-labeled.png?v=basket-layout-standard-20260804-08"), highlightImage: ge2CestaAsset("custom/items/grape-basket-empty-labeled.png?v=basket-layout-standard-20260804-08"), completeImage: ge2CestaAsset("custom/items/grape-basket-full-labeled.png?v=basket-layout-standard-20260804-08") },
             ],
           },
         ],
