@@ -19,8 +19,14 @@
         preload: "auto",
         mutedUntilInteraction: true,
         freezeTime: 6.4,
-        objectFit: "cover",
+        objectFit: "contain",
         objectPosition: "center center",
+        startHotspot: {
+          x: 50,
+          y: 72.5,
+          width: 38,
+          height: 18,
+        },
         nextState: "VIDEO_02_INSTRUCAO",
       },
       instrucao: {

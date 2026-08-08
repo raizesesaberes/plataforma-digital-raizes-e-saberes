@@ -4427,11 +4427,12 @@
     renderJardimCinematicHome() {
       const config = this.getJardimCinematicConfig();
       const abertura = config?.videos?.abertura || {};
+      const startHotspot = abertura.startHotspot || {};
       const fallback = abertura.poster || this.game.assets.screens.intro;
       const showDevMessage = config?.developmentMessageEnabled !== false && this.isDevelopmentRuntime();
       return `
         <section class="game-screen jardim-cinematic-screen" data-screen="intro" data-jardim-cinematic-state="${escapeHtml(config.initialState || "HOME_LOOP")}" aria-label="O Jardim das Descobertas">
-          <div class="jardim-cinematic-stage" data-jardim-stage style="--jardim-fallback:url('${escapeHtml(fallback)}');--jardim-object-position:${escapeHtml(abertura.objectPosition || "center center")}">
+          <div class="jardim-cinematic-stage" data-jardim-stage style="--jardim-fallback:url('${escapeHtml(fallback)}');--jardim-object-fit:${escapeHtml(abertura.objectFit || "contain")};--jardim-object-position:${escapeHtml(abertura.objectPosition || "center center")}">
             <img class="jardim-cinematic-fallback" src="${escapeHtml(fallback)}" alt="" loading="eager" decoding="async" />
             <video
               class="jardim-cinematic-video"
@@ -4453,11 +4454,12 @@
               ${showDevMessage ? `<span>Vídeo 02 aguardando arquivo oficial.</span>` : ""}
             </div>
           </div>
-          <button class="jardim-start-button" type="button" data-game-action="start" aria-label="Comecar O Jardim das Descobertas">
-            <span>COMEÇAR</span>
+          <button class="jardim-start-button" type="button" data-game-action="start" aria-label="Comecar O Jardim das Descobertas" style="--jardim-start-x:${Number(startHotspot.x ?? 50)}%;--jardim-start-y:${Number(startHotspot.y ?? 72.5)}%;--jardim-start-w:${Number(startHotspot.width ?? 38)}%;--jardim-start-h:${Number(startHotspot.height ?? 18)}%;">
+            <span class="game-sr-only">COMEÇAR</span>
           </button>
-          <button class="jardim-audio-toggle" type="button" data-game-action="toggle-jardim-audio" aria-label="Ativar ou desativar audio" aria-pressed="false">
-            <span>Audio</span>
+          <button class="jardim-audio-toggle" type="button" data-game-action="toggle-jardim-audio" aria-label="Ativar audio" aria-pressed="false" title="Ativar audio">
+            <img src="assets/games/de-quem-e-este-som/effects/audio-button.png" alt="" loading="eager" decoding="async" />
+            <span class="game-sr-only" data-jardim-audio-label>Ativar audio</span>
           </button>
         </section>
       `;
@@ -6797,11 +6799,21 @@
     toggleJardimAudio(button) {
       if (!this.isJardimCinematicEnabled()) return;
       const video = this.root.querySelector("[data-jardim-home-video]");
-      const pressed = button?.getAttribute("aria-pressed") === "true";
-      if (video) video.muted = pressed;
-      button?.setAttribute("aria-pressed", String(!pressed));
-      const label = button?.querySelector("span");
-      if (label) label.textContent = pressed ? "Audio" : "Sem audio";
+      const audioEnabled = button?.getAttribute("aria-pressed") === "true";
+      this.setJardimAudioEnabled(!audioEnabled, button, video);
+    }
+
+    setJardimAudioEnabled(enabled, button = this.root.querySelector(".jardim-audio-toggle"), video = this.root.querySelector("[data-jardim-home-video]")) {
+      if (video) {
+        video.muted = !enabled;
+        video.volume = 1;
+        if (enabled) video.play?.().catch(() => {});
+      }
+      button?.setAttribute("aria-pressed", String(enabled));
+      button?.setAttribute("aria-label", enabled ? "Desativar audio" : "Ativar audio");
+      button?.setAttribute("title", enabled ? "Desativar audio" : "Ativar audio");
+      const label = button?.querySelector("[data-jardim-audio-label]");
+      if (label) label.textContent = enabled ? "Desativar audio" : "Ativar audio";
     }
 
     async startJardimCinematicFlow(button) {
@@ -6811,6 +6823,7 @@
         button.disabled = true;
         button.setAttribute("aria-busy", "true");
       }
+      this.setJardimAudioEnabled(true);
       audioPlayer.blip("success");
       await this.freezeJardimHomeFrame();
       const screen = this.root.querySelector(".jardim-cinematic-screen");

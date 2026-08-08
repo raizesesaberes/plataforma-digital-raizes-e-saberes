@@ -1781,7 +1781,7 @@ body.game-immersive-active .game-stage,
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: var(--jardim-object-fit, contain);
   object-position: var(--jardim-object-position, center center);
 }
 
@@ -1846,42 +1846,38 @@ body.game-immersive-active .game-stage,
 
 .jardim-cinematic-screen > .jardim-start-button {
   position: absolute;
-  left: 50%;
-  bottom: max(26px, env(safe-area-inset-bottom));
+  left: var(--jardim-start-x, 50%);
+  top: var(--jardim-start-y, 72.5%);
   z-index: 5;
-  display: inline-grid;
-  min-width: min(72vw, 300px);
-  min-height: 64px;
-  place-items: center;
-  padding: 14px 28px;
-  border: 3px solid #fff4b8;
-  border-radius: 8px;
-  background: linear-gradient(180deg, #ffe57a 0%, #ffb52f 100%);
-  box-shadow: 0 12px 0 #a85d18, 0 18px 30px rgba(26, 46, 35, 0.28);
-  color: #3f2308;
+  width: var(--jardim-start-w, 38%);
+  height: var(--jardim-start-h, 18%);
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  color: transparent;
   cursor: pointer;
-  font-size: clamp(1.08rem, 3.4vw, 1.55rem);
-  font-weight: 1000;
-  letter-spacing: 0;
-  transform: translateX(-50%);
-  transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+  transform: translate(-50%, 0);
+  transition: outline-color 140ms ease;
 }
 
 .jardim-cinematic-screen > .jardim-start-button:hover,
 .jardim-cinematic-screen > .jardim-start-button:focus-visible {
-  filter: saturate(1.08) brightness(1.04);
-  transform: translateX(-50%) translateY(-2px);
+  transform: translate(-50%, 0);
 }
 
 .jardim-cinematic-screen > .jardim-start-button:focus-visible {
-  outline: 5px solid #3eb6ff;
-  outline-offset: 4px;
+  outline: 4px solid rgba(62, 182, 255, 0.78);
+  outline-offset: 3px;
 }
 
 .jardim-cinematic-screen > .jardim-start-button:active,
 .jardim-cinematic-screen > .jardim-start-button[aria-busy="true"] {
-  box-shadow: 0 6px 0 #a85d18, 0 10px 22px rgba(26, 46, 35, 0.24);
-  transform: translateX(-50%) translateY(6px);
+  box-shadow: none;
+  transform: translate(-50%, 0);
 }
 
 .jardim-cinematic-screen > .jardim-start-button:disabled {
@@ -1893,16 +1889,28 @@ body.game-immersive-active .game-stage,
   top: max(16px, env(safe-area-inset-top));
   right: max(16px, env(safe-area-inset-right));
   z-index: 5;
-  min-width: 88px;
-  min-height: 44px;
-  padding: 8px 12px;
-  border: 2px solid rgba(255, 255, 255, 0.7);
-  border-radius: 8px;
-  background: rgba(18, 54, 44, 0.72);
-  color: #fffaf0;
+  display: grid;
+  width: clamp(46px, 5vw, 62px);
+  height: clamp(46px, 5vw, 62px);
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: transparent;
   cursor: pointer;
-  font-size: 0.86rem;
-  font-weight: 900;
+}
+
+.jardim-cinematic-screen > .jardim-audio-toggle img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(14, 39, 29, 0.25));
+}
+
+.jardim-cinematic-screen > .jardim-audio-toggle[aria-pressed="false"] img {
+  opacity: 0.68;
 }
 
 .jardim-cinematic-screen > .jardim-audio-toggle:focus-visible {
@@ -1921,8 +1929,8 @@ body.game-immersive-active .game-stage,
   }
 
   .jardim-cinematic-screen > .jardim-start-button {
-    bottom: max(18px, env(safe-area-inset-bottom));
-    min-height: 58px;
+    --jardim-start-w: 52%;
+    --jardim-start-h: 15%;
   }
 }
 
