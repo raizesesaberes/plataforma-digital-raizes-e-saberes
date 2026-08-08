@@ -1758,6 +1758,174 @@ body.game-immersive-active .game-stage,
   background: #071e17;
 }
 
+.jardim-cinematic-screen {
+  overflow: hidden;
+  padding: 0;
+  background: #153e34;
+}
+
+.jardim-cinematic-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  background: #153e34 var(--jardim-fallback) center / cover no-repeat;
+}
+
+.jardim-cinematic-fallback,
+.jardim-cinematic-frame,
+.jardim-cinematic-video,
+.jardim-cinematic-freeze {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--jardim-object-position, center center);
+}
+
+.jardim-cinematic-fallback {
+  z-index: 1;
+}
+
+.jardim-cinematic-frame {
+  z-index: 3;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.jardim-cinematic-frame.is-visible {
+  opacity: 1;
+}
+
+.jardim-cinematic-video {
+  z-index: 2;
+  background: #153e34;
+}
+
+.jardim-cinematic-freeze {
+  z-index: 3;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.jardim-cinematic-freeze.is-visible {
+  opacity: 1;
+}
+
+.jardim-cinematic-transition {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 260ms ease;
+}
+
+.jardim-cinematic-screen.is-awaiting-video .jardim-cinematic-transition {
+  opacity: 1;
+}
+
+.jardim-cinematic-transition span {
+  max-width: min(86vw, 520px);
+  padding: 14px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  background: rgba(15, 45, 37, 0.82);
+  color: #fffaf0;
+  font-size: clamp(0.95rem, 2vw, 1.2rem);
+  font-weight: 900;
+  text-align: center;
+}
+
+.jardim-start-button {
+  position: absolute;
+  left: 50%;
+  bottom: max(26px, env(safe-area-inset-bottom));
+  z-index: 5;
+  display: inline-grid;
+  min-width: min(72vw, 300px);
+  min-height: 64px;
+  place-items: center;
+  padding: 14px 28px;
+  border: 3px solid #fff4b8;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffe57a 0%, #ffb52f 100%);
+  box-shadow: 0 12px 0 #a85d18, 0 18px 30px rgba(26, 46, 35, 0.28);
+  color: #3f2308;
+  cursor: pointer;
+  font-size: clamp(1.08rem, 3.4vw, 1.55rem);
+  font-weight: 1000;
+  letter-spacing: 0;
+  transform: translateX(-50%);
+  transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+}
+
+.jardim-start-button:hover,
+.jardim-start-button:focus-visible {
+  filter: saturate(1.08) brightness(1.04);
+  transform: translateX(-50%) translateY(-2px);
+}
+
+.jardim-start-button:focus-visible {
+  outline: 5px solid #3eb6ff;
+  outline-offset: 4px;
+}
+
+.jardim-start-button:active,
+.jardim-start-button[aria-busy="true"] {
+  box-shadow: 0 6px 0 #a85d18, 0 10px 22px rgba(26, 46, 35, 0.24);
+  transform: translateX(-50%) translateY(6px);
+}
+
+.jardim-start-button:disabled {
+  cursor: wait;
+}
+
+.jardim-audio-toggle {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+  z-index: 5;
+  min-width: 88px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  background: rgba(18, 54, 44, 0.72);
+  color: #fffaf0;
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.jardim-audio-toggle:focus-visible {
+  outline: 4px solid #ffcf48;
+  outline-offset: 3px;
+}
+
+.jardim-cinematic-screen.is-transitioning .jardim-start-button {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-aspect-ratio: 3 / 4) {
+  .jardim-cinematic-stage {
+    --jardim-object-position: center center;
+  }
+
+  .jardim-start-button {
+    bottom: max(18px, env(safe-area-inset-bottom));
+    min-height: 58px;
+  }
+}
+
 .cinematic-intro-copy {
   position: absolute;
   left: clamp(18px, 5vw, 64px);

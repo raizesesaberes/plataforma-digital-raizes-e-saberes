@@ -37,6 +37,7 @@
   const festaV2Asset = (path) => `${festaV2Base}${path}`;
   const storyAlbumKey = "raizes:story-album:v1";
   const cinematicIntroStorageKey = "raizes:cinematic-intro-seen:v1";
+  const jardimCinematicConfig = window.RaizesJardimDescobertasConfig || null;
 
   const gameRepository = {
     games: {
@@ -316,6 +317,7 @@
             feedback: jardimAsset("screens/screen-final.png"),
             final: jardimAsset("screens/screen-final.png"),
           },
+          cinematicExperience: jardimCinematicConfig,
         },
         audio: {
           narration: 0.9,
@@ -4110,6 +4112,7 @@
       this.transitionToken = 0;
       this.basketIntroStartTimer = null;
       this.basketRoomAdvanceTimer = null;
+      this.jardimCinematicStartLocked = false;
     }
 
     mount() {
@@ -4407,7 +4410,63 @@
       `;
     }
 
+    getJardimCinematicConfig() {
+      return this.game.id === "jardim-descobertas" ? this.game.assets.cinematicExperience || null : null;
+    }
+
+    isJardimCinematicEnabled() {
+      const config = this.getJardimCinematicConfig();
+      return Boolean(config?.videos?.abertura?.src);
+    }
+
+    isDevelopmentRuntime() {
+      const host = window.location.hostname;
+      return !host || host === "localhost" || host === "127.0.0.1" || host.endsWith(".local");
+    }
+
+    renderJardimCinematicHome() {
+      const config = this.getJardimCinematicConfig();
+      const abertura = config?.videos?.abertura || {};
+      const fallback = abertura.poster || this.game.assets.screens.intro;
+      const showDevMessage = config?.developmentMessageEnabled !== false && this.isDevelopmentRuntime();
+      return `
+        <section class="game-screen jardim-cinematic-screen" data-screen="intro" data-jardim-cinematic-state="${escapeHtml(config.initialState || "HOME_LOOP")}" aria-label="O Jardim das Descobertas">
+          <div class="jardim-cinematic-stage" data-jardim-stage style="--jardim-fallback:url('${escapeHtml(fallback)}');--jardim-object-position:${escapeHtml(abertura.objectPosition || "center center")}">
+            <img class="jardim-cinematic-fallback" src="${escapeHtml(fallback)}" alt="" loading="eager" decoding="async" />
+            <video
+              class="jardim-cinematic-video"
+              data-jardim-home-video
+              src="${escapeHtml(abertura.src)}"
+              ${abertura.poster ? `poster="${escapeHtml(abertura.poster)}"` : ""}
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="${escapeHtml(abertura.preload || "auto")}"
+              disablepictureinpicture
+              controlslist="nodownload noplaybackrate noremoteplayback"
+              aria-hidden="true"
+            ></video>
+            ${abertura.frame ? `<img class="jardim-cinematic-frame" data-jardim-freeze-frame src="${escapeHtml(abertura.frame)}" alt="" loading="eager" decoding="async" />` : ""}
+            <canvas class="jardim-cinematic-freeze" data-jardim-freeze-canvas aria-hidden="true"></canvas>
+            <div class="jardim-cinematic-transition" data-jardim-transition aria-live="polite">
+              ${showDevMessage ? `<span>Vídeo 02 aguardando arquivo oficial.</span>` : ""}
+            </div>
+          </div>
+          <button class="jardim-start-button" type="button" data-game-action="start" aria-label="Comecar O Jardim das Descobertas">
+            <span>COMEÇAR</span>
+          </button>
+          <button class="jardim-audio-toggle" type="button" data-game-action="toggle-jardim-audio" aria-label="Ativar ou desativar audio" aria-pressed="false">
+            <span>Audio</span>
+          </button>
+        </section>
+      `;
+    }
+
     renderIntroScreen() {
+      if (this.isJardimCinematicEnabled()) {
+        return this.renderJardimCinematicHome();
+      }
       if (this.game.type === "selection") {
         return `
           <section class="game-screen selection-screen selection-intro-screen" data-screen="intro" aria-label="Boas-vindas">
@@ -5474,6 +5533,7 @@
         if (!input) return;
         audioPlayer.volumes[input.dataset.volume] = Number(input.value);
       });
+      document.addEventListener("visibilitychange", () => this.syncJardimVisibility());
     }
 
     openGame(gameId) {
@@ -5493,6 +5553,7 @@
       this.root.style.setProperty("--game-atlas", `url("${this.game.assets.atlas}")`);
       this.root.style.setProperty("--library-atlas", `url("${this.game.assets.library}")`);
       this.root.innerHTML = this.render();
+      this.jardimCinematicStartLocked = false;
       this.startPlayerEntry();
     }
 
@@ -5602,6 +5663,10 @@
         this.finishCinematicIntro();
       }
       if (action === "start") {
+        if (this.isJardimCinematicEnabled()) {
+          this.startJardimCinematicFlow(button);
+          return;
+        }
         audioPlayer.blip();
         this.updateRoundContent();
         this.go("room");
@@ -5676,6 +5741,9 @@
       if (action === "play-audio") {
         this.playRoundSound(button);
       }
+      if (action === "toggle-jardim-audio") {
+        this.toggleJardimAudio(button);
+      }
       if (action === "begin-audio-choice") {
         this.updateRoundContent();
         this.go("choice");
@@ -5739,6 +5807,7 @@
         this.mysteryBoxMachine.reset();
         this.magicBox.reset();
         this.state = progressController.create(this.game);
+        this.jardimCinematicStartLocked = false;
         if (this.game.type === "selection") this.record = null;
         this.updateRoundContent();
         this.go("intro");
@@ -6616,6 +6685,7 @@
       this.syncRounds();
       this.syncBasketIntroStart(screen);
       this.syncBasketRoomAdvance(screen);
+      this.syncJardimCinematicMedia(screen);
     }
 
     syncBasketSceneMedia(screen) {
@@ -6706,6 +6776,140 @@
         video.addEventListener("loadedmetadata", startRoomVideo, { once: true });
         this.basketRoomAdvanceTimer = window.setTimeout(startRoomVideo, 500);
       }
+    }
+
+    syncJardimCinematicMedia(screen) {
+      if (!this.isJardimCinematicEnabled()) return;
+      const video = this.root.querySelector("[data-jardim-home-video]");
+      if (!video) return;
+      if (screen === "intro" && !document.hidden && !this.jardimCinematicStartLocked) {
+        video.play?.().catch(() => {});
+      } else {
+        video.pause?.();
+      }
+    }
+
+    syncJardimVisibility() {
+      if (!this.isJardimCinematicEnabled()) return;
+      this.syncJardimCinematicMedia(this.state.screen);
+    }
+
+    toggleJardimAudio(button) {
+      if (!this.isJardimCinematicEnabled()) return;
+      const video = this.root.querySelector("[data-jardim-home-video]");
+      const pressed = button?.getAttribute("aria-pressed") === "true";
+      if (video) video.muted = pressed;
+      button?.setAttribute("aria-pressed", String(!pressed));
+      const label = button?.querySelector("span");
+      if (label) label.textContent = pressed ? "Audio" : "Sem audio";
+    }
+
+    async startJardimCinematicFlow(button) {
+      if (this.jardimCinematicStartLocked) return;
+      this.jardimCinematicStartLocked = true;
+      if (button) {
+        button.disabled = true;
+        button.setAttribute("aria-busy", "true");
+      }
+      audioPlayer.blip("success");
+      await this.freezeJardimHomeFrame();
+      const screen = this.root.querySelector(".jardim-cinematic-screen");
+      screen?.classList.add("is-transitioning");
+      window.setTimeout(() => this.startVideo02(), 420);
+    }
+
+    seekVideo(video, time) {
+      return new Promise((resolve) => {
+        if (!video || !Number.isFinite(time)) {
+          resolve(false);
+          return;
+        }
+        let settled = false;
+        const done = () => {
+          if (settled) return;
+          settled = true;
+          resolve(true);
+        };
+        video.addEventListener("seeked", done, { once: true });
+        try {
+          const maxTime = Number.isFinite(video.duration) && video.duration > 0 ? Math.max(0, video.duration - 0.05) : time;
+          video.currentTime = Math.min(Math.max(0, time), maxTime);
+        } catch (error) {
+          video.removeEventListener("seeked", done);
+          settled = true;
+          resolve(false);
+        }
+        window.setTimeout(done, 900);
+      });
+    }
+
+    async freezeJardimHomeFrame() {
+      const config = this.getJardimCinematicConfig();
+      const abertura = config?.videos?.abertura || {};
+      const video = this.root.querySelector("[data-jardim-home-video]");
+      const canvas = this.root.querySelector("[data-jardim-freeze-canvas]");
+      const officialFrame = this.root.querySelector("[data-jardim-freeze-frame]");
+      if (officialFrame) {
+        video?.pause?.();
+        officialFrame.classList.add("is-visible");
+        return true;
+      }
+      if (!video || !canvas) return false;
+      video.pause?.();
+      await this.seekVideo(video, Number(abertura.freezeTime));
+      const width = video.videoWidth || 1280;
+      const height = video.videoHeight || 720;
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+      if (!context) return false;
+      try {
+        context.drawImage(video, 0, 0, width, height);
+        canvas.classList.add("is-visible");
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    startVideo02() {
+      const config = this.getJardimCinematicConfig();
+      const instrucao = config?.videos?.instrucao || {};
+      if (!instrucao.src) {
+        const screen = this.root.querySelector(".jardim-cinematic-screen");
+        screen?.classList.add("is-awaiting-video");
+        screen?.setAttribute("data-jardim-cinematic-state", instrucao.state || "VIDEO_02_INSTRUCAO");
+        return false;
+      }
+      return this.playJardimConfiguredVideo("instrucao");
+    }
+
+    playJardimConfiguredVideo(videoKey) {
+      const config = this.getJardimCinematicConfig();
+      const videoConfig = config?.videos?.[videoKey];
+      if (!videoConfig?.src) return false;
+      const video = this.root.querySelector("[data-jardim-home-video]");
+      const screen = this.root.querySelector(".jardim-cinematic-screen");
+      if (!video) return false;
+      screen?.setAttribute("data-jardim-cinematic-state", videoConfig.state || videoKey);
+      screen?.classList.remove("is-awaiting-video");
+      this.root.querySelector("[data-jardim-freeze-canvas]")?.classList.remove("is-visible");
+      this.root.querySelector("[data-jardim-freeze-frame]")?.classList.remove("is-visible");
+      video.pause?.();
+      video.loop = videoConfig.loop === true;
+      video.muted = false;
+      video.src = videoConfig.src;
+      video.load?.();
+      video.addEventListener("ended", () => this.advanceJardimCinematicState(videoConfig.nextState), { once: true });
+      video.play?.().catch(() => {});
+      return true;
+    }
+
+    advanceJardimCinematicState(nextState) {
+      if (!nextState) return false;
+      const screen = this.root.querySelector(".jardim-cinematic-screen");
+      screen?.setAttribute("data-jardim-cinematic-state", nextState);
+      return true;
     }
 
     go(screen, options = {}) {
