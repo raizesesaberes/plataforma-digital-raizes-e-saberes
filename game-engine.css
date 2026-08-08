@@ -1691,7 +1691,7 @@ body.game-immersive-active .game-stage,
   white-space: normal;
 }
 
-.game-screen > :not(.game-scene):not(.victory-layer):not(.victory-content):not(.encouragement-layer):not(.encouragement-content) {
+.game-screen > :not(.game-scene):not(.victory-layer):not(.victory-content):not(.encouragement-layer):not(.encouragement-content):not(.jardim-cinematic-stage):not(.jardim-start-button):not(.jardim-audio-toggle) {
   position: relative;
   z-index: 2;
 }
