@@ -4427,6 +4427,7 @@
     renderJardimCinematicHome() {
       const config = this.getJardimCinematicConfig();
       const abertura = config?.videos?.abertura || {};
+      const instrucao = config?.videos?.instrucao || {};
       const startHotspot = abertura.startHotspot || {};
       const fallback = abertura.poster || this.game.assets.screens.intro;
       const showDevMessage = config?.developmentMessageEnabled !== false && this.isDevelopmentRuntime();
@@ -4448,11 +4449,16 @@
               controlslist="nodownload noplaybackrate noremoteplayback"
               aria-hidden="true"
             ></video>
+            ${instrucao.src ? `<video class="jardim-preload-video" data-jardim-preload-video src="${escapeHtml(instrucao.src)}" preload="${escapeHtml(instrucao.preload || "auto")}" playsinline muted aria-hidden="true"></video>` : ""}
             ${abertura.frame ? `<img class="jardim-cinematic-frame" data-jardim-freeze-frame src="${escapeHtml(abertura.frame)}" alt="" loading="eager" decoding="async" />` : ""}
             <canvas class="jardim-cinematic-freeze" data-jardim-freeze-canvas aria-hidden="true"></canvas>
             <div class="jardim-cinematic-transition" data-jardim-transition aria-live="polite">
               ${showDevMessage ? `<span>Vídeo 02 aguardando arquivo oficial.</span>` : ""}
             </div>
+            <article class="jardim-instruction-panel" data-jardim-instruction-panel aria-live="polite">
+              <p>${escapeHtml(instrucao.instructionText || "")}</p>
+              <button class="jardim-explore-button" type="button" data-game-action="start-video-03" disabled aria-disabled="true">${escapeHtml(instrucao.exploreButtonLabel || "EXPLORAR")}</button>
+            </article>
           </div>
           <button class="jardim-start-button" type="button" data-game-action="start" aria-label="Comecar O Jardim das Descobertas" style="--jardim-start-x:${Number(startHotspot.x ?? 50)}%;--jardim-start-y:${Number(startHotspot.y ?? 72.5)}%;--jardim-start-w:${Number(startHotspot.width ?? 38)}%;--jardim-start-h:${Number(startHotspot.height ?? 18)}%;">
             <span class="game-sr-only">COMEÇAR</span>
@@ -5746,6 +5752,9 @@
       if (action === "toggle-jardim-audio") {
         this.toggleJardimAudio(button);
       }
+      if (action === "start-video-03") {
+        this.startVideo03(button);
+      }
       if (action === "begin-audio-choice") {
         this.updateRoundContent();
         this.go("choice");
@@ -6825,10 +6834,9 @@
       }
       this.setJardimAudioEnabled(true);
       audioPlayer.blip("success");
-      await this.freezeJardimHomeFrame();
       const screen = this.root.querySelector(".jardim-cinematic-screen");
       screen?.classList.add("is-transitioning");
-      window.setTimeout(() => this.startVideo02(), 420);
+      this.startVideo02();
     }
 
     seekVideo(video, time) {
@@ -6897,6 +6905,22 @@
       return this.playJardimConfiguredVideo("instrucao");
     }
 
+    startVideo03(button = null) {
+      if (!this.isJardimCinematicEnabled()) return false;
+      const config = this.getJardimCinematicConfig();
+      const passarinho = config?.videos?.passarinho || {};
+      if (button) {
+        button.disabled = true;
+        button.setAttribute("aria-disabled", "true");
+      }
+      if (!passarinho.src) {
+        const screen = this.root.querySelector(".jardim-cinematic-screen");
+        screen?.setAttribute("data-jardim-cinematic-state", passarinho.state || "VIDEO_03_PASSARINHO");
+        return false;
+      }
+      return this.playJardimConfiguredVideo("passarinho");
+    }
+
     playJardimConfiguredVideo(videoKey) {
       const config = this.getJardimCinematicConfig();
       const videoConfig = config?.videos?.[videoKey];
@@ -6906,16 +6930,58 @@
       if (!video) return false;
       screen?.setAttribute("data-jardim-cinematic-state", videoConfig.state || videoKey);
       screen?.classList.remove("is-awaiting-video");
+      screen?.classList.remove("is-transitioning");
+      screen?.classList.remove("is-video-complete");
+      screen?.classList.add("is-playing-instruction");
       this.root.querySelector("[data-jardim-freeze-canvas]")?.classList.remove("is-visible");
       this.root.querySelector("[data-jardim-freeze-frame]")?.classList.remove("is-visible");
+      const exploreButton = this.root.querySelector("[data-game-action='start-video-03']");
+      if (exploreButton) {
+        exploreButton.disabled = true;
+        exploreButton.setAttribute("aria-disabled", "true");
+      }
       video.pause?.();
       video.loop = videoConfig.loop === true;
       video.muted = false;
       video.src = videoConfig.src;
       video.load?.();
-      video.addEventListener("ended", () => this.advanceJardimCinematicState(videoConfig.nextState), { once: true });
+      video.addEventListener("ended", () => this.handleJardimVideoEnded(video, videoConfig), { once: true });
       video.play?.().catch(() => {});
       return true;
+    }
+
+    handleJardimVideoEnded(video, videoConfig) {
+      const screen = this.root.querySelector(".jardim-cinematic-screen");
+      video.pause?.();
+      this.freezeJardimCurrentVideoFrame(video);
+      screen?.classList.remove("is-playing-instruction");
+      if (videoConfig.id === "video-02-instrucao") {
+        screen?.classList.add("is-video-complete");
+        const exploreButton = this.root.querySelector("[data-game-action='start-video-03']");
+        if (exploreButton) {
+          exploreButton.disabled = false;
+          exploreButton.setAttribute("aria-disabled", "false");
+        }
+      }
+      this.advanceJardimCinematicState(videoConfig.nextState);
+    }
+
+    freezeJardimCurrentVideoFrame(video) {
+      const canvas = this.root.querySelector("[data-jardim-freeze-canvas]");
+      if (!video || !canvas) return false;
+      const width = video.videoWidth || 1280;
+      const height = video.videoHeight || 720;
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+      if (!context) return false;
+      try {
+        context.drawImage(video, 0, 0, width, height);
+        canvas.classList.add("is-visible");
+        return true;
+      } catch (error) {
+        return false;
+      }
     }
 
     advanceJardimCinematicState(nextState) {

@@ -32,9 +32,12 @@
       instrucao: {
         id: "video-02-instrucao",
         state: "VIDEO_02_INSTRUCAO",
-        src: null,
+        src: `${basePath}videos/video-02-instrucao.mp4`,
         loop: false,
+        preload: "auto",
         freezeTime: null,
+        instructionText: "Vamos explorar o jardim e descobrir onde esta o passarinho.",
+        exploreButtonLabel: "EXPLORAR",
         nextState: "VIDEO_03_PASSARINHO",
       },
       passarinho: {

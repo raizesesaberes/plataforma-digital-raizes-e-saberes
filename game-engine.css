@@ -1805,6 +1805,14 @@ body.game-immersive-active .game-stage,
   background: #153e34;
 }
 
+.jardim-preload-video {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .jardim-cinematic-freeze {
   z-index: 3;
   opacity: 0;
@@ -1842,6 +1850,67 @@ body.game-immersive-active .game-stage,
   font-size: clamp(0.95rem, 2vw, 1.2rem);
   font-weight: 900;
   text-align: center;
+}
+
+.jardim-instruction-panel {
+  position: absolute;
+  left: 50%;
+  top: max(18px, env(safe-area-inset-top));
+  z-index: 5;
+  display: grid;
+  width: min(88%, 880px);
+  gap: 14px;
+  justify-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(-8px);
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.jardim-instruction-panel p {
+  max-width: 100%;
+  margin: 0;
+  padding: 12px 18px;
+  border: 2px solid rgba(255, 255, 255, 0.72);
+  border-radius: 8px;
+  background: rgba(15, 60, 46, 0.78);
+  color: #fffaf0;
+  font-size: clamp(1rem, 2.1vw, 1.42rem);
+  font-weight: 1000;
+  line-height: 1.18;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.28);
+}
+
+.jardim-explore-button {
+  min-width: min(54vw, 260px);
+  min-height: 56px;
+  padding: 12px 24px;
+  border: 3px solid #fff4b8;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffe57a 0%, #ffb52f 100%);
+  box-shadow: 0 8px 0 #a85d18, 0 14px 24px rgba(26, 46, 35, 0.26);
+  color: #3f2308;
+  cursor: pointer;
+  font-size: clamp(1rem, 2.7vw, 1.32rem);
+  font-weight: 1000;
+}
+
+.jardim-explore-button:focus-visible {
+  outline: 4px solid #3eb6ff;
+  outline-offset: 4px;
+}
+
+.jardim-explore-button:disabled {
+  cursor: default;
+  filter: grayscale(0.35);
+  opacity: 0.65;
+}
+
+.jardim-cinematic-screen.is-video-complete .jardim-instruction-panel {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
 }
 
 .jardim-cinematic-screen > .jardim-start-button {
@@ -1919,6 +1988,16 @@ body.game-immersive-active .game-stage,
 }
 
 .jardim-cinematic-screen.is-transitioning .jardim-start-button {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.jardim-cinematic-screen.is-playing-instruction .jardim-start-button,
+.jardim-cinematic-screen.is-playing-instruction .jardim-audio-toggle,
+.jardim-cinematic-screen.is-playing-instruction .jardim-instruction-panel,
+.jardim-cinematic-screen.is-video-complete .jardim-start-button,
+.jardim-cinematic-screen.is-video-complete .jardim-audio-toggle,
+.jardim-cinematic-screen.is-transitioning .jardim-audio-toggle {
   opacity: 0;
   pointer-events: none;
 }
