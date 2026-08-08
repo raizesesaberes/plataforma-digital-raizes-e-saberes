@@ -4431,6 +4431,7 @@
       const startHotspot = abertura.startHotspot || {};
       const signPosition = instrucao.signPosition || {};
       const exploreHotspot = instrucao.exploreHotspot || {};
+      const preloadVideos = Object.entries(config?.videos || {}).filter(([key, video]) => key !== "abertura" && video?.src);
       const discoveryRounds = Array.isArray(config?.rounds) ? config.rounds.filter((round) => round?.instructionCard && round?.hotspot) : [];
       const fallback = abertura.poster || this.game.assets.screens.intro;
       const showDevMessage = config?.developmentMessageEnabled !== false && this.isDevelopmentRuntime();
@@ -4452,7 +4453,7 @@
               controlslist="nodownload noplaybackrate noremoteplayback"
               aria-hidden="true"
             ></video>
-            ${instrucao.src ? `<video class="jardim-preload-video" data-jardim-preload-video src="${escapeHtml(instrucao.src)}" preload="${escapeHtml(instrucao.preload || "auto")}" playsinline muted aria-hidden="true"></video>` : ""}
+            ${preloadVideos.map(([key, video]) => `<video class="jardim-preload-video" data-jardim-preload-video="${escapeHtml(key)}" src="${escapeHtml(video.src)}" preload="${escapeHtml(video.preload || "auto")}" playsinline muted aria-hidden="true"></video>`).join("")}
             ${abertura.frame ? `<img class="jardim-cinematic-frame" data-jardim-freeze-frame src="${escapeHtml(abertura.frame)}" alt="" loading="eager" decoding="async" />` : ""}
             <canvas class="jardim-cinematic-freeze" data-jardim-freeze-canvas aria-hidden="true"></canvas>
             <div class="jardim-cinematic-transition" data-jardim-transition aria-live="polite">
@@ -4477,10 +4478,6 @@
           </div>
           <button class="jardim-start-button" type="button" data-game-action="start" aria-label="Comecar O Jardim das Descobertas" style="--jardim-start-x:${Number(startHotspot.x ?? 50)}%;--jardim-start-y:${Number(startHotspot.y ?? 72.5)}%;--jardim-start-w:${Number(startHotspot.width ?? 38)}%;--jardim-start-h:${Number(startHotspot.height ?? 18)}%;">
             <span class="game-sr-only">COMEÇAR</span>
-          </button>
-          <button class="jardim-audio-toggle" type="button" data-game-action="toggle-jardim-audio" aria-label="Ativar audio" aria-pressed="false" title="Ativar audio">
-            <img src="assets/games/de-quem-e-este-som/effects/audio-button.png" alt="" loading="eager" decoding="async" />
-            <span class="game-sr-only" data-jardim-audio-label>Ativar audio</span>
           </button>
         </section>
       `;
@@ -5764,9 +5761,6 @@
       if (action === "play-audio") {
         this.playRoundSound(button);
       }
-      if (action === "toggle-jardim-audio") {
-        this.toggleJardimAudio(button);
-      }
       if (action === "start-video-03") {
         this.startVideo03(button);
       }
@@ -6823,24 +6817,12 @@
       this.syncJardimCinematicMedia(this.state.screen);
     }
 
-    toggleJardimAudio(button) {
-      if (!this.isJardimCinematicEnabled()) return;
-      const video = this.root.querySelector("[data-jardim-home-video]");
-      const audioEnabled = button?.getAttribute("aria-pressed") === "true";
-      this.setJardimAudioEnabled(!audioEnabled, button, video);
-    }
-
-    setJardimAudioEnabled(enabled, button = this.root.querySelector(".jardim-audio-toggle"), video = this.root.querySelector("[data-jardim-home-video]")) {
+    setJardimAudioEnabled(enabled, video = this.root.querySelector("[data-jardim-home-video]")) {
       if (video) {
         video.muted = !enabled;
         video.volume = 1;
         if (enabled) video.play?.().catch(() => {});
       }
-      button?.setAttribute("aria-pressed", String(enabled));
-      button?.setAttribute("aria-label", enabled ? "Desativar audio" : "Ativar audio");
-      button?.setAttribute("title", enabled ? "Desativar audio" : "Ativar audio");
-      const label = button?.querySelector("[data-jardim-audio-label]");
-      if (label) label.textContent = enabled ? "Desativar audio" : "Ativar audio";
     }
 
     async startJardimCinematicFlow(button) {
@@ -7021,6 +7003,14 @@
           exploreButton.disabled = false;
           exploreButton.setAttribute("aria-disabled", "false");
         }
+      }
+      const config = this.getJardimCinematicConfig();
+      const discoveryRound = Array.isArray(config?.rounds)
+        ? config.rounds.find((round) => round?.videoKey && config?.videos?.[round.videoKey]?.id === videoConfig.id)
+        : null;
+      if (discoveryRound) {
+        this.startJardimDiscoveryRound(discoveryRound.id, videoConfig.nextState);
+        return;
       }
       this.advanceJardimCinematicState(videoConfig.nextState);
     }

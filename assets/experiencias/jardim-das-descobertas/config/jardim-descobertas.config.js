@@ -56,8 +56,9 @@
       passarinho: {
         id: "video-03-passarinho",
         state: "VIDEO_03_PASSARINHO",
-        src: null,
+        src: `${basePath}videos/video-03-passarinho.mp4`,
         loop: false,
+        preload: "auto",
         freezeTime: null,
         nextState: "INTERACAO_PASSARINHO",
       },
@@ -90,7 +91,7 @@
       {
         id: "passarinho",
         videoKey: "passarinho",
-        videoSrc: null,
+        videoSrc: `${basePath}videos/video-03-passarinho.mp4`,
         freezeTime: null,
         questionText: "ONDE ESTA O PASSARINHO?",
         questionAudio: null,

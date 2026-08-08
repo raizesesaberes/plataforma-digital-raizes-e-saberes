@@ -1691,7 +1691,7 @@ body.game-immersive-active .game-stage,
   white-space: normal;
 }
 
-.game-screen > :not(.game-scene):not(.victory-layer):not(.victory-content):not(.encouragement-layer):not(.encouragement-content):not(.jardim-cinematic-stage):not(.jardim-start-button):not(.jardim-audio-toggle) {
+.game-screen > :not(.game-scene):not(.victory-layer):not(.victory-content):not(.encouragement-layer):not(.encouragement-content):not(.jardim-cinematic-stage):not(.jardim-start-button) {
   position: relative;
   z-index: 2;
 }
@@ -2084,54 +2084,17 @@ body.game-immersive-active .game-stage,
   cursor: wait;
 }
 
-.jardim-cinematic-screen > .jardim-audio-toggle {
-  position: absolute;
-  top: max(16px, env(safe-area-inset-top));
-  right: max(16px, env(safe-area-inset-right));
-  z-index: 5;
-  display: grid;
-  width: clamp(46px, 5vw, 62px);
-  height: clamp(46px, 5vw, 62px);
-  place-items: center;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: transparent;
-  cursor: pointer;
-}
-
-.jardim-cinematic-screen > .jardim-audio-toggle img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 8px rgba(14, 39, 29, 0.25));
-}
-
-.jardim-cinematic-screen > .jardim-audio-toggle[aria-pressed="false"] img {
-  opacity: 0.68;
-}
-
-.jardim-cinematic-screen > .jardim-audio-toggle:focus-visible {
-  outline: 4px solid #ffcf48;
-  outline-offset: 3px;
-}
-
 .jardim-cinematic-screen.is-transitioning .jardim-start-button {
   opacity: 0;
   pointer-events: none;
 }
 
 .jardim-cinematic-screen.is-playing-instruction .jardim-start-button,
-.jardim-cinematic-screen.is-playing-instruction .jardim-audio-toggle,
 .jardim-cinematic-screen.is-playing-instruction .jardim-instruction-sign,
 .jardim-cinematic-screen.is-playing-instruction .jardim-explore-button,
 .jardim-cinematic-screen.is-playing-instruction .jardim-round-sign,
 .jardim-cinematic-screen.is-playing-instruction .jardim-discovery-hotspot,
-.jardim-cinematic-screen.is-video-complete .jardim-start-button,
-.jardim-cinematic-screen.is-video-complete .jardim-audio-toggle,
-.jardim-cinematic-screen.is-transitioning .jardim-audio-toggle {
+.jardim-cinematic-screen.is-video-complete .jardim-start-button {
   opacity: 0;
   pointer-events: none;
 }
