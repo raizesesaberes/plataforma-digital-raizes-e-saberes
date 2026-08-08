@@ -4429,6 +4429,8 @@
       const abertura = config?.videos?.abertura || {};
       const instrucao = config?.videos?.instrucao || {};
       const startHotspot = abertura.startHotspot || {};
+      const signPosition = instrucao.signPosition || {};
+      const exploreHotspot = instrucao.exploreHotspot || {};
       const fallback = abertura.poster || this.game.assets.screens.intro;
       const showDevMessage = config?.developmentMessageEnabled !== false && this.isDevelopmentRuntime();
       return `
@@ -4455,10 +4457,10 @@
             <div class="jardim-cinematic-transition" data-jardim-transition aria-live="polite">
               ${showDevMessage ? `<span>Vídeo 02 aguardando arquivo oficial.</span>` : ""}
             </div>
-            <article class="jardim-instruction-panel" data-jardim-instruction-panel aria-live="polite">
-              <p>${escapeHtml(instrucao.instructionText || "")}</p>
-              <button class="jardim-explore-button" type="button" data-game-action="start-video-03" disabled aria-disabled="true">${escapeHtml(instrucao.exploreButtonLabel || "EXPLORAR")}</button>
-            </article>
+            ${instrucao.signSrc ? `<img class="jardim-instruction-sign" data-jardim-instruction-panel src="${escapeHtml(instrucao.signSrc)}" alt="${escapeHtml(instrucao.signAlt || "")}" loading="eager" decoding="async" style="--jardim-sign-x:${Number(signPosition.x ?? 21)}%;--jardim-sign-y:${Number(signPosition.y ?? 66)}%;--jardim-sign-w:${Number(signPosition.width ?? 30)}%;" />` : ""}
+            <button class="jardim-explore-button" type="button" data-game-action="start-video-03" disabled aria-disabled="true" aria-label="${escapeHtml(instrucao.exploreButtonLabel || "EXPLORAR")}" style="--jardim-explore-x:${Number(exploreHotspot.x ?? 50.5)}%;--jardim-explore-y:${Number(exploreHotspot.y ?? 49)}%;--jardim-explore-w:${Number(exploreHotspot.width ?? 28)}%;--jardim-explore-h:${Number(exploreHotspot.height ?? 13)}%;">
+              <span class="game-sr-only">${escapeHtml(instrucao.exploreButtonLabel || "EXPLORAR")}</span>
+            </button>
           </div>
           <button class="jardim-start-button" type="button" data-game-action="start" aria-label="Comecar O Jardim das Descobertas" style="--jardim-start-x:${Number(startHotspot.x ?? 50)}%;--jardim-start-y:${Number(startHotspot.y ?? 72.5)}%;--jardim-start-w:${Number(startHotspot.width ?? 38)}%;--jardim-start-h:${Number(startHotspot.height ?? 18)}%;">
             <span class="game-sr-only">COMEÇAR</span>

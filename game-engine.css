@@ -1852,53 +1852,47 @@ body.game-immersive-active .game-stage,
   text-align: center;
 }
 
-.jardim-instruction-panel {
+.jardim-instruction-sign {
   position: absolute;
-  left: 50%;
-  top: max(18px, env(safe-area-inset-top));
+  left: var(--jardim-sign-x, 21%);
+  top: var(--jardim-sign-y, 66%);
   z-index: 5;
-  display: grid;
-  width: min(88%, 880px);
-  gap: 14px;
-  justify-items: center;
+  display: block;
+  width: var(--jardim-sign-w, 30%);
+  max-width: 430px;
+  min-width: 190px;
+  height: auto;
   opacity: 0;
   pointer-events: none;
-  transform: translateX(-50%) translateY(-8px);
+  transform: translate(-50%, 8px);
   transition: opacity 220ms ease, transform 220ms ease;
-}
-
-.jardim-instruction-panel p {
-  max-width: 100%;
-  margin: 0;
-  padding: 12px 18px;
-  border: 2px solid rgba(255, 255, 255, 0.72);
-  border-radius: 8px;
-  background: rgba(15, 60, 46, 0.78);
-  color: #fffaf0;
-  font-size: clamp(1rem, 2.1vw, 1.42rem);
-  font-weight: 1000;
-  line-height: 1.18;
-  text-align: center;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.28);
+  filter: drop-shadow(0 10px 18px rgba(23, 42, 30, 0.3));
 }
 
 .jardim-explore-button {
-  min-width: min(54vw, 260px);
-  min-height: 56px;
-  padding: 12px 24px;
-  border: 3px solid #fff4b8;
-  border-radius: 8px;
-  background: linear-gradient(180deg, #ffe57a 0%, #ffb52f 100%);
-  box-shadow: 0 8px 0 #a85d18, 0 14px 24px rgba(26, 46, 35, 0.26);
-  color: #3f2308;
+  position: absolute;
+  left: var(--jardim-explore-x, 50.5%);
+  top: var(--jardim-explore-y, 49%);
+  z-index: 6;
+  width: var(--jardim-explore-w, 28%);
+  height: var(--jardim-explore-h, 13%);
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  color: transparent;
   cursor: pointer;
-  font-size: clamp(1rem, 2.7vw, 1.32rem);
-  font-weight: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 0);
 }
 
 .jardim-explore-button:focus-visible {
-  outline: 4px solid #3eb6ff;
-  outline-offset: 4px;
+  outline: 4px solid rgba(62, 182, 255, 0.78);
+  outline-offset: 3px;
 }
 
 .jardim-explore-button:disabled {
@@ -1907,10 +1901,14 @@ body.game-immersive-active .game-stage,
   opacity: 0.65;
 }
 
-.jardim-cinematic-screen.is-video-complete .jardim-instruction-panel {
+.jardim-cinematic-screen.is-video-complete .jardim-instruction-sign {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.jardim-cinematic-screen.is-video-complete .jardim-explore-button {
   opacity: 1;
   pointer-events: auto;
-  transform: translateX(-50%) translateY(0);
 }
 
 .jardim-cinematic-screen > .jardim-start-button {
@@ -1994,7 +1992,8 @@ body.game-immersive-active .game-stage,
 
 .jardim-cinematic-screen.is-playing-instruction .jardim-start-button,
 .jardim-cinematic-screen.is-playing-instruction .jardim-audio-toggle,
-.jardim-cinematic-screen.is-playing-instruction .jardim-instruction-panel,
+.jardim-cinematic-screen.is-playing-instruction .jardim-instruction-sign,
+.jardim-cinematic-screen.is-playing-instruction .jardim-explore-button,
 .jardim-cinematic-screen.is-video-complete .jardim-start-button,
 .jardim-cinematic-screen.is-video-complete .jardim-audio-toggle,
 .jardim-cinematic-screen.is-transitioning .jardim-audio-toggle {
@@ -2010,6 +2009,17 @@ body.game-immersive-active .game-stage,
   .jardim-cinematic-screen > .jardim-start-button {
     --jardim-start-w: 52%;
     --jardim-start-h: 15%;
+  }
+
+  .jardim-instruction-sign {
+    --jardim-sign-x: 25%;
+    --jardim-sign-y: 68%;
+    --jardim-sign-w: 38%;
+  }
+
+  .jardim-explore-button {
+    --jardim-explore-w: 44%;
+    --jardim-explore-h: 12%;
   }
 }
 
