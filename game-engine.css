@@ -1764,7 +1764,7 @@ body.game-immersive-active .game-stage,
   background: #153e34;
 }
 
-.jardim-cinematic-stage {
+.jardim-cinematic-screen > .jardim-cinematic-stage {
   position: absolute;
   inset: 0;
   z-index: 1;
@@ -1844,7 +1844,7 @@ body.game-immersive-active .game-stage,
   text-align: center;
 }
 
-.jardim-start-button {
+.jardim-cinematic-screen > .jardim-start-button {
   position: absolute;
   left: 50%;
   bottom: max(26px, env(safe-area-inset-bottom));
@@ -1867,28 +1867,28 @@ body.game-immersive-active .game-stage,
   transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
 }
 
-.jardim-start-button:hover,
-.jardim-start-button:focus-visible {
+.jardim-cinematic-screen > .jardim-start-button:hover,
+.jardim-cinematic-screen > .jardim-start-button:focus-visible {
   filter: saturate(1.08) brightness(1.04);
   transform: translateX(-50%) translateY(-2px);
 }
 
-.jardim-start-button:focus-visible {
+.jardim-cinematic-screen > .jardim-start-button:focus-visible {
   outline: 5px solid #3eb6ff;
   outline-offset: 4px;
 }
 
-.jardim-start-button:active,
-.jardim-start-button[aria-busy="true"] {
+.jardim-cinematic-screen > .jardim-start-button:active,
+.jardim-cinematic-screen > .jardim-start-button[aria-busy="true"] {
   box-shadow: 0 6px 0 #a85d18, 0 10px 22px rgba(26, 46, 35, 0.24);
   transform: translateX(-50%) translateY(6px);
 }
 
-.jardim-start-button:disabled {
+.jardim-cinematic-screen > .jardim-start-button:disabled {
   cursor: wait;
 }
 
-.jardim-audio-toggle {
+.jardim-cinematic-screen > .jardim-audio-toggle {
   position: absolute;
   top: max(16px, env(safe-area-inset-top));
   right: max(16px, env(safe-area-inset-right));
@@ -1905,7 +1905,7 @@ body.game-immersive-active .game-stage,
   font-weight: 900;
 }
 
-.jardim-audio-toggle:focus-visible {
+.jardim-cinematic-screen > .jardim-audio-toggle:focus-visible {
   outline: 4px solid #ffcf48;
   outline-offset: 3px;
 }
@@ -1920,7 +1920,7 @@ body.game-immersive-active .game-stage,
     --jardim-object-position: center center;
   }
 
-  .jardim-start-button {
+  .jardim-cinematic-screen > .jardim-start-button {
     bottom: max(18px, env(safe-area-inset-bottom));
     min-height: 58px;
   }
