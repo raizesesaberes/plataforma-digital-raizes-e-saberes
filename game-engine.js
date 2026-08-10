@@ -4445,7 +4445,7 @@
               src="${escapeHtml(abertura.src)}"
               ${abertura.poster ? `poster="${escapeHtml(abertura.poster)}"` : ""}
               autoplay
-              muted
+              ${abertura.mutedUntilInteraction === true ? "muted" : ""}
               loop
               playsinline
               preload="${escapeHtml(abertura.preload || "auto")}"
@@ -6804,9 +6804,16 @@
     syncJardimCinematicMedia(screen) {
       if (!this.isJardimCinematicEnabled()) return;
       const video = this.root.querySelector("[data-jardim-home-video]");
+      const config = this.getJardimCinematicConfig();
+      const abertura = config?.videos?.abertura || {};
       if (!video) return;
       if (screen === "intro" && !document.hidden && !this.jardimCinematicStartLocked) {
-        video.play?.().catch(() => {});
+        video.muted = abertura.mutedUntilInteraction === true;
+        video.volume = 1;
+        video.play?.().catch(() => {
+          video.muted = true;
+          video.play?.().catch(() => {});
+        });
       } else {
         video.pause?.();
       }
@@ -6957,9 +6964,19 @@
       const delay = Number.isFinite(Number(round.successDelay)) ? Number(round.successDelay) : 1200;
       window.setTimeout(() => {
         screen.classList.remove("is-round-active", "is-round-success");
-        this.advanceJardimCinematicState(round.nextState);
+        if (!this.playJardimVideoForState(round.nextState)) {
+          this.advanceJardimCinematicState(round.nextState);
+        }
       }, delay);
       return true;
+    }
+
+    playJardimVideoForState(stateName) {
+      if (!stateName) return false;
+      const config = this.getJardimCinematicConfig();
+      const entry = Object.entries(config?.videos || {}).find(([, videoConfig]) => videoConfig?.state === stateName && videoConfig?.src);
+      if (!entry) return false;
+      return this.playJardimConfiguredVideo(entry[0]);
     }
 
     playJardimConfiguredVideo(videoKey) {
@@ -7006,7 +7023,7 @@
       }
       const config = this.getJardimCinematicConfig();
       const discoveryRound = Array.isArray(config?.rounds)
-        ? config.rounds.find((round) => round?.videoKey && config?.videos?.[round.videoKey]?.id === videoConfig.id)
+        ? config.rounds.find((round) => round?.videoKey && round?.instructionCard && round?.hotspot && config?.videos?.[round.videoKey]?.id === videoConfig.id)
         : null;
       if (discoveryRound) {
         this.startJardimDiscoveryRound(discoveryRound.id, videoConfig.nextState);
