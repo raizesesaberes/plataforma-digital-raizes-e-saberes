@@ -60,7 +60,7 @@
         src: `${basePath}videos/video-03-passarinho.mp4`,
         loop: false,
         preload: "auto",
-        freezeTime: 8.45,
+        freezeTime: 8.25,
         nextState: "INTERACAO_PASSARINHO",
       },
       passarinhoCelebracao: {
@@ -112,7 +112,7 @@
         id: "passarinho",
         videoKey: "passarinho",
         videoSrc: `${basePath}videos/video-03-passarinho.mp4`,
-        freezeTime: 8.45,
+        freezeTime: 8.25,
         hotspotLabel: "Passarinho pousado na casinha",
         hotspot: {
           x: 15,
@@ -141,10 +141,10 @@
         freezeTime: 7.6,
         hotspotLabel: "Joaninha pousada na flor",
         hotspot: {
-          x: 69,
-          y: 60,
-          width: 14,
-          height: 16,
+          x: 50,
+          y: 46,
+          width: 18,
+          height: 18,
         },
         instructionCard: `${basePath}imagens/elementos/placa-joaninha.png`,
         instructionAlt: "Encontre a joaninha, clique nela pra seguir pra proxima descoberta.",
