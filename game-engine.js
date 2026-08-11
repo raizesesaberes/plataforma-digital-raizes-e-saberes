@@ -4487,7 +4487,7 @@
               })
               .join("")}
           </div>
-          <button class="jardim-start-button" type="button" data-game-action="start" aria-label="Comecar O Jardim das Descobertas" style="--jardim-start-x:${Number(startHotspot.x ?? 50)}%;--jardim-start-y:${Number(startHotspot.y ?? 72.5)}%;--jardim-start-w:${Number(startHotspot.width ?? 38)}%;--jardim-start-h:${Number(startHotspot.height ?? 18)}%;">
+          <button class="jardim-start-button" type="button" data-game-action="start" ${abertura.startAfterFirstLoop === true ? "disabled aria-disabled=\"true\"" : "aria-disabled=\"false\""} aria-label="Comecar O Jardim das Descobertas" style="--jardim-start-x:${Number(startHotspot.x ?? 50)}%;--jardim-start-y:${Number(startHotspot.y ?? 72.5)}%;--jardim-start-w:${Number(startHotspot.width ?? 38)}%;--jardim-start-h:${Number(startHotspot.height ?? 18)}%;">
             <span class="game-sr-only">COMEÇAR</span>
           </button>
         </section>
@@ -5395,6 +5395,10 @@
         const snapSlot = event.target.closest("[data-snap-slot-id]");
         const snapBoard = event.target.closest("[data-snap-board]");
         const speak = event.target.closest("[data-game-speak]");
+        const jardimScreen = event.target.closest(".jardim-cinematic-screen");
+        if (jardimScreen && this.game?.id === "jardim-descobertas" && this.state.screen === "intro") {
+          this.unlockJardimOpeningAudio();
+        }
         if (gamePlay) this.openGame(gamePlay.dataset.gamePlay);
         if (gameSelect) this.openGame(gameSelect.dataset.gameSelect);
         if (gameBack) this.openHub();
@@ -5459,6 +5463,11 @@
         }
       }, true);
       this.root.addEventListener("timeupdate", (event) => {
+        const jardimHomeVideo = event.target.closest?.("[data-jardim-home-video]");
+        if (jardimHomeVideo && this.game.id === "jardim-descobertas" && this.state.screen === "intro") {
+          this.handleJardimOpeningTimeUpdate(jardimHomeVideo);
+          return;
+        }
         const video = event.target.closest?.("[data-basket-intro-video]");
         if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
         if (video.dataset.loopCount === "1" || video.currentTime < Math.max(0.2, video.duration - 0.35)) return;
@@ -5585,6 +5594,7 @@
       this.root.style.setProperty("--library-atlas", `url("${this.game.assets.library}")`);
       this.root.innerHTML = this.render();
       this.jardimCinematicStartLocked = false;
+      this.jardimOpeningAudioUnlocked = false;
       this.startPlayerEntry();
     }
 
@@ -6822,7 +6832,7 @@
       const abertura = config?.videos?.abertura || {};
       if (!video) return;
       if (screen === "intro" && !document.hidden && !this.jardimCinematicStartLocked) {
-        video.muted = abertura.mutedUntilInteraction === true;
+        video.muted = abertura.mutedUntilInteraction === true && !this.jardimOpeningAudioUnlocked;
         video.volume = 1;
         video.play?.().catch(() => {
           video.muted = true;
@@ -6838,12 +6848,41 @@
       this.syncJardimCinematicMedia(this.state.screen);
     }
 
+    handleJardimOpeningTimeUpdate(video) {
+      if (!video || this.jardimCinematicStartLocked) return;
+      const config = this.getJardimCinematicConfig();
+      const abertura = config?.videos?.abertura || {};
+      if (abertura.startAfterFirstLoop !== true || video.dataset.loopReady === "true") return;
+      if (!Number.isFinite(video.duration) || video.duration <= 0) return;
+      const previousTime = Number(video.dataset.previousLoopTime || "0");
+      video.dataset.previousLoopTime = String(video.currentTime);
+      const completedFirstLoop = previousTime > video.duration * 0.6 && video.currentTime < previousTime;
+      if (!completedFirstLoop) return;
+      video.dataset.loopReady = "true";
+      const startButton = this.root.querySelector(".jardim-start-button");
+      if (startButton) {
+        startButton.disabled = false;
+        startButton.setAttribute("aria-disabled", "false");
+      }
+    }
+
     setJardimAudioEnabled(enabled, video = this.root.querySelector("[data-jardim-home-video]")) {
       if (video) {
         video.muted = !enabled;
         video.volume = 1;
         if (enabled) video.play?.().catch(() => {});
       }
+    }
+
+    unlockJardimOpeningAudio() {
+      if (!this.isJardimCinematicEnabled() || this.jardimCinematicStartLocked) return false;
+      const video = this.root.querySelector("[data-jardim-home-video]");
+      if (!video) return false;
+      this.jardimOpeningAudioUnlocked = true;
+      video.muted = false;
+      video.volume = 1;
+      video.play?.().catch(() => {});
+      return true;
     }
 
     async startJardimCinematicFlow(button) {
@@ -6995,8 +7034,17 @@
         hotspot.setAttribute("aria-disabled", "true");
       });
       audioPlayer.stopAll?.();
-      this.playJardimApplause();
       const delay = Number.isFinite(Number(round.successDelay)) ? Number(round.successDelay) : 1200;
+      if (round.celebrationState) {
+        window.setTimeout(() => {
+          screen.classList.remove("is-round-active", "is-round-success", "is-round-celebrating", "is-round-complete");
+          if (!this.playJardimVideoForState(round.celebrationState)) {
+            this.advanceJardimCinematicState(round.nextState);
+          }
+        }, delay);
+        return true;
+      }
+      this.playJardimApplause();
       window.setTimeout(() => {
         screen.classList.remove("is-round-celebrating");
         screen.classList.add("is-round-complete");
@@ -7107,6 +7155,8 @@
           exploreButton.disabled = false;
           exploreButton.setAttribute("aria-disabled", "false");
         }
+        this.advanceJardimCinematicState(videoConfig.nextState);
+        return;
       }
       const config = this.getJardimCinematicConfig();
       const discoveryRound = Array.isArray(config?.rounds)
@@ -7116,6 +7166,7 @@
         this.startJardimDiscoveryRound(discoveryRound.id, videoConfig.nextState);
         return;
       }
+      if (this.playJardimVideoForState(videoConfig.nextState)) return;
       this.advanceJardimCinematicState(videoConfig.nextState);
     }
 
