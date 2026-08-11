@@ -1932,6 +1932,99 @@ body.game-immersive-active .game-stage,
   display: none;
 }
 
+.jardim-target-overlay {
+  position: absolute;
+  left: var(--jardim-target-x, 50%);
+  top: var(--jardim-target-y, 50%);
+  z-index: 5;
+  width: var(--jardim-target-w, 14%);
+  max-width: 240px;
+  min-width: 56px;
+  height: auto;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: opacity 180ms ease, filter 180ms ease, transform 180ms ease;
+}
+
+.jardim-target-overlay[hidden] {
+  display: none;
+}
+
+.jardim-question-card,
+.jardim-success-card {
+  position: absolute;
+  left: 50%;
+  z-index: 6;
+  display: grid;
+  justify-items: center;
+  width: min(84%, 720px);
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -8px);
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.jardim-question-card {
+  top: clamp(18px, 5%, 48px);
+}
+
+.jardim-success-card {
+  top: clamp(24px, 8%, 72px);
+  gap: 12px;
+}
+
+.jardim-question-card span,
+.jardim-success-card span {
+  display: block;
+  max-width: 100%;
+  padding: 12px 18px;
+  border: 2px solid rgba(255, 255, 255, 0.78);
+  border-radius: 8px;
+  background: rgba(18, 61, 45, 0.78);
+  color: #fffaf0;
+  font-size: clamp(1rem, 2.4vw, 1.58rem);
+  font-weight: 1000;
+  line-height: 1.12;
+  text-align: center;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.jardim-success-card span {
+  background: rgba(35, 96, 52, 0.88);
+}
+
+.jardim-question-card[hidden],
+.jardim-success-card[hidden] {
+  display: none;
+}
+
+.jardim-next-button {
+  min-width: min(70vw, 260px);
+  min-height: 56px;
+  padding: 12px 28px;
+  border: 3px solid #fff4b8;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffe57a 0%, #ffb52f 100%);
+  box-shadow: 0 8px 0 #a85d18, 0 14px 24px rgba(26, 46, 35, 0.24);
+  color: #3f2308;
+  cursor: pointer;
+  font-size: clamp(1rem, 2.5vw, 1.35rem);
+  font-weight: 1000;
+}
+
+.jardim-next-button:focus-visible {
+  outline: 4px solid rgba(62, 182, 255, 0.9);
+  outline-offset: 3px;
+}
+
+.jardim-next-button:disabled {
+  cursor: default;
+  filter: grayscale(0.35);
+  opacity: 0.72;
+}
+
 .jardim-discovery-hotspot {
   position: absolute;
   left: var(--jardim-hotspot-x, 50%);
@@ -1988,6 +2081,15 @@ body.game-immersive-active .game-stage,
   transform: translate(-50%, 0);
 }
 
+.jardim-cinematic-screen.is-round-active .jardim-target-overlay,
+.jardim-cinematic-screen.is-round-active .jardim-question-card {
+  opacity: 1;
+}
+
+.jardim-cinematic-screen.is-round-active .jardim-question-card {
+  transform: translate(-50%, 0);
+}
+
 .jardim-cinematic-screen.is-round-active .jardim-discovery-hotspot {
   opacity: 1;
   pointer-events: auto;
@@ -1999,8 +2101,20 @@ body.game-immersive-active .game-stage,
   pointer-events: none;
 }
 
-.jardim-cinematic-screen.is-round-success .jardim-round-sign {
+.jardim-cinematic-screen.is-round-success .jardim-round-sign,
+.jardim-cinematic-screen.is-round-success .jardim-question-card {
   opacity: 0;
+}
+
+.jardim-cinematic-screen.is-round-success .jardim-target-overlay {
+  filter: drop-shadow(0 0 12px rgba(255, 246, 142, 0.95)) drop-shadow(0 0 28px rgba(255, 255, 255, 0.86));
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+.jardim-cinematic-screen.is-round-complete .jardim-success-card {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
 }
 
 .jardim-discovery-hotspot.is-found {
@@ -2093,6 +2207,9 @@ body.game-immersive-active .game-stage,
 .jardim-cinematic-screen.is-playing-instruction .jardim-instruction-sign,
 .jardim-cinematic-screen.is-playing-instruction .jardim-explore-button,
 .jardim-cinematic-screen.is-playing-instruction .jardim-round-sign,
+.jardim-cinematic-screen.is-playing-instruction .jardim-target-overlay,
+.jardim-cinematic-screen.is-playing-instruction .jardim-question-card,
+.jardim-cinematic-screen.is-playing-instruction .jardim-success-card,
 .jardim-cinematic-screen.is-playing-instruction .jardim-discovery-hotspot,
 .jardim-cinematic-screen.is-video-complete .jardim-start-button {
   opacity: 0;
@@ -2124,6 +2241,11 @@ body.game-immersive-active .game-stage,
     --jardim-round-sign-x: 26%;
     --jardim-round-sign-y: 68%;
     --jardim-round-sign-w: 38%;
+  }
+
+  .jardim-question-card,
+  .jardim-success-card {
+    width: min(92%, 620px);
   }
 }
 

@@ -4467,8 +4467,19 @@
               .map((round) => {
                 const hotspot = round.hotspot || {};
                 const position = round.instructionPosition || {};
+                const targetPosition = round.targetPosition || {};
                 return `
                   <img class="jardim-round-sign" data-jardim-round-sign="${escapeHtml(round.id)}" src="${escapeHtml(round.instructionCard)}" alt="${escapeHtml(round.instructionAlt || round.questionText || "")}" loading="eager" decoding="async" style="--jardim-round-sign-x:${Number(position.x ?? 22)}%;--jardim-round-sign-y:${Number(position.y ?? 66)}%;--jardim-round-sign-w:${Number(position.width ?? 29)}%;" />
+                  ${round.targetImage ? `<img class="jardim-target-overlay" data-jardim-target-overlay="${escapeHtml(round.id)}" src="${escapeHtml(round.targetImage)}" alt="${escapeHtml(round.targetAlt || "")}" loading="eager" decoding="async" style="--jardim-target-x:${Number(targetPosition.x ?? hotspot.x ?? 50)}%;--jardim-target-y:${Number(targetPosition.y ?? hotspot.y ?? 50)}%;--jardim-target-w:${Number(targetPosition.width ?? hotspot.width ?? 14)}%;" />` : ""}
+                  <div class="jardim-question-card" data-jardim-question-card="${escapeHtml(round.id)}" role="status" aria-live="polite">
+                    <span>${escapeHtml(round.questionText || "")}</span>
+                  </div>
+                  <div class="jardim-success-card" data-jardim-success-card="${escapeHtml(round.id)}" role="status" aria-live="polite">
+                    <span>${escapeHtml(round.successText || "PARABÉNS!")}</span>
+                    <button class="jardim-next-button" type="button" data-game-action="start-jardim-next-state" data-next-state="${escapeHtml(round.nextState || "")}" disabled aria-disabled="true">
+                      ${escapeHtml(round.exploreButtonLabel || "EXPLORAR")}
+                    </button>
+                  </div>
                   <button class="jardim-discovery-hotspot" type="button" data-game-action="answer-jardim-discovery" data-round-id="${escapeHtml(round.id)}" disabled aria-disabled="true" aria-label="${escapeHtml(round.questionText || "Encontrar descoberta")}" style="--jardim-hotspot-x:${Number(hotspot.x ?? 50)}%;--jardim-hotspot-y:${Number(hotspot.y ?? 50)}%;--jardim-hotspot-w:${Number(hotspot.width ?? 12)}%;--jardim-hotspot-h:${Number(hotspot.height ?? 12)}%;">
                     <span class="game-sr-only">${escapeHtml(round.questionText || "Encontrar descoberta")}</span>
                   </button>
@@ -5767,6 +5778,9 @@
       if (action === "answer-jardim-discovery") {
         this.answerJardimDiscovery(button);
       }
+      if (action === "start-jardim-next-state") {
+        this.startJardimNextState(button);
+      }
       if (action === "begin-audio-choice") {
         this.updateRoundContent();
         this.go("choice");
@@ -6936,11 +6950,20 @@
       const round = this.getJardimDiscoveryRound(roundId);
       const screen = this.root.querySelector(".jardim-cinematic-screen");
       if (!round || !screen) return false;
-      screen.classList.remove("is-video-complete", "is-playing-instruction", "is-awaiting-video", "is-transitioning", "is-round-success");
+      screen.classList.remove("is-video-complete", "is-playing-instruction", "is-awaiting-video", "is-transitioning", "is-round-success", "is-round-celebrating", "is-round-complete");
       screen.classList.add("is-round-active");
       screen.setAttribute("data-jardim-cinematic-state", stateName || `INTERACAO_${String(round.id || "").toUpperCase()}`);
       this.root.querySelectorAll("[data-jardim-round-sign]").forEach((sign) => {
         sign.hidden = sign.dataset.jardimRoundSign !== round.id;
+      });
+      this.root.querySelectorAll("[data-jardim-target-overlay]").forEach((target) => {
+        target.hidden = target.dataset.jardimTargetOverlay !== round.id;
+      });
+      this.root.querySelectorAll("[data-jardim-question-card]").forEach((card) => {
+        card.hidden = card.dataset.jardimQuestionCard !== round.id;
+      });
+      this.root.querySelectorAll("[data-jardim-success-card]").forEach((card) => {
+        card.hidden = card.dataset.jardimSuccessCard !== round.id;
       });
       this.root.querySelectorAll("[data-game-action='answer-jardim-discovery']").forEach((hotspot) => {
         const isCurrent = hotspot.dataset.roundId === round.id;
@@ -6948,6 +6971,13 @@
         hotspot.setAttribute("aria-disabled", isCurrent ? "false" : "true");
         hotspot.classList.remove("is-found");
       });
+      this.root.querySelectorAll("[data-game-action='start-jardim-next-state']").forEach((nextButton) => {
+        nextButton.disabled = true;
+        nextButton.setAttribute("aria-disabled", "true");
+      });
+      if (round.questionSpeech || round.questionText) {
+        audioPlayer.speak(round.questionSpeech || round.questionText, null);
+      }
       return true;
     }
 
@@ -6959,24 +6989,70 @@
       button.disabled = true;
       button.setAttribute("aria-disabled", "true");
       button.classList.add("is-found");
-      screen.classList.add("is-round-success");
-      audioPlayer.blip("success");
+      screen.classList.add("is-round-success", "is-round-celebrating");
+      this.root.querySelectorAll("[data-game-action='answer-jardim-discovery']").forEach((hotspot) => {
+        hotspot.disabled = true;
+        hotspot.setAttribute("aria-disabled", "true");
+      });
+      audioPlayer.stopAll?.();
+      this.playJardimApplause();
       const delay = Number.isFinite(Number(round.successDelay)) ? Number(round.successDelay) : 1200;
       window.setTimeout(() => {
-        screen.classList.remove("is-round-active", "is-round-success");
-        if (!this.playJardimVideoForState(round.nextState)) {
-          this.advanceJardimCinematicState(round.nextState);
-        }
+        screen.classList.remove("is-round-celebrating");
+        screen.classList.add("is-round-complete");
+        this.root.querySelectorAll("[data-game-action='start-jardim-next-state']").forEach((nextButton) => {
+          const isCurrent = nextButton.dataset.nextState === round.nextState;
+          nextButton.disabled = !isCurrent;
+          nextButton.setAttribute("aria-disabled", isCurrent ? "false" : "true");
+        });
       }, delay);
       return true;
     }
 
-    playJardimVideoForState(stateName) {
-      if (!stateName) return false;
-      const config = this.getJardimCinematicConfig();
-      const entry = Object.entries(config?.videos || {}).find(([, videoConfig]) => videoConfig?.state === stateName && videoConfig?.src);
-      if (!entry) return false;
-      return this.playJardimConfiguredVideo(entry[0]);
+    playJardimApplause() {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) {
+        audioPlayer.blip("success");
+        return;
+      }
+      const context = new AudioContext();
+      const output = context.createGain();
+      output.gain.value = audioPlayer.volumes.effects * 0.35;
+      output.connect(context.destination);
+      const now = context.currentTime;
+      [0, 0.16, 0.34, 0.52, 0.74, 0.98, 1.22, 1.48].forEach((offset) => {
+        const source = context.createBufferSource();
+        const buffer = context.createBuffer(1, Math.floor(context.sampleRate * 0.08), context.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let index = 0; index < data.length; index += 1) {
+          data[index] = (Math.random() * 2 - 1) * (1 - index / data.length);
+        }
+        const filter = context.createBiquadFilter();
+        const gain = context.createGain();
+        filter.type = "bandpass";
+        filter.frequency.value = 1200 + Math.random() * 900;
+        gain.gain.setValueAtTime(0.0001, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.45, now + offset + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.09);
+        source.buffer = buffer;
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(output);
+        source.start(now + offset);
+        source.stop(now + offset + 0.1);
+      });
+      window.setTimeout(() => context.close?.(), 1800);
+    }
+
+    startJardimNextState(button = null) {
+      const nextState = button?.dataset.nextState;
+      if (!nextState || button?.disabled) return false;
+      button.disabled = true;
+      button.setAttribute("aria-disabled", "true");
+      const screen = this.root.querySelector(".jardim-cinematic-screen");
+      screen?.classList.remove("is-round-active", "is-round-success", "is-round-celebrating", "is-round-complete");
+      this.advanceJardimCinematicState(nextState);
+      return true;
     }
 
     playJardimConfiguredVideo(videoKey) {
@@ -6990,6 +7066,7 @@
       screen?.classList.remove("is-awaiting-video");
       screen?.classList.remove("is-transitioning");
       screen?.classList.remove("is-video-complete");
+      screen?.classList.remove("is-round-active", "is-round-success", "is-round-celebrating", "is-round-complete");
       screen?.classList.add("is-playing-instruction");
       this.root.querySelector("[data-jardim-freeze-canvas]")?.classList.remove("is-visible");
       this.root.querySelector("[data-jardim-freeze-frame]")?.classList.remove("is-visible");
@@ -7008,10 +7085,10 @@
       return true;
     }
 
-    handleJardimVideoEnded(video, videoConfig) {
+    async handleJardimVideoEnded(video, videoConfig) {
       const screen = this.root.querySelector(".jardim-cinematic-screen");
       video.pause?.();
-      this.freezeJardimCurrentVideoFrame(video);
+      await this.freezeJardimCurrentVideoFrame(video, videoConfig.freezeTime);
       screen?.classList.remove("is-playing-instruction");
       if (videoConfig.id === "video-02-instrucao") {
         screen?.classList.add("is-video-complete");
@@ -7032,9 +7109,12 @@
       this.advanceJardimCinematicState(videoConfig.nextState);
     }
 
-    freezeJardimCurrentVideoFrame(video) {
+    async freezeJardimCurrentVideoFrame(video, freezeTime = null) {
       const canvas = this.root.querySelector("[data-jardim-freeze-canvas]");
       if (!video || !canvas) return false;
+      if (Number.isFinite(Number(freezeTime))) {
+        await this.seekVideo(video, Number(freezeTime));
+      }
       const width = video.videoWidth || 1280;
       const height = video.videoHeight || 720;
       canvas.width = width;
