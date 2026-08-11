@@ -3,7 +3,7 @@
 
   window.RaizesJardimDescobertasConfig = {
     currentVersion: "2.0",
-    totalVideos: 7,
+    totalVideos: 8,
     initialState: "HOME_LOOP",
     developmentMessageEnabled: true,
     freezeCandidates: [5.8, 6.4, 7.1],
@@ -81,6 +81,15 @@
         freezeTime: 7.6,
         nextState: "INTERACAO_JOANINHA",
       },
+      joaninhaCelebracao: {
+        id: "video-04-comemoracao-joaninha",
+        state: "VIDEO_04_COMEMORACAO_JOANINHA",
+        src: `${basePath}videos/video-04-comemoracao-joaninha.mp4`,
+        loop: false,
+        preload: "auto",
+        freezeTime: null,
+        nextState: "VIDEO_05_PATINHO",
+      },
       patinho: {
         id: "video-05-patinho",
         state: "VIDEO_05_PATINHO",
@@ -144,7 +153,9 @@
           width: 29,
         },
         successText: "PARABÉNS! VOCÊ ENCONTROU A JOANINHA!",
-        successDelay: 2000,
+        successDelay: 850,
+        celebrationState: "VIDEO_04_COMEMORACAO_JOANINHA",
+        showSuccessCard: false,
         exploreButtonLabel: "EXPLORAR",
         nextState: "VIDEO_05_PATINHO",
       },
