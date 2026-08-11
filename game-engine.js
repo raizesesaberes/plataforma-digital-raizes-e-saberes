@@ -4471,17 +4471,17 @@
                 return `
                   <img class="jardim-round-sign" data-jardim-round-sign="${escapeHtml(round.id)}" src="${escapeHtml(round.instructionCard)}" alt="${escapeHtml(round.instructionAlt || round.questionText || "")}" loading="eager" decoding="async" style="--jardim-round-sign-x:${Number(position.x ?? 22)}%;--jardim-round-sign-y:${Number(position.y ?? 66)}%;--jardim-round-sign-w:${Number(position.width ?? 29)}%;" />
                   ${round.targetImage ? `<img class="jardim-target-overlay" data-jardim-target-overlay="${escapeHtml(round.id)}" src="${escapeHtml(round.targetImage)}" alt="${escapeHtml(round.targetAlt || "")}" loading="eager" decoding="async" style="--jardim-target-x:${Number(targetPosition.x ?? hotspot.x ?? 50)}%;--jardim-target-y:${Number(targetPosition.y ?? hotspot.y ?? 50)}%;--jardim-target-w:${Number(targetPosition.width ?? hotspot.width ?? 14)}%;" />` : ""}
-                  <div class="jardim-question-card" data-jardim-question-card="${escapeHtml(round.id)}" role="status" aria-live="polite">
+                  ${round.questionText ? `<div class="jardim-question-card" data-jardim-question-card="${escapeHtml(round.id)}" role="status" aria-live="polite">
                     <span>${escapeHtml(round.questionText || "")}</span>
-                  </div>
+                  </div>` : ""}
                   <div class="jardim-success-card" data-jardim-success-card="${escapeHtml(round.id)}" role="status" aria-live="polite">
                     <span>${escapeHtml(round.successText || "PARABÉNS!")}</span>
                     <button class="jardim-next-button" type="button" data-game-action="start-jardim-next-state" data-next-state="${escapeHtml(round.nextState || "")}" disabled aria-disabled="true">
                       ${escapeHtml(round.exploreButtonLabel || "EXPLORAR")}
                     </button>
                   </div>
-                  <button class="jardim-discovery-hotspot" type="button" data-game-action="answer-jardim-discovery" data-round-id="${escapeHtml(round.id)}" disabled aria-disabled="true" aria-label="${escapeHtml(round.questionText || "Encontrar descoberta")}" style="--jardim-hotspot-x:${Number(hotspot.x ?? 50)}%;--jardim-hotspot-y:${Number(hotspot.y ?? 50)}%;--jardim-hotspot-w:${Number(hotspot.width ?? 12)}%;--jardim-hotspot-h:${Number(hotspot.height ?? 12)}%;">
-                    <span class="game-sr-only">${escapeHtml(round.questionText || "Encontrar descoberta")}</span>
+                  <button class="jardim-discovery-hotspot" type="button" data-game-action="answer-jardim-discovery" data-round-id="${escapeHtml(round.id)}" disabled aria-disabled="true" aria-label="${escapeHtml(round.hotspotLabel || round.questionText || "Encontrar descoberta")}" style="--jardim-hotspot-x:${Number(hotspot.x ?? 50)}%;--jardim-hotspot-y:${Number(hotspot.y ?? 50)}%;--jardim-hotspot-w:${Number(hotspot.width ?? 12)}%;--jardim-hotspot-h:${Number(hotspot.height ?? 12)}%;">
+                    <span class="game-sr-only">${escapeHtml(round.hotspotLabel || round.questionText || "Encontrar descoberta")}</span>
                   </button>
                 `;
               })
@@ -7051,8 +7051,18 @@
       button.setAttribute("aria-disabled", "true");
       const screen = this.root.querySelector(".jardim-cinematic-screen");
       screen?.classList.remove("is-round-active", "is-round-success", "is-round-celebrating", "is-round-complete");
-      this.advanceJardimCinematicState(nextState);
+      if (!this.playJardimVideoForState(nextState)) {
+        this.advanceJardimCinematicState(nextState);
+      }
       return true;
+    }
+
+    playJardimVideoForState(stateName) {
+      if (!stateName) return false;
+      const config = this.getJardimCinematicConfig();
+      const entry = Object.entries(config?.videos || {}).find(([, videoConfig]) => videoConfig?.state === stateName && videoConfig?.src);
+      if (!entry) return false;
+      return this.playJardimConfiguredVideo(entry[0]);
     }
 
     playJardimConfiguredVideo(videoKey) {
