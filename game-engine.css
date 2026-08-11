@@ -2118,6 +2118,7 @@ body.game-immersive-active .game-stage,
 }
 
 .jardim-discovery-hotspot.is-found {
+  opacity: 1;
   pointer-events: none;
 }
 
