@@ -592,10 +592,10 @@
       },
       "atelie-bia": {
         id: "atelie-bia",
-        type: "creative-canvas",
+        type: "guided-painting",
         title: "O Atelie da Bia",
         category: "Criatividade",
-        subtitle: "Canvas Criativo",
+        subtitle: "Pintura Guiada",
         scenario: "Atelie de Artes",
         character: "Bia",
         mascot: "Pipo",
@@ -615,6 +615,13 @@
             feedback: atelieAsset("screens/screen-canvas.png"),
             final: atelieAsset("screens/screen-final.png"),
           },
+          painting: {
+            goldenMasterScreen: atelieAsset("golden-master/TELA_GOLDEN_MASTER.png"),
+            visualBase: atelieAsset("golden-master/JOANINHA_GOLDEN_MASTER_V2.png"),
+            protectedOverlay: atelieAsset("golden-master/JOANINHA_BASE_PROTEGIDA.png"),
+            completionSound: atelieAsset("audio/cabeca-concluida.mp3"),
+            ambientMusic: atelieAsset("audio/ambiente-loop.mp3"),
+          },
         },
         audio: {
           narration: 0.9,
@@ -624,17 +631,73 @@
         rounds: [
           {
             id: "obra-natureza",
-            hint: "Crie uma obra com elementos da natureza.",
-            narration: "Solte, mova e reorganize os elementos como quiser. Toda criacao e especial.",
-            canvas: {
-              minElements: 1,
-              elements: [
-                { id: "leaf-green", label: "Folha verde", image: atelieAsset("elements/leaf-green.png") },
-                { id: "leaf-brown", label: "Folha marrom", image: atelieAsset("elements/leaf-brown.png") },
-                { id: "flower-yellow", label: "Flor amarela", image: atelieAsset("elements/flower-yellow.png") },
-                { id: "flower-pink", label: "Flor rosa", image: atelieAsset("elements/flower-pink.png") },
-                { id: "twig", label: "Galho", image: atelieAsset("elements/twig.png") },
-                { id: "acorn", label: "Semente", image: atelieAsset("elements/acorn.png") },
+            hint: "Pinte a cabeca da joaninha.",
+            narration: "Escolha uma cor e pinte somente a cabeca da joaninha.",
+            painting: {
+              completionThreshold: 0.65,
+              brushSize: 30,
+              eraserSize: 40,
+              initialStepId: "cabeca",
+              steps: [
+                {
+                  id: "cabeca",
+                  label: "Cabeca",
+                  instruction: "VAMOS COMECAR PELA CABECA!",
+                  narration: "Escolha uma cor e pinte somente a cabeca da joaninha.",
+                  part: atelieAsset("golden-master/JOANINHA_PARTE_CABECA.png"),
+                  mask: atelieAsset("golden-master/JOANINHA_MASK_CABECA.png"),
+                  completionSound: atelieAsset("audio/cabeca-concluida.mp3"),
+                },
+                {
+                  id: "corpo",
+                  label: "Corpo",
+                  instruction: "AGORA VAMOS COLORIR O CORPO!",
+                  narration: "Agora escolha uma cor e pinte somente o corpo da joaninha.",
+                  part: atelieAsset("golden-master/JOANINHA_PARTE_CORPO.png"),
+                  mask: atelieAsset("golden-master/JOANINHA_MASK_CORPO.png"),
+                  completionSound: atelieAsset("audio/corpo-concluido.mp3"),
+                },
+                {
+                  id: "asas",
+                  label: "Asas",
+                  instruction: "AGORA VAMOS COLORIR AS ASAS!",
+                  narration: "Agora vamos colorir somente as asas da joaninha.",
+                  part: atelieAsset("golden-master/JOANINHA_PARTE_ASAS.png"),
+                  mask: atelieAsset("golden-master/JOANINHA_MASK_ASAS.png"),
+                  completionSound: atelieAsset("audio/asas-concluidas.mp3"),
+                },
+                {
+                  id: "pintinhas",
+                  label: "Pintinhas",
+                  instruction: "AGORA VAMOS COLORIR AS PINTINHAS!",
+                  narration: "Agora vamos colorir as pintinhas da joaninha.",
+                  part: atelieAsset("golden-master/JOANINHA_PARTE_PINTINHAS.png"),
+                  mask: atelieAsset("golden-master/JOANINHA_MASK_PINTINHAS.png"),
+                  completionSound: atelieAsset("audio/pintinhas-concluidas.mp3"),
+                },
+                {
+                  id: "pernas-antenas",
+                  label: "Pernas + antenas",
+                  instruction: "FALTA POUQUINHO! VAMOS COLORIR AS PERNAS E AS ANTENAS!",
+                  narration: "Falta pouquinho. Vamos colorir somente as pernas e as antenas.",
+                  part: atelieAsset("golden-master/JOANINHA_PARTE_PERNAS_ANTENAS.png"),
+                  mask: atelieAsset("golden-master/JOANINHA_MASK_PERNAS_ANTENAS.png"),
+                  completionSound: atelieAsset("audio/pernas-antenas-concluidas.mp3"),
+                },
+              ],
+              colors: [
+                { id: "red", label: "Vermelho", value: "#e53935" },
+                { id: "orange", label: "Laranja", value: "#fb8c00" },
+                { id: "yellow", label: "Amarelo", value: "#fdd835" },
+                { id: "light-green", label: "Verde-claro", value: "#9ccc65" },
+                { id: "green", label: "Verde", value: "#43a047" },
+                { id: "light-blue", label: "Azul-claro", value: "#29b6f6" },
+                { id: "blue", label: "Azul", value: "#1e88e5" },
+                { id: "purple", label: "Roxo", value: "#8e24aa" },
+                { id: "pink", label: "Rosa", value: "#ec407a" },
+                { id: "brown", label: "Marrom", value: "#795548" },
+                { id: "black", label: "Preto", value: "#111111" },
+                { id: "white", label: "Branco", value: "#ffffff" },
               ],
             },
           },
@@ -2610,6 +2673,19 @@
         canvasItems: [],
         selectedCanvasId: null,
         canvasSequence: 0,
+        guidedPainting: {
+          activeStepId: "cabeca",
+          activeTool: "brush",
+          activeColor: "red",
+          completedSteps: [],
+          regions: {
+            cabeca: { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
+            corpo: { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
+            asas: { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
+            pintinhas: { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
+            "pernas-antenas": { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
+          },
+        },
         timelinePlacements: {},
         selectedTimelineId: null,
         journeyVisited: [],
@@ -4113,6 +4189,8 @@
       this.basketIntroStartTimer = null;
       this.basketRoomAdvanceTimer = null;
       this.jardimCinematicStartLocked = false;
+      this.guidedPaint = null;
+      this.guidedPaintMusic = null;
     }
 
     mount() {
@@ -4629,6 +4707,19 @@
           </section>
         `;
       }
+      if (this.game.type === "guided-painting") {
+        return `
+          <section class="game-screen" data-screen="room" aria-label="Escolha dos materiais">
+            <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
+            ${components.particles(18)}
+            <article class="garden-prompt">
+              ${components.audioButton("Ouvir instrucao", this.currentRound().narration)}
+              <strong data-hint-text>${this.currentRound().hint}</strong>
+            </article>
+            <button class="game-primary-button game-observe-button" type="button" data-game-action="begin-guided-painting">Pintar</button>
+          </section>
+        `;
+      }
       if (this.game.type === "timeline-sequence") {
         return `
           <section class="game-screen" data-screen="room" aria-label="Conhecendo a rotina">
@@ -4955,7 +5046,7 @@
     }
 
     renderHintScreen() {
-      if (this.game.type === "drag-drop" || this.game.type === "find" || this.game.type === "snap" || this.game.type === "criteria" || this.game.type === "path-follow" || this.game.type === "path-follow-v2" || this.game.type === "creative-canvas" || this.game.type === "timeline-sequence" || this.game.type === "journey-celebration" || this.game.type === "journey-celebration-v2" || this.game.type === "audio-recognition" || this.game.type === "pattern-recognition" || this.game.type === "exploration-v2" || this.game.type === "story-builder") {
+      if (this.game.type === "drag-drop" || this.game.type === "find" || this.game.type === "snap" || this.game.type === "criteria" || this.game.type === "path-follow" || this.game.type === "path-follow-v2" || this.game.type === "creative-canvas" || this.game.type === "guided-painting" || this.game.type === "timeline-sequence" || this.game.type === "journey-celebration" || this.game.type === "journey-celebration-v2" || this.game.type === "audio-recognition" || this.game.type === "pattern-recognition" || this.game.type === "exploration-v2" || this.game.type === "story-builder") {
         return "";
       }
       const round = this.currentRound();
@@ -5111,6 +5202,9 @@
           </section>
         `;
       }
+      if (this.game.type === "guided-painting") {
+        return this.renderGuidedPaintingScreen();
+      }
       if (this.game.type === "timeline-sequence") {
         return `
           <section class="game-screen" data-screen="choice" aria-label="Sequencia temporal">
@@ -5205,6 +5299,80 @@
       `;
     }
 
+    renderGuidedPaintingScreen() {
+      const round = this.currentRound();
+      const painting = round.painting;
+      const guidedState = this.state.guidedPainting || {};
+      const activeStep = this.guidedPaintingStep(guidedState.activeStepId);
+      const regionState = this.guidedPaintingRegionState(activeStep?.id);
+      const activeColor = guidedState.activeColor || painting.colors[0]?.id || "red";
+      const activeTool = guidedState.activeTool || "brush";
+      const coverage = Math.round((regionState.coverage || 0) * 100);
+      const threshold = Math.round((painting.completionThreshold || 0.65) * 100);
+      const ready = Boolean(regionState.ready);
+      return `
+        <section class="game-screen guided-painting-screen" data-screen="choice" aria-label="Atelie da Bia - pintura ${activeStep?.label || "guiada"}">
+          <article class="guided-painting-shell" data-guided-painting-root>
+            <header class="guided-painting-header">
+              <div>
+                <span>Atelie da Bia</span>
+                <h2>${activeStep?.instruction || round.hint}</h2>
+              </div>
+              <button class="guided-audio-button" type="button" data-game-action="guided-replay-audio">Ouvir novamente</button>
+            </header>
+            <div class="guided-progress-steps" aria-label="Progresso das partes">
+              ${painting.steps.map((step) => {
+                const state = this.guidedPaintingStepState(step);
+                return `
+                <button class="is-${state}" type="button" data-guided-step="${step.id}" disabled aria-disabled="true">
+                  ${step.label}${state === "complete" ? " ✓" : state === "active" ? " ●" : " ○"}
+                </button>
+              `;
+              }).join("")}
+            </div>
+            <div class="guided-painting-layout">
+              <aside class="guided-tool-panel" aria-label="Ferramentas de pintura">
+                <div class="guided-color-grid" data-guided-colors>
+                  ${painting.colors.map((color) => `
+                    <button class="guided-color-swatch${activeTool === "brush" && activeColor === color.id ? " is-selected" : ""}" type="button" data-guided-color="${color.id}" aria-label="${color.label}" title="${color.label}" style="--swatch:${color.value}"></button>
+                  `).join("")}
+                </div>
+                <div class="guided-tool-actions">
+                  <button class="${activeTool === "eraser" ? "is-selected" : ""}" type="button" data-game-action="guided-eraser">Borracha</button>
+                  <button type="button" data-game-action="guided-undo" ${regionState.actions?.length ? "" : "disabled"}>Desfazer</button>
+                  <button type="button" data-game-action="guided-redo" ${regionState.redoActions?.length ? "" : "disabled"}>Refazer</button>
+                </div>
+              </aside>
+              <main class="guided-artboard-wrap">
+                <div class="guided-artboard" data-guided-artboard>
+                  <img class="guided-layer guided-base-layer" data-guided-base alt="" />
+                  <canvas class="guided-layer guided-paint-layer" data-guided-paint-canvas aria-label="Area de pintura ${activeStep?.label || "guiada"}"></canvas>
+                  <img class="guided-layer guided-protected-layer" data-guided-protected alt="" />
+                  <canvas class="guided-mask-probe" data-guided-mask-probe aria-hidden="true"></canvas>
+                  <div class="guided-asset-warning" data-guided-asset-warning hidden>Assets oficiais da joaninha ou mascara nao encontrados.</div>
+                </div>
+              </main>
+              <aside class="guided-status-panel" aria-label="Status da pintura">
+                <div class="guided-miniature">
+                  <strong>SUA JOANINHA</strong>
+                  <div class="guided-miniature-frame" data-guided-miniature></div>
+                </div>
+                <div class="guided-coverage">
+                  <span>Cobertura: ${activeStep?.label || "Etapa"}</span>
+                  <i><b data-guided-coverage-bar style="width:${coverage}%"></b></i>
+                  <strong data-guided-coverage-label>${coverage}% / ${threshold}%</strong>
+                </div>
+                <button class="guided-ready-button${ready ? " is-ready" : ""}" type="button" data-game-action="guided-ready" ${ready ? "" : "disabled aria-disabled=\"true\""}>
+                  PRONTO
+                </button>
+                <p class="guided-tech-status" data-guided-tech-status>${ready ? `ETAPA ${activeStep?.label?.toUpperCase() || ""} LIBERADA` : `Pinte ${activeStep?.label || "a etapa"} ate completar o limite tecnico.`}</p>
+              </aside>
+            </div>
+          </article>
+        </section>
+      `;
+    }
+
     renderFeedbackScreen() {
       if (this.game.type === "selection") {
         return `
@@ -5216,6 +5384,19 @@
               <img class="selection-feedback-medal" src="${this.game.assets.components.medal}" alt="" loading="eager" decoding="async" />
               <strong>Muito bem!</strong>
               <button class="game-primary-button" type="button" data-game-action="next-round">Proxima descoberta</button>
+            </article>
+          </section>
+        `;
+      }
+      if (this.game.type === "guided-painting") {
+        return `
+          <section class="game-screen guided-painting-success-screen" data-screen="feedback" aria-label="Etapa corpo concluida">
+            <div class="game-scene game-scene-feedback" style="--screen:url('${this.game.assets.screens.feedback}')" aria-hidden="true"></div>
+            ${components.confetti(28)}
+            <article class="guided-success-card">
+              <strong>ETAPA CORPO CONCLUIDA</strong>
+              <span>Cabeca preservada e corpo pintado com o mesmo motor.</span>
+              <button class="game-secondary-button" type="button" data-game-action="begin-guided-painting">Voltar para a pintura</button>
             </article>
           </section>
         `;
@@ -5279,6 +5460,25 @@
     }
 
     renderFinalScreen() {
+      if (this.game.type === "guided-painting") {
+        return `
+          <section class="game-screen guided-final-screen" data-screen="final" aria-label="Joaninha completa">
+            <article class="guided-final-shell">
+              <header class="guided-final-header">
+                <span>Atelie da Bia</span>
+                <h2>VOCE CONSEGUIU! SUA JOANINHA ESTA PRONTA!</h2>
+              </header>
+              <div class="guided-final-preview" data-guided-final-preview>
+                <img data-guided-final-image alt="Joaninha criada pela crianca" />
+              </div>
+              <button class="guided-life-button" type="button" data-game-action="guided-life-ready">
+                <span>★</span> DAR VIDA
+              </button>
+              <p class="guided-final-status" data-guided-final-status>Confira sua criacao antes de dar vida.</p>
+            </article>
+          </section>
+        `;
+      }
       if (this.game.id === "organizando-cesta") {
         return `
           <section class="game-screen basket-victory-screen" data-screen="final" aria-label="Tela de comemoracao">
@@ -5353,6 +5553,7 @@
         "[data-creative-element-id]",
         "[data-canvas-item-id]",
         "[data-remove-canvas-id]",
+        "[data-guided-color]",
         "[data-timeline-card-id]",
         "[data-timeline-slot-id]",
         "[data-journey-portal-id]",
@@ -5389,6 +5590,7 @@
         const creativeElement = event.target.closest("[data-creative-element-id]");
         const canvasItem = event.target.closest("[data-canvas-item-id]");
         const removeCanvas = event.target.closest("[data-remove-canvas-id]");
+        const guidedColor = event.target.closest("[data-guided-color]");
         const timelineCard = event.target.closest("[data-timeline-card-id]");
         const timelineSlot = event.target.closest("[data-timeline-slot-id]");
         const journeyPortal = event.target.closest("[data-journey-portal-id]");
@@ -5425,6 +5627,7 @@
         if (pathV2Reference) this.visitPathV2Reference(pathV2Reference.dataset.pathV2ReferenceId, pathV2Reference);
         if (pathV2Phase) this.setPathV2Phase(Number(pathV2Phase.dataset.pathV2PhaseIndex));
         if (creativeElement) this.addCanvasItem(creativeElement.dataset.creativeElementId);
+        if (guidedColor) this.selectGuidedColor(guidedColor.dataset.guidedColor);
         if (removeCanvas) {
           this.removeCanvasItem(removeCanvas.dataset.removeCanvasId);
         } else if (canvasItem) {
@@ -5561,23 +5764,40 @@
       this.root.addEventListener("pointerdown", (event) => {
         const magicTouchTarget = this.getMagicTouchTarget(event);
         if (magicTouchTarget) this.playMagicTouchFX(event, magicTouchTarget);
+        if (event.target.closest("[data-guided-paint-canvas]")) {
+          this.startGuidedPaintStroke(event);
+          return;
+        }
         const board = event.target.closest("[data-path-board]");
         if (!board) return;
         this.state = { ...this.state, pathDrawing: true };
         this.advanceNearestPathPoint(event.clientX, event.clientY);
       });
       this.root.addEventListener("pointermove", (event) => {
+        if (this.guidedPaint?.isDrawing) {
+          this.moveGuidedPaintStroke(event);
+          return;
+        }
         if (!this.state.pathDrawing) return;
         if (!event.target.closest("[data-path-board]")) return;
         this.advanceNearestPathPoint(event.clientX, event.clientY);
       });
-      this.root.addEventListener("pointerup", () => {
+      this.root.addEventListener("pointerup", (event) => {
+        if (this.guidedPaint?.isDrawing) this.endGuidedPaintStroke(event);
+        if (this.state.pathDrawing) this.state = { ...this.state, pathDrawing: false };
+      });
+      this.root.addEventListener("pointercancel", (event) => {
+        if (this.guidedPaint?.isDrawing) this.endGuidedPaintStroke(event);
         if (this.state.pathDrawing) this.state = { ...this.state, pathDrawing: false };
       });
       this.root.addEventListener("input", (event) => {
         const input = event.target.closest("[data-volume]");
         if (!input) return;
         audioPlayer.volumes[input.dataset.volume] = Number(input.value);
+      });
+      window.addEventListener("resize", () => {
+        if (this.game?.type !== "guided-painting") return;
+        this.resizeGuidedPaintCanvas();
       });
       document.addEventListener("visibilitychange", () => this.syncJardimVisibility());
     }
@@ -5587,8 +5807,12 @@
       this.clearMagicBoxFrameTimer();
       this.mysteryBoxMachine.reset();
       this.magicBox.reset();
+      this.guidedPaint = null;
       this.game = gameRepository.getGame(gameId);
       this.state = progressController.create(this.game);
+      if (this.game.type === "guided-painting") {
+        this.state.guidedPainting.activeStepId = this.currentRound()?.painting?.initialStepId || "cabeca";
+      }
       this.record = rewardController.latest(this.game.id);
       this.journeyV2Visited = new Set();
       this.journeyV2Completed = new Set();
@@ -5609,6 +5833,7 @@
       this.clearMagicBoxFrameTimer();
       this.mysteryBoxMachine.reset();
       this.magicBox.reset();
+      this.guidedPaint = null;
       delete this.root.dataset.activeGame;
       document.documentElement.classList.remove("game-immersive-active");
       document.body.classList.remove("game-immersive-active");
@@ -5760,6 +5985,12 @@
         audioPlayer.speak(this.currentRound().narration, null);
         this.go("choice");
       }
+      if (action === "begin-guided-painting") {
+        this.updateRoundContent();
+        audioPlayer.speak(this.currentRound().narration, null);
+        this.startGuidedPaintMusic();
+        this.go("choice");
+      }
       if (action === "begin-timeline") {
         this.updateRoundContent();
         audioPlayer.speak(this.currentRound().narration, null);
@@ -5787,6 +6018,25 @@
       }
       if (action === "play-audio") {
         this.playRoundSound(button);
+      }
+      if (action === "guided-replay-audio") {
+        const step = this.guidedPaintingStep();
+        audioPlayer.speak(step?.narration || this.currentRound().narration, button);
+      }
+      if (action === "guided-eraser") {
+        this.setGuidedPaintTool("eraser");
+      }
+      if (action === "guided-undo") {
+        this.undoGuidedPaint();
+      }
+      if (action === "guided-redo") {
+        this.redoGuidedPaint();
+      }
+      if (action === "guided-ready") {
+        this.finishGuidedPaintingHead();
+      }
+      if (action === "guided-life-ready") {
+        this.prepareGuidedLifeState();
       }
       if (action === "start-video-03") {
         this.startVideo03(button);
@@ -6416,6 +6666,556 @@
       this.go("feedback");
     }
 
+    guidedPaintingConfig() {
+      return this.currentRound()?.painting || null;
+    }
+
+    guidedPaintingAssets() {
+      return this.game.assets?.painting || {};
+    }
+
+    guidedPaintingStep(stepId = this.state.guidedPainting?.activeStepId) {
+      const config = this.guidedPaintingConfig();
+      return config?.steps?.find((step) => step.id === stepId) || config?.steps?.find((step) => !step.locked) || null;
+    }
+
+    guidedPaintingRegionState(stepId = this.state.guidedPainting?.activeStepId) {
+      const guidedState = this.state.guidedPainting || {};
+      const region = guidedState.regions?.[stepId];
+      return region || { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] };
+    }
+
+    updateGuidedPaintingRegion(stepId, patch) {
+      const current = this.guidedPaintingRegionState(stepId);
+      this.state = {
+        ...this.state,
+        guidedPainting: {
+          ...this.state.guidedPainting,
+          regions: {
+            ...(this.state.guidedPainting.regions || {}),
+            [stepId]: {
+              ...current,
+              ...patch,
+            },
+          },
+        },
+      };
+    }
+
+    guidedPaintingStepState(step) {
+      const guidedState = this.state.guidedPainting || {};
+      if (guidedState.completedSteps?.includes(step.id)) return "complete";
+      if (step.id === guidedState.activeStepId) return "active";
+      return "locked";
+    }
+
+    loadGuidedImage(src) {
+      return new Promise((resolve) => {
+        if (!src) {
+          resolve(null);
+          return;
+        }
+        const image = new Image();
+        image.decoding = "async";
+        image.onload = () => resolve(image);
+        image.onerror = () => resolve(null);
+        image.src = src;
+      });
+    }
+
+    getGuidedPaintBuffer(stepId, width, height) {
+      if (!this.guidedPaintBuffers) this.guidedPaintBuffers = {};
+      if (!this.guidedPaintBuffers[stepId]) {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        this.guidedPaintBuffers[stepId] = canvas;
+      }
+      return this.guidedPaintBuffers[stepId];
+    }
+
+    syncGuidedPaintingScreen(screen = this.state.screen) {
+      if (this.game.type !== "guided-painting" || screen !== "choice") return;
+      window.requestAnimationFrame(() => this.ensureGuidedPaintEngine());
+    }
+
+    async ensureGuidedPaintEngine() {
+      if (this.game.type !== "guided-painting") return;
+      const root = this.root.querySelector("[data-guided-painting-root]");
+      const paintCanvas = this.root.querySelector("[data-guided-paint-canvas]");
+      const artboard = this.root.querySelector("[data-guided-artboard]");
+      if (!root || !paintCanvas || !artboard) return;
+      const config = this.guidedPaintingConfig();
+      const assets = this.guidedPaintingAssets();
+      const activeStep = this.guidedPaintingStep();
+      if (!config) return;
+      const width = 1200;
+      const height = 1200;
+      if (!this.guidedPaint || this.guidedPaint.gameId !== this.game.id || this.guidedPaint.region !== activeStep?.id) {
+        const maskBuffer = document.createElement("canvas");
+        const scratchBuffer = document.createElement("canvas");
+        [maskBuffer, scratchBuffer].forEach((canvas) => {
+          canvas.width = width;
+          canvas.height = height;
+        });
+        const paintBuffer = this.getGuidedPaintBuffer(activeStep?.id, width, height);
+        this.guidedPaint = {
+          gameId: this.game.id,
+          region: activeStep?.id,
+          width,
+          height,
+          paintCanvas,
+          paintBuffer,
+          maskBuffer,
+          scratchBuffer,
+          maskReady: false,
+          assetsReady: false,
+          isDrawing: false,
+          currentAction: null,
+          lastPoint: null,
+        };
+        const [baseImage, protectedImage, maskImage] = await Promise.all([
+          this.loadGuidedImage(assets.visualBase),
+          this.loadGuidedImage(assets.protectedOverlay),
+          this.loadGuidedImage(activeStep?.mask),
+        ]);
+        const base = this.root.querySelector("[data-guided-base]");
+        const protectedLayer = this.root.querySelector("[data-guided-protected]");
+        const miniature = this.root.querySelector("[data-guided-miniature]");
+        if (base && baseImage) base.src = assets.visualBase;
+        if (protectedLayer && protectedImage) protectedLayer.src = assets.protectedOverlay;
+        if (protectedImage) this.guidedPaintProtectedImage = protectedImage;
+        if (miniature && baseImage) miniature.style.setProperty("--guided-miniature-base", `url("${assets.visualBase}")`);
+        const maskContext = maskBuffer.getContext("2d", { willReadFrequently: true });
+        if (maskContext && maskImage) {
+          maskContext.clearRect(0, 0, width, height);
+          maskContext.drawImage(maskImage, 0, 0, width, height);
+          this.guidedPaint.maskReady = true;
+          const maskData = maskContext.getImageData(0, 0, width, height).data;
+          let maskPixels = 0;
+          for (let index = 0; index < maskData.length; index += 4) {
+            if (maskData[index + 3] > 8 && Math.max(maskData[index], maskData[index + 1], maskData[index + 2]) > 8) maskPixels += 1;
+          }
+          this.guidedPaint.maskPixels = maskPixels;
+        }
+        this.guidedPaint.assetsReady = Boolean(baseImage && protectedImage && maskImage);
+        this.syncGuidedAssetWarning();
+        this.redrawGuidedPaintFromActions();
+      } else {
+        this.guidedPaint.paintCanvas = paintCanvas;
+      }
+      this.resizeGuidedPaintCanvas();
+      this.syncGuidedPaintingUi();
+    }
+
+    syncGuidedAssetWarning() {
+      const warning = this.root.querySelector("[data-guided-asset-warning]");
+      if (!warning) return;
+      warning.hidden = Boolean(this.guidedPaint?.assetsReady);
+    }
+
+    resizeGuidedPaintCanvas() {
+      const engine = this.guidedPaint;
+      if (!engine?.paintCanvas) return;
+      const ratio = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+      const rect = engine.paintCanvas.getBoundingClientRect();
+      const cssWidth = Math.max(1, Math.round(rect.width));
+      const cssHeight = Math.max(1, Math.round(rect.height));
+      const targetWidth = Math.round(cssWidth * ratio);
+      const targetHeight = Math.round(cssHeight * ratio);
+      if (engine.paintCanvas.width !== targetWidth || engine.paintCanvas.height !== targetHeight) {
+        engine.paintCanvas.width = targetWidth;
+        engine.paintCanvas.height = targetHeight;
+      }
+      const context = engine.paintCanvas.getContext("2d");
+      if (!context) return;
+      context.setTransform(targetWidth / engine.width, 0, 0, targetHeight / engine.height, 0, 0);
+      context.clearRect(0, 0, engine.width, engine.height);
+      this.guidedPaintingConfig()?.steps
+        ?.filter((step) => !step.locked)
+        .forEach((step) => {
+          const buffer = this.guidedPaintBuffers?.[step.id];
+          if (buffer) context.drawImage(buffer, 0, 0);
+        });
+    }
+
+    selectGuidedColor(colorId) {
+      if (this.game.type !== "guided-painting") return;
+      const config = this.guidedPaintingConfig();
+      const color = config?.colors.find((entry) => entry.id === colorId);
+      if (!color) return;
+      this.state = {
+        ...this.state,
+        guidedPainting: {
+          ...this.state.guidedPainting,
+          activeTool: "brush",
+          activeColor: color.id,
+        },
+      };
+      audioPlayer.blip();
+      this.syncGuidedPaintingUi();
+    }
+
+    setGuidedPaintTool(tool) {
+      if (this.game.type !== "guided-painting") return;
+      this.state = {
+        ...this.state,
+        guidedPainting: {
+          ...this.state.guidedPainting,
+          activeTool: tool,
+        },
+      };
+      audioPlayer.blip();
+      this.syncGuidedPaintingUi();
+    }
+
+    guidedCanvasPoint(event) {
+      const engine = this.guidedPaint;
+      const rect = engine.paintCanvas.getBoundingClientRect();
+      return {
+        x: Math.max(0, Math.min(engine.width, ((event.clientX - rect.left) / rect.width) * engine.width)),
+        y: Math.max(0, Math.min(engine.height, ((event.clientY - rect.top) / rect.height) * engine.height)),
+      };
+    }
+
+    startGuidedPaintStroke(event) {
+      const engine = this.guidedPaint;
+      if (!engine?.maskReady) return;
+      event.preventDefault();
+      event.target.setPointerCapture?.(event.pointerId);
+      const config = this.guidedPaintingConfig();
+      const guidedState = this.state.guidedPainting;
+      const activeStep = this.guidedPaintingStep();
+      const color = config.colors.find((entry) => entry.id === guidedState.activeColor) || config.colors[0];
+      const point = this.guidedCanvasPoint(event);
+      engine.isDrawing = true;
+      engine.lastPoint = point;
+      engine.currentAction = {
+        id: `paint-${Date.now()}-${Math.round(Math.random() * 100000)}`,
+        region: activeStep?.id,
+        tool: guidedState.activeTool,
+        color: color?.value || "#e53935",
+        size: guidedState.activeTool === "eraser" ? config.eraserSize : config.brushSize,
+        points: [point],
+      };
+      this.drawGuidedPaintSegment(point, point, engine.currentAction);
+    }
+
+    moveGuidedPaintStroke(event) {
+      const engine = this.guidedPaint;
+      if (!engine?.isDrawing || !engine.currentAction) return;
+      event.preventDefault();
+      const point = this.guidedCanvasPoint(event);
+      this.drawGuidedPaintSegment(engine.lastPoint, point, engine.currentAction);
+      engine.currentAction.points.push(point);
+      engine.lastPoint = point;
+    }
+
+    endGuidedPaintStroke(event) {
+      const engine = this.guidedPaint;
+      if (!engine?.isDrawing || !engine.currentAction) return;
+      event?.target?.releasePointerCapture?.(event.pointerId);
+      engine.isDrawing = false;
+      const action = engine.currentAction;
+      engine.currentAction = null;
+      engine.lastPoint = null;
+      const stepId = engine.region;
+      const regionState = this.guidedPaintingRegionState(stepId);
+      const nextActions = [...(regionState.actions || []), action];
+      const coverage = this.calculateGuidedPaintCoverage();
+      this.updateGuidedPaintingRegion(stepId, {
+        coverage,
+        ready: coverage >= this.guidedPaintingConfig().completionThreshold,
+        actions: nextActions,
+        redoActions: [],
+      });
+      this.syncGuidedPaintingUi();
+    }
+
+    drawGuidedPaintSegment(from, to, action) {
+      const engine = this.guidedPaint;
+      if (!engine?.maskReady) return;
+      const scratch = engine.scratchBuffer.getContext("2d");
+      const paint = engine.paintBuffer.getContext("2d");
+      if (!scratch || !paint) return;
+      scratch.clearRect(0, 0, engine.width, engine.height);
+      scratch.save();
+      scratch.lineCap = "round";
+      scratch.lineJoin = "round";
+      scratch.strokeStyle = action.color;
+      scratch.lineWidth = action.size;
+      scratch.beginPath();
+      scratch.moveTo(from.x, from.y);
+      const distance = Math.hypot(to.x - from.x, to.y - from.y);
+      const steps = Math.max(1, Math.ceil(distance / Math.max(4, action.size * 0.28)));
+      for (let step = 1; step <= steps; step += 1) {
+        const progress = step / steps;
+        scratch.lineTo(from.x + (to.x - from.x) * progress, from.y + (to.y - from.y) * progress);
+      }
+      scratch.stroke();
+      scratch.restore();
+      scratch.globalCompositeOperation = "destination-in";
+      scratch.drawImage(engine.maskBuffer, 0, 0);
+      scratch.globalCompositeOperation = "source-over";
+      paint.save();
+      paint.globalCompositeOperation = action.tool === "eraser" ? "destination-out" : "source-over";
+      paint.drawImage(engine.scratchBuffer, 0, 0);
+      paint.restore();
+      this.resizeGuidedPaintCanvas();
+      this.syncGuidedMiniature();
+    }
+
+    redrawGuidedPaintFromActions() {
+      const engine = this.guidedPaint;
+      if (!engine?.paintBuffer) return;
+      const paint = engine.paintBuffer.getContext("2d");
+      if (!paint) return;
+      paint.clearRect(0, 0, engine.width, engine.height);
+      const actions = this.guidedPaintingRegionState(engine.region).actions || [];
+      actions.forEach((action) => {
+        const points = action.points || [];
+        for (let index = 1; index < points.length; index += 1) {
+          this.drawGuidedPaintSegment(points[index - 1], points[index], action);
+        }
+        if (points.length === 1) this.drawGuidedPaintSegment(points[0], points[0], action);
+      });
+      const coverage = this.calculateGuidedPaintCoverage();
+      this.updateGuidedPaintingRegion(engine.region, {
+        coverage,
+        ready: coverage >= this.guidedPaintingConfig().completionThreshold,
+      });
+      this.resizeGuidedPaintCanvas();
+      this.syncGuidedPaintingUi();
+    }
+
+    calculateGuidedPaintCoverage() {
+      const engine = this.guidedPaint;
+      if (!engine?.maskReady || !engine.maskPixels) return 0;
+      const paint = engine.paintBuffer.getContext("2d", { willReadFrequently: true });
+      const mask = engine.maskBuffer.getContext("2d", { willReadFrequently: true });
+      if (!paint || !mask) return 0;
+      const paintData = paint.getImageData(0, 0, engine.width, engine.height).data;
+      const maskData = mask.getImageData(0, 0, engine.width, engine.height).data;
+      let painted = 0;
+      for (let index = 0; index < maskData.length; index += 4) {
+        if (maskData[index + 3] > 8 && Math.max(maskData[index], maskData[index + 1], maskData[index + 2]) > 8 && paintData[index + 3] > 8) painted += 1;
+      }
+      return Math.max(0, Math.min(1, painted / engine.maskPixels));
+    }
+
+    undoGuidedPaint() {
+      if (this.game.type !== "guided-painting") return;
+      const stepId = this.state.guidedPainting.activeStepId;
+      const regionState = this.guidedPaintingRegionState(stepId);
+      const actions = [...(regionState.actions || [])];
+      const action = actions.pop();
+      if (!action) return;
+      this.updateGuidedPaintingRegion(stepId, {
+        actions,
+        redoActions: [action, ...(regionState.redoActions || [])],
+      });
+      audioPlayer.blip();
+      this.redrawGuidedPaintFromActions();
+    }
+
+    redoGuidedPaint() {
+      if (this.game.type !== "guided-painting") return;
+      const stepId = this.state.guidedPainting.activeStepId;
+      const regionState = this.guidedPaintingRegionState(stepId);
+      const redoActions = [...(regionState.redoActions || [])];
+      const action = redoActions.shift();
+      if (!action) return;
+      this.updateGuidedPaintingRegion(stepId, {
+        actions: [...(regionState.actions || []), action],
+        redoActions,
+      });
+      audioPlayer.blip();
+      this.redrawGuidedPaintFromActions();
+    }
+
+    syncGuidedMiniature() {
+      const engine = this.guidedPaint;
+      const miniature = this.root.querySelector("[data-guided-miniature]");
+      if (!engine || !miniature) return;
+      const composite = this.composeGuidedPainting({ includeProtectedBase: false });
+      if (!composite) return;
+      miniature.style.setProperty("--guided-miniature-paint", `url("${composite.toDataURL("image/png")}")`);
+    }
+
+    composeGuidedPainting(options = {}) {
+      const width = this.guidedPaint?.width || 1200;
+      const height = this.guidedPaint?.height || 1200;
+      const composite = document.createElement("canvas");
+      composite.width = width;
+      composite.height = height;
+      const context = composite.getContext("2d");
+      if (!context) return null;
+      const config = this.guidedPaintingConfig();
+      config?.steps
+        ?.filter((step) => !step.locked)
+        .forEach((step) => {
+          const buffer = this.guidedPaintBuffers?.[step.id];
+          if (buffer) context.drawImage(buffer, 0, 0);
+        });
+      if (options.includeProtectedBase && this.guidedPaintProtectedImage) {
+        context.drawImage(this.guidedPaintProtectedImage, 0, 0, width, height);
+      }
+      return composite;
+    }
+
+    guidedPaintingRegionTexture(stepId) {
+      const buffer = this.guidedPaintBuffers?.[stepId];
+      return buffer ? buffer.toDataURL("image/png") : "";
+    }
+
+    buildGuidedCharacterCreation() {
+      const config = this.guidedPaintingConfig();
+      const previewCanvas = this.composeGuidedPainting({ includeProtectedBase: true });
+      const regions = {};
+      config.steps
+        .filter((step) => !step.locked)
+        .forEach((step) => {
+          regions[step.id] = {
+            ...this.guidedPaintingRegionState(step.id),
+            texture: this.guidedPaintingRegionTexture(step.id),
+          };
+        });
+      return {
+        characterId: "joaninha",
+        completed: true,
+        completedAt: Date.now(),
+        regions,
+        preview: previewCanvas ? previewCanvas.toDataURL("image/png") : "",
+      };
+    }
+
+    syncGuidedFinalScreen(screen = this.state.screen) {
+      if (this.game.type !== "guided-painting" || screen !== "final") return;
+      window.requestAnimationFrame(() => {
+        const creation = this.state.guidedPainting.characterCreation || this.buildGuidedCharacterCreation();
+        const image = this.root.querySelector("[data-guided-final-image]");
+        if (image && creation.preview) image.src = creation.preview;
+      });
+    }
+
+    prepareGuidedLifeState() {
+      if (this.game.type !== "guided-painting") return;
+      const creation = this.buildGuidedCharacterCreation();
+      this.state = {
+        ...this.state,
+        guidedPainting: {
+          ...this.state.guidedPainting,
+          lifeReady: true,
+          characterCreation: creation,
+        },
+      };
+      const image = this.root.querySelector("[data-guided-final-image]");
+      const status = this.root.querySelector("[data-guided-final-status]");
+      if (image && creation.preview) image.src = creation.preview;
+      if (status) status.textContent = "JOANINHA PRONTA PARA GANHAR VIDA";
+      audioPlayer.blip("success");
+    }
+
+    syncGuidedPaintingUi() {
+      if (this.game.type !== "guided-painting") return;
+      const state = this.state.guidedPainting || {};
+      const config = this.guidedPaintingConfig();
+      const activeStep = this.guidedPaintingStep();
+      const regionState = this.guidedPaintingRegionState(activeStep?.id);
+      const coverage = Math.round((regionState.coverage || 0) * 100);
+      const threshold = Math.round((config?.completionThreshold || 0.65) * 100);
+      this.root.querySelectorAll("[data-guided-color]").forEach((button) => {
+        button.classList.toggle("is-selected", state.activeTool === "brush" && button.dataset.guidedColor === state.activeColor);
+      });
+      const eraser = this.root.querySelector("[data-game-action='guided-eraser']");
+      eraser?.classList.toggle("is-selected", state.activeTool === "eraser");
+      const undo = this.root.querySelector("[data-game-action='guided-undo']");
+      const redo = this.root.querySelector("[data-game-action='guided-redo']");
+      if (undo) undo.disabled = !(regionState.actions || []).length;
+      if (redo) redo.disabled = !(regionState.redoActions || []).length;
+      const bar = this.root.querySelector("[data-guided-coverage-bar]");
+      const label = this.root.querySelector("[data-guided-coverage-label]");
+      if (bar) bar.style.width = `${coverage}%`;
+      if (label) label.textContent = `${coverage}% / ${threshold}%`;
+      const readyButton = this.root.querySelector("[data-game-action='guided-ready']");
+      if (readyButton) {
+        readyButton.disabled = !regionState.ready;
+        readyButton.setAttribute("aria-disabled", regionState.ready ? "false" : "true");
+        readyButton.classList.toggle("is-ready", Boolean(regionState.ready));
+      }
+      const status = this.root.querySelector("[data-guided-tech-status]");
+      if (status) status.textContent = regionState.ready ? `ETAPA ${activeStep?.label?.toUpperCase() || ""} LIBERADA` : `Pinte ${activeStep?.label || "a etapa"} ate completar o limite tecnico.`;
+      this.syncGuidedMiniature();
+      this.syncGuidedAssetWarning();
+    }
+
+    finishGuidedPaintingHead() {
+      if (this.game.type !== "guided-painting") return;
+      const activeStep = this.guidedPaintingStep();
+      const coverage = this.calculateGuidedPaintCoverage();
+      const ready = coverage >= this.guidedPaintingConfig().completionThreshold;
+      this.updateGuidedPaintingRegion(activeStep.id, {
+        coverage,
+        ready,
+        completed: ready,
+      });
+      this.syncGuidedPaintingUi();
+      if (!ready) return;
+      audioPlayer.blip("success");
+      this.playGuidedCompletionSound();
+      this.advanceGuidedPaintingStep(activeStep.id);
+    }
+
+    advanceGuidedPaintingStep(stepId) {
+      const config = this.guidedPaintingConfig();
+      const steps = config.steps.filter((step) => !step.locked);
+      const currentIndex = steps.findIndex((step) => step.id === stepId);
+      const nextStep = steps[currentIndex + 1];
+      const completedSteps = Array.from(new Set([...(this.state.guidedPainting.completedSteps || []), stepId]));
+      if (nextStep) {
+        this.state = {
+          ...this.state,
+          guidedPainting: {
+            ...this.state.guidedPainting,
+            activeStepId: nextStep.id,
+            completedSteps,
+          },
+        };
+        this.guidedPaint = null;
+        this.go("choice", { transition: { enabled: true, duration: 420, variant: "soft" } });
+        audioPlayer.speak(nextStep.narration || this.currentRound().narration, null);
+        return;
+      }
+      this.state = {
+        ...this.state,
+        guidedPainting: {
+          ...this.state.guidedPainting,
+          completedSteps,
+          characterCreation: this.buildGuidedCharacterCreation(),
+        },
+        completedRounds: [this.currentRound().id],
+      };
+      this.go("final");
+    }
+
+    playGuidedCompletionSound() {
+      const src = this.guidedPaintingStep()?.completionSound || this.guidedPaintingAssets().completionSound;
+      if (!src) return;
+      const audio = new Audio(src);
+      audio.volume = audioPlayer.volumes.effects;
+      audio.play?.().catch(() => {});
+    }
+
+    startGuidedPaintMusic() {
+      const src = this.guidedPaintingAssets().ambientMusic;
+      if (!src || this.guidedPaintMusic?.src?.includes(src)) return;
+      const audio = new Audio(src);
+      audio.loop = true;
+      audio.volume = audioPlayer.volumes.music;
+      this.guidedPaintMusic = audio;
+      audio.play?.().catch(() => {});
+    }
+
     canvasCoordinates(clientX, clientY) {
       const canvas = this.root.querySelector("[data-creative-canvas]");
       if (!canvas) return { x: 50, y: 50 };
@@ -6739,6 +7539,8 @@
       this.syncMagicAmbienceLayer(screen);
       this.syncReactiveCharactersForScreen(screen);
       this.syncRounds();
+      this.syncGuidedPaintingScreen(screen);
+      this.syncGuidedFinalScreen(screen);
       this.syncBasketIntroStart(screen);
       this.syncBasketRoomAdvance(screen);
       this.syncJardimCinematicMedia(screen);
