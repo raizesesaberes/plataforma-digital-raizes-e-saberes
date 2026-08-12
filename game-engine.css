@@ -1911,6 +1911,39 @@ body.game-immersive-active .game-stage,
   pointer-events: auto;
 }
 
+.jardim-final-button {
+  position: absolute;
+  left: 50%;
+  top: 78%;
+  z-index: 8;
+  width: min(46%, 420px);
+  height: 14%;
+  min-width: 120px;
+  min-height: 52px;
+  padding: 12px 28px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  color: transparent;
+  cursor: pointer;
+  font-size: clamp(1rem, 2.5vw, 1.35rem);
+  font-weight: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 0);
+}
+
+.jardim-final-button:focus-visible {
+  outline: 4px solid rgba(62, 182, 255, 0.9);
+  outline-offset: 3px;
+}
+
+.jardim-cinematic-screen.is-final-loop .jardim-final-button {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .jardim-round-sign {
   position: absolute;
   left: var(--jardim-round-sign-x, 22%);
@@ -2213,6 +2246,7 @@ body.game-immersive-active .game-stage,
 .jardim-cinematic-screen.is-playing-instruction .jardim-question-card,
 .jardim-cinematic-screen.is-playing-instruction .jardim-success-card,
 .jardim-cinematic-screen.is-playing-instruction .jardim-discovery-hotspot,
+.jardim-cinematic-screen.is-playing-instruction:not(.is-final-loop) .jardim-final-button,
 .jardim-cinematic-screen.is-video-complete .jardim-start-button {
   opacity: 0;
   pointer-events: none;

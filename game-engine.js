@@ -4432,7 +4432,10 @@
       const signPosition = instrucao.signPosition || {};
       const exploreHotspot = instrucao.exploreHotspot || {};
       const preloadVideos = Object.entries(config?.videos || {}).filter(([key, video]) => key !== "abertura" && video?.src);
-      const discoveryRounds = Array.isArray(config?.rounds) ? config.rounds.filter((round) => round?.instructionCard && round?.hotspot) : [];
+      const discoveryRounds = Array.isArray(config?.rounds) ? config.rounds.filter((round) => {
+        const hotspot = round?.hotspot || {};
+        return Number.isFinite(Number(hotspot.x)) && Number.isFinite(Number(hotspot.y));
+      }) : [];
       const fallback = abertura.poster || this.game.assets.screens.intro;
       const showDevMessage = config?.developmentMessageEnabled !== false && this.isDevelopmentRuntime();
       return `
@@ -4463,13 +4466,16 @@
             <button class="jardim-explore-button" type="button" data-game-action="start-video-03" disabled aria-disabled="true" aria-label="${escapeHtml(instrucao.exploreButtonLabel || "EXPLORAR")}" style="--jardim-explore-x:${Number(exploreHotspot.x ?? 50.5)}%;--jardim-explore-y:${Number(exploreHotspot.y ?? 49)}%;--jardim-explore-w:${Number(exploreHotspot.width ?? 28)}%;--jardim-explore-h:${Number(exploreHotspot.height ?? 13)}%;">
               <span class="game-sr-only">${escapeHtml(instrucao.exploreButtonLabel || "EXPLORAR")}</span>
             </button>
+            <button class="jardim-final-button" type="button" data-game-action="jardim-final-hub" disabled aria-disabled="true">
+              ${escapeHtml(config?.final?.nextDiscoveryLabel || "PRÓXIMA DESCOBERTA")}
+            </button>
             ${discoveryRounds
               .map((round) => {
                 const hotspot = round.hotspot || {};
                 const position = round.instructionPosition || {};
                 const targetPosition = round.targetPosition || {};
                 return `
-                  <img class="jardim-round-sign" data-jardim-round-sign="${escapeHtml(round.id)}" src="${escapeHtml(round.instructionCard)}" alt="${escapeHtml(round.instructionAlt || round.questionText || "")}" loading="eager" decoding="async" style="--jardim-round-sign-x:${Number(position.x ?? 22)}%;--jardim-round-sign-y:${Number(position.y ?? 66)}%;--jardim-round-sign-w:${Number(position.width ?? 29)}%;" />
+                  ${round.instructionCard ? `<img class="jardim-round-sign" data-jardim-round-sign="${escapeHtml(round.id)}" src="${escapeHtml(round.instructionCard)}" alt="${escapeHtml(round.instructionAlt || round.questionText || "")}" loading="eager" decoding="async" style="--jardim-round-sign-x:${Number(position.x ?? 22)}%;--jardim-round-sign-y:${Number(position.y ?? 66)}%;--jardim-round-sign-w:${Number(position.width ?? 29)}%;" />` : ""}
                   ${round.targetImage ? `<img class="jardim-target-overlay" data-jardim-target-overlay="${escapeHtml(round.id)}" src="${escapeHtml(round.targetImage)}" alt="${escapeHtml(round.targetAlt || "")}" loading="eager" decoding="async" style="--jardim-target-x:${Number(targetPosition.x ?? hotspot.x ?? 50)}%;--jardim-target-y:${Number(targetPosition.y ?? hotspot.y ?? 50)}%;--jardim-target-w:${Number(targetPosition.width ?? hotspot.width ?? 14)}%;" />` : ""}
                   ${round.questionText ? `<div class="jardim-question-card" data-jardim-question-card="${escapeHtml(round.id)}" role="status" aria-live="polite">
                     <span>${escapeHtml(round.questionText || "")}</span>
@@ -5790,6 +5796,9 @@
       }
       if (action === "start-jardim-next-state") {
         this.startJardimNextState(button);
+      }
+      if (action === "jardim-final-hub") {
+        this.openHub();
       }
       if (action === "begin-audio-choice") {
         this.updateRoundContent();
@@ -7124,7 +7133,7 @@
       screen?.classList.remove("is-awaiting-video");
       screen?.classList.remove("is-transitioning");
       screen?.classList.remove("is-video-complete");
-      screen?.classList.remove("is-round-active", "is-round-success", "is-round-celebrating", "is-round-complete");
+      screen?.classList.remove("is-round-active", "is-round-success", "is-round-celebrating", "is-round-complete", "is-final-loop");
       screen?.classList.add("is-playing-instruction");
       this.root.querySelector("[data-jardim-freeze-canvas]")?.classList.remove("is-visible");
       this.root.querySelector("[data-jardim-freeze-frame]")?.classList.remove("is-visible");
@@ -7133,6 +7142,11 @@
         exploreButton.disabled = true;
         exploreButton.setAttribute("aria-disabled", "true");
       }
+      const finalButton = this.root.querySelector("[data-game-action='jardim-final-hub']");
+      if (finalButton) {
+        finalButton.disabled = true;
+        finalButton.setAttribute("aria-disabled", "true");
+      }
       video.pause?.();
       video.loop = videoConfig.loop === true;
       video.muted = false;
@@ -7140,6 +7154,16 @@
       video.load?.();
       video.addEventListener("ended", () => this.handleJardimVideoEnded(video, videoConfig), { once: true });
       video.play?.().catch(() => {});
+      if (videoConfig.nextState === "HUB_JOGOS") {
+        window.setTimeout(() => {
+          screen?.classList.add("is-final-loop");
+          const finalButton = this.root.querySelector("[data-game-action='jardim-final-hub']");
+          if (finalButton) {
+            finalButton.disabled = false;
+            finalButton.setAttribute("aria-disabled", "false");
+          }
+        }, 650);
+      }
       return true;
     }
 
@@ -7160,7 +7184,13 @@
       }
       const config = this.getJardimCinematicConfig();
       const discoveryRound = Array.isArray(config?.rounds)
-        ? config.rounds.find((round) => round?.videoKey && round?.instructionCard && round?.hotspot && config?.videos?.[round.videoKey]?.id === videoConfig.id)
+        ? config.rounds.find((round) => {
+          const hotspot = round?.hotspot || {};
+          return round?.videoKey
+            && Number.isFinite(Number(hotspot.x))
+            && Number.isFinite(Number(hotspot.y))
+            && config?.videos?.[round.videoKey]?.id === videoConfig.id;
+        })
         : null;
       if (discoveryRound) {
         this.startJardimDiscoveryRound(discoveryRound.id, videoConfig.nextState);
