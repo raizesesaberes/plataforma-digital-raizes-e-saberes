@@ -4815,6 +4815,8 @@ body.game-immersive-active .game-stage,
   height: 100%;
   object-fit: contain;
   pointer-events: none;
+  transform: translate(var(--guided-view-x, 0), var(--guided-view-y, 0)) scale(var(--guided-view-scale, 1));
+  transform-origin: 0 0;
 }
 
 .guided-paint-layer {
@@ -4829,6 +4831,7 @@ body.game-immersive-active .game-stage,
 
 .guided-protected-layer {
   z-index: 3;
+  display: none;
 }
 
 .guided-mask-probe {

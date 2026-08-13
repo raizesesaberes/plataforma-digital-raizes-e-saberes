@@ -668,6 +668,7 @@
                   narration: "Escolha uma cor e pinte somente a cabeca da joaninha.",
                   part: atelieAsset("golden-master/JOANINHA_PARTE_CABECA.png"),
                   mask: atelieAsset("golden-master/JOANINHA_MASK_CABECA.png"),
+                  viewBox: { x: 45, y: 365, width: 665, height: 575 },
                   completionSound: atelieAsset("audio/cabeca-concluida.mp3"),
                 },
                 {
@@ -677,6 +678,7 @@
                   narration: "Agora escolha uma cor e pinte somente o corpo da joaninha.",
                   part: atelieAsset("golden-master/JOANINHA_PARTE_CORPO.png"),
                   mask: atelieAsset("golden-master/JOANINHA_MASK_CORPO.png"),
+                  viewBox: { x: 575, y: 525, width: 455, height: 545 },
                   completionSound: atelieAsset("audio/corpo-concluido.mp3"),
                 },
                 {
@@ -686,6 +688,7 @@
                   narration: "Agora vamos colorir somente as asas da joaninha.",
                   part: atelieAsset("golden-master/JOANINHA_PARTE_ASAS.png"),
                   mask: atelieAsset("golden-master/JOANINHA_MASK_ASAS.png"),
+                  viewBox: { x: 610, y: 355, width: 644, height: 540 },
                   completionSound: atelieAsset("audio/asas-concluidas.mp3"),
                 },
                 {
@@ -695,6 +698,7 @@
                   narration: "Agora vamos colorir as pintinhas da joaninha.",
                   part: atelieAsset("golden-master/JOANINHA_PARTE_PINTINHAS.png"),
                   mask: atelieAsset("golden-master/JOANINHA_MASK_PINTINHAS.png"),
+                  viewBox: { x: 610, y: 330, width: 630, height: 535 },
                   completionSound: atelieAsset("audio/pintinhas-concluidas.mp3"),
                 },
                 {
@@ -704,6 +708,7 @@
                   narration: "Falta pouquinho. Vamos colorir somente as pernas e as antenas.",
                   part: atelieAsset("golden-master/JOANINHA_PARTE_PERNAS_ANTENAS.png"),
                   mask: atelieAsset("golden-master/JOANINHA_MASK_PERNAS_ANTENAS.png"),
+                  viewBox: { x: 0, y: 25, width: 1254, height: 1200 },
                   completionSound: atelieAsset("audio/pernas-antenas-concluidas.mp3"),
                 },
               ],
@@ -5338,6 +5343,10 @@
       const regionState = this.guidedPaintingRegionState(activeStep?.id);
       const activeColor = guidedState.activeColor || painting.colors[0]?.id || "red";
       const activeTool = guidedState.activeTool || "brush";
+      const viewBox = activeStep?.viewBox || { x: 0, y: 0, width: 1254, height: 1254 };
+      const viewScale = 1254 / Math.max(viewBox.width || 1254, viewBox.height || 1254);
+      const viewOffsetX = -viewBox.x * viewScale + (1254 - (viewBox.width || 1254) * viewScale) / 2;
+      const viewOffsetY = -viewBox.y * viewScale + (1254 - (viewBox.height || 1254) * viewScale) / 2;
       const coverage = Math.round((regionState.coverage || 0) * 100);
       const threshold = Math.round((painting.completionThreshold || 0.65) * 100);
       const ready = Boolean(regionState.ready);
@@ -5379,7 +5388,7 @@
                 </div>
               </aside>
               <main class="guided-artboard-wrap">
-                <div class="guided-artboard" data-guided-artboard>
+                <div class="guided-artboard" data-guided-artboard style="--guided-view-scale:${viewScale}; --guided-view-x:${(viewOffsetX / 1254) * 100}%; --guided-view-y:${(viewOffsetY / 1254) * 100}%;">
                   <img class="guided-layer guided-base-layer" data-guided-base alt="" />
                   <canvas class="guided-layer guided-paint-layer" data-guided-paint-canvas aria-label="Area de pintura ${activeStep?.label || "guiada"}"></canvas>
                   <img class="guided-layer guided-protected-layer" data-guided-protected alt="" />
@@ -6854,17 +6863,18 @@
           isDrawing: false,
           currentAction: null,
           lastPoint: null,
+          viewBox: activeStep?.viewBox || { x: 0, y: 0, width, height },
         };
         const [baseImage, protectedImage, maskImage] = await Promise.all([
-          this.loadGuidedImage(assets.visualBase),
+          this.loadGuidedImage(activeStep?.part || assets.visualBase),
           this.loadGuidedImage(assets.protectedOverlay),
           this.loadGuidedImage(activeStep?.mask),
         ]);
         const base = this.root.querySelector("[data-guided-base]");
         const protectedLayer = this.root.querySelector("[data-guided-protected]");
         const miniature = this.root.querySelector("[data-guided-miniature]");
-        if (base && baseImage) base.src = assets.visualBase;
-        if (protectedLayer && protectedImage) protectedLayer.src = assets.protectedOverlay;
+        if (base && baseImage) base.src = activeStep?.part || assets.visualBase;
+        if (protectedLayer) protectedLayer.src = "";
         if (protectedImage) this.guidedPaintProtectedImage = protectedImage;
         if (miniature && baseImage) miniature.style.setProperty("--guided-miniature-base", `url("${assets.visualBase}")`);
         const maskContext = maskBuffer.getContext("2d", { willReadFrequently: true });
@@ -6884,6 +6894,7 @@
         this.redrawGuidedPaintFromActions();
       } else {
         this.guidedPaint.paintCanvas = paintCanvas;
+        this.guidedPaint.viewBox = activeStep?.viewBox || { x: 0, y: 0, width, height };
       }
       this.resizeGuidedPaintCanvas();
       this.syncGuidedPaintingUi();
@@ -6953,9 +6964,10 @@
     guidedCanvasPoint(event) {
       const engine = this.guidedPaint;
       const rect = engine.paintCanvas.getBoundingClientRect();
+      const viewBox = engine.viewBox || { x: 0, y: 0, width: engine.width, height: engine.height };
       return {
-        x: Math.max(0, Math.min(engine.width, ((event.clientX - rect.left) / rect.width) * engine.width)),
-        y: Math.max(0, Math.min(engine.height, ((event.clientY - rect.top) / rect.height) * engine.height)),
+        x: Math.max(0, Math.min(engine.width, viewBox.x + ((event.clientX - rect.left) / rect.width) * viewBox.width)),
+        y: Math.max(0, Math.min(engine.height, viewBox.y + ((event.clientY - rect.top) / rect.height) * viewBox.height)),
       };
     }
 
