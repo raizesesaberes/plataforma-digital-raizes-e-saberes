@@ -720,6 +720,14 @@
                 { id: "brown", label: "Marrom", value: "#795548" },
                 { id: "black", label: "Preto", value: "#111111" },
                 { id: "white", label: "Branco", value: "#ffffff" },
+                { id: "light-pink", label: "Rosa-claro", value: "#f8a9c8" },
+                { id: "lilac", label: "Lilas", value: "#c7a4ff" },
+                { id: "baby-blue", label: "Azul-bebe", value: "#9edcff" },
+                { id: "aqua-green", label: "Verde-agua", value: "#64d9c4" },
+                { id: "light-yellow", label: "Amarelo-claro", value: "#fff176" },
+                { id: "peach", label: "Pessego", value: "#ffb982" },
+                { id: "cream", label: "Bege creme", value: "#f3dfb8" },
+                { id: "gray", label: "Cinza", value: "#9aa0a6" },
               ],
             },
           },
@@ -5357,7 +5365,11 @@
               <aside class="guided-tool-panel" aria-label="Ferramentas de pintura">
                 <div class="guided-color-grid" data-guided-colors>
                   ${painting.colors.map((color) => `
-                    <button class="guided-color-swatch${activeTool === "brush" && activeColor === color.id ? " is-selected" : ""}" type="button" data-guided-color="${color.id}" aria-label="${color.label}" title="${color.label}" style="--swatch:${color.value}"></button>
+                    <button class="guided-color-swatch${activeTool === "brush" && activeColor === color.id ? " is-selected" : ""}" type="button" data-guided-color="${color.id}" aria-label="${color.label}" title="${color.label}" style="--swatch:${color.value}">
+                      <span class="guided-pencil-tip" aria-hidden="true"></span>
+                      <span class="guided-pencil-body" aria-hidden="true"></span>
+                      <span class="guided-pencil-cap" aria-hidden="true"></span>
+                    </button>
                   `).join("")}
                 </div>
                 <div class="guided-tool-actions">
