@@ -165,6 +165,13 @@
               },
             },
           },
+          life: {
+            active: false,
+            running: false,
+            phase: "atelier",
+            replayCount: 0,
+            gardenCharacters: {},
+          },
         },
         audio: {
           narration: 0.9,
@@ -621,6 +628,21 @@
             protectedOverlay: atelieAsset("golden-master/JOANINHA_BASE_PROTEGIDA.png"),
             completionSound: atelieAsset("audio/cabeca-concluida.mp3"),
             ambientMusic: atelieAsset("audio/ambiente-loop.mp3"),
+            gardenBackground: atelieAsset("backgrounds/jardim-descobertas-dia-v2.png"),
+            animation: {
+              base: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/IDLE/JOANINHA_ANIM_IDLE.png"),
+              wingsHalf: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/WINGS/JOANINHA_LAYER_EXTERNAL_WINGS_TEXTURE_HALF.png"),
+              wingsOpen: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/WINGS/JOANINHA_LAYER_EXTERNAL_WINGS_TEXTURE_OPEN.png"),
+              innerWings: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/WINGS/JOANINHA_INNER_WINGS.png"),
+              legsStepA: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/LEGS/JOANINHA_LEGS_STEP_A.png"),
+              legsStepB: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/LEGS/JOANINHA_LEGS_STEP_B.png"),
+              legsStepC: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/LEGS/JOANINHA_LEGS_STEP_C.png"),
+              antennasA: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/ANTENNAS/JOANINHA_ANTENNAS_SOFT_A.png"),
+              antennasB: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/ANTENNAS/JOANINHA_ANTENNAS_SOFT_B.png"),
+              eyesBlink: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/EYES/JOANINHA_EYES_BLINK_OVERLAY.png"),
+              shadow: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/SHADOW/JOANINHA_SHADOW.png"),
+              shadowFlight: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/SHADOW/JOANINHA_SHADOW_FLIGHT_SOFT.png"),
+            },
           },
         },
         audio: {
@@ -4294,6 +4316,7 @@
               ${this.renderChoiceScreen()}
               ${this.renderFeedbackScreen()}
               ${this.renderFinalScreen()}
+              ${this.renderGuidedLifeScreen()}
               ${MagicAmbienceLayer.render()}
             </main>
             <aside class="game-panel" aria-label="Painel do jogo">
@@ -5498,6 +5521,46 @@
       return VictoryScreen.render(this.getVictoryOptions());
     }
 
+    renderGuidedLifeScreen() {
+      if (this.game?.type !== "guided-painting") return "";
+      const assets = this.guidedPaintingAssets();
+      const animation = assets.animation || {};
+      const gardenZone = this.guidedLadybugGardenZone();
+      return `
+        <section class="game-screen guided-life-screen" data-screen="life" aria-label="Jardim Mestre com a joaninha criada">
+          <div class="guided-life-garden" style="--guided-garden:url('${assets.gardenBackground || this.game.assets.screens.final}')" data-guided-life-garden>
+            <div class="guided-life-transition" aria-hidden="true"></div>
+            <div class="guided-life-ladybug is-sequence" data-guided-life-ladybug style="--ladybug-x:${gardenZone.idle.x}%; --ladybug-y:${gardenZone.idle.y}%; --ladybug-scale:${gardenZone.idle.scale};">
+              <img class="guided-life-shadow guided-life-shadow-ground" src="${animation.shadow || ""}" alt="" />
+              <img class="guided-life-shadow guided-life-shadow-flight" src="${animation.shadowFlight || animation.shadow || ""}" alt="" />
+              <div class="guided-life-body" data-guided-life-body>
+                ${this.renderGuidedLifeLayer("base", assets.protectedOverlay)}
+                ${this.renderGuidedLifeRegionLayer("cabeca", "head")}
+                ${this.renderGuidedLifeRegionLayer("corpo", "body")}
+                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "legs idle")}
+                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "legs step-a", animation.legsStepA)}
+                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "legs step-b", animation.legsStepB)}
+                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "legs step-c", animation.legsStepC)}
+                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "antenna antenna-a", animation.antennasA)}
+                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "antenna antenna-b", animation.antennasB)}
+                ${this.renderGuidedLifeWingLayer("wing idle")}
+                ${this.renderGuidedLifeWingLayer("wing half", animation.wingsHalf)}
+                ${this.renderGuidedLifeWingLayer("wing open", animation.wingsOpen)}
+                ${this.renderGuidedLifeLayer("inner-wings", animation.innerWings)}
+                ${this.renderGuidedLifeLayer("protected", assets.protectedOverlay)}
+                ${this.renderGuidedLifeLayer("blink", animation.eyesBlink)}
+              </div>
+            </div>
+            <div class="guided-life-speech" data-guided-life-speech>UAU! SUA JOANINHA GANHOU VIDA!</div>
+            <div class="guided-life-actions" data-guided-life-actions>
+              <button type="button" data-game-action="guided-life-replay">VER DE NOVO</button>
+              <button type="button" data-game-action="guided-life-back">VOLTAR AO JARDIM</button>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
     renderRoundPanel() {
       return `
         <section>
@@ -6037,6 +6100,12 @@
       }
       if (action === "guided-life-ready") {
         this.prepareGuidedLifeState();
+      }
+      if (action === "guided-life-replay") {
+        this.replayGuidedLife();
+      }
+      if (action === "guided-life-back") {
+        this.returnGuidedLifeToGarden();
       }
       if (action === "start-video-03") {
         this.startVideo03(button);
@@ -7089,6 +7158,48 @@
       };
     }
 
+    guidedLadybugGardenZone() {
+      return {
+        idle: { x: 46, y: 63, scale: 0.235 },
+        walkStart: { x: 42, y: 64, scale: 0.23 },
+        takeoff: { x: 51, y: 53, scale: 0.215 },
+        flight: { x: 66, y: 36, scale: 0.17 },
+        landing: { x: 48, y: 62, scale: 0.23 },
+      };
+    }
+
+    guidedLifeLayerMask(stepId) {
+      const config = this.guidedPaintingConfig();
+      const step = config?.steps?.find((entry) => entry.id === stepId);
+      return step?.mask || "";
+    }
+
+    guidedLifeLayerStyle(stepId, clipSrc = this.guidedLifeLayerMask(stepId)) {
+      const texture = this.guidedPaintingRegionTexture(stepId);
+      return `--life-texture:url('${texture}'); --life-clip:url('${clipSrc}')`;
+    }
+
+    renderGuidedLifeLayer(kind, src) {
+      if (!src) return "";
+      return `<img class="guided-life-layer is-${kind}" src="${src}" alt="" aria-hidden="true" />`;
+    }
+
+    renderGuidedLifeRegionLayer(stepId, kind, clipSrc = this.guidedLifeLayerMask(stepId)) {
+      const texture = this.guidedPaintingRegionTexture(stepId);
+      if (!texture) return "";
+      return `<span class="guided-life-layer guided-life-painted is-${kind}" style="${this.guidedLifeLayerStyle(stepId, clipSrc)}" aria-hidden="true"></span>`;
+    }
+
+    renderGuidedLifeWingLayer(kind, clipSrc = this.guidedLifeLayerMask("asas")) {
+      const texture = this.guidedPaintingRegionTexture("asas");
+      const spots = this.guidedPaintingRegionTexture("pintinhas");
+      const spotsClip = kind === "wing idle" ? this.guidedLifeLayerMask("pintinhas") : clipSrc;
+      return `
+        <span class="guided-life-layer guided-life-wing is-${kind}" style="${this.guidedLifeLayerStyle("asas", clipSrc)}" aria-hidden="true"></span>
+        <span class="guided-life-layer guided-life-wing-spots is-${kind}" style="--life-texture:url('${spots}'); --life-clip:url('${spotsClip || clipSrc}')" aria-hidden="true"></span>
+      `;
+    }
+
     syncGuidedFinalScreen(screen = this.state.screen) {
       if (this.game.type !== "guided-painting" || screen !== "final") return;
       window.requestAnimationFrame(() => {
@@ -7100,6 +7211,7 @@
 
     prepareGuidedLifeState() {
       if (this.game.type !== "guided-painting") return;
+      if (this.state.guidedPainting?.life?.running) return;
       const creation = this.buildGuidedCharacterCreation();
       this.state = {
         ...this.state,
@@ -7107,13 +7219,119 @@
           ...this.state.guidedPainting,
           lifeReady: true,
           characterCreation: creation,
+          life: {
+            ...(this.state.guidedPainting.life || {}),
+            active: true,
+            running: true,
+            phase: "sequence",
+            startedAt: Date.now(),
+            gardenCharacters: {
+              ladybug: {
+                completed: true,
+                paintingState: creation,
+                animationState: "sequence",
+                gardenPosition: this.guidedLadybugGardenZone().idle,
+              },
+            },
+          },
         },
       };
       const image = this.root.querySelector("[data-guided-final-image]");
       const status = this.root.querySelector("[data-guided-final-status]");
       if (image && creation.preview) image.src = creation.preview;
-      if (status) status.textContent = "JOANINHA PRONTA PARA GANHAR VIDA";
+      if (status) status.textContent = "JOANINHA ENTRANDO NO JARDIM";
       audioPlayer.blip("success");
+      this.root.innerHTML = this.render();
+      this.go("life", { transition: { enabled: true, duration: 520, variant: "soft" } });
+    }
+
+    syncGuidedLifeScreen(screen = this.state.screen) {
+      if (this.game.type !== "guided-painting" || screen !== "life") return;
+      window.requestAnimationFrame(() => this.startGuidedLifeSequence());
+    }
+
+    startGuidedLifeSequence({ replay = false } = {}) {
+      const ladybug = this.root.querySelector("[data-guided-life-ladybug]");
+      const garden = this.root.querySelector("[data-guided-life-garden]");
+      if (!ladybug || !garden) return;
+      const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+      ladybug.classList.remove("is-sequence", "is-loop", "is-replay", "is-reduced");
+      garden.classList.remove("is-loop-ready");
+      void ladybug.offsetWidth;
+      ladybug.classList.add(reduced ? "is-reduced" : "is-sequence");
+      if (replay) ladybug.classList.add("is-replay");
+      const duration = reduced ? 1800 : 9200;
+      window.clearTimeout(this.guidedLifeTimer);
+      this.guidedLifeTimer = window.setTimeout(() => {
+        ladybug.classList.remove("is-sequence", "is-replay", "is-reduced");
+        ladybug.classList.add("is-loop");
+        garden.classList.add("is-loop-ready");
+        this.state = {
+          ...this.state,
+          guidedPainting: {
+            ...this.state.guidedPainting,
+            life: {
+              ...(this.state.guidedPainting.life || {}),
+              running: false,
+              phase: "loop",
+              gardenCharacters: {
+                ...(this.state.guidedPainting.life?.gardenCharacters || {}),
+                ladybug: {
+                  ...(this.state.guidedPainting.life?.gardenCharacters?.ladybug || {}),
+                  animationState: "loop",
+                  gardenPosition: this.guidedLadybugGardenZone().idle,
+                },
+              },
+            },
+          },
+        };
+      }, duration);
+    }
+
+    replayGuidedLife() {
+      if (this.game.type !== "guided-painting" || this.state.screen !== "life") return;
+      this.state = {
+        ...this.state,
+        guidedPainting: {
+          ...this.state.guidedPainting,
+          life: {
+            ...(this.state.guidedPainting.life || {}),
+            running: true,
+            phase: "sequence",
+            replayCount: (this.state.guidedPainting.life?.replayCount || 0) + 1,
+          },
+        },
+      };
+      this.startGuidedLifeSequence({ replay: true });
+    }
+
+    returnGuidedLifeToGarden() {
+      if (this.game.type !== "guided-painting") return;
+      const creation = this.state.guidedPainting?.characterCreation || this.buildGuidedCharacterCreation();
+      this.state = {
+        ...this.state,
+        guidedPainting: {
+          ...this.state.guidedPainting,
+          characterCreation: creation,
+          life: {
+            ...(this.state.guidedPainting.life || {}),
+            active: true,
+            running: false,
+            phase: "garden",
+            gardenCharacters: {
+              ...(this.state.guidedPainting.life?.gardenCharacters || {}),
+              ladybug: {
+                completed: true,
+                paintingState: creation,
+                animationState: "garden-idle",
+                gardenPosition: this.guidedLadybugGardenZone().idle,
+              },
+            },
+          },
+        },
+      };
+      audioPlayer.blip();
+      this.go("room", { transition: { enabled: true, duration: 420, variant: "soft" } });
     }
 
     syncGuidedPaintingUi() {
@@ -7541,6 +7759,7 @@
       this.syncRounds();
       this.syncGuidedPaintingScreen(screen);
       this.syncGuidedFinalScreen(screen);
+      this.syncGuidedLifeScreen(screen);
       this.syncBasketIntroStart(screen);
       this.syncBasketRoomAdvance(screen);
       this.syncJardimCinematicMedia(screen);
