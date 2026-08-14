@@ -2710,6 +2710,7 @@
         canvasSequence: 0,
         guidedPainting: {
           activeStepId: "cabeca",
+          frontierStepId: "cabeca",
           activeTool: "brush",
           activeColor: "red",
           completedSteps: [],
@@ -6799,6 +6800,7 @@
       const guidedState = this.state.guidedPainting || {};
       if (guidedState.completedSteps?.includes(step.id)) return "complete";
       if (step.id === guidedState.activeStepId) return "active";
+      if (step.id === guidedState.frontierStepId) return "available";
       return "locked";
     }
 
@@ -6806,13 +6808,14 @@
       if (this.game.type !== "guided-painting") return;
       const step = this.guidedPaintingStep(stepId);
       const guidedState = this.state.guidedPainting || {};
-      const canReview = step?.id === guidedState.activeStepId || guidedState.completedSteps?.includes(step?.id);
+      const canReview = step?.id === guidedState.activeStepId || step?.id === guidedState.frontierStepId || guidedState.completedSteps?.includes(step?.id);
       if (!step || !canReview) return;
       this.state = {
         ...this.state,
         guidedPainting: {
           ...guidedState,
           activeStepId: step.id,
+          characterCreation: null,
         },
       };
       this.guidedPaint = null;
@@ -7162,8 +7165,8 @@
     }
 
     composeGuidedPainting(options = {}) {
-      const width = this.guidedPaint?.width || 1200;
-      const height = this.guidedPaint?.height || 1200;
+      const width = this.guidedPaint?.width || 1254;
+      const height = this.guidedPaint?.height || 1254;
       const composite = document.createElement("canvas");
       composite.width = width;
       composite.height = height;
@@ -7253,7 +7256,14 @@
     syncGuidedFinalScreen(screen = this.state.screen) {
       if (this.game.type !== "guided-painting" || screen !== "final") return;
       window.requestAnimationFrame(() => {
-        const creation = this.state.guidedPainting.characterCreation || this.buildGuidedCharacterCreation();
+        const creation = this.buildGuidedCharacterCreation();
+        this.state = {
+          ...this.state,
+          guidedPainting: {
+            ...this.state.guidedPainting,
+            characterCreation: creation,
+          },
+        };
         const image = this.root.querySelector("[data-guided-final-image]");
         if (image && creation.preview) image.src = creation.preview;
       });
@@ -7446,7 +7456,9 @@
           guidedPainting: {
             ...this.state.guidedPainting,
             activeStepId: nextStep.id,
+            frontierStepId: nextStep.id,
             completedSteps,
+            characterCreation: null,
           },
         };
         this.guidedPaint = null;

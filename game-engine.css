@@ -4669,6 +4669,17 @@ body.game-immersive-active .game-stage,
   color: #155c38;
 }
 
+.guided-progress-steps button.is-available {
+  border-color: #d5b172;
+  background: #fff9ea;
+  color: #725327;
+}
+
+.guided-progress-steps button.is-complete,
+.guided-progress-steps button.is-available {
+  cursor: pointer;
+}
+
 .guided-progress-steps button.is-locked {
   opacity: 0.48;
   cursor: not-allowed;
