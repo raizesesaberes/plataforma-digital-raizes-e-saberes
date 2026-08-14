@@ -668,17 +668,17 @@
                   narration: "Escolha uma cor e pinte somente a cabeca da joaninha.",
                   part: atelieAsset("golden-master/JOANINHA_PARTE_CABECA.png"),
                   mask: atelieAsset("golden-master/JOANINHA_MASK_CABECA.png"),
-                  viewBox: { x: 45, y: 365, width: 665, height: 575 },
+                  viewBox: { x: 45, y: 320, width: 720, height: 680 },
                   completionSound: atelieAsset("audio/cabeca-concluida.mp3"),
                 },
                 {
-                  id: "corpo",
-                  label: "Corpo",
-                  instruction: "AGORA VAMOS COLORIR O CORPO!",
-                  narration: "Agora escolha uma cor e pinte somente o corpo da joaninha.",
-                  part: atelieAsset("golden-master/JOANINHA_PARTE_CORPO.png"),
-                  mask: atelieAsset("golden-master/JOANINHA_MASK_CORPO.png"),
-                  viewBox: { x: 360, y: 560, width: 560, height: 500 },
+                  id: "corpo-pernas",
+                  label: "Corpo + pernas",
+                  instruction: "AGORA VAMOS COLORIR O CORPO E AS PERNAS!",
+                  narration: "Agora escolha uma cor e pinte o corpo e as pernas da joaninha.",
+                  part: atelieAsset("golden-master/JOANINHA_PARTE_CORPO_PERNAS.png"),
+                  mask: atelieAsset("golden-master/JOANINHA_MASK_CORPO_PERNAS.png"),
+                  viewBox: { x: 105, y: 700, width: 1149, height: 554 },
                   completionSound: atelieAsset("audio/corpo-concluido.mp3"),
                 },
                 {
@@ -688,7 +688,7 @@
                   narration: "Agora vamos colorir somente as asas da joaninha.",
                   part: atelieAsset("golden-master/JOANINHA_PARTE_ASAS.png"),
                   mask: atelieAsset("golden-master/JOANINHA_MASK_ASAS.png"),
-                  viewBox: { x: 575, y: 300, width: 679, height: 625 },
+                  viewBox: { x: 545, y: 300, width: 709, height: 590 },
                   completionSound: atelieAsset("audio/asas-concluidas.mp3"),
                 },
                 {
@@ -702,13 +702,13 @@
                   completionSound: atelieAsset("audio/pintinhas-concluidas.mp3"),
                 },
                 {
-                  id: "pernas-antenas",
-                  label: "Pernas + antenas",
-                  instruction: "FALTA POUQUINHO! VAMOS COLORIR AS PERNAS E AS ANTENAS!",
-                  narration: "Falta pouquinho. Vamos colorir somente as pernas e as antenas.",
-                  part: atelieAsset("golden-master/JOANINHA_PARTE_PERNAS_ANTENAS.png"),
-                  mask: atelieAsset("golden-master/JOANINHA_MASK_PERNAS_ANTENAS.png"),
-                  viewBox: { x: 0, y: 25, width: 1254, height: 1200 },
+                  id: "antenas",
+                  label: "Antenas",
+                  instruction: "FALTA POUQUINHO! VAMOS COLORIR AS ANTENAS!",
+                  narration: "Falta pouquinho. Vamos colorir somente as antenas da joaninha.",
+                  part: atelieAsset("golden-master/JOANINHA_PARTE_ANTENAS.png"),
+                  mask: atelieAsset("golden-master/JOANINHA_MASK_ANTENAS.png"),
+                  viewBox: { x: 0, y: 25, width: 620, height: 430 },
                   completionSound: atelieAsset("audio/pernas-antenas-concluidas.mp3"),
                 },
               ],
@@ -2715,10 +2715,10 @@
           completedSteps: [],
           regions: {
             cabeca: { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
-            corpo: { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
+            "corpo-pernas": { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
             asas: { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
             pintinhas: { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
-            "pernas-antenas": { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
+            antenas: { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
           },
         },
         timelinePlacements: {},
@@ -5558,13 +5558,13 @@
               <div class="guided-life-body" data-guided-life-body>
                 ${this.renderGuidedLifeLayer("base", assets.protectedOverlay)}
                 ${this.renderGuidedLifeRegionLayer("cabeca", "head")}
-                ${this.renderGuidedLifeRegionLayer("corpo", "body")}
-                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "legs idle")}
-                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "legs step-a", animation.legsStepA)}
-                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "legs step-b", animation.legsStepB)}
-                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "legs step-c", animation.legsStepC)}
-                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "antenna antenna-a", animation.antennasA)}
-                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "antenna antenna-b", animation.antennasB)}
+                ${this.renderGuidedLifeRegionLayer("corpo-pernas", "body")}
+                ${this.renderGuidedLifeRegionLayer("corpo-pernas", "legs idle")}
+                ${this.renderGuidedLifeRegionLayer("corpo-pernas", "legs step-a", animation.legsStepA)}
+                ${this.renderGuidedLifeRegionLayer("corpo-pernas", "legs step-b", animation.legsStepB)}
+                ${this.renderGuidedLifeRegionLayer("corpo-pernas", "legs step-c", animation.legsStepC)}
+                ${this.renderGuidedLifeRegionLayer("antenas", "antenna antenna-a", animation.antennasA)}
+                ${this.renderGuidedLifeRegionLayer("antenas", "antenna antenna-b", animation.antennasB)}
                 ${this.renderGuidedLifeWingLayer("wing idle")}
                 ${this.renderGuidedLifeWingLayer("wing half", animation.wingsHalf)}
                 ${this.renderGuidedLifeWingLayer("wing open", animation.wingsOpen)}
