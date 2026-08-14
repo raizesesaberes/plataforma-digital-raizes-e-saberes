@@ -4823,6 +4823,7 @@ body.game-immersive-active .game-stage,
   z-index: 2;
   touch-action: none;
   pointer-events: auto;
+  mix-blend-mode: multiply;
 }
 
 .guided-base-layer {
@@ -4831,6 +4832,7 @@ body.game-immersive-active .game-stage,
 
 .guided-protected-layer {
   z-index: 3;
+  display: none;
 }
 
 .guided-mask-probe {

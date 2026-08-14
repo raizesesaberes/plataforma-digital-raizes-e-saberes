@@ -6839,8 +6839,8 @@
       const assets = this.guidedPaintingAssets();
       const activeStep = this.guidedPaintingStep();
       if (!config) return;
-      const width = 1200;
-      const height = 1200;
+      const width = 1254;
+      const height = 1254;
       if (!this.guidedPaint || this.guidedPaint.gameId !== this.game.id || this.guidedPaint.region !== activeStep?.id) {
         const maskBuffer = document.createElement("canvas");
         const scratchBuffer = document.createElement("canvas");
@@ -6876,7 +6876,7 @@
         const protectedLayer = this.root.querySelector("[data-guided-protected]");
         const miniature = this.root.querySelector("[data-guided-miniature]");
         if (base && baseImage) base.src = activeStep?.part || assets.visualBase;
-        if (protectedLayer && baseImage) protectedLayer.src = activeStep?.part || "";
+        if (protectedLayer) protectedLayer.src = "";
         if (protectedImage) this.guidedPaintProtectedImage = protectedImage;
         if (miniature && baseImage) miniature.style.setProperty("--guided-miniature-base", `url("${assets.visualBase}")`);
         const maskContext = maskBuffer.getContext("2d", { willReadFrequently: true });
@@ -6927,12 +6927,7 @@
       if (!context) return;
       context.setTransform(targetWidth / engine.width, 0, 0, targetHeight / engine.height, 0, 0);
       context.clearRect(0, 0, engine.width, engine.height);
-      this.guidedPaintingConfig()?.steps
-        ?.filter((step) => !step.locked)
-        .forEach((step) => {
-          const buffer = this.guidedPaintBuffers?.[step.id];
-          if (buffer) context.drawImage(buffer, 0, 0);
-        });
+      if (engine.paintBuffer) context.drawImage(engine.paintBuffer, 0, 0);
     }
 
     selectGuidedColor(colorId) {
