@@ -7428,6 +7428,7 @@
           },
         };
         this.guidedPaint = null;
+        this.root.innerHTML = this.render();
         this.go("choice", { transition: { enabled: true, duration: 420, variant: "soft" } });
         audioPlayer.speak(nextStep.narration || this.currentRound().narration, null);
         return;
@@ -7441,6 +7442,7 @@
         },
         completedRounds: [this.currentRound().id],
       };
+      this.root.innerHTML = this.render();
       this.go("final");
     }
 
