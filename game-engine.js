@@ -688,7 +688,7 @@
                   narration: "Agora vamos colorir somente as asas da joaninha.",
                   part: atelieAsset("golden-master/JOANINHA_PARTE_ASAS.png"),
                   mask: atelieAsset("golden-master/JOANINHA_MASK_ASAS.png"),
-                  viewBox: { x: 610, y: 355, width: 644, height: 540 },
+                  viewBox: { x: 575, y: 300, width: 679, height: 625 },
                   completionSound: atelieAsset("audio/asas-concluidas.mp3"),
                 },
                 {
