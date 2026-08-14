@@ -678,7 +678,7 @@
                   narration: "Agora escolha uma cor e pinte somente o corpo da joaninha.",
                   part: atelieAsset("golden-master/JOANINHA_PARTE_CORPO.png"),
                   mask: atelieAsset("golden-master/JOANINHA_MASK_CORPO.png"),
-                  viewBox: { x: 575, y: 525, width: 455, height: 545 },
+                  viewBox: { x: 360, y: 560, width: 560, height: 500 },
                   completionSound: atelieAsset("audio/corpo-concluido.mp3"),
                 },
                 {
@@ -5363,8 +5363,9 @@
             <div class="guided-progress-steps" aria-label="Progresso das partes">
               ${painting.steps.map((step) => {
                 const state = this.guidedPaintingStepState(step);
+                const locked = state === "locked";
                 return `
-                <button class="is-${state}" type="button" data-guided-step="${step.id}" disabled aria-disabled="true">
+                <button class="is-${state}" type="button" data-guided-step="${step.id}" ${locked ? "disabled aria-disabled=\"true\"" : "aria-disabled=\"false\""}>
                   ${step.label}${state === "complete" ? " ✓" : state === "active" ? " ●" : " ○"}
                 </button>
               `;
@@ -5675,6 +5676,7 @@
         const canvasItem = event.target.closest("[data-canvas-item-id]");
         const removeCanvas = event.target.closest("[data-remove-canvas-id]");
         const guidedColor = event.target.closest("[data-guided-color]");
+        const guidedStep = event.target.closest("[data-guided-step]");
         const timelineCard = event.target.closest("[data-timeline-card-id]");
         const timelineSlot = event.target.closest("[data-timeline-slot-id]");
         const journeyPortal = event.target.closest("[data-journey-portal-id]");
@@ -5699,6 +5701,7 @@
           return;
         }
         if (action) this.handleAction(action, event.target.closest("button"));
+        if (guidedStep) this.selectGuidedPaintingStep(guidedStep.dataset.guidedStep);
         if (audioChoice) this.answerAudio(audioChoice.dataset.audioChoiceId, audioChoice);
         if (patternChoice) this.answerPattern(patternChoice.dataset.patternChoiceId, patternChoice);
         if (explorationElement) this.answerExplorationV2(explorationElement.dataset.explorationElementId, explorationElement);
@@ -6797,6 +6800,25 @@
       if (guidedState.completedSteps?.includes(step.id)) return "complete";
       if (step.id === guidedState.activeStepId) return "active";
       return "locked";
+    }
+
+    selectGuidedPaintingStep(stepId) {
+      if (this.game.type !== "guided-painting") return;
+      const step = this.guidedPaintingStep(stepId);
+      const guidedState = this.state.guidedPainting || {};
+      const canReview = step?.id === guidedState.activeStepId || guidedState.completedSteps?.includes(step?.id);
+      if (!step || !canReview) return;
+      this.state = {
+        ...this.state,
+        guidedPainting: {
+          ...guidedState,
+          activeStepId: step.id,
+        },
+      };
+      this.guidedPaint = null;
+      this.root.innerHTML = this.render();
+      this.go("choice", { transition: false });
+      audioPlayer.blip();
     }
 
     loadGuidedImage(src) {
