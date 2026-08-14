@@ -6863,7 +6863,9 @@
           isDrawing: false,
           currentAction: null,
           lastPoint: null,
+          artboard,
           viewBox: activeStep?.viewBox || { x: 0, y: 0, width, height },
+          viewScale: width / Math.max(activeStep?.viewBox?.width || width, activeStep?.viewBox?.height || height),
         };
         const [baseImage, protectedImage, maskImage] = await Promise.all([
           this.loadGuidedImage(activeStep?.part || assets.visualBase),
@@ -6874,7 +6876,7 @@
         const protectedLayer = this.root.querySelector("[data-guided-protected]");
         const miniature = this.root.querySelector("[data-guided-miniature]");
         if (base && baseImage) base.src = activeStep?.part || assets.visualBase;
-        if (protectedLayer) protectedLayer.src = "";
+        if (protectedLayer && baseImage) protectedLayer.src = activeStep?.part || "";
         if (protectedImage) this.guidedPaintProtectedImage = protectedImage;
         if (miniature && baseImage) miniature.style.setProperty("--guided-miniature-base", `url("${assets.visualBase}")`);
         const maskContext = maskBuffer.getContext("2d", { willReadFrequently: true });
@@ -6894,7 +6896,9 @@
         this.redrawGuidedPaintFromActions();
       } else {
         this.guidedPaint.paintCanvas = paintCanvas;
+        this.guidedPaint.artboard = artboard;
         this.guidedPaint.viewBox = activeStep?.viewBox || { x: 0, y: 0, width, height };
+        this.guidedPaint.viewScale = width / Math.max(activeStep?.viewBox?.width || width, activeStep?.viewBox?.height || height);
       }
       this.resizeGuidedPaintCanvas();
       this.syncGuidedPaintingUi();
@@ -6963,11 +6967,16 @@
 
     guidedCanvasPoint(event) {
       const engine = this.guidedPaint;
-      const rect = engine.paintCanvas.getBoundingClientRect();
+      const rect = (engine.artboard || engine.paintCanvas).getBoundingClientRect();
       const viewBox = engine.viewBox || { x: 0, y: 0, width: engine.width, height: engine.height };
+      const scale = engine.viewScale || 1;
+      const viewOffsetX = -viewBox.x * scale + (engine.width - viewBox.width * scale) / 2;
+      const viewOffsetY = -viewBox.y * scale + (engine.height - viewBox.height * scale) / 2;
+      const visualX = ((event.clientX - rect.left) / rect.width) * engine.width;
+      const visualY = ((event.clientY - rect.top) / rect.height) * engine.height;
       return {
-        x: Math.max(0, Math.min(engine.width, viewBox.x + ((event.clientX - rect.left) / rect.width) * viewBox.width)),
-        y: Math.max(0, Math.min(engine.height, viewBox.y + ((event.clientY - rect.top) / rect.height) * viewBox.height)),
+        x: Math.max(0, Math.min(engine.width, (visualX - viewOffsetX) / scale)),
+        y: Math.max(0, Math.min(engine.height, (visualY - viewOffsetY) / scale)),
       };
     }
 
