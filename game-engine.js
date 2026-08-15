@@ -637,6 +637,7 @@
               legsStepA: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/LEGS/JOANINHA_LEGS_STEP_A.png"),
               legsStepB: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/LEGS/JOANINHA_LEGS_STEP_B.png"),
               legsStepC: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/LEGS/JOANINHA_LEGS_STEP_C.png"),
+              bodyMask: atelieAsset("golden-master/JOANINHA_MASK_CORPO.png"),
               antennasA: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/ANTENNAS/JOANINHA_ANTENNAS_SOFT_A.png"),
               antennasB: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/ANTENNAS/JOANINHA_ANTENNAS_SOFT_B.png"),
               eyesBlink: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/EYES/JOANINHA_EYES_BLINK_OVERLAY.png"),
@@ -668,15 +669,17 @@
                   narration: "Escolha uma cor e pinte somente a cabeca da joaninha.",
                   part: atelieAsset("golden-master/JOANINHA_PARTE_CABECA.png"),
                   mask: atelieAsset("golden-master/JOANINHA_MASK_CABECA.png"),
+                  viewBox: { x: 45, y: 320, width: 720, height: 680 },
                   completionSound: atelieAsset("audio/cabeca-concluida.mp3"),
                 },
                 {
-                  id: "corpo",
-                  label: "Corpo",
-                  instruction: "AGORA VAMOS COLORIR O CORPO!",
-                  narration: "Agora escolha uma cor e pinte somente o corpo da joaninha.",
-                  part: atelieAsset("golden-master/JOANINHA_PARTE_CORPO.png"),
-                  mask: atelieAsset("golden-master/JOANINHA_MASK_CORPO.png"),
+                  id: "corpo-pernas",
+                  label: "Corpo + pernas",
+                  instruction: "AGORA VAMOS COLORIR O CORPO E AS PERNAS!",
+                  narration: "Agora escolha uma cor e pinte o corpo e as pernas da joaninha.",
+                  part: atelieAsset("golden-master/JOANINHA_PARTE_CORPO_PERNAS.png"),
+                  mask: atelieAsset("golden-master/JOANINHA_MASK_CORPO_PERNAS.png"),
+                  viewBox: { x: 105, y: 700, width: 1149, height: 554 },
                   completionSound: atelieAsset("audio/corpo-concluido.mp3"),
                 },
                 {
@@ -686,6 +689,7 @@
                   narration: "Agora vamos colorir somente as asas da joaninha.",
                   part: atelieAsset("golden-master/JOANINHA_PARTE_ASAS.png"),
                   mask: atelieAsset("golden-master/JOANINHA_MASK_ASAS.png"),
+                  viewBox: { x: 545, y: 300, width: 709, height: 590 },
                   completionSound: atelieAsset("audio/asas-concluidas.mp3"),
                 },
                 {
@@ -695,15 +699,17 @@
                   narration: "Agora vamos colorir as pintinhas da joaninha.",
                   part: atelieAsset("golden-master/JOANINHA_PARTE_PINTINHAS.png"),
                   mask: atelieAsset("golden-master/JOANINHA_MASK_PINTINHAS.png"),
+                  viewBox: { x: 610, y: 330, width: 630, height: 535 },
                   completionSound: atelieAsset("audio/pintinhas-concluidas.mp3"),
                 },
                 {
-                  id: "pernas-antenas",
-                  label: "Pernas + antenas",
-                  instruction: "FALTA POUQUINHO! VAMOS COLORIR AS PERNAS E AS ANTENAS!",
-                  narration: "Falta pouquinho. Vamos colorir somente as pernas e as antenas.",
-                  part: atelieAsset("golden-master/JOANINHA_PARTE_PERNAS_ANTENAS.png"),
-                  mask: atelieAsset("golden-master/JOANINHA_MASK_PERNAS_ANTENAS.png"),
+                  id: "antenas",
+                  label: "Antenas",
+                  instruction: "FALTA POUQUINHO! VAMOS COLORIR AS ANTENAS!",
+                  narration: "Falta pouquinho. Vamos colorir somente as antenas da joaninha.",
+                  part: atelieAsset("golden-master/JOANINHA_PARTE_ANTENAS.png"),
+                  mask: atelieAsset("golden-master/JOANINHA_MASK_ANTENAS.png"),
+                  viewBox: { x: 0, y: 25, width: 620, height: 430 },
                   completionSound: atelieAsset("audio/pernas-antenas-concluidas.mp3"),
                 },
               ],
@@ -720,6 +726,14 @@
                 { id: "brown", label: "Marrom", value: "#795548" },
                 { id: "black", label: "Preto", value: "#111111" },
                 { id: "white", label: "Branco", value: "#ffffff" },
+                { id: "light-pink", label: "Rosa-claro", value: "#f8a9c8" },
+                { id: "lilac", label: "Lilas", value: "#c7a4ff" },
+                { id: "baby-blue", label: "Azul-bebe", value: "#9edcff" },
+                { id: "aqua-green", label: "Verde-agua", value: "#64d9c4" },
+                { id: "light-yellow", label: "Amarelo-claro", value: "#fff176" },
+                { id: "peach", label: "Pessego", value: "#ffb982" },
+                { id: "cream", label: "Bege creme", value: "#f3dfb8" },
+                { id: "gray", label: "Cinza", value: "#9aa0a6" },
               ],
             },
           },
@@ -2697,15 +2711,16 @@
         canvasSequence: 0,
         guidedPainting: {
           activeStepId: "cabeca",
+          frontierStepId: "cabeca",
           activeTool: "brush",
           activeColor: "red",
           completedSteps: [],
           regions: {
             cabeca: { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
-            corpo: { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
+            "corpo-pernas": { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
             asas: { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
             pintinhas: { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
-            "pernas-antenas": { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
+            antenas: { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] },
           },
         },
         timelinePlacements: {},
@@ -5330,6 +5345,10 @@
       const regionState = this.guidedPaintingRegionState(activeStep?.id);
       const activeColor = guidedState.activeColor || painting.colors[0]?.id || "red";
       const activeTool = guidedState.activeTool || "brush";
+      const viewBox = activeStep?.viewBox || { x: 0, y: 0, width: 1254, height: 1254 };
+      const viewScale = 1254 / Math.max(viewBox.width || 1254, viewBox.height || 1254);
+      const viewOffsetX = -viewBox.x * viewScale + (1254 - (viewBox.width || 1254) * viewScale) / 2;
+      const viewOffsetY = -viewBox.y * viewScale + (1254 - (viewBox.height || 1254) * viewScale) / 2;
       const coverage = Math.round((regionState.coverage || 0) * 100);
       const threshold = Math.round((painting.completionThreshold || 0.65) * 100);
       const ready = Boolean(regionState.ready);
@@ -5346,8 +5365,9 @@
             <div class="guided-progress-steps" aria-label="Progresso das partes">
               ${painting.steps.map((step) => {
                 const state = this.guidedPaintingStepState(step);
+                const locked = state === "locked";
                 return `
-                <button class="is-${state}" type="button" data-guided-step="${step.id}" disabled aria-disabled="true">
+                <button class="is-${state}" type="button" data-guided-step="${step.id}" ${locked ? "disabled aria-disabled=\"true\"" : "aria-disabled=\"false\""}>
                   ${step.label}${state === "complete" ? " ✓" : state === "active" ? " ●" : " ○"}
                 </button>
               `;
@@ -5357,7 +5377,11 @@
               <aside class="guided-tool-panel" aria-label="Ferramentas de pintura">
                 <div class="guided-color-grid" data-guided-colors>
                   ${painting.colors.map((color) => `
-                    <button class="guided-color-swatch${activeTool === "brush" && activeColor === color.id ? " is-selected" : ""}" type="button" data-guided-color="${color.id}" aria-label="${color.label}" title="${color.label}" style="--swatch:${color.value}"></button>
+                    <button class="guided-color-swatch${activeTool === "brush" && activeColor === color.id ? " is-selected" : ""}" type="button" data-guided-color="${color.id}" aria-label="${color.label}" title="${color.label}" style="--swatch:${color.value}">
+                      <span class="guided-pencil-tip" aria-hidden="true"></span>
+                      <span class="guided-pencil-body" aria-hidden="true"></span>
+                      <span class="guided-pencil-cap" aria-hidden="true"></span>
+                    </button>
                   `).join("")}
                 </div>
                 <div class="guided-tool-actions">
@@ -5367,7 +5391,7 @@
                 </div>
               </aside>
               <main class="guided-artboard-wrap">
-                <div class="guided-artboard" data-guided-artboard>
+                <div class="guided-artboard" data-guided-artboard style="--guided-view-scale:${viewScale}; --guided-view-x:${(viewOffsetX / 1254) * 100}%; --guided-view-y:${(viewOffsetY / 1254) * 100}%;">
                   <img class="guided-layer guided-base-layer" data-guided-base alt="" />
                   <canvas class="guided-layer guided-paint-layer" data-guided-paint-canvas aria-label="Area de pintura ${activeStep?.label || "guiada"}"></canvas>
                   <img class="guided-layer guided-protected-layer" data-guided-protected alt="" />
@@ -5534,18 +5558,18 @@
               <img class="guided-life-shadow guided-life-shadow-ground" src="${animation.shadow || ""}" alt="" />
               <img class="guided-life-shadow guided-life-shadow-flight" src="${animation.shadowFlight || animation.shadow || ""}" alt="" />
               <div class="guided-life-body" data-guided-life-body>
-                ${this.renderGuidedLifeLayer("base", assets.protectedOverlay)}
                 ${this.renderGuidedLifeRegionLayer("cabeca", "head")}
-                ${this.renderGuidedLifeRegionLayer("corpo", "body")}
-                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "legs idle")}
-                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "legs step-a", animation.legsStepA)}
-                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "legs step-b", animation.legsStepB)}
-                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "legs step-c", animation.legsStepC)}
-                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "antenna antenna-a", animation.antennasA)}
-                ${this.renderGuidedLifeRegionLayer("pernas-antenas", "antenna antenna-b", animation.antennasB)}
-                ${this.renderGuidedLifeWingLayer("wing idle")}
-                ${this.renderGuidedLifeWingLayer("wing half", animation.wingsHalf)}
-                ${this.renderGuidedLifeWingLayer("wing open", animation.wingsOpen)}
+                ${this.renderGuidedLifeRegionLayer("corpo-pernas", "body", animation.bodyMask)}
+                ${this.renderGuidedLifeRegionLayer("corpo-pernas", "legs idle")}
+                ${this.renderGuidedLifeRegionLayer("corpo-pernas", "legs step-a", animation.legsStepA)}
+                ${this.renderGuidedLifeRegionLayer("corpo-pernas", "legs step-b", animation.legsStepB)}
+                ${this.renderGuidedLifeRegionLayer("corpo-pernas", "legs step-c", animation.legsStepC)}
+                ${this.renderGuidedLifeRegionLayer("antenas", "antenna idle")}
+                ${this.renderGuidedLifeRegionLayer("antenas", "antenna antenna-a", animation.antennasA)}
+                ${this.renderGuidedLifeRegionLayer("antenas", "antenna antenna-b", animation.antennasB)}
+                ${this.renderGuidedLifeWingLayer("idle")}
+                ${this.renderGuidedLifeWingLayer("half")}
+                ${this.renderGuidedLifeWingLayer("open")}
                 ${this.renderGuidedLifeLayer("inner-wings", animation.innerWings)}
                 ${this.renderGuidedLifeLayer("protected", assets.protectedOverlay)}
                 ${this.renderGuidedLifeLayer("blink", animation.eyesBlink)}
@@ -5654,6 +5678,7 @@
         const canvasItem = event.target.closest("[data-canvas-item-id]");
         const removeCanvas = event.target.closest("[data-remove-canvas-id]");
         const guidedColor = event.target.closest("[data-guided-color]");
+        const guidedStep = event.target.closest("[data-guided-step]");
         const timelineCard = event.target.closest("[data-timeline-card-id]");
         const timelineSlot = event.target.closest("[data-timeline-slot-id]");
         const journeyPortal = event.target.closest("[data-journey-portal-id]");
@@ -5678,6 +5703,7 @@
           return;
         }
         if (action) this.handleAction(action, event.target.closest("button"));
+        if (guidedStep) this.selectGuidedPaintingStep(guidedStep.dataset.guidedStep);
         if (audioChoice) this.answerAudio(audioChoice.dataset.audioChoiceId, audioChoice);
         if (patternChoice) this.answerPattern(patternChoice.dataset.patternChoiceId, patternChoice);
         if (explorationElement) this.answerExplorationV2(explorationElement.dataset.explorationElementId, explorationElement);
@@ -6775,7 +6801,28 @@
       const guidedState = this.state.guidedPainting || {};
       if (guidedState.completedSteps?.includes(step.id)) return "complete";
       if (step.id === guidedState.activeStepId) return "active";
+      if (step.id === guidedState.frontierStepId) return "available";
       return "locked";
+    }
+
+    selectGuidedPaintingStep(stepId) {
+      if (this.game.type !== "guided-painting") return;
+      const step = this.guidedPaintingStep(stepId);
+      const guidedState = this.state.guidedPainting || {};
+      const canReview = step?.id === guidedState.activeStepId || step?.id === guidedState.frontierStepId || guidedState.completedSteps?.includes(step?.id);
+      if (!step || !canReview) return;
+      this.state = {
+        ...this.state,
+        guidedPainting: {
+          ...guidedState,
+          activeStepId: step.id,
+          characterCreation: null,
+        },
+      };
+      this.guidedPaint = null;
+      this.root.innerHTML = this.render();
+      this.go("choice", { transition: false });
+      audioPlayer.blip();
     }
 
     loadGuidedImage(src) {
@@ -6818,8 +6865,8 @@
       const assets = this.guidedPaintingAssets();
       const activeStep = this.guidedPaintingStep();
       if (!config) return;
-      const width = 1200;
-      const height = 1200;
+      const width = 1254;
+      const height = 1254;
       if (!this.guidedPaint || this.guidedPaint.gameId !== this.game.id || this.guidedPaint.region !== activeStep?.id) {
         const maskBuffer = document.createElement("canvas");
         const scratchBuffer = document.createElement("canvas");
@@ -6842,17 +6889,20 @@
           isDrawing: false,
           currentAction: null,
           lastPoint: null,
+          artboard,
+          viewBox: activeStep?.viewBox || { x: 0, y: 0, width, height },
+          viewScale: width / Math.max(activeStep?.viewBox?.width || width, activeStep?.viewBox?.height || height),
         };
         const [baseImage, protectedImage, maskImage] = await Promise.all([
-          this.loadGuidedImage(assets.visualBase),
+          this.loadGuidedImage(activeStep?.part || assets.visualBase),
           this.loadGuidedImage(assets.protectedOverlay),
           this.loadGuidedImage(activeStep?.mask),
         ]);
         const base = this.root.querySelector("[data-guided-base]");
         const protectedLayer = this.root.querySelector("[data-guided-protected]");
         const miniature = this.root.querySelector("[data-guided-miniature]");
-        if (base && baseImage) base.src = assets.visualBase;
-        if (protectedLayer && protectedImage) protectedLayer.src = assets.protectedOverlay;
+        if (base && baseImage) base.src = activeStep?.part || assets.visualBase;
+        if (protectedLayer) protectedLayer.src = "";
         if (protectedImage) this.guidedPaintProtectedImage = protectedImage;
         if (miniature && baseImage) miniature.style.setProperty("--guided-miniature-base", `url("${assets.visualBase}")`);
         const maskContext = maskBuffer.getContext("2d", { willReadFrequently: true });
@@ -6872,6 +6922,9 @@
         this.redrawGuidedPaintFromActions();
       } else {
         this.guidedPaint.paintCanvas = paintCanvas;
+        this.guidedPaint.artboard = artboard;
+        this.guidedPaint.viewBox = activeStep?.viewBox || { x: 0, y: 0, width, height };
+        this.guidedPaint.viewScale = width / Math.max(activeStep?.viewBox?.width || width, activeStep?.viewBox?.height || height);
       }
       this.resizeGuidedPaintCanvas();
       this.syncGuidedPaintingUi();
@@ -6900,12 +6953,7 @@
       if (!context) return;
       context.setTransform(targetWidth / engine.width, 0, 0, targetHeight / engine.height, 0, 0);
       context.clearRect(0, 0, engine.width, engine.height);
-      this.guidedPaintingConfig()?.steps
-        ?.filter((step) => !step.locked)
-        .forEach((step) => {
-          const buffer = this.guidedPaintBuffers?.[step.id];
-          if (buffer) context.drawImage(buffer, 0, 0);
-        });
+      if (engine.paintBuffer) context.drawImage(engine.paintBuffer, 0, 0);
     }
 
     selectGuidedColor(colorId) {
@@ -6940,10 +6988,16 @@
 
     guidedCanvasPoint(event) {
       const engine = this.guidedPaint;
-      const rect = engine.paintCanvas.getBoundingClientRect();
+      const rect = (engine.artboard || engine.paintCanvas).getBoundingClientRect();
+      const viewBox = engine.viewBox || { x: 0, y: 0, width: engine.width, height: engine.height };
+      const scale = engine.viewScale || 1;
+      const viewOffsetX = -viewBox.x * scale + (engine.width - viewBox.width * scale) / 2;
+      const viewOffsetY = -viewBox.y * scale + (engine.height - viewBox.height * scale) / 2;
+      const visualX = ((event.clientX - rect.left) / rect.width) * engine.width;
+      const visualY = ((event.clientY - rect.top) / rect.height) * engine.height;
       return {
-        x: Math.max(0, Math.min(engine.width, ((event.clientX - rect.left) / rect.width) * engine.width)),
-        y: Math.max(0, Math.min(engine.height, ((event.clientY - rect.top) / rect.height) * engine.height)),
+        x: Math.max(0, Math.min(engine.width, (visualX - viewOffsetX) / scale)),
+        y: Math.max(0, Math.min(engine.height, (visualY - viewOffsetY) / scale)),
       };
     }
 
@@ -7112,8 +7166,8 @@
     }
 
     composeGuidedPainting(options = {}) {
-      const width = this.guidedPaint?.width || 1200;
-      const height = this.guidedPaint?.height || 1200;
+      const width = this.guidedPaint?.width || 1254;
+      const height = this.guidedPaint?.height || 1254;
       const composite = document.createElement("canvas");
       composite.width = width;
       composite.height = height;
@@ -7190,20 +7244,31 @@
       return `<span class="guided-life-layer guided-life-painted is-${kind}" style="${this.guidedLifeLayerStyle(stepId, clipSrc)}" aria-hidden="true"></span>`;
     }
 
-    renderGuidedLifeWingLayer(kind, clipSrc = this.guidedLifeLayerMask("asas")) {
+    renderGuidedLifeWingLayer(kind) {
       const texture = this.guidedPaintingRegionTexture("asas");
       const spots = this.guidedPaintingRegionTexture("pintinhas");
-      const spotsClip = kind === "wing idle" ? this.guidedLifeLayerMask("pintinhas") : clipSrc;
+      const wingClip = this.guidedLifeLayerMask("asas");
+      const spotsClip = this.guidedLifeLayerMask("pintinhas");
+      if (!texture && !spots) return "";
       return `
-        <span class="guided-life-layer guided-life-wing is-${kind}" style="${this.guidedLifeLayerStyle("asas", clipSrc)}" aria-hidden="true"></span>
-        <span class="guided-life-layer guided-life-wing-spots is-${kind}" style="--life-texture:url('${spots}'); --life-clip:url('${spotsClip || clipSrc}')" aria-hidden="true"></span>
+        <span class="guided-life-layer guided-life-wing-group is-wing ${kind}" aria-hidden="true">
+          <span class="guided-life-painted guided-life-wing-surface" style="${this.guidedLifeLayerStyle("asas", wingClip)}"></span>
+          <span class="guided-life-painted guided-life-wing-spots" style="--life-texture:url('${spots}'); --life-clip:url('${spotsClip}')"></span>
+        </span>
       `;
     }
 
     syncGuidedFinalScreen(screen = this.state.screen) {
       if (this.game.type !== "guided-painting" || screen !== "final") return;
       window.requestAnimationFrame(() => {
-        const creation = this.state.guidedPainting.characterCreation || this.buildGuidedCharacterCreation();
+        const creation = this.buildGuidedCharacterCreation();
+        this.state = {
+          ...this.state,
+          guidedPainting: {
+            ...this.state.guidedPainting,
+            characterCreation: creation,
+          },
+        };
         const image = this.root.querySelector("[data-guided-final-image]");
         if (image && creation.preview) image.src = creation.preview;
       });
@@ -7396,10 +7461,13 @@
           guidedPainting: {
             ...this.state.guidedPainting,
             activeStepId: nextStep.id,
+            frontierStepId: nextStep.id,
             completedSteps,
+            characterCreation: null,
           },
         };
         this.guidedPaint = null;
+        this.root.innerHTML = this.render();
         this.go("choice", { transition: { enabled: true, duration: 420, variant: "soft" } });
         audioPlayer.speak(nextStep.narration || this.currentRound().narration, null);
         return;
@@ -7413,6 +7481,7 @@
         },
         completedRounds: [this.currentRound().id],
       };
+      this.root.innerHTML = this.render();
       this.go("final");
     }
 
