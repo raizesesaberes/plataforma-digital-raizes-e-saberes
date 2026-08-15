@@ -637,6 +637,7 @@
               legsStepA: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/LEGS/JOANINHA_LEGS_STEP_A.png"),
               legsStepB: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/LEGS/JOANINHA_LEGS_STEP_B.png"),
               legsStepC: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/LEGS/JOANINHA_LEGS_STEP_C.png"),
+              bodyMask: atelieAsset("golden-master/JOANINHA_MASK_CORPO.png"),
               antennasA: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/ANTENNAS/JOANINHA_ANTENNAS_SOFT_A.png"),
               antennasB: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/ANTENNAS/JOANINHA_ANTENNAS_SOFT_B.png"),
               eyesBlink: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/EYES/JOANINHA_EYES_BLINK_OVERLAY.png"),
@@ -5557,18 +5558,18 @@
               <img class="guided-life-shadow guided-life-shadow-ground" src="${animation.shadow || ""}" alt="" />
               <img class="guided-life-shadow guided-life-shadow-flight" src="${animation.shadowFlight || animation.shadow || ""}" alt="" />
               <div class="guided-life-body" data-guided-life-body>
-                ${this.renderGuidedLifeLayer("base", assets.protectedOverlay)}
                 ${this.renderGuidedLifeRegionLayer("cabeca", "head")}
-                ${this.renderGuidedLifeRegionLayer("corpo-pernas", "body")}
+                ${this.renderGuidedLifeRegionLayer("corpo-pernas", "body", animation.bodyMask)}
                 ${this.renderGuidedLifeRegionLayer("corpo-pernas", "legs idle")}
                 ${this.renderGuidedLifeRegionLayer("corpo-pernas", "legs step-a", animation.legsStepA)}
                 ${this.renderGuidedLifeRegionLayer("corpo-pernas", "legs step-b", animation.legsStepB)}
                 ${this.renderGuidedLifeRegionLayer("corpo-pernas", "legs step-c", animation.legsStepC)}
+                ${this.renderGuidedLifeRegionLayer("antenas", "antenna idle")}
                 ${this.renderGuidedLifeRegionLayer("antenas", "antenna antenna-a", animation.antennasA)}
                 ${this.renderGuidedLifeRegionLayer("antenas", "antenna antenna-b", animation.antennasB)}
-                ${this.renderGuidedLifeWingLayer("wing idle")}
-                ${this.renderGuidedLifeWingLayer("wing half", animation.wingsHalf)}
-                ${this.renderGuidedLifeWingLayer("wing open", animation.wingsOpen)}
+                ${this.renderGuidedLifeWingLayer("idle")}
+                ${this.renderGuidedLifeWingLayer("half")}
+                ${this.renderGuidedLifeWingLayer("open")}
                 ${this.renderGuidedLifeLayer("inner-wings", animation.innerWings)}
                 ${this.renderGuidedLifeLayer("protected", assets.protectedOverlay)}
                 ${this.renderGuidedLifeLayer("blink", animation.eyesBlink)}
@@ -7213,11 +7214,11 @@
 
     guidedLadybugGardenZone() {
       return {
-        idle: { x: 46, y: 63, scale: 0.235 },
-        walkStart: { x: 42, y: 64, scale: 0.23 },
-        takeoff: { x: 51, y: 53, scale: 0.215 },
-        flight: { x: 66, y: 36, scale: 0.17 },
-        landing: { x: 48, y: 62, scale: 0.23 },
+        idle: { x: 46, y: 63, scale: 0.62 },
+        walkStart: { x: 42, y: 64, scale: 0.6 },
+        takeoff: { x: 51, y: 53, scale: 0.56 },
+        flight: { x: 66, y: 36, scale: 0.44 },
+        landing: { x: 48, y: 62, scale: 0.6 },
       };
     }
 
@@ -7243,13 +7244,21 @@
       return `<span class="guided-life-layer guided-life-painted is-${kind}" style="${this.guidedLifeLayerStyle(stepId, clipSrc)}" aria-hidden="true"></span>`;
     }
 
-    renderGuidedLifeWingLayer(kind, clipSrc = this.guidedLifeLayerMask("asas")) {
+    renderGuidedLifeWingLayer(kind) {
       const texture = this.guidedPaintingRegionTexture("asas");
       const spots = this.guidedPaintingRegionTexture("pintinhas");
-      const spotsClip = kind === "wing idle" ? this.guidedLifeLayerMask("pintinhas") : clipSrc;
+      const wingClip = this.guidedLifeLayerMask("asas");
+      const spotsClip = this.guidedLifeLayerMask("pintinhas");
+      if (!texture && !spots) return "";
       return `
-        <span class="guided-life-layer guided-life-wing is-${kind}" style="${this.guidedLifeLayerStyle("asas", clipSrc)}" aria-hidden="true"></span>
-        <span class="guided-life-layer guided-life-wing-spots is-${kind}" style="--life-texture:url('${spots}'); --life-clip:url('${spotsClip || clipSrc}')" aria-hidden="true"></span>
+        <span class="guided-life-layer guided-life-wing-group is-wing ${kind}" data-guided-wing-state="${kind}" aria-hidden="true">
+          ${["left", "right"].map((side) => `
+            <span class="guided-life-wing-side is-${side}">
+              <span class="guided-life-painted guided-life-wing-surface" style="${this.guidedLifeLayerStyle("asas", wingClip)}"></span>
+              <span class="guided-life-painted guided-life-wing-spots" style="--life-texture:url('${spots}'); --life-clip:url('${spotsClip}')"></span>
+            </span>
+          `).join("")}
+        </span>
       `;
     }
 

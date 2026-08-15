@@ -1691,7 +1691,7 @@ body.game-immersive-active .game-stage,
   white-space: normal;
 }
 
-.game-screen > :not(.game-scene):not(.victory-layer):not(.victory-content):not(.encouragement-layer):not(.encouragement-content):not(.jardim-cinematic-stage):not(.jardim-start-button) {
+.game-screen > :not(.game-scene):not(.victory-layer):not(.victory-content):not(.encouragement-layer):not(.encouragement-content):not(.jardim-cinematic-stage):not(.jardim-start-button):not(.guided-life-garden) {
   position: relative;
   z-index: 2;
 }
@@ -5139,7 +5139,7 @@ body.game-immersive-active .game-stage,
 }
 
 .guided-life-painted,
-.guided-life-wing,
+.guided-life-wing-surface,
 .guided-life-wing-spots {
   background-image: var(--life-texture);
   background-position: center;
@@ -5153,10 +5153,6 @@ body.game-immersive-active .game-stage,
   -webkit-mask-position: center;
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-size: contain;
-}
-
-.guided-life-layer.is-base {
-  opacity: 0.18;
 }
 
 .guided-life-layer.is-protected {
@@ -5183,19 +5179,59 @@ body.game-immersive-active .game-stage,
   z-index: 5;
 }
 
-.guided-life-wing,
+.guided-life-wing-group {
+  transform-origin: 58% 48%;
+}
+
+.guided-life-wing-group.half {
+  transform: translate(0, -4%);
+}
+
+.guided-life-wing-group.open {
+  transform: translate(0, -10%);
+}
+
+.guided-life-wing-side {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.guided-life-wing-side.is-left {
+  clip-path: polygon(0 0, 55% 0, 55% 100%, 0 100%);
+  transform-origin: 55% 48%;
+}
+
+.guided-life-wing-side.is-right {
+  clip-path: polygon(45% 0, 100% 0, 100% 100%, 45% 100%);
+  transform-origin: 55% 48%;
+}
+
+.guided-life-wing-group.half .guided-life-wing-side.is-left {
+  transform: translate(-1.4%, -3.4%) rotate(-8deg) scale(0.98, 1.02);
+}
+
+.guided-life-wing-group.half .guided-life-wing-side.is-right {
+  transform: translate(1.4%, -3.4%) rotate(8deg) scale(0.98, 1.02);
+}
+
+.guided-life-wing-group.open .guided-life-wing-side.is-left {
+  transform: translate(-4.8%, -9%) rotate(-21deg) scale(0.92, 1.08);
+}
+
+.guided-life-wing-group.open .guided-life-wing-side.is-right {
+  transform: translate(4.8%, -9%) rotate(21deg) scale(0.92, 1.08);
+}
+
+.guided-life-wing-surface,
 .guided-life-wing-spots {
-  transform-origin: 55% 45%;
-}
-
-.guided-life-wing.half,
-.guided-life-wing-spots.half {
-  transform: translate(1.5%, -7%) rotate(-9deg) scale(0.96, 1.02);
-}
-
-.guided-life-wing.open,
-.guided-life-wing-spots.open {
-  transform: translate(-2%, -16%) rotate(-24deg) scale(0.84, 1.1);
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .guided-life-layer.is-blink {
@@ -5213,6 +5249,8 @@ body.game-immersive-active .game-stage,
 .guided-life-layer.step-c,
 .guided-life-layer.antenna-a,
 .guided-life-layer.antenna-b,
+.guided-life-wing-group.half,
+.guided-life-wing-group.open,
 .guided-life-layer.half,
 .guided-life-layer.open,
 .guided-life-layer.is-inner-wings,
@@ -5236,6 +5274,11 @@ body.game-immersive-active .game-stage,
   animation: guided-life-step-c 9.2s steps(1, end) both;
 }
 
+.guided-life-ladybug.is-sequence .guided-life-layer.is-antenna.idle,
+.guided-life-ladybug.is-loop .guided-life-layer.is-antenna.idle {
+  animation: guided-life-antenna-idle 2.8s steps(1, end) infinite;
+}
+
 .guided-life-ladybug.is-sequence .guided-life-layer.antenna-a,
 .guided-life-ladybug.is-loop .guided-life-layer.antenna-a {
   animation: guided-life-antenna-a 2.8s steps(1, end) infinite;
@@ -5246,17 +5289,21 @@ body.game-immersive-active .game-stage,
   animation: guided-life-antenna-b 2.8s steps(1, end) infinite;
 }
 
-.guided-life-ladybug.is-sequence .guided-life-layer.is-wing.idle {
+.guided-life-ladybug.is-sequence .guided-life-wing-group.idle {
   animation: guided-life-wing-idle 9.2s steps(1, end) both;
 }
 
-.guided-life-ladybug.is-sequence .guided-life-layer.half {
+.guided-life-ladybug.is-sequence .guided-life-wing-group.half {
   animation: guided-life-wing-half 9.2s steps(1, end) both;
 }
 
-.guided-life-ladybug.is-sequence .guided-life-layer.open,
-.guided-life-ladybug.is-sequence .guided-life-layer.is-inner-wings {
+.guided-life-ladybug.is-sequence .guided-life-wing-group.open {
   animation: guided-life-wing-open 9.2s steps(1, end) both;
+}
+
+.guided-life-ladybug.is-sequence .guided-life-layer.is-inner-wings {
+  transform-origin: 58% 48%;
+  animation: guided-life-inner-wings 9.2s linear both;
 }
 
 .guided-life-ladybug.is-sequence .guided-life-shadow-ground {
@@ -5327,15 +5374,15 @@ body.game-immersive-active .game-stage,
 }
 
 @keyframes guided-life-flight {
-  0% { left: 50%; top: 52%; transform: translate(-50%, -50%) scale(0.72); }
-  12% { left: 46%; top: 63%; transform: translate(-50%, -50%) scale(0.25); }
-  26% { left: 42%; top: 64%; transform: translate(-50%, -50%) scale(0.23) rotate(-2deg); }
-  38% { left: 50%; top: 62%; transform: translate(-50%, -50%) scale(0.23) rotate(2deg); }
-  50% { left: 52%; top: 54%; transform: translate(-50%, -50%) scale(0.21) rotate(-6deg); }
-  64% { left: 66%; top: 36%; transform: translate(-50%, -50%) scale(0.17) rotate(9deg); }
-  78% { left: 58%; top: 41%; transform: translate(-50%, -50%) scale(0.18) rotate(-5deg); }
-  90% { left: 48%; top: 61%; transform: translate(-50%, -50%) scale(0.22) rotate(1deg); }
-  100% { left: 46%; top: 63%; transform: translate(-50%, -50%) scale(0.235); }
+  0% { left: 50%; top: 52%; transform: translate(-50%, -50%) scale(0.82); }
+  12% { left: 46%; top: 63%; transform: translate(-50%, -50%) scale(0.62); }
+  26% { left: 42%; top: 64%; transform: translate(-50%, -50%) scale(0.6) rotate(-2deg); }
+  38% { left: 50%; top: 62%; transform: translate(-50%, -50%) scale(0.6) rotate(2deg); }
+  50% { left: 52%; top: 54%; transform: translate(-50%, -50%) scale(0.56) rotate(-6deg); }
+  64% { left: 66%; top: 36%; transform: translate(-50%, -50%) scale(0.44) rotate(9deg); }
+  78% { left: 58%; top: 41%; transform: translate(-50%, -50%) scale(0.48) rotate(-5deg); }
+  90% { left: 48%; top: 61%; transform: translate(-50%, -50%) scale(0.58) rotate(1deg); }
+  100% { left: 46%; top: 63%; transform: translate(-50%, -50%) scale(0.62); }
 }
 
 @keyframes guided-life-idle {
@@ -5378,6 +5425,11 @@ body.game-immersive-active .game-stage,
   0%, 38%, 42%, 100% { opacity: 0; }
 }
 
+@keyframes guided-life-antenna-idle {
+  0%, 15%, 35%, 48%, 73%, 100% { opacity: 1; }
+  16%, 34%, 49%, 72% { opacity: 0; }
+}
+
 @keyframes guided-life-antenna-a {
   0%, 48%, 100% { opacity: 0; }
   16%, 34% { opacity: 1; }
@@ -5401,6 +5453,13 @@ body.game-immersive-active .game-stage,
 @keyframes guided-life-wing-open {
   51%, 83% { opacity: 1; }
   0%, 50%, 84%, 100% { opacity: 0; }
+}
+
+@keyframes guided-life-inner-wings {
+  0%, 50%, 84%, 100% { opacity: 0; transform: translateY(0) scale(1); }
+  51%, 83% { opacity: 0.92; }
+  54%, 60%, 66%, 72%, 78% { transform: translateY(-1.8%) scale(1.04, 0.96); }
+  57%, 63%, 69%, 75%, 81% { transform: translateY(1.2%) scale(0.98, 1.03); }
 }
 
 @keyframes guided-life-ground-shadow {
@@ -8672,7 +8731,7 @@ body.game-immersive-active .game-stage,
   .guided-life-ladybug.is-sequence {
     left: 46%;
     top: 63%;
-    transform: translate(-50%, -50%) scale(0.235);
+    transform: translate(-50%, -50%) scale(0.62);
   }
 
   .guided-life-transition {
