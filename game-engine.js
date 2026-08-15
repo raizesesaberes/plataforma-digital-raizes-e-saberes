@@ -7252,12 +7252,8 @@
       if (!texture && !spots) return "";
       return `
         <span class="guided-life-layer guided-life-wing-group is-wing ${kind}" data-guided-wing-state="${kind}" aria-hidden="true">
-          ${["left", "right"].map((side) => `
-            <span class="guided-life-wing-side is-${side}">
-              <span class="guided-life-painted guided-life-wing-surface" style="${this.guidedLifeLayerStyle("asas", wingClip)}"></span>
-              <span class="guided-life-painted guided-life-wing-spots" style="--life-texture:url('${spots}'); --life-clip:url('${spotsClip}')"></span>
-            </span>
-          `).join("")}
+          <span class="guided-life-painted guided-life-wing-surface" style="${this.guidedLifeLayerStyle("asas", wingClip)}"></span>
+          <span class="guided-life-painted guided-life-wing-spots" style="--life-texture:url('${spots}'); --life-clip:url('${spotsClip}')"></span>
         </span>
       `;
     }
