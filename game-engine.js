@@ -20,6 +20,7 @@
   const atelieBase = "assets/games/atelie-bia/";
   const atelieAsset = (path) => `${atelieBase}${path}`;
   const passarinhoAsset = (path) => atelieAsset(`passarinhos/v1/${path}`);
+  const patinhoAsset = (path) => atelieAsset(`patinhos/v1/${path}`);
   const rotinaBase = "assets/games/rotina-pipo/";
   const rotinaAsset = (path) => `${rotinaBase}${path}`;
   const festaBase = "assets/games/grande-festa/";
@@ -662,8 +663,9 @@
                 miniatureLabel: "SEU PASSARINHO",
                 finalTitle: "VOCE CONSEGUIU! SEU PASSARINHO ESTA PRONTO!",
                 finalImageAlt: "Passarinho criado pela crianca",
-                lifeButtonEnabled: false,
-                lifeStatus: "DAR VIDA DO PASSARINHO PREPARADO PARA PROXIMA HOMOLOGACAO.",
+                lifeButtonEnabled: true,
+                lifeStatus: "Confira seu passarinho antes de dar vida.",
+                lifeSpeech: "SEU PASSARINHO GANHOU VIDA NO JARDIM!",
                 visualBase: passarinhoAsset("PASSARINHO_GOLDEN_MASTER_V1.png"),
                 protectedOverlay: "",
                 previewWidth: 1536,
@@ -674,6 +676,26 @@
                   cabeca: { x: 0, y: 0, width: 1536, height: 1536, z: 3 },
                   "cauda-bico": { x: 0, y: 0, width: 1536, height: 1536, z: 4 },
                   "pernas-pes": { x: 0, y: 0, width: 1536, height: 1536, z: 5 },
+                },
+              },
+              duck: {
+                id: "duck",
+                label: "Patinho",
+                miniatureLabel: "SEU PATINHO",
+                finalTitle: "VOCE CONSEGUIU! SEU PATINHO ESTA PRONTO!",
+                finalImageAlt: "Patinho criado pela crianca",
+                lifeButtonEnabled: false,
+                lifeStatus: "DAR VIDA DO PATINHO PREPARADO PARA PROXIMA HOMOLOGACAO.",
+                visualBase: "",
+                protectedOverlay: "",
+                previewWidth: 1536,
+                previewHeight: 1536,
+                assembly: {
+                  asas: { x: 0, y: 0, width: 1536, height: 1536, z: 1 },
+                  corpo: { x: 0, y: 0, width: 1536, height: 1536, z: 2 },
+                  "pernas-pes": { x: 0, y: 0, width: 1536, height: 1536, z: 3 },
+                  "cauda-bico": { x: 0, y: 0, width: 1536, height: 1536, z: 4 },
+                  cabeca: { x: 0, y: 0, width: 1536, height: 1536, z: 5 },
                 },
               },
             },
@@ -764,6 +786,70 @@
                       canvasWidth: 1536,
                       canvasHeight: 1536,
                       viewBox: { x: 410, y: 1070, width: 610, height: 240 },
+                    },
+                  ],
+                },
+                duck: {
+                  id: "duck",
+                  label: "Patinho",
+                  hint: "Pinte a cabeca do patinho.",
+                  narration: "Escolha uma cor e pinte somente a cabeca do patinho.",
+                  initialStepId: "cabeca",
+                  steps: [
+                    {
+                      id: "cabeca",
+                      label: "1. Cabeca",
+                      instruction: "VAMOS COMECAR PELA CABECA!",
+                      narration: "Vamos comecar pela cabeca.",
+                      part: patinhoAsset("PATINHO_PARTE_01_CABECA.png"),
+                      mask: patinhoAsset("PATINHO_MASK_01_CABECA.png"),
+                      canvasWidth: 1536,
+                      canvasHeight: 1536,
+                      viewBox: { x: 420, y: 170, width: 590, height: 600 },
+                    },
+                    {
+                      id: "corpo",
+                      label: "2. Corpo",
+                      instruction: "AGORA VAMOS COLORIR O CORPO!",
+                      narration: "Agora vamos colorir o corpo.",
+                      part: patinhoAsset("PATINHO_PARTE_02_CORPO.png"),
+                      mask: patinhoAsset("PATINHO_MASK_02_CORPO.png"),
+                      canvasWidth: 1536,
+                      canvasHeight: 1536,
+                      viewBox: { x: 500, y: 700, width: 520, height: 460 },
+                    },
+                    {
+                      id: "asas",
+                      label: "3. Asas",
+                      instruction: "VAMOS COLORIR AS ASAS!",
+                      narration: "Vamos colorir as asas.",
+                      part: patinhoAsset("PATINHO_PARTE_03_ASAS.png"),
+                      mask: patinhoAsset("PATINHO_MASK_03_ASAS.png"),
+                      canvasWidth: 1536,
+                      canvasHeight: 1536,
+                      viewBox: { x: 240, y: 330, width: 1040, height: 740 },
+                    },
+                    {
+                      id: "cauda-bico",
+                      label: "4. Cauda + bico",
+                      instruction: "AGORA VAMOS COLORIR A CAUDA E O BICO!",
+                      narration: "Agora vamos colorir a cauda e o bico.",
+                      part: patinhoAsset("PATINHO_PARTE_04_CAUDA_BICO.png"),
+                      mask: patinhoAsset("PATINHO_MASK_04_CAUDA_BICO.png"),
+                      canvasWidth: 1536,
+                      canvasHeight: 1536,
+                      viewBox: { x: 500, y: 500, width: 950, height: 660 },
+                    },
+                    {
+                      id: "pernas-pes",
+                      label: "5. Pernas + pes",
+                      instruction: "VAMOS TERMINAR COM AS PERNAS E OS PES!",
+                      narration: "Vamos terminar com as pernas e os pes.",
+                      part: patinhoAsset("PATINHO_PARTE_05_PERNAS_PES.png"),
+                      mask: patinhoAsset("PATINHO_MASK_05_PERNAS_PES.png"),
+                      canvasWidth: 1536,
+                      canvasHeight: 1536,
+                      viewBox: { x: 390, y: 1060, width: 760, height: 250 },
                     },
                   ],
                 },
@@ -3066,6 +3152,36 @@
       oscillator.start();
       gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.22);
       oscillator.stop(context.currentTime + 0.24);
+    },
+    birdChirp() {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const context = new AudioContext();
+      const output = context.createGain();
+      output.gain.value = this.volumes.effects * 0.1;
+      output.connect(context.destination);
+      this.activeContexts.add(context);
+      const now = context.currentTime;
+      [1180, 1540, 1320].forEach((frequency, index) => {
+        const start = now + index * 0.08;
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(frequency, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(this.volumes.effects * 0.075, start + 0.025);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.16);
+        oscillator.connect(gain);
+        gain.connect(output);
+        oscillator.start(start);
+        oscillator.stop(start + 0.18);
+      });
+      const timer = window.setTimeout(() => {
+        this.activeTimers.delete(timer);
+        this.activeContexts.delete(context);
+        context.close?.();
+      }, 520);
+      this.activeTimers.add(timer);
     },
     playConfigured(sound, button) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -5674,6 +5790,7 @@
     renderGuidedLifeScreen() {
       if (this.game?.type !== "guided-painting") return "";
       const assets = this.guidedPaintingAssets();
+      if (this.guidedPaintingCharacterId() === "bird") return this.renderGuidedBirdLifeScreen(assets);
       const animation = assets.animation || {};
       const gardenZone = this.guidedLadybugGardenZone();
       return `
@@ -5705,6 +5822,41 @@
             <div class="guided-life-actions" data-guided-life-actions>
               <button type="button" data-game-action="guided-life-replay">VER DE NOVO</button>
               <button type="button" data-game-action="guided-life-back">VOLTAR AO JARDIM</button>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    renderGuidedBirdLifeScreen(assets = this.guidedPaintingAssets()) {
+      const gardenZone = this.guidedBirdGardenZone();
+      return `
+        <section class="game-screen guided-life-screen" data-screen="life" aria-label="Jardim Mestre com o passarinho criado">
+          <div class="guided-life-garden guided-bird-garden" style="--guided-garden:url('${assets.gardenBackground || this.game.assets.screens.final}')" data-guided-life-garden>
+            <div class="guided-life-transition guided-bird-spark" aria-hidden="true"></div>
+            <div class="guided-life-bird is-sequence" data-guided-life-bird style="--bird-x:${gardenZone.idle.x}%; --bird-y:${gardenZone.idle.y}%; --bird-scale:${gardenZone.idle.scale};">
+              <span class="guided-bird-shadow" aria-hidden="true"></span>
+              <div class="guided-bird-body" data-guided-life-body>
+                ${this.renderGuidedBirdPartLayer("asas", "wing wing-left")}
+                ${this.renderGuidedBirdPartLayer("asas", "wing wing-right")}
+                ${this.renderGuidedBirdPartLayer("corpo", "torso")}
+                ${this.renderGuidedBirdPartLayer("pernas-pes", "legs")}
+                ${this.renderGuidedBirdPartLayer("cauda-bico", "tail")}
+                ${this.renderGuidedBirdPartLayer("cabeca", "head")}
+                ${this.renderGuidedBirdPartLayer("cauda-bico", "beak")}
+                ${this.renderGuidedBirdArtLayer("asas", "wing-art wing-left-art")}
+                ${this.renderGuidedBirdArtLayer("asas", "wing-art wing-right-art")}
+                ${this.renderGuidedBirdArtLayer("corpo", "torso-art")}
+                ${this.renderGuidedBirdArtLayer("pernas-pes", "legs-art")}
+                ${this.renderGuidedBirdArtLayer("cauda-bico", "tail-art")}
+                ${this.renderGuidedBirdArtLayer("cabeca", "head-art")}
+                ${this.renderGuidedBirdArtLayer("cauda-bico", "beak-art")}
+              </div>
+            </div>
+            <div class="guided-life-speech guided-bird-speech" data-guided-life-speech>${escapeHtml(assets.lifeSpeech || "SEU PASSARINHO GANHOU VIDA NO JARDIM!")}</div>
+            <div class="guided-life-actions" data-guided-life-actions>
+              <button type="button" data-game-action="guided-life-replay">VER DE NOVO</button>
+              <button type="button" data-game-action="guided-life-back">CONTINUAR NO JARDIM</button>
             </div>
           </div>
         </section>
@@ -7460,6 +7612,16 @@
       };
     }
 
+    guidedBirdGardenZone() {
+      return {
+        idle: { x: 43, y: 55, scale: 0.66 },
+        takeoff: { x: 45, y: 48, scale: 0.62 },
+        nearCamera: { x: 56, y: 42, scale: 0.86 },
+        flight: { x: 69, y: 30, scale: 0.52 },
+        landing: { x: 46, y: 55, scale: 0.66 },
+      };
+    }
+
     guidedLifeLayerMask(stepId) {
       const config = this.guidedPaintingConfig();
       const step = config?.steps?.find((entry) => entry.id === stepId);
@@ -7480,6 +7642,24 @@
       const texture = this.guidedPaintingRegionTexture(stepId);
       if (!texture) return "";
       return `<span class="guided-life-layer guided-life-painted is-${kind}" style="${this.guidedLifeLayerStyle(stepId, clipSrc)}" aria-hidden="true"></span>`;
+    }
+
+    guidedPaintingStepPart(stepId) {
+      const config = this.guidedPaintingConfig();
+      return config?.steps?.find((entry) => entry.id === stepId)?.part || "";
+    }
+
+    renderGuidedBirdPartLayer(stepId, kind) {
+      const texture = this.guidedPaintingRegionTexture(stepId);
+      const clipSrc = this.guidedLifeLayerMask(stepId);
+      if (!texture || !clipSrc) return "";
+      return `<span class="guided-bird-layer guided-bird-painted is-${kind}" style="${this.guidedLifeLayerStyle(stepId, clipSrc)}" aria-hidden="true"></span>`;
+    }
+
+    renderGuidedBirdArtLayer(stepId, kind) {
+      const src = this.guidedPaintingStepPart(stepId);
+      if (!src) return "";
+      return `<img class="guided-bird-layer guided-bird-art is-${kind}" src="${src}" alt="" aria-hidden="true" />`;
     }
 
     renderGuidedLifeWingLayer(kind) {
@@ -7515,6 +7695,7 @@
     prepareGuidedLifeState() {
       if (this.game.type !== "guided-painting") return;
       const assets = this.guidedPaintingAssets();
+      const characterId = this.guidedPaintingCharacterId();
       if (assets.lifeButtonEnabled === false) {
         const status = this.root.querySelector("[data-guided-final-status]");
         if (status) status.textContent = assets.lifeStatus || "Dar vida preparado para proxima etapa.";
@@ -7536,11 +7717,11 @@
             phase: "sequence",
             startedAt: Date.now(),
             gardenCharacters: {
-              ladybug: {
+              [characterId]: {
                 completed: true,
                 paintingState: creation,
                 animationState: "sequence",
-                gardenPosition: this.guidedLadybugGardenZone().idle,
+                gardenPosition: characterId === "bird" ? this.guidedBirdGardenZone().idle : this.guidedLadybugGardenZone().idle,
               },
             },
           },
@@ -7549,7 +7730,7 @@
       const image = this.root.querySelector("[data-guided-final-image]");
       const status = this.root.querySelector("[data-guided-final-status]");
       if (image && creation.preview) image.src = creation.preview;
-      if (status) status.textContent = "JOANINHA ENTRANDO NO JARDIM";
+      if (status) status.textContent = characterId === "bird" ? "PASSARINHO ENTRANDO NO JARDIM" : "JOANINHA ENTRANDO NO JARDIM";
       audioPlayer.blip("success");
       this.root.innerHTML = this.render();
       this.go("life", { transition: { enabled: true, duration: 520, variant: "soft" } });
@@ -7561,6 +7742,10 @@
     }
 
     startGuidedLifeSequence({ replay = false } = {}) {
+      if (this.guidedPaintingCharacterId() === "bird") {
+        this.startGuidedBirdLifeSequence({ replay });
+        return;
+      }
       const ladybug = this.root.querySelector("[data-guided-life-ladybug]");
       const garden = this.root.querySelector("[data-guided-life-garden]");
       if (!ladybug || !garden) return;
@@ -7598,6 +7783,61 @@
       }, duration);
     }
 
+    startGuidedBirdLifeSequence({ replay = false } = {}) {
+      const bird = this.root.querySelector("[data-guided-life-bird]");
+      const garden = this.root.querySelector("[data-guided-life-garden]");
+      if (!bird || !garden) return;
+      const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+      bird.classList.remove("is-sequence", "is-loop", "is-replay", "is-reduced");
+      garden.classList.remove("is-loop-ready");
+      void bird.offsetWidth;
+      bird.classList.add(reduced ? "is-reduced" : "is-sequence");
+      if (replay) bird.classList.add("is-replay");
+      this.playGuidedBirdLifeAudio(reduced);
+      const duration = reduced ? 1800 : 9800;
+      window.clearTimeout(this.guidedLifeTimer);
+      this.guidedLifeTimer = window.setTimeout(() => {
+        bird.classList.remove("is-sequence", "is-replay", "is-reduced");
+        bird.classList.add("is-loop");
+        garden.classList.add("is-loop-ready");
+        this.state = {
+          ...this.state,
+          guidedPainting: {
+            ...this.state.guidedPainting,
+            life: {
+              ...(this.state.guidedPainting.life || {}),
+              running: false,
+              phase: "loop",
+              gardenCharacters: {
+                ...(this.state.guidedPainting.life?.gardenCharacters || {}),
+                bird: {
+                  ...(this.state.guidedPainting.life?.gardenCharacters?.bird || {}),
+                  animationState: "loop",
+                  gardenPosition: this.guidedBirdGardenZone().idle,
+                },
+              },
+            },
+          },
+        };
+      }, duration);
+    }
+
+    playGuidedBirdLifeAudio(reduced = false) {
+      if (reduced) {
+        audioPlayer.blip("success");
+        return;
+      }
+      audioPlayer.blip("success");
+      const chirp = () => audioPlayer.birdChirp?.();
+      [1600, 2050, 2680, 6200, 8900].forEach((delay) => {
+        const timer = window.setTimeout(() => {
+          audioPlayer.activeTimers.delete(timer);
+          chirp();
+        }, delay);
+        audioPlayer.activeTimers.add(timer);
+      });
+    }
+
     replayGuidedLife() {
       if (this.game.type !== "guided-painting" || this.state.screen !== "life") return;
       this.state = {
@@ -7618,6 +7858,7 @@
     returnGuidedLifeToGarden() {
       if (this.game.type !== "guided-painting") return;
       const creation = this.state.guidedPainting?.characterCreation || this.buildGuidedCharacterCreation();
+      const characterId = this.guidedPaintingCharacterId();
       this.state = {
         ...this.state,
         guidedPainting: {
@@ -7630,11 +7871,11 @@
             phase: "garden",
             gardenCharacters: {
               ...(this.state.guidedPainting.life?.gardenCharacters || {}),
-              ladybug: {
+              [characterId]: {
                 completed: true,
                 paintingState: creation,
                 animationState: "garden-idle",
-                gardenPosition: this.guidedLadybugGardenZone().idle,
+                gardenPosition: characterId === "bird" ? this.guidedBirdGardenZone().idle : this.guidedLadybugGardenZone().idle,
               },
             },
           },
