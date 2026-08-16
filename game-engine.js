@@ -7696,20 +7696,20 @@
 
     guidedBirdGardenZone() {
       return {
-        idle: { x: 43, y: 55, scale: 0.66 },
+        idle: { x: 31, y: 32, scale: 0.38 },
         takeoff: { x: 45, y: 48, scale: 0.62 },
-        nearCamera: { x: 56, y: 42, scale: 0.86 },
-        flight: { x: 69, y: 30, scale: 0.52 },
-        landing: { x: 46, y: 55, scale: 0.66 },
+        nearCamera: { x: 56, y: 42, scale: 0.78 },
+        flight: { x: 69, y: 30, scale: 0.5 },
+        landing: { x: 31, y: 32, scale: 0.38 },
       };
     }
 
     guidedDuckGardenZone() {
       return {
-        idle: { x: 37, y: 70, scale: 0.48 },
-        waterEntry: { x: 52, y: 64, scale: 0.43 },
-        swim: { x: 66, y: 58, scale: 0.38 },
-        loop: { x: 57, y: 64, scale: 0.41 },
+        idle: { x: 54, y: 69, scale: 0.4 },
+        waterEntry: { x: 60, y: 70, scale: 0.38 },
+        swim: { x: 73, y: 69, scale: 0.34 },
+        loop: { x: 66, y: 72, scale: 0.36 },
       };
     }
 
@@ -8053,7 +8053,11 @@
                 completed: true,
                 paintingState: creation,
                 animationState: "garden-idle",
-                gardenPosition: characterId === "bird" ? this.guidedBirdGardenZone().idle : this.guidedLadybugGardenZone().idle,
+                gardenPosition: characterId === "bird"
+                  ? this.guidedBirdGardenZone().idle
+                  : characterId === "duck"
+                    ? this.guidedDuckGardenZone().loop
+                    : this.guidedLadybugGardenZone().idle,
               },
             },
           },
