@@ -666,14 +666,14 @@
                 lifeStatus: "DAR VIDA DO PASSARINHO PREPARADO PARA PROXIMA HOMOLOGACAO.",
                 visualBase: passarinhoAsset("PASSARINHO_GOLDEN_MASTER_V1.png"),
                 protectedOverlay: "",
-                previewWidth: 1388,
-                previewHeight: 1133,
+                previewWidth: 1536,
+                previewHeight: 1536,
                 assembly: {
-                  asas: { x: 0, y: -20, width: 1388, height: 1050, z: 1 },
-                  corpo: { x: 320, y: 425, width: 570, height: 494, z: 2 },
-                  cabeca: { x: 350, y: -10, width: 560, height: 560, z: 3 },
-                  "cauda-bico": { x: 388, y: 300, width: 980, height: 653, z: 4 },
-                  "pernas-pes": { x: 300, y: 760, width: 705, height: 390, z: 5 },
+                  asas: { x: 0, y: 0, width: 1536, height: 1536, z: 1 },
+                  corpo: { x: 0, y: 0, width: 1536, height: 1536, z: 2 },
+                  cabeca: { x: 0, y: 0, width: 1536, height: 1536, z: 3 },
+                  "cauda-bico": { x: 0, y: 0, width: 1536, height: 1536, z: 4 },
+                  "pernas-pes": { x: 0, y: 0, width: 1536, height: 1536, z: 5 },
                 },
               },
             },
@@ -717,9 +717,9 @@
                       narration: "Vamos comecar pela cabeca.",
                       part: passarinhoAsset("PASSARINHO_PARTE_01_CABECA.png"),
                       mask: passarinhoAsset("PASSARINHO_MASK_01_CABECA.png"),
-                      canvasWidth: 1346,
-                      canvasHeight: 1168,
-                      viewBox: { x: 90, y: 0, width: 1040, height: 1030 },
+                      canvasWidth: 1536,
+                      canvasHeight: 1536,
+                      viewBox: { x: 360, y: 120, width: 600, height: 650 },
                     },
                     {
                       id: "corpo",
@@ -728,9 +728,9 @@
                       narration: "Agora vamos colorir o corpo.",
                       part: passarinhoAsset("PASSARINHO_PARTE_02_CORPO.png"),
                       mask: passarinhoAsset("PASSARINHO_MASK_02_CORPO.png"),
-                      canvasWidth: 1347,
-                      canvasHeight: 1168,
-                      viewBox: { x: 25, y: 0, width: 1130, height: 1070 },
+                      canvasWidth: 1536,
+                      canvasHeight: 1536,
+                      viewBox: { x: 430, y: 760, width: 460, height: 430 },
                     },
                     {
                       id: "asas",
@@ -741,7 +741,7 @@
                       mask: passarinhoAsset("PASSARINHO_MASK_03_ASAS.png"),
                       canvasWidth: 1536,
                       canvasHeight: 1536,
-                      viewBox: { x: 0, y: 250, width: 1536, height: 890 },
+                      viewBox: { x: 80, y: 390, width: 1130, height: 620 },
                     },
                     {
                       id: "cauda-bico",
@@ -751,8 +751,8 @@
                       part: passarinhoAsset("PASSARINHO_PARTE_04_CAUDA_BICO.png"),
                       mask: passarinhoAsset("PASSARINHO_MASK_04_CAUDA_BICO.png"),
                       canvasWidth: 1536,
-                      canvasHeight: 1024,
-                      viewBox: { x: 0, y: 0, width: 1536, height: 1024 },
+                      canvasHeight: 1536,
+                      viewBox: { x: 480, y: 535, width: 1010, height: 610 },
                     },
                     {
                       id: "pernas-pes",
@@ -762,8 +762,8 @@
                       part: passarinhoAsset("PASSARINHO_PARTE_05_PERNAS_PES.png"),
                       mask: passarinhoAsset("PASSARINHO_MASK_05_PERNAS_PES.png"),
                       canvasWidth: 1536,
-                      canvasHeight: 1024,
-                      viewBox: { x: 140, y: 65, width: 1240, height: 900 },
+                      canvasHeight: 1536,
+                      viewBox: { x: 410, y: 1070, width: 610, height: 240 },
                     },
                   ],
                 },
@@ -6907,6 +6907,7 @@
       if (current.characterId !== characterId || !current.regions?.[initialStepId]) {
         this.guidedPaint = null;
         this.guidedPaintBuffers = {};
+        this.guidedPaintPartImages = {};
       }
       this.state = {
         ...this.state,
@@ -7112,6 +7113,8 @@
         if (protectedLayer) protectedLayer.src = "";
         this.guidedPaintProtectedImage = protectedImage || null;
         this.guidedPaintVisualBaseImage = visualBaseImage || baseImage || null;
+        if (!this.guidedPaintPartImages) this.guidedPaintPartImages = {};
+        if (activeStep?.id && baseImage) this.guidedPaintPartImages[activeStep.id] = baseImage;
         if (miniature && visualBaseImage) miniature.style.setProperty("--guided-miniature-base", `url("${assets.visualBase}")`);
         const maskContext = maskBuffer.getContext("2d", { willReadFrequently: true });
         if (maskContext && maskImage) {
@@ -7404,9 +7407,15 @@
             context.drawImage(buffer, 0, 0);
           }
         });
-      if (options.includeProtectedBase && assembly && this.guidedPaintVisualBaseImage) {
+      if (options.includeProtectedBase && assembly) {
         context.globalCompositeOperation = "multiply";
-        context.drawImage(this.guidedPaintVisualBaseImage, 0, 0, width, height);
+        paintSteps.forEach((step) => {
+          const partImage = this.guidedPaintPartImages?.[step.id];
+          const placement = assembly?.[step.id];
+          if (partImage && placement) {
+            context.drawImage(partImage, placement.x, placement.y, placement.width, placement.height);
+          }
+        });
         context.globalCompositeOperation = "source-over";
       }
       if (options.includeProtectedBase && this.guidedPaintProtectedImage) {
