@@ -684,8 +684,9 @@
                 miniatureLabel: "SEU PATINHO",
                 finalTitle: "VOCE CONSEGUIU! SEU PATINHO ESTA PRONTO!",
                 finalImageAlt: "Patinho criado pela crianca",
-                lifeButtonEnabled: false,
-                lifeStatus: "DAR VIDA DO PATINHO PREPARADO PARA PROXIMA HOMOLOGACAO.",
+                lifeButtonEnabled: true,
+                lifeStatus: "Confira seu patinho antes de dar vida.",
+                lifeSpeech: "QUA! QUA! SEU PATINHO GANHOU VIDA NO JARDIM!",
                 visualBase: "",
                 protectedOverlay: "",
                 previewWidth: 1536,
@@ -3181,6 +3182,37 @@
         this.activeContexts.delete(context);
         context.close?.();
       }, 520);
+      this.activeTimers.add(timer);
+    },
+    duckQuack() {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const context = new AudioContext();
+      const output = context.createGain();
+      output.gain.value = this.volumes.effects * 0.12;
+      output.connect(context.destination);
+      this.activeContexts.add(context);
+      const now = context.currentTime;
+      [360, 280].forEach((frequency, index) => {
+        const start = now + index * 0.16;
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = "square";
+        oscillator.frequency.setValueAtTime(frequency, start);
+        oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.72, start + 0.14);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(this.volumes.effects * 0.08, start + 0.025);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.2);
+        oscillator.connect(gain);
+        gain.connect(output);
+        oscillator.start(start);
+        oscillator.stop(start + 0.22);
+      });
+      const timer = window.setTimeout(() => {
+        this.activeTimers.delete(timer);
+        this.activeContexts.delete(context);
+        context.close?.();
+      }, 620);
       this.activeTimers.add(timer);
     },
     playConfigured(sound, button) {
@@ -5791,6 +5823,7 @@
       if (this.game?.type !== "guided-painting") return "";
       const assets = this.guidedPaintingAssets();
       if (this.guidedPaintingCharacterId() === "bird") return this.renderGuidedBirdLifeScreen(assets);
+      if (this.guidedPaintingCharacterId() === "duck") return this.renderGuidedDuckLifeScreen(assets);
       const animation = assets.animation || {};
       const gardenZone = this.guidedLadybugGardenZone();
       return `
@@ -5822,6 +5855,55 @@
             <div class="guided-life-actions" data-guided-life-actions>
               <button type="button" data-game-action="guided-life-replay">VER DE NOVO</button>
               <button type="button" data-game-action="guided-life-back">VOLTAR AO JARDIM</button>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    renderGuidedDuckLifeScreen(assets = this.guidedPaintingAssets()) {
+      const gardenZone = this.guidedDuckGardenZone();
+      return `
+        <section class="game-screen guided-life-screen" data-screen="life" aria-label="Jardim Mestre com o patinho criado">
+          <div class="guided-life-garden guided-duck-garden" style="--guided-garden:url('${assets.gardenBackground || this.game.assets.screens.final}')" data-guided-life-garden>
+            <div class="guided-life-transition guided-duck-spark" aria-hidden="true"></div>
+            <div class="guided-duck-water guided-duck-water-back" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="guided-life-duck is-sequence" data-guided-life-duck style="--duck-x:${gardenZone.idle.x}%; --duck-y:${gardenZone.idle.y}%; --duck-scale:${gardenZone.idle.scale};">
+              <span class="guided-duck-shadow" aria-hidden="true"></span>
+              <div class="guided-duck-body" data-guided-life-body>
+                ${this.renderGuidedDuckPartLayer("asas", "wing wing-left")}
+                ${this.renderGuidedDuckPartLayer("asas", "wing wing-right")}
+                ${this.renderGuidedDuckPartLayer("pernas-pes", "legs leg-left")}
+                ${this.renderGuidedDuckPartLayer("pernas-pes", "legs leg-right")}
+                ${this.renderGuidedDuckPartLayer("corpo", "torso")}
+                ${this.renderGuidedDuckPartLayer("cauda-bico", "tail")}
+                ${this.renderGuidedDuckPartLayer("cabeca", "head")}
+                ${this.renderGuidedDuckPartLayer("cauda-bico", "beak")}
+                ${this.renderGuidedDuckArtLayer("asas", "wing-art wing-left-art")}
+                ${this.renderGuidedDuckArtLayer("asas", "wing-art wing-right-art")}
+                ${this.renderGuidedDuckArtLayer("pernas-pes", "legs-art leg-left-art")}
+                ${this.renderGuidedDuckArtLayer("pernas-pes", "legs-art leg-right-art")}
+                ${this.renderGuidedDuckArtLayer("corpo", "torso-art")}
+                ${this.renderGuidedDuckArtLayer("cauda-bico", "tail-art")}
+                ${this.renderGuidedDuckArtLayer("cabeca", "head-art")}
+                ${this.renderGuidedDuckArtLayer("cauda-bico", "beak-art")}
+              </div>
+              <div class="guided-duck-ripples" aria-hidden="true">
+                <span></span><span></span><span></span>
+              </div>
+              <div class="guided-duck-splashes" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+            <div class="guided-duck-water guided-duck-water-front" aria-hidden="true">
+              <span></span><span></span><span></span><span></span>
+            </div>
+            <div class="guided-life-speech guided-duck-speech" data-guided-life-speech>${escapeHtml(assets.lifeSpeech || "QUA! QUA! SEU PATINHO GANHOU VIDA NO JARDIM!")}</div>
+            <div class="guided-life-actions" data-guided-life-actions>
+              <button type="button" data-game-action="guided-life-replay">VER DE NOVO</button>
+              <button type="button" data-game-action="guided-life-back">CONTINUAR NO JARDIM</button>
             </div>
           </div>
         </section>
@@ -7622,6 +7704,15 @@
       };
     }
 
+    guidedDuckGardenZone() {
+      return {
+        idle: { x: 37, y: 70, scale: 0.48 },
+        waterEntry: { x: 52, y: 64, scale: 0.43 },
+        swim: { x: 66, y: 58, scale: 0.38 },
+        loop: { x: 57, y: 64, scale: 0.41 },
+      };
+    }
+
     guidedLifeLayerMask(stepId) {
       const config = this.guidedPaintingConfig();
       const step = config?.steps?.find((entry) => entry.id === stepId);
@@ -7660,6 +7751,19 @@
       const src = this.guidedPaintingStepPart(stepId);
       if (!src) return "";
       return `<img class="guided-bird-layer guided-bird-art is-${kind}" src="${src}" alt="" aria-hidden="true" />`;
+    }
+
+    renderGuidedDuckPartLayer(stepId, kind) {
+      const texture = this.guidedPaintingRegionTexture(stepId);
+      const clipSrc = this.guidedLifeLayerMask(stepId);
+      if (!texture || !clipSrc) return "";
+      return `<span class="guided-duck-layer guided-duck-painted is-${kind}" style="${this.guidedLifeLayerStyle(stepId, clipSrc)}" aria-hidden="true"></span>`;
+    }
+
+    renderGuidedDuckArtLayer(stepId, kind) {
+      const src = this.guidedPaintingStepPart(stepId);
+      if (!src) return "";
+      return `<img class="guided-duck-layer guided-duck-art is-${kind}" src="${src}" alt="" aria-hidden="true" />`;
     }
 
     renderGuidedLifeWingLayer(kind) {
@@ -7721,7 +7825,11 @@
                 completed: true,
                 paintingState: creation,
                 animationState: "sequence",
-                gardenPosition: characterId === "bird" ? this.guidedBirdGardenZone().idle : this.guidedLadybugGardenZone().idle,
+                gardenPosition: characterId === "bird"
+                  ? this.guidedBirdGardenZone().idle
+                  : characterId === "duck"
+                    ? this.guidedDuckGardenZone().idle
+                    : this.guidedLadybugGardenZone().idle,
               },
             },
           },
@@ -7730,7 +7838,11 @@
       const image = this.root.querySelector("[data-guided-final-image]");
       const status = this.root.querySelector("[data-guided-final-status]");
       if (image && creation.preview) image.src = creation.preview;
-      if (status) status.textContent = characterId === "bird" ? "PASSARINHO ENTRANDO NO JARDIM" : "JOANINHA ENTRANDO NO JARDIM";
+      if (status) status.textContent = characterId === "bird"
+        ? "PASSARINHO ENTRANDO NO JARDIM"
+        : characterId === "duck"
+          ? "PATINHO ENTRANDO NO JARDIM"
+          : "JOANINHA ENTRANDO NO JARDIM";
       audioPlayer.blip("success");
       this.root.innerHTML = this.render();
       this.go("life", { transition: { enabled: true, duration: 520, variant: "soft" } });
@@ -7744,6 +7856,10 @@
     startGuidedLifeSequence({ replay = false } = {}) {
       if (this.guidedPaintingCharacterId() === "bird") {
         this.startGuidedBirdLifeSequence({ replay });
+        return;
+      }
+      if (this.guidedPaintingCharacterId() === "duck") {
+        this.startGuidedDuckLifeSequence({ replay });
         return;
       }
       const ladybug = this.root.querySelector("[data-guided-life-ladybug]");
@@ -7822,6 +7938,45 @@
       }, duration);
     }
 
+    startGuidedDuckLifeSequence({ replay = false } = {}) {
+      const duck = this.root.querySelector("[data-guided-life-duck]");
+      const garden = this.root.querySelector("[data-guided-life-garden]");
+      if (!duck || !garden) return;
+      const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+      duck.classList.remove("is-sequence", "is-loop", "is-replay", "is-reduced");
+      garden.classList.remove("is-loop-ready");
+      void duck.offsetWidth;
+      duck.classList.add(reduced ? "is-reduced" : "is-sequence");
+      if (replay) duck.classList.add("is-replay");
+      this.playGuidedDuckLifeAudio(reduced);
+      const duration = reduced ? 1800 : 11200;
+      window.clearTimeout(this.guidedLifeTimer);
+      this.guidedLifeTimer = window.setTimeout(() => {
+        duck.classList.remove("is-sequence", "is-replay", "is-reduced");
+        duck.classList.add("is-loop");
+        garden.classList.add("is-loop-ready");
+        this.state = {
+          ...this.state,
+          guidedPainting: {
+            ...this.state.guidedPainting,
+            life: {
+              ...(this.state.guidedPainting.life || {}),
+              running: false,
+              phase: "loop",
+              gardenCharacters: {
+                ...(this.state.guidedPainting.life?.gardenCharacters || {}),
+                duck: {
+                  ...(this.state.guidedPainting.life?.gardenCharacters?.duck || {}),
+                  animationState: "loop",
+                  gardenPosition: this.guidedDuckGardenZone().loop,
+                },
+              },
+            },
+          },
+        };
+      }, duration);
+    }
+
     playGuidedBirdLifeAudio(reduced = false) {
       if (reduced) {
         audioPlayer.blip("success");
@@ -7833,6 +7988,29 @@
         const timer = window.setTimeout(() => {
           audioPlayer.activeTimers.delete(timer);
           chirp();
+        }, delay);
+        audioPlayer.activeTimers.add(timer);
+      });
+    }
+
+    playGuidedDuckLifeAudio(reduced = false) {
+      if (reduced) {
+        audioPlayer.blip("success");
+        return;
+      }
+      audioPlayer.blip("success");
+      const quack = () => audioPlayer.duckQuack?.();
+      [1350, 1880, 5550, 6200, 9600].forEach((delay) => {
+        const timer = window.setTimeout(() => {
+          audioPlayer.activeTimers.delete(timer);
+          quack();
+        }, delay);
+        audioPlayer.activeTimers.add(timer);
+      });
+      [3950, 7050].forEach((delay) => {
+        const timer = window.setTimeout(() => {
+          audioPlayer.activeTimers.delete(timer);
+          audioPlayer.blip("effects");
         }, delay);
         audioPlayer.activeTimers.add(timer);
       });
