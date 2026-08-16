@@ -687,7 +687,7 @@
                 lifeButtonEnabled: true,
                 lifeStatus: "Confira seu patinho antes de dar vida.",
                 lifeSpeech: "QUA! QUA! SEU PATINHO GANHOU VIDA NO JARDIM!",
-                visualBase: "",
+                visualBase: patinhoAsset("PATINHO_GOLDEN_MASTER_V1_1536x1536.png"),
                 protectedOverlay: "",
                 previewWidth: 1536,
                 previewHeight: 1536,
