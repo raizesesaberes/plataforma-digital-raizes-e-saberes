@@ -4584,6 +4584,39 @@ body.game-immersive-active .game-stage,
   display: grid;
 }
 
+.guided-character-picker {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(96px, 14vh, 132px);
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  width: min(86vw, 520px);
+  transform: translateX(-50%);
+}
+
+.guided-character-picker button {
+  min-width: 150px;
+  min-height: 48px;
+  padding: 10px 18px;
+  border: 2px solid #7cb66c;
+  border-radius: 8px;
+  background: rgba(255, 250, 236, 0.92);
+  color: #31502e;
+  font-family: inherit;
+  font-weight: 1000;
+  box-shadow: 0 10px 20px rgba(48, 82, 42, 0.16);
+  cursor: pointer;
+}
+
+.guided-character-picker button.is-selected {
+  border-color: #f4b72e;
+  background: #fff2ba;
+  color: #4b2714;
+}
+
 .guided-painting-screen {
   align-items: stretch;
   padding: clamp(10px, 2vw, 18px);
@@ -4812,7 +4845,7 @@ body.game-immersive-active .game-stage,
   position: relative;
   width: min(100%, 72vh);
   max-width: 640px;
-  aspect-ratio: 1;
+  aspect-ratio: var(--guided-artboard-ratio, 1);
   overflow: hidden;
   border-radius: 8px;
   background: #fffaf2;
@@ -5548,6 +5581,16 @@ body.game-immersive-active .game-stage,
 
   .guided-life-button {
     width: 100%;
+  }
+
+  .guided-character-picker {
+    bottom: 92px;
+    width: calc(100% - 24px);
+  }
+
+  .guided-character-picker button {
+    flex: 1 1 140px;
+    min-width: 0;
   }
 
   .guided-life-ladybug {

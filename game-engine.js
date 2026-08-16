@@ -19,6 +19,7 @@
   const caminhoAsset = (path) => `${caminhoBase}${path}`;
   const atelieBase = "assets/games/atelie-bia/";
   const atelieAsset = (path) => `${atelieBase}${path}`;
+  const passarinhoAsset = (path) => atelieAsset(`passarinhos/v1/${path}`);
   const rotinaBase = "assets/games/rotina-pipo/";
   const rotinaAsset = (path) => `${rotinaBase}${path}`;
   const festaBase = "assets/games/grande-festa/";
@@ -644,6 +645,38 @@
               shadow: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/SHADOW/JOANINHA_SHADOW.png"),
               shadowFlight: atelieAsset("animation/RS-ATELIE-BIA-JARDIM-ASSET-006/SHADOW/JOANINHA_SHADOW_FLIGHT_SOFT.png"),
             },
+            characters: {
+              ladybug: {
+                id: "ladybug",
+                label: "Joaninha",
+                miniatureLabel: "SUA JOANINHA",
+                finalTitle: "VOCE CONSEGUIU! SUA JOANINHA ESTA PRONTA!",
+                finalImageAlt: "Joaninha criada pela crianca",
+                lifeButtonEnabled: true,
+                visualBase: atelieAsset("golden-master/JOANINHA_GOLDEN_MASTER_V2.png"),
+                protectedOverlay: atelieAsset("golden-master/JOANINHA_BASE_PROTEGIDA.png"),
+              },
+              bird: {
+                id: "bird",
+                label: "Passarinho",
+                miniatureLabel: "SEU PASSARINHO",
+                finalTitle: "VOCE CONSEGUIU! SEU PASSARINHO ESTA PRONTO!",
+                finalImageAlt: "Passarinho criado pela crianca",
+                lifeButtonEnabled: false,
+                lifeStatus: "DAR VIDA DO PASSARINHO PREPARADO PARA PROXIMA HOMOLOGACAO.",
+                visualBase: passarinhoAsset("PASSARINHO_GOLDEN_MASTER_V1.png"),
+                protectedOverlay: "",
+                previewWidth: 1388,
+                previewHeight: 1133,
+                assembly: {
+                  asas: { x: 0, y: -20, width: 1388, height: 1050, z: 1 },
+                  corpo: { x: 320, y: 425, width: 570, height: 494, z: 2 },
+                  cabeca: { x: 350, y: -10, width: 560, height: 560, z: 3 },
+                  "cauda-bico": { x: 388, y: 300, width: 980, height: 653, z: 4 },
+                  "pernas-pes": { x: 300, y: 760, width: 705, height: 390, z: 5 },
+                },
+              },
+            },
           },
         },
         audio: {
@@ -661,6 +694,80 @@
               brushSize: 30,
               eraserSize: 40,
               initialStepId: "cabeca",
+              initialCharacterId: "ladybug",
+              characters: {
+                ladybug: {
+                  id: "ladybug",
+                  label: "Joaninha",
+                  hint: "Pinte a cabeca da joaninha.",
+                  narration: "Escolha uma cor e pinte somente a cabeca da joaninha.",
+                  initialStepId: "cabeca",
+                },
+                bird: {
+                  id: "bird",
+                  label: "Passarinho",
+                  hint: "Pinte a cabeca do passarinho.",
+                  narration: "Escolha uma cor e pinte somente a cabeca do passarinho.",
+                  initialStepId: "cabeca",
+                  steps: [
+                    {
+                      id: "cabeca",
+                      label: "1. Cabeca",
+                      instruction: "VAMOS COMECAR PELA CABECA!",
+                      narration: "Vamos comecar pela cabeca.",
+                      part: passarinhoAsset("PASSARINHO_PARTE_01_CABECA.png"),
+                      mask: passarinhoAsset("PASSARINHO_MASK_01_CABECA.png"),
+                      canvasWidth: 1346,
+                      canvasHeight: 1168,
+                      viewBox: { x: 90, y: 0, width: 1040, height: 1030 },
+                    },
+                    {
+                      id: "corpo",
+                      label: "2. Corpo",
+                      instruction: "AGORA VAMOS COLORIR O CORPO!",
+                      narration: "Agora vamos colorir o corpo.",
+                      part: passarinhoAsset("PASSARINHO_PARTE_02_CORPO.png"),
+                      mask: passarinhoAsset("PASSARINHO_MASK_02_CORPO.png"),
+                      canvasWidth: 1347,
+                      canvasHeight: 1168,
+                      viewBox: { x: 25, y: 0, width: 1130, height: 1070 },
+                    },
+                    {
+                      id: "asas",
+                      label: "3. Asas",
+                      instruction: "VAMOS COLORIR AS ASAS!",
+                      narration: "Vamos colorir as asas.",
+                      part: passarinhoAsset("PASSARINHO_PARTE_03_ASAS.png"),
+                      mask: passarinhoAsset("PASSARINHO_MASK_03_ASAS.png"),
+                      canvasWidth: 1536,
+                      canvasHeight: 1536,
+                      viewBox: { x: 0, y: 250, width: 1536, height: 890 },
+                    },
+                    {
+                      id: "cauda-bico",
+                      label: "4. Cauda + bico",
+                      instruction: "AGORA VAMOS COLORIR A CAUDA E O BICO!",
+                      narration: "Agora vamos colorir a cauda e o bico.",
+                      part: passarinhoAsset("PASSARINHO_PARTE_04_CAUDA_BICO.png"),
+                      mask: passarinhoAsset("PASSARINHO_MASK_04_CAUDA_BICO.png"),
+                      canvasWidth: 1536,
+                      canvasHeight: 1024,
+                      viewBox: { x: 0, y: 0, width: 1536, height: 1024 },
+                    },
+                    {
+                      id: "pernas-pes",
+                      label: "5. Pernas + pes",
+                      instruction: "VAMOS TERMINAR COM AS PERNAS E OS PES!",
+                      narration: "Vamos terminar com as pernas e os pes.",
+                      part: passarinhoAsset("PASSARINHO_PARTE_05_PERNAS_PES.png"),
+                      mask: passarinhoAsset("PASSARINHO_MASK_05_PERNAS_PES.png"),
+                      canvasWidth: 1536,
+                      canvasHeight: 1024,
+                      viewBox: { x: 140, y: 65, width: 1240, height: 900 },
+                    },
+                  ],
+                },
+              },
               steps: [
                 {
                   id: "cabeca",
@@ -2710,6 +2817,7 @@
         selectedCanvasId: null,
         canvasSequence: 0,
         guidedPainting: {
+          characterId: "ladybug",
           activeStepId: "cabeca",
           frontierStepId: "cabeca",
           activeTool: "brush",
@@ -4746,14 +4854,27 @@
         `;
       }
       if (this.game.type === "guided-painting") {
+        const painting = this.currentRound()?.painting || {};
+        const characters = Object.values(painting.characters || {});
+        const activeCharacterId = this.guidedPaintingCharacterId(painting);
+        const activeCharacter = painting.characters?.[activeCharacterId] || {};
         return `
           <section class="game-screen" data-screen="room" aria-label="Escolha dos materiais">
             <div class="game-scene game-scene-room" style="--screen:url('${this.game.assets.screens.room}')" aria-hidden="true"></div>
             ${components.particles(18)}
             <article class="garden-prompt">
-              ${components.audioButton("Ouvir instrucao", this.currentRound().narration)}
-              <strong data-hint-text>${this.currentRound().hint}</strong>
+              ${components.audioButton("Ouvir instrucao", activeCharacter.narration || this.currentRound().narration)}
+              <strong data-hint-text>${escapeHtml(activeCharacter.hint || this.currentRound().hint)}</strong>
             </article>
+            ${characters.length > 1 ? `
+              <div class="guided-character-picker" aria-label="Escolha o personagem">
+                ${characters.map((character) => `
+                  <button class="${character.id === activeCharacterId ? "is-selected" : ""}" type="button" data-game-action="select-guided-character" data-guided-character="${escapeHtml(character.id)}" aria-pressed="${character.id === activeCharacterId ? "true" : "false"}">
+                    ${escapeHtml(character.label)}
+                  </button>
+                `).join("")}
+              </div>
+            ` : ""}
             <button class="game-primary-button game-observe-button" type="button" data-game-action="begin-guided-painting">Pintar</button>
           </section>
         `;
@@ -5339,16 +5460,19 @@
 
     renderGuidedPaintingScreen() {
       const round = this.currentRound();
-      const painting = round.painting;
+      const painting = this.guidedPaintingConfig();
+      const assets = this.guidedPaintingAssets();
       const guidedState = this.state.guidedPainting || {};
       const activeStep = this.guidedPaintingStep(guidedState.activeStepId);
       const regionState = this.guidedPaintingRegionState(activeStep?.id);
       const activeColor = guidedState.activeColor || painting.colors[0]?.id || "red";
       const activeTool = guidedState.activeTool || "brush";
-      const viewBox = activeStep?.viewBox || { x: 0, y: 0, width: 1254, height: 1254 };
-      const viewScale = 1254 / Math.max(viewBox.width || 1254, viewBox.height || 1254);
-      const viewOffsetX = -viewBox.x * viewScale + (1254 - (viewBox.width || 1254) * viewScale) / 2;
-      const viewOffsetY = -viewBox.y * viewScale + (1254 - (viewBox.height || 1254) * viewScale) / 2;
+      const canvasWidth = activeStep?.canvasWidth || 1254;
+      const canvasHeight = activeStep?.canvasHeight || 1254;
+      const viewBox = activeStep?.viewBox || { x: 0, y: 0, width: canvasWidth, height: canvasHeight };
+      const viewScale = Math.min(canvasWidth / (viewBox.width || canvasWidth), canvasHeight / (viewBox.height || canvasHeight));
+      const viewOffsetX = -viewBox.x * viewScale + (canvasWidth - (viewBox.width || canvasWidth) * viewScale) / 2;
+      const viewOffsetY = -viewBox.y * viewScale + (canvasHeight - (viewBox.height || canvasHeight) * viewScale) / 2;
       const coverage = Math.round((regionState.coverage || 0) * 100);
       const threshold = Math.round((painting.completionThreshold || 0.65) * 100);
       const ready = Boolean(regionState.ready);
@@ -5391,17 +5515,17 @@
                 </div>
               </aside>
               <main class="guided-artboard-wrap">
-                <div class="guided-artboard" data-guided-artboard style="--guided-view-scale:${viewScale}; --guided-view-x:${(viewOffsetX / 1254) * 100}%; --guided-view-y:${(viewOffsetY / 1254) * 100}%;">
+                <div class="guided-artboard" data-guided-artboard style="--guided-artboard-ratio:${canvasWidth} / ${canvasHeight}; --guided-view-scale:${viewScale}; --guided-view-x:${(viewOffsetX / canvasWidth) * 100}%; --guided-view-y:${(viewOffsetY / canvasHeight) * 100}%;">
                   <img class="guided-layer guided-base-layer" data-guided-base alt="" />
                   <canvas class="guided-layer guided-paint-layer" data-guided-paint-canvas aria-label="Area de pintura ${activeStep?.label || "guiada"}"></canvas>
                   <img class="guided-layer guided-protected-layer" data-guided-protected alt="" />
                   <canvas class="guided-mask-probe" data-guided-mask-probe aria-hidden="true"></canvas>
-                  <div class="guided-asset-warning" data-guided-asset-warning hidden>Assets oficiais da joaninha ou mascara nao encontrados.</div>
+                  <div class="guided-asset-warning" data-guided-asset-warning hidden>Assets oficiais de ${escapeHtml((assets.label || "personagem").toLowerCase())} ou mascara nao encontrados.</div>
                 </div>
               </main>
               <aside class="guided-status-panel" aria-label="Status da pintura">
                 <div class="guided-miniature">
-                  <strong>SUA JOANINHA</strong>
+                  <strong>${escapeHtml(assets.miniatureLabel || "SUA CRIACAO")}</strong>
                   <div class="guided-miniature-frame" data-guided-miniature></div>
                 </div>
                 <div class="guided-coverage">
@@ -5508,20 +5632,22 @@
 
     renderFinalScreen() {
       if (this.game.type === "guided-painting") {
+        const assets = this.guidedPaintingAssets();
+        const lifeEnabled = assets.lifeButtonEnabled !== false;
         return `
-          <section class="game-screen guided-final-screen" data-screen="final" aria-label="Joaninha completa">
+          <section class="game-screen guided-final-screen" data-screen="final" aria-label="${escapeHtml(assets.label || "Criacao")} completa">
             <article class="guided-final-shell">
               <header class="guided-final-header">
                 <span>Atelie da Bia</span>
-                <h2>VOCE CONSEGUIU! SUA JOANINHA ESTA PRONTA!</h2>
+                <h2>${escapeHtml(assets.finalTitle || "VOCE CONSEGUIU! SUA CRIACAO ESTA PRONTA!")}</h2>
               </header>
               <div class="guided-final-preview" data-guided-final-preview>
-                <img data-guided-final-image alt="Joaninha criada pela crianca" />
+                <img data-guided-final-image alt="${escapeHtml(assets.finalImageAlt || "Criacao da crianca")}" />
               </div>
-              <button class="guided-life-button" type="button" data-game-action="guided-life-ready">
+              <button class="guided-life-button" type="button" data-game-action="guided-life-ready" ${lifeEnabled ? "" : "aria-disabled=\"true\""}>
                 <span>★</span> DAR VIDA
               </button>
-              <p class="guided-final-status" data-guided-final-status>Confira sua criacao antes de dar vida.</p>
+              <p class="guided-final-status" data-guided-final-status>${escapeHtml(lifeEnabled ? "Confira sua criacao antes de dar vida." : assets.lifeStatus || "Dar vida preparado para proxima etapa.")}</p>
             </article>
           </section>
         `;
@@ -5900,7 +6026,7 @@
       this.game = gameRepository.getGame(gameId);
       this.state = progressController.create(this.game);
       if (this.game.type === "guided-painting") {
-        this.state.guidedPainting.activeStepId = this.currentRound()?.painting?.initialStepId || "cabeca";
+        this.prepareGuidedPaintingCharacter(this.currentRound()?.painting?.initialCharacterId || "ladybug");
       }
       this.record = rewardController.latest(this.game.id);
       this.journeyV2Visited = new Set();
@@ -6076,9 +6202,12 @@
       }
       if (action === "begin-guided-painting") {
         this.updateRoundContent();
-        audioPlayer.speak(this.currentRound().narration, null);
+        this.prepareGuidedPaintingCharacter();
         this.startGuidedPaintMusic();
         this.go("choice");
+      }
+      if (action === "select-guided-character") {
+        this.selectGuidedPaintingCharacter(button.dataset.guidedCharacter);
       }
       if (action === "begin-timeline") {
         this.updateRoundContent();
@@ -6110,7 +6239,7 @@
       }
       if (action === "guided-replay-audio") {
         const step = this.guidedPaintingStep();
-        audioPlayer.speak(step?.narration || this.currentRound().narration, button);
+        this.playGuidedNarration(step, button);
       }
       if (action === "guided-eraser") {
         this.setGuidedPaintTool("eraser");
@@ -6761,12 +6890,89 @@
       this.go("feedback");
     }
 
+    createGuidedPaintingRegions(steps = []) {
+      return steps.reduce((regions, step) => {
+        regions[step.id] = { coverage: 0, ready: false, completed: false, actions: [], redoActions: [] };
+        return regions;
+      }, {});
+    }
+
+    prepareGuidedPaintingCharacter(characterId = this.guidedPaintingCharacterId()) {
+      if (this.game.type !== "guided-painting") return;
+      const base = this.currentRound()?.painting || {};
+      const character = base.characters?.[characterId] || base.characters?.[base.initialCharacterId] || {};
+      const steps = character.steps || base.steps || [];
+      const initialStepId = character.initialStepId || base.initialStepId || steps[0]?.id || "cabeca";
+      const current = this.state.guidedPainting || {};
+      if (current.characterId !== characterId || !current.regions?.[initialStepId]) {
+        this.guidedPaint = null;
+        this.guidedPaintBuffers = {};
+      }
+      this.state = {
+        ...this.state,
+        completedRounds: [],
+        guidedPainting: {
+          ...current,
+          characterId,
+          activeStepId: initialStepId,
+          frontierStepId: initialStepId,
+          activeTool: current.activeTool || "brush",
+          activeColor: current.activeColor || base.colors?.[0]?.id || "red",
+          completedSteps: current.characterId === characterId ? current.completedSteps || [] : [],
+          regions: current.characterId === characterId && current.regions?.[initialStepId] ? current.regions : this.createGuidedPaintingRegions(steps),
+          characterCreation: null,
+          life: null,
+        },
+      };
+    }
+
+    selectGuidedPaintingCharacter(characterId) {
+      if (this.game.type !== "guided-painting") return;
+      const base = this.currentRound()?.painting || {};
+      if (!base.characters?.[characterId]) return;
+      this.prepareGuidedPaintingCharacter(characterId);
+      audioPlayer.blip();
+      this.root.innerHTML = this.render();
+      this.go("room", { transition: false });
+    }
+
     guidedPaintingConfig() {
-      return this.currentRound()?.painting || null;
+      const base = this.currentRound()?.painting || null;
+      if (!base) return null;
+      const character = this.guidedPaintingCharacterConfig(base);
+      return {
+        ...base,
+        ...character,
+        colors: base.colors || [],
+        steps: character?.steps || base.steps || [],
+        completionThreshold: character?.completionThreshold || base.completionThreshold,
+        brushSize: character?.brushSize || base.brushSize,
+        eraserSize: character?.eraserSize || base.eraserSize,
+        initialStepId: character?.initialStepId || base.initialStepId,
+        characters: base.characters || {},
+      };
+    }
+
+    guidedPaintingCharacterId(config = this.currentRound()?.painting || null) {
+      return this.state.guidedPainting?.characterId || config?.initialCharacterId || "ladybug";
+    }
+
+    guidedPaintingCharacterConfig(config = this.currentRound()?.painting || null) {
+      if (!config) return null;
+      const characterId = this.guidedPaintingCharacterId(config);
+      return config.characters?.[characterId] || config.characters?.[config.initialCharacterId] || null;
+    }
+
+    guidedPaintingCharacterAssets() {
+      const characterId = this.guidedPaintingCharacterId();
+      return this.game.assets?.painting?.characters?.[characterId] || {};
     }
 
     guidedPaintingAssets() {
-      return this.game.assets?.painting || {};
+      return {
+        ...(this.game.assets?.painting || {}),
+        ...this.guidedPaintingCharacterAssets(),
+      };
     }
 
     guidedPaintingStep(stepId = this.state.guidedPainting?.activeStepId) {
@@ -6865,8 +7071,8 @@
       const assets = this.guidedPaintingAssets();
       const activeStep = this.guidedPaintingStep();
       if (!config) return;
-      const width = 1254;
-      const height = 1254;
+      const width = activeStep?.canvasWidth || 1254;
+      const height = activeStep?.canvasHeight || 1254;
       if (!this.guidedPaint || this.guidedPaint.gameId !== this.game.id || this.guidedPaint.region !== activeStep?.id) {
         const maskBuffer = document.createElement("canvas");
         const scratchBuffer = document.createElement("canvas");
@@ -6891,20 +7097,22 @@
           lastPoint: null,
           artboard,
           viewBox: activeStep?.viewBox || { x: 0, y: 0, width, height },
-          viewScale: width / Math.max(activeStep?.viewBox?.width || width, activeStep?.viewBox?.height || height),
+          viewScale: Math.min(width / (activeStep?.viewBox?.width || width), height / (activeStep?.viewBox?.height || height)),
         };
-        const [baseImage, protectedImage, maskImage] = await Promise.all([
+        const [baseImage, protectedImage, maskImage, visualBaseImage] = await Promise.all([
           this.loadGuidedImage(activeStep?.part || assets.visualBase),
           this.loadGuidedImage(assets.protectedOverlay),
           this.loadGuidedImage(activeStep?.mask),
+          this.loadGuidedImage(assets.visualBase),
         ]);
         const base = this.root.querySelector("[data-guided-base]");
         const protectedLayer = this.root.querySelector("[data-guided-protected]");
         const miniature = this.root.querySelector("[data-guided-miniature]");
         if (base && baseImage) base.src = activeStep?.part || assets.visualBase;
         if (protectedLayer) protectedLayer.src = "";
-        if (protectedImage) this.guidedPaintProtectedImage = protectedImage;
-        if (miniature && baseImage) miniature.style.setProperty("--guided-miniature-base", `url("${assets.visualBase}")`);
+        this.guidedPaintProtectedImage = protectedImage || null;
+        this.guidedPaintVisualBaseImage = visualBaseImage || baseImage || null;
+        if (miniature && visualBaseImage) miniature.style.setProperty("--guided-miniature-base", `url("${assets.visualBase}")`);
         const maskContext = maskBuffer.getContext("2d", { willReadFrequently: true });
         if (maskContext && maskImage) {
           maskContext.clearRect(0, 0, width, height);
@@ -6917,14 +7125,14 @@
           }
           this.guidedPaint.maskPixels = maskPixels;
         }
-        this.guidedPaint.assetsReady = Boolean(baseImage && protectedImage && maskImage);
+        this.guidedPaint.assetsReady = Boolean(baseImage && maskImage && (assets.protectedOverlay ? protectedImage : true));
         this.syncGuidedAssetWarning();
         this.redrawGuidedPaintFromActions();
       } else {
         this.guidedPaint.paintCanvas = paintCanvas;
         this.guidedPaint.artboard = artboard;
         this.guidedPaint.viewBox = activeStep?.viewBox || { x: 0, y: 0, width, height };
-        this.guidedPaint.viewScale = width / Math.max(activeStep?.viewBox?.width || width, activeStep?.viewBox?.height || height);
+        this.guidedPaint.viewScale = Math.min(width / (activeStep?.viewBox?.width || width), height / (activeStep?.viewBox?.height || height));
       }
       this.resizeGuidedPaintCanvas();
       this.syncGuidedPaintingUi();
@@ -7166,20 +7374,41 @@
     }
 
     composeGuidedPainting(options = {}) {
-      const width = this.guidedPaint?.width || 1254;
-      const height = this.guidedPaint?.height || 1254;
+      const assets = this.guidedPaintingAssets();
+      const assembly = assets.assembly || null;
+      const width = assembly ? assets.previewWidth || 1254 : this.guidedPaint?.width || 1254;
+      const height = assembly ? assets.previewHeight || 1254 : this.guidedPaint?.height || 1254;
       const composite = document.createElement("canvas");
       composite.width = width;
       composite.height = height;
       const context = composite.getContext("2d");
       if (!context) return null;
       const config = this.guidedPaintingConfig();
-      config?.steps
+      if (options.includeProtectedBase && !assembly && this.guidedPaintVisualBaseImage) {
+        context.drawImage(this.guidedPaintVisualBaseImage, 0, 0, width, height);
+      }
+      const paintSteps = (config?.steps || [])
         ?.filter((step) => !step.locked)
+        .sort((a, b) => {
+          const zA = assembly?.[a.id]?.z ?? config.steps.indexOf(a);
+          const zB = assembly?.[b.id]?.z ?? config.steps.indexOf(b);
+          return zA - zB;
+        });
+      paintSteps
         .forEach((step) => {
           const buffer = this.guidedPaintBuffers?.[step.id];
-          if (buffer) context.drawImage(buffer, 0, 0);
+          const placement = assembly?.[step.id];
+          if (buffer && placement) {
+            context.drawImage(buffer, placement.x, placement.y, placement.width, placement.height);
+          } else if (buffer) {
+            context.drawImage(buffer, 0, 0);
+          }
         });
+      if (options.includeProtectedBase && assembly && this.guidedPaintVisualBaseImage) {
+        context.globalCompositeOperation = "multiply";
+        context.drawImage(this.guidedPaintVisualBaseImage, 0, 0, width, height);
+        context.globalCompositeOperation = "source-over";
+      }
       if (options.includeProtectedBase && this.guidedPaintProtectedImage) {
         context.drawImage(this.guidedPaintProtectedImage, 0, 0, width, height);
       }
@@ -7204,7 +7433,7 @@
           };
         });
       return {
-        characterId: "joaninha",
+        characterId: this.guidedPaintingCharacterId(config),
         completed: true,
         completedAt: Date.now(),
         regions,
@@ -7276,6 +7505,13 @@
 
     prepareGuidedLifeState() {
       if (this.game.type !== "guided-painting") return;
+      const assets = this.guidedPaintingAssets();
+      if (assets.lifeButtonEnabled === false) {
+        const status = this.root.querySelector("[data-guided-final-status]");
+        if (status) status.textContent = assets.lifeStatus || "Dar vida preparado para proxima etapa.";
+        audioPlayer.blip();
+        return;
+      }
       if (this.state.guidedPainting?.life?.running) return;
       const creation = this.buildGuidedCharacterCreation();
       this.state = {
@@ -7469,7 +7705,7 @@
         this.guidedPaint = null;
         this.root.innerHTML = this.render();
         this.go("choice", { transition: { enabled: true, duration: 420, variant: "soft" } });
-        audioPlayer.speak(nextStep.narration || this.currentRound().narration, null);
+        this.playGuidedNarration(nextStep, null);
         return;
       }
       this.state = {
@@ -7491,6 +7727,24 @@
       const audio = new Audio(src);
       audio.volume = audioPlayer.volumes.effects;
       audio.play?.().catch(() => {});
+    }
+
+    playGuidedNarration(step = this.guidedPaintingStep(), button = null) {
+      const src = step?.narrationAudio || step?.audio || this.guidedPaintingAssets().narrationAudio;
+      if (!src) {
+        audioPlayer.blip();
+        return;
+      }
+      const audio = new Audio(src);
+      audio.volume = audioPlayer.volumes.narration;
+      button?.classList.add("is-playing");
+      button?.setAttribute("aria-busy", "true");
+      audio.onended = () => {
+        button?.classList.remove("is-playing");
+        button?.setAttribute("aria-busy", "false");
+      };
+      audio.onerror = audio.onended;
+      audio.play?.().catch(() => audio.onerror?.());
     }
 
     startGuidedPaintMusic() {
