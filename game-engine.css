@@ -5336,6 +5336,11 @@ body.game-immersive-active .game-stage,
   transform-origin: 50% 82%;
 }
 
+.guided-life-duck .guided-duck-layer.is-legs,
+.guided-life-duck .guided-duck-layer.is-legs-art {
+  opacity: 0;
+}
+
 .guided-duck-layer.leg-left,
 .guided-duck-layer.leg-left-art {
   clip-path: polygon(0 58%, 51% 58%, 51% 100%, 0 100%);
@@ -5543,12 +5548,12 @@ body.game-immersive-active .game-stage,
 
 .guided-life-duck.is-sequence .guided-duck-layer.leg-left,
 .guided-life-duck.is-sequence .guided-duck-layer.leg-left-art {
-  animation: guided-duck-left-foot 11.2s ease-in-out both;
+  animation: none;
 }
 
 .guided-life-duck.is-sequence .guided-duck-layer.leg-right,
 .guided-life-duck.is-sequence .guided-duck-layer.leg-right-art {
-  animation: guided-duck-right-foot 11.2s ease-in-out both;
+  animation: none;
 }
 
 .guided-life-duck.is-sequence .guided-duck-layer.wing-left,
@@ -5901,9 +5906,9 @@ body.game-immersive-active .game-stage,
   34% { left: 53%; top: 35%; transform: translate(-50%, -50%) scale(0.56) rotate(7deg); }
   48% { left: 68%; top: 28%; transform: translate(-50%, -50%) scale(0.5) rotate(12deg); }
   62% { left: 56%; top: 33%; transform: translate(-50%, -50%) scale(0.74) rotate(-5deg); }
-  76% { left: 39%; top: 27%; transform: translate(-50%, -50%) scale(0.5) rotate(-12deg); }
-  90% { left: 32%; top: 31%; transform: translate(-50%, -50%) scale(0.4) rotate(3deg); }
-  100% { left: 31%; top: 32%; transform: translate(-50%, -50%) scale(0.38); }
+  76% { left: 34%; top: 25%; transform: translate(-50%, -50%) scale(0.46) rotate(-12deg); }
+  90% { left: 25%; top: 28%; transform: translate(-50%, -50%) scale(0.36) rotate(3deg); }
+  100% { left: 24%; top: 29%; transform: translate(-50%, -50%) scale(0.34); }
 }
 
 @keyframes guided-duck-journey {
@@ -9499,9 +9504,9 @@ body.game-immersive-active .game-stage,
 
   .guided-life-bird.is-reduced,
   .guided-life-bird.is-sequence {
-    left: 31%;
-    top: 32%;
-    transform: translate(-50%, -50%) scale(0.38);
+    left: 24%;
+    top: 29%;
+    transform: translate(-50%, -50%) scale(0.34);
   }
 
   .guided-life-duck.is-reduced,

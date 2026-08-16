@@ -7696,11 +7696,11 @@
 
     guidedBirdGardenZone() {
       return {
-        idle: { x: 31, y: 32, scale: 0.38 },
+        idle: { x: 24, y: 29, scale: 0.34 },
         takeoff: { x: 45, y: 48, scale: 0.62 },
         nearCamera: { x: 56, y: 42, scale: 0.78 },
         flight: { x: 69, y: 30, scale: 0.5 },
-        landing: { x: 31, y: 32, scale: 0.38 },
+        landing: { x: 24, y: 29, scale: 0.34 },
       };
     }
 
