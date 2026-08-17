@@ -8757,14 +8757,11 @@
       if (!video.dataset.ateliePremiumBound) {
         video.dataset.ateliePremiumBound = "true";
         const complete = () => this.completeAteliePremiumVideo(video, kind);
-        const revealVideo = () => video.classList.add("is-video-ready");
-        video.addEventListener("loadeddata", revealVideo);
-        video.addEventListener("playing", revealVideo);
         video.addEventListener("ended", complete);
         video.addEventListener("error", () => this.enableAteliePremiumHotspots(screen));
         video.addEventListener("timeupdate", () => {
           if (video.dataset.ateliePremiumCompleting === "true") return;
-          if (video.currentTime > 0.12) video.classList.add("is-video-ready");
+          if (video.currentTime > 0.75) video.classList.add("is-video-ready");
           if (!Number.isFinite(video.duration) || video.duration <= 0) return;
           if (video.currentTime >= Math.max(0, video.duration - 0.08)) complete();
         });
