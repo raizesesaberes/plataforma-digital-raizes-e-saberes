@@ -5260,7 +5260,7 @@
         <section class="game-screen atelie-premium-screen${debug ? " is-debug-hotspots" : ""}" data-screen="${scene.screen}" data-atelie-premium-state="${scene.state}" aria-label="${escapeHtml(scene.label)}">
           <div class="atelie-premium-stage" data-atelie-premium-stage style="--atelie-premium-fallback:url('${escapeHtml(scene.fallback || this.game.assets.card)}')">
             <img class="atelie-premium-fallback" src="${escapeHtml(scene.fallback || this.game.assets.card)}" alt="" loading="eager" decoding="async" />
-            <video class="atelie-premium-video" data-atelie-premium-video="${escapeHtml(kind)}" src="${escapeHtml(scene.src || "")}" poster="${escapeHtml(scene.fallback || this.game.assets.card)}" playsinline preload="auto" ${kind === "intro" ? "autoplay" : ""} disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback" aria-hidden="true"></video>
+            <video class="atelie-premium-video" data-atelie-premium-video="${escapeHtml(kind)}" src="${escapeHtml(scene.src || "")}" poster="${escapeHtml(scene.fallback || this.game.assets.card)}" playsinline preload="auto" ${kind === "intro" ? "autoplay" : ""} disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback" aria-hidden="true" style="opacity:0;"></video>
             ${preload ? `<video class="atelie-premium-preload" src="${escapeHtml(preload)}" preload="auto" playsinline muted aria-hidden="true"></video>` : ""}
             <canvas class="atelie-premium-freeze" data-atelie-premium-freeze aria-hidden="true"></canvas>
             <div class="atelie-premium-shine" data-atelie-premium-shine aria-hidden="true"></div>
@@ -8761,7 +8761,10 @@
         video.addEventListener("error", () => this.enableAteliePremiumHotspots(screen));
         video.addEventListener("timeupdate", () => {
           if (video.dataset.ateliePremiumCompleting === "true") return;
-          if (video.currentTime > 0.75) video.classList.add("is-video-ready");
+          if (video.currentTime > 0.2 && (!this.isAteliePremiumVideoFrameDark(video) || video.currentTime > 3)) {
+            video.classList.add("is-video-ready");
+            video.style.opacity = "1";
+          }
           if (!Number.isFinite(video.duration) || video.duration <= 0) return;
           if (video.currentTime >= Math.max(0, video.duration - 0.08)) complete();
         });
@@ -8770,11 +8773,32 @@
       screen.dataset.atelieFinalFrame = "false";
       screen.querySelector("[data-atelie-premium-freeze]")?.classList.remove("is-visible");
       video.classList.remove("is-video-ready");
+      video.style.opacity = "0";
       video.currentTime = 0;
       video.play?.().catch(() => {
         video.muted = true;
         video.play?.().catch(() => this.enableAteliePremiumHotspots(screen));
       });
+    }
+
+    isAteliePremiumVideoFrameDark(video) {
+      if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) return true;
+      const canvas = document.createElement("canvas");
+      canvas.width = 32;
+      canvas.height = 18;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      if (!context) return false;
+      try {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+        let brightness = 0;
+        for (let index = 0; index < pixels.length; index += 4) {
+          brightness += pixels[index] + pixels[index + 1] + pixels[index + 2];
+        }
+        return brightness / (pixels.length / 4) < 24;
+      } catch (error) {
+        return false;
+      }
     }
 
     completeAteliePremiumVideo(video, kind) {
