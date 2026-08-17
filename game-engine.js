@@ -624,12 +624,13 @@
             feedback: atelieAsset("screens/screen-canvas.png"),
             final: atelieAsset("screens/screen-final.png"),
           },
-          premiumFlow: {
-            enabled: true,
-            videos: {
-              intro: atelieAsset("videos/video-01-abertura-atelie-bia.mp4"),
-              mural: atelieAsset("videos/video-02-mural-aventuras.mp4"),
-              jardimSelect: atelieAsset("videos/video-03-selecao-jardim.mp4"),
+        premiumFlow: {
+          enabled: true,
+          startButton: "assets/builds/caixa-misteriosa-premium-01/png/btn_comecar_premium.png",
+          videos: {
+            intro: atelieAsset("videos/video-01-abertura-atelie-bia.mp4"),
+            mural: atelieAsset("videos/video-02-mural-aventuras.mp4"),
+            jardimSelect: atelieAsset("videos/video-03-selecao-jardim.mp4"),
             },
             hotspots: {
               start: { x: 50, y: 76, width: 34, height: 16, label: "Comecar" },
@@ -5227,15 +5228,14 @@
           state: "ATELIE_INTRO",
           label: "Abertura do Atelie da Bia",
           src: flow.videos?.intro,
-          fallback: this.game.assets.screens.intro,
-          hotspots: [this.renderAteliePremiumHotspot("start", flow.hotspots?.start, "atelie-start", "Comecar", true)],
+          loop: true,
+          hotspots: [this.renderAteliePremiumHotspot("start", flow.hotspots?.start, "atelie-start", "Comecar", true, flow.startButton)],
         },
         mural: {
           screen: "room",
           state: "ATELIE_MURAL",
           label: "Mural das aventuras",
           src: flow.videos?.mural,
-          fallback: this.game.assets.screens.room,
           hotspots: Object.entries(flow.hotspots?.adventures || {}).map(([id, hotspot]) => this.renderAteliePremiumHotspot(id, hotspot, "atelie-adventure", hotspot.label, hotspot.enabled !== false)),
         },
         jardimSelect: {
@@ -5243,7 +5243,6 @@
           state: "JARDIM_SELECT",
           label: "Escolha um amiguinho do jardim",
           src: flow.videos?.jardimSelect,
-          fallback: this.game.assets.screens.choice,
           hotspots: [
             ...Object.entries(flow.hotspots?.characters || {}).map(([id, hotspot]) => this.renderAteliePremiumHotspot(id, hotspot, "atelie-character", hotspot.label, true)),
             this.renderAteliePremiumHotspot("back-to-mural", { x: 13, y: 9, width: 20, height: 9, label: "Outras aventuras" }, "atelie-back-mural", "Outras aventuras", true),
@@ -5258,9 +5257,8 @@
           : "";
       return `
         <section class="game-screen atelie-premium-screen${debug ? " is-debug-hotspots" : ""}" data-screen="${scene.screen}" data-atelie-premium-state="${scene.state}" aria-label="${escapeHtml(scene.label)}">
-          <div class="atelie-premium-stage" data-atelie-premium-stage style="--atelie-premium-fallback:url('${escapeHtml(scene.fallback || this.game.assets.card)}')">
-            <img class="atelie-premium-fallback" src="${escapeHtml(scene.fallback || this.game.assets.card)}" alt="" loading="eager" decoding="async" />
-            <video class="atelie-premium-video" data-atelie-premium-video="${escapeHtml(kind)}" src="${escapeHtml(scene.src || "")}" poster="${escapeHtml(scene.fallback || this.game.assets.card)}" playsinline preload="auto" ${kind === "intro" ? "autoplay" : ""} disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback" aria-hidden="true" style="opacity:0;"></video>
+          <div class="atelie-premium-stage" data-atelie-premium-stage>
+            <video class="atelie-premium-video is-video-ready" data-atelie-premium-video="${escapeHtml(kind)}" ${scene.loop ? "data-atelie-loop-video=\"true\" loop" : ""} src="${escapeHtml(scene.src || "")}" playsinline preload="auto" ${kind === "intro" ? "autoplay" : ""} disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback" aria-hidden="true"></video>
             ${preload ? `<video class="atelie-premium-preload" src="${escapeHtml(preload)}" preload="auto" playsinline muted aria-hidden="true"></video>` : ""}
             <canvas class="atelie-premium-freeze" data-atelie-premium-freeze aria-hidden="true"></canvas>
             <div class="atelie-premium-shine" data-atelie-premium-shine aria-hidden="true"></div>
@@ -5272,9 +5270,10 @@
       `;
     }
 
-    renderAteliePremiumHotspot(id, hotspot = {}, type, label = "", enabled = true) {
+    renderAteliePremiumHotspot(id, hotspot = {}, type, label = "", enabled = true, visibleImage = "") {
       return `
-        <button class="atelie-premium-hotspot" type="button" data-game-action="${escapeHtml(type)}" data-atelie-hotspot-id="${escapeHtml(id)}" ${enabled ? "" : "data-disabled-route=\"true\""} disabled aria-disabled="true" aria-label="${escapeHtml(label || id)}" style="${this.ateliePremiumHotspotStyle(hotspot)}">
+        <button class="atelie-premium-hotspot${visibleImage ? " is-visible-control" : ""}" type="button" data-game-action="${escapeHtml(type)}" data-atelie-hotspot-id="${escapeHtml(id)}" ${enabled ? "" : "data-disabled-route=\"true\""} disabled aria-disabled="true" aria-label="${escapeHtml(label || id)}" style="${this.ateliePremiumHotspotStyle(hotspot)}">
+          ${visibleImage ? `<img src="${escapeHtml(visibleImage)}" alt="" aria-hidden="true" />` : ""}
           <span class="game-sr-only">${escapeHtml(label || id)}</span>
         </button>
       `;
@@ -8746,7 +8745,18 @@
     prepareAteliePremiumVideo(video, kind) {
       const screen = video.closest(".atelie-premium-screen");
       if (!screen || !video) return;
+      const loopVideo = video.dataset.atelieLoopVideo === "true";
       const completed = Boolean(this.state.ateliePremiumCompleted?.[kind]);
+      if (loopVideo) {
+        video.classList.add("is-video-ready");
+        video.style.opacity = "1";
+        this.enableAteliePremiumHotspots(screen);
+        video.play?.().catch(() => {
+          video.muted = true;
+          video.play?.().catch(() => {});
+        });
+        return;
+      }
       const showFinalFrame = completed || screen.dataset.atelieFinalFrame === "true";
       if (showFinalFrame) {
         const showFrame = () => this.freezeAteliePremiumVideoFrame(video).then(() => this.enableAteliePremiumHotspots(screen));
@@ -8761,10 +8771,6 @@
         video.addEventListener("error", () => this.enableAteliePremiumHotspots(screen));
         video.addEventListener("timeupdate", () => {
           if (video.dataset.ateliePremiumCompleting === "true") return;
-          if (video.currentTime > 0.2 && (!this.isAteliePremiumVideoFrameDark(video) || video.currentTime > 3)) {
-            video.classList.add("is-video-ready");
-            video.style.opacity = "1";
-          }
           if (!Number.isFinite(video.duration) || video.duration <= 0) return;
           if (video.currentTime >= Math.max(0, video.duration - 0.08)) complete();
         });
@@ -8772,8 +8778,8 @@
       this.disableAteliePremiumHotspots(screen);
       screen.dataset.atelieFinalFrame = "false";
       screen.querySelector("[data-atelie-premium-freeze]")?.classList.remove("is-visible");
-      video.classList.remove("is-video-ready");
-      video.style.opacity = "0";
+      video.classList.add("is-video-ready");
+      video.style.opacity = "1";
       video.currentTime = 0;
       video.play?.().catch(() => {
         video.muted = true;
@@ -8803,6 +8809,8 @@
 
     completeAteliePremiumVideo(video, kind) {
       if (!video || video.dataset.ateliePremiumCompleting === "true") return;
+      const loopVideo = video.dataset.atelieLoopVideo === "true";
+      if (loopVideo && this.state.ateliePremiumCompleted?.[kind]) return;
       video.dataset.ateliePremiumCompleting = "true";
       this.state = {
         ...this.state,
@@ -8811,6 +8819,12 @@
           [kind]: true,
         },
       };
+      if (loopVideo) {
+        const screen = video.closest(".atelie-premium-screen");
+        if (screen) this.enableAteliePremiumHotspots(screen);
+        video.dataset.ateliePremiumCompleting = "false";
+        return;
+      }
       this.freezeAteliePremiumVideoFrame(video).then(() => {
         const screen = video.closest(".atelie-premium-screen");
         if (screen) {

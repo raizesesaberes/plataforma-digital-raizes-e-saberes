@@ -2348,6 +2348,28 @@ body.game-immersive-active .game-stage,
   pointer-events: none;
 }
 
+.atelie-premium-hotspot.is-visible-control {
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  background: transparent;
+  color: transparent;
+}
+
+.atelie-premium-hotspot.is-visible-control img {
+  display: block;
+  width: min(100%, 360px);
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.28));
+  pointer-events: none;
+}
+
+.atelie-premium-hotspot.is-visible-control:disabled {
+  opacity: 0.72;
+}
+
 .atelie-premium-hotspot:not(:disabled):hover,
 .atelie-premium-hotspot:not(:disabled):focus-visible,
 .atelie-premium-hotspot.is-tapped {
