@@ -2282,7 +2282,13 @@ body.game-immersive-active .game-stage,
 
 .atelie-premium-video {
   z-index: 2;
+  opacity: 0;
   background: transparent;
+  transition: opacity 180ms ease;
+}
+
+.atelie-premium-video.is-video-ready {
+  opacity: 1;
 }
 
 .atelie-premium-preload {

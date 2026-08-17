@@ -5260,7 +5260,7 @@
         <section class="game-screen atelie-premium-screen${debug ? " is-debug-hotspots" : ""}" data-screen="${scene.screen}" data-atelie-premium-state="${scene.state}" aria-label="${escapeHtml(scene.label)}">
           <div class="atelie-premium-stage" data-atelie-premium-stage style="--atelie-premium-fallback:url('${escapeHtml(scene.fallback || this.game.assets.card)}')">
             <img class="atelie-premium-fallback" src="${escapeHtml(scene.fallback || this.game.assets.card)}" alt="" loading="eager" decoding="async" />
-            <video class="atelie-premium-video" data-atelie-premium-video="${escapeHtml(kind)}" src="${escapeHtml(scene.src || "")}" playsinline preload="auto" ${kind === "intro" ? "autoplay" : ""} disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback" aria-hidden="true"></video>
+            <video class="atelie-premium-video" data-atelie-premium-video="${escapeHtml(kind)}" src="${escapeHtml(scene.src || "")}" poster="${escapeHtml(scene.fallback || this.game.assets.card)}" playsinline preload="auto" ${kind === "intro" ? "autoplay" : ""} disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback" aria-hidden="true"></video>
             ${preload ? `<video class="atelie-premium-preload" src="${escapeHtml(preload)}" preload="auto" playsinline muted aria-hidden="true"></video>` : ""}
             <canvas class="atelie-premium-freeze" data-atelie-premium-freeze aria-hidden="true"></canvas>
             <div class="atelie-premium-shine" data-atelie-premium-shine aria-hidden="true"></div>
@@ -8757,10 +8757,14 @@
       if (!video.dataset.ateliePremiumBound) {
         video.dataset.ateliePremiumBound = "true";
         const complete = () => this.completeAteliePremiumVideo(video, kind);
+        const revealVideo = () => video.classList.add("is-video-ready");
+        video.addEventListener("loadeddata", revealVideo);
+        video.addEventListener("playing", revealVideo);
         video.addEventListener("ended", complete);
         video.addEventListener("error", () => this.enableAteliePremiumHotspots(screen));
         video.addEventListener("timeupdate", () => {
           if (video.dataset.ateliePremiumCompleting === "true") return;
+          if (video.currentTime > 0.12) video.classList.add("is-video-ready");
           if (!Number.isFinite(video.duration) || video.duration <= 0) return;
           if (video.currentTime >= Math.max(0, video.duration - 0.08)) complete();
         });
@@ -8768,6 +8772,7 @@
       this.disableAteliePremiumHotspots(screen);
       screen.dataset.atelieFinalFrame = "false";
       screen.querySelector("[data-atelie-premium-freeze]")?.classList.remove("is-visible");
+      video.classList.remove("is-video-ready");
       video.currentTime = 0;
       video.play?.().catch(() => {
         video.muted = true;
