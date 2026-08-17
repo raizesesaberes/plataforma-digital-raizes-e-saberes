@@ -624,6 +624,28 @@
             feedback: atelieAsset("screens/screen-canvas.png"),
             final: atelieAsset("screens/screen-final.png"),
           },
+          premiumFlow: {
+            enabled: true,
+            videos: {
+              intro: atelieAsset("videos/video-01-abertura-atelie-bia.mp4"),
+              mural: atelieAsset("videos/video-02-mural-aventuras.mp4"),
+              jardimSelect: atelieAsset("videos/video-03-selecao-jardim.mp4"),
+            },
+            hotspots: {
+              start: { x: 50, y: 76, width: 34, height: 16, label: "Comecar" },
+              adventures: {
+                jardim: { x: 28, y: 43, width: 24, height: 24, label: "Jardim das Descobertas", enabled: true },
+                numeros: { x: 72, y: 43, width: 24, height: 24, label: "Mundo dos Numeros", enabled: false },
+                palavras: { x: 28, y: 73, width: 24, height: 24, label: "Mundo das Palavras", enabled: false },
+                mundo: { x: 72, y: 73, width: 24, height: 24, label: "Cuidando de Mim e do Mundo", enabled: false },
+              },
+              characters: {
+                ladybug: { x: 24, y: 62, width: 21, height: 28, label: "Joaninha" },
+                bird: { x: 50, y: 55, width: 24, height: 32, label: "Passarinho" },
+                duck: { x: 76, y: 63, width: 22, height: 28, label: "Patinho" },
+              },
+            },
+          },
           painting: {
             goldenMasterScreen: atelieAsset("golden-master/TELA_GOLDEN_MASTER.png"),
             visualBase: atelieAsset("golden-master/JOANINHA_GOLDEN_MASTER_V2.png"),
@@ -4873,6 +4895,9 @@
     }
 
     renderIntroScreen() {
+      if (this.isAteliePremiumFlowEnabled()) {
+        return this.renderAteliePremiumVideoScreen("intro");
+      }
       if (this.isJardimCinematicEnabled()) {
         return this.renderJardimCinematicHome();
       }
@@ -4918,6 +4943,9 @@
     }
 
     renderRoomScreen() {
+      if (this.isAteliePremiumFlowEnabled()) {
+        return this.renderAteliePremiumVideoScreen("mural");
+      }
       if (this.game.type === "drag-drop") {
         const round = this.currentRound();
         if (this.game.id === "organizando-cesta") {
@@ -5177,6 +5205,81 @@
       `;
     }
 
+    isAteliePremiumFlowEnabled() {
+      const flow = this.game?.assets?.premiumFlow;
+      return this.game?.id === "atelie-bia" && flow?.enabled === true && Boolean(flow?.videos?.intro);
+    }
+
+    ateliePremiumFlowConfig() {
+      return this.game?.assets?.premiumFlow || {};
+    }
+
+    ateliePremiumHotspotStyle(hotspot = {}) {
+      return `--atelie-hotspot-x:${Number(hotspot.x ?? 50)}%;--atelie-hotspot-y:${Number(hotspot.y ?? 50)}%;--atelie-hotspot-w:${Number(hotspot.width ?? 20)}%;--atelie-hotspot-h:${Number(hotspot.height ?? 16)}%;`;
+    }
+
+    renderAteliePremiumVideoScreen(kind) {
+      const flow = this.ateliePremiumFlowConfig();
+      const debug = new URLSearchParams(window.location.search).get("debugHotspots") === "1";
+      const screenMap = {
+        intro: {
+          screen: "intro",
+          state: "ATELIE_INTRO",
+          label: "Abertura do Atelie da Bia",
+          src: flow.videos?.intro,
+          fallback: this.game.assets.screens.intro,
+          hotspots: [this.renderAteliePremiumHotspot("start", flow.hotspots?.start, "atelie-start", "Comecar", true)],
+        },
+        mural: {
+          screen: "room",
+          state: "ATELIE_MURAL",
+          label: "Mural das aventuras",
+          src: flow.videos?.mural,
+          fallback: this.game.assets.screens.room,
+          hotspots: Object.entries(flow.hotspots?.adventures || {}).map(([id, hotspot]) => this.renderAteliePremiumHotspot(id, hotspot, "atelie-adventure", hotspot.label, hotspot.enabled !== false)),
+        },
+        jardimSelect: {
+          screen: "hint",
+          state: "JARDIM_SELECT",
+          label: "Escolha um amiguinho do jardim",
+          src: flow.videos?.jardimSelect,
+          fallback: this.game.assets.screens.choice,
+          hotspots: [
+            ...Object.entries(flow.hotspots?.characters || {}).map(([id, hotspot]) => this.renderAteliePremiumHotspot(id, hotspot, "atelie-character", hotspot.label, true)),
+            this.renderAteliePremiumHotspot("back-to-mural", { x: 13, y: 9, width: 20, height: 9, label: "Outras aventuras" }, "atelie-back-mural", "Outras aventuras", true),
+          ],
+        },
+      };
+      const scene = screenMap[kind] || screenMap.intro;
+      const preload = kind === "intro"
+        ? flow.videos?.mural
+        : kind === "mural"
+          ? flow.videos?.jardimSelect
+          : "";
+      return `
+        <section class="game-screen atelie-premium-screen${debug ? " is-debug-hotspots" : ""}" data-screen="${scene.screen}" data-atelie-premium-state="${scene.state}" aria-label="${escapeHtml(scene.label)}">
+          <div class="atelie-premium-stage" data-atelie-premium-stage style="--atelie-premium-fallback:url('${escapeHtml(scene.fallback || this.game.assets.card)}')">
+            <img class="atelie-premium-fallback" src="${escapeHtml(scene.fallback || this.game.assets.card)}" alt="" loading="eager" decoding="async" />
+            <video class="atelie-premium-video" data-atelie-premium-video="${escapeHtml(kind)}" src="${escapeHtml(scene.src || "")}" playsinline preload="auto" ${kind === "intro" ? "autoplay" : ""} disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback" aria-hidden="true"></video>
+            ${preload ? `<video class="atelie-premium-preload" src="${escapeHtml(preload)}" preload="auto" playsinline muted aria-hidden="true"></video>` : ""}
+            <canvas class="atelie-premium-freeze" data-atelie-premium-freeze aria-hidden="true"></canvas>
+            <div class="atelie-premium-shine" data-atelie-premium-shine aria-hidden="true"></div>
+            <div class="atelie-premium-hotspots" data-atelie-premium-hotspots aria-label="${escapeHtml(scene.label)}">
+              ${scene.hotspots.join("")}
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    renderAteliePremiumHotspot(id, hotspot = {}, type, label = "", enabled = true) {
+      return `
+        <button class="atelie-premium-hotspot" type="button" data-game-action="${escapeHtml(type)}" data-atelie-hotspot-id="${escapeHtml(id)}" ${enabled ? "" : "data-disabled-route=\"true\""} disabled aria-disabled="true" aria-label="${escapeHtml(label || id)}" style="${this.ateliePremiumHotspotStyle(hotspot)}">
+          <span class="game-sr-only">${escapeHtml(label || id)}</span>
+        </button>
+      `;
+    }
+
     getBackgroundVideoConfig(slot, fallbackImage) {
       const gameConfig = window.RaizesGameConfig?.games?.[this.game.id]?.backgroundVideo?.[slot]
         || window.RaizesGameConfig?.backgroundVideos?.[this.game.id]?.[slot]
@@ -5353,6 +5456,9 @@
     }
 
     renderHintScreen() {
+      if (this.isAteliePremiumFlowEnabled()) {
+        return this.renderAteliePremiumVideoScreen("jardimSelect");
+      }
       if (this.game.type === "drag-drop" || this.game.type === "find" || this.game.type === "snap" || this.game.type === "criteria" || this.game.type === "path-follow" || this.game.type === "path-follow-v2" || this.game.type === "creative-canvas" || this.game.type === "guided-painting" || this.game.type === "timeline-sequence" || this.game.type === "journey-celebration" || this.game.type === "journey-celebration-v2" || this.game.type === "audio-recognition" || this.game.type === "pattern-recognition" || this.game.type === "exploration-v2" || this.game.type === "story-builder") {
         return "";
       }
@@ -5854,7 +5960,7 @@
             <div class="guided-life-speech" data-guided-life-speech>UAU! SUA JOANINHA GANHOU VIDA!</div>
             <div class="guided-life-actions" data-guided-life-actions>
               <button type="button" data-game-action="guided-life-replay">VER DE NOVO</button>
-              <button type="button" data-game-action="guided-life-back">VOLTAR AO JARDIM</button>
+              <button type="button" data-game-action="guided-life-back">COLORIR OUTRO AMIGUINHO</button>
             </div>
           </div>
         </section>
@@ -5903,7 +6009,7 @@
             <div class="guided-life-speech guided-duck-speech" data-guided-life-speech>${escapeHtml(assets.lifeSpeech || "QUA! QUA! SEU PATINHO GANHOU VIDA NO JARDIM!")}</div>
             <div class="guided-life-actions" data-guided-life-actions>
               <button type="button" data-game-action="guided-life-replay">VER DE NOVO</button>
-              <button type="button" data-game-action="guided-life-back">CONTINUAR NO JARDIM</button>
+              <button type="button" data-game-action="guided-life-back">COLORIR OUTRO AMIGUINHO</button>
             </div>
           </div>
         </section>
@@ -5938,7 +6044,7 @@
             <div class="guided-life-speech guided-bird-speech" data-guided-life-speech>${escapeHtml(assets.lifeSpeech || "SEU PASSARINHO GANHOU VIDA NO JARDIM!")}</div>
             <div class="guided-life-actions" data-guided-life-actions>
               <button type="button" data-game-action="guided-life-replay">VER DE NOVO</button>
-              <button type="button" data-game-action="guided-life-back">CONTINUAR NO JARDIM</button>
+              <button type="button" data-game-action="guided-life-back">COLORIR OUTRO AMIGUINHO</button>
             </div>
           </div>
         </section>
@@ -6384,6 +6490,10 @@
         this.finishCinematicIntro();
       }
       if (action === "start") {
+        if (this.isAteliePremiumFlowEnabled() && this.state.screen === "intro") {
+          this.startAteliePremiumMural(button);
+          return;
+        }
         if (this.isJardimCinematicEnabled()) {
           this.startJardimCinematicFlow(button);
           return;
@@ -6442,6 +6552,18 @@
       }
       if (action === "select-guided-character") {
         this.selectGuidedPaintingCharacter(button.dataset.guidedCharacter);
+      }
+      if (action === "atelie-start") {
+        this.startAteliePremiumMural(button);
+      }
+      if (action === "atelie-adventure") {
+        this.selectAteliePremiumAdventure(button);
+      }
+      if (action === "atelie-character") {
+        this.selectAteliePremiumCharacter(button);
+      }
+      if (action === "atelie-back-mural") {
+        this.returnAteliePremiumMural(button);
       }
       if (action === "begin-timeline") {
         this.updateRoundContent();
@@ -7169,6 +7291,73 @@
       audioPlayer.blip();
       this.root.innerHTML = this.render();
       this.go("room", { transition: false });
+    }
+
+    lockAteliePremiumHotspots(button) {
+      const screen = button?.closest?.(".atelie-premium-screen");
+      if (!screen) return false;
+      if (screen.dataset.atalieLocked === "true" || screen.dataset.atelieLocked === "true") return true;
+      screen.dataset.atelieLocked = "true";
+      screen.querySelectorAll(".atelie-premium-hotspot").forEach((hotspot) => {
+        hotspot.disabled = true;
+        hotspot.setAttribute("aria-disabled", "true");
+      });
+      button?.classList.add("is-tapped");
+      return false;
+    }
+
+    startAteliePremiumMural(button) {
+      if (!this.isAteliePremiumFlowEnabled()) return;
+      if (this.lockAteliePremiumHotspots(button)) return;
+      audioPlayer.blip("success");
+      this.go("room", { transition: { enabled: true, duration: 420, variant: "soft" } });
+    }
+
+    selectAteliePremiumAdventure(button) {
+      if (!this.isAteliePremiumFlowEnabled()) return;
+      if (button?.dataset.disabledRoute === "true") {
+        audioPlayer.blip();
+        return;
+      }
+      if (this.lockAteliePremiumHotspots(button)) return;
+      const adventureId = button?.dataset.atelieHotspotId || "";
+      this.state = {
+        ...this.state,
+        selectedAdventure: adventureId,
+        ateliePremiumState: adventureId === "jardim" ? "JARDIM_INTRO" : "ATELIE_MURAL",
+      };
+      audioPlayer.blip("success");
+      if (adventureId === "jardim") {
+        this.go("hint", { transition: { enabled: true, duration: 420, variant: "soft" } });
+      }
+    }
+
+    selectAteliePremiumCharacter(button) {
+      if (!this.isAteliePremiumFlowEnabled()) return;
+      if (this.lockAteliePremiumHotspots(button)) return;
+      const characterId = button?.dataset.atelieHotspotId || "ladybug";
+      this.state = {
+        ...this.state,
+        selectedCharacter: characterId,
+        ateliePremiumState: "PAINTING",
+      };
+      this.prepareGuidedPaintingCharacter(characterId);
+      this.startGuidedPaintMusic();
+      audioPlayer.blip("success");
+      this.root.innerHTML = this.render();
+      this.go("choice", { transition: { enabled: true, duration: 420, variant: "soft" } });
+    }
+
+    returnAteliePremiumMural(button) {
+      if (!this.isAteliePremiumFlowEnabled()) return;
+      if (this.lockAteliePremiumHotspots(button)) return;
+      this.state = {
+        ...this.state,
+        selectedAdventure: null,
+        ateliePremiumState: "ATELIE_MURAL",
+      };
+      audioPlayer.blip();
+      this.go("room", { transition: { enabled: true, duration: 420, variant: "soft" } });
     }
 
     guidedPaintingConfig() {
@@ -8064,6 +8253,18 @@
         },
       };
       audioPlayer.blip();
+      if (this.isAteliePremiumFlowEnabled()) {
+        this.state = {
+          ...this.state,
+          ateliePremiumState: "JARDIM_SELECT",
+          ateliePremiumCompleted: {
+            ...(this.state.ateliePremiumCompleted || {}),
+            jardimSelect: true,
+          },
+        };
+        this.go("hint", { transition: { enabled: true, duration: 420, variant: "soft" } });
+        return;
+      }
       this.go("room", { transition: { enabled: true, duration: 420, variant: "soft" } });
     }
 
@@ -8518,6 +8719,121 @@
       this.syncBasketIntroStart(screen);
       this.syncBasketRoomAdvance(screen);
       this.syncJardimCinematicMedia(screen);
+      this.syncAteliePremiumMedia(screen);
+    }
+
+    ateliePremiumKindForScreen(screen) {
+      if (screen === "intro") return "intro";
+      if (screen === "room") return "mural";
+      if (screen === "hint") return "jardimSelect";
+      return "";
+    }
+
+    syncAteliePremiumMedia(screen = this.state.screen) {
+      if (!this.isAteliePremiumFlowEnabled()) return;
+      const activeKind = this.ateliePremiumKindForScreen(screen);
+      this.root.querySelectorAll("[data-atelie-premium-video]").forEach((video) => {
+        const kind = video.dataset.ateliePremiumVideo;
+        const active = kind === activeKind && video.closest("[data-screen]")?.classList.contains("is-active");
+        if (!active) {
+          video.pause?.();
+          return;
+        }
+        this.prepareAteliePremiumVideo(video, kind);
+      });
+    }
+
+    prepareAteliePremiumVideo(video, kind) {
+      const screen = video.closest(".atelie-premium-screen");
+      if (!screen || !video) return;
+      const completed = Boolean(this.state.ateliePremiumCompleted?.[kind]);
+      const showFinalFrame = completed || screen.dataset.atelieFinalFrame === "true";
+      if (showFinalFrame) {
+        const showFrame = () => this.freezeAteliePremiumVideoFrame(video).then(() => this.enableAteliePremiumHotspots(screen));
+        if (video.readyState >= 1) showFrame();
+        else video.addEventListener("loadedmetadata", showFrame, { once: true });
+        return;
+      }
+      if (!video.dataset.ateliePremiumBound) {
+        video.dataset.ateliePremiumBound = "true";
+        const complete = () => this.completeAteliePremiumVideo(video, kind);
+        video.addEventListener("ended", complete);
+        video.addEventListener("error", () => this.enableAteliePremiumHotspots(screen));
+        video.addEventListener("timeupdate", () => {
+          if (video.dataset.ateliePremiumCompleting === "true") return;
+          if (!Number.isFinite(video.duration) || video.duration <= 0) return;
+          if (video.currentTime >= Math.max(0, video.duration - 0.08)) complete();
+        });
+      }
+      this.disableAteliePremiumHotspots(screen);
+      screen.dataset.atelieFinalFrame = "false";
+      screen.querySelector("[data-atelie-premium-freeze]")?.classList.remove("is-visible");
+      video.currentTime = 0;
+      video.play?.().catch(() => {
+        video.muted = true;
+        video.play?.().catch(() => this.enableAteliePremiumHotspots(screen));
+      });
+    }
+
+    completeAteliePremiumVideo(video, kind) {
+      if (!video || video.dataset.ateliePremiumCompleting === "true") return;
+      video.dataset.ateliePremiumCompleting = "true";
+      this.state = {
+        ...this.state,
+        ateliePremiumCompleted: {
+          ...(this.state.ateliePremiumCompleted || {}),
+          [kind]: true,
+        },
+      };
+      this.freezeAteliePremiumVideoFrame(video).then(() => {
+        const screen = video.closest(".atelie-premium-screen");
+        if (screen) {
+          screen.dataset.atelieFinalFrame = "true";
+          this.enableAteliePremiumHotspots(screen);
+        }
+        video.dataset.ateliePremiumCompleting = "false";
+      });
+    }
+
+    async freezeAteliePremiumVideoFrame(video) {
+      const screen = video?.closest(".atelie-premium-screen");
+      const canvas = screen?.querySelector("[data-atelie-premium-freeze]");
+      if (!video || !canvas) return false;
+      video.pause?.();
+      if (Number.isFinite(video.duration) && video.duration > 0) {
+        await this.seekVideo(video, Math.max(0, video.duration - 0.06));
+      }
+      const width = video.videoWidth || 1280;
+      const height = video.videoHeight || 720;
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+      if (!context) return false;
+      try {
+        context.drawImage(video, 0, 0, width, height);
+        canvas.classList.add("is-visible");
+        return true;
+      } catch (error) {
+        this.enableAteliePremiumHotspots(screen);
+        return false;
+      }
+    }
+
+    enableAteliePremiumHotspots(screen) {
+      if (!screen) return;
+      screen.dataset.atelieLocked = "false";
+      screen.querySelectorAll(".atelie-premium-hotspot").forEach((hotspot) => {
+        hotspot.disabled = false;
+        hotspot.setAttribute("aria-disabled", "false");
+      });
+    }
+
+    disableAteliePremiumHotspots(screen) {
+      if (!screen) return;
+      screen.querySelectorAll(".atelie-premium-hotspot").forEach((hotspot) => {
+        hotspot.disabled = true;
+        hotspot.setAttribute("aria-disabled", "true");
+      });
     }
 
     syncBasketSceneMedia(screen) {

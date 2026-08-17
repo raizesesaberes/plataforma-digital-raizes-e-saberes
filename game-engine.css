@@ -2252,6 +2252,127 @@ body.game-immersive-active .game-stage,
   pointer-events: none;
 }
 
+.atelie-premium-screen {
+  overflow: hidden;
+  padding: 0;
+  background: #15110d;
+}
+
+.atelie-premium-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #15110d var(--atelie-premium-fallback) center / contain no-repeat;
+}
+
+.atelie-premium-fallback,
+.atelie-premium-video,
+.atelie-premium-freeze {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.atelie-premium-fallback {
+  z-index: 1;
+}
+
+.atelie-premium-video {
+  z-index: 2;
+  background: transparent;
+}
+
+.atelie-premium-preload {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.atelie-premium-freeze {
+  z-index: 3;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.atelie-premium-freeze.is-visible {
+  opacity: 1;
+}
+
+.atelie-premium-shine {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.atelie-premium-hotspots {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.atelie-premium-hotspot {
+  position: absolute;
+  left: var(--atelie-hotspot-x);
+  top: var(--atelie-hotspot-y);
+  width: var(--atelie-hotspot-w);
+  height: var(--atelie-hotspot-h);
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  appearance: none;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.atelie-premium-hotspot:disabled {
+  cursor: default;
+  pointer-events: none;
+}
+
+.atelie-premium-hotspot:not(:disabled):hover,
+.atelie-premium-hotspot:not(:disabled):focus-visible,
+.atelie-premium-hotspot.is-tapped {
+  transform: translate(-50%, -50%) scale(1.03);
+  box-shadow: 0 0 26px rgba(255, 232, 144, 0.44);
+}
+
+.atelie-premium-hotspot:focus-visible {
+  outline: 3px solid rgba(255, 232, 144, 0.95);
+  outline-offset: 3px;
+}
+
+.atelie-premium-screen.is-debug-hotspots .atelie-premium-hotspot {
+  border: 2px solid rgba(255, 214, 79, 0.95);
+  background: rgba(255, 214, 79, 0.16);
+  color: #2d2200;
+}
+
+.atelie-premium-screen.is-debug-hotspots .atelie-premium-hotspot::after {
+  content: attr(data-atelie-hotspot-id);
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #2d2200;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
 @media (max-aspect-ratio: 3 / 4) {
   .jardim-cinematic-stage {
     --jardim-object-position: center center;
