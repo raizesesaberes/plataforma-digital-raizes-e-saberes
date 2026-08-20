@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { basename, extname, join, relative } from "node:path";
 
 const allowedExtensions = new Set([".png", ".pdf", ".jpg", ".jpeg", ".webp"]);
@@ -14,6 +14,7 @@ const shouldCommit = args.includes("--commit");
 const dryRun = args.includes("--dry-run") || !shouldCommit;
 const catalogPath = "printable-activities-catalog.js";
 const jsonCatalogPath = "data/atividades-imprimiveis/catalog.json";
+const assetRoot = "assets/atividades-imprimiveis/educacao-infantil";
 
 const report = {
   mode: dryRun ? "dry-run" : "commit",
@@ -42,6 +43,35 @@ const splitList = (value) =>
         .split(/[;|]/)
         .map((item) => item.trim())
         .filter(Boolean);
+
+const normalizeAgeGroup = (value) => {
+  const normalized = String(value || "").toLowerCase();
+  if (normalized.includes("ei2")) return "ei2";
+  if (normalized.includes("ei3")) return "ei3";
+  if (normalized.includes("ei4")) return "ei4";
+  if (normalized.includes("ei5")) return "ei5";
+  return String(value || "").trim();
+};
+
+const normalizeAge = (value, faixaEtaria) => {
+  const text = String(value || "").trim();
+  if (text) return text;
+  return { ei2: "2 anos", ei3: "3 anos", ei4: "4 anos", ei5: "5 anos" }[faixaEtaria] || "";
+};
+
+const normalizeStatus = (value) => {
+  const normalized = String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
+  if (["PUBLICADO", "PUBLICADA", "PRODUCAO VISUAL ATUAL"].includes(normalized)) return "PUBLICADO";
+  if (normalized.includes("PENDENTE")) return "PENDENTE_DE_METADADOS";
+  if (normalized.includes("ARQUIV")) return "ARQUIVADO";
+  if (normalized.includes("REVISAO")) return "EM_REVISAO";
+  return normalized || "RASCUNHO";
+};
+
+const titleFromCode = (codigo) => `Atividade ${codigo}`;
 
 const parseCsv = (text) => {
   const [headerLine, ...lines] = text.split(/\r?\n/).filter((line) => line.trim());
@@ -169,38 +199,45 @@ if (!report.errors.length) {
       warn(`${codigo}: dimensoes da imagem nao identificadas automaticamente.`);
     }
 
-    const missingMetadata = ["titulo", "faixaEtaria", "idade", "objetivo"].filter((field) => !String(row[field] || "").trim());
-    if (missingMetadata.length) warn(`${codigo}: metadados pendentes (${missingMetadata.join(", ")}).`);
+    const faixaEtaria = normalizeAgeGroup(row.faixaEtaria || row.faixa || row.etapa);
+    const idade = normalizeAge(row.idade, faixaEtaria);
+    const missingPedagogicalMetadata = ["objetivo", "camposExperiencia", "tiposAtividade", "materiais"].filter((field) => !String(row[field] || "").trim());
+    if (missingPedagogicalMetadata.length) {
+      warn(`${codigo}: metadados pedagogicos pendentes (${missingPedagogicalMetadata.join(", ")}).`);
+    }
+    const destinationDir = join(assetRoot, faixaEtaria || "ei2", "originais");
+    const destinationPath = join(destinationDir, basename(filePath));
+    const publicPath = destinationPath.replaceAll("\\", "/");
 
     nextActivities.push({
       id: codigo,
       codigo,
       slug: codigo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
-      titulo: row.titulo || "",
+      titulo: row.titulo || titleFromCode(codigo),
       segmento: row.segmento || "Educacao Infantil",
       etapa: row.etapa || "Educacao Infantil",
-      faixaEtaria: row.faixaEtaria || "",
-      idade: row.idade || "",
+      faixaEtaria,
+      idade,
       descricao: row.descricao || "",
-      objetivo: row.objetivo || "",
+      objetivo: row.objetivo || "Atividade imprimivel para experiencias pedagogicas do EI2.",
       comandoCrianca: row.comandoCrianca || "",
-      orientacaoProfessor: row.orientacaoProfessor || "",
+      orientacaoProfessor: row.orientacaoProfessor || "Imprimir em A4, orientar a crianca e acompanhar a realizacao com apoio de um adulto.",
       camposExperiencia: splitList(row.camposExperiencia),
       direitosAprendizagem: splitList(row.direitosAprendizagem),
       tiposAtividade: splitList(row.tiposAtividade),
       materiais: splitList(row.materiais),
       palavrasChave: splitList(row.palavrasChave),
-      arquivoOriginal: relative(".", filePath),
-      arquivoPng: extension === ".png" ? relative(".", filePath) : "",
+      arquivoOriginal: publicPath,
+      arquivoPng: extension === ".png" ? publicPath : "",
       arquivoPdf: extension === ".pdf" ? relative(".", filePath) : "",
-      miniatura: row.miniatura || "",
+      miniatura: row.miniatura || publicPath,
       formato: extension.slice(1),
-      orientacaoPagina: row.orientacaoPagina || "",
+      orientacaoPagina: row.orientacaoPagina || (dimensions.largura >= dimensions.altura ? "paisagem" : "retrato"),
       largura: Number(row.largura || dimensions.largura || 0),
       altura: Number(row.altura || dimensions.altura || 0),
       versao: row.versao || row.versao === 0 ? String(row.versao) : "1.0",
-      status: row.status || (missingMetadata.length ? "PENDENTE_DE_METADADOS" : "RASCUNHO"),
-      dataPublicacao: row.dataPublicacao || "",
+      status: normalizeStatus(row.status),
+      dataPublicacao: row.dataPublicacao || new Date().toISOString(),
       dataAtualizacao: row.dataAtualizacao || new Date().toISOString(),
       checksum: fileChecksum,
       visualizacoes: 0,
@@ -209,6 +246,10 @@ if (!report.errors.length) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
+    if (shouldCommit) {
+      mkdirSync(destinationDir, { recursive: true });
+      copyFileSync(filePath, destinationPath);
+    }
     report.success.push(`${codigo}: validado.`);
   }
 

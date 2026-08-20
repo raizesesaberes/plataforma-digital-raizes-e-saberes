@@ -8055,14 +8055,21 @@ td {
 
 .pa-preview {
   overflow: hidden;
+  display: grid;
+  justify-items: center;
+  padding: 14px;
 }
 
 .pa-preview img {
   display: block;
   width: 100%;
+  max-width: 1120px;
+  aspect-ratio: 297 / 210;
   max-height: 78vh;
   object-fit: contain;
   background: #f7f9f6;
+  border: 1px solid rgba(6, 70, 47, 0.12);
+  border-radius: 8px;
 }
 
 .pa-meta {

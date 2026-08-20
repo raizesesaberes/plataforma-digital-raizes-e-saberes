@@ -67,3 +67,15 @@ Corrija os erros no manifesto ou nos nomes dos arquivos e execute novamente o dr
 ## Publicacao
 
 Depois da importacao, revise os metadados na area `Admin > Atividades Imprimiveis`. Publique somente atividades com codigo, titulo, arquivo valido e status revisado.
+
+## Versoes A4
+
+As atividades importadas podem ter uma versao normalizada para impressao em `assets/atividades-imprimiveis/educacao-infantil/ei2/a4/`.
+
+O gerador local cria PNGs A4 paisagem em 300 DPI:
+
+```bash
+python3 scripts/generate-a4-printable-assets.py
+```
+
+A plataforma usa `arquivoA4` para imprimir e preserva `arquivoOriginal` para rastreabilidade e download do PNG recebido no pacote.

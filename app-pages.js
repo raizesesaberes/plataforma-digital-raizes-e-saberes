@@ -7531,14 +7531,22 @@ const initPrintableActivities = () => {
     const printButton = event.target.closest("[data-pa-print]");
     if (printButton) {
       const item = printableActivitiesDataService.getByCode(printButton.dataset.paPrint, { admin: root.dataset.printableApp === "admin" });
-      if (!item?.arquivoOriginal) return;
+      const printableFile = item?.arquivoA4 || item?.arquivoOriginal;
+      if (!printableFile) return;
       printableActivitiesDataService.metric("impressao", { codigo: item.codigo });
       const printWindow = window.open("", "_blank", "noopener,noreferrer");
       if (!printWindow) return;
       printWindow.document.write(`
         <!doctype html><html lang="pt-BR"><head><meta charset="utf-8" /><title>${printableEscape(item.codigo)}</title>
-        <style>@page{size:${item.orientacaoPagina === "paisagem" ? "landscape" : "portrait"};margin:0}html,body{margin:0;width:100%;min-height:100%;background:#fff}.sheet{min-height:100vh;display:grid;place-items:center;break-after:page}img,iframe{max-width:100vw;max-height:100vh;width:auto;height:auto;border:0}</style></head>
-        <body><main class="sheet">${String(item.formato).toLowerCase() === "pdf" ? `<iframe src="${printableEscape(item.arquivoOriginal)}" title="${printableEscape(item.codigo)}"></iframe>` : `<img src="${printableEscape(item.arquivoOriginal)}" alt="${printableEscape(item.codigo)}" />`}</main><script>window.onload=()=>setTimeout(()=>window.print(),250);<\/script></body></html>
+        <style>
+          @page{size:A4 ${item.orientacaoPagina === "paisagem" ? "landscape" : "portrait"};margin:0}
+          html,body{margin:0;width:100%;min-height:100%;background:#fff}
+          body{display:grid;place-items:center}
+          .sheet{width:${item.orientacaoPagina === "paisagem" ? "297mm" : "210mm"};height:${item.orientacaoPagina === "paisagem" ? "210mm" : "297mm"};display:grid;place-items:center;overflow:hidden;break-after:page;background:#fff}
+          img,iframe{display:block;width:100%;height:100%;object-fit:contain;border:0}
+          @media screen{body{min-height:100vh;background:#eef3ef}.sheet{box-shadow:0 12px 30px rgba(0,0,0,.16)}}
+        </style></head>
+        <body><main class="sheet">${String(item.formato).toLowerCase() === "pdf" ? `<iframe src="${printableEscape(printableFile)}" title="${printableEscape(item.codigo)}"></iframe>` : `<img src="${printableEscape(printableFile)}" alt="${printableEscape(item.codigo)}" />`}</main><script>window.onload=()=>setTimeout(()=>window.print(),250);<\/script></body></html>
       `);
       printWindow.document.close();
       return;
