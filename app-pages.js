@@ -41,6 +41,7 @@ const ecosystemModules = [
   ["book-viewer.html", "Book Viewer"],
   ["professor.html", "Professor"],
   ["atividades.html", "Atividades Imprimiveis"],
+  ["motor-atividade.html", "Motor de Atividades"],
   ["admin-atividades.html", "Admin Atividades"],
   ["avalia.html", "Avalia+"],
   ["banco-questoes.html", "Banco de Questoes"],
@@ -2060,6 +2061,7 @@ const routeKeyByHref = {
   "book-viewer.html": "viewer",
   "professor.html": "professor",
   "atividades.html": "atividades",
+  "motor-atividade.html": "motorAtividade",
   "admin-atividades.html": "adminAtividades",
   "avalia.html": "avalia",
   "secretaria.html": "secretaria",
@@ -2804,6 +2806,8 @@ const renderStudentPresentationDashboard = () => `
     </section>
     <div class="student-grid student-restored-grid">
       ${renderStudentMedals(studentDashboardView.medals)}
+      ${renderStudentUniversalActivities()}
+      ${renderUniversalActivityStudentPortfolio()}
     </div>
     ${renderStudentQuickAccess(studentDashboardView.quickAccess)}
   </div>
@@ -3129,6 +3133,7 @@ const renderPrintableActivityCard = (item) => {
       </div>
       <footer>
         <a href="atividades.html?codigo=${encodeURIComponent(item.codigo)}${window.location.search ? `&voltar=${encodeURIComponent(window.location.search)}` : ""}" data-pa-view="${printableEscape(item.codigo)}">Visualizar</a>
+        <button type="button" data-ua-assign="${printableEscape(item.codigo)}">Indicar atividade</button>
         <a href="${printableEscape(item.arquivoOriginal || "#")}" download data-pa-download="${printableEscape(item.codigo)}" aria-disabled="${item.arquivoOriginal ? "false" : "true"}">Baixar</a>
         <button type="button" data-pa-print="${printableEscape(item.codigo)}">Imprimir</button>
         <button type="button" data-pa-favorite="${printableEscape(item.codigo)}" aria-pressed="${isFavorite}">${isFavorite ? "Favorito" : "Favoritar"}</button>
@@ -3155,6 +3160,7 @@ const renderPrintableMainPage = ({ admin = false } = {}) => {
       </header>
       ${renderPrintableAgeCards({ admin })}
       ${renderPrintableFilters({ admin })}
+      ${renderUniversalActivityAssignDialog()}
       <div class="pa-status" role="status">${total ? `${items.length} de ${total} atividades` : "Nenhuma atividade cadastrada ainda. Estrutura pronta para receber o pacote EI2."}</div>
       ${
         admin
@@ -3188,6 +3194,7 @@ const renderPrintableDetailPage = ({ admin = false } = {}) => {
   const back = getPrintableParams().get("voltar") || "";
   return `
     <section class="pa-shell pa-detail" data-printable-app>
+      ${renderUniversalActivityAssignDialog()}
       <header class="pa-hero">
         <span>${printableEscape(item.codigo)} · versao ${printableEscape(item.versao || "1.0")}</span>
         <h1>${printableEscape(item.titulo || "Titulo pendente")}</h1>
@@ -3198,6 +3205,7 @@ const renderPrintableDetailPage = ({ admin = false } = {}) => {
         <section class="pa-preview">
           ${preview ? `<img src="${printableEscape(preview)}" alt="Visualizacao ampliada da atividade ${printableEscape(item.codigo)}" />` : `<div class="pa-empty"><h2>Arquivo pendente</h2><p>A atividade ainda nao possui arquivo valido associado.</p></div>`}
           <div>
+            <button type="button" data-ua-assign="${printableEscape(item.codigo)}">Indicar atividade</button>
             <a href="${printableEscape(item.arquivoOriginal || "#")}" download data-pa-download="${printableEscape(item.codigo)}">Baixar</a>
             <button type="button" data-pa-print="${printableEscape(item.codigo)}">Imprimir</button>
             <button type="button" data-pa-favorite="${printableEscape(item.codigo)}">Favoritar</button>
@@ -3228,6 +3236,424 @@ const renderPrintableDetailPage = ({ admin = false } = {}) => {
 
 const renderPrintableActivitiesPage = ({ admin = false } = {}) =>
   getPrintableParams().get("codigo") ? renderPrintableDetailPage({ admin }) : renderPrintableMainPage({ admin });
+
+const universalActivityEngineVersion = "1.0.0";
+const universalActivityStorageKey = "raizes:universal-activity-engine:v1";
+const universalActivityStudentProfile = {
+  id: "student-demo-pedro",
+  name: "Pedro Henrique",
+  classId: "infantil-4a",
+  className: "Infantil 4 A",
+};
+
+const universalActivityTeacherProfile = {
+  id: "teacher-demo-helena",
+  name: "Professora Helena",
+};
+
+const universalActivityToolProfiles = {
+  ei2: ["pincel", "dedo", "rolinho", "esponja", "algodao", "papel", "barbante", "bolinhas", "borracha"],
+  ei3: ["pincel", "dedo", "rolinho", "esponja", "algodao", "papel", "barbante", "bolinhas", "borracha", "giz", "carimbo", "adesivos", "formas"],
+  ei4: ["pincel", "dedo", "rolinho", "esponja", "algodao", "papel", "barbante", "bolinhas", "borracha", "giz", "carimbo", "adesivos", "formas", "lapis", "tracos", "montagem", "arrastar"],
+  ei5: ["pincel", "dedo", "rolinho", "esponja", "algodao", "papel", "barbante", "bolinhas", "borracha", "giz", "carimbo", "adesivos", "formas", "lapis", "tracos", "montagem", "arrastar", "letras_moveis", "numeros", "ordenacao", "ligacao"],
+};
+
+const universalActivityToolLabels = {
+  pincel: "Pincel",
+  dedo: "Dedo",
+  rolinho: "Rolinho",
+  esponja: "Esponja",
+  algodao: "Algodao",
+  papel: "Papel",
+  barbante: "Barbante",
+  bolinhas: "Bolinhas",
+  borracha: "Borracha",
+};
+
+const universalActivityDemoClasses = [
+  {
+    id: "infantil-4a",
+    name: "Infantil 4 A",
+    students: [
+      { id: "student-demo-pedro", name: "Pedro Henrique" },
+      { id: "student-demo-lia", name: "Lia Martins" },
+      { id: "student-demo-ana", name: "Ana Clara" },
+      { id: "student-demo-sofia", name: "Sofia Alves" },
+    ],
+  },
+  {
+    id: "infantil-5a",
+    name: "Infantil 5 A",
+    students: [
+      { id: "student-demo-miguel", name: "Miguel Rocha" },
+      { id: "student-demo-leo", name: "Leo Santos" },
+      { id: "student-demo-julia", name: "Julia Costa" },
+    ],
+  },
+];
+
+const readUniversalActivityState = () => {
+  try {
+    return JSON.parse(localStorage.getItem(universalActivityStorageKey) || '{"assignments":[],"submissions":[],"metrics":[]}');
+  } catch (error) {
+    return { assignments: [], submissions: [], metrics: [] };
+  }
+};
+
+const writeUniversalActivityState = (state) => {
+  localStorage.setItem(universalActivityStorageKey, JSON.stringify({ assignments: [], submissions: [], portfolioRefs: [], metrics: [], ...state }));
+};
+
+const getUniversalActivityByCode = (code) => printableActivitiesDataService.getByCode(code, { admin: true });
+
+const getUniversalActivityClass = (classId) => universalActivityDemoClasses.find((item) => item.id === classId) || universalActivityDemoClasses[0];
+
+const getUniversalActivityTools = (activity, assignment) => {
+  const profileKey = assignment?.toolProfile || activity?.perfilFerramentas || activity?.faixaEtaria || "ei2";
+  const profileTools = universalActivityToolProfiles[profileKey] || universalActivityToolProfiles.ei2;
+  const allowed = activity?.ferramentasPermitidas?.length ? activity.ferramentasPermitidas : profileTools;
+  return allowed.filter((tool) => universalActivityToolProfiles.ei5.includes(tool));
+};
+
+const getUniversalActivitySuggestedTools = (activity) => {
+  if (activity?.ferramentasSugeridas?.length) return activity.ferramentasSugeridas;
+  const text = printableNormalize([activity?.titulo, activity?.objetivo, activity?.comandoCrianca, ...(activity?.materiais || [])].join(" "));
+  const suggestions = [
+    ["algodao", "algodao"],
+    ["esponja", "esponja"],
+    ["rolinho", "rolinho"],
+    ["dedo", "dedo"],
+    ["barbante", "barbante"],
+    ["bolinhas", "bolinha"],
+    ["papel", "papel"],
+  ];
+  return suggestions.filter(([, term]) => text.includes(term)).map(([tool]) => tool);
+};
+
+const syncUniversalActivityPortfolio = (submission) => {
+  if (submission.status !== "COMPLETED") return;
+  const state = readUniversalActivityState();
+  const refId = `portfolio-${submission.submissionId}`;
+  const portfolioRef = {
+    refId,
+    submissionId: submission.submissionId,
+    assignmentId: submission.assignmentId,
+    activityCode: submission.activityCode,
+    studentId: submission.studentId,
+    classId: submission.classId,
+    completedAt: submission.completedAt,
+  };
+  state.portfolioRefs = [portfolioRef, ...(state.portfolioRefs || []).filter((item) => item.refId !== refId)];
+  writeUniversalActivityState(state);
+};
+
+const getUniversalActivityPortfolioForStudent = (studentId = universalActivityStudentProfile.id) => {
+  const state = readUniversalActivityState();
+  const refs = state.portfolioRefs || [];
+  return refs
+    .filter((ref) => ref.studentId === studentId)
+    .map((ref) => ({
+      ref,
+      submission: state.submissions.find((submission) => submission.submissionId === ref.submissionId),
+      assignment: state.assignments.find((assignment) => assignment.assignmentId === ref.assignmentId),
+      activity: getUniversalActivityByCode(ref.activityCode),
+    }))
+    .filter((item) => item.submission);
+};
+
+const createUniversalActivityAssignment = ({ activityCode, classId, studentIds, instructions, dueDate, toolProfile, mode }) => {
+  const state = readUniversalActivityState();
+  const classInfo = getUniversalActivityClass(classId);
+  const assignment = {
+    assignmentId: `ua-${Date.now()}`,
+    activityCode,
+    teacherId: universalActivityTeacherProfile.id,
+    teacherName: universalActivityTeacherProfile.name,
+    classId,
+    className: classInfo.name,
+    studentIds,
+    assignedAt: new Date().toISOString(),
+    dueDate: dueDate || "",
+    instructions: instructions || "",
+    toolProfile: toolProfile || "ei2",
+    mode: mode || "livre",
+    status: "PUBLICADA",
+  };
+  state.assignments = [assignment, ...state.assignments.filter((item) => item.assignmentId !== assignment.assignmentId)];
+  writeUniversalActivityState(state);
+  return assignment;
+};
+
+const getUniversalActivityAssignmentsForStudent = (studentId = universalActivityStudentProfile.id) => {
+  const state = readUniversalActivityState();
+  return state.assignments.filter((assignment) => assignment.status !== "ARQUIVADA" && assignment.studentIds.includes(studentId));
+};
+
+const getUniversalActivitySubmission = (assignmentId, studentId = universalActivityStudentProfile.id) => {
+  const state = readUniversalActivityState();
+  return state.submissions.find((item) => item.assignmentId === assignmentId && item.studentId === studentId) || null;
+};
+
+const upsertUniversalActivitySubmission = (submission) => {
+  const state = readUniversalActivityState();
+  const index = state.submissions.findIndex((item) => item.submissionId === submission.submissionId);
+  if (index >= 0) state.submissions[index] = submission;
+  else state.submissions.unshift(submission);
+  writeUniversalActivityState(state);
+  return submission;
+};
+
+const getOrCreateUniversalActivitySubmission = (assignment) => {
+  const existing = getUniversalActivitySubmission(assignment.assignmentId);
+  if (existing) return existing;
+  const submission = {
+    submissionId: `uas-${assignment.assignmentId}-${universalActivityStudentProfile.id}`,
+    assignmentId: assignment.assignmentId,
+    activityCode: assignment.activityCode,
+    studentId: universalActivityStudentProfile.id,
+    studentName: universalActivityStudentProfile.name,
+    classId: assignment.classId,
+    className: assignment.className,
+    teacherId: assignment.teacherId,
+    teacherName: assignment.teacherName,
+    status: "NOT_STARTED",
+    startedAt: "",
+    lastSavedAt: "",
+    completedAt: "",
+    engineVersion: universalActivityEngineVersion,
+    canvasData: { strokes: [] },
+    objectsData: [],
+    preview: "",
+    finalArtwork: "",
+  };
+  return upsertUniversalActivitySubmission(submission);
+};
+
+const getUniversalActivityStudentStatus = (assignment) => {
+  const submission = getUniversalActivitySubmission(assignment.assignmentId);
+  if (!submission || submission.status === "NOT_STARTED") return "NOVA";
+  if (submission.status === "COMPLETED") return "CONCLUIDA";
+  return "EM ANDAMENTO";
+};
+
+const seedUniversalActivityTechnicalAssignments = () => {
+  const state = readUniversalActivityState();
+  if (state.assignments.some((item) => item.seededBy === "technical-pilot-v1")) return;
+  const codes = ["RS-EI2-ATI-001", "RS-EI2-ATI-004", "RS-EI2-ATI-028"].filter((code) => getUniversalActivityByCode(code));
+  const seeded = codes.map((code, index) => ({
+    assignmentId: `ua-pilot-${String(index + 1).padStart(2, "0")}`,
+    activityCode: code,
+    teacherId: universalActivityTeacherProfile.id,
+    teacherName: universalActivityTeacherProfile.name,
+    classId: universalActivityStudentProfile.classId,
+    className: universalActivityStudentProfile.className,
+    studentIds: [universalActivityStudentProfile.id],
+    assignedAt: new Date().toISOString(),
+    dueDate: "",
+    instructions: index === 0 ? "Use pintura livre para testar o motor." : index === 1 ? "Teste colagem de algodao." : "Combine formas e pintura livre.",
+    toolProfile: "ei2",
+    mode: index === 0 ? "livre" : "sugerido",
+    status: "PUBLICADA",
+    seededBy: "technical-pilot-v1",
+  }));
+  writeUniversalActivityState({ ...state, assignments: [...seeded, ...state.assignments] });
+};
+
+const renderUniversalActivityAssignDialog = () => `
+  <dialog class="ua-dialog" data-ua-assign-dialog>
+    <form method="dialog" class="ua-assign-form" data-ua-assign-form>
+      <header><span>Motor Universal</span><h2>Indicar atividade</h2><button type="button" data-ua-close-dialog aria-label="Fechar">×</button></header>
+      <input type="hidden" name="activityCode" />
+      <label><span>Destino</span><select name="scope"><option value="class">Turma inteira</option><option value="group">Grupo de alunos</option><option value="student">Aluno individual</option></select></label>
+      <label><span>Turma</span><select name="classId">${universalActivityDemoClasses.map((item) => `<option value="${printableEscape(item.id)}">${printableEscape(item.name)}</option>`).join("")}</select></label>
+      <fieldset data-ua-students><legend>Alunos</legend></fieldset>
+      <label><span>Orientacao opcional</span><textarea name="instructions" rows="3" placeholder="Ex.: use pintura com dedo e cole bolinhas no desenho."></textarea></label>
+      <label><span>Prazo opcional</span><input name="dueDate" type="date" /></label>
+      <label><span>Perfil de ferramentas</span><select name="toolProfile"><option value="ei2">EI2</option><option value="ei3">EI3</option><option value="ei4">EI4</option><option value="ei5">EI5</option></select></label>
+      <label><span>Modo</span><select name="mode"><option value="livre">Modo livre</option><option value="sugerido">Modo sugerido</option></select></label>
+      <footer><button type="button" data-ua-close-dialog>Cancelar</button><button type="submit">Publicar atividade</button></footer>
+    </form>
+  </dialog>
+`;
+
+const renderStudentUniversalActivities = () => {
+  seedUniversalActivityTechnicalAssignments();
+  const assignments = getUniversalActivityAssignmentsForStudent();
+  return `
+    <section class="student-card ua-student-list" aria-labelledby="student-activities-title" data-ua-student-list>
+      <div class="student-card-head"><h2 id="student-activities-title">Minhas Atividades</h2><a href="atividades.html">Banco</a></div>
+      <div class="ua-student-grid">
+        ${
+          assignments.length
+            ? assignments
+                .map((assignment) => {
+                  const activity = getUniversalActivityByCode(assignment.activityCode);
+                  const submission = getUniversalActivitySubmission(assignment.assignmentId);
+                  const status = getUniversalActivityStudentStatus(assignment);
+                  return `
+                    <article class="ua-student-card">
+                      <img src="${printableEscape(activity?.miniatura || activity?.arquivoA4 || "")}" alt="Atividade ${printableEscape(assignment.activityCode)}" loading="lazy" />
+                      <div>
+                        <mark>${printableEscape(assignment.activityCode)}</mark>
+                        <strong>${printableEscape(activity?.titulo || assignment.activityCode)}</strong>
+                        <small>${printableEscape(assignment.teacherName)} · enviada em ${new Date(assignment.assignedAt).toLocaleDateString("pt-BR")}${assignment.dueDate ? ` · prazo ${new Date(assignment.dueDate).toLocaleDateString("pt-BR")}` : ""}</small>
+                        <span>${status}</span>
+                      </div>
+                      <a href="motor-atividade.html?assignment=${encodeURIComponent(assignment.assignmentId)}">${status === "CONCLUIDA" ? "Ver minha atividade" : submission ? "Continuar" : "Comecar"}</a>
+                    </article>
+                  `;
+                })
+                .join("")
+            : `<p class="ua-empty">Nenhuma atividade indicada para voce ainda.</p>`
+        }
+      </div>
+    </section>
+  `;
+};
+
+const renderUniversalActivityStudentPortfolio = (studentId = universalActivityStudentProfile.id) => {
+  const items = getUniversalActivityPortfolioForStudent(studentId);
+  return `
+    <section class="student-card ua-portfolio" aria-labelledby="student-portfolio-title" data-ua-portfolio>
+      <div class="student-card-head"><h2 id="student-portfolio-title">Portfolio Digital</h2><span>${items.length} registros</span></div>
+      <div class="ua-portfolio-grid">
+        ${
+          items.length
+            ? items
+                .map(({ submission, activity, assignment }) => `
+                  <article>
+                    <img src="${printableEscape(submission.finalArtwork || submission.preview || activity?.miniatura || "")}" alt="Portfolio ${printableEscape(activity?.titulo || submission.activityCode)}" loading="lazy" />
+                    <div>
+                      <mark>${printableEscape(submission.activityCode)}</mark>
+                      <strong>${printableEscape(activity?.titulo || submission.activityCode)}</strong>
+                      <small>${printableEscape(assignment?.className || submission.className)} · concluida em ${new Date(submission.completedAt).toLocaleDateString("pt-BR")}</small>
+                    </div>
+                  </article>
+                `)
+                .join("")
+            : `<p class="ua-empty">As atividades concluidas aparecerao aqui automaticamente.</p>`
+        }
+      </div>
+    </section>
+  `;
+};
+
+const renderUniversalActivityTeacherPortfolio = () => {
+  const state = readUniversalActivityState();
+  const refs = state.portfolioRefs || [];
+  const studentIds = [...new Set(refs.map((ref) => ref.studentId))];
+  const findStudent = (studentId) =>
+    universalActivityDemoClasses.flatMap((item) => item.students.map((student) => ({ ...student, className: item.name }))).find((student) => student.id === studentId);
+  return `
+    <section class="tw-board ua-portfolio-teacher">
+      <div class="tw-section-head"><h2>Portfolio Digital</h2><span>${refs.length} atividades concluidas</span></div>
+      ${
+        studentIds.length
+          ? studentIds
+              .map((studentId) => {
+                const student = findStudent(studentId);
+                const items = getUniversalActivityPortfolioForStudent(studentId);
+                return `
+                  <article>
+                    <header><strong>${printableEscape(student?.name || studentId)}</strong><small>${printableEscape(student?.className || "")} · ${items.length} registros</small></header>
+                    <div>
+                      ${items
+                        .map(({ submission, activity }) => `
+                          <figure>
+                            <img src="${printableEscape(submission.finalArtwork || submission.preview || activity?.miniatura || "")}" alt="Atividade ${printableEscape(submission.activityCode)}" loading="lazy" />
+                            <figcaption>${printableEscape(submission.activityCode)}</figcaption>
+                          </figure>
+                        `)
+                        .join("")}
+                    </div>
+                  </article>
+                `;
+              })
+              .join("")
+          : `<p class="ua-empty">Nenhuma atividade concluida no portfolio ainda.</p>`
+      }
+    </section>
+  `;
+};
+
+const renderUniversalActivityTeacherDeliveries = () => {
+  const state = readUniversalActivityState();
+  const assignments = state.assignments.filter((assignment) => assignment.status !== "ARQUIVADA");
+  return `
+    <section class="tw-board ua-deliveries" data-ua-deliveries>
+      <div class="tw-section-head"><h2>Atividades Indicadas</h2><button type="button" data-teacher-view="atividades">Indicar nova</button></div>
+      ${
+        assignments.length
+          ? assignments
+              .map((assignment) => {
+                const activity = getUniversalActivityByCode(assignment.activityCode);
+                const submissions = state.submissions.filter((submission) => submission.assignmentId === assignment.assignmentId);
+                const completed = submissions.filter((submission) => submission.status === "COMPLETED").length;
+                const progress = submissions.filter((submission) => submission.status === "IN_PROGRESS").length;
+                const notStarted = Math.max(0, assignment.studentIds.length - completed - progress);
+                return `
+                  <article class="ua-delivery-card">
+                    <div><mark>${printableEscape(assignment.activityCode)}</mark><strong>${printableEscape(activity?.titulo || assignment.activityCode)}</strong><small>${printableEscape(assignment.className)} · ${assignment.studentIds.length} alunos</small></div>
+                    <div class="ua-delivery-metrics"><span>${completed} concluidas</span><span>${progress} em andamento</span><span>${notStarted} nao iniciadas</span></div>
+                    <button type="button" data-ua-open-delivery="${printableEscape(assignment.assignmentId)}">Ver entregas</button>
+                  </article>
+                `;
+              })
+              .join("")
+          : `<p class="ua-empty">Nenhuma atividade indicada ainda.</p>`
+      }
+      <div class="ua-delivery-detail" data-ua-delivery-detail></div>
+    </section>
+  `;
+};
+
+const renderUniversalActivityMotorPage = () => {
+  seedUniversalActivityTechnicalAssignments();
+  const assignmentId = getPrintableParams().get("assignment");
+  const state = readUniversalActivityState();
+  const assignment = state.assignments.find((item) => item.assignmentId === assignmentId);
+  if (!assignment || !assignment.studentIds.includes(universalActivityStudentProfile.id)) {
+    return `<section class="ua-motor-shell"><div class="pa-empty"><h1>Atividade nao encontrada</h1><p>Esta atividade nao esta atribuida ao aluno atual.</p><a href="aluno.html">Voltar</a></div></section>`;
+  }
+  const activity = getUniversalActivityByCode(assignment.activityCode);
+  if (!activity) {
+    return `<section class="ua-motor-shell"><div class="pa-empty"><h1>Base nao encontrada</h1><p>O codigo ${printableEscape(assignment.activityCode)} nao existe no Banco de Atividades.</p><a href="aluno.html">Voltar</a></div></section>`;
+  }
+  getOrCreateUniversalActivitySubmission(assignment);
+  const tools = getUniversalActivityTools(activity, assignment);
+  const suggestedTools = assignment.mode === "sugerido" ? getUniversalActivitySuggestedTools(activity).filter((tool) => tools.includes(tool)) : [];
+  const colors = ["#0b7a34", "#e53935", "#1e88e5", "#fdd835", "#fb8c00", "#8e24aa", "#111111", "#ffffff"];
+  return `
+    <section class="ua-motor-shell" data-ua-engine data-assignment-id="${printableEscape(assignment.assignmentId)}">
+      <header class="ua-motor-head">
+        <a href="aluno.html">Voltar</a>
+        <div><span>${printableEscape(activity.codigo)}</span><h1>${printableEscape(activity.titulo)}</h1><small>${printableEscape(assignment.instructions || "Crie do seu jeito.")}</small></div>
+        <button type="button" data-ua-complete>Concluir</button>
+      </header>
+      <main class="ua-motor-layout">
+        <aside class="ua-tools" aria-label="Ferramentas">
+          ${tools.map((tool) => `<button type="button" data-ua-tool="${tool}" class="${[tool === "pincel" ? "is-active" : "", suggestedTools.includes(tool) ? "is-suggested" : ""].filter(Boolean).join(" ")}"><span>${universalActivityToolLabels[tool] || tool}</span></button>`).join("")}
+        </aside>
+        <section class="ua-stage-wrap">
+          <div class="ua-stage" data-ua-stage>
+            <img src="${printableEscape(activity.arquivoA4 || activity.arquivoOriginal)}" alt="Atividade base ${printableEscape(activity.codigo)}" data-ua-base />
+            <canvas data-ua-canvas width="1600" height="1131"></canvas>
+            <div class="ua-object-layer" data-ua-object-layer></div>
+          </div>
+        </section>
+        <aside class="ua-controls" aria-label="Controles">
+          <div class="ua-palette">${colors.map((color, index) => `<button type="button" data-ua-color="${color}" style="--ua-color:${color}" aria-label="Cor ${index + 1}" class="${index === 0 ? "is-active" : ""}"></button>`).join("")}</div>
+          <label><span>Espessura</span><input type="range" min="6" max="44" value="16" data-ua-size /></label>
+          <button type="button" data-ua-undo>Desfazer</button>
+          <button type="button" data-ua-redo>Refazer</button>
+          <button type="button" data-ua-clear>Limpar</button>
+          <button type="button" data-ua-save>Salvar</button>
+          <output data-ua-save-status>Salvo automaticamente</output>
+        </aside>
+      </main>
+    </section>
+  `;
+};
 
 const renderTeacherWorkspaceView = (view) => {
   const { books, experiences, activities } = getTeacherBibliotecaResources();
@@ -3307,6 +3733,7 @@ const renderTeacherWorkspaceView = (view) => {
         <div class="tw-section-head"><h2>Alunos</h2><button type="button">Adicionar observacao</button></div>
         ${teacherWorkspaceStudents.map(renderStudentCard).join("")}
       </section>
+      ${renderUniversalActivityTeacherPortfolio()}
     `,
     biblioteca: `
       <section class="tw-board">
@@ -3352,6 +3779,7 @@ const renderTeacherWorkspaceView = (view) => {
       </section>
     `,
     relatorios: `
+      ${renderUniversalActivityTeacherDeliveries()}
       <section class="tw-board tw-card-grid">
         ${teacherWorkspaceClasses.map((item) => `<article class="tw-metric-card"><span>${item.progress}%</span><strong>${item.name}</strong><small>progresso da turma</small></article>`).join("")}
       </section>
@@ -4248,6 +4676,12 @@ const modules = {
     code: "PRINTABLE-ACTIVITIES-001",
     html: renderPrintableActivitiesPage(),
   },
+  motorAtividade: {
+    title: "Motor Universal de Atividades",
+    subtitle: "Atividade digital do aluno",
+    code: "UNIVERSAL-ACTIVITY-ENGINE",
+    html: renderUniversalActivityMotorPage(),
+  },
   adminAtividades: {
     title: "Admin Atividades Imprimiveis",
     subtitle: "Conteudos > Atividades Imprimiveis",
@@ -4712,6 +5146,7 @@ const moduleEnvironment = {
   curadoria: "curadoria",
   professor: "professor",
   atividades: "professor",
+  motorAtividade: "aluno",
   adminAtividades: "curadoria",
   avalia: "avalia",
   bancoQuestoes: "avalia",
@@ -7453,6 +7888,7 @@ const initTeacherWorkspace = () => {
     workspace.querySelectorAll("[data-teacher-view]").forEach((button) => {
       button.classList.toggle("is-active", button.dataset.teacherView === view);
     });
+    initUniversalActivityTeacherDeliveries();
     if (search) search.value = "";
   };
 
@@ -7562,6 +7998,418 @@ const initPrintableActivities = () => {
   });
 };
 
+const initUniversalActivityAssignmentUi = () => {
+  const dialog = document.querySelector("[data-ua-assign-dialog]");
+  if (!dialog) return;
+  const form = dialog.querySelector("[data-ua-assign-form]");
+  const classSelect = form?.querySelector("[name='classId']");
+  const scopeSelect = form?.querySelector("[name='scope']");
+  const studentFieldset = form?.querySelector("[data-ua-students]");
+  const renderStudents = () => {
+    const classInfo = getUniversalActivityClass(classSelect?.value);
+    const scope = scopeSelect?.value || "class";
+    studentFieldset.innerHTML = `<legend>Alunos</legend>${classInfo.students
+      .map((student, index) => {
+        const checked = scope === "class" || (scope === "student" && index === 0) ? "checked" : "";
+        const type = scope === "student" ? "radio" : "checkbox";
+        return `<label><input type="${type}" name="studentIds" value="${printableEscape(student.id)}" ${checked} ${scope === "class" ? "disabled" : ""} /><span>${printableEscape(student.name)}</span></label>`;
+      })
+      .join("")}`;
+  };
+  document.addEventListener("click", (event) => {
+    const assign = event.target.closest("[data-ua-assign]");
+    if (!assign) return;
+    form.activityCode.value = assign.dataset.uaAssign;
+    renderStudents();
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+  });
+  dialog.addEventListener("click", (event) => {
+    if (event.target.closest("[data-ua-close-dialog]")) dialog.close?.();
+  });
+  classSelect?.addEventListener("change", renderStudents);
+  scopeSelect?.addEventListener("change", renderStudents);
+  form?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const classInfo = getUniversalActivityClass(String(data.get("classId") || ""));
+    const scope = String(data.get("scope") || "class");
+    const studentIds =
+      scope === "class"
+        ? classInfo.students.map((student) => student.id)
+        : data.getAll("studentIds").map(String).filter(Boolean);
+    if (!studentIds.length) {
+      window.alert("Selecione pelo menos um aluno.");
+      return;
+    }
+    createUniversalActivityAssignment({
+      activityCode: String(data.get("activityCode") || ""),
+      classId: classInfo.id,
+      studentIds,
+      instructions: String(data.get("instructions") || ""),
+      dueDate: String(data.get("dueDate") || ""),
+      toolProfile: String(data.get("toolProfile") || "ei2"),
+      mode: String(data.get("mode") || "livre"),
+    });
+    dialog.close?.();
+    window.alert("Atividade indicada com sucesso.");
+  });
+  renderStudents();
+};
+
+const renderUniversalDeliveryDetail = (assignmentId, target) => {
+  const state = readUniversalActivityState();
+  const assignment = state.assignments.find((item) => item.assignmentId === assignmentId);
+  if (!assignment || !target) return;
+  const activity = getUniversalActivityByCode(assignment.activityCode);
+  const classInfo = getUniversalActivityClass(assignment.classId);
+  const selectedStudentId = target.dataset.uaSelectedStudent || "";
+  const selectedStudent = classInfo.students.find((student) => student.id === selectedStudentId);
+  const selectedSubmission = selectedStudent
+    ? state.submissions.find((item) => item.assignmentId === assignment.assignmentId && item.studentId === selectedStudent.id)
+    : null;
+  const selectedStatus = selectedSubmission?.status === "COMPLETED" ? "CONCLUIDA" : selectedSubmission?.status === "IN_PROGRESS" ? "EM ANDAMENTO" : "NAO INICIOU";
+  target.innerHTML = `
+    <section class="ua-delivery-open">
+      <header><span>${printableEscape(assignment.activityCode)}</span><h3>Entregas</h3><small>${printableEscape(activity?.titulo || assignment.activityCode)} · ${printableEscape(assignment.className)}</small></header>
+      ${classInfo.students
+        .filter((student) => assignment.studentIds.includes(student.id))
+        .map((student) => {
+          const submission = state.submissions.find((item) => item.assignmentId === assignment.assignmentId && item.studentId === student.id);
+          const status = submission?.status === "COMPLETED" ? "CONCLUIDA" : submission?.status === "IN_PROGRESS" ? "EM ANDAMENTO" : "NAO INICIOU";
+          return `
+            <article>
+              <strong>${printableEscape(student.name)}</strong>
+              <span>${status}</span>
+              ${submission?.finalArtwork || submission?.preview ? `<img src="${printableEscape(submission.finalArtwork || submission.preview)}" alt="Producao de ${printableEscape(student.name)}" />` : `<small>Sem producao salva.</small>`}
+              <small>Envio: ${new Date(assignment.assignedAt).toLocaleString("pt-BR")} · Inicio: ${submission?.startedAt ? new Date(submission.startedAt).toLocaleString("pt-BR") : "pendente"} · Ultima edicao: ${submission?.lastSavedAt ? new Date(submission.lastSavedAt).toLocaleString("pt-BR") : "pendente"} · Conclusao: ${submission?.completedAt ? new Date(submission.completedAt).toLocaleString("pt-BR") : "pendente"}</small>
+              <button type="button" data-ua-open-student-delivery="${printableEscape(student.id)}">Abrir detalhes</button>
+            </article>
+          `;
+        })
+        .join("")}
+      ${
+        selectedStudent
+          ? `<aside class="ua-delivery-student-detail">
+              <h4>${printableEscape(selectedStudent.name)}</h4>
+              <dl>
+                <div><dt>Status</dt><dd>${selectedStatus}</dd></div>
+                <div><dt>Codigo</dt><dd>${printableEscape(assignment.activityCode)}</dd></div>
+                <div><dt>Titulo</dt><dd>${printableEscape(activity?.titulo || assignment.activityCode)}</dd></div>
+                <div><dt>Turma</dt><dd>${printableEscape(assignment.className)}</dd></div>
+                <div><dt>Professor</dt><dd>${printableEscape(assignment.teacherName)}</dd></div>
+                <div><dt>Envio</dt><dd>${new Date(assignment.assignedAt).toLocaleString("pt-BR")}</dd></div>
+                <div><dt>Inicio</dt><dd>${selectedSubmission?.startedAt ? new Date(selectedSubmission.startedAt).toLocaleString("pt-BR") : "pendente"}</dd></div>
+                <div><dt>Ultima edicao</dt><dd>${selectedSubmission?.lastSavedAt ? new Date(selectedSubmission.lastSavedAt).toLocaleString("pt-BR") : "pendente"}</dd></div>
+                <div><dt>Conclusao</dt><dd>${selectedSubmission?.completedAt ? new Date(selectedSubmission.completedAt).toLocaleString("pt-BR") : "pendente"}</dd></div>
+              </dl>
+              ${selectedSubmission?.finalArtwork || selectedSubmission?.preview ? `<img src="${printableEscape(selectedSubmission.finalArtwork || selectedSubmission.preview)}" alt="Producao final de ${printableEscape(selectedStudent.name)}" />` : `<p class="ua-empty">Este aluno ainda nao salvou producao.</p>`}
+            </aside>`
+          : ""
+      }
+    </section>
+  `;
+};
+
+const initUniversalActivityTeacherDeliveries = () => {
+  const root = document.querySelector("[data-ua-deliveries]");
+  if (!root) return;
+  root.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-ua-open-delivery]");
+    const studentButton = event.target.closest("[data-ua-open-student-delivery]");
+    const target = root.querySelector("[data-ua-delivery-detail]");
+    if (studentButton && target) {
+      target.dataset.uaSelectedStudent = studentButton.dataset.uaOpenStudentDelivery;
+      renderUniversalDeliveryDetail(target.dataset.uaAssignmentId, target);
+      return;
+    }
+    if (!button || !target) return;
+    target.dataset.uaAssignmentId = button.dataset.uaOpenDelivery;
+    target.dataset.uaSelectedStudent = "";
+    renderUniversalDeliveryDetail(button.dataset.uaOpenDelivery, target);
+  });
+};
+
+const initUniversalActivityEngine = () => {
+  const root = document.querySelector("[data-ua-engine]");
+  if (!root) return;
+  const assignmentId = root.dataset.assignmentId;
+  const state = readUniversalActivityState();
+  const assignment = state.assignments.find((item) => item.assignmentId === assignmentId);
+  if (!assignment) return;
+  const activity = getUniversalActivityByCode(assignment.activityCode);
+  let submission = getOrCreateUniversalActivitySubmission(assignment);
+  const canvas = root.querySelector("[data-ua-canvas]");
+  const ctx = canvas.getContext("2d");
+  const stage = root.querySelector("[data-ua-stage]");
+  const objectLayer = root.querySelector("[data-ua-object-layer]");
+  const saveStatus = root.querySelector("[data-ua-save-status]");
+  let activeTool = "pincel";
+  let activeColor = "#0b7a34";
+  let activeSize = 16;
+  let drawing = false;
+  let currentStroke = null;
+  let selectedObject = null;
+  let activeObjectId = null;
+  let undoStack = [];
+  let redoStack = [];
+
+  const snapshot = () => JSON.stringify({ strokes: submission.canvasData?.strokes || [], objects: submission.objectsData || [] });
+  const restoreSnapshot = (text) => {
+    const parsed = JSON.parse(text);
+    submission.canvasData = { strokes: parsed.strokes || [] };
+    submission.objectsData = parsed.objects || [];
+    drawAll();
+  };
+  const pushUndo = () => {
+    undoStack.push(snapshot());
+    if (undoStack.length > 30) undoStack.shift();
+    redoStack = [];
+  };
+  const normalizedPoint = (event) => {
+    const rect = canvas.getBoundingClientRect();
+    const source = event.touches?.[0] || event.changedTouches?.[0] || event;
+    return {
+      x: Math.max(0, Math.min(1, (source.clientX - rect.left) / rect.width)),
+      y: Math.max(0, Math.min(1, (source.clientY - rect.top) / rect.height)),
+    };
+  };
+  const drawStroke = (stroke) => {
+    const points = stroke.points || [];
+    if (points.length < 1) return;
+    ctx.save();
+    if (stroke.tool === "borracha") ctx.globalCompositeOperation = "destination-out";
+    ctx.globalAlpha = stroke.opacity ?? 0.9;
+    ctx.strokeStyle = stroke.tool === "borracha" ? "rgba(0,0,0,1)" : stroke.color;
+    ctx.lineWidth = (stroke.size || 16) * (stroke.tool === "dedo" ? 1.8 : stroke.tool === "rolinho" ? 2.4 : stroke.tool === "esponja" ? 1.6 : 1);
+    ctx.lineCap = stroke.tool === "rolinho" ? "square" : "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    points.forEach((point, index) => {
+      const x = point.x * canvas.width;
+      const y = point.y * canvas.height;
+      if (index === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+      if (stroke.tool === "esponja" && index % 2 === 0) {
+        ctx.moveTo(x + 0.1, y + 0.1);
+        ctx.arc(x, y, ctx.lineWidth * 0.38, 0, Math.PI * 2);
+      }
+    });
+    ctx.stroke();
+    ctx.restore();
+  };
+  const renderObjects = () => {
+    objectLayer.innerHTML = (submission.objectsData || [])
+      .map((object) => `<button type="button" class="ua-collage-object is-${object.kind}" data-object-id="${object.id}" style="left:${object.x * 100}%;top:${object.y * 100}%;width:${object.size * 100}%;height:${object.size * 100}%;--ua-color:${object.color || activeColor};transform:rotate(${object.rotation || 0}deg)" aria-label="${object.kind}"></button>`)
+      .join("");
+  };
+  const drawAll = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    (submission.canvasData?.strokes || []).forEach(drawStroke);
+    renderObjects();
+  };
+  const ensureImageReady = (image) => {
+    if (!image || (image.complete && image.naturalWidth)) return Promise.resolve();
+    return new Promise((resolve) => {
+      image.addEventListener("load", resolve, { once: true });
+      image.addEventListener("error", resolve, { once: true });
+    });
+  };
+  const saveSubmission = async ({ complete = false } = {}) => {
+    const now = new Date().toISOString();
+    submission.status = complete ? "COMPLETED" : submission.status === "NOT_STARTED" ? "IN_PROGRESS" : submission.status;
+    submission.startedAt = submission.startedAt || now;
+    submission.lastSavedAt = now;
+    if (complete) submission.completedAt = now;
+    submission.engineVersion = universalActivityEngineVersion;
+    submission.preview = canvas.toDataURL("image/png", 0.82);
+    if (complete) {
+      const composed = document.createElement("canvas");
+      composed.width = canvas.width;
+      composed.height = canvas.height;
+      const cctx = composed.getContext("2d");
+      const base = root.querySelector("[data-ua-base]");
+      await ensureImageReady(base);
+      if (base?.naturalWidth) cctx.drawImage(base, 0, 0, composed.width, composed.height);
+      cctx.drawImage(canvas, 0, 0);
+      for (const object of submission.objectsData || []) {
+        cctx.save();
+        cctx.translate(object.x * composed.width, object.y * composed.height);
+        cctx.rotate(((object.rotation || 0) * Math.PI) / 180);
+        cctx.fillStyle = object.color || activeColor;
+        const size = object.size * composed.width;
+        if (object.kind === "algodao") {
+          cctx.fillStyle = "#f7f7f2";
+          cctx.beginPath();
+          cctx.arc(0, 0, size / 2, 0, Math.PI * 2);
+          cctx.fill();
+        } else if (object.kind === "barbante") {
+          cctx.strokeStyle = "#8d6e63";
+          cctx.lineWidth = Math.max(8, size / 5);
+          cctx.beginPath();
+          cctx.moveTo(-size / 2, 0);
+          cctx.lineTo(size / 2, 0);
+          cctx.stroke();
+        } else {
+          cctx.beginPath();
+          cctx.arc(0, 0, size / 2, 0, Math.PI * 2);
+          cctx.fill();
+        }
+        cctx.restore();
+      }
+      submission.finalArtwork = composed.toDataURL("image/png", 0.9);
+    }
+    upsertUniversalActivitySubmission(submission);
+    if (complete) syncUniversalActivityPortfolio(submission);
+    if (saveStatus) saveStatus.textContent = complete ? "Concluida" : `Salvo ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+  };
+  const addObject = (point) => {
+    pushUndo();
+    const kind = activeTool;
+    submission.objectsData = [
+      ...(submission.objectsData || []),
+      { id: `obj-${Date.now()}`, kind, x: point.x, y: point.y, size: kind === "barbante" ? 0.12 : 0.055, color: kind === "algodao" ? "#f7f7f2" : activeColor, rotation: kind === "barbante" ? -8 : 0 },
+    ];
+    activeObjectId = submission.objectsData.at(-1)?.id || null;
+    drawAll();
+    saveSubmission();
+  };
+  const removeObjectAt = (point) => {
+    const objects = submission.objectsData || [];
+    let index = -1;
+    for (let i = objects.length - 1; i >= 0; i -= 1) {
+      const object = objects[i];
+      if (Math.abs(object.x - point.x) < object.size && Math.abs(object.y - point.y) < object.size) {
+        index = i;
+        break;
+      }
+    }
+    if (index >= 0) {
+      pushUndo();
+      objects.splice(index, 1);
+      submission.objectsData = objects;
+      drawAll();
+      saveSubmission();
+      return true;
+    }
+    return false;
+  };
+  const start = (event) => {
+    event.preventDefault();
+    const point = normalizedPoint(event);
+    if (["algodao", "papel", "barbante", "bolinhas"].includes(activeTool)) {
+      addObject(point);
+      return;
+    }
+    if (activeTool === "borracha" && removeObjectAt(point)) return;
+    pushUndo();
+    drawing = true;
+    currentStroke = { tool: activeTool, color: activeColor, size: activeSize, opacity: activeTool === "dedo" ? 0.72 : 0.9, points: [point] };
+  };
+  const move = (event) => {
+    if (!drawing || !currentStroke) return;
+    event.preventDefault();
+    currentStroke.points.push(normalizedPoint(event));
+    drawAll();
+    drawStroke(currentStroke);
+  };
+  const end = () => {
+    if (!drawing || !currentStroke) return;
+    drawing = false;
+    submission.canvasData = { strokes: [...(submission.canvasData?.strokes || []), currentStroke] };
+    currentStroke = null;
+    drawAll();
+    saveSubmission();
+  };
+  stage.addEventListener("pointerdown", start);
+  stage.addEventListener("pointermove", move);
+  stage.addEventListener("pointerup", end);
+  stage.addEventListener("pointercancel", end);
+  objectLayer.addEventListener("pointerdown", (event) => {
+    const objectButton = event.target.closest("[data-object-id]");
+    if (!objectButton) return;
+    event.stopPropagation();
+    const object = submission.objectsData.find((item) => item.id === objectButton.dataset.objectId);
+    if (!object) return;
+    if (activeTool === "borracha") {
+      pushUndo();
+      submission.objectsData = submission.objectsData.filter((item) => item.id !== object.id);
+      activeObjectId = null;
+      drawAll();
+      saveSubmission();
+      return;
+    }
+    selectedObject = { id: object.id };
+    activeObjectId = object.id;
+    pushUndo();
+  });
+  objectLayer.addEventListener("pointermove", (event) => {
+    if (!selectedObject) return;
+    event.preventDefault();
+    const point = normalizedPoint(event);
+    const object = submission.objectsData.find((item) => item.id === selectedObject.id);
+    if (object) {
+      object.x = point.x;
+      object.y = point.y;
+      drawAll();
+    }
+  });
+  objectLayer.addEventListener("pointerup", () => {
+    if (selectedObject) saveSubmission();
+    selectedObject = null;
+  });
+  window.addEventListener("pointerup", () => {
+    if (selectedObject) saveSubmission();
+    selectedObject = null;
+  });
+  root.addEventListener("click", async (event) => {
+    const tool = event.target.closest("[data-ua-tool]");
+    if (tool) {
+      activeTool = tool.dataset.uaTool;
+      root.querySelectorAll("[data-ua-tool]").forEach((button) => button.classList.toggle("is-active", button === tool));
+    }
+    const color = event.target.closest("[data-ua-color]");
+    if (color) {
+      activeColor = color.dataset.uaColor;
+      root.querySelectorAll("[data-ua-color]").forEach((button) => button.classList.toggle("is-active", button === color));
+    }
+    if (event.target.closest("[data-ua-undo]") && undoStack.length) {
+      redoStack.push(snapshot());
+      restoreSnapshot(undoStack.pop());
+      saveSubmission();
+    }
+    if (event.target.closest("[data-ua-redo]") && redoStack.length) {
+      undoStack.push(snapshot());
+      restoreSnapshot(redoStack.pop());
+      saveSubmission();
+    }
+    if (event.target.closest("[data-ua-clear]") && window.confirm("Limpar sua producao? A atividade original sera mantida.")) {
+      pushUndo();
+      submission.canvasData = { strokes: [] };
+      submission.objectsData = [];
+      drawAll();
+      saveSubmission();
+    }
+    if (event.target.closest("[data-ua-save]")) saveSubmission();
+    if (event.target.closest("[data-ua-complete]") && window.confirm("Concluir atividade agora?")) {
+      await saveSubmission({ complete: true });
+      window.location.href = "aluno.html";
+    }
+  });
+  root.querySelector("[data-ua-size]")?.addEventListener("input", (event) => {
+    activeSize = Number(event.target.value || 16);
+    const object = (submission.objectsData || []).find((item) => item.id === activeObjectId);
+    if (object) {
+      object.size = Math.max(0.035, Math.min(0.18, activeSize / 260));
+      drawAll();
+      saveSubmission();
+    }
+  });
+  drawAll();
+  saveSubmission();
+  window.setInterval(() => saveSubmission(), 12000);
+};
+
 const renderAppPage = () => {
   const mount = document.querySelector("[data-app-page]");
   if (!mount) {
@@ -7580,6 +8428,8 @@ const renderAppPage = () => {
       document.querySelector(".teacher-workspace")?.classList.add("is-mounted");
     });
     initTeacherWorkspace();
+    initUniversalActivityAssignmentUi();
+    initUniversalActivityTeacherDeliveries();
     return;
   }
 
@@ -7638,6 +8488,9 @@ const renderAppPage = () => {
   initCurationBatches();
   initTeacherWorkspace();
   initPrintableActivities();
+  initUniversalActivityAssignmentUi();
+  initUniversalActivityTeacherDeliveries();
+  initUniversalActivityEngine();
 };
 
 renderAppPage();
