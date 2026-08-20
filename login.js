@@ -79,6 +79,16 @@ const getNextPage = () => {
 
 const nextPage = getNextPage();
 const needsCuratorAccess = nextPage.startsWith("curadoria.html");
+const getNextPageName = () => {
+  try {
+    const url = new URL(nextPage, window.location.origin);
+    return url.pathname.replace(/^\/+/, "").replace(/\/$/, "") || "plataforma.html";
+  } catch (error) {
+    return String(nextPage || "plataforma.html").split(/[?#]/)[0].replace(/^\/+/, "").replace(/\/$/, "");
+  }
+};
+const questionBankLoginPages = new Set(["avalia", "avalia.html", "banco-questoes", "banco-questoes.html"]);
+const requiresQuestionBankRole = requiresSupabaseAuth && questionBankLoginPages.has(getNextPageName());
 const getPostLoginDestination = (role) => {
   if (!role) return getNextPage();
   const next = getNextPage();
@@ -126,7 +136,7 @@ const getSessionRoleFromAuthData = (authData) => {
   );
 };
 
-if (requiresSupabaseAuth) {
+if (!isLogoutReturn) {
   const context = getStoredSupabaseContext();
   if (context.userId && hasValidPlatformRole(context.role) && Number(context.expiresAt || 0) > Math.floor(Date.now() / 1000) + 60) {
     window.location.replace(getPostLoginDestination(context.role));
@@ -147,7 +157,9 @@ const errorMessage = document.querySelector("[data-login-error]");
 if (requiresSupabaseAuth) {
   const copy = document.querySelector(".login-copy span");
   if (copy) {
-    copy.textContent = "Entre com o usuario Supabase Auth do professor para salvar e liberar a pre-visualizacao oficial.";
+    copy.textContent = requiresQuestionBankRole
+      ? "Entre com o usuario Supabase Auth autorizado para salvar e liberar a pre-visualizacao oficial."
+      : "Entre com o usuario Supabase Auth autorizado para acessar seu ambiente.";
   }
 }
 
@@ -234,7 +246,7 @@ form?.addEventListener("submit", async (event) => {
   setLoginBusy(true);
 
   try {
-    const context = await authenticateWithSupabase(email, password, { requireQuestionBankRole: requiresSupabaseAuth });
+    const context = await authenticateWithSupabase(email, password, { requireQuestionBankRole: requiresQuestionBankRole });
     if (context?.missingPlatformRole) {
       showLoginError("Usuario autenticado, mas sem perfil de plataforma valido. Solicite platform_role em app_metadata.");
       setLoginBusy(false);
@@ -250,7 +262,11 @@ form?.addEventListener("submit", async (event) => {
   }
 
   if (requiresSupabaseAuth) {
-    showLoginError("Entre com um usuario Supabase Auth valido e com perfil question_bank_role para salvar a avaliacao.");
+    showLoginError(
+      requiresQuestionBankRole
+        ? "Entre com um usuario Supabase Auth valido e com perfil question_bank_role para salvar a avaliacao."
+        : "Entre com um usuario Supabase Auth valido e com perfil de plataforma autorizado."
+    );
     setLoginBusy(false);
     return;
   }
