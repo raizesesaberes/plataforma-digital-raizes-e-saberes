@@ -40,6 +40,8 @@ const ecosystemModules = [
   ["universidade.html", "Universidade"],
   ["book-viewer.html", "Book Viewer"],
   ["professor.html", "Professor"],
+  ["atividades.html", "Atividades Imprimiveis"],
+  ["admin-atividades.html", "Admin Atividades"],
   ["avalia.html", "Avalia+"],
   ["banco-questoes.html", "Banco de Questoes"],
   ["secretaria.html", "Secretaria"],
@@ -2057,6 +2059,8 @@ const routeKeyByHref = {
   "curadoria.html": "curadoria",
   "book-viewer.html": "viewer",
   "professor.html": "professor",
+  "atividades.html": "atividades",
+  "admin-atividades.html": "adminAtividades",
   "avalia.html": "avalia",
   "secretaria.html": "secretaria",
   "gestor.html": "gestor",
@@ -2807,14 +2811,16 @@ const renderStudentPresentationDashboard = () => `
 
 const teacherWorkspaceNav = [
   ["inicio", "Inicio"],
-  ["planejamentos", "Planejamentos"],
   ["turmas", "Minhas Turmas"],
-  ["alunos", "Alunos"],
   ["biblioteca", "Biblioteca Viva"],
+  ["atividades", "Atividades Imprimiveis"],
+  ["planejamentos", "Planejamentos"],
+  ["favoritos", "Favoritos"],
+  ["relatorios", "Relatorios"],
+  ["alunos", "Alunos"],
   ["experiencias", "Experiencias"],
   ["jogos", "Jogos"],
   ["avaliacoes", "Avaliacoes"],
-  ["relatorios", "Relatorios"],
   ["universidade", "Universidade"],
   ["configuracoes", "Configuracoes"],
 ];
@@ -2909,6 +2915,320 @@ const renderResourceCard = (resource) => `
   </article>
 `;
 
+const printableEscape = (value) =>
+  String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+const printableNormalize = (value) =>
+  String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+const printableAllowedRoles = ["professor", "coordenador", "coordenador_pedagogico", "gestor", "gestor_escolar", "admin", "administrador", "administrador_nacional"];
+const printableAdminRoles = ["coordenador", "coordenador_pedagogico", "gestor", "gestor_escolar", "admin", "administrador", "administrador_nacional"];
+
+const getPrintableUserRole = () => {
+  try {
+    const session = JSON.parse(localStorage.getItem("raizes:supabase-auth-session") || "null");
+    const token = session?.access_token || localStorage.getItem("raizes:supabase-access-token") || "";
+    const [, payload] = String(token).split(".");
+    const decoded = payload ? JSON.parse(atob(payload.replaceAll("-", "+").replaceAll("_", "/"))) : {};
+    const metadata = decoded.app_metadata || {};
+    return String(metadata.printable_activities_role || metadata.question_bank_role || metadata.app_role || metadata.role || decoded.app_role || "").toLowerCase();
+  } catch (error) {
+    return "";
+  }
+};
+
+const canAccessPrintableActivities = ({ admin = false } = {}) => {
+  const role = getPrintableUserRole();
+  if (role) return (admin ? printableAdminRoles : printableAllowedRoles).includes(role);
+  const isDemoAuthenticated = typeof localStorage !== "undefined" && localStorage.getItem(platformAuth.key) === "true";
+  const isCurator = typeof localStorage !== "undefined" && localStorage.getItem(platformAuth.curatorKey) === "true";
+  return admin ? isCurator : isDemoAuthenticated;
+};
+
+const printableActivitiesDataService = (() => {
+  const catalog = () => window.RaizesPrintableActivitiesCatalog || { ageGroups: [], bnccFields: [], activities: [] };
+  const all = () => (catalog().activities || []).map((item) => ({ visualizacoes: 0, downloads: 0, impressoes: 0, ...item }));
+  const visible = ({ admin = false } = {}) => (admin ? all() : all().filter((item) => String(item.status || "").toUpperCase() === "PUBLICADO"));
+  const storageKey = "raizes:printable-activities:user-state";
+  const readUserState = () => {
+    try {
+      return JSON.parse(localStorage.getItem(storageKey) || '{"favorites":[],"recent":[],"metrics":[]}');
+    } catch (error) {
+      return { favorites: [], recent: [], metrics: [] };
+    }
+  };
+  const writeUserState = (state) => localStorage.setItem(storageKey, JSON.stringify({ favorites: [], recent: [], metrics: [], ...state }));
+  return {
+    list: visible,
+    getByCode(code, options) {
+      return visible(options).find((item) => item.codigo === code || item.slug === code || item.id === code);
+    },
+    ageGroups: () => catalog().ageGroups || [],
+    bnccFields: () => catalog().bnccFields || [],
+    facets(items) {
+      const unique = (values) => [...new Set(values.flat().filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+      return {
+        fields: unique(items.map((item) => item.camposExperiencia || [])),
+        types: unique(items.map((item) => item.tiposAtividade || [])),
+        materials: unique(items.map((item) => item.materiais || [])),
+      };
+    },
+    state: readUserState,
+    toggleFavorite(code) {
+      const state = readUserState();
+      const exists = state.favorites.includes(code);
+      state.favorites = exists ? state.favorites.filter((item) => item !== code) : [code, ...state.favorites];
+      writeUserState(state);
+      return !exists;
+    },
+    markRecent(code) {
+      const state = readUserState();
+      state.recent = [code, ...state.recent.filter((item) => item !== code)].slice(0, 12);
+      writeUserState(state);
+    },
+    metric(type, payload = {}) {
+      try {
+        const state = readUserState();
+        state.metrics = [...(state.metrics || []), { type, payload, at: new Date().toISOString() }].slice(-80);
+        writeUserState(state);
+      } catch (error) {
+        return null;
+      }
+      return null;
+    },
+  };
+})();
+
+const getPrintableParams = () => new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
+
+const printableIncludes = (item, query) => {
+  if (!query) return true;
+  const haystack = [
+    item.codigo,
+    item.titulo,
+    item.tema,
+    item.objetivo,
+    item.orientacaoProfessor,
+    item.descricao,
+    item.comandoCrianca,
+    ...(item.materiais || []),
+    ...(item.palavrasChave || []),
+    ...(item.tiposAtividade || []),
+    ...(item.camposExperiencia || []),
+  ].join(" ");
+  return printableNormalize(haystack).includes(printableNormalize(query));
+};
+
+const getPrintableFilteredItems = ({ admin = false } = {}) => {
+  const params = getPrintableParams();
+  const items = printableActivitiesDataService.list({ admin });
+  const query = params.get("q") || "";
+  const age = params.get("faixa") || "";
+  const field = params.get("campo") || "";
+  const type = params.get("tipo") || "";
+  const material = params.get("material") || "";
+  const favoriteOnly = params.get("favoritos") === "1";
+  const userState = printableActivitiesDataService.state();
+  const filtered = items.filter((item) => {
+    const matchesFavorite = !favoriteOnly || userState.favorites.includes(item.codigo);
+    return (
+      matchesFavorite &&
+      printableIncludes(item, query) &&
+      (!age || item.faixaEtaria === age) &&
+      (!field || (item.camposExperiencia || []).includes(field)) &&
+      (!type || (item.tiposAtividade || []).includes(type)) &&
+      (!material || (item.materiais || []).includes(material))
+    );
+  });
+  const sort = params.get("ordem") || "relevancia";
+  return filtered.sort((a, b) => {
+    if (sort === "codigo") return String(a.codigo).localeCompare(String(b.codigo), "pt-BR");
+    if (sort === "titulo") return String(a.titulo).localeCompare(String(b.titulo), "pt-BR");
+    if (sort === "recentes") return String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
+    if (sort === "atualizadas") return String(b.updatedAt || b.dataAtualizacao || "").localeCompare(String(a.updatedAt || a.dataAtualizacao || ""));
+    if (sort === "visualizadas") return Number(b.visualizacoes || 0) - Number(a.visualizacoes || 0);
+    if (sort === "baixadas") return Number(b.downloads || 0) - Number(a.downloads || 0);
+    return 0;
+  });
+};
+
+const renderPrintableAgeCards = ({ admin = false } = {}) => {
+  const items = printableActivitiesDataService.list({ admin });
+  return `
+    <section class="pa-age-grid" aria-label="Faixas etarias">
+      ${printableActivitiesDataService
+        .ageGroups()
+        .map((group) => {
+          const count = items.filter((item) => item.faixaEtaria === group.id).length;
+          const label = count ? `${count} ATIVIDADES DISPONIVEIS` : "ATIVIDADES EM PRODUCAO";
+          return `<button class="pa-age-card" type="button" data-pa-filter-faixa="${group.id}"><span>${group.label}</span><strong>${group.age.toUpperCase()}</strong><small>${label}</small></button>`;
+        })
+        .join("")}
+    </section>
+  `;
+};
+
+const renderPrintableFilters = ({ admin = false } = {}) => {
+  const params = getPrintableParams();
+  const items = printableActivitiesDataService.list({ admin });
+  const facets = printableActivitiesDataService.facets(items);
+  const option = (value, label, selected) => `<option value="${printableEscape(value)}" ${value === selected ? "selected" : ""}>${printableEscape(label || value)}</option>`;
+  const options = (values, selected) => `<option value="">Todos</option>${values.map((value) => option(value, value, selected)).join("")}`;
+  return `
+    <form class="pa-filters" data-pa-filters>
+      <label class="pa-search"><span>Pesquisa</span><input name="q" type="search" value="${printableEscape(params.get("q") || "")}" placeholder="PESQUISE PELO CODIGO, TITULO, TEMA, OBJETIVO, MATERIAL OU PALAVRA-CHAVE" /></label>
+      <details class="pa-filter-panel" open>
+        <summary>Filtros</summary>
+        <div>
+          <label><span>Faixa etaria</span><select name="faixa">${options(printableActivitiesDataService.ageGroups().map((group) => group.id), params.get("faixa") || "")}</select></label>
+          ${facets.fields.length ? `<label><span>Campo BNCC</span><select name="campo">${options(facets.fields, params.get("campo") || "")}</select></label>` : ""}
+          ${facets.types.length ? `<label><span>Tipo</span><select name="tipo">${options(facets.types, params.get("tipo") || "")}</select></label>` : ""}
+          ${facets.materials.length ? `<label><span>Material</span><select name="material">${options(facets.materials, params.get("material") || "")}</select></label>` : ""}
+          <label><span>Ordenacao</span><select name="ordem">
+            ${[
+              ["relevancia", "Relevancia"],
+              ["codigo", "Codigo"],
+              ["titulo", "Titulo"],
+              ["recentes", "Adicionadas recentemente"],
+              ["atualizadas", "Atualizadas recentemente"],
+              ["visualizadas", "Mais visualizadas"],
+              ["baixadas", "Mais baixadas"],
+            ].map(([value, label]) => option(value, label, params.get("ordem") || "relevancia")).join("")}
+          </select></label>
+          <label class="pa-check"><input name="favoritos" type="checkbox" value="1" ${params.get("favoritos") === "1" ? "checked" : ""} /><span>Somente favoritos</span></label>
+          <button type="button" data-pa-clear>Limpar filtros</button>
+        </div>
+      </details>
+    </form>
+  `;
+};
+
+const renderPrintableActivityCard = (item) => {
+  const userState = printableActivitiesDataService.state();
+  const isFavorite = userState.favorites.includes(item.codigo);
+  const thumb = item.miniatura || item.arquivoPng || item.arquivoOriginal || "";
+  return `
+    <article class="pa-card" data-teacher-search-item>
+      <div class="pa-thumb">
+        ${thumb ? `<img src="${printableEscape(thumb)}" alt="Miniatura da atividade ${printableEscape(item.codigo)}" loading="lazy" decoding="async" />` : `<span>SEM MINIATURA</span>`}
+      </div>
+      <div class="pa-card-body">
+        <mark>${printableEscape(item.codigo)}</mark>
+        <h3>${printableEscape(item.titulo || "Titulo pendente")}</h3>
+        <p>${printableEscape(item.idade || item.faixaEtaria || "Idade pendente")} · ${printableEscape((item.tiposAtividade || [])[0] || "Tipo pendente")}</p>
+        <small>${printableEscape((item.camposExperiencia || []).join(", ") || "Campo de experiencia pendente")}</small>
+        <small><b>Materiais:</b> ${printableEscape((item.materiais || []).slice(0, 3).join(", ") || "pendentes")}</small>
+      </div>
+      <footer>
+        <a href="atividades.html?codigo=${encodeURIComponent(item.codigo)}${window.location.search ? `&voltar=${encodeURIComponent(window.location.search)}` : ""}" data-pa-view="${printableEscape(item.codigo)}">Visualizar</a>
+        <a href="${printableEscape(item.arquivoOriginal || "#")}" download data-pa-download="${printableEscape(item.codigo)}" aria-disabled="${item.arquivoOriginal ? "false" : "true"}">Baixar</a>
+        <button type="button" data-pa-print="${printableEscape(item.codigo)}">Imprimir</button>
+        <button type="button" data-pa-favorite="${printableEscape(item.codigo)}" aria-pressed="${isFavorite}">${isFavorite ? "Favorito" : "Favoritar"}</button>
+      </footer>
+    </article>
+  `;
+};
+
+const renderPrintableMainPage = ({ admin = false } = {}) => {
+  if (!canAccessPrintableActivities({ admin })) {
+    return `<section class="pa-shell"><div class="pa-empty"><h1>Acesso restrito</h1><p>Este modulo e exclusivo para professor, coordenador, gestor escolar e administrador.</p><a href="login.html?next=${encodeURIComponent(window.location.pathname.split("/").pop() + window.location.search)}">Entrar com perfil autorizado</a></div></section>`;
+  }
+  const params = getPrintableParams();
+  const items = getPrintableFilteredItems({ admin });
+  const total = printableActivitiesDataService.list({ admin }).length;
+  const hasQuery = Boolean([...params.keys()].length);
+  return `
+    <section class="pa-shell" data-printable-app="${admin ? "admin" : "teacher"}">
+      <header class="pa-hero">
+        <span>${admin ? "Conteudos > Atividades Imprimiveis" : "Area do Professor"}</span>
+        <h1>${admin ? "Atividades Imprimiveis" : "Banco de Atividades Imprimiveis"}</h1>
+        <p>Atividades exclusivas para apoiar o planejamento e as experiencias da Educacao Infantil.</p>
+        ${admin ? `<a href="README_IMPORTACAO_ATIVIDADES.md">README de importacao</a>` : ""}
+      </header>
+      ${renderPrintableAgeCards({ admin })}
+      ${renderPrintableFilters({ admin })}
+      <div class="pa-status" role="status">${total ? `${items.length} de ${total} atividades` : "Nenhuma atividade cadastrada ainda. Estrutura pronta para receber o pacote EI2."}</div>
+      ${
+        admin
+          ? `<section class="pa-admin-actions">
+              <a href="data/atividades-imprimiveis/modelos/manifest.json">Modelo JSON</a>
+              <a href="data/atividades-imprimiveis/modelos/manifest.csv">Modelo CSV</a>
+              <code>node scripts/import-printable-activities.mjs --source CAMINHO --dry-run</code>
+            </section>`
+          : ""
+      }
+      <section class="pa-grid" aria-label="Atividades imprimiveis">
+        ${
+          items.length
+            ? items.map(renderPrintableActivityCard).join("")
+            : `<article class="pa-empty"><h2>${hasQuery ? "Nenhum resultado encontrado" : "Banco vazio"}</h2><p>${hasQuery ? "Ajuste a pesquisa ou limpe os filtros." : "Nenhuma atividade real foi cadastrada nesta etapa."}</p></article>`
+        }
+      </section>
+    </section>
+  `;
+};
+
+const renderPrintableDetailPage = ({ admin = false } = {}) => {
+  const code = getPrintableParams().get("codigo");
+  const item = printableActivitiesDataService.getByCode(code, { admin });
+  if (!item) {
+    return `<section class="pa-shell"><div class="pa-empty"><h1>Atividade nao encontrada</h1><p>O codigo informado nao existe ou nao esta publicado para este perfil.</p><a href="atividades.html">Voltar ao banco</a></div></section>`;
+  }
+  printableActivitiesDataService.markRecent(item.codigo);
+  printableActivitiesDataService.metric("visualizacao", { codigo: item.codigo });
+  const preview = item.arquivoPng || item.miniatura || item.arquivoOriginal || "";
+  const back = getPrintableParams().get("voltar") || "";
+  return `
+    <section class="pa-shell pa-detail" data-printable-app>
+      <header class="pa-hero">
+        <span>${printableEscape(item.codigo)} · versao ${printableEscape(item.versao || "1.0")}</span>
+        <h1>${printableEscape(item.titulo || "Titulo pendente")}</h1>
+        <p>${printableEscape(item.faixaEtaria || "Faixa etaria pendente")} · ${printableEscape(item.idade || "")} · ${printableEscape(item.status || "status pendente")}</p>
+        <a href="atividades.html${printableEscape(back)}">Voltar aos resultados</a>
+      </header>
+      <div class="pa-detail-grid">
+        <section class="pa-preview">
+          ${preview ? `<img src="${printableEscape(preview)}" alt="Visualizacao ampliada da atividade ${printableEscape(item.codigo)}" />` : `<div class="pa-empty"><h2>Arquivo pendente</h2><p>A atividade ainda nao possui arquivo valido associado.</p></div>`}
+          <div>
+            <a href="${printableEscape(item.arquivoOriginal || "#")}" download data-pa-download="${printableEscape(item.codigo)}">Baixar</a>
+            <button type="button" data-pa-print="${printableEscape(item.codigo)}">Imprimir</button>
+            <button type="button" data-pa-favorite="${printableEscape(item.codigo)}">Favoritar</button>
+          </div>
+        </section>
+        <aside class="pa-meta">
+          ${[
+            ["Codigo oficial", item.codigo],
+            ["Faixa etaria", item.faixaEtaria],
+            ["Idade", item.idade],
+            ["Versao", item.versao],
+            ["Status", item.status],
+            ["Publicacao", item.dataPublicacao || "pendente"],
+            ["Atualizacao", item.dataAtualizacao || item.updatedAt || "pendente"],
+            ["Objetivo", item.objetivo],
+            ["Campos de experiencias", (item.camposExperiencia || []).join(", ")],
+            ["Direitos de aprendizagem", (item.direitosAprendizagem || []).join(", ")],
+            ["Tipo de atividade", (item.tiposAtividade || []).join(", ")],
+            ["Materiais", (item.materiais || []).join(", ")],
+            ["Orientacao ao professor", item.orientacaoProfessor],
+            ["Palavras-chave", (item.palavrasChave || []).join(", ")],
+          ].map(([label, value]) => `<article><strong>${printableEscape(label)}</strong><span>${printableEscape(value || "pendente")}</span></article>`).join("")}
+        </aside>
+      </div>
+    </section>
+  `;
+};
+
+const renderPrintableActivitiesPage = ({ admin = false } = {}) =>
+  getPrintableParams().get("codigo") ? renderPrintableDetailPage({ admin }) : renderPrintableMainPage({ admin });
+
 const renderTeacherWorkspaceView = (view) => {
   const { books, experiences, activities } = getTeacherBibliotecaResources();
   const resourceCards = [
@@ -2994,6 +3314,29 @@ const renderTeacherWorkspaceView = (view) => {
         <div class="tw-resource-grid">${resourceCards.filter((item) => item.kind === "Livro").map(renderResourceCard).join("")}</div>
       </section>
     `,
+    atividades: `
+      <section class="tw-board">
+        <div class="tw-section-head"><h2>Atividades Imprimiveis</h2><button type="button" data-teacher-open-url="atividades.html">Abrir banco</button></div>
+        <div class="tw-card-grid">
+          <article class="tw-recommendation-card" data-teacher-search-item>
+            <span>Atividades Imprimiveis</span>
+            <strong>Banco de Atividades Imprimiveis</strong>
+            <small>Encontre, visualize e imprima atividades organizadas por faixa etaria, objetivo e campo de experiencias.</small>
+            <button type="button" data-teacher-open-url="atividades.html">Abrir</button>
+          </article>
+          ${renderPrintableAgeCards()}
+        </div>
+      </section>
+    `,
+    favoritos: `
+      <section class="tw-board">
+        <div class="tw-section-head"><h2>Favoritos</h2><button type="button" data-teacher-open-url="atividades.html?favoritos=1">Ver atividades favoritas</button></div>
+        <div class="tw-card-grid">
+          <article class="tw-metric-card"><span>Biblioteca Viva</span><strong>Favoritos digitais</strong><small>Livros e experiencias continuam no modulo Biblioteca Viva.</small></article>
+          <article class="tw-metric-card"><span>Imprimiveis</span><strong>${printableActivitiesDataService.state().favorites.length}</strong><small>atividades salvas localmente neste dispositivo</small></article>
+        </div>
+      </section>
+    `,
     experiencias: `
       <section class="tw-board">
         <div class="tw-section-head"><h2>Experiencias e atividades</h2><span>${experiences.length} experiencias · ${activities.length} atividades</span></div>
@@ -3027,8 +3370,8 @@ const renderProfessorDashboard = () => {
   const { books, experiences, activities } = getTeacherBibliotecaResources();
   const recommendations = [
     { type: "Biblioteca", title: books[0]?.title || "Livro oficial", detail: books[0]?.subtitle || "Colecao Raizes e Saberes", view: "biblioteca", action: "Abrir" },
+    { type: "Atividades Imprimiveis", title: "Banco de Atividades Imprimiveis", detail: "Encontre, visualize e imprima atividades organizadas por faixa etaria, objetivo e campo de experiencias.", view: "atividades", action: "Abrir" },
     { type: "Experiencia", title: experiences[0]?.title || "Experiencia publicada", detail: experiences[0]?.unitTitle || "Percurso editorial", view: "experiencias", action: "Preparar" },
-    { type: "Atividade", title: activities[0]?.title || "Atividade interativa", detail: activities[0]?.type || "Motor universal", view: "experiencias", action: "Ver" },
   ];
   return `
     <section class="teacher-workspace" data-teacher-workspace>
@@ -3899,6 +4242,18 @@ const modules = {
     code: "MS-003",
     html: renderProfessorDashboard(),
   },
+  atividades: {
+    title: "Banco de Atividades Imprimiveis",
+    subtitle: "Atividades exclusivas para a Educacao Infantil",
+    code: "PRINTABLE-ACTIVITIES-001",
+    html: renderPrintableActivitiesPage(),
+  },
+  adminAtividades: {
+    title: "Admin Atividades Imprimiveis",
+    subtitle: "Conteudos > Atividades Imprimiveis",
+    code: "PRINTABLE-ACTIVITIES-ADMIN",
+    html: renderPrintableActivitiesPage({ admin: true }),
+  },
   avalia: {
     title: "Avalia+",
     subtitle: "Inteligencia em avaliacao",
@@ -4086,6 +4441,7 @@ const environments = {
       ["avalia", "Avalia+", "avalia.html"],
       ["bancoQuestoes", "Banco de Questoes", "banco-questoes.html"],
       ["professor", "Professor", "professor.html"],
+      ["atividades", "Atividades Imprimiveis", "atividades.html"],
       ["aluno", "Aluno", "aluno.html"],
       ["familia", "Familia", "familia.html"],
       ["secretaria", "Secretaria", "secretaria.html"],
@@ -4185,6 +4541,7 @@ const environments = {
     profileImage: "logo-sidebar-dark.png",
     nav: [
       ["curadoria", "Dashboard", "curadoria.html#dashboard"],
+      ["adminAtividades", "Conteudos > Atividades Imprimiveis", "admin-atividades.html"],
       ["lotes", "Lotes de Curadoria", "#lotes"],
       ["instituicoes", "Instituicoes", "#instituicoes"],
       ["cursos", "Cursos", "#cursos"],
@@ -4219,21 +4576,23 @@ const environments = {
     user: "Professora Helena<br />Ver perfil",
     nav: [
       ["professor", "Inicio", "professor.html"],
-      ["planejamentos", "Planejamentos", "#"],
       ["turmas", "Minhas Turmas", "#"],
-      ["alunos", "Alunos", "#"],
       ["biblioteca", "Biblioteca Viva", "#"],
+      ["atividades", "Atividades Imprimiveis", "atividades.html"],
+      ["planejamentos", "Planejamentos", "#"],
+      ["favoritos", "Favoritos", "atividades.html?favoritos=1"],
+      ["relatorios", "Relatorios", "#"],
+      ["alunos", "Alunos", "#"],
       ["experiencias", "Experiencias", "#"],
       ["jogos", "Jogos", "#"],
       ["avaliacoes", "Avaliacoes", "#"],
-      ["relatorios", "Relatorios", "#"],
       ["universidade", "Universidade", "#"],
       ["configuracoes", "Configuracoes", "#"],
     ],
     mobile: [
       ["professor", "Inicio", "professor.html"],
       ["turmas", "Turmas", "#"],
-      ["atividades", "Atividades", "#"],
+      ["atividades", "Atividades", "atividades.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
       ["mensagens", "Mais", "#"],
     ],
@@ -4352,6 +4711,8 @@ const moduleEnvironment = {
   universidade: "universidade",
   curadoria: "curadoria",
   professor: "professor",
+  atividades: "professor",
+  adminAtividades: "curadoria",
   avalia: "avalia",
   bancoQuestoes: "avalia",
   secretaria: "secretaria",
@@ -7096,6 +7457,11 @@ const initTeacherWorkspace = () => {
   };
 
   workspace.addEventListener("click", (event) => {
+    const urlButton = event.target.closest("[data-teacher-open-url]");
+    if (urlButton) {
+      window.location.href = urlButton.dataset.teacherOpenUrl;
+      return;
+    }
     const button = event.target.closest("[data-teacher-view]");
     if (!button) return;
     event.preventDefault();
@@ -7107,6 +7473,84 @@ const initTeacherWorkspace = () => {
     content?.querySelectorAll("[data-teacher-search-item]").forEach((item) => {
       item.hidden = Boolean(query) && !item.textContent.toLowerCase().includes(query);
     });
+  });
+};
+
+const initPrintableActivities = () => {
+  const root = document.querySelector("[data-printable-app]");
+  if (!root) return;
+  let debounceTimer = null;
+  const updateUrlFromForm = () => {
+    const form = root.querySelector("[data-pa-filters]");
+    if (!form) return;
+    const data = new FormData(form);
+    const params = new URLSearchParams();
+    for (const [key, value] of data.entries()) {
+      if (String(value || "").trim()) params.set(key, value);
+    }
+    const next = `${window.location.pathname}${params.toString() ? `?${params}` : ""}`;
+    window.history.replaceState({}, "", next);
+    const admin = root.dataset.printableApp === "admin";
+    root.outerHTML = renderPrintableMainPage({ admin });
+    initPrintableActivities();
+  };
+  root.addEventListener("input", (event) => {
+    if (!event.target.closest("[data-pa-filters]")) return;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(updateUrlFromForm, 180);
+  });
+  root.addEventListener("change", (event) => {
+    if (event.target.closest("[data-pa-filters]")) updateUrlFromForm();
+  });
+  root.addEventListener("click", (event) => {
+    const ageButton = event.target.closest("[data-pa-filter-faixa]");
+    if (ageButton) {
+      const params = getPrintableParams();
+      params.set("faixa", ageButton.dataset.paFilterFaixa);
+      window.history.replaceState({}, "", `${window.location.pathname}?${params}`);
+      const admin = root.dataset.printableApp === "admin";
+      root.outerHTML = renderPrintableMainPage({ admin });
+      initPrintableActivities();
+      return;
+    }
+    if (event.target.closest("[data-pa-clear]")) {
+      window.history.replaceState({}, "", window.location.pathname);
+      const admin = root.dataset.printableApp === "admin";
+      root.outerHTML = renderPrintableMainPage({ admin });
+      initPrintableActivities();
+      return;
+    }
+    const favorite = event.target.closest("[data-pa-favorite]");
+    if (favorite) {
+      const isFavorite = printableActivitiesDataService.toggleFavorite(favorite.dataset.paFavorite);
+      printableActivitiesDataService.metric("favorito", { codigo: favorite.dataset.paFavorite, active: isFavorite });
+      favorite.textContent = isFavorite ? "Favorito" : "Favoritar";
+      favorite.setAttribute("aria-pressed", String(isFavorite));
+      return;
+    }
+    const printButton = event.target.closest("[data-pa-print]");
+    if (printButton) {
+      const item = printableActivitiesDataService.getByCode(printButton.dataset.paPrint, { admin: root.dataset.printableApp === "admin" });
+      if (!item?.arquivoOriginal) return;
+      printableActivitiesDataService.metric("impressao", { codigo: item.codigo });
+      const printWindow = window.open("", "_blank", "noopener,noreferrer");
+      if (!printWindow) return;
+      printWindow.document.write(`
+        <!doctype html><html lang="pt-BR"><head><meta charset="utf-8" /><title>${printableEscape(item.codigo)}</title>
+        <style>@page{size:${item.orientacaoPagina === "paisagem" ? "landscape" : "portrait"};margin:0}html,body{margin:0;width:100%;min-height:100%;background:#fff}.sheet{min-height:100vh;display:grid;place-items:center;break-after:page}img,iframe{max-width:100vw;max-height:100vh;width:auto;height:auto;border:0}</style></head>
+        <body><main class="sheet">${String(item.formato).toLowerCase() === "pdf" ? `<iframe src="${printableEscape(item.arquivoOriginal)}" title="${printableEscape(item.codigo)}"></iframe>` : `<img src="${printableEscape(item.arquivoOriginal)}" alt="${printableEscape(item.codigo)}" />`}</main><script>window.onload=()=>setTimeout(()=>window.print(),250);<\/script></body></html>
+      `);
+      printWindow.document.close();
+      return;
+    }
+    const download = event.target.closest("[data-pa-download]");
+    if (download) {
+      printableActivitiesDataService.metric("download", { codigo: download.dataset.paDownload });
+    }
+    const view = event.target.closest("[data-pa-view]");
+    if (view) {
+      printableActivitiesDataService.metric("visualizacao_card", { codigo: view.dataset.paView });
+    }
   });
 };
 
@@ -7185,6 +7629,7 @@ const renderAppPage = () => {
   initDigitalResultsPanel();
   initCurationBatches();
   initTeacherWorkspace();
+  initPrintableActivities();
 };
 
 renderAppPage();
