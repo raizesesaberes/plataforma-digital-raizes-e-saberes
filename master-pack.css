@@ -7409,6 +7409,7 @@ td {
 }
 
 .tw-sidebar button,
+.tw-sidebar a,
 .tw-top-actions button,
 .tw-section-head button,
 .tw-recommendation-card button,
@@ -7420,21 +7421,54 @@ td {
   cursor: pointer;
 }
 
-.tw-sidebar nav button {
+.tw-sidebar nav button,
+.tw-sidebar nav a {
   min-height: 42px;
   border-radius: 10px;
   padding: 0 12px;
   text-align: left;
   background: transparent;
   color: rgba(255, 255, 255, 0.78);
+  display: flex;
+  align-items: center;
+  text-decoration: none;
 }
 
 .tw-sidebar nav button.is-active,
+.tw-sidebar nav a.is-active,
 .tw-sidebar nav button:hover,
-.tw-sidebar nav button:focus-visible {
+.tw-sidebar nav a:hover,
+.tw-sidebar nav button:focus-visible,
+.tw-sidebar nav a:focus-visible {
   background: #fff;
   color: #083f2d;
   outline: none;
+}
+
+.platform-logout-button {
+  min-height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 10px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-family: Poppins, Inter, sans-serif;
+  font-weight: 900;
+  text-align: left;
+  cursor: pointer;
+}
+
+.platform-logout-button:hover,
+.platform-logout-button:focus-visible {
+  background: #fff;
+  color: #083f2d;
+  outline: none;
+}
+
+.platform-logout-button:disabled,
+.student-logout-button:disabled {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 .tw-main {
@@ -7695,6 +7729,134 @@ td {
   border-radius: 14px;
   background: #e7f1ea;
   color: #0d6b4b;
+}
+
+.tw-link-card {
+  text-decoration: none;
+}
+
+.tw-student-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: #e7f1ea;
+}
+
+.tw-student-card a {
+  min-height: 36px;
+  border-radius: 999px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e7f1ea;
+  color: #0d6b4b;
+  font-family: Poppins, Inter, sans-serif;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.tw-student-card a:hover,
+.tw-student-card a:focus-visible {
+  background: #0d6b4b;
+  color: #fff;
+  outline: none;
+}
+
+.tw-muted {
+  margin: 0;
+  color: #647083;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.student-pedro-home {
+  gap: 16px;
+}
+
+.student-pedro-hero {
+  min-height: 220px;
+  border-radius: 8px;
+  padding: 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 18px;
+  background: #fff7d8;
+  border: 1px solid rgba(15, 120, 77, 0.12);
+  color: #123321;
+}
+
+.student-pedro-hero span {
+  color: #0d6b4b;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 0.82rem;
+}
+
+.student-pedro-hero h1 {
+  margin: 8px 0 0;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: clamp(2.2rem, 5vw, 4.4rem);
+  line-height: 1;
+}
+
+.student-pedro-hero .student-avatar {
+  width: min(150px, 26vw);
+  aspect-ratio: 1;
+  border-radius: 28px;
+  object-fit: cover;
+  background: #fff;
+}
+
+.student-logout-button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 18px;
+  background: #0d6b4b;
+  color: #fff;
+  font-family: Poppins, Inter, sans-serif;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.student-logout-button:hover,
+.student-logout-button:focus-visible {
+  background: #083f2d;
+  outline: none;
+}
+
+.student-pedro-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.student-pedro-actions a {
+  min-height: 132px;
+  border-radius: 8px;
+  padding: 18px;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  text-decoration: none;
+  background: #fff;
+  border: 1px solid rgba(15, 120, 77, 0.14);
+  color: #123321;
+  box-shadow: 0 10px 24px rgba(8, 63, 45, 0.05);
+}
+
+.student-pedro-actions strong {
+  font-family: Poppins, Inter, sans-serif;
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  line-height: 1.15;
+}
+
+.student-pedro-actions small {
+  color: #647083;
+  font-weight: 800;
 }
 
 .tw-class-card i {
@@ -8582,6 +8744,7 @@ td {
   .teacher-workspace,
   .tw-overview-grid,
   .tw-hero,
+  .student-pedro-hero,
   .pa-detail-grid,
   .ua-motor-layout {
     grid-template-columns: 1fr;
@@ -8596,7 +8759,8 @@ td {
   }
 
   .tw-topbar,
-  .tw-recommendations {
+  .tw-recommendations,
+  .student-pedro-actions {
     grid-template-columns: 1fr;
   }
 

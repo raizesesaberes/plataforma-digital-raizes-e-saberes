@@ -10,6 +10,22 @@ const demoAccess = {
 const supabaseSessionKey = "raizes:supabase-auth-session";
 const loginParams = new URLSearchParams(window.location.search);
 const requiresSupabaseAuth = loginParams.get("auth") === "supabase";
+const isLogoutReturn = loginParams.get("logout") === "1";
+
+const clearStoredAuthSession = () => {
+  localStorage.removeItem(supabaseSessionKey);
+  localStorage.removeItem("raizes:supabase-access-token");
+  localStorage.removeItem(demoAccess.key);
+  localStorage.removeItem(demoAccess.curatorKey);
+  Object.keys(localStorage)
+    .filter((key) => key.startsWith("sb-") || key.includes("supabase.auth.token"))
+    .forEach((key) => localStorage.removeItem(key));
+};
+
+if (isLogoutReturn) {
+  clearStoredAuthSession();
+  window.history.replaceState(null, "", "login.html");
+}
 
 const decodeJwtPayload = (token) => {
   try {
@@ -20,6 +36,32 @@ const decodeJwtPayload = (token) => {
     return {};
   }
 };
+
+const normalizePlatformRole = (role) => {
+  const normalized = String(role || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  const aliases = {
+    professor: ["professor", "teacher"],
+    aluno: ["aluno", "student"],
+    gestor: ["gestor", "gestor_escolar", "manager"],
+    coordenador: ["coordenador", "coordenador_pedagogico", "coordinator"],
+    admin: ["admin", "administrador", "administrador_nacional"],
+  };
+  return Object.keys(aliases).find((key) => aliases[key].includes(normalized)) || normalized;
+};
+const validPlatformRoles = new Set(["professor", "aluno", "gestor", "coordenador", "admin"]);
+const hasValidPlatformRole = (role) => validPlatformRoles.has(normalizePlatformRole(role));
+
+const getRoleHome = (role) =>
+  ({
+    professor: "/professor",
+    aluno: "/aluno",
+    gestor: "gestor.html",
+    coordenador: "/professor",
+    admin: "gestor.html",
+  })[normalizePlatformRole(role)] || "plataforma.html";
 
 const getNextPage = () => {
   const requestedPage = new URLSearchParams(window.location.search).get("next");
@@ -37,6 +79,11 @@ const getNextPage = () => {
 
 const nextPage = getNextPage();
 const needsCuratorAccess = nextPage.startsWith("curadoria.html");
+const getPostLoginDestination = (role) => {
+  if (!role) return getNextPage();
+  const next = getNextPage();
+  return ["plataforma.html", "index.html", "/"].includes(next) ? getRoleHome(role) : next;
+};
 
 const getStoredSupabaseContext = () => {
   try {
@@ -46,11 +93,14 @@ const getStoredSupabaseContext = () => {
     return {
       userId: payload.sub || session?.user?.id || null,
       role:
-        appMetadata.question_bank_role ||
+        appMetadata.platform_role ||
         appMetadata.app_role ||
         appMetadata.role ||
-        payload.question_bank_role ||
+        appMetadata.question_bank_role ||
+        payload.platform_role ||
         payload.app_role ||
+        session?.platform_role ||
+        session?.question_bank_role ||
         null,
       expiresAt: payload.exp || session?.expires_at || 0,
     };
@@ -59,10 +109,27 @@ const getStoredSupabaseContext = () => {
   }
 };
 
+const getSessionRoleFromAuthData = (authData) => {
+  const payload = decodeJwtPayload(authData?.access_token);
+  const appMetadata = payload.app_metadata || {};
+  const userMetadata = payload.user_metadata || authData?.user?.user_metadata || {};
+  return normalizePlatformRole(
+    appMetadata.platform_role ||
+      appMetadata.app_role ||
+      appMetadata.role ||
+      appMetadata.question_bank_role ||
+      payload.platform_role ||
+      payload.app_role ||
+      userMetadata.platform_role ||
+      userMetadata.role ||
+      null
+  );
+};
+
 if (requiresSupabaseAuth) {
   const context = getStoredSupabaseContext();
-  if (context.userId && context.role && Number(context.expiresAt || 0) > Math.floor(Date.now() / 1000) + 60) {
-    window.location.replace(getNextPage());
+  if (context.userId && hasValidPlatformRole(context.role) && Number(context.expiresAt || 0) > Math.floor(Date.now() / 1000) + 60) {
+    window.location.replace(getPostLoginDestination(context.role));
   }
 }
 
@@ -90,6 +157,7 @@ const saveSupabaseSession = (authData) => {
   }
   const payload = decodeJwtPayload(authData.access_token);
   const appMetadata = payload.app_metadata || {};
+  const platformRole = getSessionRoleFromAuthData(authData);
   const questionBankRole =
     appMetadata.question_bank_role ||
     appMetadata.app_role ||
@@ -105,11 +173,12 @@ const saveSupabaseSession = (authData) => {
       expires_at: authData.expires_at || Math.floor(Date.now() / 1000) + Number(authData.expires_in || 3600),
       token_type: authData.token_type || "bearer",
       user: authData.user || null,
+      platform_role: platformRole,
       question_bank_role: questionBankRole,
     })
   );
   localStorage.setItem("raizes:supabase-access-token", authData.access_token);
-  return { userId: payload.sub || authData.user?.id || null, questionBankRole };
+  return { userId: payload.sub || authData.user?.id || null, platformRole, questionBankRole };
 };
 
 const authenticateWithSupabase = async (email, password, { requireQuestionBankRole = false } = {}) => {
@@ -130,7 +199,12 @@ const authenticateWithSupabase = async (email, password, { requireQuestionBankRo
     return false;
   }
   const context = saveSupabaseSession(await response.json());
-  return Boolean(context?.userId && (!requireQuestionBankRole || context.questionBankRole));
+  if (!context?.userId) return false;
+  if (requireQuestionBankRole && !context.questionBankRole) return false;
+  if (!hasValidPlatformRole(context.platformRole)) {
+    return { ...context, missingPlatformRole: true };
+  }
+  return context;
 };
 
 const setLoginBusy = (isBusy, label = "Acessar Plataforma") => {
@@ -160,9 +234,15 @@ form?.addEventListener("submit", async (event) => {
   setLoginBusy(true);
 
   try {
-    if (await authenticateWithSupabase(email, password, { requireQuestionBankRole: requiresSupabaseAuth })) {
+    const context = await authenticateWithSupabase(email, password, { requireQuestionBankRole: requiresSupabaseAuth });
+    if (context?.missingPlatformRole) {
+      showLoginError("Usuario autenticado, mas sem perfil de plataforma valido. Solicite platform_role em app_metadata.");
+      setLoginBusy(false);
+      return;
+    }
+    if (context) {
       localStorage.setItem(demoAccess.key, "true");
-      window.location.replace(getNextPage());
+      window.location.replace(getPostLoginDestination(context.platformRole || context.questionBankRole));
       return;
     }
   } catch (error) {

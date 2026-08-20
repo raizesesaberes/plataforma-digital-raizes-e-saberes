@@ -4,14 +4,199 @@ const platformAuth = {
   loginPage: "login.html",
 };
 
+const platformSessionKey = "raizes:supabase-auth-session";
+const platformRoles = {
+  professor: ["professor", "teacher"],
+  aluno: ["aluno", "student"],
+  gestor: ["gestor", "gestor_escolar", "manager"],
+  coordenador: ["coordenador", "coordenador_pedagogico", "coordinator"],
+  admin: ["admin", "administrador", "administrador_nacional"],
+};
+const platformRoleHome = {
+  professor: "/professor",
+  aluno: "/aluno",
+  gestor: "gestor.html",
+  coordenador: "/professor",
+  admin: "gestor.html",
+};
+const routeAccessRules = {
+  professor: ["professor", "gestor", "coordenador", "admin"],
+  professorTurma: ["professor", "gestor", "coordenador", "admin"],
+  professorAluno: ["professor", "gestor", "coordenador", "admin"],
+  aluno: ["aluno"],
+  alunoAtividades: ["aluno"],
+  arvore: ["aluno"],
+  missao: ["aluno"],
+  jogos: ["aluno"],
+  perfil: ["aluno"],
+  motorAtividade: ["aluno"],
+  adminAtividades: ["gestor", "coordenador", "admin"],
+  secretaria: ["gestor", "coordenador", "admin"],
+  gestor: ["gestor", "coordenador", "admin"],
+};
+const protectedRouteKeyByPage = {
+  "professor.html": "professor",
+  "professor-turma.html": "professorTurma",
+  "professor-aluno.html": "professorAluno",
+  "aluno.html": "aluno",
+  "aluno-atividades.html": "alunoAtividades",
+  "arvore.html": "arvore",
+  "missao.html": "missao",
+  "jogos.html": "jogos",
+  "perfil.html": "perfil",
+  "motor-atividade.html": "motorAtividade",
+  "admin-atividades.html": "adminAtividades",
+  "secretaria.html": "secretaria",
+  "gestor.html": "gestor",
+  professor: "professor",
+  "professor/turma": "professorTurma",
+  "professor/alunos": "professorAluno",
+  aluno: "aluno",
+  "aluno/atividades": "alunoAtividades",
+};
+const decodePlatformJwtPayload = (token) => {
+  try {
+    const [, payload] = String(token || "").split(".");
+    if (!payload) return {};
+    return JSON.parse(atob(payload.replaceAll("-", "+").replaceAll("_", "/")));
+  } catch (error) {
+    return {};
+  }
+};
+const normalizePlatformRole = (role) => {
+  const normalized = String(role || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  return Object.keys(platformRoles).find((key) => platformRoles[key].includes(normalized)) || normalized;
+};
+const getPlatformSession = () => {
+  try {
+    const session = JSON.parse(localStorage.getItem(platformSessionKey) || "null");
+    const payload = decodePlatformJwtPayload(session?.access_token || localStorage.getItem("raizes:supabase-access-token") || "");
+    const metadata = payload.app_metadata || {};
+    const userMetadata = payload.user_metadata || session?.user?.user_metadata || {};
+    const role = normalizePlatformRole(
+      metadata.platform_role ||
+        metadata.app_role ||
+        metadata.role ||
+        metadata.question_bank_role ||
+        payload.platform_role ||
+        payload.app_role ||
+        userMetadata.platform_role ||
+        userMetadata.role ||
+        session?.platform_role ||
+        session?.question_bank_role
+    );
+    return {
+      userId: payload.sub || session?.user?.id || null,
+      email: payload.email || session?.user?.email || "",
+      name: userMetadata.full_name || userMetadata.name || session?.user?.email || "",
+      role,
+      expiresAt: payload.exp || session?.expires_at || 0,
+    };
+  } catch (error) {
+    return { userId: null, email: "", name: "", role: "", expiresAt: 0 };
+  }
+};
+const hasValidPlatformSession = () => {
+  const session = getPlatformSession();
+  return Boolean(session.userId && session.role && Number(session.expiresAt || 0) > Math.floor(Date.now() / 1000) + 60);
+};
+const getCurrentPlatformRole = () => {
+  const session = getPlatformSession();
+  if (hasValidPlatformSession()) {
+    return session.role;
+  }
+  return "";
+};
+const clearPlatformSession = () => {
+  try {
+    localStorage.removeItem(platformSessionKey);
+    localStorage.removeItem("raizes:supabase-access-token");
+    localStorage.removeItem(platformAuth.key);
+    localStorage.removeItem(platformAuth.curatorKey);
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith("sb-") || key.includes("supabase.auth.token"))
+      .forEach((key) => localStorage.removeItem(key));
+  } catch (error) {
+    return null;
+  }
+  return null;
+};
+const signOutPlatformSession = async () => {
+  const session = getPlatformSession();
+  const storedSession = (() => {
+    try {
+      return JSON.parse(localStorage.getItem(platformSessionKey) || "null");
+    } catch (error) {
+      return null;
+    }
+  })();
+  try {
+    if (window.supabase?.auth?.signOut) {
+      await window.supabase.auth.signOut();
+    } else if (storedSession?.access_token && window.RAIZES_SUPABASE?.url && window.RAIZES_SUPABASE?.anonKey) {
+      await fetch(`${window.RAIZES_SUPABASE.url.replace(/\/$/, "")}/auth/v1/logout`, {
+        method: "POST",
+        headers: {
+          apikey: window.RAIZES_SUPABASE.anonKey,
+          Authorization: `Bearer ${storedSession.access_token}`,
+        },
+      });
+    }
+  } catch (error) {
+    // A limpeza local abaixo garante que o navegador nao reaproveite a sessao.
+  }
+  clearPlatformSession();
+  window.location.replace("/login.html?logout=1");
+  return session;
+};
+const canAccessPlatformRoute = (routeKey, role) => {
+  const allowed = routeAccessRules[routeKey];
+  if (!allowed) return true;
+  return allowed.includes(role);
+};
+const getRoleHome = (role) => platformRoleHome[role] || "plataforma.html";
+const getCurrentPageName = () => window.location.pathname.replace(/^\/+/, "").replace(/\/$/, "") || "biblioteca.html";
+const getProtectedRouteKeyForPath = () => {
+  const normalizedPath = getCurrentPageName();
+  if (normalizedPath.startsWith("professor/alunos/")) return "professorAluno";
+  return protectedRouteKeyByPage[normalizedPath] || protectedRouteKeyByPage[`${normalizedPath}.html`] || "";
+};
+const normalizeRequestedPath = (path) => {
+  const value = String(path || "").replace(/^\/+/, "");
+  if (!value) return "plataforma.html";
+  if (value.startsWith("professor/")) return value;
+  if (value.startsWith("aluno/")) return value;
+  return value.endsWith(".html") ? value : `${value}.html`;
+};
+
 const requirePlatformAuth = () => {
   if (typeof window === "undefined") {
     return;
   }
 
-  const currentPath = `${window.location.pathname.split("/").pop() || "biblioteca.html"}${window.location.search}${window.location.hash}`;
-  const publicPages = new Set(["universidade.html", "index.html", "login.html"]);
-  if (publicPages.has(window.location.pathname.split("/").pop() || "biblioteca.html")) {
+  const rawPath = window.location.pathname.replace(/^\//, "");
+  const currentPath = `${normalizeRequestedPath(rawPath || getCurrentPageName())}${window.location.search}${window.location.hash}`;
+  const publicPages = new Set(["universidade.html", "universidade", "index.html", "index", "login.html", "login"]);
+  if (publicPages.has(getCurrentPageName())) {
+    return;
+  }
+
+  const protectedRouteKey = getProtectedRouteKeyForPath();
+  const currentRole = getCurrentPlatformRole();
+  if (protectedRouteKey) {
+    if (!currentRole) {
+      document.documentElement.style.display = "none";
+      window.location.replace(`${platformAuth.loginPage}?next=${encodeURIComponent(currentPath)}&auth=supabase&reason=role`);
+      return;
+    }
+    if (!canAccessPlatformRoute(protectedRouteKey, currentRole)) {
+      document.documentElement.style.display = "none";
+      window.location.replace(getRoleHome(currentRole));
+      return;
+    }
     return;
   }
 
@@ -2051,6 +2236,7 @@ const library2TeacherPanel = `
 const routeKeyByHref = {
   "plataforma.html": "plataforma",
   "aluno.html": "aluno",
+  "aluno-atividades.html": "alunoAtividades",
   "arvore.html": "arvore",
   "missao.html": "missao",
   "jogos.html": "jogos",
@@ -2060,6 +2246,8 @@ const routeKeyByHref = {
   "curadoria.html": "curadoria",
   "book-viewer.html": "viewer",
   "professor.html": "professor",
+  "professor-turma.html": "professorTurma",
+  "professor-aluno.html": "professorAluno",
   "atividades.html": "atividades",
   "motor-atividade.html": "motorAtividade",
   "admin-atividades.html": "adminAtividades",
@@ -2069,13 +2257,18 @@ const routeKeyByHref = {
   "familia.html": "familia",
 };
 
-const ecosystemModuleLinks = (activeKey) =>
-  ecosystemModules
+const ecosystemModuleLinks = (activeKey, environmentKey = "") => {
+  const modulesForEnvironment =
+    environmentKey === "aluno"
+      ? ecosystemModules.filter(([href]) => ["aluno.html", "arvore.html", "missao.html", "jogos.html", "perfil.html", "biblioteca.html"].includes(href))
+      : ecosystemModules;
+  return modulesForEnvironment
     .map(([href, label]) => {
       const isActive = routeKeyByHref[href] === activeKey;
       return `<a class="${isActive ? "is-active" : ""}" href="${href}">${label}</a>`;
     })
     .join("");
+};
 
 const knowledgeTreeStages = [
   { key: "seed", level: 1, label: "Semente", xpRange: "0 - 199 XP", minXp: 0, maxXp: 199, asset: "assets/knowledge-tree/stage-seed.webp", description: "Tudo comeca com uma pequena semente de curiosidade." },
@@ -2509,13 +2702,40 @@ const renderMissionPlayer = (mission) => {
   `;
 };
 
+const pilotProfiles = {
+  teacher: {
+    id: "teacher-pilot-helena",
+    role: "professor",
+    name: "Helena Martins",
+    displayName: "Professora Helena",
+    greeting: "OLA, PROFESSORA HELENA!",
+  },
+  class: {
+    id: "infantil-4a",
+    name: "Infantil 4 A",
+    shift: "Manha",
+  },
+  student: {
+    id: "student-demo-pedro",
+    role: "aluno",
+    name: "Pedro",
+    fullName: "Pedro Henrique",
+    avatar: "assets/aluno/oficial-avatar-aluno.png",
+    classId: "infantil-4a",
+    className: "Infantil 4 A",
+    pendingActivities: 3,
+    completedActivities: 4,
+    progress: 24,
+  },
+};
+
 // Supabase-ready fallback view model. Replace this object with fetched records when the backend is connected.
 const studentDashboardData = {
   tree: knowledgeTreeFixtures.pedro,
   profile: {
-    name: "Pedro",
+    name: pilotProfiles.student.name,
     greeting: "Que alegria ter voce aqui hoje!",
-    avatar: "assets/aluno/oficial-avatar-aluno.png",
+    avatar: pilotProfiles.student.avatar,
     xp: 125,
     level: "Nivel 1",
     notifications: 3,
@@ -2815,13 +3035,13 @@ const renderStudentPresentationDashboard = () => `
 
 const teacherWorkspaceNav = [
   ["inicio", "Inicio"],
-  ["turmas", "Minhas Turmas"],
+  ["turmas", "Minha Turma"],
+  ["alunos", "Producoes dos Alunos"],
+  ["atividades", "Atividades"],
   ["biblioteca", "Biblioteca Viva"],
-  ["atividades", "Atividades Imprimiveis"],
   ["planejamentos", "Planejamentos"],
   ["favoritos", "Favoritos"],
   ["relatorios", "Relatorios"],
-  ["alunos", "Alunos"],
   ["experiencias", "Experiencias"],
   ["jogos", "Jogos"],
   ["avaliacoes", "Avaliacoes"],
@@ -2830,28 +3050,30 @@ const teacherWorkspaceNav = [
 ];
 
 const teacherWorkspaceClasses = [
-  { id: "infantil-4a", name: "Infantil 4 A", students: 22, progress: 68, next: "Sala das Descobertas", alert: "3 registros pendentes" },
-  { id: "infantil-5a", name: "Infantil 5 A", students: 24, progress: 74, next: "Sequencia e rotina", alert: "2 avaliacoes para corrigir" },
-  { id: "infantil-5b", name: "Infantil 5 B", students: 21, progress: 61, next: "Numerais no cotidiano", alert: "1 familia aguardando retorno" },
+  { id: pilotProfiles.class.id, name: pilotProfiles.class.name, students: 1, progress: pilotProfiles.student.progress, next: "Atividades de Pedro", alert: `${pilotProfiles.student.pendingActivities} atividades pendentes` },
 ];
 
 const teacherWorkspaceLessons = [
-  { time: "07:30", title: "Roda de conversa", className: "Infantil 4 A", status: "pronta", resource: "A Caixa Misteriosa" },
-  { time: "09:10", title: "Matematica investigativa", className: "Infantil 5 A", status: "em preparo", resource: "Memoria das quantidades" },
-  { time: "13:20", title: "Projeto leitura viva", className: "Infantil 5 B", status: "pronta", resource: "Livro do Aluno" },
+  { time: "07:30", title: "Acompanhamento de Pedro", className: pilotProfiles.class.name, status: "pronta", resource: "Motor Universal" },
 ];
 
 const teacherWorkspaceStudents = [
-  { name: "Pedro Henrique", className: "Infantil 4 A", progress: 82, note: "participativo" },
-  { name: "Lia Martins", className: "Infantil 5 A", progress: 76, note: "boa oralidade" },
-  { name: "Ana Clara", className: "Infantil 5 B", progress: 64, note: "acompanhar registro" },
+  {
+    id: pilotProfiles.student.id,
+    name: pilotProfiles.student.name,
+    fullName: pilotProfiles.student.fullName,
+    className: pilotProfiles.student.className,
+    avatar: pilotProfiles.student.avatar,
+    progress: pilotProfiles.student.progress,
+    pendingActivities: pilotProfiles.student.pendingActivities,
+    completedActivities: pilotProfiles.student.completedActivities,
+    note: "piloto real",
+  },
 ];
 
 const teacherWorkspaceTasks = [
-  { label: "Avaliacoes para corrigir", count: 7, view: "avaliacoes" },
-  { label: "Atividades pendentes", count: 12, view: "planejamentos" },
-  { label: "Mensagens de familias", count: 4, view: "inicio" },
-  { label: "Planos para revisar", count: 3, view: "planejamentos" },
+  { label: "Atividades pendentes de Pedro", count: pilotProfiles.student.pendingActivities, view: "alunos" },
+  { label: "Producoes concluidas", count: pilotProfiles.student.completedActivities, view: "alunos" },
 ];
 
 const getTeacherBibliotecaResources = () => {
@@ -2864,7 +3086,7 @@ const getTeacherBibliotecaResources = () => {
 
 const renderTeacherCard = () => `
   <article class="tw-teacher-card">
-    <div><span>Professora</span><strong>Helena Martins</strong><small>Educacao Infantil · Manha e tarde</small></div>
+    <div><span>Professora</span><strong>${pilotProfiles.teacher.displayName}</strong><small>Educacao Infantil · ${pilotProfiles.class.name}</small></div>
     <b>Hoje</b>
   </article>
 `;
@@ -2880,17 +3102,17 @@ const renderPlanningCard = (lesson) => `
 
 const renderClassCard = (classItem) => `
   <article class="tw-class-card" data-teacher-search-item>
-    <div><strong>${classItem.name}</strong><span>${classItem.students} alunos</span></div>
+    <div><strong>${classItem.name}</strong><span>${classItem.students} aluno</span></div>
     <i><b style="width:${classItem.progress}%"></b></i>
     <small>${classItem.progress}% do percurso · ${classItem.alert}</small>
   </article>
 `;
 
 const renderStudentCard = (student) => `
-  <article class="tw-student-card" data-teacher-search-item>
-    <span>${student.name.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span>
-    <div><strong>${student.name}</strong><small>${student.className} · ${student.note}</small></div>
-    <b>${student.progress}%</b>
+  <article class="tw-student-card" data-teacher-search-item data-student-id="${printableEscape(student.id)}">
+    ${student.avatar ? `<img class="tw-student-avatar" src="${printableEscape(student.avatar)}" alt="" loading="lazy" />` : `<span>${student.name.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span>`}
+    <div><strong>${student.name}</strong><small>${student.className} · ${student.pendingActivities} pendentes · ${student.completedActivities} concluidas</small></div>
+    <a href="professor-aluno.html?id=${encodeURIComponent(student.id)}">Abrir</a>
   </article>
 `;
 
@@ -3240,15 +3462,15 @@ const renderPrintableActivitiesPage = ({ admin = false } = {}) =>
 const universalActivityEngineVersion = "1.0.0";
 const universalActivityStorageKey = "raizes:universal-activity-engine:v1";
 const universalActivityStudentProfile = {
-  id: "student-demo-pedro",
-  name: "Pedro Henrique",
-  classId: "infantil-4a",
-  className: "Infantil 4 A",
+  id: pilotProfiles.student.id,
+  name: pilotProfiles.student.fullName,
+  classId: pilotProfiles.student.classId,
+  className: pilotProfiles.student.className,
 };
 
 const universalActivityTeacherProfile = {
-  id: "teacher-demo-helena",
-  name: "Professora Helena",
+  id: pilotProfiles.teacher.id,
+  name: pilotProfiles.teacher.displayName,
 };
 
 const universalActivityToolProfiles = {
@@ -3272,22 +3494,10 @@ const universalActivityToolLabels = {
 
 const universalActivityDemoClasses = [
   {
-    id: "infantil-4a",
-    name: "Infantil 4 A",
+    id: pilotProfiles.class.id,
+    name: pilotProfiles.class.name,
     students: [
-      { id: "student-demo-pedro", name: "Pedro Henrique" },
-      { id: "student-demo-lia", name: "Lia Martins" },
-      { id: "student-demo-ana", name: "Ana Clara" },
-      { id: "student-demo-sofia", name: "Sofia Alves" },
-    ],
-  },
-  {
-    id: "infantil-5a",
-    name: "Infantil 5 A",
-    students: [
-      { id: "student-demo-miguel", name: "Miguel Rocha" },
-      { id: "student-demo-leo", name: "Leo Santos" },
-      { id: "student-demo-julia", name: "Julia Costa" },
+      { id: pilotProfiles.student.id, name: pilotProfiles.student.fullName },
     ],
   },
 ];
@@ -3481,7 +3691,7 @@ const renderStudentUniversalActivities = () => {
   const assignments = getUniversalActivityAssignmentsForStudent();
   return `
     <section class="student-card ua-student-list" aria-labelledby="student-activities-title" data-ua-student-list>
-      <div class="student-card-head"><h2 id="student-activities-title">Minhas Atividades</h2><a href="atividades.html">Banco</a></div>
+      <div class="student-card-head"><h2 id="student-activities-title">Minhas Atividades</h2></div>
       <div class="ua-student-grid">
         ${
           assignments.length
@@ -3496,7 +3706,7 @@ const renderStudentUniversalActivities = () => {
                       <div>
                         <mark>${printableEscape(assignment.activityCode)}</mark>
                         <strong>${printableEscape(activity?.titulo || assignment.activityCode)}</strong>
-                        <small>${printableEscape(assignment.teacherName)} · enviada em ${new Date(assignment.assignedAt).toLocaleDateString("pt-BR")}${assignment.dueDate ? ` · prazo ${new Date(assignment.dueDate).toLocaleDateString("pt-BR")}` : ""}</small>
+                        <small>Enviada em ${new Date(assignment.assignedAt).toLocaleDateString("pt-BR")}${assignment.dueDate ? ` · prazo ${new Date(assignment.dueDate).toLocaleDateString("pt-BR")}` : ""}</small>
                         <span>${status}</span>
                       </div>
                       <a href="motor-atividade.html?assignment=${encodeURIComponent(assignment.assignmentId)}">${status === "CONCLUIDA" ? "Ver minha atividade" : submission ? "Continuar" : "Comecar"}</a>
@@ -3655,6 +3865,163 @@ const renderUniversalActivityMotorPage = () => {
   `;
 };
 
+const renderTeacherPilotCards = () => `
+  <section class="tw-recommendations">
+    ${[
+      { title: "MINHA TURMA", detail: `${pilotProfiles.class.name} · Pedro vinculado`, href: "professor-turma.html" },
+      { title: "ATIVIDADES", detail: "Selecionar experiencias e atividades para Pedro", href: "atividades.html" },
+      { title: "PRODUCOES DOS ALUNOS", detail: "Acompanhar entregas e portfolio de Pedro", href: "professor-aluno.html?id=student-demo-pedro" },
+    ]
+      .map(
+        (item) => `
+          <a class="tw-recommendation-card tw-link-card" href="${item.href}">
+            <span>Ambiente da professora</span>
+            <strong>${item.title}</strong>
+            <small>${item.detail}</small>
+          </a>
+        `
+      )
+      .join("")}
+  </section>
+`;
+
+const renderTeacherPilotHome = () => `
+  <section class="teacher-workspace teacher-pilot" data-teacher-workspace>
+    <aside class="tw-sidebar" aria-label="Ambiente da professora">
+      ${renderTeacherCard()}
+      <nav>
+        <a class="is-active" href="professor.html">Inicio</a>
+        <a href="professor-turma.html">Minha Turma</a>
+        <a href="atividades.html">Atividades</a>
+        <a href="professor-aluno.html?id=student-demo-pedro">Producoes</a>
+      </nav>
+      <button class="platform-logout-button" type="button" data-platform-logout>SAIR</button>
+    </aside>
+    <div class="tw-main">
+      <section class="tw-hero">
+        <div>
+          <span>Ambiente Professor</span>
+          <h1>${pilotProfiles.teacher.greeting}</h1>
+          <p>Piloto real conectado a ${pilotProfiles.class.name} e ao aluno ${pilotProfiles.student.name}.</p>
+        </div>
+        <div class="tw-hero-metrics">
+          <article><strong>1</strong><span>aluno</span></article>
+          <article><strong>${pilotProfiles.student.pendingActivities}</strong><span>pendentes</span></article>
+          <article><strong>${pilotProfiles.student.completedActivities}</strong><span>concluidas</span></article>
+        </div>
+      </section>
+      ${renderTeacherPilotCards()}
+      <main class="tw-content" data-teacher-content>${renderTeacherWorkspaceView("inicio")}</main>
+    </div>
+  </section>
+`;
+
+const renderTeacherClassPage = () => `
+  <section class="teacher-workspace teacher-pilot" data-teacher-workspace>
+    <aside class="tw-sidebar" aria-label="Ambiente da professora">
+      ${renderTeacherCard()}
+      <nav>
+        <a href="professor.html">Inicio</a>
+        <a class="is-active" href="professor-turma.html">Minha Turma</a>
+        <a href="atividades.html">Atividades</a>
+      </nav>
+      <button class="platform-logout-button" type="button" data-platform-logout>SAIR</button>
+    </aside>
+    <div class="tw-main">
+      <section class="tw-hero">
+        <div>
+          <span>MINHA TURMA</span>
+          <h1>${pilotProfiles.class.name}</h1>
+          <p>Alunos reais vinculados a ${pilotProfiles.teacher.displayName} nesta etapa piloto.</p>
+        </div>
+      </section>
+      <main class="tw-content">
+        <section class="tw-board">
+          <div class="tw-section-head"><h2>Alunos</h2><span>1 vinculo ativo</span></div>
+          ${teacherWorkspaceStudents.map(renderStudentCard).join("")}
+        </section>
+      </main>
+    </div>
+  </section>
+`;
+
+const renderTeacherStudentPage = () => {
+  const student = teacherWorkspaceStudents.find((item) => item.id === getPrintableParams().get("id")) || teacherWorkspaceStudents[0];
+  return `
+    <section class="teacher-workspace teacher-pilot" data-teacher-workspace>
+      <aside class="tw-sidebar" aria-label="Ambiente da professora">
+        ${renderTeacherCard()}
+        <nav>
+          <a href="professor.html">Inicio</a>
+          <a href="professor-turma.html">Minha Turma</a>
+          <a class="is-active" href="professor-aluno.html?id=${encodeURIComponent(student.id)}">Pedro</a>
+        </nav>
+        <button class="platform-logout-button" type="button" data-platform-logout>SAIR</button>
+      </aside>
+      <div class="tw-main">
+        <section class="tw-hero">
+          <div>
+            <span>${student.className}</span>
+            <h1>${student.name.toUpperCase()}</h1>
+            <p>Ficha individual do aluno para acompanhamento de atividades, producoes e historico.</p>
+          </div>
+          <div class="tw-hero-metrics">
+            <article><strong>${student.pendingActivities}</strong><span>pendentes</span></article>
+            <article><strong>${student.completedActivities}</strong><span>concluidas</span></article>
+            <article><strong>${student.progress}%</strong><span>progresso</span></article>
+          </div>
+        </section>
+        <section class="tw-recommendations">
+          ${["ATIVIDADES", "PRODUCOES", "HISTORICO"]
+            .map((title) => `<article class="tw-recommendation-card"><span>Pedro</span><strong>${title}</strong><small>Estrutura preparada para dados reais do aluno.</small></article>`)
+            .join("")}
+        </section>
+        <main class="tw-content">
+          <section class="tw-board">
+            <div class="tw-section-head"><h2>Atribuicao</h2><button type="button" data-teacher-open-url="atividades.html">ATRIBUIR ATIVIDADE</button></div>
+            <p class="tw-muted">A tela de selecao usa o banco de atividades e o Motor Universal compartilhado. A gravacao completa da atribuicao sera aprofundada na proxima etapa.</p>
+          </section>
+          ${renderUniversalActivityTeacherDeliveries()}
+          ${renderUniversalActivityTeacherPortfolio()}
+        </main>
+      </div>
+    </section>
+  `;
+};
+
+const renderStudentSimpleDashboard = () => `
+  <div class="student-dashboard student-pedro-home" data-student-dashboard>
+    <section class="student-pedro-hero">
+      <div>
+        <span>Ambiente do Aluno</span>
+        <h1>OLA, PEDRO!</h1>
+      </div>
+      ${studentLazyImg(pilotProfiles.student.avatar, "", "student-avatar")}
+      <button class="student-logout-button" type="button" data-platform-logout>SAIR</button>
+    </section>
+    <section class="student-pedro-actions" aria-label="Areas principais do aluno">
+      <a href="aluno-atividades.html"><strong>MINHAS ATIVIDADES</strong><small>${pilotProfiles.student.pendingActivities} esperando por voce</small></a>
+      <a href="motor-atividade.html?assignment=ua-pilot-01"><strong>CONTINUAR</strong><small>Retomar uma atividade iniciada</small></a>
+      <a href="perfil.html"><strong>MINHAS CONQUISTAS</strong><small>Medalhas e progresso</small></a>
+    </section>
+    <main class="student-grid student-restored-grid">
+      ${renderStudentUniversalActivities()}
+      ${renderStudentMedals(studentDashboardView.medals)}
+    </main>
+  </div>
+`;
+
+const renderStudentActivitiesPage = () => `
+  <div class="student-dashboard student-pedro-home" data-student-dashboard>
+    <section class="student-pedro-hero">
+      <div><span>MINHAS ATIVIDADES</span><h1>OLA, PEDRO!</h1></div>
+      ${studentLazyImg(pilotProfiles.student.avatar, "", "student-avatar")}
+      <button class="student-logout-button" type="button" data-platform-logout>SAIR</button>
+    </section>
+    ${renderStudentUniversalActivities()}
+  </div>
+`;
+
 const renderTeacherWorkspaceView = (view) => {
   const { books, experiences, activities } = getTeacherBibliotecaResources();
   const resourceCards = [
@@ -3683,7 +4050,7 @@ const renderTeacherWorkspaceView = (view) => {
       <section class="tw-board">
         <div class="tw-section-head"><h2>Notificacoes</h2><button type="button" data-teacher-view="inicio">Voltar</button></div>
         ${[
-          "Infantil 5 A concluiu 74% do percurso da semana",
+          "Pedro concluiu uma producao no Motor Universal",
           "Nova experiencia publicada na Biblioteca Viva",
           "Familia de Pedro Henrique enviou uma mensagem",
         ].map((title) => `<article class="tw-planning-card" data-teacher-search-item><span>Agora</span><strong>${title}</strong><small>Prioridade normal</small></article>`).join("")}
@@ -3698,7 +4065,7 @@ const renderTeacherWorkspaceView = (view) => {
     mensagens: `
       <section class="tw-board">
         <div class="tw-section-head"><h2>Mensagens</h2><button type="button">Nova mensagem</button></div>
-        ${["Coordenacao pedagogica", "Familia de Lia Martins", "Secretaria escolar"].map((sender) => `<article class="tw-student-card" data-teacher-search-item><span>${sender.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span><div><strong>${sender}</strong><small>Mensagem aguardando leitura</small></div><b>1</b></article>`).join("")}
+        ${["Coordenacao pedagogica", "Familia de Pedro Henrique", "Secretaria escolar"].map((sender) => `<article class="tw-student-card" data-teacher-search-item><span>${sender.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span><div><strong>${sender}</strong><small>Mensagem aguardando leitura</small></div><b>1</b></article>`).join("")}
       </section>
     `,
     acesso: `
@@ -3795,55 +4162,7 @@ const renderTeacherWorkspaceView = (view) => {
 };
 
 const renderProfessorDashboard = () => {
-  const { books, experiences, activities } = getTeacherBibliotecaResources();
-  const recommendations = [
-    { type: "Biblioteca", title: books[0]?.title || "Livro oficial", detail: books[0]?.subtitle || "Colecao Raizes e Saberes", view: "biblioteca", action: "Abrir" },
-    { type: "Atividades Imprimiveis", title: "Banco de Atividades Imprimiveis", detail: "Encontre, visualize e imprima atividades organizadas por faixa etaria, objetivo e campo de experiencias.", view: "atividades", action: "Abrir" },
-    { type: "Experiencia", title: experiences[0]?.title || "Experiencia publicada", detail: experiences[0]?.unitTitle || "Percurso editorial", view: "experiencias", action: "Preparar" },
-  ];
-  return `
-    <section class="teacher-workspace" data-teacher-workspace>
-      <aside class="tw-sidebar" aria-label="Areas do Workspace Pedagogico">
-        ${renderTeacherCard()}
-        <nav>
-          ${teacherWorkspaceNav.map(([key, label], index) => `<button type="button" data-teacher-view="${key}" class="${index === 0 ? "is-active" : ""}">${label}</button>`).join("")}
-        </nav>
-      </aside>
-      <div class="tw-main">
-        <header class="tw-topbar">
-          <label><span>Pesquisa global</span><input data-teacher-search type="search" placeholder="Buscar aulas, alunos, recursos..." /></label>
-          <div class="tw-top-actions">
-            ${[
-              ["notificacoes", "Notificacoes"],
-              ["calendario", "Calendario"],
-              ["mensagens", "Mensagens"],
-              ["acesso", "Acesso rapido"],
-              ["perfil", "Perfil"],
-              ["configuracoes", "Configuracoes"],
-            ].map(([view, label]) => `<button type="button" data-teacher-view="${view}">${label}</button>`).join("")}
-          </div>
-        </header>
-        <section class="tw-hero">
-          <div>
-            <span>Workspace Pedagogico</span>
-            <h1>Tudo que voce precisa para o dia de aula.</h1>
-            <p>Planejamento, turmas, recursos da Biblioteca Viva e pendencias em uma unica mesa de trabalho.</p>
-          </div>
-          <div class="tw-hero-metrics">
-            <article><strong>${teacherWorkspaceLessons.length}</strong><span>aulas hoje</span></article>
-            <article><strong>${teacherWorkspaceTasks.reduce((total, item) => total + item.count, 0)}</strong><span>pendencias</span></article>
-            <article><strong>${books.length + experiences.length + activities.length}</strong><span>recursos vivos</span></article>
-          </div>
-        </section>
-        <section class="tw-recommendations">
-          ${recommendations.map(renderRecommendationCard).join("")}
-        </section>
-        <main class="tw-content" data-teacher-content>
-          ${renderTeacherWorkspaceView("inicio")}
-        </main>
-      </div>
-    </section>
-  `;
+  return renderTeacherPilotHome();
 };
 
 const familySoonLabels = {
@@ -4136,7 +4455,13 @@ const modules = {
     title: "Dashboard do Aluno",
     subtitle: "Home principal do aluno",
     code: "PLAT-V2-005",
-    html: renderStudentPresentationDashboard(),
+    html: renderStudentSimpleDashboard(),
+  },
+  alunoAtividades: {
+    title: "Minhas Atividades",
+    subtitle: "Atividades atribuidas ao aluno",
+    code: "ALUNO-ATIVIDADES",
+    html: renderStudentActivitiesPage(),
   },
   arvore: {
     title: "Minha Arvore",
@@ -4670,6 +4995,18 @@ const modules = {
     code: "MS-003",
     html: renderProfessorDashboard(),
   },
+  professorTurma: {
+    title: "Minha Turma",
+    subtitle: "Turma vinculada a Professora Helena",
+    code: "PROF-TURMA",
+    html: renderTeacherClassPage(),
+  },
+  professorAluno: {
+    title: "Pedro",
+    subtitle: "Ficha individual do aluno",
+    code: "PROF-ALUNO",
+    html: renderTeacherStudentPage(),
+  },
   atividades: {
     title: "Banco de Atividades Imprimiveis",
     subtitle: "Atividades exclusivas para a Educacao Infantil",
@@ -5136,6 +5473,7 @@ const environments = {
 const moduleEnvironment = {
   plataforma: "plataforma",
   aluno: "aluno",
+  alunoAtividades: "aluno",
   arvore: "aluno",
   missao: "aluno",
   jogos: "aluno",
@@ -5145,6 +5483,8 @@ const moduleEnvironment = {
   universidade: "universidade",
   curadoria: "curadoria",
   professor: "professor",
+  professorTurma: "professor",
+  professorAluno: "professor",
   atividades: "professor",
   motorAtividade: "aluno",
   adminAtividades: "curadoria",
@@ -8410,6 +8750,20 @@ const initUniversalActivityEngine = () => {
   window.setInterval(() => saveSubmission(), 12000);
 };
 
+let platformLogoutInitialized = false;
+const initPlatformLogout = () => {
+  if (platformLogoutInitialized) return;
+  platformLogoutInitialized = true;
+  document.addEventListener("click", async (event) => {
+    const button = event.target.closest?.("[data-platform-logout]");
+    if (!button) return;
+    event.preventDefault();
+    button.disabled = true;
+    button.textContent = "SAINDO...";
+    await signOutPlatformSession();
+  });
+};
+
 const renderAppPage = () => {
   const mount = document.querySelector("[data-app-page]");
   if (!mount) {
@@ -8420,16 +8774,32 @@ const renderAppPage = () => {
   const activeModule = modules[activeKey] || modules.biblioteca;
   const environmentKey = moduleEnvironment[activeKey] || activeKey;
   const environment = environments[environmentKey] || environments.biblioteca;
+  const currentRole = getCurrentPlatformRole();
+  if (currentRole && !canAccessPlatformRoute(activeKey, currentRole)) {
+    document.documentElement.style.display = "none";
+    window.location.replace(getRoleHome(currentRole));
+    return;
+  }
   document.title = `${activeModule.title} | Raizes e Saberes`;
 
-  if (activeKey === "professor") {
+  if (["professor", "professorTurma", "professorAluno"].includes(activeKey)) {
     mount.innerHTML = activeModule.html;
+    initPlatformLogout();
     requestAnimationFrame(() => {
       document.querySelector(".teacher-workspace")?.classList.add("is-mounted");
     });
     initTeacherWorkspace();
     initUniversalActivityAssignmentUi();
     initUniversalActivityTeacherDeliveries();
+    return;
+  }
+
+  if (["aluno", "alunoAtividades"].includes(activeKey)) {
+    mount.innerHTML = activeModule.html;
+    initPlatformLogout();
+    requestAnimationFrame(() => {
+      document.querySelector("[data-student-dashboard]")?.classList.add("is-mounted");
+    });
     return;
   }
 
@@ -8463,7 +8833,7 @@ const renderAppPage = () => {
           <a class="icon-button menu-toggle" href="plataforma.html" aria-label="Inicio">☰</a>
           <label class="app-search"><span>Pesquisar</span><input type="search" placeholder="${environment.search}" /></label>
           <button class="top-filter" type="button">Filtros</button>
-          <nav class="module-switcher" aria-label="Modulos do Ecossistema">${ecosystemModuleLinks(activeKey)}</nav>
+          <nav class="module-switcher" aria-label="Modulos do Ecossistema">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>
           <div class="top-actions" aria-label="Acoes"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>MS</span>`}<strong>${environment.user}</strong></div></div>
         </header>
         <section class="screen is-active route-screen" data-route-screen="${activeKey}">${activeModule.html}</section>
@@ -8476,6 +8846,7 @@ const renderAppPage = () => {
     document.querySelector(".route-screen")?.classList.add("is-mounted");
   });
 
+  initPlatformLogout();
   initBookReader();
   initLibrarySearch();
   initLibraryExperiences();
