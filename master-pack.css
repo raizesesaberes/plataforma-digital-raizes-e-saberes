@@ -11203,11 +11203,11 @@ td {
 .family-week-cell {
   min-height: 48px;
   display: grid;
-  gap: 2px;
+  gap: 4px;
   align-content: start;
   border: 1px solid rgba(13, 71, 45, 0.1);
   border-radius: 8px;
-  padding: 7px;
+  padding: 6px;
   background: #ffffff;
 }
 
@@ -11225,12 +11225,100 @@ td {
   line-height: 1.1;
 }
 
-.family-week-cell p {
+.family-week-cell p,
+.family-week-routine p,
+.family-week-notice p {
   margin: 0;
   color: #526358;
   font-size: 0.68rem;
   font-weight: 700;
   line-height: 1.25;
+}
+
+.family-week-routine {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+  padding-right: 18px;
+}
+
+.family-week-routine.is-missing {
+  align-content: center;
+  min-height: 30px;
+}
+
+.family-week-routine button,
+.family-week-cell.is-empty button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 18px;
+  height: 18px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  background: #edf6e8;
+  color: #0d6b4b;
+  cursor: pointer;
+}
+
+.family-week-routine button::before,
+.family-week-cell.is-empty button::before {
+  content: "Editar";
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.family-week-routine button::after,
+.family-week-cell.is-empty button::after {
+  content: "✎";
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.family-week-routine button:hover,
+.family-week-routine button:focus-visible,
+.family-week-cell.is-empty button:hover,
+.family-week-cell.is-empty button:focus-visible {
+  background: #0d6b4b;
+  color: #fff;
+  outline: none;
+}
+
+.family-week-notice {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  border: 0;
+  border-top: 1px solid rgba(13, 71, 45, 0.08);
+  padding: 4px 0 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.family-week-notice strong,
+.family-week-notice p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+}
+
+.family-week-notice strong {
+  -webkit-line-clamp: 1;
+}
+
+.family-week-notice p {
+  -webkit-line-clamp: 1;
+}
+
+.family-week-notice.is-expanded strong,
+.family-week-notice.is-expanded p {
+  -webkit-line-clamp: unset;
 }
 
 .family-week-cell em {
@@ -11251,10 +11339,16 @@ td {
 }
 
 .family-week-cell.is-empty {
+  position: relative;
   align-content: center;
   border-style: dashed;
   background: #fafcf8;
   text-align: center;
+}
+
+.family-week-cell.is-empty button {
+  top: 5px;
+  right: 5px;
 }
 
 .family-week-mobile {
@@ -11326,6 +11420,81 @@ td {
 .family-tree-mini strong {
   color: #0d6b4b;
   font-family: Poppins, Inter, sans-serif;
+}
+
+.family-routine-modal[hidden] {
+  display: none;
+}
+
+.family-routine-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(8, 43, 30, 0.28);
+}
+
+.family-routine-dialog {
+  width: min(420px, 100%);
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(13, 71, 45, 0.12);
+  border-radius: 14px;
+  padding: 16px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(8, 43, 30, 0.18);
+}
+
+.family-routine-dialog label {
+  display: grid;
+  gap: 5px;
+}
+
+.family-routine-dialog label span {
+  color: #607269;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.family-routine-dialog input,
+.family-routine-dialog textarea {
+  width: 100%;
+  border: 1px solid rgba(13, 71, 45, 0.14);
+  border-radius: 10px;
+  padding: 9px 10px;
+  color: #173328;
+  font: inherit;
+  font-weight: 750;
+}
+
+.family-routine-dialog textarea {
+  resize: vertical;
+}
+
+.family-routine-dialog > div:last-child {
+  display: flex;
+  justify-content: end;
+  gap: 8px;
+}
+
+.family-routine-dialog button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 14px;
+  background: #0d6b4b;
+  color: #fff;
+  font-family: Poppins, Inter, sans-serif;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.family-routine-dialog button[type="button"] {
+  background: #edf6e8;
+  color: #0d6b4b;
 }
 
 .family-tree-card i {

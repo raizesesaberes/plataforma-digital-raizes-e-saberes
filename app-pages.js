@@ -4905,6 +4905,7 @@ const renderProfessorDashboard = () => {
 
 const familyAreaData = {
   student: {
+    id: pilotProfiles.student.id,
     name: pilotProfiles.student.name,
     fullName: pilotProfiles.student.fullName,
     avatar: pilotProfiles.student.avatar,
@@ -4928,6 +4929,7 @@ const familyAreaData = {
     completedActivities: getStudentGameSummary().completedCount,
   },
   weekly: [],
+  scheduleNotices: [],
 };
 
 const familyWeekDays = [
@@ -4945,6 +4947,41 @@ const familyScheduleSlots = [
   ["4", "Horario 4"],
   ["5", "Horario 5"],
 ];
+
+const familyScheduleStorageKey = () => `raizes:family-weekly-schedule:${familyAreaData.student.id || pilotProfiles.student.id}:v1`;
+const familyNoticeStorageKey = () => `raizes:family-schedule-notices:${familyAreaData.student.id || pilotProfiles.student.id}:v1`;
+const familyReadJsonList = (key) => {
+  try {
+    return JSON.parse(localStorage.getItem(key) || "[]");
+  } catch (error) {
+    return [];
+  }
+};
+const familyWriteJsonList = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn("Nao foi possivel salvar a rotina semanal.", error);
+  }
+};
+const familyIsoDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+const familyMondayForDate = (date = new Date()) => {
+  const current = new Date(date);
+  const day = current.getDay() || 7;
+  current.setDate(current.getDate() - day + 1);
+  current.setHours(0, 0, 0, 0);
+  return current;
+};
+const familyDateFromIso = (iso) => {
+  const [year, month, day] = String(iso || "").split("-").map(Number);
+  return year && month && day ? new Date(year, month - 1, day) : familyMondayForDate();
+};
+const familyWeekStartIso = () => familyIsoDate(familyMondayForDate());
 
 const familyAreaViews = [
   ["inicio", "Inicio"],
@@ -5027,55 +5064,86 @@ const renderFamilyAgenda = () =>
     ? familyAreaData.agenda.map((item) => `<article class="family-list-card"><span>${item.date}</span><strong>${item.title}</strong><p>${item.detail}</p></article>`).join("")
     : renderFamilyEmpty("NENHUM COMPROMISSO PROGRAMADO.");
 
-const getFamilyWeekRange = () => {
+const getFamilyWeekRange = (weekStartIso = familyWeekStartIso()) => {
   if (typeof Date === "undefined") return "Semana atual";
-  const today = new Date();
-  const day = today.getDay() || 7;
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - day + 1);
+  const monday = familyDateFromIso(weekStartIso);
   const friday = new Date(monday);
   friday.setDate(monday.getDate() + 4);
   const months = ["Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
   return `${String(monday.getDate()).padStart(2, "0")} a ${String(friday.getDate()).padStart(2, "0")} de ${months[friday.getMonth()]}`;
 };
 
-const getFamilyWeekRecord = (dayKey, slotKey) =>
-  familyAreaData.weekly.find((item) => item.dia_da_semana === dayKey && String(item.ordem_do_horario) === String(slotKey));
+const getFamilyWeekDates = (weekStartIso = familyWeekStartIso()) => {
+  const monday = familyDateFromIso(weekStartIso);
+  return familyWeekDays.reduce((dates, [dayKey], index) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + index);
+    dates[dayKey] = familyIsoDate(date);
+    return dates;
+  }, {});
+};
 
-const renderFamilyWeekCell = (dayKey, slotKey) => {
-  const record = getFamilyWeekRecord(dayKey, slotKey);
-  if (!record) return `<div class="family-week-cell is-empty"><span>Sem registro</span></div>`;
+const getFamilyRoutineRecords = () => familyReadJsonList(familyScheduleStorageKey());
+const getFamilyNoticeRecords = () => [...familyAreaData.scheduleNotices, ...familyReadJsonList(familyNoticeStorageKey())];
+const getFamilyRoutineRecord = (dayKey, slotKey) =>
+  getFamilyRoutineRecords().find((item) => item.day_of_week === dayKey && String(item.slot_index) === String(slotKey));
+const getFamilyNoticeRecord = (specificDate, slotKey) =>
+  getFamilyNoticeRecords().find((item) => item.specific_date === specificDate && String(item.slot_index) === String(slotKey));
+
+const renderFamilyWeekCell = (dayKey, slotKey, specificDate = "") => {
+  const routine = getFamilyRoutineRecord(dayKey, slotKey);
+  const notice = getFamilyNoticeRecord(specificDate, slotKey);
+  if (!routine && !notice) {
+    return `<div class="family-week-cell is-empty" data-day="${dayKey}" data-slot="${slotKey}" data-date="${specificDate}"><span>Sem registro</span><button type="button" data-edit-routine data-day="${dayKey}" data-slot="${slotKey}">Editar horario</button></div>`;
+  }
   return `
-    <div class="family-week-cell">
-      <small>${record.horario || ""}</small>
-      <strong>${record.titulo}</strong>
-      ${record.descricao ? `<p>${record.descricao}</p>` : ""}
-      <em data-source="${record.source || "professor"}">${record.source === "familia" ? "Familia" : "Escola"}</em>
+    <div class="family-week-cell" data-day="${dayKey}" data-slot="${slotKey}" data-date="${specificDate}">
+      ${
+        routine
+          ? `<div class="family-week-routine">
+              <small>${routine.start_time || ""}</small>
+              <strong>${routine.subject_or_activity || routine.title || ""}</strong>
+              ${routine.optional_note || routine.note ? `<p>${routine.optional_note || routine.note}</p>` : ""}
+              <button type="button" data-edit-routine data-day="${dayKey}" data-slot="${slotKey}">Editar horario</button>
+            </div>`
+          : `<div class="family-week-routine is-missing"><span>Rotina nao cadastrada</span><button type="button" data-edit-routine data-day="${dayKey}" data-slot="${slotKey}">Editar horario</button></div>`
+      }
+      ${
+        notice
+          ? `<button type="button" class="family-week-notice" data-notice-detail title="${notice.message || notice.title}">
+              <em data-source="professor">Escola</em>
+              <strong>${notice.title}</strong>
+              ${notice.message ? `<p>${notice.message}</p>` : ""}
+            </button>`
+          : ""
+      }
     </div>
   `;
 };
 
-const renderFamilyWeeklyBoard = () => `
+const renderFamilyWeeklyBoard = (weekStartIso = familyWeekStartIso()) => {
+  const weekDates = getFamilyWeekDates(weekStartIso);
+  return `
   <section class="family-panel family-week-panel">
     <div class="family-section-head family-week-head">
       <div>
         <h2>Minha Semana</h2>
-        <span>${getFamilyWeekRange()}</span>
+        <span>${getFamilyWeekRange(weekStartIso)}</span>
       </div>
       <div class="family-week-actions" aria-label="Controles de semana">
-        <button type="button" disabled>Semana anterior</button>
-        <button type="button" disabled>Hoje</button>
-        <button type="button" disabled>Proxima semana</button>
+        <button type="button" data-week-move="-1">Semana anterior</button>
+        <button type="button" data-week-today>Hoje</button>
+        <button type="button" data-week-move="1">Proxima semana</button>
       </div>
     </div>
-    <div class="family-week-grid" aria-label="Quadro semanal">
+    <div class="family-week-grid" aria-label="Quadro semanal" data-week-start="${weekStartIso}">
       <div class="family-week-corner">Horario</div>
       ${familyWeekDays.map(([, short]) => `<div class="family-week-day">${short}</div>`).join("")}
       ${familyScheduleSlots
         .map(
           ([slotKey, slotLabel]) => `
             <div class="family-week-slot">${slotLabel}</div>
-            ${familyWeekDays.map(([dayKey]) => renderFamilyWeekCell(dayKey, slotKey)).join("")}
+            ${familyWeekDays.map(([dayKey]) => renderFamilyWeekCell(dayKey, slotKey, weekDates[dayKey])).join("")}
           `
         )
         .join("")}
@@ -5086,7 +5154,7 @@ const renderFamilyWeeklyBoard = () => `
           ([dayKey, short, full]) => `
             <article>
               <h3>${full}</h3>
-              ${familyScheduleSlots.map(([slotKey, slotLabel]) => `<div><b>${slotLabel}</b>${renderFamilyWeekCell(dayKey, slotKey)}</div>`).join("")}
+              ${familyScheduleSlots.map(([slotKey, slotLabel]) => `<div><b>${slotLabel}</b>${renderFamilyWeekCell(dayKey, slotKey, weekDates[dayKey])}</div>`).join("")}
             </article>
           `
         )
@@ -5094,6 +5162,7 @@ const renderFamilyWeeklyBoard = () => `
     </div>
   </section>
 `;
+};
 
 const renderFamilyProgressSummary = () => {
   const { progress } = familyAreaData;
@@ -5210,11 +5279,41 @@ const renderFamilyView = (view) => {
   return views[view] || views.inicio;
 };
 
+const renderFamilyRoutineModal = () => `
+  <div class="family-routine-modal" data-routine-modal hidden>
+    <form class="family-routine-dialog" data-routine-form>
+      <div class="family-section-head">
+        <h2>Editar horario</h2>
+        <span data-routine-label>Rotina semanal</span>
+      </div>
+      <input type="hidden" name="day_of_week" />
+      <input type="hidden" name="slot_index" />
+      <label>
+        <span>Horario</span>
+        <input name="start_time" type="time" />
+      </label>
+      <label>
+        <span>Aula / atividade</span>
+        <input name="subject_or_activity" type="text" maxlength="42" placeholder="Ex.: Artes" required />
+      </label>
+      <label>
+        <span>Observacao opcional</span>
+        <textarea name="optional_note" maxlength="90" rows="2" placeholder="Material, combinados ou observacao curta"></textarea>
+      </label>
+      <div>
+        <button type="submit">Salvar</button>
+        <button type="button" data-routine-cancel>Cancelar</button>
+      </div>
+    </form>
+  </div>
+`;
+
 const renderFamilyDashboard = () => {
   const view = getFamilyView();
   const { student } = familyAreaData;
+  const weekStartIso = familyWeekStartIso();
   return `
-    <main class="family-v1" data-family-area>
+    <main class="family-v1" data-family-area data-week-start="${weekStartIso}">
       <aside class="family-v1-sidebar">
         <a class="family-v1-logo" href="familia.html"><img src="logo-app.png" alt="Raizes e Saberes Educacional" onerror="this.hidden=true" /></a>
         <div class="family-v1-person">
@@ -5239,6 +5338,7 @@ const renderFamilyDashboard = () => {
       <nav class="family-v1-mobile" aria-label="Navegacao mobile">
         ${familyAreaViews.map(([key, label]) => `<a class="${key === view ? "is-active" : ""}" href="familia.html?view=${key}">${label}</a>`).join("")}
       </nav>
+      ${renderFamilyRoutineModal()}
     </main>
   `;
 };
@@ -5246,12 +5346,95 @@ const renderFamilyDashboard = () => {
 const initFamilyArea = () => {
   const area = document.querySelector("[data-family-area]");
   if (!area) return;
+  const renderWeek = (weekStartIso = area.dataset.weekStart || familyWeekStartIso()) => {
+    area.dataset.weekStart = weekStartIso;
+    const panel = area.querySelector(".family-week-panel");
+    if (panel) {
+      panel.outerHTML = renderFamilyWeeklyBoard(weekStartIso);
+    }
+  };
+  const openRoutineModal = (dayKey, slotKey) => {
+    const modal = area.querySelector("[data-routine-modal]");
+    const form = area.querySelector("[data-routine-form]");
+    if (!modal || !form) return;
+    const routine = getFamilyRoutineRecord(dayKey, slotKey);
+    const dayLabel = familyWeekDays.find(([key]) => key === dayKey)?.[2] || dayKey;
+    form.elements.day_of_week.value = dayKey;
+    form.elements.slot_index.value = slotKey;
+    form.elements.start_time.value = routine?.start_time || "";
+    form.elements.subject_or_activity.value = routine?.subject_or_activity || routine?.title || "";
+    form.elements.optional_note.value = routine?.optional_note || routine?.note || "";
+    const label = modal.querySelector("[data-routine-label]");
+    if (label) label.textContent = `${dayLabel} - horario ${slotKey}`;
+    modal.hidden = false;
+    form.elements.start_time.focus();
+  };
+  const closeRoutineModal = () => {
+    const modal = area.querySelector("[data-routine-modal]");
+    if (modal) modal.hidden = true;
+  };
   area.addEventListener("click", (event) => {
     const filterButton = event.target.closest?.("[data-family-filter]");
-    if (!filterButton) return;
-    area.querySelectorAll("[data-family-filter]").forEach((button) => button.classList.toggle("is-active", button === filterButton));
-    const list = area.querySelector("[data-family-online-list]");
-    if (list) list.innerHTML = renderFamilyOnlineActivities(filterButton.dataset.familyFilter || "todas");
+    if (filterButton) {
+      area.querySelectorAll("[data-family-filter]").forEach((button) => button.classList.toggle("is-active", button === filterButton));
+      const list = area.querySelector("[data-family-online-list]");
+      if (list) list.innerHTML = renderFamilyOnlineActivities(filterButton.dataset.familyFilter || "todas");
+      return;
+    }
+    const editButton = event.target.closest?.("[data-edit-routine]");
+    if (editButton) {
+      event.preventDefault();
+      openRoutineModal(editButton.dataset.day, editButton.dataset.slot);
+      return;
+    }
+    const cancelButton = event.target.closest?.("[data-routine-cancel]");
+    if (cancelButton) {
+      event.preventDefault();
+      closeRoutineModal();
+      return;
+    }
+    const noticeButton = event.target.closest?.("[data-notice-detail]");
+    if (noticeButton) {
+      event.preventDefault();
+      noticeButton.classList.toggle("is-expanded");
+      return;
+    }
+    const weekMoveButton = event.target.closest?.("[data-week-move]");
+    if (weekMoveButton) {
+      const current = familyDateFromIso(area.dataset.weekStart || familyWeekStartIso());
+      current.setDate(current.getDate() + Number(weekMoveButton.dataset.weekMove || 0) * 7);
+      renderWeek(familyIsoDate(current));
+      return;
+    }
+    const todayButton = event.target.closest?.("[data-week-today]");
+    if (todayButton) {
+      renderWeek(familyWeekStartIso());
+    }
+  });
+  area.querySelector("[data-routine-form]")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const dayKey = form.elements.day_of_week.value;
+    const slotKey = form.elements.slot_index.value;
+    const current = getFamilyRoutineRecords().filter((item) => !(item.day_of_week === dayKey && String(item.slot_index) === String(slotKey)));
+    const subject = String(form.elements.subject_or_activity.value || "").trim();
+    if (subject) {
+      current.push({
+        id: `routine-${dayKey}-${slotKey}`,
+        student_id: familyAreaData.student.id,
+        day_of_week: dayKey,
+        slot_index: Number(slotKey),
+        start_time: form.elements.start_time.value || "",
+        subject_or_activity: subject,
+        optional_note: String(form.elements.optional_note.value || "").trim(),
+        created_by: "familia",
+        updated_by: getPlatformSession().userId || "local-family",
+        updated_at: new Date().toISOString(),
+      });
+    }
+    familyWriteJsonList(familyScheduleStorageKey(), current);
+    closeRoutineModal();
+    renderWeek(area.dataset.weekStart || familyWeekStartIso());
   });
 };
 
