@@ -7309,6 +7309,36 @@ td {
   object-position: center top;
 }
 
+.student-profile-page,
+.professor-profile-page {
+  min-height: 100vh;
+  padding: 18px;
+  background: #f8faf7;
+}
+
+.profile-floating-logout {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 4;
+  min-height: 42px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 18px;
+  background: #0d6b4b;
+  color: #fff;
+  font-family: Poppins, Inter, sans-serif;
+  font-weight: 900;
+  box-shadow: 0 12px 28px rgba(8, 63, 45, 0.18);
+  cursor: pointer;
+}
+
+.profile-floating-logout:hover,
+.profile-floating-logout:focus-visible {
+  background: #083f2d;
+  outline: none;
+}
+
 .professor-hotspot {
   position: absolute;
   display: block;

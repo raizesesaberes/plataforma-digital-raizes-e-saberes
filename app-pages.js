@@ -2898,6 +2898,7 @@ const renderStudentProfilePage = () => {
           onerror="this.hidden=true"
         />
         ${studentProfileHotspots.map((hotspot) => `<a class="profile-hotspot ${hotspot.className}" href="${hotspot.href}" aria-label="${hotspot.label}"></a>`).join("")}
+        <button class="profile-floating-logout" type="button" data-platform-logout>SAIR</button>
       </section>
     </main>
   `;
@@ -2925,6 +2926,56 @@ const studentProfileHotspots = [
   { className: "profile-hotspot-game-ponte", href: "jogos.html", label: "Abrir jogo Construindo a Ponte" },
   { className: "profile-hotspot-game-cores", href: "jogos.html", label: "Abrir jogo As Cores do Jardim" },
 ];
+
+const professorProfileHotspots = [
+  { className: "professor-hotspot-avatar", href: "professor.html", label: "Abrir perfil da professora Helena" },
+  { className: "professor-hotspot-turmas-top", href: "professor-turma.html", label: "Abrir minhas turmas" },
+  { className: "professor-hotspot-planejadas-top", href: "atividades.html", label: "Abrir atividades planejadas" },
+  { className: "professor-hotspot-concluidas-top", href: "professor.html?view=relatorios", label: "Abrir atividades concluidas" },
+  { className: "professor-hotspot-xp-top", href: "universidade.html", label: "Abrir formacao e XP" },
+  { className: "professor-hotspot-turma-a", href: "professor-turma.html", label: "Abrir Infantil 5 anos A" },
+  { className: "professor-hotspot-turma-b", href: "professor-turma.html", label: "Abrir Infantil 5 anos B" },
+  { className: "professor-hotspot-turma-4a", href: "professor-turma.html", label: "Abrir 4 Ano A" },
+  { className: "professor-hotspot-turma-2a", href: "professor-turma.html", label: "Abrir 2 Ano A" },
+  { className: "professor-hotspot-turma-3b", href: "professor-turma.html", label: "Abrir 3 Ano B" },
+  { className: "professor-hotspot-seg", href: "professor.html?view=planejamentos", label: "Abrir planejamento de segunda" },
+  { className: "professor-hotspot-ter", href: "professor.html?view=planejamentos", label: "Abrir planejamento de terca" },
+  { className: "professor-hotspot-qua", href: "professor.html?view=planejamentos", label: "Abrir planejamento de quarta" },
+  { className: "professor-hotspot-qui", href: "professor.html?view=planejamentos", label: "Abrir planejamento de quinta" },
+  { className: "professor-hotspot-sex", href: "professor.html?view=planejamentos", label: "Abrir planejamento de sexta" },
+  { className: "professor-hotspot-aula-1", href: "biblioteca.html", label: "Abrir aula de Linguagem" },
+  { className: "professor-hotspot-aula-2", href: "biblioteca.html", label: "Abrir aula de Matematica" },
+  { className: "professor-hotspot-aula-3", href: "biblioteca.html", label: "Abrir aula de Ciencias" },
+  { className: "professor-hotspot-aula-4", href: "biblioteca.html", label: "Abrir aula de Historia" },
+  { className: "professor-hotspot-aula-5", href: "biblioteca.html", label: "Abrir aula de Projeto" },
+  { className: "professor-hotspot-pendente-corrigir", href: "professor.html?view=avaliacoes", label: "Abrir atividades para corrigir" },
+  { className: "professor-hotspot-pendente-revisar", href: "atividades.html", label: "Abrir atividades para revisar" },
+  { className: "professor-hotspot-pendente-devolutivas", href: "professor.html?view=mensagens", label: "Abrir devolutivas" },
+  { className: "professor-hotspot-pendente-publicar", href: "atividades.html", label: "Abrir atividades para publicar" },
+  { className: "professor-hotspot-correcoes", href: "professor.html?view=relatorios", label: "Abrir correcoes" },
+  { className: "professor-hotspot-book-1", href: "book-viewer.html?book=livro-001", label: "Abrir livro integrado 1" },
+  { className: "professor-hotspot-book-2", href: "book-viewer.html?book=livro-002", label: "Abrir livro integrado 2" },
+  { className: "professor-hotspot-book-3", href: "book-viewer.html?book=livro-003", label: "Abrir livro integrado 3" },
+  { className: "professor-hotspot-book-4", href: "book-viewer.html?book=livro-004", label: "Abrir livro integrado 4" },
+  { className: "professor-hotspot-book-5", href: "book-viewer.html?book=livro-005", label: "Abrir livro integrado 5" },
+  { className: "professor-hotspot-bncc", href: "universidade.html", label: "Abrir conteudos alinhados a BNCC" },
+];
+
+const renderProfessorProfilePage = () => `
+  <main class="professor-profile-page">
+    <section class="professor-dashboard" aria-label="Perfil da Professora Helena">
+      <img
+        src="assets/professor/professor-dashboard.png"
+        alt="Perfil da Professora Helena com turmas, planejamento semanal, proximas aulas, atividades pendentes, correcoes e biblioteca integrada"
+        loading="eager"
+        decoding="async"
+        onerror="this.hidden=true"
+      />
+      ${professorProfileHotspots.map((hotspot) => `<a class="professor-hotspot ${hotspot.className}" href="${hotspot.href}" aria-label="${hotspot.label}"></a>`).join("")}
+      <button class="profile-floating-logout" type="button" data-platform-logout>SAIR</button>
+    </section>
+  </main>
+`;
 
 // Reusable student dashboard components. Each renderer receives data only, ready for Supabase records.
 const renderStudentHero = ({ profile, tree }) => `
@@ -4645,7 +4696,7 @@ const initAdminWorkspace = () => {
 };
 
 const renderProfessorDashboard = () => {
-  return renderTeacherPilotHome();
+  return renderProfessorProfilePage();
 };
 
 const familySoonLabels = {
@@ -4944,7 +4995,7 @@ const modules = {
     title: "Dashboard do Aluno",
     subtitle: "Home principal do aluno",
     code: "PLAT-V2-005",
-    html: renderStudentSimpleDashboard(),
+    html: renderStudentProfilePage(),
   },
   alunoAtividades: {
     title: "Minhas Atividades",
