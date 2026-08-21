@@ -343,6 +343,15 @@
   background: var(--rs-green-700);
 }
 
+.app-shell[data-environment="aluno"] .module-switcher {
+  scrollbar-width: thin;
+}
+
+.app-shell[data-environment="aluno"] .module-switcher a {
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
 .menu-toggle {
   display: none;
 }
@@ -7466,7 +7475,9 @@ td {
 }
 
 .platform-logout-button:disabled,
-.student-logout-button:disabled {
+.student-logout-button:disabled,
+.app-nav-logout:disabled,
+.mobile-logout-button:disabled {
   opacity: 0.7;
   cursor: wait;
 }
@@ -7802,6 +7813,14 @@ td {
   line-height: 1;
 }
 
+.student-pedro-hero p {
+  max-width: 540px;
+  margin: 12px 0 0;
+  color: #365345;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
 .student-pedro-hero .student-avatar {
   width: min(150px, 26vw);
   aspect-ratio: 1;
@@ -7857,6 +7876,58 @@ td {
 .student-pedro-actions small {
   color: #647083;
   font-weight: 800;
+}
+
+.student-home-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.student-home-card {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-height: 220px;
+  padding: 22px;
+  border: 1px solid rgba(15, 120, 77, 0.14);
+  border-radius: 8px;
+  background: #fffdf7;
+  color: #123321;
+  box-shadow: 0 14px 30px rgba(8, 63, 45, 0.06);
+}
+
+.student-home-card-feature {
+  grid-column: span 2;
+  background: #e9f5df;
+}
+
+.student-home-card span {
+  color: #0d6b4b;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.student-home-card strong {
+  font-family: Poppins, Inter, sans-serif;
+  font-size: clamp(1.15rem, 2vw, 1.7rem);
+  line-height: 1.15;
+}
+
+.student-home-card p {
+  margin: 0;
+  color: #4c6256;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.student-home-card .student-primary-action {
+  align-self: end;
+  min-height: 46px;
+  margin-top: auto;
+  padding: 0 14px;
 }
 
 .tw-class-card i {
@@ -8760,8 +8831,13 @@ td {
 
   .tw-topbar,
   .tw-recommendations,
-  .student-pedro-actions {
+  .student-pedro-actions,
+  .student-home-grid {
     grid-template-columns: 1fr;
+  }
+
+  .student-home-card-feature {
+    grid-column: span 1;
   }
 
   .tw-top-actions {
@@ -11200,6 +11276,14 @@ td {
     padding: 16px 10px;
   }
 
+  .app-shell[data-environment="aluno"] {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .app-shell[data-environment="aluno"] .app-sidebar {
+    padding: 16px 12px;
+  }
+
   .sidebar-logo {
     width: 58px;
     overflow: hidden;
@@ -11222,6 +11306,28 @@ td {
   .app-nav button::first-letter,
   .app-nav a::first-letter {
     font-size: 0.9rem;
+  }
+
+  .app-shell[data-environment="aluno"] .sidebar-logo {
+    width: 100%;
+  }
+
+  .app-shell[data-environment="aluno"] .sidebar-logo img {
+    width: 100%;
+    max-width: 170px;
+  }
+
+  .app-shell[data-environment="aluno"] .app-nav button,
+  .app-shell[data-environment="aluno"] .app-nav a {
+    justify-content: flex-start;
+    padding: 0 12px 0 14px;
+    text-align: left;
+    font-size: 0.74rem;
+  }
+
+  .app-shell[data-environment="aluno"] .app-nav button::first-letter,
+  .app-shell[data-environment="aluno"] .app-nav a::first-letter {
+    font-size: inherit;
   }
 
   .sidebar-profile {
@@ -11355,6 +11461,10 @@ td {
 
   .screen {
     padding: 18px 14px 92px;
+  }
+
+  .app-shell[data-environment="aluno"] .screen {
+    padding-bottom: 132px;
   }
 
   .library-grid,
@@ -11574,7 +11684,8 @@ td {
 
 @media (min-width: 621px) and (max-width: 900px) {
   .app-shell[data-environment="aluno"] ~ .mobile-tabbar {
-    display: none;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -11595,12 +11706,20 @@ td {
     display: none;
   }
 
-  .app-shell[data-active-module="arvore"] ~ .mobile-tabbar {
-    display: none;
+  .app-shell[data-environment="aluno"] ~ .mobile-tabbar {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
   }
 
-  .app-shell[data-active-module="missao"] ~ .mobile-tabbar {
-    display: none;
+  .app-shell[data-environment="aluno"] ~ .mobile-tabbar button,
+  .app-shell[data-environment="aluno"] ~ .mobile-tabbar a {
+    min-height: 38px;
+    padding: 0 4px;
+    font-size: 0.62rem;
+    line-height: 1.05;
   }
 
   .screen[data-route-screen="aluno"] {

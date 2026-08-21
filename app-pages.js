@@ -29,8 +29,13 @@ const routeAccessRules = {
   missao: ["aluno"],
   jogos: ["aluno"],
   perfil: ["aluno"],
+  biblioteca: ["aluno", "professor", "gestor", "coordenador", "admin"],
+  familia: ["aluno"],
   motorAtividade: ["aluno"],
+  universidade: ["professor", "gestor", "coordenador", "admin"],
   adminAtividades: ["gestor", "coordenador", "admin"],
+  avalia: ["professor", "gestor", "coordenador", "admin"],
+  bancoQuestoes: ["professor", "gestor", "coordenador", "admin"],
   secretaria: ["gestor", "coordenador", "admin"],
   gestor: ["gestor", "coordenador", "admin"],
 };
@@ -44,7 +49,12 @@ const protectedRouteKeyByPage = {
   "missao.html": "missao",
   "jogos.html": "jogos",
   "perfil.html": "perfil",
+  "biblioteca.html": "biblioteca",
+  "familia.html": "familia",
   "motor-atividade.html": "motorAtividade",
+  "universidade.html": "universidade",
+  "avalia.html": "avalia",
+  "banco-questoes.html": "bancoQuestoes",
   "admin-atividades.html": "adminAtividades",
   "secretaria.html": "secretaria",
   "gestor.html": "gestor",
@@ -54,6 +64,7 @@ const protectedRouteKeyByPage = {
   aluno: "aluno",
   "aluno/atividades": "alunoAtividades",
 };
+const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "missao", "arvore", "biblioteca", "jogos", "perfil", "familia", "viewer", "motorAtividade"]);
 const decodePlatformJwtPayload = (token) => {
   try {
     const [, payload] = String(token || "").split(".");
@@ -2260,7 +2271,15 @@ const routeKeyByHref = {
 const ecosystemModuleLinks = (activeKey, environmentKey = "") => {
   const modulesForEnvironment =
     environmentKey === "aluno"
-      ? ecosystemModules.filter(([href]) => ["aluno.html", "arvore.html", "missao.html", "jogos.html", "perfil.html", "biblioteca.html"].includes(href))
+      ? [
+          ["aluno.html", "Inicio"],
+          ["missao.html", "Missao do Dia"],
+          ["arvore.html", "Minha Arvore"],
+          ["biblioteca.html", "Biblioteca"],
+          ["jogos.html", "Jogar e Descobrir"],
+          ["perfil.html", "Perfil"],
+          ["familia.html", "Familia"],
+        ]
       : ecosystemModules;
   return modulesForEnvironment
     .map(([href, label]) => {
@@ -3993,19 +4012,45 @@ const renderStudentSimpleDashboard = () => `
   <div class="student-dashboard student-pedro-home" data-student-dashboard>
     <section class="student-pedro-hero">
       <div>
-        <span>Ambiente do Aluno</span>
-        <h1>OLA, PEDRO!</h1>
+        <span>Inicio</span>
+        <h1>OLA, ${getStudentFirstName().toUpperCase()}!</h1>
+        <p>Este e o seu espaco para aprender, ler, jogar e acompanhar suas conquistas.</p>
       </div>
       ${studentLazyImg(pilotProfiles.student.avatar, "", "student-avatar")}
       <button class="student-logout-button" type="button" data-platform-logout>SAIR</button>
     </section>
-    <section class="student-pedro-actions" aria-label="Areas principais do aluno">
-      <a href="aluno-atividades.html"><strong>MINHAS ATIVIDADES</strong><small>${pilotProfiles.student.pendingActivities} esperando por voce</small></a>
-      <a href="motor-atividade.html?assignment=ua-pilot-01"><strong>CONTINUAR</strong><small>Retomar uma atividade iniciada</small></a>
-      <a href="perfil.html"><strong>MINHAS CONQUISTAS</strong><small>Medalhas e progresso</small></a>
+    <section class="student-home-grid" aria-label="Areas principais do aluno">
+      <article class="student-home-card student-home-card-feature">
+        <span>Missao do Dia</span>
+        <strong>Veja o que a professora preparou para voce.</strong>
+        <p>SUAS NOVAS DESCOBERTAS VAO APARECER AQUI.</p>
+        <a class="student-primary-action" href="missao.html">VER MINHAS MISSOES</a>
+      </article>
+      <article class="student-home-card">
+        <span>Continuar</span>
+        <strong>Nada em andamento agora.</strong>
+        <p>Quando houver uma atividade, livro, jogo ou experiencia iniciada, ela aparecera aqui.</p>
+      </article>
+      <article class="student-home-card">
+        <span>Minha Arvore</span>
+        <strong>Acompanhe suas conquistas.</strong>
+        <p>Veja seu crescimento, medalhas e progresso na jornada.</p>
+        <a class="student-primary-action" href="arvore.html">VER MINHA ARVORE</a>
+      </article>
+      <article class="student-home-card">
+        <span>Jogar e Descobrir</span>
+        <strong>Experiencias liberadas para brincar e aprender.</strong>
+        <p>Os jogos certos para sua turma aparecerao neste espaco.</p>
+        <a class="student-primary-action" href="jogos.html">JOGAR</a>
+      </article>
+      <article class="student-home-card">
+        <span>Meus Livros</span>
+        <strong>Abra a Biblioteca.</strong>
+        <p>Escolha um livro e continue sua leitura com tranquilidade.</p>
+        <a class="student-primary-action" href="biblioteca.html">ABRIR BIBLIOTECA</a>
+      </article>
     </section>
-    <main class="student-grid student-restored-grid">
-      ${renderStudentUniversalActivities()}
+    <main class="student-grid student-restored-grid" aria-label="Conquistas do aluno">
       ${renderStudentMedals(studentDashboardView.medals)}
     </main>
   </div>
@@ -4021,6 +4066,16 @@ const renderStudentActivitiesPage = () => `
     ${renderStudentUniversalActivities()}
   </div>
 `;
+
+const getStudentFirstName = () => {
+  const session = getPlatformSession();
+  const candidate = session.role === "aluno" ? session.name || session.email : pilotProfiles.student.name;
+  const normalized = String(candidate || "").trim();
+  if (!normalized || normalized.includes("@")) {
+    return normalized.toLowerCase().includes("pedro") ? "Pedro" : pilotProfiles.student.name;
+  }
+  return normalized.split(/\s+/)[0] || pilotProfiles.student.name;
+};
 
 const renderTeacherWorkspaceView = (view) => {
   const { books, experiences, activities } = getTeacherBibliotecaResources();
@@ -4476,13 +4531,13 @@ const modules = {
     html: renderMissionPlayer(missionFixtures.colorMatch001),
   },
   jogos: {
-    title: "Jogos Educativos",
+    title: "Jogar e Descobrir",
     subtitle: "Hub oficial dos jogos digitais",
     code: "GAME-ENGINE-2.0",
     html: `
       <div class="screen-title">
         <p>GAME-ENGINE-2.0</p>
-        <h1>Jogos Educativos</h1>
+        <h1>Jogar e Descobrir</h1>
         <span>Escolha uma experiencia, conquiste XP e acompanhe suas medalhas.</span>
       </div>
       <div class="game-engine" data-game-engine></div>
@@ -5229,25 +5284,31 @@ const environments = {
     ],
   },
   aluno: {
-    label: "Aluno",
-    profile: "Aprendizagem",
+    label: "Espaco do Aluno",
+    profile: "Pedro",
     search: "Buscar livros, missoes, atividades...",
-    user: `Pedro<br />Nivel 1 - ${studentDashboardView.profile.xp} XP`,
+    user: `${getStudentFirstName()}<br />Aluno`,
     avatar: "assets/aluno/oficial-avatar-aluno.png",
     profileImage: "logo-sidebar-dark.png",
     nav: [
-      ["aluno", "🏠 Inicio", "aluno.html"],
-      ["biblioteca", "📚 Biblioteca", "biblioteca.html"],
-      ["jogos", "🎮 Jogos", "jogos.html"],
-      ["conquistas", "🏆 Conquistas", "#conquistas"],
-      ["perfil", "👤 Perfil", "perfil.html"],
+      ["aluno", "INICIO", "aluno.html"],
+      ["missao", "MISSAO DO DIA", "missao.html"],
+      ["arvore", "MINHA ARVORE", "arvore.html"],
+      ["biblioteca", "BIBLIOTECA", "biblioteca.html"],
+      ["jogos", "JOGAR E DESCOBRIR", "jogos.html"],
+      ["perfil", "PERFIL", "perfil.html"],
+      ["familia", "FAMILIA", "familia.html"],
+      ["logout", "SAIR", "#"],
     ],
     mobile: [
-      ["aluno", "🏠 Inicio", "aluno.html"],
-      ["biblioteca", "📚 Biblioteca", "biblioteca.html"],
-      ["jogos", "🎮 Jogos", "jogos.html"],
-      ["conquistas", "🏆 Conquistas", "#conquistas"],
-      ["perfil", "👤 Perfil", "perfil.html"],
+      ["aluno", "INICIO", "aluno.html"],
+      ["missao", "MISSAO", "missao.html"],
+      ["arvore", "ARVORE", "arvore.html"],
+      ["biblioteca", "BIBLIOTECA", "biblioteca.html"],
+      ["jogos", "JOGAR", "jogos.html"],
+      ["perfil", "PERFIL", "perfil.html"],
+      ["familia", "FAMILIA", "familia.html"],
+      ["logout", "SAIR", "#"],
     ],
   },
   biblioteca: {
@@ -8772,9 +8833,17 @@ const renderAppPage = () => {
 
   const activeKey = mount.dataset.appPage || "biblioteca";
   const activeModule = modules[activeKey] || modules.biblioteca;
-  const environmentKey = moduleEnvironment[activeKey] || activeKey;
-  const environment = environments[environmentKey] || environments.biblioteca;
   const currentRole = getCurrentPlatformRole();
+  if (currentRole === "aluno" && !studentAllowedRouteKeys.has(activeKey)) {
+    document.documentElement.style.display = "none";
+    window.location.replace(getRoleHome(currentRole));
+    return;
+  }
+  let environmentKey = moduleEnvironment[activeKey] || activeKey;
+  if (currentRole === "aluno" && studentAllowedRouteKeys.has(activeKey)) {
+    environmentKey = "aluno";
+  }
+  const environment = environments[environmentKey] || environments.biblioteca;
   if (currentRole && !canAccessPlatformRoute(activeKey, currentRole)) {
     document.documentElement.style.display = "none";
     window.location.replace(getRoleHome(currentRole));
@@ -8794,30 +8863,29 @@ const renderAppPage = () => {
     return;
   }
 
-  if (["aluno", "alunoAtividades"].includes(activeKey)) {
-    mount.innerHTML = activeModule.html;
-    initPlatformLogout();
-    requestAnimationFrame(() => {
-      document.querySelector("[data-student-dashboard]")?.classList.add("is-mounted");
-    });
-    return;
-  }
-
   const nav = environment.nav
     .map(([key, label, href]) =>
       key === "heading"
         ? `<strong class="app-nav-heading">${label}</strong>`
+        : key === "logout"
+          ? `<button class="app-nav-logout" type="button" data-platform-logout>${label}</button>`
         : `<a class="${key === activeKey ? "is-active" : ""}" href="${href}">${label}</a>`
     )
     .join("");
   const mobileNav = environment.mobile
-    .map(([key, label, href]) => `<a class="${key === activeKey ? "is-active" : ""}" href="${href}">${label}</a>`)
+    .map(([key, label, href]) =>
+      key === "logout"
+        ? `<button class="mobile-logout-button" type="button" data-platform-logout>${label}</button>`
+        : `<a class="${key === activeKey ? "is-active" : ""}" href="${href}">${label}</a>`
+    )
     .join("");
+  const shellHomeHref = environmentKey === "aluno" ? "aluno.html" : "plataforma.html";
+  const shellLogoHref = environmentKey === "aluno" ? "aluno.html" : "index.html";
 
   mount.innerHTML = `
     <div class="app-shell" data-environment="${environmentKey}" data-active-module="${activeKey}">
       <aside class="app-sidebar" aria-label="Navegacao principal">
-        <a class="sidebar-logo" href="index.html" aria-label="Raizes e Saberes">
+        <a class="sidebar-logo" href="${shellLogoHref}" aria-label="Raizes e Saberes">
           <img src="logo-sidebar-dark.png" alt="Raizes e Saberes Ecossistema Educacional" onerror="this.hidden=true; this.nextElementSibling.hidden=false;" />
           <span class="sidebar-logo-fallback" hidden><strong>Raizes e Saberes</strong><em>Ecossistema Educacional</em></span>
         </a>
@@ -8830,7 +8898,7 @@ const renderAppPage = () => {
       </aside>
       <main class="app-main">
         <header class="app-topbar">
-          <a class="icon-button menu-toggle" href="plataforma.html" aria-label="Inicio">☰</a>
+          <a class="icon-button menu-toggle" href="${shellHomeHref}" aria-label="Inicio">☰</a>
           <label class="app-search"><span>Pesquisar</span><input type="search" placeholder="${environment.search}" /></label>
           <button class="top-filter" type="button">Filtros</button>
           <nav class="module-switcher" aria-label="Modulos do Ecossistema">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>
@@ -8844,6 +8912,7 @@ const renderAppPage = () => {
 
   requestAnimationFrame(() => {
     document.querySelector(".route-screen")?.classList.add("is-mounted");
+    document.querySelector("[data-student-dashboard]")?.classList.add("is-mounted");
   });
 
   initPlatformLogout();
