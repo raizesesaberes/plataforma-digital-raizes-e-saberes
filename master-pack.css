@@ -7417,13 +7417,27 @@ td {
   align-content: start;
 }
 
+.tw-nav-heading {
+  margin: 10px 0 2px;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tw-nav-heading:first-child {
+  margin-top: 0;
+}
+
 .tw-sidebar button,
 .tw-sidebar a,
 .tw-top-actions button,
 .tw-section-head button,
 .tw-recommendation-card button,
 .tw-resource-card button,
-.tw-lesson-card button {
+.tw-lesson-card button,
+.teacher-home-card button {
   border: 0;
   font-family: Poppins, Inter, sans-serif;
   font-weight: 800;
@@ -7529,7 +7543,8 @@ td {
 .tw-section-head button,
 .tw-recommendation-card button,
 .tw-resource-card button,
-.tw-lesson-card button {
+.tw-lesson-card button,
+.teacher-home-card button {
   min-height: 36px;
   border-radius: 999px;
   padding: 0 12px;
@@ -7542,9 +7557,12 @@ td {
 .tw-section-head button:hover,
 .tw-recommendation-card button:hover,
 .tw-resource-card button:hover,
-.tw-lesson-card button:hover {
+.tw-lesson-card button:hover,
+.teacher-home-card button:hover,
+.teacher-home-card button:focus-visible {
   background: #0d6b4b;
   color: #fff;
+  outline: none;
 }
 
 .tw-hero {
@@ -7624,6 +7642,57 @@ td {
 
 .tw-recommendations {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.teacher-home-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.teacher-home-card {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-height: 190px;
+  border: 1px solid rgba(6, 70, 47, 0.12);
+  border-radius: 12px;
+  padding: 18px;
+  background: #fff;
+  color: #123321;
+  box-shadow: 0 12px 26px rgba(8, 63, 45, 0.05);
+}
+
+.teacher-home-card-feature {
+  grid-column: span 2;
+  background: #edf6ef;
+}
+
+.teacher-home-card span {
+  color: #0d6b4b;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.teacher-home-card strong {
+  font-family: Poppins, Inter, sans-serif;
+  font-size: clamp(1.15rem, 1.6vw, 1.55rem);
+  line-height: 1.15;
+}
+
+.teacher-home-card p {
+  margin: 0;
+  color: #526b60;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.teacher-home-card button {
+  align-self: end;
+  justify-self: start;
+  margin-top: auto;
 }
 
 .tw-overview-grid {
@@ -8831,11 +8900,13 @@ td {
 
   .tw-topbar,
   .tw-recommendations,
+  .teacher-home-grid,
   .student-pedro-actions,
   .student-home-grid {
     grid-template-columns: 1fr;
   }
 
+  .teacher-home-card-feature,
   .student-home-card-feature {
     grid-column: span 1;
   }
