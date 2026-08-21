@@ -21,6 +21,7 @@ const platformRoleHome = {
 };
 const routeAccessRules = {
   admin: ["admin"],
+  escolaColetiva: ["admin"],
   professor: ["professor", "gestor", "coordenador", "admin"],
   professorTurma: ["professor", "gestor", "coordenador", "admin"],
   professorAluno: ["professor", "gestor", "coordenador", "admin"],
@@ -46,6 +47,7 @@ const protectedRouteKeyByPage = {
   "professor-turma.html": "professorTurma",
   "professor-aluno.html": "professorAluno",
   "admin.html": "admin",
+  "escola.html": "escolaColetiva",
   "aluno.html": "aluno",
   "aluno-atividades.html": "alunoAtividades",
   "aluno-atividade.html": "alunoAtividade",
@@ -67,6 +69,7 @@ const protectedRouteKeyByPage = {
   "professor/turma": "professorTurma",
   "professor/alunos": "professorAluno",
   admin: "admin",
+  escola: "escolaColetiva",
   aluno: "aluno",
   "aluno/atividades": "alunoAtividades",
   "aluno/atividade": "alunoAtividade",
@@ -2267,6 +2270,7 @@ const routeKeyByHref = {
   "curadoria.html": "curadoria",
   "book-viewer.html": "viewer",
   "admin.html": "admin",
+  "escola.html": "escolaColetiva",
   "professor.html": "professor",
   "professor-turma.html": "professorTurma",
   "professor-aluno.html": "professorAluno",
@@ -4681,6 +4685,7 @@ const adminPlatformTabs = [
   { label: "Site", href: "index.html", status: "publico" },
   { label: "Inicio", href: "plataforma.html", status: "pronto" },
   { label: "Admin / TI", view: "inicio", status: "ativo" },
+  { label: "Escola Coletiva", href: "escola.html", status: "homologar" },
   { label: "Aluno", href: "aluno.html", status: "homologar" },
   { label: "Minha Arvore", href: "arvore.html", status: "pronto" },
   { label: "Missao do Dia", href: "missao.html", status: "pronto" },
@@ -4896,6 +4901,329 @@ const initAdminWorkspace = () => {
     workspace.querySelectorAll("[data-admin-search-item]").forEach((item) => {
       item.hidden = term ? !item.textContent.toLowerCase().includes(term) : false;
     });
+  });
+};
+
+const schoolCollectiveData = {
+  institution: {
+    school_id: "school-demo-descobertas",
+    school_name: "Escola das Descobertas",
+    education_stage: "Educacao Infantil",
+    municipality_name: "Municipio das Descobertas",
+    school_logo: "",
+  },
+  defaultAge: "4",
+  ages: {
+    2: {
+      label: "2 anos",
+      icon: "seed",
+      accent: "green",
+      challenge: null,
+      games: [],
+      books: [],
+      suggestions: [],
+      info: [],
+    },
+    3: {
+      label: "3 anos",
+      icon: "butterfly",
+      accent: "purple",
+      challenge: {
+        title: "Pequenos exploradores",
+        description: "Observe imagens, cores e sons com a turma.",
+        href: "jogos.html?idade=3",
+        image: "assets/home-official/banner_jardim.png",
+      },
+      games: [
+        { title: "Caixa Misteriosa", description: "Descubra objetos por pistas.", href: "jogos.html", image: "assets/home-official/thumb_jogo.png" },
+        { title: "Rotina do Pipo", description: "Organize momentos do dia.", href: "jogos.html", image: "assets/home-official/continue-card-jogos.png" },
+      ],
+      books: [
+        { title: "O Jardim das Cores", volume: "Volume 1", href: "book-viewer.html?book=livro-001", image: "assets/aluno/livro-biblioteca-natureza.webp" },
+      ],
+      suggestions: [
+        { type: "PARA LER", title: "Historia curta em roda.", cta: "LER", href: "biblioteca.html", tone: "pink" },
+      ],
+      info: [
+        { type: "LEMBRETE", title: "Trazer garrafinha", message: "Amanha teremos atividade no patio.", tone: "green" },
+      ],
+    },
+    4: {
+      label: "4 anos",
+      icon: "leaf",
+      accent: "green",
+      challenge: {
+        title: "As cores do nosso jardim",
+        description: "Encontre as cores e complete a descoberta!",
+        href: "jogos.html?desafio=jardim-cores&idade=4",
+        image: "assets/home-official/banner_jardim.png",
+      },
+      games: [
+        { title: "Jogo das Cores", description: "Descubra e combine as cores do jardim.", href: "jogos.html", image: "assets/home-official/thumb_jogo.png" },
+        { title: "Formas Divertidas", description: "Aprenda brincando com as formas.", href: "jogos.html", image: "assets/games/formas-casa/screens/screen-intro.png" },
+        { title: "Jardim das Descobertas", description: "Explore, encontre e aprenda com a natureza.", href: "jogos.html", image: "assets/home-official/banner_jardim.png" },
+      ],
+      books: [
+        { title: "O Jardim das Cores", volume: "Volume 1", href: "book-viewer.html?book=livro-001", image: "assets/aluno/livro-biblioteca-natureza.webp" },
+        { title: "Amigos da Natureza", volume: "Volume 2", href: "book-viewer.html?book=livro-002", image: "assets/aluno/livro-biblioteca-caderno.webp" },
+        { title: "Hora de Sonhar", volume: "Volume 1", href: "book-viewer.html?book=livro-003", image: "assets/aluno/livro-linguagem.webp" },
+      ],
+      suggestions: [
+        { type: "PARA LER", title: "Leia com sua familia a historia do jardim.", cta: "LER AGORA", href: "book-viewer.html?book=livro-001", tone: "pink" },
+        { type: "VAMOS PRATICAR?", title: "Jogue novamente o jogo das cores.", cta: "JOGAR", href: "jogos.html", tone: "purple" },
+        { type: "LEMBRETE", title: "Amanha vamos usar folhas secas.", cta: "", href: "", tone: "orange" },
+      ],
+      info: [
+        { type: "COMUNICADO", title: "Reuniao de familias", message: "Sexta-feira as 18h.", tone: "orange" },
+        { type: "EVENTO", title: "Semana da leitura", message: "24 a 28 de agosto.", tone: "green" },
+        { type: "LEMBRETE", title: "Identificacao", message: "Nao esqueca de identificar os materiais.", tone: "green" },
+      ],
+    },
+    5: {
+      label: "5 anos",
+      icon: "flower",
+      accent: "orange",
+      challenge: {
+        title: "Missao dos pequenos cientistas",
+        description: "Observe, compare e conte o que descobriu.",
+        href: "jogos.html?idade=5",
+        image: "assets/home-official/banner_alfabetizacao.png",
+      },
+      games: [
+        { title: "Construindo a Ponte", description: "Resolva desafios em equipe.", href: "jogos.html", image: "assets/home-official/thumb_simulado.png" },
+        { title: "Caminho da Escola", description: "Siga pistas e complete o percurso.", href: "jogos.html", image: "assets/home-official/continue-card-jogos.png" },
+      ],
+      books: [
+        { title: "Descobertas em Familia", volume: "Volume 1", href: "book-viewer.html?book=livro-004", image: "assets/aluno/livro-biblioteca-linguagem.webp" },
+        { title: "Natureza em Foco", volume: "Volume 2", href: "book-viewer.html?book=livro-005", image: "assets/aluno/livro-biblioteca-matematica.webp" },
+      ],
+      suggestions: [
+        { type: "ESTUDO", title: "Prepare uma observacao sobre o jardim.", cta: "VER", href: "jogos.html", tone: "green" },
+      ],
+      info: [
+        { type: "EVENTO", title: "Mostra das descobertas", message: "Exposicao coletiva na sexta.", tone: "green" },
+      ],
+    },
+  },
+};
+
+const schoolIconMap = {
+  seed: "2",
+  butterfly: "3",
+  leaf: "4",
+  flower: "5",
+  home: "IN",
+  game: "G",
+  star: "*",
+  book: "B",
+  user: "EU",
+  exit: "S",
+};
+
+const renderSchoolIcon = (key) => `<span class="school-icon school-icon-${key}" aria-hidden="true">${schoolIconMap[key] || "."}</span>`;
+
+const renderSchoolEmpty = (title, message = "Assim que a escola publicar, este espaco sera atualizado.") => `
+  <div class="school-empty">
+    <strong>${title}</strong>
+    <span>${message}</span>
+  </div>
+`;
+
+const renderSchoolChallenge = (ageData) => {
+  if (!ageData.challenge) return renderSchoolEmpty("NOVO DESAFIO EM PREPARACAO.", "A equipe pedagogica ainda nao publicou um desafio para esta idade.");
+  const challenge = ageData.challenge;
+  return `
+    <article class="school-challenge-card">
+      <div>
+        <span>${renderSchoolIcon("star")} DESAFIO DO DIA</span>
+        <h2>${challenge.title}</h2>
+        <p>${challenge.description}</p>
+        <a class="school-primary-action" href="${challenge.href}"><span aria-hidden="true">PLAY</span> COMECAR DESAFIO</a>
+      </div>
+      <img src="${challenge.image}" alt="" loading="lazy" onerror="this.hidden=true" />
+    </article>
+  `;
+};
+
+const renderSchoolGames = (ageData) => {
+  if (!ageData.games.length) return renderSchoolEmpty("NOVOS JOGOS CHEGAM EM BREVE.", "A curadoria ainda nao liberou jogos para esta idade.");
+  return ageData.games
+    .map(
+      (game) => `
+        <article class="school-game-card">
+          <img src="${game.image}" alt="" loading="lazy" onerror="this.hidden=true" />
+          <strong>${game.title}</strong>
+          <p>${game.description}</p>
+          <a href="${game.href}">${renderSchoolIcon("game")} JOGAR</a>
+        </article>
+      `
+    )
+    .join("");
+};
+
+const renderSchoolBooks = (ageData) => {
+  if (!ageData.books.length) return renderSchoolEmpty("NOVAS LEITURAS CHEGAM EM BREVE.", "A biblioteca coletiva sera atualizada pela equipe.");
+  return ageData.books
+    .map(
+      (book) => `
+        <article class="school-book-card">
+          <img src="${book.image}" alt="" loading="lazy" onerror="this.hidden=true" />
+          <strong>${book.title}</strong>
+          <span>${book.volume}</span>
+          <a href="${book.href}">${renderSchoolIcon("book")} LER</a>
+        </article>
+      `
+    )
+    .join("");
+};
+
+const renderSchoolSuggestions = (ageData) => {
+  if (!ageData.suggestions.length) return renderSchoolEmpty("NENHUMA NOVA SUGESTAO DA PROFESSORA.", "Quando uma professora publicar sugestoes, elas aparecerao aqui.");
+  return ageData.suggestions
+    .map(
+      (item) => `
+        <article class="school-suggestion-card is-${item.tone}">
+          <span>${item.type}</span>
+          <p>${item.title}</p>
+          ${item.href ? `<a href="${item.href}">${item.cta || "ABRIR"}</a>` : ""}
+        </article>
+      `
+    )
+    .join("");
+};
+
+const renderSchoolInfo = (ageData) => {
+  if (!ageData.info.length) return renderSchoolEmpty("NENHUM NOVO COMUNICADO DA ESCOLA.", "A escola ainda nao publicou informacoes para esta idade.");
+  return ageData.info
+    .map(
+      (item) => `
+        <article class="school-info-card is-${item.tone}">
+          <span>${item.type}</span>
+          <strong>${item.title}</strong>
+          <p>${item.message}</p>
+        </article>
+      `
+    )
+    .join("");
+};
+
+const renderSchoolCollectiveDashboard = () => {
+  const { institution, ages, defaultAge } = schoolCollectiveData;
+  const activeAge = ages[defaultAge] || Object.values(ages)[0];
+  const navItems = [
+    ["inicio", "INICIO", "escola.html", "home"],
+    ["jogos", "JOGOS", "jogos.html", "game"],
+    ["desafio", "DESAFIO", "#desafio-do-dia", "star"],
+    ["biblioteca", "BIBLIOTECA", "biblioteca.html", "book"],
+    ["espaco", "MEU ESPACO", "familia.html", "user"],
+    ["sair", "SAIR", "#sair", "exit"],
+  ];
+  return `
+    <section class="school-collective" data-school-collective data-active-age="${defaultAge}">
+      <header class="school-top">
+        <a class="school-brand" href="escola.html" aria-label="Raizes e Saberes">
+          <img src="logo-app.png" alt="Raizes e Saberes Educacional" onerror="this.hidden=true" />
+        </a>
+        <div class="school-identity">
+          <h1>${institution.school_name}</h1>
+          <strong>${institution.education_stage}</strong>
+          <span>${institution.municipality_name}</span>
+        </div>
+        <div class="school-logo-slot">
+          ${institution.school_logo ? `<img src="${institution.school_logo}" alt="Logomarca da escola" />` : `<span>LOGOMARCA<br>DA ESCOLA</span>`}
+        </div>
+      </header>
+      <nav class="school-main-nav" aria-label="Navegacao coletiva da escola">
+        ${navItems
+          .map(([key, label, href, icon]) =>
+            key === "sair"
+              ? `<button type="button" data-platform-logout>${renderSchoolIcon(icon)} ${label}</button>`
+              : `<a class="${key === "inicio" ? "is-active" : ""}" href="${href}">${renderSchoolIcon(icon)} ${label}</a>`
+          )
+          .join("")}
+      </nav>
+      <main class="school-dashboard-grid">
+        <section class="school-welcome-card">
+          <div>
+            <h2>Bem-vindos a ${institution.school_name}!</h2>
+            <p>Escolha sua idade e comece uma nova descoberta.</p>
+          </div>
+          <img src="assets/home-official/hero_children.png" alt="" onerror="this.hidden=true" />
+        </section>
+        <section id="desafio-do-dia" class="school-live-slot" data-school-slot="challenge">${renderSchoolChallenge(activeAge)}</section>
+        <section class="school-age-filter" aria-label="Escolha a idade">
+          ${Object.entries(ages)
+            .map(
+              ([age, item]) => `
+                <button class="is-${item.accent} ${age === defaultAge ? "is-active" : ""}" type="button" data-school-age="${age}">
+                  ${renderSchoolIcon(item.icon)}
+                  <strong>${item.label}</strong>
+                </button>
+              `
+            )
+            .join("")}
+        </section>
+        <section class="school-panel school-games-panel">
+          <div class="school-panel-head">
+            <h2>${renderSchoolIcon("game")} Jogar e Descobrir</h2>
+            <a data-school-link="games" href="jogos.html?idade=${defaultAge}">VER TODOS &gt;</a>
+          </div>
+          <div class="school-game-grid" data-school-slot="games">${renderSchoolGames(activeAge)}</div>
+        </section>
+        <section class="school-panel school-library-panel">
+          <div class="school-panel-head">
+            <h2>${renderSchoolIcon("book")} Biblioteca Viva</h2>
+            <a data-school-link="books" href="biblioteca.html?idade=${defaultAge}">VER TODOS &gt;</a>
+          </div>
+          <div class="school-book-grid" data-school-slot="books">${renderSchoolBooks(activeAge)}</div>
+        </section>
+        <aside class="school-panel school-suggestions-panel">
+          <div class="school-panel-head">
+            <h2>Sugestoes da Professora</h2>
+          </div>
+          <div class="school-suggestion-list" data-school-slot="suggestions">${renderSchoolSuggestions(activeAge)}</div>
+        </aside>
+        <section class="school-panel school-info-panel">
+          <div class="school-panel-head">
+            <h2>Informacoes da Escola</h2>
+          </div>
+          <div class="school-info-grid" data-school-slot="info">${renderSchoolInfo(activeAge)}</div>
+        </section>
+        <figure class="school-illustration" aria-hidden="true">
+          <img src="assets/home-official/banner_jardim.png" alt="" onerror="this.hidden=true" />
+        </figure>
+      </main>
+    </section>
+  `;
+};
+
+const initSchoolCollectiveDashboard = () => {
+  const root = document.querySelector("[data-school-collective]");
+  if (!root) return;
+  const slots = {
+    challenge: root.querySelector('[data-school-slot="challenge"]'),
+    games: root.querySelector('[data-school-slot="games"]'),
+    books: root.querySelector('[data-school-slot="books"]'),
+    suggestions: root.querySelector('[data-school-slot="suggestions"]'),
+    info: root.querySelector('[data-school-slot="info"]'),
+  };
+  const renderAge = (age) => {
+    const ageData = schoolCollectiveData.ages[age] || schoolCollectiveData.ages[schoolCollectiveData.defaultAge];
+    root.dataset.activeAge = age;
+    root.querySelectorAll("[data-school-age]").forEach((button) => button.classList.toggle("is-active", button.dataset.schoolAge === age));
+    if (slots.challenge) slots.challenge.innerHTML = renderSchoolChallenge(ageData);
+    if (slots.games) slots.games.innerHTML = renderSchoolGames(ageData);
+    if (slots.books) slots.books.innerHTML = renderSchoolBooks(ageData);
+    if (slots.suggestions) slots.suggestions.innerHTML = renderSchoolSuggestions(ageData);
+    if (slots.info) slots.info.innerHTML = renderSchoolInfo(ageData);
+    root.querySelector('[data-school-link="games"]')?.setAttribute("href", `jogos.html?idade=${age}`);
+    root.querySelector('[data-school-link="books"]')?.setAttribute("href", `biblioteca.html?idade=${age}`);
+  };
+  root.addEventListener("click", (event) => {
+    const button = event.target.closest?.("[data-school-age]");
+    if (!button) return;
+    event.preventDefault();
+    renderAge(button.dataset.schoolAge || schoolCollectiveData.defaultAge);
   });
 };
 
@@ -5696,6 +6024,12 @@ const modules = {
     subtitle: "QG da Plataforma",
     code: "ADMIN-TI",
     html: renderAdminDashboard(),
+  },
+  escolaColetiva: {
+    title: "Ambiente Coletivo da Escola",
+    subtitle: "Homologacao Admin/TI",
+    code: "ESCOLA-COLETIVA-V1",
+    html: renderSchoolCollectiveDashboard(),
   },
   aluno: {
     title: "Dashboard do Aluno",
@@ -6727,6 +7061,7 @@ const environments = {
 const moduleEnvironment = {
   plataforma: "plataforma",
   admin: "admin",
+  escolaColetiva: "admin",
   aluno: "aluno",
   alunoAtividades: "aluno",
   alunoAtividade: "aluno",
@@ -10082,6 +10417,16 @@ const renderAppPage = () => {
       document.querySelector(".admin-workspace")?.classList.add("is-mounted");
     });
     initAdminWorkspace();
+    return;
+  }
+
+  if (activeKey === "escolaColetiva") {
+    mount.innerHTML = activeModule.html;
+    initPlatformLogout();
+    initSchoolCollectiveDashboard();
+    requestAnimationFrame(() => {
+      document.querySelector("[data-school-collective]")?.classList.add("is-mounted");
+    });
     return;
   }
 

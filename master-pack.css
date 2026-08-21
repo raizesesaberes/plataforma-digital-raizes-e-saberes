@@ -15324,3 +15324,688 @@ td {
     flex-direction: column;
   }
 }
+
+.school-collective {
+  min-height: 100vh;
+  padding: 28px 34px 32px;
+  background:
+    radial-gradient(circle at 78% 18%, rgba(239, 130, 28, 0.08), transparent 30%),
+    linear-gradient(180deg, #ffffff 0%, #f9f8f3 100%);
+  color: #10231f;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.school-collective * {
+  box-sizing: border-box;
+}
+
+.school-top,
+.school-main-nav,
+.school-dashboard-grid {
+  width: min(100%, 1620px);
+  margin: 0 auto;
+}
+
+.school-top {
+  display: grid;
+  grid-template-columns: 210px 1fr minmax(160px, 240px);
+  gap: 34px;
+  align-items: center;
+  padding-bottom: 24px;
+}
+
+.school-brand {
+  display: flex;
+  align-items: center;
+  min-height: 86px;
+  padding-right: 28px;
+  border-right: 2px solid rgba(10, 59, 45, 0.18);
+}
+
+.school-brand img {
+  display: block;
+  width: min(170px, 100%);
+  height: auto;
+}
+
+.school-identity h1 {
+  margin: 0 0 6px;
+  color: #07582f;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: clamp(2rem, 3vw, 2.9rem);
+  line-height: 1.02;
+  text-transform: uppercase;
+}
+
+.school-identity strong,
+.school-identity span {
+  display: block;
+  color: #475569;
+  font-size: 1.1rem;
+  line-height: 1.45;
+  text-transform: uppercase;
+}
+
+.school-logo-slot {
+  display: grid;
+  min-height: 76px;
+  place-items: center;
+  border: 1.5px dashed rgba(8, 118, 55, 0.55);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.66);
+  color: #087637;
+  font-weight: 800;
+  text-align: center;
+}
+
+.school-logo-slot img {
+  max-width: 100%;
+  max-height: 70px;
+  object-fit: contain;
+}
+
+.school-main-nav {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(8, 63, 49, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 45px rgba(10, 42, 30, 0.06);
+}
+
+.school-main-nav a,
+.school-main-nav button {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 0;
+  border-right: 1px solid rgba(8, 63, 49, 0.12);
+  background: transparent;
+  color: #14231e;
+  font: inherit;
+  font-weight: 900;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.school-main-nav a:last-child,
+.school-main-nav button:last-child {
+  border-right: 0;
+}
+
+.school-main-nav .is-active {
+  margin: 4px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #087637, #045428);
+  color: #fff;
+}
+
+.school-main-nav button {
+  cursor: pointer;
+}
+
+.school-icon {
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  border-radius: 10px;
+  background: #eaf6ed;
+  color: #086333;
+  font-size: 0.8rem;
+  font-weight: 950;
+}
+
+.school-icon-game {
+  background: #efe8ff;
+  color: #5b35c8;
+}
+
+.school-icon-star {
+  background: #fff2cf;
+  color: #df7b00;
+}
+
+.school-icon-book {
+  background: #e6f1ff;
+  color: #075dc2;
+}
+
+.school-icon-user {
+  background: #e7f7f7;
+  color: #08707a;
+}
+
+.school-icon-exit {
+  background: #fff0f3;
+  color: #d81548;
+}
+
+.school-dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+  gap: 24px;
+  padding-top: 24px;
+}
+
+.school-welcome-card,
+.school-challenge-card,
+.school-panel,
+.school-illustration {
+  border: 1px solid rgba(8, 63, 49, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 16px 38px rgba(10, 42, 30, 0.07);
+}
+
+.school-welcome-card {
+  position: relative;
+  display: grid;
+  min-height: 202px;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 45%);
+  align-items: end;
+  overflow: hidden;
+  padding: 42px 38px;
+  background:
+    linear-gradient(90deg, rgba(226, 248, 244, 0.96), rgba(255, 255, 255, 0.64)),
+    url("assets/home-official/banner_jardim.png") center/cover;
+}
+
+.school-welcome-card h2 {
+  margin: 0 0 10px;
+  color: #07582f;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: clamp(1.7rem, 2.4vw, 2.35rem);
+  line-height: 1.08;
+  text-transform: uppercase;
+}
+
+.school-welcome-card p {
+  max-width: 620px;
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.school-welcome-card img {
+  align-self: end;
+  justify-self: end;
+  max-width: 100%;
+  max-height: 190px;
+  object-fit: contain;
+}
+
+.school-live-slot {
+  min-width: 0;
+}
+
+.school-challenge-card {
+  display: grid;
+  min-height: 202px;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 40%);
+  align-items: center;
+  gap: 20px;
+  overflow: hidden;
+  padding: 26px 28px;
+  background: linear-gradient(135deg, #fffdf2, #f9f0da);
+}
+
+.school-challenge-card span {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #087637;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.school-challenge-card h2 {
+  margin: 18px 0 8px;
+  color: #07582f;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: clamp(1.35rem, 2vw, 2rem);
+  text-transform: uppercase;
+}
+
+.school-challenge-card p {
+  margin: 0 0 22px;
+  color: #1f2937;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.school-challenge-card img {
+  width: 100%;
+  height: 180px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.school-primary-action,
+.school-game-card a,
+.school-book-card a,
+.school-suggestion-card a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 22px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0b7a3b, #055326);
+  color: #fff;
+  font-weight: 950;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.school-primary-action span {
+  color: inherit;
+  font-size: 0.72rem;
+}
+
+.school-age-filter {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.school-age-filter button {
+  display: flex;
+  min-height: 70px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 1px solid rgba(8, 63, 49, 0.14);
+  border-radius: 16px;
+  background: #fff;
+  color: #0b5831;
+  cursor: pointer;
+  font: inherit;
+  font-size: 1.15rem;
+  font-weight: 950;
+  box-shadow: 0 14px 34px rgba(10, 42, 30, 0.05);
+}
+
+.school-age-filter .is-purple {
+  color: #5b35c8;
+}
+
+.school-age-filter .is-orange {
+  color: #e06f09;
+}
+
+.school-age-filter button.is-active {
+  border-color: rgba(8, 118, 55, 0.72);
+  background: linear-gradient(180deg, #f4fff7, #fff);
+  box-shadow: inset 0 0 0 1px rgba(8, 118, 55, 0.32), 0 18px 34px rgba(8, 118, 55, 0.12);
+}
+
+.school-panel {
+  min-width: 0;
+  padding: 22px;
+}
+
+.school-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.school-panel-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: #07582f;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 1.15rem;
+  text-transform: uppercase;
+}
+
+.school-panel-head a {
+  color: #0058b9;
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.school-games-panel,
+.school-info-panel {
+  grid-column: span 1;
+}
+
+.school-library-panel,
+.school-suggestions-panel {
+  grid-column: span 1;
+}
+
+.school-game-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.school-game-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(91, 53, 200, 0.13);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.school-game-card img {
+  width: 100%;
+  aspect-ratio: 1 / 0.82;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #f3f0ff;
+}
+
+.school-game-card strong,
+.school-book-card strong {
+  color: #17315f;
+  font-weight: 950;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.school-game-card p {
+  flex: 1;
+  margin: 0;
+  color: #374151;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.school-game-card a,
+.school-suggestion-card.is-purple a {
+  background: linear-gradient(135deg, #7a4dd6, #4f2eb3);
+}
+
+.school-book-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.school-book-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid rgba(0, 88, 185, 0.12);
+  border-radius: 14px;
+  background: #fff;
+  text-align: center;
+}
+
+.school-book-card img {
+  width: 100%;
+  max-width: 132px;
+  aspect-ratio: 0.72 / 1;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #e6f1ff;
+}
+
+.school-book-card span {
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.school-book-card a {
+  width: 100%;
+  background: linear-gradient(135deg, #177cd3, #075db5);
+}
+
+.school-suggestion-list {
+  display: grid;
+  gap: 12px;
+}
+
+.school-suggestion-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 16px;
+  align-items: center;
+  min-height: 78px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #fff6fa;
+  border: 1px solid rgba(216, 21, 72, 0.12);
+}
+
+.school-suggestion-card span {
+  color: #d81548;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.school-suggestion-card p {
+  margin: 0;
+  color: #24302c;
+  font-weight: 700;
+}
+
+.school-suggestion-card a {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  background: linear-gradient(135deg, #ef4e85, #d81548);
+}
+
+.school-suggestion-card.is-orange {
+  background: #fff7eb;
+  border-color: rgba(224, 111, 9, 0.16);
+}
+
+.school-suggestion-card.is-orange span {
+  color: #e06f09;
+}
+
+.school-suggestion-card.is-green {
+  background: #f1fbf4;
+  border-color: rgba(8, 118, 55, 0.16);
+}
+
+.school-suggestion-card.is-green span {
+  color: #087637;
+}
+
+.school-info-panel {
+  grid-column: 1 / span 1;
+}
+
+.school-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.school-info-card {
+  min-height: 104px;
+  padding: 18px;
+  border: 1px solid rgba(8, 63, 49, 0.12);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.school-info-card span {
+  display: block;
+  margin-bottom: 10px;
+  color: #087637;
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+
+.school-info-card strong {
+  display: block;
+  color: #07582f;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.school-info-card p {
+  margin: 8px 0 0;
+  color: #374151;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.school-info-card.is-orange span {
+  color: #e06f09;
+}
+
+.school-illustration {
+  display: flex;
+  min-height: 148px;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0;
+  background: linear-gradient(180deg, #e9f8ff, #f6fff2);
+}
+
+.school-illustration img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.school-empty {
+  display: grid;
+  min-height: 142px;
+  place-items: center;
+  gap: 8px;
+  padding: 22px;
+  border: 1px dashed rgba(8, 63, 49, 0.22);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #64748b;
+  text-align: center;
+}
+
+.school-empty strong {
+  color: #07582f;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 1.05rem;
+}
+
+.school-empty span {
+  max-width: 360px;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+@media (max-width: 1180px) {
+  .school-collective {
+    padding: 22px;
+  }
+
+  .school-top {
+    grid-template-columns: 170px 1fr;
+  }
+
+  .school-logo-slot {
+    grid-column: 1 / -1;
+    min-height: 58px;
+  }
+
+  .school-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .school-game-grid,
+  .school-book-grid,
+  .school-info-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .school-top {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .school-brand {
+    min-height: auto;
+    padding-right: 0;
+    border-right: 0;
+  }
+
+  .school-main-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .school-welcome-card,
+  .school-challenge-card {
+    grid-template-columns: 1fr;
+  }
+
+  .school-welcome-card img,
+  .school-challenge-card img {
+    justify-self: center;
+  }
+
+  .school-age-filter,
+  .school-game-grid,
+  .school-book-grid,
+  .school-info-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .school-collective {
+    padding: 14px;
+  }
+
+  .school-main-nav,
+  .school-age-filter,
+  .school-game-grid,
+  .school-book-grid,
+  .school-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .school-main-nav a,
+  .school-main-nav button {
+    justify-content: flex-start;
+    padding: 0 16px;
+  }
+
+  .school-welcome-card,
+  .school-challenge-card,
+  .school-panel {
+    padding: 18px;
+  }
+
+  .school-suggestion-card {
+    grid-template-columns: 1fr;
+  }
+
+  .school-suggestion-card a {
+    grid-row: auto;
+    grid-column: auto;
+  }
+}
