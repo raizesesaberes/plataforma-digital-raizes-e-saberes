@@ -5129,6 +5129,43 @@ h3 {
   gap: 16px;
 }
 
+.login-access-map {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 24px;
+  padding: 16px;
+  border: 1px solid rgba(6, 70, 47, 0.12);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #fbfdfb, #f2faf4);
+}
+
+.login-access-map h2 {
+  margin: 0;
+  color: #063f2a;
+  font-family: Poppins, sans-serif;
+  font-size: 0.88rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.login-access-map div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.login-access-map span {
+  min-height: 38px;
+  border: 1px solid rgba(6, 70, 47, 0.12);
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: #fff;
+  color: #22342b;
+  font-size: 0.78rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
 .login-access-level {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -5273,6 +5310,10 @@ h3 {
   }
 
   .login-access-level {
+    grid-template-columns: 1fr;
+  }
+
+  .login-access-map div {
     grid-template-columns: 1fr;
   }
 

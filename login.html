@@ -22,30 +22,26 @@
         </a>
 
         <div class="login-copy">
-          <p>Ambiente Demonstrativo</p>
-          <h1 id="login-title">Escolha seu acesso</h1>
-          <span data-login-access-copy>Aluno, Professor e Admin entram pela mesma tela. O Supabase confirma o nivel real pelo token autenticado.</span>
+          <p>Ecossistema Raizes e Saberes</p>
+          <h1 id="login-title">Um unico acesso. Cada perfil no seu espaco.</h1>
+          <span data-login-access-copy>Entre com seu usuario e senha. A Plataforma Raizes e Saberes abrira automaticamente o ambiente correspondente ao seu perfil.</span>
         </div>
 
+        <section class="login-access-map" aria-label="Acessos da plataforma">
+          <h2>Acessos da Plataforma</h2>
+          <div>
+            <span>Administracao / TI</span>
+            <span>Professor</span>
+            <span>Aluno &amp; Familia</span>
+            <span>Escola</span>
+            <span>Educacao Infantil</span>
+          </div>
+        </section>
+
         <form class="login-form" data-login-form novalidate>
-          <fieldset class="login-access-level" aria-label="Nivel de acesso">
-            <legend>Nivel de acesso</legend>
-            <label>
-              <input type="radio" name="access_level" value="aluno" required />
-              <span><strong>Aluno</strong><small>Entrar no ambiente do estudante.</small></span>
-            </label>
-            <label>
-              <input type="radio" name="access_level" value="professor" required />
-              <span><strong>Professor</strong><small>Entrar no ambiente pedagogico.</small></span>
-            </label>
-            <label>
-              <input type="radio" name="access_level" value="admin" required />
-              <span><strong>Admin</strong><small>Entrar no QG Admin / TI.</small></span>
-            </label>
-          </fieldset>
           <label>
-            <span>E-mail</span>
-            <input type="email" name="email" autocomplete="username" placeholder="demo@raizesesaberes.com.br" required />
+            <span>E-mail / Usuario</span>
+            <input type="email" name="email" autocomplete="username" placeholder="usuario@raizesesaberes.com.br" required />
           </label>
           <label>
             <span>Senha</span>

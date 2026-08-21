@@ -3,6 +3,7 @@
   "rewrites": [
     { "source": "/admin", "destination": "/admin.html" },
     { "source": "/escola", "destination": "/escola.html" },
+    { "source": "/educacao-infantil", "destination": "/educacao-infantil.html" },
     { "source": "/professor", "destination": "/professor.html" },
     { "source": "/familia", "destination": "/familia.html" },
     { "source": "/professor/turma", "destination": "/professor-turma.html" },

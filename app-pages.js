@@ -8,6 +8,8 @@ const platformSessionKey = "raizes:supabase-auth-session";
 const platformRoles = {
   professor: ["professor", "teacher"],
   aluno: ["aluno", "student"],
+  escola: ["escola", "school"],
+  educacao_infantil: ["educacao_infantil", "educacao-infantil", "educacaoinfantil", "infantil", "early_childhood"],
   gestor: ["gestor", "gestor_escolar", "manager"],
   coordenador: ["coordenador", "coordenador_pedagogico", "coordinator"],
   admin: ["admin", "administrador", "administrador_nacional"],
@@ -15,13 +17,16 @@ const platformRoles = {
 const platformRoleHome = {
   professor: "/professor",
   aluno: "/aluno",
+  escola: "/escola",
+  educacao_infantil: "/educacao-infantil",
   gestor: "gestor.html",
   coordenador: "/professor",
   admin: "/admin",
 };
 const routeAccessRules = {
   admin: ["admin"],
-  escolaColetiva: ["admin"],
+  escolaColetiva: ["escola"],
+  educacaoInfantil: ["educacao_infantil"],
   professor: ["professor", "gestor", "coordenador", "admin"],
   professorTurma: ["professor", "gestor", "coordenador", "admin"],
   professorAluno: ["professor", "gestor", "coordenador", "admin"],
@@ -48,6 +53,7 @@ const protectedRouteKeyByPage = {
   "professor-aluno.html": "professorAluno",
   "admin.html": "admin",
   "escola.html": "escolaColetiva",
+  "educacao-infantil.html": "educacaoInfantil",
   "aluno.html": "aluno",
   "aluno-atividades.html": "alunoAtividades",
   "aluno-atividade.html": "alunoAtividade",
@@ -70,6 +76,7 @@ const protectedRouteKeyByPage = {
   "professor/alunos": "professorAluno",
   admin: "admin",
   escola: "escolaColetiva",
+  "educacao-infantil": "educacaoInfantil",
   aluno: "aluno",
   "aluno/atividades": "alunoAtividades",
   "aluno/atividade": "alunoAtividade",
@@ -241,6 +248,7 @@ const ecosystemModules = [
   ["plataforma.html", "Inicio"],
   ["admin.html", "Admin / TI"],
   ["escola.html", "Escola"],
+  ["educacao-infantil.html", "Educacao Infantil"],
   ["aluno.html", "Aluno"],
   ["arvore.html", "Minha Arvore"],
   ["missao.html", "Missao do Dia"],
@@ -2272,6 +2280,7 @@ const routeKeyByHref = {
   "book-viewer.html": "viewer",
   "admin.html": "admin",
   "escola.html": "escolaColetiva",
+  "educacao-infantil.html": "educacaoInfantil",
   "professor.html": "professor",
   "professor-turma.html": "professorTurma",
   "professor-aluno.html": "professorAluno",
@@ -4691,7 +4700,8 @@ const adminPlatformTabs = [
   { label: "Site", href: "index.html", status: "publico" },
   { label: "Inicio", href: "plataforma.html", status: "pronto" },
   { label: "Admin / TI", view: "inicio", status: "ativo" },
-  { label: "Escola Coletiva", href: "escola.html", status: "homologar" },
+  { label: "Escola", href: "escola.html", status: "homologar" },
+  { label: "Educacao Infantil", href: "educacao-infantil.html", status: "homologar" },
   { label: "Aluno", href: "aluno.html", status: "homologar" },
   { label: "Minha Arvore", href: "arvore.html", status: "pronto" },
   { label: "Missao do Dia", href: "missao.html", status: "pronto" },
@@ -5113,16 +5123,62 @@ const renderSchoolInfo = (ageData) => {
     .join("");
 };
 
-const renderSchoolCollectiveDashboard = () => {
+const renderSchoolInstitutionalDashboard = () => {
+  const { institution, ages } = schoolCollectiveData;
+  const activeAge = ages[schoolCollectiveData.defaultAge] || Object.values(ages)[0];
+  return `
+    <section class="school-institutional" data-school-institutional>
+      <header class="school-context-strip">
+        <div>
+          <span>Acesso Escola</span>
+          <h1>${institution.school_name}</h1>
+          <p>${institution.education_stage} - ${institution.municipality_name}</p>
+        </div>
+        <div class="school-logo-slot">
+          ${institution.school_logo ? `<img src="${institution.school_logo}" alt="Logomarca da escola" />` : `<span>LOGOMARCA<br>DA ESCOLA</span>`}
+        </div>
+      </header>
+      <section class="school-institutional-hero">
+        <div>
+          <span>O que esta acontecendo na minha escola?</span>
+          <h2>Informacoes, comunicados e proximos acontecimentos em um so lugar.</h2>
+          <p>Este ambiente concentra a identidade institucional da unidade, comunicados, eventos, lembretes e sugestoes publicadas pela equipe escolar.</p>
+          <a href="educacao-infantil.html">Entrar na Educacao Infantil</a>
+        </div>
+        <img src="assets/home-official/banner_jardim.png" alt="" onerror="this.hidden=true" />
+      </section>
+      <div class="school-institutional-grid">
+        <section class="school-panel school-info-panel">
+          <div class="school-panel-head"><h2>Informacoes da Escola</h2></div>
+          <div class="school-info-grid">${renderSchoolInfo(activeAge)}</div>
+        </section>
+        <section class="school-panel school-suggestions-panel">
+          <div class="school-panel-head"><h2>Sugestoes da Professora</h2></div>
+          <div class="school-suggestion-list">${renderSchoolSuggestions(activeAge)}</div>
+        </section>
+        <section class="school-panel school-access-panel">
+          <div class="school-panel-head"><h2>Ambientes Vinculados</h2></div>
+          <article>
+            <strong>Educacao Infantil</strong>
+            <p>Ambiente coletivo pedagogico para desafios, jogos, leitura e experiencias por idade.</p>
+            <a href="educacao-infantil.html">Espaco Educacao Infantil</a>
+          </article>
+        </section>
+      </div>
+    </section>
+  `;
+};
+
+const renderEarlyChildhoodDashboard = () => {
   const { institution, ages, defaultAge } = schoolCollectiveData;
   const activeAge = ages[defaultAge] || Object.values(ages)[0];
   return `
     <section class="school-collective" data-school-collective data-active-age="${defaultAge}">
       <header class="school-context-strip">
         <div>
-          <span>Ambiente coletivo da escola</span>
-          <h1>${institution.school_name}</h1>
-          <p>${institution.education_stage} - ${institution.municipality_name}</p>
+          <span>Acesso Educacao Infantil</span>
+          <h1>Educacao Infantil</h1>
+          <p>${institution.school_name} - ${institution.municipality_name}</p>
         </div>
         <div class="school-logo-slot">
           ${institution.school_logo ? `<img src="${institution.school_logo}" alt="Logomarca da escola" />` : `<span>LOGOMARCA<br>DA ESCOLA</span>`}
@@ -6012,10 +6068,16 @@ const modules = {
     html: renderAdminDashboard(),
   },
   escolaColetiva: {
-    title: "Ambiente Coletivo da Escola",
-    subtitle: "Homologacao Admin/TI",
-    code: "ESCOLA-COLETIVA-V1",
-    html: renderSchoolCollectiveDashboard(),
+    title: "Acesso Escola",
+    subtitle: "Institucional e Comunicacao",
+    code: "ESCOLA-INSTITUCIONAL-V1",
+    html: renderSchoolInstitutionalDashboard(),
+  },
+  educacaoInfantil: {
+    title: "Educacao Infantil",
+    subtitle: "Ambiente coletivo pedagogico",
+    code: "EDUCACAO-INFANTIL-V1",
+    html: renderEarlyChildhoodDashboard(),
   },
   aluno: {
     title: "Dashboard do Aluno",
@@ -6787,6 +6849,7 @@ const environments = {
       ["atividades", "Atividades Imprimiveis", "atividades.html"],
       ["aluno", "Aluno", "aluno.html"],
       ["escolaColetiva", "Escola", "escola.html"],
+      ["educacaoInfantil", "Educacao Infantil", "educacao-infantil.html"],
       ["familia", "Familia", "familia.html"],
       ["secretaria", "Secretaria", "secretaria.html"],
       ["gestor", "Gestor", "gestor.html"],
@@ -7049,6 +7112,7 @@ const moduleEnvironment = {
   plataforma: "plataforma",
   admin: "admin",
   escolaColetiva: "plataforma",
+  educacaoInfantil: "plataforma",
   aluno: "aluno",
   alunoAtividades: "aluno",
   alunoAtividade: "aluno",
