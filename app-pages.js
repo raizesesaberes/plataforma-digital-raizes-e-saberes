@@ -3059,22 +3059,22 @@ const renderStudentPresentationDashboard = () => `
 `;
 
 const teacherWorkspaceNav = [
-  ["heading", "Principal"],
-  ["inicio", "Inicio"],
-  ["turmas", "Minhas Turmas"],
+  ["heading", "Minhas Turmas"],
+  ["inicio", "Inicio", "home"],
+  ["turmas", "Minhas Turmas", "users"],
   ["heading", "Conteudos"],
-  ["biblioteca", "Biblioteca Viva"],
-  ["atividades", "Atividades Imprimiveis"],
-  ["experiencias", "Experiencias"],
-  ["jogos", "Jogos"],
+  ["biblioteca", "Biblioteca Viva", "book"],
+  ["atividades", "Atividades Imprimiveis", "doc"],
+  ["experiencias", "Experiencias", "flask"],
+  ["jogos", "Jogos", "game"],
   ["heading", "Trabalho Pedagogico"],
-  ["planejamentos", "Planejamentos"],
-  ["avaliacoes", "Avaliacoes"],
-  ["relatorios", "Relatorios"],
+  ["planejamentos", "Planejamentos", "calendar"],
+  ["avaliacoes", "Avaliacoes", "check"],
+  ["relatorios", "Relatorios", "chart"],
   ["heading", "Formacao"],
-  ["universidade", "Universidade"],
+  ["universidade", "Universidade", "cap"],
   ["heading", "Sistema"],
-  ["configuracoes", "Configuracoes"],
+  ["configuracoes", "Configuracoes", "gear"],
 ];
 
 const teacherWorkspaceClasses = [
@@ -3114,8 +3114,8 @@ const getTeacherBibliotecaResources = () => {
 
 const renderTeacherCard = () => `
   <article class="tw-teacher-card">
-    <div><span>Professora</span><strong>${pilotProfiles.teacher.displayName}</strong><small>Educacao Infantil · ${pilotProfiles.class.name}</small></div>
-    <b>Hoje</b>
+    <img src="logo-sidebar-dark.png" alt="Raizes e Saberes" onerror="this.hidden=true" />
+    <div><span>Professora</span><strong>${pilotProfiles.teacher.displayName}</strong><small>Educacao Infantil</small></div>
   </article>
 `;
 
@@ -3134,25 +3134,24 @@ const renderTeacherSidebar = (activeView = "inicio") => `
     ${renderTeacherCard()}
     <nav aria-label="Menu do professor">
       ${teacherWorkspaceNav
-        .map(([key, label]) =>
+        .map(([key, label, icon]) =>
           key === "heading"
             ? `<strong class="tw-nav-heading">${label}</strong>`
-            : `<button type="button" class="${key === activeView ? "is-active" : ""}" data-teacher-view="${key}">${label}</button>`
+            : `<button type="button" class="${key === activeView ? "is-active" : ""}" data-teacher-view="${key}"><i data-icon="${icon || "dot"}"></i><span>${label}</span></button>`
         )
         .join("")}
     </nav>
-    <button class="platform-logout-button" type="button" data-platform-logout>SAIR</button>
+    <button class="platform-logout-button" type="button" data-platform-logout><i data-icon="logout"></i><span>SAIR</span></button>
   </aside>
 `;
 
 const renderTeacherTopbar = () => `
   <header class="tw-topbar" aria-label="Acoes do professor">
-    <label><span>Pesquisar no ambiente da professora</span><input type="search" data-teacher-search placeholder="Buscar turmas, conteudos, atividades..." /></label>
+    <label><span>Pesquisar</span><input type="search" data-teacher-search placeholder="Buscar conteudos, alunos, turmas..." /></label>
     <div class="tw-top-actions" aria-label="Acoes rapidas">
-      <button type="button" data-teacher-view="notificacoes">Notificacoes</button>
-      <button type="button" data-teacher-view="calendario">Calendario</button>
-      <button type="button" data-teacher-view="mensagens">Mensagens</button>
-      <button type="button" data-teacher-view="perfil">Perfil</button>
+      <button type="button" data-teacher-view="notificacoes" aria-label="Notificacoes"><i data-icon="bell"></i><b hidden>0</b></button>
+      <button type="button" data-teacher-view="mensagens" aria-label="Mensagens"><i data-icon="mail"></i><b hidden>0</b></button>
+      <button type="button" data-teacher-view="perfil" class="tw-user-chip"><span>${getTeacherFirstName()}</span></button>
     </div>
   </header>
 `;
@@ -3168,9 +3167,8 @@ const renderPlanningCard = (lesson) => `
 
 const renderClassCard = (classItem) => `
   <article class="tw-class-card" data-teacher-search-item>
-    <div><strong>${classItem.name}</strong><span>${classItem.students} aluno</span></div>
-    <i><b style="width:${classItem.progress}%"></b></i>
-    <small>${classItem.progress}% do percurso · ${classItem.alert}</small>
+    <div><strong>${classItem.name}</strong><span>Turma vinculada</span></div>
+    <small>Os indicadores reais da turma aparecerao aqui quando houver dados publicados.</small>
   </article>
 `;
 
@@ -3931,26 +3929,134 @@ const renderUniversalActivityMotorPage = () => {
   `;
 };
 
-const renderTeacherPilotCards = () => `
-  <section class="teacher-home-grid" aria-label="Areas principais da professora">
+const premiumIcon = (name) => `<i class="premium-icon" data-icon="${name}"></i>`;
+
+const renderPremiumEmpty = (title, text = "", tone = "green") => `
+  <div class="premium-empty is-${tone}">
+    <strong>${title}</strong>
+    ${text ? `<span>${text}</span>` : ""}
+  </div>
+`;
+
+const renderTeacherQuickActions = () => `
+  <section class="teacher-side-card teacher-quick-actions" aria-label="Acessos rapidos">
+    <h2>Acessos Rapidos</h2>
     ${[
-      { title: "MINHAS TURMAS", detail: `${pilotProfiles.class.name} preparado para acompanhamento pedagogico.`, action: "VER MINHAS TURMAS", view: "turmas", feature: true },
-      { title: "ATIVIDADES", detail: "Atalhos para atividades imprimiveis e conteudos que podem apoiar a rotina da turma.", action: "ABRIR ATIVIDADES", view: "atividades" },
-      { title: "ACOMPANHAMENTO", detail: "Producoes, progresso e historico serao acessados dentro de cada turma e aluno.", action: "ACOMPANHAR TURMA", view: "turmas" },
-      { title: "PLANEJAMENTO", detail: "Organize as proximas propostas pedagogicas da semana.", action: "VER PLANEJAMENTOS", view: "planejamentos" },
-      { title: "CONTEUDOS", detail: "Biblioteca Viva, atividades imprimiveis, experiencias e jogos em um fluxo pedagogico.", action: "EXPLORAR CONTEUDOS", view: "biblioteca" },
+      { label: "ATRIBUIR ATIVIDADE", icon: "clipboard", view: "atividades", tone: "green" },
+      { label: "ABRIR MINHA TURMA", icon: "users", view: "turmas", tone: "lime" },
+      { label: "CRIAR PLANEJAMENTO", icon: "doc", view: "planejamentos", tone: "blue" },
+      { label: "VER PRODUCOES", icon: "portfolio", view: "alunos", tone: "purple" },
+      { label: "ABRIR BIBLIOTECA", icon: "book", view: "biblioteca", tone: "orange" },
+      { label: "VER RELATORIOS", icon: "chart", view: "relatorios", tone: "teal" },
     ]
-      .map(
-        (item) => `
-          <article class="teacher-home-card ${item.feature ? "teacher-home-card-feature" : ""}">
-            <span>Ambiente da professora</span>
-            <strong>${item.title}</strong>
-            <p>${item.detail}</p>
-            <button type="button" data-teacher-view="${item.view}">${item.action}</button>
-          </article>
-        `
-      )
+      .map((item) => `<button type="button" class="quick-action is-${item.tone}" data-teacher-view="${item.view}">${premiumIcon(item.icon)}<span>${item.label}</span></button>`)
       .join("")}
+  </section>
+`;
+
+const renderTeacherSideRail = () => `
+  <aside class="teacher-right-rail" aria-label="Resumo do professor">
+    ${renderTeacherQuickActions()}
+    <section class="teacher-side-card">
+      <h2>Hoje</h2>
+      ${renderPremiumEmpty("SEM COMPROMISSOS PARA HOJE", "Sua agenda pedagogica aparecera aqui quando houver eventos.", "blue")}
+    </section>
+    <section class="teacher-side-card is-clickable" data-teacher-view="notificacoes">
+      <h2>Notificacoes</h2>
+      ${renderPremiumEmpty("NENHUMA NOTIFICACAO NOVA", "Avisos importantes ficarao organizados neste painel.", "red")}
+    </section>
+    <section class="teacher-side-card is-clickable" data-teacher-view="calendario">
+      <h2>Proximos compromissos</h2>
+      ${renderPremiumEmpty("SEM COMPROMISSOS AGENDADOS", "Quando sua rotina for publicada, os proximos itens aparecerao aqui.", "blue")}
+    </section>
+    <section class="teacher-side-card is-clickable" data-teacher-view="mensagens">
+      <h2>Mensagens</h2>
+      ${renderPremiumEmpty("NENHUMA MENSAGEM NOVA", "As conversas da escola e das familias aparecerao aqui.", "teal")}
+    </section>
+  </aside>
+`;
+
+const renderTeacherMetricCard = ({ title, text, icon, tone, view }) => `
+  <button type="button" class="teacher-metric-card is-${tone}" data-teacher-view="${view}" data-teacher-search-item>
+    ${premiumIcon(icon)}
+    <span>${title}</span>
+    <strong>${text}</strong>
+  </button>
+`;
+
+const renderTeacherContentCard = ({ title, detail, icon, tone, view }) => `
+  <button type="button" class="teacher-content-card is-${tone}" data-teacher-view="${view}" data-teacher-search-item>
+    ${premiumIcon(icon)}
+    <strong>${title}</strong>
+    <small>${detail}</small>
+  </button>
+`;
+
+const renderTeacherPlanningStrip = () => `
+  <section class="teacher-premium-section">
+    <h2>Planejamento</h2>
+    <div class="teacher-planning-grid">
+      ${[
+        { title: "Planejamento da semana", detail: "Sua organizacao semanal aparecera aqui.", icon: "calendar", tone: "green", view: "planejamentos" },
+        { title: "Proximas experiencias", detail: "Novas experiencias chegam em breve.", icon: "star", tone: "blue", view: "experiencias" },
+        { title: "Avaliacoes", detail: "Nenhuma correcao pendente no momento.", icon: "check", tone: "purple", view: "avaliacoes" },
+      ].map(renderTeacherContentCard).join("")}
+    </div>
+  </section>
+`;
+
+const renderTeacherPremiumHome = () => `
+  <section class="teacher-premium-layout" data-teacher-home>
+    <main class="teacher-premium-main">
+      <section class="teacher-premium-hero">
+        <div>
+          <span>Bom dia,</span>
+          <h1>PROFESSORA ${getTeacherFirstName().toUpperCase()}</h1>
+          <p>Organize sua rotina, acompanhe sua turma e prepare novas experiencias.</p>
+        </div>
+        <div class="teacher-hero-art" aria-hidden="true">
+          <img src="assets/professor/professor-dashboard.png" alt="" loading="eager" onerror="this.hidden=true" />
+        </div>
+      </section>
+
+      <section class="teacher-class-feature" data-teacher-search-item>
+        ${premiumIcon("users")}
+        <div>
+          <span>Minhas Turmas</span>
+          <strong>${pilotProfiles.class.name}</strong>
+          <small>Os indicadores reais da turma serao exibidos quando publicados.</small>
+          <button type="button" data-teacher-view="turmas">ABRIR TURMA</button>
+        </div>
+      </section>
+
+      <section class="teacher-premium-section">
+        <h2>Acompanhamento</h2>
+        <div class="teacher-metric-grid">
+          ${[
+            { title: "Atividades pendentes", text: "NENHUMA PENDENCIA NO MOMENTO", icon: "clipboard", tone: "orange", view: "atividades" },
+            { title: "Producoes recebidas", text: "SUAS PRODUCOES RECEBIDAS APARECERAO AQUI", icon: "portfolio", tone: "purple", view: "alunos" },
+            { title: "Alunos em acompanhamento", text: "ACOMPANHAMENTO REAL EM PREPARACAO", icon: "users", tone: "green", view: "turmas" },
+            { title: "Proximas acoes", text: "SEM ACOES PROGRAMADAS AGORA", icon: "heart", tone: "red", view: "planejamentos" },
+          ].map(renderTeacherMetricCard).join("")}
+        </div>
+      </section>
+
+      <section class="teacher-premium-section">
+        <h2>Conteudos</h2>
+        <div class="teacher-content-grid">
+          ${[
+            { title: "Biblioteca Viva", detail: "Explorar conteudos", icon: "book", tone: "green", view: "biblioteca" },
+            { title: "Atividades Imprimiveis", detail: "Ver atividades", icon: "doc", tone: "purple", view: "atividades" },
+            { title: "Experiencias", detail: "Explorar experiencias", icon: "flask", tone: "teal", view: "experiencias" },
+            { title: "Jogos", detail: "Ver jogos", icon: "game", tone: "orange", view: "jogos" },
+          ].map(renderTeacherContentCard).join("")}
+        </div>
+      </section>
+
+      ${renderTeacherPlanningStrip()}
+      <main class="tw-content" data-teacher-content hidden>${renderTeacherWorkspaceView("inicio")}</main>
+    </main>
+    ${renderTeacherSideRail()}
   </section>
 `;
 
@@ -3959,20 +4065,7 @@ const renderTeacherPilotHome = () => `
     ${renderTeacherSidebar("inicio")}
     <div class="tw-main">
       ${renderTeacherTopbar()}
-      <section class="tw-hero">
-        <div>
-          <span>Ambiente Professor</span>
-          <h1>OLA, PROFESSORA ${getTeacherFirstName().toUpperCase()}!</h1>
-          <p>Este e o seu espaco de trabalho para organizar turmas, conteudos, planejamentos e acompanhamento pedagogico.</p>
-        </div>
-        <div class="tw-hero-metrics">
-          <article><strong>${teacherWorkspaceClasses.length}</strong><span>turma</span></article>
-          <article><strong>${getTeacherBibliotecaResources().books.length}</strong><span>livros</span></article>
-          <article><strong>${getTeacherBibliotecaResources().experiences.length}</strong><span>experiencias</span></article>
-        </div>
-      </section>
-      ${renderTeacherPilotCards()}
-      <main class="tw-content" data-teacher-content>${renderTeacherWorkspaceView("inicio")}</main>
+      ${renderTeacherPremiumHome()}
     </div>
   </section>
 `;
@@ -4036,52 +4129,124 @@ const renderTeacherStudentPage = () => {
   `;
 };
 
+const studentPremiumNav = [
+  ["aluno.html", "Inicio", "home"],
+  ["missao.html", "Missao do Dia", "star"],
+  ["arvore.html", "Minha Arvore", "tree"],
+  ["biblioteca.html", "Biblioteca", "book"],
+  ["jogos.html", "Jogar e Descobrir", "game"],
+  ["perfil.html", "Perfil", "user"],
+  ["familia.html", "Familia", "family"],
+];
+
+const renderStudentPremiumSidebar = () => `
+  <aside class="student-premium-sidebar" aria-label="Menu do aluno">
+    <a class="student-premium-logo" href="aluno.html" aria-label="Raizes e Saberes">
+      <img src="logo-sidebar-dark.png" alt="Raizes e Saberes" onerror="this.hidden=true" />
+    </a>
+    <nav>
+      ${studentPremiumNav
+        .map(([href, label, icon], index) => `<a class="${index === 0 ? "is-active" : ""}" href="${href}">${premiumIcon(icon)}<span>${label}</span></a>`)
+        .join("")}
+    </nav>
+    <button class="student-premium-logout" type="button" data-platform-logout>${premiumIcon("logout")}<span>SAIR</span></button>
+  </aside>
+`;
+
+const renderStudentPremiumTopbar = () => `
+  <header class="student-premium-topbar">
+    <label><span>Buscar</span><input type="search" placeholder="Buscar livros, jogos, atividades..." /></label>
+    <div>
+      <a href="perfil.html" aria-label="Abrir perfil">${studentLazyImg(pilotProfiles.student.avatar, "", "student-top-avatar")}<strong>${getStudentFirstName()}</strong></a>
+    </div>
+  </header>
+`;
+
+const renderStudentQuickRail = () => `
+  <aside class="student-right-rail" aria-label="Atalhos e recados do aluno">
+    <section class="student-side-card student-shortcuts">
+      <h2>Meus Atalhos</h2>
+      ${[
+        ["missao.html", "Continuar Atividade", "play", "green"],
+        ["arvore.html", "Ver Minha Arvore", "tree", "lime"],
+        ["biblioteca.html", "Abrir Livro", "book", "blue"],
+        ["jogos.html", "Jogar", "game", "purple"],
+        ["perfil.html", "Meu Perfil", "user", "teal"],
+      ]
+        .map(([href, label, icon, tone]) => `<a class="student-shortcut is-${tone}" href="${href}">${premiumIcon(icon)}<span>${label}</span><b>›</b></a>`)
+        .join("")}
+    </section>
+    <section class="student-side-card">
+      <h2>Minhas Conquistas</h2>
+      <div class="student-medal-placeholders" aria-hidden="true"><span></span><span></span><span></span></div>
+      <p>Continue explorando e ganhe novas conquistas!</p>
+    </section>
+    <section class="student-side-card is-pink">
+      <h2>Recado da Professora</h2>
+      ${renderPremiumEmpty("QUANDO SUA PROFESSORA ENVIAR UM RECADO, ELE APARECERA AQUI.", "", "pink")}
+    </section>
+    <section class="student-side-card is-warm">
+      <h2>Proxima Missao</h2>
+      ${renderPremiumEmpty("SUA PROXIMA MISSAO APARECERA AQUI.", "Fique ligado!", "orange")}
+    </section>
+  </aside>
+`;
+
+const renderStudentPremiumCard = ({ title, text, href, icon, tone, cta }) => `
+  <a class="student-premium-card is-${tone}" href="${href}" data-student-search-item>
+    ${premiumIcon(icon)}
+    <div><strong>${title}</strong><p>${text}</p></div>
+    <span>${cta}</span>
+  </a>
+`;
+
 const renderStudentSimpleDashboard = () => `
-  <div class="student-dashboard student-pedro-home" data-student-dashboard>
-    <section class="student-pedro-hero">
-      <div>
-        <span>Inicio</span>
-        <h1>OLA, ${getStudentFirstName().toUpperCase()}!</h1>
-        <p>Este e o seu espaco para aprender, ler, jogar e acompanhar suas conquistas.</p>
+  <section class="student-premium-workspace" data-student-dashboard>
+    ${renderStudentPremiumSidebar()}
+    <main class="student-premium-main">
+      ${renderStudentPremiumTopbar()}
+      <div class="student-premium-grid">
+        <main class="student-center">
+          <section class="student-premium-hero">
+            <div>
+              <h1>OLA, ${getStudentFirstName().toUpperCase()}!</h1>
+              <p>Vamos descobrir coisas novas hoje?</p>
+            </div>
+            ${studentLazyImg("assets/aluno/oficial-hero-aluno.png", "", "student-hero-art")}
+          </section>
+
+          <section class="student-mission-card is-mission">
+            <div class="student-card-art is-green" aria-hidden="true"></div>
+            <div>
+              <span>Missao do Dia</span>
+              <strong>SUA NOVA MISSAO</strong>
+              <p>Suas novas descobertas vao aparecer aqui quando a professora preparar algo especial para voce.</p>
+              <a href="missao.html">COMECAR</a>
+            </div>
+          </section>
+
+          <section class="student-mission-card is-continue">
+            <div class="student-card-art is-purple" aria-hidden="true"></div>
+            <div>
+              <span>Continuar</span>
+              <strong>VOCE NAO TEM NENHUMA ATIVIDADE EM ANDAMENTO.</strong>
+              <p>Quando comecar algo novo, voce podera continuar por aqui.</p>
+              <a href="missao.html">CONTINUAR</a>
+            </div>
+          </section>
+
+          <section class="student-premium-card-grid" aria-label="Areas principais do aluno">
+            ${[
+              { title: "Minha Arvore", text: "Continue aprendendo e veja sua arvore crescer.", href: "arvore.html", icon: "tree", tone: "green", cta: "VER" },
+              { title: "Meus Livros", text: "Explore seus livros favoritos.", href: "biblioteca.html", icon: "book", tone: "blue", cta: "ABRIR" },
+              { title: "Jogar e Descobrir", text: "Jogos divertidos para aprender brincando.", href: "jogos.html", icon: "game", tone: "purple", cta: "JOGAR" },
+            ].map(renderStudentPremiumCard).join("")}
+          </section>
+        </main>
+        ${renderStudentQuickRail()}
       </div>
-      ${studentLazyImg(pilotProfiles.student.avatar, "", "student-avatar")}
-      <button class="student-logout-button" type="button" data-platform-logout>SAIR</button>
-    </section>
-    <section class="student-home-grid" aria-label="Areas principais do aluno">
-      <article class="student-home-card student-home-card-feature">
-        <span>Missao do Dia</span>
-        <strong>Veja o que a professora preparou para voce.</strong>
-        <p>SUAS NOVAS DESCOBERTAS VAO APARECER AQUI.</p>
-        <a class="student-primary-action" href="missao.html">VER MINHAS MISSOES</a>
-      </article>
-      <article class="student-home-card">
-        <span>Continuar</span>
-        <strong>Nada em andamento agora.</strong>
-        <p>Quando houver uma atividade, livro, jogo ou experiencia iniciada, ela aparecera aqui.</p>
-      </article>
-      <article class="student-home-card">
-        <span>Minha Arvore</span>
-        <strong>Acompanhe suas conquistas.</strong>
-        <p>Veja seu crescimento, medalhas e progresso na jornada.</p>
-        <a class="student-primary-action" href="arvore.html">VER MINHA ARVORE</a>
-      </article>
-      <article class="student-home-card">
-        <span>Jogar e Descobrir</span>
-        <strong>Experiencias liberadas para brincar e aprender.</strong>
-        <p>Os jogos certos para sua turma aparecerao neste espaco.</p>
-        <a class="student-primary-action" href="jogos.html">JOGAR</a>
-      </article>
-      <article class="student-home-card">
-        <span>Meus Livros</span>
-        <strong>Abra a Biblioteca.</strong>
-        <p>Escolha um livro e continue sua leitura com tranquilidade.</p>
-        <a class="student-primary-action" href="biblioteca.html">ABRIR BIBLIOTECA</a>
-      </article>
-    </section>
-    <main class="student-grid student-restored-grid" aria-label="Conquistas do aluno">
-      ${renderStudentMedals(studentDashboardView.medals)}
     </main>
-  </div>
+  </section>
 `;
 
 const renderStudentActivitiesPage = () => `
@@ -4117,11 +4282,11 @@ const renderTeacherWorkspaceView = (view) => {
       <section class="tw-overview-grid">
         <div class="tw-column">
           <div class="tw-section-head"><h2>Aulas de hoje</h2><button type="button" data-teacher-view="planejamentos">Ver semana</button></div>
-          ${teacherWorkspaceLessons.map(renderLessonCard).join("")}
+          ${renderPremiumEmpty("SEM AULAS PUBLICADAS PARA HOJE", "Quando houver planejamento real, ele aparecera aqui.", "green")}
         </div>
         <div class="tw-column">
           <div class="tw-section-head"><h2>Pendencias</h2><button type="button" data-teacher-view="avaliacoes">Corrigir</button></div>
-          ${teacherWorkspaceTasks.map((task) => `<button class="tw-task-row" type="button" data-teacher-view="${task.view}"><span>${task.label}</span><strong>${task.count}</strong></button>`).join("")}
+          ${renderPremiumEmpty("NENHUMA PENDENCIA NO MOMENTO", "As pendencias reais serao exibidas quando a turma tiver registros.", "orange")}
         </div>
         <div class="tw-column">
           <div class="tw-section-head"><h2>Turmas</h2><button type="button" data-teacher-view="turmas">Abrir</button></div>
@@ -4132,31 +4297,27 @@ const renderTeacherWorkspaceView = (view) => {
     notificacoes: `
       <section class="tw-board">
         <div class="tw-section-head"><h2>Notificacoes</h2><button type="button" data-teacher-view="inicio">Voltar</button></div>
-        ${[
-          "Pedro concluiu uma producao no Motor Universal",
-          "Nova experiencia publicada na Biblioteca Viva",
-          "Familia de Pedro Henrique enviou uma mensagem",
-        ].map((title) => `<article class="tw-planning-card" data-teacher-search-item><span>Agora</span><strong>${title}</strong><small>Prioridade normal</small></article>`).join("")}
+        ${renderPremiumEmpty("NENHUMA NOTIFICACAO NOVA", "Avisos da plataforma aparecerao aqui quando forem enviados.", "red")}
       </section>
     `,
     calendario: `
       <section class="tw-board">
         <div class="tw-section-head"><h2>Calendario</h2><button type="button" data-teacher-view="planejamentos">Planejar</button></div>
-        ${teacherWorkspaceLessons.map((lesson) => `<article class="tw-lesson-card" data-teacher-search-item><span>${lesson.time}</span><div><strong>${lesson.title}</strong><small>${lesson.className} · hoje</small></div><button type="button" data-teacher-view="planejamentos">Abrir</button></article>`).join("")}
+        ${renderPremiumEmpty("SEM COMPROMISSOS PARA HOJE", "Sua agenda pedagogica aparecera aqui quando houver eventos.", "blue")}
       </section>
     `,
     mensagens: `
       <section class="tw-board">
-        <div class="tw-section-head"><h2>Mensagens</h2><button type="button">Nova mensagem</button></div>
-        ${["Coordenacao pedagogica", "Responsavel de Pedro Henrique", "Equipe escolar"].map((sender) => `<article class="tw-student-card" data-teacher-search-item><span>${sender.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span><div><strong>${sender}</strong><small>Mensagem aguardando leitura</small></div><b>1</b></article>`).join("")}
+        <div class="tw-section-head"><h2>Mensagens</h2><button type="button" data-teacher-view="inicio">Voltar</button></div>
+        ${renderPremiumEmpty("NENHUMA MENSAGEM NOVA", "As conversas da escola e das familias aparecerao aqui.", "teal")}
       </section>
     `,
     acesso: `
       <section class="tw-board tw-card-grid">
         ${[
           { title: "Abrir Biblioteca Viva", detail: "Livros, experiencias e atividades", view: "biblioteca" },
-          { title: "Corrigir avaliacoes", detail: "7 registros pendentes", view: "avaliacoes" },
-          { title: "Ver relatorios", detail: "Progresso das turmas", view: "relatorios" },
+          { title: "Corrigir avaliacoes", detail: "Nenhuma correcao pendente no momento", view: "avaliacoes" },
+          { title: "Ver relatorios", detail: "Relatorios reais aparecerao aqui", view: "relatorios" },
         ].map((item) => renderRecommendationCard({ type: "Atalho", title: item.title, detail: item.detail, view: item.view, action: "Abrir" })).join("")}
       </section>
     `,
@@ -4164,7 +4325,7 @@ const renderTeacherWorkspaceView = (view) => {
       <section class="tw-board tw-card-grid">
         ${renderTeacherCard()}
         <article class="tw-metric-card"><span>Agenda</span><strong>Manha e tarde</strong><small>Educacao Infantil</small></article>
-        <article class="tw-metric-card"><span>Turmas</span><strong>${teacherWorkspaceClasses.length}</strong><small>ativas no workspace</small></article>
+        <article class="tw-metric-card"><span>Turmas</span><strong>${pilotProfiles.class.name}</strong><small>Turma piloto vinculada</small></article>
       </section>
     `,
     planejamentos: `
@@ -4224,14 +4385,16 @@ const renderTeacherWorkspaceView = (view) => {
       <section class="tw-board tw-placeholder"><h2>Jogos</h2><p>Jogos pedagogicos serao organizados aqui, usando o mesmo workspace.</p></section>
     `,
     avaliacoes: `
-      <section class="tw-board tw-card-grid">
-        ${["Diagnostica Infantil 4", "Registro de oralidade", "Sequencia numerica"].map((title, index) => `<article class="tw-metric-card"><span>${index + 2}</span><strong>${title}</strong><small>pendente de correcao</small></article>`).join("")}
+      <section class="tw-board">
+        <div class="tw-section-head"><h2>Avaliacoes</h2><button type="button" data-teacher-view="inicio">Voltar</button></div>
+        ${renderPremiumEmpty("NENHUMA AVALIACAO PENDENTE", "As avaliacoes reais aparecerao aqui quando forem publicadas.", "purple")}
       </section>
     `,
     relatorios: `
       ${renderUniversalActivityTeacherDeliveries()}
-      <section class="tw-board tw-card-grid">
-        ${teacherWorkspaceClasses.map((item) => `<article class="tw-metric-card"><span>${item.progress}%</span><strong>${item.name}</strong><small>progresso da turma</small></article>`).join("")}
+      <section class="tw-board">
+        <div class="tw-section-head"><h2>Relatorios</h2><button type="button" data-teacher-view="inicio">Voltar</button></div>
+        ${renderPremiumEmpty("RELATORIOS EM PREPARACAO", "Indicadores reais de progresso serao exibidos quando houver dados suficientes.", "blue")}
       </section>
     `,
     universidade: `
@@ -8553,10 +8716,18 @@ const initTeacherWorkspace = () => {
   const workspace = document.querySelector("[data-teacher-workspace]");
   if (!workspace) return;
   const content = workspace.querySelector("[data-teacher-content]");
+  const home = workspace.querySelector("[data-teacher-home]");
   const search = workspace.querySelector("[data-teacher-search]");
 
   const openView = (view) => {
     if (!content) return;
+    if (view === "inicio") {
+      content.hidden = true;
+      if (home) home.hidden = false;
+    } else {
+      content.hidden = false;
+      if (home) home.hidden = true;
+    }
     content.innerHTML = renderTeacherWorkspaceView(view);
     workspace.querySelectorAll("[data-teacher-view]").forEach((button) => {
       button.classList.toggle("is-active", button.dataset.teacherView === view);
@@ -9132,6 +9303,15 @@ const renderAppPage = () => {
     initTeacherWorkspace();
     initUniversalActivityAssignmentUi();
     initUniversalActivityTeacherDeliveries();
+    return;
+  }
+
+  if (activeKey === "aluno") {
+    mount.innerHTML = activeModule.html;
+    initPlatformLogout();
+    requestAnimationFrame(() => {
+      document.querySelector("[data-student-dashboard]")?.classList.add("is-mounted");
+    });
     return;
   }
 
