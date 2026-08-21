@@ -26,12 +26,13 @@ const routeAccessRules = {
   professorAluno: ["professor", "gestor", "coordenador", "admin"],
   aluno: ["aluno"],
   alunoAtividades: ["aluno"],
+  alunoAtividade: ["aluno"],
   arvore: ["aluno"],
   missao: ["aluno"],
   jogos: ["aluno"],
   perfil: ["aluno"],
   biblioteca: ["aluno", "professor", "gestor", "coordenador", "admin"],
-  familia: ["aluno"],
+  familia: ["aluno", "admin"],
   motorAtividade: ["aluno"],
   universidade: ["professor", "gestor", "coordenador", "admin"],
   adminAtividades: ["gestor", "coordenador", "admin"],
@@ -47,6 +48,8 @@ const protectedRouteKeyByPage = {
   "admin.html": "admin",
   "aluno.html": "aluno",
   "aluno-atividades.html": "alunoAtividades",
+  "aluno-atividade.html": "alunoAtividade",
+  "aluno-atividade.html": "alunoAtividade",
   "arvore.html": "arvore",
   "missao.html": "missao",
   "jogos.html": "jogos",
@@ -66,8 +69,9 @@ const protectedRouteKeyByPage = {
   admin: "admin",
   aluno: "aluno",
   "aluno/atividades": "alunoAtividades",
+  "aluno/atividade": "alunoAtividade",
 };
-const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "missao", "arvore", "biblioteca", "jogos", "perfil", "familia", "viewer", "motorAtividade"]);
+const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "alunoAtividade", "missao", "arvore", "biblioteca", "jogos", "perfil", "familia", "viewer", "motorAtividade"]);
 const decodePlatformJwtPayload = (token) => {
   try {
     const [, payload] = String(token || "").split(".");
@@ -167,7 +171,7 @@ const signOutPlatformSession = async () => {
   return session;
 };
 const canAccessPlatformRoute = (routeKey, role) => {
-  if (role === "admin" && routeKey !== "familia") return true;
+  if (role === "admin") return true;
   const allowed = routeAccessRules[routeKey];
   if (!allowed) return true;
   return allowed.includes(role);
@@ -177,6 +181,7 @@ const getCurrentPageName = () => window.location.pathname.replace(/^\/+/, "").re
 const getProtectedRouteKeyForPath = () => {
   const normalizedPath = getCurrentPageName();
   if (normalizedPath.startsWith("professor/alunos/")) return "professorAluno";
+  if (normalizedPath.startsWith("aluno/atividade/")) return "alunoAtividade";
   return protectedRouteKeyByPage[normalizedPath] || protectedRouteKeyByPage[`${normalizedPath}.html`] || "";
 };
 const normalizeRequestedPath = (path) => {
@@ -4672,10 +4677,66 @@ const adminWorkspaceNav = [
   ["logs", "Logs"],
 ];
 
+const adminPlatformTabs = [
+  { label: "Site", href: "index.html", status: "publico" },
+  { label: "Inicio", href: "plataforma.html", status: "pronto" },
+  { label: "Admin / TI", view: "inicio", status: "ativo" },
+  { label: "Aluno", href: "aluno.html", status: "homologar" },
+  { label: "Minha Arvore", href: "arvore.html", status: "pronto" },
+  { label: "Missao do Dia", href: "missao.html", status: "pronto" },
+  { label: "Jogos", href: "jogos.html", status: "teste" },
+  { label: "Perfil", href: "perfil.html", status: "pronto" },
+  { label: "Biblioteca", href: "biblioteca.html", status: "pronto" },
+  { label: "Aluno & Familia", href: "familia.html", status: "homologar" },
+  { label: "Universidade", href: "universidade.html", status: "teste" },
+  { label: "Book Viewer", href: "book-viewer.html", status: "homologado" },
+  { label: "Professor", href: "professor.html", status: "homologar" },
+  { label: "Minha Turma", href: "professor-turma.html", status: "pronto" },
+  { label: "Aluno Pedro", href: "professor-aluno.html?id=pedro", status: "pronto" },
+  { label: "Atividades Imprimiveis", href: "atividades.html", status: "teste" },
+  { label: "Motor de Atividades", href: "motor-atividade.html", status: "construcao" },
+  { label: "Admin Atividades", href: "admin-atividades.html", status: "ti" },
+  { label: "Avalia+", href: "avalia.html", status: "teste" },
+  { label: "Banco de Questoes", href: "banco-questoes.html", status: "teste" },
+  { label: "Secretaria", href: "secretaria.html", status: "gestao" },
+  { label: "Gestor", href: "gestor.html", status: "gestao" },
+];
+
 const getAdminFeature = (key) => adminFeatureRegistry.find((item) => item.key === key);
 const getAdminFeatureStatusClass = (status) =>
   `is-${String(status || "em-desenvolvimento").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-")}`;
 const getAdminFeaturePolicy = (key) => getAdminFeature(key)?.roles || { admin: true, professor: false, aluno: false };
+
+const renderAdminPlatformTabs = (active = "inicio") => `
+  <nav class="admin-platform-tabs" aria-label="Todas as abas da plataforma">
+    ${adminPlatformTabs
+      .map((tab) => {
+        const isActive = tab.view === active || (!tab.view && tab.href === "admin.html" && active === "inicio");
+        const attrs = tab.view ? `href="#${tab.view}" data-admin-view="${tab.view}"` : `href="${tab.href}"`;
+        return `<a ${attrs} class="${isActive ? "is-active" : ""}" data-status="${tab.status}">${tab.label}</a>`;
+      })
+      .join("")}
+  </nav>
+`;
+
+const renderAdminHomologationHub = () => `
+  <section class="admin-board admin-homologation-hub" aria-label="Homologacao de ambientes">
+    <div class="admin-section-head">
+      <h2>Homologacao professor e aluno</h2>
+      <span>Atalhos para conferir as correcoes visuais e funcionais</span>
+    </div>
+    <div class="admin-feature-grid">
+      ${[
+        { label: "Home do Professor", area: "Professor", status: "HOMOLOGAR", href: "professor.html" },
+        { label: "Turma da Professora", area: "Professor", status: "PRONTO", href: "professor-turma.html" },
+        { label: "Aluno Pedro visto pela professora", area: "Professor", status: "PRONTO", href: "professor-aluno.html?id=pedro" },
+        { label: "Home do Aluno", area: "Aluno", status: "HOMOLOGAR", href: "aluno.html" },
+        { label: "Atividades do Aluno", area: "Aluno", status: "PRONTO", href: "aluno-atividades.html" },
+        { label: "Missao, arvore e jogos", area: "Aluno", status: "PRONTO", href: "missao.html" },
+      ].map(renderAdminFeatureCard).join("")}
+    </div>
+  </section>
+`;
 
 const renderAdminFeatureCard = (item) => `
   <article class="admin-feature-card" data-admin-search-item>
@@ -4746,6 +4807,7 @@ const renderAdminWorkspaceView = (view = "inicio") => {
           )
           .join("")}
       </section>
+      ${renderAdminHomologationHub()}
       ${renderAdminPermissionMatrix()}
     `,
     plataforma: `
@@ -4771,6 +4833,7 @@ const renderAdminWorkspaceView = (view = "inicio") => {
     `,
     professores: `<section class="admin-board admin-empty-state"><h2>Professores</h2><p>Ambiente da Professora Helena reaproveitado para regressao e validacao pedagogica.</p><a href="professor.html">Abrir ambiente professor</a></section>`,
     alunos: `<section class="admin-board admin-empty-state"><h2>Alunos</h2><p>Ambiente do aluno Pedro reaproveitado para regressao e validacao infantil.</p><a href="aluno.html">Abrir ambiente aluno</a></section>`,
+    familia: `<section class="admin-board admin-empty-state"><h2>Familia</h2><p>Aba registrada para acompanhar a futura area da familia. Como a rota protegida hoje pertence ao aluno, o Admin/TI mantem este espaco como homologacao interna sem acesso indevido.</p></section>`,
     permissoes: renderAdminPermissionMatrix(),
     biblioteca: `<section class="admin-board"><div class="admin-section-head"><h2>Conteudos</h2><span>Biblioteca e materiais existentes</span></div><div class="admin-feature-grid">${byArea("Conteudos").map(renderAdminFeatureCard).join("")}</div></section>`,
     atividades: `<section class="admin-board admin-empty-state"><h2>Atividades Imprimiveis</h2><p>Modulo administrativo existente reaproveitado. Use-o para curadoria e homologacao dos imprimiveis.</p><a href="admin-atividades.html">Abrir Admin de Atividades</a></section>`,
@@ -4796,6 +4859,7 @@ const renderAdminDashboard = () => `
         <button type="button" data-admin-view="permissoes">Permissoes</button>
         <button type="button" data-platform-logout>SAIR</button>
       </header>
+      ${renderAdminPlatformTabs("inicio")}
       <section class="admin-hero">
         <div>
           <span>QG DA PLATAFORMA</span>
@@ -4839,66 +4903,286 @@ const renderProfessorDashboard = () => {
   return renderProfessorProfilePage();
 };
 
-const familySoonLabels = {
-  filhos: "Acompanhamento dos Filhos",
-  frequencia: "Historico de Frequencia",
-  aprendizagem: "Evolucao da Aprendizagem",
-  alertas: "Alertas e Comunicados",
-  eventos: "Agenda da Familia",
-  materiais: "Materiais da Escola",
+const familyAreaData = {
+  student: {
+    name: pilotProfiles.student.name,
+    fullName: pilotProfiles.student.fullName,
+    avatar: pilotProfiles.student.avatar,
+    school: "Escola Raizes e Saberes",
+    className: pilotProfiles.student.className,
+    ageGroup: "Infantil 4 anos",
+    shift: pilotProfiles.class.shift,
+    schoolYear: "2026",
+  },
+  teacher: pilotProfiles.teacher.displayName,
+  messages: [],
+  bookActivities: [],
+  onlineActivities: [],
+  agenda: [],
+  attendance: null,
+  progress: {
+    xp: studentDashboardData.profile.xp,
+    level: studentDashboardData.profile.level,
+    percent: studentDashboardData.profile.progress,
+    achievements: studentDashboardData.medals,
+    completedActivities: pilotProfiles.student.completedActivities,
+  },
 };
 
-const familyDashboardHotspots = [
-  { className: "family-hotspot-avatar", href: "familia.html?soon=filhos", label: "Abrir perfil da responsavel Ana Paula" },
-  { className: "family-hotspot-filhos-top", href: "familia.html?soon=filhos", label: "Abrir filhos cadastrados" },
-  { className: "family-hotspot-frequencia-top", href: "familia.html?soon=frequencia", label: "Abrir frequencia media" },
-  { className: "family-hotspot-tarefas-top", href: "familia.html?soon=alertas", label: "Abrir tarefas acompanhadas" },
-  { className: "family-hotspot-participacao-top", href: "familia.html?soon=filhos", label: "Abrir participacao da familia" },
-  { className: "family-hotspot-pedro", href: "aluno.html", label: "Abrir painel do aluno Pedro Silva" },
-  { className: "family-hotspot-maria", href: "aluno.html", label: "Abrir painel da aluna Maria Silva" },
-  { className: "family-hotspot-frequencia", href: "familia.html?soon=frequencia", label: "Abrir historico de frequencia" },
-  { className: "family-hotspot-aprendizagem", href: "familia.html?soon=aprendizagem", label: "Abrir evolucao da aprendizagem" },
-  { className: "family-hotspot-alerta-reuniao", href: "familia.html?soon=alertas", label: "Abrir alerta Reuniao de Pais e Mestres" },
-  { className: "family-hotspot-alerta-atividades", href: "familia.html?soon=alertas", label: "Abrir atividades para casa" },
-  { className: "family-hotspot-alerta-comunicado", href: "familia.html?soon=alertas", label: "Abrir comunicado da escola" },
-  { className: "family-hotspot-evento-passeio", href: "familia.html?soon=eventos", label: "Abrir evento Passeio Pedagogico" },
-  { className: "family-hotspot-evento-avaliacao", href: "familia.html?soon=eventos", label: "Abrir evento Avaliacao Bimestral" },
-  { className: "family-hotspot-evento-reuniao", href: "familia.html?soon=eventos", label: "Abrir evento Reuniao de Pais e Mestres" },
-  { className: "family-hotspot-book-1", href: "book-viewer.html?book=livro-008", label: "Abrir Lingua Portuguesa 5 anos Volume 2" },
-  { className: "family-hotspot-book-2", href: "book-viewer.html?book=livro-008", label: "Abrir Matematica 5 anos Volume 2" },
-  { className: "family-hotspot-book-3", href: "book-viewer.html?book=livro-008", label: "Abrir Educacao Infantil 5 anos Volume 2" },
-  { className: "family-hotspot-book-4", href: "book-viewer.html?book=livro-008", label: "Abrir Historia 5 anos Volume 2" },
-  { className: "family-hotspot-leitura", href: "book-viewer.html?book=livro-008", label: "Abrir Leitura em Familia" },
-  { className: "family-hotspot-materiais", href: "familia.html?soon=materiais", label: "Abrir materiais da escola" },
+const familyAreaViews = [
+  ["inicio", "Inicio"],
+  ["atividades", "Atividades"],
+  ["agenda", "Agenda"],
+  ["acompanhamento", "Acompanhamento"],
+  ["perfil", "Perfil"],
 ];
 
-const renderFamilySoon = (key) => {
-  const title = familySoonLabels[key] || "Modulo em breve";
+const getFamilyView = () => {
+  if (typeof window === "undefined") return "inicio";
+  const view = new URLSearchParams(window.location.search).get("view") || "inicio";
+  return familyAreaViews.some(([key]) => key === view) ? view : "inicio";
+};
+
+const renderFamilyEmpty = (title, text = "") => `
+  <div class="family-empty-state">
+    <strong>${title}</strong>
+    ${text ? `<p>${text}</p>` : ""}
+  </div>
+`;
+
+const renderFamilyMessageList = () =>
+  familyAreaData.messages.length
+    ? familyAreaData.messages
+        .map((message) => `<article class="family-list-card"><span>${message.origin}</span><strong>${message.title}</strong><p>${message.text}</p><small>${message.date}</small></article>`)
+        .join("")
+    : renderFamilyEmpty("NENHUM NOVO RECADO NO MOMENTO.");
+
+const renderFamilyBookActivities = () =>
+  familyAreaData.bookActivities.length
+    ? familyAreaData.bookActivities
+        .map(
+          (activity) => `
+            <article class="family-activity-card">
+              <span>Livro</span>
+              <strong>${activity.title}</strong>
+              <dl>
+                <div><dt>Livro</dt><dd>${activity.book}</dd></div>
+                <div><dt>Volume</dt><dd>${activity.volume}</dd></div>
+                <div><dt>Paginas</dt><dd>${activity.pages}</dd></div>
+                <div><dt>Prazo</dt><dd>${activity.due || "Sem prazo informado"}</dd></div>
+              </dl>
+              <p>${activity.orientation}</p>
+              <button type="button">Ver detalhes</button>
+            </article>
+          `
+        )
+        .join("")
+    : renderFamilyEmpty("NENHUMA ATIVIDADE NO LIVRO PUBLICADA.");
+
+const renderFamilyOnlineActivities = (filter = "todas") => {
+  const filtered = familyAreaData.onlineActivities.filter((activity) => {
+    if (filter === "pendentes") return ["NOVA", "EM ANDAMENTO"].includes(activity.status);
+    if (filter === "concluidas") return ["CONCLUIDA", "ENVIADA"].includes(activity.status);
+    return true;
+  });
+  return filtered.length
+    ? filtered
+        .map(
+          (activity) => `
+            <article class="family-activity-card">
+              <span>${activity.status}</span>
+              <strong>${activity.title}</strong>
+              <p>${activity.instructions}</p>
+              ${
+                ["CONCLUIDA", "ENVIADA"].includes(activity.status)
+                  ? `<button type="button" disabled>Atividade concluida</button>`
+                  : `<a href="aluno-atividade.html?id=${activity.id}">Fazer atividade</a>`
+              }
+            </article>
+          `
+        )
+        .join("")
+    : renderFamilyEmpty("NAO HA ATIVIDADES ONLINE PENDENTES.");
+};
+
+const renderFamilyAgenda = () =>
+  familyAreaData.agenda.length
+    ? familyAreaData.agenda.map((item) => `<article class="family-list-card"><span>${item.date}</span><strong>${item.title}</strong><p>${item.detail}</p></article>`).join("")
+    : renderFamilyEmpty("NENHUM COMPROMISSO PROGRAMADO.");
+
+const renderFamilyProgress = (compact = false) => {
+  const { progress } = familyAreaData;
   return `
-    <section class="coming-soon-panel">
-      <span>Em breve</span>
-      <h1>${title}</h1>
-      <p>Este recurso da area da Familia ja esta planejado e sera liberado nas proximas etapas.</p>
-      <a href="familia.html">Voltar ao Painel da Familia</a>
+    <section class="family-progress-grid">
+      <article class="family-metric-card"><span>Frequencia</span><strong>${familyAreaData.attendance?.summary || "Sem registro publicado"}</strong><small>Somente consulta</small></article>
+      <article class="family-metric-card"><span>XP</span><strong>${progress.xp ? `${progress.xp} XP` : "Sem registro"}</strong><small>${progress.level || "Nivel nao publicado"}</small></article>
+      <article class="family-metric-card"><span>Atividades concluidas</span><strong>${progress.completedActivities || 0}</strong><small>Historico do aluno</small></article>
+      <article class="family-tree-card">
+        <span>Minha Arvore</span>
+        <strong>${progress.percent || 0}%</strong>
+        <i><b style="width:${progress.percent || 0}%"></b></i>
+        <small>Progresso registrado</small>
+      </article>
+    </section>
+    ${
+      compact
+        ? ""
+        : `<section class="family-panel">
+            <div class="family-section-head"><h2>Conquistas</h2><span>Acompanhamento</span></div>
+            ${
+              progress.achievements?.length
+                ? `<div class="family-achievement-list">${progress.achievements.map((item) => `<article><img src="${item.image}" alt="" onerror="this.hidden=true" /><strong>${item.title}</strong></article>`).join("")}</div>`
+                : renderFamilyEmpty("SUAS CONQUISTAS APARECERAO AQUI.")
+            }
+          </section>`
+    }
+  `;
+};
+
+const renderFamilyProfile = () => {
+  const { student } = familyAreaData;
+  return `
+    <section class="family-profile-card">
+      <img src="${student.avatar}" alt="" onerror="this.hidden=true" />
+      <div>
+        <span>Aluno</span>
+        <h2>${student.fullName}</h2>
+        <dl>
+          <div><dt>Escola</dt><dd>${student.school}</dd></div>
+          <div><dt>Turma</dt><dd>${student.className}</dd></div>
+          <div><dt>Faixa etaria</dt><dd>${student.ageGroup}</dd></div>
+          <div><dt>Turno</dt><dd>${student.shift}</dd></div>
+          <div><dt>Ano letivo</dt><dd>${student.schoolYear}</dd></div>
+        </dl>
+      </div>
     </section>
   `;
 };
 
+const renderFamilyHomeView = () => `
+  <section class="family-home-grid">
+    <div class="family-panel family-panel-large">
+      <div class="family-section-head"><h2>Recados da professora</h2><span>${familyAreaData.teacher}</span></div>
+      ${renderFamilyMessageList()}
+    </div>
+    <div class="family-panel">
+      <div class="family-section-head"><h2>Atividades online</h2><span>Aluno</span></div>
+      ${renderFamilyOnlineActivities("pendentes")}
+    </div>
+    <div class="family-panel">
+      <div class="family-section-head"><h2>Atividades no livro</h2><span>Orientacoes</span></div>
+      ${renderFamilyBookActivities()}
+    </div>
+    <div class="family-panel">
+      <div class="family-section-head"><h2>Proximos compromissos</h2><span>Agenda</span></div>
+      ${renderFamilyAgenda()}
+    </div>
+    <div class="family-panel">
+      <div class="family-section-head"><h2>Minha Arvore</h2><span>Acompanhamento</span></div>
+      ${renderFamilyProgress(true)}
+      <a class="family-primary-link" href="familia.html?view=acompanhamento">Ver meu acompanhamento</a>
+    </div>
+  </section>
+`;
+
+const renderFamilyActivitiesView = () => `
+  <section class="family-panel">
+    <div class="family-section-head"><h2>Atividades</h2><span>Livro e online</span></div>
+    <div class="family-filter-row" role="group" aria-label="Filtros de atividades">
+      <button type="button" data-family-filter="todas" class="is-active">Todas</button>
+      <button type="button" data-family-filter="pendentes">Pendentes</button>
+      <button type="button" data-family-filter="concluidas">Concluidas</button>
+    </div>
+    <div class="family-activity-columns">
+      <section><h3>Atividades no livro</h3>${renderFamilyBookActivities()}</section>
+      <section><h3>Atividades online</h3><div data-family-online-list>${renderFamilyOnlineActivities("todas")}</div></section>
+    </div>
+  </section>
+`;
+
+const renderFamilyView = (view) => {
+  const views = {
+    inicio: renderFamilyHomeView(),
+    atividades: renderFamilyActivitiesView(),
+    agenda: `<section class="family-panel"><div class="family-section-head"><h2>Agenda</h2><span>Somente consulta</span></div>${renderFamilyAgenda()}</section>`,
+    acompanhamento: renderFamilyProgress(),
+    perfil: renderFamilyProfile(),
+  };
+  return views[view] || views.inicio;
+};
+
 const renderFamilyDashboard = () => {
-  const params = typeof window === "undefined" ? new URLSearchParams() : new URLSearchParams(window.location.search);
-  const soon = params.get("soon");
-  if (soon) return renderFamilySoon(soon);
+  const view = getFamilyView();
+  const { student } = familyAreaData;
   return `
-    <section class="family-dashboard" aria-label="Painel da Familia Ana Paula">
-      <img
-        src="assets/familia/familia-dashboard.png"
-        alt="Painel da Familia de Ana Paula com filhos, frequencia, aprendizagem, alertas, eventos e biblioteca"
-        loading="eager"
-        decoding="async"
-        onerror="this.hidden=true"
-      />
-      ${familyDashboardHotspots.map((hotspot) => `<a class="family-hotspot ${hotspot.className}" href="${hotspot.href}" aria-label="${hotspot.label}"></a>`).join("")}
-    </section>
+    <main class="family-v1" data-family-area>
+      <aside class="family-v1-sidebar">
+        <a class="family-v1-logo" href="familia.html"><img src="logo-app.png" alt="Raizes e Saberes Educacional" onerror="this.hidden=true" /></a>
+        <div class="family-v1-person">
+          <img src="${student.avatar}" alt="" onerror="this.hidden=true" />
+          <span>Familia do</span>
+          <strong>${student.name}</strong>
+          <small>${student.className}</small>
+        </div>
+        <nav aria-label="Area Aluno e Familia">
+          ${familyAreaViews.map(([key, label]) => `<a class="${key === view ? "is-active" : ""}" href="familia.html?view=${key}">${label}</a>`).join("")}
+          <button type="button" data-platform-logout>Sair</button>
+        </nav>
+      </aside>
+      <section class="family-v1-main">
+        <header class="family-v1-hero">
+          <span>Area Aluno & Familia</span>
+          <h1>Ola, familia do ${student.name}!</h1>
+          <p>Acompanhe a rotina, as atividades e as conquistas.</p>
+        </header>
+        <section class="family-v1-content" data-family-content>${renderFamilyView(view)}</section>
+      </section>
+      <nav class="family-v1-mobile" aria-label="Navegacao mobile">
+        ${familyAreaViews.map(([key, label]) => `<a class="${key === view ? "is-active" : ""}" href="familia.html?view=${key}">${label}</a>`).join("")}
+      </nav>
+    </main>
+  `;
+};
+
+const initFamilyArea = () => {
+  const area = document.querySelector("[data-family-area]");
+  if (!area) return;
+  area.addEventListener("click", (event) => {
+    const filterButton = event.target.closest?.("[data-family-filter]");
+    if (!filterButton) return;
+    area.querySelectorAll("[data-family-filter]").forEach((button) => button.classList.toggle("is-active", button === filterButton));
+    const list = area.querySelector("[data-family-online-list]");
+    if (list) list.innerHTML = renderFamilyOnlineActivities(filterButton.dataset.familyFilter || "todas");
+  });
+};
+
+const getFamilyActivityById = (id) => familyAreaData.onlineActivities.find((activity) => activity.id === id);
+
+const renderStudentOnlineActivityFocus = () => {
+  const params = typeof window === "undefined" ? new URLSearchParams() : new URLSearchParams(window.location.search);
+  const id = params.get("id") || params.get("activity") || "";
+  const activity = getFamilyActivityById(id);
+  return `
+    <main class="student-focus-activity" data-student-focus-activity>
+      <header>
+        <a href="familia.html?view=atividades">Sair da atividade</a>
+        <span>Modo foco</span>
+      </header>
+      <section class="student-focus-card">
+        <span>Atividade online</span>
+        <h1>${activity?.title || "Atividade em preparacao"}</h1>
+        <p>${activity?.instructions || "Quando a professora disponibilizar uma atividade online, ela abrira aqui em modo foco com instrucoes simples para a crianca."}</p>
+        <div class="student-focus-engine">
+          <strong>Motor da atividade</strong>
+          <p>${activity?.engine ? "Motor configurado para esta atividade." : "Motor ainda nao publicado para esta atividade."}</p>
+        </div>
+        <div class="student-focus-actions">
+          <button type="button" disabled>Salvar</button>
+          <button type="button" disabled>Concluir</button>
+          <button type="button" disabled>Enviar</button>
+        </div>
+      </section>
+    </main>
   `;
 };
 
@@ -5142,6 +5426,12 @@ const modules = {
     subtitle: "Atividades atribuidas ao aluno",
     code: "ALUNO-ATIVIDADES",
     html: renderStudentActivitiesPage(),
+  },
+  alunoAtividade: {
+    title: "Atividade Online",
+    subtitle: "Modo foco do aluno",
+    code: "ALUNO-FOCO",
+    html: renderStudentOnlineActivityFocus(),
   },
   arvore: {
     title: "Minha Arvore",
@@ -6130,28 +6420,24 @@ const environments = {
     ],
   },
   familia: {
-    label: "Painel da Familia",
-    profile: "Responsavel",
-    search: "Buscar comunicados, atividades, agenda...",
-    user: "Ana Paula Silva<br />Responsavel",
+    label: "Aluno & Familia",
+    profile: "Acompanhamento do aluno",
+    search: "Buscar recados, atividades e agenda...",
+    user: "Familia do Pedro<br />Responsavel",
     nav: [
       ["familia", "Inicio", "familia.html"],
-      ["filhos", "Meus Filhos", "#"],
-      ["frequencia", "Frequencia", "#"],
-      ["atividades", "Atividades", "#"],
-      ["avaliacoes", "Avaliacoes", "#"],
-      ["biblioteca", "Biblioteca Digital", "biblioteca.html"],
-      ["agenda", "Agenda Escolar", "#"],
-      ["comunicados", "Comunicados", "#"],
-      ["mensagens", "Mensagens", "#"],
-      ["financeiro", "Financeiro", "#"],
+      ["atividades", "Atividades", "familia.html?view=atividades"],
+      ["agenda", "Agenda", "familia.html?view=agenda"],
+      ["acompanhamento", "Acompanhamento", "familia.html?view=acompanhamento"],
+      ["perfil", "Perfil", "familia.html?view=perfil"],
+      ["logout", "Sair", "#"],
     ],
     mobile: [
       ["familia", "Inicio", "familia.html"],
-      ["filhos", "Filhos", "#"],
-      ["atividades", "Atividades", "#"],
-      ["mensagens", "Mensagens", "#"],
-      ["mais", "Mais", "#"],
+      ["atividades", "Atividades", "familia.html?view=atividades"],
+      ["agenda", "Agenda", "familia.html?view=agenda"],
+      ["acompanhamento", "Acomp.", "familia.html?view=acompanhamento"],
+      ["perfil", "Perfil", "familia.html?view=perfil"],
     ],
   },
 };
@@ -6161,6 +6447,7 @@ const moduleEnvironment = {
   admin: "admin",
   aluno: "aluno",
   alunoAtividades: "aluno",
+  alunoAtividade: "aluno",
   arvore: "aluno",
   missao: "aluno",
   jogos: "aluno",
@@ -9513,6 +9800,19 @@ const renderAppPage = () => {
       document.querySelector(".admin-workspace")?.classList.add("is-mounted");
     });
     initAdminWorkspace();
+    return;
+  }
+
+  if (activeKey === "familia") {
+    mount.innerHTML = activeModule.html;
+    initPlatformLogout();
+    initFamilyArea();
+    return;
+  }
+
+  if (activeKey === "alunoAtividade") {
+    mount.innerHTML = activeModule.html;
+    initPlatformLogout();
     return;
   }
 

@@ -3,9 +3,11 @@
   "rewrites": [
     { "source": "/admin", "destination": "/admin.html" },
     { "source": "/professor", "destination": "/professor.html" },
+    { "source": "/familia", "destination": "/familia.html" },
     { "source": "/professor/turma", "destination": "/professor-turma.html" },
     { "source": "/professor/alunos/:id", "destination": "/professor-aluno.html?id=:id" },
     { "source": "/aluno", "destination": "/aluno.html" },
-    { "source": "/aluno/atividades", "destination": "/aluno-atividades.html" }
+    { "source": "/aluno/atividades", "destination": "/aluno-atividades.html" },
+    { "source": "/aluno/atividade/:id", "destination": "/aluno-atividade.html?id=:id" }
   ]
 }
