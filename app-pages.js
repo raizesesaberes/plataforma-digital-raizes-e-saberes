@@ -240,6 +240,7 @@ const ecosystemModules = [
   ["index.html", "Site"],
   ["plataforma.html", "Inicio"],
   ["admin.html", "Admin / TI"],
+  ["escola.html", "Escola"],
   ["aluno.html", "Aluno"],
   ["arvore.html", "Minha Arvore"],
   ["missao.html", "Missao do Dia"],
@@ -3027,14 +3028,19 @@ const renderProfileConstructionState = (role) => {
 };
 
 const renderProfileShell = (role, content) => `
-  <main class="student-profile-page ${role === "professor" ? "professor-profile-page" : ""}">
-    ${renderProfileSidebar(role)}
-    <div class="profile-main-panel">
-      ${renderProfileHeader(role)}
-      ${renderProfileConstructionState(role)}
-      ${content}
+  <section class="profile-platform-page ${role === "professor" ? "professor-profile-page" : "student-profile-page"}">
+    <div class="profile-platform-intro">
+      <div>
+        <span>${profileAccessConfig[role].eyebrow}</span>
+        <h1>${profileAccessConfig[role].name}</h1>
+      </div>
+      <div class="profile-platform-quick" aria-label="${profileAccessConfig[role].quickTitle}">
+        ${profileAccessConfig[role].quick.map((item) => `<a class="profile-quick-link is-${item.tone}" href="${item.href}">${item.label}</a>`).join("")}
+      </div>
     </div>
-  </main>
+    ${renderProfileConstructionState(role)}
+    ${content}
+  </section>
 `;
 
 const renderStudentProfilePage = () => {
@@ -4935,11 +4941,11 @@ const schoolCollectiveData = {
         image: "assets/home-official/banner_jardim.png",
       },
       games: [
-        { title: "Caixa Misteriosa", description: "Descubra objetos por pistas.", href: "jogos.html", image: "assets/home-official/thumb_jogo.png" },
-        { title: "Rotina do Pipo", description: "Organize momentos do dia.", href: "jogos.html", image: "assets/home-official/continue-card-jogos.png" },
+        { title: "Caixa Misteriosa", description: "Descubra objetos por pistas.", href: "jogos.html", image: "assets/games/caixa-misteriosa/screens/screen-intro.png" },
+        { title: "Rotina do Pipo", description: "Organize momentos do dia.", href: "jogos.html", image: "assets/games/rotina-pipo/screens/screen-intro.png" },
       ],
       books: [
-        { title: "O Jardim das Cores", volume: "Volume 1", href: "book-viewer.html?book=livro-001", image: "assets/aluno/livro-biblioteca-natureza.webp" },
+        { title: "Infantil 3", volume: "Volume 1", href: "book-viewer.html?book=livro-001", image: "assets/_legacy-root/RAIZES_INFANTIL3_VOL1_BIBLIOTECA.webp" },
       ],
       suggestions: [
         { type: "PARA LER", title: "Historia curta em roda.", cta: "LER", href: "biblioteca.html", tone: "pink" },
@@ -4959,14 +4965,14 @@ const schoolCollectiveData = {
         image: "assets/home-official/banner_jardim.png",
       },
       games: [
-        { title: "Jogo das Cores", description: "Descubra e combine as cores do jardim.", href: "jogos.html", image: "assets/home-official/thumb_jogo.png" },
+        { title: "Jogo das Cores", description: "Descubra e combine as cores do jardim.", href: "jogos.html", image: "assets/games/atelie-bia/screens/screen-intro.png" },
         { title: "Formas Divertidas", description: "Aprenda brincando com as formas.", href: "jogos.html", image: "assets/games/formas-casa/screens/screen-intro.png" },
-        { title: "Jardim das Descobertas", description: "Explore, encontre e aprenda com a natureza.", href: "jogos.html", image: "assets/home-official/banner_jardim.png" },
+        { title: "Jardim das Descobertas", description: "Explore, encontre e aprenda com a natureza.", href: "jogos.html", image: "assets/games/jardim-descobertas/screens/screen-intro.png" },
       ],
       books: [
-        { title: "O Jardim das Cores", volume: "Volume 1", href: "book-viewer.html?book=livro-001", image: "assets/aluno/livro-biblioteca-natureza.webp" },
-        { title: "Amigos da Natureza", volume: "Volume 2", href: "book-viewer.html?book=livro-002", image: "assets/aluno/livro-biblioteca-caderno.webp" },
-        { title: "Hora de Sonhar", volume: "Volume 1", href: "book-viewer.html?book=livro-003", image: "assets/aluno/livro-linguagem.webp" },
+        { title: "Infantil 4", volume: "Volume 1", href: "book-viewer.html?book=livro-001", image: "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg" },
+        { title: "Infantil 4", volume: "Volume 2", href: "book-viewer.html?book=livro-002", image: "assets/biblioteca/RAIZES_INFANTIL4_VOL2_BIBLIOTECA.jpg" },
+        { title: "Infantil 5", volume: "Volume 1", href: "book-viewer.html?book=livro-003", image: "assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.jpg" },
       ],
       suggestions: [
         { type: "PARA LER", title: "Leia com sua familia a historia do jardim.", cta: "LER AGORA", href: "book-viewer.html?book=livro-001", tone: "pink" },
@@ -4990,12 +4996,12 @@ const schoolCollectiveData = {
         image: "assets/home-official/banner_alfabetizacao.png",
       },
       games: [
-        { title: "Construindo a Ponte", description: "Resolva desafios em equipe.", href: "jogos.html", image: "assets/home-official/thumb_simulado.png" },
-        { title: "Caminho da Escola", description: "Siga pistas e complete o percurso.", href: "jogos.html", image: "assets/home-official/continue-card-jogos.png" },
+        { title: "Construindo a Ponte", description: "Resolva desafios em equipe.", href: "jogos.html", image: "assets/games/construindo-ponte/screens/screen-intro.png" },
+        { title: "Caminho da Escola", description: "Siga pistas e complete o percurso.", href: "jogos.html", image: "assets/games/caminho-escola/screens/screen-intro.png" },
       ],
       books: [
-        { title: "Descobertas em Familia", volume: "Volume 1", href: "book-viewer.html?book=livro-004", image: "assets/aluno/livro-biblioteca-linguagem.webp" },
-        { title: "Natureza em Foco", volume: "Volume 2", href: "book-viewer.html?book=livro-005", image: "assets/aluno/livro-biblioteca-matematica.webp" },
+        { title: "Infantil 5", volume: "Volume 1", href: "book-viewer.html?book=livro-004", image: "assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.jpg" },
+        { title: "Infantil 5", volume: "Volume 2", href: "book-viewer.html?book=livro-005", image: "assets/biblioteca/RAIZES_INFANTIL5_VOL2_BIBLIOTECA.jpg" },
       ],
       suggestions: [
         { type: "ESTUDO", title: "Prepare uma observacao sobre o jardim.", cta: "VER", href: "jogos.html", tone: "green" },
@@ -5110,38 +5116,18 @@ const renderSchoolInfo = (ageData) => {
 const renderSchoolCollectiveDashboard = () => {
   const { institution, ages, defaultAge } = schoolCollectiveData;
   const activeAge = ages[defaultAge] || Object.values(ages)[0];
-  const navItems = [
-    ["inicio", "INICIO", "escola.html", "home"],
-    ["jogos", "JOGOS", "jogos.html", "game"],
-    ["desafio", "DESAFIO", "#desafio-do-dia", "star"],
-    ["biblioteca", "BIBLIOTECA", "biblioteca.html", "book"],
-    ["espaco", "MEU ESPACO", "familia.html", "user"],
-    ["sair", "SAIR", "#sair", "exit"],
-  ];
   return `
     <section class="school-collective" data-school-collective data-active-age="${defaultAge}">
-      <header class="school-top">
-        <a class="school-brand" href="escola.html" aria-label="Raizes e Saberes">
-          <img src="logo-app.png" alt="Raizes e Saberes Educacional" onerror="this.hidden=true" />
-        </a>
-        <div class="school-identity">
+      <header class="school-context-strip">
+        <div>
+          <span>Ambiente coletivo da escola</span>
           <h1>${institution.school_name}</h1>
-          <strong>${institution.education_stage}</strong>
-          <span>${institution.municipality_name}</span>
+          <p>${institution.education_stage} - ${institution.municipality_name}</p>
         </div>
         <div class="school-logo-slot">
           ${institution.school_logo ? `<img src="${institution.school_logo}" alt="Logomarca da escola" />` : `<span>LOGOMARCA<br>DA ESCOLA</span>`}
         </div>
       </header>
-      <nav class="school-main-nav" aria-label="Navegacao coletiva da escola">
-        ${navItems
-          .map(([key, label, href, icon]) =>
-            key === "sair"
-              ? `<button type="button" data-platform-logout>${renderSchoolIcon(icon)} ${label}</button>`
-              : `<a class="${key === "inicio" ? "is-active" : ""}" href="${href}">${renderSchoolIcon(icon)} ${label}</a>`
-          )
-          .join("")}
-      </nav>
       <main class="school-dashboard-grid">
         <section class="school-welcome-card">
           <div>
@@ -6800,6 +6786,7 @@ const environments = {
       ["professor", "Professor", "professor.html"],
       ["atividades", "Atividades Imprimiveis", "atividades.html"],
       ["aluno", "Aluno", "aluno.html"],
+      ["escolaColetiva", "Escola", "escola.html"],
       ["familia", "Familia", "familia.html"],
       ["secretaria", "Secretaria", "secretaria.html"],
       ["gestor", "Gestor", "gestor.html"],
@@ -7061,7 +7048,7 @@ const environments = {
 const moduleEnvironment = {
   plataforma: "plataforma",
   admin: "admin",
-  escolaColetiva: "admin",
+  escolaColetiva: "plataforma",
   aluno: "aluno",
   alunoAtividades: "aluno",
   alunoAtividade: "aluno",
@@ -10389,7 +10376,7 @@ const renderAppPage = () => {
   }
   document.title = `${activeModule.title} | Raizes e Saberes`;
 
-  if (["professor", "professorTurma", "professorAluno"].includes(activeKey)) {
+  if (["professorTurma", "professorAluno"].includes(activeKey)) {
     mount.innerHTML = activeModule.html;
     initPlatformLogout();
     requestAnimationFrame(() => {
@@ -10401,15 +10388,6 @@ const renderAppPage = () => {
     return;
   }
 
-  if (activeKey === "aluno") {
-    mount.innerHTML = activeModule.html;
-    initPlatformLogout();
-    requestAnimationFrame(() => {
-      document.querySelector("[data-student-dashboard]")?.classList.add("is-mounted");
-    });
-    return;
-  }
-
   if (activeKey === "admin") {
     mount.innerHTML = activeModule.html;
     initPlatformLogout();
@@ -10417,16 +10395,6 @@ const renderAppPage = () => {
       document.querySelector(".admin-workspace")?.classList.add("is-mounted");
     });
     initAdminWorkspace();
-    return;
-  }
-
-  if (activeKey === "escolaColetiva") {
-    mount.innerHTML = activeModule.html;
-    initPlatformLogout();
-    initSchoolCollectiveDashboard();
-    requestAnimationFrame(() => {
-      document.querySelector("[data-school-collective]")?.classList.add("is-mounted");
-    });
     return;
   }
 
@@ -10496,6 +10464,7 @@ const renderAppPage = () => {
   });
 
   initPlatformLogout();
+  initSchoolCollectiveDashboard();
   initBookReader();
   initLibrarySearch();
   initLibraryExperiences();
