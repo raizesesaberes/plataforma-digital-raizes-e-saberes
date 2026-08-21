@@ -2886,22 +2886,162 @@ const createStudentDashboardView = () => {
   };
 };
 
-const renderStudentProfilePage = () => {
+const profileAccessConfig = {
+  aluno: {
+    logoAlt: "Raizes e Saberes Educacional",
+    eyebrow: "Ambiente do aluno",
+    name: "Pedro",
+    search: "Buscar livros, jogos, atividades...",
+    homeHref: "aluno.html",
+    quickTitle: "Acessos rapidos",
+    quick: [
+      { label: "Continuar atividade", href: "aluno-atividades.html", tone: "green" },
+      { label: "Ver minha arvore", href: "arvore.html", tone: "green" },
+      { label: "Abrir livro", href: "biblioteca.html", tone: "blue" },
+      { label: "Jogar", href: "jogos.html", tone: "purple" },
+      { label: "Meu perfil", href: "perfil.html", tone: "teal" },
+    ],
+    tabs: [
+      { label: "Inicio", href: "aluno.html" },
+      { label: "Missao do Dia", href: "missao.html" },
+      { label: "Minha Arvore", href: "arvore.html" },
+      { label: "Biblioteca", href: "biblioteca.html" },
+      { label: "Jogos", href: "jogos.html" },
+      { label: "Perfil", href: "perfil.html" },
+      { label: "Familia", href: "familia.html" },
+      { label: "Atividades", href: "aluno-atividades.html" },
+    ],
+  },
+  professor: {
+    logoAlt: "Raizes e Saberes Educacional",
+    eyebrow: "Ambiente professor",
+    name: "Professora Helena",
+    search: "Buscar conteudos, alunos, turmas, experiencias...",
+    homeHref: "professor.html",
+    quickTitle: "Acessos rapidos",
+    quick: [
+      { label: "Atribuir atividade", href: "atividades.html", tone: "green" },
+      { label: "Abrir minha turma", href: "professor-turma.html", tone: "green" },
+      { label: "Criar planejamento", href: "professor.html?view=planejamentos", tone: "blue" },
+      { label: "Ver producoes", href: "professor-aluno.html?id=pedro", tone: "purple" },
+      { label: "Abrir biblioteca", href: "biblioteca.html", tone: "orange" },
+      { label: "Ver relatorios", href: "professor.html?view=relatorios", tone: "teal" },
+    ],
+    tabs: [
+      { label: "Inicio", href: "professor.html" },
+      { label: "Minha Turma", href: "professor-turma.html" },
+      { label: "Alunos", href: "professor-aluno.html?id=pedro" },
+      { label: "Biblioteca", href: "biblioteca.html" },
+      { label: "Atividades", href: "atividades.html" },
+      { label: "Experiencias", href: "biblioteca.html#acervo-completo" },
+      { label: "Jogos", href: "jogos.html" },
+      { label: "Planejamentos", href: "professor.html?view=planejamentos" },
+      { label: "Avaliacoes", href: "avalia.html" },
+      { label: "Relatorios", href: "professor.html?view=relatorios" },
+      { label: "Universidade", href: "universidade.html" },
+    ],
+  },
+};
+
+const profileConstructionCopy = {
+  aluno: {
+    familia: ["Familia", "Este espaco vai receber comunicados e acompanhamento familiar assim que a proxima etapa for liberada."],
+  },
+  professor: {
+    planejamentos: ["Planejamentos", "Este modulo esta reservado para o planejamento pedagogico completo da professora."],
+    relatorios: ["Relatorios", "Este modulo esta reservado para indicadores, devolutivas e acompanhamento da turma."],
+    avaliacoes: ["Avaliacoes", "Este modulo esta reservado para rotinas de avaliacao e acompanhamento."],
+    mensagens: ["Mensagens", "Este modulo esta reservado para comunicados e devolutivas."],
+  },
+};
+
+const getProfileViewParam = () => {
+  if (typeof window === "undefined") return "";
+  return new URLSearchParams(window.location.search).get("view") || "";
+};
+
+const renderProfileTopTabs = (role) => {
+  const config = profileAccessConfig[role];
   return `
-    <main class="student-profile-page">
-      <section class="student-profile-static-map" aria-label="Perfil do aluno Pedro">
-        <img
-          src="assets/aluno/perfil-aluno-dashboard.png"
-          alt="Perfil do aluno Pedro com medalhas, progresso, conquistas e jogos concluidos"
-          loading="eager"
-          decoding="async"
-          onerror="this.hidden=true"
-        />
-        ${studentProfileHotspots.map((hotspot) => `<a class="profile-hotspot ${hotspot.className}" href="${hotspot.href}" aria-label="${hotspot.label}"></a>`).join("")}
-        <button class="profile-floating-logout" type="button" data-platform-logout>SAIR</button>
-      </section>
-    </main>
+    <nav class="profile-top-tabs" aria-label="Abas de navegacao ${config.eyebrow}">
+      ${config.tabs.map((tab, index) => `<a class="${index === 0 ? "is-active" : ""}" href="${tab.href}">${tab.label}</a>`).join("")}
+    </nav>
   `;
+};
+
+const renderProfileSidebar = (role) => {
+  const config = profileAccessConfig[role];
+  return `
+    <aside class="profile-access-sidebar" aria-label="${config.quickTitle}">
+      <a class="profile-access-logo" href="${config.homeHref}" aria-label="Voltar ao inicio">
+        <img src="logo-app.png" alt="${config.logoAlt}" loading="eager" decoding="async" onerror="this.hidden=true" />
+      </a>
+      <div class="profile-access-identity">
+        <span>${config.eyebrow}</span>
+        <strong>${config.name}</strong>
+      </div>
+      <div class="profile-quick-links">
+        <h2>${config.quickTitle}</h2>
+        ${config.quick.map((item) => `<a class="profile-quick-link is-${item.tone}" href="${item.href}">${item.label}</a>`).join("")}
+      </div>
+      <button class="profile-sidebar-logout" type="button" data-platform-logout>Sair</button>
+    </aside>
+  `;
+};
+
+const renderProfileHeader = (role) => {
+  const config = profileAccessConfig[role];
+  return `
+    <header class="profile-access-header" aria-label="Navegacao principal">
+      <label class="profile-access-search">
+        <span>Buscar</span>
+        <input type="search" placeholder="${config.search}" />
+      </label>
+      ${renderProfileTopTabs(role)}
+    </header>
+  `;
+};
+
+const renderProfileConstructionState = (role) => {
+  const view = getProfileViewParam();
+  const copy = profileConstructionCopy[role]?.[view];
+  if (!copy) return "";
+  const config = profileAccessConfig[role];
+  return `
+    <section class="profile-construction-state" aria-label="${copy[0]} em construcao">
+      <span>Em construcao</span>
+      <h2>${copy[0]}</h2>
+      <p>${copy[1]}</p>
+      <a href="${config.homeHref}">Voltar ao inicio</a>
+    </section>
+  `;
+};
+
+const renderProfileShell = (role, content) => `
+  <main class="student-profile-page ${role === "professor" ? "professor-profile-page" : ""}">
+    ${renderProfileSidebar(role)}
+    <div class="profile-main-panel">
+      ${renderProfileHeader(role)}
+      ${renderProfileConstructionState(role)}
+      ${content}
+    </div>
+  </main>
+`;
+
+const renderStudentProfilePage = () => {
+  const content = `
+    <section class="student-profile-static-map" aria-label="Perfil do aluno Pedro">
+      <img
+        src="assets/aluno/perfil-aluno-dashboard.png"
+        alt="Perfil do aluno Pedro com medalhas, progresso, conquistas e jogos concluidos"
+        loading="eager"
+        decoding="async"
+        onerror="this.hidden=true"
+      />
+      ${studentProfileHotspots.map((hotspot) => `<a class="profile-hotspot ${hotspot.className}" href="${hotspot.href}" aria-label="${hotspot.label}"></a>`).join("")}
+    </section>
+  `;
+  return renderProfileShell("aluno", content);
 };
 
 const studentProfileHotspots = [
@@ -2961,8 +3101,8 @@ const professorProfileHotspots = [
   { className: "professor-hotspot-bncc", href: "universidade.html", label: "Abrir conteudos alinhados a BNCC" },
 ];
 
-const renderProfessorProfilePage = () => `
-  <main class="professor-profile-page">
+const renderProfessorProfilePage = () => {
+  const content = `
     <section class="professor-dashboard" aria-label="Perfil da Professora Helena">
       <img
         src="assets/professor/professor-dashboard.png"
@@ -2972,10 +3112,10 @@ const renderProfessorProfilePage = () => `
         onerror="this.hidden=true"
       />
       ${professorProfileHotspots.map((hotspot) => `<a class="professor-hotspot ${hotspot.className}" href="${hotspot.href}" aria-label="${hotspot.label}"></a>`).join("")}
-      <button class="profile-floating-logout" type="button" data-platform-logout>SAIR</button>
     </section>
-  </main>
-`;
+  `;
+  return renderProfileShell("professor", content);
+};
 
 // Reusable student dashboard components. Each renderer receives data only, ready for Supabase records.
 const renderStudentHero = ({ profile, tree }) => `
