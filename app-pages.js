@@ -17,9 +17,10 @@ const platformRoleHome = {
   aluno: "/aluno",
   gestor: "gestor.html",
   coordenador: "/professor",
-  admin: "gestor.html",
+  admin: "/admin",
 };
 const routeAccessRules = {
+  admin: ["admin"],
   professor: ["professor", "gestor", "coordenador", "admin"],
   professorTurma: ["professor", "gestor", "coordenador", "admin"],
   professorAluno: ["professor", "gestor", "coordenador", "admin"],
@@ -43,6 +44,7 @@ const protectedRouteKeyByPage = {
   "professor.html": "professor",
   "professor-turma.html": "professorTurma",
   "professor-aluno.html": "professorAluno",
+  "admin.html": "admin",
   "aluno.html": "aluno",
   "aluno-atividades.html": "alunoAtividades",
   "arvore.html": "arvore",
@@ -61,6 +63,7 @@ const protectedRouteKeyByPage = {
   professor: "professor",
   "professor/turma": "professorTurma",
   "professor/alunos": "professorAluno",
+  admin: "admin",
   aluno: "aluno",
   "aluno/atividades": "alunoAtividades",
 };
@@ -164,6 +167,7 @@ const signOutPlatformSession = async () => {
   return session;
 };
 const canAccessPlatformRoute = (routeKey, role) => {
+  if (role === "admin" && routeKey !== "familia") return true;
   const allowed = routeAccessRules[routeKey];
   if (!allowed) return true;
   return allowed.includes(role);
@@ -227,6 +231,7 @@ requirePlatformAuth();
 const ecosystemModules = [
   ["index.html", "Site"],
   ["plataforma.html", "Inicio"],
+  ["admin.html", "Admin / TI"],
   ["aluno.html", "Aluno"],
   ["arvore.html", "Minha Arvore"],
   ["missao.html", "Missao do Dia"],
@@ -2256,6 +2261,7 @@ const routeKeyByHref = {
   "universidade.html": "universidade",
   "curadoria.html": "curadoria",
   "book-viewer.html": "viewer",
+  "admin.html": "admin",
   "professor.html": "professor",
   "professor-turma.html": "professorTurma",
   "professor-aluno.html": "professorAluno",
@@ -4238,6 +4244,243 @@ const renderTeacherWorkspaceView = (view) => {
   return viewMap[view] || viewMap.inicio;
 };
 
+const adminFeatureRegistry = [
+  { key: "plataforma", label: "Plataforma", area: "Visao geral", status: "PUBLICADO", href: "plataforma.html", roles: { admin: true, professor: true, aluno: true } },
+  { key: "professor", label: "Ambiente Professor", area: "Usuarios e acessos", status: "HOMOLOGADO", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "aluno", label: "Ambiente Aluno", area: "Usuarios e acessos", status: "HOMOLOGADO", href: "aluno.html", roles: { admin: true, professor: false, aluno: true } },
+  { key: "biblioteca", label: "Biblioteca Viva", area: "Conteudos", status: "PUBLICADO", href: "biblioteca.html", roles: { admin: true, professor: true, aluno: true } },
+  { key: "atividades", label: "Atividades Imprimiveis", area: "Conteudos", status: "EM TESTE", href: "admin-atividades.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "experiencias", label: "Experiencias Digitais", area: "Conteudos", status: "EM TESTE", href: "biblioteca.html#acervo-completo", roles: { admin: true, professor: true, aluno: true } },
+  { key: "jogos", label: "Jogos", area: "Conteudos", status: "EM DESENVOLVIMENTO", href: "jogos.html", roles: { admin: true, professor: true, aluno: true } },
+  { key: "planejamentos", label: "Planejamentos", area: "Gestao pedagogica", status: "EM DESENVOLVIMENTO", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "avaliacoes", label: "Avalia+", area: "Conteudos", status: "EM TESTE", href: "avalia.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "banco", label: "Banco de Questoes", area: "Conteudos", status: "EM TESTE", href: "banco-questoes.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "universidade", label: "Universidade", area: "Conteudos", status: "EM TESTE", href: "universidade.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "bookViewer", label: "Book Viewer", area: "Motores", status: "HOMOLOGADO", href: "book-viewer.html", roles: { admin: true, professor: true, aluno: true } },
+  { key: "motorUniversal", label: "Motor Universal de Atividades", area: "Motores", status: "EM DESENVOLVIMENTO", href: "motor-atividade.html", roles: { admin: true, professor: false, aluno: true } },
+  { key: "motorJogos", label: "Motor de Jogos", area: "Motores", status: "EM DESENVOLVIMENTO", href: "jogos.html", roles: { admin: true, professor: true, aluno: true } },
+  { key: "pintura", label: "Pintura / Desenho", area: "Motores", status: "EM DESENVOLVIMENTO", href: "motor-atividade.html", roles: { admin: true, professor: false, aluno: true } },
+  { key: "arrastar", label: "Arrastar e Soltar", area: "Motores", status: "EM DESENVOLVIMENTO", href: "motor-atividade.html", roles: { admin: true, professor: false, aluno: true } },
+  { key: "pareamento", label: "Pareamento", area: "Motores", status: "EM DESENVOLVIMENTO", href: "motor-atividade.html", roles: { admin: true, professor: false, aluno: true } },
+  { key: "audioVideo", label: "Audio / Video Interativo", area: "Motores", status: "EM DESENVOLVIMENTO", href: "biblioteca.html", roles: { admin: true, professor: true, aluno: true } },
+  { key: "atribuicoes", label: "Atribuicoes", area: "Gestao pedagogica", status: "EM DESENVOLVIMENTO", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "producoes", label: "Producoes dos Alunos", area: "Gestao pedagogica", status: "EM DESENVOLVIMENTO", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "relatorios", label: "Relatorios", area: "Gestao pedagogica", status: "EM DESENVOLVIMENTO", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "adminAtividades", label: "Admin de Atividades", area: "Sistema / TI", status: "EM TESTE", href: "admin-atividades.html", roles: { admin: true, professor: false, aluno: false } },
+];
+
+const adminWorkspaceNav = [
+  ["heading", "Visao geral"],
+  ["inicio", "Inicio"],
+  ["plataforma", "Painel da Plataforma"],
+  ["status", "Status dos Modulos"],
+  ["heading", "Usuarios e acessos"],
+  ["usuarios", "Usuarios"],
+  ["professores", "Professores"],
+  ["alunos", "Alunos"],
+  ["gestores", "Gestores"],
+  ["escolas", "Escolas"],
+  ["turmas", "Turmas"],
+  ["permissoes", "Perfis e Permissoes"],
+  ["heading", "Conteudos"],
+  ["biblioteca", "Biblioteca Viva"],
+  ["atividades", "Atividades Imprimiveis"],
+  ["experiencias", "Experiencias Digitais"],
+  ["jogos", "Jogos"],
+  ["planejamentos", "Planejamentos"],
+  ["avaliacoes", "Avaliacoes"],
+  ["banco", "Banco de Questoes"],
+  ["universidade", "Universidade"],
+  ["heading", "Motores"],
+  ["bookViewer", "Book Viewer"],
+  ["motorUniversal", "Motor Universal"],
+  ["motorJogos", "Motor de Jogos"],
+  ["pintura", "Pintura / Desenho"],
+  ["arrastar", "Arrastar e Soltar"],
+  ["pareamento", "Pareamento"],
+  ["audioVideo", "Audio / Video Interativo"],
+  ["outrosMotores", "Outros Motores"],
+  ["heading", "Gestao pedagogica"],
+  ["atribuicoes", "Atribuicoes"],
+  ["missoes", "Missoes"],
+  ["producoes", "Producoes dos Alunos"],
+  ["progresso", "Progresso"],
+  ["relatorios", "Relatorios"],
+  ["conquistas", "Conquistas / Gamificacao"],
+  ["heading", "Comunicacao"],
+  ["mensagens", "Mensagens"],
+  ["notificacoes", "Notificacoes"],
+  ["familia", "Familia"],
+  ["heading", "Sistema / TI"],
+  ["adminAtividades", "Admin de Atividades"],
+  ["assets", "Assets / Arquivos"],
+  ["configuracoes", "Configuracoes"],
+  ["logs", "Logs"],
+];
+
+const getAdminFeature = (key) => adminFeatureRegistry.find((item) => item.key === key);
+const getAdminFeatureStatusClass = (status) =>
+  `is-${String(status || "em-desenvolvimento").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-")}`;
+const getAdminFeaturePolicy = (key) => getAdminFeature(key)?.roles || { admin: true, professor: false, aluno: false };
+
+const renderAdminFeatureCard = (item) => `
+  <article class="admin-feature-card" data-admin-search-item>
+    <div>
+      <span>${item.area}</span>
+      <strong>${item.label}</strong>
+      <small class="${getAdminFeatureStatusClass(item.status)}">${item.status}</small>
+    </div>
+    <a href="${item.href}">Abrir</a>
+  </article>
+`;
+
+const renderAdminSidebar = (active = "inicio") => `
+  <aside class="admin-sidebar">
+    <div class="admin-id-card">
+      <span>ADMIN / TI</span>
+      <strong>Raizes e Saberes</strong>
+      <small>${getPlatformSession().email || "admin.ti@raizesesaberes.com.br"}</small>
+    </div>
+    <nav aria-label="Menu Admin">
+      ${adminWorkspaceNav
+        .map(([key, label]) =>
+          key === "heading"
+            ? `<strong class="tw-nav-heading">${label}</strong>`
+            : `<button type="button" data-admin-view="${key}" class="${key === active ? "is-active" : ""}">${label}</button>`
+        )
+        .join("")}
+      <button class="platform-logout-button" type="button" data-platform-logout>SAIR</button>
+    </nav>
+  </aside>
+`;
+
+const renderAdminPermissionMatrix = () => `
+  <section class="admin-board">
+    <div class="admin-section-head">
+      <h2>Liberacao por perfil</h2>
+      <span>Registro central preparado para feature flags</span>
+    </div>
+    <div class="admin-permission-table" role="table" aria-label="Liberacao de funcionalidades por perfil">
+      <div role="row"><strong>Funcionalidade</strong><strong>Admin</strong><strong>Professor</strong><strong>Aluno</strong></div>
+      ${adminFeatureRegistry
+        .map((item) => {
+          const policy = getAdminFeaturePolicy(item.key);
+          return `<div role="row"><span>${item.label}</span><b>${policy.admin ? "SIM" : "NAO"}</b><b>${policy.professor ? "SIM" : "NAO"}</b><b>${policy.aluno ? "SIM" : "NAO"}</b></div>`;
+        })
+        .join("")}
+    </div>
+  </section>
+`;
+
+const renderAdminWorkspaceView = (view = "inicio") => {
+  const feature = getAdminFeature(view);
+  const byArea = (area) => adminFeatureRegistry.filter((item) => item.area === area);
+  const development = adminFeatureRegistry.filter((item) => item.status === "EM DESENVOLVIMENTO");
+  const homologated = adminFeatureRegistry.filter((item) => item.status === "HOMOLOGADO" || item.status === "PUBLICADO");
+  const viewMap = {
+    inicio: `
+      <section class="admin-home-grid" aria-label="Areas principais do Admin">
+        ${["PLATAFORMA", "USUARIOS", "CONTEUDOS", "MOTORES", "GESTAO PEDAGOGICA", "EM DESENVOLVIMENTO", "HOMOLOGADOS", "STATUS DO SISTEMA"]
+          .map(
+            (title) => `
+              <article class="admin-home-card" data-admin-search-item>
+                <span>QG da Plataforma</span>
+                <strong>${title}</strong>
+                <p>Area preparada para diagnostico, homologacao e liberacao controlada por perfil.</p>
+              </article>
+            `
+          )
+          .join("")}
+      </section>
+      ${renderAdminPermissionMatrix()}
+    `,
+    plataforma: `
+      <section class="admin-board">
+        <div class="admin-section-head"><h2>Painel da Plataforma</h2><span>Fluxo oficial de desenvolvimento</span></div>
+        <div class="admin-flow">
+          ${["Construir", "Disponibilizar no Admin/TI", "Testar", "Homologar", "Liberar por perfil", "Publicar"].map((step) => `<article>${step}</article>`).join("")}
+        </div>
+      </section>
+    `,
+    status: `
+      <section class="admin-board">
+        <div class="admin-section-head"><h2>Status dos Modulos</h2><span>Estados encontrados no projeto</span></div>
+        <div class="admin-feature-grid">${adminFeatureRegistry.map(renderAdminFeatureCard).join("")}</div>
+      </section>
+    `,
+    usuarios: `
+      <section class="admin-board admin-empty-state">
+        <h2>Usuarios</h2>
+        <p>Helena e Pedro usam usuarios reais do Supabase Auth. O usuario Admin/TI deve existir no Supabase com app_metadata.platform_role = admin antes do login real.</p>
+      </section>
+      ${renderAdminPermissionMatrix()}
+    `,
+    professores: `<section class="admin-board admin-empty-state"><h2>Professores</h2><p>Ambiente da Professora Helena reaproveitado para regressao e validacao pedagogica.</p><a href="professor.html">Abrir ambiente professor</a></section>`,
+    alunos: `<section class="admin-board admin-empty-state"><h2>Alunos</h2><p>Ambiente do aluno Pedro reaproveitado para regressao e validacao infantil.</p><a href="aluno.html">Abrir ambiente aluno</a></section>`,
+    permissoes: renderAdminPermissionMatrix(),
+    biblioteca: `<section class="admin-board"><div class="admin-section-head"><h2>Conteudos</h2><span>Biblioteca e materiais existentes</span></div><div class="admin-feature-grid">${byArea("Conteudos").map(renderAdminFeatureCard).join("")}</div></section>`,
+    atividades: `<section class="admin-board admin-empty-state"><h2>Atividades Imprimiveis</h2><p>Modulo administrativo existente reaproveitado. Use-o para curadoria e homologacao dos imprimiveis.</p><a href="admin-atividades.html">Abrir Admin de Atividades</a></section>`,
+    motores: `<section class="admin-board"><div class="admin-section-head"><h2>Motores</h2><span>Sem duplicar engines existentes</span></div><div class="admin-feature-grid">${byArea("Motores").map(renderAdminFeatureCard).join("")}</div></section>`,
+    emDesenvolvimento: `<section class="admin-board"><div class="admin-section-head"><h2>Em desenvolvimento</h2><span>Acesso restrito ao Admin/TI</span></div><div class="admin-feature-grid">${development.map(renderAdminFeatureCard).join("")}</div></section>`,
+    homologados: `<section class="admin-board"><div class="admin-section-head"><h2>Homologados e publicados</h2><span>Disponiveis conforme perfil</span></div><div class="admin-feature-grid">${homologated.map(renderAdminFeatureCard).join("")}</div></section>`,
+    logs: `<section class="admin-board admin-empty-state"><h2>Logs</h2><p>Espaco reservado para backend seguro, Edge Function ou servico server-side. Nenhum segredo e exposto no frontend.</p></section>`,
+    configuracoes: `<section class="admin-board admin-empty-state"><h2>Configuracoes</h2><p>Controle tecnico preparado para proximas etapas sem armazenar tokens, senhas ou service role no frontend.</p></section>`,
+  };
+  if (feature) {
+    return `<section class="admin-board admin-empty-state"><h2>${feature.label}</h2><p>Status atual: ${feature.status}. Modulo existente reaproveitado no QG sem criar tela duplicada.</p><a href="${feature.href}">Abrir modulo</a></section>`;
+  }
+  return viewMap[view] || `<section class="admin-board admin-empty-state"><h2>${adminWorkspaceNav.find(([key]) => key === view)?.[1] || "Modulo"}</h2><p>Estrutura reservada para desenvolvimento futuro e liberacao segura por perfil.</p></section>`;
+};
+
+const renderAdminDashboard = () => `
+  <section class="admin-workspace" data-admin-workspace>
+    ${renderAdminSidebar("inicio")}
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <label><span>Busca Admin</span><input type="search" placeholder="Buscar modulos, usuarios, status..." data-admin-search /></label>
+        <button type="button" data-admin-view="status">Status</button>
+        <button type="button" data-admin-view="permissoes">Permissoes</button>
+        <button type="button" data-platform-logout>SAIR</button>
+      </header>
+      <section class="admin-hero">
+        <div>
+          <span>QG DA PLATAFORMA</span>
+          <h1>RAIZES E SABERES EDUCACIONAL</h1>
+          <p>Ambiente ADMIN / TI para acompanhar construcao, homologacao, liberacao por perfil e operacao tecnica da plataforma.</p>
+        </div>
+        <div class="admin-hero-badges">
+          <span>LOGIN UNICO</span>
+          <span>SUPABASE AUTH</span>
+          <span>PLATFORM_ROLE</span>
+        </div>
+      </section>
+      <section class="admin-content" data-admin-content>${renderAdminWorkspaceView("inicio")}</section>
+    </main>
+  </section>
+`;
+
+const initAdminWorkspace = () => {
+  const workspace = document.querySelector("[data-admin-workspace]");
+  if (!workspace) return;
+  const content = workspace.querySelector("[data-admin-content]");
+  const activate = (view) => {
+    workspace.querySelectorAll("[data-admin-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.adminView === view));
+    if (content) content.innerHTML = renderAdminWorkspaceView(view);
+  };
+  workspace.addEventListener("click", (event) => {
+    const button = event.target.closest?.("[data-admin-view]");
+    if (!button) return;
+    event.preventDefault();
+    activate(button.dataset.adminView || "inicio");
+  });
+  workspace.querySelector("[data-admin-search]")?.addEventListener("input", (event) => {
+    const term = String(event.target.value || "").trim().toLowerCase();
+    workspace.querySelectorAll("[data-admin-search-item]").forEach((item) => {
+      item.hidden = term ? !item.textContent.toLowerCase().includes(term) : false;
+    });
+  });
+};
+
 const renderProfessorDashboard = () => {
   return renderTeacherPilotHome();
 };
@@ -4527,6 +4770,12 @@ const modules = {
     subtitle: "Central de Comando Raizes e Saberes",
     code: "HOME-ECO-001",
     html: renderEcosystemHome(),
+  },
+  admin: {
+    title: "Admin / TI",
+    subtitle: "QG da Plataforma",
+    code: "ADMIN-TI",
+    html: renderAdminDashboard(),
   },
   aluno: {
     title: "Dashboard do Aluno",
@@ -5555,6 +5804,7 @@ const environments = {
 
 const moduleEnvironment = {
   plataforma: "plataforma",
+  admin: "admin",
   aluno: "aluno",
   alunoAtividades: "aluno",
   arvore: "aluno",
@@ -8882,6 +9132,16 @@ const renderAppPage = () => {
     initTeacherWorkspace();
     initUniversalActivityAssignmentUi();
     initUniversalActivityTeacherDeliveries();
+    return;
+  }
+
+  if (activeKey === "admin") {
+    mount.innerHTML = activeModule.html;
+    initPlatformLogout();
+    requestAnimationFrame(() => {
+      document.querySelector(".admin-workspace")?.classList.add("is-mounted");
+    });
+    initAdminWorkspace();
     return;
   }
 

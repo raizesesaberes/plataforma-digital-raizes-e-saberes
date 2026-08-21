@@ -60,7 +60,7 @@ const getRoleHome = (role) =>
     aluno: "/aluno",
     gestor: "gestor.html",
     coordenador: "/professor",
-    admin: "gestor.html",
+    admin: "/admin",
   })[normalizePlatformRole(role)] || "plataforma.html";
 
 const getNextPage = () => {

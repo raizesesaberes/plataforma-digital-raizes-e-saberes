@@ -1,6 +1,7 @@
 {
   "cleanUrls": true,
   "rewrites": [
+    { "source": "/admin", "destination": "/admin.html" },
     { "source": "/professor", "destination": "/professor.html" },
     { "source": "/professor/turma", "destination": "/professor-turma.html" },
     { "source": "/professor/alunos/:id", "destination": "/professor-aluno.html?id=:id" },
