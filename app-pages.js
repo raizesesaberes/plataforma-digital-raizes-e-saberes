@@ -4921,13 +4921,30 @@ const familyAreaData = {
   agenda: [],
   attendance: null,
   progress: {
-    xp: studentDashboardData.profile.xp,
-    level: studentDashboardData.profile.level,
-    percent: studentDashboardData.profile.progress,
+    xp: getStudentGameSummary().totalXp,
+    level: getStudentGameSummary().totalXp ? studentDashboardData.profile.level : "",
+    percent: getStudentGameSummary().percent,
     achievements: studentDashboardData.medals,
-    completedActivities: pilotProfiles.student.completedActivities,
+    completedActivities: getStudentGameSummary().completedCount,
   },
+  weekly: [],
 };
+
+const familyWeekDays = [
+  ["seg", "SEG", "Segunda"],
+  ["ter", "TER", "Terca"],
+  ["qua", "QUA", "Quarta"],
+  ["qui", "QUI", "Quinta"],
+  ["sex", "SEX", "Sexta"],
+];
+
+const familyScheduleSlots = [
+  ["1", "Horario 1"],
+  ["2", "Horario 2"],
+  ["3", "Horario 3"],
+  ["4", "Horario 4"],
+  ["5", "Horario 5"],
+];
 
 const familyAreaViews = [
   ["inicio", "Inicio"],
@@ -4953,7 +4970,7 @@ const renderFamilyEmpty = (title, text = "") => `
 const renderFamilyMessageList = () =>
   familyAreaData.messages.length
     ? familyAreaData.messages
-        .map((message) => `<article class="family-list-card"><span>${message.origin}</span><strong>${message.title}</strong><p>${message.text}</p><small>${message.date}</small></article>`)
+        .map((message) => `<article class="family-list-card family-message-card"><img src="assets/universidade/avatar-ana-carolina.webp" alt="" onerror="this.hidden=true" /><span>${message.origin}</span><strong>${message.title}</strong><p>${message.text}</p><small>${message.date}</small></article>`)
         .join("")
     : renderFamilyEmpty("NENHUM NOVO RECADO NO MOMENTO.");
 
@@ -5010,6 +5027,95 @@ const renderFamilyAgenda = () =>
     ? familyAreaData.agenda.map((item) => `<article class="family-list-card"><span>${item.date}</span><strong>${item.title}</strong><p>${item.detail}</p></article>`).join("")
     : renderFamilyEmpty("NENHUM COMPROMISSO PROGRAMADO.");
 
+const getFamilyWeekRange = () => {
+  if (typeof Date === "undefined") return "Semana atual";
+  const today = new Date();
+  const day = today.getDay() || 7;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - day + 1);
+  const friday = new Date(monday);
+  friday.setDate(monday.getDate() + 4);
+  const months = ["Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+  return `${String(monday.getDate()).padStart(2, "0")} a ${String(friday.getDate()).padStart(2, "0")} de ${months[friday.getMonth()]}`;
+};
+
+const getFamilyWeekRecord = (dayKey, slotKey) =>
+  familyAreaData.weekly.find((item) => item.dia_da_semana === dayKey && String(item.ordem_do_horario) === String(slotKey));
+
+const renderFamilyWeekCell = (dayKey, slotKey) => {
+  const record = getFamilyWeekRecord(dayKey, slotKey);
+  if (!record) return `<div class="family-week-cell is-empty"><span>Sem registro</span></div>`;
+  return `
+    <div class="family-week-cell">
+      <small>${record.horario || ""}</small>
+      <strong>${record.titulo}</strong>
+      ${record.descricao ? `<p>${record.descricao}</p>` : ""}
+      <em data-source="${record.source || "professor"}">${record.source === "familia" ? "Familia" : "Escola"}</em>
+    </div>
+  `;
+};
+
+const renderFamilyWeeklyBoard = () => `
+  <section class="family-panel family-week-panel">
+    <div class="family-section-head family-week-head">
+      <div>
+        <h2>Minha Semana</h2>
+        <span>${getFamilyWeekRange()}</span>
+      </div>
+      <div class="family-week-actions" aria-label="Controles de semana">
+        <button type="button" disabled>Semana anterior</button>
+        <button type="button" disabled>Hoje</button>
+        <button type="button" disabled>Proxima semana</button>
+      </div>
+    </div>
+    <div class="family-week-grid" aria-label="Quadro semanal">
+      <div class="family-week-corner">Horario</div>
+      ${familyWeekDays.map(([, short]) => `<div class="family-week-day">${short}</div>`).join("")}
+      ${familyScheduleSlots
+        .map(
+          ([slotKey, slotLabel]) => `
+            <div class="family-week-slot">${slotLabel}</div>
+            ${familyWeekDays.map(([dayKey]) => renderFamilyWeekCell(dayKey, slotKey)).join("")}
+          `
+        )
+        .join("")}
+    </div>
+    <div class="family-week-mobile">
+      ${familyWeekDays
+        .map(
+          ([dayKey, short, full]) => `
+            <article>
+              <h3>${full}</h3>
+              ${familyScheduleSlots.map(([slotKey, slotLabel]) => `<div><b>${slotLabel}</b>${renderFamilyWeekCell(dayKey, slotKey)}</div>`).join("")}
+            </article>
+          `
+        )
+        .join("")}
+    </div>
+  </section>
+`;
+
+const renderFamilyProgressSummary = () => {
+  const { progress } = familyAreaData;
+  return `
+    <section class="family-panel family-summary-panel">
+      <div class="family-section-head"><h2>Acompanhamento</h2><span>Resumo</span></div>
+      <dl>
+        <div><dt>Frequencia</dt><dd>${familyAreaData.attendance?.summary || "Sem registro publicado"}</dd></div>
+        <div><dt>XP</dt><dd>${progress.xp ? `${progress.xp} XP` : "0 XP"}</dd></div>
+        <div><dt>Nivel</dt><dd>${progress.level || "Sem registro"}</dd></div>
+        <div><dt>Concluidas</dt><dd>${progress.completedActivities || 0}</dd></div>
+      </dl>
+      <div class="family-tree-mini">
+        <span>Minha Arvore</span>
+        <i><b style="width:${progress.percent || 0}%"></b></i>
+        <strong>${progress.percent || 0}%</strong>
+      </div>
+      <a class="family-primary-link" href="familia.html?view=acompanhamento">Ver acompanhamento</a>
+    </section>
+  `;
+};
+
 const renderFamilyProgress = (compact = false) => {
   const { progress } = familyAreaData;
   return `
@@ -5061,27 +5167,20 @@ const renderFamilyProfile = () => {
 
 const renderFamilyHomeView = () => `
   <section class="family-home-grid">
-    <div class="family-panel family-panel-large">
+    <div class="family-panel family-home-card">
       <div class="family-section-head"><h2>Recados da professora</h2><span>${familyAreaData.teacher}</span></div>
       ${renderFamilyMessageList()}
     </div>
-    <div class="family-panel">
+    <div class="family-panel family-home-card">
       <div class="family-section-head"><h2>Atividades online</h2><span>Aluno</span></div>
       ${renderFamilyOnlineActivities("pendentes")}
     </div>
-    <div class="family-panel">
+    <div class="family-panel family-home-card">
       <div class="family-section-head"><h2>Atividades no livro</h2><span>Orientacoes</span></div>
       ${renderFamilyBookActivities()}
     </div>
-    <div class="family-panel">
-      <div class="family-section-head"><h2>Proximos compromissos</h2><span>Agenda</span></div>
-      ${renderFamilyAgenda()}
-    </div>
-    <div class="family-panel">
-      <div class="family-section-head"><h2>Minha Arvore</h2><span>Acompanhamento</span></div>
-      ${renderFamilyProgress(true)}
-      <a class="family-primary-link" href="familia.html?view=acompanhamento">Ver meu acompanhamento</a>
-    </div>
+    ${renderFamilyWeeklyBoard()}
+    ${renderFamilyProgressSummary()}
   </section>
 `;
 
