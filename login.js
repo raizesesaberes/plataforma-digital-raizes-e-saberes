@@ -53,6 +53,13 @@ const normalizePlatformRole = (role) => {
 };
 const validPlatformRoles = new Set(["professor", "aluno", "gestor", "coordenador", "admin"]);
 const hasValidPlatformRole = (role) => validPlatformRoles.has(normalizePlatformRole(role));
+const loginRoleLabels = {
+  aluno: "Aluno",
+  professor: "Professor",
+  admin: "Admin / TI",
+  gestor: "Gestor",
+  coordenador: "Coordenador",
+};
 
 const getRoleHome = (role) =>
   ({
@@ -89,6 +96,13 @@ const getNextPageName = () => {
 };
 const questionBankLoginPages = new Set(["avalia", "avalia.html", "banco-questoes", "banco-questoes.html"]);
 const requiresQuestionBankRole = requiresSupabaseAuth && questionBankLoginPages.has(getNextPageName());
+const inferRequestedAccessRole = () => {
+  const pageName = getNextPageName();
+  if (pageName === "admin" || pageName === "admin.html") return "admin";
+  if (pageName === "aluno" || pageName === "aluno.html" || pageName.startsWith("aluno/")) return "aluno";
+  if (pageName === "professor" || pageName === "professor.html" || pageName.startsWith("professor/")) return "professor";
+  return "";
+};
 const getPostLoginDestination = (role) => {
   if (!role) return getNextPage();
   const next = getNextPage();
@@ -153,13 +167,41 @@ if (
 
 const form = document.querySelector("[data-login-form]");
 const errorMessage = document.querySelector("[data-login-error]");
+const accessCopy = document.querySelector("[data-login-access-copy]");
+const submitButton = form?.querySelector("button[type='submit']");
+const selectedAccessInput = () => form?.querySelector('input[name="access_level"]:checked');
+const getRequestedAccessRole = () => normalizePlatformRole(selectedAccessInput()?.value || "");
+
+const setRequestedAccessRole = (role) => {
+  const normalized = normalizePlatformRole(role);
+  const radio = form?.querySelector(`input[name="access_level"][value="${normalized}"]`);
+  if (radio) {
+    radio.checked = true;
+  }
+};
+
+const syncAccessCopy = () => {
+  const role = getRequestedAccessRole();
+  if (accessCopy) {
+    accessCopy.textContent = role
+      ? `Acesso ${loginRoleLabels[role] || role}: entre com a credencial Supabase correspondente.`
+      : "Aluno, Professor e Admin entram pela mesma tela. O Supabase confirma o nivel real pelo token autenticado.";
+  }
+  if (submitButton) {
+    submitButton.textContent = role ? `Acessar como ${loginRoleLabels[role] || role}` : "Acessar Plataforma";
+  }
+};
+
+setRequestedAccessRole(inferRequestedAccessRole());
+syncAccessCopy();
+form?.querySelectorAll('input[name="access_level"]').forEach((input) => input.addEventListener("change", syncAccessCopy));
 
 if (requiresSupabaseAuth) {
-  const copy = document.querySelector(".login-copy span");
+  const copy = accessCopy || document.querySelector(".login-copy span");
   if (copy) {
     copy.textContent = requiresQuestionBankRole
       ? "Entre com o usuario Supabase Auth autorizado para salvar e liberar a pre-visualizacao oficial."
-      : "Entre com o usuario Supabase Auth autorizado para acessar seu ambiente.";
+      : copy.textContent;
   }
 }
 
@@ -220,10 +262,10 @@ const authenticateWithSupabase = async (email, password, { requireQuestionBankRo
 };
 
 const setLoginBusy = (isBusy, label = "Acessar Plataforma") => {
-  const submitButton = form?.querySelector("button[type='submit']");
   if (submitButton) {
+    const role = getRequestedAccessRole();
     submitButton.disabled = isBusy;
-    submitButton.textContent = isBusy ? "Entrando..." : label;
+    submitButton.textContent = isBusy ? "Entrando..." : role ? `Acessar como ${loginRoleLabels[role] || role}` : label;
   }
 };
 
@@ -239,9 +281,14 @@ form?.addEventListener("submit", async (event) => {
   const formData = new FormData(form);
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
+  const requestedRole = normalizePlatformRole(formData.get("access_level"));
 
   if (errorMessage) {
     errorMessage.hidden = true;
+  }
+  if (!["aluno", "professor", "admin"].includes(requestedRole)) {
+    showLoginError("Escolha o nivel de acesso: Aluno, Professor ou Admin.");
+    return;
   }
   setLoginBusy(true);
 
@@ -249,6 +296,12 @@ form?.addEventListener("submit", async (event) => {
     const context = await authenticateWithSupabase(email, password, { requireQuestionBankRole: requiresQuestionBankRole });
     if (context?.missingPlatformRole) {
       showLoginError("Usuario autenticado, mas sem perfil de plataforma valido. Solicite platform_role em app_metadata.");
+      setLoginBusy(false);
+      return;
+    }
+    if (context && normalizePlatformRole(context.platformRole) !== requestedRole) {
+      clearStoredAuthSession();
+      showLoginError(`Esta credencial pertence ao acesso ${loginRoleLabels[normalizePlatformRole(context.platformRole)] || "autorizado"}, nao ao acesso ${loginRoleLabels[requestedRole]}.`);
       setLoginBusy(false);
       return;
     }

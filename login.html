@@ -23,11 +23,26 @@
 
         <div class="login-copy">
           <p>Ambiente Demonstrativo</p>
-          <h1 id="login-title">Acesso restrito a Plataforma Digital</h1>
-          <span>Entre com as credenciais autorizadas para visualizar a biblioteca, livros digitais e paineis do ecossistema.</span>
+          <h1 id="login-title">Escolha seu acesso</h1>
+          <span data-login-access-copy>Aluno, Professor e Admin entram pela mesma tela. O Supabase confirma o nivel real pelo token autenticado.</span>
         </div>
 
         <form class="login-form" data-login-form novalidate>
+          <fieldset class="login-access-level" aria-label="Nivel de acesso">
+            <legend>Nivel de acesso</legend>
+            <label>
+              <input type="radio" name="access_level" value="aluno" required />
+              <span><strong>Aluno</strong><small>Entrar no ambiente do estudante.</small></span>
+            </label>
+            <label>
+              <input type="radio" name="access_level" value="professor" required />
+              <span><strong>Professor</strong><small>Entrar no ambiente pedagogico.</small></span>
+            </label>
+            <label>
+              <input type="radio" name="access_level" value="admin" required />
+              <span><strong>Admin</strong><small>Entrar no QG Admin / TI.</small></span>
+            </label>
+          </fieldset>
           <label>
             <span>E-mail</span>
             <input type="email" name="email" autocomplete="username" placeholder="demo@raizesesaberes.com.br" required />
