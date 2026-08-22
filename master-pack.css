@@ -320,21 +320,27 @@
   overflow-x: auto;
 }
 
-.module-switcher a {
+.module-switcher a,
+.module-switcher-logout {
   flex: 0 0 auto;
   padding: 9px 10px;
   border: 1px solid var(--rs-line);
   border-radius: var(--rs-radius);
   color: var(--rs-muted);
   background: #fff;
+  font-family: inherit;
   font-size: 0.72rem;
   font-weight: 800;
   text-decoration: none;
+  cursor: pointer;
 }
 
-.module-switcher a:hover {
+.module-switcher a:hover,
+.module-switcher-logout:hover,
+.module-switcher-logout:focus-visible {
   color: #fff;
   background: var(--rs-green-700);
+  outline: none;
 }
 
 .module-switcher a.is-active {

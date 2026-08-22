@@ -35,9 +35,10 @@ const routeAccessRules = {
   alunoAtividade: ["aluno"],
   arvore: ["aluno"],
   missao: ["aluno"],
-  jogos: ["aluno"],
+  jogos: ["aluno", "educacao_infantil"],
   perfil: ["aluno"],
-  biblioteca: ["aluno", "professor", "gestor", "coordenador", "admin"],
+  biblioteca: ["aluno", "educacao_infantil", "professor", "gestor", "coordenador", "admin"],
+  viewer: ["aluno", "educacao_infantil", "professor", "gestor", "coordenador", "admin"],
   familia: ["educacao_infantil", "admin"],
   motorAtividade: ["aluno"],
   universidade: ["professor", "gestor", "coordenador", "admin"],
@@ -82,6 +83,7 @@ const protectedRouteKeyByPage = {
   "aluno/atividade": "alunoAtividade",
 };
 const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "alunoAtividade", "missao", "arvore", "biblioteca", "jogos", "perfil", "viewer", "motorAtividade"]);
+const earlyChildhoodAllowedRouteKeys = new Set(["educacaoInfantil", "jogos", "biblioteca", "viewer"]);
 const decodePlatformJwtPayload = (token) => {
   try {
     const [, payload] = String(token || "").split(".");
@@ -2305,9 +2307,21 @@ const ecosystemModuleLinks = (activeKey, environmentKey = "") => {
           ["perfil.html", "Perfil"],
           ["familia.html", "Familia"],
         ]
+      : environmentKey === "educacaoInfantil"
+        ? [
+            ["educacao-infantil.html", "Inicio"],
+            ["index.html", "Site"],
+            ["jogos.html", "Jogos"],
+            ["biblioteca.html", "Biblioteca"],
+            ["book-viewer.html", "Book Viewer"],
+            ["#logout", "Sair"],
+          ]
       : ecosystemModules;
   return modulesForEnvironment
     .map(([href, label]) => {
+      if (href === "#logout") {
+        return `<button class="module-switcher-logout" type="button" data-platform-logout>${label}</button>`;
+      }
       const isActive = routeKeyByHref[href] === activeKey;
       return `<a class="${isActive ? "is-active" : ""}" href="${href}">${label}</a>`;
     })
@@ -6900,6 +6914,30 @@ const environments = {
       ["logout", "SAIR", "#"],
     ],
   },
+  educacaoInfantil: {
+    label: "Aluno Infantil",
+    profile: "Educacao Infantil",
+    search: "Buscar jogos, livros e atividades...",
+    user: "Aluno Infantil",
+    avatar: "assets/aluno/oficial-avatar-aluno.png",
+    profileImage: "logo-sidebar-dark.png",
+    nav: [
+      ["educacaoInfantil", "Inicio", "educacao-infantil.html"],
+      ["site", "Site", "index.html"],
+      ["jogos", "Jogos", "jogos.html"],
+      ["biblioteca", "Biblioteca", "biblioteca.html"],
+      ["viewer", "Book Viewer", "book-viewer.html"],
+      ["logout", "Sair", "#"],
+    ],
+    mobile: [
+      ["educacaoInfantil", "Inicio", "educacao-infantil.html"],
+      ["site", "Site", "index.html"],
+      ["jogos", "Jogos", "jogos.html"],
+      ["biblioteca", "Biblioteca", "biblioteca.html"],
+      ["viewer", "Livro", "book-viewer.html"],
+      ["logout", "Sair", "#"],
+    ],
+  },
   biblioteca: {
     label: "Biblioteca Digital",
     profile: "Acervo Educacional",
@@ -7120,7 +7158,7 @@ const moduleEnvironment = {
   plataforma: "plataforma",
   admin: "admin",
   escolaColetiva: "plataforma",
-  educacaoInfantil: "plataforma",
+  educacaoInfantil: "educacaoInfantil",
   aluno: "aluno",
   alunoAtividades: "aluno",
   alunoAtividade: "aluno",
@@ -10436,9 +10474,17 @@ const renderAppPage = () => {
     window.location.replace(getRoleHome(currentRole));
     return;
   }
+  if (currentRole === "educacao_infantil" && !earlyChildhoodAllowedRouteKeys.has(activeKey)) {
+    document.documentElement.style.display = "none";
+    window.location.replace(getRoleHome(currentRole));
+    return;
+  }
   let environmentKey = moduleEnvironment[activeKey] || activeKey;
   if (currentRole === "aluno" && studentAllowedRouteKeys.has(activeKey)) {
     environmentKey = "aluno";
+  }
+  if (currentRole === "educacao_infantil" && earlyChildhoodAllowedRouteKeys.has(activeKey)) {
+    environmentKey = "educacaoInfantil";
   }
   const environment = environments[environmentKey] || environments.biblioteca;
   if (currentRole && !canAccessPlatformRoute(activeKey, currentRole)) {
