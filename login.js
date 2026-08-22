@@ -184,6 +184,17 @@ const form = document.querySelector("[data-login-form]");
 const errorMessage = document.querySelector("[data-login-error]");
 const accessCopy = document.querySelector("[data-login-access-copy]");
 const submitButton = form?.querySelector("button[type='submit']");
+const accessOptions = Array.from(document.querySelectorAll("[data-login-access-option]"));
+let selectedAccessRole = inferRequestedAccessRole() || "admin";
+
+const setSelectedAccessRole = (role) => {
+  selectedAccessRole = normalizePlatformRole(role) || selectedAccessRole;
+  accessOptions.forEach((option) => {
+    const isSelected = normalizePlatformRole(option.dataset.loginAccessOption) === selectedAccessRole;
+    option.classList.toggle("is-selected", isSelected);
+    option.setAttribute("aria-pressed", String(isSelected));
+  });
+};
 
 const syncAccessCopy = () => {
   if (accessCopy) {
@@ -195,6 +206,11 @@ const syncAccessCopy = () => {
 };
 
 syncAccessCopy();
+setSelectedAccessRole(selectedAccessRole);
+
+accessOptions.forEach((option) => {
+  option.addEventListener("click", () => setSelectedAccessRole(option.dataset.loginAccessOption));
+});
 
 if (requiresSupabaseAuth) {
   const copy = accessCopy || document.querySelector(".login-copy span");

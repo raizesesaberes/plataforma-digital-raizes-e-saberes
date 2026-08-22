@@ -159,7 +159,7 @@ const clearPlatformSession = () => {
   }
   return null;
 };
-const signOutPlatformSession = async () => {
+const signOutPlatformSession = async ({ redirectTo } = {}) => {
   const session = getPlatformSession();
   const storedSession = (() => {
     try {
@@ -184,7 +184,7 @@ const signOutPlatformSession = async () => {
     // A limpeza local abaixo garante que o navegador nao reaproveite a sessao.
   }
   clearPlatformSession();
-  window.location.replace("/login.html?logout=1");
+  window.location.replace(redirectTo || `${platformRoute("/login.html", "login.html")}?logout=1`);
   return session;
 };
 const canAccessPlatformRoute = (routeKey, role) => {
@@ -2339,6 +2339,9 @@ const ecosystemModuleLinks = (activeKey, environmentKey = "") => {
     .map(([href, label]) => {
       if (href === "#logout") {
         return `<button class="module-switcher-logout" type="button" data-platform-logout>${label}</button>`;
+      }
+      if (href === "index.html") {
+        return `<button class="module-switcher-site" type="button" data-platform-site-logout>${label}</button>`;
       }
       const isActive = routeKeyByHref[href] === activeKey;
       return `<a class="${isActive ? "is-active" : ""}" href="${href}">${label}</a>`;
@@ -10946,7 +10949,15 @@ const initPlatformLogout = () => {
   if (platformLogoutInitialized) return;
   platformLogoutInitialized = true;
   document.addEventListener("click", async (event) => {
+    const siteButton = event.target.closest?.("[data-platform-site-logout]");
     const button = event.target.closest?.("[data-platform-logout]");
+    if (siteButton) {
+      event.preventDefault();
+      siteButton.disabled = true;
+      siteButton.textContent = "SAINDO...";
+      await signOutPlatformSession({ redirectTo: platformRoute("/", "index.html") });
+      return;
+    }
     if (!button) return;
     event.preventDefault();
     button.disabled = true;
@@ -11038,6 +11049,8 @@ const renderAppPage = () => {
         ? `<strong class="app-nav-heading">${label}</strong>`
         : key === "logout"
           ? `<button class="app-nav-logout" type="button" data-platform-logout>${label}</button>`
+        : key === "site"
+          ? `<button class="app-nav-site" type="button" data-platform-site-logout>${label}</button>`
         : `<a class="${key === activeKey ? "is-active" : ""}" href="${href}">${label}</a>`
     )
     .join("");
@@ -11045,6 +11058,8 @@ const renderAppPage = () => {
     .map(([key, label, href]) =>
       key === "logout"
         ? `<button class="mobile-logout-button" type="button" data-platform-logout>${label}</button>`
+        : key === "site"
+          ? `<button class="mobile-site-button" type="button" data-platform-site-logout>${label}</button>`
         : `<a class="${key === activeKey ? "is-active" : ""}" href="${href}">${label}</a>`
     )
     .join("");
@@ -11055,7 +11070,7 @@ const renderAppPage = () => {
     ? `<nav class="module-switcher official-school-switcher" aria-label="Navegacao da Escola">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>`
     : `<nav class="module-switcher" aria-label="Modulos do Ecossistema">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>`;
   const topActions = environmentKey === "escola"
-    ? `<div class="top-actions official-school-actions" aria-label="Acoes"><a class="school-site-link" href="index.html">SITE</a><button class="school-top-logout" type="button" data-platform-logout>SAIR</button></div>`
+    ? `<div class="top-actions official-school-actions" aria-label="Acoes"><button class="school-site-link" type="button" data-platform-site-logout>SITE</button><button class="school-top-logout" type="button" data-platform-logout>SAIR</button></div>`
     : `<div class="top-actions" aria-label="Acoes"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>MS</span>`}<strong>${environment.user}</strong></div></div>`;
 
   mount.innerHTML = `

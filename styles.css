@@ -5154,16 +5154,33 @@ h3 {
   gap: 8px;
 }
 
-.login-access-map span {
+.login-access-map button {
+  appearance: none;
   min-height: 38px;
   border: 1px solid rgba(6, 70, 47, 0.12);
   border-radius: 8px;
   padding: 9px 10px;
   background: #fff;
   color: #22342b;
+  font: inherit;
   font-size: 0.78rem;
   font-weight: 850;
+  text-align: left;
   text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(6, 70, 47, 0);
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.login-access-map button:hover,
+.login-access-map button:focus-visible,
+.login-access-map button.is-selected {
+  border-color: rgba(46, 125, 50, 0.7);
+  background: linear-gradient(135deg, #2e7d32, #06462f);
+  color: #fff;
+  box-shadow: 0 14px 28px rgba(6, 70, 47, 0.22);
+  outline: none;
+  transform: translateY(-1px);
 }
 
 .login-access-level {

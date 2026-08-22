@@ -321,6 +321,7 @@
 }
 
 .module-switcher a,
+.module-switcher-site,
 .module-switcher-logout {
   flex: 0 0 auto;
   padding: 9px 10px;
@@ -336,6 +337,8 @@
 }
 
 .module-switcher a:hover,
+.module-switcher-site:hover,
+.module-switcher-site:focus-visible,
 .module-switcher-logout:hover,
 .module-switcher-logout:focus-visible {
   color: #fff;
