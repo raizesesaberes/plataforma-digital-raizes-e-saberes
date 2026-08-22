@@ -44,9 +44,9 @@ const normalizePlatformRole = (role) => {
     .toLowerCase();
   const aliases = {
     professor: ["professor", "teacher"],
-    aluno: ["aluno", "student"],
+    aluno: ["aluno", "student", "aluno_ensino_fundamental", "aluno-ensino-fundamental", "ensino_fundamental", "fundamental"],
     escola: ["escola", "school"],
-    educacao_infantil: ["educacao_infantil", "educacao-infantil", "educacaoinfantil", "infantil", "early_childhood"],
+    educacao_infantil: ["educacao_infantil", "educacao-infantil", "educacaoinfantil", "aluno_educacao_infantil", "aluno-educacao-infantil", "aluno_infantil", "infantil", "early_childhood"],
     gestor: ["gestor", "gestor_escolar", "manager"],
     coordenador: ["coordenador", "coordenador_pedagogico", "coordinator"],
     admin: ["admin", "administrador", "administrador_nacional"],
@@ -56,10 +56,10 @@ const normalizePlatformRole = (role) => {
 const validPlatformRoles = new Set(["professor", "aluno", "escola", "educacao_infantil", "gestor", "coordenador", "admin"]);
 const hasValidPlatformRole = (role) => validPlatformRoles.has(normalizePlatformRole(role));
 const loginRoleLabels = {
-  aluno: "Aluno",
+  aluno: "Aluno Ensino Fundamental",
   professor: "Professor",
   escola: "Escola",
-  educacao_infantil: "Educacao Infantil",
+  educacao_infantil: "Aluno Educacao Infantil",
   admin: "Admin / TI",
   gestor: "Gestor",
   coordenador: "Coordenador",
@@ -70,7 +70,7 @@ const getRoleHome = (role) =>
     professor: "/professor",
     aluno: "/aluno",
     escola: "/escola",
-    educacao_infantil: "/educacao-infantil",
+    educacao_infantil: "/familia",
     gestor: "gestor.html",
     coordenador: "/professor",
     admin: "/admin",
@@ -105,6 +105,7 @@ const requiresQuestionBankRole = requiresSupabaseAuth && questionBankLoginPages.
 const inferRequestedAccessRole = () => {
   const pageName = getNextPageName();
   if (pageName === "admin" || pageName === "admin.html") return "admin";
+  if (pageName === "familia" || pageName === "familia.html") return "educacao_infantil";
   if (pageName === "aluno" || pageName === "aluno.html" || pageName.startsWith("aluno/")) return "aluno";
   if (pageName === "escola" || pageName === "escola.html") return "escola";
   if (pageName === "educacao-infantil" || pageName === "educacao-infantil.html") return "educacao_infantil";

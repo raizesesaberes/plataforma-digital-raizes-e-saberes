@@ -7,9 +7,9 @@ const platformAuth = {
 const platformSessionKey = "raizes:supabase-auth-session";
 const platformRoles = {
   professor: ["professor", "teacher"],
-  aluno: ["aluno", "student"],
+  aluno: ["aluno", "student", "aluno_ensino_fundamental", "aluno-ensino-fundamental", "ensino_fundamental", "fundamental"],
   escola: ["escola", "school"],
-  educacao_infantil: ["educacao_infantil", "educacao-infantil", "educacaoinfantil", "infantil", "early_childhood"],
+  educacao_infantil: ["educacao_infantil", "educacao-infantil", "educacaoinfantil", "aluno_educacao_infantil", "aluno-educacao-infantil", "aluno_infantil", "infantil", "early_childhood"],
   gestor: ["gestor", "gestor_escolar", "manager"],
   coordenador: ["coordenador", "coordenador_pedagogico", "coordinator"],
   admin: ["admin", "administrador", "administrador_nacional"],
@@ -18,14 +18,14 @@ const platformRoleHome = {
   professor: "/professor",
   aluno: "/aluno",
   escola: "/escola",
-  educacao_infantil: "/educacao-infantil",
+  educacao_infantil: "/familia",
   gestor: "gestor.html",
   coordenador: "/professor",
   admin: "/admin",
 };
 const routeAccessRules = {
   admin: ["admin"],
-  escolaColetiva: ["escola", "aluno"],
+  escolaColetiva: ["escola"],
   educacaoInfantil: ["educacao_infantil"],
   professor: ["professor", "gestor", "coordenador", "admin"],
   professorTurma: ["professor", "gestor", "coordenador", "admin"],
@@ -38,7 +38,7 @@ const routeAccessRules = {
   jogos: ["aluno"],
   perfil: ["aluno"],
   biblioteca: ["aluno", "professor", "gestor", "coordenador", "admin"],
-  familia: ["aluno", "admin"],
+  familia: ["educacao_infantil", "admin"],
   motorAtividade: ["aluno"],
   universidade: ["professor", "gestor", "coordenador", "admin"],
   adminAtividades: ["gestor", "coordenador", "admin"],
@@ -81,7 +81,7 @@ const protectedRouteKeyByPage = {
   "aluno/atividades": "alunoAtividades",
   "aluno/atividade": "alunoAtividade",
 };
-const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "alunoAtividade", "missao", "arvore", "biblioteca", "jogos", "perfil", "familia", "escolaColetiva", "viewer", "motorAtividade"]);
+const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "alunoAtividade", "missao", "arvore", "biblioteca", "jogos", "perfil", "viewer", "motorAtividade"]);
 const decodePlatformJwtPayload = (token) => {
   try {
     const [, payload] = String(token || "").split(".");
@@ -248,7 +248,7 @@ const ecosystemModules = [
   ["plataforma.html", "Inicio"],
   ["admin.html", "Admin / TI"],
   ["escola.html", "Escola"],
-  ["educacao-infantil.html", "Educacao Infantil"],
+  ["educacao-infantil.html", "Area da Escola Infantil"],
   ["aluno.html", "Aluno"],
   ["arvore.html", "Minha Arvore"],
   ["missao.html", "Missao do Dia"],
@@ -4701,14 +4701,14 @@ const adminPlatformTabs = [
   { label: "Inicio", href: "plataforma.html", status: "pronto" },
   { label: "Admin / TI", view: "inicio", status: "ativo" },
   { label: "Escola", href: "escola.html", status: "homologar" },
-  { label: "Educacao Infantil", href: "educacao-infantil.html", status: "homologar" },
+  { label: "Area da Escola Infantil", href: "educacao-infantil.html", status: "homologar" },
   { label: "Aluno", href: "aluno.html", status: "homologar" },
   { label: "Minha Arvore", href: "arvore.html", status: "pronto" },
   { label: "Missao do Dia", href: "missao.html", status: "pronto" },
   { label: "Jogos", href: "jogos.html", status: "teste" },
   { label: "Perfil", href: "perfil.html", status: "pronto" },
   { label: "Biblioteca", href: "biblioteca.html", status: "pronto" },
-  { label: "Aluno & Familia", href: "familia.html", status: "homologar" },
+  { label: "Aluno Educacao Infantil", href: "familia.html", status: "homologar" },
   { label: "Universidade", href: "universidade.html", status: "teste" },
   { label: "Book Viewer", href: "book-viewer.html", status: "homologado" },
   { label: "Professor", href: "professor.html", status: "homologar" },
@@ -5176,7 +5176,7 @@ const renderEarlyChildhoodDashboard = () => {
     <section class="school-collective" data-school-collective data-active-age="${defaultAge}">
       <header class="school-context-strip">
         <div>
-          <span>Acesso Educacao Infantil</span>
+          <span>Area da Escola</span>
           <h1>Educacao Infantil</h1>
           <p>${institution.school_name} - ${institution.municipality_name}</p>
         </div>
@@ -5694,7 +5694,7 @@ const renderFamilyDashboard = () => {
         </div>
         <nav aria-label="Area Aluno e Familia">
           ${familyAreaViews.map(([key, label]) => `<a class="${key === view ? "is-active" : ""}" href="familia.html?view=${key}">${label}</a>`).join("")}
-          <a class="family-nav-secondary" href="escola.html">Area da Escola</a>
+          <a class="family-nav-secondary" href="educacao-infantil.html">Area da Escola</a>
           <a class="family-nav-secondary" href="index.html">Site</a>
           <button type="button" data-platform-logout>Sair</button>
         </nav>
@@ -5702,12 +5702,12 @@ const renderFamilyDashboard = () => {
       <section class="family-v1-main">
         <header class="family-v1-hero">
           <div>
-            <span>Area Aluno & Familia</span>
+            <span>Aluno Educacao Infantil & Familia</span>
             <h1>Ola, familia do ${student.name}!</h1>
             <p>Acompanhe a rotina, as atividades e as conquistas.</p>
           </div>
           <div class="family-hero-actions" aria-label="Acessos da familia">
-            <a href="escola.html">Area da Escola</a>
+            <a href="educacao-infantil.html">Area da Escola</a>
             <a href="index.html">Ir para o site</a>
           </div>
         </header>
@@ -6082,14 +6082,14 @@ const modules = {
     html: renderSchoolInstitutionalDashboard(),
   },
   educacaoInfantil: {
-    title: "Educacao Infantil",
-    subtitle: "Ambiente coletivo pedagogico",
+    title: "Area da Escola Infantil",
+    subtitle: "Aba da escola no aluno da Educacao Infantil",
     code: "EDUCACAO-INFANTIL-V1",
     html: renderEarlyChildhoodDashboard(),
   },
   aluno: {
-    title: "Dashboard do Aluno",
-    subtitle: "Home principal do aluno",
+    title: "Aluno Ensino Fundamental",
+    subtitle: "Home principal do aluno do Ensino Fundamental",
     code: "PLAT-V2-005",
     html: renderStudentProfilePage(),
   },
@@ -6855,10 +6855,10 @@ const environments = {
       ["bancoQuestoes", "Banco de Questoes", "banco-questoes.html"],
       ["professor", "Professor", "professor.html"],
       ["atividades", "Atividades Imprimiveis", "atividades.html"],
-      ["aluno", "Aluno", "aluno.html"],
+      ["aluno", "Aluno Fundamental", "aluno.html"],
       ["escolaColetiva", "Escola", "escola.html"],
-      ["educacaoInfantil", "Educacao Infantil", "educacao-infantil.html"],
-      ["familia", "Familia", "familia.html"],
+      ["educacaoInfantil", "Area da Escola Infantil", "educacao-infantil.html"],
+      ["familia", "Aluno Infantil", "familia.html"],
       ["secretaria", "Secretaria", "secretaria.html"],
       ["gestor", "Gestor", "gestor.html"],
       ["arvore", "Minha Arvore", "arvore.html"],
@@ -7094,8 +7094,8 @@ const environments = {
     ],
   },
   familia: {
-    label: "Aluno & Familia",
-    profile: "Acompanhamento do aluno",
+    label: "Aluno Educacao Infantil",
+    profile: "Acompanhamento infantil",
     search: "Buscar recados, atividades e agenda...",
     user: "Familia do Pedro<br />Responsavel",
     nav: [
