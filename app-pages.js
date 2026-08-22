@@ -40,6 +40,7 @@ const routeAccessRules = {
   arvore: ["aluno"],
   missao: ["aluno"],
   jogos: ["aluno", "educacao_infantil", "escola"],
+  colorirDescobrir: ["educacao_infantil", "escola", "admin"],
   perfil: ["aluno"],
   biblioteca: ["aluno", "educacao_infantil", "escola", "professor", "gestor", "coordenador", "admin"],
   viewer: ["aluno", "educacao_infantil", "escola", "professor", "gestor", "coordenador", "admin"],
@@ -66,6 +67,7 @@ const protectedRouteKeyByPage = {
   "arvore.html": "arvore",
   "missao.html": "missao",
   "jogos.html": "jogos",
+  "colorir-descobrir.html": "colorirDescobrir",
   "perfil.html": "perfil",
   "biblioteca.html": "biblioteca",
   "familia.html": "familia",
@@ -85,10 +87,11 @@ const protectedRouteKeyByPage = {
   aluno: "aluno",
   "aluno/atividades": "alunoAtividades",
   "aluno/atividade": "alunoAtividade",
+  "colorir-descobrir": "colorirDescobrir",
 };
 const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "alunoAtividade", "missao", "arvore", "biblioteca", "jogos", "perfil", "viewer", "motorAtividade"]);
-const earlyChildhoodAllowedRouteKeys = new Set(["familia", "educacaoInfantil", "jogos", "biblioteca", "viewer"]);
-const schoolAllowedRouteKeys = new Set(["escolaColetiva", "jogos", "biblioteca", "viewer"]);
+const earlyChildhoodAllowedRouteKeys = new Set(["familia", "educacaoInfantil", "jogos", "biblioteca", "viewer", "colorirDescobrir"]);
+const schoolAllowedRouteKeys = new Set(["escolaColetiva", "jogos", "biblioteca", "viewer", "colorirDescobrir"]);
 const decodePlatformJwtPayload = (token) => {
   try {
     const [, payload] = String(token || "").split(".");
@@ -2330,7 +2333,7 @@ const ecosystemModuleLinks = (activeKey, environmentKey = "") => {
             ["jogos.html", "Jogos"],
             ["biblioteca.html", "Biblioteca"],
             ["escola.html#desafio", "Desafio do Dia"],
-            ["escola.html#colorir", "Colorir, Pintar e Descobrir"],
+            ["colorir-descobrir.html", "Colorir e Descobrir"],
             ["index.html", "Site"],
             ["#logout", "Sair"],
           ]
@@ -6618,6 +6621,14 @@ const modules = {
       return renderGamesModule();
     },
   },
+  colorirDescobrir: {
+    title: "Colorir e Descobrir",
+    subtitle: "Atividades criativas da escola",
+    code: "COLORIR-DESCOBRIR",
+    get html() {
+      return window.renderColorirDescobrirApp?.() || `<div class="pcd-app" data-colorir-descobrir-app></div>`;
+    },
+  },
   perfil: {
     title: "Perfil",
     subtitle: "Progresso e conquistas do aluno",
@@ -7423,7 +7434,7 @@ const environments = {
       ["jogos", "JOGOS", "jogos.html"],
       ["biblioteca", "BIBLIOTECA", "biblioteca.html"],
       ["desafio", "DESAFIO DO DIA", "escola.html#desafio"],
-      ["colorir", "COLORIR, PINTAR E DESCOBRIR", "escola.html#colorir"],
+      ["colorirDescobrir", "COLORIR E DESCOBRIR", "colorir-descobrir.html"],
       ["site", "SITE", "index.html"],
       ["logout", "SAIR", "#"],
     ],
@@ -7432,7 +7443,7 @@ const environments = {
       ["jogos", "JOGOS", "jogos.html"],
       ["biblioteca", "BIBLIOTECA", "biblioteca.html"],
       ["desafio", "DESAFIO", "escola.html#desafio"],
-      ["colorir", "COLORIR", "escola.html#colorir"],
+      ["colorirDescobrir", "COLORIR", "colorir-descobrir.html"],
       ["logout", "SAIR", "#"],
     ],
   },
@@ -7663,6 +7674,7 @@ const moduleEnvironment = {
   arvore: "aluno",
   missao: "aluno",
   jogos: "aluno",
+  colorirDescobrir: "escola",
   perfil: "aluno",
   biblioteca: "biblioteca",
   viewer: "biblioteca",
@@ -11109,6 +11121,7 @@ const renderAppPage = () => {
   initPlatformLogout();
   initSchoolCollectiveDashboard();
   initOfficialSchoolDashboard();
+  window.initColorirDescobrir?.();
   initBookReader();
   initLibrarySearch();
   initLibraryExperiences();
