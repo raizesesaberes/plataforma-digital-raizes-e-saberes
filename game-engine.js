@@ -4475,7 +4475,11 @@
   class GameEngine {
     constructor(root, gameId) {
       this.root = root;
-      this.game = gameRepository.getGame(gameId);
+      const publishedGameIds = String(root.dataset.publishedGames || "").split(",").map((id) => id.trim()).filter(Boolean);
+      const initialGame = gameRepository.getGame(gameId);
+      this.game = publishedGameIds.length && !publishedGameIds.includes(initialGame.id)
+        ? gameRepository.getGame(publishedGameIds[0])
+        : initialGame;
       this.state = progressController.create(this.game);
       this.record = rewardController.latest(this.game.id);
       this.mode = root.dataset.gameId ? "player" : "hub";
@@ -4507,6 +4511,14 @@
       this.jardimCinematicStartLocked = false;
       this.guidedPaint = null;
       this.guidedPaintMusic = null;
+    }
+
+    getVisibleGames() {
+      const publishedGameIds = String(this.root.dataset.publishedGames || "").split(",").map((id) => id.trim()).filter(Boolean);
+      const games = Object.values(gameRepository.games).sort((a, b) => a.unlock.order - b.unlock.order);
+      return publishedGameIds.length
+        ? publishedGameIds.map((id) => gameRepository.games[id]).filter(Boolean).sort((a, b) => a.unlock.order - b.unlock.order)
+        : games;
     }
 
     mount() {
@@ -4556,8 +4568,7 @@
             </aside>
           </header>
           <div class="game-hub-grid">
-            ${Object.values(gameRepository.games)
-              .sort((a, b) => a.unlock.order - b.unlock.order)
+            ${this.getVisibleGames()
               .map((game) => this.renderHubCard(game))
               .join("")}
           </div>
@@ -4629,7 +4640,7 @@
             <span>Hub</span>
             <strong>Jogos Educativos</strong>
           </button>
-          ${Object.values(gameRepository.games).sort((a, b) => a.unlock.order - b.unlock.order).map((game) => `
+          ${this.getVisibleGames().map((game) => `
             <button class="${game.id === this.game.id ? "is-active" : ""}" type="button" data-game-select="${game.id}">
               <span>${game.category}</span>
               <strong>${game.title}</strong>
@@ -5871,7 +5882,7 @@
         xp: this.game.xp,
         animateXp: true,
         message: victoryConfig.message || "VOCE FOI INCRIVEL!",
-        continueHref: victoryConfig.continueHref || "jogos.html",
+        continueHref: victoryConfig.continueHref || (this.root.dataset.collectiveMode === "school" ? "escola.html" : "jogos.html"),
         continueLabel: victoryConfig.continueLabel || "CONTINUAR",
         backHref: victoryConfig.backHref || "",
         backLabel: victoryConfig.backLabel || "VOLTAR AO SITE",

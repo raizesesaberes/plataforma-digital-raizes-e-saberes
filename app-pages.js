@@ -14,20 +14,23 @@ const platformRoles = {
   coordenador: ["coordenador", "coordenador_pedagogico", "coordinator"],
   admin: ["admin", "administrador", "administrador_nacional"],
 };
+const prefersFileRoutes = () =>
+  typeof window !== "undefined" &&
+  (window.location.protocol === "file:" || ["localhost", "127.0.0.1", ""].includes(window.location.hostname));
+const platformRoute = (cleanPath, filePath) => (prefersFileRoutes() ? filePath : cleanPath);
 const platformRoleHome = {
-  professor: "/professor",
-  aluno: "/aluno",
-  escola: "/escola",
-  educacao_infantil: "/familia",
+  professor: platformRoute("/professor", "professor.html"),
+  aluno: platformRoute("/aluno", "aluno.html"),
+  escola: platformRoute("/escola", "escola.html"),
+  educacao_infantil: platformRoute("/familia", "familia.html"),
   gestor: "gestor.html",
-  coordenador: "/professor",
-  admin: "/admin",
+  coordenador: platformRoute("/professor", "professor.html"),
+  admin: platformRoute("/admin", "admin.html"),
 };
 const routeAccessRules = {
   admin: ["admin"],
   escolaColetiva: ["escola"],
   educacaoInfantil: ["educacao_infantil"],
-  colorirDescobrir: ["escola", "educacao_infantil", "admin"],
   professor: ["professor", "gestor", "coordenador", "admin"],
   professorTurma: ["professor", "gestor", "coordenador", "admin"],
   professorAluno: ["professor", "gestor", "coordenador", "admin"],
@@ -36,10 +39,10 @@ const routeAccessRules = {
   alunoAtividade: ["aluno"],
   arvore: ["aluno"],
   missao: ["aluno"],
-  jogos: ["aluno", "educacao_infantil"],
+  jogos: ["aluno", "educacao_infantil", "escola"],
   perfil: ["aluno"],
-  biblioteca: ["aluno", "educacao_infantil", "professor", "gestor", "coordenador", "admin"],
-  viewer: ["aluno", "educacao_infantil", "professor", "gestor", "coordenador", "admin"],
+  biblioteca: ["aluno", "educacao_infantil", "escola", "professor", "gestor", "coordenador", "admin"],
+  viewer: ["aluno", "educacao_infantil", "escola", "professor", "gestor", "coordenador", "admin"],
   familia: ["educacao_infantil", "admin"],
   motorAtividade: ["aluno"],
   universidade: ["professor", "gestor", "coordenador", "admin"],
@@ -56,7 +59,6 @@ const protectedRouteKeyByPage = {
   "admin.html": "admin",
   "escola.html": "escolaColetiva",
   "educacao-infantil.html": "educacaoInfantil",
-  "colorir-descobrir.html": "colorirDescobrir",
   "aluno.html": "aluno",
   "aluno-atividades.html": "alunoAtividades",
   "aluno-atividade.html": "alunoAtividade",
@@ -80,13 +82,13 @@ const protectedRouteKeyByPage = {
   admin: "admin",
   escola: "escolaColetiva",
   "educacao-infantil": "educacaoInfantil",
-  "colorir-descobrir": "colorirDescobrir",
   aluno: "aluno",
   "aluno/atividades": "alunoAtividades",
   "aluno/atividade": "alunoAtividade",
 };
 const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "alunoAtividade", "missao", "arvore", "biblioteca", "jogos", "perfil", "viewer", "motorAtividade"]);
-const earlyChildhoodAllowedRouteKeys = new Set(["educacaoInfantil", "colorirDescobrir", "jogos", "biblioteca", "viewer"]);
+const earlyChildhoodAllowedRouteKeys = new Set(["familia", "educacaoInfantil", "jogos", "biblioteca", "viewer"]);
+const schoolAllowedRouteKeys = new Set(["escolaColetiva", "jogos", "biblioteca", "viewer"]);
 const decodePlatformJwtPayload = (token) => {
   try {
     const [, payload] = String(token || "").split(".");
@@ -238,6 +240,9 @@ const requirePlatformAuth = () => {
   const isAuthenticated = localStorage.getItem(platformAuth.key) === "true";
   const isCuratorArea = currentPath.startsWith("curadoria.html");
   const isCurator = localStorage.getItem(platformAuth.curatorKey) === "true";
+  if (currentRole) {
+    return;
+  }
   if (isAuthenticated && (!isCuratorArea || isCurator)) {
     return;
   }
@@ -254,7 +259,6 @@ const ecosystemModules = [
   ["admin.html", "Admin / TI"],
   ["escola.html", "Escola"],
   ["educacao-infantil.html", "Area da Escola Infantil"],
-  ["colorir-descobrir.html", "Pra Colorir e Descobrir"],
   ["aluno.html", "Aluno"],
   ["arvore.html", "Minha Arvore"],
   ["missao.html", "Missao do Dia"],
@@ -2318,6 +2322,16 @@ const ecosystemModuleLinks = (activeKey, environmentKey = "") => {
             ["jogos.html", "Jogos"],
             ["biblioteca.html", "Biblioteca"],
             ["book-viewer.html", "Book Viewer"],
+            ["#logout", "Sair"],
+          ]
+      : environmentKey === "escola"
+        ? [
+            ["escola.html#inicio", "Inicio"],
+            ["jogos.html", "Jogos"],
+            ["biblioteca.html", "Biblioteca"],
+            ["escola.html#desafio", "Desafio do Dia"],
+            ["escola.html#colorir", "Colorir, Pintar e Descobrir"],
+            ["index.html", "Site"],
             ["#logout", "Sair"],
           ]
       : ecosystemModules;
@@ -4648,7 +4662,6 @@ const adminFeatureRegistry = [
   { key: "atividades", label: "Atividades Imprimiveis", area: "Conteudos", status: "EM TESTE", href: "admin-atividades.html", roles: { admin: true, professor: true, aluno: false } },
   { key: "experiencias", label: "Experiencias Digitais", area: "Conteudos", status: "EM TESTE", href: "biblioteca.html#acervo-completo", roles: { admin: true, professor: true, aluno: true } },
   { key: "jogos", label: "Jogos", area: "Conteudos", status: "EM DESENVOLVIMENTO", href: "jogos.html", roles: { admin: true, professor: true, aluno: true } },
-  { key: "colorirDescobrir", label: "Pra Colorir e Descobrir", area: "Conteudos", status: "EM TESTE", href: "colorir-descobrir.html", roles: { admin: true, professor: false, aluno: true } },
   { key: "planejamentos", label: "Planejamentos", area: "Gestao pedagogica", status: "EM DESENVOLVIMENTO", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
   { key: "avaliacoes", label: "Avalia+", area: "Conteudos", status: "EM TESTE", href: "avalia.html", roles: { admin: true, professor: true, aluno: false } },
   { key: "banco", label: "Banco de Questoes", area: "Conteudos", status: "EM TESTE", href: "banco-questoes.html", roles: { admin: true, professor: true, aluno: false } },
@@ -4684,7 +4697,6 @@ const adminWorkspaceNav = [
   ["atividades", "Atividades Imprimiveis"],
   ["experiencias", "Experiencias Digitais"],
   ["jogos", "Jogos"],
-  ["colorirDescobrir", "Pra Colorir e Descobrir"],
   ["planejamentos", "Planejamentos"],
   ["avaliacoes", "Avaliacoes"],
   ["banco", "Banco de Questoes"],
@@ -4726,7 +4738,6 @@ const adminPlatformTabs = [
   { label: "Minha Arvore", href: "arvore.html", status: "pronto" },
   { label: "Missao do Dia", href: "missao.html", status: "pronto" },
   { label: "Jogos", href: "jogos.html", status: "teste" },
-  { label: "Pra Colorir e Descobrir", href: "colorir-descobrir.html", status: "teste" },
   { label: "Perfil", href: "perfil.html", status: "pronto" },
   { label: "Biblioteca", href: "biblioteca.html", status: "pronto" },
   { label: "Aluno Educacao Infantil", href: "familia.html", status: "homologar" },
@@ -4829,71 +4840,6 @@ const renderAdminPermissionMatrix = () => `
   </section>
 `;
 
-const renderColorirDiscoverAdminPanel = () => {
-  const catalog = window.RaizesColorirDescobrirCatalog?.getCatalog?.() || { themes: [], figures: [] };
-  const themes = catalog.themes || [];
-  const figures = catalog.figures || [];
-  const status = (figure) => {
-    const missingRequired = !figure.titulo || !figure.tema || !figure.imagemBranca;
-    const warnings = [
-      !figure.imagemColorida ? "imagem colorida" : "",
-      !figure.audioCuriosidade ? "audio" : "",
-      !figure.musicaLoop ? "musica" : "",
-    ].filter(Boolean);
-    if (missingRequired) return `<small class="is-em-desenvolvimento">NAO PUBLICAVEL</small>`;
-    if (warnings.length) return `<small class="is-em-teste">INCOMPLETA: ${warnings.join(", ")}</small>`;
-    return `<small class="is-publicado">COMPLETA</small>`;
-  };
-  return `
-    <section class="admin-board pcd-admin" data-pcd-admin>
-      <div class="admin-section-head">
-        <div>
-          <h2>Pra Colorir e Descobrir</h2>
-          <span>Conteudos > entretenimento educativo infantil</span>
-        </div>
-        <a href="colorir-descobrir.html">Abrir experiencia</a>
-      </div>
-      <div class="pa-admin-actions">
-        <code>assets/colorir-descobrir/figuras/branco</code>
-        <code>assets/colorir-descobrir/figuras/colorido</code>
-        <code>assets/colorir-descobrir/audios/curiosidades</code>
-        <code>assets/colorir-descobrir/musicas</code>
-      </div>
-      <form class="pcd-admin-form" data-pcd-admin-form>
-        <label><span>Tema</span><input name="temaTitulo" placeholder="Bichinhos do Jardim" /></label>
-        <label><span>Ordem do tema</span><input name="temaOrdem" type="number" min="1" value="${themes.length + 1}" /></label>
-        <label><span>Status do tema</span><select name="temaStatus"><option value="publicado">publicado</option><option value="rascunho">rascunho</option><option value="arquivado">arquivado</option></select></label>
-        <button type="button" data-pcd-save-theme>Salvar tema</button>
-      </form>
-      <form class="pcd-admin-form is-figure" data-pcd-figure-form>
-        <label><span>Titulo da figura *</span><input name="titulo" required placeholder="Joaninha" /></label>
-        <label><span>Codigo interno</span><input name="codigoInterno" placeholder="PCD-BJ-004" /></label>
-        <label><span>Tema *</span><select name="tema" required>${themes.map((theme) => `<option value="${printableEscape(theme.id)}">${printableEscape(theme.titulo)}</option>`).join("")}</select></label>
-        <label><span>Ordem</span><input name="ordem" type="number" min="1" value="${figures.length + 1}" /></label>
-        <label><span>Imagem branca *</span><input name="imagemBranca" required placeholder="assets/colorir-descobrir/figuras/branco/arquivo.png" /></label>
-        <label><span>Imagem colorida</span><input name="imagemColorida" placeholder="assets/colorir-descobrir/figuras/colorido/arquivo.png" /></label>
-        <label><span>Audio curiosidade</span><input name="audioCuriosidade" placeholder="assets/colorir-descobrir/audios/curiosidades/audio.mp3" /></label>
-        <label><span>Musica loop</span><input name="musicaLoop" placeholder="assets/colorir-descobrir/musicas/musica.mp3" /></label>
-        <label class="pcd-admin-wide"><span>Curiosidade</span><textarea name="textoCuriosidade" rows="3"></textarea></label>
-        <label><span>Status</span><select name="status"><option value="publicado">publicado</option><option value="rascunho">rascunho</option><option value="arquivado">arquivado</option></select></label>
-        <button type="button" data-pcd-save-figure>Salvar figura</button>
-      </form>
-      <div class="admin-feature-grid">
-        ${figures.map((figure) => `
-          <article class="admin-feature-card" data-admin-search-item>
-            <div>
-              <span>${printableEscape(figure.codigoInterno || figure.id)}</span>
-              <strong>${printableEscape(figure.titulo)}</strong>
-              ${status(figure)}
-            </div>
-            <a href="colorir-descobrir.html?tema=${encodeURIComponent(figure.tema)}">Ver</a>
-          </article>
-        `).join("") || `<article class="pa-empty"><h2>Nenhuma figura cadastrada</h2><p>Cadastre os primeiros PNGs para publicar a experiencia.</p></article>`}
-      </div>
-    </section>
-  `;
-};
-
 const renderAdminWorkspaceView = (view = "inicio") => {
   const feature = getAdminFeature(view);
   const byArea = (area) => adminFeatureRegistry.filter((item) => item.area === area);
@@ -4944,14 +4890,12 @@ const renderAdminWorkspaceView = (view = "inicio") => {
     permissoes: renderAdminPermissionMatrix(),
     biblioteca: `<section class="admin-board"><div class="admin-section-head"><h2>Conteudos</h2><span>Biblioteca e materiais existentes</span></div><div class="admin-feature-grid">${byArea("Conteudos").map(renderAdminFeatureCard).join("")}</div></section>`,
     atividades: `<section class="admin-board admin-empty-state"><h2>Atividades Imprimiveis</h2><p>Modulo administrativo existente reaproveitado. Use-o para curadoria e homologacao dos imprimiveis.</p><a href="admin-atividades.html">Abrir Admin de Atividades</a></section>`,
-    colorirDescobrir: renderColorirDiscoverAdminPanel(),
     motores: `<section class="admin-board"><div class="admin-section-head"><h2>Motores</h2><span>Sem duplicar engines existentes</span></div><div class="admin-feature-grid">${byArea("Motores").map(renderAdminFeatureCard).join("")}</div></section>`,
     emDesenvolvimento: `<section class="admin-board"><div class="admin-section-head"><h2>Em desenvolvimento</h2><span>Acesso restrito ao Admin/TI</span></div><div class="admin-feature-grid">${development.map(renderAdminFeatureCard).join("")}</div></section>`,
     homologados: `<section class="admin-board"><div class="admin-section-head"><h2>Homologados e publicados</h2><span>Disponiveis conforme perfil</span></div><div class="admin-feature-grid">${homologated.map(renderAdminFeatureCard).join("")}</div></section>`,
     logs: `<section class="admin-board admin-empty-state"><h2>Logs</h2><p>Espaco reservado para backend seguro, Edge Function ou servico server-side. Nenhum segredo e exposto no frontend.</p></section>`,
     configuracoes: `<section class="admin-board admin-empty-state"><h2>Configuracoes</h2><p>Controle tecnico preparado para proximas etapas sem armazenar tokens, senhas ou service role no frontend.</p></section>`,
   };
-  if (viewMap[view]) return viewMap[view];
   if (feature) {
     return `<section class="admin-board admin-empty-state"><h2>${feature.label}</h2><p>Status atual: ${feature.status}. Modulo existente reaproveitado no QG sem criar tela duplicada.</p><a href="${feature.href}">Abrir modulo</a></section>`;
   }
@@ -4994,35 +4938,11 @@ const initAdminWorkspace = () => {
     workspace.querySelectorAll("[data-admin-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.adminView === view));
     if (content) content.innerHTML = renderAdminWorkspaceView(view);
   };
-  const bindColorirAdmin = (target) => {
-    const api = window.RaizesColorirDescobrirCatalog;
-    if (!api || !target?.querySelector("[data-pcd-admin]")) return;
-    target.querySelector("[data-pcd-save-theme]")?.addEventListener("click", () => {
-      const form = target.querySelector("[data-pcd-admin-form]");
-      const data = Object.fromEntries(new FormData(form).entries());
-      api.upsertTheme({
-        titulo: data.temaTitulo,
-        ordem: data.temaOrdem,
-        status: data.temaStatus,
-      });
-      if (content) content.innerHTML = renderAdminWorkspaceView("colorirDescobrir");
-      bindColorirAdmin(content);
-    });
-    target.querySelector("[data-pcd-save-figure]")?.addEventListener("click", () => {
-      const form = target.querySelector("[data-pcd-figure-form]");
-      if (!form.reportValidity()) return;
-      const data = Object.fromEntries(new FormData(form).entries());
-      api.upsertFigure(data);
-      if (content) content.innerHTML = renderAdminWorkspaceView("colorirDescobrir");
-      bindColorirAdmin(content);
-    });
-  };
   workspace.addEventListener("click", (event) => {
     const button = event.target.closest?.("[data-admin-view]");
     if (!button) return;
     event.preventDefault();
     activate(button.dataset.adminView || "inicio");
-    bindColorirAdmin(content);
   });
   workspace.querySelector("[data-admin-search]")?.addEventListener("input", (event) => {
     const term = String(event.target.value || "").trim().toLowerCase();
@@ -5030,7 +4950,6 @@ const initAdminWorkspace = () => {
       item.hidden = term ? !item.textContent.toLowerCase().includes(term) : false;
     });
   });
-  bindColorirAdmin(content);
 };
 
 const schoolCollectiveData = {
@@ -5039,6 +4958,7 @@ const schoolCollectiveData = {
     school_name: "Escola das Descobertas",
     education_stage: "Educacao Infantil",
     municipality_name: "Municipio das Descobertas",
+    network_name: "Rede Raizes e Saberes",
     school_logo: "",
   },
   defaultAge: "4",
@@ -5135,6 +5055,138 @@ const schoolCollectiveData = {
     },
   },
 };
+
+const officialSchoolGameIds = ["caixa-misteriosa", "organizando-cesta", "jardim-descobertas", "atelie-bia"];
+const officialSchoolGames = [
+  {
+    id: "caixa-misteriosa",
+    slug: "caixa-misteriosa",
+    title: "A Caixa Misteriosa",
+    description: "Descubra objetos, pistas e pequenas surpresas com a turma.",
+    href: "caixa-misteriosa-premium-01.html?introAudio=1&v=round1-video-url-20260804-01",
+    image: "assets/games/caixa-misteriosa/screens/screen-intro.png",
+    engine: "selection / build premium Caixa Misteriosa",
+  },
+  {
+    id: "organizando-cesta",
+    slug: "organizando-cesta",
+    title: "Organizando a Cesta",
+    description: "Organize frutas e observe criterios de classificacao.",
+    href: "jogos.html?game=organizando-cesta&origin=escola",
+    image: "assets/game-engine-2/assets/organizando-cesta/custom/intro-banner.png",
+    engine: "drag-drop / GameEngine",
+  },
+  {
+    id: "jardim-descobertas",
+    slug: "jardim-descobertas",
+    title: "O Jardim das Descobertas",
+    description: "Explore o jardim e encontre elementos da natureza.",
+    href: "jogos.html?game=jardim-descobertas&origin=escola",
+    image: "assets/games/jardim-descobertas/screens/screen-intro.png",
+    engine: "find / GameEngine",
+  },
+  {
+    id: "atelie-bia",
+    slug: "atelie-bia",
+    title: "O Atelie da Bia",
+    description: "Pinte, escolha cores e crie uma obra coletiva.",
+    href: "jogos.html?game=atelie-bia&origin=escola",
+    image: "assets/games/atelie-bia/screens/screen-intro.png",
+    engine: "guided-painting / GameEngine",
+  },
+];
+
+const schoolLibraryHighlights = [
+  {
+    title: "Infantil 4",
+    volume: "Volume 1",
+    href: "book-viewer.html?book=livro-005",
+    image: "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg",
+  },
+  {
+    title: "Infantil 4",
+    volume: "Volume 2",
+    href: "book-viewer.html?book=livro-006",
+    image: "assets/biblioteca/RAIZES_INFANTIL4_VOL2_BIBLIOTECA.jpg",
+  },
+  {
+    title: "Infantil 5",
+    volume: "Volume 1",
+    href: "book-viewer.html?book=livro-007",
+    image: "assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.jpg",
+  },
+];
+
+const schoolColoringCategories = [
+  ["insetos", "Insetos"],
+  ["animais-aquaticos", "Animais aquaticos"],
+  ["mamiferos", "Mamiferos"],
+  ["herbivoros", "Herbivoros"],
+  ["dinossauros", "Dinossauros"],
+];
+
+const schoolColoringFigures = [
+  {
+    id: "joaninha-jardim",
+    category: "insetos",
+    title: "Joaninha do jardim",
+    thumbnail: "assets/games/atelie-bia/golden-master/JOANINHA_BASE_PROTEGIDA.png",
+    outline_image: "assets/games/atelie-bia/golden-master/JOANINHA_BASE_PROTEGIDA.png",
+    audio_url: "",
+    curiosity_text: "A joaninha ajuda o jardim porque se alimenta de pequenos insetos que atacam as plantas.",
+    printable_asset: "assets/games/atelie-bia/golden-master/JOANINHA_BASE_PROTEGIDA.png",
+    age_range: "4 a 5 anos",
+    status: "PUBLICADO",
+  },
+  {
+    id: "patinho-lago",
+    category: "animais-aquaticos",
+    title: "Patinho no lago",
+    thumbnail: "assets/games/atelie-bia/patinhos/v1/PATINHO_GOLDEN_MASTER_V1_1536x1536.png",
+    outline_image: "assets/games/atelie-bia/patinhos/v1/PATINHO_GOLDEN_MASTER_V1_1536x1536.png",
+    audio_url: "",
+    curiosity_text: "O patinho usa os pes para nadar e explorar a agua com seguranca.",
+    printable_asset: "assets/games/atelie-bia/patinhos/v1/PATINHO_GOLDEN_MASTER_V1_1536x1536.png",
+    age_range: "4 a 5 anos",
+    status: "PUBLICADO",
+  },
+  {
+    id: "coelhinho-campo",
+    category: "mamiferos",
+    title: "Coelhinho do campo",
+    thumbnail: "",
+    outline_image: "",
+    audio_url: "",
+    curiosity_text: "O coelho e um mamifero que usa as orelhas para perceber sons ao redor.",
+    printable_asset: "",
+    age_range: "4 a 5 anos",
+    status: "PUBLICADO",
+  },
+  {
+    id: "tartaruga-folhas",
+    category: "herbivoros",
+    title: "Tartaruga das folhas",
+    thumbnail: "assets/game-engine-2/assets/organizando-cesta/characters/turtle-happy.png",
+    outline_image: "assets/game-engine-2/assets/organizando-cesta/characters/turtle-happy.png",
+    audio_url: "",
+    curiosity_text: "Algumas tartarugas gostam de folhas, frutas e flores. Elas observam tudo com calma.",
+    printable_asset: "assets/game-engine-2/assets/organizando-cesta/characters/turtle-happy.png",
+    age_range: "4 a 5 anos",
+    status: "PUBLICADO",
+  },
+  {
+    id: "dinossauro-amigo",
+    category: "dinossauros",
+    title: "Dinossauro amigo",
+    thumbnail: "",
+    outline_image: "",
+    audio_url: "",
+    curiosity_text: "Os dinossauros viveram ha muito tempo. Alguns eram gigantes e outros eram pequenos.",
+    printable_asset: "",
+    age_range: "4 a 5 anos",
+    status: "PREPARADO",
+  },
+];
 
 const schoolIconMap = {
   seed: "2",
@@ -5236,62 +5288,197 @@ const renderSchoolInfo = (ageData) => {
     .join("");
 };
 
-const renderSchoolColorirDiscover = () => `
-  <article class="school-game-card school-colorir-card">
-    <img src="assets/games/atelie-bia/screens/screen-canvas.png" alt="" loading="lazy" onerror="this.hidden=true" />
-    <strong>Pra Colorir e Descobrir</strong>
-    <p>Escolha uma figura, ouca uma curiosidade e deixe tudo cheio de cores.</p>
-    <a href="colorir-descobrir.html">${renderSchoolIcon("game")} COLORIR</a>
-  </article>
-`;
+const renderOfficialSchoolGameCards = () =>
+  officialSchoolGames
+    .map(
+      (game) => `
+        <article class="official-school-game-card">
+          <img src="${game.image}" alt="" loading="lazy" decoding="async" onerror="this.hidden=true" />
+          <div>
+            <span>Interacao coletiva livre</span>
+            <h3>${game.title}</h3>
+            <p>${game.description}</p>
+            <a href="${game.href}" data-official-school-game="${game.id}">Jogar</a>
+          </div>
+        </article>
+      `
+    )
+    .join("");
+
+const renderOfficialSchoolBooks = () =>
+  schoolLibraryHighlights
+    .map(
+      (book) => `
+        <article class="official-school-book-card">
+          <img src="${book.image}" alt="" loading="lazy" decoding="async" onerror="this.hidden=true" />
+          <strong>${book.title}</strong>
+          <span>${book.volume}</span>
+          <a href="${book.href}">Ler</a>
+        </article>
+      `
+    )
+    .join("");
+
+const renderSchoolFigureArt = (figure, extraClass = "") => {
+  if (figure.outline_image) {
+    return `<img class="${extraClass}" src="${figure.outline_image}" alt="" loading="lazy" decoding="async" onerror="this.hidden=true; this.nextElementSibling.hidden=false;" /><div class="school-coloring-fallback ${extraClass}" hidden>${figure.title}</div>`;
+  }
+  return `<div class="school-coloring-fallback ${extraClass}">${figure.title}</div>`;
+};
+
+const renderSchoolColoringModule = () => {
+  const firstFigure = schoolColoringFigures[0];
+  return `
+    <section class="official-school-panel official-school-coloring" id="colorir" data-school-coloring>
+      <div class="official-school-section-head">
+        <span>Atelie coletivo</span>
+        <h2>Colorir, Pintar e Descobrir</h2>
+        <p>Escolha uma figura, pinte livremente, ouca uma curiosidade curta e imprima o contorno limpo.</p>
+      </div>
+      <div class="school-coloring-tabs" role="tablist" aria-label="Categorias de figuras">
+        ${schoolColoringCategories
+          .map(
+            ([id, label], index) =>
+              `<button class="${index === 0 ? "is-active" : ""}" type="button" data-school-color-category="${id}">${label}</button>`
+          )
+          .join("")}
+      </div>
+      <div class="school-coloring-layout">
+        <div class="school-coloring-gallery" data-school-color-gallery>
+          ${schoolColoringFigures
+            .filter((figure) => figure.category === schoolColoringCategories[0][0])
+            .map(
+              (figure, index) => `
+                <button class="${index === 0 ? "is-active" : ""}" type="button" data-school-color-figure="${figure.id}">
+                  ${renderSchoolFigureArt(figure)}
+                  <strong>${figure.title}</strong>
+                  <span>${figure.age_range}</span>
+                </button>
+              `
+            )
+            .join("")}
+        </div>
+        <article class="school-coloring-workbench" data-school-color-workbench data-active-figure="${firstFigure.id}">
+          <header>
+            <span data-school-color-category-label>Insetos</span>
+            <h3 data-school-color-title>${firstFigure.title}</h3>
+            <p data-school-color-curiosity>${firstFigure.curiosity_text}</p>
+          </header>
+          <div class="school-coloring-stage" data-school-color-stage>
+            <canvas width="760" height="520" data-school-color-canvas aria-label="Area de pintura"></canvas>
+            <div class="school-color-outline" data-school-color-outline>${renderSchoolFigureArt(firstFigure, "is-large")}</div>
+          </div>
+          <div class="school-coloring-tools" aria-label="Ferramentas de pintura">
+            <button type="button" class="is-active" data-school-color="#e53935" style="--swatch:#e53935">Vermelho</button>
+            <button type="button" data-school-color="#fb8c00" style="--swatch:#fb8c00">Laranja</button>
+            <button type="button" data-school-color="#fdd835" style="--swatch:#fdd835">Amarelo</button>
+            <button type="button" data-school-color="#43a047" style="--swatch:#43a047">Verde</button>
+            <button type="button" data-school-color="#1e88e5" style="--swatch:#1e88e5">Azul</button>
+            <button type="button" data-school-color="#8e24aa" style="--swatch:#8e24aa">Roxo</button>
+          </div>
+          <footer class="school-coloring-actions">
+            <button type="button" data-school-color-mode="paint">Colorir</button>
+            <button type="button" data-school-color-clear>Apagar / Limpar</button>
+            <button type="button" data-school-color-audio>Ouvir curiosidade</button>
+            <button type="button" data-school-color-print>Imprimir</button>
+            <button type="button" data-school-color-other>Colorir outro</button>
+          </footer>
+        </article>
+      </div>
+      <div class="school-printable-sheet" data-school-printable-sheet aria-hidden="true">
+        <h1 data-school-print-title>${firstFigure.title}</h1>
+        <div data-school-print-art>${renderSchoolFigureArt(firstFigure, "is-print")}</div>
+      </div>
+    </section>
+  `;
+};
 
 const renderSchoolInstitutionalDashboard = () => {
   const { institution, ages } = schoolCollectiveData;
   const activeAge = ages[schoolCollectiveData.defaultAge] || Object.values(ages)[0];
   return `
-    <section class="school-institutional" data-school-institutional>
-      <header class="school-context-strip">
-        <div>
-          <span>Acesso Escola</span>
-          <h1>${institution.school_name}</h1>
-          <p>${institution.education_stage} - ${institution.municipality_name}</p>
+    <section class="official-school" data-official-school>
+      <header class="official-school-hero" id="inicio">
+        <div class="official-school-brand">
+          <img src="logo-sidebar-dark.png" alt="Raizes e Saberes" onerror="this.hidden=true" />
+          <i></i>
+          <div>
+            <span>Portal educacional coletivo</span>
+            <h1>${institution.school_name}</h1>
+            <p>${institution.education_stage} - ${institution.municipality_name}</p>
+          </div>
         </div>
-        <div class="school-logo-slot">
+        <div class="school-logo-slot official-school-logo">
           ${institution.school_logo ? `<img src="${institution.school_logo}" alt="Logomarca da escola" />` : `<span>LOGOMARCA<br>DA ESCOLA</span>`}
         </div>
-      </header>
-      <section class="school-institutional-hero">
-        <div>
-          <span>O que esta acontecendo na minha escola?</span>
-          <h2>Informacoes, comunicados e proximos acontecimentos em um so lugar.</h2>
-          <p>Este ambiente concentra a identidade institucional da unidade, comunicados, eventos, lembretes e sugestoes publicadas pela equipe escolar.</p>
-          <a href="educacao-infantil.html">Entrar na Educacao Infantil</a>
+        <div class="official-school-hero-copy">
+          <span>${institution.network_name}</span>
+          <h2>Bem-vindos a escola das descobertas.</h2>
+          <p>Jogos, leitura, desafios e pinturas em uma experiencia limpa para a comunidade escolar.</p>
+          <div>
+            <a href="#jogos">Jogar e descobrir</a>
+            <a href="educacao-infantil.html">Educacao Infantil</a>
+          </div>
         </div>
-        <img src="assets/home-official/banner_jardim.png" alt="" onerror="this.hidden=true" />
+        <img class="official-school-hero-art" src="assets/home-official/hero_children.png" alt="" onerror="this.hidden=true" />
+      </header>
+
+      <section class="official-school-panel official-school-access" id="acessos">
+        <div class="official-school-section-head">
+          <span>Acessos</span>
+          <h2>Acessos da Comunidade Escolar</h2>
+          <p>Portas simples para entrar no ambiente correto, sempre respeitando o login unico.</p>
+        </div>
+        <div class="official-school-access-grid">
+          <a href="educacao-infantil.html"><strong>Educacao Infantil</strong><span>Ambiente coletivo homologado</span></a>
+          <a href="login.html?next=%2Fprofessor&auth=supabase"><strong>Professor</strong><span>Entrar com perfil autorizado</span></a>
+          <a href="login.html?next=%2Faluno&auth=supabase"><strong>Aluno Fundamental</strong><span>Area do aluno em homologacao</span></a>
+          <a href="login.html?next=%2Faluno&auth=supabase"><strong>Aluno Medio</strong><span>Porta preparada para proxima fase</span></a>
+        </div>
       </section>
-      <div class="school-institutional-grid">
-        <section class="school-panel school-info-panel">
-          <div class="school-panel-head"><h2>Informacoes da Escola</h2></div>
-          <div class="school-info-grid">${renderSchoolInfo(activeAge)}</div>
-        </section>
-        <section class="school-panel school-suggestions-panel">
-          <div class="school-panel-head"><h2>Sugestoes da Professora</h2></div>
+
+      <section class="official-school-feature-row" id="desafio">
+        ${renderSchoolChallenge(activeAge)}
+      </section>
+
+      <section class="official-school-panel" id="jogos">
+        <div class="official-school-section-head">
+          <span>Interacao coletiva livre</span>
+          <h2>Jogar e Descobrir</h2>
+          <p>Somente os quatro jogos publicados para a Escola V1 aparecem aqui.</p>
+          <a href="escola.html#jogos">Ver todos</a>
+        </div>
+        <div class="official-school-games">${renderOfficialSchoolGameCards()}</div>
+      </section>
+
+      <section class="official-school-split">
+        <div class="official-school-panel" id="biblioteca">
+          <div class="official-school-section-head">
+            <span>Biblioteca Viva</span>
+            <h2>Ler na escola</h2>
+            <p>O leitor tecnico permanece como Book Viewer; para a crianca aparece apenas o comando Ler.</p>
+            <a href="biblioteca.html">Abrir biblioteca</a>
+          </div>
+          <div class="official-school-books">${renderOfficialSchoolBooks()}</div>
+        </div>
+        <div class="official-school-panel">
+          <div class="official-school-section-head">
+            <span>Professora</span>
+            <h2>Sugestoes da Professora</h2>
+          </div>
           <div class="school-suggestion-list">${renderSchoolSuggestions(activeAge)}</div>
-        </section>
-        <section class="school-panel school-access-panel">
-          <div class="school-panel-head"><h2>Ambientes Vinculados</h2></div>
-          <article>
-            <strong>Educacao Infantil</strong>
-            <p>Ambiente coletivo pedagogico para desafios, jogos, leitura e experiencias por idade.</p>
-            <a href="educacao-infantil.html">Espaco Educacao Infantil</a>
-          </article>
-          <article>
-            <strong>Pra Colorir e Descobrir</strong>
-            <p>Ambiente infantil de entretenimento educativo para colorir livremente.</p>
-            <a href="colorir-descobrir.html">Abrir colorir</a>
-          </article>
-        </section>
-      </div>
+        </div>
+      </section>
+
+      ${renderSchoolColoringModule()}
+
+      <section class="official-school-panel" id="informacoes">
+        <div class="official-school-section-head">
+          <span>Comunicados</span>
+          <h2>Informacoes da Escola</h2>
+        </div>
+        <div class="school-info-grid">${renderSchoolInfo(activeAge)}</div>
+      </section>
     </section>
   `;
 };
@@ -5337,7 +5524,7 @@ const renderEarlyChildhoodDashboard = () => {
             <h2>${renderSchoolIcon("game")} Jogar e Descobrir</h2>
             <a data-school-link="games" href="jogos.html?idade=${defaultAge}">VER TODOS &gt;</a>
           </div>
-          <div class="school-game-grid" data-school-slot="games">${renderSchoolColorirDiscover()}${renderSchoolGames(activeAge)}</div>
+          <div class="school-game-grid" data-school-slot="games">${renderSchoolGames(activeAge)}</div>
         </section>
         <section class="school-panel school-library-panel">
           <div class="school-panel-head">
@@ -5381,7 +5568,7 @@ const initSchoolCollectiveDashboard = () => {
     root.dataset.activeAge = age;
     root.querySelectorAll("[data-school-age]").forEach((button) => button.classList.toggle("is-active", button.dataset.schoolAge === age));
     if (slots.challenge) slots.challenge.innerHTML = renderSchoolChallenge(ageData);
-    if (slots.games) slots.games.innerHTML = `${renderSchoolColorirDiscover()}${renderSchoolGames(ageData)}`;
+    if (slots.games) slots.games.innerHTML = renderSchoolGames(ageData);
     if (slots.books) slots.books.innerHTML = renderSchoolBooks(ageData);
     if (slots.suggestions) slots.suggestions.innerHTML = renderSchoolSuggestions(ageData);
     if (slots.info) slots.info.innerHTML = renderSchoolInfo(ageData);
@@ -5393,6 +5580,142 @@ const initSchoolCollectiveDashboard = () => {
     if (!button) return;
     event.preventDefault();
     renderAge(button.dataset.schoolAge || schoolCollectiveData.defaultAge);
+  });
+};
+
+const initOfficialSchoolDashboard = () => {
+  const root = document.querySelector("[data-official-school]");
+  const coloring = document.querySelector("[data-school-coloring]");
+  if (!root || !coloring) return;
+
+  const gallery = coloring.querySelector("[data-school-color-gallery]");
+  const workbench = coloring.querySelector("[data-school-color-workbench]");
+  const titleNode = coloring.querySelector("[data-school-color-title]");
+  const categoryNode = coloring.querySelector("[data-school-color-category-label]");
+  const curiosityNode = coloring.querySelector("[data-school-color-curiosity]");
+  const outlineNode = coloring.querySelector("[data-school-color-outline]");
+  const printTitleNode = coloring.querySelector("[data-school-print-title]");
+  const printArtNode = coloring.querySelector("[data-school-print-art]");
+  const canvas = coloring.querySelector("[data-school-color-canvas]");
+  const context = canvas?.getContext?.("2d");
+  let activeColor = "#e53935";
+  let activeFigure = schoolColoringFigures[0];
+  let drawing = false;
+
+  const getCategoryLabel = (categoryId) => schoolColoringCategories.find(([id]) => id === categoryId)?.[1] || "Figuras";
+  const clearCanvas = () => {
+    if (!context || !canvas) return;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+  };
+  const renderGallery = (categoryId) => {
+    const figures = schoolColoringFigures.filter((figure) => figure.category === categoryId);
+    gallery.innerHTML = figures
+      .map(
+        (figure, index) => `
+          <button class="${index === 0 ? "is-active" : ""}" type="button" data-school-color-figure="${figure.id}">
+            ${renderSchoolFigureArt(figure)}
+            <strong>${figure.title}</strong>
+            <span>${figure.age_range}</span>
+          </button>
+        `
+      )
+      .join("");
+    setFigure(figures[0] || schoolColoringFigures[0]);
+  };
+  const setFigure = (figure) => {
+    if (!figure) return;
+    activeFigure = figure;
+    workbench.dataset.activeFigure = figure.id;
+    titleNode.textContent = figure.title;
+    categoryNode.textContent = getCategoryLabel(figure.category);
+    curiosityNode.textContent = figure.curiosity_text;
+    outlineNode.innerHTML = renderSchoolFigureArt(figure, "is-large");
+    printTitleNode.textContent = figure.title;
+    printArtNode.innerHTML = renderSchoolFigureArt(figure, "is-print");
+    gallery.querySelectorAll("[data-school-color-figure]").forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.schoolColorFigure === figure.id);
+    });
+    clearCanvas();
+  };
+  const pointFromEvent = (event) => {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = event.clientX ?? event.touches?.[0]?.clientX ?? 0;
+    const clientY = event.clientY ?? event.touches?.[0]?.clientY ?? 0;
+    return {
+      x: ((clientX - rect.left) / rect.width) * canvas.width,
+      y: ((clientY - rect.top) / rect.height) * canvas.height,
+    };
+  };
+  const paint = (event, start = false) => {
+    if (!context || !canvas) return;
+    const point = pointFromEvent(event);
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.strokeStyle = activeColor;
+    context.lineWidth = 24;
+    if (start) {
+      context.beginPath();
+      context.moveTo(point.x, point.y);
+      return;
+    }
+    context.lineTo(point.x, point.y);
+    context.stroke();
+  };
+
+  coloring.addEventListener("click", (event) => {
+    const categoryButton = event.target.closest?.("[data-school-color-category]");
+    if (categoryButton) {
+      coloring.querySelectorAll("[data-school-color-category]").forEach((button) => button.classList.toggle("is-active", button === categoryButton));
+      renderGallery(categoryButton.dataset.schoolColorCategory);
+      return;
+    }
+    const figureButton = event.target.closest?.("[data-school-color-figure]");
+    if (figureButton) {
+      setFigure(schoolColoringFigures.find((figure) => figure.id === figureButton.dataset.schoolColorFigure));
+      return;
+    }
+    const colorButton = event.target.closest?.("[data-school-color]");
+    if (colorButton) {
+      activeColor = colorButton.dataset.schoolColor || activeColor;
+      coloring.querySelectorAll("[data-school-color]").forEach((button) => button.classList.toggle("is-active", button === colorButton));
+      return;
+    }
+    if (event.target.closest?.("[data-school-color-clear]")) {
+      clearCanvas();
+      return;
+    }
+    if (event.target.closest?.("[data-school-color-audio]")) {
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(new SpeechSynthesisUtterance(activeFigure.curiosity_text));
+      }
+      return;
+    }
+    if (event.target.closest?.("[data-school-color-print]")) {
+      window.print();
+      return;
+    }
+    if (event.target.closest?.("[data-school-color-other]")) {
+      const currentIndex = schoolColoringFigures.findIndex((figure) => figure.id === activeFigure.id);
+      setFigure(schoolColoringFigures[(currentIndex + 1) % schoolColoringFigures.length]);
+    }
+  });
+
+  canvas?.addEventListener("pointerdown", (event) => {
+    drawing = true;
+    canvas.setPointerCapture?.(event.pointerId);
+    paint(event, true);
+  });
+  canvas?.addEventListener("pointermove", (event) => {
+    if (!drawing) return;
+    event.preventDefault();
+    paint(event);
+  });
+  ["pointerup", "pointercancel", "pointerleave"].forEach((type) => {
+    canvas?.addEventListener(type, () => {
+      drawing = false;
+      context?.closePath?.();
+    });
   });
 };
 
@@ -6189,6 +6512,46 @@ const renderEcosystemHome = () => {
   `;
 };
 
+const getRequestedGameId = () => {
+  if (typeof window === "undefined") return "";
+  const params = new URLSearchParams(window.location.search);
+  const requested = params.get("game") || params.get("jogo") || params.get("id") || "";
+  return /^[a-z0-9-]+$/.test(requested) ? requested : "";
+};
+
+const renderGamesModule = () => {
+  const requestedGameId = getRequestedGameId();
+  const currentRole = getCurrentPlatformRole();
+  const isSchoolExperience = currentRole === "escola";
+  const schoolGameAllowed = !requestedGameId || officialSchoolGameIds.includes(requestedGameId);
+  if (isSchoolExperience && (!requestedGameId || !schoolGameAllowed)) {
+    return `
+      <section class="official-school-panel official-school-games-page">
+        <div class="official-school-section-head">
+          <span>Escola V1</span>
+          <h2>Jogos publicados</h2>
+          <p>Somente os quatro jogos homologados aparecem neste espaco publico da Escola.</p>
+        </div>
+        <div class="official-school-games">${renderOfficialSchoolGameCards()}</div>
+      </section>
+    `;
+  }
+  const playerAttribute = requestedGameId
+    ? ` data-game-id="${requestedGameId}"${isSchoolExperience ? ` data-published-games="${officialSchoolGameIds.join(",")}" data-collective-mode="school"` : ""}`
+    : "";
+  const intro = requestedGameId
+    ? `<span>Interacao coletiva livre. Ao finalizar, volte para a Escola pelo menu.</span>`
+    : `<span>Escolha uma experiencia, conquiste XP e acompanhe suas medalhas.</span>`;
+  return `
+    <div class="screen-title">
+      <p>GAME-ENGINE-2.0</p>
+      <h1>Jogar e Descobrir</h1>
+      ${intro}
+    </div>
+    <div class="game-engine" data-game-engine${playerAttribute}></div>
+  `;
+};
+
 const modules = {
   plataforma: {
     title: "Home do Ecossistema",
@@ -6213,12 +6576,6 @@ const modules = {
     subtitle: "Aba da escola no aluno da Educacao Infantil",
     code: "EDUCACAO-INFANTIL-V1",
     html: renderEarlyChildhoodDashboard(),
-  },
-  colorirDescobrir: {
-    title: "Pra Colorir e Descobrir",
-    subtitle: "Entretenimento educativo infantil",
-    code: "COLORIR-DESCOBRIR-V1",
-    html: window.renderColorirDescobrirApp ? window.renderColorirDescobrirApp() : `<div class="pcd-app" data-colorir-descobrir-app></div>`,
   },
   aluno: {
     title: "Aluno Ensino Fundamental",
@@ -6254,14 +6611,9 @@ const modules = {
     title: "Jogar e Descobrir",
     subtitle: "Hub oficial dos jogos digitais",
     code: "GAME-ENGINE-2.0",
-    html: `
-      <div class="screen-title">
-        <p>GAME-ENGINE-2.0</p>
-        <h1>Jogar e Descobrir</h1>
-        <span>Escolha uma experiencia, conquiste XP e acompanhe suas medalhas.</span>
-      </div>
-      <div class="game-engine" data-game-engine></div>
-    `,
+    get html() {
+      return renderGamesModule();
+    },
   },
   perfil: {
     title: "Perfil",
@@ -7042,7 +7394,6 @@ const environments = {
     profileImage: "logo-sidebar-dark.png",
     nav: [
       ["educacaoInfantil", "Inicio", "educacao-infantil.html"],
-      ["colorirDescobrir", "Colorir", "colorir-descobrir.html"],
       ["site", "Site", "index.html"],
       ["jogos", "Jogos", "jogos.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
@@ -7051,12 +7402,35 @@ const environments = {
     ],
     mobile: [
       ["educacaoInfantil", "Inicio", "educacao-infantil.html"],
-      ["colorirDescobrir", "Colorir", "colorir-descobrir.html"],
       ["site", "Site", "index.html"],
       ["jogos", "Jogos", "jogos.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
       ["viewer", "Livro", "book-viewer.html"],
       ["logout", "Sair", "#"],
+    ],
+  },
+  escola: {
+    label: "Escola",
+    profile: "Portal coletivo oficial",
+    search: "Buscar jogos, livros, desafios e comunicados...",
+    user: "Escola<br />Acesso coletivo",
+    profileImage: "logo-sidebar-dark.png",
+    nav: [
+      ["escolaColetiva", "INICIO", "escola.html#inicio"],
+      ["jogos", "JOGOS", "jogos.html"],
+      ["biblioteca", "BIBLIOTECA", "biblioteca.html"],
+      ["desafio", "DESAFIO DO DIA", "escola.html#desafio"],
+      ["colorir", "COLORIR, PINTAR E DESCOBRIR", "escola.html#colorir"],
+      ["site", "SITE", "index.html"],
+      ["logout", "SAIR", "#"],
+    ],
+    mobile: [
+      ["escolaColetiva", "INICIO", "escola.html#inicio"],
+      ["jogos", "JOGOS", "jogos.html"],
+      ["biblioteca", "BIBLIOTECA", "biblioteca.html"],
+      ["desafio", "DESAFIO", "escola.html#desafio"],
+      ["colorir", "COLORIR", "escola.html#colorir"],
+      ["logout", "SAIR", "#"],
     ],
   },
   biblioteca: {
@@ -7278,9 +7652,8 @@ const environments = {
 const moduleEnvironment = {
   plataforma: "plataforma",
   admin: "admin",
-  escolaColetiva: "plataforma",
+  escolaColetiva: "escola",
   educacaoInfantil: "educacaoInfantil",
-  colorirDescobrir: "educacaoInfantil",
   aluno: "aluno",
   alunoAtividades: "aluno",
   alunoAtividade: "aluno",
@@ -10601,12 +10974,20 @@ const renderAppPage = () => {
     window.location.replace(getRoleHome(currentRole));
     return;
   }
+  if (currentRole === "escola" && !schoolAllowedRouteKeys.has(activeKey)) {
+    document.documentElement.style.display = "none";
+    window.location.replace(getRoleHome(currentRole));
+    return;
+  }
   let environmentKey = moduleEnvironment[activeKey] || activeKey;
   if (currentRole === "aluno" && studentAllowedRouteKeys.has(activeKey)) {
     environmentKey = "aluno";
   }
   if (currentRole === "educacao_infantil" && earlyChildhoodAllowedRouteKeys.has(activeKey)) {
     environmentKey = "educacaoInfantil";
+  }
+  if (currentRole === "escola" && schoolAllowedRouteKeys.has(activeKey)) {
+    environmentKey = "escola";
   }
   const environment = environments[environmentKey] || environments.biblioteca;
   if (currentRole && !canAccessPlatformRoute(activeKey, currentRole)) {
@@ -10667,8 +11048,15 @@ const renderAppPage = () => {
         : `<a class="${key === activeKey ? "is-active" : ""}" href="${href}">${label}</a>`
     )
     .join("");
-  const shellHomeHref = environmentKey === "aluno" ? "aluno.html" : "plataforma.html";
-  const shellLogoHref = environmentKey === "aluno" ? "aluno.html" : "index.html";
+  const shellHomeHref = environmentKey === "aluno" ? "aluno.html" : environmentKey === "escola" ? "escola.html" : "plataforma.html";
+  const shellLogoHref = environmentKey === "aluno" ? "aluno.html" : environmentKey === "escola" ? "escola.html" : "index.html";
+  const topFilter = environmentKey === "escola" ? "" : `<button class="top-filter" type="button">Filtros</button>`;
+  const moduleSwitcher = environmentKey === "escola"
+    ? `<nav class="module-switcher official-school-switcher" aria-label="Navegacao da Escola">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>`
+    : `<nav class="module-switcher" aria-label="Modulos do Ecossistema">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>`;
+  const topActions = environmentKey === "escola"
+    ? `<div class="top-actions official-school-actions" aria-label="Acoes"><a class="school-site-link" href="index.html">SITE</a><button class="school-top-logout" type="button" data-platform-logout>SAIR</button></div>`
+    : `<div class="top-actions" aria-label="Acoes"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>MS</span>`}<strong>${environment.user}</strong></div></div>`;
 
   mount.innerHTML = `
     <div class="app-shell" data-environment="${environmentKey}" data-active-module="${activeKey}">
@@ -10688,9 +11076,9 @@ const renderAppPage = () => {
         <header class="app-topbar">
           <a class="icon-button menu-toggle" href="${shellHomeHref}" aria-label="Inicio">☰</a>
           <label class="app-search"><span>Pesquisar</span><input type="search" placeholder="${environment.search}" /></label>
-          <button class="top-filter" type="button">Filtros</button>
-          <nav class="module-switcher" aria-label="Modulos do Ecossistema">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>
-          <div class="top-actions" aria-label="Acoes"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>MS</span>`}<strong>${environment.user}</strong></div></div>
+          ${topFilter}
+          ${moduleSwitcher}
+          ${topActions}
         </header>
         <section class="screen is-active route-screen" data-route-screen="${activeKey}">${activeModule.html}</section>
       </main>
@@ -10705,6 +11093,7 @@ const renderAppPage = () => {
 
   initPlatformLogout();
   initSchoolCollectiveDashboard();
+  initOfficialSchoolDashboard();
   initBookReader();
   initLibrarySearch();
   initLibraryExperiences();
@@ -10720,7 +11109,6 @@ const renderAppPage = () => {
   initUniversalActivityAssignmentUi();
   initUniversalActivityTeacherDeliveries();
   initUniversalActivityEngine();
-  window.initColorirDescobrir?.();
 };
 
 renderAppPage();

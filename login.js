@@ -55,6 +55,9 @@ const normalizePlatformRole = (role) => {
 };
 const validPlatformRoles = new Set(["professor", "aluno", "escola", "educacao_infantil", "gestor", "coordenador", "admin"]);
 const hasValidPlatformRole = (role) => validPlatformRoles.has(normalizePlatformRole(role));
+const prefersFileRoutes = () =>
+  window.location.protocol === "file:" || ["localhost", "127.0.0.1", ""].includes(window.location.hostname);
+const platformRoute = (cleanPath, filePath) => (prefersFileRoutes() ? filePath : cleanPath);
 const loginRoleLabels = {
   aluno: "Aluno Ensino Fundamental",
   professor: "Professor",
@@ -67,13 +70,13 @@ const loginRoleLabels = {
 
 const getRoleHome = (role) =>
   ({
-    professor: "/professor",
-    aluno: "/aluno",
-    escola: "/escola",
-    educacao_infantil: "/familia",
+    professor: platformRoute("/professor", "professor.html"),
+    aluno: platformRoute("/aluno", "aluno.html"),
+    escola: platformRoute("/escola", "escola.html"),
+    educacao_infantil: platformRoute("/familia", "familia.html"),
     gestor: "gestor.html",
-    coordenador: "/professor",
-    admin: "/admin",
+    coordenador: platformRoute("/professor", "professor.html"),
+    admin: platformRoute("/admin", "admin.html"),
   })[normalizePlatformRole(role)] || "plataforma.html";
 
 const getNextPage = () => {
@@ -123,6 +126,7 @@ const getStoredSupabaseContext = () => {
     const session = JSON.parse(localStorage.getItem(supabaseSessionKey) || "null");
     const payload = decodeJwtPayload(session?.access_token);
     const appMetadata = payload.app_metadata || {};
+    const userMetadata = payload.user_metadata || session?.user?.user_metadata || {};
     return {
       userId: payload.sub || session?.user?.id || null,
       role:
@@ -132,6 +136,8 @@ const getStoredSupabaseContext = () => {
         appMetadata.question_bank_role ||
         payload.platform_role ||
         payload.app_role ||
+        userMetadata.platform_role ||
+        userMetadata.role ||
         session?.platform_role ||
         session?.question_bank_role ||
         null,
