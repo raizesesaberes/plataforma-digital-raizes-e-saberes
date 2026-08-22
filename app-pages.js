@@ -2324,6 +2324,7 @@ const ecosystemModuleLinks = (activeKey, environmentKey = "") => {
             ["index.html", "Site"],
             ["jogos.html", "Jogos"],
             ["biblioteca.html", "Biblioteca"],
+            ["colorir-descobrir.html", "Colorir e Descobrir"],
             ["book-viewer.html", "Book Viewer"],
             ["#logout", "Sair"],
           ]
@@ -7411,6 +7412,7 @@ const environments = {
       ["site", "Site", "index.html"],
       ["jogos", "Jogos", "jogos.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
+      ["colorirDescobrir", "Colorir e Descobrir", "colorir-descobrir.html"],
       ["viewer", "Book Viewer", "book-viewer.html"],
       ["logout", "Sair", "#"],
     ],
@@ -7419,6 +7421,7 @@ const environments = {
       ["site", "Site", "index.html"],
       ["jogos", "Jogos", "jogos.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
+      ["colorirDescobrir", "Colorir", "colorir-descobrir.html"],
       ["viewer", "Livro", "book-viewer.html"],
       ["logout", "Sair", "#"],
     ],
