@@ -1,6 +1,27 @@
 (function () {
-  const storageKey = "raizes:colorir-descobrir:catalog:v1";
+  const storageKey = "raizes:colorir-descobrir:catalog:v2";
   const now = "2026-08-22T00:00:00.000Z";
+  const jardimFigure = (ordem, titulo, curiosidade) => {
+    const code = String(ordem).padStart(2, "0");
+    const slug = titulo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const fileName = `PCD_JARDIM_${code}_${titulo}`;
+    return {
+      id: `${slug}-jardim`,
+      codigoInterno: `PCD-JARDIM-${code}`,
+      titulo,
+      tema: "bichinhos-jardim",
+      ordem,
+      imagemBranca: `assets/colorir-descobrir/figuras/branco/${fileName}.png`,
+      imagemColorida: "",
+      imagemMascara: `assets/colorir-descobrir/figuras/mask/${fileName}_MASK.png`,
+      audioCuriosidade: "",
+      textoCuriosidade: curiosidade,
+      musicaLoop: "",
+      status: "publicado",
+      createdAt: now,
+      updatedAt: now,
+    };
+  };
 
   const defaultCatalog = {
     version: "COLORIR_DESCOBRIR_PROFILE_V1",
@@ -21,51 +42,14 @@
       { id: "brinquedos-brincadeiras", titulo: "Brinquedos e Brincadeiras", ordem: 8, status: "rascunho", accent: "#2ea39a" },
     ],
     figures: [
-      {
-        id: "joaninha-atelie-bia",
-        codigoInterno: "PCD-BJ-001",
-        titulo: "Joaninha",
-        tema: "bichinhos-jardim",
-        ordem: 1,
-        imagemBranca: "assets/games/atelie-bia/golden-master/JOANINHA_BASE_PROTEGIDA.png",
-        imagemColorida: "assets/games/atelie-bia/golden-master/JOANINHA_GOLDEN_MASTER_V2.png",
-        audioCuriosidade: "",
-        textoCuriosidade: "As joaninhas ajudam o jardim porque comem bichinhos bem pequenos que ficam nas folhas.",
-        musicaLoop: "",
-        status: "publicado",
-        createdAt: now,
-        updatedAt: now,
-      },
-      {
-        id: "passarinho-atelie-bia",
-        codigoInterno: "PCD-BJ-002",
-        titulo: "Passarinho",
-        tema: "bichinhos-jardim",
-        ordem: 2,
-        imagemBranca: "assets/games/atelie-bia/passarinhos/v1/PASSARINHO_GOLDEN_MASTER_V1.png",
-        imagemColorida: "assets/games/atelie-bia/passarinhos/v1/PASSARINHO_GOLDEN_MASTER_V1.png",
-        audioCuriosidade: "",
-        textoCuriosidade: "Os passarinhos espalham sementes e ajudam novas plantas a nascerem pelo caminho.",
-        musicaLoop: "",
-        status: "publicado",
-        createdAt: now,
-        updatedAt: now,
-      },
-      {
-        id: "patinho-atelie-bia",
-        codigoInterno: "PCD-BJ-003",
-        titulo: "Patinho",
-        tema: "bichinhos-jardim",
-        ordem: 3,
-        imagemBranca: "assets/games/atelie-bia/patinhos/v1/PATINHO_GOLDEN_MASTER_V1_1536x1536.png",
-        imagemColorida: "assets/games/atelie-bia/patinhos/v1/PATINHO_GOLDEN_MASTER_V1_1536x1536.png",
-        audioCuriosidade: "",
-        textoCuriosidade: "Os patinhos nascem sabendo nadar pertinho da familia.",
-        musicaLoop: "",
-        status: "publicado",
-        createdAt: now,
-        updatedAt: now,
-      },
+      jardimFigure(1, "JOANINHA", "As joaninhas ajudam o jardim porque comem bichinhos bem pequenos que ficam nas folhas."),
+      jardimFigure(2, "BORBOLETA", "As borboletas visitam flores e carregam pozinhos que ajudam novas plantas a nascerem."),
+      jardimFigure(3, "ABELHA", "As abelhas visitam flores e ajudam o jardim a ficar cheio de vida."),
+      jardimFigure(4, "CARACOL", "O caracol leva a casinha nas costas e gosta de lugares fresquinhos."),
+      jardimFigure(5, "LAGARTA", "A lagarta come folhas e, depois de um tempo, pode virar uma borboleta."),
+      jardimFigure(6, "FORMIGA", "As formigas trabalham juntas e conseguem carregar alimentos maiores que elas."),
+      jardimFigure(7, "GRILO", "O grilo faz som esfregando as asinhas para conversar no jardim."),
+      jardimFigure(8, "LIBELULA", "A libelula voa rapido e gosta de ficar perto da agua e das plantas."),
     ],
   };
 
@@ -86,6 +70,7 @@
     ordem: Number(figure.ordem || 999),
     imagemBranca: figure.imagemBranca || "",
     imagemColorida: figure.imagemColorida || "",
+    imagemMascara: figure.imagemMascara || figure.mask || "",
     audioCuriosidade: figure.audioCuriosidade || "",
     textoCuriosidade: figure.textoCuriosidade || "",
     musicaLoop: figure.musicaLoop || "",
@@ -162,6 +147,7 @@
         palavrasChave: [theme?.titulo || "", figure.titulo].filter(Boolean),
         arquivoOriginal: figure.imagemBranca,
         arquivoPng: figure.imagemBranca,
+        arquivoMascara: figure.imagemMascara,
         arquivoPdf: "",
         miniatura: figure.imagemColorida || figure.imagemBranca,
         formato: "png",

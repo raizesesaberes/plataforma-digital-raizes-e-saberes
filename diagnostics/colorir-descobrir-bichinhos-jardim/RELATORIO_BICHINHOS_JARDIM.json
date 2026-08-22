@@ -1,0 +1,602 @@
+[
+  {
+    "titulo": "JOANINHA",
+    "source": "/Users/danielhenrique/Downloads/ChatGPT Image 22 de ago. de 2026, 16_51_48.png",
+    "masterFile": "assets/colorir-descobrir/figuras/branco/PCD_JARDIM_01_JOANINHA.png",
+    "maskFile": "assets/colorir-descobrir/figuras/mask/PCD_JARDIM_01_JOANINHA_MASK.png",
+    "dimensions": {
+      "master": [
+        1536,
+        1536
+      ],
+      "mask": [
+        1536,
+        1536
+      ]
+    },
+    "masterBBox": [
+      108,
+      176,
+      1435,
+      1363
+    ],
+    "maskBBox": [
+      104,
+      170,
+      1433,
+      1367
+    ],
+    "sourceAlpha": {
+      "alpha0": 520974,
+      "alpha_gt0": 1052564,
+      "alpha255": 1867,
+      "bbox": [
+        0,
+        0,
+        1774,
+        887
+      ]
+    },
+    "maskAlpha": {
+      "alpha0": 1416561,
+      "alpha_gt0": 942735,
+      "alpha255": 942735,
+      "bbox": [
+        104,
+        170,
+        1433,
+        1367
+      ]
+    },
+    "externalOpaqueComponents": 0,
+    "sameTransformApplied": true,
+    "transform": {
+      "sourceUnionBox": [
+        10,
+        70,
+        877,
+        851
+      ],
+      "scale": 1.5317185697808535,
+      "translate": [
+        89,
+        63
+      ],
+      "scaledSize": [
+        1359,
+        1359
+      ]
+    },
+    "alignmentTest": "APROVADO",
+    "paintTest": "APROVADO",
+    "paintOutsideMaskPixels": 0,
+    "contoursPreserved": true,
+    "partsCut": 0,
+    "status": "APROVADA"
+  },
+  {
+    "titulo": "BORBOLETA",
+    "source": "/Users/danielhenrique/Downloads/ChatGPT Image 22 de ago. de 2026, 16_52_04.png",
+    "masterFile": "assets/colorir-descobrir/figuras/branco/PCD_JARDIM_02_BORBOLETA.png",
+    "maskFile": "assets/colorir-descobrir/figuras/mask/PCD_JARDIM_02_BORBOLETA_MASK.png",
+    "dimensions": {
+      "master": [
+        1536,
+        1536
+      ],
+      "mask": [
+        1536,
+        1536
+      ]
+    },
+    "masterBBox": [
+      102,
+      185,
+      1430,
+      1351
+    ],
+    "maskBBox": [
+      112,
+      205,
+      1433,
+      1330
+    ],
+    "sourceAlpha": {
+      "alpha0": 211833,
+      "alpha_gt0": 1361705,
+      "alpha255": 1138,
+      "bbox": [
+        0,
+        0,
+        1774,
+        887
+      ]
+    },
+    "maskAlpha": {
+      "alpha0": 1266394,
+      "alpha_gt0": 1092902,
+      "alpha255": 1092902,
+      "bbox": [
+        112,
+        205,
+        1433,
+        1330
+      ]
+    },
+    "externalOpaqueComponents": 0,
+    "sameTransformApplied": true,
+    "transform": {
+      "sourceUnionBox": [
+        6,
+        62,
+        875,
+        822
+      ],
+      "scale": 1.5281933256616802,
+      "translate": [
+        95,
+        92
+      ],
+      "scaledSize": [
+        1356,
+        1356
+      ]
+    },
+    "alignmentTest": "APROVADO",
+    "paintTest": "APROVADO",
+    "paintOutsideMaskPixels": 0,
+    "contoursPreserved": true,
+    "partsCut": 0,
+    "status": "APROVADA"
+  },
+  {
+    "titulo": "ABELHA",
+    "source": "/Users/danielhenrique/Downloads/ChatGPT Image 22 de ago. de 2026, 16_52_18.png",
+    "masterFile": "assets/colorir-descobrir/figuras/branco/PCD_JARDIM_03_ABELHA.png",
+    "maskFile": "assets/colorir-descobrir/figuras/mask/PCD_JARDIM_03_ABELHA_MASK.png",
+    "dimensions": {
+      "master": [
+        1536,
+        1536
+      ],
+      "mask": [
+        1536,
+        1536
+      ]
+    },
+    "masterBBox": [
+      137,
+      102,
+      1415,
+      1431
+    ],
+    "maskBBox": [
+      121,
+      108,
+      1395,
+      1432
+    ],
+    "sourceAlpha": {
+      "alpha0": 315284,
+      "alpha_gt0": 1258254,
+      "alpha255": 2249,
+      "bbox": [
+        0,
+        0,
+        1774,
+        887
+      ]
+    },
+    "maskAlpha": {
+      "alpha0": 1375133,
+      "alpha_gt0": 984163,
+      "alpha255": 984163,
+      "bbox": [
+        121,
+        108,
+        1395,
+        1432
+      ]
+    },
+    "externalOpaqueComponents": 0,
+    "sameTransformApplied": true,
+    "transform": {
+      "sourceUnionBox": [
+        33,
+        9,
+        876,
+        875
+      ],
+      "scale": 1.533487297921478,
+      "translate": [
+        70,
+        90
+      ],
+      "scaledSize": [
+        1360,
+        1360
+      ]
+    },
+    "alignmentTest": "APROVADO",
+    "paintTest": "APROVADO",
+    "paintOutsideMaskPixels": 0,
+    "contoursPreserved": true,
+    "partsCut": 0,
+    "status": "APROVADA"
+  },
+  {
+    "titulo": "CARACOL",
+    "source": "/Users/danielhenrique/Downloads/ChatGPT Image 22 de ago. de 2026, 16_52_32.png",
+    "masterFile": "assets/colorir-descobrir/figuras/branco/PCD_JARDIM_04_CARACOL.png",
+    "maskFile": "assets/colorir-descobrir/figuras/mask/PCD_JARDIM_04_CARACOL_MASK.png",
+    "dimensions": {
+      "master": [
+        1536,
+        1536
+      ],
+      "mask": [
+        1536,
+        1536
+      ]
+    },
+    "masterBBox": [
+      104,
+      167,
+      1421,
+      1369
+    ],
+    "maskBBox": [
+      116,
+      187,
+      1432,
+      1349
+    ],
+    "sourceAlpha": {
+      "alpha0": 284720,
+      "alpha_gt0": 1288818,
+      "alpha255": 1167,
+      "bbox": [
+        0,
+        0,
+        1774,
+        887
+      ]
+    },
+    "maskAlpha": {
+      "alpha0": 1396709,
+      "alpha_gt0": 962587,
+      "alpha255": 962587,
+      "bbox": [
+        116,
+        187,
+        1432,
+        1349
+      ]
+    },
+    "externalOpaqueComponents": 0,
+    "sameTransformApplied": true,
+    "transform": {
+      "sourceUnionBox": [
+        0,
+        45,
+        869,
+        829
+      ],
+      "scale": 1.5281933256616802,
+      "translate": [
+        104,
+        100
+      ],
+      "scaledSize": [
+        1356,
+        1356
+      ]
+    },
+    "alignmentTest": "APROVADO",
+    "paintTest": "APROVADO",
+    "paintOutsideMaskPixels": 0,
+    "contoursPreserved": true,
+    "partsCut": 0,
+    "status": "APROVADA"
+  },
+  {
+    "titulo": "LAGARTA",
+    "source": "/Users/danielhenrique/Downloads/ChatGPT Image 22 de ago. de 2026, 16_52_46.png",
+    "masterFile": "assets/colorir-descobrir/figuras/branco/PCD_JARDIM_05_LAGARTA.png",
+    "maskFile": "assets/colorir-descobrir/figuras/mask/PCD_JARDIM_05_LAGARTA_MASK.png",
+    "dimensions": {
+      "master": [
+        1536,
+        1536
+      ],
+      "mask": [
+        1536,
+        1536
+      ]
+    },
+    "masterBBox": [
+      102,
+      205,
+      1400,
+      1332
+    ],
+    "maskBBox": [
+      123,
+      220,
+      1432,
+      1311
+    ],
+    "sourceAlpha": {
+      "alpha0": 576376,
+      "alpha_gt0": 997162,
+      "alpha255": 1307,
+      "bbox": [
+        0,
+        0,
+        1774,
+        887
+      ]
+    },
+    "maskAlpha": {
+      "alpha0": 1704967,
+      "alpha_gt0": 654329,
+      "alpha255": 654329,
+      "bbox": [
+        123,
+        220,
+        1432,
+        1311
+      ]
+    },
+    "externalOpaqueComponents": 0,
+    "sameTransformApplied": true,
+    "transform": {
+      "sourceUnionBox": [
+        35,
+        95,
+        874,
+        804
+      ],
+      "scale": 1.5828367103694876,
+      "translate": [
+        49,
+        57
+      ],
+      "scaledSize": [
+        1404,
+        1404
+      ]
+    },
+    "alignmentTest": "APROVADO",
+    "paintTest": "APROVADO",
+    "paintOutsideMaskPixels": 0,
+    "contoursPreserved": true,
+    "partsCut": 0,
+    "status": "APROVADA"
+  },
+  {
+    "titulo": "FORMIGA",
+    "source": "/Users/danielhenrique/Downloads/ChatGPT Image 22 de ago. de 2026, 16_53_02.png",
+    "masterFile": "assets/colorir-descobrir/figuras/branco/PCD_JARDIM_06_FORMIGA.png",
+    "maskFile": "assets/colorir-descobrir/figuras/mask/PCD_JARDIM_06_FORMIGA_MASK.png",
+    "dimensions": {
+      "master": [
+        1536,
+        1536
+      ],
+      "mask": [
+        1536,
+        1536
+      ]
+    },
+    "masterBBox": [
+      102,
+      137,
+      1408,
+      1384
+    ],
+    "maskBBox": [
+      123,
+      130,
+      1433,
+      1405
+    ],
+    "sourceAlpha": {
+      "alpha0": 409963,
+      "alpha_gt0": 1163575,
+      "alpha255": 1975,
+      "bbox": [
+        0,
+        0,
+        1758,
+        887
+      ]
+    },
+    "maskAlpha": {
+      "alpha0": 1566723,
+      "alpha_gt0": 792573,
+      "alpha255": 792573,
+      "bbox": [
+        123,
+        130,
+        1433,
+        1405
+      ]
+    },
+    "externalOpaqueComponents": 0,
+    "sameTransformApplied": true,
+    "transform": {
+      "sourceUnionBox": [
+        15,
+        50,
+        865,
+        866
+      ],
+      "scale": 1.5623529411764705,
+      "translate": [
+        81,
+        52
+      ],
+      "scaledSize": [
+        1386,
+        1386
+      ]
+    },
+    "alignmentTest": "APROVADO",
+    "paintTest": "APROVADO",
+    "paintOutsideMaskPixels": 0,
+    "contoursPreserved": true,
+    "partsCut": 0,
+    "status": "APROVADA"
+  },
+  {
+    "titulo": "GRILO",
+    "source": "/Users/danielhenrique/Downloads/ChatGPT Image 22 de ago. de 2026, 16_53_16.png",
+    "masterFile": "assets/colorir-descobrir/figuras/branco/PCD_JARDIM_07_GRILO.png",
+    "maskFile": "assets/colorir-descobrir/figuras/mask/PCD_JARDIM_07_GRILO_MASK.png",
+    "dimensions": {
+      "master": [
+        1536,
+        1536
+      ],
+      "mask": [
+        1536,
+        1536
+      ]
+    },
+    "masterBBox": [
+      102,
+      187,
+      1432,
+      1345
+    ],
+    "maskBBox": [
+      104,
+      184,
+      1431,
+      1351
+    ],
+    "sourceAlpha": {
+      "alpha0": 435606,
+      "alpha_gt0": 1137932,
+      "alpha255": 1099,
+      "bbox": [
+        0,
+        0,
+        1773,
+        887
+      ]
+    },
+    "maskAlpha": {
+      "alpha0": 1629338,
+      "alpha_gt0": 729958,
+      "alpha255": 729958,
+      "bbox": [
+        104,
+        184,
+        1431,
+        1351
+      ]
+    },
+    "externalOpaqueComponents": 0,
+    "sameTransformApplied": true,
+    "transform": {
+      "sourceUnionBox": [
+        16,
+        79,
+        873,
+        832
+      ],
+      "scale": 1.5495915985997666,
+      "translate": [
+        79,
+        62
+      ],
+      "scaledSize": [
+        1374,
+        1374
+      ]
+    },
+    "alignmentTest": "APROVADO",
+    "paintTest": "APROVADO",
+    "paintOutsideMaskPixels": 0,
+    "contoursPreserved": true,
+    "partsCut": 0,
+    "status": "APROVADA"
+  },
+  {
+    "titulo": "LIBELULA",
+    "source": "/Users/danielhenrique/Downloads/ChatGPT Image 22 de ago. de 2026, 16_53_39.png",
+    "masterFile": "assets/colorir-descobrir/figuras/branco/PCD_JARDIM_08_LIBELULA.png",
+    "maskFile": "assets/colorir-descobrir/figuras/mask/PCD_JARDIM_08_LIBELULA_MASK.png",
+    "dimensions": {
+      "master": [
+        1536,
+        1536
+      ],
+      "mask": [
+        1536,
+        1536
+      ]
+    },
+    "masterBBox": [
+      104,
+      124,
+      1435,
+      1413
+    ],
+    "maskBBox": [
+      104,
+      126,
+      1428,
+      1402
+    ],
+    "sourceAlpha": {
+      "alpha0": 354710,
+      "alpha_gt0": 1218828,
+      "alpha255": 202,
+      "bbox": [
+        0,
+        0,
+        1773,
+        887
+      ]
+    },
+    "maskAlpha": {
+      "alpha0": 1514486,
+      "alpha_gt0": 844810,
+      "alpha255": 844810,
+      "bbox": [
+        104,
+        126,
+        1428,
+        1402
+      ]
+    },
+    "externalOpaqueComponents": 0,
+    "sameTransformApplied": true,
+    "transform": {
+      "sourceUnionBox": [
+        12,
+        26,
+        875,
+        861
+      ],
+      "scale": 1.5388180764774044,
+      "translate": [
+        86,
+        86
+      ],
+      "scaledSize": [
+        1365,
+        1365
+      ]
+    },
+    "alignmentTest": "APROVADO",
+    "paintTest": "APROVADO",
+    "paintOutsideMaskPixels": 0,
+    "contoursPreserved": true,
+    "partsCut": 0,
+    "status": "APROVADA"
+  }
+]

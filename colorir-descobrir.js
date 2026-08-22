@@ -31,6 +31,8 @@
     canvas: null,
     ctx: null,
     image: null,
+    maskImage: null,
+    maskReady: false,
     drawing: false,
     lastPoint: null,
     undo: [],
@@ -252,6 +254,7 @@
           <img class="pcd-base-image" src="${dataUrlSafe(figure.imagemBranca)}" alt="${html(figure.titulo)} para colorir" draggable="false" />
           <canvas class="pcd-canvas" data-pcd-canvas width="1200" height="1200"></canvas>
           <img class="pcd-outline-image" src="${dataUrlSafe(figure.imagemBranca)}" alt="" draggable="false" aria-hidden="true" />
+          ${figure.imagemMascara ? `<img class="pcd-mask-preload" src="${dataUrlSafe(figure.imagemMascara)}" alt="" draggable="false" aria-hidden="true" data-pcd-mask />` : ""}
         </div>
         <aside class="pcd-actions" aria-label="Acoes">
           <button type="button" data-pcd-undo>DESFAZER</button>
@@ -346,12 +349,37 @@
     }
     ctx.restore();
     state.lastPoint = point;
+    applyMask();
+  };
+
+  const applyMask = () => {
+    if (!state.ctx || !state.canvas || !state.maskReady || !state.maskImage) return;
+    state.ctx.save();
+    state.ctx.globalCompositeOperation = "destination-in";
+    state.ctx.globalAlpha = 1;
+    state.ctx.drawImage(state.maskImage, 0, 0, state.canvas.width, state.canvas.height);
+    state.ctx.restore();
   };
 
   const bindCanvas = () => {
     state.canvas = state.root.querySelector("[data-pcd-canvas]");
     state.ctx = state.canvas?.getContext("2d");
     if (!state.canvas || !state.ctx) return;
+    state.maskImage = null;
+    state.maskReady = false;
+    if (state.figure?.imagemMascara) {
+      const mask = new Image();
+      mask.onload = () => {
+        state.maskImage = mask;
+        state.maskReady = true;
+        applyMask();
+      };
+      mask.onerror = () => {
+        state.maskImage = null;
+        state.maskReady = false;
+      };
+      mask.src = state.figure.imagemMascara;
+    }
     const start = (event) => {
       event.preventDefault();
       snapshot();
