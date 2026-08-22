@@ -27,6 +27,7 @@ const routeAccessRules = {
   admin: ["admin"],
   escolaColetiva: ["escola"],
   educacaoInfantil: ["educacao_infantil"],
+  colorirDescobrir: ["escola", "educacao_infantil", "admin"],
   professor: ["professor", "gestor", "coordenador", "admin"],
   professorTurma: ["professor", "gestor", "coordenador", "admin"],
   professorAluno: ["professor", "gestor", "coordenador", "admin"],
@@ -55,6 +56,7 @@ const protectedRouteKeyByPage = {
   "admin.html": "admin",
   "escola.html": "escolaColetiva",
   "educacao-infantil.html": "educacaoInfantil",
+  "colorir-descobrir.html": "colorirDescobrir",
   "aluno.html": "aluno",
   "aluno-atividades.html": "alunoAtividades",
   "aluno-atividade.html": "alunoAtividade",
@@ -78,12 +80,13 @@ const protectedRouteKeyByPage = {
   admin: "admin",
   escola: "escolaColetiva",
   "educacao-infantil": "educacaoInfantil",
+  "colorir-descobrir": "colorirDescobrir",
   aluno: "aluno",
   "aluno/atividades": "alunoAtividades",
   "aluno/atividade": "alunoAtividade",
 };
 const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "alunoAtividade", "missao", "arvore", "biblioteca", "jogos", "perfil", "viewer", "motorAtividade"]);
-const earlyChildhoodAllowedRouteKeys = new Set(["educacaoInfantil", "jogos", "biblioteca", "viewer"]);
+const earlyChildhoodAllowedRouteKeys = new Set(["educacaoInfantil", "colorirDescobrir", "jogos", "biblioteca", "viewer"]);
 const decodePlatformJwtPayload = (token) => {
   try {
     const [, payload] = String(token || "").split(".");
@@ -251,6 +254,7 @@ const ecosystemModules = [
   ["admin.html", "Admin / TI"],
   ["escola.html", "Escola"],
   ["educacao-infantil.html", "Area da Escola Infantil"],
+  ["colorir-descobrir.html", "Pra Colorir e Descobrir"],
   ["aluno.html", "Aluno"],
   ["arvore.html", "Minha Arvore"],
   ["missao.html", "Missao do Dia"],
@@ -4644,6 +4648,7 @@ const adminFeatureRegistry = [
   { key: "atividades", label: "Atividades Imprimiveis", area: "Conteudos", status: "EM TESTE", href: "admin-atividades.html", roles: { admin: true, professor: true, aluno: false } },
   { key: "experiencias", label: "Experiencias Digitais", area: "Conteudos", status: "EM TESTE", href: "biblioteca.html#acervo-completo", roles: { admin: true, professor: true, aluno: true } },
   { key: "jogos", label: "Jogos", area: "Conteudos", status: "EM DESENVOLVIMENTO", href: "jogos.html", roles: { admin: true, professor: true, aluno: true } },
+  { key: "colorirDescobrir", label: "Pra Colorir e Descobrir", area: "Conteudos", status: "EM TESTE", href: "colorir-descobrir.html", roles: { admin: true, professor: false, aluno: true } },
   { key: "planejamentos", label: "Planejamentos", area: "Gestao pedagogica", status: "EM DESENVOLVIMENTO", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
   { key: "avaliacoes", label: "Avalia+", area: "Conteudos", status: "EM TESTE", href: "avalia.html", roles: { admin: true, professor: true, aluno: false } },
   { key: "banco", label: "Banco de Questoes", area: "Conteudos", status: "EM TESTE", href: "banco-questoes.html", roles: { admin: true, professor: true, aluno: false } },
@@ -4679,6 +4684,7 @@ const adminWorkspaceNav = [
   ["atividades", "Atividades Imprimiveis"],
   ["experiencias", "Experiencias Digitais"],
   ["jogos", "Jogos"],
+  ["colorirDescobrir", "Pra Colorir e Descobrir"],
   ["planejamentos", "Planejamentos"],
   ["avaliacoes", "Avaliacoes"],
   ["banco", "Banco de Questoes"],
@@ -4720,6 +4726,7 @@ const adminPlatformTabs = [
   { label: "Minha Arvore", href: "arvore.html", status: "pronto" },
   { label: "Missao do Dia", href: "missao.html", status: "pronto" },
   { label: "Jogos", href: "jogos.html", status: "teste" },
+  { label: "Pra Colorir e Descobrir", href: "colorir-descobrir.html", status: "teste" },
   { label: "Perfil", href: "perfil.html", status: "pronto" },
   { label: "Biblioteca", href: "biblioteca.html", status: "pronto" },
   { label: "Aluno Educacao Infantil", href: "familia.html", status: "homologar" },
@@ -4822,6 +4829,71 @@ const renderAdminPermissionMatrix = () => `
   </section>
 `;
 
+const renderColorirDiscoverAdminPanel = () => {
+  const catalog = window.RaizesColorirDescobrirCatalog?.getCatalog?.() || { themes: [], figures: [] };
+  const themes = catalog.themes || [];
+  const figures = catalog.figures || [];
+  const status = (figure) => {
+    const missingRequired = !figure.titulo || !figure.tema || !figure.imagemBranca;
+    const warnings = [
+      !figure.imagemColorida ? "imagem colorida" : "",
+      !figure.audioCuriosidade ? "audio" : "",
+      !figure.musicaLoop ? "musica" : "",
+    ].filter(Boolean);
+    if (missingRequired) return `<small class="is-em-desenvolvimento">NAO PUBLICAVEL</small>`;
+    if (warnings.length) return `<small class="is-em-teste">INCOMPLETA: ${warnings.join(", ")}</small>`;
+    return `<small class="is-publicado">COMPLETA</small>`;
+  };
+  return `
+    <section class="admin-board pcd-admin" data-pcd-admin>
+      <div class="admin-section-head">
+        <div>
+          <h2>Pra Colorir e Descobrir</h2>
+          <span>Conteudos > entretenimento educativo infantil</span>
+        </div>
+        <a href="colorir-descobrir.html">Abrir experiencia</a>
+      </div>
+      <div class="pa-admin-actions">
+        <code>assets/colorir-descobrir/figuras/branco</code>
+        <code>assets/colorir-descobrir/figuras/colorido</code>
+        <code>assets/colorir-descobrir/audios/curiosidades</code>
+        <code>assets/colorir-descobrir/musicas</code>
+      </div>
+      <form class="pcd-admin-form" data-pcd-admin-form>
+        <label><span>Tema</span><input name="temaTitulo" placeholder="Bichinhos do Jardim" /></label>
+        <label><span>Ordem do tema</span><input name="temaOrdem" type="number" min="1" value="${themes.length + 1}" /></label>
+        <label><span>Status do tema</span><select name="temaStatus"><option value="publicado">publicado</option><option value="rascunho">rascunho</option><option value="arquivado">arquivado</option></select></label>
+        <button type="button" data-pcd-save-theme>Salvar tema</button>
+      </form>
+      <form class="pcd-admin-form is-figure" data-pcd-figure-form>
+        <label><span>Titulo da figura *</span><input name="titulo" required placeholder="Joaninha" /></label>
+        <label><span>Codigo interno</span><input name="codigoInterno" placeholder="PCD-BJ-004" /></label>
+        <label><span>Tema *</span><select name="tema" required>${themes.map((theme) => `<option value="${printableEscape(theme.id)}">${printableEscape(theme.titulo)}</option>`).join("")}</select></label>
+        <label><span>Ordem</span><input name="ordem" type="number" min="1" value="${figures.length + 1}" /></label>
+        <label><span>Imagem branca *</span><input name="imagemBranca" required placeholder="assets/colorir-descobrir/figuras/branco/arquivo.png" /></label>
+        <label><span>Imagem colorida</span><input name="imagemColorida" placeholder="assets/colorir-descobrir/figuras/colorido/arquivo.png" /></label>
+        <label><span>Audio curiosidade</span><input name="audioCuriosidade" placeholder="assets/colorir-descobrir/audios/curiosidades/audio.mp3" /></label>
+        <label><span>Musica loop</span><input name="musicaLoop" placeholder="assets/colorir-descobrir/musicas/musica.mp3" /></label>
+        <label class="pcd-admin-wide"><span>Curiosidade</span><textarea name="textoCuriosidade" rows="3"></textarea></label>
+        <label><span>Status</span><select name="status"><option value="publicado">publicado</option><option value="rascunho">rascunho</option><option value="arquivado">arquivado</option></select></label>
+        <button type="button" data-pcd-save-figure>Salvar figura</button>
+      </form>
+      <div class="admin-feature-grid">
+        ${figures.map((figure) => `
+          <article class="admin-feature-card" data-admin-search-item>
+            <div>
+              <span>${printableEscape(figure.codigoInterno || figure.id)}</span>
+              <strong>${printableEscape(figure.titulo)}</strong>
+              ${status(figure)}
+            </div>
+            <a href="colorir-descobrir.html?tema=${encodeURIComponent(figure.tema)}">Ver</a>
+          </article>
+        `).join("") || `<article class="pa-empty"><h2>Nenhuma figura cadastrada</h2><p>Cadastre os primeiros PNGs para publicar a experiencia.</p></article>`}
+      </div>
+    </section>
+  `;
+};
+
 const renderAdminWorkspaceView = (view = "inicio") => {
   const feature = getAdminFeature(view);
   const byArea = (area) => adminFeatureRegistry.filter((item) => item.area === area);
@@ -4872,12 +4944,14 @@ const renderAdminWorkspaceView = (view = "inicio") => {
     permissoes: renderAdminPermissionMatrix(),
     biblioteca: `<section class="admin-board"><div class="admin-section-head"><h2>Conteudos</h2><span>Biblioteca e materiais existentes</span></div><div class="admin-feature-grid">${byArea("Conteudos").map(renderAdminFeatureCard).join("")}</div></section>`,
     atividades: `<section class="admin-board admin-empty-state"><h2>Atividades Imprimiveis</h2><p>Modulo administrativo existente reaproveitado. Use-o para curadoria e homologacao dos imprimiveis.</p><a href="admin-atividades.html">Abrir Admin de Atividades</a></section>`,
+    colorirDescobrir: renderColorirDiscoverAdminPanel(),
     motores: `<section class="admin-board"><div class="admin-section-head"><h2>Motores</h2><span>Sem duplicar engines existentes</span></div><div class="admin-feature-grid">${byArea("Motores").map(renderAdminFeatureCard).join("")}</div></section>`,
     emDesenvolvimento: `<section class="admin-board"><div class="admin-section-head"><h2>Em desenvolvimento</h2><span>Acesso restrito ao Admin/TI</span></div><div class="admin-feature-grid">${development.map(renderAdminFeatureCard).join("")}</div></section>`,
     homologados: `<section class="admin-board"><div class="admin-section-head"><h2>Homologados e publicados</h2><span>Disponiveis conforme perfil</span></div><div class="admin-feature-grid">${homologated.map(renderAdminFeatureCard).join("")}</div></section>`,
     logs: `<section class="admin-board admin-empty-state"><h2>Logs</h2><p>Espaco reservado para backend seguro, Edge Function ou servico server-side. Nenhum segredo e exposto no frontend.</p></section>`,
     configuracoes: `<section class="admin-board admin-empty-state"><h2>Configuracoes</h2><p>Controle tecnico preparado para proximas etapas sem armazenar tokens, senhas ou service role no frontend.</p></section>`,
   };
+  if (viewMap[view]) return viewMap[view];
   if (feature) {
     return `<section class="admin-board admin-empty-state"><h2>${feature.label}</h2><p>Status atual: ${feature.status}. Modulo existente reaproveitado no QG sem criar tela duplicada.</p><a href="${feature.href}">Abrir modulo</a></section>`;
   }
@@ -4920,11 +4994,35 @@ const initAdminWorkspace = () => {
     workspace.querySelectorAll("[data-admin-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.adminView === view));
     if (content) content.innerHTML = renderAdminWorkspaceView(view);
   };
+  const bindColorirAdmin = (target) => {
+    const api = window.RaizesColorirDescobrirCatalog;
+    if (!api || !target?.querySelector("[data-pcd-admin]")) return;
+    target.querySelector("[data-pcd-save-theme]")?.addEventListener("click", () => {
+      const form = target.querySelector("[data-pcd-admin-form]");
+      const data = Object.fromEntries(new FormData(form).entries());
+      api.upsertTheme({
+        titulo: data.temaTitulo,
+        ordem: data.temaOrdem,
+        status: data.temaStatus,
+      });
+      if (content) content.innerHTML = renderAdminWorkspaceView("colorirDescobrir");
+      bindColorirAdmin(content);
+    });
+    target.querySelector("[data-pcd-save-figure]")?.addEventListener("click", () => {
+      const form = target.querySelector("[data-pcd-figure-form]");
+      if (!form.reportValidity()) return;
+      const data = Object.fromEntries(new FormData(form).entries());
+      api.upsertFigure(data);
+      if (content) content.innerHTML = renderAdminWorkspaceView("colorirDescobrir");
+      bindColorirAdmin(content);
+    });
+  };
   workspace.addEventListener("click", (event) => {
     const button = event.target.closest?.("[data-admin-view]");
     if (!button) return;
     event.preventDefault();
     activate(button.dataset.adminView || "inicio");
+    bindColorirAdmin(content);
   });
   workspace.querySelector("[data-admin-search]")?.addEventListener("input", (event) => {
     const term = String(event.target.value || "").trim().toLowerCase();
@@ -4932,6 +5030,7 @@ const initAdminWorkspace = () => {
       item.hidden = term ? !item.textContent.toLowerCase().includes(term) : false;
     });
   });
+  bindColorirAdmin(content);
 };
 
 const schoolCollectiveData = {
@@ -5137,6 +5236,15 @@ const renderSchoolInfo = (ageData) => {
     .join("");
 };
 
+const renderSchoolColorirDiscover = () => `
+  <article class="school-game-card school-colorir-card">
+    <img src="assets/games/atelie-bia/screens/screen-canvas.png" alt="" loading="lazy" onerror="this.hidden=true" />
+    <strong>Pra Colorir e Descobrir</strong>
+    <p>Escolha uma figura, ouca uma curiosidade e deixe tudo cheio de cores.</p>
+    <a href="colorir-descobrir.html">${renderSchoolIcon("game")} COLORIR</a>
+  </article>
+`;
+
 const renderSchoolInstitutionalDashboard = () => {
   const { institution, ages } = schoolCollectiveData;
   const activeAge = ages[schoolCollectiveData.defaultAge] || Object.values(ages)[0];
@@ -5176,6 +5284,11 @@ const renderSchoolInstitutionalDashboard = () => {
             <strong>Educacao Infantil</strong>
             <p>Ambiente coletivo pedagogico para desafios, jogos, leitura e experiencias por idade.</p>
             <a href="educacao-infantil.html">Espaco Educacao Infantil</a>
+          </article>
+          <article>
+            <strong>Pra Colorir e Descobrir</strong>
+            <p>Ambiente infantil de entretenimento educativo para colorir livremente.</p>
+            <a href="colorir-descobrir.html">Abrir colorir</a>
           </article>
         </section>
       </div>
@@ -5224,7 +5337,7 @@ const renderEarlyChildhoodDashboard = () => {
             <h2>${renderSchoolIcon("game")} Jogar e Descobrir</h2>
             <a data-school-link="games" href="jogos.html?idade=${defaultAge}">VER TODOS &gt;</a>
           </div>
-          <div class="school-game-grid" data-school-slot="games">${renderSchoolGames(activeAge)}</div>
+          <div class="school-game-grid" data-school-slot="games">${renderSchoolColorirDiscover()}${renderSchoolGames(activeAge)}</div>
         </section>
         <section class="school-panel school-library-panel">
           <div class="school-panel-head">
@@ -5268,7 +5381,7 @@ const initSchoolCollectiveDashboard = () => {
     root.dataset.activeAge = age;
     root.querySelectorAll("[data-school-age]").forEach((button) => button.classList.toggle("is-active", button.dataset.schoolAge === age));
     if (slots.challenge) slots.challenge.innerHTML = renderSchoolChallenge(ageData);
-    if (slots.games) slots.games.innerHTML = renderSchoolGames(ageData);
+    if (slots.games) slots.games.innerHTML = `${renderSchoolColorirDiscover()}${renderSchoolGames(ageData)}`;
     if (slots.books) slots.books.innerHTML = renderSchoolBooks(ageData);
     if (slots.suggestions) slots.suggestions.innerHTML = renderSchoolSuggestions(ageData);
     if (slots.info) slots.info.innerHTML = renderSchoolInfo(ageData);
@@ -6101,6 +6214,12 @@ const modules = {
     code: "EDUCACAO-INFANTIL-V1",
     html: renderEarlyChildhoodDashboard(),
   },
+  colorirDescobrir: {
+    title: "Pra Colorir e Descobrir",
+    subtitle: "Entretenimento educativo infantil",
+    code: "COLORIR-DESCOBRIR-V1",
+    html: window.renderColorirDescobrirApp ? window.renderColorirDescobrirApp() : `<div class="pcd-app" data-colorir-descobrir-app></div>`,
+  },
   aluno: {
     title: "Aluno Ensino Fundamental",
     subtitle: "Home principal do aluno do Ensino Fundamental",
@@ -6923,6 +7042,7 @@ const environments = {
     profileImage: "logo-sidebar-dark.png",
     nav: [
       ["educacaoInfantil", "Inicio", "educacao-infantil.html"],
+      ["colorirDescobrir", "Colorir", "colorir-descobrir.html"],
       ["site", "Site", "index.html"],
       ["jogos", "Jogos", "jogos.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
@@ -6931,6 +7051,7 @@ const environments = {
     ],
     mobile: [
       ["educacaoInfantil", "Inicio", "educacao-infantil.html"],
+      ["colorirDescobrir", "Colorir", "colorir-descobrir.html"],
       ["site", "Site", "index.html"],
       ["jogos", "Jogos", "jogos.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
@@ -7159,6 +7280,7 @@ const moduleEnvironment = {
   admin: "admin",
   escolaColetiva: "plataforma",
   educacaoInfantil: "educacaoInfantil",
+  colorirDescobrir: "educacaoInfantil",
   aluno: "aluno",
   alunoAtividades: "aluno",
   alunoAtividade: "aluno",
@@ -10598,6 +10720,7 @@ const renderAppPage = () => {
   initUniversalActivityAssignmentUi();
   initUniversalActivityTeacherDeliveries();
   initUniversalActivityEngine();
+  window.initColorirDescobrir?.();
 };
 
 renderAppPage();
