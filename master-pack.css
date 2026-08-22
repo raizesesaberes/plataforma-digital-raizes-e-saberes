@@ -10915,6 +10915,12 @@ td {
   color: #9a4e0b;
 }
 
+.family-v1-sidebar nav .family-nav-secondary {
+  background: #f7fbff;
+  color: #075f32;
+  border: 1px solid rgba(13, 107, 75, 0.12);
+}
+
 .family-v1-main {
   min-width: 0;
   display: grid;
@@ -10925,6 +10931,10 @@ td {
 
 .family-v1-hero {
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
   border: 1px solid rgba(13, 71, 45, 0.1);
   border-radius: 14px;
   padding: 16px 20px;
@@ -10959,6 +10969,44 @@ td {
   font-weight: 750;
   line-height: 1.35;
   text-transform: uppercase;
+}
+
+.family-hero-actions {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.family-hero-actions a {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0 16px;
+  border: 1px solid rgba(13, 107, 75, 0.14);
+  background: #0d6b4b;
+  color: #ffffff;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-decoration: none;
+  text-transform: uppercase;
+  box-shadow: 0 10px 18px rgba(13, 107, 75, 0.16);
+}
+
+.family-hero-actions a:last-child {
+  background: #ffffff;
+  color: #0d6b4b;
+  box-shadow: none;
+}
+
+.family-hero-actions a:hover,
+.family-hero-actions a:focus-visible {
+  transform: translateY(-1px);
+  outline: none;
 }
 
 .family-v1-content,
@@ -11674,8 +11722,24 @@ td {
     font-size: 1.75rem;
   }
 
+  .family-v1-hero {
+    display: grid;
+    gap: 12px;
+  }
+
   .family-v1-hero p {
     font-size: 0.76rem;
+  }
+
+  .family-hero-actions {
+    justify-content: stretch;
+  }
+
+  .family-hero-actions a {
+    flex: 1 1 140px;
+    min-height: 42px;
+    padding: 0 10px;
+    font-size: 0.68rem;
   }
 
   .family-home-grid {

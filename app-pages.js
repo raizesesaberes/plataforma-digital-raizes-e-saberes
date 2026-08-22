@@ -25,7 +25,7 @@ const platformRoleHome = {
 };
 const routeAccessRules = {
   admin: ["admin"],
-  escolaColetiva: ["escola"],
+  escolaColetiva: ["escola", "aluno"],
   educacaoInfantil: ["educacao_infantil"],
   professor: ["professor", "gestor", "coordenador", "admin"],
   professorTurma: ["professor", "gestor", "coordenador", "admin"],
@@ -81,7 +81,7 @@ const protectedRouteKeyByPage = {
   "aluno/atividades": "alunoAtividades",
   "aluno/atividade": "alunoAtividade",
 };
-const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "alunoAtividade", "missao", "arvore", "biblioteca", "jogos", "perfil", "familia", "viewer", "motorAtividade"]);
+const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "alunoAtividade", "missao", "arvore", "biblioteca", "jogos", "perfil", "familia", "escolaColetiva", "viewer", "motorAtividade"]);
 const decodePlatformJwtPayload = (token) => {
   try {
     const [, payload] = String(token || "").split(".");
@@ -5694,14 +5694,22 @@ const renderFamilyDashboard = () => {
         </div>
         <nav aria-label="Area Aluno e Familia">
           ${familyAreaViews.map(([key, label]) => `<a class="${key === view ? "is-active" : ""}" href="familia.html?view=${key}">${label}</a>`).join("")}
+          <a class="family-nav-secondary" href="escola.html">Area da Escola</a>
+          <a class="family-nav-secondary" href="index.html">Site</a>
           <button type="button" data-platform-logout>Sair</button>
         </nav>
       </aside>
       <section class="family-v1-main">
         <header class="family-v1-hero">
-          <span>Area Aluno & Familia</span>
-          <h1>Ola, familia do ${student.name}!</h1>
-          <p>Acompanhe a rotina, as atividades e as conquistas.</p>
+          <div>
+            <span>Area Aluno & Familia</span>
+            <h1>Ola, familia do ${student.name}!</h1>
+            <p>Acompanhe a rotina, as atividades e as conquistas.</p>
+          </div>
+          <div class="family-hero-actions" aria-label="Acessos da familia">
+            <a href="escola.html">Area da Escola</a>
+            <a href="index.html">Ir para o site</a>
+          </div>
         </header>
         <section class="family-v1-content" data-family-content>${renderFamilyView(view)}</section>
       </section>
