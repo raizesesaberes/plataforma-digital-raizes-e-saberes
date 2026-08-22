@@ -9568,6 +9568,10 @@ td {
   color: #18362f;
 }
 
+.app-shell[data-active-module="colorirDescobrir"] + .mobile-tabbar {
+  display: none;
+}
+
 .pcd-shell,
 .pcd-painter {
   display: grid;
