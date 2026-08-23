@@ -1,6 +1,22 @@
 (function () {
   const appSelector = "[data-colorir-descobrir-app]";
   const soundPreferenceKey = "raizes:colorir-descobrir:sound:v1";
+  const goldenMasterThemesAsset = "assets/colorir-descobrir/telas/PCD_TELA_TEMAS_GOLDEN_MASTER.png";
+  const implementedThemes = new Set(["bichinhos-jardim"]);
+  const themeHotspots = [
+    { id: "voltar", action: "school-back", label: "Voltar para a Area da Escola", x: 2.2, y: 3.8, w: 10.5, h: 7.4 },
+    { id: "som", action: "sound", label: "Ativar ou desativar som", x: 86.9, y: 3.8, w: 10.2, h: 7.4 },
+    { id: "bichinhos-jardim", theme: "bichinhos-jardim", label: "Abrir Bichinhos do Jardim", x: 13.7, y: 20.2, w: 19.0, h: 34.6 },
+    { id: "fundo-mar", theme: "fundo-mar", label: "Abrir Fundo do Mar", x: 33.8, y: 20.2, w: 18.9, h: 34.6 },
+    { id: "dinossauros", theme: "dinossauros", label: "Abrir Dinossauros", x: 53.7, y: 20.2, w: 18.9, h: 34.6 },
+    { id: "animais-brasil", theme: "animais-brasil", label: "Abrir Animais do Brasil", x: 73.3, y: 20.2, w: 18.9, h: 34.6 },
+    { id: "nossa-natureza", theme: "nossa-natureza", label: "Abrir Nossa Natureza", x: 13.7, y: 56.3, w: 19.0, h: 34.5 },
+    { id: "espaco", theme: "espaco", label: "Abrir Espaco", x: 33.8, y: 56.3, w: 18.9, h: 34.5 },
+    { id: "cultura-brasileira", theme: "cultura-brasileira", label: "Abrir Cultura Brasileira", x: 53.7, y: 56.3, w: 18.9, h: 34.5 },
+    { id: "conheca-nossa-cidade", theme: "conheca-nossa-cidade", label: "Abrir Conheca Nossa Cidade", x: 73.3, y: 56.3, w: 18.9, h: 34.5 },
+    { id: "pagina-anterior", action: "previous-page", label: "Pagina anterior de temas", x: 39.2, y: 92.8, w: 3.1, h: 5.0 },
+    { id: "proxima-pagina", action: "next-page", label: "Proxima pagina de temas", x: 57.7, y: 92.8, w: 3.1, h: 5.0 },
+  ];
   const defaultPalette = [
     ["#e53935", "Vermelho"],
     ["#1e88e5", "Azul"],
@@ -59,6 +75,30 @@
   const getPublishedThemes = () => catalogApi()?.getThemes?.() || [];
   const getFiguresByTheme = (themeId) => catalogApi()?.getFiguresByTheme?.(themeId) || [];
   const getTheme = (themeId) => getCatalog().themes.find((theme) => theme.id === themeId) || null;
+  const hasDebugHotspots = () => new URLSearchParams(window.location.search).get("debugHotspots") === "1";
+
+  const renderHotspot = (hotspot) => {
+    const data = hotspot.theme ? `data-pcd-theme="${hotspot.theme}"` : `data-pcd-action="${hotspot.action}"`;
+    return `
+      <button
+        class="pcd-hotspot"
+        type="button"
+        ${data}
+        aria-label="${html(hotspot.label)}"
+        style="--x:${hotspot.x};--y:${hotspot.y};--w:${hotspot.w};--h:${hotspot.h};"
+      >${html(hotspot.label)}</button>
+    `;
+  };
+
+  const renderFirstThemePreload = () =>
+    getFiguresByTheme("bichinhos-jardim")
+      .map((figure) => `<img src="${dataUrlSafe(figure.imagemBranca)}" alt="" loading="eager" decoding="async" />`)
+      .join("");
+
+  const setStatus = (message) => {
+    const status = state.root?.querySelector("[data-pcd-status]");
+    if (status) status.textContent = message;
+  };
 
   const stopSpeech = () => {
     if (window.speechSynthesis) window.speechSynthesis.cancel();
@@ -155,31 +195,30 @@
   };
 
   const renderHome = () => {
-    const themes = getPublishedThemes();
     return `
-      <section class="pcd-shell pcd-home" data-pcd-view="home">
-        <header class="pcd-hero">
-          <a class="pcd-back" href="educacao-infantil.html">VOLTAR</a>
-          <div>
-            <h1>PRA COLORIR E DESCOBRIR</h1>
-            <p>ESCOLHA UMA AVENTURA, DESCUBRA COISAS INCRIVEIS E DEIXE TUDO CHEIO DE CORES!</p>
+      <section class="pcd-golden-screen${hasDebugHotspots() ? " is-debugging-hotspots" : ""}" data-pcd-view="home">
+        <div class="golden-master-container" aria-label="Pra Colorir e Descobrir: escolha de temas">
+          <img class="pcd-golden-master" src="${goldenMasterThemesAsset}" alt="Pra Colorir e Descobrir. O que voce quer descobrir hoje?" draggable="false" />
+          <div class="pcd-hotspot-layer" aria-label="Opcoes de temas">
+            ${themeHotspots.map(renderHotspot).join("")}
           </div>
-        </header>
-        ${themes.length ? `
-          <div class="pcd-theme-grid">
-            ${themes.map((theme) => `
-              <button class="pcd-theme-card" type="button" data-pcd-theme="${theme.id}" style="--pcd-accent:${theme.accent || "#35b779"}">
-                <span></span>
-                <strong>${html(theme.titulo).toUpperCase()}</strong>
-              </button>
-            `).join("")}
-          </div>
-        ` : `
-          <div class="pcd-empty">
-            <strong>NOVAS DESCOBERTAS ESTAO CHEGANDO!</strong>
-            <p>Assim que a escola publicar os primeiros pacotes, eles aparecem aqui.</p>
-          </div>
-        `}
+        </div>
+        <div class="pcd-accessible-status" data-pcd-status aria-live="polite"></div>
+        <div class="pcd-preload-assets" aria-hidden="true">${renderFirstThemePreload()}</div>
+        <p class="pcd-orientation-hint">Gire o dispositivo para brincar melhor.</p>
+      </section>
+    `;
+  };
+
+  const renderComingSoon = (themeId) => {
+    const theme = getTheme(themeId);
+    return `
+      <section class="pcd-shell pcd-coming-soon" data-pcd-view="coming-soon">
+        <div>
+          <span>${html(theme?.titulo || "Novas paginas").toUpperCase()}</span>
+          <h1>NOVAS DESCOBERTAS ESTAO CHEGANDO!</h1>
+          <button class="pcd-back" type="button" data-pcd-home>VOLTAR AOS TEMAS</button>
+        </div>
       </section>
     `;
   };
@@ -285,10 +324,22 @@
 
   const showTheme = (themeId) => {
     stopAudio();
+    if (!implementedThemes.has(themeId)) {
+      showComingSoon(themeId);
+      return;
+    }
     state.view = "theme";
     state.themeId = themeId;
     state.figure = null;
     mount(renderTheme(themeId));
+  };
+
+  const showComingSoon = (themeId) => {
+    stopAudio();
+    state.view = "coming-soon";
+    state.themeId = themeId;
+    state.figure = null;
+    mount(renderComingSoon(themeId));
   };
 
   const showIntro = (figureId) => {
@@ -480,7 +531,9 @@
     localStorage.setItem(soundPreferenceKey, state.muted ? "off" : "on");
     state.root.querySelectorAll("[data-pcd-sound]").forEach((button) => {
       button.textContent = state.muted ? "SOM OFF" : "SOM";
+      button.setAttribute("aria-label", state.muted ? "Som desligado. Ativar som" : "Som ligado. Desativar som");
     });
+    setStatus(state.muted ? "Som desligado." : "Som ligado.");
     if (state.muted) stopAudio();
     else if (state.view === "paint" && state.figure) startMusic(state.figure);
   };
@@ -495,6 +548,19 @@
       const colorButton = event.target.closest("[data-pcd-color]");
       const toolButton = event.target.closest("[data-pcd-tool]");
       const printButton = event.target.closest("[data-pcd-print]");
+      const actionButton = event.target.closest("[data-pcd-action]");
+      if (actionButton?.dataset.pcdAction === "school-back") {
+        window.location.href = "escola.html";
+        return;
+      }
+      if (actionButton?.dataset.pcdAction === "sound") {
+        toggleSound();
+        return;
+      }
+      if (["previous-page", "next-page"].includes(actionButton?.dataset.pcdAction)) {
+        showComingSoon("novas-paginas");
+        return;
+      }
       if (themeButton) showTheme(themeButton.dataset.pcdTheme);
       if (figureButton) showIntro(figureButton.dataset.pcdFigure);
       if (event.target.closest("[data-pcd-home]")) showHome();

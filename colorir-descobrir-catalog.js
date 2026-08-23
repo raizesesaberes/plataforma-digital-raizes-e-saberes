@@ -1,5 +1,5 @@
 (function () {
-  const storageKey = "raizes:colorir-descobrir:catalog:v2";
+  const storageKey = "raizes:colorir-descobrir:catalog:v3";
   const now = "2026-08-22T00:00:00.000Z";
   const jardimFigure = (ordem, titulo, curiosidade) => {
     const code = String(ordem).padStart(2, "0");
@@ -33,13 +33,13 @@
     ],
     themes: [
       { id: "bichinhos-jardim", titulo: "Bichinhos do Jardim", ordem: 1, status: "publicado", accent: "#35b779" },
-      { id: "animais-fazenda", titulo: "Animais da Fazenda", ordem: 2, status: "rascunho", accent: "#f49b36" },
-      { id: "fundo-mar", titulo: "Fundo do Mar", ordem: 3, status: "rascunho", accent: "#37a7d8" },
-      { id: "nossa-natureza", titulo: "Nossa Natureza", ordem: 4, status: "rascunho", accent: "#7fb43f" },
-      { id: "dinossauros", titulo: "Dinossauros", ordem: 5, status: "rascunho", accent: "#8a7bd1" },
-      { id: "frutas-alimentos", titulo: "Frutas e Alimentos", ordem: 6, status: "rascunho", accent: "#e94f7b" },
-      { id: "cultura-brasileira", titulo: "Cultura Brasileira", ordem: 7, status: "rascunho", accent: "#f2c230" },
-      { id: "brinquedos-brincadeiras", titulo: "Brinquedos e Brincadeiras", ordem: 8, status: "rascunho", accent: "#2ea39a" },
+      { id: "fundo-mar", titulo: "Fundo do Mar", ordem: 2, status: "rascunho", accent: "#37a7d8" },
+      { id: "dinossauros", titulo: "Dinossauros", ordem: 3, status: "rascunho", accent: "#f49b36" },
+      { id: "animais-brasil", titulo: "Animais do Brasil", ordem: 4, status: "rascunho", accent: "#63ad44" },
+      { id: "nossa-natureza", titulo: "Nossa Natureza", ordem: 5, status: "rascunho", accent: "#2ea39a" },
+      { id: "espaco", titulo: "Espaco", ordem: 6, status: "rascunho", accent: "#6850ba" },
+      { id: "cultura-brasileira", titulo: "Cultura Brasileira", ordem: 7, status: "rascunho", accent: "#f2a322" },
+      { id: "conheca-nossa-cidade", titulo: "Conheca Nossa Cidade", ordem: 8, status: "rascunho", accent: "#7555c5" },
     ],
     figures: [
       jardimFigure(1, "JOANINHA", "As joaninhas ajudam o jardim porque comem bichinhos bem pequenos que ficam nas folhas."),
