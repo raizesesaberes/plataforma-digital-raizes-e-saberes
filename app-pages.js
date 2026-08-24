@@ -3927,6 +3927,24 @@ const renderTeacherPlanningView = () => {
 const renderTeacherActivitiesView = () => {
   const printableTotal = printableActivitiesDataService.list({ admin: false }).length;
   const { experiences, activities } = getTeacherBibliotecaResources();
+  const institutionalReady = teacherInstitutionalState.status === "ready";
+  const institutionalClass = getTeacherInstitutionalClasses()[0] || null;
+  const institutionalStudent = institutionalClass ? getTeacherInstitutionalStudents(institutionalClass.id)[0] : null;
+  const targetActions = institutionalReady
+    ? [
+        `<button type="button" data-teacher-open-url="atividades.html">DESTINATARIO NAO DEFINIDO</button>`,
+        institutionalClass
+          ? `<button type="button" data-teacher-open-url="atividades.html?target=class&class=${encodeURIComponent(institutionalClass.id)}">${printableEscape(institutionalClass.name.toUpperCase())}</button>`
+          : "",
+        institutionalStudent
+          ? `<button type="button" data-teacher-open-url="atividades.html?target=student&student=${encodeURIComponent(institutionalStudent.id)}&class=${encodeURIComponent(institutionalStudent.classId)}">${printableEscape(institutionalStudent.name.toUpperCase())}</button>`
+          : "",
+      ].join("")
+    : `
+            <button type="button" data-teacher-open-url="atividades.html">DESTINATARIO NAO DEFINIDO</button>
+            <button type="button" data-teacher-open-url="atividades.html?target=class&class=${encodeURIComponent(pilotProfiles.class.id)}">INFANTIL 4 A</button>
+            <button type="button" data-teacher-open-url="atividades.html?target=student&student=${encodeURIComponent(pilotProfiles.student.id)}&class=${encodeURIComponent(pilotProfiles.class.id)}">PEDRO</button>
+          `;
   return `
     <section class="tw-board tw-activities-shell">
       <div class="tw-planning-heading">
@@ -3943,9 +3961,7 @@ const renderTeacherActivitiesView = () => {
           <strong>Banco de Atividades Imprimiveis</strong>
           <small>${printableTotal} atividades reais disponiveis no catalogo existente, com filtros, visualizacao, impressao, download e indicacao.</small>
           <div>
-            <button type="button" data-teacher-open-url="atividades.html">DESTINATARIO NAO DEFINIDO</button>
-            <button type="button" data-teacher-open-url="atividades.html?target=class&class=${encodeURIComponent(pilotProfiles.class.id)}">INFANTIL 4 A</button>
-            <button type="button" data-teacher-open-url="atividades.html?target=student&student=${encodeURIComponent(pilotProfiles.student.id)}&class=${encodeURIComponent(pilotProfiles.class.id)}">PEDRO</button>
+            ${targetActions}
           </div>
         </article>
         <article class="tw-activity-entry" data-teacher-search-item>
@@ -3962,7 +3978,17 @@ const renderTeacherActivitiesView = () => {
         </article>
       </div>
     </section>
-    ${renderUniversalActivityTeacherDeliveries()}
+    ${
+      institutionalReady
+        ? `
+          <section class="tw-board ua-deliveries" data-ua-deliveries>
+            <div class="tw-section-head"><h2>Atividades Indicadas</h2><button type="button" data-teacher-view="atividades">Indicar nova</button></div>
+            <p class="ua-empty">NENHUMA ATIVIDADE INSTITUCIONAL INDICADA AINDA.</p>
+            <div class="ua-delivery-detail" data-ua-delivery-detail></div>
+          </section>
+        `
+        : renderUniversalActivityTeacherDeliveries()
+    }
   `;
 };
 
@@ -4942,6 +4968,9 @@ const renderUniversalActivityTeacherDeliveries = () => {
 };
 
 const getTeacherTrackingData = () => {
+  if (teacherInstitutionalState.status === "ready") {
+    return { assignments: [], submissions: [], productions: [] };
+  }
   const state = readUniversalActivityState();
   const assignments = (state.assignments || []).filter(
     (assignment) =>
@@ -4998,6 +5027,68 @@ const renderTeacherTrackingProduction = (submission) => {
 const renderTeacherTrackingView = () => {
   const { assignments, submissions, productions } = getTeacherTrackingData();
   const statuses = [...new Set(submissions.map((submission) => submission.status).filter(Boolean))];
+  const institutionalReady = teacherInstitutionalState.status === "ready";
+  const classes = getTeacherInstitutionalClasses();
+  const selectedClass = classes[0] || null;
+  const students = selectedClass ? getTeacherInstitutionalStudents(selectedClass.id) : [];
+  if (institutionalReady) {
+    return `
+      <section class="tw-board tw-tracking-shell">
+        <div class="tw-planning-heading">
+          <div>
+            <span>Acompanhamento</span>
+            <h2>Acompanhamento</h2>
+            <p>ACOMPANHE OS REGISTROS E AS EXPERIENCIAS DA SUA TURMA.</p>
+          </div>
+          <label class="tw-class-selector">
+            <span>Turma</span>
+            <select data-tracking-class>
+              ${classes.map((classItem) => `<option value="${printableEscape(classItem.id)}">${printableEscape(classItem.name)}</option>`).join("")}
+            </select>
+          </label>
+        </div>
+        ${
+          selectedClass
+            ? `<div class="tw-tracking-summary" aria-label="Visao geral da turma">
+                <article><span>Turma</span><strong>${printableEscape(selectedClass.name)}</strong><small>${printableEscape(selectedClass.schoolName || selectedClass.shift || "Turma institucional")}</small></article>
+                <article><span>Alunos</span><strong>${students.length}</strong><small>Enrollments ativos autorizados pela RLS</small></article>
+                <article><span>Atividades indicadas</span><strong>0</strong><small>Motor Universal Supabase ainda nao conectado</small></article>
+                <article><span>Producoes</span><strong>0</strong><small>Sem producoes institucionais registradas</small></article>
+              </div>`
+            : renderTeacherEmptyState("NENHUMA TURMA INSTITUCIONAL DISPONIVEL.")
+        }
+      </section>
+      <section class="tw-board tw-tracking-section">
+        <div class="tw-section-head"><h2>Alunos</h2><span>${selectedClass ? printableEscape(selectedClass.name) : "Supabase"}</span></div>
+        <div class="tw-tracking-students">
+          ${students.length ? students.map(renderStudentCard).join("") : renderTeacherEmptyState("NENHUM ALUNO VINCULADO A ESTA TURMA.")}
+        </div>
+      </section>
+      <section class="tw-board tw-tracking-section" data-ua-deliveries>
+        <div class="tw-section-head"><h2>Atividades Indicadas</h2><button type="button" data-teacher-view="atividades">Indicar atividade</button></div>
+        <div class="tw-tracking-list"><p class="ua-empty">NENHUMA ATIVIDADE INDICADA AINDA.</p></div>
+        <div class="ua-delivery-detail" data-ua-delivery-detail></div>
+      </section>
+      <section class="tw-board tw-tracking-section">
+        <div class="tw-section-head"><h2>Producoes</h2><span>Motor Universal</span></div>
+        <div class="tw-tracking-list"><p class="ua-empty">AINDA NAO HA PRODUCOES REGISTRADAS.</p></div>
+      </section>
+      <section class="tw-board tw-tracking-section">
+        <div class="tw-section-head"><h2>Progresso</h2><span>Estados registrados</span></div>
+        <p class="ua-empty">O PROGRESSO APARECERA AQUI QUANDO HOUVER REGISTROS.</p>
+      </section>
+      <section class="tw-board tw-tracking-section">
+        <div class="tw-section-head"><h2>Registros Pedagogicos</h2><span>Arquitetura futura</span></div>
+        <p class="ua-empty">NENHUM REGISTRO PEDAGOGICO DISPONIVEL.</p>
+      </section>
+    `;
+  }
+  if (teacherInstitutionalState.status === "loading") {
+    return `<section class="tw-board">${renderTeacherInstitutionalStatus("CARREGANDO ACOMPANHAMENTO INSTITUCIONAL.")}</section>`;
+  }
+  if (teacherInstitutionalState.status === "error") {
+    return `<section class="tw-board">${renderTeacherInstitutionalStatus(teacherInstitutionalState.error || "NAO FOI POSSIVEL CARREGAR ACOMPANHAMENTO.")}</section>`;
+  }
   return `
     <section class="tw-board tw-tracking-shell">
       <div class="tw-planning-heading">
@@ -5268,7 +5359,7 @@ const renderTeacherPremiumHome = () => `
           <p>Organize suas turmas, planeje experiencias e acompanhe as producoes dos alunos em um unico workspace.</p>
         </div>
         <div class="teacher-hero-art" aria-hidden="true">
-          <img src="assets/professor/professor-dashboard.png" alt="" loading="eager" onerror="this.hidden=true" />
+          ${teacherInstitutionalState.status === "ready" ? "" : `<img src="assets/professor/professor-dashboard.png" alt="" loading="eager" onerror="this.hidden=true" />`}
         </div>
       </section>
 
@@ -5355,9 +5446,12 @@ const renderTeacherClassPage = () => `
 
 const renderTeacherStudentPage = () => {
   const studentId = getPrintableParams().get("id") || "";
-  const student = teacherInstitutionalState.studentsById?.[studentId] || getTeacherInstitutionalStudents()[0];
+  const institutionalReady = teacherInstitutionalState.status === "ready";
+  const student = institutionalReady
+    ? teacherInstitutionalState.studentsById?.[studentId] || null
+    : teacherInstitutionalState.studentsById?.[studentId] || getTeacherInstitutionalStudents()[0];
   const classItem = student ? getTeacherInstitutionalClasses().find((item) => item.id === student.classId) : null;
-  const isReady = teacherInstitutionalState.status === "ready" && student;
+  const isReady = institutionalReady && student;
   return `
     <section class="teacher-workspace teacher-pilot" data-teacher-workspace>
       ${renderTeacherSidebar("acompanhamento")}
@@ -5408,7 +5502,7 @@ const renderTeacherStudentPage = () => {
               ${renderTeacherEmptyState("NENHUM REGISTRO PEDAGOGICO DISPONIVEL.")}
             </article>
           </section>
-          ` : `<section class="tw-board">${renderTeacherInstitutionalStatus("CARREGANDO FICHA DO ALUNO.")}</section>`}
+          ` : `<section class="tw-board">${renderTeacherInstitutionalStatus(institutionalReady ? "ALUNO NAO ENCONTRADO NAS TURMAS AUTORIZADAS." : "CARREGANDO FICHA DO ALUNO.")}</section>`}
         </main>
       </div>
     </section>
