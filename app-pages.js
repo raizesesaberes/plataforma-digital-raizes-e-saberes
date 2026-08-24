@@ -1240,7 +1240,7 @@ const legacyLibraryBooks = [
   { src: "assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.webp", year: "Infantil 5", title: "Volume 1", type: "Livro do Aluno", href: "book-viewer.html?book=livro-007", collection: "Educacao Infantil", publishedAt: "2026-07-11" },
   { src: "assets/biblioteca/RAIZES_INFANTIL5_VOL2_BIBLIOTECA.webp", year: "Infantil 5", title: "Volume 2", type: "Livro do Aluno", href: "book-viewer.html?book=livro-008", collection: "Educacao Infantil", publishedAt: "2026-07-11" },
   { src: "assets/biblioteca/RAIZES_LAB_SENSORIAL_INFANTIL5_BIBLIOTECA.webp", year: "Infantil 5", title: "Lab Sensorial", type: "Experiencias", href: "book-viewer.html?book=laboratorio-sensorial-005", collection: "Laboratorio Sensorial", publishedAt: "2026-07-11" },
-  { src: "assets/biblioteca/RAIZES_GUIA_ALFABETIZADOR_INFANTIL5_BIBLIOTECA.webp", year: "Infantil 5", title: "Guia do Alfabetizador", type: "Professor", href: "professor.html", collection: "Guias do Professor", publishedAt: "2026-07-11" },
+  { src: "assets/_legacy-root/RAIZES_GUIA_ALFABETIZADOR_INFANTIL5_BIBLIOTECA.webp", year: "Infantil 5", title: "Guia do Alfabetizador", type: "Professor", href: "professor.html", collection: "Guias do Professor", publishedAt: "2026-07-11" },
   {
     src: "assets/biblioteca/RAIZES_AVALIA_PORTUGUES_2ANO_BIBLIOTECA.jpg",
     year: "2º Ano",
@@ -1649,6 +1649,7 @@ const libraryContinueBooks = withCatalogBook(allReadableBooks)
 const libraryFavoriteBooks = withCatalogBook(allReadableBooks).filter(({ catalogBook }) => isFavoriteBook(catalogBook.id));
 const libraryRecommendedBooks = allReadableBooks.filter((book) => book.collection === "Educacao Infantil").slice(0, 8);
 const libraryTeacherBooks = allReadableBooks.filter((book) => book.type === "Guia do Professor").slice(0, 4);
+const libraryStudentBooks = allReadableBooks.filter((book) => book.type === "Livro do Aluno").slice(0, 8);
 const libraryFeaturedBook = getCatalogBookFromLibraryBook(featuredLibraryBook) || defaultBook;
 const libraryFeaturedProgress = getReadingProgress(libraryFeaturedBook.id, libraryFeaturedBook.totalPages);
 const library2HeroHtml = `
@@ -2107,6 +2108,9 @@ const renderPremiumLibraryHome = () => {
           <button type="button" data-bv-filter-status="recent">Recentes</button>
         </div>
       </section>
+
+      ${libraryStudentBooks.length ? buildBookCarousel("Material do aluno", `${libraryStudentBooks.length} livros existentes`, libraryStudentBooks, "Abrir livro") : ""}
+      ${libraryTeacherBooks.length ? buildBookCarousel("Guias do Professor", `${libraryTeacherBooks.length} guias existentes`, libraryTeacherBooks, "Abrir guia") : ""}
 
       <section class="bv-section bv-continue">
         <div class="panel-head"><h2>Continuar de onde parou</h2><a href="${featuredBook ? getBookLibraryUrl(featuredBook.bookId) : featuredLibraryBook.href}">Abrir livro</a></div>
@@ -3313,30 +3317,40 @@ const renderStudentPresentationDashboard = () => `
 `;
 
 const teacherWorkspaceNav = [
-  ["heading", "Minhas Turmas"],
   ["inicio", "Inicio", "home"],
   ["turmas", "Minhas Turmas", "users"],
-  ["heading", "Conteudos"],
-  ["biblioteca", "Biblioteca Viva", "book"],
+  ["planejamentos", "Planejamento", "calendar"],
   ["atividades", "Atividades Imprimiveis", "doc"],
-  ["experiencias", "Experiencias", "flask"],
-  ["jogos", "Jogos", "game"],
-  ["heading", "Trabalho Pedagogico"],
-  ["planejamentos", "Planejamentos", "calendar"],
-  ["avaliacoes", "Avaliacoes", "check"],
-  ["relatorios", "Relatorios", "chart"],
-  ["heading", "Formacao"],
-  ["universidade", "Universidade", "cap"],
-  ["heading", "Sistema"],
-  ["configuracoes", "Configuracoes", "gear"],
+  ["biblioteca", "Biblioteca", "book"],
+  ["acompanhamento", "Acompanhamento", "chart"],
+  ["formacao", "Formacao", "cap"],
 ];
 
 const teacherWorkspaceClasses = [
-  { id: pilotProfiles.class.id, name: pilotProfiles.class.name, students: 1, progress: pilotProfiles.student.progress, next: "Atividades de Pedro", alert: `${pilotProfiles.student.pendingActivities} atividades pendentes` },
+  { id: pilotProfiles.class.id, name: pilotProfiles.class.name, ageGroup: "Infantil 4 anos", students: 1, status: "Turma piloto", shift: pilotProfiles.class.shift },
 ];
 
 const teacherWorkspaceLessons = [
   { time: "07:30", title: "Acompanhamento de Pedro", className: pilotProfiles.class.name, status: "pronta", resource: "Motor Universal" },
+];
+
+const TEACHER_PLANNING_STORAGE_KEY = "raizes:teacher-planning:v1";
+
+const teacherPlanningDays = [
+  ["segunda", "Segunda"],
+  ["terca", "Terca"],
+  ["quarta", "Quarta"],
+  ["quinta", "Quinta"],
+  ["sexta", "Sexta"],
+];
+
+const teacherPlanningResourceTypes = [
+  ["livro", "Livro"],
+  ["experiencia", "Experiencia"],
+  ["atividade-imprimivel", "Atividade imprimivel"],
+  ["biblioteca", "Biblioteca"],
+  ["experiencia-digital", "Jogo / experiencia digital"],
+  ["proposta-livre", "Proposta livre do professor"],
 ];
 
 const teacherWorkspaceStudents = [
@@ -3352,6 +3366,28 @@ const teacherWorkspaceStudents = [
     note: "piloto real",
   },
 ];
+
+const teacherInstitutionalState = {
+  status: "loading",
+  error: "",
+  loadedAt: "",
+  promise: null,
+  profile: null,
+  classes: [],
+  studentsByClass: {},
+  studentsById: {},
+  hydratedDom: false,
+};
+
+const getTeacherInstitutionalClasses = () => teacherInstitutionalState.classes || [];
+const getTeacherInstitutionalStudents = (classId = "") => {
+  if (classId) return teacherInstitutionalState.studentsByClass?.[classId] || [];
+  return Object.values(teacherInstitutionalState.studentsById || {}).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+};
+
+const getTeacherDisplayName = () => teacherInstitutionalState.profile?.displayName || pilotProfiles.teacher.displayName;
+const getTeacherClassHref = (classItem) => `professor-turma.html?id=${encodeURIComponent(classItem.id)}`;
+const getTeacherStudentHref = (student) => `professor-aluno.html?id=${encodeURIComponent(student.id)}`;
 
 const teacherWorkspaceTasks = [
   { label: "Atividades pendentes na turma", count: pilotProfiles.student.pendingActivities, view: "turmas" },
@@ -3369,13 +3405,13 @@ const getTeacherBibliotecaResources = () => {
 const renderTeacherCard = () => `
   <article class="tw-teacher-card">
     <img src="logo-sidebar-dark.png" alt="Raizes e Saberes" onerror="this.hidden=true" />
-    <div><span>Professora</span><strong>${pilotProfiles.teacher.displayName}</strong><small>Educacao Infantil</small></div>
+    <div><span>Professora</span><strong>${printableEscape(getTeacherDisplayName())}</strong><small>Area do Professor</small></div>
   </article>
 `;
 
 const getTeacherFirstName = () => {
   const session = getPlatformSession();
-  const candidate = session.role === "professor" ? session.name || session.email : pilotProfiles.teacher.displayName;
+  const candidate = teacherInstitutionalState.profile?.displayName || (session.role === "professor" ? session.name || session.email : pilotProfiles.teacher.displayName);
   const normalized = String(candidate || "").trim();
   if (!normalized || normalized.includes("@")) {
     return normalized.toLowerCase().includes("helena") ? "Helena" : pilotProfiles.teacher.name.split(/\s+/)[0];
@@ -3388,10 +3424,12 @@ const renderTeacherSidebar = (activeView = "inicio") => `
     ${renderTeacherCard()}
     <nav aria-label="Menu do professor">
       ${teacherWorkspaceNav
-        .map(([key, label, icon]) =>
+        .map(([key, label, icon, href]) =>
           key === "heading"
             ? `<strong class="tw-nav-heading">${label}</strong>`
-            : `<button type="button" class="${key === activeView ? "is-active" : ""}" data-teacher-view="${key}"><i data-icon="${icon || "dot"}"></i><span>${label}</span></button>`
+            : href
+              ? `<button type="button" class="${key === activeView ? "is-active" : ""}" data-teacher-open-url="${href}"><i data-icon="${icon || "dot"}"></i><span>${label}</span></button>`
+              : `<button type="button" class="${key === activeView ? "is-active" : ""}" data-teacher-view="${key}"><i data-icon="${icon || "dot"}"></i><span>${label}</span></button>`
         )
         .join("")}
     </nav>
@@ -3419,20 +3457,324 @@ const renderPlanningCard = (lesson) => `
   </article>
 `;
 
+const readTeacherPlanning = () => {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(TEACHER_PLANNING_STORAGE_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed.filter((item) => item && item.classId === pilotProfiles.class.id) : [];
+  } catch (error) {
+    return [];
+  }
+};
+
+const writeTeacherPlanning = (items) => {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(TEACHER_PLANNING_STORAGE_KEY, JSON.stringify(items));
+};
+
+const findTeacherPlanningLabel = (collection, value, fallback = "") =>
+  collection.find(([key]) => key === value)?.[1] || fallback || value;
+
+const renderTeacherPlanningProposalCard = (proposal) => `
+  <article class="tw-planning-proposal" data-teacher-search-item data-planning-card="${printableEscape(proposal.id)}">
+    <span>${printableEscape(findTeacherPlanningLabel(teacherPlanningResourceTypes, proposal.resourceType, "Recurso"))}</span>
+    <strong>${printableEscape(proposal.title)}</strong>
+    <small>${printableEscape(proposal.className)} · ${printableEscape(findTeacherPlanningLabel(teacherPlanningDays, proposal.day, "Dia"))}</small>
+    <div class="tw-planning-detail" data-planning-detail="${printableEscape(proposal.id)}" hidden>
+      <p>${printableEscape(proposal.note || "Sem observacao registrada.")}</p>
+      <em>Planejado localmente. Ainda nao publicado para a turma.</em>
+    </div>
+    <div class="tw-planning-actions">
+      <button type="button" data-planning-view="${printableEscape(proposal.id)}">VISUALIZAR</button>
+      <button type="button" data-planning-edit="${printableEscape(proposal.id)}">EDITAR</button>
+      <button type="button" data-planning-remove="${printableEscape(proposal.id)}">REMOVER</button>
+    </div>
+  </article>
+`;
+
+const renderTeacherPlanningDay = ([dayKey, dayLabel], proposals) => {
+  const dayProposals = proposals.filter((proposal) => proposal.day === dayKey);
+  return `
+    <article class="tw-planning-day" data-teacher-search-item>
+      <header>
+        <span>${printableEscape(dayLabel)}</span>
+        <b>${dayProposals.length ? `${dayProposals.length} proposta${dayProposals.length > 1 ? "s" : ""}` : "Sem propostas"}</b>
+      </header>
+      ${
+        dayProposals.length
+          ? `<div class="tw-planning-list">${dayProposals.map(renderTeacherPlanningProposalCard).join("")}</div>`
+          : renderTeacherEmptyState("NENHUMA PROPOSTA PLANEJADA PARA ESTE DIA.")
+      }
+      <button type="button" class="tw-planning-add-day" data-planning-add="${printableEscape(dayKey)}">+ ADICIONAR PROPOSTA</button>
+    </article>
+  `;
+};
+
+const renderTeacherPlanningForm = () => `
+  <section class="tw-planning-form-panel" data-planning-panel hidden>
+    <div class="tw-section-head">
+      <h2>Adicionar proposta</h2>
+      <button type="button" data-planning-cancel>Fechar</button>
+    </div>
+    <form class="tw-planning-form" data-teacher-planning-form>
+      <input type="hidden" name="id" />
+      <label>
+        <span>Titulo da proposta</span>
+        <input name="title" required maxlength="90" placeholder="Ex.: Roda de conversa sobre o livro" />
+      </label>
+      <label>
+        <span>Dia</span>
+        <select name="day" required>
+          ${teacherPlanningDays.map(([key, label]) => `<option value="${key}">${label}</option>`).join("")}
+        </select>
+      </label>
+      <label>
+        <span>Turma</span>
+        <select name="classId" required>
+          ${teacherWorkspaceClasses.map((classItem) => `<option value="${printableEscape(classItem.id)}">${printableEscape(classItem.name)}</option>`).join("")}
+        </select>
+      </label>
+      <label>
+        <span>Origem / recurso</span>
+        <select name="resourceType" required>
+          ${teacherPlanningResourceTypes.map(([key, label]) => `<option value="${key}">${label}</option>`).join("")}
+        </select>
+      </label>
+      <label class="tw-planning-form-note">
+        <span>Observacao do professor</span>
+        <textarea name="note" rows="4" maxlength="420" placeholder="Registre uma orientacao breve para lembrar a intencao pedagogica."></textarea>
+      </label>
+      <div class="tw-planning-form-actions">
+        <button type="submit">SALVAR PROPOSTA</button>
+        <button type="button" data-planning-cancel>Cancelar</button>
+      </div>
+    </form>
+  </section>
+`;
+
+const renderTeacherPlanningView = () => {
+  const proposals = readTeacherPlanning();
+  return `
+    <section class="tw-board tw-planning-shell">
+      <div class="tw-planning-heading">
+        <div>
+          <span>Planejamento</span>
+          <h2>Planejamento</h2>
+          <p>ORGANIZE AS EXPERIENCIAS E ATIVIDADES DA SUA TURMA.</p>
+        </div>
+        <button type="button" data-planning-add="segunda">+ ADICIONAR PROPOSTA</button>
+      </div>
+      <label class="tw-class-selector">
+        <span>Turma</span>
+        <select data-planning-class>
+          ${teacherWorkspaceClasses.map((classItem) => `<option value="${printableEscape(classItem.id)}">${printableEscape(classItem.name)}</option>`).join("")}
+        </select>
+      </label>
+      <div class="tw-planning-week" aria-label="Planejamento semanal">
+        ${teacherPlanningDays.map((day) => renderTeacherPlanningDay(day, proposals)).join("")}
+      </div>
+      ${renderTeacherPlanningForm()}
+    </section>
+  `;
+};
+
+const renderTeacherActivitiesView = () => {
+  const printableTotal = printableActivitiesDataService.list({ admin: false }).length;
+  const { experiences, activities } = getTeacherBibliotecaResources();
+  return `
+    <section class="tw-board tw-activities-shell">
+      <div class="tw-planning-heading">
+        <div>
+          <span>Atividades</span>
+          <h2>Atividades Imprimiveis</h2>
+          <p>ESCOLHA UMA ATIVIDADE PARA COMECAR.</p>
+        </div>
+        <button type="button" data-teacher-open-url="atividades.html">ABRIR BANCO</button>
+      </div>
+      <div class="tw-activity-entry-grid">
+        <article class="tw-activity-entry" data-teacher-search-item>
+          <span>Atividades imprimiveis</span>
+          <strong>Banco de Atividades Imprimiveis</strong>
+          <small>${printableTotal} atividades reais disponiveis no catalogo existente, com filtros, visualizacao, impressao, download e indicacao.</small>
+          <div>
+            <button type="button" data-teacher-open-url="atividades.html">DESTINATARIO NAO DEFINIDO</button>
+            <button type="button" data-teacher-open-url="atividades.html?target=class&class=${encodeURIComponent(pilotProfiles.class.id)}">INFANTIL 4 A</button>
+            <button type="button" data-teacher-open-url="atividades.html?target=student&student=${encodeURIComponent(pilotProfiles.student.id)}&class=${encodeURIComponent(pilotProfiles.class.id)}">PEDRO</button>
+          </div>
+        </article>
+        <article class="tw-activity-entry" data-teacher-search-item>
+          <span>Experiencias digitais</span>
+          <strong>Catalogo existente</strong>
+          <small>${experiences.length + activities.length ? `${experiences.length} experiencias e ${activities.length} atividades digitais encontradas.` : "AINDA NAO HA EXPERIENCIAS ASSOCIADAS A ESTE DESTINATARIO."}</small>
+          <button type="button" data-teacher-view="experiencias">ABRIR EXPERIENCIAS</button>
+        </article>
+        <article class="tw-activity-entry is-disabled" data-teacher-search-item>
+          <span>Futuro</span>
+          <strong>Criar atividade</strong>
+          <small>Area preparada para uma etapa posterior, apos homologacao do Motor Universal e integracao Supabase.</small>
+          <button type="button" disabled>EM PREPARACAO</button>
+        </article>
+      </div>
+    </section>
+    ${renderUniversalActivityTeacherDeliveries()}
+  `;
+};
+
+const addTeacherLibraryReturn = (href = "") => {
+  if (!href.startsWith("book-viewer.html")) return href;
+  const separator = href.includes("?") ? "&" : "?";
+  return `${href}${separator}from=teacher`;
+};
+
+const renderTeacherLibraryMaterialCard = (book) => `
+  <article class="tw-library-material" data-teacher-search-item>
+    <img src="${printableEscape(book.src)}" alt="${printableEscape(`${book.year} ${book.title}`)}" loading="lazy" />
+    <div>
+      <span>${printableEscape(book.year || book.collection || "Biblioteca")}</span>
+      <strong>${printableEscape(book.title)}</strong>
+      <small>${printableEscape([book.type, book.pages, book.component].filter(Boolean).join(" · "))}</small>
+      <a class="tw-primary-link" href="${printableEscape(addTeacherLibraryReturn(book.href))}">ABRIR NO BOOK VIEWER</a>
+    </div>
+  </article>
+`;
+
+const renderTeacherLibraryCategoryCard = ({ title, label, count, text, href, covers = [], disabled = false }) => `
+  <article class="tw-library-category" data-teacher-search-item>
+    <div class="tw-library-cover-stack" aria-hidden="true">
+      ${covers.slice(0, 3).map((cover) => `<img src="${printableEscape(cover)}" alt="" loading="lazy" />`).join("")}
+    </div>
+    <div>
+      <span>${printableEscape(label)}</span>
+      <strong>${printableEscape(title)}</strong>
+      <small>${printableEscape(text)}</small>
+      ${disabled ? `<button type="button" disabled>EM PREPARACAO</button>` : `<a class="tw-primary-link" href="${printableEscape(href)}">ABRIR</a>`}
+    </div>
+    <b>${printableEscape(count)}</b>
+  </article>
+`;
+
+const renderTeacherLibraryShelf = (title, subtitle, books) =>
+  books.length
+    ? `
+      <section class="tw-board">
+        <div class="tw-section-head"><h2>${printableEscape(title)}</h2><span>${printableEscape(subtitle)}</span></div>
+        <div class="tw-library-material-grid">
+          ${books.map(renderTeacherLibraryMaterialCard).join("")}
+        </div>
+      </section>
+    `
+    : "";
+
+const renderTeacherLibraryView = () => {
+  const studentBooks = allReadableBooks.filter((book) => book.type === "Livro do Aluno");
+  const teacherGuides = allReadableBooks.filter((book) => book.type === "Guia do Professor");
+  const { experiences, activities } = getTeacherBibliotecaResources();
+  const digitalTotal = experiences.length + activities.length;
+  const categoryCards = [
+    studentBooks.length
+      ? {
+          title: "Livros da Colecao",
+          label: "Material do aluno",
+          count: `${studentBooks.length} materiais`,
+          text: "Livros do aluno cadastrados no acervo existente.",
+          href: "biblioteca.html#acervo-completo",
+          covers: studentBooks.map((book) => book.src),
+        }
+      : null,
+    teacherGuides.length
+      ? {
+          title: "Guias do Professor",
+          label: "Material do professor",
+          count: `${teacherGuides.length} guias`,
+          text: "Guias cadastrados no catalogo atual e abertos pelo Book Viewer.",
+          href: addTeacherLibraryReturn(teacherGuides[0].href),
+          covers: teacherGuides.map((book) => book.src),
+        }
+      : null,
+    digitalTotal
+      ? {
+          title: "Conteudos Digitais",
+          label: "Experiencias",
+          count: `${digitalTotal} itens`,
+          text: "Entrada para experiencias e recursos digitais ja existentes.",
+          href: "biblioteca.html#acervo-completo",
+          covers: studentBooks.map((book) => book.src),
+        }
+      : null,
+    {
+      title: "Vincular ao Planejamento",
+      label: "Futuro",
+      count: "Supabase",
+      text: "Arquitetura preparada para escolher materiais sem publicar ou enviar agora.",
+      disabled: true,
+    },
+  ].filter(Boolean);
+
+  return `
+    <section class="tw-board tw-library-shell">
+      <div class="tw-planning-heading">
+        <div>
+          <span>Biblioteca</span>
+          <h2>Biblioteca</h2>
+          <p>ACESSO AOS MATERIAIS DIGITAIS DA PLATAFORMA.</p>
+        </div>
+        <button type="button" data-teacher-open-url="biblioteca.html">ABRIR BIBLIOTECA</button>
+      </div>
+      <div class="tw-library-entry-grid">
+        ${categoryCards.map(renderTeacherLibraryCategoryCard).join("")}
+      </div>
+    </section>
+    ${renderTeacherLibraryShelf("Material do aluno", `${studentBooks.length} livros existentes`, studentBooks.slice(0, 4))}
+    ${renderTeacherLibraryShelf("Material do professor", `${teacherGuides.length} guias existentes`, teacherGuides.slice(0, 4))}
+  `;
+};
+
+const renderTeacherInstitutionalStatus = (title = "CARREGANDO DADOS INSTITUCIONAIS.") => {
+  if (teacherInstitutionalState.status === "error") {
+    return renderTeacherEmptyState("NAO FOI POSSIVEL CARREGAR O SUPABASE INSTITUCIONAL.", teacherInstitutionalState.error || "Entre novamente e tente acessar a Area do Professor.");
+  }
+  if (teacherInstitutionalState.status === "empty") {
+    return renderTeacherEmptyState("NENHUMA TURMA VINCULADA AO PROFESSOR.", "A vinculacao institucional precisa existir em class_teacher_memberships para liberar esta area.");
+  }
+  return renderTeacherEmptyState(title, "Validando sua sessao e buscando turmas autorizadas pelo RLS.");
+};
+
 const renderClassCard = (classItem) => `
   <article class="tw-class-card" data-teacher-search-item>
-    <div><strong>${classItem.name}</strong><span>Turma vinculada</span></div>
-    <small>Os indicadores reais da turma aparecerao aqui quando houver dados publicados.</small>
+    <header>
+      <span>Turma</span>
+      <strong>${printableEscape(classItem.name)}</strong>
+    </header>
+    <dl class="tw-card-meta">
+      <div><dt>Escola</dt><dd>${printableEscape(classItem.schoolName || "Nao informada")}</dd></div>
+      <div><dt>Alunos</dt><dd>${printableEscape(classItem.students || 0)}</dd></div>
+      <div><dt>Status</dt><dd>${printableEscape(classItem.status || "Ativa")}</dd></div>
+    </dl>
+    <a class="tw-primary-link" href="${getTeacherClassHref(classItem)}">ABRIR TURMA</a>
   </article>
 `;
 
 const renderStudentCard = (student) => `
   <article class="tw-student-card" data-teacher-search-item data-student-id="${printableEscape(student.id)}">
     ${student.avatar ? `<img class="tw-student-avatar" src="${printableEscape(student.avatar)}" alt="" loading="lazy" />` : `<span>${student.name.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span>`}
-    <div><strong>${student.name}</strong><small>${student.className} · ${student.pendingActivities} pendentes · ${student.completedActivities} concluidas</small></div>
-    <a href="professor-aluno.html?id=${encodeURIComponent(student.id)}">Abrir</a>
+    <div><strong>${printableEscape(student.name)}</strong><small>Aluno da turma ${printableEscape(student.className)}</small></div>
+    <a class="tw-primary-link" href="${getTeacherStudentHref(student)}">ABRIR ACOMPANHAMENTO</a>
   </article>
 `;
+
+const renderTeacherClassesList = () => {
+  const classes = getTeacherInstitutionalClasses();
+  if (teacherInstitutionalState.status !== "ready") return renderTeacherInstitutionalStatus();
+  if (!classes.length) return renderTeacherInstitutionalStatus();
+  return classes.map(renderClassCard).join("");
+};
+
+const renderTeacherStudentsList = (classId = "") => {
+  const students = getTeacherInstitutionalStudents(classId);
+  if (teacherInstitutionalState.status !== "ready") return renderTeacherInstitutionalStatus("CARREGANDO ALUNOS DA TURMA.");
+  if (!students.length) return renderTeacherEmptyState("NENHUM ALUNO VINCULADO A ESTA TURMA.", "Os alunos aparecem aqui quando houver enrollments ativos para a turma.");
+  return students.map(renderStudentCard).join("");
+};
 
 const renderLessonCard = (lesson) => `
   <article class="tw-lesson-card" data-teacher-search-item>
@@ -3455,8 +3797,31 @@ const renderResourceCard = (resource) => `
   <article class="tw-resource-card" data-teacher-search-item>
     ${resource.cover ? `<img src="${resource.cover}" alt="" loading="lazy" />` : `<span>${resource.kind}</span>`}
     <div><strong>${resource.title}</strong><small>${resource.detail}</small></div>
-    <button type="button" data-teacher-view="${resource.view || "biblioteca"}">Usar</button>
+    ${
+      resource.href
+        ? `<a href="${resource.href}">Abrir</a>`
+        : `<button type="button" data-teacher-view="${resource.view || "biblioteca"}">Usar</button>`
+    }
   </article>
+`;
+
+const renderTeacherBreadcrumb = (items = []) => `
+  <nav class="tw-breadcrumb" aria-label="Caminho do professor">
+    ${items
+      .map((item, index) =>
+        item.href
+          ? `<a href="${item.href}">${printableEscape(item.label)}</a>`
+          : `<span aria-current="${index === items.length - 1 ? "page" : "false"}">${printableEscape(item.label)}</span>`
+      )
+      .join("<b>›</b>")}
+  </nav>
+`;
+
+const renderTeacherEmptyState = (title, text = "") => `
+  <div class="tw-empty-state">
+    <strong>${printableEscape(title)}</strong>
+    ${text ? `<p>${printableEscape(text)}</p>` : ""}
+  </div>
 `;
 
 const printableEscape = (value) =>
@@ -3483,7 +3848,20 @@ const getPrintableUserRole = () => {
     const [, payload] = String(token).split(".");
     const decoded = payload ? JSON.parse(atob(payload.replaceAll("-", "+").replaceAll("_", "/"))) : {};
     const metadata = decoded.app_metadata || {};
-    return String(metadata.printable_activities_role || metadata.question_bank_role || metadata.app_role || metadata.role || decoded.app_role || "").toLowerCase();
+    const userMetadata = decoded.user_metadata || session?.user?.user_metadata || {};
+    return normalizePlatformRole(
+      metadata.printable_activities_role ||
+        metadata.platform_role ||
+        metadata.question_bank_role ||
+        metadata.app_role ||
+        metadata.role ||
+        decoded.platform_role ||
+        decoded.app_role ||
+        userMetadata.platform_role ||
+        userMetadata.role ||
+        session?.platform_role ||
+        ""
+    );
   } catch (error) {
     return "";
   }
@@ -3628,6 +4006,7 @@ const renderPrintableFilters = ({ admin = false } = {}) => {
   const options = (values, selected) => `<option value="">Todos</option>${values.map((value) => option(value, value, selected)).join("")}`;
   return `
     <form class="pa-filters" data-pa-filters>
+      ${["target", "student", "class"].map((key) => (params.get(key) ? `<input type="hidden" name="${key}" value="${printableEscape(params.get(key))}" />` : "")).join("")}
       <label class="pa-search"><span>Pesquisa</span><input name="q" type="search" value="${printableEscape(params.get("q") || "")}" placeholder="PESQUISE PELO CODIGO, TITULO, TEMA, OBJETIVO, MATERIAL OU PALAVRA-CHAVE" /></label>
       <details class="pa-filter-panel" open>
         <summary>Filtros</summary>
@@ -3659,6 +4038,11 @@ const renderPrintableActivityCard = (item) => {
   const userState = printableActivitiesDataService.state();
   const isFavorite = userState.favorites.includes(item.codigo);
   const thumb = item.miniatura || item.arquivoPng || item.arquivoOriginal || "";
+  const detailParams = appendPrintableContextParams(new URLSearchParams(window.location.search));
+  detailParams.set("codigo", item.codigo);
+  const backParams = new URLSearchParams(window.location.search);
+  backParams.delete("codigo");
+  if (backParams.toString()) detailParams.set("voltar", `?${backParams.toString()}`);
   return `
     <article class="pa-card" data-teacher-search-item>
       <div class="pa-thumb">
@@ -3672,7 +4056,7 @@ const renderPrintableActivityCard = (item) => {
         <small><b>Materiais:</b> ${printableEscape((item.materiais || []).slice(0, 3).join(", ") || "pendentes")}</small>
       </div>
       <footer>
-        <a href="atividades.html?codigo=${encodeURIComponent(item.codigo)}${window.location.search ? `&voltar=${encodeURIComponent(window.location.search)}` : ""}" data-pa-view="${printableEscape(item.codigo)}">Visualizar</a>
+        <a href="atividades.html?${detailParams.toString()}" data-pa-view="${printableEscape(item.codigo)}">Visualizar</a>
         <button type="button" data-ua-assign="${printableEscape(item.codigo)}">Indicar atividade</button>
         <a href="${printableEscape(item.arquivoOriginal || "#")}" download data-pa-download="${printableEscape(item.codigo)}" aria-disabled="${item.arquivoOriginal ? "false" : "true"}">Baixar</a>
         <button type="button" data-pa-print="${printableEscape(item.codigo)}">Imprimir</button>
@@ -3698,6 +4082,7 @@ const renderPrintableMainPage = ({ admin = false } = {}) => {
         <p>Atividades exclusivas para apoiar o planejamento e as experiencias da Educacao Infantil.</p>
         ${admin ? `<a href="README_IMPORTACAO_ATIVIDADES.md">README de importacao</a>` : ""}
       </header>
+      ${admin ? "" : renderPrintableContextPanel()}
       ${renderPrintableAgeCards({ admin })}
       ${renderPrintableFilters({ admin })}
       ${renderUniversalActivityAssignDialog()}
@@ -3732,6 +4117,7 @@ const renderPrintableDetailPage = ({ admin = false } = {}) => {
   printableActivitiesDataService.metric("visualizacao", { codigo: item.codigo });
   const preview = item.arquivoPng || item.miniatura || item.arquivoOriginal || "";
   const back = getPrintableParams().get("voltar") || "";
+  const contextQuery = getPrintableContextQuery();
   return `
     <section class="pa-shell pa-detail" data-printable-app>
       ${renderUniversalActivityAssignDialog()}
@@ -3739,8 +4125,9 @@ const renderPrintableDetailPage = ({ admin = false } = {}) => {
         <span>${printableEscape(item.codigo)} · versao ${printableEscape(item.versao || "1.0")}</span>
         <h1>${printableEscape(item.titulo || "Titulo pendente")}</h1>
         <p>${printableEscape(item.faixaEtaria || "Faixa etaria pendente")} · ${printableEscape(item.idade || "")} · ${printableEscape(item.status || "status pendente")}</p>
-        <a href="atividades.html${printableEscape(back)}">Voltar aos resultados</a>
+        <a href="atividades.html${printableEscape(back || contextQuery)}">Voltar aos resultados</a>
       </header>
+      ${renderPrintableContextPanel()}
       <div class="pa-detail-grid">
         <section class="pa-preview">
           ${preview ? `<img src="${printableEscape(preview)}" alt="Visualizacao ampliada da atividade ${printableEscape(item.codigo)}" />` : `<div class="pa-empty"><h2>Arquivo pendente</h2><p>A atividade ainda nao possui arquivo valido associado.</p></div>`}
@@ -3836,6 +4223,72 @@ const getUniversalActivityByCode = (code) => printableActivitiesDataService.getB
 
 const getUniversalActivityClass = (classId) => universalActivityDemoClasses.find((item) => item.id === classId) || universalActivityDemoClasses[0];
 
+const getPrintableAssignmentContext = () => {
+  const params = getPrintableParams();
+  const target = params.get("target") || "";
+  if (target === "student") {
+    const studentId = params.get("student") || "";
+    const classInfo = getUniversalActivityClass(params.get("class") || universalActivityStudentProfile.classId);
+    const student = classInfo.students.find((item) => item.id === studentId) || universalActivityDemoClasses.flatMap((item) => item.students).find((item) => item.id === studentId);
+    return {
+      type: "student",
+      id: studentId || universalActivityStudentProfile.id,
+      label: student?.name || universalActivityStudentProfile.name,
+      classId: classInfo.id,
+      className: classInfo.name,
+      description: "DESTINATARIO: PEDRO",
+    };
+  }
+  if (target === "class") {
+    const classInfo = getUniversalActivityClass(params.get("class") || universalActivityStudentProfile.classId);
+    return {
+      type: "class",
+      id: classInfo.id,
+      label: classInfo.name,
+      classId: classInfo.id,
+      className: classInfo.name,
+      description: `DESTINATARIO: ${classInfo.name.toUpperCase()}`,
+    };
+  }
+  return {
+    type: "",
+    id: "",
+    label: "Nao definido",
+    classId: universalActivityStudentProfile.classId,
+    className: universalActivityStudentProfile.className,
+    description: "DESTINATARIO NAO DEFINIDO",
+  };
+};
+
+const appendPrintableContextParams = (params = new URLSearchParams()) => {
+  const context = getPrintableAssignmentContext();
+  if (!context.type) return params;
+  params.set("target", context.type);
+  if (context.type === "student") params.set("student", context.id);
+  if (context.classId) params.set("class", context.classId);
+  return params;
+};
+
+const getPrintableContextQuery = () => {
+  const params = appendPrintableContextParams(new URLSearchParams());
+  const query = params.toString();
+  return query ? `?${query}` : "";
+};
+
+const renderPrintableContextPanel = () => {
+  const context = getPrintableAssignmentContext();
+  return `
+    <section class="pa-context-panel" data-pa-context data-target-type="${printableEscape(context.type)}" data-target-id="${printableEscape(context.id)}">
+      <div>
+        <span>Contexto da indicacao</span>
+        <strong>${printableEscape(context.description)}</strong>
+        <small>${context.type ? "A atividade ainda sera escolhida no banco existente antes de qualquer indicacao local." : "Escolha uma atividade para comecar. Futuramente sera possivel selecionar turma ou aluno aqui."}</small>
+      </div>
+      ${context.type ? `<a href="professor.html?view=atividades">Trocar contexto</a>` : ""}
+    </section>
+  `;
+};
+
 const getUniversalActivityTools = (activity, assignment) => {
   const profileKey = assignment?.toolProfile || activity?.perfilFerramentas || activity?.faixaEtaria || "ei2";
   const profileTools = universalActivityToolProfiles[profileKey] || universalActivityToolProfiles.ei2;
@@ -3892,6 +4345,7 @@ const getUniversalActivityPortfolioForStudent = (studentId = universalActivitySt
 const createUniversalActivityAssignment = ({ activityCode, classId, studentIds, instructions, dueDate, toolProfile, mode }) => {
   const state = readUniversalActivityState();
   const classInfo = getUniversalActivityClass(classId);
+  const context = getPrintableAssignmentContext();
   const assignment = {
     assignmentId: `ua-${Date.now()}`,
     activityCode,
@@ -3905,6 +4359,9 @@ const createUniversalActivityAssignment = ({ activityCode, classId, studentIds, 
     instructions: instructions || "",
     toolProfile: toolProfile || "ei2",
     mode: mode || "livre",
+    targetType: context.type || (studentIds.length === classInfo.students.length ? "class" : "student"),
+    targetId: context.id || (studentIds.length === classInfo.students.length ? classId : studentIds[0] || classId),
+    targetLabel: context.type ? context.label : studentIds.length === classInfo.students.length ? classInfo.name : classInfo.students.filter((student) => studentIds.includes(student.id)).map((student) => student.name).join(", "),
     status: "PUBLICADA",
   };
   state.assignments = [assignment, ...state.assignments.filter((item) => item.assignmentId !== assignment.assignmentId)];
@@ -3991,6 +4448,7 @@ const renderUniversalActivityAssignDialog = () => `
   <dialog class="ua-dialog" data-ua-assign-dialog>
     <form method="dialog" class="ua-assign-form" data-ua-assign-form>
       <header><span>Motor Universal</span><h2>Indicar atividade</h2><button type="button" data-ua-close-dialog aria-label="Fechar">×</button></header>
+      ${renderPrintableContextPanel()}
       <input type="hidden" name="activityCode" />
       <label><span>Destino</span><select name="scope"><option value="class">Turma inteira</option><option value="group">Grupo de alunos</option><option value="student">Aluno individual</option></select></label>
       <label><span>Turma</span><select name="classId">${universalActivityDemoClasses.map((item) => `<option value="${printableEscape(item.id)}">${printableEscape(item.name)}</option>`).join("")}</select></label>
@@ -4106,7 +4564,7 @@ const renderUniversalActivityTeacherPortfolio = () => {
 
 const renderUniversalActivityTeacherDeliveries = () => {
   const state = readUniversalActivityState();
-  const assignments = state.assignments.filter((assignment) => assignment.status !== "ARQUIVADA");
+  const assignments = state.assignments.filter((assignment) => assignment.status !== "ARQUIVADA" && !assignment.seededBy);
   return `
     <section class="tw-board ua-deliveries" data-ua-deliveries>
       <div class="tw-section-head"><h2>Atividades Indicadas</h2><button type="button" data-teacher-view="atividades">Indicar nova</button></div>
@@ -4115,25 +4573,192 @@ const renderUniversalActivityTeacherDeliveries = () => {
           ? assignments
               .map((assignment) => {
                 const activity = getUniversalActivityByCode(assignment.activityCode);
-                const submissions = state.submissions.filter((submission) => submission.assignmentId === assignment.assignmentId);
-                const completed = submissions.filter((submission) => submission.status === "COMPLETED").length;
-                const progress = submissions.filter((submission) => submission.status === "IN_PROGRESS").length;
-                const notStarted = Math.max(0, assignment.studentIds.length - completed - progress);
+                const targetLabel = assignment.targetLabel || assignment.className || assignment.studentIds?.join(", ") || "Destinatario registrado";
                 return `
                   <article class="ua-delivery-card">
-                    <div><mark>${printableEscape(assignment.activityCode)}</mark><strong>${printableEscape(activity?.titulo || assignment.activityCode)}</strong><small>${printableEscape(assignment.className)} · ${assignment.studentIds.length} alunos</small></div>
-                    <div class="ua-delivery-metrics"><span>${completed} concluidas</span><span>${progress} em andamento</span><span>${notStarted} nao iniciadas</span></div>
-                    <button type="button" data-ua-open-delivery="${printableEscape(assignment.assignmentId)}">Ver entregas</button>
+                    <div>
+                      <mark>${printableEscape(assignment.activityCode)}</mark>
+                      <strong>${printableEscape(activity?.titulo || assignment.activityCode)}</strong>
+                      <small>Destinatario: ${printableEscape(targetLabel)}</small>
+                      ${assignment.assignedAt ? `<small>Indicada em ${new Date(assignment.assignedAt).toLocaleString("pt-BR")}</small>` : ""}
+                      ${assignment.status ? `<small>Status: ${printableEscape(assignment.status)}</small>` : ""}
+                    </div>
+                    <button type="button" data-ua-open-delivery="${printableEscape(assignment.assignmentId)}">Consultar</button>
                   </article>
                 `;
               })
               .join("")
-          : `<p class="ua-empty">Nenhuma atividade indicada ainda.</p>`
+          : `<p class="ua-empty">NENHUMA ATIVIDADE INDICADA AINDA.</p>`
       }
       <div class="ua-delivery-detail" data-ua-delivery-detail></div>
     </section>
   `;
 };
+
+const getTeacherTrackingData = () => {
+  const state = readUniversalActivityState();
+  const assignments = (state.assignments || []).filter(
+    (assignment) =>
+      assignment &&
+      assignment.status !== "ARQUIVADA" &&
+      !assignment.seededBy &&
+      assignment.classId === pilotProfiles.class.id
+  );
+  const assignmentIds = new Set(assignments.map((assignment) => assignment.assignmentId));
+  const submissions = (state.submissions || []).filter(
+    (submission) =>
+      submission &&
+      assignmentIds.has(submission.assignmentId) &&
+      submission.studentId === pilotProfiles.student.id &&
+      submission.status &&
+      submission.status !== "NOT_STARTED"
+  );
+  const productions = submissions.filter((submission) => submission.preview || submission.finalArtwork || submission.completedAt);
+  return { assignments, submissions, productions };
+};
+
+const renderTeacherTrackingAssignment = (assignment) => {
+  const activity = getUniversalActivityByCode(assignment.activityCode);
+  const submission = getUniversalActivitySubmission(assignment.assignmentId, pilotProfiles.student.id);
+  const status = submission?.status || assignment.status || "INDICADA";
+  const targetLabel = assignment.targetLabel || assignment.className || "Infantil 4 A";
+  return `
+    <article class="tw-tracking-item" data-teacher-search-item>
+      <div>
+        <span>${printableEscape(assignment.activityCode)}</span>
+        <strong>${printableEscape(activity?.titulo || assignment.activityCode)}</strong>
+        <small>Destinatario: ${printableEscape(targetLabel)}</small>
+      </div>
+      <mark>${printableEscape(status)}</mark>
+    </article>
+  `;
+};
+
+const renderTeacherTrackingProduction = (submission) => {
+  const activity = getUniversalActivityByCode(submission.activityCode);
+  return `
+    <article class="tw-tracking-production" data-teacher-search-item>
+      ${submission.finalArtwork || submission.preview ? `<img src="${printableEscape(submission.finalArtwork || submission.preview)}" alt="Producao registrada de ${printableEscape(pilotProfiles.student.name)}" loading="lazy" />` : ""}
+      <div>
+        <span>${printableEscape(submission.activityCode)}</span>
+        <strong>${printableEscape(activity?.titulo || submission.activityCode)}</strong>
+        ${submission.completedAt ? `<small>Registrada em ${new Date(submission.completedAt).toLocaleString("pt-BR")}</small>` : ""}
+        ${submission.lastSavedAt && !submission.completedAt ? `<small>Ultima edicao: ${new Date(submission.lastSavedAt).toLocaleString("pt-BR")}</small>` : ""}
+      </div>
+    </article>
+  `;
+};
+
+const renderTeacherTrackingView = () => {
+  const { assignments, submissions, productions } = getTeacherTrackingData();
+  const statuses = [...new Set(submissions.map((submission) => submission.status).filter(Boolean))];
+  return `
+    <section class="tw-board tw-tracking-shell">
+      <div class="tw-planning-heading">
+        <div>
+          <span>Acompanhamento</span>
+          <h2>Acompanhamento</h2>
+          <p>ACOMPANHE OS REGISTROS E AS EXPERIENCIAS DA SUA TURMA.</p>
+        </div>
+        <label class="tw-class-selector">
+          <span>Turma</span>
+          <select data-tracking-class>
+            <option value="${printableEscape(pilotProfiles.class.id)}">${printableEscape(pilotProfiles.class.name)}</option>
+          </select>
+        </label>
+      </div>
+      <div class="tw-tracking-summary" aria-label="Visao geral da turma">
+        <article><span>Turma</span><strong>${printableEscape(pilotProfiles.class.name)}</strong><small>${printableEscape(pilotProfiles.class.shift || "Turma piloto")}</small></article>
+        <article><span>Alunos</span><strong>${teacherWorkspaceStudents.length}</strong><small>Aluno real no conjunto piloto</small></article>
+        <article><span>Atividades indicadas</span><strong>${assignments.length}</strong><small>Somente registros locais validos</small></article>
+        <article><span>Producoes</span><strong>${productions.length}</strong><small>Somente registros reais do Motor Universal</small></article>
+      </div>
+    </section>
+    <section class="tw-board tw-tracking-section">
+      <div class="tw-section-head"><h2>Alunos</h2><span>${printableEscape(pilotProfiles.class.name)}</span></div>
+      <div class="tw-tracking-students">
+        ${teacherWorkspaceStudents.map(renderStudentCard).join("")}
+      </div>
+    </section>
+    <section class="tw-board tw-tracking-section" data-ua-deliveries>
+      <div class="tw-section-head"><h2>Atividades Indicadas</h2><button type="button" data-teacher-view="atividades">Indicar atividade</button></div>
+      <div class="tw-tracking-list">
+        ${assignments.length ? assignments.map(renderTeacherTrackingAssignment).join("") : `<p class="ua-empty">NENHUMA ATIVIDADE INDICADA AINDA.</p>`}
+      </div>
+      <div class="ua-delivery-detail" data-ua-delivery-detail></div>
+    </section>
+    <section class="tw-board tw-tracking-section">
+      <div class="tw-section-head"><h2>Producoes</h2><span>Motor Universal</span></div>
+      <div class="tw-tracking-list">
+        ${productions.length ? productions.map(renderTeacherTrackingProduction).join("") : `<p class="ua-empty">AINDA NAO HA PRODUCOES REGISTRADAS.</p>`}
+      </div>
+    </section>
+    <section class="tw-board tw-tracking-section">
+      <div class="tw-section-head"><h2>Progresso</h2><span>Estados registrados</span></div>
+      ${
+        statuses.length
+          ? `<div class="tw-tracking-status-list">${statuses.map((status) => `<span>${printableEscape(status)}</span>`).join("")}</div>`
+          : `<p class="ua-empty">O PROGRESSO APARECERA AQUI QUANDO HOUVER REGISTROS.</p>`
+      }
+    </section>
+    <section class="tw-board tw-tracking-section">
+      <div class="tw-section-head"><h2>Registros Pedagogicos</h2><span>Arquitetura futura</span></div>
+      <p class="ua-empty">NENHUM REGISTRO PEDAGOGICO DISPONIVEL.</p>
+    </section>
+    <section class="tw-board tw-tracking-section">
+      <div class="tw-section-head"><h2>Relatorios</h2><span>Futuro</span></div>
+      <p class="ua-empty">RELATORIOS SERAO GERADOS FUTURAMENTE A PARTIR DE REGISTROS REAIS.</p>
+    </section>
+  `;
+};
+
+const renderTeacherFormationView = () => `
+  <section class="tw-board tw-formation-shell">
+    <div class="tw-planning-heading">
+      <div>
+        <span>Formacao</span>
+        <h2>Formacao</h2>
+        <p>ACESSE A ESTRUTURA DE FORMACAO CONTINUADA DA PLATAFORMA.</p>
+      </div>
+      <button type="button" data-teacher-open-url="universidade.html?from=teacher">ACESSAR FORMACAO</button>
+    </div>
+    <div class="tw-formation-grid">
+      <article class="tw-formation-card" data-teacher-search-item>
+        <span>Conteudo disponivel</span>
+        <strong>Cursos gratuitos</strong>
+        <small>Catalogo publico existente da Universidade, com busca, filtros e acesso ao ambiente oficial das instituicoes.</small>
+        <a class="tw-primary-link" href="universidade.html?from=teacher#catalogo">ABRIR CATALOGO</a>
+      </article>
+      <article class="tw-formation-card" data-teacher-search-item>
+        <span>Conteudo disponivel</span>
+        <strong>Centros de Conhecimento</strong>
+        <small>Organizacao tematica existente para agrupar cursos, referencias e materiais preparados pela curadoria.</small>
+        <a class="tw-primary-link" href="universidade.html?from=teacher#centros-conhecimento">ABRIR CENTROS</a>
+      </article>
+      <article class="tw-formation-card" data-teacher-search-item>
+        <span>Institucional</span>
+        <strong>Formacao Raizes e Saberes</strong>
+        <small>Area da Universidade preparada para cursos internos, trilhas, assessorias, videoaulas e encontros futuros.</small>
+        <a class="tw-primary-link" href="universidade.html?from=teacher#formacao-raizes">VER ESTRUTURA</a>
+      </article>
+      <article class="tw-formation-card is-empty" data-teacher-search-item>
+        <span>Progresso do professor</span>
+        <strong>NENHUM CURSO INICIADO AINDA.</strong>
+        <small>O catalogo existir nao significa que o professor iniciou ou concluiu uma formacao.</small>
+      </article>
+      <article class="tw-formation-card is-empty" data-teacher-search-item>
+        <span>Certificados</span>
+        <strong>NENHUM CERTIFICADO DISPONIVEL AINDA.</strong>
+        <small>Certificados reais dependem de persistencia e validacao em etapa futura.</small>
+      </article>
+      <article class="tw-formation-card is-empty" data-teacher-search-item>
+        <span>Historico formativo</span>
+        <strong>SEU HISTORICO FORMATIVO APARECERA AQUI QUANDO HOUVER REGISTROS.</strong>
+        <small>Sem registros locais ou Supabase nesta etapa.</small>
+      </article>
+    </div>
+  </section>
+`;
 
 const renderUniversalActivityMotorPage = () => {
   seedUniversalActivityTechnicalAssignments();
@@ -4196,14 +4821,14 @@ const renderTeacherQuickActions = () => `
   <section class="teacher-side-card teacher-quick-actions" aria-label="Acessos rapidos">
     <h2>Acessos Rapidos</h2>
     ${[
-      { label: "ATRIBUIR ATIVIDADE", icon: "clipboard", view: "atividades", tone: "green" },
-      { label: "ABRIR MINHA TURMA", icon: "users", view: "turmas", tone: "lime" },
-      { label: "CRIAR PLANEJAMENTO", icon: "doc", view: "planejamentos", tone: "blue" },
-      { label: "VER PRODUCOES", icon: "portfolio", view: "alunos", tone: "purple" },
-      { label: "ABRIR BIBLIOTECA", icon: "book", view: "biblioteca", tone: "orange" },
-      { label: "VER RELATORIOS", icon: "chart", view: "relatorios", tone: "teal" },
+      { label: "MINHAS TURMAS", icon: "users", view: "turmas", tone: "lime" },
+      { label: "PLANEJAMENTO", icon: "calendar", view: "planejamentos", tone: "blue" },
+      { label: "ATIVIDADES", icon: "clipboard", view: "atividades", tone: "green" },
+      { label: "BIBLIOTECA", icon: "book", view: "biblioteca", tone: "orange" },
+      { label: "ACOMPANHAMENTO", icon: "portfolio", view: "acompanhamento", tone: "purple" },
+      { label: "FORMACAO", icon: "cap", view: "formacao", tone: "teal" },
     ]
-      .map((item) => `<button type="button" class="quick-action is-${item.tone}" data-teacher-view="${item.view}">${premiumIcon(item.icon)}<span>${item.label}</span></button>`)
+      .map((item) => `<button type="button" class="quick-action is-${item.tone}" ${item.href ? `data-teacher-open-url="${item.href}"` : `data-teacher-view="${item.view}"`}>${premiumIcon(item.icon)}<span>${item.label}</span></button>`)
       .join("")}
   </section>
 `;
@@ -4231,7 +4856,7 @@ const renderTeacherSideRail = () => `
 `;
 
 const renderTeacherMetricCard = ({ title, text, icon, tone, view }) => `
-  <button type="button" class="teacher-metric-card is-${tone}" data-teacher-view="${view}" data-teacher-search-item>
+  <button type="button" class="teacher-metric-card is-${tone}" ${String(view || "").endsWith(".html") ? `data-teacher-open-url="${view}"` : `data-teacher-view="${view}"`} data-teacher-search-item>
     ${premiumIcon(icon)}
     <span>${title}</span>
     <strong>${text}</strong>
@@ -4239,7 +4864,7 @@ const renderTeacherMetricCard = ({ title, text, icon, tone, view }) => `
 `;
 
 const renderTeacherContentCard = ({ title, detail, icon, tone, view }) => `
-  <button type="button" class="teacher-content-card is-${tone}" data-teacher-view="${view}" data-teacher-search-item>
+  <button type="button" class="teacher-content-card is-${tone}" ${String(view || "").endsWith(".html") ? `data-teacher-open-url="${view}"` : `data-teacher-view="${view}"`} data-teacher-search-item>
     ${premiumIcon(icon)}
     <strong>${title}</strong>
     <small>${detail}</small>
@@ -4252,12 +4877,40 @@ const renderTeacherPlanningStrip = () => `
     <div class="teacher-planning-grid">
       ${[
         { title: "Planejamento da semana", detail: "Sua organizacao semanal aparecera aqui.", icon: "calendar", tone: "green", view: "planejamentos" },
-        { title: "Proximas experiencias", detail: "Novas experiencias chegam em breve.", icon: "star", tone: "blue", view: "experiencias" },
-        { title: "Avaliacoes", detail: "Nenhuma correcao pendente no momento.", icon: "check", tone: "purple", view: "avaliacoes" },
+        { title: "Experiencias", detail: "Conteudos para preparar novas propostas.", icon: "star", tone: "blue", view: "experiencias" },
+        { title: "Atividades digitais", detail: "Organizacao estrutural para futuras atribuicoes.", icon: "doc", tone: "purple", view: "atividades" },
       ].map(renderTeacherContentCard).join("")}
     </div>
   </section>
 `;
+
+const renderTeacherHomeClassFeature = () => {
+  const classItem = getTeacherInstitutionalClasses()[0];
+  if (teacherInstitutionalState.status !== "ready" || !classItem) {
+    return `
+      <section class="teacher-class-feature" data-teacher-search-item>
+        ${premiumIcon("users")}
+        <div>
+          <span>Minhas Turmas</span>
+          <strong>Dados institucionais</strong>
+          <small>${teacherInstitutionalState.status === "error" ? printableEscape(teacherInstitutionalState.error) : "Carregando turmas autorizadas pelo Supabase."}</small>
+          <button type="button" data-teacher-view="turmas">ABRIR TURMAS</button>
+        </div>
+      </section>
+    `;
+  }
+  return `
+    <section class="teacher-class-feature" data-teacher-search-item>
+      ${premiumIcon("users")}
+      <div>
+        <span>Minhas Turmas</span>
+        <strong>${printableEscape(classItem.name)}</strong>
+        <small>${printableEscape(classItem.schoolName)} · ${printableEscape(classItem.students)} alunos vinculados.</small>
+        <button type="button" data-teacher-view="turmas">ABRIR TURMA</button>
+      </div>
+    </section>
+  `;
+};
 
 const renderTeacherPremiumHome = () => `
   <section class="teacher-premium-layout" data-teacher-home>
@@ -4266,49 +4919,40 @@ const renderTeacherPremiumHome = () => `
         <div>
           <span>Bom dia,</span>
           <h1>PROFESSORA ${getTeacherFirstName().toUpperCase()}</h1>
-          <p>Organize sua rotina, acompanhe sua turma e prepare novas experiencias.</p>
+          <p>Organize suas turmas, planeje experiencias e acompanhe as producoes dos alunos em um unico workspace.</p>
         </div>
         <div class="teacher-hero-art" aria-hidden="true">
           <img src="assets/professor/professor-dashboard.png" alt="" loading="eager" onerror="this.hidden=true" />
         </div>
       </section>
 
-      <section class="teacher-class-feature" data-teacher-search-item>
-        ${premiumIcon("users")}
-        <div>
-          <span>Minhas Turmas</span>
-          <strong>${pilotProfiles.class.name}</strong>
-          <small>Os indicadores reais da turma serao exibidos quando publicados.</small>
-          <button type="button" data-teacher-view="turmas">ABRIR TURMA</button>
-        </div>
-      </section>
+      ${renderTeacherHomeClassFeature()}
 
       <section class="teacher-premium-section">
-        <h2>Acompanhamento</h2>
+        <h2>Areas principais</h2>
         <div class="teacher-metric-grid">
           ${[
-            { title: "Atividades pendentes", text: "NENHUMA PENDENCIA NO MOMENTO", icon: "clipboard", tone: "orange", view: "atividades" },
-            { title: "Producoes recebidas", text: "SUAS PRODUCOES RECEBIDAS APARECERAO AQUI", icon: "portfolio", tone: "purple", view: "alunos" },
-            { title: "Alunos em acompanhamento", text: "ACOMPANHAMENTO REAL EM PREPARACAO", icon: "users", tone: "green", view: "turmas" },
-            { title: "Proximas acoes", text: "SEM ACOES PROGRAMADAS AGORA", icon: "heart", tone: "red", view: "planejamentos" },
+            { title: "Minhas Turmas", text: "ABRIR TURMAS", icon: "users", tone: "green", view: "turmas" },
+            { title: "Planejamento", text: "ORGANIZAR SEMANA", icon: "calendar", tone: "orange", view: "planejamentos" },
+            { title: "Acompanhamento", text: "VER ALUNOS E PRODUCOES", icon: "portfolio", tone: "purple", view: "acompanhamento" },
+            { title: "Formacao", text: "ABRIR UNIVERSIDADE", icon: "cap", tone: "red", view: "formacao" },
           ].map(renderTeacherMetricCard).join("")}
         </div>
       </section>
 
       <section class="teacher-premium-section">
-        <h2>Conteudos</h2>
+        <h2>Recursos pedagogicos</h2>
         <div class="teacher-content-grid">
           ${[
             { title: "Biblioteca Viva", detail: "Explorar conteudos", icon: "book", tone: "green", view: "biblioteca" },
             { title: "Atividades Imprimiveis", detail: "Ver atividades", icon: "doc", tone: "purple", view: "atividades" },
-            { title: "Experiencias", detail: "Explorar experiencias", icon: "flask", tone: "teal", view: "experiencias" },
-            { title: "Jogos", detail: "Ver jogos", icon: "game", tone: "orange", view: "jogos" },
+            { title: "Experiencias", detail: "Apoio ao planejamento", icon: "flask", tone: "teal", view: "experiencias" },
+            { title: "Book Viewer", detail: "Abrir livros e guias", icon: "book", tone: "orange", view: "biblioteca" },
           ].map(renderTeacherContentCard).join("")}
         </div>
       </section>
 
       ${renderTeacherPlanningStrip()}
-      <main class="tw-content" data-teacher-content hidden>${renderTeacherWorkspaceView("inicio")}</main>
     </main>
     ${renderTeacherSideRail()}
   </section>
@@ -4320,6 +4964,7 @@ const renderTeacherPilotHome = () => `
     <div class="tw-main">
       ${renderTeacherTopbar()}
       ${renderTeacherPremiumHome()}
+      <main class="tw-content" data-teacher-content hidden>${renderTeacherWorkspaceView("inicio")}</main>
     </div>
   </section>
 `;
@@ -4329,54 +4974,95 @@ const renderTeacherClassPage = () => `
     ${renderTeacherSidebar("turmas")}
     <div class="tw-main">
       ${renderTeacherTopbar()}
+      ${(() => {
+        const classId = getPrintableParams().get("id") || getTeacherInstitutionalClasses()[0]?.id || "";
+        const classItem = getTeacherInstitutionalClasses().find((item) => item.id === classId) || getTeacherInstitutionalClasses()[0];
+        const students = classItem ? getTeacherInstitutionalStudents(classItem.id) : [];
+        const isReady = teacherInstitutionalState.status === "ready" && classItem;
+        return `
+      ${renderTeacherBreadcrumb([
+        { label: "Minhas Turmas", href: "professor.html?view=turmas" },
+        { label: isReady ? classItem.name : "Turma" },
+      ])}
       <section class="tw-hero">
         <div>
           <span>MINHAS TURMAS</span>
-          <h1>${pilotProfiles.class.name}</h1>
-          <p>Alunos reais vinculados a ${pilotProfiles.teacher.displayName} nesta etapa piloto.</p>
+          <h1>${isReady ? printableEscape(classItem.name) : "TURMA"}</h1>
+          <p>${isReady ? `${printableEscape(classItem.schoolName)} · ${printableEscape(classItem.shift || "Turno nao informado")} · ${students.length} alunos vinculados.` : "Carregando turma autorizada pelo Supabase."}</p>
+        </div>
+        <div class="tw-hero-actions">
+          <a href="professor.html?view=turmas">VOLTAR PARA MINHAS TURMAS</a>
+          ${isReady ? `<a href="atividades.html?target=class&class=${encodeURIComponent(classItem.id)}">ESCOLHER ATIVIDADE</a>` : ""}
         </div>
       </section>
       <main class="tw-content">
         <section class="tw-board">
-          <div class="tw-section-head"><h2>Alunos</h2><span>1 vinculo ativo</span></div>
-          ${teacherWorkspaceStudents.map(renderStudentCard).join("")}
+          <div class="tw-section-head"><h2>Alunos</h2><span>${isReady ? `${students.length} vinculos ativos` : "Supabase"}</span></div>
+          ${isReady ? renderTeacherStudentsList(classItem.id) : renderTeacherInstitutionalStatus("CARREGANDO ALUNOS DA TURMA.")}
         </section>
       </main>
+        `;
+      })()}
     </div>
   </section>
 `;
 
 const renderTeacherStudentPage = () => {
-  const student = teacherWorkspaceStudents.find((item) => item.id === getPrintableParams().get("id")) || teacherWorkspaceStudents[0];
+  const studentId = getPrintableParams().get("id") || "";
+  const student = teacherInstitutionalState.studentsById?.[studentId] || getTeacherInstitutionalStudents()[0];
+  const classItem = student ? getTeacherInstitutionalClasses().find((item) => item.id === student.classId) : null;
+  const isReady = teacherInstitutionalState.status === "ready" && student;
   return `
     <section class="teacher-workspace teacher-pilot" data-teacher-workspace>
-      ${renderTeacherSidebar("turmas")}
+      ${renderTeacherSidebar("acompanhamento")}
       <div class="tw-main">
         ${renderTeacherTopbar()}
+        ${renderTeacherBreadcrumb([
+          { label: "Minhas Turmas", href: "professor.html?view=turmas" },
+          { label: isReady ? student.className : "Turma", href: isReady ? getTeacherClassHref({ id: student.classId }) : "professor.html?view=turmas" },
+          { label: isReady ? student.name : "Aluno" },
+        ])}
         <section class="tw-hero">
           <div>
-            <span>${student.className}</span>
-            <h1>${student.name.toUpperCase()}</h1>
-            <p>Ficha individual do aluno para acompanhamento de atividades, producoes e historico.</p>
+            <span>${isReady ? printableEscape(student.className) : "ACOMPANHAMENTO"}</span>
+            <h1>${isReady ? printableEscape(student.name.toUpperCase()) : "ALUNO"}</h1>
+            <p>Ficha individual para acompanhar atividades, producoes e registros quando houver dados publicados.</p>
           </div>
-          <div class="tw-hero-metrics">
-            <article><strong>${student.pendingActivities}</strong><span>pendentes</span></article>
-            <article><strong>${student.completedActivities}</strong><span>concluidas</span></article>
-            <article><strong>${student.progress}%</strong><span>progresso</span></article>
+          <div class="tw-hero-actions">
+            ${isReady ? `<a href="${getTeacherClassHref({ id: student.classId })}">VOLTAR PARA TURMA</a>` : `<a href="professor.html?view=turmas">VOLTAR PARA MINHAS TURMAS</a>`}
+            ${isReady ? `<a href="atividades.html?target=student&student=${encodeURIComponent(student.id)}&class=${encodeURIComponent(student.classId)}">INDICAR ATIVIDADE</a>` : ""}
           </div>
-        </section>
-        <section class="tw-recommendations">
-          ${["VISAO GERAL", "MISSOES / ATIVIDADES", "PRODUCOES", "PROGRESSO", "HISTORICO"]
-            .map((title) => `<article class="tw-recommendation-card"><span>Pedro</span><strong>${title}</strong><small>Estrutura preparada para dados reais do aluno.</small></article>`)
-            .join("")}
         </section>
         <main class="tw-content">
-          <section class="tw-board">
-            <div class="tw-section-head"><h2>Atribuicao</h2><button type="button" data-teacher-open-url="atividades.html">ATRIBUIR ATIVIDADE</button></div>
-            <p class="tw-muted">A tela de selecao usa o banco de atividades e o Motor Universal compartilhado. A gravacao completa da atribuicao sera aprofundada na proxima etapa.</p>
+          ${isReady ? `
+          <section class="tw-student-followup">
+            <article class="tw-board">
+              <div class="tw-section-head"><h2>Visao geral</h2><span>Aluno da turma</span></div>
+              <dl class="tw-card-meta">
+                <div><dt>Nome</dt><dd>${printableEscape(student.fullName || student.name)}</dd></div>
+                <div><dt>Turma</dt><dd>${printableEscape(student.className)}</dd></div>
+                <div><dt>Escola</dt><dd>${printableEscape(classItem?.schoolName || "Nao informada")}</dd></div>
+                <div><dt>Status</dt><dd>${printableEscape(student.status || "Ativo")}</dd></div>
+              </dl>
+            </article>
+            <article class="tw-board">
+              <div class="tw-section-head"><h2>Atividades</h2><a href="atividades.html?target=student&student=${encodeURIComponent(student.id)}&class=${encodeURIComponent(student.classId)}">ABRIR BANCO</a></div>
+              ${renderTeacherEmptyState("NENHUMA ATIVIDADE ENVIADA AINDA.", "Use o banco de atividades para escolher uma proposta quando necessario.")}
+            </article>
+            <article class="tw-board">
+              <div class="tw-section-head"><h2>Producoes</h2><span>Portfolio</span></div>
+              ${renderTeacherEmptyState("AINDA NAO HA PRODUCOES REGISTRADAS.")}
+            </article>
+            <article class="tw-board">
+              <div class="tw-section-head"><h2>Progresso</h2><span>Em preparacao</span></div>
+              ${renderTeacherEmptyState("O PROGRESSO DO ALUNO APARECERA AQUI QUANDO HOUVER REGISTROS.")}
+            </article>
+            <article class="tw-board">
+              <div class="tw-section-head"><h2>Registros</h2><span>Historico</span></div>
+              ${renderTeacherEmptyState("NENHUM REGISTRO PEDAGOGICO DISPONIVEL.")}
+            </article>
           </section>
-          ${renderUniversalActivityTeacherDeliveries()}
-          ${renderUniversalActivityTeacherPortfolio()}
+          ` : `<section class="tw-board">${renderTeacherInstitutionalStatus("CARREGANDO FICHA DO ALUNO.")}</section>`}
         </main>
       </div>
     </section>
@@ -4526,8 +5212,10 @@ const getStudentFirstName = () => {
 
 const renderTeacherWorkspaceView = (view) => {
   const { books, experiences, activities } = getTeacherBibliotecaResources();
+  const institutionalClasses = getTeacherInstitutionalClasses();
+  const institutionalStudents = getTeacherInstitutionalStudents();
   const resourceCards = [
-    ...books.map((book) => ({ kind: "Livro", title: book.title, detail: `${book.subtitle} · ${book.ageGroup.replace("EI", "")} anos`, cover: book.coverAsset, view: "biblioteca" })),
+    ...books.map((book) => ({ kind: "Livro", title: book.title, detail: `${book.subtitle} · ${book.ageGroup.replace("EI", "")} anos`, cover: book.coverAsset, href: book.viewerHref || `book-viewer.html?book=${encodeURIComponent(book.bookId || book.id)}` })),
     ...experiences.map((experience) => ({ kind: "Exp", title: experience.title, detail: `${experience.unitTitle || experience.unit} · ${experience.pageStart || ""}-${experience.pageEnd || ""}`, view: "experiencias" })),
     ...activities.slice(0, 3).map((activity) => ({ kind: "Ativ", title: activity.title, detail: activity.type, view: "experiencias" })),
   ];
@@ -4539,12 +5227,12 @@ const renderTeacherWorkspaceView = (view) => {
           ${renderPremiumEmpty("SEM AULAS PUBLICADAS PARA HOJE", "Quando houver planejamento real, ele aparecera aqui.", "green")}
         </div>
         <div class="tw-column">
-          <div class="tw-section-head"><h2>Pendencias</h2><button type="button" data-teacher-view="avaliacoes">Corrigir</button></div>
+          <div class="tw-section-head"><h2>Pendencias</h2><button type="button" data-teacher-view="acompanhamento">Acompanhar</button></div>
           ${renderPremiumEmpty("NENHUMA PENDENCIA NO MOMENTO", "As pendencias reais serao exibidas quando a turma tiver registros.", "orange")}
         </div>
         <div class="tw-column">
           <div class="tw-section-head"><h2>Turmas</h2><button type="button" data-teacher-view="turmas">Abrir</button></div>
-          ${teacherWorkspaceClasses.map(renderClassCard).join("")}
+          ${renderTeacherClassesList()}
         </div>
       </section>
     `,
@@ -4579,46 +5267,36 @@ const renderTeacherWorkspaceView = (view) => {
       <section class="tw-board tw-card-grid">
         ${renderTeacherCard()}
         <article class="tw-metric-card"><span>Agenda</span><strong>Manha e tarde</strong><small>Educacao Infantil</small></article>
-        <article class="tw-metric-card"><span>Turmas</span><strong>${pilotProfiles.class.name}</strong><small>Turma piloto vinculada</small></article>
+        <article class="tw-metric-card"><span>Turmas</span><strong>${institutionalClasses.length}</strong><small>Vinculos institucionais ativos</small></article>
       </section>
     `,
     planejamentos: `
-      <section class="tw-board">
-        <div class="tw-section-head"><h2>Planejamentos</h2><button type="button">Novo plano</button></div>
-        ${teacherWorkspaceLessons.map(renderPlanningCard).join("")}
-      </section>
+      ${renderTeacherPlanningView()}
     `,
     turmas: `
-      <section class="tw-board tw-card-grid">
-        ${teacherWorkspaceClasses.map(renderClassCard).join("")}
+      <section class="tw-board">
+        <div class="tw-section-head"><h2>Minhas Turmas</h2><span>${teacherInstitutionalState.status === "ready" ? `${institutionalClasses.length} turma${institutionalClasses.length === 1 ? "" : "s"}` : "Supabase"}</span></div>
+        <p class="tw-muted">Escolha uma turma para visualizar os alunos vinculados e acompanhar as proximas atividades.</p>
+        <div class="tw-card-grid">
+          ${renderTeacherClassesList()}
+        </div>
       </section>
     `,
     alunos: `
       <section class="tw-board">
-        <div class="tw-section-head"><h2>Alunos</h2><button type="button">Adicionar observacao</button></div>
-        ${teacherWorkspaceStudents.map(renderStudentCard).join("")}
+        <div class="tw-section-head"><h2>Alunos</h2><span>${teacherInstitutionalState.status === "ready" ? `${institutionalStudents.length} alunos` : "Supabase"}</span></div>
+        ${renderTeacherStudentsList()}
       </section>
       ${renderUniversalActivityTeacherPortfolio()}
     `,
+    acompanhamento: `
+      ${renderTeacherTrackingView()}
+    `,
     biblioteca: `
-      <section class="tw-board">
-        <div class="tw-section-head"><h2>Biblioteca Viva</h2><span>${books.length} livros oficiais</span></div>
-        <div class="tw-resource-grid">${resourceCards.filter((item) => item.kind === "Livro").map(renderResourceCard).join("")}</div>
-      </section>
+      ${renderTeacherLibraryView()}
     `,
     atividades: `
-      <section class="tw-board">
-        <div class="tw-section-head"><h2>Atividades Imprimiveis</h2><button type="button" data-teacher-open-url="atividades.html">Abrir banco</button></div>
-        <div class="tw-card-grid">
-          <article class="tw-recommendation-card" data-teacher-search-item>
-            <span>Atividades Imprimiveis</span>
-            <strong>Banco de Atividades Imprimiveis</strong>
-            <small>Encontre, visualize e imprima atividades organizadas por faixa etaria, objetivo e campo de experiencias.</small>
-            <button type="button" data-teacher-open-url="atividades.html">Abrir</button>
-          </article>
-          ${renderPrintableAgeCards()}
-        </div>
-      </section>
+      ${renderTeacherActivitiesView()}
     `,
     favoritos: `
       <section class="tw-board">
@@ -4651,8 +5329,11 @@ const renderTeacherWorkspaceView = (view) => {
         ${renderPremiumEmpty("RELATORIOS EM PREPARACAO", "Indicadores reais de progresso serao exibidos quando houver dados suficientes.", "blue")}
       </section>
     `,
+    formacao: `
+      ${renderTeacherFormationView()}
+    `,
     universidade: `
-      <section class="tw-board tw-placeholder"><h2>Universidade</h2><p>Formacao docente, trilhas e certificados abrirao neste painel.</p></section>
+      ${renderTeacherFormationView()}
     `,
     configuracoes: `
       <section class="tw-board tw-placeholder"><h2>Configuracoes</h2><p>Preferencias do workspace, notificacoes e atalhos ficarao aqui.</p></section>
@@ -5727,7 +6408,7 @@ const initOfficialSchoolDashboard = () => {
 };
 
 const renderProfessorDashboard = () => {
-  return renderProfessorProfilePage();
+  return renderTeacherPilotHome();
 };
 
 const familyAreaData = {
@@ -6655,6 +7336,11 @@ const modules = {
     code: "MS-008",
     html: `
       <div class="university-catalog-platform" data-course-catalog>
+        ${
+          getPrintableParams().get("from") === "teacher"
+            ? `<a class="university-teacher-return" href="professor.html?view=formacao">VOLTAR PARA AREA DO PROFESSOR</a>`
+            : ""
+        }
         <section class="university-public-hero" id="universidade">
           <div>
             <span>Universidade Raizes e Saberes</span>
@@ -7014,7 +7700,7 @@ const modules = {
     html: `
       <div class="book-reader" data-book-reader data-total-pages="${activeBook.totalPages}">
         <header class="reader-header">
-          <a class="reader-back" href="biblioteca.html">&larr; Biblioteca</a>
+          <a class="reader-back" href="${getPrintableParams().get("from") === "teacher" ? "professor.html?view=biblioteca" : "biblioteca.html"}">&larr; ${getPrintableParams().get("from") === "teacher" ? "Biblioteca do Professor" : "Biblioteca"}</a>
           <div>
             <p>${activeBook.collection}</p>
             <h1>${activeBook.title}</h1>
@@ -7454,7 +8140,7 @@ const environments = {
     label: "Biblioteca Digital",
     profile: "Acervo Educacional",
     search: "Buscar livros, colecoes, disciplinas...",
-    user: "Ola, Professor<br />Marcos Silva",
+    user: "Professora Helena<br />Ver perfil",
     nav: [
       ["biblioteca", "Biblioteca Digital", "biblioteca.html"],
       ["viewer", "Book Viewer", "book-viewer.html"],
@@ -7474,7 +8160,7 @@ const environments = {
     label: "Universidade",
     profile: "Formacao que Transforma",
     search: "Buscar cursos, trilhas, temas...",
-    user: "Ana Carolina<br />Nivel 3 - 1.250 XP",
+    user: "Professor<br />Formacao",
     avatar: "assets/universidade/avatar-ana-carolina.webp",
     profileImage: "logo-sidebar-dark.png",
     nav: [
@@ -7547,32 +8233,26 @@ const environments = {
     user: "Professora Helena<br />Ver perfil",
     nav: [
       ["professor", "Inicio", "professor.html"],
-      ["turmas", "Minhas Turmas", "#"],
-      ["biblioteca", "Biblioteca Viva", "#"],
+      ["turmas", "Minhas Turmas", "professor-turma.html"],
+      ["planejamentos", "Planejamento", "professor.html"],
       ["atividades", "Atividades Imprimiveis", "atividades.html"],
-      ["planejamentos", "Planejamentos", "#"],
-      ["favoritos", "Favoritos", "atividades.html?favoritos=1"],
-      ["relatorios", "Relatorios", "#"],
-      ["alunos", "Alunos", "#"],
-      ["experiencias", "Experiencias", "#"],
-      ["jogos", "Jogos", "#"],
-      ["avaliacoes", "Avaliacoes", "#"],
-      ["universidade", "Universidade", "#"],
-      ["configuracoes", "Configuracoes", "#"],
+      ["biblioteca", "Biblioteca", "biblioteca.html"],
+      ["alunos", "Acompanhamento", "professor-aluno.html?id=pedro"],
+      ["universidade", "Formacao", "universidade.html"],
     ],
     mobile: [
       ["professor", "Inicio", "professor.html"],
-      ["turmas", "Turmas", "#"],
+      ["turmas", "Turmas", "professor-turma.html"],
       ["atividades", "Atividades", "atividades.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
-      ["mensagens", "Mais", "#"],
+      ["universidade", "Formacao", "universidade.html"],
     ],
   },
   avalia: {
     label: "Avalia+",
     profile: "Inteligencia em Avaliacao",
     search: "Buscar diagnosticos, disciplinas, turmas...",
-    user: "Prof. Marcos Silva<br />Gestor Escolar",
+    user: "Professora Helena<br />Ver perfil",
     nav: [
       ["avalia", "Visao Geral", "avalia.html"],
       ["diagnosticos", "Diagnosticos", "#"],
@@ -8431,7 +9111,7 @@ const publishDigitalAssessmentDemo = (payload) => {
     title: payload.title,
     component: payload.component,
     year: payload.year,
-    teacher: "Prof. Marcos Silva",
+    teacher: pilotProfiles.teacher.displayName,
     classId: "2ano-a",
     className: payload.className || "2o Ano A",
     status: "DISPONIVEL",
@@ -9116,7 +9796,7 @@ const initQuestionBank = () => {
                 <span><b>AVALIACAO:</b> ${htmlEscape(assessmentTitle)}</span>
                 <span><b>COMPONENTE:</b> ${htmlEscape(component)}</span>
                 <span><b>ANO/TURMA:</b> ${htmlEscape(`${year} ${className}`.trim())}</span>
-                <span><b>PROFESSOR(A):</b> Prof. Marcos Silva</span>
+                <span><b>PROFESSOR(A):</b> ${htmlEscape(pilotProfiles.teacher.displayName)}</span>
                 <span><b>DATA DE APLICACAO:</b> ${htmlEscape(applicationDate || "____/____/______")}</span>
                 <span><b>TOTAL DE QUESTOES:</b> ${items.length}</span>
                 <span><b>VALOR TOTAL:</b> ${totalPoints}</span>
@@ -9135,7 +9815,7 @@ const initQuestionBank = () => {
                 <span><b>ESTUDANTE:</b> _____________________________________________</span>
                 <span><b>TURMA:</b> ${htmlEscape(className)}</span>
                 <span><b>TURNO:</b> __________________</span>
-                <span><b>PROFESSOR(A):</b> Prof. Marcos Silva</span>
+                <span><b>PROFESSOR(A):</b> ${htmlEscape(pilotProfiles.teacher.displayName)}</span>
                 <span><b>COMPONENTE CURRICULAR:</b> ${htmlEscape(component)}</span>
                 <span><b>ANO:</b> ${htmlEscape(year)}</span>
                 <span><b>DATA:</b> ${htmlEscape(applicationDate || "____/____/______")}</span>
@@ -9671,9 +10351,11 @@ const getSupabaseUserContext = () => {
     token,
     userId: payload.sub || null,
     role:
+      appMetadata.platform_role ||
       appMetadata.question_bank_role ||
       appMetadata.app_role ||
       appMetadata.role ||
+      payload.platform_role ||
       payload.question_bank_role ||
       payload.app_role ||
       (payload.role === "service_role" ? "service_role" : "anonymous"),
@@ -9690,9 +10372,11 @@ const resolveSupabaseUserContext = async ({ requireAuthenticated = false, allowe
   const payload = decodeJwtPayload(token);
   const appMetadata = payload.app_metadata || {};
   const role =
+    appMetadata.platform_role ||
     appMetadata.question_bank_role ||
     appMetadata.app_role ||
     appMetadata.role ||
+    payload.platform_role ||
     payload.question_bank_role ||
     payload.app_role ||
     (payload.role === "service_role" ? "service_role" : "anonymous");
@@ -9707,10 +10391,10 @@ const resolveSupabaseUserContext = async ({ requireAuthenticated = false, allowe
     return context;
   }
   if (!context.userId || !context.token || String(context.token).startsWith("sb_")) {
-    throw new Error("Sessao Supabase ausente. Entre novamente para salvar a avaliacao.");
+    throw new Error("Sessao Supabase ausente. Entre novamente para continuar.");
   }
   if (allowedRoles.length && !allowedRoles.includes(context.role)) {
-    throw new Error("Seu perfil nao tem permissao para salvar avaliacoes neste modulo.");
+    throw new Error("Seu perfil nao tem permissao para acessar este modulo.");
   }
   return context;
 };
@@ -9776,6 +10460,142 @@ const createSupabaseRestClient = () => {
   const getContext = (options) => resolveSupabaseUserContext(options);
 
   return { isConfigured, canUseFallback, request, context, getContext };
+};
+
+const supabaseEq = (value) => `eq.${encodeURIComponent(String(value || ""))}`;
+const supabaseIn = (values = []) => `in.(${values.map((value) => String(value || "")).filter(Boolean).join(",")})`;
+const normalizeInstitutionalStatus = (status) => {
+  const value = String(status || "").trim();
+  return value ? value.replaceAll("_", " ") : "Ativo";
+};
+const normalizeStudentName = (student = {}) => student.nome || student.name || student.full_name || student.fullName || "Aluno";
+const normalizeClassName = (classItem = {}) => classItem.nome || classItem.name || "Turma";
+const normalizeSchoolName = (school = {}) => school.nome || school.name || "Escola";
+
+const mapInstitutionalClass = (classItem = {}, school = null, studentCount = 0) => ({
+  id: classItem.id,
+  name: normalizeClassName(classItem),
+  schoolId: classItem.school_id || school?.id || "",
+  schoolName: normalizeSchoolName(school || {}),
+  status: normalizeInstitutionalStatus(classItem.status),
+  shift: classItem.turno || classItem.shift || "",
+  schoolYear: classItem.school_year || "",
+  students: studentCount,
+});
+
+const mapInstitutionalStudent = (student = {}, classItem = null) => {
+  const name = normalizeStudentName(student);
+  return {
+    id: student.id,
+    name,
+    fullName: name,
+    classId: student.class_id || classItem?.id || "",
+    className: normalizeClassName(classItem || {}),
+    schoolId: student.school_id || classItem?.schoolId || classItem?.school_id || "",
+    status: normalizeInstitutionalStatus(student.status),
+    avatar: "",
+    progress: 0,
+    pendingActivities: 0,
+    completedActivities: 0,
+  };
+};
+
+const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
+  if (!force && teacherInstitutionalState.status === "ready") return teacherInstitutionalState;
+  if (!force && teacherInstitutionalState.promise) return teacherInstitutionalState.promise;
+  teacherInstitutionalState.status = "loading";
+  teacherInstitutionalState.error = "";
+  teacherInstitutionalState.promise = (async () => {
+    try {
+      const client = createSupabaseRestClient();
+      const context = await client.getContext({ requireAuthenticated: true, allowedRoles: ["professor", "admin", "gestor", "coordenador"] });
+      const profileRows = await client.request(
+        "profiles",
+        `?select=id,display_name,platform_role,status&id=${supabaseEq(context.userId)}&limit=1`,
+        { requireAuthenticated: true, allowedRoles: ["professor", "admin", "gestor", "coordenador"] }
+      );
+      const profile = Array.isArray(profileRows) ? profileRows[0] : null;
+      if (!profile?.id) {
+        throw new Error("Profile institucional nao encontrado para a sessao autenticada.");
+      }
+
+      const membershipRows = await client.request(
+        "class_teacher_memberships",
+        "?select=id,class_id,teacher_id,role,status&status=eq.active",
+        { requireAuthenticated: true, allowedRoles: ["professor", "admin", "gestor", "coordenador"] }
+      );
+      const classIds = [...new Set((membershipRows || []).map((item) => item.class_id).filter(Boolean))];
+      if (!classIds.length) {
+        teacherInstitutionalState.profile = {
+          id: profile.id,
+          displayName: profile.display_name || getTeacherDisplayName(),
+          role: profile.platform_role || context.role,
+        };
+        teacherInstitutionalState.classes = [];
+        teacherInstitutionalState.studentsByClass = {};
+        teacherInstitutionalState.studentsById = {};
+        teacherInstitutionalState.status = "empty";
+        return teacherInstitutionalState;
+      }
+
+      const classRows = await client.request(
+        "classes",
+        `?select=id,nome,school_id,status,turno,school_year&id=${supabaseIn(classIds)}`,
+        { requireAuthenticated: true, allowedRoles: ["professor", "admin", "gestor", "coordenador"] }
+      );
+      const schoolIds = [...new Set((classRows || []).map((item) => item.school_id).filter(Boolean))];
+      const schoolRows = schoolIds.length
+        ? await client.request("schools", `?select=id,nome,status&id=${supabaseIn(schoolIds)}`, {
+            requireAuthenticated: true,
+            allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+          })
+        : [];
+      const enrollmentRows = await client.request(
+        "enrollments",
+        `?select=id,student_id,class_id,school_id,status,students(id,nome,school_id,class_id,status)&status=eq.active&class_id=${supabaseIn(classIds)}`,
+        { requireAuthenticated: true, allowedRoles: ["professor", "admin", "gestor", "coordenador"] }
+      );
+      const schoolById = new Map((schoolRows || []).map((item) => [item.id, item]));
+      const rawClassById = new Map((classRows || []).map((item) => [item.id, item]));
+      const studentsByClass = {};
+      const studentsById = {};
+      (enrollmentRows || []).forEach((enrollment) => {
+        const rawStudent = enrollment.students || {};
+        if (!rawStudent.id) return;
+        const rawClass = rawClassById.get(enrollment.class_id) || { id: enrollment.class_id };
+        const student = mapInstitutionalStudent({ ...rawStudent, class_id: enrollment.class_id, school_id: enrollment.school_id }, rawClass);
+        studentsByClass[enrollment.class_id] = studentsByClass[enrollment.class_id] || [];
+        studentsByClass[enrollment.class_id].push(student);
+        studentsById[student.id] = student;
+      });
+      Object.values(studentsByClass).forEach((students) => students.sort((a, b) => a.name.localeCompare(b.name, "pt-BR")));
+      const classes = (classRows || [])
+        .map((classItem) => mapInstitutionalClass(classItem, schoolById.get(classItem.school_id), studentsByClass[classItem.id]?.length || 0))
+        .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+
+      teacherInstitutionalState.profile = {
+        id: profile.id,
+        displayName: profile.display_name || getTeacherDisplayName(),
+        role: profile.platform_role || context.role,
+      };
+      teacherInstitutionalState.classes = classes;
+      teacherInstitutionalState.studentsByClass = studentsByClass;
+      teacherInstitutionalState.studentsById = studentsById;
+      teacherInstitutionalState.loadedAt = new Date().toISOString();
+      teacherInstitutionalState.status = classes.length ? "ready" : "empty";
+      return teacherInstitutionalState;
+    } catch (error) {
+      teacherInstitutionalState.status = "error";
+      teacherInstitutionalState.error = error.message || "Falha ao carregar dados institucionais.";
+      teacherInstitutionalState.classes = [];
+      teacherInstitutionalState.studentsByClass = {};
+      teacherInstitutionalState.studentsById = {};
+      return teacherInstitutionalState;
+    } finally {
+      teacherInstitutionalState.promise = null;
+    }
+  })();
+  return teacherInstitutionalState.promise;
 };
 
 const questionBankFallbackStore = {
@@ -10423,9 +11243,38 @@ const initTeacherWorkspace = () => {
   const content = workspace.querySelector("[data-teacher-content]");
   const home = workspace.querySelector("[data-teacher-home]");
   const search = workspace.querySelector("[data-teacher-search]");
+  let activeTeacherView = "inicio";
+
+  const getPlanningPanel = () => workspace.querySelector("[data-planning-panel]");
+
+  const fillPlanningForm = (proposal = {}, day = "segunda") => {
+    const panel = getPlanningPanel();
+    const form = panel?.querySelector("[data-teacher-planning-form]");
+    if (!panel || !form) return;
+    panel.hidden = false;
+    panel.querySelector("h2").textContent = proposal.id ? "Editar proposta" : "Adicionar proposta";
+    form.elements.id.value = proposal.id || "";
+    form.elements.title.value = proposal.title || "";
+    form.elements.day.value = proposal.day || day;
+    form.elements.classId.value = proposal.classId || pilotProfiles.class.id;
+    form.elements.resourceType.value = proposal.resourceType || "proposta-livre";
+    form.elements.note.value = proposal.note || "";
+    form.elements.title.focus();
+  };
+
+  const closePlanningForm = () => {
+    const panel = getPlanningPanel();
+    const form = panel?.querySelector("[data-teacher-planning-form]");
+    if (!panel || !form) return;
+    form.reset();
+    form.elements.id.value = "";
+    panel.hidden = true;
+    panel.querySelector("h2").textContent = "Adicionar proposta";
+  };
 
   const openView = (view) => {
     if (!content) return;
+    activeTeacherView = view;
     if (view === "inicio") {
       content.hidden = true;
       if (home) home.hidden = false;
@@ -10448,9 +11297,70 @@ const initTeacherWorkspace = () => {
       return;
     }
     const button = event.target.closest("[data-teacher-view]");
+    const addPlanning = event.target.closest("[data-planning-add]");
+    if (addPlanning) {
+      event.preventDefault();
+      fillPlanningForm({}, addPlanning.dataset.planningAdd || "segunda");
+      return;
+    }
+    const cancelPlanning = event.target.closest("[data-planning-cancel]");
+    if (cancelPlanning) {
+      event.preventDefault();
+      closePlanningForm();
+      return;
+    }
+    const viewPlanning = event.target.closest("[data-planning-view]");
+    if (viewPlanning) {
+      event.preventDefault();
+      const detail = workspace.querySelector(`[data-planning-detail="${CSS.escape(viewPlanning.dataset.planningView)}"]`);
+      if (detail) detail.hidden = !detail.hidden;
+      return;
+    }
+    const editPlanning = event.target.closest("[data-planning-edit]");
+    if (editPlanning) {
+      event.preventDefault();
+      const proposal = readTeacherPlanning().find((item) => item.id === editPlanning.dataset.planningEdit);
+      if (proposal) fillPlanningForm(proposal, proposal.day);
+      return;
+    }
+    const removePlanning = event.target.closest("[data-planning-remove]");
+    if (removePlanning) {
+      event.preventDefault();
+      const proposal = readTeacherPlanning().find((item) => item.id === removePlanning.dataset.planningRemove);
+      if (!proposal) return;
+      if (!window.confirm(`Remover a proposta "${proposal.title}" do planejamento?`)) return;
+      writeTeacherPlanning(readTeacherPlanning().filter((item) => item.id !== proposal.id));
+      openView("planejamentos");
+      return;
+    }
     if (!button) return;
     event.preventDefault();
     openView(button.dataset.teacherView || "inicio");
+  });
+
+  workspace.addEventListener("submit", (event) => {
+    const form = event.target.closest("[data-teacher-planning-form]");
+    if (!form) return;
+    event.preventDefault();
+    const formData = new FormData(form);
+    const classItem = teacherWorkspaceClasses.find((item) => item.id === formData.get("classId")) || teacherWorkspaceClasses[0];
+    const now = new Date().toISOString();
+    const currentItems = readTeacherPlanning();
+    const existingId = String(formData.get("id") || "");
+    const proposal = {
+      id: existingId || `planning-${Date.now()}`,
+      title: String(formData.get("title") || "").trim(),
+      day: String(formData.get("day") || "segunda"),
+      classId: classItem.id,
+      className: classItem.name,
+      resourceType: String(formData.get("resourceType") || "proposta-livre"),
+      note: String(formData.get("note") || "").trim(),
+      createdAt: currentItems.find((item) => item.id === existingId)?.createdAt || now,
+      updatedAt: now,
+    };
+    if (!proposal.title) return;
+    writeTeacherPlanning(existingId ? currentItems.map((item) => (item.id === existingId ? proposal : item)) : [...currentItems, proposal]);
+    openView(activeTeacherView === "planejamentos" ? "planejamentos" : activeTeacherView);
   });
 
   search?.addEventListener("input", () => {
@@ -10458,6 +11368,32 @@ const initTeacherWorkspace = () => {
     content?.querySelectorAll("[data-teacher-search-item]").forEach((item) => {
       item.hidden = Boolean(query) && !item.textContent.toLowerCase().includes(query);
     });
+  });
+
+  const initialView = new URLSearchParams(window.location.search).get("view");
+  if (initialView && initialView !== "inicio") {
+    openView(initialView);
+  }
+
+  ensureTeacherInstitutionalData().then(() => {
+    if (teacherInstitutionalState.hydratedDom || !document.body.contains(workspace)) return;
+    teacherInstitutionalState.hydratedDom = true;
+    const path = window.location.pathname.split("/").pop() || "professor.html";
+    if (path === "professor-turma.html") {
+      workspace.outerHTML = renderTeacherClassPage();
+      requestAnimationFrame(() => document.querySelector(".teacher-workspace")?.classList.add("is-mounted"));
+      initTeacherWorkspace();
+      return;
+    }
+    if (path === "professor-aluno.html") {
+      workspace.outerHTML = renderTeacherStudentPage();
+      requestAnimationFrame(() => document.querySelector(".teacher-workspace")?.classList.add("is-mounted"));
+      initTeacherWorkspace();
+      return;
+    }
+    workspace.outerHTML = renderTeacherPilotHome();
+    requestAnimationFrame(() => document.querySelector(".teacher-workspace")?.classList.add("is-mounted"));
+    initTeacherWorkspace();
   });
 };
 
@@ -10499,7 +11435,8 @@ const initPrintableActivities = () => {
       return;
     }
     if (event.target.closest("[data-pa-clear]")) {
-      window.history.replaceState({}, "", window.location.pathname);
+      const contextParams = appendPrintableContextParams(new URLSearchParams());
+      window.history.replaceState({}, "", `${window.location.pathname}${contextParams.toString() ? `?${contextParams}` : ""}`);
       const admin = root.dataset.printableApp === "admin";
       root.outerHTML = renderPrintableMainPage({ admin });
       initPrintableActivities();
@@ -10554,17 +11491,21 @@ const initUniversalActivityAssignmentUi = () => {
   const classSelect = form?.querySelector("[name='classId']");
   const scopeSelect = form?.querySelector("[name='scope']");
   const studentFieldset = form?.querySelector("[data-ua-students]");
+  const context = getPrintableAssignmentContext();
   const renderStudents = () => {
     const classInfo = getUniversalActivityClass(classSelect?.value);
     const scope = scopeSelect?.value || "class";
     studentFieldset.innerHTML = `<legend>Alunos</legend>${classInfo.students
       .map((student, index) => {
-        const checked = scope === "class" || (scope === "student" && index === 0) ? "checked" : "";
+        const checked = scope === "class" || (scope === "student" && (student.id === context.id || index === 0)) || (scope === "group" && student.id === context.id) ? "checked" : "";
         const type = scope === "student" ? "radio" : "checkbox";
         return `<label><input type="${type}" name="studentIds" value="${printableEscape(student.id)}" ${checked} ${scope === "class" ? "disabled" : ""} /><span>${printableEscape(student.name)}</span></label>`;
       })
       .join("")}`;
   };
+  if (context.type === "student" && scopeSelect) scopeSelect.value = "student";
+  if (context.type === "class" && scopeSelect) scopeSelect.value = "class";
+  if (context.classId && classSelect) classSelect.value = context.classId;
   document.addEventListener("click", (event) => {
     const assign = event.target.closest("[data-ua-assign]");
     if (!assign) return;
@@ -10612,49 +11553,35 @@ const renderUniversalDeliveryDetail = (assignmentId, target) => {
   if (!assignment || !target) return;
   const activity = getUniversalActivityByCode(assignment.activityCode);
   const classInfo = getUniversalActivityClass(assignment.classId);
-  const selectedStudentId = target.dataset.uaSelectedStudent || "";
-  const selectedStudent = classInfo.students.find((student) => student.id === selectedStudentId);
-  const selectedSubmission = selectedStudent
-    ? state.submissions.find((item) => item.assignmentId === assignment.assignmentId && item.studentId === selectedStudent.id)
-    : null;
-  const selectedStatus = selectedSubmission?.status === "COMPLETED" ? "CONCLUIDA" : selectedSubmission?.status === "IN_PROGRESS" ? "EM ANDAMENTO" : "NAO INICIOU";
+  const submissions = state.submissions.filter((item) => item.assignmentId === assignment.assignmentId);
+  const targetLabel = assignment.targetLabel || assignment.className || "Destinatario registrado";
   target.innerHTML = `
     <section class="ua-delivery-open">
-      <header><span>${printableEscape(assignment.activityCode)}</span><h3>Entregas</h3><small>${printableEscape(activity?.titulo || assignment.activityCode)} · ${printableEscape(assignment.className)}</small></header>
-      ${classInfo.students
-        .filter((student) => assignment.studentIds.includes(student.id))
-        .map((student) => {
-          const submission = state.submissions.find((item) => item.assignmentId === assignment.assignmentId && item.studentId === student.id);
-          const status = submission?.status === "COMPLETED" ? "CONCLUIDA" : submission?.status === "IN_PROGRESS" ? "EM ANDAMENTO" : "NAO INICIOU";
-          return `
-            <article>
-              <strong>${printableEscape(student.name)}</strong>
-              <span>${status}</span>
-              ${submission?.finalArtwork || submission?.preview ? `<img src="${printableEscape(submission.finalArtwork || submission.preview)}" alt="Producao de ${printableEscape(student.name)}" />` : `<small>Sem producao salva.</small>`}
-              <small>Envio: ${new Date(assignment.assignedAt).toLocaleString("pt-BR")} · Inicio: ${submission?.startedAt ? new Date(submission.startedAt).toLocaleString("pt-BR") : "pendente"} · Ultima edicao: ${submission?.lastSavedAt ? new Date(submission.lastSavedAt).toLocaleString("pt-BR") : "pendente"} · Conclusao: ${submission?.completedAt ? new Date(submission.completedAt).toLocaleString("pt-BR") : "pendente"}</small>
-              <button type="button" data-ua-open-student-delivery="${printableEscape(student.id)}">Abrir detalhes</button>
-            </article>
-          `;
-        })
-        .join("")}
+      <header><span>${printableEscape(assignment.activityCode)}</span><h3>Indicacao registrada</h3><small>${printableEscape(activity?.titulo || assignment.activityCode)}</small></header>
+      <dl class="tw-card-meta">
+        <div><dt>Destinatario</dt><dd>${printableEscape(targetLabel)}</dd></div>
+        <div><dt>Turma</dt><dd>${printableEscape(classInfo.name)}</dd></div>
+        ${assignment.assignedAt ? `<div><dt>Indicada em</dt><dd>${new Date(assignment.assignedAt).toLocaleString("pt-BR")}</dd></div>` : ""}
+        ${assignment.status ? `<div><dt>Status</dt><dd>${printableEscape(assignment.status)}</dd></div>` : ""}
+        ${assignment.dueDate ? `<div><dt>Prazo</dt><dd>${new Date(assignment.dueDate).toLocaleDateString("pt-BR")}</dd></div>` : ""}
+      </dl>
       ${
-        selectedStudent
-          ? `<aside class="ua-delivery-student-detail">
-              <h4>${printableEscape(selectedStudent.name)}</h4>
-              <dl>
-                <div><dt>Status</dt><dd>${selectedStatus}</dd></div>
-                <div><dt>Codigo</dt><dd>${printableEscape(assignment.activityCode)}</dd></div>
-                <div><dt>Titulo</dt><dd>${printableEscape(activity?.titulo || assignment.activityCode)}</dd></div>
-                <div><dt>Turma</dt><dd>${printableEscape(assignment.className)}</dd></div>
-                <div><dt>Professor</dt><dd>${printableEscape(assignment.teacherName)}</dd></div>
-                <div><dt>Envio</dt><dd>${new Date(assignment.assignedAt).toLocaleString("pt-BR")}</dd></div>
-                <div><dt>Inicio</dt><dd>${selectedSubmission?.startedAt ? new Date(selectedSubmission.startedAt).toLocaleString("pt-BR") : "pendente"}</dd></div>
-                <div><dt>Ultima edicao</dt><dd>${selectedSubmission?.lastSavedAt ? new Date(selectedSubmission.lastSavedAt).toLocaleString("pt-BR") : "pendente"}</dd></div>
-                <div><dt>Conclusao</dt><dd>${selectedSubmission?.completedAt ? new Date(selectedSubmission.completedAt).toLocaleString("pt-BR") : "pendente"}</dd></div>
-              </dl>
-              ${selectedSubmission?.finalArtwork || selectedSubmission?.preview ? `<img src="${printableEscape(selectedSubmission.finalArtwork || selectedSubmission.preview)}" alt="Producao final de ${printableEscape(selectedStudent.name)}" />` : `<p class="ua-empty">Este aluno ainda nao salvou producao.</p>`}
-            </aside>`
-          : ""
+        submissions.length
+          ? submissions
+              .map((submission) => {
+                const student = classInfo.students.find((item) => item.id === submission.studentId);
+                return `
+                  <article>
+                    <strong>${printableEscape(student?.name || submission.studentName || submission.studentId)}</strong>
+                    ${submission.status ? `<small>Status registrado: ${printableEscape(submission.status)}</small>` : ""}
+                    ${submission.lastSavedAt ? `<small>Ultima edicao: ${new Date(submission.lastSavedAt).toLocaleString("pt-BR")}</small>` : ""}
+                    ${submission.completedAt ? `<small>Conclusao: ${new Date(submission.completedAt).toLocaleString("pt-BR")}</small>` : ""}
+                    ${submission.finalArtwork || submission.preview ? `<img src="${printableEscape(submission.finalArtwork || submission.preview)}" alt="Producao de ${printableEscape(student?.name || submission.studentName || "aluno")}" />` : ""}
+                  </article>
+                `;
+              })
+              .join("")
+          : `<p class="ua-empty">Nenhuma producao registrada para esta indicacao.</p>`
       }
     </section>
   `;
@@ -11023,7 +11950,7 @@ const renderAppPage = () => {
   }
   document.title = `${activeModule.title} | Raizes e Saberes`;
 
-  if (["professorTurma", "professorAluno"].includes(activeKey)) {
+  if (["professor", "professorTurma", "professorAluno"].includes(activeKey)) {
     mount.innerHTML = activeModule.html;
     initPlatformLogout();
     requestAnimationFrame(() => {
