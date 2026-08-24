@@ -8205,6 +8205,21 @@ td {
   align-items: end;
 }
 
+.tw-planning-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.tw-planning-toolbar strong {
+  color: #083f2d;
+  font-size: 0.82rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
 .tw-planning-heading span,
 .tw-class-selector span,
 .tw-planning-day header span,
@@ -8256,6 +8271,14 @@ td {
   background: #0d6b4b;
   color: #fff;
   outline: none;
+}
+
+.tw-planning-heading button:disabled,
+.tw-planning-add-day:disabled,
+.tw-planning-actions button:disabled,
+.tw-planning-form-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .tw-class-selector {
@@ -8325,6 +8348,11 @@ td {
   border-radius: 12px;
   padding: 12px;
   background: #fff;
+}
+
+.tw-planning-proposal.is-published {
+  border-color: rgba(13, 107, 75, 0.28);
+  background: #f6fbf7;
 }
 
 .tw-planning-proposal strong {
@@ -12072,6 +12100,15 @@ td {
   display: grid;
   gap: 1px;
   padding-right: 18px;
+}
+
+.family-week-entry {
+  min-width: 0;
+}
+
+.family-week-entry strong,
+.family-week-entry p {
+  overflow-wrap: anywhere;
 }
 
 .family-week-routine.is-missing {

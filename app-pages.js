@@ -3353,6 +3353,36 @@ const teacherPlanningResourceTypes = [
   ["proposta-livre", "Proposta livre do professor"],
 ];
 
+const teacherPlanningRemoteResourceTypes = {
+  livro: "livro",
+  experiencia: "experiencia",
+  "atividade-imprimivel": "atividade",
+  biblioteca: "livro",
+  "experiencia-digital": "atividade_online",
+  "proposta-livre": "proposta_livre",
+};
+
+const teacherPlanningLocalResourceTypes = Object.fromEntries(Object.entries(teacherPlanningRemoteResourceTypes).map(([local, remote]) => [remote, local]));
+
+const teacherPlanningCalendarTypes = [
+  ["atividade", "Atividade"],
+  ["aula", "Aula"],
+  ["lembrete", "Lembrete"],
+  ["livro", "Livro"],
+  ["experiencia", "Experiencia"],
+  ["atividade_online", "Atividade online"],
+  ["outro", "Outro"],
+];
+
+const teacherPlanningState = {
+  status: "idle",
+  error: "",
+  promise: null,
+  weekStartIso: "",
+  plans: [],
+  publicationsByPlanId: {},
+};
+
 const teacherWorkspaceStudents = [
   {
     id: pilotProfiles.student.id,
@@ -3374,6 +3404,8 @@ const teacherInstitutionalState = {
   promise: null,
   profile: null,
   classes: [],
+  memberships: [],
+  teacherByClass: {},
   studentsByClass: {},
   studentsById: {},
   hydratedDom: false,
@@ -3388,6 +3420,7 @@ const getTeacherInstitutionalStudents = (classId = "") => {
 const getTeacherDisplayName = () => teacherInstitutionalState.profile?.displayName || pilotProfiles.teacher.displayName;
 const getTeacherClassHref = (classItem) => `professor-turma.html?id=${encodeURIComponent(classItem.id)}`;
 const getTeacherStudentHref = (student) => `professor-aluno.html?id=${encodeURIComponent(student.id)}`;
+const getTeacherPlanningClasses = () => getTeacherInstitutionalClasses();
 
 const teacherWorkspaceTasks = [
   { label: "Atividades pendentes na turma", count: pilotProfiles.student.pendingActivities, view: "turmas" },
@@ -3475,29 +3508,283 @@ const writeTeacherPlanning = (items) => {
 const findTeacherPlanningLabel = (collection, value, fallback = "") =>
   collection.find(([key]) => key === value)?.[1] || fallback || value;
 
-const renderTeacherPlanningProposalCard = (proposal) => `
-  <article class="tw-planning-proposal" data-teacher-search-item data-planning-card="${printableEscape(proposal.id)}">
-    <span>${printableEscape(findTeacherPlanningLabel(teacherPlanningResourceTypes, proposal.resourceType, "Recurso"))}</span>
+const toTeacherIsoDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const fromTeacherIsoDate = (isoDate = "") => {
+  const [year, month, day] = String(isoDate).split("-").map(Number);
+  return Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day) ? new Date(year, month - 1, day) : new Date();
+};
+
+const getTeacherPlanningWeekStart = (date = new Date()) => {
+  const copy = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = copy.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  copy.setDate(copy.getDate() + diff);
+  return toTeacherIsoDate(copy);
+};
+
+const getTeacherPlanningWeekDates = (weekStartIso = teacherPlanningState.weekStartIso || getTeacherPlanningWeekStart()) => {
+  const start = fromTeacherIsoDate(weekStartIso);
+  return teacherPlanningDays.reduce((dates, [dayKey], index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+    dates[dayKey] = toTeacherIsoDate(date);
+    return dates;
+  }, {});
+};
+
+const formatTeacherPlanningDate = (isoDate = "") => {
+  if (!isoDate) return "";
+  return fromTeacherIsoDate(isoDate).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+};
+
+const getTeacherPlanningWeekLabel = () => {
+  const weekStart = teacherPlanningState.weekStartIso || getTeacherPlanningWeekStart();
+  const dates = getTeacherPlanningWeekDates(weekStart);
+  return `${formatTeacherPlanningDate(dates.segunda)} a ${formatTeacherPlanningDate(dates.sexta)}`;
+};
+
+const getTeacherPlanningClassById = (classId = "") => getTeacherPlanningClasses().find((classItem) => classItem.id === classId) || null;
+
+const getTeacherPlanningClassContext = (classId = "") => {
+  const classItem = getTeacherPlanningClassById(classId) || getTeacherPlanningClasses()[0] || null;
+  if (!classItem?.id) throw new Error("Nenhuma turma institucional disponivel para o planejamento.");
+  const teacherId = classItem.teacherId || teacherInstitutionalState.teacherByClass?.[classItem.id] || teacherInstitutionalState.profile?.teacherId || "";
+  if (!teacherId) throw new Error("Vinculo teacher_id nao encontrado para esta turma.");
+  if (!classItem.schoolId) throw new Error("school_id nao encontrado para esta turma.");
+  return { classItem, teacherId, schoolId: classItem.schoolId };
+};
+
+const normalizeTeacherPlanningResourceType = (value = "") =>
+  teacherPlanningRemoteResourceTypes[value] || (Object.values(teacherPlanningRemoteResourceTypes).includes(value) ? value : "outro");
+
+const mapTeacherPlanningResourceType = (value = "") => teacherPlanningLocalResourceTypes[value] || value || "proposta-livre";
+
+const normalizeTeacherPlanningCalendarType = (value = "") => {
+  const normalized = normalizeTeacherPlanningResourceType(value);
+  return teacherPlanningCalendarTypes.some(([key]) => key === normalized) ? normalized : "outro";
+};
+
+const mapTeacherPlanRow = (row = {}, classItem = null, publication = null) => ({
+  id: row.id,
+  title: row.title || "Proposta sem titulo",
+  day: row.weekday || "segunda",
+  planDate: row.plan_date || "",
+  classId: row.class_id || classItem?.id || "",
+  className: classItem?.name || "Turma",
+  schoolId: row.school_id || classItem?.schoolId || "",
+  teacherId: row.teacher_id || classItem?.teacherId || "",
+  resourceType: mapTeacherPlanningResourceType(row.resource_type),
+  note: row.teacher_notes || "",
+  status: row.status || "draft",
+  publication,
+  published: publication?.status === "published",
+  createdAt: row.created_at || "",
+  updatedAt: row.updated_at || "",
+});
+
+const setTeacherPlanningError = (message = "") => {
+  teacherPlanningState.status = message ? "error" : "ready";
+  teacherPlanningState.error = message;
+};
+
+const ensureTeacherPlanningWeek = async ({ force = false } = {}) => {
+  if (!teacherPlanningState.weekStartIso) teacherPlanningState.weekStartIso = getTeacherPlanningWeekStart();
+  if (!force && teacherPlanningState.status === "ready") return teacherPlanningState;
+  if (!force && teacherPlanningState.promise) return teacherPlanningState.promise;
+  teacherPlanningState.status = "loading";
+  teacherPlanningState.error = "";
+  teacherPlanningState.promise = (async () => {
+    try {
+      await ensureTeacherInstitutionalData();
+      if (!["ready", "empty"].includes(teacherInstitutionalState.status)) {
+        throw new Error(teacherInstitutionalState.error || "Dados institucionais indisponiveis.");
+      }
+      const classes = getTeacherInstitutionalClasses();
+      if (!classes.length) {
+        teacherPlanningState.plans = [];
+        teacherPlanningState.publicationsByPlanId = {};
+        teacherPlanningState.status = "ready";
+        return teacherPlanningState;
+      }
+      const client = createSupabaseRestClient();
+      const dates = getTeacherPlanningWeekDates();
+      const classIds = classes.map((classItem) => classItem.id).filter(Boolean);
+      const planRows = await client.request(
+        "teacher_plans",
+        `?select=id,teacher_id,class_id,school_id,plan_date,weekday,title,resource_type,resource_reference,teacher_notes,status,created_at,updated_at&status=neq.archived&plan_date=gte.${encodeURIComponent(dates.segunda)}&plan_date=lte.${encodeURIComponent(dates.sexta)}&class_id=${supabaseIn(classIds)}&order=plan_date.asc&order=created_at.asc`,
+        { requireAuthenticated: true, allowedRoles: ["professor", "admin", "gestor", "coordenador"] }
+      );
+      const planIds = (planRows || []).map((row) => row.id).filter(Boolean);
+      const publicationRows = planIds.length
+        ? await client.request(
+            "class_calendar_entries",
+            `?select=id,class_id,school_id,teacher_id,plan_id,entry_date,start_time,end_time,title,description,entry_type,status,created_at,updated_at&status=eq.published&plan_id=${supabaseIn(planIds)}&order=entry_date.asc`,
+            { requireAuthenticated: true, allowedRoles: ["professor", "admin", "gestor", "coordenador"] }
+          )
+        : [];
+      const classById = new Map(classes.map((classItem) => [classItem.id, classItem]));
+      const publicationsByPlanId = Object.fromEntries((publicationRows || []).filter((row) => row.plan_id).map((row) => [row.plan_id, row]));
+      teacherPlanningState.publicationsByPlanId = publicationsByPlanId;
+      teacherPlanningState.plans = (planRows || []).map((row) => mapTeacherPlanRow(row, classById.get(row.class_id), publicationsByPlanId[row.id]));
+      teacherPlanningState.status = "ready";
+      return teacherPlanningState;
+    } catch (error) {
+      teacherPlanningState.plans = [];
+      teacherPlanningState.publicationsByPlanId = {};
+      setTeacherPlanningError(error.message || "Falha ao carregar planejamento no Supabase.");
+      return teacherPlanningState;
+    } finally {
+      teacherPlanningState.promise = null;
+    }
+  })();
+  return teacherPlanningState.promise;
+};
+
+const saveTeacherPlanningToSupabase = async (formData) => {
+  const weekDates = getTeacherPlanningWeekDates();
+  const day = String(formData.get("day") || "segunda");
+  const existingId = String(formData.get("id") || "");
+  const { classItem, teacherId, schoolId } = getTeacherPlanningClassContext(String(formData.get("classId") || ""));
+  const payload = {
+    teacher_id: teacherId,
+    class_id: classItem.id,
+    school_id: schoolId,
+    plan_date: weekDates[day] || weekDates.segunda,
+    weekday: day,
+    title: String(formData.get("title") || "").trim(),
+    resource_type: normalizeTeacherPlanningResourceType(String(formData.get("resourceType") || "proposta-livre")),
+    resource_reference: {},
+    teacher_notes: String(formData.get("note") || "").trim() || null,
+    status: "draft",
+  };
+  if (!payload.title) throw new Error("Informe um titulo para a proposta.");
+  const client = createSupabaseRestClient();
+  if (existingId) {
+    await client.request("teacher_plans", `?id=${supabaseEq(existingId)}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+      requireAuthenticated: true,
+      allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+    });
+  } else {
+    await client.request("teacher_plans", "", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      requireAuthenticated: true,
+      allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+    });
+  }
+  await ensureTeacherPlanningWeek({ force: true });
+};
+
+const archiveTeacherPlanning = async (planId) => {
+  const client = createSupabaseRestClient();
+  const publication = teacherPlanningState.publicationsByPlanId?.[planId];
+  if (publication?.id) {
+    await client.request("class_calendar_entries", `?id=${supabaseEq(publication.id)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "archived" }),
+      requireAuthenticated: true,
+      allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+    });
+  }
+  await client.request("teacher_plans", `?id=${supabaseEq(planId)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "archived" }),
+    requireAuthenticated: true,
+    allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+  });
+  await ensureTeacherPlanningWeek({ force: true });
+};
+
+const saveTeacherCalendarEntryToSupabase = async (formData) => {
+  const planId = String(formData.get("planId") || "");
+  const plan = teacherPlanningState.plans.find((item) => item.id === planId);
+  if (!plan) throw new Error("Proposta nao encontrada para publicacao.");
+  const { classItem, teacherId, schoolId } = getTeacherPlanningClassContext(plan.classId);
+  const payload = {
+    class_id: classItem.id,
+    school_id: schoolId,
+    teacher_id: teacherId,
+    plan_id: plan.id,
+    entry_date: String(formData.get("entryDate") || plan.planDate),
+    start_time: String(formData.get("startTime") || "") || null,
+    end_time: String(formData.get("endTime") || "") || null,
+    title: String(formData.get("title") || plan.title).trim(),
+    description: String(formData.get("description") || "").trim() || null,
+    entry_type: String(formData.get("entryType") || normalizeTeacherPlanningCalendarType(plan.resourceType) || "outro"),
+    status: "published",
+  };
+  if (!payload.title) throw new Error("Informe um titulo publico para a agenda.");
+  const existingId = String(formData.get("publicationId") || "");
+  const client = createSupabaseRestClient();
+  if (existingId) {
+    await client.request("class_calendar_entries", `?id=${supabaseEq(existingId)}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+      requireAuthenticated: true,
+      allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+    });
+  } else {
+    await client.request("class_calendar_entries", "", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      requireAuthenticated: true,
+      allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+    });
+  }
+  await ensureTeacherPlanningWeek({ force: true });
+};
+
+const archiveTeacherCalendarEntry = async (planId) => {
+  const publication = teacherPlanningState.publicationsByPlanId?.[planId];
+  if (!publication?.id) return;
+  const client = createSupabaseRestClient();
+  await client.request("class_calendar_entries", `?id=${supabaseEq(publication.id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "archived" }),
+    requireAuthenticated: true,
+    allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+  });
+  await ensureTeacherPlanningWeek({ force: true });
+};
+
+const renderTeacherPlanningProposalCard = (proposal) => {
+  const publication = proposal.publication || null;
+  const publicationLabel = publication?.entry_date ? `${formatTeacherPlanningDate(publication.entry_date)}${publication.start_time ? ` · ${publication.start_time.slice(0, 5)}` : ""}` : "Nao publicado";
+  return `
+  <article class="tw-planning-proposal ${proposal.published ? "is-published" : ""}" data-teacher-search-item data-planning-card="${printableEscape(proposal.id)}">
+    <span>${printableEscape(findTeacherPlanningLabel(teacherPlanningResourceTypes, proposal.resourceType, "Recurso"))} · ${proposal.published ? "PUBLICADO" : "RASCUNHO"}</span>
     <strong>${printableEscape(proposal.title)}</strong>
-    <small>${printableEscape(proposal.className)} · ${printableEscape(findTeacherPlanningLabel(teacherPlanningDays, proposal.day, "Dia"))}</small>
+    <small>${printableEscape(proposal.className)} · ${printableEscape(findTeacherPlanningLabel(teacherPlanningDays, proposal.day, "Dia"))} · ${printableEscape(formatTeacherPlanningDate(proposal.planDate))}</small>
     <div class="tw-planning-detail" data-planning-detail="${printableEscape(proposal.id)}" hidden>
       <p>${printableEscape(proposal.note || "Sem observacao registrada.")}</p>
-      <em>Planejado localmente. Ainda nao publicado para a turma.</em>
+      <em>${printableEscape(proposal.published ? `Publicado na agenda: ${publicationLabel}` : "Rascunho privado. Publicacao exige acao explicita.")}</em>
     </div>
     <div class="tw-planning-actions">
       <button type="button" data-planning-view="${printableEscape(proposal.id)}">VISUALIZAR</button>
       <button type="button" data-planning-edit="${printableEscape(proposal.id)}">EDITAR</button>
-      <button type="button" data-planning-remove="${printableEscape(proposal.id)}">REMOVER</button>
+      <button type="button" data-planning-publish="${printableEscape(proposal.id)}">${proposal.published ? "EDITAR PUBLICACAO" : "PUBLICAR PARA TURMA"}</button>
+      ${proposal.published ? `<button type="button" data-planning-unpublish="${printableEscape(proposal.id)}">RETIRAR DA AGENDA</button>` : ""}
+      <button type="button" data-planning-remove="${printableEscape(proposal.id)}">ARQUIVAR</button>
     </div>
   </article>
 `;
+};
 
-const renderTeacherPlanningDay = ([dayKey, dayLabel], proposals) => {
-  const dayProposals = proposals.filter((proposal) => proposal.day === dayKey);
+const renderTeacherPlanningDay = ([dayKey, dayLabel], proposals, canPlan = false) => {
+  const weekDates = getTeacherPlanningWeekDates();
+  const dayProposals = proposals.filter((proposal) => proposal.day === dayKey && (!proposal.planDate || proposal.planDate === weekDates[dayKey]));
   return `
     <article class="tw-planning-day" data-teacher-search-item>
       <header>
-        <span>${printableEscape(dayLabel)}</span>
+        <span>${printableEscape(dayLabel)} · ${printableEscape(formatTeacherPlanningDate(weekDates[dayKey]))}</span>
         <b>${dayProposals.length ? `${dayProposals.length} proposta${dayProposals.length > 1 ? "s" : ""}` : "Sem propostas"}</b>
       </header>
       ${
@@ -3505,7 +3792,7 @@ const renderTeacherPlanningDay = ([dayKey, dayLabel], proposals) => {
           ? `<div class="tw-planning-list">${dayProposals.map(renderTeacherPlanningProposalCard).join("")}</div>`
           : renderTeacherEmptyState("NENHUMA PROPOSTA PLANEJADA PARA ESTE DIA.")
       }
-      <button type="button" class="tw-planning-add-day" data-planning-add="${printableEscape(dayKey)}">+ ADICIONAR PROPOSTA</button>
+      <button type="button" class="tw-planning-add-day" data-planning-add="${printableEscape(dayKey)}" ${canPlan ? "" : "disabled"}>+ ADICIONAR PROPOSTA</button>
     </article>
   `;
 };
@@ -3531,7 +3818,7 @@ const renderTeacherPlanningForm = () => `
       <label>
         <span>Turma</span>
         <select name="classId" required>
-          ${teacherWorkspaceClasses.map((classItem) => `<option value="${printableEscape(classItem.id)}">${printableEscape(classItem.name)}</option>`).join("")}
+          ${getTeacherPlanningClasses().map((classItem) => `<option value="${printableEscape(classItem.id)}">${printableEscape(classItem.name)}</option>`).join("")}
         </select>
       </label>
       <label>
@@ -3552,28 +3839,87 @@ const renderTeacherPlanningForm = () => `
   </section>
 `;
 
+const renderTeacherPublicationPanel = () => `
+  <section class="tw-planning-form-panel" data-publication-panel hidden>
+    <div class="tw-section-head">
+      <h2>Publicar na agenda</h2>
+      <button type="button" data-publication-cancel>Fechar</button>
+    </div>
+    <form class="tw-planning-form" data-teacher-publication-form>
+      <input type="hidden" name="planId" />
+      <input type="hidden" name="publicationId" />
+      <label>
+        <span>Titulo publico</span>
+        <input name="title" required maxlength="90" />
+      </label>
+      <label>
+        <span>Data</span>
+        <input type="date" name="entryDate" required />
+      </label>
+      <label>
+        <span>Inicio</span>
+        <input type="time" name="startTime" />
+      </label>
+      <label>
+        <span>Fim</span>
+        <input type="time" name="endTime" />
+      </label>
+      <label>
+        <span>Tipo</span>
+        <select name="entryType" required>
+          ${teacherPlanningCalendarTypes.map(([key, label]) => `<option value="${key}">${label}</option>`).join("")}
+        </select>
+      </label>
+      <label class="tw-planning-form-note">
+        <span>Descricao publica</span>
+        <textarea name="description" rows="4" maxlength="420" placeholder="Texto que podera ser exibido na agenda da turma quando o modulo do aluno/familia for conectado."></textarea>
+      </label>
+      <div class="tw-planning-form-actions">
+        <button type="submit">PUBLICAR</button>
+        <button type="button" data-publication-cancel>Cancelar</button>
+      </div>
+    </form>
+  </section>
+`;
+
 const renderTeacherPlanningView = () => {
-  const proposals = readTeacherPlanning();
+  const proposals = teacherPlanningState.plans || [];
+  const classes = getTeacherPlanningClasses();
+  const canPlan = teacherInstitutionalState.status === "ready" && classes.length > 0 && teacherPlanningState.status !== "error";
+  const statusMessage =
+    teacherPlanningState.status === "loading"
+      ? renderTeacherEmptyState("CARREGANDO PLANEJAMENTO INSTITUCIONAL...")
+      : teacherPlanningState.status === "error"
+        ? renderTeacherEmptyState(teacherPlanningState.error || "NAO FOI POSSIVEL CARREGAR O PLANEJAMENTO.")
+        : "";
   return `
     <section class="tw-board tw-planning-shell">
       <div class="tw-planning-heading">
         <div>
           <span>Planejamento</span>
           <h2>Planejamento</h2>
-          <p>ORGANIZE AS EXPERIENCIAS E ATIVIDADES DA SUA TURMA.</p>
+          <p>ORGANIZE RASCUNHOS E PUBLIQUE NA AGENDA DA TURMA QUANDO ESTIVER PRONTO.</p>
         </div>
-        <button type="button" data-planning-add="segunda">+ ADICIONAR PROPOSTA</button>
+        <div class="tw-planning-toolbar">
+          <button type="button" data-planning-week-move="-1">SEMANA ANTERIOR</button>
+          <strong>${printableEscape(getTeacherPlanningWeekLabel())}</strong>
+          <button type="button" data-planning-week-today>HOJE</button>
+          <button type="button" data-planning-week-move="1">PROXIMA SEMANA</button>
+          <button type="button" data-planning-add="segunda" ${canPlan ? "" : "disabled"}>+ ADICIONAR PROPOSTA</button>
+        </div>
       </div>
       <label class="tw-class-selector">
         <span>Turma</span>
         <select data-planning-class>
-          ${teacherWorkspaceClasses.map((classItem) => `<option value="${printableEscape(classItem.id)}">${printableEscape(classItem.name)}</option>`).join("")}
+          ${classes.length ? classes.map((classItem) => `<option value="${printableEscape(classItem.id)}">${printableEscape(classItem.name)}</option>`).join("") : `<option value="">Aguardando vinculo institucional</option>`}
         </select>
       </label>
+      ${statusMessage}
       <div class="tw-planning-week" aria-label="Planejamento semanal">
-        ${teacherPlanningDays.map((day) => renderTeacherPlanningDay(day, proposals)).join("")}
+        ${teacherPlanningDays.map((day) => renderTeacherPlanningDay(day, proposals, canPlan)).join("")}
       </div>
       ${renderTeacherPlanningForm()}
+      ${renderTeacherPublicationPanel()}
     </section>
   `;
 };
@@ -6440,6 +6786,21 @@ const familyAreaData = {
   scheduleNotices: [],
 };
 
+const familyInstitutionalState = {
+  status: "idle",
+  error: "",
+  promise: null,
+  profile: null,
+  guardian: null,
+  student: null,
+  enrollment: null,
+  classItem: null,
+  school: null,
+  entries: [],
+  weekStartIso: "",
+  hydratedDom: false,
+};
+
 const familyWeekDays = [
   ["seg", "SEG", "Segunda"],
   ["ter", "TER", "Terca"],
@@ -6490,6 +6851,146 @@ const familyDateFromIso = (iso) => {
   return year && month && day ? new Date(year, month - 1, day) : familyMondayForDate();
 };
 const familyWeekStartIso = () => familyIsoDate(familyMondayForDate());
+
+const isFamilyInstitutionalMode = () => hasValidPlatformSession() && getCurrentPlatformRole() === "educacao_infantil";
+const normalizeFamilyStudentName = (student = {}) => student.nome || student.name || student.full_name || student.fullName || "Aluno";
+const normalizeFamilyClassName = (classItem = {}) => classItem.nome || classItem.name || "Turma";
+const normalizeFamilySchoolName = (school = {}) => school.nome || school.name || "Escola";
+const getFamilyActiveStudent = () => {
+  if (!isFamilyInstitutionalMode()) return familyAreaData.student;
+  if (familyInstitutionalState.status === "ready" && familyInstitutionalState.student) {
+    const student = familyInstitutionalState.student;
+    const fullName = normalizeFamilyStudentName(student);
+    return {
+      id: student.id,
+      name: fullName,
+      fullName,
+      avatar: familyAreaData.student.avatar,
+      school: normalizeFamilySchoolName(familyInstitutionalState.school || {}),
+      className: normalizeFamilyClassName(familyInstitutionalState.classItem || {}),
+      ageGroup: familyInstitutionalState.classItem?.age_group || familyAreaData.student.ageGroup,
+      shift: familyInstitutionalState.classItem?.turno || familyInstitutionalState.classItem?.shift || "",
+      schoolYear: familyInstitutionalState.enrollment?.school_year || familyInstitutionalState.classItem?.school_year || "",
+    };
+  }
+  return {
+    id: "",
+    name: familyInstitutionalState.status === "error" ? "Aluno" : "carregando",
+    fullName: familyInstitutionalState.status === "error" ? "Aluno institucional" : "Carregando aluno institucional",
+    avatar: "",
+    school: familyInstitutionalState.status === "error" ? "Supabase indisponivel" : "Carregando escola",
+    className: familyInstitutionalState.status === "error" ? "Turma indisponivel" : "Carregando turma",
+    ageGroup: "",
+    shift: "",
+    schoolYear: "",
+  };
+};
+
+const getFamilyInstitutionalEntriesByDay = (weekStartIso = familyInstitutionalState.weekStartIso || familyWeekStartIso()) => {
+  const weekDates = getFamilyWeekDates(weekStartIso);
+  return familyWeekDays.reduce((grouped, [dayKey]) => {
+    grouped[dayKey] = (familyInstitutionalState.entries || [])
+      .filter((entry) => entry.entry_date === weekDates[dayKey] && entry.status === "published")
+      .sort((a, b) => {
+        const aTime = a.start_time || "99:99:99";
+        const bTime = b.start_time || "99:99:99";
+        if (aTime !== bTime) return aTime.localeCompare(bTime);
+        return String(a.created_at || "").localeCompare(String(b.created_at || ""));
+      });
+    return grouped;
+  }, {});
+};
+
+const formatFamilyEntryTime = (entry = {}) => {
+  const start = entry.start_time ? String(entry.start_time).slice(0, 5) : "";
+  const end = entry.end_time ? String(entry.end_time).slice(0, 5) : "";
+  if (start && end) return `${start} - ${end}`;
+  return start || "Sem horario";
+};
+
+const mapFamilyCalendarEntry = (entry = {}) => ({
+  title: entry.title || "Publicacao",
+  description: entry.description || "",
+  entry_date: entry.entry_date || "",
+  start_time: entry.start_time || "",
+  end_time: entry.end_time || "",
+  entry_type: entry.entry_type || "outro",
+  status: entry.status || "",
+  created_at: entry.created_at || "",
+});
+
+const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" } = {}) => {
+  if (!isFamilyInstitutionalMode()) return familyInstitutionalState;
+  if (weekStartIso) familyInstitutionalState.weekStartIso = weekStartIso;
+  if (!familyInstitutionalState.weekStartIso) familyInstitutionalState.weekStartIso = familyWeekStartIso();
+  if (!force && familyInstitutionalState.status === "ready") return familyInstitutionalState;
+  if (!force && familyInstitutionalState.promise) return familyInstitutionalState.promise;
+  familyInstitutionalState.status = "loading";
+  familyInstitutionalState.error = "";
+  familyInstitutionalState.promise = (async () => {
+    try {
+      const client = createSupabaseRestClient();
+      const context = await client.getContext({ requireAuthenticated: true, allowedRoles: ["educacao_infantil", "admin"] });
+      const profileRows = await client.request("profiles", `?select=id,display_name,platform_role,status&id=${supabaseEq(context.userId)}&limit=1`, {
+        requireAuthenticated: true,
+        allowedRoles: ["educacao_infantil", "admin"],
+      });
+      const profile = Array.isArray(profileRows) ? profileRows[0] : null;
+      if (!profile?.id) throw new Error("Profile institucional da familia nao encontrado.");
+
+      const guardianRows = await client.request(
+        "student_guardians",
+        `?select=id,student_id,profile_id,relationship,status,student:students(id,nome,school_id,class_id,status)&status=eq.active&profile_id=${supabaseEq(context.userId)}&limit=1`,
+        { requireAuthenticated: true, allowedRoles: ["educacao_infantil", "admin"] }
+      );
+      const guardian = Array.isArray(guardianRows) ? guardianRows[0] : null;
+      if (!guardian?.student_id) throw new Error("Vinculo familia-aluno nao encontrado para esta sessao.");
+      let student = guardian.student || null;
+      if (!student?.id) {
+        const studentRows = await client.request("students", `?select=id,nome,school_id,class_id,status&id=${supabaseEq(guardian.student_id)}&limit=1`, {
+          requireAuthenticated: true,
+          allowedRoles: ["educacao_infantil", "admin"],
+        });
+        student = Array.isArray(studentRows) ? studentRows[0] : null;
+      }
+      if (!student?.id) throw new Error("RLS nao retornou os dados do aluno vinculado.");
+
+      const enrollmentRows = await client.request(
+        "enrollments",
+        `?select=id,student_id,class_id,school_id,status,school_year,classes(id,nome,school_id,status,turno,school_year,age_group),schools(id,nome,status)&status=eq.active&student_id=${supabaseEq(student.id)}&limit=1`,
+        { requireAuthenticated: true, allowedRoles: ["educacao_infantil", "admin"] }
+      );
+      const enrollment = Array.isArray(enrollmentRows) ? enrollmentRows[0] : null;
+      if (!enrollment?.class_id || !enrollment?.school_id) throw new Error("Enrollment ativo do aluno nao foi retornado pela RLS.");
+      const classItem = enrollment.classes || { id: enrollment.class_id, nome: student.className || "" };
+      const school = enrollment.schools || { id: enrollment.school_id, nome: student.school || "" };
+      const weekDates = getFamilyWeekDates(familyInstitutionalState.weekStartIso);
+      const entries = await client.request(
+        "class_calendar_entries",
+        `?select=title,description,entry_date,start_time,end_time,entry_type,status,created_at&status=eq.published&entry_date=gte.${encodeURIComponent(weekDates.seg)}&entry_date=lte.${encodeURIComponent(weekDates.sex)}&order=start_time.asc.nullslast&order=created_at.asc`,
+        { requireAuthenticated: true, allowedRoles: ["educacao_infantil", "admin"] }
+      );
+
+      familyInstitutionalState.profile = profile;
+      familyInstitutionalState.guardian = guardian;
+      familyInstitutionalState.student = student;
+      familyInstitutionalState.enrollment = enrollment;
+      familyInstitutionalState.classItem = classItem;
+      familyInstitutionalState.school = school;
+      familyInstitutionalState.entries = (entries || []).filter((entry) => entry.status === "published").map(mapFamilyCalendarEntry);
+      familyInstitutionalState.status = "ready";
+      return familyInstitutionalState;
+    } catch (error) {
+      familyInstitutionalState.error = error.message || "Nao foi possivel carregar a semana.";
+      familyInstitutionalState.entries = [];
+      familyInstitutionalState.status = "error";
+      return familyInstitutionalState;
+    } finally {
+      familyInstitutionalState.promise = null;
+    }
+  })();
+  return familyInstitutionalState.promise;
+};
 
 const familyAreaViews = [
   ["inicio", "Inicio"],
@@ -6629,7 +7130,77 @@ const renderFamilyWeekCell = (dayKey, slotKey, specificDate = "") => {
   `;
 };
 
+const renderFamilyInstitutionalEntryCell = (entry) => {
+  if (!entry) {
+    return `<div class="family-week-cell is-empty"><span>Sem registro</span></div>`;
+  }
+  return `
+    <div class="family-week-cell family-week-entry">
+      <small>${printableEscape(formatFamilyEntryTime(entry))}</small>
+      <em>${printableEscape(entry.entry_type || "agenda")}</em>
+      <strong>${printableEscape(entry.title)}</strong>
+      ${entry.description ? `<p>${printableEscape(entry.description)}</p>` : ""}
+    </div>
+  `;
+};
+
+const renderFamilyInstitutionalWeeklyBoard = (weekStartIso = familyInstitutionalState.weekStartIso || familyWeekStartIso()) => {
+  const entriesByDay = getFamilyInstitutionalEntriesByDay(weekStartIso);
+  const maxRows = Math.max(1, ...Object.values(entriesByDay).map((items) => items.length));
+  const statusMessage =
+    familyInstitutionalState.status === "loading" || familyInstitutionalState.status === "idle"
+      ? renderFamilyEmpty("CARREGANDO MINHA SEMANA.")
+      : familyInstitutionalState.status === "error"
+        ? renderFamilyEmpty("NAO FOI POSSIVEL CARREGAR A SEMANA.", familyInstitutionalState.error)
+        : "";
+  return `
+  <section class="family-panel family-week-panel">
+    <div class="family-section-head family-week-head">
+      <div>
+        <h2>Minha Semana</h2>
+        <span>${getFamilyWeekRange(weekStartIso)}</span>
+      </div>
+      <div class="family-week-actions" aria-label="Controles de semana">
+        <button type="button" data-week-move="-1">Semana anterior</button>
+        <button type="button" data-week-today>Hoje</button>
+        <button type="button" data-week-move="1">Proxima semana</button>
+      </div>
+    </div>
+    ${statusMessage}
+    <div class="family-week-grid" aria-label="Quadro semanal" data-week-start="${weekStartIso}">
+      <div class="family-week-corner">Agenda</div>
+      ${familyWeekDays.map(([, short]) => `<div class="family-week-day">${short}</div>`).join("")}
+      ${Array.from({ length: maxRows })
+        .map(
+          (_, index) => `
+            <div class="family-week-slot">${index === 0 ? "Publicacao" : ""}</div>
+            ${familyWeekDays.map(([dayKey]) => renderFamilyInstitutionalEntryCell(entriesByDay[dayKey]?.[index])).join("")}
+          `
+        )
+        .join("")}
+    </div>
+    <div class="family-week-mobile">
+      ${familyWeekDays
+        .map(
+          ([dayKey, , full]) => `
+            <article>
+              <h3>${full}</h3>
+              ${
+                entriesByDay[dayKey]?.length
+                  ? entriesByDay[dayKey].map((entry) => `<div><b>${printableEscape(formatFamilyEntryTime(entry))}</b>${renderFamilyInstitutionalEntryCell(entry)}</div>`).join("")
+                  : `<div><b>Agenda</b>${renderFamilyInstitutionalEntryCell(null)}</div>`
+              }
+            </article>
+          `
+        )
+        .join("")}
+    </div>
+  </section>
+`;
+};
+
 const renderFamilyWeeklyBoard = (weekStartIso = familyWeekStartIso()) => {
+  if (isFamilyInstitutionalMode()) return renderFamilyInstitutionalWeeklyBoard(weekStartIso);
   const weekDates = getFamilyWeekDates(weekStartIso);
   return `
   <section class="family-panel family-week-panel">
@@ -6723,7 +7294,7 @@ const renderFamilyProgress = (compact = false) => {
 };
 
 const renderFamilyProfile = () => {
-  const { student } = familyAreaData;
+  const student = getFamilyActiveStudent();
   return `
     <section class="family-profile-card">
       <img src="${student.avatar}" alt="" onerror="this.hidden=true" />
@@ -6818,14 +7389,14 @@ const renderFamilyRoutineModal = () => `
 
 const renderFamilyDashboard = () => {
   const view = getFamilyView();
-  const { student } = familyAreaData;
-  const weekStartIso = familyWeekStartIso();
+  const student = getFamilyActiveStudent();
+  const weekStartIso = familyInstitutionalState.weekStartIso || familyWeekStartIso();
   return `
     <main class="family-v1" data-family-area data-week-start="${weekStartIso}">
       <aside class="family-v1-sidebar">
         <a class="family-v1-logo" href="familia.html"><img src="logo-app.png" alt="Raizes e Saberes Educacional" onerror="this.hidden=true" /></a>
         <div class="family-v1-person">
-          <img src="${student.avatar}" alt="" onerror="this.hidden=true" />
+          ${student.avatar ? `<img src="${student.avatar}" alt="" onerror="this.hidden=true" />` : ""}
           <span>Familia do</span>
           <strong>${student.name}</strong>
           <small>${student.className}</small>
@@ -6869,6 +7440,20 @@ const initFamilyArea = () => {
       panel.outerHTML = renderFamilyWeeklyBoard(weekStartIso);
     }
   };
+  const loadInstitutionalWeek = async (weekStartIso = area.dataset.weekStart || familyWeekStartIso(), { rerenderShell = false } = {}) => {
+    if (!isFamilyInstitutionalMode()) return;
+    familyInstitutionalState.weekStartIso = weekStartIso;
+    familyInstitutionalState.status = "loading";
+    renderWeek(weekStartIso);
+    await ensureFamilyInstitutionalWeek({ force: true, weekStartIso });
+    if (!document.body.contains(area)) return;
+    if (rerenderShell) {
+      area.outerHTML = renderFamilyDashboard();
+      initFamilyArea();
+      return;
+    }
+    renderWeek(weekStartIso);
+  };
   const openRoutineModal = (dayKey, slotKey) => {
     const modal = area.querySelector("[data-routine-modal]");
     const form = area.querySelector("[data-routine-form]");
@@ -6889,7 +7474,7 @@ const initFamilyArea = () => {
     const modal = area.querySelector("[data-routine-modal]");
     if (modal) modal.hidden = true;
   };
-  area.addEventListener("click", (event) => {
+  area.addEventListener("click", async (event) => {
     const filterButton = event.target.closest?.("[data-family-filter]");
     if (filterButton) {
       area.querySelectorAll("[data-family-filter]").forEach((button) => button.classList.toggle("is-active", button === filterButton));
@@ -6919,12 +7504,15 @@ const initFamilyArea = () => {
     if (weekMoveButton) {
       const current = familyDateFromIso(area.dataset.weekStart || familyWeekStartIso());
       current.setDate(current.getDate() + Number(weekMoveButton.dataset.weekMove || 0) * 7);
-      renderWeek(familyIsoDate(current));
+      const nextWeek = familyIsoDate(current);
+      if (isFamilyInstitutionalMode()) await loadInstitutionalWeek(nextWeek);
+      else renderWeek(nextWeek);
       return;
     }
     const todayButton = event.target.closest?.("[data-week-today]");
     if (todayButton) {
-      renderWeek(familyWeekStartIso());
+      if (isFamilyInstitutionalMode()) await loadInstitutionalWeek(familyWeekStartIso());
+      else renderWeek(familyWeekStartIso());
     }
   });
   area.querySelector("[data-routine-form]")?.addEventListener("submit", (event) => {
@@ -6952,6 +7540,10 @@ const initFamilyArea = () => {
     closeRoutineModal();
     renderWeek(area.dataset.weekStart || familyWeekStartIso());
   });
+  if (isFamilyInstitutionalMode() && !familyInstitutionalState.hydratedDom) {
+    familyInstitutionalState.hydratedDom = true;
+    loadInstitutionalWeek(area.dataset.weekStart || familyWeekStartIso(), { rerenderShell: true });
+  }
 };
 
 const getFamilyActivityById = (id) => familyAreaData.onlineActivities.find((activity) => activity.id === id);
@@ -10524,14 +11116,19 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
         "?select=id,class_id,teacher_id,role,status&status=eq.active",
         { requireAuthenticated: true, allowedRoles: ["professor", "admin", "gestor", "coordenador"] }
       );
+      const teacherByClass = Object.fromEntries((membershipRows || []).filter((item) => item.class_id && item.teacher_id).map((item) => [item.class_id, item.teacher_id]));
+      const teacherId = (membershipRows || []).find((item) => item.teacher_id)?.teacher_id || "";
       const classIds = [...new Set((membershipRows || []).map((item) => item.class_id).filter(Boolean))];
       if (!classIds.length) {
         teacherInstitutionalState.profile = {
           id: profile.id,
           displayName: profile.display_name || getTeacherDisplayName(),
           role: profile.platform_role || context.role,
+          teacherId,
         };
         teacherInstitutionalState.classes = [];
+        teacherInstitutionalState.memberships = membershipRows || [];
+        teacherInstitutionalState.teacherByClass = teacherByClass;
         teacherInstitutionalState.studentsByClass = {};
         teacherInstitutionalState.studentsById = {};
         teacherInstitutionalState.status = "empty";
@@ -10570,15 +11167,21 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
       });
       Object.values(studentsByClass).forEach((students) => students.sort((a, b) => a.name.localeCompare(b.name, "pt-BR")));
       const classes = (classRows || [])
-        .map((classItem) => mapInstitutionalClass(classItem, schoolById.get(classItem.school_id), studentsByClass[classItem.id]?.length || 0))
+        .map((classItem) => ({
+          ...mapInstitutionalClass(classItem, schoolById.get(classItem.school_id), studentsByClass[classItem.id]?.length || 0),
+          teacherId: teacherByClass[classItem.id] || teacherId,
+        }))
         .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 
       teacherInstitutionalState.profile = {
         id: profile.id,
         displayName: profile.display_name || getTeacherDisplayName(),
         role: profile.platform_role || context.role,
+        teacherId,
       };
       teacherInstitutionalState.classes = classes;
+      teacherInstitutionalState.memberships = membershipRows || [];
+      teacherInstitutionalState.teacherByClass = teacherByClass;
       teacherInstitutionalState.studentsByClass = studentsByClass;
       teacherInstitutionalState.studentsById = studentsById;
       teacherInstitutionalState.loadedAt = new Date().toISOString();
@@ -10588,6 +11191,8 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
       teacherInstitutionalState.status = "error";
       teacherInstitutionalState.error = error.message || "Falha ao carregar dados institucionais.";
       teacherInstitutionalState.classes = [];
+      teacherInstitutionalState.memberships = [];
+      teacherInstitutionalState.teacherByClass = {};
       teacherInstitutionalState.studentsByClass = {};
       teacherInstitutionalState.studentsById = {};
       return teacherInstitutionalState;
@@ -11246,17 +11851,28 @@ const initTeacherWorkspace = () => {
   let activeTeacherView = "inicio";
 
   const getPlanningPanel = () => workspace.querySelector("[data-planning-panel]");
+  const getPublicationPanel = () => workspace.querySelector("[data-publication-panel]");
+  const refreshPlanningView = async ({ force = true } = {}) => {
+    await ensureTeacherPlanningWeek({ force });
+    if (activeTeacherView === "planejamentos" && content && document.body.contains(workspace)) {
+      content.innerHTML = renderTeacherWorkspaceView("planejamentos");
+    }
+  };
 
   const fillPlanningForm = (proposal = {}, day = "segunda") => {
     const panel = getPlanningPanel();
     const form = panel?.querySelector("[data-teacher-planning-form]");
     if (!panel || !form) return;
+    if (!getTeacherPlanningClasses().length) {
+      window.alert("Aguarde o carregamento do vinculo institucional da turma.");
+      return;
+    }
     panel.hidden = false;
     panel.querySelector("h2").textContent = proposal.id ? "Editar proposta" : "Adicionar proposta";
     form.elements.id.value = proposal.id || "";
     form.elements.title.value = proposal.title || "";
     form.elements.day.value = proposal.day || day;
-    form.elements.classId.value = proposal.classId || pilotProfiles.class.id;
+    form.elements.classId.value = proposal.classId || getTeacherPlanningClasses()[0]?.id || "";
     form.elements.resourceType.value = proposal.resourceType || "proposta-livre";
     form.elements.note.value = proposal.note || "";
     form.elements.title.focus();
@@ -11270,6 +11886,35 @@ const initTeacherWorkspace = () => {
     form.elements.id.value = "";
     panel.hidden = true;
     panel.querySelector("h2").textContent = "Adicionar proposta";
+  };
+
+  const fillPublicationForm = (proposal) => {
+    const panel = getPublicationPanel();
+    const form = panel?.querySelector("[data-teacher-publication-form]");
+    if (!panel || !form || !proposal) return;
+    const publication = proposal.publication || {};
+    panel.hidden = false;
+    panel.querySelector("h2").textContent = publication.id ? "Editar publicacao" : "Publicar na agenda";
+    form.elements.planId.value = proposal.id;
+    form.elements.publicationId.value = publication.id || "";
+    form.elements.title.value = publication.title || proposal.title || "";
+    form.elements.entryDate.value = publication.entry_date || proposal.planDate || "";
+    form.elements.startTime.value = publication.start_time ? publication.start_time.slice(0, 5) : "";
+    form.elements.endTime.value = publication.end_time ? publication.end_time.slice(0, 5) : "";
+    form.elements.entryType.value = publication.entry_type || normalizeTeacherPlanningCalendarType(proposal.resourceType);
+    form.elements.description.value = publication.description || "";
+    form.elements.title.focus();
+  };
+
+  const closePublicationForm = () => {
+    const panel = getPublicationPanel();
+    const form = panel?.querySelector("[data-teacher-publication-form]");
+    if (!panel || !form) return;
+    form.reset();
+    form.elements.planId.value = "";
+    form.elements.publicationId.value = "";
+    panel.hidden = true;
+    panel.querySelector("h2").textContent = "Publicar na agenda";
   };
 
   const openView = (view) => {
@@ -11288,9 +11933,16 @@ const initTeacherWorkspace = () => {
     });
     initUniversalActivityTeacherDeliveries();
     if (search) search.value = "";
+    if (view === "planejamentos") {
+      ensureTeacherPlanningWeek().then(() => {
+        if (activeTeacherView === "planejamentos" && content && document.body.contains(workspace)) {
+          content.innerHTML = renderTeacherWorkspaceView("planejamentos");
+        }
+      });
+    }
   };
 
-  workspace.addEventListener("click", (event) => {
+  workspace.addEventListener("click", async (event) => {
     const urlButton = event.target.closest("[data-teacher-open-url]");
     if (urlButton) {
       window.location.href = urlButton.dataset.teacherOpenUrl;
@@ -11319,18 +11971,76 @@ const initTeacherWorkspace = () => {
     const editPlanning = event.target.closest("[data-planning-edit]");
     if (editPlanning) {
       event.preventDefault();
-      const proposal = readTeacherPlanning().find((item) => item.id === editPlanning.dataset.planningEdit);
+      const proposal = (teacherPlanningState.plans || []).find((item) => item.id === editPlanning.dataset.planningEdit);
       if (proposal) fillPlanningForm(proposal, proposal.day);
+      return;
+    }
+    const publishPlanning = event.target.closest("[data-planning-publish]");
+    if (publishPlanning) {
+      event.preventDefault();
+      const proposal = (teacherPlanningState.plans || []).find((item) => item.id === publishPlanning.dataset.planningPublish);
+      if (proposal) fillPublicationForm(proposal);
+      return;
+    }
+    const cancelPublication = event.target.closest("[data-publication-cancel]");
+    if (cancelPublication) {
+      event.preventDefault();
+      closePublicationForm();
+      return;
+    }
+    const unpublishPlanning = event.target.closest("[data-planning-unpublish]");
+    if (unpublishPlanning) {
+      event.preventDefault();
+      const proposal = (teacherPlanningState.plans || []).find((item) => item.id === unpublishPlanning.dataset.planningUnpublish);
+      if (!proposal) return;
+      if (!window.confirm(`Retirar "${proposal.title}" da agenda da turma?`)) return;
+      unpublishPlanning.disabled = true;
+      unpublishPlanning.textContent = "RETIRANDO...";
+      try {
+        await archiveTeacherCalendarEntry(proposal.id);
+        await refreshPlanningView({ force: false });
+      } catch (error) {
+        window.alert(error.message || "Nao foi possivel retirar a publicacao.");
+      } finally {
+        unpublishPlanning.disabled = false;
+      }
       return;
     }
     const removePlanning = event.target.closest("[data-planning-remove]");
     if (removePlanning) {
       event.preventDefault();
-      const proposal = readTeacherPlanning().find((item) => item.id === removePlanning.dataset.planningRemove);
+      const proposal = (teacherPlanningState.plans || []).find((item) => item.id === removePlanning.dataset.planningRemove);
       if (!proposal) return;
-      if (!window.confirm(`Remover a proposta "${proposal.title}" do planejamento?`)) return;
-      writeTeacherPlanning(readTeacherPlanning().filter((item) => item.id !== proposal.id));
-      openView("planejamentos");
+      const message = proposal.published
+        ? `Arquivar a proposta "${proposal.title}" e retirar a publicacao ativa da agenda?`
+        : `Arquivar a proposta "${proposal.title}" do planejamento?`;
+      if (!window.confirm(message)) return;
+      removePlanning.disabled = true;
+      removePlanning.textContent = "ARQUIVANDO...";
+      try {
+        await archiveTeacherPlanning(proposal.id);
+        await refreshPlanningView({ force: false });
+      } catch (error) {
+        window.alert(error.message || "Nao foi possivel arquivar a proposta.");
+      } finally {
+        removePlanning.disabled = false;
+      }
+      return;
+    }
+    const weekMove = event.target.closest("[data-planning-week-move]");
+    if (weekMove) {
+      event.preventDefault();
+      const current = fromTeacherIsoDate(teacherPlanningState.weekStartIso || getTeacherPlanningWeekStart());
+      current.setDate(current.getDate() + Number(weekMove.dataset.planningWeekMove || 0) * 7);
+      teacherPlanningState.weekStartIso = toTeacherIsoDate(current);
+      await refreshPlanningView({ force: true });
+      return;
+    }
+    const weekToday = event.target.closest("[data-planning-week-today]");
+    if (weekToday) {
+      event.preventDefault();
+      teacherPlanningState.weekStartIso = getTeacherPlanningWeekStart();
+      await refreshPlanningView({ force: true });
       return;
     }
     if (!button) return;
@@ -11338,29 +12048,35 @@ const initTeacherWorkspace = () => {
     openView(button.dataset.teacherView || "inicio");
   });
 
-  workspace.addEventListener("submit", (event) => {
+  workspace.addEventListener("submit", async (event) => {
     const form = event.target.closest("[data-teacher-planning-form]");
-    if (!form) return;
+    const publicationForm = event.target.closest("[data-teacher-publication-form]");
+    if (!form && !publicationForm) return;
     event.preventDefault();
-    const formData = new FormData(form);
-    const classItem = teacherWorkspaceClasses.find((item) => item.id === formData.get("classId")) || teacherWorkspaceClasses[0];
-    const now = new Date().toISOString();
-    const currentItems = readTeacherPlanning();
-    const existingId = String(formData.get("id") || "");
-    const proposal = {
-      id: existingId || `planning-${Date.now()}`,
-      title: String(formData.get("title") || "").trim(),
-      day: String(formData.get("day") || "segunda"),
-      classId: classItem.id,
-      className: classItem.name,
-      resourceType: String(formData.get("resourceType") || "proposta-livre"),
-      note: String(formData.get("note") || "").trim(),
-      createdAt: currentItems.find((item) => item.id === existingId)?.createdAt || now,
-      updatedAt: now,
-    };
-    if (!proposal.title) return;
-    writeTeacherPlanning(existingId ? currentItems.map((item) => (item.id === existingId ? proposal : item)) : [...currentItems, proposal]);
-    openView(activeTeacherView === "planejamentos" ? "planejamentos" : activeTeacherView);
+    const submitButton = (form || publicationForm).querySelector("button[type='submit']");
+    const previousLabel = submitButton?.textContent || "";
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = form ? "SALVANDO..." : "PUBLICANDO...";
+    }
+    try {
+      if (form) {
+        await saveTeacherPlanningToSupabase(new FormData(form));
+        closePlanningForm();
+      }
+      if (publicationForm) {
+        await saveTeacherCalendarEntryToSupabase(new FormData(publicationForm));
+        closePublicationForm();
+      }
+      await refreshPlanningView({ force: false });
+    } catch (error) {
+      window.alert(error.message || "Nao foi possivel salvar no Supabase.");
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = previousLabel;
+      }
+    }
   });
 
   search?.addEventListener("input", () => {
