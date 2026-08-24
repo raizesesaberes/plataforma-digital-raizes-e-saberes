@@ -2788,6 +2788,7 @@ h3 {
   background: #f8fafc;
   font-size: 0.9rem;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .university-command {
@@ -3287,9 +3288,8 @@ h3 {
 .video-lesson-grid small {
   display: block;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .video-lesson-grid strong {
@@ -4684,7 +4684,16 @@ h3 {
 
   .hero {
     width: min(100% - 32px, var(--container));
+    overflow: hidden;
     padding: 132px 0 76px;
+  }
+
+  .hero::before,
+  .hero-content::after,
+  .video-section::before,
+  .video-section::after,
+  .infantil-section::before {
+    display: none;
   }
 
   .placeholder-chip {
@@ -4754,8 +4763,8 @@ h3 {
   }
 
   .platform-mockup-card img {
-    width: 108%;
-    max-width: none;
+    width: 100%;
+    max-width: 100%;
     border-radius: 18px;
   }
 
@@ -4786,6 +4795,7 @@ h3 {
   .university-section,
   .assessment-section,
   .results-section {
+    overflow: hidden;
     padding-right: 16px;
     padding-left: 16px;
   }
