@@ -9531,11 +9531,32 @@ td {
   padding: 18px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 12px;
-  align-items: center;
+  column-gap: 12px;
+  row-gap: 5px;
+  align-items: start;
+  align-content: center;
   color: #17271f;
   text-align: left;
   cursor: pointer;
+}
+
+.teacher-metric-card .premium-icon,
+.teacher-content-card .premium-icon {
+  grid-row: 1 / span 2;
+  margin-top: 1px;
+}
+
+.teacher-metric-card span,
+.teacher-metric-card strong,
+.teacher-content-card strong,
+.teacher-content-card small {
+  grid-column: 2;
+  min-width: 0;
+  max-width: 100%;
+  justify-self: start;
+  text-align: left;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .teacher-metric-card strong,
