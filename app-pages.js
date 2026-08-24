@@ -3437,7 +3437,7 @@ const getTeacherBibliotecaResources = () => {
 
 const renderTeacherCard = () => `
   <article class="tw-teacher-card">
-    <img src="logo-sidebar-dark.png" alt="Raizes e Saberes" onerror="this.hidden=true" />
+    <img src="assets/brand/logo-premium-dark.png" alt="Raizes e Saberes" onerror="this.hidden=true" />
     <div><span>Professora</span><strong>${printableEscape(getTeacherDisplayName())}</strong><small>Area do Professor</small></div>
   </article>
 `;
@@ -3457,13 +3457,15 @@ const renderTeacherSidebar = (activeView = "inicio") => `
     ${renderTeacherCard()}
     <nav aria-label="Menu do professor">
       ${teacherWorkspaceNav
-        .map(([key, label, icon, href]) =>
-          key === "heading"
+        .filter(([key]) => key === "inicio")
+        .map(([key, label, icon, href]) => {
+          const navItem = key === "heading"
             ? `<strong class="tw-nav-heading">${label}</strong>`
             : href
               ? `<button type="button" class="${key === activeView ? "is-active" : ""}" data-teacher-open-url="${href}"><i data-icon="${icon || "dot"}"></i><span>${label}</span></button>`
-              : `<button type="button" class="${key === activeView ? "is-active" : ""}" data-teacher-view="${key}"><i data-icon="${icon || "dot"}"></i><span>${label}</span></button>`
-        )
+              : `<button type="button" class="${key === activeView ? "is-active" : ""}" data-teacher-view="${key}"><i data-icon="${icon || "dot"}"></i><span>${label}</span></button>`;
+          return key === "inicio" ? `${navItem}${renderTeacherQuickActions()}` : navItem;
+        })
         .join("")}
     </nav>
     <button class="platform-logout-button" type="button" data-platform-logout><i data-icon="logout"></i><span>SAIR</span></button>
@@ -5258,6 +5260,7 @@ const renderTeacherQuickActions = () => `
   <section class="teacher-side-card teacher-quick-actions" aria-label="Acessos rapidos">
     <h2>Acessos Rapidos</h2>
     ${[
+      { label: "SITE", icon: "home", href: "index.html", tone: "site" },
       { label: "MINHAS TURMAS", icon: "users", view: "turmas", tone: "lime" },
       { label: "PLANEJAMENTO", icon: "calendar", view: "planejamentos", tone: "blue" },
       { label: "ATIVIDADES", icon: "clipboard", view: "atividades", tone: "green" },
@@ -5272,7 +5275,6 @@ const renderTeacherQuickActions = () => `
 
 const renderTeacherSideRail = () => `
   <aside class="teacher-right-rail" aria-label="Resumo do professor">
-    ${renderTeacherQuickActions()}
     <section class="teacher-side-card">
       <h2>Hoje</h2>
       ${renderPremiumEmpty("SEM COMPROMISSOS PARA HOJE", "Sua agenda pedagogica aparecera aqui quando houver eventos.", "blue")}

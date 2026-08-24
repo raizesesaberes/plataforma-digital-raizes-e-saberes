@@ -9184,14 +9184,17 @@ td {
 }
 
 .tw-teacher-card {
-  padding: 0 2px 10px;
+  padding: 0 0 10px;
   background: transparent;
   border-radius: 0;
 }
 
 .tw-teacher-card img {
-  width: min(100%, 168px);
+  width: min(100%, 182px);
   height: auto;
+  justify-self: center;
+  border-radius: 18px;
+  box-shadow: 0 14px 28px rgba(6, 70, 47, 0.1);
 }
 
 .tw-teacher-card div {
@@ -9512,6 +9515,24 @@ td {
 
 .teacher-quick-actions {
   gap: 9px;
+  margin: 4px 0 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff;
+  border-color: rgba(6, 70, 47, 0.12);
+  box-shadow: 0 12px 26px rgba(8, 63, 45, 0.06);
+}
+
+.tw-sidebar .teacher-quick-actions h2 {
+  font-size: 0.72rem;
+  color: #06462f;
+  letter-spacing: 0;
+}
+
+.tw-sidebar .teacher-quick-actions .premium-icon {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
 }
 
 .quick-action {
@@ -9529,6 +9550,33 @@ td {
   cursor: pointer;
 }
 
+.tw-sidebar .teacher-quick-actions .quick-action {
+  min-height: 40px;
+  border-radius: 9px;
+  background: #eef7ef;
+  color: #06462f;
+  box-shadow: none;
+  transform: none;
+}
+
+.tw-sidebar .teacher-quick-actions .quick-action.is-site { background: #eaf5ed; color: #06462f; }
+.tw-sidebar .teacher-quick-actions .quick-action.is-blue { background: #edf5ff; color: #0d4d9d; }
+.tw-sidebar .teacher-quick-actions .quick-action.is-purple { background: #f4efff; color: #5031a8; }
+.tw-sidebar .teacher-quick-actions .quick-action.is-orange { background: #fff3e5; color: #a44f00; }
+.tw-sidebar .teacher-quick-actions .quick-action.is-teal { background: #eaf8f8; color: #0a6670; }
+.tw-sidebar .teacher-quick-actions .quick-action:hover,
+.tw-sidebar .teacher-quick-actions .quick-action:focus-visible {
+  outline: none;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(8, 63, 45, 0.1);
+}
+
+.tw-sidebar .teacher-quick-actions .quick-action:hover .premium-icon,
+.tw-sidebar .teacher-quick-actions .quick-action:focus-visible .premium-icon {
+  color: inherit;
+}
+
+.quick-action.is-site { background: #eaf5ed; color: #06462f; }
 .quick-action.is-blue { background: #edf5ff; color: #0d4d9d; }
 .quick-action.is-purple { background: #f4efff; color: #5031a8; }
 .quick-action.is-orange { background: #fff3e5; color: #a44f00; }
