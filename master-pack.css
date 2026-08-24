@@ -9677,22 +9677,25 @@ td {
   display: grid;
   grid-template-columns: 232px minmax(0, 1fr);
   min-height: 100vh;
-  background: #f8fbff;
+  background: #f8faf7;
   color: #141d18;
 }
 
 .student-premium-sidebar {
   display: grid;
   grid-template-rows: auto 1fr auto;
-  gap: 22px;
-  padding: 24px 18px;
-  background: #fff;
-  border-right: 1px solid rgba(6, 70, 47, 0.11);
-  box-shadow: 12px 0 30px rgba(6, 70, 47, 0.04);
+  gap: 18px;
+  padding: 18px 14px;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(20, 141, 85, 0.28), transparent 34%),
+    linear-gradient(180deg, #075234 0%, #043b27 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 16px 0 34px rgba(4, 59, 39, 0.12);
 }
 
 .student-premium-logo img {
-  width: min(100%, 172px);
+  width: min(100%, 148px);
+  filter: drop-shadow(0 16px 20px rgba(0, 0, 0, 0.22));
 }
 
 .student-premium-sidebar nav {
@@ -9703,14 +9706,14 @@ td {
 
 .student-premium-sidebar nav a,
 .student-premium-logout {
-  min-height: 50px;
+  min-height: 44px;
   border: 0;
-  border-radius: 12px;
-  padding: 0 12px;
+  border-radius: 10px;
+  padding: 0 18px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  color: #141d18;
+  gap: 14px;
+  color: rgba(255, 255, 255, 0.86);
   background: transparent;
   font-family: Poppins, Inter, sans-serif;
   font-weight: 900;
@@ -9718,24 +9721,41 @@ td {
   cursor: pointer;
 }
 
+.student-premium-sidebar nav a .premium-icon,
+.student-premium-logout .premium-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 0;
+  background: transparent;
+  color: currentColor;
+}
+
+.student-premium-sidebar nav a .premium-icon::before,
+.student-premium-logout .premium-icon::before {
+  width: 20px;
+  height: 20px;
+}
+
 .student-premium-sidebar nav a.is-active,
 .student-premium-sidebar nav a:hover,
 .student-premium-sidebar nav a:focus-visible {
-  background: linear-gradient(135deg, #12833f, #075b34);
+  background: linear-gradient(135deg, #1f9b5f, #0b6a43);
   color: #fff;
   outline: none;
+  box-shadow: 0 12px 22px rgba(5, 68, 43, 0.22);
 }
 
 .student-premium-sidebar nav a.is-active .premium-icon,
 .student-premium-sidebar nav a:hover .premium-icon,
 .student-premium-sidebar nav a:focus-visible .premium-icon {
-  background: rgba(255, 255, 255, 0.18);
+  background: transparent;
   color: #fff;
 }
 
 .student-premium-logout {
-  color: #0b5b37;
-  background: #f7fbf8;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .student-premium-main {
@@ -9762,7 +9782,7 @@ td {
 }
 
 .student-premium-topbar input {
-  min-height: 54px;
+  min-height: 46px;
   width: 100%;
   border: 1px solid rgba(6, 70, 47, 0.12);
   border-radius: 999px;
@@ -9782,6 +9802,10 @@ td {
   font-family: Poppins, Inter, sans-serif;
   font-weight: 900;
   text-decoration: none;
+  min-height: 44px;
+  border-radius: 999px;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .student-top-avatar {
@@ -9807,7 +9831,7 @@ td {
 }
 
 .student-premium-hero {
-  min-height: 238px;
+  min-height: 220px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 44%;
   align-items: center;
@@ -9815,17 +9839,26 @@ td {
   border-radius: 18px;
   padding: 28px 34px;
   background:
-    linear-gradient(180deg, rgba(221, 246, 255, 0.96), rgba(236, 250, 232, 0.96)),
-    #eaf8ff;
+    radial-gradient(circle at 85% 25%, rgba(219, 236, 213, 0.82), transparent 30%),
+    linear-gradient(120deg, #fff 0%, #fff 58%, #f1eadf 100%);
   border: 1px solid rgba(6, 70, 47, 0.08);
+  box-shadow: 0 18px 46px rgba(8, 63, 45, 0.07);
+}
+
+.student-premium-hero span {
+  color: #06462f;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .student-premium-hero h1 {
   margin: 0;
-  color: #075b34;
+  color: #06462f;
   font-family: Poppins, Inter, sans-serif;
-  font-size: clamp(2.5rem, 4.5vw, 4.7rem);
-  line-height: 0.96;
+  font-size: clamp(2rem, 3vw, 3rem);
+  line-height: 1.04;
 }
 
 .student-premium-hero p {
@@ -9853,10 +9886,22 @@ td {
 
 .student-mission-card {
   display: grid;
-  grid-template-columns: minmax(180px, 300px) minmax(0, 1fr);
-  gap: 24px;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 18px;
   align-items: center;
   padding: 24px;
+}
+
+.student-mission-card > .premium-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 24px;
+  background: #eaf5e7;
+}
+
+.student-mission-card > .premium-icon::before {
+  width: 36px;
+  height: 36px;
 }
 
 .student-mission-card span,
@@ -9939,6 +9984,18 @@ td {
   align-items: start;
   text-decoration: none;
   color: #141d18;
+}
+
+.student-premium-card div,
+.student-mission-card div {
+  min-width: 0;
+}
+
+.student-premium-card strong,
+.student-premium-card p,
+.student-mission-card strong,
+.student-mission-card p {
+  overflow-wrap: anywhere;
 }
 
 .student-premium-card > span {

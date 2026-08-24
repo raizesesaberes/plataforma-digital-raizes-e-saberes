@@ -3411,6 +3411,19 @@ const teacherInstitutionalState = {
   hydratedDom: false,
 };
 
+const studentInstitutionalState = {
+  status: "idle",
+  error: "",
+  promise: null,
+  profile: null,
+  publicUser: null,
+  student: null,
+  enrollment: null,
+  classItem: null,
+  school: null,
+  hydratedDom: false,
+};
+
 const getTeacherInstitutionalClasses = () => teacherInstitutionalState.classes || [];
 const getTeacherInstitutionalStudents = (classId = "") => {
   if (classId) return teacherInstitutionalState.studentsByClass?.[classId] || [];
@@ -5537,7 +5550,7 @@ const renderStudentPremiumTopbar = () => `
   <header class="student-premium-topbar">
     <label><span>Buscar</span><input type="search" placeholder="Buscar livros, jogos, atividades..." /></label>
     <div>
-      <a href="perfil.html" aria-label="Abrir perfil">${studentLazyImg(pilotProfiles.student.avatar, "", "student-top-avatar")}<strong>${getStudentFirstName()}</strong></a>
+      <a href="perfil.html" aria-label="Abrir perfil">${getActiveStudentProfile().avatar ? studentLazyImg(getActiveStudentProfile().avatar, "", "student-top-avatar") : premiumIcon("aluno")}<strong>${printableEscape(getActiveStudentProfile().firstName)}</strong></a>
     </div>
   </header>
 `;
@@ -5547,27 +5560,25 @@ const renderStudentQuickRail = () => `
     <section class="student-side-card student-shortcuts">
       <h2>Meus Atalhos</h2>
       ${[
-        ["missao.html", "Continuar Atividade", "play", "green"],
-        ["arvore.html", "Ver Minha Arvore", "tree", "lime"],
+        ["aluno-atividades.html", "Atividades", "atividades", "green"],
+        ["aluno.html", "Agenda", "calendario", "lime"],
         ["biblioteca.html", "Abrir Livro", "book", "blue"],
-        ["jogos.html", "Jogar", "game", "purple"],
         ["perfil.html", "Meu Perfil", "user", "teal"],
       ]
         .map(([href, label, icon, tone]) => `<a class="student-shortcut is-${tone}" href="${href}">${premiumIcon(icon)}<span>${label}</span><b>›</b></a>`)
         .join("")}
     </section>
     <section class="student-side-card">
-      <h2>Minhas Conquistas</h2>
-      <div class="student-medal-placeholders" aria-hidden="true"><span></span><span></span><span></span></div>
-      <p>Continue explorando e ganhe novas conquistas!</p>
+      <h2>Acompanhamento</h2>
+      ${renderPremiumEmpty("SEM PROGRESSO PUBLICADO.", "Quando houver dados reais, eles aparecerao aqui.", "green")}
     </section>
     <section class="student-side-card is-pink">
       <h2>Recado da Professora</h2>
       ${renderPremiumEmpty("QUANDO SUA PROFESSORA ENVIAR UM RECADO, ELE APARECERA AQUI.", "", "pink")}
     </section>
     <section class="student-side-card is-warm">
-      <h2>Proxima Missao</h2>
-      ${renderPremiumEmpty("SUA PROXIMA MISSAO APARECERA AQUI.", "Fique ligado!", "orange")}
+      <h2>Agenda</h2>
+      ${renderPremiumEmpty("NENHUM ITEM PUBLICADO.", "A agenda sera conectada em etapa separada.", "orange")}
     </section>
   </aside>
 `;
@@ -5589,37 +5600,38 @@ const renderStudentSimpleDashboard = () => `
         <main class="student-center">
           <section class="student-premium-hero">
             <div>
-              <h1>OLA, ${getStudentFirstName().toUpperCase()}!</h1>
-              <p>Vamos descobrir coisas novas hoje?</p>
+              <span>${isStudentInstitutionalMode() ? printableEscape(getActiveStudentProfile().schoolName) : "Aluno Ensino Fundamental"}</span>
+              <h1>OLA, ${printableEscape(getStudentFirstName().toUpperCase())}!</h1>
+              <p>${isStudentInstitutionalMode() ? `${printableEscape(getActiveStudentProfile().fullName)} · ${printableEscape(getActiveStudentProfile().className)}` : "Vamos descobrir coisas novas hoje?"}</p>
             </div>
             ${studentLazyImg("assets/aluno/oficial-hero-aluno.png", "", "student-hero-art")}
           </section>
 
           <section class="student-mission-card is-mission">
-            <div class="student-card-art is-green" aria-hidden="true"></div>
+            ${premiumIcon("atividades")}
             <div>
-              <span>Missao do Dia</span>
-              <strong>SUA NOVA MISSAO</strong>
-              <p>Suas novas descobertas vao aparecer aqui quando a professora preparar algo especial para voce.</p>
-              <a href="missao.html">COMECAR</a>
+              <span>Atividades</span>
+              <strong>NENHUMA ATIVIDADE PUBLICADA.</strong>
+              <p>Quando houver uma atividade real para este aluno, ela aparecera aqui.</p>
+              <a href="aluno-atividades.html">VER ATIVIDADES</a>
             </div>
           </section>
 
           <section class="student-mission-card is-continue">
-            <div class="student-card-art is-purple" aria-hidden="true"></div>
+            ${premiumIcon("calendario")}
             <div>
-              <span>Continuar</span>
-              <strong>VOCE NAO TEM NENHUMA ATIVIDADE EM ANDAMENTO.</strong>
-              <p>Quando comecar algo novo, voce podera continuar por aqui.</p>
-              <a href="missao.html">CONTINUAR</a>
+              <span>Agenda</span>
+              <strong>NENHUM COMPROMISSO PUBLICADO.</strong>
+              <p>A agenda institucional do aluno sera conectada em etapa separada.</p>
+              <a href="aluno.html">INICIO</a>
             </div>
           </section>
 
           <section class="student-premium-card-grid" aria-label="Areas principais do aluno">
             ${[
-              { title: "Minha Arvore", text: "Continue aprendendo e veja sua arvore crescer.", href: "arvore.html", icon: "tree", tone: "green", cta: "VER" },
-              { title: "Meus Livros", text: "Explore seus livros favoritos.", href: "biblioteca.html", icon: "book", tone: "blue", cta: "ABRIR" },
-              { title: "Jogar e Descobrir", text: "Jogos divertidos para aprender brincando.", href: "jogos.html", icon: "game", tone: "purple", cta: "JOGAR" },
+              { title: "Minha Turma", text: getActiveStudentProfile().className, href: "aluno.html", icon: "turmas", tone: "green", cta: "VER" },
+              { title: "Minha Escola", text: getActiveStudentProfile().schoolName || "Escola vinculada", href: "aluno.html", icon: "escola", tone: "blue", cta: "VER" },
+              { title: "Meus Livros", text: "Materiais do aluno aparecem na Biblioteca.", href: "biblioteca.html", icon: "book", tone: "purple", cta: "ABRIR" },
             ].map(renderStudentPremiumCard).join("")}
           </section>
         </main>
@@ -5641,6 +5653,9 @@ const renderStudentActivitiesPage = () => `
 `;
 
 const getStudentFirstName = () => {
+  if (isStudentInstitutionalMode()) {
+    return getActiveStudentProfile().firstName;
+  }
   const session = getPlatformSession();
   const candidate = session.role === "aluno" ? session.name || session.email : pilotProfiles.student.name;
   const normalized = String(candidate || "").trim();
@@ -7972,7 +7987,7 @@ const modules = {
     title: "Aluno Ensino Fundamental",
     subtitle: "Home principal do aluno do Ensino Fundamental",
     code: "PLAT-V2-005",
-    html: renderStudentProfilePage(),
+    html: "",
   },
   alunoAtividades: {
     title: "Minhas Atividades",
@@ -8765,7 +8780,7 @@ const environments = {
     label: "Espaco do Aluno",
     profile: "Pedro",
     search: "Buscar livros, missoes, atividades...",
-    user: `${getStudentFirstName()}<br />Aluno`,
+    user: "Aluno",
     avatar: "assets/aluno/oficial-avatar-aluno.png",
     profileImage: "logo-sidebar-dark.png",
     nav: [
@@ -11174,6 +11189,129 @@ const normalizeInstitutionalStatus = (status) => {
 const normalizeStudentName = (student = {}) => student.nome || student.name || student.full_name || student.fullName || "Aluno";
 const normalizeClassName = (classItem = {}) => classItem.nome || classItem.name || "Turma";
 const normalizeSchoolName = (school = {}) => school.nome || school.name || "Escola";
+const normalizeProfileName = (profile = {}) => profile.display_name || profile.nome || profile.name || profile.full_name || "";
+const getSupabaseSessionEmail = () => {
+  const session = getStoredSupabaseSession();
+  const payload = decodeJwtPayload(session?.access_token);
+  return payload.email || session?.user?.email || "";
+};
+
+const isStudentInstitutionalMode = () => hasValidPlatformSession() && getCurrentPlatformRole() === "aluno";
+const resolveLegacyPublicUserForAuth = async (client, context) => {
+  const email = getSupabaseSessionEmail().toLowerCase();
+  try {
+    const users = await client.request("users", "?select=*&limit=100", {
+      requireAuthenticated: true,
+      allowedRoles: ["aluno", "admin"],
+    });
+    return (users || []).find((user) => {
+      const values = [
+        user.id,
+        user.auth_user_id,
+        user.auth_id,
+        user.user_id,
+        user.supabase_user_id,
+      ].map((value) => String(value || ""));
+      const userEmail = String(user.email || user.username || user.login || "").toLowerCase();
+      return values.includes(context.userId) || (email && userEmail === email);
+    }) || null;
+  } catch (error) {
+    return null;
+  }
+};
+
+const getStudentCandidateByUserId = async (client, userId) => {
+  if (!userId) return null;
+  const rows = await client.request("students", `?select=*&user_id=${supabaseEq(userId)}&limit=1`, {
+    requireAuthenticated: true,
+    allowedRoles: ["aluno", "admin"],
+  });
+  return Array.isArray(rows) ? rows[0] || null : null;
+};
+
+const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
+  if (!isStudentInstitutionalMode()) return studentInstitutionalState;
+  if (!force && studentInstitutionalState.status === "ready") return studentInstitutionalState;
+  if (!force && studentInstitutionalState.promise) return studentInstitutionalState.promise;
+  studentInstitutionalState.status = "loading";
+  studentInstitutionalState.error = "";
+  studentInstitutionalState.promise = (async () => {
+    try {
+      const client = createSupabaseRestClient();
+      const context = await client.getContext({ requireAuthenticated: true, allowedRoles: ["aluno", "admin"] });
+      const profileRows = await client.request("profiles", `?select=*&id=${supabaseEq(context.userId)}&limit=1`, {
+        requireAuthenticated: true,
+        allowedRoles: ["aluno", "admin"],
+      }).catch(() => []);
+      const profile = Array.isArray(profileRows) ? profileRows[0] || null : null;
+      let student = await getStudentCandidateByUserId(client, context.userId);
+      let publicUser = null;
+      if (!student?.id) {
+        publicUser = await resolveLegacyPublicUserForAuth(client, context);
+        student = await getStudentCandidateByUserId(client, publicUser?.id);
+      }
+      if (!student?.id) throw new Error("Aluno vinculado a esta sessao nao foi encontrado.");
+      const enrollmentRows = await client.request(
+        "enrollments",
+        `?select=*,classes(*),schools(*)&student_id=${supabaseEq(student.id)}&status=eq.active&limit=1`,
+        { requireAuthenticated: true, allowedRoles: ["aluno", "admin"] }
+      );
+      const enrollment = Array.isArray(enrollmentRows) ? enrollmentRows[0] || null : null;
+      const classItem = enrollment?.classes || null;
+      const school = enrollment?.schools || null;
+      studentInstitutionalState.profile = profile;
+      studentInstitutionalState.publicUser = publicUser;
+      studentInstitutionalState.student = student;
+      studentInstitutionalState.enrollment = enrollment;
+      studentInstitutionalState.classItem = classItem;
+      studentInstitutionalState.school = school;
+      studentInstitutionalState.status = "ready";
+      return studentInstitutionalState;
+    } catch (error) {
+      studentInstitutionalState.status = "error";
+      studentInstitutionalState.error = error.message || "Nao foi possivel carregar o aluno institucional.";
+      studentInstitutionalState.student = null;
+      studentInstitutionalState.enrollment = null;
+      studentInstitutionalState.classItem = null;
+      studentInstitutionalState.school = null;
+      return studentInstitutionalState;
+    } finally {
+      studentInstitutionalState.promise = null;
+    }
+  })();
+  return studentInstitutionalState.promise;
+};
+
+const getActiveStudentProfile = () => {
+  if (isStudentInstitutionalMode()) {
+    const student = studentInstitutionalState.student || {};
+    const profile = studentInstitutionalState.profile || {};
+    const fullName = normalizeStudentName(student);
+    const displayName = fullName !== "Aluno" ? fullName : normalizeProfileName(profile) || "Aluno";
+    return {
+      id: student.id || "",
+      name: displayName,
+      firstName: displayName.split(/\s+/)[0] || "Aluno",
+      fullName: displayName,
+      className: normalizeClassName(studentInstitutionalState.classItem || {}) || "Turma",
+      schoolName: normalizeSchoolName(studentInstitutionalState.school || {}) || "Escola",
+      avatar: "",
+      status: studentInstitutionalState.status,
+      error: studentInstitutionalState.error,
+    };
+  }
+  return {
+    id: pilotProfiles.student.id,
+    name: pilotProfiles.student.name,
+    firstName: pilotProfiles.student.name,
+    fullName: pilotProfiles.student.fullName,
+    className: pilotProfiles.student.className,
+    schoolName: "",
+    avatar: pilotProfiles.student.avatar,
+    status: "fallback",
+    error: "",
+  };
+};
 
 const mapInstitutionalClass = (classItem = {}, school = null, studentCount = 0) => ({
   id: classItem.id,
@@ -12224,6 +12362,18 @@ const initTeacherWorkspace = () => {
   });
 };
 
+const initStudentInstitutionalDashboard = () => {
+  const dashboard = document.querySelector("[data-student-dashboard]");
+  if (!dashboard || !isStudentInstitutionalMode()) return;
+  ensureStudentInstitutionalData().then(() => {
+    if (studentInstitutionalState.hydratedDom || !document.body.contains(dashboard)) return;
+    studentInstitutionalState.hydratedDom = true;
+    dashboard.outerHTML = renderStudentSimpleDashboard();
+    requestAnimationFrame(() => document.querySelector("[data-student-dashboard]")?.classList.add("is-mounted"));
+    initStudentInstitutionalDashboard();
+  });
+};
+
 const initPrintableActivities = () => {
   const root = document.querySelector("[data-printable-app]");
   if (!root) return;
@@ -12796,6 +12946,16 @@ const renderAppPage = () => {
       document.querySelector(".admin-workspace")?.classList.add("is-mounted");
     });
     initAdminWorkspace();
+    return;
+  }
+
+  if (activeKey === "aluno") {
+    mount.innerHTML = renderStudentSimpleDashboard();
+    initPlatformLogout();
+    initStudentInstitutionalDashboard();
+    requestAnimationFrame(() => {
+      document.querySelector("[data-student-dashboard]")?.classList.add("is-mounted");
+    });
     return;
   }
 
