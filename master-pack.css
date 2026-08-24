@@ -11729,8 +11729,8 @@ td {
 .family-v1 {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 212px minmax(0, 1fr);
-  background: #f5f9f2;
+  grid-template-columns: 232px minmax(0, 1fr);
+  background: #f8faf7;
   color: #163025;
 }
 
@@ -11740,26 +11740,30 @@ td {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  border-right: 1px solid rgba(13, 71, 45, 0.1);
-  padding: 14px;
-  background: #ffffff;
-  box-shadow: 10px 0 24px rgba(17, 67, 43, 0.05);
+  gap: 18px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 18px 14px;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(20, 141, 85, 0.28), transparent 34%),
+    linear-gradient(180deg, #075234 0%, #043b27 100%);
+  color: #fff;
+  box-shadow: 16px 0 34px rgba(4, 59, 39, 0.12);
 }
 
 .family-v1-logo {
   display: grid;
   place-items: center;
-  min-height: 70px;
+  min-height: 204px;
 }
 
 .family-v1-logo img {
-  width: min(126px, 100%);
+  width: min(100%, 148px);
   height: auto;
+  filter: drop-shadow(0 16px 20px rgba(0, 0, 0, 0.22));
 }
 
 .family-v1-person {
-  display: grid;
+  display: none;
   justify-items: center;
   gap: 4px;
   border: 1px solid rgba(13, 71, 45, 0.1);
@@ -11799,7 +11803,7 @@ td {
 
 .family-v1-sidebar nav {
   display: grid;
-  gap: 6px;
+  gap: 8px;
 }
 
 .family-v1-sidebar nav a,
@@ -11810,19 +11814,35 @@ td {
 .family-activity-card button,
 .student-focus-activity header a,
 .student-focus-actions button {
-  min-height: 38px;
+  min-height: 44px;
   border: 0;
   border-radius: 10px;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 0 14px;
-  background: #edf6e8;
-  color: #0d6b4b;
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 0 18px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.86);
   font-family: Poppins, Inter, sans-serif;
   font-weight: 900;
   text-decoration: none;
   cursor: pointer;
+}
+
+.family-v1-sidebar nav a .premium-icon,
+.family-v1-sidebar nav button .premium-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 0;
+  background: transparent;
+  color: currentColor;
+}
+
+.family-v1-sidebar nav a .premium-icon::before,
+.family-v1-sidebar nav button .premium-icon::before {
+  width: 20px;
+  height: 20px;
 }
 
 .family-v1-sidebar nav a.is-active,
@@ -11835,44 +11855,153 @@ td {
 .family-primary-link:focus-visible,
 .family-activity-card a:hover,
 .family-activity-card a:focus-visible {
-  background: #0d6b4b;
+  background: linear-gradient(135deg, #1f9b5f, #0b6a43);
   color: #fff;
   outline: none;
+  box-shadow: 0 12px 22px rgba(5, 68, 43, 0.22);
 }
 
 .family-v1-sidebar nav button {
-  margin-top: 6px;
-  background: #fff4eb;
-  color: #9a4e0b;
+  margin-top: auto;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
 }
 
 .family-v1-sidebar nav .family-nav-secondary {
-  background: #f7fbff;
-  color: #075f32;
-  border: 1px solid rgba(13, 107, 75, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.family-primary-link {
+  width: 100%;
+  justify-content: center;
+  background: #eef8ec;
+  color: #0d6b4b;
+  box-shadow: none;
 }
 
 .family-v1-main {
   min-width: 0;
   display: grid;
-  gap: 12px;
+  gap: 16px;
   align-content: start;
-  padding: 14px;
+  padding: 22px 26px 28px;
+}
+
+.family-v1-topbar {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(260px, 560px) auto;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 54px;
+}
+
+.family-v1-topbar label {
+  position: relative;
+  min-width: 0;
+  display: block;
+}
+
+.family-v1-topbar label span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.family-v1-topbar label::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  background: #41564c;
+  -webkit-mask: var(--rs-icon-site) center / contain no-repeat;
+  mask: var(--rs-icon-site) center / contain no-repeat;
+}
+
+.family-v1-topbar input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid rgba(6, 70, 47, 0.14);
+  border-radius: 999px;
+  padding: 0 18px 0 48px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #17271f;
+  font: inherit;
+  font-weight: 700;
+  box-shadow: 0 10px 24px rgba(8, 63, 45, 0.045);
+}
+
+.family-v1-topbar > div {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.family-v1-topbar a {
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(6, 70, 47, 0.1);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.9);
+  color: #06462f;
+  text-decoration: none;
+  box-shadow: 0 10px 20px rgba(8, 63, 45, 0.04);
+}
+
+.family-v1-topbar a .premium-icon {
+  background: transparent;
+}
+
+.family-v1-topbar strong {
+  min-height: 44px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 18px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #173024;
+  font-family: Poppins, Inter, sans-serif;
+  font-weight: 900;
 }
 
 .family-v1-hero {
+  position: relative;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
   border: 1px solid rgba(13, 71, 45, 0.1);
-  border-radius: 14px;
-  padding: 16px 20px;
+  border-radius: 18px;
+  padding: 32px 34px;
   background:
-    linear-gradient(110deg, rgba(255, 255, 255, 0.96), rgba(246, 252, 239, 0.92)),
+    radial-gradient(circle at 72% 40%, rgba(219, 236, 213, 0.72), transparent 22%),
+    linear-gradient(110deg, rgba(255, 255, 255, 0.98), rgba(246, 252, 239, 0.92)),
     #ffffff;
-  box-shadow: 0 10px 24px rgba(17, 67, 43, 0.05);
+  box-shadow: 0 18px 46px rgba(8, 63, 45, 0.07);
+}
+
+.family-v1-hero::after {
+  content: "";
+  position: absolute;
+  right: 25%;
+  bottom: -42px;
+  width: 260px;
+  height: 190px;
+  background: url("logo-sidebar-dark.png") center / contain no-repeat;
+  opacity: 0.08;
+  pointer-events: none;
 }
 
 .family-v1-hero span {
@@ -11888,7 +12017,7 @@ td {
   margin: 4px 0;
   color: #08482f;
   font-family: Poppins, Inter, sans-serif;
-  font-size: clamp(1.55rem, 2.4vw, 2.4rem);
+  font-size: clamp(2rem, 3vw, 3rem);
   line-height: 1.05;
 }
 
@@ -11952,6 +12081,7 @@ td {
 .family-home-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: start;
+  gap: 16px;
 }
 
 .family-panel,
@@ -11959,10 +12089,36 @@ td {
 .student-focus-card {
   min-width: 0;
   border: 1px solid rgba(13, 71, 45, 0.1);
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: 16px;
+  padding: 18px;
   background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 8px 20px rgba(17, 67, 43, 0.045);
+  box-shadow: 0 14px 32px rgba(8, 63, 45, 0.06);
+}
+
+.family-home-card {
+  min-height: 154px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.family-home-card > .premium-icon {
+  width: 78px;
+  height: 78px;
+  border-radius: 28px;
+  background: #eaf5e7;
+}
+
+.family-home-card .premium-icon::before {
+  width: 38px;
+  height: 38px;
+}
+
+.family-panel-body {
+  min-width: 0;
+  display: grid;
+  gap: 16px;
 }
 
 .family-panel-large {
@@ -11988,14 +12144,14 @@ td {
 }
 
 .family-empty-state {
-  min-height: 76px;
+  min-height: 68px;
   display: grid;
   place-items: center;
   gap: 4px;
-  border: 1px dashed rgba(13, 107, 75, 0.18);
+  border: 1px solid rgba(13, 107, 75, 0.14);
   border-radius: 10px;
   padding: 12px;
-  background: #f8fbf7;
+  background: rgba(255, 255, 255, 0.78);
   color: #486055;
   text-align: center;
 }
@@ -12117,6 +12273,7 @@ td {
 
 .family-week-panel {
   grid-column: span 2;
+  padding: 20px;
 }
 
 .family-summary-panel {
@@ -12648,6 +12805,32 @@ td {
   .family-v1-main,
   .student-focus-activity {
     padding: 10px;
+  }
+
+  .family-v1-topbar {
+    grid-template-columns: 1fr;
+    justify-content: stretch;
+    gap: 10px;
+  }
+
+  .family-v1-topbar label {
+    width: 100%;
+  }
+
+  .family-v1-topbar input {
+    min-width: 0;
+  }
+
+  .family-v1-topbar > div {
+    min-width: 0;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .family-v1-topbar strong {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
 
   .family-v1-hero,

@@ -7087,11 +7087,11 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
 };
 
 const familyAreaViews = [
-  ["inicio", "Inicio"],
-  ["atividades", "Atividades"],
-  ["agenda", "Agenda"],
-  ["acompanhamento", "Acompanhamento"],
-  ["perfil", "Perfil"],
+  ["inicio", "Inicio", "home"],
+  ["atividades", "Atividades", "atividades"],
+  ["agenda", "Agenda", "calendario"],
+  ["acompanhamento", "Acompanhamento", "acompanhamento"],
+  ["perfil", "Perfil", "perfil"],
 ];
 
 const getFamilyView = () => {
@@ -7410,16 +7410,25 @@ const renderFamilyProfile = () => {
 const renderFamilyHomeView = () => `
   <section class="family-home-grid">
     <div class="family-panel family-home-card">
-      <div class="family-section-head"><h2>Recados da professora</h2><span>${familyAreaData.teacher}</span></div>
-      ${renderFamilyMessageList()}
+      ${premiumIcon("mensagens")}
+      <div class="family-panel-body">
+        <div class="family-section-head"><h2>Recados da professora</h2><span>${familyAreaData.teacher}</span></div>
+        ${renderFamilyMessageList()}
+      </div>
     </div>
     <div class="family-panel family-home-card">
-      <div class="family-section-head"><h2>Atividades online</h2><span>Aluno</span></div>
-      ${renderFamilyOnlineActivities("pendentes")}
+      ${premiumIcon("atividades")}
+      <div class="family-panel-body">
+        <div class="family-section-head"><h2>Atividades online</h2><span>Aluno</span></div>
+        ${renderFamilyOnlineActivities("pendentes")}
+      </div>
     </div>
     <div class="family-panel family-home-card">
-      <div class="family-section-head"><h2>Atividades no livro</h2><span>Orientacoes</span></div>
-      ${renderFamilyBookActivities()}
+      ${premiumIcon("biblioteca")}
+      <div class="family-panel-body">
+        <div class="family-section-head"><h2>Atividades no livro</h2><span>Orientacoes</span></div>
+        ${renderFamilyBookActivities()}
+      </div>
     </div>
     ${renderFamilyWeeklyBoard()}
     ${renderFamilyProgressSummary()}
@@ -7488,7 +7497,7 @@ const renderFamilyDashboard = () => {
   return `
     <main class="family-v1" data-family-area data-week-start="${weekStartIso}">
       <aside class="family-v1-sidebar">
-        <a class="family-v1-logo" href="familia.html"><img src="logo-app.png" alt="Raizes e Saberes Educacional" onerror="this.hidden=true" /></a>
+        <a class="family-v1-logo" href="familia.html"><img src="logo-sidebar-dark.png" alt="Raizes e Saberes Educacional" onerror="this.hidden=true" /></a>
         <div class="family-v1-person">
           ${student.avatar ? `<img src="${student.avatar}" alt="" onerror="this.hidden=true" />` : ""}
           <span>Familia do</span>
@@ -7496,13 +7505,21 @@ const renderFamilyDashboard = () => {
           <small>${student.className}</small>
         </div>
         <nav aria-label="Area Aluno e Familia">
-          ${familyAreaViews.map(([key, label]) => `<a class="${key === view ? "is-active" : ""}" href="familia.html?view=${key}">${label}</a>`).join("")}
-          <a class="family-nav-secondary" href="educacao-infantil.html">Area da Escola</a>
-          <a class="family-nav-secondary" href="index.html">Site</a>
-          <button type="button" data-platform-logout>Sair</button>
+          ${familyAreaViews.map(([key, label, icon]) => `<a class="${key === view ? "is-active" : ""}" href="familia.html?view=${key}">${premiumIcon(icon)}<span>${label}</span></a>`).join("")}
+          <a class="family-nav-secondary" href="educacao-infantil.html">${premiumIcon("escola")}<span>Area da Escola</span></a>
+          <a class="family-nav-secondary" href="index.html">${premiumIcon("site")}<span>Site</span></a>
+          <button type="button" data-platform-logout>${premiumIcon("sair")}<span>Sair</span></button>
         </nav>
       </aside>
       <section class="family-v1-main">
+        <header class="family-v1-topbar">
+          <label><span>Buscar</span><input type="search" placeholder="Buscar conteudos, aluno, agenda..." data-family-search /></label>
+          <div>
+            <a href="index.html" aria-label="Ir para o site">${premiumIcon("site")}</a>
+            <a href="familia.html?view=perfil" aria-label="Perfil">${premiumIcon("perfil")}</a>
+            <strong>${student.name}</strong>
+          </div>
+        </header>
         <header class="family-v1-hero">
           <div>
             <span>Aluno Educacao Infantil & Familia</span>
