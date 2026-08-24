@@ -11861,6 +11861,8 @@ td {
 .family-v1-sidebar nav {
   display: grid;
   gap: 8px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .family-v1-sidebar nav a,
@@ -11885,6 +11887,20 @@ td {
   font-weight: 900;
   text-decoration: none;
   cursor: pointer;
+}
+
+.family-v1-sidebar nav a,
+.family-v1-sidebar nav button {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.family-v1-sidebar nav a span,
+.family-v1-sidebar nav button span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .family-v1-sidebar nav a .premium-icon,
