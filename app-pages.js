@@ -6905,6 +6905,7 @@ const familyInstitutionalState = {
   enrollment: null,
   classItem: null,
   school: null,
+  teacher: null,
   entries: [],
   weekStartIso: "",
   hydratedDom: false,
@@ -6926,8 +6927,12 @@ const familyScheduleSlots = [
   ["5", "Horario 5"],
 ];
 
-const familyScheduleStorageKey = () => `raizes:family-weekly-schedule:${familyAreaData.student.id || pilotProfiles.student.id}:v1`;
-const familyNoticeStorageKey = () => `raizes:family-schedule-notices:${familyAreaData.student.id || pilotProfiles.student.id}:v1`;
+const familyScheduleStudentId = () => {
+  if (isFamilyInstitutionalMode?.() && familyInstitutionalState.student?.id) return familyInstitutionalState.student.id;
+  return familyAreaData.student.id || pilotProfiles.student.id;
+};
+const familyScheduleStorageKey = () => `raizes:family-weekly-schedule:${familyScheduleStudentId()}:v1`;
+const familyNoticeStorageKey = () => `raizes:family-schedule-notices:${familyScheduleStudentId()}:v1`;
 const familyReadJsonList = (key) => {
   try {
     return JSON.parse(localStorage.getItem(key) || "[]");
@@ -7017,7 +7022,24 @@ const formatFamilyEntryTime = (entry = {}) => {
   return start || "Sem horario";
 };
 
+const normalizeFamilyTeacherName = (teacher = {}) => {
+  teacher = teacher || {};
+  return (
+    teacher.display_name || teacher.nome || teacher.name || teacher.full_name || teacher.fullName || teacher.email || ""
+  );
+};
+
+const getFamilyTeacherName = () =>
+  (isFamilyInstitutionalMode() && normalizeFamilyTeacherName(familyInstitutionalState.teacher)) ||
+  familyAreaData.teacher ||
+  "Professora";
+
 const mapFamilyCalendarEntry = (entry = {}) => ({
+  id: entry.id || "",
+  class_id: entry.class_id || "",
+  school_id: entry.school_id || "",
+  teacher_id: entry.teacher_id || "",
+  plan_id: entry.plan_id || "",
   title: entry.title || "Publicacao",
   description: entry.description || "",
   entry_date: entry.entry_date || "",
@@ -7027,6 +7049,37 @@ const mapFamilyCalendarEntry = (entry = {}) => ({
   status: entry.status || "",
   created_at: entry.created_at || "",
 });
+
+const getFamilyEntriesForDate = (specificDate = "") =>
+  (familyInstitutionalState.entries || [])
+    .filter((entry) => entry.entry_date === specificDate && entry.status === "published")
+    .sort((a, b) => {
+      const aTime = a.start_time || "99:99:99";
+      const bTime = b.start_time || "99:99:99";
+      if (aTime !== bTime) return aTime.localeCompare(bTime);
+      return String(a.created_at || "").localeCompare(String(b.created_at || ""));
+    });
+
+const isFamilyEntrySlotMatch = (entry = {}, routine = null) => {
+  if (!entry.start_time || !routine?.start_time) return false;
+  return String(entry.start_time).slice(0, 5) === String(routine.start_time).slice(0, 5);
+};
+
+const getFamilySlottedEntries = (dayKey, slotKey, specificDate = "") => {
+  const routine = getFamilyRoutineRecord(dayKey, slotKey);
+  return getFamilyEntriesForDate(specificDate).filter((entry) => isFamilyEntrySlotMatch(entry, routine));
+};
+
+const getFamilyUnscheduledEntries = (specificDate = "") =>
+  getFamilyEntriesForDate(specificDate).filter((entry) => {
+    if (!entry.start_time) return true;
+    return !familyScheduleSlots.some(([slotKey]) =>
+      familyWeekDays.some(([dayKey]) => {
+        const weekDates = getFamilyWeekDates(familyInstitutionalState.weekStartIso || familyWeekStartIso());
+        return weekDates[dayKey] === specificDate && isFamilyEntrySlotMatch(entry, getFamilyRoutineRecord(dayKey, slotKey));
+      })
+    );
+  });
 
 const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" } = {}) => {
   if (!isFamilyInstitutionalMode()) return familyInstitutionalState;
@@ -7049,20 +7102,26 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
 
       const guardianRows = await client.request(
         "student_guardians",
-        `?select=id,student_id,profile_id,relationship,status,student:students(id,nome,school_id,class_id,status)&status=eq.active&profile_id=${supabaseEq(context.userId)}&limit=1`,
+        `?select=id,student_id,profile_id,relationship,status,student:students(id,nome,school_id,class_id,status,user_id)&status=eq.active&profile_id=${supabaseEq(context.userId)}&limit=1`,
         { requireAuthenticated: true, allowedRoles: ["educacao_infantil", "admin"] }
-      );
+      ).catch(() => []);
       const guardian = Array.isArray(guardianRows) ? guardianRows[0] : null;
-      if (!guardian?.student_id) throw new Error("Vinculo familia-aluno nao encontrado para esta sessao.");
-      let student = guardian.student || null;
-      if (!student?.id) {
-        const studentRows = await client.request("students", `?select=id,nome,school_id,class_id,status&id=${supabaseEq(guardian.student_id)}&limit=1`, {
+      let student = guardian?.student || null;
+      if (!student?.id && guardian?.student_id) {
+        const studentRows = await client.request("students", `?select=id,nome,school_id,class_id,status,user_id&id=${supabaseEq(guardian.student_id)}&limit=1`, {
           requireAuthenticated: true,
           allowedRoles: ["educacao_infantil", "admin"],
         });
         student = Array.isArray(studentRows) ? studentRows[0] : null;
       }
-      if (!student?.id) throw new Error("RLS nao retornou os dados do aluno vinculado.");
+      if (!student?.id) {
+        student = await getStudentCandidateByUserId(client, context.userId);
+      }
+      if (!student?.id) {
+        const publicUser = await resolveLegacyPublicUserForAuth(client, context);
+        student = await getStudentCandidateByUserId(client, publicUser?.id);
+      }
+      if (!student?.id) throw new Error("Aluno vinculado a esta sessao nao foi encontrado.");
 
       const enrollmentRows = await client.request(
         "enrollments",
@@ -7073,10 +7132,24 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
       if (!enrollment?.class_id || !enrollment?.school_id) throw new Error("Enrollment ativo do aluno nao foi retornado pela RLS.");
       const classItem = enrollment.classes || { id: enrollment.class_id, nome: student.className || "" };
       const school = enrollment.schools || { id: enrollment.school_id, nome: student.school || "" };
+      const teacherMembershipRows = await client.request(
+        "class_teacher_memberships",
+        `?select=id,class_id,teacher_id,role,status&status=eq.active&class_id=${supabaseEq(enrollment.class_id)}&limit=1`,
+        { requireAuthenticated: true, allowedRoles: ["educacao_infantil", "admin"] }
+      ).catch(() => []);
+      const teacherMembership = Array.isArray(teacherMembershipRows) ? teacherMembershipRows[0] : null;
+      let teacher = null;
+      if (teacherMembership?.teacher_id) {
+        const teacherRows = await client.request("teachers", `?select=*&id=${supabaseEq(teacherMembership.teacher_id)}&limit=1`, {
+          requireAuthenticated: true,
+          allowedRoles: ["educacao_infantil", "admin"],
+        }).catch(() => []);
+        teacher = Array.isArray(teacherRows) ? teacherRows[0] || null : null;
+      }
       const weekDates = getFamilyWeekDates(familyInstitutionalState.weekStartIso);
       const entries = await client.request(
         "class_calendar_entries",
-        `?select=title,description,entry_date,start_time,end_time,entry_type,status,created_at&status=eq.published&entry_date=gte.${encodeURIComponent(weekDates.seg)}&entry_date=lte.${encodeURIComponent(weekDates.sex)}&order=start_time.asc.nullslast&order=created_at.asc`,
+        `?select=id,class_id,school_id,teacher_id,plan_id,title,description,entry_date,start_time,end_time,entry_type,status,created_at&status=eq.published&class_id=${supabaseEq(enrollment.class_id)}&entry_date=gte.${encodeURIComponent(weekDates.seg)}&entry_date=lte.${encodeURIComponent(weekDates.sex)}&order=start_time.asc.nullslast&order=created_at.asc`,
         { requireAuthenticated: true, allowedRoles: ["educacao_infantil", "admin"] }
       );
 
@@ -7086,6 +7159,7 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
       familyInstitutionalState.enrollment = enrollment;
       familyInstitutionalState.classItem = classItem;
       familyInstitutionalState.school = school;
+      familyInstitutionalState.teacher = teacher;
       familyInstitutionalState.entries = (entries || []).filter((entry) => entry.status === "published").map(mapFamilyCalendarEntry);
       familyInstitutionalState.status = "ready";
       return familyInstitutionalState;
@@ -7239,23 +7313,51 @@ const renderFamilyWeekCell = (dayKey, slotKey, specificDate = "") => {
   `;
 };
 
-const renderFamilyInstitutionalEntryCell = (entry) => {
-  if (!entry) {
-    return `<div class="family-week-cell is-empty"><span>Sem registro</span></div>`;
-  }
+const renderFamilyInstitutionalEntryCard = (entry) => {
   return `
-    <div class="family-week-cell family-week-entry">
+    <button type="button" class="family-week-notice family-week-entry" data-notice-detail title="${printableEscape(entry.description || entry.title)}">
       <small>${printableEscape(formatFamilyEntryTime(entry))}</small>
       <em>${printableEscape(entry.entry_type || "agenda")}</em>
       <strong>${printableEscape(entry.title)}</strong>
       ${entry.description ? `<p>${printableEscape(entry.description)}</p>` : ""}
+    </button>
+  `;
+};
+
+const renderFamilyInstitutionalWeekCell = (dayKey, slotKey, specificDate = "") => {
+  const routine = getFamilyRoutineRecord(dayKey, slotKey);
+  const entries = getFamilySlottedEntries(dayKey, slotKey, specificDate);
+  return `
+    <div class="family-week-cell ${!routine && !entries.length ? "is-empty" : ""}" data-day="${dayKey}" data-slot="${slotKey}" data-date="${specificDate}">
+      ${
+        routine
+          ? `<div class="family-week-routine">
+              <small>${printableEscape(routine.start_time || "")}</small>
+              <strong>${printableEscape(routine.subject_or_activity || routine.title || "")}</strong>
+              ${routine.optional_note || routine.note ? `<p>${printableEscape(routine.optional_note || routine.note)}</p>` : ""}
+              <button type="button" data-edit-routine data-day="${dayKey}" data-slot="${slotKey}">Editar horario</button>
+            </div>`
+          : `<div class="family-week-routine is-missing"><span>Sem registro</span><button type="button" data-edit-routine data-day="${dayKey}" data-slot="${slotKey}">Editar horario</button></div>`
+      }
+      ${entries.map(renderFamilyInstitutionalEntryCard).join("")}
+    </div>
+  `;
+};
+
+const renderFamilyUnscheduledEntriesCell = (specificDate = "") => {
+  const entries = getFamilyUnscheduledEntries(specificDate);
+  if (!entries.length) {
+    return `<div class="family-week-cell is-empty"><span>Sem publicacao</span></div>`;
+  }
+  return `
+    <div class="family-week-cell family-week-unscheduled">
+      ${entries.map(renderFamilyInstitutionalEntryCard).join("")}
     </div>
   `;
 };
 
 const renderFamilyInstitutionalWeeklyBoard = (weekStartIso = familyInstitutionalState.weekStartIso || familyWeekStartIso()) => {
-  const entriesByDay = getFamilyInstitutionalEntriesByDay(weekStartIso);
-  const maxRows = Math.max(1, ...Object.values(entriesByDay).map((items) => items.length));
+  const weekDates = getFamilyWeekDates(weekStartIso);
   const statusMessage =
     familyInstitutionalState.status === "loading" || familyInstitutionalState.status === "idle"
       ? renderFamilyEmpty("CARREGANDO MINHA SEMANA.")
@@ -7277,16 +7379,18 @@ const renderFamilyInstitutionalWeeklyBoard = (weekStartIso = familyInstitutional
     </div>
     ${statusMessage}
     <div class="family-week-grid" aria-label="Quadro semanal" data-week-start="${weekStartIso}">
-      <div class="family-week-corner">Agenda</div>
+      <div class="family-week-corner">Horario</div>
       ${familyWeekDays.map(([, short]) => `<div class="family-week-day">${short}</div>`).join("")}
-      ${Array.from({ length: maxRows })
+      ${familyScheduleSlots
         .map(
-          (_, index) => `
-            <div class="family-week-slot">${index === 0 ? "Publicacao" : ""}</div>
-            ${familyWeekDays.map(([dayKey]) => renderFamilyInstitutionalEntryCell(entriesByDay[dayKey]?.[index])).join("")}
+          ([slotKey, slotLabel]) => `
+            <div class="family-week-slot">${slotLabel}</div>
+            ${familyWeekDays.map(([dayKey]) => renderFamilyInstitutionalWeekCell(dayKey, slotKey, weekDates[dayKey])).join("")}
           `
         )
         .join("")}
+      <div class="family-week-slot">Sem horario</div>
+      ${familyWeekDays.map(([dayKey]) => renderFamilyUnscheduledEntriesCell(weekDates[dayKey])).join("")}
     </div>
     <div class="family-week-mobile">
       ${familyWeekDays
@@ -7294,11 +7398,8 @@ const renderFamilyInstitutionalWeeklyBoard = (weekStartIso = familyInstitutional
           ([dayKey, , full]) => `
             <article>
               <h3>${full}</h3>
-              ${
-                entriesByDay[dayKey]?.length
-                  ? entriesByDay[dayKey].map((entry) => `<div><b>${printableEscape(formatFamilyEntryTime(entry))}</b>${renderFamilyInstitutionalEntryCell(entry)}</div>`).join("")
-                  : `<div><b>Agenda</b>${renderFamilyInstitutionalEntryCell(null)}</div>`
-              }
+              ${familyScheduleSlots.map(([slotKey, slotLabel]) => `<div><b>${slotLabel}</b>${renderFamilyInstitutionalWeekCell(dayKey, slotKey, weekDates[dayKey])}</div>`).join("")}
+              <div><b>Sem horario</b>${renderFamilyUnscheduledEntriesCell(weekDates[dayKey])}</div>
             </article>
           `
         )
@@ -7427,7 +7528,7 @@ const renderFamilyHomeView = () => `
     <div class="family-panel family-home-card">
       ${premiumIcon("mensagens")}
       <div class="family-panel-body">
-        <div class="family-section-head"><h2>Recados da professora</h2><span>${familyAreaData.teacher}</span></div>
+        <div class="family-section-head"><h2>Recados da professora</h2><span>${printableEscape(getFamilyTeacherName())}</span></div>
         ${renderFamilyMessageList()}
       </div>
     </div>
@@ -7539,7 +7640,7 @@ const renderFamilyDashboard = () => {
           <div>
             <span>Aluno Educacao Infantil & Familia</span>
             <h1>Ola, familia do ${student.name}!</h1>
-            <p>Acompanhe a rotina, as atividades e as conquistas.</p>
+            <p>${printableEscape(student.className)} · ${printableEscape(student.school)}</p>
           </div>
           <div class="family-hero-actions" aria-label="Acessos da familia">
             <a href="educacao-infantil.html">Area da Escola</a>
@@ -7651,7 +7752,7 @@ const initFamilyArea = () => {
     if (subject) {
       current.push({
         id: `routine-${dayKey}-${slotKey}`,
-        student_id: familyAreaData.student.id,
+        student_id: familyScheduleStudentId(),
         day_of_week: dayKey,
         slot_index: Number(slotKey),
         start_time: form.elements.start_time.value || "",
@@ -11202,7 +11303,7 @@ const resolveLegacyPublicUserForAuth = async (client, context) => {
   try {
     const users = await client.request("users", "?select=*&limit=100", {
       requireAuthenticated: true,
-      allowedRoles: ["aluno", "admin"],
+      allowedRoles: ["aluno", "educacao_infantil", "admin"],
     });
     return (users || []).find((user) => {
       const values = [
@@ -11224,7 +11325,7 @@ const getStudentCandidateByUserId = async (client, userId) => {
   if (!userId) return null;
   const rows = await client.request("students", `?select=*&user_id=${supabaseEq(userId)}&limit=1`, {
     requireAuthenticated: true,
-    allowedRoles: ["aluno", "admin"],
+    allowedRoles: ["aluno", "educacao_infantil", "admin"],
   });
   return Array.isArray(rows) ? rows[0] || null : null;
 };
