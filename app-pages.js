@@ -6907,6 +6907,7 @@ const familyInstitutionalState = {
   school: null,
   teacher: null,
   entries: [],
+  calendarError: "",
   weekStartIso: "",
   hydratedDom: false,
 };
@@ -7163,12 +7164,6 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
           teacher.profile = Array.isArray(teacherProfileRows) ? teacherProfileRows[0] || null : null;
         }
       }
-      const weekDates = getFamilyWeekDates(familyInstitutionalState.weekStartIso);
-      const entries = await client.request(
-        "class_calendar_entries",
-        `?select=id,class_id,school_id,teacher_id,plan_id,title,description,entry_date,start_time,end_time,entry_type,status,created_at&status=eq.published&class_id=${supabaseEq(enrollment.class_id)}&entry_date=gte.${encodeURIComponent(weekDates.seg)}&entry_date=lte.${encodeURIComponent(weekDates.sex)}&order=start_time.asc.nullslast&order=created_at.asc`,
-        { requireAuthenticated: true, allowedRoles: ["educacao_infantil", "admin"] }
-      );
 
       familyInstitutionalState.profile = profile;
       familyInstitutionalState.guardian = guardian;
@@ -7177,6 +7172,18 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
       familyInstitutionalState.classItem = classItem;
       familyInstitutionalState.school = school;
       familyInstitutionalState.teacher = teacher;
+      familyInstitutionalState.calendarError = "";
+
+      const weekDates = getFamilyWeekDates(familyInstitutionalState.weekStartIso);
+      const entries = await client.request(
+        "class_calendar_entries",
+        `?select=id,class_id,school_id,teacher_id,plan_id,title,description,entry_date,start_time,end_time,entry_type,status,created_at&status=eq.published&class_id=${supabaseEq(enrollment.class_id)}&entry_date=gte.${encodeURIComponent(weekDates.seg)}&entry_date=lte.${encodeURIComponent(weekDates.sex)}&order=start_time.asc.nullslast&order=created_at.asc`,
+        { requireAuthenticated: true, allowedRoles: ["educacao_infantil", "admin"] }
+      ).catch((error) => {
+        familyInstitutionalState.calendarError = error.message || "Nao foi possivel carregar a Minha Semana.";
+        return [];
+      });
+
       familyInstitutionalState.entries = (entries || []).filter((entry) => entry.status === "published").map(mapFamilyCalendarEntry);
       familyInstitutionalState.status = "ready";
       return familyInstitutionalState;
