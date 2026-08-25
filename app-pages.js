@@ -7024,7 +7024,12 @@ const formatFamilyEntryTime = (entry = {}) => {
 
 const normalizeFamilyTeacherName = (teacher = {}) => {
   teacher = teacher || {};
+  const profile = teacher.profile || teacher.profiles || {};
   return (
+    profile.display_name ||
+    profile.full_name ||
+    profile.name ||
+    profile.email ||
     teacher.display_name || teacher.nome || teacher.name || teacher.full_name || teacher.fullName || teacher.email || ""
   );
 };
@@ -7096,32 +7101,37 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
       const profileRows = await client.request("profiles", `?select=id,display_name,platform_role,status&id=${supabaseEq(context.userId)}&limit=1`, {
         requireAuthenticated: true,
         allowedRoles: ["educacao_infantil", "admin"],
-      });
+      }).catch(() => []);
       const profile = Array.isArray(profileRows) ? profileRows[0] : null;
-      if (!profile?.id) throw new Error("Profile institucional da familia nao encontrado.");
 
-      const guardianRows = await client.request(
-        "student_guardians",
-        `?select=id,student_id,profile_id,relationship,status,student:students(id,nome,school_id,class_id,status,user_id)&status=eq.active&profile_id=${supabaseEq(context.userId)}&limit=1`,
-        { requireAuthenticated: true, allowedRoles: ["educacao_infantil", "admin"] }
-      ).catch(() => []);
-      const guardian = Array.isArray(guardianRows) ? guardianRows[0] : null;
-      let student = guardian?.student || null;
-      if (!student?.id && guardian?.student_id) {
-        const studentRows = await client.request("students", `?select=id,nome,school_id,class_id,status,user_id&id=${supabaseEq(guardian.student_id)}&limit=1`, {
-          requireAuthenticated: true,
-          allowedRoles: ["educacao_infantil", "admin"],
-        });
-        student = Array.isArray(studentRows) ? studentRows[0] : null;
+      let directStudentError = "";
+      let student = await getStudentCandidateByUserId(client, context.userId).catch((error) => {
+        directStudentError = error.message || "Consulta students por user_id falhou.";
+        return null;
+      });
+      let guardian = null;
+      if (!student?.id) {
+        const guardianRows = await client.request(
+          "student_guardians",
+          `?select=id,student_id,profile_id,relationship,status,student:students(id,nome,school_id,class_id,status,user_id)&status=eq.active&profile_id=${supabaseEq(context.userId)}&limit=1`,
+          { requireAuthenticated: true, allowedRoles: ["educacao_infantil", "admin"] }
+        ).catch(() => []);
+        guardian = Array.isArray(guardianRows) ? guardianRows[0] : null;
+        student = guardian?.student || null;
+        if (!student?.id && guardian?.student_id) {
+          const studentRows = await client.request("students", `?select=id,nome,school_id,class_id,status,user_id&id=${supabaseEq(guardian.student_id)}&limit=1`, {
+            requireAuthenticated: true,
+            allowedRoles: ["educacao_infantil", "admin"],
+          });
+          student = Array.isArray(studentRows) ? studentRows[0] : null;
+        }
       }
       if (!student?.id) {
-        student = await getStudentCandidateByUserId(client, context.userId);
+        throw new Error(
+          directStudentError ||
+            "Consulta students por user_id = auth.uid() nao retornou aluno, e nao houve vinculo ativo em student_guardians."
+        );
       }
-      if (!student?.id) {
-        const publicUser = await resolveLegacyPublicUserForAuth(client, context);
-        student = await getStudentCandidateByUserId(client, publicUser?.id);
-      }
-      if (!student?.id) throw new Error("Aluno vinculado a esta sessao nao foi encontrado.");
 
       const enrollmentRows = await client.request(
         "enrollments",
@@ -7145,6 +7155,13 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
           allowedRoles: ["educacao_infantil", "admin"],
         }).catch(() => []);
         teacher = Array.isArray(teacherRows) ? teacherRows[0] || null : null;
+        if (teacher?.profile_id) {
+          const teacherProfileRows = await client.request("profiles", `?select=id,display_name,full_name,name,email,status&id=${supabaseEq(teacher.profile_id)}&limit=1`, {
+            requireAuthenticated: true,
+            allowedRoles: ["educacao_infantil", "admin"],
+          }).catch(() => []);
+          teacher.profile = Array.isArray(teacherProfileRows) ? teacherProfileRows[0] || null : null;
+        }
       }
       const weekDates = getFamilyWeekDates(familyInstitutionalState.weekStartIso);
       const entries = await client.request(
