@@ -46,14 +46,15 @@ const normalizePlatformRole = (role) => {
     professor: ["professor", "teacher"],
     aluno: ["aluno", "student", "aluno_ensino_fundamental", "aluno-ensino-fundamental", "ensino_fundamental", "fundamental"],
     escola: ["escola", "school"],
-    educacao_infantil: ["educacao_infantil", "educacao-infantil", "educacaoinfantil", "aluno_educacao_infantil", "aluno-educacao-infantil", "aluno_infantil", "infantil", "early_childhood"],
+    educacao_infantil: ["educacao_infantil", "educacao-infantil", "educacaoinfantil", "aluno_educacao_infantil", "aluno-educacao-infantil", "aluno_infantil", "infantil", "early_childhood", "familia", "responsavel", "responsavel_ei"],
     gestor: ["gestor", "gestor_escolar", "manager"],
     coordenador: ["coordenador", "coordenador_pedagogico", "coordinator"],
+    secretaria: ["secretaria", "secretaria_escolar", "secretaria-operacional"],
     admin: ["admin", "administrador", "administrador_nacional"],
   };
   return Object.keys(aliases).find((key) => aliases[key].includes(normalized)) || normalized;
 };
-const validPlatformRoles = new Set(["professor", "aluno", "escola", "educacao_infantil", "gestor", "coordenador", "admin"]);
+const validPlatformRoles = new Set(["professor", "aluno", "escola", "educacao_infantil", "gestor", "coordenador", "secretaria", "admin"]);
 const hasValidPlatformRole = (role) => validPlatformRoles.has(normalizePlatformRole(role));
 const prefersFileRoutes = () =>
   window.location.protocol === "file:" || ["localhost", "127.0.0.1", ""].includes(window.location.hostname);
@@ -66,6 +67,7 @@ const loginRoleLabels = {
   admin: "Admin / TI",
   gestor: "Gestor",
   coordenador: "Coordenador",
+  secretaria: "Secretaria",
 };
 
 const getRoleHome = (role) =>
@@ -76,6 +78,7 @@ const getRoleHome = (role) =>
     educacao_infantil: platformRoute("/familia", "familia.html"),
     gestor: "gestor.html",
     coordenador: platformRoute("/professor", "professor.html"),
+    secretaria: platformRoute("/secretaria", "secretaria.html"),
     admin: platformRoute("/admin", "admin.html"),
   })[normalizePlatformRole(role)] || "plataforma.html";
 
@@ -113,11 +116,30 @@ const inferRequestedAccessRole = () => {
   if (pageName === "escola" || pageName === "escola.html") return "escola";
   if (pageName === "educacao-infantil" || pageName === "educacao-infantil.html") return "educacao_infantil";
   if (pageName === "professor" || pageName === "professor.html" || pageName.startsWith("professor/")) return "professor";
+  if (pageName === "secretaria" || pageName === "secretaria.html") return "secretaria";
   return "";
+};
+const requestedRouteAllowedRoles = {
+  admin: ["admin"],
+  escola: ["secretaria", "professor", "aluno", "educacao_infantil", "gestor", "coordenador", "admin"],
+  educacao_infantil: ["educacao_infantil", "admin"],
+  aluno: ["aluno"],
+  professor: ["professor", "gestor", "coordenador", "admin"],
+  secretaria: ["secretaria", "gestor", "coordenador", "admin"],
+};
+const canRoleAccessRequestedRoute = (role, requestedRole) => {
+  const normalizedRole = normalizePlatformRole(role);
+  const allowed = requestedRouteAllowedRoles[requestedRole];
+  if (normalizedRole === "admin") return true;
+  return !allowed || allowed.includes(normalizedRole);
 };
 const getPostLoginDestination = (role) => {
   if (!role) return getNextPage();
   const next = getNextPage();
+  const requestedRole = inferRequestedAccessRole();
+  if (requestedRole && !canRoleAccessRequestedRoute(role, requestedRole)) {
+    return getRoleHome(role);
+  }
   return ["plataforma.html", "index.html", "/"].includes(next) ? getRoleHome(role) : next;
 };
 

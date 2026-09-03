@@ -1,0 +1,79 @@
+{
+  "package_version": "RS-SCHOOL-V1-DEPLOYMENT-2026-09-01",
+  "schema_version": "RS-SCHOOL-TEMPLATE V1",
+  "mode": "dry-run",
+  "generated_at": "2026-09-01T19:47:04.594Z",
+  "school_name": "Escola Template Validacao 2",
+  "school_year": "2026",
+  "files": {
+    "turmas.csv": {
+      "rows": 2,
+      "columns": [
+        "class_name",
+        "school_year",
+        "status",
+        "age_group",
+        "shift",
+        "grade"
+      ]
+    },
+    "professores.csv": {
+      "rows": 2,
+      "columns": [
+        "full_name",
+        "email",
+        "status"
+      ]
+    },
+    "professor_turmas.csv": {
+      "rows": 2,
+      "columns": [
+        "teacher_email",
+        "class_name",
+        "school_year",
+        "role",
+        "status"
+      ]
+    },
+    "alunos.csv": {
+      "rows": 6,
+      "columns": [
+        "full_name",
+        "birth_date",
+        "class_name",
+        "school_year",
+        "status"
+      ]
+    },
+    "responsaveis.csv": {
+      "rows": 6,
+      "columns": [
+        "guardian_name",
+        "email",
+        "phone",
+        "relationship",
+        "student_reference",
+        "status",
+        "is_primary"
+      ]
+    }
+  },
+  "counts": {
+    "lines_read": 18,
+    "valid": 18,
+    "invalid": 0,
+    "duplicated": 0,
+    "existing": 0,
+    "created": 0,
+    "ignored": 0,
+    "failures": 1
+  },
+  "existing_records": [],
+  "created_ids": [],
+  "errors": [
+    {
+      "message": "auth failed: 400 {\"code\":400,\"error_code\":\"invalid_credentials\",\"msg\":\"Invalid login credentials\"}"
+    }
+  ],
+  "warnings": []
+}

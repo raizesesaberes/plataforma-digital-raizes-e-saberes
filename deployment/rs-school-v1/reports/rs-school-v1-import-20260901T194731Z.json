@@ -1,0 +1,88 @@
+{
+  "package_version": "RS-SCHOOL-V1-DEPLOYMENT-2026-09-01",
+  "schema_version": "RS-SCHOOL-TEMPLATE V1",
+  "mode": "dry-run",
+  "generated_at": "2026-09-01T19:47:31.580Z",
+  "school_name": "Escola Template Validacao 2",
+  "school_year": "2026",
+  "files": {
+    "turmas.csv": {
+      "rows": 2,
+      "columns": [
+        "class_name",
+        "school_year",
+        "status",
+        "age_group",
+        "shift",
+        "grade"
+      ]
+    },
+    "professores.csv": {
+      "rows": 2,
+      "columns": [
+        "full_name",
+        "email",
+        "status"
+      ]
+    },
+    "professor_turmas.csv": {
+      "rows": 2,
+      "columns": [
+        "teacher_email",
+        "class_name",
+        "school_year",
+        "role",
+        "status"
+      ]
+    },
+    "alunos.csv": {
+      "rows": 6,
+      "columns": [
+        "full_name",
+        "birth_date",
+        "class_name",
+        "school_year",
+        "status"
+      ]
+    },
+    "responsaveis.csv": {
+      "rows": 6,
+      "columns": [
+        "guardian_name",
+        "email",
+        "phone",
+        "relationship",
+        "student_reference",
+        "status",
+        "is_primary"
+      ]
+    }
+  },
+  "counts": {
+    "lines_read": 18,
+    "valid": 18,
+    "invalid": 0,
+    "duplicated": 0,
+    "existing": 2,
+    "created": 0,
+    "ignored": 16,
+    "failures": 0
+  },
+  "existing_records": [
+    {
+      "kind": "class",
+      "source_line": 2,
+      "id": "689cf61c-0735-4c34-88aa-704d12ac014a",
+      "message": "Infantil A/2026"
+    },
+    {
+      "kind": "class",
+      "source_line": 3,
+      "id": "488f8aee-3d5c-4cf4-a286-d8db9b969a5b",
+      "message": "Infantil B/2026"
+    }
+  ],
+  "created_ids": [],
+  "errors": [],
+  "warnings": []
+}

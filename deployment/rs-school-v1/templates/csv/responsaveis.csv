@@ -1,0 +1,7 @@
+guardian_name,email,phone,relationship,student_reference,status,is_primary
+Responsavel Exemplo Um,responsavel.um@example.invalid,11900000001,mae,Aluno Exemplo Um,active,true
+Responsavel Exemplo Dois,responsavel.dois@example.invalid,11900000002,pai,Aluno Exemplo Dois,active,true
+Responsavel Exemplo Tres,responsavel.tres@example.invalid,11900000003,responsavel,Aluno Exemplo Tres,active,true
+Responsavel Exemplo Quatro,responsavel.quatro@example.invalid,11900000004,mae,Aluno Exemplo Quatro,active,true
+Responsavel Exemplo Cinco,responsavel.cinco@example.invalid,11900000005,pai,Aluno Exemplo Cinco,active,true
+Responsavel Exemplo Seis,responsavel.seis@example.invalid,11900000006,tutor,Aluno Exemplo Seis,active,true

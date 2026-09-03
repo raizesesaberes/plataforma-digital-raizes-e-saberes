@@ -9,9 +9,10 @@ const platformRoles = {
   professor: ["professor", "teacher"],
   aluno: ["aluno", "student", "aluno_ensino_fundamental", "aluno-ensino-fundamental", "ensino_fundamental", "fundamental"],
   escola: ["escola", "school"],
-  educacao_infantil: ["educacao_infantil", "educacao-infantil", "educacaoinfantil", "aluno_educacao_infantil", "aluno-educacao-infantil", "aluno_infantil", "infantil", "early_childhood"],
+  educacao_infantil: ["educacao_infantil", "educacao-infantil", "educacaoinfantil", "aluno_educacao_infantil", "aluno-educacao-infantil", "aluno_infantil", "infantil", "early_childhood", "familia", "responsavel", "responsavel_ei"],
   gestor: ["gestor", "gestor_escolar", "manager"],
   coordenador: ["coordenador", "coordenador_pedagogico", "coordinator"],
+  secretaria: ["secretaria", "secretaria_escolar", "secretaria-operacional"],
   admin: ["admin", "administrador", "administrador_nacional"],
 };
 const prefersFileRoutes = () =>
@@ -25,11 +26,12 @@ const platformRoleHome = {
   educacao_infantil: platformRoute("/familia", "familia.html"),
   gestor: "gestor.html",
   coordenador: platformRoute("/professor", "professor.html"),
+  secretaria: platformRoute("/secretaria", "secretaria.html"),
   admin: platformRoute("/admin", "admin.html"),
 };
 const routeAccessRules = {
   admin: ["admin"],
-  escolaColetiva: ["escola"],
+  escolaColetiva: ["secretaria", "professor", "aluno", "educacao_infantil", "gestor", "coordenador", "admin"],
   educacaoInfantil: ["educacao_infantil"],
   professor: ["professor", "gestor", "coordenador", "admin"],
   professorTurma: ["professor", "gestor", "coordenador", "admin"],
@@ -39,18 +41,18 @@ const routeAccessRules = {
   alunoAtividade: ["aluno"],
   arvore: ["aluno"],
   missao: ["aluno"],
-  jogos: ["aluno", "educacao_infantil", "escola"],
+  jogos: ["aluno", "educacao_infantil", "escola", "secretaria", "gestor", "coordenador", "admin"],
   colorirDescobrir: ["educacao_infantil", "escola", "admin"],
   perfil: ["aluno"],
-  biblioteca: ["aluno", "educacao_infantil", "escola", "professor", "gestor", "coordenador", "admin"],
-  viewer: ["aluno", "educacao_infantil", "escola", "professor", "gestor", "coordenador", "admin"],
+  biblioteca: ["aluno", "educacao_infantil", "escola", "professor", "secretaria", "gestor", "coordenador", "admin"],
+  viewer: ["aluno", "educacao_infantil", "escola", "professor", "secretaria", "gestor", "coordenador", "admin"],
   familia: ["educacao_infantil", "admin"],
   motorAtividade: ["aluno"],
   universidade: ["professor", "gestor", "coordenador", "admin"],
   adminAtividades: ["gestor", "coordenador", "admin"],
   avalia: ["professor", "gestor", "coordenador", "admin"],
   bancoQuestoes: ["professor", "gestor", "coordenador", "admin"],
-  secretaria: ["gestor", "coordenador", "admin"],
+  secretaria: ["secretaria", "gestor", "coordenador", "admin"],
   gestor: ["gestor", "coordenador", "admin"],
 };
 const protectedRouteKeyByPage = {
@@ -89,8 +91,8 @@ const protectedRouteKeyByPage = {
   "aluno/atividade": "alunoAtividade",
   "colorir-descobrir": "colorirDescobrir",
 };
-const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "alunoAtividade", "missao", "arvore", "biblioteca", "jogos", "perfil", "viewer", "motorAtividade"]);
-const earlyChildhoodAllowedRouteKeys = new Set(["familia", "educacaoInfantil", "jogos", "biblioteca", "viewer", "colorirDescobrir"]);
+const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "alunoAtividade", "missao", "arvore", "biblioteca", "jogos", "perfil", "viewer", "motorAtividade", "escolaColetiva"]);
+const earlyChildhoodAllowedRouteKeys = new Set(["familia", "educacaoInfantil", "jogos", "biblioteca", "viewer", "colorirDescobrir", "escolaColetiva"]);
 const schoolAllowedRouteKeys = new Set(["escolaColetiva", "jogos", "biblioteca", "viewer", "colorirDescobrir"]);
 const decodePlatformJwtPayload = (token) => {
   try {
@@ -279,6 +281,18 @@ const ecosystemModules = [
   ["secretaria.html", "Secretaria"],
   ["gestor.html", "Gestor"],
   ["familia.html", "Familia"],
+];
+
+const secretariaOfficialModules = [
+  ["painel", "Painel", "secretaria.html?view=painel"],
+  ["alunos", "Alunos", "secretaria.html?view=alunos"],
+  ["matriculas", "Matriculas", "secretaria.html?view=matriculas"],
+  ["responsaveis", "Responsaveis", "secretaria.html?view=responsaveis"],
+  ["turmas", "Turmas", "secretaria.html?view=turmas"],
+  ["professores", "Professores", "secretaria.html?view=professores"],
+  ["frequencia", "Frequencia", "secretaria.html?view=frequencia"],
+  ["documentos", "Documentos", "secretaria.html?view=documentos"],
+  ["comunicados", "Comunicados", "secretaria.html?view=comunicados"],
 ];
 
 const questionLegalClassifications = [
@@ -2312,7 +2326,9 @@ const routeKeyByHref = {
 
 const ecosystemModuleLinks = (activeKey, environmentKey = "") => {
   const modulesForEnvironment =
-    environmentKey === "aluno"
+    environmentKey === "secretaria"
+      ? secretariaOfficialModules
+    : environmentKey === "aluno"
       ? [
           ["aluno.html", "Inicio"],
           ["missao.html", "Missao do Dia"],
@@ -2334,25 +2350,35 @@ const ecosystemModuleLinks = (activeKey, environmentKey = "") => {
           ]
       : environmentKey === "escola"
         ? [
-            ["escola.html#inicio", "Inicio"],
-            ["jogos.html", "Jogos"],
-            ["biblioteca.html", "Biblioteca"],
-            ["escola.html#desafio", "Desafio do Dia"],
-            ["colorir-descobrir.html", "Colorir e Descobrir"],
-            ["index.html", "Site"],
+            ["#back", "Voltar"],
+            ["plataforma.html", "Inicio"],
+            ["escola.html#inicio", "Minha Escola"],
             ["#logout", "Sair"],
           ]
       : ecosystemModules;
   return modulesForEnvironment
     .map(([href, label]) => {
+      if (href === "#back") {
+        const contents = environmentKey === "escola" ? secretariaInlineIcon("progresso", label) : label;
+        return `<button class="module-switcher-back" type="button" data-platform-back>${contents}</button>`;
+      }
       if (href === "#logout") {
-        return `<button class="module-switcher-logout" type="button" data-platform-logout>${label}</button>`;
+        const contents = environmentKey === "escola" ? secretariaInlineIcon("sair", label) : label;
+        return `<button class="module-switcher-logout" type="button" data-platform-logout>${contents}</button>`;
       }
       if (href === "index.html") {
         return `<button class="module-switcher-site" type="button" data-platform-site-logout>${label}</button>`;
       }
-      const isActive = routeKeyByHref[href] === activeKey;
-      return `<a class="${isActive ? "is-active" : ""}" href="${href}">${label}</a>`;
+      const isActive = environmentKey === "secretaria"
+        ? new URLSearchParams(String(href).split("?")[1] || "").get("view") === getSecretariaCurrentView()
+        : routeKeyByHref[href] === activeKey;
+      const schoolNavIcon = label === "Inicio" ? "home" : label === "Minha Escola" ? "escola" : "";
+      const contents = environmentKey === "secretaria"
+        ? secretariaInlineIcon(secretariaViewIcon[new URLSearchParams(String(href).split("?")[1] || "").get("view")] || "site", label)
+        : environmentKey === "escola" && schoolNavIcon
+          ? secretariaInlineIcon(schoolNavIcon, label)
+          : label;
+      return `<a class="${isActive ? "is-active" : ""}" href="${href}">${contents}</a>`;
     })
     .join("");
 };
@@ -3408,6 +3434,42 @@ const teacherInstitutionalState = {
   teacherByClass: {},
   studentsByClass: {},
   studentsById: {},
+  hydratedDom: false,
+};
+
+const secretariaInstitutionalState = {
+  status: "idle",
+  error: "",
+  loadedAt: "",
+  promise: null,
+  context: null,
+  schools: [],
+  profiles: [],
+  teachers: [],
+  classes: [],
+  students: [],
+  enrollments: [],
+  enrollmentMovements: [],
+  guardians: [],
+  institutionalGuardians: [],
+  guardianLinks: [],
+  classTeacherMemberships: [],
+  teacherClassMovements: [],
+  schoolMemberships: [],
+  documentTypes: [],
+  studentDocuments: [],
+  studentDocumentEvents: [],
+  attendanceRecords: [],
+  attendanceEvents: [],
+  communications: [],
+  communicationEvents: [],
+  lastCreateResult: null,
+  lastGuardianResult: null,
+  lastEnrollmentMovementResult: null,
+  lastTeacherClassResult: null,
+  lastDocumentResult: null,
+  lastAttendanceResult: null,
+  lastCommunicationResult: null,
   hydratedDom: false,
 };
 
@@ -6273,6 +6335,7 @@ const renderAdminSidebar = (active = "inicio") => `
             : `<button type="button" data-admin-view="${key}" class="${key === active ? "is-active" : ""}">${label}</button>`
         )
         .join("")}
+      <a class="platform-logout-button" href="secretaria.html">SECRETARIA</a>
       <button class="platform-logout-button" type="button" data-platform-logout>SAIR</button>
     </nav>
   </aside>
@@ -6364,6 +6427,7 @@ const renderAdminDashboard = () => `
     <main class="admin-main">
       <header class="admin-topbar">
         <label><span>Busca Admin</span><input type="search" placeholder="Buscar modulos, usuarios, status..." data-admin-search /></label>
+        <a class="admin-topbar-link" href="secretaria.html?v=secretaria-v1-validation-20260901f">Abrir Secretaria V1</a>
         <button type="button" data-admin-view="status">Status</button>
         <button type="button" data-admin-view="permissoes">Permissoes</button>
         <button type="button" data-platform-logout>SAIR</button>
@@ -6658,6 +6722,51 @@ const schoolIconMap = {
 };
 
 const renderSchoolIcon = (key) => `<span class="school-icon school-icon-${key}" aria-hidden="true">${schoolIconMap[key] || "."}</span>`;
+const renderOfficialSchoolIcon = (icon, label = "") => secretariaInlineIcon(icon, label);
+const officialSchoolAllowedRoles = ["admin", "secretaria", "professor", "aluno", "educacao_infantil", "gestor", "coordenador"];
+const officialSchoolState = {
+  status: "idle",
+  error: "",
+  promise: null,
+  context: null,
+  school: null,
+  communications: [],
+  scope: null,
+  source: "supabase",
+};
+const schoolOfficialEscape = (value) =>
+  String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+const officialRoleLabel = (role) =>
+  ({
+    admin: "Admin",
+    secretaria: "Secretaria",
+    professor: "Professor",
+    aluno: "Aluno",
+    educacao_infantil: "Familia / EI",
+    gestor: "Gestor",
+    coordenador: "Coordenador",
+  })[normalizePlatformRole(role)] || "Perfil autorizado";
+const officialSchoolName = (school = {}) => school.nome || school.name || "Escola";
+const officialSchoolDateLabel = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("pt-BR");
+};
+const officialSchoolShortcuts = [
+  { title: "BIBLIOTECA DIGITAL", detail: "Explore livros e leituras disponiveis.", href: "biblioteca.html", action: "ACESSAR BIBLIOTECA", icon: "book" },
+  { title: "JOGOS E EXPERIENCIAS", detail: "Aprenda, descubra e participe.", href: "jogos.html", action: "ACESSAR JOGOS", icon: "game" },
+];
+const officialSchoolNavIcon = {
+  escolaColetiva: "escola",
+  biblioteca: "book",
+  jogos: "game",
+};
 
 const renderSchoolEmpty = (title, message = "Assim que a escola publicar, este espaco sera atualizado.") => `
   <div class="school-empty">
@@ -6849,11 +6958,11 @@ const renderSchoolColoringModule = () => {
   `;
 };
 
-const renderSchoolInstitutionalDashboard = () => {
+const renderLegacySchoolInstitutionalDashboard = () => {
   const { institution, ages } = schoolCollectiveData;
   const activeAge = ages[schoolCollectiveData.defaultAge] || Object.values(ages)[0];
   return `
-    <section class="official-school" data-official-school>
+    <section class="official-school" data-official-school-legacy>
       <header class="official-school-hero" id="inicio">
         <div class="official-school-brand">
           <img src="logo-sidebar-dark.png" alt="Raizes e Saberes" onerror="this.hidden=true" />
@@ -6938,6 +7047,168 @@ const renderSchoolInstitutionalDashboard = () => {
     </section>
   `;
 };
+
+const renderOfficialSchoolLoading = () => `
+  <section class="official-school official-school-real" data-official-school data-official-school-mode="real">
+    <div class="official-school-real-status">
+      <strong>Carregando Minha Escola</strong>
+      <span>Consultando escola e comunicados publicados.</span>
+    </div>
+  </section>
+`;
+
+const renderOfficialSchoolError = (message) => `
+  <div class="official-school-real-status is-error">
+    <strong>Nao foi possivel abrir Minha Escola</strong>
+    <span>${schoolOfficialEscape(message || "Entre novamente e tente acessar pelo comando Minha Escola.")}</span>
+  </div>
+`;
+
+const renderOfficialSchoolCommunicationCard = (communication = {}) => {
+  const title = communication.title || communication.titulo || "Comunicado";
+  const body = communication.body || communication.message || communication.content || "";
+  const date = officialSchoolDateLabel(communication.communication_date || communication.published_at || communication.created_at);
+  const audienceType = String(communication.audience_type || "school").toLowerCase();
+  const audienceLabel = audienceType === "class" ? "Turma" : audienceType === "student" ? "Aluno/Familia" : "Toda a escola";
+  return `
+    <article class="official-school-communication-card">
+      <div class="official-school-communication-icon" aria-hidden="true">${renderOfficialSchoolIcon("mail")}</div>
+      <div>
+        <strong>${schoolOfficialEscape(title)}</strong>
+        <span class="official-school-communication-badge">${schoolOfficialEscape(audienceLabel)}</span>
+        ${body ? `<p>${schoolOfficialEscape(body)}</p>` : ""}
+        ${date ? `<span>${schoolOfficialEscape(date)}</span>` : ""}
+      </div>
+    </article>
+  `;
+};
+
+const renderOfficialSchoolCommunications = (communications = []) => {
+  const visibleCommunications = communications.filter((communication) =>
+    shouldShowOfficialSchoolCommunication(communication, officialSchoolState)
+  );
+  if (!visibleCommunications.length) {
+    return `
+      <div class="official-school-empty-card">
+        <strong>Nenhum comunicado publicado.</strong>
+        <span>Quando a Secretaria publicar avisos para seu perfil, eles aparecerao aqui.</span>
+      </div>
+    `;
+  }
+  return visibleCommunications.slice(0, 3).map(renderOfficialSchoolCommunicationCard).join("");
+};
+
+const renderOfficialSchoolWeeklyChallenge = () => `
+  <article class="official-school-panel official-school-weekly-challenge" id="desafio-da-semana">
+    <div class="official-school-section-head">
+      <span>${renderOfficialSchoolIcon("calendar")} Desafio da Semana</span>
+      <h2>Desafio da Semana</h2>
+      <p>Espaco preparado para propostas publicadas futuramente pelo Professor.</p>
+    </div>
+    <div class="official-school-prepared-empty">
+      ${renderOfficialSchoolIcon("progresso")}
+      <div>
+        <strong>Nenhum desafio publicado para esta semana.</strong>
+        <span>Quando houver um desafio real para seu perfil, ele aparecera aqui com titulo, turma, professor, periodo e acao.</span>
+      </div>
+    </div>
+  </article>
+`;
+
+const renderOfficialSchoolTeacherRecommendations = () => `
+  <article class="official-school-panel official-school-recommendations" id="recomendados">
+    <div class="official-school-section-head">
+      <span>${renderOfficialSchoolIcon("cap")} Recomendados pela Professora</span>
+      <h2>Recomendados pela Professora</h2>
+      <p>Area preparada para livros, jogos, atividades, experiencias e propostas livres.</p>
+    </div>
+    <div class="official-school-prepared-empty">
+      ${renderOfficialSchoolIcon("book")}
+      <div>
+        <strong>Nenhuma recomendacao publicada.</strong>
+        <span>As recomendacoes reais aparecerao aqui quando forem liberadas para seu perfil.</span>
+      </div>
+    </div>
+  </article>
+`;
+
+const officialSchoolAdminRoles = new Set(["admin", "secretaria", "gestor", "coordenador"]);
+const officialSchoolStudentRoles = new Set(["aluno", "educacao_infantil"]);
+const shouldShowOfficialSchoolCommunication = (communication = {}, state = officialSchoolState) => {
+  const audienceType = String(communication.audience_type || "school").toLowerCase();
+  const role = normalizePlatformRole(state.context?.role);
+  const scope = state.scope || {};
+  if (audienceType === "school") return true;
+  if (audienceType === "class") {
+    return Boolean(communication.class_id && (scope.classIds || new Set()).has(communication.class_id))
+      || Boolean(scope.isAdministrative);
+  }
+  if (audienceType === "student") {
+    return officialSchoolStudentRoles.has(role)
+      && Boolean(communication.student_id && (scope.studentIds || new Set()).has(communication.student_id));
+  }
+  return false;
+};
+
+const renderOfficialSchoolRealContent = () => {
+  const school = officialSchoolState.school || {};
+  const context = officialSchoolState.context || {};
+  const schoolName = officialSchoolName(school);
+  const location = [school.municipio, school.estado].filter(Boolean).join(" - ");
+  return `
+    <header class="official-school-real-hero" id="inicio">
+      <img src="assets/home-official/minha-escola-v1-hero.png" alt="" loading="eager" decoding="async" onerror="this.hidden=true" />
+      <div class="official-school-real-hero-copy">
+        <span>MINHA ESCOLA</span>
+        <p>BEM-VINDOS A</p>
+        <h1>${schoolOfficialEscape(schoolName)}</h1>
+        <small>Um espaco de aprendizagem, convivencia e descobertas.</small>
+      </div>
+    </header>
+
+    ${renderOfficialSchoolWeeklyChallenge()}
+
+    <section class="official-school-real-grid">
+      <article class="official-school-panel official-school-real-communications" id="comunicados">
+        <div class="official-school-section-head">
+          <span>${renderOfficialSchoolIcon("mail")} Comunicados</span>
+          <h2>Comunicados da Escola</h2>
+          <p>Avisos publicados pela Secretaria para o seu perfil institucional.</p>
+        </div>
+        <div class="official-school-communication-list">
+          ${renderOfficialSchoolCommunications(officialSchoolState.communications)}
+        </div>
+        <a class="official-school-view-all" href="#comunicados">Ver todos os comunicados</a>
+      </article>
+
+      ${renderOfficialSchoolTeacherRecommendations()}
+    </section>
+
+    <article class="official-school-panel official-school-real-shortcuts" id="biblioteca-jogos">
+      <div class="official-school-section-head">
+        <span>${renderOfficialSchoolIcon("escola")} Explore e Descubra</span>
+        <h2>Biblioteca e Jogos</h2>
+        <p>Atalhos para os modulos ja existentes da plataforma.</p>
+      </div>
+      <div class="official-school-shortcut-list">
+        ${officialSchoolShortcuts
+          .map(
+            (shortcut) => `
+              <a href="${shortcut.href}">
+                ${renderOfficialSchoolIcon(shortcut.icon)}
+                <strong>${schoolOfficialEscape(shortcut.title)}</strong>
+                <span>${schoolOfficialEscape(shortcut.detail)}</span>
+                <em>${schoolOfficialEscape(shortcut.action)}</em>
+              </a>
+            `
+          )
+          .join("")}
+      </div>
+    </article>
+  `;
+};
+
+const renderSchoolInstitutionalDashboard = () => renderOfficialSchoolLoading();
 
 const renderEarlyChildhoodDashboard = () => {
   const { institution, ages, defaultAge } = schoolCollectiveData;
@@ -7039,8 +7310,168 @@ const initSchoolCollectiveDashboard = () => {
   });
 };
 
+const requestOfficialSchoolRows = (client, table, params, options = {}) => {
+  const { optional = false, ...requestOptions } = options;
+  return client
+    .request(table, params, {
+      ...requestOptions,
+      requireAuthenticated: true,
+      allowedRoles: officialSchoolAllowedRoles,
+    })
+    .catch((error) => {
+      if (optional) return [];
+      throw error;
+    });
+};
+
+const collectOfficialSchoolScope = async (client, context) => {
+  const schoolIds = new Set();
+  const classIds = new Set();
+  const studentIds = new Set();
+  const teacherIds = new Set();
+  const guardianIds = new Set();
+  const addSchoolId = (value) => {
+    if (value) schoolIds.add(value);
+  };
+  const addClassId = (value) => {
+    if (value) classIds.add(value);
+  };
+  const addStudentId = (value) => {
+    if (value) studentIds.add(value);
+  };
+  const memberships = await requestOfficialSchoolRows(
+    client,
+    "school_memberships",
+    `?select=school_id,membership_role,status&profile_id=${supabaseEq(context.userId)}&status=eq.active&limit=10`,
+    { optional: true }
+  );
+  memberships.forEach((membership) => addSchoolId(membership.school_id));
+
+  const [students, teachers, guardians] = await Promise.all([
+    requestOfficialSchoolRows(client, "students", `?select=id,school_id,class_id,user_id,status&user_id=${supabaseEq(context.userId)}&status=eq.active&limit=50`, { optional: true }),
+    requestOfficialSchoolRows(client, "teachers", `?select=id,school_id,profile_id,status&profile_id=${supabaseEq(context.userId)}&status=eq.active&limit=50`, { optional: true }),
+    requestOfficialSchoolRows(client, "guardians", `?select=id,school_id,profile_id,status&profile_id=${supabaseEq(context.userId)}&status=eq.active&limit=50`, { optional: true }),
+  ]);
+  students.forEach((student) => {
+    addSchoolId(student.school_id);
+    addClassId(student.class_id);
+    addStudentId(student.id);
+  });
+  teachers.forEach((teacher) => {
+    addSchoolId(teacher.school_id);
+    if (teacher.id) teacherIds.add(teacher.id);
+  });
+  guardians.forEach((guardian) => {
+    addSchoolId(guardian.school_id);
+    if (guardian.id) guardianIds.add(guardian.id);
+  });
+
+  if (teacherIds.size) {
+    const teacherLinks = await requestOfficialSchoolRows(
+      client,
+      "class_teacher_memberships",
+      `?select=teacher_id,class_id,status&teacher_id=${supabaseIn([...teacherIds])}&status=eq.active&limit=100`,
+      { optional: true }
+    );
+    teacherLinks.forEach((link) => addClassId(link.class_id));
+  }
+
+  if (guardianIds.size) {
+    const guardianLinks = await requestOfficialSchoolRows(
+      client,
+      "student_guardian_links",
+      `?select=guardian_id,student_id,status&guardian_id=${supabaseIn([...guardianIds])}&status=eq.active&limit=100`,
+      { optional: true }
+    );
+    guardianLinks.forEach((link) => addStudentId(link.student_id));
+  }
+
+  if (studentIds.size) {
+    const linkedStudents = await requestOfficialSchoolRows(
+      client,
+      "students",
+      `?select=id,school_id,class_id,status&id=${supabaseIn([...studentIds])}&status=eq.active&limit=100`,
+      { optional: true }
+    );
+    linkedStudents.forEach((student) => {
+      addSchoolId(student.school_id);
+      addClassId(student.class_id);
+    });
+  }
+
+  const isAdministrative = officialSchoolAdminRoles.has(normalizePlatformRole(context.role));
+  if (!schoolIds.size && isAdministrative) {
+    const adminSchools = await requestOfficialSchoolRows(client, "schools", "?select=id,status&status=eq.active&limit=1");
+    adminSchools.forEach((school) => addSchoolId(school.id));
+  }
+  return { schoolIds, classIds, studentIds, isAdministrative };
+};
+
+const loadOfficialSchoolData = async ({ force = false } = {}) => {
+  if (!force && officialSchoolState.status === "ready") return officialSchoolState;
+  if (!force && officialSchoolState.promise) return officialSchoolState.promise;
+  officialSchoolState.status = "loading";
+  officialSchoolState.error = "";
+  officialSchoolState.promise = (async () => {
+    try {
+      const client = createSupabaseRestClient();
+      const context = await client.getContext({ requireAuthenticated: true, allowedRoles: officialSchoolAllowedRoles });
+      const scope = await collectOfficialSchoolScope(client, context);
+      const schoolIds = [...scope.schoolIds];
+      if (!schoolIds.length) {
+        throw new Error("Nenhum vinculo institucional ativo foi encontrado para Minha Escola.");
+      }
+      const [school] = await requestOfficialSchoolRows(
+        client,
+        "schools",
+        `?select=id,nome,codigo_inep,municipio,estado,status&id=${supabaseEq(schoolIds[0])}&limit=1`
+      );
+      if (!school?.id) {
+        throw new Error("Escola vinculada nao foi encontrada.");
+      }
+      const communications = await requestOfficialSchoolRows(
+        client,
+        "communications",
+        `?select=id,school_id,title,body,communication_type,audience_type,class_id,student_id,status,communication_date,created_at&school_id=${supabaseEq(school.id)}&status=eq.published&order=created_at.desc&limit=8`
+      );
+      officialSchoolState.status = "ready";
+      officialSchoolState.context = context;
+      officialSchoolState.school = school;
+      officialSchoolState.communications = communications || [];
+      officialSchoolState.scope = scope;
+      officialSchoolState.error = "";
+      return officialSchoolState;
+    } catch (error) {
+      officialSchoolState.status = "error";
+      officialSchoolState.error = error.message || "Falha ao carregar Minha Escola.";
+      officialSchoolState.school = null;
+      officialSchoolState.communications = [];
+      officialSchoolState.scope = null;
+      return officialSchoolState;
+    } finally {
+      officialSchoolState.promise = null;
+    }
+  })();
+  return officialSchoolState.promise;
+};
+
+const hydrateOfficialSchoolDashboard = async (root) => {
+  root.innerHTML = `
+    <div class="official-school-real-status">
+      <strong>Carregando Minha Escola</strong>
+      <span>Consultando escola e comunicados publicados.</span>
+    </div>
+  `;
+  await loadOfficialSchoolData({ force: true });
+  root.innerHTML = officialSchoolState.status === "ready" ? renderOfficialSchoolRealContent() : renderOfficialSchoolError(officialSchoolState.error);
+};
+
 const initOfficialSchoolDashboard = () => {
   const root = document.querySelector("[data-official-school]");
+  if (root?.dataset.officialSchoolMode === "real") {
+    hydrateOfficialSchoolDashboard(root);
+    return;
+  }
   const coloring = document.querySelector("[data-school-coloring]");
   if (!root || !coloring) return;
 
@@ -9152,19 +9583,13 @@ const modules = {
   },
   secretaria: {
     title: "Secretaria Municipal",
-    subtitle: "Acompanhe os principais indicadores da educacao municipal",
-    code: "MS-005",
+    subtitle: "Gestao institucional",
+    code: "",
     html: `
-      <div class="dashboard-head"><div><p>MS-005</p><h1>Visao Geral da Rede</h1><span>Acompanhe os principais indicadores da educacao municipal</span></div></div>
-      <div class="metric-row"><article>Estudantes<strong>24.875</strong><span>95,2%</span></article><article>Escolas<strong>58</strong><span>100%</span></article><article>Professores<strong>1.482</strong><span>97,5%</span></article><article>Desempenho Medio<strong>72,6%</strong><span>▲ 6,3 p.p.</span></article><article>Frequencia Media<strong>94,1%</strong><span>▲ 2,4 p.p.</span></article><article>IDEB Projetado<strong>6,1</strong><span>▲ 0,3</span></article></div>
-      <div class="analytics-grid secretaria-grid">
-        <section class="panel span-2"><h2>Evolucao do Desempenho da Rede</h2><div class="line-chart"></div></section>
-        <section class="panel"><h2>Desempenho por Etapa de Ensino</h2><div class="bar-list"><p>Educacao Infantil<i style="--value:86%"></i></p><p>Anos Iniciais<i style="--value:74%"></i></p><p>Anos Finais<i style="--value:67%"></i></p><p>Ensino Medio<i style="--value:61%"></i></p></div></section>
-        <section class="panel map-card"><h2>IDEB por Escola</h2><div class="map-shape"></div></section>
-        <section class="panel"><h2>Ranking de Escolas</h2><ol class="rank-list"><li>EM Professor Olavo Bilac <span>86,9%</span></li><li>EMEF Monteiro Lobato <span>83,2%</span></li><li>EM Vereador Joao Lima <span>80,7%</span></li></ol></section>
-        <section class="panel chart-card"><h2>Frequencia da Rede</h2><div class="donut">94,1%</div></section>
-        <section class="panel"><h2>Alertas e Acompanhamentos</h2><ul class="clean-list"><li>5 escolas com desempenho abaixo de 50%</li><li>12 escolas com frequencia abaixo de 85%</li><li>8 escolas com queda no desempenho</li></ul></section>
-      </div>
+      <section class="secretaria-v1" data-secretaria-v1>
+        <div class="dashboard-head"><div><h1>Secretaria</h1><span>Gestao institucional</span></div><button type="button" data-platform-logout>SAIR</button></div>
+        <section class="panel"><h2>Carregando Secretaria</h2><p>Consultando dados institucionais.</p></section>
+      </section>
     `,
   },
   gestor: {
@@ -9287,21 +9712,14 @@ const environments = {
     user: "Escola<br />Acesso coletivo",
     profileImage: "logo-sidebar-dark.png",
     nav: [
-      ["escolaColetiva", "INICIO", "escola.html#inicio"],
-      ["jogos", "JOGOS", "jogos.html"],
+      ["escolaColetiva", "MINHA ESCOLA", "escola.html#inicio"],
       ["biblioteca", "BIBLIOTECA", "biblioteca.html"],
-      ["desafio", "DESAFIO DO DIA", "escola.html#desafio"],
-      ["colorirDescobrir", "COLORIR E DESCOBRIR", "colorir-descobrir.html"],
-      ["site", "SITE", "index.html"],
-      ["logout", "SAIR", "#"],
+      ["jogos", "JOGOS E EXPERIENCIAS", "jogos.html"],
     ],
     mobile: [
-      ["escolaColetiva", "INICIO", "escola.html#inicio"],
-      ["jogos", "JOGOS", "jogos.html"],
+      ["escolaColetiva", "MINHA ESCOLA", "escola.html#inicio"],
       ["biblioteca", "BIBLIOTECA", "biblioteca.html"],
-      ["desafio", "DESAFIO", "escola.html#desafio"],
-      ["colorirDescobrir", "COLORIR", "colorir-descobrir.html"],
-      ["logout", "SAIR", "#"],
+      ["jogos", "JOGOS", "jogos.html"],
     ],
   },
   biblioteca: {
@@ -9442,28 +9860,11 @@ const environments = {
   },
   secretaria: {
     label: "Secretaria Municipal",
-    profile: "Gestao 2025 - 2028",
-    search: "Buscar escolas, indicadores, relatorios...",
-    user: "Secretaria Ana Paula<br />Secretaria de Educacao",
-    nav: [
-      ["secretaria", "Visao Geral da Rede", "secretaria.html"],
-      ["escolas", "Escolas", "#"],
-      ["indicadores", "Indicadores", "#"],
-      ["desempenho", "Desempenho", "#"],
-      ["avalia", "Avalia+", "avalia.html"],
-      ["frequencia", "Frequencia", "#"],
-      ["ideb", "IDEB", "#"],
-      ["relatorios", "Relatorios", "#"],
-      ["comparativos", "Comparativos", "#"],
-      ["planejamento", "Planejamento", "#"],
-    ],
-    mobile: [
-      ["secretaria", "Inicio", "secretaria.html"],
-      ["indicadores", "Indicadores", "#"],
-      ["escolas", "Escolas", "#"],
-      ["avalia", "Avalia+", "avalia.html"],
-      ["mais", "Mais", "#"],
-    ],
+    profile: "Operacao Institucional",
+    search: "Buscar alunos, matriculas, responsaveis e turmas...",
+    user: "Secretaria<br />Perfil autorizado",
+    nav: secretariaOfficialModules,
+    mobile: secretariaOfficialModules.slice(0, 5),
   },
   gestor: {
     label: "Gestor Escolar",
@@ -11632,9 +12033,34 @@ const createSupabaseRestClient = () => {
 
 const supabaseEq = (value) => `eq.${encodeURIComponent(String(value || ""))}`;
 const supabaseIn = (values = []) => `in.(${values.map((value) => String(value || "")).filter(Boolean).join(",")})`;
+const institutionalStatusLabels = {
+  active: "Ativo",
+  ativo: "Ativo",
+  inactive: "Inativo",
+  archived: "Arquivado",
+  transferred: "Transferido",
+  ended: "Encerrado",
+  cancelled: "Cancelado",
+  pending: "Pendente",
+  received: "Recebido",
+  waived: "Dispensado",
+  draft: "Rascunho",
+  published: "Publicado",
+  principal: "Principal",
+  auxiliar: "Auxiliar",
+  especialista: "Especialista",
+  substituto: "Substituto",
+  responsavel: "Responsavel",
+  mae: "Mae",
+  pai: "Pai",
+  avo: "Avo",
+  tutor: "Tutor",
+  outro: "Outro",
+  not_configured: "Acesso nao configurado",
+};
 const normalizeInstitutionalStatus = (status) => {
   const value = String(status || "").trim();
-  return value ? value.replaceAll("_", " ") : "Ativo";
+  return value ? institutionalStatusLabels[value.toLowerCase()] || value.replaceAll("_", " ") : "Ativo";
 };
 const normalizeStudentName = (student = {}) => student.nome || student.name || student.full_name || student.fullName || "Aluno";
 const normalizeClassName = (classItem = {}) => classItem.nome || classItem.name || "Turma";
@@ -11915,6 +12341,2492 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
     }
   })();
   return teacherInstitutionalState.promise;
+};
+
+const secretariaAllowedRoles = ["secretaria", "admin", "gestor", "coordenador"];
+const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "comunicados"];
+const secretariaOfficialViews = ["painel", "alunos", "matriculas", "responsaveis", "turmas", "professores", "frequencia", "documentos", "comunicados"];
+const secretariaActiveStatuses = new Set(["active", "ativo"]);
+
+const isSecretariaActiveStatus = (status) => secretariaActiveStatuses.has(String(status || "active").toLowerCase());
+const secretariaStatusLabel = (status) => normalizeInstitutionalStatus(status || "active");
+const secretariaAccessLabel = (status) => String(status || "").toLowerCase() === "active" ? "Acesso configurado" : "Acesso nao configurado";
+const secretariaBadgeTone = (status) => {
+  const value = String(status || "").toLowerCase();
+  if (["active", "ativo", "published", "received", "present"].includes(value)) return "success";
+  if (["pending", "draft", "justified", "not_configured"].includes(value)) return "warning";
+  if (["absent", "cancelled"].includes(value)) return "danger";
+  if (["transferred", "ended", "archived", "waived"].includes(value)) return "neutral";
+  return "info";
+};
+const secretariaBadge = (label, tone = "neutral") => `<span class="secretaria-badge is-${tone}">${htmlEscape(label)}</span>`;
+const secretariaSchoolYear = (enrollment = {}, classItem = {}) => enrollment.school_year || classItem.school_year || classItem.ano_escolar || "Ano nao informado";
+const getSecretariaParams = () => new URLSearchParams(window.location.search);
+const getSecretariaCurrentView = () => {
+  const view = getSecretariaParams().get("view") || "painel";
+  return secretariaViews.includes(view) ? view : "painel";
+};
+
+const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
+  if (!force && secretariaInstitutionalState.status === "ready") return secretariaInstitutionalState;
+  if (!force && secretariaInstitutionalState.promise) return secretariaInstitutionalState.promise;
+  secretariaInstitutionalState.status = "loading";
+  secretariaInstitutionalState.error = "";
+  secretariaInstitutionalState.promise = (async () => {
+    try {
+      const client = createSupabaseRestClient();
+      const context = await client.getContext({ requireAuthenticated: true, allowedRoles: secretariaAllowedRoles });
+      const options = { requireAuthenticated: true, allowedRoles: secretariaAllowedRoles };
+      const [
+        schools,
+        profiles,
+        teachers,
+        classes,
+        students,
+        enrollments,
+        enrollmentMovements,
+        guardians,
+        institutionalGuardians,
+        guardianLinks,
+        classTeacherMemberships,
+        teacherClassMovements,
+        schoolMemberships,
+        documentTypes,
+        studentDocuments,
+        studentDocumentEvents,
+        attendanceRecords,
+        attendanceEvents,
+        communications,
+        communicationEvents,
+      ] = await Promise.all([
+        client.request("schools", "?select=id,nome,codigo_inep,municipio,estado,status&order=nome.asc", options),
+        client.request("rpc/secretaria_list_staff_profiles", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }),
+        client.request("rpc/secretaria_list_teachers", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }),
+        client.request("rpc/secretaria_list_classes", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }),
+        client.request("rpc/secretaria_list_students", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }),
+        client.request("rpc/secretaria_list_enrollments", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }),
+        client.request("rpc/secretaria_list_enrollment_movements", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }).catch(() => []),
+        client.request("student_guardians", "?select=id,student_id,profile_id,relationship,status&order=created_at.asc", options),
+        client.request("guardians", "?select=id,school_id,profile_id,full_name,email,phone,status,access_status,created_at&order=full_name.asc", options),
+        client.request("student_guardian_links", "?select=id,student_id,guardian_id,relationship,is_primary,status,created_at&order=created_at.asc", options),
+        client.request("rpc/secretaria_list_class_teacher_memberships", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }),
+        client.request("teacher_class_movements", "?select=id,school_id,teacher_id,class_id,membership_id,movement_type,from_status,to_status,role,reason,performed_by,created_at&order=created_at.asc", options).catch(() => []),
+        client.request("school_memberships", "?select=id,school_id,profile_id,membership_role,status,started_at,ended_at&order=started_at.asc", options),
+        client.request("rpc/secretaria_list_document_types", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }),
+        client.request("rpc/secretaria_list_student_documents", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }),
+        client.request("rpc/secretaria_list_student_document_events", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }),
+        client.request("rpc/secretaria_list_attendance_records", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }),
+        client.request("rpc/secretaria_list_attendance_events", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }),
+        client.request("rpc/secretaria_list_communications", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }).catch(() => []),
+        client.request("rpc/secretaria_list_communication_events", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }).catch(() => []),
+      ]);
+
+      Object.assign(secretariaInstitutionalState, {
+        status: "ready",
+        error: "",
+        loadedAt: new Date().toISOString(),
+        context,
+        schools: schools || [],
+        profiles: profiles || [],
+        teachers: teachers || [],
+        classes: classes || [],
+        students: students || [],
+        enrollments: enrollments || [],
+        enrollmentMovements: enrollmentMovements || [],
+        guardians: guardians || [],
+        institutionalGuardians: institutionalGuardians || [],
+        guardianLinks: guardianLinks || [],
+        classTeacherMemberships: classTeacherMemberships || [],
+        teacherClassMovements: teacherClassMovements || [],
+        schoolMemberships: schoolMemberships || [],
+        documentTypes: documentTypes || [],
+        studentDocuments: studentDocuments || [],
+        studentDocumentEvents: studentDocumentEvents || [],
+        attendanceRecords: attendanceRecords || [],
+        attendanceEvents: attendanceEvents || [],
+        communications: communications || [],
+        communicationEvents: communicationEvents || [],
+      });
+      return secretariaInstitutionalState;
+    } catch (error) {
+      Object.assign(secretariaInstitutionalState, {
+        status: "error",
+        error: error.message || "Nao foi possivel carregar a Secretaria pelo Supabase.",
+        schools: [],
+        profiles: [],
+        teachers: [],
+        classes: [],
+        students: [],
+        enrollments: [],
+        enrollmentMovements: [],
+        guardians: [],
+        institutionalGuardians: [],
+        guardianLinks: [],
+        classTeacherMemberships: [],
+        teacherClassMovements: [],
+        schoolMemberships: [],
+        documentTypes: [],
+        studentDocuments: [],
+        studentDocumentEvents: [],
+        attendanceRecords: [],
+        attendanceEvents: [],
+        communications: [],
+        communicationEvents: [],
+      });
+      return secretariaInstitutionalState;
+    } finally {
+      secretariaInstitutionalState.promise = null;
+    }
+  })();
+  return secretariaInstitutionalState.promise;
+};
+
+const buildSecretariaIndex = () => {
+  const state = secretariaInstitutionalState;
+  const schoolById = new Map((state.schools || []).map((item) => [item.id, item]));
+  const profileById = new Map((state.profiles || []).map((item) => [item.id, item]));
+  const teacherById = new Map((state.teachers || []).map((item) => [item.id, item]));
+  const classById = new Map((state.classes || []).map((item) => [item.id, item]));
+  const studentById = new Map((state.students || []).map((item) => [item.id, item]));
+  const institutionalGuardianById = new Map((state.institutionalGuardians || []).map((item) => [item.id, item]));
+  const enrollmentsByStudent = {};
+  (state.enrollments || []).forEach((enrollment) => {
+    enrollmentsByStudent[enrollment.student_id] = enrollmentsByStudent[enrollment.student_id] || [];
+    enrollmentsByStudent[enrollment.student_id].push(enrollment);
+  });
+  const activeEnrollments = (state.enrollments || []).filter((item) => isSecretariaActiveStatus(item.status) && !item.ended_at);
+  const activeEnrollmentByStudent = new Map();
+  activeEnrollments.forEach((enrollment) => {
+    if (!activeEnrollmentByStudent.has(enrollment.student_id)) activeEnrollmentByStudent.set(enrollment.student_id, enrollment);
+  });
+  const activeEnrollmentsByClass = {};
+  activeEnrollments.forEach((enrollment) => {
+    activeEnrollmentsByClass[enrollment.class_id] = activeEnrollmentsByClass[enrollment.class_id] || [];
+    activeEnrollmentsByClass[enrollment.class_id].push(enrollment);
+  });
+  const movementsByStudent = {};
+  const movementsByEnrollment = {};
+  (state.enrollmentMovements || []).forEach((movement) => {
+    movementsByStudent[movement.student_id] = movementsByStudent[movement.student_id] || [];
+    movementsByStudent[movement.student_id].push(movement);
+    movementsByEnrollment[movement.enrollment_id] = movementsByEnrollment[movement.enrollment_id] || [];
+    movementsByEnrollment[movement.enrollment_id].push(movement);
+  });
+  const activeTeacherMemberships = (state.classTeacherMemberships || []).filter((item) => isSecretariaActiveStatus(item.status) && !item.ended_at);
+  const teacherMembershipsByClass = {};
+  const teacherMembershipsByTeacher = {};
+  const allTeacherMembershipsByTeacher = {};
+  const teacherMovementsByTeacher = {};
+  const teacherMovementsByClass = {};
+  (state.classTeacherMemberships || []).forEach((membership) => {
+    allTeacherMembershipsByTeacher[membership.teacher_id] = allTeacherMembershipsByTeacher[membership.teacher_id] || [];
+    allTeacherMembershipsByTeacher[membership.teacher_id].push(membership);
+  });
+  activeTeacherMemberships.forEach((membership) => {
+    teacherMembershipsByClass[membership.class_id] = teacherMembershipsByClass[membership.class_id] || [];
+    teacherMembershipsByClass[membership.class_id].push(membership);
+    teacherMembershipsByTeacher[membership.teacher_id] = teacherMembershipsByTeacher[membership.teacher_id] || [];
+    teacherMembershipsByTeacher[membership.teacher_id].push(membership);
+  });
+  (state.teacherClassMovements || []).forEach((movement) => {
+    teacherMovementsByTeacher[movement.teacher_id] = teacherMovementsByTeacher[movement.teacher_id] || [];
+    teacherMovementsByTeacher[movement.teacher_id].push(movement);
+    teacherMovementsByClass[movement.class_id] = teacherMovementsByClass[movement.class_id] || [];
+    teacherMovementsByClass[movement.class_id].push(movement);
+  });
+  const activeGuardians = (state.guardians || []).filter((item) => isSecretariaActiveStatus(item.status));
+  const activeInstitutionalGuardians = (state.institutionalGuardians || []).filter((item) => isSecretariaActiveStatus(item.status));
+  const activeGuardianLinks = (state.guardianLinks || []).filter((item) => isSecretariaActiveStatus(item.status));
+  const guardiansByStudent = {};
+  const guardiansByProfile = {};
+  activeGuardians.forEach((guardian) => {
+    guardiansByStudent[guardian.student_id] = guardiansByStudent[guardian.student_id] || [];
+    guardiansByStudent[guardian.student_id].push(guardian);
+    guardiansByProfile[guardian.profile_id] = guardiansByProfile[guardian.profile_id] || [];
+    guardiansByProfile[guardian.profile_id].push(guardian);
+  });
+  const guardianLinksByStudent = {};
+  const guardianLinksByGuardian = {};
+  activeGuardianLinks.forEach((link) => {
+    guardianLinksByStudent[link.student_id] = guardianLinksByStudent[link.student_id] || [];
+    guardianLinksByStudent[link.student_id].push(link);
+    guardianLinksByGuardian[link.guardian_id] = guardianLinksByGuardian[link.guardian_id] || [];
+    guardianLinksByGuardian[link.guardian_id].push(link);
+  });
+  const documentTypeById = new Map((state.documentTypes || []).map((item) => [item.id, item]));
+  const documentTypesBySchool = {};
+  (state.documentTypes || []).forEach((type) => {
+    const key = type.school_id || "global";
+    documentTypesBySchool[key] = documentTypesBySchool[key] || [];
+    documentTypesBySchool[key].push(type);
+  });
+  Object.values(documentTypesBySchool).forEach((types) => types.sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "pt-BR")));
+  const documentsByStudent = {};
+  const documentsByStudentType = {};
+  (state.studentDocuments || []).forEach((documentItem) => {
+    documentsByStudent[documentItem.student_id] = documentsByStudent[documentItem.student_id] || [];
+    documentsByStudent[documentItem.student_id].push(documentItem);
+    documentsByStudentType[`${documentItem.student_id}:${documentItem.document_type_id}`] = documentItem;
+  });
+  const documentEventsByDocument = {};
+  const documentEventsByStudent = {};
+  (state.studentDocumentEvents || []).forEach((event) => {
+    documentEventsByDocument[event.student_document_id] = documentEventsByDocument[event.student_document_id] || [];
+    documentEventsByDocument[event.student_document_id].push(event);
+    documentEventsByStudent[event.student_id] = documentEventsByStudent[event.student_id] || [];
+    documentEventsByStudent[event.student_id].push(event);
+  });
+  const attendanceByStudent = {};
+  const attendanceByClass = {};
+  const attendanceByClassDate = {};
+  (state.attendanceRecords || []).forEach((record) => {
+    attendanceByStudent[record.student_id] = attendanceByStudent[record.student_id] || [];
+    attendanceByStudent[record.student_id].push(record);
+    attendanceByClass[record.class_id] = attendanceByClass[record.class_id] || [];
+    attendanceByClass[record.class_id].push(record);
+    attendanceByClassDate[`${record.class_id}:${record.attendance_date}`] = attendanceByClassDate[`${record.class_id}:${record.attendance_date}`] || [];
+    attendanceByClassDate[`${record.class_id}:${record.attendance_date}`].push(record);
+  });
+  Object.values(attendanceByStudent).forEach((records) => records.sort((a, b) => String(b.attendance_date || "").localeCompare(String(a.attendance_date || ""))));
+  const attendanceEventsByRecord = {};
+  (state.attendanceEvents || []).forEach((event) => {
+    attendanceEventsByRecord[event.attendance_record_id] = attendanceEventsByRecord[event.attendance_record_id] || [];
+    attendanceEventsByRecord[event.attendance_record_id].push(event);
+  });
+  const communicationsByStudent = {};
+  const communicationsByClass = {};
+  const communicationsBySchool = {};
+  (state.communications || []).forEach((communication) => {
+    communicationsBySchool[communication.school_id] = communicationsBySchool[communication.school_id] || [];
+    communicationsBySchool[communication.school_id].push(communication);
+    if (communication.class_id) {
+      communicationsByClass[communication.class_id] = communicationsByClass[communication.class_id] || [];
+      communicationsByClass[communication.class_id].push(communication);
+    }
+    if (communication.student_id) {
+      communicationsByStudent[communication.student_id] = communicationsByStudent[communication.student_id] || [];
+      communicationsByStudent[communication.student_id].push(communication);
+    }
+  });
+  const communicationEventsByCommunication = {};
+  (state.communicationEvents || []).forEach((event) => {
+    communicationEventsByCommunication[event.communication_id] = communicationEventsByCommunication[event.communication_id] || [];
+    communicationEventsByCommunication[event.communication_id].push(event);
+  });
+  return {
+    schoolById,
+    profileById,
+    teacherById,
+    classById,
+    studentById,
+    institutionalGuardianById,
+    enrollmentsByStudent,
+    activeEnrollments,
+    activeEnrollmentByStudent,
+    activeEnrollmentsByClass,
+    movementsByStudent,
+    movementsByEnrollment,
+    teacherMembershipsByClass,
+    teacherMembershipsByTeacher,
+    allTeacherMembershipsByTeacher,
+    teacherMovementsByTeacher,
+    teacherMovementsByClass,
+    activeGuardians,
+    activeInstitutionalGuardians,
+    activeGuardianLinks,
+    guardiansByStudent,
+    guardiansByProfile,
+    guardianLinksByStudent,
+    guardianLinksByGuardian,
+    documentTypeById,
+    documentTypesBySchool,
+    documentsByStudent,
+    documentsByStudentType,
+    documentEventsByDocument,
+    documentEventsByStudent,
+    attendanceByStudent,
+    attendanceByClass,
+    attendanceByClassDate,
+    attendanceEventsByRecord,
+    communicationsByStudent,
+    communicationsByClass,
+    communicationsBySchool,
+    communicationEventsByCommunication,
+  };
+};
+
+var attendanceStatusLabels = {
+  present: "Presente",
+  absent: "Faltou",
+  justified: "Falta justificada",
+};
+function attendanceStatusLabel(status) {
+  return attendanceStatusLabels[String(status || "").toLowerCase()] || status || "Sem registro";
+}
+const attendanceDefaultDate = () => {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+};
+function attendanceSummary(records = []) {
+  const total = records.length;
+  const present = records.filter((record) => record.status === "present").length;
+  const absent = records.filter((record) => record.status === "absent").length;
+  const justified = records.filter((record) => record.status === "justified").length;
+  const percent = total ? Math.round((present / total) * 100) : 0;
+  return { total, present, absent, justified, percent };
+}
+
+const secretariaTeacherName = (teacher = {}, index = buildSecretariaIndex()) =>
+  teacher.full_name || normalizeProfileName(index.profileById.get(teacher.profile_id) || {}) || teacher.disciplina || "Professor(a)";
+
+const secretariaClassTeachers = (classId, index = buildSecretariaIndex()) =>
+  (index.teacherMembershipsByClass[classId] || [])
+    .map((membership) => secretariaTeacherName(index.teacherById.get(membership.teacher_id) || {}, index))
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, "pt-BR"));
+
+const secretariaStudentEnrollment = (student, index = buildSecretariaIndex()) =>
+  index.activeEnrollmentByStudent.get(student?.id) || (index.enrollmentsByStudent[student?.id] || [])[0] || null;
+
+const secretariaMovementLabels = {
+  enrollment_created: "Matricula criada",
+  class_transfer: "Transferencia de turma",
+  status_change: "Alteracao de status",
+  enrollment_closed: "Matricula encerrada",
+  reenrollment: "Rematricula",
+};
+
+const secretariaEnrollmentStatusOptions = ["active", "transferred", "ended", "cancelled", "archived"];
+const secretariaDocumentStatusOptions = ["pending", "received", "waived"];
+const secretariaDocumentStatusLabels = {
+  pending: "Pendente",
+  received: "Recebido",
+  waived: "Dispensado",
+};
+const secretariaDocumentStatusLabel = (status) => secretariaDocumentStatusLabels[String(status || "pending").toLowerCase()] || status || "Pendente";
+const communicationAudienceLabels = {
+  school: "Escola",
+  class: "Turma",
+  student: "Aluno/Familia",
+};
+const communicationTypeLabels = {
+  institutional_announcement: "Comunicado institucional",
+  notice: "Comunicado",
+  message: "Mensagem",
+  weekly_information: "Informacao da semana",
+};
+const communicationStatusLabels = {
+  draft: "Rascunho",
+  published: "Publicado",
+  archived: "Retirado",
+};
+const communicationAudienceLabel = (value) => communicationAudienceLabels[String(value || "").toLowerCase()] || value || "Destino nao informado";
+const communicationTypeLabel = (value) => communicationTypeLabels[String(value || "").toLowerCase()] || value || "Tipo nao informado";
+const communicationStatusLabel = (value) => communicationStatusLabels[String(value || "").toLowerCase()] || value || "Status nao informado";
+const communicationAudienceSummary = ({ audienceType, school, classItem, student } = {}) => {
+  if (audienceType === "school") return `Toda a escola: ${normalizeSchoolName(school || {})}`;
+  if (audienceType === "class") return `Turma: ${normalizeClassName(classItem || {})}`;
+  if (audienceType === "student") return `Aluno/Familia: ${normalizeStudentName(student || {})}`;
+  return "Destino nao informado";
+};
+const communicationDisplayDate = (value) => {
+  if (!value) return "Data nao informada";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+};
+const secretariaStudentDocumentTypes = (student, index = buildSecretariaIndex()) => {
+  const schoolTypes = index.documentTypesBySchool[student?.school_id] || [];
+  const globalTypes = index.documentTypesBySchool.global || [];
+  return [...schoolTypes, ...globalTypes].filter((type) => type.status === "active");
+};
+const secretariaStudentDocumentRows = (student, index = buildSecretariaIndex()) =>
+  secretariaStudentDocumentTypes(student, index).map((type) => ({
+    type,
+    document: index.documentsByStudentType[`${student?.id}:${type.id}`] || null,
+  }));
+const secretariaPendingDocumentRows = (index = buildSecretariaIndex()) =>
+  (secretariaInstitutionalState.students || [])
+    .flatMap((student) => secretariaStudentDocumentRows(student, index).map((row) => ({ ...row, student })))
+    .filter((row) => row.type.required && (!row.document || row.document.status === "pending"));
+
+const secretariaStudentsWithoutGuardian = (index = buildSecretariaIndex()) => {
+  const linkedStudentIds = new Set([
+    ...Object.keys(index.guardiansByStudent || {}),
+    ...Object.keys(index.guardianLinksByStudent || {}),
+  ]);
+  return (secretariaInstitutionalState.students || [])
+    .filter((student) => isSecretariaActiveStatus(student.status) && !linkedStudentIds.has(student.id));
+};
+
+const secretariaEnrollmentsNeedingAttention = (index = buildSecretariaIndex()) =>
+  (secretariaInstitutionalState.enrollments || [])
+    .filter((enrollment) => !isSecretariaActiveStatus(enrollment.status) || !enrollment.class_id || !enrollment.student_id);
+
+const secretariaRecentActivities = (index = buildSecretariaIndex()) => {
+  const activities = [];
+  (secretariaInstitutionalState.students || []).forEach((student) => {
+    activities.push({
+      at: student.created_at || "",
+      label: `Aluno cadastrado: ${normalizeStudentName(student)}`,
+      href: secretariaLink("alunos", { student: student.id }),
+    });
+  });
+  (secretariaInstitutionalState.enrollments || []).forEach((enrollment) => {
+    const student = index.studentById.get(enrollment.student_id) || {};
+    const classItem = index.classById.get(enrollment.class_id) || {};
+    activities.push({
+      at: enrollment.created_at || "",
+      label: `Matricula criada: ${normalizeStudentName(student)} em ${normalizeClassName(classItem)}`,
+      href: secretariaLink("alunos", { student: enrollment.student_id }),
+    });
+  });
+  (secretariaInstitutionalState.enrollmentMovements || []).forEach((movement) => {
+    const student = index.studentById.get(movement.student_id) || {};
+    activities.push({
+      at: movement.created_at || "",
+      label: `${secretariaMovementLabels[movement.movement_type] || "Movimentacao"}: ${normalizeStudentName(student)}`,
+      href: secretariaLink("matriculas", { student: movement.student_id }),
+    });
+  });
+  (secretariaInstitutionalState.guardianLinks || []).forEach((link) => {
+    const student = index.studentById.get(link.student_id) || {};
+    const guardian = index.institutionalGuardianById.get(link.guardian_id) || {};
+    activities.push({
+      at: link.created_at || "",
+      label: `Responsavel vinculado: ${guardian.full_name || "Responsavel"} a ${normalizeStudentName(student)}`,
+      href: secretariaLink("responsaveis", { guardian: link.guardian_id }),
+    });
+  });
+  (secretariaInstitutionalState.communications || []).forEach((communication) => {
+    activities.push({
+      at: communication.created_at || communication.communication_date || "",
+      label: `Comunicado publicado: ${communication.title || "Sem titulo"}`,
+      href: secretariaLink("comunicados"),
+    });
+  });
+  return activities
+    .filter((item) => item.label.trim())
+    .sort((a, b) => String(b.at || "").localeCompare(String(a.at || "")));
+};
+
+const secretariaFormatDateTime = (value) => {
+  if (!value) return "Data nao informada";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+};
+
+const secretariaStudentMovements = (student, index = buildSecretariaIndex()) =>
+  (index.movementsByStudent[student?.id] || []).slice().sort((a, b) => String(a.created_at || "").localeCompare(String(b.created_at || "")));
+
+const secretariaLink = (view, extra = {}) => {
+  const params = new URLSearchParams();
+  params.set("view", view);
+  Object.entries(extra).forEach(([key, value]) => {
+    if (value) params.set(key, value);
+  });
+  return `secretaria.html?${params.toString()}`;
+};
+const secretariaViewIcon = {
+  painel: "chart",
+  alunos: "aluno",
+  matriculas: "clipboard",
+  responsaveis: "family",
+  turmas: "users",
+  professores: "cap",
+  frequencia: "calendar",
+  documentos: "doc",
+  comunicados: "mail",
+};
+const secretariaInlineIcon = (icon, label = "") => `<i class="secretaria-icon" data-icon="${icon}" aria-hidden="true"></i>${label ? `<span>${htmlEscape(label)}</span>` : ""}`;
+
+const callSecretariaCreateStudentEnrollment = async ({ nome, dataNascimento, classId, schoolYear, status }) => {
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/secretaria_create_student_enrollment", "", {
+    method: "POST",
+    requireAuthenticated: true,
+    allowedRoles: secretariaAllowedRoles,
+    body: JSON.stringify({
+      p_nome: nome,
+      p_data_nascimento: dataNascimento || null,
+      p_class_id: classId,
+      p_school_year: schoolYear,
+      p_status: status || "active",
+    }),
+  });
+  secretariaInstitutionalState.lastCreateResult = result;
+  return result;
+};
+
+const callSecretariaEnrollmentRpc = async (rpcName, payload) => {
+  const client = createSupabaseRestClient();
+  const result = await client.request(`rpc/${rpcName}`, "", {
+    method: "POST",
+    requireAuthenticated: true,
+    allowedRoles: secretariaAllowedRoles,
+    body: JSON.stringify(payload),
+  });
+  secretariaInstitutionalState.lastEnrollmentMovementResult = result;
+  return result;
+};
+
+const callSecretariaTransferEnrollment = ({ enrollmentId, toClassId, reason }) =>
+  callSecretariaEnrollmentRpc("secretaria_transfer_enrollment", {
+    p_enrollment_id: enrollmentId,
+    p_to_class_id: toClassId,
+    p_reason: reason,
+  });
+
+const callSecretariaUpdateEnrollmentStatus = ({ enrollmentId, toStatus, reason }) =>
+  callSecretariaEnrollmentRpc("secretaria_update_enrollment_status", {
+    p_enrollment_id: enrollmentId,
+    p_to_status: toStatus,
+    p_reason: reason,
+  });
+
+const callSecretariaCloseEnrollment = ({ enrollmentId, toStatus, reason }) =>
+  callSecretariaEnrollmentRpc("secretaria_close_enrollment", {
+    p_enrollment_id: enrollmentId,
+    p_to_status: toStatus,
+    p_reason: reason,
+  });
+
+const callSecretariaReenrollStudent = ({ studentId, classId, schoolYear, reason }) =>
+  callSecretariaEnrollmentRpc("secretaria_reenroll_student", {
+    p_student_id: studentId,
+    p_class_id: classId,
+    p_school_year: schoolYear,
+    p_reason: reason,
+  });
+
+const callSecretariaClassTeacherRpc = async (rpcName, payload) => {
+  const client = createSupabaseRestClient();
+  const result = await client.request(`rpc/${rpcName}`, "", {
+    method: "POST",
+    requireAuthenticated: true,
+    allowedRoles: secretariaAllowedRoles,
+    body: JSON.stringify(payload),
+  });
+  secretariaInstitutionalState.lastTeacherClassResult = result;
+  return result;
+};
+
+const callSecretariaCreateClass = ({ schoolId, nome, schoolYear, status, ageGroup, turno, anoEscolar, reason }) =>
+  callSecretariaClassTeacherRpc("secretaria_create_class", {
+    p_school_id: schoolId,
+    p_nome: nome,
+    p_school_year: schoolYear,
+    p_status: status || "active",
+    p_age_group: ageGroup || null,
+    p_turno: turno || null,
+    p_ano_escolar: anoEscolar || null,
+    p_reason: reason || null,
+  });
+
+const callSecretariaUpdateClassBasic = ({ classId, nome, status, ageGroup, turno, anoEscolar, reason }) =>
+  callSecretariaClassTeacherRpc("secretaria_update_class_basic", {
+    p_class_id: classId,
+    p_nome: nome,
+    p_status: status || "active",
+    p_age_group: ageGroup || null,
+    p_turno: turno || null,
+    p_ano_escolar: anoEscolar || null,
+    p_reason: reason || null,
+  });
+
+const callSecretariaCreateTeacher = ({ schoolId, fullName, status, disciplina }) =>
+  callSecretariaClassTeacherRpc("secretaria_create_teacher", {
+    p_school_id: schoolId,
+    p_full_name: fullName,
+    p_status: status || "active",
+    p_disciplina: disciplina || null,
+  });
+
+const callSecretariaLinkTeacherToClass = ({ teacherId, classId, role, reason }) =>
+  callSecretariaClassTeacherRpc("secretaria_link_teacher_to_class", {
+    p_teacher_id: teacherId,
+    p_class_id: classId,
+    p_role: role || "principal",
+    p_reason: reason,
+  });
+
+const callSecretariaEndTeacherClassMembership = ({ membershipId, reason }) =>
+  callSecretariaClassTeacherRpc("secretaria_end_teacher_class_membership", {
+    p_membership_id: membershipId,
+    p_reason: reason,
+  });
+
+const callSecretariaSetStudentDocumentStatus = async ({ studentId, documentTypeId, status, notes, fileReference, receivedAt, expiresAt }) => {
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/secretaria_set_student_document_status", "", {
+    method: "POST",
+    requireAuthenticated: true,
+    allowedRoles: secretariaAllowedRoles,
+    body: JSON.stringify({
+      p_student_id: studentId,
+      p_document_type_id: documentTypeId,
+      p_status: status,
+      p_notes: notes || null,
+      p_file_reference: fileReference || null,
+      p_received_at: receivedAt || null,
+      p_expires_at: expiresAt || null,
+    }),
+  });
+  secretariaInstitutionalState.lastDocumentResult = result;
+  return result;
+};
+
+const callSecretariaPublishCommunication = async ({ schoolId, communicationType, audienceType, classId, studentId, title, body, status }) => {
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/publish_communication", "", {
+    method: "POST",
+    requireAuthenticated: true,
+    allowedRoles: secretariaAllowedRoles,
+    body: JSON.stringify({
+      p_school_id: schoolId,
+      p_communication_type: communicationType,
+      p_audience_type: audienceType,
+      p_title: title,
+      p_body: body,
+      p_class_id: audienceType === "school" ? null : classId,
+      p_student_id: audienceType === "student" ? studentId : null,
+      p_status: status || "published",
+      p_communication_date: attendanceDefaultDate(),
+      p_expires_at: null,
+    }),
+  });
+  secretariaInstitutionalState.lastCommunicationResult = result;
+  return result;
+};
+
+const callSecretariaSetCommunicationStatus = async ({ communicationId, toStatus }) => {
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/secretaria_set_communication_status", "", {
+    method: "POST",
+    requireAuthenticated: true,
+    allowedRoles: secretariaAllowedRoles,
+    body: JSON.stringify({
+      p_communication_id: communicationId,
+      p_to_status: toStatus,
+    }),
+  });
+  return result;
+};
+
+const callSecretariaDeleteCommunication = async ({ communicationId }) => {
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/secretaria_delete_communication", "", {
+    method: "POST",
+    requireAuthenticated: true,
+    allowedRoles: secretariaAllowedRoles,
+    body: JSON.stringify({ p_communication_id: communicationId }),
+  });
+  return result;
+};
+
+const findSecretariaDuplicateStudent = ({ nome, dataNascimento, classItem }, index = buildSecretariaIndex()) => {
+  const normalizedName = String(nome || "").trim().toLowerCase();
+  if (!normalizedName || !classItem?.school_id) return null;
+  return (secretariaInstitutionalState.students || []).find((student) => {
+    const sameSchool = student.school_id === classItem.school_id;
+    const sameName = String(student.nome || "").trim().toLowerCase() === normalizedName;
+    const sameBirth = !dataNascimento || !student.data_nascimento || student.data_nascimento === dataNascimento;
+    return sameSchool && sameName && sameBirth && isSecretariaActiveStatus(student.status);
+  }) || null;
+};
+
+const findSecretariaDuplicateClass = ({ nome, schoolId, schoolYear }, index = buildSecretariaIndex()) => {
+  const normalizedName = String(nome || "").trim().toLowerCase();
+  const normalizedYear = String(schoolYear || "").trim();
+  if (!normalizedName || !schoolId || !normalizedYear) return null;
+  return (secretariaInstitutionalState.classes || []).find((classItem) =>
+    classItem.school_id === schoolId
+    && String(classItem.nome || "").trim().toLowerCase() === normalizedName
+    && String(classItem.school_year || "").trim() === normalizedYear
+    && classItem.status !== "archived"
+  ) || null;
+};
+
+const callSecretariaCreateGuardianLink = async ({ studentId, fullName, relationship, phone, email, status, isPrimary, guardianId }) => {
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/secretaria_create_guardian_link", "", {
+    method: "POST",
+    requireAuthenticated: true,
+    allowedRoles: secretariaAllowedRoles,
+    body: JSON.stringify({
+      p_student_id: studentId,
+      p_full_name: fullName,
+      p_relationship: relationship,
+      p_phone: phone || null,
+      p_email: email || null,
+      p_status: status || "active",
+      p_is_primary: Boolean(isPrimary),
+      p_guardian_id: guardianId || null,
+    }),
+  });
+  secretariaInstitutionalState.lastGuardianResult = result;
+  return result;
+};
+
+const findSecretariaDuplicateGuardian = ({ fullName, email, phone, schoolId }, index = buildSecretariaIndex()) => {
+  const normalizedName = String(fullName || "").trim().toLowerCase();
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const normalizedPhone = String(phone || "").trim();
+  return (secretariaInstitutionalState.institutionalGuardians || []).find((guardian) => {
+    const sameSchool = guardian.school_id === schoolId;
+    const sameName = normalizedName && String(guardian.full_name || "").trim().toLowerCase() === normalizedName;
+    const sameEmail = normalizedEmail && String(guardian.email || "").trim().toLowerCase() === normalizedEmail;
+    const samePhone = normalizedPhone && String(guardian.phone || "").trim() === normalizedPhone;
+    return sameSchool && isSecretariaActiveStatus(guardian.status) && (sameEmail || samePhone || sameName);
+  }) || null;
+};
+
+const renderSecretariaNav = (currentView) => {
+  const labels = {
+    painel: "Painel",
+    alunos: "Alunos",
+    turmas: "Turmas",
+    professores: "Professores",
+    matriculas: "Matriculas",
+    responsaveis: "Responsaveis",
+    documentos: "Documentos",
+    frequencia: "Frequencia",
+    comunicados: "Comunicados",
+  };
+  return `<nav class="secretaria-official-nav" aria-label="Menu oficial da Secretaria">${secretariaOfficialViews
+    .map((view) => `<a class="${view === currentView ? "is-active" : ""}" href="${secretariaLink(view)}">${labels[view]}</a>`)
+    .join("")}</nav>`;
+};
+
+const renderSecretariaGlobalHeader = (index = buildSecretariaIndex()) => {
+  const school = (secretariaInstitutionalState.schools || []).find((item) => isSecretariaActiveStatus(item.status)) || secretariaInstitutionalState.schools?.[0] || {};
+  const role = secretariaInstitutionalState.context?.role || "perfil autorizado";
+  return `
+    <header class="secretaria-global-header" aria-label="Contexto autenticado da Secretaria">
+      <div class="secretaria-context-chip">
+        <span class="secretaria-avatar">MS</span>
+        <div>
+          <small>Usuario autenticado</small>
+          <strong>${htmlEscape(role)}</strong>
+        </div>
+      </div>
+      <div class="secretaria-context-divider" aria-hidden="true"></div>
+      <div class="secretaria-context-chip">
+        ${secretariaInlineIcon("escola")}
+        <div>
+          <small>Escola atual</small>
+          <strong>${htmlEscape(normalizeSchoolName(school) || "Escola nao carregada")}</strong>
+        </div>
+      </div>
+    </header>
+  `;
+};
+
+const renderSecretariaStatus = () => {
+  if (secretariaInstitutionalState.status === "error") {
+    return `<section class="panel"><h2>Erro institucional</h2><p>${htmlEscape(secretariaInstitutionalState.error)}</p><span>Nenhum dado demonstrativo foi aplicado.</span></section>`;
+  }
+  return `<section class="panel"><h2>Carregando Secretaria</h2><p>Consultando dados institucionais.</p></section>`;
+};
+
+const renderSecretariaDashboardPanel = (index) => {
+  const activeStudents = (secretariaInstitutionalState.students || []).filter((item) => isSecretariaActiveStatus(item.status));
+  const activeTeachers = (secretariaInstitutionalState.teachers || []).filter((item) => isSecretariaActiveStatus(item.status));
+  const activeClasses = (secretariaInstitutionalState.classes || []).filter((item) => isSecretariaActiveStatus(item.status));
+  const activeSchools = (secretariaInstitutionalState.schools || []).filter((item) => isSecretariaActiveStatus(item.status));
+  const activeStudentIds = new Set(activeStudents.map((item) => item.id).filter(Boolean));
+  const institutionalGuardianIds = index.activeGuardianLinks
+    .filter((item) => activeStudentIds.has(item.student_id))
+    .map((item) => item.guardian_id)
+    .filter(Boolean);
+  const legacyGuardianProfileIds = index.activeGuardians
+    .filter((item) => activeStudentIds.has(item.student_id))
+    .map((item) => item.profile_id)
+    .filter(Boolean);
+  const uniqueGuardianCount = new Set([...institutionalGuardianIds, ...legacyGuardianProfileIds]).size;
+  const pendingDocuments = secretariaPendingDocumentRows(index);
+  const studentsWithoutGuardian = secretariaStudentsWithoutGuardian(index);
+  const guardiansWithoutAccess = index.activeInstitutionalGuardians.filter((guardian) => guardian.access_status !== "active");
+  const teachersWithoutAccess = activeTeachers.filter((teacher) => !teacher.profile_id);
+  const enrollmentAttention = secretariaEnrollmentsNeedingAttention(index);
+  const recentActivities = secretariaRecentActivities(index);
+  const visibleActivities = recentActivities.slice(0, 5);
+  const school = activeSchools[0] || secretariaInstitutionalState.schools[0] || {};
+  const activeYears = [...new Set([
+    ...(secretariaInstitutionalState.classes || []).map((item) => item.school_year),
+    ...(secretariaInstitutionalState.enrollments || []).map((item) => item.school_year),
+  ].filter((item) => item && item !== "Ano nao informado"))].sort();
+  const schoolYear = activeYears[activeYears.length - 1] || "Ano nao informado";
+  const alerts = [
+    { label: "Documentos pendentes", detail: "Itens que precisam de revisao ou assinatura", count: pendingDocuments.length, href: secretariaLink("documentos", { q: "pendente" }), icon: "doc", tone: "red" },
+    { label: "Alunos sem responsavel", detail: "Alunos ativos ainda sem responsavel vinculado", count: studentsWithoutGuardian.length, href: secretariaLink("alunos", { q: "sem responsavel" }), icon: "family", tone: "orange" },
+    { label: "Responsaveis sem acesso configurado", detail: "Responsaveis que ainda nao tem acesso a plataforma", count: guardiansWithoutAccess.length, href: secretariaLink("responsaveis", { q: "acesso nao configurado" }), icon: "admin", tone: "gold" },
+    { label: "Professores sem acesso configurado", detail: "Professores institucionais sem usuario Auth", count: teachersWithoutAccess.length, href: secretariaLink("professores", { q: "sem acesso" }), icon: "cap", tone: "blue" },
+    { label: "Matriculas que exigem atencao", detail: "Matriculas com pendencia ou inconsistencia", count: enrollmentAttention.length, href: secretariaLink("matriculas", { q: "pendencia" }), icon: "clipboard", tone: "purple" },
+  ];
+  const metrics = [
+    { label: "Alunos ativos", value: activeStudents.length, icon: "users" },
+    { label: "Matriculas ativas", value: index.activeEnrollments.length, icon: "clipboard" },
+    { label: "Turmas ativas", value: activeClasses.length, icon: "users" },
+    { label: "Professores ativos", value: activeTeachers.length, icon: "cap" },
+    { label: "Responsaveis vinculados", value: uniqueGuardianCount, icon: "family" },
+  ];
+  return `
+    <div class="secretaria-dashboard-grid">
+      <section class="panel secretaria-identification secretaria-dashboard-context">
+        <div>
+          <span>Ano letivo</span>
+          <strong>${htmlEscape(schoolYear)}</strong>
+        </div>
+      </section>
+      <div class="secretaria-metric-row secretaria-dashboard-metrics" aria-label="Indicadores principais da Secretaria">
+        ${metrics.map((metric) => `<article>${secretariaInlineIcon(metric.icon)}<span>${htmlEscape(metric.label)}</span><strong>${metric.value}</strong></article>`).join("")}
+      </div>
+      <div class="secretaria-panel-grid secretaria-dashboard-operation">
+        <section class="panel secretaria-attention-panel">
+          <div class="panel-head"><h2>${secretariaInlineIcon("bell", "Atencao necessaria")}</h2></div>
+          <ul class="clean-list secretaria-alert-list">
+            ${alerts.map((alert) => `
+              <li class="is-${alert.tone}">
+                <a href="${alert.href}">
+                  ${secretariaInlineIcon(alert.icon)}
+                  <strong>${alert.count}</strong>
+                  <span><b>${htmlEscape(alert.label)}</b><small>${htmlEscape(alert.detail)}</small></span>
+                </a>
+              </li>
+            `).join("")}
+          </ul>
+          <p class="secretaria-soft-note">Resolva os itens acima para manter a escola sempre organizada.</p>
+        </section>
+        <section class="panel secretaria-quick-panel">
+          <div class="panel-head"><h2>${secretariaInlineIcon("progresso", "Acoes rapidas")}</h2><span>Secretaria</span></div>
+          <div class="secretaria-quick-actions">
+            <a href="${secretariaLink("novoAluno")}">${secretariaInlineIcon("aluno", "Novo Aluno")}</a>
+            <a href="${secretariaLink("matriculas")}">${secretariaInlineIcon("clipboard", "Nova Matricula")}</a>
+            <a href="${secretariaLink("novoResponsavel")}">${secretariaInlineIcon("family", "Novo Responsavel")}</a>
+            <a href="${secretariaLink("novaTurma")}">${secretariaInlineIcon("users", "Nova Turma")}</a>
+            <a href="${secretariaLink("novoProfessor")}">${secretariaInlineIcon("cap", "Novo Professor")}</a>
+            <a href="${secretariaLink("comunicados")}">${secretariaInlineIcon("mail", "Novo Comunicado")}</a>
+          </div>
+          <p class="secretaria-soft-note is-green">Atalhos para as principais acoes do dia a dia.</p>
+        </section>
+        <section class="panel secretaria-timeline-panel">
+          <div class="panel-head"><h2>${secretariaInlineIcon("calendar", "Atividade recente")}</h2><a href="${secretariaLink("comunicados")}">Ver todas</a></div>
+          <ul class="clean-list secretaria-timeline-list">
+            ${visibleActivities.map((item) => `<li><a href="${item.href}"><strong>${htmlEscape(item.label)}</strong></a><span>${htmlEscape(secretariaFormatDateTime(item.at))}</span></li>`).join("") || "<li>Nenhuma atividade recente encontrada.</li>"}
+          </ul>
+        </section>
+      </div>
+    </div>
+  `;
+};
+
+const renderSecretariaEnrollmentManagement = (student, enrollment, classItem, index) => {
+  if (!enrollment?.id) return `<section class="panel"><h2>Gestao da matricula</h2><p>Aluno sem matricula para movimentar.</p></section>`;
+  const sameSchoolClasses = (secretariaInstitutionalState.classes || [])
+    .filter((item) =>
+      isSecretariaActiveStatus(item.status)
+      && item.school_id === enrollment.school_id
+      && item.id !== enrollment.class_id
+      && secretariaSchoolYear({}, item) === secretariaSchoolYear(enrollment, classItem)
+    )
+    .sort((a, b) => normalizeClassName(a).localeCompare(normalizeClassName(b), "pt-BR"));
+  const activeClasses = (secretariaInstitutionalState.classes || [])
+    .filter((item) => isSecretariaActiveStatus(item.status) && item.school_id === enrollment.school_id)
+    .sort((a, b) => `${secretariaSchoolYear({}, a)} ${normalizeClassName(a)}`.localeCompare(`${secretariaSchoolYear({}, b)} ${normalizeClassName(b)}`, "pt-BR"));
+  const result = secretariaInstitutionalState.lastEnrollmentMovementResult;
+  return `
+    <section class="panel span-2">
+      <h2>Gestao da matricula</h2>
+      <div class="analytics-grid secretaria-grid">
+        <form data-secretaria-transfer-form>
+          <h3>Transferir turma</h3>
+          <input type="hidden" name="enrollment_id" value="${htmlEscape(enrollment.id)}" />
+          <input type="hidden" name="student_id" value="${htmlEscape(student.id)}" />
+          <label><span>Turma destino</span><select name="to_class_id" required>${sameSchoolClasses.map((item) => `<option value="${htmlEscape(item.id)}">${htmlEscape(normalizeClassName(item))}</option>`).join("")}</select></label>
+          <label><span>Motivo</span><input name="reason" required placeholder="transferencia interna" /></label>
+          <button type="submit" ${sameSchoolClasses.length ? "" : "disabled"}>Transferir</button>
+        </form>
+        <form data-secretaria-status-form>
+          <h3>Alterar status</h3>
+          <input type="hidden" name="enrollment_id" value="${htmlEscape(enrollment.id)}" />
+          <input type="hidden" name="student_id" value="${htmlEscape(student.id)}" />
+          <label><span>Novo status</span><select name="to_status" required>${secretariaEnrollmentStatusOptions.map((status) => `<option value="${htmlEscape(status)}" ${status === enrollment.status ? "selected" : ""}>${htmlEscape(secretariaStatusLabel(status))}</option>`).join("")}</select></label>
+          <label><span>Motivo</span><input name="reason" required placeholder="correcao administrativa" /></label>
+          <button type="submit">Alterar status</button>
+        </form>
+        <form data-secretaria-close-form>
+          <h3>Encerrar matricula</h3>
+          <input type="hidden" name="enrollment_id" value="${htmlEscape(enrollment.id)}" />
+          <input type="hidden" name="student_id" value="${htmlEscape(student.id)}" />
+          <label><span>Status final</span><select name="to_status" required><option value="ended">Encerrado</option><option value="cancelled">Cancelado</option><option value="archived">Arquivado</option></select></label>
+          <label><span>Motivo</span><input name="reason" required placeholder="encerramento" /></label>
+          <button type="submit">Encerrar</button>
+        </form>
+        <form data-secretaria-reenroll-form>
+          <h3>Rematricular</h3>
+          <input type="hidden" name="student_id" value="${htmlEscape(student.id)}" />
+          <label><span>Turma</span><select name="class_id" required>${activeClasses.map((item) => `<option value="${htmlEscape(item.id)}">${htmlEscape(secretariaSchoolYear({}, item))} · ${htmlEscape(normalizeClassName(item))}</option>`).join("")}</select></label>
+          <label><span>Ano letivo</span><input name="school_year" required value="${htmlEscape(secretariaSchoolYear(enrollment, classItem))}" /></label>
+          <label><span>Motivo</span><input name="reason" required placeholder="rematricula" /></label>
+          <button type="submit">Rematricular</button>
+        </form>
+      </div>
+      <p data-secretaria-enrollment-message>${result?.movement_id ? "Ultima movimentacao registrada com sucesso." : "Movimentacoes sao registradas no historico institucional."}</p>
+    </section>
+  `;
+};
+
+const renderSecretariaEnrollmentHistory = (student, index) => {
+  const movements = secretariaStudentMovements(student, index);
+  if (!movements.length) {
+    return `<section class="panel span-2"><h2>Historico de matricula</h2><p>Nenhuma movimentacao registrada para este aluno.</p></section>`;
+  }
+  return `
+    <section class="panel span-2">
+      <h2>Historico de matricula</h2>
+      <ul class="clean-list">
+        ${movements.map((movement) => {
+          const fromClass = index.classById.get(movement.from_class_id) || {};
+          const toClass = index.classById.get(movement.to_class_id) || {};
+          const actor = index.profileById.get(movement.performed_by) || {};
+          return `
+            <li>
+              <strong>${htmlEscape(secretariaFormatDateTime(movement.created_at))} · ${htmlEscape(secretariaMovementLabels[movement.movement_type] || normalizeInstitutionalStatus(movement.movement_type))}</strong>
+              <span>${htmlEscape(normalizeClassName(fromClass) || "Sem turma anterior")} -> ${htmlEscape(normalizeClassName(toClass) || "Sem turma nova")} · ${htmlEscape(secretariaStatusLabel(movement.from_status) || "sem status")} -> ${htmlEscape(secretariaStatusLabel(movement.to_status) || "sem status")} · ${htmlEscape(movement.reason || "Sem motivo")} · ${htmlEscape(normalizeProfileName(actor) || "Usuario institucional")}</span>
+            </li>
+          `;
+        }).join("")}
+      </ul>
+    </section>
+  `;
+};
+
+const renderSecretariaStudentDocuments = (student, index) => {
+  const rows = secretariaStudentDocumentRows(student, index);
+  const events = (index.documentEventsByStudent[student?.id] || []).slice(0, 8);
+  return `
+    <section class="panel span-2">
+      <h2>Documentos e Pendencias</h2>
+      <ul class="clean-list">
+        ${rows.map(({ type, document }) => `
+          <li>
+            <strong>${htmlEscape(type.name)}</strong>
+            ${secretariaBadge(secretariaDocumentStatusLabel(document?.status || "pending"), secretariaBadgeTone(document?.status || "pending"))}
+            <span>${document?.received_at ? `Recebido em ${htmlEscape(secretariaFormatDateTime(document.received_at))}` : "Aguardando conferencia"}${document?.file_reference ? ` · Arquivo informado` : ""}</span>
+            ${document?.notes ? `<span>Observacao: ${htmlEscape(document.notes)}</span>` : ""}
+            <form data-secretaria-document-form>
+              <input type="hidden" name="student_id" value="${htmlEscape(student.id)}" />
+              <input type="hidden" name="document_type_id" value="${htmlEscape(type.id)}" />
+              <label><span>Status</span><select name="status" required>${secretariaDocumentStatusOptions.map((status) => `<option value="${htmlEscape(status)}" ${(document?.status || "pending") === status ? "selected" : ""}>${htmlEscape(secretariaDocumentStatusLabel(status))}</option>`).join("")}</select></label>
+              <label><span>Observacao</span><input name="notes" value="${htmlEscape(document?.notes || "")}" placeholder="observacao administrativa" /></label>
+              <p class="secretaria-inline-note">Upload documental desabilitado no piloto. Operar somente status e metadados ate Storage privado ser homologado.</p>
+              <button type="submit">Salvar documento</button>
+            </form>
+          </li>
+        `).join("") || "<li>Nenhum tipo de documento ativo retornado pelo Supabase.</li>"}
+      </ul>
+      <p data-secretaria-document-message>${secretariaInstitutionalState.lastDocumentResult?.document_id ? `Ultimo documento atualizado: ${htmlEscape(secretariaInstitutionalState.lastDocumentResult.document_id)}` : "Status e pendencias sao salvos no historico institucional."}</p>
+      <h3>Auditoria documental</h3>
+      <ul class="clean-list">
+        ${events.map((event) => {
+          const type = index.documentTypeById.get(event.document_type_id) || {};
+          const actor = index.profileById.get(event.actor_id) || {};
+          return `<li><strong>${htmlEscape(secretariaFormatDateTime(event.created_at))}</strong><span>${htmlEscape(type.name || "Documento")} · ${htmlEscape(secretariaDocumentStatusLabel(event.from_status) || "sem status")} -> ${htmlEscape(secretariaDocumentStatusLabel(event.to_status) || "sem status")} · ${htmlEscape(normalizeProfileName(actor) || "Usuario institucional")}</span></li>`;
+        }).join("") || "<li>Nenhum evento documental registrado.</li>"}
+      </ul>
+    </section>
+  `;
+};
+
+const renderSecretariaEnrollmentDeclaration = (student, enrollment, classItem, school) => {
+  if (!student?.id || !enrollment?.id) {
+    return `<section class="panel span-2"><h2>Declaracao de matricula</h2><p>Aluno sem matricula ativa para emissao.</p></section>`;
+  }
+  const issueDate = new Date().toLocaleDateString("pt-BR");
+  const schoolName = normalizeSchoolName(school) || "Escola";
+  const studentName = normalizeStudentName(student);
+  const className = normalizeClassName(classItem);
+  const schoolYear = secretariaSchoolYear(enrollment, classItem);
+  const status = secretariaStatusLabel(enrollment.status);
+  const declarationHtml = `
+    <article class="secretaria-declaration">
+      <h1>Declaração de Matrícula</h1>
+      <p>Declaramos, para os devidos fins, que <strong>${htmlEscape(studentName)}</strong> encontra-se matriculado(a) em <strong>${htmlEscape(className)}</strong>, ano letivo <strong>${htmlEscape(schoolYear)}</strong>, na unidade <strong>${htmlEscape(schoolName)}</strong>.</p>
+      <p>Status da matrícula: <strong>${htmlEscape(status)}</strong>.</p>
+      <p>Data de emissão: ${htmlEscape(issueDate)}.</p>
+      <footer>${htmlEscape(schoolName)} · Secretaria Escolar</footer>
+    </article>
+  `;
+  return `
+    <section class="panel span-2">
+      <h2>Declaracao de matricula</h2>
+      <div data-secretaria-declaration>${declarationHtml}</div>
+      <button type="button" data-secretaria-print-declaration>IMPRIMIR / GERAR DECLARACAO</button>
+      <p>Declaracao gerada com os dados institucionais da matricula ativa.</p>
+    </section>
+  `;
+};
+
+const renderSecretariaStudentAttendance = (student, index) => {
+  const records = index.attendanceByStudent[student?.id] || [];
+  const summary = attendanceSummary(records);
+  return `
+    <section class="panel">
+      <h2>Frequencia</h2>
+      <dl>
+        <div><dt>Dias registrados</dt><dd>${summary.total}</dd></div>
+        <div><dt>Presencas</dt><dd>${summary.present}</dd></div>
+        <div><dt>Faltas</dt><dd>${summary.absent}</dd></div>
+        <div><dt>Justificadas</dt><dd>${summary.justified}</dd></div>
+        <div><dt>Percentual</dt><dd>${summary.total ? `${summary.percent}%` : "Sem base"}</dd></div>
+      </dl>
+      <ul class="clean-list">
+        ${records.slice(0, 12).map((record) => {
+          const classItem = index.classById.get(record.class_id) || {};
+          return `<li><strong>${htmlEscape(record.attendance_date)}</strong>${secretariaBadge(attendanceStatusLabel(record.status), secretariaBadgeTone(record.status))}<span>${htmlEscape(normalizeClassName(classItem))}${record.notes ? ` · ${htmlEscape(record.notes)}` : ""}</span></li>`;
+        }).join("") || "<li>Nenhum registro de frequencia retornado pelo Supabase.</li>"}
+      </ul>
+    </section>
+  `;
+};
+
+const renderSecretariaStudentDetail = (student, index) => {
+  if (!student?.id) return `<section class="panel"><h2>Ficha do aluno</h2><p>Selecione um aluno para abrir a ficha institucional.</p></section>`;
+  const enrollment = secretariaStudentEnrollment(student, index);
+  const classItem = index.classById.get(enrollment?.class_id || student.class_id) || {};
+  const school = index.schoolById.get(enrollment?.school_id || student.school_id) || {};
+  const teachers = secretariaClassTeachers(classItem.id, index);
+  const guardians = (index.guardiansByStudent[student.id] || []).map((guardian) => ({
+    ...guardian,
+    name: normalizeProfileName(index.profileById.get(guardian.profile_id) || {}) || guardian.profile_id,
+    accessStatus: "active",
+  }));
+  const institutionalGuardians = (index.guardianLinksByStudent[student.id] || []).map((link) => {
+    const guardian = index.institutionalGuardianById.get(link.guardian_id) || {};
+    return {
+      ...link,
+      name: guardian.full_name || guardian.id || link.guardian_id,
+      accessStatus: guardian.access_status || "not_configured",
+    };
+  });
+  const allGuardians = [...institutionalGuardians, ...guardians];
+  return `
+    <section class="panel span-2 secretaria-student-card">
+      <div class="secretaria-student-head">
+        <div>
+          <span>Ficha do aluno</span>
+          <h2>${htmlEscape(normalizeStudentName(student))}</h2>
+          <p>${htmlEscape(normalizeClassName(classItem) || "Sem turma")} · ${htmlEscape(secretariaStatusLabel(enrollment?.status || student.status))}</p>
+        </div>
+        <div class="secretaria-student-actions">
+          <a href="${secretariaLink("novoAluno", { student: student.id })}">Editar dados</a>
+          <a href="${secretariaLink("novoResponsavel", { student: student.id })}">Vincular responsavel</a>
+          <a href="#gestao-matricula">Gerenciar matricula</a>
+          <a href="#declaracao-matricula">Gerar declaracao</a>
+        </div>
+      </div>
+      <div class="secretaria-detail-sections">
+        <article>
+          <h3>Dados pessoais</h3>
+          <ul class="clean-list">
+            <li>Nome: <strong>${htmlEscape(normalizeStudentName(student))}</strong></li>
+            <li>Status: ${secretariaBadge(secretariaStatusLabel(student.status), secretariaBadgeTone(student.status))}</li>
+            <li>Identificacao: ${htmlEscape(student.id)}</li>
+            <li>Cadastrado em: ${htmlEscape(secretariaFormatDateTime(student.created_at))}</li>
+          </ul>
+        </article>
+        <article>
+          <h3>Matricula</h3>
+          <ul class="clean-list">
+            <li>Escola: ${htmlEscape(normalizeSchoolName(school))}</li>
+            <li>Turma: ${htmlEscape(normalizeClassName(classItem))}</li>
+            <li>Ano letivo: ${htmlEscape(secretariaSchoolYear(enrollment, classItem))}</li>
+            <li>Status: ${secretariaBadge(secretariaStatusLabel(enrollment?.status), secretariaBadgeTone(enrollment?.status))}</li>
+            <li>Matricula: ${htmlEscape(enrollment?.id || "Sem matricula ativa")}</li>
+          </ul>
+        </article>
+        <article>
+          <h3>Responsaveis</h3>
+          <ul class="clean-list">
+            ${allGuardians.map((item) => `<li><strong>${htmlEscape(item.name)}</strong>${secretariaBadge(secretariaAccessLabel(item.accessStatus), item.accessStatus === "active" ? "success" : "warning")}</li>`).join("") || "<li>Sem responsavel ativo vinculado.</li>"}
+          </ul>
+        </article>
+        <article>
+          <h3>Equipe</h3>
+          <ul class="clean-list">
+            <li>Professor(es): ${htmlEscape(teachers.join(", ") || "Sem professor ativo vinculado")}</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+    ${renderSecretariaStudentDocuments(student, index)}
+    <div id="declaracao-matricula" class="secretaria-anchor">${renderSecretariaEnrollmentDeclaration(student, enrollment, classItem, school)}</div>
+    ${renderSecretariaStudentAttendance(student, index)}
+    <div id="gestao-matricula" class="secretaria-anchor">${renderSecretariaEnrollmentManagement(student, enrollment, classItem, index)}</div>
+    ${renderSecretariaEnrollmentHistory(student, index)}
+  `;
+};
+
+const renderSecretariaNewStudentView = (index) => {
+  const activeClasses = (secretariaInstitutionalState.classes || [])
+    .filter((classItem) => isSecretariaActiveStatus(classItem.status))
+    .sort((a, b) => normalizeClassName(a).localeCompare(normalizeClassName(b), "pt-BR"));
+  const defaultClass = activeClasses.find((classItem) => normalizeClassName(classItem) === "Infantil 4 A") || activeClasses[0] || {};
+  const defaultYear = secretariaSchoolYear({}, defaultClass) === "Ano nao informado" ? "2026" : secretariaSchoolYear({}, defaultClass);
+  const result = secretariaInstitutionalState.lastCreateResult;
+  return `
+    <section class="panel span-2">
+      <div class="panel-head">
+        <h2>Novo Aluno</h2>
+        <a href="${secretariaLink("alunos")}">Voltar para alunos</a>
+      </div>
+      <form data-secretaria-student-form>
+        <div class="qb-builder-grid">
+          <label>
+            <span>Nome completo</span>
+            <input name="nome" autocomplete="off" required placeholder="Aluno Ficticio de Homologacao" />
+          </label>
+          <label>
+            <span>Data de nascimento</span>
+            <input name="data_nascimento" type="date" />
+          </label>
+          <label>
+            <span>Turma</span>
+            <select name="class_id" required data-secretaria-class-select>
+              ${activeClasses.map((classItem) => `<option value="${htmlEscape(classItem.id)}" data-school-year="${htmlEscape(secretariaSchoolYear({}, classItem))}" ${classItem.id === defaultClass.id ? "selected" : ""}>${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}
+            </select>
+          </label>
+          <label>
+            <span>Ano letivo</span>
+            <input name="school_year" value="${htmlEscape(defaultYear)}" required data-secretaria-school-year />
+          </label>
+          <label>
+            <span>Status</span>
+            <select name="status" required>
+              <option value="active">Ativo</option>
+            </select>
+          </label>
+        </div>
+        <div class="qb-builder-actions">
+          <button type="submit">Salvar aluno e matricula</button>
+          <a href="${secretariaLink("alunos")}">Cancelar</a>
+        </div>
+        <p data-secretaria-form-message>${result?.student_id ? "Ultimo cadastro salvo com aluno e matricula." : "Aluno e matricula sao salvos em uma operacao unica."}</p>
+      </form>
+    </section>
+  `;
+};
+
+const renderSecretariaStudentsView = (index) => {
+  const params = getSecretariaParams();
+  const selected = index.studentById.get(params.get("student")) || null;
+  const rows = (secretariaInstitutionalState.students || [])
+    .filter((student) => isSecretariaActiveStatus(student.status))
+    .map((student) => {
+      const enrollment = secretariaStudentEnrollment(student, index);
+      const classItem = index.classById.get(enrollment?.class_id || student.class_id) || {};
+      return `
+        <li data-secretaria-search-item>
+          <a href="${secretariaLink("alunos", { student: student.id })}"><strong>${htmlEscape(normalizeStudentName(student))}</strong></a>
+          ${secretariaBadge(secretariaStatusLabel(student.status), secretariaBadgeTone(student.status))}
+          <span>${htmlEscape(normalizeClassName(classItem))} · ${htmlEscape(secretariaSchoolYear(enrollment, classItem))} · Matricula ${htmlEscape(secretariaStatusLabel(enrollment?.status))}</span>
+        </li>
+      `;
+    })
+    .join("");
+  return `
+    <div class="analytics-grid secretaria-grid">
+      <section class="panel span-2">
+        <div class="panel-head"><h2>Alunos</h2><a href="${secretariaLink("novoAluno")}">NOVO ALUNO</a></div>
+        <label class="app-search"><span>Buscar aluno</span><input type="search" placeholder="Buscar por nome" data-secretaria-search /></label>
+        <ul class="clean-list">${rows || "<li>Nenhum aluno ativo retornado pelo Supabase.</li>"}</ul>
+      </section>
+      ${renderSecretariaStudentDetail(selected, index)}
+    </div>
+  `;
+};
+
+const renderSecretariaClassesView = (index) => {
+  const selected = index.classById.get(getSecretariaParams().get("class")) || null;
+  const rows = (secretariaInstitutionalState.classes || [])
+    .map((classItem) => {
+      const teachers = secretariaClassTeachers(classItem.id, index);
+      const count = (index.activeEnrollmentsByClass[classItem.id] || []).length;
+      return `
+        <li data-secretaria-search-item>
+          <a href="${secretariaLink("turmas", { class: classItem.id })}"><strong>${htmlEscape(normalizeClassName(classItem))}</strong></a>
+          ${secretariaBadge(secretariaStatusLabel(classItem.status), secretariaBadgeTone(classItem.status))}
+          <span>Ano letivo ${htmlEscape(secretariaSchoolYear({}, classItem))} · ${htmlEscape(teachers.join(", ") || "Sem professor ativo")} · ${count} aluno${count === 1 ? "" : "s"}</span>
+        </li>
+      `;
+    })
+    .join("");
+  const detailStudents = selected
+    ? (index.activeEnrollmentsByClass[selected.id] || [])
+        .map((enrollment) => index.studentById.get(enrollment.student_id))
+        .filter(Boolean)
+        .sort((a, b) => normalizeStudentName(a).localeCompare(normalizeStudentName(b), "pt-BR"))
+    : [];
+  return `
+    <div class="analytics-grid secretaria-grid">
+      <section class="panel span-2">
+        <div class="panel-head"><h2>Turmas</h2><a href="${secretariaLink("novaTurma")}">NOVA TURMA</a></div>
+        <label class="app-search"><span>Buscar turma</span><input type="search" placeholder="Buscar por nome" data-secretaria-search /></label>
+        <ul class="clean-list">${rows || "<li>Nenhuma turma ativa retornada pelo Supabase.</li>"}</ul>
+      </section>
+      <section class="panel span-2">
+        <h2>${htmlEscape(selected ? normalizeClassName(selected) : "Detalhe da turma")}</h2>
+        ${
+          selected
+            ? `<ul class="clean-list">
+                <li>Ano letivo: ${htmlEscape(secretariaSchoolYear({}, selected))}</li>
+                <li>Status: ${secretariaBadge(secretariaStatusLabel(selected.status), secretariaBadgeTone(selected.status))}</li>
+                <li>Professor(es): ${htmlEscape(secretariaClassTeachers(selected.id, index).join(", ") || "Sem professor ativo vinculado")}</li>
+                <li>Total ativo: ${detailStudents.length}</li>
+                ${detailStudents.map((student) => `<li>${htmlEscape(normalizeStudentName(student))}</li>`).join("")}
+              </ul>
+              <form data-secretaria-class-edit-form>
+                <h3>Editar turma</h3>
+                <input type="hidden" name="class_id" value="${htmlEscape(selected.id)}" />
+                <label><span>Nome</span><input name="nome" required value="${htmlEscape(normalizeClassName(selected))}" /></label>
+                <label><span>Status</span><select name="status" required><option value="active" ${selected.status === "active" ? "selected" : ""}>Ativo</option><option value="inactive" ${selected.status === "inactive" ? "selected" : ""}>Inativo</option><option value="archived" ${selected.status === "archived" ? "selected" : ""}>Arquivado</option></select></label>
+                <label><span>Faixa/etapa</span><input name="age_group" value="${htmlEscape(selected.age_group || "")}" /></label>
+                <label><span>Turno</span><input name="turno" value="${htmlEscape(selected.turno || "")}" /></label>
+                <label><span>Ano escolar</span><input name="ano_escolar" value="${htmlEscape(selected.ano_escolar || "")}" /></label>
+                <label><span>Motivo</span><input name="reason" required placeholder="correcao administrativa" /></label>
+                <button type="submit">Salvar turma</button>
+              </form>
+              <p data-secretaria-class-message>Edicao basica segura. School_id e ano letivo nao sao alterados aqui.</p>`
+            : "<p>Selecione uma turma para abrir os vinculos reais.</p>"
+        }
+      </section>
+    </div>
+  `;
+};
+
+const renderSecretariaNewClassView = (index) => {
+  const schoolsFromClasses = [...new Set((secretariaInstitutionalState.classes || []).map((classItem) => classItem.school_id).filter(Boolean))]
+    .map((schoolId) => index.schoolById.get(schoolId) || { id: schoolId, nome: `Escola ${schoolId}` });
+  const schools = ((secretariaInstitutionalState.schools || []).filter((school) => isSecretariaActiveStatus(school.status)).length
+    ? (secretariaInstitutionalState.schools || []).filter((school) => isSecretariaActiveStatus(school.status))
+    : schoolsFromClasses.length
+      ? schoolsFromClasses
+      : [{ id: "11111111-1111-1111-1111-111111111111", nome: "Escola nao informada" }]);
+  const defaultSchool = schools[0] || secretariaInstitutionalState.schools[0] || {};
+  const result = secretariaInstitutionalState.lastTeacherClassResult;
+  return `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>Nova Turma</h2><a href="${secretariaLink("turmas")}">Voltar para turmas</a></div>
+      <form data-secretaria-class-form>
+        <div class="qb-builder-grid">
+          <label><span>Escola</span><select name="school_id" required>${schools.map((school) => `<option value="${htmlEscape(school.id)}" ${school.id === defaultSchool.id ? "selected" : ""}>${htmlEscape(normalizeSchoolName(school))}</option>`).join("")}</select></label>
+          <label><span>Nome da turma</span><input name="nome" required placeholder="Infantil Teste Secretaria A" /></label>
+          <label><span>Ano letivo</span><input name="school_year" required value="2026" /></label>
+          <label><span>Status</span><select name="status" required><option value="active">Ativo</option><option value="inactive">Inativo</option></select></label>
+          <label><span>Faixa/etapa</span><input name="age_group" placeholder="Infantil teste" /></label>
+          <label><span>Turno</span><input name="turno" placeholder="Manha" /></label>
+          <label><span>Ano escolar</span><input name="ano_escolar" placeholder="Infantil" /></label>
+          <label><span>Motivo</span><input name="reason" required placeholder="homologacao secretaria 03.5" /></label>
+        </div>
+        <div class="qb-builder-actions">
+          <button type="submit">Salvar turma</button>
+          <a href="${secretariaLink("turmas")}">Cancelar</a>
+        </div>
+        <p data-secretaria-class-message>${result?.class_id ? `Ultima turma criada: ${htmlEscape(result.class_id)}` : "A operacao valida duplicidade por escola e ano letivo."}</p>
+      </form>
+    </section>
+  `;
+};
+
+const renderSecretariaNewTeacherView = (index) => {
+  const schoolsFromTeachers = [...new Set((secretariaInstitutionalState.teachers || []).map((teacher) => teacher.school_id).filter(Boolean))]
+    .map((schoolId) => index.schoolById.get(schoolId) || { id: schoolId, nome: `Escola ${schoolId}` });
+  const schools = ((secretariaInstitutionalState.schools || []).filter((school) => isSecretariaActiveStatus(school.status)).length
+    ? (secretariaInstitutionalState.schools || []).filter((school) => isSecretariaActiveStatus(school.status))
+    : schoolsFromTeachers.length
+      ? schoolsFromTeachers
+      : [{ id: "11111111-1111-1111-1111-111111111111", nome: "Escola nao informada" }]);
+  const defaultSchool = schools[0] || {};
+  const result = secretariaInstitutionalState.lastTeacherClassResult;
+  return `
+    <section class="panel span-2 secretaria-form-panel secretaria-teacher-create">
+      <div class="panel-head">
+        <h2>${secretariaInlineIcon("cap", "Novo Professor")}</h2>
+        <a href="${secretariaLink("professores")}">Cancelar</a>
+      </div>
+      <form data-secretaria-teacher-form>
+        <div class="secretaria-form-grid secretaria-teacher-form-grid">
+          <label class="is-wide"><span>Nome completo</span><input name="full_name" required autocomplete="off" placeholder="Nome completo do professor" /></label>
+          <label><span>Disciplina/Area</span><input name="disciplina" autocomplete="off" placeholder="Ex.: Educacao Infantil" /></label>
+          <label><span>Status</span><select name="status" required><option value="active">Ativo</option><option value="inactive">Inativo</option></select></label>
+          <label class="is-wide"><span>Escola</span><select name="school_id" required>${schools.map((school) => `<option value="${htmlEscape(school.id)}" ${school.id === defaultSchool.id ? "selected" : ""}>${htmlEscape(normalizeSchoolName(school))}</option>`).join("")}</select></label>
+        </div>
+        <div class="qb-builder-actions secretaria-form-actions">
+          <a href="${secretariaLink("professores")}">Cancelar</a>
+          <button type="submit">Salvar professor</button>
+        </div>
+        <p class="secretaria-form-hint">
+          O professor sera cadastrado institucionalmente. O acesso digital podera ser configurado posteriormente.
+        </p>
+        <p data-secretaria-teacher-message>
+          ${result?.teacher_id ? `Ultimo professor criado: ${htmlEscape(result.teacher_id)}` : ""}
+        </p>
+      </form>
+    </section>
+  `;
+};
+
+const renderSecretariaTeachersView = (index) => {
+  const selected = index.teacherById.get(getSecretariaParams().get("teacher")) || null;
+  const rows = (secretariaInstitutionalState.teachers || [])
+    .filter((teacher) => isSecretariaActiveStatus(teacher.status))
+    .map((teacher) => {
+      const memberships = index.teacherMembershipsByTeacher[teacher.id] || [];
+      const classNames = memberships.map((item) => normalizeClassName(index.classById.get(item.class_id) || {})).filter(Boolean);
+      return `
+        <li data-secretaria-search-item>
+          <a href="${secretariaLink("professores", { teacher: teacher.id })}"><strong>${htmlEscape(secretariaTeacherName(teacher, index))}</strong></a>
+          ${secretariaBadge(teacher.profile_id ? "Acesso configurado" : "Acesso nao configurado", teacher.profile_id ? "success" : "warning")}
+          <span>${htmlEscape(secretariaStatusLabel(teacher.status))} · ${htmlEscape(classNames.join(", ") || "Sem turma ativa")}</span>
+        </li>
+      `;
+    })
+    .join("");
+  const activeMemberships = selected ? index.teacherMembershipsByTeacher[selected.id] || [] : [];
+  const allMemberships = selected ? index.allTeacherMembershipsByTeacher[selected.id] || [] : [];
+  const endedMemberships = allMemberships.filter((item) => !isSecretariaActiveStatus(item.status) || item.ended_at);
+  const selectedClasses = activeMemberships.map((item) => index.classById.get(item.class_id)).filter(Boolean);
+  const linkableClasses = (secretariaInstitutionalState.classes || [])
+    .filter((classItem) => isSecretariaActiveStatus(classItem.status) && selected?.school_id === classItem.school_id)
+    .sort((a, b) => normalizeClassName(a).localeCompare(normalizeClassName(b), "pt-BR"));
+  const teacherMovements = selected ? (index.teacherMovementsByTeacher[selected.id] || []).slice().sort((a, b) => String(a.created_at || "").localeCompare(String(b.created_at || ""))) : [];
+  return `
+    <div class="analytics-grid secretaria-grid">
+      <section class="panel span-2">
+        <div class="panel-head"><h2>Professores</h2><a href="${secretariaLink("novoProfessor")}">NOVO PROFESSOR</a></div>
+        <label class="app-search"><span>Buscar professor</span><input type="search" placeholder="Buscar por nome" data-secretaria-search /></label>
+        <ul class="clean-list">${rows || "<li>Nenhum professor ativo retornado pelo Supabase.</li>"}</ul>
+      </section>
+      <section class="panel span-2">
+        <h2>${htmlEscape(selected ? secretariaTeacherName(selected, index) : "Vinculos do professor")}</h2>
+        ${
+          selected
+            ? `<ul class="clean-list">
+                <li>Status: ${secretariaBadge(secretariaStatusLabel(selected.status), secretariaBadgeTone(selected.status))}</li>
+                <li>Acesso a plataforma: ${secretariaBadge(selected.profile_id ? "Acesso configurado" : "Acesso nao configurado", selected.profile_id ? "success" : "warning")}</li>
+                <li>Escola: ${htmlEscape(normalizeSchoolName(index.schoolById.get(selected.school_id) || {}))}</li>
+                <li>Turmas ativas: ${selectedClasses.length}</li>
+                ${activeMemberships.map((membership) => {
+                  const classItem = index.classById.get(membership.class_id) || {};
+                  return `<li><strong>${htmlEscape(normalizeClassName(classItem))}</strong>${secretariaBadge(secretariaStatusLabel(membership.role), "info")}<span>Desde ${htmlEscape(secretariaFormatDateTime(membership.started_at))}</span><form data-secretaria-end-teacher-link-form><input type="hidden" name="membership_id" value="${htmlEscape(membership.id)}" /><input type="hidden" name="teacher_id" value="${htmlEscape(selected.id)}" /><input name="reason" required placeholder="encerramento do vinculo" /><button type="submit">Encerrar vinculo</button></form></li>`;
+                }).join("") || "<li>Sem turma ativa vinculada.</li>"}
+              </ul>
+              <form data-secretaria-teacher-link-form>
+                <h3>Vincular turma</h3>
+                <input type="hidden" name="teacher_id" value="${htmlEscape(selected.id)}" />
+                <label><span>Turma</span><select name="class_id" required>${linkableClasses.map((classItem) => `<option value="${htmlEscape(classItem.id)}">${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
+                <label><span>Papel</span><select name="role" required><option value="principal">Principal</option><option value="auxiliar">Auxiliar</option><option value="especialista">Especialista</option><option value="substituto">Substituto</option></select></label>
+                <label><span>Motivo</span><input name="reason" required placeholder="vinculo institucional" /></label>
+                <button type="submit">Vincular turma</button>
+              </form>
+              <h3>Vinculos encerrados</h3>
+              <ul class="clean-list">${endedMemberships.map((membership) => `<li>${htmlEscape(normalizeClassName(index.classById.get(membership.class_id) || {}))} · ${htmlEscape(secretariaStatusLabel(membership.status))} · encerrado em ${htmlEscape(secretariaFormatDateTime(membership.ended_at))}</li>`).join("") || "<li>Nenhum vinculo encerrado retornado.</li>"}</ul>
+              <h3>Historico professor-turma</h3>
+              <ul class="clean-list">${teacherMovements.map((movement) => `<li><strong>${htmlEscape(secretariaMovementLabels[movement.movement_type] || normalizeInstitutionalStatus(movement.movement_type))}</strong><span>${htmlEscape(secretariaFormatDateTime(movement.created_at))} · ${htmlEscape(normalizeClassName(index.classById.get(movement.class_id) || {}))} · ${htmlEscape(secretariaStatusLabel(movement.from_status) || "sem status")} -> ${htmlEscape(secretariaStatusLabel(movement.to_status) || "sem status")} · ${htmlEscape(movement.reason || "Sem motivo")}</span></li>`).join("") || "<li>Nenhum movimento registrado.</li>"}</ul>
+              <p data-secretaria-teacher-link-message>Operacoes professor-turma preservam o historico institucional.</p>`
+            : "<p>Selecione um professor para abrir as turmas vinculadas.</p>"
+        }
+      </section>
+    </div>
+  `;
+};
+
+const renderSecretariaEnrollmentsView = (index) => {
+  const params = getSecretariaParams();
+  const selectedStudentId = params.get("student") || "";
+  const selectedClassId = params.get("class") || "";
+  const selectedYear = params.get("year") || "";
+  const selectedStatus = params.get("status") || "";
+  const years = [...new Set((secretariaInstitutionalState.enrollments || []).map((item) => item.school_year).filter(Boolean))].sort();
+  const filteredEnrollments = (secretariaInstitutionalState.enrollments || []).filter((enrollment) =>
+    (!selectedStudentId || enrollment.student_id === selectedStudentId)
+    && (!selectedClassId || enrollment.class_id === selectedClassId)
+    && (!selectedYear || String(enrollment.school_year) === selectedYear)
+    && (!selectedStatus || String(enrollment.status) === selectedStatus)
+  );
+  const activeRows = filteredEnrollments
+    .filter((enrollment) => isSecretariaActiveStatus(enrollment.status) && !enrollment.ended_at)
+    .map((enrollment) => {
+      const student = index.studentById.get(enrollment.student_id) || {};
+      const classItem = index.classById.get(enrollment.class_id) || {};
+      const school = index.schoolById.get(enrollment.school_id) || {};
+      return `
+        <li data-secretaria-search-item>
+          <a href="${secretariaLink("alunos", { student: enrollment.student_id })}"><strong>${htmlEscape(normalizeStudentName(student))}</strong></a>
+          ${secretariaBadge(secretariaStatusLabel(enrollment.status), secretariaBadgeTone(enrollment.status))}
+          <span>${htmlEscape(normalizeClassName(classItem))} · Ano letivo ${htmlEscape(enrollment.school_year)} · ${htmlEscape(normalizeSchoolName(school))}</span>
+        </li>
+      `;
+    })
+    .join("");
+  const movements = (secretariaInstitutionalState.enrollmentMovements || [])
+    .filter((movement) =>
+      (!selectedStudentId || movement.student_id === selectedStudentId)
+      && (!selectedClassId || movement.from_class_id === selectedClassId || movement.to_class_id === selectedClassId)
+    )
+    .slice()
+    .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
+  const movementRows = movements.map((movement) => {
+    const student = index.studentById.get(movement.student_id) || {};
+    const fromClass = index.classById.get(movement.from_class_id) || {};
+    const toClass = index.classById.get(movement.to_class_id) || {};
+    return `
+      <li data-secretaria-search-item>
+        <a href="${secretariaLink("alunos", { student: movement.student_id })}"><strong>${htmlEscape(secretariaMovementLabels[movement.movement_type] || normalizeInstitutionalStatus(movement.movement_type))}</strong></a>
+          <span>${htmlEscape(normalizeStudentName(student))} · ${htmlEscape(normalizeClassName(fromClass) || "Sem origem")} -> ${htmlEscape(normalizeClassName(toClass) || "Sem destino")} · ${htmlEscape(secretariaFormatDateTime(movement.created_at))}</span>
+      </li>
+    `;
+  }).join("");
+  return `
+    <div class="analytics-grid secretaria-grid">
+      <section class="panel span-2">
+        <div class="panel-head"><h2>Matriculas</h2><a href="${secretariaLink("novoAluno")}">NOVA MATRICULA</a></div>
+        <form class="secretaria-filter-row" method="get" action="secretaria.html">
+          <input type="hidden" name="view" value="matriculas" />
+          <label><span>Aluno</span><select name="student"><option value="">Todos</option>${(secretariaInstitutionalState.students || []).map((student) => `<option value="${htmlEscape(student.id)}" ${student.id === selectedStudentId ? "selected" : ""}>${htmlEscape(normalizeStudentName(student))}</option>`).join("")}</select></label>
+          <label><span>Turma</span><select name="class"><option value="">Todas</option>${(secretariaInstitutionalState.classes || []).map((classItem) => `<option value="${htmlEscape(classItem.id)}" ${classItem.id === selectedClassId ? "selected" : ""}>${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
+          <label><span>Ano letivo</span><select name="year"><option value="">Todos</option>${years.map((year) => `<option value="${htmlEscape(year)}" ${year === selectedYear ? "selected" : ""}>${htmlEscape(year)}</option>`).join("")}</select></label>
+          <label><span>Status</span><select name="status"><option value="">Todos</option>${secretariaEnrollmentStatusOptions.map((status) => `<option value="${htmlEscape(status)}" ${status === selectedStatus ? "selected" : ""}>${htmlEscape(secretariaStatusLabel(status))}</option>`).join("")}</select></label>
+          <button type="submit">Filtrar</button>
+        </form>
+        <label class="app-search"><span>Buscar matricula</span><input type="search" placeholder="Buscar por aluno, turma ou escola" data-secretaria-search /></label>
+        <h3>Matriculas Ativas</h3>
+        <ul class="clean-list">${activeRows || "<li>Nenhuma matricula ativa retornada pelo Supabase.</li>"}</ul>
+      </section>
+      <section class="panel">
+        <h2>Transferencias</h2>
+        <ul class="clean-list">${movements.filter((item) => item.movement_type === "class_transfer").map((item) => `<li><a href="${secretariaLink("alunos", { student: item.student_id })}">${htmlEscape(normalizeStudentName(index.studentById.get(item.student_id) || {}))}</a><span>${htmlEscape(secretariaFormatDateTime(item.created_at))}</span></li>`).join("") || "<li>Nenhuma transferencia registrada.</li>"}</ul>
+      </section>
+      <section class="panel">
+        <h2>Encerramentos</h2>
+        <ul class="clean-list">${movements.filter((item) => item.movement_type === "enrollment_closed").map((item) => `<li><a href="${secretariaLink("alunos", { student: item.student_id })}">${htmlEscape(normalizeStudentName(index.studentById.get(item.student_id) || {}))}</a><span>${htmlEscape(secretariaFormatDateTime(item.created_at))}</span></li>`).join("") || "<li>Nenhum encerramento registrado.</li>"}</ul>
+      </section>
+      <section class="panel">
+        <h2>Rematriculas</h2>
+        <ul class="clean-list">${movements.filter((item) => item.movement_type === "reenrollment").map((item) => `<li><a href="${secretariaLink("alunos", { student: item.student_id })}">${htmlEscape(normalizeStudentName(index.studentById.get(item.student_id) || {}))}</a><span>${htmlEscape(secretariaFormatDateTime(item.created_at))}</span></li>`).join("") || "<li>Nenhuma rematricula registrada.</li>"}</ul>
+      </section>
+      <section class="panel span-2">
+        <div class="panel-head"><h2>Historico de Movimentacoes</h2><span>${movements.length} registro${movements.length === 1 ? "" : "s"}</span></div>
+        <ul class="clean-list">${movementRows || "<li>Nenhuma movimentacao retornada pelo Supabase.</li>"}</ul>
+      </section>
+    </div>
+  `;
+};
+
+const renderSecretariaNewGuardianView = (index) => {
+  const params = getSecretariaParams();
+  const selectedStudentId = params.get("student") || "";
+  const activeStudents = (secretariaInstitutionalState.students || [])
+    .filter((student) => isSecretariaActiveStatus(student.status))
+    .sort((a, b) => normalizeStudentName(a).localeCompare(normalizeStudentName(b), "pt-BR"));
+  const existingGuardians = (secretariaInstitutionalState.institutionalGuardians || [])
+    .filter((guardian) => isSecretariaActiveStatus(guardian.status))
+    .sort((a, b) => String(a.full_name || "").localeCompare(String(b.full_name || ""), "pt-BR"));
+  const result = secretariaInstitutionalState.lastGuardianResult;
+  return `
+    <section class="panel span-2">
+      <div class="panel-head">
+        <h2>Novo Responsavel</h2>
+        <a href="${secretariaLink("responsaveis")}">Voltar para responsaveis</a>
+      </div>
+      <form data-secretaria-guardian-form>
+        <div class="qb-builder-grid">
+          <label>
+            <span>Aluno</span>
+            <select name="student_id" required>
+              ${activeStudents.map((student) => `<option value="${htmlEscape(student.id)}" ${student.id === selectedStudentId ? "selected" : ""}>${htmlEscape(normalizeStudentName(student))}</option>`).join("")}
+            </select>
+          </label>
+          <label>
+            <span>Responsavel existente</span>
+            <select name="guardian_id" data-secretaria-existing-guardian>
+              <option value="">Criar novo responsavel</option>
+              ${existingGuardians.map((guardian) => `<option value="${htmlEscape(guardian.id)}">${htmlEscape(guardian.full_name)}${guardian.email ? ` · ${htmlEscape(guardian.email)}` : ""}</option>`).join("")}
+            </select>
+          </label>
+          <label>
+            <span>Nome completo</span>
+            <input name="full_name" autocomplete="off" placeholder="Responsavel Ficticio de Homologacao" />
+          </label>
+          <label>
+            <span>E-mail</span>
+            <input name="email" type="email" autocomplete="off" placeholder="responsavel.homologacao@example.test" />
+          </label>
+          <label>
+            <span>Telefone</span>
+            <input name="phone" autocomplete="off" placeholder="+55 11 90000-0000" />
+          </label>
+          <label>
+            <span>Vinculo</span>
+            <select name="relationship" required>
+              <option value="responsavel">Responsavel</option>
+              <option value="mae">Mae</option>
+              <option value="pai">Pai</option>
+              <option value="avo">Avo</option>
+              <option value="tutor">Tutor</option>
+              <option value="outro">Outro</option>
+            </select>
+          </label>
+          <label>
+            <span>Status</span>
+            <select name="status" required>
+              <option value="active">Ativo</option>
+            </select>
+          </label>
+          <label>
+            <span>Responsavel principal</span>
+            <select name="is_primary">
+              <option value="false">Nao</option>
+              <option value="true">Sim</option>
+            </select>
+          </label>
+        </div>
+        <div class="qb-builder-actions">
+          <button type="submit">Salvar responsavel e vinculo</button>
+          <a href="${secretariaLink("responsaveis")}">Cancelar</a>
+        </div>
+        <p data-secretaria-guardian-message>${result?.guardian_id ? "Ultimo responsavel vinculado com sucesso." : "Responsavel e vinculo sao salvos em uma operacao unica."}</p>
+      </form>
+    </section>
+  `;
+};
+
+const renderSecretariaGuardiansView = (index) => {
+  const selectedProfileId = getSecretariaParams().get("guardian");
+  const authRows = Object.entries(index.guardiansByProfile)
+    .map(([profileId, guardians]) => {
+      const profile = index.profileById.get(profileId) || {};
+      const studentNames = guardians.map((guardian) => normalizeStudentName(index.studentById.get(guardian.student_id) || {})).filter(Boolean);
+      const relationships = [...new Set(guardians.map((guardian) => secretariaStatusLabel(guardian.relationship)))];
+      return `
+        <li data-secretaria-search-item>
+          <a href="${secretariaLink("responsaveis", { guardian: profileId })}"><strong>${htmlEscape(normalizeProfileName(profile) || profileId)}</strong></a>
+          ${secretariaBadge("Acesso configurado", "success")}
+          <span>${htmlEscape(studentNames.join(", ") || "Sem aluno ativo visivel")} · ${htmlEscape(relationships.join(", "))}</span>
+        </li>
+      `;
+    })
+    .join("");
+  const institutionalRows = (index.activeInstitutionalGuardians || [])
+    .map((guardian) => {
+      const links = index.guardianLinksByGuardian[guardian.id] || [];
+      const studentNames = links.map((link) => normalizeStudentName(index.studentById.get(link.student_id) || {})).filter(Boolean);
+      const relationships = [...new Set(links.map((link) => secretariaStatusLabel(link.relationship)))];
+      return `
+        <li data-secretaria-search-item>
+          <a href="${secretariaLink("responsaveis", { guardian: guardian.id })}"><strong>${htmlEscape(guardian.full_name || guardian.id)}</strong></a>
+          ${secretariaBadge(secretariaAccessLabel(guardian.access_status), guardian.access_status === "active" ? "success" : "warning")}
+          <span>${htmlEscape(studentNames.join(", ") || "Sem aluno vinculado")} · ${htmlEscape(relationships.join(", ") || "Sem vinculo")}</span>
+        </li>
+      `;
+    })
+    .join("");
+  const selectedGuardians = selectedProfileId ? index.guardiansByProfile[selectedProfileId] || [] : [];
+  const selectedProfile = index.profileById.get(selectedProfileId) || {};
+  const selectedInstitutionalGuardian = selectedProfileId ? index.institutionalGuardianById.get(selectedProfileId) || null : null;
+  const selectedInstitutionalLinks = selectedInstitutionalGuardian ? index.guardianLinksByGuardian[selectedInstitutionalGuardian.id] || [] : [];
+  return `
+    <div class="analytics-grid secretaria-grid">
+      <section class="panel span-2">
+        <div class="panel-head"><h2>Responsaveis</h2><a href="${secretariaLink("novoResponsavel")}">NOVO RESPONSAVEL</a></div>
+        <label class="app-search"><span>Buscar responsavel</span><input type="search" placeholder="Buscar por responsavel ou aluno" data-secretaria-search /></label>
+        <ul class="clean-list">${institutionalRows}${authRows || ""}${institutionalRows || authRows ? "" : "<li>Nenhum vinculo ativo retornado pelo Supabase.</li>"}</ul>
+      </section>
+      <section class="panel span-2">
+        <h2>${htmlEscape(selectedInstitutionalGuardian?.full_name || (selectedProfileId ? normalizeProfileName(selectedProfile) || selectedProfileId : "Vinculos do responsavel"))}</h2>
+        ${
+          selectedInstitutionalGuardian
+            ? `<ul class="clean-list">
+                <li>Acesso a plataforma: ${secretariaBadge(secretariaAccessLabel(selectedInstitutionalGuardian.access_status), selectedInstitutionalGuardian.access_status === "active" ? "success" : "warning")}</li>
+                <li>E-mail: ${htmlEscape(selectedInstitutionalGuardian.email || "Nao informado")}</li>
+                <li>Telefone: ${htmlEscape(selectedInstitutionalGuardian.phone || "Nao informado")}</li>
+                ${selectedInstitutionalLinks.map((link) => `<li><strong>${htmlEscape(normalizeStudentName(index.studentById.get(link.student_id) || {}))}</strong>${secretariaBadge(link.is_primary ? "Principal" : "Vinculo ativo", link.is_primary ? "success" : "info")}<span>${htmlEscape(secretariaStatusLabel(link.relationship))} · ${htmlEscape(secretariaStatusLabel(link.status))}</span></li>`).join("") || "<li>Sem vinculo ativo.</li>"}
+              </ul>`
+            : selectedProfileId
+              ? `<ul class="clean-list"><li>Acesso a plataforma: ${secretariaBadge("Acesso configurado", "success")}</li>${selectedGuardians.map((guardian) => `<li><strong>${htmlEscape(normalizeStudentName(index.studentById.get(guardian.student_id) || {}))}</strong><span>${htmlEscape(secretariaStatusLabel(guardian.relationship))} · ${htmlEscape(secretariaStatusLabel(guardian.status))}</span></li>`).join("") || "<li>Sem vinculo ativo.</li>"}</ul>`
+            : "<p>Selecione um responsavel para abrir os alunos vinculados.</p>"
+        }
+      </section>
+    </div>
+  `;
+};
+
+const renderSecretariaPendenciasView = (index) => {
+  const rows = (secretariaInstitutionalState.students || [])
+    .flatMap((student) => secretariaStudentDocumentRows(student, index).map((row) => ({ ...row, student })))
+    .map(({ student, type, document }) => {
+      const enrollment = secretariaStudentEnrollment(student, index);
+      const classItem = index.classById.get(enrollment?.class_id || student.class_id) || {};
+      const status = document?.status || "pending";
+      return `
+        <li data-secretaria-search-item>
+          <a href="${secretariaLink("alunos", { student: student.id })}"><strong>${htmlEscape(normalizeStudentName(student))}</strong></a>
+              ${secretariaBadge(secretariaDocumentStatusLabel(status), secretariaBadgeTone(status))}
+              <span>${htmlEscape(normalizeClassName(classItem))} · ${htmlEscape(type.name)}${document?.received_at ? ` · ${htmlEscape(secretariaFormatDateTime(document.received_at))}` : ""}${document?.notes ? ` · ${htmlEscape(document.notes)}` : ""}</span>
+        </li>
+      `;
+    })
+    .join("");
+  const pending = secretariaPendingDocumentRows(index).length;
+  return `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>Documentos</h2><span>${pending} pendente${pending === 1 ? "" : "s"}</span></div>
+      <label class="app-search"><span>Filtrar</span><input type="search" placeholder="Aluno, turma, tipo de documento ou status" data-secretaria-search /></label>
+      <ul class="clean-list">${rows || "<li>Nenhuma pendencia documental retornada pelo Supabase.</li>"}</ul>
+    </section>
+  `;
+};
+
+const renderSecretariaAttendanceView = (index) => {
+  const params = getSecretariaParams();
+  const selectedClassId = params.get("class") || "";
+  const selectedStudentId = params.get("student") || "";
+  const from = params.get("from") || "";
+  const to = params.get("to") || "";
+  const records = (secretariaInstitutionalState.attendanceRecords || []).filter((record) =>
+    (!selectedClassId || record.class_id === selectedClassId)
+    && (!selectedStudentId || record.student_id === selectedStudentId)
+    && (!from || record.attendance_date >= from)
+    && (!to || record.attendance_date <= to)
+  );
+  const summary = attendanceSummary(records);
+  return `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>Frequencia</h2><span>${records.length} registro${records.length === 1 ? "" : "s"}</span></div>
+      <form class="analytics-grid secretaria-grid" method="get" action="secretaria.html">
+        <input type="hidden" name="view" value="frequencia" />
+        <label><span>Turma</span><select name="class"><option value="">Todas</option>${(secretariaInstitutionalState.classes || []).map((classItem) => `<option value="${htmlEscape(classItem.id)}" ${classItem.id === selectedClassId ? "selected" : ""}>${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
+        <label><span>Aluno</span><select name="student"><option value="">Todos</option>${(secretariaInstitutionalState.students || []).map((student) => `<option value="${htmlEscape(student.id)}" ${student.id === selectedStudentId ? "selected" : ""}>${htmlEscape(normalizeStudentName(student))}</option>`).join("")}</select></label>
+        <label><span>De</span><input type="date" name="from" value="${htmlEscape(from)}" /></label>
+        <label><span>Ate</span><input type="date" name="to" value="${htmlEscape(to)}" /></label>
+        <button type="submit">Filtrar</button>
+      </form>
+      <div class="metric-row">
+        <article>Dias registrados<strong>${summary.total}</strong><span>Consulta institucional</span></article>
+        <article>Presencas<strong>${summary.present}</strong><span>${summary.percent}%</span></article>
+        <article>Faltas<strong>${summary.absent}</strong><span>sem ranking</span></article>
+        <article>Justificadas<strong>${summary.justified}</strong><span>consulta</span></article>
+      </div>
+      <label class="app-search"><span>Buscar</span><input type="search" placeholder="Aluno, turma, status ou data" data-secretaria-search /></label>
+      <ul class="clean-list">
+        ${records.map((record) => {
+          const student = index.studentById.get(record.student_id) || {};
+          const classItem = index.classById.get(record.class_id) || {};
+          return `
+            <li data-secretaria-search-item>
+              <a href="${secretariaLink("alunos", { student: record.student_id })}"><strong>${htmlEscape(normalizeStudentName(student))}</strong></a>
+              ${secretariaBadge(attendanceStatusLabel(record.status), secretariaBadgeTone(record.status))}
+              <span>${htmlEscape(record.attendance_date)} · ${htmlEscape(normalizeClassName(classItem))}${record.notes ? ` · ${htmlEscape(record.notes)}` : ""}</span>
+            </li>
+          `;
+        }).join("") || "<li>Nenhum registro de frequencia retornado pelo Supabase.</li>"}
+      </ul>
+    </section>
+  `;
+};
+
+const renderSecretariaCommunicationsView = (index) => {
+  const params = getSecretariaParams();
+  const selectedAudience = params.get("audience") || "";
+  const selectedStatus = params.get("status") || "";
+  const selectedType = params.get("type") || "";
+  const activeSchools = (secretariaInstitutionalState.schools || []).filter((school) => isSecretariaActiveStatus(school.status));
+  const activeClasses = (secretariaInstitutionalState.classes || []).filter((classItem) => isSecretariaActiveStatus(classItem.status));
+  const activeStudents = (secretariaInstitutionalState.students || []).filter((student) => isSecretariaActiveStatus(student.status));
+  const enrollmentByStudent = new Map((secretariaInstitutionalState.enrollments || [])
+    .filter((enrollment) => isSecretariaActiveStatus(enrollment.status) && !enrollment.ended_at)
+    .map((enrollment) => [enrollment.student_id, enrollment]));
+  const rows = (secretariaInstitutionalState.communications || []).filter((communication) =>
+    (!selectedAudience || communication.audience_type === selectedAudience)
+    && (!selectedStatus || communication.status === selectedStatus)
+    && (!selectedType || communication.communication_type === selectedType)
+  );
+  const latestRows = rows.slice().sort((a, b) => String(b.created_at || b.communication_date || "").localeCompare(String(a.created_at || a.communication_date || "")));
+  const firstSchool = activeSchools[0] || secretariaInstitutionalState.schools[0] || {};
+  const firstClass = activeClasses[0] || {};
+  const firstStudent = activeStudents[0] || {};
+  return `
+    <div class="secretaria-communication-layout">
+      <section class="panel span-2 secretaria-form-panel">
+        <div class="panel-head"><h2>${secretariaInlineIcon("mail", "Novo Comunicado")}</h2><span>Comunicacao institucional</span></div>
+        <form data-secretaria-communication-form>
+          <div class="secretaria-form-grid secretaria-communication-form-grid">
+            <label><span>Destino</span><select name="audience_type" required data-secretaria-communication-audience><option value="school">Toda a escola</option><option value="class">Turma</option><option value="student">Aluno/Familia</option></select></label>
+            <label><span>Tipo</span><select name="communication_type" required><option value="institutional_announcement">Comunicado institucional</option><option value="notice">Comunicado</option><option value="message">Mensagem</option><option value="weekly_information">Informacao da semana</option></select></label>
+            <label><span>Status</span><select name="status" required><option value="published">Publicado</option><option value="draft">Rascunho</option></select></label>
+            <label data-secretaria-communication-class-wrap><span>Turma</span><select name="class_id" data-secretaria-communication-class><option value="">Selecione uma turma</option>${activeClasses.map((classItem) => `<option value="${htmlEscape(classItem.id)}">${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
+            <label data-secretaria-communication-student-wrap><span>Aluno</span><select name="student_id" data-secretaria-communication-student><option value="">Selecione um aluno</option>${activeStudents.map((student) => {
+              const enrollment = enrollmentByStudent.get(student.id) || {};
+              return `<option value="${htmlEscape(student.id)}" data-class-id="${htmlEscape(enrollment.class_id || "")}">${htmlEscape(normalizeStudentName(student))}</option>`;
+            }).join("")}</select></label>
+            <label><span>Escola</span><select name="school_id" required data-secretaria-communication-school>${activeSchools.map((school) => `<option value="${htmlEscape(school.id)}">${htmlEscape(normalizeSchoolName(school))}</option>`).join("")}</select></label>
+            <label class="is-wide"><span>Titulo</span><input name="title" required maxlength="120" placeholder="Titulo do comunicado" data-secretaria-communication-title /></label>
+            <label class="is-wide"><span>Mensagem</span><textarea name="body" rows="5" required maxlength="1000" placeholder="Texto do comunicado" data-secretaria-communication-body></textarea></label>
+          </div>
+          <div class="qb-builder-actions secretaria-form-actions">
+            <a href="${secretariaLink("comunicados")}">Cancelar</a>
+            <button type="submit" data-secretaria-communication-submit>PUBLICAR COMUNICADO</button>
+          </div>
+          <p class="secretaria-form-hint" data-secretaria-communication-message>${secretariaInstitutionalState.lastCommunicationResult?.communication_id ? (secretariaInstitutionalState.lastCommunicationResult.status === "archived" ? "Comunicado retirado da publicacao com sucesso." : "Comunicado publicado com sucesso.") : "A visibilidade do comunicado segue o destino selecionado."}</p>
+        </form>
+      </section>
+      <section class="panel span-2 secretaria-list-panel">
+      <div class="panel-head"><h2>Pre-visualizacao</h2><span>Antes de publicar</span></div>
+      <article class="secretaria-communication-preview" data-secretaria-communication-preview>
+        <strong>Novo comunicado</strong>
+        <span>${htmlEscape(communicationAudienceSummary({ audienceType: "school", school: firstSchool, classItem: firstClass, student: firstStudent }))}</span>
+        <p>Preencha titulo e mensagem para conferir como o comunicado sera apresentado.</p>
+      </article>
+      <div class="panel-head"><h2>Comunicados publicados</h2><span>${latestRows.length} registro${latestRows.length === 1 ? "" : "s"}</span></div>
+      <form class="secretaria-filter-row" method="get" action="secretaria.html">
+        <input type="hidden" name="view" value="comunicados" />
+        <label><span>Destino</span><select name="audience"><option value="">Todos</option>${Object.entries(communicationAudienceLabels).map(([key, label]) => `<option value="${htmlEscape(key)}" ${key === selectedAudience ? "selected" : ""}>${htmlEscape(label)}</option>`).join("")}</select></label>
+        <label><span>Tipo</span><select name="type"><option value="">Todos</option>${Object.entries(communicationTypeLabels).map(([key, label]) => `<option value="${htmlEscape(key)}" ${key === selectedType ? "selected" : ""}>${htmlEscape(label)}</option>`).join("")}</select></label>
+        <label><span>Status</span><select name="status"><option value="">Todos</option>${Object.entries(communicationStatusLabels).map(([key, label]) => `<option value="${htmlEscape(key)}" ${key === selectedStatus ? "selected" : ""}>${htmlEscape(label)}</option>`).join("")}</select></label>
+        <button type="submit">Filtrar</button>
+      </form>
+      <label class="app-search"><span>Buscar</span><input type="search" placeholder="Titulo, destino, aluno, turma ou origem" data-secretaria-search /></label>
+      <ul class="clean-list">
+        ${latestRows.map((communication) => {
+          const classItem = index.classById.get(communication.class_id) || {};
+          const student = index.studentById.get(communication.student_id) || {};
+          const author = index.profileById.get(communication.author_profile_id) || {};
+          const destination = communication.audience_type === "school"
+            ? normalizeSchoolName(index.schoolById.get(communication.school_id) || {})
+            : communication.audience_type === "class"
+              ? normalizeClassName(classItem)
+              : normalizeStudentName(student);
+          const events = index.communicationEventsByCommunication[communication.id] || [];
+          const actionButton = communication.status === "published"
+            ? `<button type="button" data-secretaria-communication-status="${htmlEscape(communication.id)}" data-to-status="archived" data-destination="${htmlEscape(communicationAudienceSummary({ audienceType: communication.audience_type, school: index.schoolById.get(communication.school_id) || {}, classItem, student }))}">Retirar da publicacao</button>`
+            : communication.status === "archived"
+              ? `<button type="button" data-secretaria-communication-status="${htmlEscape(communication.id)}" data-to-status="published" data-destination="${htmlEscape(communicationAudienceSummary({ audienceType: communication.audience_type, school: index.schoolById.get(communication.school_id) || {}, classItem, student }))}">Publicar novamente</button>`
+              : `<button type="button" data-secretaria-communication-status="${htmlEscape(communication.id)}" data-to-status="published" data-destination="${htmlEscape(communicationAudienceSummary({ audienceType: communication.audience_type, school: index.schoolById.get(communication.school_id) || {}, classItem, student }))}">Publicar</button>`;
+          return `
+            <li data-secretaria-search-item>
+              <strong>${htmlEscape(communication.title)}</strong>
+              ${secretariaBadge(communicationStatusLabel(communication.status), secretariaBadgeTone(communication.status))}
+              <span>${htmlEscape(communicationAudienceLabel(communication.audience_type))} · ${htmlEscape(destination)} · ${htmlEscape(communicationTypeLabel(communication.communication_type))} · ${htmlEscape(communicationDisplayDate(communication.created_at || communication.communication_date))}</span>
+              <span>${htmlEscape(String(communication.body || "").slice(0, 140))}${String(communication.body || "").length > 140 ? "..." : ""}</span>
+              <span>Publicado por ${htmlEscape(normalizeProfileName(author) || communication.author_role || "Usuario institucional")} · Historico: ${events.length} evento${events.length === 1 ? "" : "s"}</span>
+              <div class="secretaria-list-actions">
+                <a href="${secretariaLink("comunicados", { q: communication.title })}">${communication.status === "draft" ? "Visualizar/Editar" : "Visualizar"}</a>
+                ${actionButton}
+                <button type="button" data-secretaria-delete-communication="${htmlEscape(communication.id)}" data-title="${htmlEscape(communication.title)}">Excluir</button>
+              </div>
+            </li>
+          `;
+        }).join("") || "<li>Nenhum comunicado retornado pelo Supabase.</li>"}
+      </ul>
+      </section>
+    </div>
+  `;
+};
+
+const renderSecretariaReadyView = () => {
+  const view = getSecretariaCurrentView();
+  const index = buildSecretariaIndex();
+  const content = {
+    painel: () => renderSecretariaDashboardPanel(index),
+    alunos: () => renderSecretariaStudentsView(index),
+    novoAluno: () => renderSecretariaNewStudentView(index),
+    turmas: () => renderSecretariaClassesView(index),
+    novaTurma: () => renderSecretariaNewClassView(index),
+    professores: () => renderSecretariaTeachersView(index),
+    novoProfessor: () => renderSecretariaNewTeacherView(index),
+    matriculas: () => renderSecretariaEnrollmentsView(index),
+    responsaveis: () => renderSecretariaGuardiansView(index),
+    novoResponsavel: () => renderSecretariaNewGuardianView(index),
+    documentos: () => renderSecretariaPendenciasView(index),
+    pendencias: () => renderSecretariaPendenciasView(index),
+    frequencia: () => renderSecretariaAttendanceView(index),
+    comunicados: () => renderSecretariaCommunicationsView(index),
+  }[view]();
+  return `${renderSecretariaGlobalHeader(index)}${content}`;
+};
+
+const renderSecretariaDashboard = () => `
+  <section class="secretaria-v1" data-secretaria-v1>
+    <div class="dashboard-head">
+      <div>
+        <h1>Secretaria</h1>
+        <span>Gestao institucional</span>
+      </div>
+    </div>
+    ${secretariaInstitutionalState.status === "ready" ? renderSecretariaReadyView() : renderSecretariaStatus()}
+  </section>
+`;
+
+const initSecretariaInstitutional = () => {
+  const area = document.querySelector("[data-secretaria-v1]");
+  if (!area) return;
+  document.querySelectorAll("[data-secretaria-back]").forEach((backButton) => backButton.addEventListener("click", () => {
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    window.location.href = secretariaLink("painel");
+  }));
+  const search = area.querySelector("[data-secretaria-search]");
+  if (search) {
+    const applySearchFilter = () => {
+      const query = search.value.trim().toLowerCase();
+      area.querySelectorAll("[data-secretaria-search-item]").forEach((item) => {
+        item.hidden = query ? !item.textContent.toLowerCase().includes(query) : false;
+      });
+    };
+    const initialQuery = getSecretariaParams().get("q") || "";
+    if (initialQuery) {
+      search.value = initialQuery;
+      applySearchFilter();
+    }
+    search.addEventListener("input", applySearchFilter);
+  }
+  const syncCommunicationDestinationFields = () => {
+    const audience = area.querySelector("[data-secretaria-communication-audience]");
+    const classWrap = area.querySelector("[data-secretaria-communication-class-wrap]");
+    const studentWrap = area.querySelector("[data-secretaria-communication-student-wrap]");
+    const classSelect = area.querySelector("[data-secretaria-communication-class]");
+    const studentSelect = area.querySelector("[data-secretaria-communication-student]");
+    const schoolSelect = area.querySelector("[data-secretaria-communication-school]");
+    const titleInput = area.querySelector("[data-secretaria-communication-title]");
+    const bodyInput = area.querySelector("[data-secretaria-communication-body]");
+    const preview = area.querySelector("[data-secretaria-communication-preview]");
+    if (!audience) return;
+    const isSchool = audience.value === "school";
+    const isClass = audience.value === "class";
+    const isStudent = audience.value === "student";
+    if (classWrap) classWrap.hidden = isSchool;
+    if (studentWrap) studentWrap.hidden = !isStudent;
+    if (classSelect) {
+      classSelect.disabled = isSchool;
+      classSelect.required = isClass;
+    }
+    if (studentSelect) {
+      studentSelect.disabled = !isStudent;
+      studentSelect.required = isStudent;
+      Array.from(studentSelect.options).forEach((option) => {
+        if (!option.value) return;
+        option.hidden = isStudent && classSelect?.value ? option.dataset.classId !== classSelect.value : false;
+      });
+      if (studentSelect.selectedOptions[0]?.hidden) studentSelect.value = "";
+    }
+    if (preview) {
+      const selectedSchool = schoolSelect?.selectedOptions[0]?.textContent?.trim() || "Escola";
+      const selectedClass = classSelect?.selectedOptions[0]?.textContent?.trim() || "Turma nao selecionada";
+      const selectedStudent = studentSelect?.selectedOptions[0]?.textContent?.trim() || "Aluno nao selecionado";
+      const audienceLabel = isSchool
+        ? `Toda a escola: ${selectedSchool}`
+        : isClass
+          ? `Turma: ${selectedClass}`
+          : `Aluno/Familia: ${selectedStudent}`;
+      preview.innerHTML = `
+        <strong>${htmlEscape(titleInput?.value.trim() || "Novo comunicado")}</strong>
+        <span>${htmlEscape(audienceLabel)}</span>
+        <p>${htmlEscape(bodyInput?.value.trim() || "Preencha titulo e mensagem para conferir como o comunicado sera apresentado.")}</p>
+      `;
+    }
+  };
+  syncCommunicationDestinationFields();
+  area.querySelector("[data-secretaria-communication-audience]")?.addEventListener("change", syncCommunicationDestinationFields);
+  area.querySelector("[data-secretaria-communication-class]")?.addEventListener("change", syncCommunicationDestinationFields);
+  area.querySelector("[data-secretaria-communication-student]")?.addEventListener("change", syncCommunicationDestinationFields);
+  area.querySelector("[data-secretaria-communication-school]")?.addEventListener("change", syncCommunicationDestinationFields);
+  area.querySelector("[data-secretaria-communication-title]")?.addEventListener("input", syncCommunicationDestinationFields);
+  area.querySelector("[data-secretaria-communication-body]")?.addEventListener("input", syncCommunicationDestinationFields);
+  const classSelect = area.querySelector("[data-secretaria-class-select]");
+  const yearInput = area.querySelector("[data-secretaria-school-year]");
+  if (classSelect && yearInput) {
+    classSelect.addEventListener("change", () => {
+      const option = classSelect.options[classSelect.selectedIndex];
+      const nextYear = option?.dataset.schoolYear || "";
+      if (nextYear && nextYear !== "Ano nao informado") yearInput.value = nextYear;
+    });
+  }
+  const form = area.querySelector("[data-secretaria-student-form]");
+  if (form) {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = form.querySelector("[data-secretaria-form-message]");
+      const submitButton = form.querySelector("button[type='submit']");
+      const formData = new FormData(form);
+      const nome = String(formData.get("nome") || "").trim();
+      const dataNascimento = String(formData.get("data_nascimento") || "").trim();
+      const classId = String(formData.get("class_id") || "").trim();
+      const schoolYear = String(formData.get("school_year") || "").trim();
+      const status = String(formData.get("status") || "active").trim();
+      const index = buildSecretariaIndex();
+      const classItem = index.classById.get(classId);
+      const classYear = secretariaSchoolYear({}, classItem || {});
+      const duplicate = findSecretariaDuplicateStudent({ nome, dataNascimento, classItem }, index);
+      if (!nome || !classItem?.id || !schoolYear) {
+        if (message) message.textContent = "Preencha nome completo, turma e ano letivo.";
+        return;
+      }
+      if (classYear !== "Ano nao informado" && schoolYear !== classYear) {
+        if (message) message.textContent = `Ano letivo inconsistente: a turma selecionada esta em ${classYear}.`;
+        return;
+      }
+      if (duplicate) {
+        if (message) message.textContent = `Possivel duplicidade: ${normalizeStudentName(duplicate)} ja existe nesta escola. Verifique antes de salvar.`;
+        return;
+      }
+      try {
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Salvando...";
+        }
+        if (message) message.textContent = "Criando aluno e matricula no Supabase...";
+        const result = await callSecretariaCreateStudentEnrollment({ nome, dataNascimento, classId, schoolYear, status });
+        await ensureSecretariaInstitutionalData({ force: true });
+        window.location.href = secretariaLink("alunos", { student: result?.student_id });
+      } catch (error) {
+        if (message) message.textContent = error.message || "Nao foi possivel concluir o cadastro.";
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Salvar aluno e matricula";
+        }
+      }
+    });
+  }
+  const guardianForm = area.querySelector("[data-secretaria-guardian-form]");
+  if (guardianForm) {
+    const existingSelect = guardianForm.querySelector("[data-secretaria-existing-guardian]");
+    const nameInput = guardianForm.querySelector("input[name='full_name']");
+    existingSelect?.addEventListener("change", () => {
+      const reuseExisting = Boolean(existingSelect.value);
+      if (nameInput) nameInput.required = !reuseExisting;
+    });
+    guardianForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = guardianForm.querySelector("[data-secretaria-guardian-message]");
+      const submitButton = guardianForm.querySelector("button[type='submit']");
+      const formData = new FormData(guardianForm);
+      const studentId = String(formData.get("student_id") || "").trim();
+      const guardianId = String(formData.get("guardian_id") || "").trim();
+      const fullName = String(formData.get("full_name") || "").trim();
+      const email = String(formData.get("email") || "").trim();
+      const phone = String(formData.get("phone") || "").trim();
+      const relationship = String(formData.get("relationship") || "responsavel").trim();
+      const status = String(formData.get("status") || "active").trim();
+      const isPrimary = String(formData.get("is_primary") || "false") === "true";
+      const index = buildSecretariaIndex();
+      const student = index.studentById.get(studentId);
+      const enrollment = secretariaStudentEnrollment(student, index);
+      const duplicate = guardianId ? null : findSecretariaDuplicateGuardian({ fullName, email, phone, schoolId: enrollment?.school_id }, index);
+      const existingLink = duplicate ? (index.guardianLinksByGuardian[duplicate.id] || []).find((link) => link.student_id === studentId && link.relationship === relationship) : null;
+      if (!student?.id || (!guardianId && !fullName)) {
+        if (message) message.textContent = "Selecione o aluno e informe o responsavel ou escolha um existente.";
+        return;
+      }
+      if (existingLink) {
+        if (message) message.textContent = `Este responsavel ja possui vinculo ${relationship} ativo com o aluno selecionado.`;
+        return;
+      }
+      try {
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Salvando...";
+        }
+        if (message) {
+          message.textContent = duplicate
+            ? `Responsavel semelhante encontrado: ${duplicate.full_name}. Reutilizando cadastro existente e criando vinculo.`
+            : "Criando responsavel e vinculo no Supabase...";
+        }
+        const result = await callSecretariaCreateGuardianLink({
+          studentId,
+          fullName,
+          relationship,
+          phone,
+          email,
+          status,
+          isPrimary,
+          guardianId: guardianId || duplicate?.id || "",
+        });
+        await ensureSecretariaInstitutionalData({ force: true });
+        window.location.href = secretariaLink("responsaveis", { guardian: result?.guardian_id });
+      } catch (error) {
+        if (message) message.textContent = error.message || "Nao foi possivel concluir o vinculo.";
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Salvar responsavel e vinculo";
+        }
+      }
+    });
+  }
+  const bindEnrollmentMovementForm = (selector, action, pendingText) => {
+    const movementForm = area.querySelector(selector);
+    if (!movementForm) return;
+    movementForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = area.querySelector("[data-secretaria-enrollment-message]");
+      const submitButton = movementForm.querySelector("button[type='submit']");
+      const formData = new FormData(movementForm);
+      const studentId = String(formData.get("student_id") || "").trim();
+      const reason = String(formData.get("reason") || "").trim();
+      if (!reason) {
+        if (message) message.textContent = "Informe o motivo da movimentacao.";
+        return;
+      }
+      try {
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Salvando...";
+        }
+        if (message) message.textContent = pendingText;
+        await action(formData);
+        await ensureSecretariaInstitutionalData({ force: true });
+        window.location.href = secretariaLink("alunos", { student: studentId });
+      } catch (error) {
+        if (message) message.textContent = error.message || "Nao foi possivel registrar a movimentacao.";
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = submitButton.dataset.originalLabel || "Tentar novamente";
+        }
+      }
+    });
+  };
+  bindEnrollmentMovementForm("[data-secretaria-transfer-form]", (formData) => callSecretariaTransferEnrollment({
+    enrollmentId: String(formData.get("enrollment_id") || ""),
+    toClassId: String(formData.get("to_class_id") || ""),
+    reason: String(formData.get("reason") || ""),
+  }), "Transferindo turma no Supabase...");
+  bindEnrollmentMovementForm("[data-secretaria-status-form]", (formData) => callSecretariaUpdateEnrollmentStatus({
+    enrollmentId: String(formData.get("enrollment_id") || ""),
+    toStatus: String(formData.get("to_status") || ""),
+    reason: String(formData.get("reason") || ""),
+  }), "Alterando status da matricula no Supabase...");
+  bindEnrollmentMovementForm("[data-secretaria-close-form]", (formData) => callSecretariaCloseEnrollment({
+    enrollmentId: String(formData.get("enrollment_id") || ""),
+    toStatus: String(formData.get("to_status") || ""),
+    reason: String(formData.get("reason") || ""),
+  }), "Encerrando matricula no Supabase...");
+  bindEnrollmentMovementForm("[data-secretaria-reenroll-form]", (formData) => callSecretariaReenrollStudent({
+    studentId: String(formData.get("student_id") || ""),
+    classId: String(formData.get("class_id") || ""),
+    schoolYear: String(formData.get("school_year") || ""),
+    reason: String(formData.get("reason") || ""),
+  }), "Criando rematricula no Supabase...");
+  const classForm = area.querySelector("[data-secretaria-class-form]");
+  if (classForm) {
+    classForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = classForm.querySelector("[data-secretaria-class-message]");
+      const submitButton = classForm.querySelector("button[type='submit']");
+      const formData = new FormData(classForm);
+      const schoolId = String(formData.get("school_id") || "").trim();
+      const nome = String(formData.get("nome") || "").trim();
+      const schoolYear = String(formData.get("school_year") || "").trim();
+      const duplicate = findSecretariaDuplicateClass({ nome, schoolId, schoolYear });
+      if (duplicate) {
+        if (message) message.textContent = `Turma semelhante ja existe: ${normalizeClassName(duplicate)} / ${secretariaSchoolYear({}, duplicate)}.`;
+        return;
+      }
+      try {
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Salvando...";
+        }
+        if (message) message.textContent = "Criando turma no Supabase...";
+        const result = await callSecretariaCreateClass({
+          schoolId,
+          nome,
+          schoolYear,
+          status: String(formData.get("status") || "active"),
+          ageGroup: String(formData.get("age_group") || ""),
+          turno: String(formData.get("turno") || ""),
+          anoEscolar: String(formData.get("ano_escolar") || ""),
+          reason: String(formData.get("reason") || ""),
+        });
+        await ensureSecretariaInstitutionalData({ force: true });
+        window.location.href = secretariaLink("turmas", { class: result?.class_id });
+      } catch (error) {
+        if (message) message.textContent = error.message || "Nao foi possivel criar turma.";
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Salvar turma";
+        }
+      }
+    });
+  }
+  const classEditForm = area.querySelector("[data-secretaria-class-edit-form]");
+  if (classEditForm) {
+    classEditForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = area.querySelector("[data-secretaria-class-message]");
+      const submitButton = classEditForm.querySelector("button[type='submit']");
+      const formData = new FormData(classEditForm);
+      try {
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Salvando...";
+        }
+        if (message) message.textContent = "Atualizando turma no Supabase...";
+        const result = await callSecretariaUpdateClassBasic({
+          classId: String(formData.get("class_id") || ""),
+          nome: String(formData.get("nome") || ""),
+          status: String(formData.get("status") || "active"),
+          ageGroup: String(formData.get("age_group") || ""),
+          turno: String(formData.get("turno") || ""),
+          anoEscolar: String(formData.get("ano_escolar") || ""),
+          reason: String(formData.get("reason") || ""),
+        });
+        await ensureSecretariaInstitutionalData({ force: true });
+        window.location.href = secretariaLink("turmas", { class: result?.class_id });
+      } catch (error) {
+        if (message) message.textContent = error.message || "Nao foi possivel editar turma.";
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Salvar turma";
+        }
+      }
+    });
+  }
+  const teacherForm = area.querySelector("[data-secretaria-teacher-form]");
+  if (teacherForm) {
+    teacherForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = teacherForm.querySelector("[data-secretaria-teacher-message]");
+      const submitButton = teacherForm.querySelector("button[type='submit']");
+      const formData = new FormData(teacherForm);
+      try {
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Salvando...";
+        }
+        if (message) message.textContent = "Criando professor institucional no Supabase...";
+        const result = await callSecretariaCreateTeacher({
+          schoolId: String(formData.get("school_id") || ""),
+          fullName: String(formData.get("full_name") || ""),
+          status: String(formData.get("status") || "active"),
+          disciplina: String(formData.get("disciplina") || ""),
+        });
+        await ensureSecretariaInstitutionalData({ force: true });
+        window.location.href = secretariaLink("professores", { teacher: result?.teacher_id });
+      } catch (error) {
+        if (message) message.textContent = error.message || "Nao foi possivel criar professor.";
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Salvar professor";
+        }
+      }
+    });
+  }
+  const teacherLinkForm = area.querySelector("[data-secretaria-teacher-link-form]");
+  if (teacherLinkForm) {
+    teacherLinkForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = area.querySelector("[data-secretaria-teacher-link-message]");
+      const submitButton = teacherLinkForm.querySelector("button[type='submit']");
+      const formData = new FormData(teacherLinkForm);
+      try {
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Salvando...";
+        }
+        if (message) message.textContent = "Vinculando professor e turma no Supabase...";
+        const result = await callSecretariaLinkTeacherToClass({
+          teacherId: String(formData.get("teacher_id") || ""),
+          classId: String(formData.get("class_id") || ""),
+          role: String(formData.get("role") || "principal"),
+          reason: String(formData.get("reason") || ""),
+        });
+        await ensureSecretariaInstitutionalData({ force: true });
+        window.location.href = secretariaLink("professores", { teacher: result?.teacher_id });
+      } catch (error) {
+        if (message) message.textContent = error.message || "Nao foi possivel vincular professor.";
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "VINCULAR TURMA";
+        }
+      }
+    });
+  }
+  area.querySelectorAll("[data-secretaria-end-teacher-link-form]").forEach((endForm) => {
+    endForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = area.querySelector("[data-secretaria-teacher-link-message]");
+      const submitButton = endForm.querySelector("button[type='submit']");
+      const formData = new FormData(endForm);
+      const teacherId = String(formData.get("teacher_id") || "");
+      try {
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Encerrando...";
+        }
+        if (message) message.textContent = "Encerrando vinculo no Supabase...";
+        await callSecretariaEndTeacherClassMembership({
+          membershipId: String(formData.get("membership_id") || ""),
+          reason: String(formData.get("reason") || ""),
+        });
+        await ensureSecretariaInstitutionalData({ force: true });
+        window.location.href = secretariaLink("professores", { teacher: teacherId });
+      } catch (error) {
+        if (message) message.textContent = error.message || "Nao foi possivel encerrar vinculo.";
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "ENCERRAR VINCULO";
+        }
+      }
+    });
+  });
+  area.querySelectorAll("[data-secretaria-document-form]").forEach((documentForm) => {
+    documentForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = area.querySelector("[data-secretaria-document-message]");
+      const submitButton = documentForm.querySelector("button[type='submit']");
+      const formData = new FormData(documentForm);
+      const studentId = String(formData.get("student_id") || "");
+      const status = String(formData.get("status") || "pending");
+      try {
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Salvando...";
+        }
+        if (message) message.textContent = "Atualizando documento no Supabase...";
+        await callSecretariaSetStudentDocumentStatus({
+          studentId,
+          documentTypeId: String(formData.get("document_type_id") || ""),
+          status,
+          notes: String(formData.get("notes") || ""),
+          fileReference: "",
+          receivedAt: status === "received" ? new Date().toISOString() : null,
+          expiresAt: null,
+        });
+        await ensureSecretariaInstitutionalData({ force: true });
+        window.location.href = secretariaLink("alunos", { student: studentId });
+      } catch (error) {
+        if (message) message.textContent = error.message || "Nao foi possivel atualizar documento.";
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Salvar documento";
+        }
+      }
+    });
+  });
+  const communicationForm = area.querySelector("[data-secretaria-communication-form]");
+  if (communicationForm) {
+    communicationForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = area.querySelector("[data-secretaria-communication-message]");
+      const submitButton = communicationForm.querySelector("button[type='submit']");
+      const formData = new FormData(communicationForm);
+      try {
+        const audienceType = String(formData.get("audience_type") || "school");
+        const studentSelect = communicationForm.querySelector("[data-secretaria-communication-student]");
+        const selectedStudentOption = studentSelect?.selectedOptions[0];
+        const classId = audienceType === "student" && !formData.get("class_id")
+          ? selectedStudentOption?.dataset.classId || ""
+          : String(formData.get("class_id") || "");
+        const studentId = String(formData.get("student_id") || "");
+        if (audienceType === "class" && !classId) throw new Error("Selecione uma turma para publicar para uma turma.");
+        if (audienceType === "student" && (!studentId || !classId)) throw new Error("Selecione um aluno com matricula ativa para publicar para Aluno/Familia.");
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "PUBLICANDO...";
+        }
+        if (message) message.textContent = "Publicando comunicado...";
+        await callSecretariaPublishCommunication({
+          schoolId: String(formData.get("school_id") || ""),
+          communicationType: String(formData.get("communication_type") || "notice"),
+          audienceType,
+          classId,
+          studentId,
+          title: String(formData.get("title") || "").trim(),
+          body: String(formData.get("body") || "").trim(),
+          status: String(formData.get("status") || "published"),
+        });
+        await ensureSecretariaInstitutionalData({ force: true });
+        if (!document.body.contains(area)) return;
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+      } catch (error) {
+        if (message) message.textContent = error.message || "Nao foi possivel publicar o comunicado.";
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "PUBLICAR COMUNICADO";
+        }
+      }
+    });
+  }
+  area.querySelectorAll("[data-secretaria-communication-status]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const message = area.querySelector("[data-secretaria-communication-message]");
+      const toStatus = button.dataset.toStatus;
+      const originalText = button.textContent;
+      const destination = button.dataset.destination || "Destino nao informado";
+      const prompt = toStatus === "published"
+        ? `Publicar novamente para este publico?\n\n${destination}`
+        : `Retirar este comunicado da publicacao?\n\n${destination}`;
+      if (!window.confirm(prompt)) return;
+      try {
+        button.disabled = true;
+        button.textContent = toStatus === "published" ? "Publicando..." : "Retirando...";
+        const result = await callSecretariaSetCommunicationStatus({
+          communicationId: button.dataset.secretariaCommunicationStatus,
+          toStatus,
+        });
+        secretariaInstitutionalState.lastCommunicationResult = {
+          communication_id: result?.communication_id || button.dataset.secretariaCommunicationStatus,
+          status: toStatus,
+        };
+        await ensureSecretariaInstitutionalData({ force: true });
+        if (!document.body.contains(area)) return;
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+      } catch (error) {
+        if (message) message.textContent = error.message || "Nao foi possivel atualizar o comunicado.";
+        button.disabled = false;
+        button.textContent = originalText;
+      }
+    });
+  });
+  area.querySelectorAll("[data-secretaria-delete-communication]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const message = area.querySelector("[data-secretaria-communication-message]");
+      const title = button.dataset.title || "este comunicado";
+      if (!window.confirm(`Excluir definitivamente "${title}"?\n\nEsta acao nao pode ser desfeita.`)) return;
+      try {
+        button.disabled = true;
+        button.textContent = "Excluindo...";
+        await callSecretariaDeleteCommunication({ communicationId: button.dataset.secretariaDeleteCommunication });
+        secretariaInstitutionalState.lastCommunicationResult = null;
+        await ensureSecretariaInstitutionalData({ force: true });
+        if (!document.body.contains(area)) return;
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+      } catch (error) {
+        if (message) message.textContent = error.message || "Nao foi possivel excluir o comunicado.";
+        button.disabled = false;
+        button.textContent = "Excluir";
+      }
+    });
+  });
+  const printDeclarationButton = area.querySelector("[data-secretaria-print-declaration]");
+  if (printDeclarationButton) {
+    printDeclarationButton.addEventListener("click", () => {
+      const declaration = area.querySelector("[data-secretaria-declaration]")?.innerHTML || "";
+      const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
+      if (!printWindow) return;
+      printWindow.document.write(`
+        <!doctype html>
+        <html lang="pt-BR">
+          <head>
+            <meta charset="utf-8" />
+            <title>Declaracao de Matricula</title>
+            <style>
+              body { font-family: Arial, sans-serif; color: #1f2933; margin: 48px; line-height: 1.6; }
+              .secretaria-declaration { max-width: 760px; margin: 0 auto; }
+              h1 { font-size: 28px; text-align: center; margin-bottom: 40px; }
+              p { font-size: 16px; }
+              footer { margin-top: 64px; border-top: 1px solid #cbd5e1; padding-top: 16px; text-align: center; }
+            </style>
+          </head>
+          <body>${declaration}</body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    });
+  }
+  if (!secretariaInstitutionalState.hydratedDom) {
+    secretariaInstitutionalState.hydratedDom = true;
+    const loadingTimeout = window.setTimeout(() => {
+      if (secretariaInstitutionalState.status !== "loading" || !document.body.contains(area)) return;
+      Object.assign(secretariaInstitutionalState, {
+        status: "error",
+        error: "Tempo limite ao consultar o Supabase. Verifique a sessao HTTP e tente recarregar.",
+      });
+      area.outerHTML = renderSecretariaDashboard();
+      initSecretariaInstitutional();
+    }, 12000);
+    ensureSecretariaInstitutionalData()
+      .then(() => {
+        window.clearTimeout(loadingTimeout);
+        if (!document.body.contains(area)) return;
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+      })
+      .catch((error) => {
+        window.clearTimeout(loadingTimeout);
+        Object.assign(secretariaInstitutionalState, {
+          status: "error",
+          error: error.message || "Nao foi possivel renderizar a Secretaria pelo Supabase.",
+        });
+        if (!document.body.contains(area)) return;
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+      });
+  }
 };
 
 const questionBankFallbackStore = {
@@ -13382,8 +16294,18 @@ const initPlatformLogout = () => {
   if (platformLogoutInitialized) return;
   platformLogoutInitialized = true;
   document.addEventListener("click", async (event) => {
+    const backButton = event.target.closest?.("[data-platform-back]");
     const siteButton = event.target.closest?.("[data-platform-site-logout]");
     const button = event.target.closest?.("[data-platform-logout]");
+    if (backButton) {
+      event.preventDefault();
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = "plataforma.html";
+      }
+      return;
+    }
     if (siteButton) {
       event.preventDefault();
       siteButton.disabled = true;
@@ -13494,7 +16416,13 @@ const renderAppPage = () => {
           ? `<button class="app-nav-logout" type="button" data-platform-logout>${label}</button>`
         : key === "site"
           ? `<button class="app-nav-site" type="button" data-platform-site-logout>${label}</button>`
-        : `<a class="${key === activeKey ? "is-active" : ""}" href="${href}">${label}</a>`
+        : `<a class="${(environmentKey === "secretaria" ? key === getSecretariaCurrentView() : key === activeKey) ? "is-active" : ""}" href="${href}">${
+            environmentKey === "secretaria"
+              ? secretariaInlineIcon(secretariaViewIcon[key] || "site", label)
+              : environmentKey === "escola"
+                ? secretariaInlineIcon(officialSchoolNavIcon[key] || "escola", label)
+                : label
+          }</a>`
     )
     .join("");
   const mobileNav = environment.mobile
@@ -13503,17 +16431,21 @@ const renderAppPage = () => {
         ? `<button class="mobile-logout-button" type="button" data-platform-logout>${label}</button>`
         : key === "site"
           ? `<button class="mobile-site-button" type="button" data-platform-site-logout>${label}</button>`
-        : `<a class="${key === activeKey ? "is-active" : ""}" href="${href}">${label}</a>`
+        : `<a class="${(environmentKey === "secretaria" ? key === getSecretariaCurrentView() : key === activeKey) ? "is-active" : ""}" href="${href}">${label}</a>`
     )
     .join("");
   const shellHomeHref = environmentKey === "aluno" ? "aluno.html" : environmentKey === "escola" ? "escola.html" : "plataforma.html";
   const shellLogoHref = environmentKey === "aluno" ? "aluno.html" : environmentKey === "escola" ? "escola.html" : "index.html";
-  const topFilter = environmentKey === "escola" ? "" : `<button class="top-filter" type="button">Filtros</button>`;
+  const topFilter = environmentKey === "escola" || environmentKey === "secretaria" ? "" : `<button class="top-filter" type="button">Filtros</button>`;
   const moduleSwitcher = environmentKey === "escola"
     ? `<nav class="module-switcher official-school-switcher" aria-label="Navegacao da Escola">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>`
+    : environmentKey === "secretaria"
+      ? ""
     : `<nav class="module-switcher" aria-label="Modulos do Ecossistema">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>`;
   const topActions = environmentKey === "escola"
-    ? `<div class="top-actions official-school-actions" aria-label="Acoes"><button class="school-site-link" type="button" data-platform-site-logout>SITE</button><button class="school-top-logout" type="button" data-platform-logout>SAIR</button></div>`
+    ? ""
+    : environmentKey === "secretaria"
+      ? `<div class="top-actions secretaria-top-actions" aria-label="Acoes da Secretaria"><button type="button" data-secretaria-back>${secretariaInlineIcon("progresso", "VOLTAR")}</button><a href="login.html">${secretariaInlineIcon("home", "INICIO")}</a><a href="escola.html">${secretariaInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${secretariaInlineIcon("sair", "SAIR")}</button></div>`
     : `<div class="top-actions" aria-label="Acoes"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>MS</span>`}<strong>${environment.user}</strong></div></div>`;
 
   mount.innerHTML = `
@@ -13560,6 +16492,7 @@ const renderAppPage = () => {
   initLibraryAssetFallbacks();
   initMissionPlayer();
   initQuestionBank();
+  initSecretariaInstitutional();
   initDigitalStudentAssessments();
   initDigitalResultsPanel();
   initCurationBatches();

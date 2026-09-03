@@ -3839,6 +3839,949 @@
   color: #0d8a53;
 }
 
+.app-shell[data-environment="secretaria"] {
+  background: #f5f8f6;
+}
+
+.app-shell[data-environment="secretaria"] .app-sidebar {
+  padding: 30px 18px;
+  background:
+    radial-gradient(circle at 68% 4%, rgba(30, 127, 79, 0.46), transparent 32%),
+    linear-gradient(180deg, #064837 0%, #05392f 52%, #043026 100%);
+}
+
+.app-shell[data-environment="secretaria"] .sidebar-logo {
+  margin-bottom: 26px;
+}
+
+.app-shell[data-environment="secretaria"] .environment-label {
+  margin-bottom: 10px;
+  color: rgba(255, 255, 255, 0.86);
+  letter-spacing: 0;
+}
+
+.app-shell[data-environment="secretaria"] .app-nav {
+  gap: 6px;
+}
+
+.app-shell[data-environment="secretaria"] .app-nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 12px 12px;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 800;
+}
+
+.app-shell[data-environment="secretaria"] .app-nav a::before {
+  display: none;
+}
+
+.app-shell[data-environment="secretaria"] .app-nav a.is-active {
+  position: relative;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.app-shell[data-environment="secretaria"] .app-nav a.is-active::after {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 10px;
+  bottom: 10px;
+  width: 4px;
+  border-radius: 999px;
+  background: #f2bd2d;
+}
+
+.app-shell[data-environment="secretaria"] .sidebar-profile {
+  margin-top: auto;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.app-shell[data-environment="secretaria"] .app-main {
+  background: linear-gradient(180deg, #ffffff 0, #f5f8f6 360px);
+  overflow-x: hidden;
+}
+
+.app-shell[data-environment="secretaria"] .route-screen {
+  overflow-x: hidden;
+}
+
+.app-shell[data-environment="secretaria"] .app-topbar {
+  grid-template-columns: auto minmax(240px, 1fr) auto;
+  gap: 18px;
+  min-height: 74px;
+  border-bottom: 1px solid #e5ece7;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.app-shell[data-environment="secretaria"] .app-search input {
+  min-height: 46px;
+  border-radius: 8px;
+}
+
+.secretaria-top-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.secretaria-top-actions a,
+.secretaria-top-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid #dfe7de;
+  border-radius: 8px;
+  background: #fff;
+  color: #06462f;
+  font: 800 0.82rem Inter, sans-serif;
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(18, 32, 51, 0.04);
+  cursor: pointer;
+}
+
+.secretaria-icon,
+.app-shell[data-environment="secretaria"] .premium-icon {
+  --icon-bg: rgba(12, 111, 68, 0.11);
+  --icon-fg: #087045;
+  flex: 0 0 auto;
+}
+
+.secretaria-top-actions .secretaria-icon,
+.app-shell[data-environment="secretaria"] .app-nav .secretaria-icon {
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  color: currentColor;
+}
+
+.secretaria-top-actions .secretaria-icon::before,
+.app-shell[data-environment="secretaria"] .app-nav .secretaria-icon::before {
+  width: 20px;
+  height: 20px;
+}
+
+.secretaria-v1 {
+  display: grid;
+  gap: 20px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+
+.secretaria-v1,
+.secretaria-v1 * {
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.secretaria-dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  width: 100%;
+  max-width: 1440px;
+  min-width: 0;
+  overflow-x: hidden;
+  isolation: isolate;
+}
+
+.secretaria-dashboard-grid,
+.secretaria-dashboard-grid * {
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: manual;
+}
+
+.secretaria-dashboard-context,
+.secretaria-dashboard-metrics,
+.secretaria-dashboard-operation {
+  grid-column: 1 / -1;
+  min-width: 0;
+  width: 100%;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.secretaria-v1 .dashboard-head {
+  margin-bottom: 0;
+}
+
+.secretaria-v1 .dashboard-head h1 {
+  letter-spacing: 0;
+}
+
+.secretaria-global-header {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) auto minmax(260px, 1.1fr);
+  align-items: center;
+  gap: 26px;
+  padding: 20px 24px;
+  border: 1px solid var(--rs-line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 22px 54px rgba(18, 32, 51, 0.08);
+}
+
+.secretaria-context-chip {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.secretaria-context-chip small,
+.secretaria-identification span,
+.secretaria-student-head span {
+  display: block;
+  color: var(--rs-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.secretaria-context-chip strong,
+.secretaria-identification strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--rs-ink);
+  font: 800 1.02rem Poppins, sans-serif;
+}
+
+.secretaria-avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #4f8737, #0e6f45);
+  color: #fff;
+  font-weight: 900;
+  box-shadow: 0 12px 24px rgba(6, 70, 47, 0.22);
+}
+
+.secretaria-context-divider {
+  width: 1px;
+  height: 54px;
+  background: #dfe7de;
+}
+
+.secretaria-identification {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.36fr);
+  gap: 16px;
+}
+
+.secretaria-identification div,
+.secretaria-detail-sections article {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--rs-line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(18, 32, 51, 0.05);
+}
+
+.secretaria-metric-row {
+  display: grid;
+  align-items: stretch;
+  grid-auto-rows: 140px;
+  grid-template-columns: repeat(5, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 0;
+  width: 100%;
+  min-height: 140px;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.secretaria-metric-row article {
+  display: grid;
+  grid-template-areas:
+    "icon label"
+    "icon value";
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: min-content min-content;
+  align-items: center;
+  align-content: center;
+  align-self: start;
+  gap: 6px 14px;
+  width: 100%;
+  height: 140px;
+  min-height: 140px;
+  max-height: 140px;
+  padding: 20px;
+  border: 1px solid var(--rs-line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 18px 42px rgba(18, 32, 51, 0.08);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.secretaria-metric-row article .secretaria-icon {
+  grid-area: icon;
+  grid-row: span 2;
+  width: 58px;
+  height: 58px;
+}
+
+.secretaria-metric-row article span {
+  grid-area: label;
+  color: #637083;
+  line-height: 1.25;
+}
+
+.secretaria-metric-row article strong {
+  grid-area: value;
+  display: block;
+  margin: 0;
+  color: var(--rs-ink);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.secretaria-panel-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.9fr) minmax(320px, 1.15fr);
+  align-items: stretch;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.secretaria-panel-grid > .panel {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.secretaria-dashboard-grid h2,
+.secretaria-dashboard-grid a,
+.secretaria-dashboard-grid strong,
+.secretaria-dashboard-grid span,
+.secretaria-dashboard-grid small {
+  min-width: 0;
+}
+
+.secretaria-v1 .panel {
+  min-width: 0;
+  border-radius: 8px;
+}
+
+.secretaria-v1 .panel-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.secretaria-alert-list {
+  display: grid;
+  gap: 0;
+}
+
+.secretaria-alert-list li {
+  border-bottom: 1px solid #e8edf1;
+}
+
+.secretaria-alert-list li:last-child {
+  border-bottom: 0;
+}
+
+.secretaria-alert-list a {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  color: var(--rs-ink);
+  text-decoration: none;
+}
+
+.secretaria-alert-list strong {
+  display: inline-grid;
+  place-items: center;
+  min-width: 42px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #edf8ef;
+  color: #087045;
+  font-weight: 900;
+}
+
+.secretaria-alert-list b {
+  display: block;
+}
+
+.secretaria-alert-list small {
+  display: block;
+  margin-top: 3px;
+  color: var(--rs-muted);
+  font-weight: 700;
+}
+
+.secretaria-alert-list .is-red .secretaria-icon,
+.secretaria-alert-list .is-red strong { --icon-bg: #ffe8e8; --icon-fg: #d92f2f; background-color: #ffe8e8; color: #d92f2f; }
+.secretaria-alert-list .is-orange .secretaria-icon,
+.secretaria-alert-list .is-orange strong { --icon-bg: #fff1e4; --icon-fg: #c45d13; background-color: #fff1e4; color: #c45d13; }
+.secretaria-alert-list .is-gold .secretaria-icon,
+.secretaria-alert-list .is-gold strong { --icon-bg: #fff6d8; --icon-fg: #b48400; background-color: #fff6d8; color: #8d6400; }
+.secretaria-alert-list .is-blue .secretaria-icon,
+.secretaria-alert-list .is-blue strong { --icon-bg: #eaf2ff; --icon-fg: #2567b9; background-color: #eaf2ff; color: #2567b9; }
+.secretaria-alert-list .is-purple .secretaria-icon,
+.secretaria-alert-list .is-purple strong { --icon-bg: #f2eaff; --icon-fg: #6c3cc6; background-color: #f2eaff; color: #6c3cc6; }
+
+.secretaria-quick-actions,
+.secretaria-student-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.secretaria-quick-actions a,
+.secretaria-student-actions a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 58px;
+  padding: 12px 14px;
+  border: 1px solid #dfe7de;
+  border-radius: 8px;
+  background: #fff;
+  color: #06462f;
+  font-weight: 900;
+  text-decoration: none;
+  box-shadow: 0 10px 22px rgba(18, 32, 51, 0.04);
+}
+
+.secretaria-quick-actions a::after,
+.secretaria-student-actions a::after {
+  content: ">";
+  color: #087045;
+  font-weight: 900;
+}
+
+.secretaria-soft-note {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #fff7db;
+  color: #765300;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.secretaria-soft-note.is-green {
+  background: #eef8ef;
+  color: #087045;
+}
+
+.secretaria-timeline-list {
+  position: relative;
+  display: grid;
+  gap: 0;
+}
+
+.secretaria-timeline-list li {
+  position: relative;
+  padding: 12px 0 12px 30px;
+  border-bottom: 1px solid #e8edf1;
+}
+
+.secretaria-timeline-list li::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 18px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #087045;
+  box-shadow: 0 0 0 6px #eef8ef;
+}
+
+.secretaria-timeline-list a {
+  color: var(--rs-ink);
+  text-decoration: none;
+}
+
+.secretaria-timeline-list span {
+  display: block;
+  margin-top: 4px;
+  color: var(--rs-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.secretaria-student-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.secretaria-student-head h2 {
+  margin: 4px 0;
+}
+
+.secretaria-detail-sections,
+.secretaria-filter-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.secretaria-filter-row {
+  align-items: end;
+  margin: 12px 0;
+}
+
+.secretaria-filter-row label,
+.secretaria-filter-row button {
+  min-width: 0;
+}
+
+.secretaria-filter-row select,
+.secretaria-filter-row button {
+  width: 100%;
+}
+
+.secretaria-form-panel form,
+.secretaria-v1 form {
+  min-width: 0;
+}
+
+.secretaria-form-panel {
+  max-width: 980px;
+}
+
+.secretaria-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.secretaria-form-grid label {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  color: var(--rs-muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.secretaria-form-grid label.is-wide {
+  grid-column: 1 / -1;
+}
+
+.secretaria-form-grid input,
+.secretaria-form-grid select,
+.secretaria-form-grid textarea,
+.secretaria-filter-row input,
+.secretaria-filter-row select {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #dfe7de;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--rs-ink);
+  font: 700 0.92rem Inter, sans-serif;
+  padding: 0 14px;
+}
+
+.secretaria-form-grid textarea {
+  min-height: 132px;
+  padding: 12px 14px;
+  resize: vertical;
+}
+
+.secretaria-teacher-form-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(170px, 0.34fr);
+}
+
+.secretaria-communication-form-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.secretaria-form-actions {
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.secretaria-form-actions a,
+.secretaria-form-actions button {
+  min-width: 170px;
+  min-height: 46px;
+  border-radius: 8px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.secretaria-form-actions button {
+  background: #0b6f45;
+  color: #fff;
+}
+
+.secretaria-form-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dfe7de;
+  color: #06462f;
+  text-decoration: none;
+}
+
+.secretaria-form-hint {
+  margin: 14px 0 0;
+  color: var(--rs-muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.secretaria-communication-layout {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.secretaria-list-panel {
+  max-width: none;
+}
+
+.secretaria-anchor {
+  display: contents;
+}
+
+.secretaria-v1 .secretaria-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.04fr) minmax(360px, 0.96fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.secretaria-v1 .secretaria-grid > .span-2 {
+  grid-column: auto;
+}
+
+.secretaria-v1 .secretaria-grid > .panel:only-child,
+.secretaria-v1 .secretaria-grid > .secretaria-student-card,
+.secretaria-v1 .secretaria-grid > .secretaria-anchor,
+.secretaria-v1 .secretaria-grid > .secretaria-anchor + .panel {
+  grid-column: 1 / -1;
+}
+
+.secretaria-v1 .panel-head a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid #dfe7de;
+  border-radius: 8px;
+  background: #fff;
+  color: #06462f;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.secretaria-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: max-content;
+  max-width: 100%;
+  min-height: 26px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef3f0;
+  color: #405164;
+  font: 900 0.76rem Inter, sans-serif;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.secretaria-badge.is-success {
+  background: #e8f6ea;
+  color: #087045;
+}
+
+.secretaria-badge.is-warning {
+  background: #fff4d6;
+  color: #8b6500;
+}
+
+.secretaria-badge.is-danger {
+  background: #ffe7e7;
+  color: #c22727;
+}
+
+.secretaria-badge.is-info {
+  background: #eaf2ff;
+  color: #235f9f;
+}
+
+.secretaria-badge.is-neutral {
+  background: #eef1f4;
+  color: #526071;
+}
+
+.secretaria-v1 .clean-list:not(.secretaria-alert-list):not(.secretaria-timeline-list) {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+}
+
+.secretaria-v1 .clean-list:not(.secretaria-alert-list):not(.secretaria-timeline-list) li {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 12px;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding: 14px 16px 14px 58px;
+  border: 1px solid #e2e9e4;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(18, 32, 51, 0.04);
+}
+
+.secretaria-v1 .clean-list:not(.secretaria-alert-list):not(.secretaria-timeline-list) li::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #edf8ef;
+  box-shadow: inset 0 0 0 1px rgba(8, 112, 69, 0.06);
+}
+
+.secretaria-v1 .clean-list:not(.secretaria-alert-list):not(.secretaria-timeline-list) li::after {
+  content: "";
+  position: absolute;
+  left: 25px;
+  top: 25px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #087045;
+  border-radius: 999px;
+  box-sizing: border-box;
+}
+
+.secretaria-v1 .clean-list:not(.secretaria-alert-list):not(.secretaria-timeline-list) li a,
+.secretaria-v1 .clean-list:not(.secretaria-alert-list):not(.secretaria-timeline-list) li strong {
+  color: var(--rs-ink);
+  font-weight: 900;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.secretaria-v1 .clean-list:not(.secretaria-alert-list):not(.secretaria-timeline-list) li > span:not(.secretaria-badge) {
+  grid-column: 1 / -1;
+  color: var(--rs-muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.secretaria-v1 .clean-list:not(.secretaria-alert-list):not(.secretaria-timeline-list) li > .secretaria-badge {
+  justify-self: end;
+}
+
+.secretaria-v1 .clean-list:not(.secretaria-alert-list):not(.secretaria-timeline-list) li form {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #e8edf1;
+}
+
+.secretaria-v1 .clean-list:not(.secretaria-alert-list):not(.secretaria-timeline-list) li form input,
+.secretaria-v1 .clean-list:not(.secretaria-alert-list):not(.secretaria-timeline-list) li form button,
+.secretaria-v1 form input,
+.secretaria-v1 form select,
+.secretaria-v1 form textarea {
+  min-width: 0;
+}
+
+.secretaria-v1 form:not(.secretaria-filter-row) {
+  display: grid;
+  gap: 14px;
+}
+
+.secretaria-v1 form:not(.secretaria-filter-row) label {
+  display: grid;
+  gap: 7px;
+  color: var(--rs-muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.secretaria-v1 .qb-builder-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.secretaria-v1 .qb-builder-grid input,
+.secretaria-v1 .qb-builder-grid select,
+.secretaria-v1 form:not(.secretaria-filter-row) input,
+.secretaria-v1 form:not(.secretaria-filter-row) select,
+.secretaria-v1 form:not(.secretaria-filter-row) textarea {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #dfe7de;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--rs-ink);
+  font: 700 0.92rem Inter, sans-serif;
+  padding: 0 14px;
+}
+
+.secretaria-v1 form:not(.secretaria-filter-row) textarea {
+  min-height: 132px;
+  padding: 12px 14px;
+}
+
+.secretaria-v1 .qb-builder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.secretaria-v1 .qb-builder-actions a,
+.secretaria-v1 .qb-builder-actions button,
+.secretaria-v1 form button {
+  min-height: 44px;
+  border: 1px solid #dfe7de;
+  border-radius: 8px;
+  background: #0b6f45;
+  color: #fff;
+  font-weight: 900;
+  padding: 0 16px;
+  text-decoration: none;
+}
+
+.secretaria-v1 .qb-builder-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #06462f;
+}
+
+.secretaria-v1 .app-search {
+  margin: 12px 0 16px;
+}
+
+.secretaria-v1 .app-search input,
+.secretaria-filter-row input,
+.secretaria-filter-row select {
+  min-width: 0;
+}
+
+.secretaria-v1 dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.secretaria-v1 dl div {
+  padding: 14px;
+  border: 1px solid #e2e9e4;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.secretaria-v1 dt {
+  color: var(--rs-muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.secretaria-v1 dd {
+  margin: 6px 0 0;
+  color: var(--rs-ink);
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.secretaria-communication-layout {
+  grid-template-columns: minmax(360px, 0.86fr) minmax(0, 1.14fr);
+}
+
+.secretaria-communication-preview {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 16px;
+  border: 1px solid #dfe7de;
+  border-radius: 8px;
+  background: #f8fbf7;
+}
+
+.secretaria-communication-preview strong {
+  color: var(--rs-ink);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.secretaria-communication-preview span,
+.secretaria-communication-preview p {
+  margin: 0;
+  color: var(--rs-muted);
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.secretaria-list-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.secretaria-list-actions a,
+.secretaria-list-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid #dfe7de;
+  border-radius: 8px;
+  background: #fff;
+  color: #06462f;
+  font: 900 0.78rem Inter, sans-serif;
+  text-decoration: none;
+}
+
+.secretaria-list-actions button {
+  background: #f8fbf7;
+}
+
 .line-chart,
 .column-chart {
   height: 230px;
@@ -15321,6 +16264,40 @@ td {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .secretaria-identification,
+  .secretaria-detail-sections,
+  .secretaria-filter-row,
+  .secretaria-v1 .qb-builder-grid,
+  .secretaria-form-grid,
+  .secretaria-v1 dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-shell[data-environment="secretaria"] .app-topbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .secretaria-top-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .secretaria-panel-grid,
+  .secretaria-v1 .secretaria-grid,
+  .secretaria-communication-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.85fr);
+  }
+
+  .secretaria-timeline-panel {
+    grid-column: 1 / -1;
+  }
+
+  .secretaria-metric-row {
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+    grid-auto-rows: 140px;
+    min-height: 140px;
+  }
+
   .university-platform-hero,
   .university-platform .span-2 {
     grid-column: span 2;
@@ -15434,6 +16411,23 @@ td {
     justify-content: flex-start;
   }
 
+  .app-shell[data-environment="escola"] .app-topbar {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .app-shell[data-environment="escola"] .official-school-switcher {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .app-shell[data-environment="escola"] .official-school-switcher a,
+  .app-shell[data-environment="escola"] .official-school-switcher button {
+    flex: 0 0 auto;
+  }
+
   .screen {
     padding: 18px 14px 92px;
   }
@@ -15466,6 +16460,60 @@ td {
   .data-table-list,
   .metric-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .secretaria-global-header span,
+  .secretaria-student-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .secretaria-student-head,
+  .secretaria-global-header {
+    align-items: stretch;
+  }
+
+  .secretaria-identification,
+  .secretaria-detail-sections,
+  .secretaria-filter-row,
+  .secretaria-v1 .qb-builder-grid,
+  .secretaria-form-grid,
+  .secretaria-v1 dl {
+    grid-template-columns: 1fr;
+  }
+
+  .secretaria-global-header,
+  .secretaria-panel-grid,
+  .secretaria-v1 .secretaria-grid,
+  .secretaria-communication-layout,
+  .secretaria-top-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .secretaria-metric-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 132px;
+    min-height: 132px;
+  }
+
+  .secretaria-metric-row article {
+    height: 132px;
+    min-height: 132px;
+    max-height: 132px;
+  }
+
+  .secretaria-context-divider {
+    width: 100%;
+    height: 1px;
+  }
+
+  .secretaria-top-actions {
+    display: grid;
+  }
+
+  .secretaria-top-actions a,
+  .secretaria-top-actions button {
+    justify-content: center;
   }
 
   .university-platform-hero,
@@ -16376,6 +17424,22 @@ td {
 }
 
 @media (max-width: 560px) {
+  .secretaria-dashboard-grid,
+  .secretaria-identification,
+  .secretaria-metric-row,
+  .secretaria-panel-grid,
+  .secretaria-v1 .secretaria-grid,
+  .secretaria-communication-layout,
+  .secretaria-v1 .qb-builder-grid,
+  .secretaria-form-grid,
+  .secretaria-v1 dl {
+    grid-template-columns: 1fr;
+  }
+
+  .secretaria-metric-row {
+    grid-auto-rows: 132px;
+  }
+
   .ecosystem-hero,
   .journey-grid,
   .ecosystem-resource-grid,
@@ -17241,32 +18305,143 @@ td {
 }
 
 .app-shell[data-environment="escola"] {
-  background: linear-gradient(180deg, #f7fbf7 0%, #eef7ef 100%);
+  background: #f5f8f6;
 }
 
 .app-shell[data-environment="escola"] .app-sidebar {
-  background: linear-gradient(180deg, #063b27 0%, #075a34 52%, #053521 100%);
+  padding: 30px 18px;
+  background:
+    radial-gradient(circle at 68% 4%, rgba(30, 127, 79, 0.46), transparent 32%),
+    linear-gradient(180deg, #064837 0%, #05392f 52%, #043026 100%);
 }
 
 .app-shell[data-environment="escola"] .app-main {
-  background: transparent;
+  background: linear-gradient(180deg, #ffffff 0, #f5f8f6 360px);
+  overflow-x: hidden;
+}
+
+.app-shell[data-environment="escola"] .sidebar-logo {
+  margin-bottom: 26px;
+}
+
+.app-shell[data-environment="escola"] .environment-label {
+  margin-bottom: 10px;
+  color: rgba(255, 255, 255, 0.86);
+  letter-spacing: 0;
+}
+
+.app-shell[data-environment="escola"] .app-nav {
+  gap: 6px;
+}
+
+.app-shell[data-environment="escola"] .app-nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 12px;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 800;
+}
+
+.app-shell[data-environment="escola"] .app-nav a::before {
+  display: none;
+}
+
+.app-shell[data-environment="escola"] .app-nav a.is-active {
+  position: relative;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.app-shell[data-environment="escola"] .app-nav a.is-active::after {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 10px;
+  bottom: 10px;
+  width: 4px;
+  border-radius: 999px;
+  background: #f2bd2d;
+}
+
+.app-shell[data-environment="escola"] .sidebar-profile {
+  margin-top: auto;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.app-shell[data-environment="escola"] .app-topbar {
+  grid-template-columns: auto minmax(240px, 1fr) auto;
+  gap: 18px;
+  min-height: 74px;
+  border-bottom: 1px solid #e5ece7;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.app-shell[data-environment="escola"] .app-search input {
+  min-height: 46px;
+  border-radius: 8px;
 }
 
 .official-school-switcher {
-  justify-content: flex-start;
+  grid-column: auto;
+  justify-content: flex-end;
+  gap: 14px;
+  overflow-x: visible;
 }
 
 .official-school-switcher a,
 .official-school-switcher button {
-  border-color: rgba(8, 92, 52, 0.16);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid #dfe7de;
+  border-radius: 8px;
   background: #fff;
-  color: #0a5132;
+  color: #06462f;
+  font: 800 0.82rem Inter, sans-serif;
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(18, 32, 51, 0.04);
+  cursor: pointer;
 }
 
 .official-school-switcher a.is-active,
-.official-school-switcher button:hover {
-  background: #0a6b3b;
-  color: #fff;
+.official-school-switcher a:hover,
+.official-school-switcher a:focus-visible,
+.official-school-switcher button:hover,
+.official-school-switcher button:focus-visible {
+  border-color: rgba(6, 70, 47, 0.22);
+  background: #f5fbf7;
+  color: #06462f;
+  outline: none;
+}
+
+.app-shell[data-environment="escola"] .secretaria-icon,
+.official-school-switcher .secretaria-icon,
+.official-school-communication-card .secretaria-icon,
+.official-school-shortcut-list .secretaria-icon,
+.official-school-section-head .secretaria-icon {
+  --icon-bg: rgba(12, 111, 68, 0.11);
+  --icon-fg: #087045;
+  flex: 0 0 auto;
+}
+
+.app-shell[data-environment="escola"] .app-nav .secretaria-icon,
+.official-school-switcher .secretaria-icon {
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  color: currentColor;
+}
+
+.app-shell[data-environment="escola"] .app-nav .secretaria-icon::before,
+.official-school-switcher .secretaria-icon::before {
+  width: 20px;
+  height: 20px;
 }
 
 .official-school-actions {
@@ -17299,11 +18474,366 @@ td {
 .official-school {
   display: grid;
   gap: 18px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
   color: #10231f;
 }
 
 .official-school a {
   text-decoration: none;
+}
+
+.official-school-real {
+  gap: 20px;
+  overflow-x: hidden;
+}
+
+.official-school-real,
+.official-school-real * {
+  min-width: 0;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: manual;
+}
+
+.official-school-real-status {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(8, 63, 49, 0.12);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 24px;
+  color: #10231f;
+  box-shadow: 0 18px 36px rgba(10, 42, 30, 0.08);
+}
+
+.official-school-real-status strong {
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 1.35rem;
+  color: #07582f;
+}
+
+.official-school-real-status span {
+  color: #475569;
+  font-weight: 750;
+}
+
+.official-school-real-status.is-error {
+  border-color: rgba(185, 28, 28, 0.2);
+  background: #fff7f7;
+}
+
+.official-school-real-status.is-error strong {
+  color: #991b1b;
+}
+
+.official-school-real-hero {
+  position: relative;
+  min-height: 390px;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid rgba(8, 63, 49, 0.12);
+  background: #eef8ef;
+  box-shadow: 0 20px 42px rgba(10, 42, 30, 0.1);
+}
+
+.official-school-real-hero > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.official-school-real-hero-copy {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  align-content: center;
+  max-width: 720px;
+  min-height: 390px;
+  padding: 48px;
+}
+
+.official-school-real-hero-copy span,
+.official-school-real-context span,
+.official-school-communication-card span,
+.official-school-shortcut-list span,
+.official-school-section-head span {
+  color: #087637;
+  font-size: 0.78rem;
+  font-weight: 950;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.official-school-real-hero-copy p {
+  margin: 18px 0 0;
+  color: #0b5f35;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.official-school-real-hero-copy h1 {
+  max-width: 640px;
+  margin: 8px 0 0;
+  color: #06452b;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: clamp(2.35rem, 5vw, 5rem);
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.official-school-real-hero-copy small {
+  max-width: 560px;
+  margin-top: 18px;
+  color: #3f4d46;
+  font-size: 1.08rem;
+  font-weight: 820;
+  line-height: 1.5;
+}
+
+.official-school-real-context {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.8fr);
+  gap: 16px;
+}
+
+.official-school-real-context article,
+.official-school-empty-card,
+.official-school-communication-card,
+.official-school-shortcut-list a {
+  min-width: 0;
+  border: 1px solid rgba(8, 63, 49, 0.12);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 14px 28px rgba(10, 42, 30, 0.05);
+}
+
+.official-school-real-context article {
+  display: grid;
+  gap: 6px;
+  padding: 20px;
+}
+
+.official-school-real-context strong {
+  color: #10231f;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 1.08rem;
+}
+
+.official-school-real-context small {
+  color: #64748b;
+  font-weight: 750;
+}
+
+.official-school-real-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.official-school-real-communications,
+.official-school-real-shortcuts,
+.official-school-weekly-challenge,
+.official-school-recommendations {
+  min-width: 0;
+}
+
+.official-school-communication-list,
+.official-school-shortcut-list {
+  display: grid;
+  gap: 12px;
+}
+
+.official-school-weekly-challenge {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 18px;
+  align-items: center;
+}
+
+.official-school-weekly-challenge .official-school-section-head {
+  margin-bottom: 0;
+}
+
+.official-school-prepared-empty {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  min-width: 0;
+  padding: 18px;
+  border: 1px dashed rgba(8, 112, 69, 0.24);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #f8fcf9, #fff);
+}
+
+.official-school-prepared-empty .secretaria-icon {
+  width: 52px;
+  height: 52px;
+}
+
+.official-school-prepared-empty strong {
+  display: block;
+  color: #10231f;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.official-school-prepared-empty span {
+  display: block;
+  margin-top: 6px;
+  color: #64748b;
+  font-weight: 750;
+  line-height: 1.42;
+  text-transform: none;
+}
+
+.official-school-communication-card {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 14px;
+  padding: 18px;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.official-school-communication-card:hover,
+.official-school-shortcut-list a:hover {
+  border-color: rgba(8, 112, 69, 0.24);
+  box-shadow: 0 18px 34px rgba(10, 42, 30, 0.08);
+  transform: translateY(-1px);
+}
+
+.official-school-communication-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(12, 111, 68, 0.1);
+  color: #087045;
+}
+
+.official-school-communication-card strong {
+  display: block;
+  color: #10231f;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.official-school-communication-card p {
+  margin: 6px 0 0;
+  color: #475569;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.official-school-communication-card span {
+  display: block;
+  margin-top: 10px;
+  color: #64748b;
+}
+
+.official-school-communication-card .official-school-communication-badge {
+  display: inline-flex;
+  width: fit-content;
+  margin: 8px 0 0;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #eaf7ef;
+  color: #087045;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: none;
+}
+
+.official-school-empty-card {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+}
+
+.official-school-empty-card strong {
+  color: #10231f;
+  font-family: Poppins, Inter, sans-serif;
+}
+
+.official-school-empty-card span {
+  color: #64748b;
+  font-weight: 750;
+}
+
+.official-school-shortcut-list a {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-height: 132px;
+  padding: 18px;
+  color: #07582f;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.official-school-shortcut-list .secretaria-icon {
+  grid-row: span 2;
+  width: 52px;
+  height: 52px;
+}
+
+.official-school-shortcut-list strong {
+  color: #07582f;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 1rem;
+}
+
+.official-school-shortcut-list span {
+  color: #64748b;
+  text-transform: none;
+}
+
+.official-school-shortcut-list em {
+  grid-column: 2;
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #0b6f42;
+  color: #fff;
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.official-school-view-all {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 14px;
+  padding: 10px 14px;
+  border: 1px solid #dfe7de;
+  border-radius: 8px;
+  background: #fff;
+  color: #06462f;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  box-shadow: 0 10px 24px rgba(18, 32, 51, 0.04);
+}
+
+.official-school-real-shortcuts .official-school-shortcut-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .official-school-hero,
@@ -17841,6 +19371,14 @@ td {
 }
 
 @media (max-width: 1180px) {
+  .official-school-real-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .official-school-weekly-challenge {
+    grid-template-columns: 1fr;
+  }
+
   .official-school-games,
   .official-school-access-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -17857,6 +19395,19 @@ td {
 }
 
 @media (max-width: 820px) {
+  .official-school-real-hero,
+  .official-school-real-hero-copy {
+    min-height: 360px;
+  }
+
+  .official-school-real-hero-copy {
+    padding: 30px 22px;
+  }
+
+  .official-school-real-context {
+    grid-template-columns: 1fr;
+  }
+
   .official-school-hero,
   .official-school-split,
   .school-coloring-layout {
@@ -17881,6 +19432,28 @@ td {
 }
 
 @media (max-width: 560px) {
+  .official-school-real-hero,
+  .official-school-real-hero-copy {
+    min-height: 330px;
+  }
+
+  .official-school-real-hero-copy h1 {
+    font-size: 2.1rem;
+  }
+
+  .official-school-communication-card,
+  .official-school-shortcut-list a,
+  .official-school-prepared-empty {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .official-school-communication-icon,
+  .official-school-prepared-empty .secretaria-icon,
+  .official-school-shortcut-list .secretaria-icon {
+    width: 40px;
+    height: 40px;
+  }
+
   .official-school-hero,
   .official-school-panel {
     padding: 16px;
@@ -17888,7 +19461,8 @@ td {
 
   .official-school-games,
   .official-school-access-grid,
-  .official-school-books {
+  .official-school-books,
+  .official-school-real-shortcuts .official-school-shortcut-list {
     grid-template-columns: 1fr;
   }
 

@@ -1,0 +1,75 @@
+{
+  "package_version": "RS-SCHOOL-V1-DEPLOYMENT-2026-09-01",
+  "schema_version": "RS-SCHOOL-TEMPLATE V1",
+  "mode": "dry-run",
+  "generated_at": "2026-09-01T16:19:41.025Z",
+  "school_name": "Escola Ficticia Onboarding",
+  "school_year": "2026",
+  "files": {
+    "turmas.csv": {
+      "rows": 2,
+      "columns": [
+        "class_name",
+        "school_year",
+        "status",
+        "age_group",
+        "shift",
+        "grade"
+      ]
+    },
+    "professores.csv": {
+      "rows": 2,
+      "columns": [
+        "full_name",
+        "email",
+        "status"
+      ]
+    },
+    "professor_turmas.csv": {
+      "rows": 2,
+      "columns": [
+        "teacher_email",
+        "class_name",
+        "school_year",
+        "role",
+        "status"
+      ]
+    },
+    "alunos.csv": {
+      "rows": 6,
+      "columns": [
+        "full_name",
+        "birth_date",
+        "class_name",
+        "school_year",
+        "status"
+      ]
+    },
+    "responsaveis.csv": {
+      "rows": 6,
+      "columns": [
+        "guardian_name",
+        "email",
+        "phone",
+        "relationship",
+        "student_reference",
+        "status",
+        "is_primary"
+      ]
+    }
+  },
+  "counts": {
+    "lines_read": 18,
+    "valid": 18,
+    "invalid": 0,
+    "duplicated": 0,
+    "created": 0,
+    "ignored": 18,
+    "failures": 0
+  },
+  "created_ids": [],
+  "errors": [],
+  "warnings": [
+    "Template V1 nao possui RPC homologada para criar professor institucional; professores.csv e professor_turmas.csv foram validados, mas apply nao cria professores."
+  ]
+}
