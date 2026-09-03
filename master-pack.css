@@ -9157,6 +9157,200 @@ td {
   font-weight: 900;
 }
 
+.tw-class-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.tw-class-tabs button,
+.tw-class-tabs span {
+  min-height: 38px;
+  border-radius: 999px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(6, 70, 47, 0.12);
+  background: #fff;
+  color: #49695d;
+  font-family: Poppins, Inter, sans-serif;
+  font-weight: 900;
+}
+
+.tw-class-tabs button {
+  cursor: pointer;
+}
+
+.tw-class-tabs button.is-active,
+.tw-class-tabs button:hover,
+.tw-class-tabs button:focus-visible {
+  border-color: #0d6b4b;
+  background: #0d6b4b;
+  color: #fff;
+  outline: none;
+}
+
+.tw-class-tabs .is-prepared {
+  opacity: 0.64;
+}
+
+.tw-attendance-board {
+  gap: 16px;
+}
+
+.tw-attendance-form,
+.tw-attendance-list {
+  display: grid;
+  gap: 12px;
+}
+
+.tw-attendance-toolbar,
+.tw-attendance-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  justify-content: space-between;
+}
+
+.tw-attendance-toolbar label {
+  display: grid;
+  gap: 6px;
+  min-width: 220px;
+}
+
+.tw-attendance-toolbar label span,
+.tw-attendance-note span {
+  color: #0d6b4b;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.tw-attendance-toolbar input,
+.tw-attendance-note input {
+  min-height: 42px;
+  border: 1px solid rgba(6, 70, 47, 0.16);
+  border-radius: 10px;
+  padding: 0 12px;
+  background: #fff;
+  color: #083f2d;
+  font: inherit;
+  font-weight: 750;
+}
+
+.tw-attendance-toolbar button,
+.tw-attendance-footer button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 10px;
+  padding: 0 16px;
+  background: #13733f;
+  color: #fff;
+  font-family: Poppins, Inter, sans-serif;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.tw-attendance-toolbar button {
+  background: #e7f1ea;
+  color: #0d6b4b;
+}
+
+.tw-attendance-toolbar button:hover,
+.tw-attendance-toolbar button:focus-visible,
+.tw-attendance-footer button:hover,
+.tw-attendance-footer button:focus-visible {
+  background: #0d6b4b;
+  color: #fff;
+  outline: none;
+}
+
+.tw-attendance-footer button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.tw-attendance-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(300px, 1.6fr) minmax(220px, 0.9fr);
+  gap: 12px;
+  align-items: center;
+  border-radius: 14px;
+  padding: 12px;
+  background: #f8fbf7;
+  border: 1px solid rgba(6, 70, 47, 0.1);
+}
+
+.tw-attendance-row strong {
+  color: #122033;
+  font-family: Poppins, Inter, sans-serif;
+}
+
+.tw-attendance-row small {
+  display: block;
+  margin-top: 4px;
+  color: #607166;
+  font-weight: 750;
+}
+
+.tw-attendance-row fieldset {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.tw-attendance-row legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.tw-attendance-choice {
+  min-height: 36px;
+  border-radius: 999px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(6, 70, 47, 0.12);
+  background: #fff;
+  color: #49695d;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.tw-attendance-choice input {
+  accent-color: #0d6b4b;
+}
+
+.tw-attendance-choice.is-selected {
+  border-color: rgba(13, 107, 75, 0.32);
+  background: #e7f1ea;
+  color: #0d6b4b;
+}
+
+.tw-attendance-note {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.tw-attendance-footer p {
+  margin: 0;
+  color: #49695d;
+  font-weight: 800;
+}
+
 .tw-planning-shell {
   gap: 16px;
 }
@@ -9379,6 +9573,150 @@ td {
 .tw-planning-form-note,
 .tw-planning-form-actions {
   grid-column: 1 / -1;
+}
+
+.tw-class-week-shell,
+.tw-class-messages-shell {
+  gap: 16px;
+}
+
+.tw-class-week-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(170px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.tw-week-day {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  border: 1px solid rgba(6, 70, 47, 0.12);
+  border-radius: 14px;
+  padding: 12px;
+  background: #f8fbf7;
+}
+
+.tw-week-day header {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.tw-week-day header span,
+.tw-week-item span,
+.tw-message-card span,
+.tw-message-card small {
+  color: #0d6b4b;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.tw-week-day header strong,
+.tw-week-item strong,
+.tw-message-card strong {
+  color: #122033;
+  font-family: Poppins, Inter, sans-serif;
+  line-height: 1.2;
+}
+
+.tw-week-day header small {
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #e7f1ea;
+  color: #0d6b4b;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.tw-week-list,
+.tw-message-list {
+  display: grid;
+  gap: 10px;
+}
+
+.tw-week-item,
+.tw-message-card {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(6, 70, 47, 0.1);
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+}
+
+.tw-week-item.is-published,
+.tw-message-card:not(.is-archived) {
+  border-color: rgba(13, 107, 75, 0.28);
+  background: #f6fbf7;
+}
+
+.tw-message-card.is-archived {
+  opacity: 0.78;
+}
+
+.tw-week-item p,
+.tw-message-card p {
+  margin: 0;
+  color: #49695d;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.tw-week-item small {
+  color: #647083;
+  font-weight: 800;
+}
+
+.tw-week-item-actions,
+.tw-message-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tw-message-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.tw-message-main {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.tw-week-item-actions button,
+.tw-message-actions button {
+  min-height: 34px;
+  border: 1px solid rgba(6, 70, 47, 0.12);
+  border-radius: 999px;
+  padding: 0 12px;
+  background: #fff;
+  color: #0d6b4b;
+  font-family: Poppins, Inter, sans-serif;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.tw-week-item-actions button:hover,
+.tw-week-item-actions button:focus-visible,
+.tw-message-actions button:hover,
+.tw-message-actions button:focus-visible {
+  background: #0d6b4b;
+  color: #fff;
+  outline: none;
+}
+
+.tw-message-form {
+  border: 1px solid rgba(6, 70, 47, 0.12);
+  border-radius: 14px;
+  padding: 14px;
+  background: #f8fbf7;
 }
 
 .tw-activities-shell {
@@ -10287,6 +10625,22 @@ td {
   box-shadow: none;
 }
 
+.teacher-global-actions button {
+  min-width: 118px;
+  gap: 8px;
+  border: 1px solid rgba(6, 70, 47, 0.12);
+  justify-content: center;
+}
+
+.teacher-global-actions .secretaria-inline-icon {
+  color: inherit;
+}
+
+.teacher-global-actions .secretaria-inline-icon i {
+  width: 18px;
+  height: 18px;
+}
+
 .tw-top-actions button i {
   background: transparent;
   color: #17271f;
@@ -10319,16 +10673,16 @@ td {
 }
 
 .teacher-premium-hero {
-  min-height: 220px;
+  min-height: 190px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 44%;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   overflow: hidden;
   border-radius: 18px;
   padding: 26px 30px;
   background:
-    radial-gradient(circle at 85% 25%, rgba(219, 236, 213, 0.82), transparent 30%),
-    linear-gradient(120deg, #fff 0%, #fff 58%, #f1eadf 100%);
+    radial-gradient(circle at 96% 12%, rgba(219, 236, 213, 0.82), transparent 30%),
+    linear-gradient(120deg, #fff 0%, #fff 72%, #f1eadf 100%);
   border: 1px solid rgba(6, 70, 47, 0.1);
   box-shadow: 0 18px 46px rgba(8, 63, 45, 0.07);
 }
@@ -12337,7 +12691,7 @@ td {
 
   .teacher-premium-hero,
   .student-premium-hero {
-    grid-template-columns: minmax(0, 1fr) 34%;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .teacher-metric-grid,
@@ -12379,6 +12733,18 @@ td {
 
   .tw-planning-week {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tw-class-week-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tw-message-card {
+    grid-template-columns: 1fr;
+  }
+
+  .tw-attendance-row {
+    grid-template-columns: 1fr;
   }
 
   .tw-activity-entry-grid {
@@ -12488,6 +12854,7 @@ td {
   .tw-card-meta,
   .tw-planning-heading,
   .tw-planning-week,
+  .tw-class-week-grid,
   .tw-planning-form,
   .tw-activity-entry-grid,
   .tw-formation-grid,

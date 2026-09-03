@@ -3352,6 +3352,8 @@ const teacherWorkspaceNav = [
   ["formacao", "Formacao", "cap"],
 ];
 
+const teacherAllowedRoles = ["professor", "teacher", "admin", "gestor", "coordenador"];
+
 const teacherWorkspaceClasses = [
   { id: pilotProfiles.class.id, name: pilotProfiles.class.name, ageGroup: "Infantil 4 anos", students: 1, status: "Turma piloto", shift: pilotProfiles.class.shift },
 ];
@@ -3434,7 +3436,19 @@ const teacherInstitutionalState = {
   teacherByClass: {},
   studentsByClass: {},
   studentsById: {},
+  teacher: null,
+  schoolMembership: null,
   hydratedDom: false,
+};
+
+const teacherAttendanceState = {
+  status: "idle",
+  error: "",
+  message: "",
+  promise: null,
+  key: "",
+  records: [],
+  result: null,
 };
 
 const secretariaInstitutionalState = {
@@ -3504,10 +3518,76 @@ const getTeacherInstitutionalStudents = (classId = "") => {
   return Object.values(teacherInstitutionalState.studentsById || {}).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 };
 
-const getTeacherDisplayName = () => teacherInstitutionalState.profile?.displayName || pilotProfiles.teacher.displayName;
+const getTeacherCurrentSchoolName = () => getTeacherInstitutionalClasses()[0]?.schoolName || "Escola nao carregada";
+const getTeacherDisplayName = () => {
+  const profileName = teacherInstitutionalState.profile?.displayName;
+  if (profileName) return profileName;
+  const session = getPlatformSession();
+  if (["professor", "teacher"].includes(session.role) && session.name && !session.name.includes("@")) return session.name;
+  return "Professor";
+};
 const getTeacherClassHref = (classItem) => `professor-turma.html?id=${encodeURIComponent(classItem.id)}`;
 const getTeacherStudentHref = (student) => `professor-aluno.html?id=${encodeURIComponent(student.id)}`;
 const getTeacherPlanningClasses = () => getTeacherInstitutionalClasses();
+const getTeacherClassTab = () => getPrintableParams().get("tab") || "alunos";
+const getTeacherAttendanceDate = () => getPrintableParams().get("date") || toTeacherIsoDate(new Date());
+
+const teacherAttendanceStatusOptions = [
+  ["present", "Presente"],
+  ["absent", "Faltou"],
+  ["justified", "Falta justificada"],
+];
+
+const getTeacherAttendanceKey = (classId, date) => `${classId || ""}:${date || ""}`;
+
+const getTeacherAttendanceRecordByStudent = (studentId) =>
+  (teacherAttendanceState.records || []).find((record) => record.student_id === studentId) || null;
+
+const ensureTeacherAttendanceDay = async ({ force = false, classId = "", date = "" } = {}) => {
+  const key = getTeacherAttendanceKey(classId, date);
+  if (!classId || !date) return teacherAttendanceState;
+  if (!force && teacherAttendanceState.status === "ready" && teacherAttendanceState.key === key) return teacherAttendanceState;
+  if (!force && teacherAttendanceState.promise && teacherAttendanceState.key === key) return teacherAttendanceState.promise;
+  teacherAttendanceState.status = "loading";
+  teacherAttendanceState.error = "";
+  teacherAttendanceState.message = "";
+  teacherAttendanceState.key = key;
+  teacherAttendanceState.promise = (async () => {
+    try {
+      const client = createSupabaseRestClient();
+      const rows = await client.request(
+        "attendance_records",
+        `?select=id,school_id,class_id,student_id,enrollment_id,attendance_date,status,notes,recorded_by,updated_by,updated_at&class_id=${supabaseEq(classId)}&attendance_date=${supabaseEq(date)}&order=student_id.asc`,
+        { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
+      );
+      teacherAttendanceState.records = Array.isArray(rows) ? rows : [];
+      teacherAttendanceState.status = "ready";
+    } catch (error) {
+      teacherAttendanceState.records = [];
+      teacherAttendanceState.error = error.message || "Nao foi possivel carregar a frequencia.";
+      teacherAttendanceState.status = "error";
+    }
+    return teacherAttendanceState;
+  })();
+  return teacherAttendanceState.promise;
+};
+
+const saveTeacherAttendanceDay = async ({ classId = "", date = "", records = [] } = {}) => {
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/teacher_set_attendance_records", "", {
+    method: "POST",
+    requireAuthenticated: true,
+    allowedRoles: teacherAllowedRoles,
+    body: JSON.stringify({
+      p_class_id: classId,
+      p_attendance_date: date,
+      p_records: records,
+    }),
+  });
+  teacherAttendanceState.result = result;
+  teacherAttendanceState.message = "Frequencia salva com sucesso.";
+  return result;
+};
 
 const teacherWorkspaceTasks = [
   { label: "Atividades pendentes na turma", count: pilotProfiles.student.pendingActivities, view: "turmas" },
@@ -3531,12 +3611,12 @@ const renderTeacherCard = () => `
 
 const getTeacherFirstName = () => {
   const session = getPlatformSession();
-  const candidate = teacherInstitutionalState.profile?.displayName || (session.role === "professor" ? session.name || session.email : pilotProfiles.teacher.displayName);
+  const candidate = teacherInstitutionalState.profile?.displayName || (["professor", "teacher"].includes(session.role) ? session.name || session.email : getTeacherDisplayName());
   const normalized = String(candidate || "").trim();
   if (!normalized || normalized.includes("@")) {
-    return normalized.toLowerCase().includes("helena") ? "Helena" : pilotProfiles.teacher.name.split(/\s+/)[0];
+    return "Professor";
   }
-  return normalized.replace(/^professora\s+/i, "").split(/\s+/)[0] || pilotProfiles.teacher.name.split(/\s+/)[0];
+  return normalized.replace(/^professora?\s+/i, "").split(/\s+/)[0] || "Professor";
 };
 
 const renderTeacherSidebar = (activeView = "inicio") => `
@@ -3557,13 +3637,19 @@ const renderTeacherSidebar = (activeView = "inicio") => `
   </aside>
 `;
 
+const teacherInlineIcon = (icon, label = "") => {
+  const safeLabel = String(label || "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+  return `<i class="secretaria-icon" data-icon="${icon}" aria-hidden="true"></i>${safeLabel ? `<span>${safeLabel}</span>` : ""}`;
+};
+
 const renderTeacherTopbar = () => `
   <header class="tw-topbar" aria-label="Acoes do professor">
     <label><span>Pesquisar</span><input type="search" data-teacher-search placeholder="Buscar conteudos, alunos, turmas..." /></label>
-    <div class="tw-top-actions" aria-label="Acoes rapidas">
-      <button type="button" data-teacher-view="notificacoes" aria-label="Notificacoes"><i data-icon="bell"></i><b hidden>0</b></button>
-      <button type="button" data-teacher-view="mensagens" aria-label="Mensagens"><i data-icon="mail"></i><b hidden>0</b></button>
-      <button type="button" data-teacher-view="perfil" class="tw-user-chip"><span>${getTeacherFirstName()}</span></button>
+    <div class="tw-top-actions teacher-global-actions" aria-label="Acoes globais do Professor">
+      <button type="button" data-platform-back>${teacherInlineIcon("progresso", "VOLTAR")}</button>
+      <button type="button" data-teacher-open-url="professor.html">${teacherInlineIcon("home", "INICIO")}</button>
+      <button type="button" data-teacher-open-url="escola.html">${teacherInlineIcon("escola", "MINHA ESCOLA")}</button>
+      <button type="button" data-platform-logout>${teacherInlineIcon("sair", "SAIR")}</button>
     </div>
   </header>
 `;
@@ -3662,6 +3748,7 @@ const mapTeacherPlanRow = (row = {}, classItem = null, publication = null) => ({
   title: row.title || "Proposta sem titulo",
   day: row.weekday || "segunda",
   planDate: row.plan_date || "",
+  startTime: row.resource_reference?.start_time || publication?.start_time || "",
   classId: row.class_id || classItem?.id || "",
   className: classItem?.name || "Turma",
   schoolId: row.school_id || classItem?.schoolId || "",
@@ -3738,6 +3825,7 @@ const saveTeacherPlanningToSupabase = async (formData) => {
   const day = String(formData.get("day") || "segunda");
   const existingId = String(formData.get("id") || "");
   const { classItem, teacherId, schoolId } = getTeacherPlanningClassContext(String(formData.get("classId") || ""));
+  const startTime = String(formData.get("startTime") || "").trim();
   const payload = {
     teacher_id: teacherId,
     class_id: classItem.id,
@@ -3746,11 +3834,13 @@ const saveTeacherPlanningToSupabase = async (formData) => {
     weekday: day,
     title: String(formData.get("title") || "").trim(),
     resource_type: normalizeTeacherPlanningResourceType(String(formData.get("resourceType") || "proposta-livre")),
-    resource_reference: {},
+    resource_reference: startTime ? { start_time: startTime } : {},
     teacher_notes: String(formData.get("note") || "").trim() || null,
     status: "draft",
   };
   if (!payload.title) throw new Error("Informe um titulo para a proposta.");
+  const dayItems = (teacherPlanningState.plans || []).filter((plan) => plan.classId === classItem.id && plan.day === day && plan.id !== existingId && plan.status !== "archived");
+  if (dayItems.length >= 5) throw new Error("Cada dia aceita ate 5 itens nesta versao.");
   const client = createSupabaseRestClient();
   if (existingId) {
     await client.request("teacher_plans", `?id=${supabaseEq(existingId)}`, {
@@ -3766,6 +3856,64 @@ const saveTeacherPlanningToSupabase = async (formData) => {
       requireAuthenticated: true,
       allowedRoles: ["professor", "admin", "gestor", "coordenador"],
     });
+  }
+  await ensureTeacherPlanningWeek({ force: true });
+};
+
+const publishTeacherPlanPayload = async (plan) => {
+  const { classItem, teacherId, schoolId } = getTeacherPlanningClassContext(plan.classId);
+  const publication = teacherPlanningState.publicationsByPlanId?.[plan.id] || null;
+  const payload = {
+    class_id: classItem.id,
+    school_id: schoolId,
+    teacher_id: teacherId,
+    plan_id: plan.id,
+    entry_date: plan.planDate,
+    start_time: plan.startTime || null,
+    end_time: null,
+    title: plan.title,
+    description: plan.note || null,
+    entry_type: normalizeTeacherPlanningCalendarType(plan.resourceType),
+    status: "published",
+  };
+  const client = createSupabaseRestClient();
+  if (publication?.id) {
+    await client.request("class_calendar_entries", `?id=${supabaseEq(publication.id)}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+      requireAuthenticated: true,
+      allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+    });
+  } else {
+    await client.request("class_calendar_entries", "", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      requireAuthenticated: true,
+      allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+    });
+  }
+  await client.request("teacher_plans", `?id=${supabaseEq(plan.id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "published" }),
+    requireAuthenticated: true,
+    allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+  });
+};
+
+const publishTeacherClassWeekToSupabase = async (classId = "") => {
+  await ensureTeacherPlanningWeek({ force: true });
+  const weekDates = getTeacherPlanningWeekDates();
+  const plans = (teacherPlanningState.plans || []).filter(
+    (plan) => plan.classId === classId && plan.status !== "archived" && Object.values(weekDates).includes(plan.planDate)
+  );
+  if (!plans.length) throw new Error("Inclua ao menos um item antes de publicar a semana.");
+  teacherPlanningDays.forEach(([day]) => {
+    if (plans.filter((plan) => plan.day === day).length > 5) {
+      throw new Error("Cada dia aceita ate 5 itens nesta versao.");
+    }
+  });
+  for (const plan of plans) {
+    await publishTeacherPlanPayload(plan);
   }
   await ensureTeacherPlanningWeek({ force: true });
 };
@@ -3860,19 +4008,21 @@ const formatTeacherClassMessageDate = (isoDate = "") => {
 
 const mapTeacherClassMessage = (row = {}) => {
   const classItem = getTeacherInstitutionalClasses().find((item) => item.id === row.class_id) || {};
+  const student = row.student_id ? teacherInstitutionalState.studentsById?.[row.student_id] || null : null;
   return {
     id: row.id || "",
     classId: row.class_id || "",
     className: classItem.name || "Turma",
     title: row.title || "Recado",
-    text: row.description || "",
-    entry_date: row.entry_date || "",
-    start_time: row.start_time || "",
-    end_time: row.end_time || "",
-    entry_type: row.entry_type || "lembrete",
+    text: row.body || row.description || "",
+    audienceType: row.audience_type || "class",
+    studentId: row.student_id || "",
+    studentName: student?.name || "",
+    communication_date: row.communication_date || "",
     created_at: row.created_at || "",
-    date: formatTeacherClassMessageDate(row.entry_date || row.created_at),
+    date: formatTeacherClassMessageDate(row.communication_date || row.created_at),
     status: row.status || "published",
+    authorRole: row.author_role || "professor",
   };
 };
 
@@ -3900,10 +4050,9 @@ const ensureTeacherClassMessages = async ({ force = false, weekStartIso = "", cl
         return teacherClassMessagesState;
       }
       const client = createSupabaseRestClient();
-      const weekDates = getFamilyWeekDates(teacherClassMessagesState.weekStartIso);
       const rows = await client.request(
-        "class_calendar_entries",
-        `?select=id,teacher_id,class_id,school_id,title,description,entry_date,start_time,end_time,entry_type,status,created_at&status=eq.published&entry_type=eq.lembrete&class_id=${supabaseIn(classIds)}&entry_date=gte.${encodeURIComponent(weekDates.seg)}&entry_date=lte.${encodeURIComponent(weekDates.sex)}&order=entry_date.asc&order=created_at.asc`,
+        "communications",
+        `?select=id,school_id,author_profile_id,author_role,communication_type,audience_type,class_id,student_id,title,body,communication_date,status,created_at,updated_at&communication_type=eq.message&class_id=${supabaseIn(classIds)}&order=created_at.desc`,
         { requireAuthenticated: true, allowedRoles: ["professor", "admin", "gestor", "coordenador"] }
       );
       teacherClassMessagesState.messages = (rows || []).map(mapTeacherClassMessage);
@@ -3923,23 +4072,55 @@ const ensureTeacherClassMessages = async ({ force = false, weekStartIso = "", cl
 
 const sendTeacherClassMessage = async (formData) => {
   await ensureTeacherInstitutionalData();
-  const { classItem, teacherId, schoolId } = getTeacherMessageContextByClass(String(formData.get("classId") || ""));
-  const payload = {
-    teacher_id: teacherId,
-    class_id: classItem.id,
-    school_id: schoolId,
-    entry_date: String(formData.get("entryDate") || getTeacherPlanningWeekStart()),
-    entry_type: "lembrete",
-    title: String(formData.get("title") || "").trim(),
-    description: String(formData.get("message") || "").trim(),
-    status: "published",
-  };
-  if (!payload.title) throw new Error("Informe o titulo do recado.");
-  if (!payload.description) throw new Error("Escreva o recado para a turma.");
+  const { classItem, schoolId } = getTeacherMessageContextByClass(String(formData.get("classId") || ""));
+  const audienceType = String(formData.get("audienceType") || "class");
+  const studentId = String(formData.get("studentId") || "");
+  const title = String(formData.get("title") || "").trim();
+  const body = String(formData.get("message") || "").trim();
+  if (!title) throw new Error("Informe o titulo do recado.");
+  if (!body) throw new Error("Escreva o recado.");
+  if (!["class", "student"].includes(audienceType)) throw new Error("Destino do recado invalido.");
+  if (audienceType === "student" && !studentId) throw new Error("Selecione o aluno para o recado individual.");
+  if (audienceType === "student" && !getTeacherInstitutionalStudents(classItem.id).some((student) => student.id === studentId)) {
+    throw new Error("Aluno fora da turma autorizada.");
+  }
   const client = createSupabaseRestClient();
-  await client.request("class_calendar_entries", "", {
+  await client.request("rpc/publish_communication", "", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      p_school_id: schoolId,
+      p_communication_type: "message",
+      p_audience_type: audienceType,
+      p_title: title,
+      p_body: body,
+      p_class_id: classItem.id,
+      p_student_id: audienceType === "student" ? studentId : null,
+      p_status: "published",
+      p_communication_date: attendanceDefaultDate(),
+      p_expires_at: null,
+    }),
+    requireAuthenticated: true,
+    allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+  });
+  await ensureTeacherClassMessages({ force: true });
+};
+
+const setTeacherClassMessageStatus = async (communicationId = "", toStatus = "") => {
+  const client = createSupabaseRestClient();
+  await client.request("communications", `?id=${supabaseEq(communicationId)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: toStatus }),
+    requireAuthenticated: true,
+    allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+  });
+  await ensureTeacherClassMessages({ force: true });
+};
+
+const deleteTeacherClassMessage = async (communicationId = "") => {
+  const client = createSupabaseRestClient();
+  await client.request("communications", `?id=${supabaseEq(communicationId)}`, {
+    method: "DELETE",
+    prefer: "return=minimal",
     requireAuthenticated: true,
     allowedRoles: ["professor", "admin", "gestor", "coordenador"],
   });
@@ -4200,8 +4381,7 @@ const renderTeacherActivitiesView = () => {
       ].join("")
     : `
             <button type="button" data-teacher-open-url="atividades.html">DESTINATARIO NAO DEFINIDO</button>
-            <button type="button" data-teacher-open-url="atividades.html?target=class&class=${encodeURIComponent(pilotProfiles.class.id)}">INFANTIL 4 A</button>
-            <button type="button" data-teacher-open-url="atividades.html?target=student&student=${encodeURIComponent(pilotProfiles.student.id)}&class=${encodeURIComponent(pilotProfiles.class.id)}">PEDRO</button>
+            <button type="button" disabled>AGUARDANDO TURMAS REAIS</button>
           `;
   return `
     <section class="tw-board tw-activities-shell">
@@ -4361,7 +4541,7 @@ const renderTeacherLibraryView = () => {
 
 const renderTeacherInstitutionalStatus = (title = "CARREGANDO DADOS INSTITUCIONAIS.") => {
   if (teacherInstitutionalState.status === "error") {
-    return renderTeacherEmptyState("NAO FOI POSSIVEL CARREGAR O SUPABASE INSTITUCIONAL.", teacherInstitutionalState.error || "Entre novamente e tente acessar a Area do Professor.");
+    return renderTeacherEmptyState("NAO FOI POSSIVEL IDENTIFICAR O VINCULO INSTITUCIONAL DESTE PROFESSOR.", teacherInstitutionalState.error || "Entre novamente e tente acessar a Area do Professor.");
   }
   if (teacherInstitutionalState.status === "empty") {
     return renderTeacherEmptyState("NENHUMA TURMA VINCULADA AO PROFESSOR.", "A vinculacao institucional precisa existir em class_teacher_memberships para liberar esta area.");
@@ -4377,7 +4557,10 @@ const renderClassCard = (classItem) => `
     </header>
     <dl class="tw-card-meta">
       <div><dt>Escola</dt><dd>${printableEscape(classItem.schoolName || "Nao informada")}</dd></div>
+      <div><dt>Ano letivo</dt><dd>${printableEscape(classItem.schoolYear || "Nao informado")}</dd></div>
+      <div><dt>Turno</dt><dd>${printableEscape(classItem.shift || "Nao informado")}</dd></div>
       <div><dt>Alunos</dt><dd>${printableEscape(classItem.students || 0)}</dd></div>
+      <div><dt>Vinculo</dt><dd>${printableEscape(normalizeInstitutionalStatus(classItem.membershipRole || "professor"))}</dd></div>
       <div><dt>Status</dt><dd>${printableEscape(classItem.status || "Ativa")}</dd></div>
     </dl>
     <a class="tw-primary-link" href="${getTeacherClassHref(classItem)}">ABRIR TURMA</a>
@@ -4387,7 +4570,10 @@ const renderClassCard = (classItem) => `
 const renderStudentCard = (student) => `
   <article class="tw-student-card" data-teacher-search-item data-student-id="${printableEscape(student.id)}">
     ${student.avatar ? `<img class="tw-student-avatar" src="${printableEscape(student.avatar)}" alt="" loading="lazy" />` : `<span>${student.name.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span>`}
-    <div><strong>${printableEscape(student.name)}</strong><small>Aluno da turma ${printableEscape(student.className)}</small></div>
+    <div>
+      <strong>${printableEscape(student.name)}</strong>
+      <small>${printableEscape(student.className)} · Matricula ${printableEscape(student.enrollmentStatus || student.status || "Ativa")}</small>
+    </div>
     <a class="tw-primary-link" href="${getTeacherStudentHref(student)}">ABRIR ACOMPANHAMENTO</a>
   </article>
 `;
@@ -5654,7 +5840,7 @@ const renderTeacherHomeClassFeature = () => {
   if (teacherInstitutionalState.status !== "ready" || !classItem) {
     return `
       <section class="teacher-class-feature" data-teacher-search-item>
-        ${premiumIcon("users")}
+          ${premiumIcon("users")}
         <div>
           <span>Minhas Turmas</span>
           <strong>Dados institucionais</strong>
@@ -5682,12 +5868,9 @@ const renderTeacherPremiumHome = () => `
     <main class="teacher-premium-main">
       <section class="teacher-premium-hero">
         <div>
-          <span>Bom dia,</span>
-          <h1>PROFESSORA ${getTeacherFirstName().toUpperCase()}</h1>
-          <p>Organize suas turmas, planeje experiencias e acompanhe as producoes dos alunos em um unico workspace.</p>
-        </div>
-        <div class="teacher-hero-art" aria-hidden="true">
-          ${teacherInstitutionalState.status === "ready" ? "" : `<img src="assets/professor/professor-dashboard.png" alt="" loading="eager" onerror="this.hidden=true" />`}
+          <span>Area do Professor</span>
+          <h1>${printableEscape(getTeacherDisplayName())}</h1>
+          <p>${teacherInstitutionalState.status === "ready" ? `${printableEscape(getTeacherCurrentSchoolName())} · ${getTeacherInstitutionalClasses().length} turma${getTeacherInstitutionalClasses().length === 1 ? "" : "s"} · ${getTeacherInstitutionalStudents().length} aluno${getTeacherInstitutionalStudents().length === 1 ? "" : "s"} vinculados.` : "Identificando vinculo institucional do professor autenticado."}</p>
         </div>
       </section>
 
@@ -5697,10 +5880,10 @@ const renderTeacherPremiumHome = () => `
         <h2>Areas principais</h2>
         <div class="teacher-metric-grid">
           ${[
-            { title: "Minhas Turmas", text: "ABRIR TURMAS", icon: "users", tone: "green", view: "turmas" },
-            { title: "Planejamento", text: "ORGANIZAR SEMANA", icon: "calendar", tone: "orange", view: "planejamentos" },
-            { title: "Acompanhamento", text: "VER ALUNOS E PRODUCOES", icon: "portfolio", tone: "purple", view: "acompanhamento" },
-            { title: "Formacao", text: "ABRIR UNIVERSIDADE", icon: "cap", tone: "red", view: "formacao" },
+            { title: "Minhas Turmas", text: `${getTeacherInstitutionalClasses().length} turma${getTeacherInstitutionalClasses().length === 1 ? "" : "s"}`, icon: "users", tone: "green", view: "turmas" },
+            { title: "Alunos vinculados", text: `${getTeacherInstitutionalStudents().length} aluno${getTeacherInstitutionalStudents().length === 1 ? "" : "s"}`, icon: "aluno", tone: "blue", view: "turmas" },
+            { title: "Planejamento", text: "AINDA NAO DISPONIVEL", icon: "calendar", tone: "orange", view: "planejamentos" },
+            { title: "Acompanhamento", text: "AINDA NAO DISPONIVEL", icon: "portfolio", tone: "purple", view: "acompanhamento" },
           ].map(renderTeacherMetricCard).join("")}
         </div>
       </section>
@@ -5734,6 +5917,302 @@ const renderTeacherPilotHome = () => `
   </section>
 `;
 
+const renderTeacherClassTabs = (classItem, activeTab = "alunos") => {
+  const tabs = [
+    ["alunos", "Alunos"],
+    ["frequencia", "Frequencia"],
+    ["semana", "Minha Semana"],
+    ["recados", "Recados"],
+    ["recomendacoes", "Recomendacoes"],
+    ["desafio", "Desafio da Semana"],
+  ];
+  const activeTabs = new Set(["alunos", "frequencia", "semana", "recados"]);
+  return `
+    <nav class="tw-class-tabs" aria-label="Espaco da turma">
+      ${tabs
+        .map(([key, label]) =>
+          activeTabs.has(key)
+            ? `<button type="button" class="${key === activeTab ? "is-active" : ""}" data-teacher-class-tab="${key}" data-class-id="${classItem?.id || ""}">${label}</button>`
+            : `<span class="is-prepared">${label}</span>`
+        )
+        .join("")}
+    </nav>
+  `;
+};
+
+const renderTeacherClassWeekItem = (plan) => {
+  const publication = plan.publication || {};
+  const status = plan.published ? "Publicado" : "Rascunho";
+  return `
+    <article class="tw-week-item ${plan.published ? "is-published" : ""}" data-teacher-search-item>
+      <div>
+        <span>${printableEscape(plan.startTime ? plan.startTime.slice(0, 5) : "Sem horario")} · ${printableEscape(status)}</span>
+        <strong>${printableEscape(plan.title)}</strong>
+        ${plan.note ? `<p>${printableEscape(plan.note)}</p>` : ""}
+        ${plan.published ? `<small>Publicado para a turma em ${printableEscape(formatTeacherPlanningDate(publication.entry_date || plan.planDate))}</small>` : `<small>Visivel apenas para a professora ate publicar.</small>`}
+      </div>
+      <div class="tw-week-item-actions">
+        <button type="button" data-planning-edit="${printableEscape(plan.id)}">Editar</button>
+        <button type="button" data-planning-remove="${printableEscape(plan.id)}">Remover</button>
+      </div>
+    </article>
+  `;
+};
+
+const renderTeacherClassWeekDay = ([dayKey, dayLabel], classPlans = [], canPlan = false) => {
+  const weekDates = getTeacherPlanningWeekDates();
+  const dayPlans = classPlans
+    .filter((plan) => plan.day === dayKey && (!plan.planDate || plan.planDate === weekDates[dayKey]))
+    .sort((a, b) => String(a.startTime || "99:99").localeCompare(String(b.startTime || "99:99")) || String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+  const reachedLimit = dayPlans.length >= 5;
+  return `
+    <article class="tw-week-day">
+      <header>
+        <div>
+          <span>${printableEscape(formatTeacherPlanningDate(weekDates[dayKey]))}</span>
+          <strong>${printableEscape(dayLabel)}</strong>
+        </div>
+        <small>${dayPlans.length}/5</small>
+      </header>
+      ${dayPlans.length ? `<div class="tw-week-list">${dayPlans.map(renderTeacherClassWeekItem).join("")}</div>` : renderTeacherEmptyState("Nenhum item planejado para este dia.")}
+      <button type="button" class="tw-planning-add-day" data-planning-add="${printableEscape(dayKey)}" ${canPlan && !reachedLimit ? "" : "disabled"}>${reachedLimit ? "Limite do dia" : "Adicionar item"}</button>
+    </article>
+  `;
+};
+
+const renderTeacherClassWeekPanel = (classItem) => {
+  const weekStartIso = teacherPlanningState.weekStartIso || getTeacherPlanningWeekStart();
+  const weekDates = getTeacherPlanningWeekDates(weekStartIso);
+  const classPlans = (teacherPlanningState.plans || []).filter(
+    (plan) => plan.classId === classItem.id && plan.status !== "archived" && Object.values(weekDates).includes(plan.planDate)
+  );
+  const canPlan = teacherInstitutionalState.status === "ready" && teacherPlanningState.status !== "error";
+  return `
+    <section class="tw-board tw-class-week-shell">
+      <div class="tw-planning-heading">
+        <div>
+          <span>Minha Semana</span>
+          <h2>Minha Semana - ${printableEscape(classItem.name)}</h2>
+          <p>Rotina coletiva da turma. Rascunhos ficam internos ate a publicacao da semana.</p>
+        </div>
+        <div class="tw-planning-toolbar">
+          <button type="button" data-planning-week-move="-1">SEMANA ANTERIOR</button>
+          <strong>${printableEscape(getTeacherPlanningWeekLabel())}</strong>
+          <button type="button" data-planning-week-today>HOJE</button>
+          <button type="button" data-planning-week-move="1">PROXIMA SEMANA</button>
+          <button type="button" data-class-week-publish="${printableEscape(classItem.id)}" ${classPlans.length ? "" : "disabled"}>${classPlans.some((plan) => plan.published) ? "ATUALIZAR PUBLICACAO" : "PUBLICAR SEMANA"}</button>
+        </div>
+      </div>
+      ${
+        teacherPlanningState.status === "loading"
+          ? renderTeacherInstitutionalStatus("CARREGANDO MINHA SEMANA.")
+          : teacherPlanningState.status === "error"
+            ? renderTeacherEmptyState("NAO FOI POSSIVEL CARREGAR MINHA SEMANA.", teacherPlanningState.error)
+            : ""
+      }
+      <div class="tw-class-week-grid">
+        ${teacherPlanningDays.map((day) => renderTeacherClassWeekDay(day, classPlans, canPlan)).join("")}
+      </div>
+      ${renderTeacherClassWeekForm(classItem)}
+    </section>
+  `;
+};
+
+const renderTeacherClassWeekForm = (classItem) => `
+  <section class="tw-planning-form-panel" data-planning-panel hidden>
+    <div class="tw-section-head">
+      <h2>Adicionar item da semana</h2>
+      <button type="button" data-planning-cancel>Fechar</button>
+    </div>
+    <form class="tw-planning-form" data-teacher-planning-form>
+      <input type="hidden" name="id" />
+      <input type="hidden" name="classId" value="${printableEscape(classItem.id)}" />
+      <label>
+        <span>Dia</span>
+        <select name="day" required>
+          ${teacherPlanningDays.map(([key, label]) => `<option value="${key}">${label}</option>`).join("")}
+        </select>
+      </label>
+      <label>
+        <span>Horario opcional</span>
+        <input name="startTime" type="time" />
+      </label>
+      <label>
+        <span>Titulo / atividade</span>
+        <input name="title" required maxlength="90" placeholder="Ex.: Biblioteca" />
+      </label>
+      <label>
+        <span>Tipo</span>
+        <select name="resourceType" required>
+          ${teacherPlanningResourceTypes.map(([key, label]) => `<option value="${key}">${label}</option>`).join("")}
+        </select>
+      </label>
+      <label class="tw-planning-form-note">
+        <span>Observacao curta</span>
+        <textarea name="note" rows="3" maxlength="280" placeholder="Opcional. Ex.: Trazer garrafinha."></textarea>
+      </label>
+      <div class="tw-planning-form-actions">
+        <button type="submit">SALVAR RASCUNHO</button>
+        <button type="button" data-planning-cancel>Cancelar</button>
+      </div>
+    </form>
+  </section>
+`;
+
+const renderTeacherClassMessageCard = (message) => {
+  const destination =
+    message.audienceType === "student"
+      ? `Aluno/Familia: ${message.studentName || "Aluno da turma"}`
+      : `Toda a turma: ${message.className}`;
+  const statusLabel = communicationStatusLabel(message.status);
+  const primaryAction =
+    message.status === "published"
+      ? `<button type="button" data-teacher-message-status="${printableEscape(message.id)}" data-to-status="archived">Retirar da publicacao</button>`
+      : `<button type="button" data-teacher-message-status="${printableEscape(message.id)}" data-to-status="published" data-destination="${printableEscape(destination)}">Publicar novamente</button>`;
+  return `
+    <article class="tw-message-card ${message.status === "archived" ? "is-archived" : ""}" data-teacher-search-item>
+      <div class="tw-message-main">
+        <span>${printableEscape(destination)} · ${printableEscape(statusLabel)} · ${printableEscape(message.date)}</span>
+        <strong>${printableEscape(message.title)}</strong>
+        <p>${printableEscape(message.text)}</p>
+        <small>Origem: Professora</small>
+      </div>
+      <div class="tw-message-actions">
+        <button type="button" data-teacher-message-view="${printableEscape(message.id)}">Visualizar</button>
+        ${primaryAction}
+        <button type="button" data-teacher-message-delete="${printableEscape(message.id)}">Excluir</button>
+      </div>
+    </article>
+  `;
+};
+
+const renderTeacherClassMessagesPanel = (classItem, students = []) => {
+  const messages = (teacherClassMessagesState.messages || []).filter((message) => message.classId === classItem.id);
+  return `
+    <section class="tw-board tw-class-messages-shell">
+      <div class="tw-planning-heading">
+        <div>
+          <span>Recados</span>
+          <h2>Recados - ${printableEscape(classItem.name)}</h2>
+          <p>Comunicacao pedagogica para toda a turma ou para aluno/familia da propria turma.</p>
+        </div>
+      </div>
+      <form class="tw-planning-form tw-message-form" data-teacher-family-message-form>
+        <input type="hidden" name="classId" value="${printableEscape(classItem.id)}" />
+        <label>
+          <span>Destino</span>
+          <select name="audienceType" data-teacher-message-audience required>
+            <option value="class">Toda a turma</option>
+            <option value="student">Aluno / Familia</option>
+          </select>
+        </label>
+        <label data-teacher-message-student-wrap hidden>
+          <span>Aluno</span>
+          <select name="studentId">
+            <option value="">Selecione</option>
+            ${students.map((student) => `<option value="${printableEscape(student.id)}">${printableEscape(student.name)}</option>`).join("")}
+          </select>
+        </label>
+        <label>
+          <span>Titulo</span>
+          <input name="title" required maxlength="90" placeholder="Ex.: TESTE RECADO TURMA FASE 03" />
+        </label>
+        <label class="tw-planning-form-note">
+          <span>Mensagem</span>
+          <textarea name="message" rows="4" required maxlength="900" placeholder="Escreva o recado pedagogico."></textarea>
+        </label>
+        <div class="tw-planning-form-actions">
+          <button type="submit">PUBLICAR RECADO</button>
+        </div>
+      </form>
+      <div class="tw-section-head">
+        <h2>Recados publicados</h2>
+        <span>${teacherClassMessagesState.status === "ready" ? `${messages.length} registro${messages.length === 1 ? "" : "s"}` : "Supabase"}</span>
+      </div>
+      ${
+        teacherClassMessagesState.status === "loading"
+          ? renderTeacherInstitutionalStatus("CARREGANDO RECADOS.")
+          : teacherClassMessagesState.status === "error"
+            ? renderTeacherEmptyState("NAO FOI POSSIVEL CARREGAR OS RECADOS.", teacherClassMessagesState.error)
+            : messages.length
+              ? `<div class="tw-message-list">${messages.map(renderTeacherClassMessageCard).join("")}</div>`
+              : renderTeacherEmptyState("NENHUM RECADO PUBLICADO AINDA.", "Publique para toda a turma ou para um aluno/familia desta turma.")
+      }
+    </section>
+  `;
+};
+
+const renderTeacherPreparedClassPanel = (title, text) => `
+  <section class="tw-board">
+    <div class="tw-section-head"><h2>${printableEscape(title)}</h2></div>
+    ${renderTeacherEmptyState(printableEscape(text))}
+  </section>
+`;
+
+const renderTeacherAttendancePanel = (classItem, students = []) => {
+  const date = getTeacherAttendanceDate();
+  const isLoading = teacherAttendanceState.status === "loading" && teacherAttendanceState.key === getTeacherAttendanceKey(classItem?.id, date);
+  const isError = teacherAttendanceState.status === "error" && teacherAttendanceState.key === getTeacherAttendanceKey(classItem?.id, date);
+  const rows = students
+    .map((student) => {
+      const record = getTeacherAttendanceRecordByStudent(student.id);
+      const currentStatus = record?.status || "present";
+      const notes = record?.notes || "";
+      return `
+        <article class="tw-attendance-row" data-student-id="${printableEscape(student.id)}">
+          <div>
+            <strong>${printableEscape(student.name)}</strong>
+            <small>${printableEscape(student.enrollmentStatus || "Matricula ativa")}</small>
+          </div>
+          <fieldset>
+            <legend>Status de ${printableEscape(student.name)}</legend>
+            ${teacherAttendanceStatusOptions
+              .map(
+                ([value, label]) => `
+                  <label class="tw-attendance-choice ${currentStatus === value ? "is-selected" : ""}">
+                    <input type="radio" name="attendance_${printableEscape(student.id)}" value="${value}" ${currentStatus === value ? "checked" : ""} />
+                    <span>${label}</span>
+                  </label>
+                `
+              )
+              .join("")}
+          </fieldset>
+          <label class="tw-attendance-note">
+            <span>Observacao</span>
+            <input name="notes_${printableEscape(student.id)}" type="text" value="${printableEscape(notes)}" placeholder="Opcional" />
+          </label>
+        </article>
+      `;
+    })
+    .join("");
+  return `
+    <section class="tw-board tw-attendance-board">
+      <div class="tw-section-head">
+        <div>
+          <h2>Frequencia - ${printableEscape(classItem?.name || "Turma")}</h2>
+          <span>${students.length} alunos ativos</span>
+        </div>
+      </div>
+      <form class="tw-attendance-form" data-teacher-attendance-form data-class-id="${printableEscape(classItem?.id || "")}">
+        <div class="tw-attendance-toolbar">
+          <label>
+            <span>Data da chamada</span>
+            <input type="date" name="attendanceDate" value="${printableEscape(date)}" data-teacher-attendance-date />
+          </label>
+          <button type="button" data-attendance-mark-all>MARCAR TODOS COMO PRESENTES</button>
+        </div>
+        ${isLoading ? renderTeacherInstitutionalStatus("CARREGANDO FREQUENCIA DO DIA.") : ""}
+        ${isError ? renderTeacherInstitutionalStatus(`ERRO AO CARREGAR FREQUENCIA: ${teacherAttendanceState.error}`) : ""}
+        ${students.length ? `<div class="tw-attendance-list">${rows}</div>` : renderTeacherEmptyState("NENHUM ALUNO ATIVO NESTA TURMA.")}
+        <div class="tw-attendance-footer">
+          <p data-attendance-feedback>${printableEscape(teacherAttendanceState.message || "A frequencia usa somente alunos ativos desta turma.")}</p>
+          <button type="submit" ${students.length ? "" : "disabled"}>SALVAR FREQUENCIA</button>
+        </div>
+      </form>
+    </section>
+  `;
+};
+
 const renderTeacherClassPage = () => `
   <section class="teacher-workspace teacher-pilot" data-teacher-workspace>
     ${renderTeacherSidebar("turmas")}
@@ -5741,9 +6220,26 @@ const renderTeacherClassPage = () => `
       ${renderTeacherTopbar()}
       ${(() => {
         const classId = getPrintableParams().get("id") || getTeacherInstitutionalClasses()[0]?.id || "";
-        const classItem = getTeacherInstitutionalClasses().find((item) => item.id === classId) || getTeacherInstitutionalClasses()[0];
+        const classItem = classId ? getTeacherInstitutionalClasses().find((item) => item.id === classId) : getTeacherInstitutionalClasses()[0];
         const students = classItem ? getTeacherInstitutionalStudents(classItem.id) : [];
+        const activeTab = getTeacherClassTab();
         const isReady = teacherInstitutionalState.status === "ready" && classItem;
+        const panelHtml = (() => {
+          if (!isReady) {
+            return `<section class="tw-board">${renderTeacherInstitutionalStatus(teacherInstitutionalState.status === "ready" ? "TURMA NAO ENCONTRADA NAS SUAS TURMAS AUTORIZADAS." : "CARREGANDO ALUNOS DA TURMA.")}</section>`;
+          }
+          if (activeTab === "frequencia") return renderTeacherAttendancePanel(classItem, students);
+          if (activeTab === "semana") return renderTeacherClassWeekPanel(classItem);
+          if (activeTab === "recados") return renderTeacherClassMessagesPanel(classItem, students);
+          if (activeTab === "recomendacoes") return renderTeacherPreparedClassPanel("Recomendacoes", "Espaco preparado para recomendacoes futuras, sem dados ficticios.");
+          if (activeTab === "desafio") return renderTeacherPreparedClassPanel("Desafio da Semana", "Espaco preparado para publicacao futura de desafios, sem Banco de Propostas nesta etapa.");
+          return `
+            <section class="tw-board">
+              <div class="tw-section-head"><h2>Alunos</h2><span>${students.length} vinculos ativos</span></div>
+              ${renderTeacherStudentsList(classItem.id)}
+            </section>
+          `;
+        })();
         return `
       ${renderTeacherBreadcrumb([
         { label: "Minhas Turmas", href: "professor.html?view=turmas" },
@@ -5761,10 +6257,8 @@ const renderTeacherClassPage = () => `
         </div>
       </section>
       <main class="tw-content">
-        <section class="tw-board">
-          <div class="tw-section-head"><h2>Alunos</h2><span>${isReady ? `${students.length} vinculos ativos` : "Supabase"}</span></div>
-          ${isReady ? renderTeacherStudentsList(classItem.id) : renderTeacherInstitutionalStatus("CARREGANDO ALUNOS DA TURMA.")}
-        </section>
+        ${isReady ? renderTeacherClassTabs(classItem, activeTab) : ""}
+        ${panelHtml}
       </main>
         `;
       })()}
@@ -12240,32 +12734,55 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
   teacherInstitutionalState.promise = (async () => {
     try {
       const client = createSupabaseRestClient();
-      const context = await client.getContext({ requireAuthenticated: true, allowedRoles: ["professor", "admin", "gestor", "coordenador"] });
+      const context = await client.getContext({ requireAuthenticated: true, allowedRoles: teacherAllowedRoles });
       const profileRows = await client.request(
         "profiles",
         `?select=id,display_name,platform_role,status&id=${supabaseEq(context.userId)}&limit=1`,
-        { requireAuthenticated: true, allowedRoles: ["professor", "admin", "gestor", "coordenador"] }
+        { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
       );
       const profile = Array.isArray(profileRows) ? profileRows[0] : null;
       if (!profile?.id) {
         throw new Error("Profile institucional nao encontrado para a sessao autenticada.");
       }
 
+      const teacherRows = await client.request(
+        "teachers",
+        `?select=id,school_id,profile_id,disciplina,status&profile_id=${supabaseEq(profile.id)}&status=eq.active&limit=1`,
+        { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
+      );
+      const teacher = Array.isArray(teacherRows) ? teacherRows[0] : null;
+      if (!teacher?.id || !teacher?.school_id) {
+        throw new Error("Nao foi possivel identificar o vinculo institucional deste professor.");
+      }
+
+      const schoolMembershipRows = await client.request(
+        "school_memberships",
+        `?select=id,school_id,profile_id,membership_role,status&profile_id=${supabaseEq(profile.id)}&school_id=${supabaseEq(teacher.school_id)}&status=eq.active&limit=1`,
+        { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
+      );
+      const schoolMembership = Array.isArray(schoolMembershipRows) ? schoolMembershipRows[0] : null;
+      if (!schoolMembership?.id) {
+        throw new Error("School membership ativo nao encontrado para este professor.");
+      }
+
       const membershipRows = await client.request(
         "class_teacher_memberships",
-        "?select=id,class_id,teacher_id,role,status&status=eq.active",
-        { requireAuthenticated: true, allowedRoles: ["professor", "admin", "gestor", "coordenador"] }
+        `?select=id,class_id,teacher_id,role,status&teacher_id=${supabaseEq(teacher.id)}&status=eq.active`,
+        { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
       );
       const teacherByClass = Object.fromEntries((membershipRows || []).filter((item) => item.class_id && item.teacher_id).map((item) => [item.class_id, item.teacher_id]));
-      const teacherId = (membershipRows || []).find((item) => item.teacher_id)?.teacher_id || "";
+      const teacherId = teacher.id;
       const classIds = [...new Set((membershipRows || []).map((item) => item.class_id).filter(Boolean))];
       if (!classIds.length) {
         teacherInstitutionalState.profile = {
           id: profile.id,
-          displayName: profile.display_name || getTeacherDisplayName(),
+          displayName: profile.display_name || "Professor",
           role: profile.platform_role || context.role,
           teacherId,
+          schoolId: teacher.school_id,
         };
+        teacherInstitutionalState.teacher = teacher;
+        teacherInstitutionalState.schoolMembership = schoolMembership;
         teacherInstitutionalState.classes = [];
         teacherInstitutionalState.memberships = membershipRows || [];
         teacherInstitutionalState.teacherByClass = teacherByClass;
@@ -12277,20 +12794,20 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
 
       const classRows = await client.request(
         "classes",
-        `?select=id,nome,school_id,status,turno,school_year&id=${supabaseIn(classIds)}`,
-        { requireAuthenticated: true, allowedRoles: ["professor", "admin", "gestor", "coordenador"] }
+        `?select=id,nome,school_id,status,turno,school_year&id=${supabaseIn(classIds)}&school_id=${supabaseEq(teacher.school_id)}`,
+        { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
       );
       const schoolIds = [...new Set((classRows || []).map((item) => item.school_id).filter(Boolean))];
       const schoolRows = schoolIds.length
         ? await client.request("schools", `?select=id,nome,status&id=${supabaseIn(schoolIds)}`, {
             requireAuthenticated: true,
-            allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+            allowedRoles: teacherAllowedRoles,
           })
         : [];
       const enrollmentRows = await client.request(
         "enrollments",
-        `?select=id,student_id,class_id,school_id,status,students(id,nome,school_id,class_id,status)&status=eq.active&class_id=${supabaseIn(classIds)}`,
-        { requireAuthenticated: true, allowedRoles: ["professor", "admin", "gestor", "coordenador"] }
+        `?select=id,student_id,class_id,school_id,status,students(id,nome,school_id,class_id,status)&status=eq.active&class_id=${supabaseIn(classIds)}&school_id=${supabaseEq(teacher.school_id)}`,
+        { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
       );
       const schoolById = new Map((schoolRows || []).map((item) => [item.id, item]));
       const rawClassById = new Map((classRows || []).map((item) => [item.id, item]));
@@ -12300,7 +12817,11 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
         const rawStudent = enrollment.students || {};
         if (!rawStudent.id) return;
         const rawClass = rawClassById.get(enrollment.class_id) || { id: enrollment.class_id };
-        const student = mapInstitutionalStudent({ ...rawStudent, class_id: enrollment.class_id, school_id: enrollment.school_id }, rawClass);
+        const student = {
+          ...mapInstitutionalStudent({ ...rawStudent, class_id: enrollment.class_id, school_id: enrollment.school_id }, rawClass),
+          enrollmentId: enrollment.id || "",
+          enrollmentStatus: normalizeInstitutionalStatus(enrollment.status),
+        };
         studentsByClass[enrollment.class_id] = studentsByClass[enrollment.class_id] || [];
         studentsByClass[enrollment.class_id].push(student);
         studentsById[student.id] = student;
@@ -12310,15 +12831,19 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
         .map((classItem) => ({
           ...mapInstitutionalClass(classItem, schoolById.get(classItem.school_id), studentsByClass[classItem.id]?.length || 0),
           teacherId: teacherByClass[classItem.id] || teacherId,
+          membershipRole: (membershipRows || []).find((item) => item.class_id === classItem.id)?.role || "professor",
         }))
         .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 
       teacherInstitutionalState.profile = {
         id: profile.id,
-        displayName: profile.display_name || getTeacherDisplayName(),
+        displayName: profile.display_name || "Professor",
         role: profile.platform_role || context.role,
         teacherId,
+        schoolId: teacher.school_id,
       };
+      teacherInstitutionalState.teacher = teacher;
+      teacherInstitutionalState.schoolMembership = schoolMembership;
       teacherInstitutionalState.classes = classes;
       teacherInstitutionalState.memberships = membershipRows || [];
       teacherInstitutionalState.teacherByClass = teacherByClass;
@@ -12335,6 +12860,8 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
       teacherInstitutionalState.teacherByClass = {};
       teacherInstitutionalState.studentsByClass = {};
       teacherInstitutionalState.studentsById = {};
+      teacherInstitutionalState.teacher = null;
+      teacherInstitutionalState.schoolMembership = null;
       return teacherInstitutionalState;
     } finally {
       teacherInstitutionalState.promise = null;
@@ -15480,6 +16007,11 @@ const initTeacherWorkspace = () => {
   const getPublicationPanel = () => workspace.querySelector("[data-publication-panel]");
   const refreshPlanningView = async ({ force = true } = {}) => {
     await ensureTeacherPlanningWeek({ force });
+    const path = window.location.pathname.split("/").pop() || "";
+    if (path === "professor-turma.html" && getTeacherClassTab() === "semana") {
+      rerenderTeacherClassPage();
+      return;
+    }
     if (activeTeacherView === "planejamentos" && content && document.body.contains(workspace)) {
       content.innerHTML = renderTeacherWorkspaceView("planejamentos");
     }
@@ -15499,6 +16031,7 @@ const initTeacherWorkspace = () => {
     form.elements.title.value = proposal.title || "";
     form.elements.day.value = proposal.day || day;
     form.elements.classId.value = proposal.classId || getTeacherPlanningClasses()[0]?.id || "";
+    if (form.elements.startTime) form.elements.startTime.value = proposal.startTime ? proposal.startTime.slice(0, 5) : "";
     form.elements.resourceType.value = proposal.resourceType || "proposta-livre";
     form.elements.note.value = proposal.note || "";
     form.elements.title.focus();
@@ -15575,10 +16108,69 @@ const initTeacherWorkspace = () => {
     }
   };
 
+  const rerenderTeacherClassPage = () => {
+    if (!document.body.contains(workspace)) return;
+    workspace.outerHTML = renderTeacherClassPage();
+    requestAnimationFrame(() => document.querySelector(".teacher-workspace")?.classList.add("is-mounted"));
+    initTeacherWorkspace();
+  };
+
+  const hydrateTeacherAttendanceIfNeeded = async ({ force = false } = {}) => {
+    const path = window.location.pathname.split("/").pop() || "";
+    if (path !== "professor-turma.html" || getTeacherClassTab() !== "frequencia" || teacherInstitutionalState.status !== "ready") return;
+    const classId = getPrintableParams().get("id") || getTeacherInstitutionalClasses()[0]?.id || "";
+    const date = getTeacherAttendanceDate();
+    if (!classId || !date) return;
+    const before = `${teacherAttendanceState.status}:${teacherAttendanceState.key}:${teacherAttendanceState.records.length}`;
+    await ensureTeacherAttendanceDay({ force, classId, date });
+    const after = `${teacherAttendanceState.status}:${teacherAttendanceState.key}:${teacherAttendanceState.records.length}`;
+    if (before !== after && document.body.contains(workspace)) {
+      rerenderTeacherClassPage();
+    }
+  };
+
   workspace.addEventListener("click", async (event) => {
     const urlButton = event.target.closest("[data-teacher-open-url]");
     if (urlButton) {
       window.location.href = urlButton.dataset.teacherOpenUrl;
+      return;
+    }
+    const classTab = event.target.closest("[data-teacher-class-tab]");
+    if (classTab) {
+      event.preventDefault();
+      const params = new URLSearchParams(window.location.search);
+      params.set("tab", classTab.dataset.teacherClassTab || "alunos");
+      if (classTab.dataset.classId) params.set("id", classTab.dataset.classId);
+      window.location.href = `${window.location.pathname}?${params.toString()}`;
+      return;
+    }
+    const publishClassWeek = event.target.closest("[data-class-week-publish]");
+    if (publishClassWeek) {
+      event.preventDefault();
+      const classItem = getTeacherInstitutionalClasses().find((item) => item.id === publishClassWeek.dataset.classWeekPublish);
+      if (!classItem) return;
+      if (!window.confirm(`Publicar ou atualizar Minha Semana de ${classItem.name}?`)) return;
+      publishClassWeek.disabled = true;
+      publishClassWeek.textContent = "PUBLICANDO...";
+      try {
+        await publishTeacherClassWeekToSupabase(classItem.id);
+        rerenderTeacherClassPage();
+      } catch (error) {
+        window.alert(error.message || "Nao foi possivel publicar Minha Semana.");
+      } finally {
+        publishClassWeek.disabled = false;
+      }
+      return;
+    }
+    const markAll = event.target.closest("[data-attendance-mark-all]");
+    if (markAll) {
+      event.preventDefault();
+      workspace.querySelectorAll(".tw-attendance-row").forEach((row) => {
+        row.querySelector("input[value='present']").checked = true;
+        row.querySelectorAll(".tw-attendance-choice").forEach((choice) => {
+          choice.classList.toggle("is-selected", choice.querySelector("input")?.value === "present");
+        });
+      });
       return;
     }
     const button = event.target.closest("[data-teacher-view]");
@@ -15698,6 +16290,48 @@ const initTeacherWorkspace = () => {
       }
       return;
     }
+    const messageView = event.target.closest("[data-teacher-message-view]");
+    if (messageView) {
+      event.preventDefault();
+      const message = (teacherClassMessagesState.messages || []).find((item) => item.id === messageView.dataset.teacherMessageView);
+      if (message) window.alert(`${message.title}\n\n${message.text}`);
+      return;
+    }
+    const messageStatus = event.target.closest("[data-teacher-message-status]");
+    if (messageStatus) {
+      event.preventDefault();
+      const message = (teacherClassMessagesState.messages || []).find((item) => item.id === messageStatus.dataset.teacherMessageStatus);
+      if (!message) return;
+      const toStatus = messageStatus.dataset.toStatus || "";
+      const destination = messageStatus.dataset.destination || (message.audienceType === "student" ? `Aluno/Familia: ${message.studentName}` : `Toda a turma: ${message.className}`);
+      const label = toStatus === "published" ? `Publicar novamente para ${destination}?` : `Retirar "${message.title}" da publicacao?`;
+      if (!window.confirm(label)) return;
+      messageStatus.disabled = true;
+      messageStatus.textContent = toStatus === "published" ? "PUBLICANDO..." : "RETIRANDO...";
+      try {
+        await setTeacherClassMessageStatus(message.id, toStatus);
+        rerenderTeacherClassPage();
+      } catch (error) {
+        window.alert(error.message || "Nao foi possivel alterar o recado.");
+      }
+      return;
+    }
+    const messageDelete = event.target.closest("[data-teacher-message-delete]");
+    if (messageDelete) {
+      event.preventDefault();
+      const message = (teacherClassMessagesState.messages || []).find((item) => item.id === messageDelete.dataset.teacherMessageDelete);
+      if (!message) return;
+      if (!window.confirm(`Excluir definitivamente "${message.title}"?`)) return;
+      messageDelete.disabled = true;
+      messageDelete.textContent = "EXCLUINDO...";
+      try {
+        await deleteTeacherClassMessage(message.id);
+        rerenderTeacherClassPage();
+      } catch (error) {
+        window.alert(error.message || "Nao foi possivel excluir o recado.");
+      }
+      return;
+    }
     if (!button) return;
     event.preventDefault();
     openView(button.dataset.teacherView || "inicio");
@@ -15707,13 +16341,14 @@ const initTeacherWorkspace = () => {
     const form = event.target.closest("[data-teacher-planning-form]");
     const publicationForm = event.target.closest("[data-teacher-publication-form]");
     const messageForm = event.target.closest("[data-teacher-family-message-form]");
-    if (!form && !publicationForm && !messageForm) return;
+    const attendanceForm = event.target.closest("[data-teacher-attendance-form]");
+    if (!form && !publicationForm && !messageForm && !attendanceForm) return;
     event.preventDefault();
-    const submitButton = (form || publicationForm || messageForm).querySelector("button[type='submit']");
+    const submitButton = (form || publicationForm || messageForm || attendanceForm).querySelector("button[type='submit']");
     const previousLabel = submitButton?.textContent || "";
     if (submitButton) {
       submitButton.disabled = true;
-      submitButton.textContent = form ? "SALVANDO..." : publicationForm ? "PUBLICANDO..." : "ENVIANDO...";
+      submitButton.textContent = form || attendanceForm ? "SALVANDO..." : publicationForm ? "PUBLICANDO..." : "ENVIANDO...";
     }
     try {
       if (form) {
@@ -15729,6 +16364,29 @@ const initTeacherWorkspace = () => {
         teacherClassMessagesState.classId = String(data.get("classId") || teacherClassMessagesState.classId || "");
         await sendTeacherClassMessage(data);
         messageForm.reset();
+        rerenderTeacherClassPage();
+        return;
+      }
+      if (attendanceForm) {
+        const data = new FormData(attendanceForm);
+        const classId = attendanceForm.dataset.classId || getPrintableParams().get("id") || "";
+        const date = String(data.get("attendanceDate") || getTeacherAttendanceDate());
+        const students = getTeacherInstitutionalStudents(classId);
+        const records = students.map((student) => ({
+          student_id: student.id,
+          status: String(data.get(`attendance_${student.id}`) || "present"),
+          notes: String(data.get(`notes_${student.id}`) || "").trim() || null,
+        }));
+        await saveTeacherAttendanceDay({ classId, date, records });
+        await ensureTeacherAttendanceDay({ force: true, classId, date });
+        teacherAttendanceState.message = "Frequencia salva com sucesso.";
+        const params = new URLSearchParams(window.location.search);
+        params.set("id", classId);
+        params.set("tab", "frequencia");
+        params.set("date", date);
+        window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
+        rerenderTeacherClassPage();
+        return;
       }
       if (form || publicationForm) await refreshPlanningView({ force: false });
       if (messageForm && activeTeacherView === "mensagens" && content && document.body.contains(workspace)) {
@@ -15745,7 +16403,30 @@ const initTeacherWorkspace = () => {
   });
 
   workspace.addEventListener("change", async (event) => {
+    const attendanceRadio = event.target.closest(".tw-attendance-choice input[type='radio']");
+    if (attendanceRadio) {
+      const row = attendanceRadio.closest(".tw-attendance-row");
+      row?.querySelectorAll(".tw-attendance-choice").forEach((choice) => {
+        choice.classList.toggle("is-selected", choice.querySelector("input")?.checked === true);
+      });
+      return;
+    }
+    const attendanceDate = event.target.closest("[data-teacher-attendance-date]");
+    if (attendanceDate) {
+      const params = new URLSearchParams(window.location.search);
+      params.set("date", attendanceDate.value || getTeacherAttendanceDate());
+      params.set("tab", "frequencia");
+      window.location.href = `${window.location.pathname}?${params.toString()}`;
+      return;
+    }
     const classSelect = event.target.closest("[data-teacher-family-message-form] select[name='classId']");
+    const messageAudience = event.target.closest("[data-teacher-message-audience]");
+    if (messageAudience) {
+      const form = messageAudience.closest("[data-teacher-family-message-form]");
+      const wrap = form?.querySelector("[data-teacher-message-student-wrap]");
+      if (wrap) wrap.hidden = messageAudience.value !== "student";
+      return;
+    }
     if (!classSelect) return;
     teacherClassMessagesState.classId = classSelect.value || "";
     await ensureTeacherClassMessages({ force: true, classId: teacherClassMessagesState.classId });
@@ -15771,6 +16452,16 @@ const initTeacherWorkspace = () => {
     teacherInstitutionalState.hydratedDom = true;
     const path = window.location.pathname.split("/").pop() || "professor.html";
     if (path === "professor-turma.html") {
+      const classId = getPrintableParams().get("id") || getTeacherInstitutionalClasses()[0]?.id || "";
+      if (getTeacherClassTab() === "semana") {
+        teacherPlanningState.status = "idle";
+        ensureTeacherPlanningWeek({ force: true }).then(rerenderTeacherClassPage);
+      }
+      if (getTeacherClassTab() === "recados") {
+        teacherClassMessagesState.classId = classId;
+        teacherClassMessagesState.status = "idle";
+        ensureTeacherClassMessages({ force: true, classId }).then(rerenderTeacherClassPage);
+      }
       workspace.outerHTML = renderTeacherClassPage();
       requestAnimationFrame(() => document.querySelector(".teacher-workspace")?.classList.add("is-mounted"));
       initTeacherWorkspace();
@@ -15786,6 +16477,8 @@ const initTeacherWorkspace = () => {
     requestAnimationFrame(() => document.querySelector(".teacher-workspace")?.classList.add("is-mounted"));
     initTeacherWorkspace();
   });
+
+  hydrateTeacherAttendanceIfNeeded();
 };
 
 const initStudentInstitutionalDashboard = () => {
