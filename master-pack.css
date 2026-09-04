@@ -9691,7 +9691,8 @@ td {
 }
 
 .tw-week-item-actions button,
-.tw-message-actions button {
+.tw-message-actions button,
+.tw-message-actions a {
   min-height: 34px;
   border: 1px solid rgba(6, 70, 47, 0.12);
   border-radius: 999px;
@@ -9701,12 +9702,17 @@ td {
   font-family: Poppins, Inter, sans-serif;
   font-weight: 900;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
 }
 
 .tw-week-item-actions button:hover,
 .tw-week-item-actions button:focus-visible,
 .tw-message-actions button:hover,
-.tw-message-actions button:focus-visible {
+.tw-message-actions button:focus-visible,
+.tw-message-actions a:hover,
+.tw-message-actions a:focus-visible {
   background: #0d6b4b;
   color: #fff;
   outline: none;
@@ -9717,6 +9723,15 @@ td {
   border-radius: 14px;
   padding: 14px;
   background: #f8fbf7;
+}
+
+.tw-operation-feedback {
+  margin: 0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #e7f1ea;
+  color: #0d6b4b;
+  font-weight: 900;
 }
 
 .tw-activities-shell {
@@ -9951,7 +9966,7 @@ td {
 }
 
 .tw-tracking-summary {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(150px, 1fr));
 }
 
 .tw-tracking-summary article,
@@ -9962,6 +9977,91 @@ td {
   border-radius: 14px;
   padding: 14px;
   background: #f8fbf7;
+}
+
+.tw-tracking-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  gap: 10px;
+  min-width: min(100%, 680px);
+}
+
+.tw-tracking-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.95fr) minmax(0, 1.45fr);
+  gap: 16px;
+  align-items: start;
+  min-width: 0;
+}
+
+.tw-tracking-grid.is-wide {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.05fr) minmax(300px, 0.9fr);
+}
+
+.tw-tracking-metric {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.tw-tracking-metric .secretaria-icon {
+  width: 48px;
+  height: 48px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #e7f1ea;
+  color: #0d6b4b;
+}
+
+.tw-tracking-student-detail {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+
+.tw-tracking-student-detail article {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  border: 1px solid rgba(6, 70, 47, 0.12);
+  border-radius: 14px;
+  padding: 14px;
+  background: #f8fbf7;
+}
+
+.tw-tracking-student-detail span {
+  color: #0d6b4b;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.tw-tracking-student-detail strong {
+  min-width: 0;
+  color: #083f2d;
+  font-family: Poppins, Inter, sans-serif;
+  line-height: 1.2;
+}
+
+.tw-tracking-student-detail small {
+  color: #49695d;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.tw-tracking-students .tw-student-card {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tw-tracking-students .tw-student-card.is-active {
+  border-color: rgba(13, 107, 75, 0.45);
+  background: #edf7ef;
+  box-shadow: 0 10px 24px rgba(6, 70, 47, 0.12);
 }
 
 .tw-tracking-summary article {
@@ -11975,10 +12075,128 @@ td {
   outline: none;
 }
 
+.pa-card footer button:disabled,
+.pa-preview button:disabled {
+  cursor: not-allowed;
+  background: #f2f6f3;
+  color: #6b8075;
+  border: 1px dashed rgba(6, 70, 47, 0.18);
+}
+
+.pa-card footer button:disabled:hover,
+.pa-preview button:disabled:hover {
+  background: #f2f6f3;
+  color: #6b8075;
+}
+
 .pa-status {
   min-height: 34px;
   display: flex;
   align-items: center;
+}
+
+.pa-recommendation-dialog {
+  width: min(560px, calc(100vw - 32px));
+  border: 0;
+  border-radius: 20px;
+  padding: 0;
+  box-shadow: 0 28px 90px rgba(18, 32, 51, 0.28);
+}
+
+.pa-recommendation-dialog::backdrop {
+  background: rgba(6, 70, 47, 0.34);
+  backdrop-filter: blur(4px);
+}
+
+.pa-recommendation-dialog form {
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+}
+
+.pa-recommendation-dialog header {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.pa-recommendation-dialog header span,
+.pa-recommendation-dialog label span {
+  color: #0d6b4b;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.pa-recommendation-dialog h2 {
+  margin: 4px 0 0;
+  color: #122033;
+  font-family: Poppins, Inter, sans-serif;
+}
+
+.pa-recommendation-dialog label {
+  display: grid;
+  gap: 7px;
+  color: #122033;
+  font-weight: 850;
+}
+
+.pa-recommendation-dialog input,
+.pa-recommendation-dialog select,
+.pa-recommendation-dialog textarea {
+  width: 100%;
+  border: 1px solid rgba(6, 70, 47, 0.14);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  color: #122033;
+  font: inherit;
+  font-weight: 750;
+}
+
+.pa-recommendation-note {
+  min-width: 0;
+}
+
+.pa-recommendation-dialog p {
+  margin: 0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #f2f6f3;
+  color: #49695d;
+  font-weight: 850;
+}
+
+.pa-recommendation-dialog footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.pa-recommendation-dialog button {
+  min-height: 38px;
+  border: 1px solid rgba(6, 70, 47, 0.14);
+  border-radius: 999px;
+  padding: 0 16px;
+  background: #fff;
+  color: #0d6b4b;
+  font-family: Poppins, Inter, sans-serif;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.pa-recommendation-dialog button[type="submit"] {
+  background: #0d6b4b;
+  color: #fff;
+}
+
+.pa-recommendation-dialog button:hover,
+.pa-recommendation-dialog button:focus-visible {
+  background: #e5892f;
+  color: #fff;
+  outline: none;
 }
 
 .pa-admin-actions {
@@ -12759,6 +12977,12 @@ td {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .tw-tracking-filters,
+  .tw-tracking-grid,
+  .tw-tracking-grid.is-wide {
+    grid-template-columns: 1fr;
+  }
+
   .tw-library-entry-grid {
     grid-template-columns: 1fr;
   }
@@ -12858,6 +13082,10 @@ td {
   .tw-planning-form,
   .tw-activity-entry-grid,
   .tw-formation-grid,
+  .tw-tracking-filters,
+  .tw-tracking-grid,
+  .tw-tracking-grid.is-wide,
+  .tw-tracking-student-detail,
   .tw-tracking-summary,
   .tw-tracking-item,
   .tw-tracking-production,

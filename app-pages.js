@@ -3497,6 +3497,30 @@ const teacherClassMessagesState = {
   classId: "",
 };
 
+const teacherRecommendationsState = {
+  status: "idle",
+  error: "",
+  message: "",
+  promise: null,
+  items: [],
+  classId: "",
+};
+let printableRecommendationContextHydrated = false;
+
+const teacherTrackingState = {
+  selectedClassId: "",
+  selectedStudentId: "",
+  periodDays: 30,
+};
+
+const teacherTrackingAttendanceState = {
+  status: "idle",
+  error: "",
+  promise: null,
+  key: "",
+  records: [],
+};
+
 const studentInstitutionalState = {
   status: "idle",
   error: "",
@@ -4171,6 +4195,134 @@ const deleteTeacherClassMessage = async (communicationId = "") => {
   await ensureTeacherClassMessages({ force: true });
 };
 
+const recommendationStatusLabels = {
+  published: "Publicado",
+  archived: "Retirado da publicacao",
+  deleted: "Excluido",
+};
+
+const recommendationTypeLabels = {
+  printable_activity: "Atividade imprimivel",
+  activity: "Atividade",
+  book: "Livro",
+  game: "Jogo",
+  experience: "Experiencia",
+  free_proposal: "Proposta livre",
+  other: "Conteudo",
+};
+
+const recommendationStatusLabel = (value) => recommendationStatusLabels[String(value || "").toLowerCase()] || value || "Status nao informado";
+const recommendationTypeLabel = (value) => recommendationTypeLabels[String(value || "").toLowerCase()] || value || "Conteudo";
+
+const mapTeacherRecommendationRow = (row = {}) => ({
+  id: row.id || row.recommendation_id || "",
+  schoolId: row.school_id || "",
+  teacherId: row.teacher_id || "",
+  contentType: row.content_type || "printable_activity",
+  contentId: row.content_id || "",
+  contentTitle: row.content_title || row.title || "Conteudo recomendado",
+  targetType: row.target_type || "class",
+  classId: row.class_id || "",
+  className: row.class_name || normalizeClassName(getTeacherInstitutionalClasses().find((item) => item.id === row.class_id) || {}),
+  studentId: row.student_id || "",
+  studentName: row.student_name || teacherInstitutionalState.studentsById?.[row.student_id]?.name || "",
+  note: row.note || "",
+  status: row.status || "published",
+  publishedAt: row.published_at || "",
+  createdAt: row.created_at || "",
+  updatedAt: row.updated_at || "",
+});
+
+const ensureTeacherRecommendations = async ({ force = false, classId = "" } = {}) => {
+  if (classId) teacherRecommendationsState.classId = classId;
+  if (!force && teacherRecommendationsState.status === "ready" && (!classId || teacherRecommendationsState.classId === classId)) return teacherRecommendationsState;
+  if (!force && teacherRecommendationsState.promise) return teacherRecommendationsState.promise;
+  teacherRecommendationsState.status = "loading";
+  teacherRecommendationsState.error = "";
+  teacherRecommendationsState.promise = (async () => {
+    try {
+      await ensureTeacherInstitutionalData();
+      const selectedClassId = teacherRecommendationsState.classId || getTeacherInstitutionalClasses()[0]?.id || "";
+      if (!selectedClassId) {
+        teacherRecommendationsState.items = [];
+        teacherRecommendationsState.status = "ready";
+        return teacherRecommendationsState;
+      }
+      teacherRecommendationsState.classId = selectedClassId;
+      const client = createSupabaseRestClient();
+      const rows = await client.request("rpc/teacher_list_pedagogical_recommendations", "", {
+        method: "POST",
+        body: JSON.stringify({ p_class_id: selectedClassId }),
+        requireAuthenticated: true,
+        allowedRoles: teacherAllowedRoles,
+      });
+      teacherRecommendationsState.items = (Array.isArray(rows) ? rows : []).map(mapTeacherRecommendationRow);
+      teacherRecommendationsState.status = "ready";
+      return teacherRecommendationsState;
+    } catch (error) {
+      teacherRecommendationsState.error = error.message || "Nao foi possivel carregar as recomendacoes.";
+      teacherRecommendationsState.items = [];
+      teacherRecommendationsState.status = "error";
+      return teacherRecommendationsState;
+    } finally {
+      teacherRecommendationsState.promise = null;
+    }
+  })();
+  return teacherRecommendationsState.promise;
+};
+
+const createTeacherPedagogicalRecommendation = async ({ classId = "", contentType = "printable_activity", contentId = "", contentTitle = "", targetType = "class", studentId = "", note = "" } = {}) => {
+  await ensureTeacherInstitutionalData();
+  const classItem = getTeacherInstitutionalClasses().find((item) => item.id === classId);
+  if (!classItem) throw new Error("Turma fora do vinculo autorizado da professora.");
+  if (targetType === "student" && !getTeacherInstitutionalStudents(classItem.id).some((student) => student.id === studentId)) {
+    throw new Error("Aluno fora da turma autorizada.");
+  }
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/teacher_create_pedagogical_recommendation", "", {
+    method: "POST",
+    body: JSON.stringify({
+      p_school_id: classItem.schoolId,
+      p_class_id: classItem.id,
+      p_content_type: contentType,
+      p_content_id: contentId,
+      p_content_title: contentTitle,
+      p_target_type: targetType,
+      p_student_id: targetType === "student" ? studentId : null,
+      p_note: note || null,
+    }),
+    requireAuthenticated: true,
+    allowedRoles: teacherAllowedRoles,
+  });
+  teacherRecommendationsState.message = "Recomendacao publicada com sucesso.";
+  await ensureTeacherRecommendations({ force: true, classId: classItem.id });
+  return Array.isArray(result) ? result[0] || {} : result || {};
+};
+
+const setTeacherRecommendationStatus = async (recommendationId = "", toStatus = "") => {
+  const client = createSupabaseRestClient();
+  await client.request("rpc/teacher_set_pedagogical_recommendation_status", "", {
+    method: "POST",
+    body: JSON.stringify({ p_recommendation_id: recommendationId, p_to_status: toStatus }),
+    requireAuthenticated: true,
+    allowedRoles: teacherAllowedRoles,
+  });
+  teacherRecommendationsState.message = toStatus === "published" ? "Recomendacao publicada novamente." : "Recomendacao retirada da publicacao.";
+  await ensureTeacherRecommendations({ force: true, classId: teacherRecommendationsState.classId });
+};
+
+const deleteTeacherRecommendation = async (recommendationId = "") => {
+  const client = createSupabaseRestClient();
+  await client.request("rpc/teacher_delete_pedagogical_recommendation", "", {
+    method: "POST",
+    body: JSON.stringify({ p_recommendation_id: recommendationId }),
+    requireAuthenticated: true,
+    allowedRoles: teacherAllowedRoles,
+  });
+  teacherRecommendationsState.message = "Recomendacao excluida.";
+  await ensureTeacherRecommendations({ force: true, classId: teacherRecommendationsState.classId });
+};
+
 const getTeacherClassWeekDates = () => getFamilyWeekDates(teacherClassMessagesState.weekStartIso || getTeacherPlanningWeekStart());
 
 const getTeacherClassMessagesForDate = (specificDate = "") =>
@@ -4372,6 +4524,7 @@ const renderTeacherPublicationPanel = () => `
 const renderTeacherPlanningView = () => {
   const proposals = teacherPlanningState.plans || [];
   const classes = getTeacherPlanningClasses();
+  const selectedClassId = getTeacherSelectedPlanningClassId();
   const canPlan = teacherInstitutionalState.status === "ready" && classes.length > 0 && teacherPlanningState.status !== "error";
   const statusMessage =
     teacherPlanningState.status === "loading"
@@ -4398,12 +4551,12 @@ const renderTeacherPlanningView = () => {
       <label class="tw-class-selector">
         <span>Turma</span>
         <select data-planning-class>
-          ${classes.length ? classes.map((classItem) => `<option value="${printableEscape(classItem.id)}">${printableEscape(classItem.name)}</option>`).join("") : `<option value="">Aguardando vinculo institucional</option>`}
+          ${classes.length ? classes.map((classItem) => `<option value="${printableEscape(classItem.id)}" ${classItem.id === selectedClassId ? "selected" : ""}>${printableEscape(classItem.name)}</option>`).join("") : `<option value="">Aguardando vinculo institucional</option>`}
         </select>
       </label>
       ${statusMessage}
       <div class="tw-planning-week" aria-label="Planejamento semanal">
-        ${teacherPlanningDays.map((day) => renderTeacherPlanningDay(day, proposals, canPlan)).join("")}
+        ${teacherPlanningDays.map((day) => renderTeacherPlanningDay(day, proposals, canPlan, selectedClassId)).join("")}
       </div>
       ${renderTeacherPlanningForm()}
     </section>
@@ -4418,16 +4571,16 @@ const renderTeacherActivitiesView = () => {
   const institutionalStudent = institutionalClass ? getTeacherInstitutionalStudents(institutionalClass.id)[0] : null;
   const targetActions = institutionalReady
     ? [
-        `<button type="button" data-teacher-open-url="atividades.html">DESTINATARIO NAO DEFINIDO</button>`,
+        `<button type="button" data-teacher-open-url="atividades.html">EXPLORAR ATIVIDADES</button>`,
         institutionalClass
-          ? `<button type="button" data-teacher-open-url="atividades.html?target=class&class=${encodeURIComponent(institutionalClass.id)}">${printableEscape(institutionalClass.name.toUpperCase())}</button>`
+          ? `<button type="button" data-teacher-open-url="atividades.html?target=class&class=${encodeURIComponent(institutionalClass.id)}">INDICAR PARA TURMA</button>`
           : "",
         institutionalStudent
-          ? `<button type="button" data-teacher-open-url="atividades.html?target=student&student=${encodeURIComponent(institutionalStudent.id)}&class=${encodeURIComponent(institutionalStudent.classId)}">${printableEscape(institutionalStudent.name.toUpperCase())}</button>`
+          ? `<button type="button" data-teacher-open-url="atividades.html?target=student&student=${encodeURIComponent(institutionalStudent.id)}&class=${encodeURIComponent(institutionalStudent.classId)}">INDICAR PARA ALUNO</button>`
           : "",
       ].join("")
     : `
-            <button type="button" data-teacher-open-url="atividades.html">DESTINATARIO NAO DEFINIDO</button>
+            <button type="button" data-teacher-open-url="atividades.html">EXPLORAR ATIVIDADES</button>
             <button type="button" disabled>AGUARDANDO TURMAS REAIS</button>
           `;
   return `
@@ -4436,29 +4589,29 @@ const renderTeacherActivitiesView = () => {
         <div>
           <span>Atividades</span>
           <h2>Atividades Imprimiveis</h2>
-          <p>ESCOLHA UMA ATIVIDADE PARA COMECAR.</p>
+          <p>EXPLORE, VISUALIZE E IMPRIMA ATIVIDADES PARA SUAS TURMAS.</p>
         </div>
-        <button type="button" data-teacher-open-url="atividades.html">ABRIR BANCO</button>
+        <button type="button" data-teacher-open-url="atividades.html">ABRIR ATIVIDADES</button>
       </div>
       <div class="tw-activity-entry-grid">
         <article class="tw-activity-entry" data-teacher-search-item>
           <span>Atividades imprimiveis</span>
-          <strong>Banco de Atividades Imprimiveis</strong>
-          <small>${printableTotal} atividades reais disponiveis no catalogo existente, com filtros, visualizacao, impressao, download e indicacao.</small>
+          <strong>Explorar atividades</strong>
+          <small>${printableTotal} atividades disponiveis para filtrar, visualizar, abrir e imprimir.</small>
           <div>
             ${targetActions}
           </div>
         </article>
         <article class="tw-activity-entry" data-teacher-search-item>
           <span>Experiencias digitais</span>
-          <strong>Catalogo existente</strong>
-          <small>${experiences.length + activities.length ? `${experiences.length} experiencias e ${activities.length} atividades digitais encontradas.` : "AINDA NAO HA EXPERIENCIAS ASSOCIADAS A ESTE DESTINATARIO."}</small>
+          <strong>Recursos digitais</strong>
+          <small>${experiences.length + activities.length ? `${experiences.length} experiencias e ${activities.length} atividades digitais encontradas.` : "Ainda nao ha experiencias associadas a este contexto."}</small>
           <button type="button" data-teacher-view="experiencias">ABRIR EXPERIENCIAS</button>
         </article>
         <article class="tw-activity-entry is-disabled" data-teacher-search-item>
-          <span>Futuro</span>
-          <strong>Criar atividade</strong>
-          <small>Area preparada para uma etapa posterior, apos homologacao do Motor Universal e integracao Supabase.</small>
+          <span>Indicacao pedagogica</span>
+          <strong>Indicar para turma ou aluno</strong>
+          <small>Espaco preparado para destacar atividades quando o motor de recomendacoes for homologado.</small>
           <button type="button" disabled>EM PREPARACAO</button>
         </article>
       </div>
@@ -4467,8 +4620,8 @@ const renderTeacherActivitiesView = () => {
       institutionalReady
         ? `
           <section class="tw-board ua-deliveries" data-ua-deliveries>
-            <div class="tw-section-head"><h2>Atividades Indicadas</h2><button type="button" data-teacher-view="atividades">Indicar nova</button></div>
-            <p class="ua-empty">NENHUMA ATIVIDADE INSTITUCIONAL INDICADA AINDA.</p>
+            <div class="tw-section-head"><h2>Atividades indicadas</h2><button type="button" data-teacher-view="atividades">Explorar atividades</button></div>
+            <p class="ua-empty">Nenhuma atividade indicada ainda. A indicacao para turma ou aluno sera ativada quando o motor de recomendacoes estiver homologado.</p>
             <div class="ua-delivery-detail" data-ua-delivery-detail></div>
           </section>
         `
@@ -4897,6 +5050,80 @@ const renderPrintableFilters = ({ admin = false } = {}) => {
   `;
 };
 
+const printableStatusLabel = (status = "") => {
+  const normalized = String(status || "").toUpperCase();
+  if (normalized === "PUBLICADO") return "Publicado";
+  if (normalized === "RASCUNHO") return "Rascunho";
+  if (normalized === "ARQUIVADO") return "Retirado";
+  return status || "Nao informado";
+};
+
+const renderPrintableIndicateButton = (code) =>
+  `<button type="button" data-pa-indicate="${printableEscape(code)}">Indicar para</button>`;
+
+const renderPrintableRecommendationDialog = () => {
+  const classes = getTeacherInstitutionalClasses();
+  const context = getPrintableAssignmentContext();
+  const selectedClassId = context.classId && classes.some((item) => item.id === context.classId) ? context.classId : classes[0]?.id || "";
+  const selectedStudents = getTeacherInstitutionalStudents(selectedClassId);
+  const selectedTarget = context.type === "student" ? "student" : "class";
+  return `
+    <dialog class="pa-recommendation-dialog" data-pa-recommendation-dialog>
+      <form data-pa-recommendation-form>
+        <input type="hidden" name="contentId" />
+        <input type="hidden" name="contentTitle" />
+        <header>
+          <div>
+            <span>Indicacao pedagogica</span>
+            <h2>Indicar atividade</h2>
+          </div>
+          <button type="button" data-pa-recommendation-close aria-label="Fechar">Fechar</button>
+        </header>
+        ${
+          teacherInstitutionalState.status === "ready" && classes.length
+            ? `
+              <label>
+                <span>Turma</span>
+                <select name="classId" data-pa-recommendation-class required>
+                  ${classes.map((classItem) => `<option value="${printableEscape(classItem.id)}" ${classItem.id === selectedClassId ? "selected" : ""}>${printableEscape(classItem.name)}</option>`).join("")}
+                </select>
+              </label>
+              <label>
+                <span>Destino</span>
+                <select name="targetType" data-pa-recommendation-target required>
+                  <option value="class" ${selectedTarget === "class" ? "selected" : ""}>Toda a turma</option>
+                  <option value="student" ${selectedTarget === "student" ? "selected" : ""}>Aluno / Familia</option>
+                </select>
+              </label>
+              <label data-pa-recommendation-student-wrap ${selectedTarget === "student" ? "" : "hidden"}>
+                <span>Aluno</span>
+                <select name="studentId">
+                  <option value="">Selecione</option>
+                  ${selectedStudents.map((student) => `<option value="${printableEscape(student.id)}" ${student.id === context.id ? "selected" : ""}>${printableEscape(student.name)}</option>`).join("")}
+                </select>
+              </label>
+              <label class="pa-recommendation-note">
+                <span>Orientacao curta</span>
+                <textarea name="note" rows="3" maxlength="280" placeholder="Opcional. Ex.: fazer em casa com apoio da familia."></textarea>
+              </label>
+              <p data-pa-recommendation-status>Escolha o destino antes de publicar.</p>
+              <footer>
+                <button type="button" data-pa-recommendation-close>Cancelar</button>
+                <button type="submit">PUBLICAR RECOMENDACAO</button>
+              </footer>
+            `
+            : `
+              <div class="pa-empty">
+                <h2>Turmas reais ainda nao carregadas</h2>
+                <p>Entre como professora e aguarde o carregamento dos vinculos institucionais.</p>
+              </div>
+            `
+        }
+      </form>
+    </dialog>
+  `;
+};
+
 const renderPrintableActivityCard = (item) => {
   const userState = printableActivitiesDataService.state();
   const isFavorite = userState.favorites.includes(item.codigo);
@@ -4920,7 +5147,7 @@ const renderPrintableActivityCard = (item) => {
       </div>
       <footer>
         <a href="atividades.html?${detailParams.toString()}" data-pa-view="${printableEscape(item.codigo)}">Visualizar</a>
-        <button type="button" data-ua-assign="${printableEscape(item.codigo)}">Indicar atividade</button>
+        ${renderPrintableIndicateButton(item.codigo)}
         <a href="${printableEscape(item.arquivoOriginal || "#")}" download data-pa-download="${printableEscape(item.codigo)}" aria-disabled="${item.arquivoOriginal ? "false" : "true"}">Baixar</a>
         <button type="button" data-pa-print="${printableEscape(item.codigo)}">Imprimir</button>
         <button type="button" data-pa-favorite="${printableEscape(item.codigo)}" aria-pressed="${isFavorite}">${isFavorite ? "Favorito" : "Favoritar"}</button>
@@ -4940,15 +5167,15 @@ const renderPrintableMainPage = ({ admin = false } = {}) => {
   return `
     <section class="pa-shell" data-printable-app="${admin ? "admin" : "teacher"}">
       <header class="pa-hero">
-        <span>${admin ? "Conteudos > Atividades Imprimiveis" : "Area do Professor"}</span>
-        <h1>${admin ? "Atividades Imprimiveis" : "Banco de Atividades Imprimiveis"}</h1>
-        <p>Atividades exclusivas para apoiar o planejamento e as experiencias da Educacao Infantil.</p>
+        <span>${admin ? "Conteudos > Atividades Imprimiveis" : "Professor"}</span>
+        <h1>Atividades Imprimiveis</h1>
+        <p>Encontre, visualize e imprima atividades para apoiar as experiencias da Educacao Infantil.</p>
         ${admin ? `<a href="README_IMPORTACAO_ATIVIDADES.md">README de importacao</a>` : ""}
       </header>
       ${admin ? "" : renderPrintableContextPanel()}
+      ${admin ? "" : renderPrintableRecommendationDialog()}
       ${renderPrintableAgeCards({ admin })}
       ${renderPrintableFilters({ admin })}
-      ${renderUniversalActivityAssignDialog()}
       <div class="pa-status" role="status">${total ? `${items.length} de ${total} atividades` : "Nenhuma atividade cadastrada ainda. Estrutura pronta para receber o pacote EI2."}</div>
       ${
         admin
@@ -4981,43 +5208,53 @@ const renderPrintableDetailPage = ({ admin = false } = {}) => {
   const preview = item.arquivoPng || item.miniatura || item.arquivoOriginal || "";
   const back = getPrintableParams().get("voltar") || "";
   const contextQuery = getPrintableContextQuery();
+  const teacherMeta = [
+    ["Faixa etaria", item.faixaEtaria],
+    ["Idade", item.idade],
+    ["Objetivo", item.objetivo],
+    ["Orientacao", item.orientacaoProfessor],
+    ["Materiais", (item.materiais || []).join(", ")],
+    ["Campos de experiencia", (item.camposExperiencia || []).join(", ")],
+    ["Tipo de atividade", (item.tiposAtividade || []).join(", ")],
+  ];
+  const adminMeta = [
+    ["Codigo", item.codigo],
+    ["Faixa etaria", item.faixaEtaria],
+    ["Idade", item.idade],
+    ["Versao", item.versao],
+    ["Status", printableStatusLabel(item.status)],
+    ["Publicacao", item.dataPublicacao || "pendente"],
+    ["Atualizacao", item.dataAtualizacao || item.updatedAt || "pendente"],
+    ["Objetivo", item.objetivo],
+    ["Campos de experiencias", (item.camposExperiencia || []).join(", ")],
+    ["Direitos de aprendizagem", (item.direitosAprendizagem || []).join(", ")],
+    ["Tipo de atividade", (item.tiposAtividade || []).join(", ")],
+    ["Materiais", (item.materiais || []).join(", ")],
+    ["Orientacao ao professor", item.orientacaoProfessor],
+    ["Palavras-chave", (item.palavrasChave || []).join(", ")],
+  ];
   return `
-    <section class="pa-shell pa-detail" data-printable-app>
-      ${renderUniversalActivityAssignDialog()}
+    <section class="pa-shell pa-detail" data-printable-app="${admin ? "admin" : "teacher"}">
       <header class="pa-hero">
-        <span>${printableEscape(item.codigo)} · versao ${printableEscape(item.versao || "1.0")}</span>
+        <span>${printableEscape(item.codigo)} · ${printableEscape(item.idade || item.faixaEtaria || "Educacao Infantil")}</span>
         <h1>${printableEscape(item.titulo || "Titulo pendente")}</h1>
-        <p>${printableEscape(item.faixaEtaria || "Faixa etaria pendente")} · ${printableEscape(item.idade || "")} · ${printableEscape(item.status || "status pendente")}</p>
+        <p>${printableEscape(item.objetivo || "Atividade pronta para visualizacao e impressao.")}</p>
         <a href="atividades.html${printableEscape(back || contextQuery)}">Voltar aos resultados</a>
       </header>
       ${renderPrintableContextPanel()}
+      ${admin ? "" : renderPrintableRecommendationDialog()}
       <div class="pa-detail-grid">
         <section class="pa-preview">
           ${preview ? `<img src="${printableEscape(preview)}" alt="Visualizacao ampliada da atividade ${printableEscape(item.codigo)}" />` : `<div class="pa-empty"><h2>Arquivo pendente</h2><p>A atividade ainda nao possui arquivo valido associado.</p></div>`}
           <div>
-            <button type="button" data-ua-assign="${printableEscape(item.codigo)}">Indicar atividade</button>
+            ${renderPrintableIndicateButton(item.codigo)}
             <a href="${printableEscape(item.arquivoOriginal || "#")}" download data-pa-download="${printableEscape(item.codigo)}">Baixar</a>
             <button type="button" data-pa-print="${printableEscape(item.codigo)}">Imprimir</button>
             <button type="button" data-pa-favorite="${printableEscape(item.codigo)}">Favoritar</button>
           </div>
         </section>
         <aside class="pa-meta">
-          ${[
-            ["Codigo oficial", item.codigo],
-            ["Faixa etaria", item.faixaEtaria],
-            ["Idade", item.idade],
-            ["Versao", item.versao],
-            ["Status", item.status],
-            ["Publicacao", item.dataPublicacao || "pendente"],
-            ["Atualizacao", item.dataAtualizacao || item.updatedAt || "pendente"],
-            ["Objetivo", item.objetivo],
-            ["Campos de experiencias", (item.camposExperiencia || []).join(", ")],
-            ["Direitos de aprendizagem", (item.direitosAprendizagem || []).join(", ")],
-            ["Tipo de atividade", (item.tiposAtividade || []).join(", ")],
-            ["Materiais", (item.materiais || []).join(", ")],
-            ["Orientacao ao professor", item.orientacaoProfessor],
-            ["Palavras-chave", (item.palavrasChave || []).join(", ")],
-          ].map(([label, value]) => `<article><strong>${printableEscape(label)}</strong><span>${printableEscape(value || "pendente")}</span></article>`).join("")}
+          ${(admin ? adminMeta : teacherMeta).map(([label, value]) => `<article><strong>${printableEscape(label)}</strong><span>${printableEscape(value || "Nao informado")}</span></article>`).join("")}
         </aside>
       </div>
     </section>
@@ -5091,26 +5328,28 @@ const getPrintableAssignmentContext = () => {
   const target = params.get("target") || "";
   if (target === "student") {
     const studentId = params.get("student") || "";
-    const classInfo = getUniversalActivityClass(params.get("class") || universalActivityStudentProfile.classId);
-    const student = classInfo.students.find((item) => item.id === studentId) || universalActivityDemoClasses.flatMap((item) => item.students).find((item) => item.id === studentId);
+    const classId = params.get("class") || "";
+    const classInfo = getTeacherInstitutionalClasses().find((item) => item.id === classId) || null;
+    const student = getTeacherInstitutionalStudents(classId).find((item) => item.id === studentId) || teacherInstitutionalState.studentsById?.[studentId] || null;
     return {
       type: "student",
-      id: studentId || universalActivityStudentProfile.id,
-      label: student?.name || universalActivityStudentProfile.name,
-      classId: classInfo.id,
-      className: classInfo.name,
-      description: "DESTINATARIO: PEDRO",
+      id: studentId,
+      label: student?.name || "Aluno selecionado",
+      classId,
+      className: classInfo?.name || "Turma selecionada",
+      description: `Destino: ${student?.name || "aluno selecionado"}`,
     };
   }
   if (target === "class") {
-    const classInfo = getUniversalActivityClass(params.get("class") || universalActivityStudentProfile.classId);
+    const classId = params.get("class") || "";
+    const classInfo = getTeacherInstitutionalClasses().find((item) => item.id === classId) || null;
     return {
       type: "class",
-      id: classInfo.id,
-      label: classInfo.name,
-      classId: classInfo.id,
-      className: classInfo.name,
-      description: `DESTINATARIO: ${classInfo.name.toUpperCase()}`,
+      id: classId,
+      label: classInfo?.name || "Turma selecionada",
+      classId,
+      className: classInfo?.name || "Turma selecionada",
+      description: `Destino: ${classInfo?.name || "turma selecionada"}`,
     };
   }
   return {
@@ -5119,7 +5358,7 @@ const getPrintableAssignmentContext = () => {
     label: "Nao definido",
     classId: universalActivityStudentProfile.classId,
     className: universalActivityStudentProfile.className,
-    description: "DESTINATARIO NAO DEFINIDO",
+    description: "Sem destino selecionado",
   };
 };
 
@@ -5143,9 +5382,9 @@ const renderPrintableContextPanel = () => {
   return `
     <section class="pa-context-panel" data-pa-context data-target-type="${printableEscape(context.type)}" data-target-id="${printableEscape(context.id)}">
       <div>
-        <span>Contexto da indicacao</span>
+        <span>${context.type ? "Indicacao pedagogica" : "Atividades imprimiveis"}</span>
         <strong>${printableEscape(context.description)}</strong>
-        <small>${context.type ? "A atividade ainda sera escolhida no banco existente antes de qualquer indicacao local." : "Escolha uma atividade para comecar. Futuramente sera possivel selecionar turma ou aluno aqui."}</small>
+        <small>${context.type ? "Destino preservado para a futura indicacao. Nesta etapa a atividade pode ser visualizada e impressa." : "Escolha uma atividade para visualizar, baixar ou imprimir."}</small>
       </div>
       ${context.type ? `<a href="professor.html?view=atividades">Trocar contexto</a>` : ""}
     </section>
@@ -5515,13 +5754,189 @@ const renderTeacherTrackingProduction = (submission) => {
   `;
 };
 
+const getTeacherTrackingPeriodDays = () => {
+  const fromUrl = Number(getPrintableParams().get("period") || teacherTrackingState.periodDays || 30);
+  return [7, 30, 90].includes(fromUrl) ? fromUrl : 30;
+};
+
+const getTeacherTrackingClassId = () => {
+  const classes = getTeacherInstitutionalClasses();
+  const fromUrl = getPrintableParams().get("class") || "";
+  const candidate = fromUrl || teacherTrackingState.selectedClassId || classes[0]?.id || "";
+  const selected = classes.some((classItem) => classItem.id === candidate) ? candidate : classes[0]?.id || "";
+  teacherTrackingState.selectedClassId = selected;
+  return selected;
+};
+
+const getTeacherTrackingStudentId = (classId = "") => {
+  const students = getTeacherInstitutionalStudents(classId);
+  const fromUrl = getPrintableParams().get("student") || "";
+  const candidate = fromUrl || teacherTrackingState.selectedStudentId || students[0]?.id || "";
+  const selected = students.some((student) => student.id === candidate) ? candidate : students[0]?.id || "";
+  teacherTrackingState.selectedStudentId = selected;
+  return selected;
+};
+
+const getTeacherTrackingStartDate = (periodDays = 30) => {
+  const date = new Date();
+  date.setDate(date.getDate() - Math.max(0, Number(periodDays || 30) - 1));
+  return toTeacherIsoDate(date);
+};
+
+const getTeacherTrackingAttendanceKey = (classId = "", periodDays = 30) => `${classId}:${periodDays}:${getTeacherTrackingStartDate(periodDays)}`;
+
+const ensureTeacherTrackingAttendance = async ({ force = false, classId = "", periodDays = 30 } = {}) => {
+  if (!classId) return teacherTrackingAttendanceState;
+  const key = getTeacherTrackingAttendanceKey(classId, periodDays);
+  if (!force && teacherTrackingAttendanceState.status === "ready" && teacherTrackingAttendanceState.key === key) return teacherTrackingAttendanceState;
+  if (!force && teacherTrackingAttendanceState.promise && teacherTrackingAttendanceState.key === key) return teacherTrackingAttendanceState.promise;
+  teacherTrackingAttendanceState.status = "loading";
+  teacherTrackingAttendanceState.error = "";
+  teacherTrackingAttendanceState.key = key;
+  teacherTrackingAttendanceState.promise = (async () => {
+    try {
+      const client = createSupabaseRestClient();
+      const startDate = getTeacherTrackingStartDate(periodDays);
+      const rows = await client.request(
+        "attendance_records",
+        `?select=id,school_id,class_id,student_id,enrollment_id,attendance_date,status,notes,recorded_by,updated_by,updated_at&class_id=${supabaseEq(classId)}&attendance_date=gte.${encodeURIComponent(startDate)}&order=attendance_date.desc&order=student_id.asc&limit=1000`,
+        { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
+      );
+      teacherTrackingAttendanceState.records = Array.isArray(rows) ? rows : [];
+      teacherTrackingAttendanceState.status = "ready";
+    } catch (error) {
+      teacherTrackingAttendanceState.records = [];
+      teacherTrackingAttendanceState.error = error.message || "Nao foi possivel carregar a frequencia do periodo.";
+      teacherTrackingAttendanceState.status = "error";
+    } finally {
+      teacherTrackingAttendanceState.promise = null;
+    }
+    return teacherTrackingAttendanceState;
+  })();
+  return teacherTrackingAttendanceState.promise;
+};
+
+const ensureTeacherTrackingBundle = async ({ force = false } = {}) => {
+  await ensureTeacherInstitutionalData();
+  if (teacherInstitutionalState.status !== "ready") return;
+  const classId = getTeacherTrackingClassId();
+  const periodDays = getTeacherTrackingPeriodDays();
+  if (!classId) return;
+  teacherTrackingState.periodDays = periodDays;
+  await Promise.all([
+    ensureTeacherTrackingAttendance({ force, classId, periodDays }),
+    ensureTeacherRecommendations({ force, classId }),
+    ensureTeacherClassMessages({ force, classId }),
+  ]);
+};
+
+const teacherTrackingPublishedRecommendations = (classId = "", studentId = "") =>
+  (teacherRecommendationsState.items || []).filter(
+    (item) =>
+      item.classId === classId &&
+      item.status === "published" &&
+      (item.targetType === "class" || (studentId && item.targetType === "student" && item.studentId === studentId))
+  );
+
+const teacherTrackingAllPublishedRecommendations = (classId = "") =>
+  (teacherRecommendationsState.items || []).filter((item) => item.classId === classId && item.status === "published");
+
+const teacherTrackingPedagogicalMessages = (classId = "", studentId = "") =>
+  (teacherClassMessagesState.messages || []).filter(
+    (message) =>
+      message.classId === classId &&
+      message.status === "published" &&
+      String(message.authorRole || "").toLowerCase() === "professor" &&
+      (message.audienceType === "class" || (studentId && message.audienceType === "student" && message.studentId === studentId))
+  );
+
+const teacherTrackingAllPedagogicalMessages = (classId = "") =>
+  (teacherClassMessagesState.messages || []).filter(
+    (message) =>
+      message.classId === classId &&
+      message.status === "published" &&
+      String(message.authorRole || "").toLowerCase() === "professor"
+  );
+
+const renderTeacherTrackingMetric = (label, value, detail, icon = "progresso") => `
+  <article class="tw-tracking-metric">
+    ${teacherInlineIcon(icon)}
+    <div>
+      <span>${printableEscape(label)}</span>
+      <strong>${printableEscape(value)}</strong>
+      <small>${printableEscape(detail)}</small>
+    </div>
+  </article>
+`;
+
+const renderTeacherTrackingRecommendation = (item) => `
+  <article class="tw-tracking-item" data-teacher-search-item>
+    <div>
+      <span>${printableEscape(recommendationTypeLabel(item.contentType))}</span>
+      <strong>${printableEscape(item.contentTitle)}</strong>
+      <small>${item.targetType === "student" ? `Aluno: ${printableEscape(item.studentName || "Aluno")}` : `Turma: ${printableEscape(item.className || "Turma")}`}${item.note ? ` · ${printableEscape(item.note)}` : ""}</small>
+    </div>
+    <mark>${printableEscape(recommendationStatusLabel(item.status))}</mark>
+  </article>
+`;
+
+const renderTeacherTrackingMessage = (message) => `
+  <article class="tw-tracking-item" data-teacher-search-item>
+    <div>
+      <span>${message.audienceType === "student" ? "Recado individual" : "Recado da turma"}</span>
+      <strong>${printableEscape(message.title)}</strong>
+      <small>${printableEscape(message.date)}${message.studentName ? ` · ${printableEscape(message.studentName)}` : ""}</small>
+    </div>
+    <mark>Publicado</mark>
+  </article>
+`;
+
+const renderTeacherTrackingAttendanceList = (records = [], studentsById = {}) => {
+  if (teacherTrackingAttendanceState.status === "loading") return `<p class="ua-empty">CARREGANDO FREQUENCIA.</p>`;
+  if (teacherTrackingAttendanceState.status === "error") return `<p class="ua-empty">${printableEscape(teacherTrackingAttendanceState.error)}</p>`;
+  if (!records.length) return `<p class="ua-empty">SEM REGISTROS DE FREQUENCIA NO PERIODO.</p>`;
+  return records
+    .slice(0, 8)
+    .map((record) => {
+      const student = studentsById[record.student_id] || {};
+      return `
+        <article class="tw-tracking-item" data-teacher-search-item>
+          <div>
+            <span>${printableEscape(record.attendance_date || "Data")}</span>
+            <strong>${printableEscape(student.name || "Aluno")}</strong>
+            <small>${record.notes ? printableEscape(record.notes) : "Sem observacao"}</small>
+          </div>
+          <mark>${printableEscape(attendanceStatusLabel(record.status))}</mark>
+        </article>
+      `;
+    })
+    .join("");
+};
+
 const renderTeacherTrackingView = () => {
   const { assignments, submissions, productions } = getTeacherTrackingData();
   const statuses = [...new Set(submissions.map((submission) => submission.status).filter(Boolean))];
   const institutionalReady = teacherInstitutionalState.status === "ready";
   const classes = getTeacherInstitutionalClasses();
-  const selectedClass = classes[0] || null;
+  const selectedClassId = institutionalReady ? getTeacherTrackingClassId() : "";
+  const selectedClass = classes.find((classItem) => classItem.id === selectedClassId) || classes[0] || null;
   const students = selectedClass ? getTeacherInstitutionalStudents(selectedClass.id) : [];
+  const selectedStudentId = institutionalReady && selectedClass ? getTeacherTrackingStudentId(selectedClass.id) : "";
+  const selectedStudent = students.find((student) => student.id === selectedStudentId) || students[0] || null;
+  const periodDays = getTeacherTrackingPeriodDays();
+  const attendanceRecords = selectedClass ? (teacherTrackingAttendanceState.records || []).filter((record) => record.class_id === selectedClass.id) : [];
+  const studentAttendance = selectedStudent ? attendanceRecords.filter((record) => record.student_id === selectedStudent.id) : [];
+  const classAttendance = attendanceSummary(attendanceRecords);
+  const selectedAttendance = attendanceSummary(studentAttendance);
+  const studentById = Object.fromEntries(students.map((student) => [student.id, student]));
+  const allRecommendations = selectedClass ? teacherTrackingAllPublishedRecommendations(selectedClass.id) : [];
+  const recommendations = selectedClass ? teacherTrackingPublishedRecommendations(selectedClass.id, selectedStudent?.id || "") : [];
+  const classRecommendations = recommendations.filter((item) => item.targetType === "class");
+  const studentRecommendations = selectedStudent ? recommendations.filter((item) => item.targetType === "student" && item.studentId === selectedStudent.id) : [];
+  const allMessages = selectedClass ? teacherTrackingAllPedagogicalMessages(selectedClass.id) : [];
+  const messages = selectedClass ? teacherTrackingPedagogicalMessages(selectedClass.id, selectedStudent?.id || "") : [];
+  const classMessages = messages.filter((item) => item.audienceType === "class");
+  const studentMessages = selectedStudent ? messages.filter((item) => item.audienceType === "student" && item.studentId === selectedStudent.id) : [];
   if (institutionalReady) {
     return `
       <section class="tw-board tw-tracking-shell">
@@ -5529,49 +5944,94 @@ const renderTeacherTrackingView = () => {
           <div>
             <span>Acompanhamento</span>
             <h2>Acompanhamento</h2>
-            <p>ACOMPANHE OS REGISTROS E AS EXPERIENCIAS DA SUA TURMA.</p>
+            <p>Leitura pedagogica por turma e aluno, usando apenas registros reais disponiveis.</p>
           </div>
-          <label class="tw-class-selector">
-            <span>Turma</span>
-            <select data-tracking-class>
-              ${classes.map((classItem) => `<option value="${printableEscape(classItem.id)}">${printableEscape(classItem.name)}</option>`).join("")}
-            </select>
-          </label>
+          <div class="tw-tracking-filters">
+            <label class="tw-class-selector">
+              <span>Turma</span>
+              <select data-tracking-class>
+                ${classes.map((classItem) => `<option value="${printableEscape(classItem.id)}" ${classItem.id === selectedClass?.id ? "selected" : ""}>${printableEscape(classItem.name)}</option>`).join("")}
+              </select>
+            </label>
+            <label class="tw-class-selector">
+              <span>Aluno</span>
+              <select data-tracking-student>
+                ${students.map((student) => `<option value="${printableEscape(student.id)}" ${student.id === selectedStudent?.id ? "selected" : ""}>${printableEscape(student.name)}</option>`).join("")}
+              </select>
+            </label>
+            <label class="tw-class-selector">
+              <span>Periodo</span>
+              <select data-tracking-period>
+                ${[7, 30, 90].map((days) => `<option value="${days}" ${days === periodDays ? "selected" : ""}>Ultimos ${days} dias</option>`).join("")}
+              </select>
+            </label>
+          </div>
         </div>
         ${
           selectedClass
             ? `<div class="tw-tracking-summary" aria-label="Visao geral da turma">
-                <article><span>Turma</span><strong>${printableEscape(selectedClass.name)}</strong><small>${printableEscape(selectedClass.schoolName || selectedClass.shift || "Turma institucional")}</small></article>
-                <article><span>Alunos</span><strong>${students.length}</strong><small>Enrollments ativos autorizados pela RLS</small></article>
-                <article><span>Atividades indicadas</span><strong>0</strong><small>Motor Universal Supabase ainda nao conectado</small></article>
-                <article><span>Producoes</span><strong>0</strong><small>Sem producoes institucionais registradas</small></article>
+                ${renderTeacherTrackingMetric("Turma", selectedClass.name, selectedClass.schoolName || selectedClass.shift || "Turma institucional", "turmas")}
+                ${renderTeacherTrackingMetric("Alunos", String(students.length), "Matriculas ativas da turma", "alunos")}
+                ${renderTeacherTrackingMetric("Presenca", `${classAttendance.percent}%`, `${classAttendance.present} presencas · ${classAttendance.absent} faltas · ${classAttendance.justified} justificadas`, "frequencia")}
+                ${renderTeacherTrackingMetric("Recomendacoes", String(allRecommendations.length), "Publicadas para a turma e seus alunos", "biblioteca")}
+                ${renderTeacherTrackingMetric("Recados", String(allMessages.length), "Mensagens pedagogicas da turma", "comunicados")}
               </div>`
             : renderTeacherEmptyState("NENHUMA TURMA INSTITUCIONAL DISPONIVEL.")
         }
       </section>
-      <section class="tw-board tw-tracking-section">
-        <div class="tw-section-head"><h2>Alunos</h2><span>${selectedClass ? printableEscape(selectedClass.name) : "Supabase"}</span></div>
-        <div class="tw-tracking-students">
-          ${students.length ? students.map(renderStudentCard).join("") : renderTeacherEmptyState("NENHUM ALUNO VINCULADO A ESTA TURMA.")}
-        </div>
-      </section>
-      <section class="tw-board tw-tracking-section" data-ua-deliveries>
-        <div class="tw-section-head"><h2>Atividades Indicadas</h2><button type="button" data-teacher-view="atividades">Indicar atividade</button></div>
-        <div class="tw-tracking-list"><p class="ua-empty">NENHUMA ATIVIDADE INDICADA AINDA.</p></div>
-        <div class="ua-delivery-detail" data-ua-delivery-detail></div>
-      </section>
-      <section class="tw-board tw-tracking-section">
-        <div class="tw-section-head"><h2>Producoes</h2><span>Motor Universal</span></div>
-        <div class="tw-tracking-list"><p class="ua-empty">AINDA NAO HA PRODUCOES REGISTRADAS.</p></div>
-      </section>
-      <section class="tw-board tw-tracking-section">
-        <div class="tw-section-head"><h2>Progresso</h2><span>Estados registrados</span></div>
-        <p class="ua-empty">O PROGRESSO APARECERA AQUI QUANDO HOUVER REGISTROS.</p>
-      </section>
-      <section class="tw-board tw-tracking-section">
-        <div class="tw-section-head"><h2>Registros Pedagogicos</h2><span>Arquitetura futura</span></div>
-        <p class="ua-empty">NENHUM REGISTRO PEDAGOGICO DISPONIVEL.</p>
-      </section>
+      <div class="tw-tracking-grid">
+        <section class="tw-board tw-tracking-section">
+          <div class="tw-section-head"><h2>Alunos da turma</h2><span>${students.length} alunos</span></div>
+          <div class="tw-tracking-students">
+            ${students.length ? students.map((student) => `
+              <button type="button" class="tw-student-card ${student.id === selectedStudent?.id ? "is-active" : ""}" data-tracking-student-pick="${printableEscape(student.id)}" data-teacher-search-item>
+                ${student.avatar ? `<img class="tw-student-avatar" src="${printableEscape(student.avatar)}" alt="" loading="lazy" />` : `<span>${student.name.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span>`}
+                <div>
+                  <strong>${printableEscape(student.name)}</strong>
+                  <small>${printableEscape(student.className)} · ${printableEscape(student.enrollmentStatus || "Matricula ativa")}</small>
+                </div>
+              </button>
+            `).join("") : renderTeacherEmptyState("NENHUM ALUNO VINCULADO A ESTA TURMA.")}
+          </div>
+        </section>
+        <section class="tw-board tw-tracking-section">
+          <div class="tw-section-head"><h2>Ficha pedagogica</h2><span>${selectedStudent ? printableEscape(selectedStudent.name) : "Aluno"}</span></div>
+          ${
+            selectedStudent
+              ? `<div class="tw-tracking-student-detail">
+                  <article><span>Identificacao</span><strong>${printableEscape(selectedStudent.name)}</strong><small>${printableEscape(selectedClass.name)} · ${printableEscape(selectedClass.schoolName || "Escola")}</small></article>
+                  <article><span>Frequencia no periodo</span><strong>${selectedAttendance.percent}%</strong><small>${selectedAttendance.present} presencas · ${selectedAttendance.absent} faltas · ${selectedAttendance.justified} justificadas</small></article>
+                  <article><span>Recomendacoes</span><strong>${classRecommendations.length + studentRecommendations.length}</strong><small>${studentRecommendations.length} individual(is) e ${classRecommendations.length} da turma</small></article>
+                  <article><span>Recados</span><strong>${classMessages.length + studentMessages.length}</strong><small>${studentMessages.length} individual(is) e ${classMessages.length} da turma</small></article>
+                </div>`
+              : renderTeacherEmptyState("SELECIONE UM ALUNO PARA VER O ACOMPANHAMENTO.")
+          }
+        </section>
+      </div>
+      <div class="tw-tracking-grid is-wide">
+        <section class="tw-board tw-tracking-section">
+          <div class="tw-section-head"><h2>Frequencia</h2><span>Ultimos ${periodDays} dias</span></div>
+          <div class="tw-tracking-list">${renderTeacherTrackingAttendanceList(attendanceRecords, studentById)}</div>
+        </section>
+        <section class="tw-board tw-tracking-section">
+          <div class="tw-section-head"><h2>Recomendacoes publicadas</h2><button type="button" data-teacher-view="atividades">Indicar atividade</button></div>
+          <div class="tw-tracking-list">${allRecommendations.length ? allRecommendations.map(renderTeacherTrackingRecommendation).join("") : `<p class="ua-empty">NENHUMA RECOMENDACAO PUBLICADA PARA ESTE CONTEXTO.</p>`}</div>
+        </section>
+        <section class="tw-board tw-tracking-section">
+          <div class="tw-section-head"><h2>Recados pedagogicos</h2><button type="button" data-teacher-open-url="${selectedClass ? `${getTeacherClassHref(selectedClass)}?tab=recados` : "professor.html?view=turmas"}">Abrir recados</button></div>
+          <div class="tw-tracking-list">${allMessages.length ? allMessages.slice(0, 6).map(renderTeacherTrackingMessage).join("") : `<p class="ua-empty">NENHUM RECADO PEDAGOGICO PUBLICADO PARA ESTE CONTEXTO.</p>`}</div>
+        </section>
+      </div>
+      <div class="tw-tracking-grid">
+        <section class="tw-board tw-tracking-section">
+          <div class="tw-section-head"><h2>Atividades e progresso</h2><span>Preparado</span></div>
+          <p class="ua-empty">AINDA NAO HA FONTE INSTITUCIONAL DE PROGRESSO DE ATIVIDADES CONECTADA A ESTA VISAO.</p>
+        </section>
+        <section class="tw-board tw-tracking-section">
+          <div class="tw-section-head"><h2>Observacoes pedagogicas</h2><span>Preparado</span></div>
+          <p class="ua-empty">MOTOR CANONICO DE OBSERVACOES PEDAGOGICAS AINDA NAO EXISTE. NENHUMA OBSERVACAO FICTICIA FOI CRIADA.</p>
+        </section>
+      </div>
     `;
   }
   if (teacherInstitutionalState.status === "loading") {
@@ -5973,7 +6433,7 @@ const renderTeacherClassTabs = (classItem, activeTab = "alunos") => {
     ["recomendacoes", "Recomendacoes"],
     ["desafio", "Desafio da Semana"],
   ];
-  const activeTabs = new Set(["alunos", "frequencia", "semana", "recados"]);
+  const activeTabs = new Set(["alunos", "frequencia", "semana", "recados", "recomendacoes"]);
   return `
     <nav class="tw-class-tabs" aria-label="Espaco da turma">
       ${tabs
@@ -6189,6 +6649,73 @@ const renderTeacherClassMessagesPanel = (classItem, students = []) => {
   `;
 };
 
+const renderTeacherRecommendationCard = (recommendation) => {
+  const destination =
+    recommendation.targetType === "student"
+      ? `Aluno/Familia: ${recommendation.studentName || "Aluno da turma"}`
+      : `Toda a turma: ${recommendation.className || "Turma"}`;
+  const statusLabel = recommendationStatusLabel(recommendation.status);
+  const primaryAction =
+    recommendation.status === "published"
+      ? `<button type="button" data-teacher-recommendation-status="${printableEscape(recommendation.id)}" data-to-status="archived">Retirar da publicacao</button>`
+      : `<button type="button" data-teacher-recommendation-status="${printableEscape(recommendation.id)}" data-to-status="published" data-destination="${printableEscape(destination)}">Publicar novamente</button>`;
+  const detailHref =
+    recommendation.contentType === "printable_activity"
+      ? `atividades.html?codigo=${encodeURIComponent(recommendation.contentId)}&target=${encodeURIComponent(recommendation.targetType)}&class=${encodeURIComponent(recommendation.classId)}${recommendation.studentId ? `&student=${encodeURIComponent(recommendation.studentId)}` : ""}`
+      : "#";
+  return `
+    <article class="tw-message-card tw-recommendation-row ${recommendation.status === "archived" ? "is-archived" : ""}" data-teacher-search-item>
+      <div class="tw-message-main">
+        <span>${printableEscape(destination)} · ${printableEscape(statusLabel)} · ${printableEscape(formatTeacherClassMessageDate(recommendation.publishedAt || recommendation.createdAt))}</span>
+        <strong>${printableEscape(recommendation.contentTitle)}</strong>
+        <p>${printableEscape(recommendation.note || "Sem orientacao adicional.")}</p>
+        <small>${printableEscape(recommendationTypeLabel(recommendation.contentType))} · ${printableEscape(recommendation.contentId)}</small>
+      </div>
+      <div class="tw-message-actions">
+        <a href="${printableEscape(detailHref)}">Visualizar</a>
+        ${primaryAction}
+        <button type="button" data-teacher-recommendation-delete="${printableEscape(recommendation.id)}">Excluir</button>
+      </div>
+    </article>
+  `;
+};
+
+const renderTeacherRecommendationsPanel = (classItem, students = []) => {
+  const recommendations = (teacherRecommendationsState.items || []).filter((item) => item.classId === classItem.id && item.status !== "deleted");
+  return `
+    <section class="tw-board tw-class-messages-shell tw-recommendations-shell">
+      <div class="tw-planning-heading">
+        <div>
+          <span>Recomendacoes</span>
+          <h2>Recomendacoes - ${printableEscape(classItem.name)}</h2>
+          <p>Conteudos destacados para toda a turma ou para um aluno/familia da propria turma.</p>
+        </div>
+        <div class="tw-planning-toolbar">
+          <a href="atividades.html?target=class&class=${encodeURIComponent(classItem.id)}">ESCOLHER ATIVIDADE</a>
+        </div>
+      </div>
+      <div class="tw-section-head">
+        <h2>Recomendacoes publicadas</h2>
+        <span>${teacherRecommendationsState.status === "ready" ? `${recommendations.length} registro${recommendations.length === 1 ? "" : "s"}` : "Supabase"}</span>
+      </div>
+      ${
+        teacherRecommendationsState.message
+          ? `<p class="tw-operation-feedback">${printableEscape(teacherRecommendationsState.message)}</p>`
+          : ""
+      }
+      ${
+        teacherRecommendationsState.status === "loading"
+          ? renderTeacherInstitutionalStatus("CARREGANDO RECOMENDACOES.")
+          : teacherRecommendationsState.status === "error"
+            ? renderTeacherEmptyState("NAO FOI POSSIVEL CARREGAR AS RECOMENDACOES.", teacherRecommendationsState.error)
+            : recommendations.length
+              ? `<div class="tw-message-list">${recommendations.map(renderTeacherRecommendationCard).join("")}</div>`
+              : renderTeacherEmptyState("NENHUMA RECOMENDACAO PUBLICADA AINDA.", "Escolha uma atividade imprimivel e indique para esta turma ou para um aluno.")
+      }
+    </section>
+  `;
+};
+
 const renderTeacherPreparedClassPanel = (title, text) => `
   <section class="tw-board">
     <div class="tw-section-head"><h2>${printableEscape(title)}</h2></div>
@@ -6278,7 +6805,7 @@ const renderTeacherClassPage = () => `
           if (activeTab === "frequencia") return renderTeacherAttendancePanel(classItem, students);
           if (activeTab === "semana") return renderTeacherClassWeekPanel(classItem);
           if (activeTab === "recados") return renderTeacherClassMessagesPanel(classItem, students);
-          if (activeTab === "recomendacoes") return renderTeacherPreparedClassPanel("Recomendacoes", "Espaco preparado para recomendacoes futuras, sem dados ficticios.");
+          if (activeTab === "recomendacoes") return renderTeacherRecommendationsPanel(classItem, students);
           if (activeTab === "desafio") return renderTeacherPreparedClassPanel("Desafio da Semana", "Espaco preparado para publicacao futura de desafios, sem Banco de Propostas nesta etapa.");
           return `
             <section class="tw-board">
@@ -7272,6 +7799,7 @@ const officialSchoolState = {
   context: null,
   school: null,
   communications: [],
+  recommendations: [],
   scope: null,
   source: "supabase",
 };
@@ -7656,22 +8184,62 @@ const renderOfficialSchoolWeeklyChallenge = () => `
   </article>
 `;
 
-const renderOfficialSchoolTeacherRecommendations = () => `
-  <article class="official-school-panel official-school-recommendations" id="recomendados">
-    <div class="official-school-section-head">
-      <span>${renderOfficialSchoolIcon("cap")} Recomendados pela Professora</span>
-      <h2>Recomendados pela Professora</h2>
-      <p>Area preparada para livros, jogos, atividades, experiencias e propostas livres.</p>
-    </div>
-    <div class="official-school-prepared-empty">
-      ${renderOfficialSchoolIcon("book")}
+const shouldShowOfficialSchoolRecommendation = (recommendation = {}, state = officialSchoolState) => {
+  if (String(recommendation.status || "").toLowerCase() !== "published") return false;
+  const targetType = String(recommendation.target_type || "class").toLowerCase();
+  const scope = state.scope || {};
+  if (scope.isAdministrative) return true;
+  if (targetType === "class") return Boolean(recommendation.class_id && (scope.classIds || new Set()).has(recommendation.class_id));
+  if (targetType === "student") return Boolean(recommendation.student_id && (scope.studentIds || new Set()).has(recommendation.student_id));
+  return false;
+};
+
+const renderOfficialSchoolRecommendationCard = (recommendation = {}) => {
+  const targetType = String(recommendation.target_type || "class").toLowerCase();
+  const destination = targetType === "student" ? "Aluno/Familia" : "Turma";
+  const detailHref =
+    recommendation.content_type === "printable_activity"
+      ? `atividades.html?codigo=${encodeURIComponent(recommendation.content_id || "")}`
+      : "#";
+  return `
+    <article class="official-school-communication-card">
+      <div class="official-school-communication-icon" aria-hidden="true">${renderOfficialSchoolIcon("cap")}</div>
       <div>
-        <strong>Nenhuma recomendacao publicada.</strong>
-        <span>As recomendacoes reais aparecerao aqui quando forem liberadas para seu perfil.</span>
+        <strong>${schoolOfficialEscape(recommendation.content_title || "Conteudo recomendado")}</strong>
+        <span class="official-school-communication-badge">${schoolOfficialEscape(`${recommendationTypeLabel(recommendation.content_type)} · ${destination}`)}</span>
+        ${recommendation.note ? `<p>${schoolOfficialEscape(recommendation.note)}</p>` : ""}
+        <span>${schoolOfficialEscape(officialSchoolDateLabel(recommendation.published_at || recommendation.created_at))}</span>
+        ${recommendation.content_type === "printable_activity" ? `<a class="official-school-view-all" href="${schoolOfficialEscape(detailHref)}">Abrir atividade</a>` : ""}
       </div>
-    </div>
-  </article>
-`;
+    </article>
+  `;
+};
+
+const renderOfficialSchoolTeacherRecommendations = (recommendations = []) => {
+  const visibleRecommendations = recommendations.filter((recommendation) =>
+    shouldShowOfficialSchoolRecommendation(recommendation, officialSchoolState)
+  );
+  return `
+    <article class="official-school-panel official-school-recommendations" id="recomendados">
+      <div class="official-school-section-head">
+        <span>${renderOfficialSchoolIcon("cap")} Recomendados pela Professora</span>
+        <h2>Recomendados pela Professora</h2>
+        <p>Atividades, livros, jogos e experiencias destacados para o seu perfil.</p>
+      </div>
+      ${
+        visibleRecommendations.length
+          ? `<div class="official-school-communication-list">${visibleRecommendations.slice(0, 4).map(renderOfficialSchoolRecommendationCard).join("")}</div>`
+          : `<div class="official-school-prepared-empty">
+              ${renderOfficialSchoolIcon("book")}
+              <div>
+                <strong>Nenhuma recomendacao publicada.</strong>
+                <span>As recomendacoes reais aparecerao aqui quando forem liberadas para seu perfil.</span>
+              </div>
+            </div>`
+      }
+    </article>
+  `;
+};
 
 const officialSchoolAdminRoles = new Set(["admin", "secretaria", "gestor", "coordenador"]);
 const officialSchoolStudentRoles = new Set(["aluno", "educacao_infantil"]);
@@ -7722,7 +8290,7 @@ const renderOfficialSchoolRealContent = () => {
         <a class="official-school-view-all" href="#comunicados">Ver todos os comunicados</a>
       </article>
 
-      ${renderOfficialSchoolTeacherRecommendations()}
+      ${renderOfficialSchoolTeacherRecommendations(officialSchoolState.recommendations)}
     </section>
 
     <article class="official-school-panel official-school-real-shortcuts" id="biblioteca-jogos">
@@ -7975,10 +8543,17 @@ const loadOfficialSchoolData = async ({ force = false } = {}) => {
         "communications",
         `?select=id,school_id,title,body,communication_type,audience_type,class_id,student_id,status,communication_date,created_at&school_id=${supabaseEq(school.id)}&status=eq.published&order=created_at.desc&limit=8`
       );
+      const recommendations = await requestOfficialSchoolRows(
+        client,
+        "pedagogical_recommendations",
+        `?select=id,school_id,teacher_id,content_type,content_id,content_title,target_type,class_id,student_id,note,status,published_at,created_at&school_id=${supabaseEq(school.id)}&status=eq.published&order=published_at.desc&limit=12`,
+        { optional: true }
+      );
       officialSchoolState.status = "ready";
       officialSchoolState.context = context;
       officialSchoolState.school = school;
       officialSchoolState.communications = communications || [];
+      officialSchoolState.recommendations = recommendations || [];
       officialSchoolState.scope = scope;
       officialSchoolState.error = "";
       return officialSchoolState;
@@ -7987,6 +8562,7 @@ const loadOfficialSchoolData = async ({ force = false } = {}) => {
       officialSchoolState.error = error.message || "Falha ao carregar Minha Escola.";
       officialSchoolState.school = null;
       officialSchoolState.communications = [];
+      officialSchoolState.recommendations = [];
       officialSchoolState.scope = null;
       return officialSchoolState;
     } finally {
@@ -9976,7 +10552,7 @@ const modules = {
     html: renderTeacherStudentPage(),
   },
   atividades: {
-    title: "Banco de Atividades Imprimiveis",
+    title: "Atividades Imprimiveis",
     subtitle: "Atividades exclusivas para a Educacao Infantil",
     code: "PRINTABLE-ACTIVITIES-001",
     html: renderPrintableActivitiesPage(),
@@ -16140,6 +16716,7 @@ const initTeacherWorkspace = () => {
       button.classList.toggle("is-active", button.dataset.teacherView === view);
     });
     initUniversalActivityTeacherDeliveries();
+    initPrintableActivities();
     if (search) search.value = "";
     if (view === "planejamentos") {
       ensureTeacherPlanningWeek().then(() => {
@@ -16152,6 +16729,13 @@ const initTeacherWorkspace = () => {
       ensureTeacherClassMessages().then(() => {
         if (activeTeacherView === "mensagens" && content && document.body.contains(workspace)) {
           content.innerHTML = renderTeacherWorkspaceView("mensagens");
+        }
+      });
+    }
+    if (view === "acompanhamento") {
+      ensureTeacherTrackingBundle({ force: true }).then(() => {
+        if (activeTeacherView === "acompanhamento" && content && document.body.contains(workspace)) {
+          content.innerHTML = renderTeacherWorkspaceView("acompanhamento");
         }
       });
     }
@@ -16400,6 +16984,55 @@ const initTeacherWorkspace = () => {
       }
       return;
     }
+    const recommendationStatus = event.target.closest("[data-teacher-recommendation-status]");
+    if (recommendationStatus) {
+      event.preventDefault();
+      const recommendation = (teacherRecommendationsState.items || []).find((item) => item.id === recommendationStatus.dataset.teacherRecommendationStatus);
+      if (!recommendation) return;
+      const toStatus = recommendationStatus.dataset.toStatus || "";
+      const destination = recommendationStatus.dataset.destination || (recommendation.targetType === "student" ? `Aluno/Familia: ${recommendation.studentName}` : `Toda a turma: ${recommendation.className}`);
+      const label = toStatus === "published" ? `Publicar novamente para ${destination}?` : `Retirar "${recommendation.contentTitle}" da publicacao?`;
+      if (!window.confirm(label)) return;
+      recommendationStatus.disabled = true;
+      recommendationStatus.textContent = toStatus === "published" ? "PUBLICANDO..." : "RETIRANDO...";
+      try {
+        await setTeacherRecommendationStatus(recommendation.id, toStatus);
+        rerenderTeacherClassPage();
+      } catch (error) {
+        window.alert(error.message || "Nao foi possivel alterar a recomendacao.");
+      }
+      return;
+    }
+    const recommendationDelete = event.target.closest("[data-teacher-recommendation-delete]");
+    if (recommendationDelete) {
+      event.preventDefault();
+      const recommendation = (teacherRecommendationsState.items || []).find((item) => item.id === recommendationDelete.dataset.teacherRecommendationDelete);
+      if (!recommendation) return;
+      if (!window.confirm("Excluir esta recomendacao definitivamente da operacao?")) return;
+      recommendationDelete.disabled = true;
+      recommendationDelete.textContent = "EXCLUINDO...";
+      try {
+        await deleteTeacherRecommendation(recommendation.id);
+        rerenderTeacherClassPage();
+      } catch (error) {
+        window.alert(error.message || "Nao foi possivel excluir a recomendacao.");
+      }
+      return;
+    }
+    const trackingStudentPick = event.target.closest("[data-tracking-student-pick]");
+    if (trackingStudentPick) {
+      event.preventDefault();
+      teacherTrackingState.selectedStudentId = trackingStudentPick.dataset.trackingStudentPick || "";
+      const params = new URLSearchParams(window.location.search);
+      params.set("view", "acompanhamento");
+      params.set("class", teacherTrackingState.selectedClassId || getTeacherTrackingClassId());
+      params.set("student", teacherTrackingState.selectedStudentId);
+      window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
+      if (activeTeacherView === "acompanhamento" && content && document.body.contains(workspace)) {
+        content.innerHTML = renderTeacherWorkspaceView("acompanhamento");
+      }
+      return;
+    }
     if (!button) return;
     event.preventDefault();
     openView(button.dataset.teacherView || "inicio");
@@ -16471,6 +17104,55 @@ const initTeacherWorkspace = () => {
   });
 
   workspace.addEventListener("change", async (event) => {
+    const planningClassSelect = event.target.closest("[data-planning-class]");
+    if (planningClassSelect) {
+      teacherPlanningState.selectedClassId = planningClassSelect.value || "";
+      await refreshPlanningView({ force: false });
+      return;
+    }
+    const trackingClassSelect = event.target.closest("[data-tracking-class]");
+    if (trackingClassSelect) {
+      teacherTrackingState.selectedClassId = trackingClassSelect.value || "";
+      teacherTrackingState.selectedStudentId = "";
+      const params = new URLSearchParams(window.location.search);
+      params.set("view", "acompanhamento");
+      params.set("class", teacherTrackingState.selectedClassId);
+      params.delete("student");
+      window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
+      await ensureTeacherTrackingBundle({ force: true });
+      if (activeTeacherView === "acompanhamento" && content && document.body.contains(workspace)) {
+        content.innerHTML = renderTeacherWorkspaceView("acompanhamento");
+      }
+      return;
+    }
+    const trackingStudentSelect = event.target.closest("[data-tracking-student]");
+    if (trackingStudentSelect) {
+      teacherTrackingState.selectedStudentId = trackingStudentSelect.value || "";
+      const params = new URLSearchParams(window.location.search);
+      params.set("view", "acompanhamento");
+      params.set("class", teacherTrackingState.selectedClassId || getTeacherTrackingClassId());
+      params.set("student", teacherTrackingState.selectedStudentId);
+      window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
+      if (activeTeacherView === "acompanhamento" && content && document.body.contains(workspace)) {
+        content.innerHTML = renderTeacherWorkspaceView("acompanhamento");
+      }
+      return;
+    }
+    const trackingPeriodSelect = event.target.closest("[data-tracking-period]");
+    if (trackingPeriodSelect) {
+      teacherTrackingState.periodDays = [7, 30, 90].includes(Number(trackingPeriodSelect.value)) ? Number(trackingPeriodSelect.value) : 30;
+      const params = new URLSearchParams(window.location.search);
+      params.set("view", "acompanhamento");
+      params.set("class", teacherTrackingState.selectedClassId || getTeacherTrackingClassId());
+      params.set("period", String(teacherTrackingState.periodDays));
+      if (teacherTrackingState.selectedStudentId) params.set("student", teacherTrackingState.selectedStudentId);
+      window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
+      await ensureTeacherTrackingBundle({ force: true });
+      if (activeTeacherView === "acompanhamento" && content && document.body.contains(workspace)) {
+        content.innerHTML = renderTeacherWorkspaceView("acompanhamento");
+      }
+      return;
+    }
     const attendanceRadio = event.target.closest(".tw-attendance-choice input[type='radio']");
     if (attendanceRadio) {
       const row = attendanceRadio.closest(".tw-attendance-row");
@@ -16530,6 +17212,11 @@ const initTeacherWorkspace = () => {
         teacherClassMessagesState.status = "idle";
         ensureTeacherClassMessages({ force: true, classId }).then(rerenderTeacherClassPage);
       }
+      if (getTeacherClassTab() === "recomendacoes") {
+        teacherRecommendationsState.classId = classId;
+        teacherRecommendationsState.status = "idle";
+        ensureTeacherRecommendations({ force: true, classId }).then(rerenderTeacherClassPage);
+      }
       workspace.outerHTML = renderTeacherClassPage();
       requestAnimationFrame(() => document.querySelector(".teacher-workspace")?.classList.add("is-mounted"));
       initTeacherWorkspace();
@@ -16586,8 +17273,48 @@ const initPrintableActivities = () => {
   });
   root.addEventListener("change", (event) => {
     if (event.target.closest("[data-pa-filters]")) updateUrlFromForm();
+    const recommendationClass = event.target.closest("[data-pa-recommendation-class]");
+    if (recommendationClass) {
+      const form = recommendationClass.closest("[data-pa-recommendation-form]");
+      const studentSelect = form?.querySelector("select[name='studentId']");
+      const students = getTeacherInstitutionalStudents(recommendationClass.value || "");
+      if (studentSelect) {
+        studentSelect.innerHTML = `<option value="">Selecione</option>${students
+          .map((student) => `<option value="${printableEscape(student.id)}">${printableEscape(student.name)}</option>`)
+          .join("")}`;
+      }
+      return;
+    }
+    const recommendationTarget = event.target.closest("[data-pa-recommendation-target]");
+    if (recommendationTarget) {
+      const wrap = recommendationTarget.closest("[data-pa-recommendation-form]")?.querySelector("[data-pa-recommendation-student-wrap]");
+      if (wrap) wrap.hidden = recommendationTarget.value !== "student";
+    }
   });
   root.addEventListener("click", (event) => {
+    const recommendationClose = event.target.closest("[data-pa-recommendation-close]");
+    if (recommendationClose) {
+      recommendationClose.closest("[data-pa-recommendation-dialog]")?.close?.();
+      return;
+    }
+    const recommendationButton = event.target.closest("[data-pa-indicate]");
+    if (recommendationButton) {
+      const item = printableActivitiesDataService.getByCode(recommendationButton.dataset.paIndicate, { admin: false });
+      const dialog = root.querySelector("[data-pa-recommendation-dialog]");
+      const form = dialog?.querySelector("[data-pa-recommendation-form]");
+      if (!item || !dialog || !form) return;
+      if (teacherInstitutionalState.status !== "ready") {
+        window.alert("Entre como professora e aguarde o carregamento das turmas reais.");
+        return;
+      }
+      form.elements.contentId.value = item.codigo;
+      form.elements.contentTitle.value = item.titulo || item.codigo;
+      const status = form.querySelector("[data-pa-recommendation-status]");
+      if (status) status.textContent = `Atividade: ${item.titulo || item.codigo}`;
+      if (typeof dialog.showModal === "function") dialog.showModal();
+      else dialog.setAttribute("open", "");
+      return;
+    }
     const ageButton = event.target.closest("[data-pa-filter-faixa]");
     if (ageButton) {
       const params = getPrintableParams();
@@ -16646,6 +17373,50 @@ const initPrintableActivities = () => {
       printableActivitiesDataService.metric("visualizacao_card", { codigo: view.dataset.paView });
     }
   });
+  root.addEventListener("submit", async (event) => {
+    const recommendationForm = event.target.closest("[data-pa-recommendation-form]");
+    if (!recommendationForm) return;
+    event.preventDefault();
+    const submitButton = recommendationForm.querySelector("button[type='submit']");
+    const status = recommendationForm.querySelector("[data-pa-recommendation-status]");
+    const previousLabel = submitButton?.textContent || "";
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "PUBLICANDO...";
+    }
+    try {
+      const data = new FormData(recommendationForm);
+      await createTeacherPedagogicalRecommendation({
+        classId: String(data.get("classId") || ""),
+        contentType: "printable_activity",
+        contentId: String(data.get("contentId") || ""),
+        contentTitle: String(data.get("contentTitle") || ""),
+        targetType: String(data.get("targetType") || "class"),
+        studentId: String(data.get("studentId") || ""),
+        note: String(data.get("note") || "").trim(),
+      });
+      if (status) status.textContent = "Recomendacao publicada com sucesso.";
+      recommendationForm.reset();
+      setTimeout(() => recommendationForm.closest("[data-pa-recommendation-dialog]")?.close?.(), 500);
+    } catch (error) {
+      if (status) status.textContent = error.message || "Nao foi possivel publicar a recomendacao.";
+      else window.alert(error.message || "Nao foi possivel publicar a recomendacao.");
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = previousLabel;
+      }
+    }
+  });
+  if (root.dataset.printableApp === "teacher" && !printableRecommendationContextHydrated) {
+    printableRecommendationContextHydrated = true;
+    ensureTeacherInstitutionalData().then(() => {
+      const currentRoot = document.querySelector("[data-printable-app]");
+      if (!currentRoot || currentRoot.dataset.printableApp !== "teacher") return;
+      currentRoot.outerHTML = getPrintableParams().get("codigo") ? renderPrintableDetailPage({ admin: false }) : renderPrintableMainPage({ admin: false });
+      initPrintableActivities();
+    });
+  }
 };
 
 const initUniversalActivityAssignmentUi = () => {
