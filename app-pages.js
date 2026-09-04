@@ -3407,6 +3407,7 @@ const teacherPlanningState = {
   error: "",
   promise: null,
   weekStartIso: "",
+  selectedClassId: "",
   plans: [],
   publicationsByPlanId: {},
 };
@@ -3723,6 +3724,15 @@ const getTeacherPlanningWeekLabel = () => {
 };
 
 const getTeacherPlanningClassById = (classId = "") => getTeacherPlanningClasses().find((classItem) => classItem.id === classId) || null;
+const getTeacherSelectedPlanningClassId = () => {
+  const classes = getTeacherPlanningClasses();
+  if (!classes.length) return "";
+  if (teacherPlanningState.selectedClassId && classes.some((classItem) => classItem.id === teacherPlanningState.selectedClassId)) {
+    return teacherPlanningState.selectedClassId;
+  }
+  teacherPlanningState.selectedClassId = classes[0]?.id || "";
+  return teacherPlanningState.selectedClassId;
+};
 
 const getTeacherPlanningClassContext = (classId = "") => {
   const classItem = getTeacherPlanningClassById(classId) || getTeacherPlanningClasses()[0] || null;
@@ -4253,9 +4263,11 @@ const renderTeacherPlanningProposalCard = (proposal) => {
 `;
 };
 
-const renderTeacherPlanningDay = ([dayKey, dayLabel], proposals, canPlan = false) => {
+const renderTeacherPlanningDay = ([dayKey, dayLabel], proposals, canPlan = false, selectedClassId = "") => {
   const weekDates = getTeacherPlanningWeekDates();
-  const dayProposals = proposals.filter((proposal) => proposal.day === dayKey && (!proposal.planDate || proposal.planDate === weekDates[dayKey]));
+  const dayProposals = proposals.filter(
+    (proposal) => proposal.day === dayKey && proposal.classId === selectedClassId && (!proposal.planDate || proposal.planDate === weekDates[dayKey])
+  );
   return `
     <article class="tw-planning-day" data-teacher-search-item>
       <header>
@@ -16067,7 +16079,7 @@ const initTeacherWorkspace = () => {
     form.elements.id.value = proposal.id || "";
     form.elements.title.value = proposal.title || "";
     form.elements.day.value = proposal.day || day;
-    form.elements.classId.value = proposal.classId || form.elements.classId.value || getTeacherPlanningClasses()[0]?.id || "";
+    form.elements.classId.value = proposal.classId || teacherPlanningState.selectedClassId || form.elements.classId.value || getTeacherPlanningClasses()[0]?.id || "";
     if (form.elements.startTime) form.elements.startTime.value = proposal.startTime ? proposal.startTime.slice(0, 5) : "";
     form.elements.resourceType.value = proposal.resourceType || "proposta-livre";
     form.elements.note.value = proposal.note || "";
