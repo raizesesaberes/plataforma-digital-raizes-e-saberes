@@ -3762,9 +3762,27 @@ const mapTeacherPlanRow = (row = {}, classItem = null, publication = null) => ({
   updatedAt: row.updated_at || "",
 });
 
+const getTeacherPlanningStatusLabel = (status = "") => {
+  if (status === "published") return "FINALIZADO";
+  if (status === "archived") return "ARQUIVADO";
+  return "RASCUNHO";
+};
+
 const setTeacherPlanningError = (message = "") => {
   teacherPlanningState.status = message ? "error" : "ready";
   teacherPlanningState.error = message;
+};
+
+const mergeTeacherPlanningRows = (rows = []) => {
+  const classById = new Map(getTeacherInstitutionalClasses().map((classItem) => [classItem.id, classItem]));
+  const mappedRows = (Array.isArray(rows) ? rows : [rows])
+    .filter(Boolean)
+    .map((row) => mapTeacherPlanRow(row, classById.get(row.class_id), teacherPlanningState.publicationsByPlanId?.[row.id]));
+  if (!mappedRows.length) return;
+  const byId = new Map((teacherPlanningState.plans || []).map((plan) => [plan.id, plan]));
+  mappedRows.forEach((plan) => byId.set(plan.id, plan));
+  teacherPlanningState.plans = Array.from(byId.values());
+  teacherPlanningState.status = "ready";
 };
 
 const ensureTeacherPlanningWeek = async ({ force = false } = {}) => {
@@ -3792,14 +3810,14 @@ const ensureTeacherPlanningWeek = async ({ force = false } = {}) => {
       const planRows = await client.request(
         "teacher_plans",
         `?select=id,teacher_id,class_id,school_id,plan_date,weekday,title,resource_type,resource_reference,teacher_notes,status,created_at,updated_at&status=neq.archived&plan_date=gte.${encodeURIComponent(dates.segunda)}&plan_date=lte.${encodeURIComponent(dates.sexta)}&class_id=${supabaseIn(classIds)}&order=plan_date.asc&order=created_at.asc`,
-        { requireAuthenticated: true, allowedRoles: ["professor", "admin", "gestor", "coordenador"] }
+        { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
       );
       const planIds = (planRows || []).map((row) => row.id).filter(Boolean);
       const publicationRows = planIds.length
         ? await client.request(
             "class_calendar_entries",
             `?select=id,class_id,school_id,teacher_id,plan_id,entry_date,start_time,end_time,title,description,entry_type,status,created_at,updated_at&status=eq.published&plan_id=${supabaseIn(planIds)}&order=entry_date.asc`,
-            { requireAuthenticated: true, allowedRoles: ["professor", "admin", "gestor", "coordenador"] }
+            { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
           )
         : [];
       const classById = new Map(classes.map((classItem) => [classItem.id, classItem]));
@@ -3826,6 +3844,7 @@ const saveTeacherPlanningToSupabase = async (formData) => {
   const existingId = String(formData.get("id") || "");
   const { classItem, teacherId, schoolId } = getTeacherPlanningClassContext(String(formData.get("classId") || ""));
   const startTime = String(formData.get("startTime") || "").trim();
+  const currentPlan = existingId ? (teacherPlanningState.plans || []).find((plan) => plan.id === existingId) : null;
   const payload = {
     teacher_id: teacherId,
     class_id: classItem.id,
@@ -3836,27 +3855,42 @@ const saveTeacherPlanningToSupabase = async (formData) => {
     resource_type: normalizeTeacherPlanningResourceType(String(formData.get("resourceType") || "proposta-livre")),
     resource_reference: startTime ? { start_time: startTime } : {},
     teacher_notes: String(formData.get("note") || "").trim() || null,
-    status: "draft",
+    status: currentPlan && ["draft", "published"].includes(currentPlan.status) ? currentPlan.status : "draft",
   };
   if (!payload.title) throw new Error("Informe um titulo para a proposta.");
   const dayItems = (teacherPlanningState.plans || []).filter((plan) => plan.classId === classItem.id && plan.day === day && plan.id !== existingId && plan.status !== "archived");
   if (dayItems.length >= 5) throw new Error("Cada dia aceita ate 5 itens nesta versao.");
   const client = createSupabaseRestClient();
+  let savedRows = [];
   if (existingId) {
-    await client.request("teacher_plans", `?id=${supabaseEq(existingId)}`, {
+    savedRows = await client.request("teacher_plans", `?id=${supabaseEq(existingId)}`, {
       method: "PATCH",
       body: JSON.stringify(payload),
       requireAuthenticated: true,
-      allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+      allowedRoles: teacherAllowedRoles,
     });
   } else {
-    await client.request("teacher_plans", "", {
+    savedRows = await client.request("teacher_plans", "", {
       method: "POST",
       body: JSON.stringify(payload),
       requireAuthenticated: true,
-      allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+      allowedRoles: teacherAllowedRoles,
     });
   }
+  mergeTeacherPlanningRows(savedRows);
+  await ensureTeacherPlanningWeek({ force: true });
+};
+
+const finalizeTeacherPlanning = async (planId) => {
+  const plan = (teacherPlanningState.plans || []).find((item) => item.id === planId);
+  if (!plan) throw new Error("Planejamento nao encontrado.");
+  const client = createSupabaseRestClient();
+  await client.request("teacher_plans", `?id=${supabaseEq(planId)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "published" }),
+    requireAuthenticated: true,
+    allowedRoles: teacherAllowedRoles,
+  });
   await ensureTeacherPlanningWeek({ force: true });
 };
 
@@ -3882,21 +3916,21 @@ const publishTeacherPlanPayload = async (plan) => {
       method: "PATCH",
       body: JSON.stringify(payload),
       requireAuthenticated: true,
-      allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+      allowedRoles: teacherAllowedRoles,
     });
   } else {
     await client.request("class_calendar_entries", "", {
       method: "POST",
       body: JSON.stringify(payload),
       requireAuthenticated: true,
-      allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+      allowedRoles: teacherAllowedRoles,
     });
   }
   await client.request("teacher_plans", `?id=${supabaseEq(plan.id)}`, {
     method: "PATCH",
     body: JSON.stringify({ status: "published" }),
     requireAuthenticated: true,
-    allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+    allowedRoles: teacherAllowedRoles,
   });
 };
 
@@ -3926,14 +3960,14 @@ const archiveTeacherPlanning = async (planId) => {
       method: "PATCH",
       body: JSON.stringify({ status: "archived" }),
       requireAuthenticated: true,
-      allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+      allowedRoles: teacherAllowedRoles,
     });
   }
   await client.request("teacher_plans", `?id=${supabaseEq(planId)}`, {
     method: "PATCH",
     body: JSON.stringify({ status: "archived" }),
     requireAuthenticated: true,
-    allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+    allowedRoles: teacherAllowedRoles,
   });
   await ensureTeacherPlanningWeek({ force: true });
 };
@@ -3964,14 +3998,14 @@ const saveTeacherCalendarEntryToSupabase = async (formData) => {
       method: "PATCH",
       body: JSON.stringify(payload),
       requireAuthenticated: true,
-      allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+      allowedRoles: teacherAllowedRoles,
     });
   } else {
     await client.request("class_calendar_entries", "", {
       method: "POST",
       body: JSON.stringify(payload),
       requireAuthenticated: true,
-      allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+      allowedRoles: teacherAllowedRoles,
     });
   }
   await ensureTeacherPlanningWeek({ force: true });
@@ -3985,7 +4019,7 @@ const archiveTeacherCalendarEntry = async (planId) => {
     method: "PATCH",
     body: JSON.stringify({ status: "archived" }),
     requireAuthenticated: true,
-    allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+    allowedRoles: teacherAllowedRoles,
   });
   await ensureTeacherPlanningWeek({ force: true });
 };
@@ -4052,8 +4086,8 @@ const ensureTeacherClassMessages = async ({ force = false, weekStartIso = "", cl
       const client = createSupabaseRestClient();
       const rows = await client.request(
         "communications",
-        `?select=id,school_id,author_profile_id,author_role,communication_type,audience_type,class_id,student_id,title,body,communication_date,status,created_at,updated_at&communication_type=eq.message&class_id=${supabaseIn(classIds)}&order=created_at.desc`,
-        { requireAuthenticated: true, allowedRoles: ["professor", "admin", "gestor", "coordenador"] }
+        `?select=id,school_id,author_profile_id,author_role,communication_type,audience_type,class_id,student_id,title,body,communication_date,status,created_at,updated_at&communication_type=eq.message&class_id=${supabaseIn(classIds)}&status=neq.deleted&order=created_at.desc`,
+        { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
       );
       teacherClassMessagesState.messages = (rows || []).map(mapTeacherClassMessage);
       teacherClassMessagesState.status = "ready";
@@ -4100,7 +4134,7 @@ const sendTeacherClassMessage = async (formData) => {
       p_expires_at: null,
     }),
     requireAuthenticated: true,
-    allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+    allowedRoles: teacherAllowedRoles,
   });
   await ensureTeacherClassMessages({ force: true });
 };
@@ -4111,18 +4145,18 @@ const setTeacherClassMessageStatus = async (communicationId = "", toStatus = "")
     method: "PATCH",
     body: JSON.stringify({ status: toStatus }),
     requireAuthenticated: true,
-    allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+    allowedRoles: teacherAllowedRoles,
   });
   await ensureTeacherClassMessages({ force: true });
 };
 
 const deleteTeacherClassMessage = async (communicationId = "") => {
   const client = createSupabaseRestClient();
-  await client.request("communications", `?id=${supabaseEq(communicationId)}`, {
-    method: "DELETE",
-    prefer: "return=minimal",
+  await client.request("rpc/secretaria_delete_communication", "", {
+    method: "POST",
+    body: JSON.stringify({ p_communication_id: communicationId }),
     requireAuthenticated: true,
-    allowedRoles: ["professor", "admin", "gestor", "coordenador"],
+    allowedRoles: teacherAllowedRoles,
   });
   await ensureTeacherClassMessages({ force: true });
 };
@@ -4197,20 +4231,22 @@ const renderTeacherClassWeeklyBoard = () => {
 const renderTeacherPlanningProposalCard = (proposal) => {
   const publication = proposal.publication || null;
   const publicationLabel = publication?.entry_date ? `${formatTeacherPlanningDate(publication.entry_date)}${publication.start_time ? ` · ${publication.start_time.slice(0, 5)}` : ""}` : "Nao publicado";
+  const statusLabel = getTeacherPlanningStatusLabel(proposal.status);
+  const isFinalized = proposal.status === "published";
   return `
   <article class="tw-planning-proposal ${proposal.published ? "is-published" : ""}" data-teacher-search-item data-planning-card="${printableEscape(proposal.id)}">
-    <span>${printableEscape(findTeacherPlanningLabel(teacherPlanningResourceTypes, proposal.resourceType, "Recurso"))} · ${proposal.published ? "PUBLICADO" : "RASCUNHO"}</span>
+    <span>${printableEscape(findTeacherPlanningLabel(teacherPlanningResourceTypes, proposal.resourceType, "Recurso"))} · ${printableEscape(statusLabel)}</span>
     <strong>${printableEscape(proposal.title)}</strong>
     <small>${printableEscape(proposal.className)} · ${printableEscape(findTeacherPlanningLabel(teacherPlanningDays, proposal.day, "Dia"))} · ${printableEscape(formatTeacherPlanningDate(proposal.planDate))}</small>
     <div class="tw-planning-detail" data-planning-detail="${printableEscape(proposal.id)}" hidden>
       <p>${printableEscape(proposal.note || "Sem observacao registrada.")}</p>
-      <em>${printableEscape(proposal.published ? `Publicado na agenda: ${publicationLabel}` : "Rascunho privado. Publicacao exige acao explicita.")}</em>
+      <em>${printableEscape(isFinalized ? `Planejamento finalizado.${publication ? ` Ja usado na Minha Semana: ${publicationLabel}.` : ""}` : "Rascunho privado da professora.")}</em>
     </div>
     <div class="tw-planning-actions">
       <button type="button" data-planning-view="${printableEscape(proposal.id)}">VISUALIZAR</button>
       <button type="button" data-planning-edit="${printableEscape(proposal.id)}">EDITAR</button>
-      <button type="button" data-planning-publish="${printableEscape(proposal.id)}">${proposal.published ? "EDITAR PUBLICACAO" : "PUBLICAR PARA TURMA"}</button>
-      ${proposal.published ? `<button type="button" data-planning-unpublish="${printableEscape(proposal.id)}">RETIRAR DA AGENDA</button>` : ""}
+      ${isFinalized ? "" : `<button type="button" data-planning-finalize="${printableEscape(proposal.id)}">FINALIZAR</button>`}
+      <button type="button" disabled title="Acao futura: aproveitar este planejamento na Minha Semana.">USAR NA MINHA SEMANA</button>
       <button type="button" data-planning-remove="${printableEscape(proposal.id)}">ARQUIVAR</button>
     </div>
   </article>
@@ -4337,7 +4373,7 @@ const renderTeacherPlanningView = () => {
         <div>
           <span>Planejamento</span>
           <h2>Planejamento</h2>
-          <p>ORGANIZE RASCUNHOS E PUBLIQUE NA AGENDA DA TURMA QUANDO ESTIVER PRONTO.</p>
+          <p>ORGANIZE INTENCOES, PROPOSTAS E OBSERVACOES PEDAGOGICAS DA SEMANA.</p>
         </div>
         <div class="tw-planning-toolbar">
           <button type="button" data-planning-week-move="-1">SEMANA ANTERIOR</button>
@@ -4358,7 +4394,6 @@ const renderTeacherPlanningView = () => {
         ${teacherPlanningDays.map((day) => renderTeacherPlanningDay(day, proposals, canPlan)).join("")}
       </div>
       ${renderTeacherPlanningForm()}
-      ${renderTeacherPublicationPanel()}
     </section>
   `;
 };
@@ -13302,6 +13337,7 @@ const communicationStatusLabels = {
   draft: "Rascunho",
   published: "Publicado",
   archived: "Retirado",
+  deleted: "Excluido",
 };
 const communicationAudienceLabel = (value) => communicationAudienceLabels[String(value || "").toLowerCase()] || value || "Destino nao informado";
 const communicationTypeLabel = (value) => communicationTypeLabels[String(value || "").toLowerCase()] || value || "Tipo nao informado";
@@ -14632,7 +14668,8 @@ const renderSecretariaCommunicationsView = (index) => {
     .filter((enrollment) => isSecretariaActiveStatus(enrollment.status) && !enrollment.ended_at)
     .map((enrollment) => [enrollment.student_id, enrollment]));
   const rows = (secretariaInstitutionalState.communications || []).filter((communication) =>
-    (!selectedAudience || communication.audience_type === selectedAudience)
+    communication.status !== "deleted"
+    && (!selectedAudience || communication.audience_type === selectedAudience)
     && (!selectedStatus || communication.status === selectedStatus)
     && (!selectedType || communication.communication_type === selectedType)
   );
@@ -15280,7 +15317,7 @@ const initSecretariaInstitutional = () => {
     button.addEventListener("click", async () => {
       const message = area.querySelector("[data-secretaria-communication-message]");
       const title = button.dataset.title || "este comunicado";
-      if (!window.confirm(`Excluir definitivamente "${title}"?\n\nEsta acao nao pode ser desfeita.`)) return;
+      if (!window.confirm("Excluir este comunicado definitivamente?")) return;
       try {
         button.disabled = true;
         button.textContent = "Excluindo...";
@@ -16030,7 +16067,7 @@ const initTeacherWorkspace = () => {
     form.elements.id.value = proposal.id || "";
     form.elements.title.value = proposal.title || "";
     form.elements.day.value = proposal.day || day;
-    form.elements.classId.value = proposal.classId || getTeacherPlanningClasses()[0]?.id || "";
+    form.elements.classId.value = proposal.classId || form.elements.classId.value || getTeacherPlanningClasses()[0]?.id || "";
     if (form.elements.startTime) form.elements.startTime.value = proposal.startTime ? proposal.startTime.slice(0, 5) : "";
     form.elements.resourceType.value = proposal.resourceType || "proposta-livre";
     form.elements.note.value = proposal.note || "";
@@ -16109,8 +16146,9 @@ const initTeacherWorkspace = () => {
   };
 
   const rerenderTeacherClassPage = () => {
-    if (!document.body.contains(workspace)) return;
-    workspace.outerHTML = renderTeacherClassPage();
+    const currentWorkspace = document.querySelector("[data-teacher-workspace]") || workspace;
+    if (!document.body.contains(currentWorkspace)) return;
+    currentWorkspace.outerHTML = renderTeacherClassPage();
     requestAnimationFrame(() => document.querySelector(".teacher-workspace")?.classList.add("is-mounted"));
     initTeacherWorkspace();
   };
@@ -16198,6 +16236,24 @@ const initTeacherWorkspace = () => {
       event.preventDefault();
       const proposal = (teacherPlanningState.plans || []).find((item) => item.id === editPlanning.dataset.planningEdit);
       if (proposal) fillPlanningForm(proposal, proposal.day);
+      return;
+    }
+    const finalizePlanning = event.target.closest("[data-planning-finalize]");
+    if (finalizePlanning) {
+      event.preventDefault();
+      const proposal = (teacherPlanningState.plans || []).find((item) => item.id === finalizePlanning.dataset.planningFinalize);
+      if (!proposal) return;
+      if (!window.confirm(`Finalizar o planejamento "${proposal.title}"?`)) return;
+      finalizePlanning.disabled = true;
+      finalizePlanning.textContent = "FINALIZANDO...";
+      try {
+        await finalizeTeacherPlanning(proposal.id);
+        await refreshPlanningView({ force: false });
+      } catch (error) {
+        window.alert(error.message || "Nao foi possivel finalizar o planejamento.");
+      } finally {
+        finalizePlanning.disabled = false;
+      }
       return;
     }
     const publishPlanning = event.target.closest("[data-planning-publish]");
@@ -16321,7 +16377,7 @@ const initTeacherWorkspace = () => {
       event.preventDefault();
       const message = (teacherClassMessagesState.messages || []).find((item) => item.id === messageDelete.dataset.teacherMessageDelete);
       if (!message) return;
-      if (!window.confirm(`Excluir definitivamente "${message.title}"?`)) return;
+      if (!window.confirm("Excluir este recado definitivamente?")) return;
       messageDelete.disabled = true;
       messageDelete.textContent = "EXCLUINDO...";
       try {
