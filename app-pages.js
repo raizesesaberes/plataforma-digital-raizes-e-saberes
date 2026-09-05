@@ -4611,8 +4611,8 @@ const renderTeacherActivitiesView = () => {
         <article class="tw-activity-entry is-disabled" data-teacher-search-item>
           <span>Indicacao pedagogica</span>
           <strong>Indicar para turma ou aluno</strong>
-          <small>Espaco preparado para destacar atividades quando o motor de recomendacoes for homologado.</small>
-          <button type="button" disabled>EM PREPARACAO</button>
+          <small>Escolha uma atividade e indique para uma turma ou para um aluno vinculado.</small>
+          <button type="button" disabled>SELECIONE UMA ATIVIDADE</button>
         </article>
       </div>
     </section>
@@ -4621,7 +4621,7 @@ const renderTeacherActivitiesView = () => {
         ? `
           <section class="tw-board ua-deliveries" data-ua-deliveries>
             <div class="tw-section-head"><h2>Atividades indicadas</h2><button type="button" data-teacher-view="atividades">Explorar atividades</button></div>
-            <p class="ua-empty">Nenhuma atividade indicada ainda. A indicacao para turma ou aluno sera ativada quando o motor de recomendacoes estiver homologado.</p>
+            <p class="ua-empty">As atividades indicadas para turma ou aluno aparecerao aqui.</p>
             <div class="ua-delivery-detail" data-ua-delivery-detail></div>
           </section>
         `
@@ -4714,8 +4714,8 @@ const renderTeacherLibraryView = () => {
     {
       title: "Vincular ao Planejamento",
       label: "Futuro",
-      count: "Supabase",
-      text: "Arquitetura preparada para escolher materiais sem publicar ou enviar agora.",
+      count: "Preparado",
+      text: "Espaco reservado para relacionar materiais ao planejamento da professora.",
       disabled: true,
     },
   ].filter(Boolean);
@@ -4744,9 +4744,9 @@ const renderTeacherInstitutionalStatus = (title = "CARREGANDO DADOS INSTITUCIONA
     return renderTeacherEmptyState("NAO FOI POSSIVEL IDENTIFICAR O VINCULO INSTITUCIONAL DESTE PROFESSOR.", teacherInstitutionalState.error || "Entre novamente e tente acessar a Area do Professor.");
   }
   if (teacherInstitutionalState.status === "empty") {
-    return renderTeacherEmptyState("NENHUMA TURMA VINCULADA AO PROFESSOR.", "A vinculacao institucional precisa existir em class_teacher_memberships para liberar esta area.");
+    return renderTeacherEmptyState("NENHUMA TURMA VINCULADA AO PROFESSOR.", "A vinculacao institucional precisa estar ativa para liberar esta area.");
   }
-  return renderTeacherEmptyState(title, "Validando sua sessao e buscando turmas autorizadas pelo RLS.");
+  return renderTeacherEmptyState(title, "Validando sua sessao e buscando suas turmas autorizadas.");
 };
 
 const renderClassCard = (classItem) => `
@@ -5549,7 +5549,7 @@ const seedUniversalActivityTechnicalAssignments = () => {
 const renderUniversalActivityAssignDialog = () => `
   <dialog class="ua-dialog" data-ua-assign-dialog>
     <form method="dialog" class="ua-assign-form" data-ua-assign-form>
-      <header><span>Motor Universal</span><h2>Indicar atividade</h2><button type="button" data-ua-close-dialog aria-label="Fechar">×</button></header>
+      <header><span>Atividade imprimivel</span><h2>Indicar atividade</h2><button type="button" data-ua-close-dialog aria-label="Fechar">×</button></header>
       ${renderPrintableContextPanel()}
       <input type="hidden" name="activityCode" />
       <label><span>Destino</span><select name="scope"><option value="class">Turma inteira</option><option value="group">Grupo de alunos</option><option value="student">Aluno individual</option></select></label>
@@ -6029,7 +6029,7 @@ const renderTeacherTrackingView = () => {
         </section>
         <section class="tw-board tw-tracking-section">
           <div class="tw-section-head"><h2>Observacoes pedagogicas</h2><span>Preparado</span></div>
-          <p class="ua-empty">MOTOR CANONICO DE OBSERVACOES PEDAGOGICAS AINDA NAO EXISTE. NENHUMA OBSERVACAO FICTICIA FOI CRIADA.</p>
+          <p class="ua-empty">As observacoes pedagogicas estruturadas aparecerao aqui quando estiverem disponiveis.</p>
         </section>
       </div>
     `;
@@ -6057,9 +6057,9 @@ const renderTeacherTrackingView = () => {
       </div>
       <div class="tw-tracking-summary" aria-label="Visao geral da turma">
         <article><span>Turma</span><strong>${printableEscape(pilotProfiles.class.name)}</strong><small>${printableEscape(pilotProfiles.class.shift || "Turma piloto")}</small></article>
-        <article><span>Alunos</span><strong>${teacherWorkspaceStudents.length}</strong><small>Aluno real no conjunto piloto</small></article>
-        <article><span>Atividades indicadas</span><strong>${assignments.length}</strong><small>Somente registros locais validos</small></article>
-        <article><span>Producoes</span><strong>${productions.length}</strong><small>Somente registros reais do Motor Universal</small></article>
+        <article><span>Alunos</span><strong>${teacherWorkspaceStudents.length}</strong><small>Alunos vinculados a turma</small></article>
+        <article><span>Atividades indicadas</span><strong>${assignments.length}</strong><small>Registros disponiveis</small></article>
+        <article><span>Producoes</span><strong>${productions.length}</strong><small>Producoes registradas</small></article>
       </div>
     </section>
     <section class="tw-board tw-tracking-section">
@@ -6076,7 +6076,7 @@ const renderTeacherTrackingView = () => {
       <div class="ua-delivery-detail" data-ua-delivery-detail></div>
     </section>
     <section class="tw-board tw-tracking-section">
-      <div class="tw-section-head"><h2>Producoes</h2><span>Motor Universal</span></div>
+      <div class="tw-section-head"><h2>Producoes</h2><span>Registros da turma</span></div>
       <div class="tw-tracking-list">
         ${productions.length ? productions.map(renderTeacherTrackingProduction).join("") : `<p class="ua-empty">AINDA NAO HA PRODUCOES REGISTRADAS.</p>`}
       </div>
@@ -6090,7 +6090,7 @@ const renderTeacherTrackingView = () => {
       }
     </section>
     <section class="tw-board tw-tracking-section">
-      <div class="tw-section-head"><h2>Registros Pedagogicos</h2><span>Arquitetura futura</span></div>
+      <div class="tw-section-head"><h2>Registros Pedagogicos</h2><span>Preparado</span></div>
       <p class="ua-empty">NENHUM REGISTRO PEDAGOGICO DISPONIVEL.</p>
     </section>
     <section class="tw-board tw-tracking-section">
@@ -6100,50 +6100,153 @@ const renderTeacherTrackingView = () => {
   `;
 };
 
+const teacherFormationCourses = [
+  {
+    title: "Docencia Plural - Formacao em Interculturalidade e Bilinguismo",
+    provider: "EV.G - Escola Virtual.Gov",
+    category: "Inclusao e diversidade",
+    workload: "40h",
+    status: "Inscricoes abertas",
+    certificate: "Certificado informado pela instituicao",
+    image: "assets/universidade/curso-educacao-inclusiva.webp",
+    href: "universidade.html?from=teacher#curso-docencia-plural-interculturalidade-bilinguismo",
+  },
+  {
+    title: "Formacao de Professores do Programa Aprender Valor",
+    provider: "EV.G - Escola Virtual.Gov",
+    category: "Educacao financeira",
+    workload: "40h",
+    status: "Inscricoes abertas",
+    certificate: "Certificado informado pela instituicao",
+    image: "assets/universidade/trilha-praticas-pedagogicas.webp",
+    href: "universidade.html?from=teacher#curso-formacao-professores-programa-aprender-valor",
+  },
+  {
+    title: "Inclusao e Acessibilidade na Educacao",
+    provider: "Mundi/IFSul",
+    category: "Educacao Inclusiva",
+    workload: "30h",
+    status: "Disponivel",
+    certificate: "Certificado informado pela instituicao",
+    image: "assets/universidade/trilha-inclusao-diversidade.webp",
+    href: "universidade.html?from=teacher#curso-inclusao-acessibilidade-educacao-ifsul",
+  },
+];
+
+const teacherFormationMaterials = [
+  {
+    title: "Curadoria de Educacao Inclusiva",
+    type: "Centro de conhecimento",
+    description: "Cursos e referencias para acolher diferentes necessidades de aprendizagem.",
+    href: "universidade.html?from=teacher#centro-educacao-inclusiva",
+    icon: "book",
+  },
+  {
+    title: "BNCC e projetos escolares",
+    type: "Centro de conhecimento",
+    description: "Percursos para curriculo, planejamento e praticas alinhadas a escola.",
+    href: "universidade.html?from=teacher#centro-bncc",
+    icon: "clipboard",
+  },
+  {
+    title: "Tecnologias Educacionais",
+    type: "Videos e recursos",
+    description: "Conteudos selecionados para uso pedagogico de tecnologias na escola.",
+    href: "universidade.html?from=teacher#centro-tecnologias-educacionais",
+    icon: "play",
+  },
+];
+
+const teacherFormationPaths = [
+  ["Formacao Docente", "Percurso para estudo individual e aplicacao em sala.", "1 curso real vinculado"],
+  ["Gestao Pedagogica", "Percurso para leitura institucional e organizacao pedagogica.", "1 curso real vinculado"],
+  ["Avalia+", "Percurso preparado para diagnostico, devolutivas e acompanhamento.", "1 curso real vinculado"],
+  ["Tecnologias Educacionais", "Percurso para recursos digitais e boas praticas.", "1 curso real vinculado"],
+];
+
+const renderTeacherFormationCourse = (course) => `
+  <article class="tw-formation-card tw-formation-course" data-teacher-search-item>
+    <img src="${printableEscape(course.image)}" alt="" loading="lazy" />
+    <div>
+      <span>${printableEscape(course.category)}</span>
+      <strong>${printableEscape(course.title)}</strong>
+      <small>${printableEscape(course.provider)} - ${printableEscape(course.workload)} - ${printableEscape(course.status)}</small>
+      <small>${printableEscape(course.certificate)}</small>
+      <a class="tw-primary-link" href="${printableEscape(course.href)}">ABRIR CURSO</a>
+    </div>
+  </article>
+`;
+
+const renderTeacherFormationMaterial = (material) => `
+  <article class="tw-formation-card" data-teacher-search-item>
+    ${teacherInlineIcon(material.icon)}
+    <span>${printableEscape(material.type)}</span>
+    <strong>${printableEscape(material.title)}</strong>
+    <small>${printableEscape(material.description)}</small>
+    <a class="tw-primary-link" href="${printableEscape(material.href)}">ABRIR MATERIAL</a>
+  </article>
+`;
+
 const renderTeacherFormationView = () => `
   <section class="tw-board tw-formation-shell">
     <div class="tw-planning-heading">
       <div>
         <span>Formacao</span>
-        <h2>Formacao</h2>
-        <p>ACESSE A ESTRUTURA DE FORMACAO CONTINUADA DA PLATAFORMA.</p>
+        <h2>Universidade Raizes e Saberes</h2>
+        <p>Cursos, trilhas e materiais selecionados para apoiar sua formacao continuada.</p>
       </div>
-      <button type="button" data-teacher-open-url="universidade.html?from=teacher">ACESSAR FORMACAO</button>
+      <button type="button" data-teacher-open-url="universidade.html?from=teacher">ABRIR UNIVERSIDADE</button>
     </div>
-    <div class="tw-formation-grid">
-      <article class="tw-formation-card" data-teacher-search-item>
-        <span>Conteudo disponivel</span>
-        <strong>Cursos gratuitos</strong>
-        <small>Catalogo publico existente da Universidade, com busca, filtros e acesso ao ambiente oficial das instituicoes.</small>
-        <a class="tw-primary-link" href="universidade.html?from=teacher#catalogo">ABRIR CATALOGO</a>
-      </article>
-      <article class="tw-formation-card" data-teacher-search-item>
-        <span>Conteudo disponivel</span>
-        <strong>Centros de Conhecimento</strong>
-        <small>Organizacao tematica existente para agrupar cursos, referencias e materiais preparados pela curadoria.</small>
-        <a class="tw-primary-link" href="universidade.html?from=teacher#centros-conhecimento">ABRIR CENTROS</a>
-      </article>
-      <article class="tw-formation-card" data-teacher-search-item>
-        <span>Institucional</span>
-        <strong>Formacao Raizes e Saberes</strong>
-        <small>Area da Universidade preparada para cursos internos, trilhas, assessorias, videoaulas e encontros futuros.</small>
-        <a class="tw-primary-link" href="universidade.html?from=teacher#formacao-raizes">VER ESTRUTURA</a>
-      </article>
-      <article class="tw-formation-card is-empty" data-teacher-search-item>
-        <span>Progresso do professor</span>
-        <strong>NENHUM CURSO INICIADO AINDA.</strong>
-        <small>O catalogo existir nao significa que o professor iniciou ou concluiu uma formacao.</small>
-      </article>
-      <article class="tw-formation-card is-empty" data-teacher-search-item>
-        <span>Certificados</span>
-        <strong>NENHUM CERTIFICADO DISPONIVEL AINDA.</strong>
-        <small>Certificados reais dependem de persistencia e validacao em etapa futura.</small>
-      </article>
-      <article class="tw-formation-card is-empty" data-teacher-search-item>
-        <span>Historico formativo</span>
-        <strong>SEU HISTORICO FORMATIVO APARECERA AQUI QUANDO HOUVER REGISTROS.</strong>
-        <small>Sem registros locais ou Supabase nesta etapa.</small>
-      </article>
+    <div class="tw-formation-overview">
+      ${renderTeacherTrackingMetric("Cursos disponiveis", String(teacherFormationCourses.length), "Curadoria real ja preservada", "cap")}
+      ${renderTeacherTrackingMetric("Trilhas", String(teacherFormationPaths.length), "Percursos preparados por tema", "map")}
+      ${renderTeacherTrackingMetric("Materiais", String(teacherFormationMaterials.length), "Centros e apoio", "book")}
+      ${renderTeacherTrackingMetric("Progresso", "Preparado", "Acompanhamento futuro", "progresso")}
+    </div>
+    <div class="tw-tracking-grid">
+      <section class="tw-board tw-tracking-section">
+        <div class="tw-section-head"><h2>Continuar aprendendo</h2><span>Preparado</span></div>
+        <p class="ua-empty">Nenhum curso iniciado pela professora ainda. O progresso aparecera aqui quando houver fonte real de acompanhamento formativo.</p>
+      </section>
+      <section class="tw-board tw-tracking-section">
+        <div class="tw-section-head"><h2>Cursos disponiveis</h2><a class="tw-primary-link" href="universidade.html?from=teacher#catalogo">Ver catalogo</a></div>
+        <div class="tw-formation-list">${teacherFormationCourses.map(renderTeacherFormationCourse).join("")}</div>
+      </section>
+    </div>
+    <div class="tw-tracking-grid">
+      <section class="tw-board tw-tracking-section">
+        <div class="tw-section-head"><h2>Videos e materiais</h2><span>Acervo existente</span></div>
+        <div class="tw-formation-grid">${teacherFormationMaterials.map(renderTeacherFormationMaterial).join("")}</div>
+      </section>
+      <section class="tw-board tw-tracking-section">
+        <div class="tw-section-head"><h2>Trilhas de formacao</h2><span>Percursos</span></div>
+        <div class="tw-tracking-list">
+          ${teacherFormationPaths
+            .map(
+              ([title, description, detail]) => `
+                <article class="tw-tracking-item" data-teacher-search-item>
+                  <div>
+                    <span>Trilha</span>
+                    <strong>${printableEscape(title)}</strong>
+                    <small>${printableEscape(description)}</small>
+                  </div>
+                  <mark>${printableEscape(detail)}</mark>
+                </article>
+              `
+            )
+            .join("")}
+        </div>
+      </section>
+    </div>
+    <div class="tw-tracking-grid">
+      <section class="tw-board tw-tracking-section">
+        <div class="tw-section-head"><h2>Progresso formativo</h2><span>Em preparacao</span></div>
+        <p class="ua-empty">O acompanhamento de progresso ainda nao esta disponivel. Nenhum progresso ficticio foi exibido.</p>
+      </section>
+      <section class="tw-board tw-tracking-section">
+        <div class="tw-section-head"><h2>Certificados</h2><span>Em preparacao</span></div>
+        <p class="ua-empty">A emissao de certificados ainda nao esta disponivel nesta etapa.</p>
+      </section>
     </div>
   </section>
 `;
@@ -6193,7 +6296,7 @@ const renderTeacherFamilyMessagesView = () => {
       ${renderTeacherClassWeeklyBoard()}
       <div class="tw-section-head">
         <h2>Comunicados publicados</h2>
-        <span>${teacherClassMessagesState.status === "ready" ? `${messages.length} registro${messages.length === 1 ? "" : "s"}` : "Supabase"}</span>
+        <span>${teacherClassMessagesState.status === "ready" ? `${messages.length} registro${messages.length === 1 ? "" : "s"}` : "Carregando"}</span>
       </div>
       ${
         teacherClassMessagesState.status === "loading"
@@ -6351,7 +6454,7 @@ const renderTeacherHomeClassFeature = () => {
         <div>
           <span>Minhas Turmas</span>
           <strong>Dados institucionais</strong>
-          <small>${teacherInstitutionalState.status === "error" ? printableEscape(teacherInstitutionalState.error) : "Carregando turmas autorizadas pelo Supabase."}</small>
+          <small>${teacherInstitutionalState.status === "error" ? printableEscape(teacherInstitutionalState.error) : "Carregando suas turmas autorizadas."}</small>
           <button type="button" data-teacher-view="turmas">ABRIR TURMAS</button>
         </div>
       </section>
@@ -6389,8 +6492,8 @@ const renderTeacherPremiumHome = () => `
           ${[
             { title: "Minhas Turmas", text: `${getTeacherInstitutionalClasses().length} turma${getTeacherInstitutionalClasses().length === 1 ? "" : "s"}`, icon: "users", tone: "green", view: "turmas" },
             { title: "Alunos vinculados", text: `${getTeacherInstitutionalStudents().length} aluno${getTeacherInstitutionalStudents().length === 1 ? "" : "s"}`, icon: "aluno", tone: "blue", view: "turmas" },
-            { title: "Planejamento", text: "AINDA NAO DISPONIVEL", icon: "calendar", tone: "orange", view: "planejamentos" },
-            { title: "Acompanhamento", text: "AINDA NAO DISPONIVEL", icon: "portfolio", tone: "purple", view: "acompanhamento" },
+            { title: "Planejamento", text: "Organizar semana", icon: "calendar", tone: "orange", view: "planejamentos" },
+            { title: "Acompanhamento", text: "Acompanhar turma", icon: "portfolio", tone: "purple", view: "acompanhamento" },
           ].map(renderTeacherMetricCard).join("")}
         </div>
       </section>
@@ -6634,7 +6737,7 @@ const renderTeacherClassMessagesPanel = (classItem, students = []) => {
       </form>
       <div class="tw-section-head">
         <h2>Recados publicados</h2>
-        <span>${teacherClassMessagesState.status === "ready" ? `${messages.length} registro${messages.length === 1 ? "" : "s"}` : "Supabase"}</span>
+        <span>${teacherClassMessagesState.status === "ready" ? `${messages.length} registro${messages.length === 1 ? "" : "s"}` : "Carregando"}</span>
       </div>
       ${
         teacherClassMessagesState.status === "loading"
@@ -6696,7 +6799,7 @@ const renderTeacherRecommendationsPanel = (classItem, students = []) => {
       </div>
       <div class="tw-section-head">
         <h2>Recomendacoes publicadas</h2>
-        <span>${teacherRecommendationsState.status === "ready" ? `${recommendations.length} registro${recommendations.length === 1 ? "" : "s"}` : "Supabase"}</span>
+        <span>${teacherRecommendationsState.status === "ready" ? `${recommendations.length} registro${recommendations.length === 1 ? "" : "s"}` : "Carregando"}</span>
       </div>
       ${
         teacherRecommendationsState.message
@@ -6823,7 +6926,7 @@ const renderTeacherClassPage = () => `
         <div>
           <span>MINHAS TURMAS</span>
           <h1>${isReady ? printableEscape(classItem.name) : "TURMA"}</h1>
-          <p>${isReady ? `${printableEscape(classItem.schoolName)} · ${printableEscape(classItem.shift || "Turno nao informado")} · ${students.length} alunos vinculados.` : "Carregando turma autorizada pelo Supabase."}</p>
+          <p>${isReady ? `${printableEscape(classItem.schoolName)} · ${printableEscape(classItem.shift || "Turno nao informado")} · ${students.length} alunos vinculados.` : "Carregando turma autorizada."}</p>
         </div>
         <div class="tw-hero-actions">
           <a href="professor.html?view=turmas">VOLTAR PARA MINHAS TURMAS</a>
@@ -7173,7 +7276,7 @@ const renderTeacherWorkspaceView = (view) => {
     `,
     turmas: `
       <section class="tw-board">
-        <div class="tw-section-head"><h2>Minhas Turmas</h2><span>${teacherInstitutionalState.status === "ready" ? `${institutionalClasses.length} turma${institutionalClasses.length === 1 ? "" : "s"}` : "Supabase"}</span></div>
+        <div class="tw-section-head"><h2>Minhas Turmas</h2><span>${teacherInstitutionalState.status === "ready" ? `${institutionalClasses.length} turma${institutionalClasses.length === 1 ? "" : "s"}` : "Carregando"}</span></div>
         <p class="tw-muted">Escolha uma turma para visualizar os alunos vinculados e acompanhar as proximas atividades.</p>
         <div class="tw-card-grid">
           ${renderTeacherClassesList()}
@@ -7182,7 +7285,7 @@ const renderTeacherWorkspaceView = (view) => {
     `,
     alunos: `
       <section class="tw-board">
-        <div class="tw-section-head"><h2>Alunos</h2><span>${teacherInstitutionalState.status === "ready" ? `${institutionalStudents.length} alunos` : "Supabase"}</span></div>
+        <div class="tw-section-head"><h2>Alunos</h2><span>${teacherInstitutionalState.status === "ready" ? `${institutionalStudents.length} alunos` : "Carregando"}</span></div>
         ${renderTeacherStudentsList()}
       </section>
       ${renderUniversalActivityTeacherPortfolio()}
@@ -8760,13 +8863,19 @@ const familyInstitutionalState = {
   status: "idle",
   error: "",
   promise: null,
+  context: null,
   profile: null,
   guardian: null,
+  guardians: [],
+  guardianLinks: [],
+  children: [],
+  selectedChildId: "",
   student: null,
   enrollment: null,
   classItem: null,
   school: null,
   teacher: null,
+  teacherMemberships: [],
   entries: [],
   calendarError: "",
   weekStartIso: "",
@@ -8828,33 +8937,40 @@ const familyDateFromIso = (iso) => {
 };
 const familyWeekStartIso = () => familyIsoDate(familyMondayForDate());
 
+const familyInstitutionalAllowedRoles = ["educacao_infantil", "admin"];
 const isFamilyInstitutionalMode = () => hasValidPlatformSession() && getCurrentPlatformRole() === "educacao_infantil";
 const normalizeFamilyStudentName = (student = {}) => student.nome || student.name || student.full_name || student.fullName || "Aluno";
 const normalizeFamilyClassName = (classItem = {}) => classItem.nome || classItem.name || "Turma";
 const normalizeFamilySchoolName = (school = {}) => school.nome || school.name || "Escola";
+const familyStatusLabel = (status = "") => institutionalStatusLabels[String(status || "").toLowerCase()] || status || "Sem status";
+const getFamilySelectedChild = () =>
+  (familyInstitutionalState.children || []).find((child) => child.student?.id === familyInstitutionalState.selectedChildId) ||
+  (familyInstitutionalState.children || [])[0] ||
+  null;
 const getFamilyActiveStudent = () => {
   if (!isFamilyInstitutionalMode()) return familyAreaData.student;
-  if (familyInstitutionalState.status === "ready" && familyInstitutionalState.student) {
-    const student = familyInstitutionalState.student;
+  const selectedChild = getFamilySelectedChild();
+  if (familyInstitutionalState.status === "ready" && selectedChild?.student) {
+    const student = selectedChild.student;
     const fullName = normalizeFamilyStudentName(student);
     return {
       id: student.id,
       name: fullName,
       fullName,
-      avatar: familyAreaData.student.avatar,
-      school: normalizeFamilySchoolName(familyInstitutionalState.school || {}),
-      className: normalizeFamilyClassName(familyInstitutionalState.classItem || {}),
-      ageGroup: familyInstitutionalState.classItem?.age_group || familyAreaData.student.ageGroup,
-      shift: familyInstitutionalState.classItem?.turno || familyInstitutionalState.classItem?.shift || "",
-      schoolYear: familyInstitutionalState.enrollment?.school_year || familyInstitutionalState.classItem?.school_year || "",
+      avatar: "",
+      school: normalizeFamilySchoolName(selectedChild.school || {}),
+      className: normalizeFamilyClassName(selectedChild.classItem || {}),
+      ageGroup: selectedChild.classItem?.age_group || "",
+      shift: selectedChild.classItem?.turno || selectedChild.classItem?.shift || "",
+      schoolYear: selectedChild.enrollment?.school_year || selectedChild.classItem?.school_year || "",
     };
   }
   return {
     id: "",
-    name: familyInstitutionalState.status === "error" ? "Aluno" : "carregando",
-    fullName: familyInstitutionalState.status === "error" ? "Aluno institucional" : "Carregando aluno institucional",
+    name: familyInstitutionalState.status === "error" ? "Crianca nao identificada" : "carregando",
+    fullName: familyInstitutionalState.status === "error" ? "Crianca nao identificada" : "Carregando crianca vinculada",
     avatar: "",
-    school: familyInstitutionalState.status === "error" ? "Supabase indisponivel" : "Carregando escola",
+    school: familyInstitutionalState.status === "error" ? "Vinculo indisponivel" : "Carregando escola",
     className: familyInstitutionalState.status === "error" ? "Turma indisponivel" : "Carregando turma",
     ageGroup: "",
     shift: "",
@@ -8897,7 +9013,7 @@ const normalizeFamilyTeacherName = (teacher = {}) => {
 };
 
 const getFamilyTeacherName = () =>
-  (isFamilyInstitutionalMode() && normalizeFamilyTeacherName(familyInstitutionalState.teacher)) ||
+  (isFamilyInstitutionalMode() && normalizeFamilyTeacherName(getFamilySelectedChild()?.teacher || familyInstitutionalState.teacher)) ||
   familyAreaData.teacher ||
   "Professora";
 
@@ -8948,6 +9064,81 @@ const getFamilyUnscheduledEntries = (specificDate = "") =>
     );
   });
 
+const buildFamilyCanonicalChildren = async (client, guardianRows = []) => {
+  const guardianIds = guardianRows.map((guardian) => guardian.id).filter(Boolean);
+  if (!guardianIds.length) return [];
+  const linkRows = await client.request(
+    "student_guardian_links",
+    `?select=id,student_id,guardian_id,relationship,is_primary,status,created_at&status=eq.active&guardian_id=${supabaseIn(guardianIds)}&order=is_primary.desc&order=created_at.asc`,
+    { requireAuthenticated: true, allowedRoles: familyInstitutionalAllowedRoles }
+  );
+  const links = Array.isArray(linkRows) ? linkRows : [];
+  const studentIds = [...new Set(links.map((link) => link.student_id).filter(Boolean))];
+  if (!studentIds.length) return [];
+  const [studentRows, enrollmentRows] = await Promise.all([
+    client.request("students", `?select=id,nome,school_id,class_id,status,user_id&status=eq.active&id=${supabaseIn(studentIds)}&order=nome.asc`, {
+      requireAuthenticated: true,
+      allowedRoles: familyInstitutionalAllowedRoles,
+    }),
+    client.request(
+      "enrollments",
+      `?select=id,student_id,class_id,school_id,status,school_year,classes(id,nome,school_id,status,turno,school_year,age_group),schools(id,nome,status)&status=eq.active&student_id=${supabaseIn(studentIds)}&order=created_at.desc`,
+      { requireAuthenticated: true, allowedRoles: familyInstitutionalAllowedRoles }
+    ),
+  ]);
+  const studentsById = new Map((studentRows || []).map((student) => [student.id, student]));
+  const enrollmentsByStudentId = new Map();
+  (enrollmentRows || []).forEach((enrollment) => {
+    if (!enrollmentsByStudentId.has(enrollment.student_id)) enrollmentsByStudentId.set(enrollment.student_id, enrollment);
+  });
+  const classIds = [...new Set((enrollmentRows || []).map((enrollment) => enrollment.class_id).filter(Boolean))];
+  const teacherMembershipRows = classIds.length
+    ? await client.request(
+        "class_teacher_memberships",
+        `?select=id,class_id,teacher_id,role,status&status=eq.active&class_id=${supabaseIn(classIds)}&order=created_at.asc`,
+        { requireAuthenticated: true, allowedRoles: familyInstitutionalAllowedRoles }
+      ).catch(() => [])
+    : [];
+  const teacherIds = [...new Set((teacherMembershipRows || []).map((membership) => membership.teacher_id).filter(Boolean))];
+  const teacherRows = teacherIds.length
+    ? await client.request("teachers", `?select=id,school_id,profile_id,full_name,nome,email,disciplina,status&id=${supabaseIn(teacherIds)}`, {
+        requireAuthenticated: true,
+        allowedRoles: familyInstitutionalAllowedRoles,
+      }).catch(() => [])
+    : [];
+  const teacherProfileIds = [...new Set((teacherRows || []).map((teacher) => teacher.profile_id).filter(Boolean))];
+  const teacherProfileRows = teacherProfileIds.length
+    ? await client.request("profiles", `?select=id,display_name,full_name,name,email,status&id=${supabaseIn(teacherProfileIds)}`, {
+        requireAuthenticated: true,
+        allowedRoles: familyInstitutionalAllowedRoles,
+      }).catch(() => [])
+    : [];
+  const teacherProfilesById = new Map((teacherProfileRows || []).map((profile) => [profile.id, profile]));
+  const teachersById = new Map((teacherRows || []).map((teacher) => [teacher.id, { ...teacher, profile: teacherProfilesById.get(teacher.profile_id) || null }]));
+  const firstTeacherMembershipByClassId = new Map();
+  (teacherMembershipRows || []).forEach((membership) => {
+    if (!firstTeacherMembershipByClassId.has(membership.class_id)) firstTeacherMembershipByClassId.set(membership.class_id, membership);
+  });
+  const guardiansById = new Map(guardianRows.map((guardian) => [guardian.id, guardian]));
+  return links
+    .map((link) => {
+      const student = studentsById.get(link.student_id);
+      const enrollment = enrollmentsByStudentId.get(link.student_id);
+      const teacherMembership = enrollment?.class_id ? firstTeacherMembershipByClassId.get(enrollment.class_id) : null;
+      return {
+        link,
+        guardian: guardiansById.get(link.guardian_id) || null,
+        student,
+        enrollment,
+        classItem: enrollment?.classes || null,
+        school: enrollment?.schools || null,
+        teacherMembership,
+        teacher: teacherMembership?.teacher_id ? teachersById.get(teacherMembership.teacher_id) || null : null,
+      };
+    })
+    .filter((child) => child.student?.id && child.enrollment?.id && child.classItem?.id && child.school?.id);
+};
+
 const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" } = {}) => {
   if (!isFamilyInstitutionalMode()) return familyInstitutionalState;
   if (weekStartIso) familyInstitutionalState.weekStartIso = weekStartIso;
@@ -8959,87 +9150,53 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
   familyInstitutionalState.promise = (async () => {
     try {
       const client = createSupabaseRestClient();
-      const context = await client.getContext({ requireAuthenticated: true, allowedRoles: ["educacao_infantil", "admin"] });
+      const context = await client.getContext({ requireAuthenticated: true, allowedRoles: familyInstitutionalAllowedRoles });
       const profileRows = await client.request("profiles", `?select=id,display_name,platform_role,status&id=${supabaseEq(context.userId)}&limit=1`, {
         requireAuthenticated: true,
-        allowedRoles: ["educacao_infantil", "admin"],
+        allowedRoles: familyInstitutionalAllowedRoles,
       }).catch(() => []);
       const profile = Array.isArray(profileRows) ? profileRows[0] : null;
 
-      let directStudentError = "";
-      let student = await getStudentCandidateByUserId(client, context.userId).catch((error) => {
-        directStudentError = error.message || "Consulta students por user_id falhou.";
-        return null;
-      });
-      let guardian = null;
-      if (!student?.id) {
-        const guardianRows = await client.request(
-          "student_guardians",
-          `?select=id,student_id,profile_id,relationship,status,student:students(id,nome,school_id,class_id,status,user_id)&status=eq.active&profile_id=${supabaseEq(context.userId)}&limit=1`,
-          { requireAuthenticated: true, allowedRoles: ["educacao_infantil", "admin"] }
-        ).catch(() => []);
-        guardian = Array.isArray(guardianRows) ? guardianRows[0] : null;
-        student = guardian?.student || null;
-        if (!student?.id && guardian?.student_id) {
-          const studentRows = await client.request("students", `?select=id,nome,school_id,class_id,status,user_id&id=${supabaseEq(guardian.student_id)}&limit=1`, {
-            requireAuthenticated: true,
-            allowedRoles: ["educacao_infantil", "admin"],
-          });
-          student = Array.isArray(studentRows) ? studentRows[0] : null;
-        }
-      }
-      if (!student?.id) {
-        throw new Error(
-          directStudentError ||
-            "Consulta students por user_id = auth.uid() nao retornou aluno, e nao houve vinculo ativo em student_guardians."
-        );
-      }
-
-      const enrollmentRows = await client.request(
-        "enrollments",
-        `?select=id,student_id,class_id,school_id,status,school_year,classes(id,nome,school_id,status,turno,school_year,age_group),schools(id,nome,status)&status=eq.active&student_id=${supabaseEq(student.id)}&limit=1`,
-        { requireAuthenticated: true, allowedRoles: ["educacao_infantil", "admin"] }
+      const guardianRows = await client.request(
+        "guardians",
+        `?select=id,school_id,profile_id,full_name,email,phone,status,access_status&status=eq.active&profile_id=${supabaseEq(context.userId)}&order=created_at.asc`,
+        { requireAuthenticated: true, allowedRoles: familyInstitutionalAllowedRoles }
       );
-      const enrollment = Array.isArray(enrollmentRows) ? enrollmentRows[0] : null;
-      if (!enrollment?.class_id || !enrollment?.school_id) throw new Error("Enrollment ativo do aluno nao foi retornado pela RLS.");
-      const classItem = enrollment.classes || { id: enrollment.class_id, nome: student.className || "" };
-      const school = enrollment.schools || { id: enrollment.school_id, nome: student.school || "" };
-      const teacherMembershipRows = await client.request(
-        "class_teacher_memberships",
-        `?select=id,class_id,teacher_id,role,status&status=eq.active&class_id=${supabaseEq(enrollment.class_id)}&limit=1`,
-        { requireAuthenticated: true, allowedRoles: ["educacao_infantil", "admin"] }
-      ).catch(() => []);
-      const teacherMembership = Array.isArray(teacherMembershipRows) ? teacherMembershipRows[0] : null;
-      let teacher = null;
-      if (teacherMembership?.teacher_id) {
-        const teacherRows = await client.request("teachers", `?select=*&id=${supabaseEq(teacherMembership.teacher_id)}&limit=1`, {
-          requireAuthenticated: true,
-          allowedRoles: ["educacao_infantil", "admin"],
-        }).catch(() => []);
-        teacher = Array.isArray(teacherRows) ? teacherRows[0] || null : null;
-        if (teacher?.profile_id) {
-          const teacherProfileRows = await client.request("profiles", `?select=id,display_name,full_name,name,email,status&id=${supabaseEq(teacher.profile_id)}&limit=1`, {
-            requireAuthenticated: true,
-            allowedRoles: ["educacao_infantil", "admin"],
-          }).catch(() => []);
-          teacher.profile = Array.isArray(teacherProfileRows) ? teacherProfileRows[0] || null : null;
-        }
+      const guardians = Array.isArray(guardianRows) ? guardianRows : [];
+      const children = await buildFamilyCanonicalChildren(client, guardians);
+      if (!children.length) {
+        throw new Error("Nao foi possivel identificar a crianca vinculada a este responsavel.");
       }
+      const selectedChild =
+        children.find((child) => child.link?.is_primary) ||
+        children.find((child) => child.student?.id === familyInstitutionalState.selectedChildId) ||
+        children[0];
 
+      const student = selectedChild.student;
+      const enrollment = selectedChild.enrollment;
+      const classItem = selectedChild.classItem || { id: enrollment.class_id, nome: "" };
+      const school = selectedChild.school || { id: enrollment.school_id, nome: "" };
+      const teacher = selectedChild.teacher || null;
       familyInstitutionalState.profile = profile;
-      familyInstitutionalState.guardian = guardian;
+      familyInstitutionalState.context = context;
+      familyInstitutionalState.guardians = guardians;
+      familyInstitutionalState.guardianLinks = children.map((child) => child.link).filter(Boolean);
+      familyInstitutionalState.children = children;
+      familyInstitutionalState.selectedChildId = student.id;
+      familyInstitutionalState.guardian = selectedChild.guardian;
       familyInstitutionalState.student = student;
       familyInstitutionalState.enrollment = enrollment;
       familyInstitutionalState.classItem = classItem;
       familyInstitutionalState.school = school;
       familyInstitutionalState.teacher = teacher;
+      familyInstitutionalState.teacherMemberships = children.map((child) => child.teacherMembership).filter(Boolean);
       familyInstitutionalState.calendarError = "";
 
       const weekDates = getFamilyWeekDates(familyInstitutionalState.weekStartIso);
       const entries = await client.request(
         "class_calendar_entries",
         `?select=id,class_id,school_id,teacher_id,plan_id,title,description,entry_date,start_time,end_time,entry_type,status,created_at&status=eq.published&class_id=${supabaseEq(enrollment.class_id)}&entry_date=gte.${encodeURIComponent(weekDates.seg)}&entry_date=lte.${encodeURIComponent(weekDates.sex)}&order=start_time.asc.nullslast&order=created_at.asc`,
-        { requireAuthenticated: true, allowedRoles: ["educacao_infantil", "admin"] }
+        { requireAuthenticated: true, allowedRoles: familyInstitutionalAllowedRoles }
       ).catch((error) => {
         familyInstitutionalState.calendarError = error.message || "Nao foi possivel carregar a Minha Semana.";
         return [];
@@ -9062,9 +9219,12 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
 
 const familyAreaViews = [
   ["inicio", "Inicio", "home"],
+  ["semana", "Minha Semana", "calendario"],
+  ["recados", "Recados", "mensagens"],
+  ["frequencia", "Frequencia", "checklist"],
   ["atividades", "Atividades", "atividades"],
-  ["agenda", "Agenda", "calendario"],
-  ["acompanhamento", "Acompanhamento", "acompanhamento"],
+  ["descobertas", "Biblioteca / Descobertas", "biblioteca"],
+  ["escola", "Minha Escola", "escola"],
   ["perfil", "Perfil", "perfil"],
 ];
 
@@ -9079,6 +9239,13 @@ const renderFamilyEmpty = (title, text = "") => `
     <strong>${title}</strong>
     ${text ? `<p>${text}</p>` : ""}
   </div>
+`;
+
+const renderFamilyPhasePlaceholder = (title, text) => `
+  <section class="family-panel">
+    <div class="family-section-head"><h2>${title}</h2><span>Preparado</span></div>
+    ${renderFamilyEmpty(title.toUpperCase(), text)}
+  </section>
 `;
 
 const renderFamilyMessageList = () => {
@@ -9222,20 +9389,10 @@ const renderFamilyInstitutionalEntryCard = (entry) => {
 };
 
 const renderFamilyInstitutionalWeekCell = (dayKey, slotKey, specificDate = "") => {
-  const routine = getFamilyRoutineRecord(dayKey, slotKey);
   const entries = getFamilySlottedEntries(dayKey, slotKey, specificDate);
   return `
-    <div class="family-week-cell ${!routine && !entries.length ? "is-empty" : ""}" data-day="${dayKey}" data-slot="${slotKey}" data-date="${specificDate}">
-      ${
-        routine
-          ? `<div class="family-week-routine">
-              <small>${printableEscape(routine.start_time || "")}</small>
-              <strong>${printableEscape(routine.subject_or_activity || routine.title || "")}</strong>
-              ${routine.optional_note || routine.note ? `<p>${printableEscape(routine.optional_note || routine.note)}</p>` : ""}
-              <button type="button" data-edit-routine data-day="${dayKey}" data-slot="${slotKey}">Editar horario</button>
-            </div>`
-          : `<div class="family-week-routine is-missing"><span>Sem registro</span><button type="button" data-edit-routine data-day="${dayKey}" data-slot="${slotKey}">Editar horario</button></div>`
-      }
+    <div class="family-week-cell ${!entries.length ? "is-empty" : ""}" data-day="${dayKey}" data-slot="${slotKey}" data-date="${specificDate}">
+      ${entries.length ? "" : `<div class="family-week-routine is-missing"><span>Sem publicacao</span></div>`}
       ${entries.map(renderFamilyInstitutionalEntryCard).join("")}
     </div>
   `;
@@ -9402,49 +9559,77 @@ const renderFamilyProgress = (compact = false) => {
 
 const renderFamilyProfile = () => {
   const student = getFamilyActiveStudent();
+  const selectedChild = getFamilySelectedChild();
+  if (isFamilyInstitutionalMode() && familyInstitutionalState.status === "error") {
+    return renderFamilyPhasePlaceholder("Perfil", familyInstitutionalState.error);
+  }
   return `
     <section class="family-profile-card">
-      <img src="${student.avatar}" alt="" onerror="this.hidden=true" />
+      ${student.avatar ? `<img src="${student.avatar}" alt="" onerror="this.hidden=true" />` : `<div class="family-profile-initial">${printableEscape((student.name || "C").slice(0, 1).toUpperCase())}</div>`}
       <div>
-        <span>Aluno</span>
+        <span>Crianca vinculada</span>
         <h2>${student.fullName}</h2>
         <dl>
           <div><dt>Escola</dt><dd>${student.school}</dd></div>
           <div><dt>Turma</dt><dd>${student.className}</dd></div>
-          <div><dt>Faixa etaria</dt><dd>${student.ageGroup}</dd></div>
-          <div><dt>Turno</dt><dd>${student.shift}</dd></div>
+          ${student.ageGroup ? `<div><dt>Faixa etaria</dt><dd>${student.ageGroup}</dd></div>` : ""}
+          ${student.shift ? `<div><dt>Turno</dt><dd>${student.shift}</dd></div>` : ""}
           <div><dt>Ano letivo</dt><dd>${student.schoolYear}</dd></div>
+          ${selectedChild?.link?.relationship ? `<div><dt>Vinculo</dt><dd>${familyStatusLabel(selectedChild.link.relationship)}</dd></div>` : ""}
+          ${selectedChild?.enrollment?.status ? `<div><dt>Matricula</dt><dd>${familyStatusLabel(selectedChild.enrollment.status)}</dd></div>` : ""}
         </dl>
       </div>
     </section>
   `;
 };
 
+const renderFamilyChildContext = () => {
+  if (!isFamilyInstitutionalMode()) return "";
+  if (familyInstitutionalState.status === "loading" || familyInstitutionalState.status === "idle") {
+    return renderFamilyEmpty("CARREGANDO VINCULO DA FAMILIA.");
+  }
+  if (familyInstitutionalState.status === "error") {
+    return renderFamilyEmpty("NAO FOI POSSIVEL IDENTIFICAR A CRIANCA VINCULADA.", familyInstitutionalState.error);
+  }
+  const selectedChild = getFamilySelectedChild();
+  const student = getFamilyActiveStudent();
+  const childrenCount = familyInstitutionalState.children.length;
+  return `
+    <section class="family-context-grid" aria-label="Contexto da familia">
+      <article>${premiumIcon("familia")}<span>Responsavel</span><strong>${printableEscape(familyInstitutionalState.guardian?.full_name || familyInstitutionalState.profile?.display_name || "Familia")}</strong></article>
+      <article>${premiumIcon("aluno")}<span>Crianca</span><strong>${printableEscape(student.fullName)}</strong></article>
+      <article>${premiumIcon("turmas")}<span>Turma</span><strong>${printableEscape(student.className)}</strong></article>
+      <article>${premiumIcon("escola")}<span>Escola</span><strong>${printableEscape(student.school)}</strong></article>
+      <article>${premiumIcon("professor")}<span>Professora</span><strong>${printableEscape(getFamilyTeacherName())}</strong></article>
+      <article>${premiumIcon("checklist")}<span>Vinculos ativos</span><strong>${childrenCount}</strong><small>${selectedChild?.link?.is_primary ? "Crianca principal" : "Modelo multi-filho pronto"}</small></article>
+    </section>
+  `;
+};
+
 const renderFamilyHomeView = () => `
   <section class="family-home-grid">
+    ${renderFamilyChildContext()}
     <div class="family-panel family-home-card">
       ${premiumIcon("mensagens")}
       <div class="family-panel-body">
-        <div class="family-section-head"><h2>Recados da professora</h2><span>${printableEscape(getFamilyTeacherName())}</span></div>
-        ${renderFamilyMessageList()}
+        <div class="family-section-head"><h2>Recados</h2><span>Proxima fase</span></div>
+        ${renderFamilyEmpty("RECADOS PREPARADO.", "A leitura por audiencia sera conectada na fase propria.")}
       </div>
     </div>
     <div class="family-panel family-home-card">
-      ${premiumIcon("atividades")}
+      ${premiumIcon("calendario")}
       <div class="family-panel-body">
-        <div class="family-section-head"><h2>Atividades online</h2><span>Aluno</span></div>
-        ${renderFamilyOnlineActivities("pendentes")}
+        <div class="family-section-head"><h2>Minha Semana</h2><span>${printableEscape(getFamilyTeacherName())}</span></div>
+        ${isFamilyInstitutionalMode() ? renderFamilyEmpty("BASE REAL PRONTA.", "A semana publicada pela professora sera detalhada na Fase 02.") : renderFamilyEmpty("MINHA SEMANA PREPARADA.")}
       </div>
     </div>
     <div class="family-panel family-home-card">
-      ${premiumIcon("biblioteca")}
+      ${premiumIcon("checklist")}
       <div class="family-panel-body">
-        <div class="family-section-head"><h2>Atividades no livro</h2><span>Orientacoes</span></div>
-        ${renderFamilyBookActivities()}
+        <div class="family-section-head"><h2>Frequencia</h2><span>Proxima fase</span></div>
+        ${renderFamilyEmpty("FREQUENCIA PREPARADA.", "Os registros reais serao exibidos quando esta fase for aberta.")}
       </div>
     </div>
-    ${renderFamilyWeeklyBoard()}
-    ${renderFamilyProgressSummary()}
   </section>
 `;
 
@@ -9466,9 +9651,12 @@ const renderFamilyActivitiesView = () => `
 const renderFamilyView = (view) => {
   const views = {
     inicio: renderFamilyHomeView(),
+    semana: renderFamilyWeeklyBoard(),
+    recados: `<section class="family-panel"><div class="family-section-head"><h2>Recados</h2><span>Proxima fase</span></div>${renderFamilyEmpty("RECADOS PREPARADO.", "Esta tela consumira comunicados e recados publicados para a crianca ou turma correta.")}</section>`,
+    frequencia: `<section class="family-panel"><div class="family-section-head"><h2>Frequencia</h2><span>Proxima fase</span></div>${renderFamilyEmpty("FREQUENCIA PREPARADA.", "Consulta de presencas, faltas e justificativas da crianca vinculada.")}</section>`,
     atividades: renderFamilyActivitiesView(),
-    agenda: `<section class="family-panel"><div class="family-section-head"><h2>Agenda</h2><span>Somente consulta</span></div>${renderFamilyAgenda()}</section>`,
-    acompanhamento: renderFamilyProgress(),
+    descobertas: `<section class="family-panel"><div class="family-section-head"><h2>Biblioteca / Descobertas</h2><span>Preparado</span></div>${renderFamilyEmpty("BIBLIOTECA E DESCOBERTAS PREPARADAS.", "Livros, jogos e experiencias seguem preservados para conexao posterior.")}</section>`,
+    escola: `<section class="family-panel"><div class="family-section-head"><h2>Minha Escola</h2><span>Portal institucional</span></div><a class="family-primary-link" href="escola.html">Abrir Minha Escola</a></section>`,
     perfil: renderFamilyProfile(),
   };
   return views[view] || views.inicio;
@@ -9507,41 +9695,43 @@ const renderFamilyDashboard = () => {
   const view = getFamilyView();
   const student = getFamilyActiveStudent();
   const weekStartIso = familyInstitutionalState.weekStartIso || familyWeekStartIso();
+  const displayName =
+    isFamilyInstitutionalMode() && familyInstitutionalState.status === "ready"
+      ? familyInstitutionalState.profile?.display_name || familyInstitutionalState.guardian?.full_name || "Familia"
+      : student.name;
+  const heroTitle =
+    isFamilyInstitutionalMode() && familyInstitutionalState.status === "error"
+      ? "Familia / Educacao Infantil"
+      : `Ola, familia de ${student.name}!`;
   return `
     <main class="family-v1" data-family-area data-week-start="${weekStartIso}">
       <aside class="family-v1-sidebar">
         <a class="family-v1-logo" href="familia.html"><img src="logo-sidebar-dark.png" alt="Raizes e Saberes Educacional" onerror="this.hidden=true" /></a>
         <div class="family-v1-person">
           ${student.avatar ? `<img src="${student.avatar}" alt="" onerror="this.hidden=true" />` : ""}
-          <span>Familia do</span>
-          <strong>${student.name}</strong>
-          <small>${student.className}</small>
+          <span>Familia / EI</span>
+          <strong>${printableEscape(displayName)}</strong>
+          <small>${printableEscape(student.className || "Base institucional")}</small>
         </div>
         <nav aria-label="Area Aluno e Familia">
           ${familyAreaViews.map(([key, label, icon]) => `<a class="${key === view ? "is-active" : ""}" href="familia.html?view=${key}">${premiumIcon(icon)}<span>${label}</span></a>`).join("")}
-          <a class="family-nav-secondary" href="educacao-infantil.html">${premiumIcon("escola")}<span>Area da Escola</span></a>
-          <a class="family-nav-secondary" href="index.html">${premiumIcon("site")}<span>Site</span></a>
-          <button type="button" data-platform-logout>${premiumIcon("sair")}<span>Sair</span></button>
         </nav>
       </aside>
       <section class="family-v1-main">
         <header class="family-v1-topbar">
           <label><span>Buscar</span><input type="search" placeholder="Buscar conteudos, aluno, agenda..." data-family-search /></label>
-          <div>
-            <a href="index.html" aria-label="Ir para o site">${premiumIcon("site")}</a>
-            <a href="familia.html?view=perfil" aria-label="Perfil">${premiumIcon("perfil")}</a>
-            <strong>${student.name}</strong>
+          <div class="family-global-actions" aria-label="Comandos globais">
+            <button type="button" data-family-back>${premiumIcon("voltar")}<span>Voltar</span></button>
+            <a href="familia.html?view=inicio">${premiumIcon("home")}<span>Inicio</span></a>
+            <a href="escola.html">${premiumIcon("escola")}<span>Minha Escola</span></a>
+            <button type="button" data-platform-logout>${premiumIcon("sair")}<span>Sair</span></button>
           </div>
         </header>
         <header class="family-v1-hero">
           <div>
-            <span>Aluno Educacao Infantil & Familia</span>
-            <h1>Ola, familia do ${student.name}!</h1>
+            <span>Familia / Educacao Infantil</span>
+            <h1>${printableEscape(heroTitle)}</h1>
             <p>${printableEscape(student.className)} · ${printableEscape(student.school)}</p>
-          </div>
-          <div class="family-hero-actions" aria-label="Acessos da familia">
-            <a href="educacao-infantil.html">Area da Escola</a>
-            <a href="index.html">Ir para o site</a>
           </div>
         </header>
         <section class="family-v1-content" data-family-content>${renderFamilyView(view)}</section>
@@ -9637,6 +9827,13 @@ const initFamilyArea = () => {
     if (todayButton) {
       if (isFamilyInstitutionalMode()) await loadInstitutionalWeek(familyWeekStartIso());
       else renderWeek(familyWeekStartIso());
+      return;
+    }
+    const backButton = event.target.closest?.("[data-family-back]");
+    if (backButton) {
+      event.preventDefault();
+      if (window.history.length > 1) window.history.back();
+      else window.location.href = "familia.html?view=inicio";
     }
   });
   area.querySelector("[data-routine-form]")?.addEventListener("submit", (event) => {
