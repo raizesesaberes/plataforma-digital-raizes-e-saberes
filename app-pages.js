@@ -8878,9 +8878,18 @@ const familyInstitutionalState = {
   teacherMemberships: [],
   entries: [],
   calendarError: "",
+  messages: [],
+  messagesError: "",
+  attendanceRecords: [],
+  attendanceError: "",
+  recommendations: [],
+  recommendationsError: "",
   weekStartIso: "",
+  attendancePeriod: "month",
   hydratedDom: false,
 };
+const familyChildSelectionStorageKey = "raizes:family-selected-child:v1";
+const familyAttendancePeriodStorageKey = "raizes:family-attendance-period:v1";
 
 const familyWeekDays = [
   ["seg", "SEG", "Segunda"],
@@ -8936,6 +8945,34 @@ const familyDateFromIso = (iso) => {
   return year && month && day ? new Date(year, month - 1, day) : familyMondayForDate();
 };
 const familyWeekStartIso = () => familyIsoDate(familyMondayForDate());
+const readFamilyAttendancePeriod = () => {
+  try {
+    const period = localStorage.getItem(familyAttendancePeriodStorageKey);
+    return period === "week" || period === "month" ? period : "month";
+  } catch (error) {
+    return "month";
+  }
+};
+const writeFamilyAttendancePeriod = (period = "month") => {
+  familyInstitutionalState.attendancePeriod = period === "week" ? "week" : "month";
+  try {
+    localStorage.setItem(familyAttendancePeriodStorageKey, familyInstitutionalState.attendancePeriod);
+  } catch (error) {
+    console.warn("Nao foi possivel preservar o filtro de frequencia.", error);
+  }
+};
+const familyAttendanceRange = (period = readFamilyAttendancePeriod()) => {
+  const today = new Date();
+  if (period === "week") {
+    const monday = familyMondayForDate(today);
+    const friday = new Date(monday);
+    friday.setDate(monday.getDate() + 4);
+    return { start: familyIsoDate(monday), end: familyIsoDate(friday), label: "Semana atual" };
+  }
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  return { start: familyIsoDate(firstDay), end: familyIsoDate(lastDay), label: "Mes atual" };
+};
 
 const familyInstitutionalAllowedRoles = ["educacao_infantil", "admin"];
 const isFamilyInstitutionalMode = () => hasValidPlatformSession() && getCurrentPlatformRole() === "educacao_infantil";
@@ -8947,6 +8984,21 @@ const getFamilySelectedChild = () =>
   (familyInstitutionalState.children || []).find((child) => child.student?.id === familyInstitutionalState.selectedChildId) ||
   (familyInstitutionalState.children || [])[0] ||
   null;
+const readFamilySelectedChildId = () => {
+  try {
+    return localStorage.getItem(familyChildSelectionStorageKey) || "";
+  } catch (error) {
+    return "";
+  }
+};
+const writeFamilySelectedChildId = (studentId = "") => {
+  familyInstitutionalState.selectedChildId = studentId;
+  try {
+    if (studentId) localStorage.setItem(familyChildSelectionStorageKey, studentId);
+  } catch (error) {
+    console.warn("Nao foi possivel preservar a crianca selecionada.", error);
+  }
+};
 const getFamilyActiveStudent = () => {
   if (!isFamilyInstitutionalMode()) return familyAreaData.student;
   const selectedChild = getFamilySelectedChild();
@@ -9017,6 +9069,25 @@ const getFamilyTeacherName = () =>
   familyAreaData.teacher ||
   "Professora";
 
+const getFamilyTeacherNames = (selectedChild = getFamilySelectedChild()) => {
+  const teachers = isFamilyInstitutionalMode()
+    ? selectedChild?.teachers?.length
+      ? selectedChild.teachers
+      : [selectedChild?.teacher || familyInstitutionalState.teacher].filter(Boolean)
+    : [];
+  const names = [...new Set(teachers.map(normalizeFamilyTeacherName).filter(Boolean))];
+  if (names.length) return names;
+  const fallback = getFamilyTeacherName();
+  return fallback ? [fallback] : [];
+};
+
+const formatFamilyCanonicalDate = (value = "") => {
+  if (!value) return "";
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("pt-BR");
+};
+
 const mapFamilyCalendarEntry = (entry = {}) => ({
   id: entry.id || "",
   class_id: entry.class_id || "",
@@ -9032,6 +9103,203 @@ const mapFamilyCalendarEntry = (entry = {}) => ({
   status: entry.status || "",
   created_at: entry.created_at || "",
 });
+
+const mapFamilyTeacherMessage = (row = {}, selectedChild = null, authorProfile = null) => {
+  const audienceType = String(row.audience_type || "").toLowerCase();
+  const classItem = selectedChild?.classItem || familyInstitutionalState.classItem || {};
+  const student = selectedChild?.student || familyInstitutionalState.student || {};
+  return {
+    id: row.id || "",
+    schoolId: row.school_id || "",
+    classId: row.class_id || "",
+    studentId: row.student_id || "",
+    title: row.title || "Recado da professora",
+    text: row.body || "",
+    audienceType,
+    audienceLabel: audienceType === "student" ? `Recado para ${normalizeFamilyStudentName(student)}` : "Recado para a turma",
+    authorName: authorProfile?.display_name || authorProfile?.full_name || authorProfile?.name || getFamilyTeacherName(),
+    className: normalizeFamilyClassName(classItem),
+    childName: audienceType === "student" ? normalizeFamilyStudentName(student) : "",
+    status: row.status || "published",
+    statusLabel: communicationStatusLabel(row.status || "published"),
+    date: formatTeacherClassMessageDate(row.communication_date || row.created_at),
+    createdAt: row.created_at || "",
+    communicationDate: row.communication_date || "",
+  };
+};
+
+const loadFamilyTeacherMessages = async (client, selectedChild = null) => {
+  const student = selectedChild?.student || {};
+  const enrollment = selectedChild?.enrollment || {};
+  const school = selectedChild?.school || {};
+  if (!student.id || !enrollment.class_id || !school.id) return [];
+  const baseSelect =
+    "select=id,school_id,author_profile_id,author_role,communication_type,audience_type,class_id,student_id,title,body,communication_date,status,created_at,updated_at";
+  const requestOptions = { requireAuthenticated: true, allowedRoles: familyInstitutionalAllowedRoles };
+  const baseQuery =
+    `?${baseSelect}&school_id=${supabaseEq(school.id)}&communication_type=eq.message&author_role=eq.professor&status=eq.published`;
+  const [classRows, studentRows] = await Promise.all([
+    client
+      .request("communications", `${baseQuery}&audience_type=eq.class&class_id=${supabaseEq(enrollment.class_id)}&order=created_at.desc`, requestOptions)
+      .catch(() => []),
+    client
+      .request("communications", `${baseQuery}&audience_type=eq.student&student_id=${supabaseEq(student.id)}&order=created_at.desc`, requestOptions)
+      .catch(() => []),
+  ]);
+  const rowsById = new Map();
+  [...(classRows || []), ...(studentRows || [])].forEach((row) => {
+    if (row?.id && row.status === "published") rowsById.set(row.id, row);
+  });
+  const rows = [...rowsById.values()].sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
+  const authorIds = [...new Set(rows.map((row) => row.author_profile_id).filter(Boolean))];
+  const authorProfiles = authorIds.length
+    ? await client
+        .request("profiles", `?select=id,display_name,full_name,name,email&id=${supabaseIn(authorIds)}`, requestOptions)
+        .catch(() => [])
+    : [];
+  const profilesById = new Map((authorProfiles || []).map((profile) => [profile.id, profile]));
+  return rows.map((row) => mapFamilyTeacherMessage(row, selectedChild, profilesById.get(row.author_profile_id) || null));
+};
+
+const mapFamilyAttendanceRecord = (row = {}) => ({
+  id: row.id || "",
+  schoolId: row.school_id || "",
+  classId: row.class_id || "",
+  studentId: row.student_id || "",
+  enrollmentId: row.enrollment_id || "",
+  date: row.attendance_date || "",
+  status: row.status || "",
+  statusLabel: attendanceStatusLabel(row.status),
+  notes: row.notes || "",
+  updatedAt: row.updated_at || "",
+});
+
+const loadFamilyAttendanceRecords = async (client, selectedChild = null) => {
+  const student = selectedChild?.student || {};
+  const enrollment = selectedChild?.enrollment || {};
+  const school = selectedChild?.school || {};
+  if (!student.id || !enrollment.class_id || !school.id) return [];
+  const period = readFamilyAttendancePeriod();
+  const range = familyAttendanceRange(period);
+  familyInstitutionalState.attendancePeriod = period;
+  const query =
+    `?select=id,school_id,class_id,student_id,enrollment_id,attendance_date,status,notes,updated_at` +
+    `&school_id=${supabaseEq(school.id)}` +
+    `&class_id=${supabaseEq(enrollment.class_id)}` +
+    `&student_id=${supabaseEq(student.id)}` +
+    `&attendance_date=gte.${encodeURIComponent(range.start)}` +
+    `&attendance_date=lte.${encodeURIComponent(range.end)}` +
+    `&order=attendance_date.desc`;
+  const rows = await client.request("attendance_records", query, {
+    requireAuthenticated: true,
+    allowedRoles: familyInstitutionalAllowedRoles,
+  });
+  return (rows || []).map(mapFamilyAttendanceRecord);
+};
+
+const familyRecommendationTeacherName = (teacher = null) => {
+  const profile = teacher?.profile || null;
+  return (
+    profile?.display_name ||
+    profile?.full_name ||
+    profile?.name ||
+    teacher?.full_name ||
+    teacher?.nome ||
+    teacher?.name ||
+    teacher?.email ||
+    getFamilyTeacherName()
+  );
+};
+
+const getFamilyRecommendationActivity = (recommendation = {}) => {
+  const type = String(recommendation.contentType || recommendation.content_type || "").toLowerCase();
+  const code = recommendation.contentId || recommendation.content_id || "";
+  if (!code || !["printable_activity", "activity"].includes(type)) return null;
+  return printableActivitiesDataService.getByCode(code, { admin: false }) || null;
+};
+
+const mapFamilyTeacherRecommendation = (row = {}, selectedChild = null, teachersById = new Map()) => {
+  const targetType = String(row.target_type || "").toLowerCase();
+  const student = selectedChild?.student || familyInstitutionalState.student || {};
+  const classItem = selectedChild?.classItem || familyInstitutionalState.classItem || {};
+  const teacher = teachersById.get(row.teacher_id) || selectedChild?.teacher || familyInstitutionalState.teacher || null;
+  const mapped = {
+    id: row.id || "",
+    schoolId: row.school_id || "",
+    teacherId: row.teacher_id || "",
+    contentType: row.content_type || "printable_activity",
+    contentId: row.content_id || "",
+    contentTitle: row.content_title || row.content_id || "Conteudo recomendado",
+    targetType,
+    classId: row.class_id || "",
+    studentId: row.student_id || "",
+    note: row.note || "",
+    status: row.status || "",
+    publishedAt: row.published_at || "",
+    createdAt: row.created_at || "",
+    teacherName: familyRecommendationTeacherName(teacher),
+    className: normalizeFamilyClassName(classItem),
+    childName: targetType === "student" ? normalizeFamilyStudentName(student) : "",
+  };
+  const activity = getFamilyRecommendationActivity(mapped);
+  if (activity) {
+    mapped.activity = activity;
+    mapped.contentTitle = activity.titulo || activity.title || mapped.contentTitle;
+  }
+  mapped.typeLabel = recommendationTypeLabel(mapped.contentType);
+  mapped.destinationLabel = targetType === "student" ? `Para ${normalizeFamilyStudentName(student)}` : "Para a turma";
+  mapped.date = formatTeacherClassMessageDate(mapped.publishedAt || mapped.createdAt);
+  return mapped;
+};
+
+const loadFamilyTeacherRecommendations = async (client, selectedChild = null) => {
+  const student = selectedChild?.student || {};
+  const enrollment = selectedChild?.enrollment || {};
+  const school = selectedChild?.school || {};
+  if (!student.id || !enrollment.class_id || !school.id) return [];
+  const requestOptions = { requireAuthenticated: true, allowedRoles: familyInstitutionalAllowedRoles };
+  const baseSelect =
+    "select=id,school_id,teacher_id,content_type,content_id,content_title,target_type,class_id,student_id,note,status,published_at,deleted_at,created_at";
+  const baseQuery = `?${baseSelect}&school_id=${supabaseEq(school.id)}&status=eq.published&deleted_at=is.null`;
+  const [classRows, studentRows] = await Promise.all([
+    client
+      .request(
+        "pedagogical_recommendations",
+        `${baseQuery}&target_type=eq.class&class_id=${supabaseEq(enrollment.class_id)}&order=published_at.desc.nullslast&order=created_at.desc`,
+        requestOptions
+      )
+      .catch(() => []),
+    client
+      .request(
+        "pedagogical_recommendations",
+        `${baseQuery}&target_type=eq.student&student_id=${supabaseEq(student.id)}&order=published_at.desc.nullslast&order=created_at.desc`,
+        requestOptions
+      )
+      .catch(() => []),
+  ]);
+  const rowsById = new Map();
+  [...(classRows || []), ...(studentRows || [])].forEach((row) => {
+    if (row?.id && row.status === "published" && !row.deleted_at) rowsById.set(row.id, row);
+  });
+  const rows = [...rowsById.values()].sort((a, b) =>
+    String(b.published_at || b.created_at || "").localeCompare(String(a.published_at || a.created_at || ""))
+  );
+  const teacherIds = [...new Set(rows.map((row) => row.teacher_id).filter(Boolean))];
+  const teacherRows = teacherIds.length
+    ? await client
+        .request("teachers", `?select=id,profile_id,full_name,nome,email,status&id=${supabaseIn(teacherIds)}`, requestOptions)
+        .catch(() => [])
+    : [];
+  const profileIds = [...new Set((teacherRows || []).map((teacher) => teacher.profile_id).filter(Boolean))];
+  const profileRows = profileIds.length
+    ? await client
+        .request("profiles", `?select=id,display_name,full_name,name,email&id=${supabaseIn(profileIds)}`, requestOptions)
+        .catch(() => [])
+    : [];
+  const profilesById = new Map((profileRows || []).map((profile) => [profile.id, profile]));
+  const teachersById = new Map((teacherRows || []).map((teacher) => [teacher.id, { ...teacher, profile: profilesById.get(teacher.profile_id) || null }]));
+  return rows.map((row) => mapFamilyTeacherRecommendation(row, selectedChild, teachersById));
+};
 
 const getFamilyEntriesForDate = (specificDate = "") =>
   (familyInstitutionalState.entries || [])
@@ -9076,7 +9344,7 @@ const buildFamilyCanonicalChildren = async (client, guardianRows = []) => {
   const studentIds = [...new Set(links.map((link) => link.student_id).filter(Boolean))];
   if (!studentIds.length) return [];
   const [studentRows, enrollmentRows] = await Promise.all([
-    client.request("students", `?select=id,nome,school_id,class_id,status,user_id&status=eq.active&id=${supabaseIn(studentIds)}&order=nome.asc`, {
+    client.request("students", `?select=id,nome,school_id,class_id,status,user_id,data_nascimento&status=eq.active&id=${supabaseIn(studentIds)}&order=nome.asc`, {
       requireAuthenticated: true,
       allowedRoles: familyInstitutionalAllowedRoles,
     }),
@@ -9116,8 +9384,12 @@ const buildFamilyCanonicalChildren = async (client, guardianRows = []) => {
   const teacherProfilesById = new Map((teacherProfileRows || []).map((profile) => [profile.id, profile]));
   const teachersById = new Map((teacherRows || []).map((teacher) => [teacher.id, { ...teacher, profile: teacherProfilesById.get(teacher.profile_id) || null }]));
   const firstTeacherMembershipByClassId = new Map();
+  const teacherMembershipsByClassId = new Map();
   (teacherMembershipRows || []).forEach((membership) => {
     if (!firstTeacherMembershipByClassId.has(membership.class_id)) firstTeacherMembershipByClassId.set(membership.class_id, membership);
+    const memberships = teacherMembershipsByClassId.get(membership.class_id) || [];
+    memberships.push(membership);
+    teacherMembershipsByClassId.set(membership.class_id, memberships);
   });
   const guardiansById = new Map(guardianRows.map((guardian) => [guardian.id, guardian]));
   return links
@@ -9125,6 +9397,7 @@ const buildFamilyCanonicalChildren = async (client, guardianRows = []) => {
       const student = studentsById.get(link.student_id);
       const enrollment = enrollmentsByStudentId.get(link.student_id);
       const teacherMembership = enrollment?.class_id ? firstTeacherMembershipByClassId.get(enrollment.class_id) : null;
+      const classTeacherMemberships = enrollment?.class_id ? teacherMembershipsByClassId.get(enrollment.class_id) || [] : [];
       return {
         link,
         guardian: guardiansById.get(link.guardian_id) || null,
@@ -9133,6 +9406,8 @@ const buildFamilyCanonicalChildren = async (client, guardianRows = []) => {
         classItem: enrollment?.classes || null,
         school: enrollment?.schools || null,
         teacherMembership,
+        teacherMemberships: classTeacherMemberships,
+        teachers: classTeacherMemberships.map((membership) => teachersById.get(membership.teacher_id)).filter(Boolean),
         teacher: teacherMembership?.teacher_id ? teachersById.get(teacherMembership.teacher_id) || null : null,
       };
     })
@@ -9168,8 +9443,9 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
         throw new Error("Nao foi possivel identificar a crianca vinculada a este responsavel.");
       }
       const selectedChild =
-        children.find((child) => child.link?.is_primary) ||
         children.find((child) => child.student?.id === familyInstitutionalState.selectedChildId) ||
+        children.find((child) => child.student?.id === readFamilySelectedChildId()) ||
+        children.find((child) => child.link?.is_primary) ||
         children[0];
 
       const student = selectedChild.student;
@@ -9182,7 +9458,7 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
       familyInstitutionalState.guardians = guardians;
       familyInstitutionalState.guardianLinks = children.map((child) => child.link).filter(Boolean);
       familyInstitutionalState.children = children;
-      familyInstitutionalState.selectedChildId = student.id;
+      writeFamilySelectedChildId(student.id);
       familyInstitutionalState.guardian = selectedChild.guardian;
       familyInstitutionalState.student = student;
       familyInstitutionalState.enrollment = enrollment;
@@ -9191,6 +9467,9 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
       familyInstitutionalState.teacher = teacher;
       familyInstitutionalState.teacherMemberships = children.map((child) => child.teacherMembership).filter(Boolean);
       familyInstitutionalState.calendarError = "";
+      familyInstitutionalState.messagesError = "";
+      familyInstitutionalState.attendanceError = "";
+      familyInstitutionalState.recommendationsError = "";
 
       const weekDates = getFamilyWeekDates(familyInstitutionalState.weekStartIso);
       const entries = await client.request(
@@ -9203,11 +9482,26 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
       });
 
       familyInstitutionalState.entries = (entries || []).filter((entry) => entry.status === "published").map(mapFamilyCalendarEntry);
+      familyInstitutionalState.messages = await loadFamilyTeacherMessages(client, selectedChild).catch((error) => {
+        familyInstitutionalState.messagesError = error.message || "Nao foi possivel carregar os recados.";
+        return [];
+      });
+      familyInstitutionalState.attendanceRecords = await loadFamilyAttendanceRecords(client, selectedChild).catch((error) => {
+        familyInstitutionalState.attendanceError = error.message || "Nao foi possivel carregar a frequencia.";
+        return [];
+      });
+      familyInstitutionalState.recommendations = await loadFamilyTeacherRecommendations(client, selectedChild).catch((error) => {
+        familyInstitutionalState.recommendationsError = error.message || "Nao foi possivel carregar as recomendacoes.";
+        return [];
+      });
       familyInstitutionalState.status = "ready";
       return familyInstitutionalState;
     } catch (error) {
       familyInstitutionalState.error = error.message || "Nao foi possivel carregar a semana.";
       familyInstitutionalState.entries = [];
+      familyInstitutionalState.messages = [];
+      familyInstitutionalState.attendanceRecords = [];
+      familyInstitutionalState.recommendations = [];
       familyInstitutionalState.status = "error";
       return familyInstitutionalState;
     } finally {
@@ -9241,6 +9535,30 @@ const renderFamilyEmpty = (title, text = "") => `
   </div>
 `;
 
+const renderFamilyChildSelector = () => {
+  if (!isFamilyInstitutionalMode() || familyInstitutionalState.status !== "ready") return "";
+  const children = familyInstitutionalState.children || [];
+  if (children.length <= 1) return "";
+  const selectedChild = getFamilySelectedChild();
+  return `
+    <section class="family-child-selector" aria-label="Selecionar crianca">
+      <div>
+        <span>Crianca atual</span>
+        <strong>${printableEscape(normalizeFamilyStudentName(selectedChild?.student || {}))}</strong>
+      </div>
+      <div class="family-child-options" role="group" aria-label="Criancas vinculadas">
+        ${children
+          .map((child) => {
+            const studentId = child.student?.id || "";
+            const active = studentId && studentId === familyInstitutionalState.selectedChildId;
+            return `<button type="button" class="${active ? "is-active" : ""}" data-family-child="${printableEscape(studentId)}">${printableEscape(normalizeFamilyStudentName(child.student || {}))}<small>${printableEscape(normalizeFamilyClassName(child.classItem || {}))}</small></button>`;
+          })
+          .join("")}
+      </div>
+    </section>
+  `;
+};
+
 const renderFamilyPhasePlaceholder = (title, text) => `
   <section class="family-panel">
     <div class="family-section-head"><h2>${title}</h2><span>Preparado</span></div>
@@ -9251,21 +9569,181 @@ const renderFamilyPhasePlaceholder = (title, text) => `
 const renderFamilyMessageList = () => {
   const messages =
     isFamilyInstitutionalMode() && familyInstitutionalState.status === "ready"
-      ? (familyInstitutionalState.entries || [])
-          .filter((entry) => entry.status === "published" && entry.entry_type === "lembrete")
-          .map((entry) => ({
-            origin: getFamilyTeacherName(),
-            title: entry.title,
-            text: entry.description || "",
-            date: formatTeacherClassMessageDate(entry.entry_date || entry.created_at),
-          }))
+      ? familyInstitutionalState.messages || []
       : familyAreaData.messages;
+  if (isFamilyInstitutionalMode() && familyInstitutionalState.messagesError) {
+    return renderFamilyEmpty("NAO FOI POSSIVEL CARREGAR OS RECADOS.", familyInstitutionalState.messagesError);
+  }
   return messages.length
     ? messages
-        .map((message) => `<article class="family-list-card family-message-card"><img src="assets/universidade/avatar-ana-carolina.webp" alt="" onerror="this.hidden=true" /><span>${message.origin}</span><strong>${message.title}</strong><p>${message.text}</p><small>${message.date}</small></article>`)
+        .map(
+          (message) => `
+            <article class="family-list-card family-message-card ${message.audienceType === "student" ? "is-individual" : "is-class"}">
+              <div class="family-message-icon">${premiumIcon(message.audienceType === "student" ? "aluno" : "turmas")}</div>
+              <div>
+                <span>${printableEscape(message.audienceLabel || message.origin || "Recado da professora")}</span>
+                <strong>${printableEscape(message.title)}</strong>
+                <p>${printableEscape(message.text)}</p>
+                <dl>
+                  <div><dt>Professora</dt><dd>${printableEscape(message.authorName || message.origin || getFamilyTeacherName())}</dd></div>
+                  <div><dt>Turma</dt><dd>${printableEscape(message.className || getFamilyActiveStudent().className)}</dd></div>
+                  ${message.childName ? `<div><dt>Crianca</dt><dd>${printableEscape(message.childName)}</dd></div>` : ""}
+                </dl>
+              </div>
+              <aside>
+                <small>${printableEscape(message.date || "")}</small>
+                <em>${printableEscape(message.statusLabel || "Publicado")}</em>
+              </aside>
+            </article>
+          `
+        )
         .join("")
-    : renderFamilyEmpty("NENHUM NOVO RECADO NO MOMENTO.");
+    : renderFamilyEmpty("Nenhum recado da professora no momento.");
 };
+
+const renderFamilyAttendanceView = () => {
+  if (!isFamilyInstitutionalMode()) {
+    return `<section class="family-panel"><div class="family-section-head"><h2>Frequencia</h2><span>Somente leitura</span></div>${renderFamilyEmpty("FREQUENCIA PREPARADA.", "Os registros da crianca aparecerao aqui quando publicados pela escola.")}</section>`;
+  }
+  if (familyInstitutionalState.status === "loading" || familyInstitutionalState.status === "idle") {
+    return `<section class="family-panel"><div class="family-section-head"><h2>Frequencia</h2><span>Carregando</span></div>${renderFamilyEmpty("CARREGANDO FREQUENCIA.", "Consultando os registros da crianca selecionada.")}</section>`;
+  }
+  if (familyInstitutionalState.status === "error") {
+    return `<section class="family-panel"><div class="family-section-head"><h2>Frequencia</h2><span>Indisponivel</span></div>${renderFamilyEmpty("NAO FOI POSSIVEL ABRIR A FREQUENCIA.", familyInstitutionalState.error)}</section>`;
+  }
+  if (familyInstitutionalState.attendanceError) {
+    return `<section class="family-panel"><div class="family-section-head"><h2>Frequencia</h2><span>Indisponivel</span></div>${renderFamilyChildSelector()}${renderFamilyEmpty("NAO FOI POSSIVEL CARREGAR A FREQUENCIA.", familyInstitutionalState.attendanceError)}</section>`;
+  }
+  const student = getFamilyActiveStudent();
+  const records = familyInstitutionalState.attendanceRecords || [];
+  const summary = attendanceSummary(records);
+  const period = familyInstitutionalState.attendancePeriod || readFamilyAttendancePeriod();
+  const range = familyAttendanceRange(period);
+  const statusClass = (status = "") => {
+    const key = String(status || "").toLowerCase();
+    if (key === "absent") return "is-absent";
+    if (key === "justified") return "is-justified";
+    return "is-present";
+  };
+  return `
+    <section class="family-panel family-attendance-panel">
+      <div class="family-section-head">
+        <div>
+          <h2>Frequencia - ${printableEscape(student.fullName || student.name)}</h2>
+          <p>${printableEscape(student.className)} · ${printableEscape(range.label)}</p>
+        </div>
+        <span>Somente leitura</span>
+      </div>
+      ${renderFamilyChildSelector()}
+      <div class="family-filter-row" role="group" aria-label="Periodo da frequencia">
+        <button type="button" class="${period === "week" ? "is-active" : ""}" data-family-attendance-period="week">Semana</button>
+        <button type="button" class="${period === "month" ? "is-active" : ""}" data-family-attendance-period="month">Mes</button>
+      </div>
+      <section class="family-attendance-summary" aria-label="Resumo da frequencia">
+        <article>${premiumIcon("checklist")}<span>Presencas</span><strong>${summary.present}</strong></article>
+        <article>${premiumIcon("alerta")}<span>Faltas</span><strong>${summary.absent}</strong></article>
+        <article>${premiumIcon("info")}<span>Faltas justificadas</span><strong>${summary.justified}</strong></article>
+      </section>
+      ${
+        records.length
+          ? `<div class="family-attendance-list">${records
+              .map(
+                (record) => `
+                  <article class="family-attendance-record">
+                    <div>
+                      <span>${printableEscape(record.date ? new Date(`${record.date}T00:00:00`).toLocaleDateString("pt-BR") : "Sem data")}</span>
+                      <strong>${printableEscape(record.statusLabel)}</strong>
+                      ${record.notes ? `<p>Observacao: ${printableEscape(record.notes)}</p>` : ""}
+                    </div>
+                    <em class="${statusClass(record.status)}">${printableEscape(record.statusLabel)}</em>
+                  </article>`
+              )
+              .join("")}</div>`
+          : renderFamilyEmpty("Ainda nao ha registros de frequencia para este periodo.")
+      }
+    </section>
+  `;
+};
+
+const getFamilyVisibleRecommendations = ({ activitiesOnly = false } = {}) => {
+  const recommendations =
+    isFamilyInstitutionalMode() && familyInstitutionalState.status === "ready"
+      ? familyInstitutionalState.recommendations || []
+      : [];
+  return recommendations.filter((recommendation) => {
+    const status = String(recommendation.status || "").toLowerCase();
+    if (status !== "published") return false;
+    if (activitiesOnly) return ["printable_activity", "activity"].includes(String(recommendation.contentType || "").toLowerCase());
+    return true;
+  });
+};
+
+const familyRecommendationOpenHref = (recommendation = {}) => {
+  const type = String(recommendation.contentType || "").toLowerCase();
+  if (["printable_activity", "activity"].includes(type) && recommendation.contentId) {
+    return `atividades.html?codigo=${encodeURIComponent(recommendation.contentId)}&from=familia&recommendation=${encodeURIComponent(recommendation.id || "")}`;
+  }
+  return "";
+};
+
+const renderFamilyRecommendationCard = (recommendation = {}, { compact = false } = {}) => {
+  const activity = recommendation.activity || getFamilyRecommendationActivity(recommendation);
+  const href = familyRecommendationOpenHref(recommendation);
+  const thumb = activity?.thumbnail || activity?.thumb || activity?.image || activity?.capa || activity?.miniatura || activity?.arquivoPng || "";
+  return `
+    <article class="family-recommendation-card ${recommendation.targetType === "student" ? "is-individual" : "is-class"}">
+      <div class="family-recommendation-thumb">
+        ${
+          thumb
+            ? `<img src="${printableEscape(thumb)}" alt="" onerror="this.hidden=true" />`
+            : premiumIcon(recommendation.targetType === "student" ? "aluno" : "atividades")
+        }
+      </div>
+      <div class="family-recommendation-body">
+        <div class="family-recommendation-kicker">
+          <span>${printableEscape(recommendation.typeLabel || recommendationTypeLabel(recommendation.contentType))}</span>
+          <em>${printableEscape(recommendation.destinationLabel || "Para a turma")}</em>
+        </div>
+        <strong>${printableEscape(recommendation.contentTitle || "Recomendacao da professora")}</strong>
+        <dl>
+          <div><dt>Professora</dt><dd>${printableEscape(recommendation.teacherName || getFamilyTeacherName())}</dd></div>
+          <div><dt>Turma</dt><dd>${printableEscape(recommendation.className || getFamilyActiveStudent().className)}</dd></div>
+          ${recommendation.childName ? `<div><dt>Crianca</dt><dd>${printableEscape(recommendation.childName)}</dd></div>` : ""}
+        </dl>
+        ${recommendation.note && !compact ? `<p>${printableEscape(recommendation.note)}</p>` : ""}
+      </div>
+      <aside>
+        <small>${printableEscape(recommendation.date || "")}</small>
+        ${href ? `<a href="${href}">Abrir</a>` : `<button type="button" disabled>Abrir</button>`}
+      </aside>
+    </article>
+  `;
+};
+
+const renderFamilyRecommendationList = ({ activitiesOnly = false, compact = false } = {}) => {
+  if (isFamilyInstitutionalMode() && familyInstitutionalState.recommendationsError) {
+    return renderFamilyEmpty("NAO FOI POSSIVEL CARREGAR AS RECOMENDACOES.", familyInstitutionalState.recommendationsError);
+  }
+  const recommendations = getFamilyVisibleRecommendations({ activitiesOnly });
+  if (!recommendations.length) {
+    return renderFamilyEmpty(activitiesOnly ? "Nenhuma atividade indicada no momento." : "Nenhuma recomendacao da professora no momento.");
+  }
+  return `<div class="family-recommendation-list">${recommendations.map((recommendation) => renderFamilyRecommendationCard(recommendation, { compact })).join("")}</div>`;
+};
+
+const renderFamilyRecommendedByTeacher = () => `
+  <div class="family-panel family-home-card family-panel-large">
+    ${premiumIcon("atividades")}
+    <div class="family-panel-body">
+      <div class="family-section-head">
+        <h2>Recomendados pela Professora</h2>
+        <span>${isFamilyInstitutionalMode() && familyInstitutionalState.status === "ready" ? `${getFamilyVisibleRecommendations().length} publicados` : "Somente leitura"}</span>
+      </div>
+      ${renderFamilyChildSelector()}
+      ${renderFamilyRecommendationList({ compact: true })}
+    </div>
+  </div>
+`;
 
 const renderFamilyBookActivities = () =>
   familyAreaData.bookActivities.length
@@ -9417,20 +9895,23 @@ const renderFamilyInstitutionalWeeklyBoard = (weekStartIso = familyInstitutional
       ? renderFamilyEmpty("CARREGANDO MINHA SEMANA.")
       : familyInstitutionalState.status === "error"
         ? renderFamilyEmpty("NAO FOI POSSIVEL CARREGAR A SEMANA.", familyInstitutionalState.error)
-        : "";
+        : familyInstitutionalState.status === "ready" && !(familyInstitutionalState.entries || []).length
+          ? renderFamilyEmpty("A PROFESSORA AINDA NAO PUBLICOU A PROGRAMACAO DESTA SEMANA.")
+          : "";
   return `
   <section class="family-panel family-week-panel">
     <div class="family-section-head family-week-head">
       <div>
-        <h2>Minha Semana</h2>
+        <h2>Minha Semana${isFamilyInstitutionalMode() ? ` - ${printableEscape(getFamilyActiveStudent().fullName || getFamilyActiveStudent().name)}` : ""}</h2>
         <span>${getFamilyWeekRange(weekStartIso)}</span>
       </div>
       <div class="family-week-actions" aria-label="Controles de semana">
         <button type="button" data-week-move="-1">Semana anterior</button>
-        <button type="button" data-week-today>Hoje</button>
+        <button type="button" data-week-today>Semana atual</button>
         <button type="button" data-week-move="1">Proxima semana</button>
       </div>
     </div>
+    ${renderFamilyChildSelector()}
     ${statusMessage}
     <div class="family-week-grid" aria-label="Quadro semanal" data-week-start="${weekStartIso}">
       <div class="family-week-corner">Horario</div>
@@ -9475,7 +9956,7 @@ const renderFamilyWeeklyBoard = (weekStartIso = familyWeekStartIso()) => {
       </div>
       <div class="family-week-actions" aria-label="Controles de semana">
         <button type="button" data-week-move="-1">Semana anterior</button>
-        <button type="button" data-week-today>Hoje</button>
+        <button type="button" data-week-today>Semana atual</button>
         <button type="button" data-week-move="1">Proxima semana</button>
       </div>
     </div>
@@ -9560,25 +10041,54 @@ const renderFamilyProgress = (compact = false) => {
 const renderFamilyProfile = () => {
   const student = getFamilyActiveStudent();
   const selectedChild = getFamilySelectedChild();
+  const teacherNames = getFamilyTeacherNames(selectedChild);
+  const birthDate = formatFamilyCanonicalDate(selectedChild?.student?.data_nascimento || "");
+  const relationship = selectedChild?.link?.relationship ? familyStatusLabel(selectedChild.link.relationship) : "";
+  const enrollmentStatus = selectedChild?.enrollment?.status ? familyStatusLabel(selectedChild.enrollment.status) : "";
+  const studentStatus = selectedChild?.student?.status ? familyStatusLabel(selectedChild.student.status) : "";
   if (isFamilyInstitutionalMode() && familyInstitutionalState.status === "error") {
     return renderFamilyPhasePlaceholder("Perfil", familyInstitutionalState.error);
   }
   return `
-    <section class="family-profile-card">
-      ${student.avatar ? `<img src="${student.avatar}" alt="" onerror="this.hidden=true" />` : `<div class="family-profile-initial">${printableEscape((student.name || "C").slice(0, 1).toUpperCase())}</div>`}
-      <div>
-        <span>Crianca vinculada</span>
-        <h2>${student.fullName}</h2>
-        <dl>
-          <div><dt>Escola</dt><dd>${student.school}</dd></div>
-          <div><dt>Turma</dt><dd>${student.className}</dd></div>
-          ${student.ageGroup ? `<div><dt>Faixa etaria</dt><dd>${student.ageGroup}</dd></div>` : ""}
-          ${student.shift ? `<div><dt>Turno</dt><dd>${student.shift}</dd></div>` : ""}
-          <div><dt>Ano letivo</dt><dd>${student.schoolYear}</dd></div>
-          ${selectedChild?.link?.relationship ? `<div><dt>Vinculo</dt><dd>${familyStatusLabel(selectedChild.link.relationship)}</dd></div>` : ""}
-          ${selectedChild?.enrollment?.status ? `<div><dt>Matricula</dt><dd>${familyStatusLabel(selectedChild.enrollment.status)}</dd></div>` : ""}
-        </dl>
+    <section class="family-panel family-profile-panel">
+      <div class="family-section-head">
+        <div>
+          <h2>Perfil da Crianca</h2>
+          <p>Consulta das informacoes institucionais da crianca selecionada.</p>
+        </div>
+        <span>Somente leitura</span>
       </div>
+      ${renderFamilyChildSelector()}
+      <article class="family-profile-hero-card">
+        ${student.avatar ? `<img src="${student.avatar}" alt="" onerror="this.hidden=true" />` : `<div class="family-profile-initial">${printableEscape((student.name || "C").slice(0, 1).toUpperCase())}</div>`}
+        <div>
+          <span>Crianca atual</span>
+          <h3>${printableEscape(student.fullName || student.name)}</h3>
+          <p>${printableEscape(student.className || "Turma nao informada")} · ${printableEscape(student.school || "Escola nao informada")}</p>
+          <div class="family-profile-badges">
+            ${enrollmentStatus ? `<em>${printableEscape(enrollmentStatus)}</em>` : ""}
+            ${studentStatus ? `<em>${printableEscape(studentStatus)}</em>` : ""}
+            ${relationship ? `<em>${printableEscape(relationship)}</em>` : ""}
+          </div>
+        </div>
+      </article>
+      <section class="family-profile-grid" aria-label="Dados da crianca">
+        <article>${premiumIcon("turmas")}<span>Turma</span><strong>${printableEscape(student.className || "Nao informada")}</strong></article>
+        <article>${premiumIcon("calendario")}<span>Ano letivo</span><strong>${printableEscape(student.schoolYear || "Nao informado")}</strong></article>
+        <article>${premiumIcon("escola")}<span>Escola</span><strong>${printableEscape(student.school || "Nao informada")}</strong></article>
+        <article>${premiumIcon("professor")}<span>Professora(s)</span><strong>${printableEscape(teacherNames.join(", ") || "Nao informada")}</strong></article>
+        ${student.ageGroup ? `<article>${premiumIcon("aluno")}<span>Etapa</span><strong>${printableEscape(student.ageGroup)}</strong></article>` : ""}
+        ${student.shift ? `<article>${premiumIcon("calendario")}<span>Turno</span><strong>${printableEscape(student.shift)}</strong></article>` : ""}
+        ${birthDate ? `<article>${premiumIcon("perfil")}<span>Nascimento</span><strong>${printableEscape(birthDate)}</strong></article>` : ""}
+        ${relationship ? `<article>${premiumIcon("familia")}<span>Vinculo familiar</span><strong>${printableEscape(relationship)}</strong></article>` : ""}
+      </section>
+      <section class="family-profile-readonly-note">
+        ${premiumIcon("checklist")}
+        <div>
+          <strong>Informacoes protegidas</strong>
+          <p>Dados oficiais de matricula, turma, escola e vinculos sao mantidos pela Secretaria.</p>
+        </div>
+      </section>
     </section>
   `;
 };
@@ -9601,7 +10111,7 @@ const renderFamilyChildContext = () => {
       <article>${premiumIcon("turmas")}<span>Turma</span><strong>${printableEscape(student.className)}</strong></article>
       <article>${premiumIcon("escola")}<span>Escola</span><strong>${printableEscape(student.school)}</strong></article>
       <article>${premiumIcon("professor")}<span>Professora</span><strong>${printableEscape(getFamilyTeacherName())}</strong></article>
-      <article>${premiumIcon("checklist")}<span>Vinculos ativos</span><strong>${childrenCount}</strong><small>${selectedChild?.link?.is_primary ? "Crianca principal" : "Modelo multi-filho pronto"}</small></article>
+      <article>${premiumIcon("checklist")}<span>Vinculos ativos</span><strong>${childrenCount}</strong><small>${selectedChild?.link?.is_primary ? "Crianca principal" : "Crianca vinculada"}</small></article>
     </section>
   `;
 };
@@ -9609,42 +10119,50 @@ const renderFamilyChildContext = () => {
 const renderFamilyHomeView = () => `
   <section class="family-home-grid">
     ${renderFamilyChildContext()}
+    ${renderFamilyRecommendedByTeacher()}
     <div class="family-panel family-home-card">
       ${premiumIcon("mensagens")}
       <div class="family-panel-body">
-        <div class="family-section-head"><h2>Recados</h2><span>Proxima fase</span></div>
-        ${renderFamilyEmpty("RECADOS PREPARADO.", "A leitura por audiencia sera conectada na fase propria.")}
+        <div class="family-section-head"><h2>Recados</h2><span>${isFamilyInstitutionalMode() && familyInstitutionalState.status === "ready" ? `${familyInstitutionalState.messages.length} publicados` : "Professora"}</span></div>
+        ${isFamilyInstitutionalMode() ? renderFamilyMessageList() : renderFamilyEmpty("NENHUM NOVO RECADO NO MOMENTO.")}
       </div>
     </div>
     <div class="family-panel family-home-card">
       ${premiumIcon("calendario")}
       <div class="family-panel-body">
         <div class="family-section-head"><h2>Minha Semana</h2><span>${printableEscape(getFamilyTeacherName())}</span></div>
-        ${isFamilyInstitutionalMode() ? renderFamilyEmpty("BASE REAL PRONTA.", "A semana publicada pela professora sera detalhada na Fase 02.") : renderFamilyEmpty("MINHA SEMANA PREPARADA.")}
+        ${
+          isFamilyInstitutionalMode() && familyInstitutionalState.status === "ready" && (familyInstitutionalState.entries || []).length
+            ? `<p>${familyInstitutionalState.entries.length} publicacao(oes) da semana para ${printableEscape(getFamilyActiveStudent().name)}.</p><a class="family-primary-link" href="familia.html?view=semana">Ver Minha Semana</a>`
+            : renderFamilyEmpty("A professora ainda nao publicou a programacao desta semana.")
+        }
       </div>
     </div>
     <div class="family-panel family-home-card">
       ${premiumIcon("checklist")}
       <div class="family-panel-body">
-        <div class="family-section-head"><h2>Frequencia</h2><span>Proxima fase</span></div>
-        ${renderFamilyEmpty("FREQUENCIA PREPARADA.", "Os registros reais serao exibidos quando esta fase for aberta.")}
+        <div class="family-section-head"><h2>Frequencia</h2><span>Somente leitura</span></div>
+        ${
+          isFamilyInstitutionalMode() && familyInstitutionalState.status === "ready" && (familyInstitutionalState.attendanceRecords || []).length
+            ? `<p>${attendanceSummary(familyInstitutionalState.attendanceRecords).present} presencas no periodo selecionado.</p><a class="family-primary-link" href="familia.html?view=frequencia">Ver frequencia</a>`
+            : renderFamilyEmpty("Ainda nao ha registros de frequencia para este periodo.")
+        }
       </div>
     </div>
   </section>
 `;
 
 const renderFamilyActivitiesView = () => `
-  <section class="family-panel">
-    <div class="family-section-head"><h2>Atividades</h2><span>Livro e online</span></div>
-    <div class="family-filter-row" role="group" aria-label="Filtros de atividades">
-      <button type="button" data-family-filter="todas" class="is-active">Todas</button>
-      <button type="button" data-family-filter="pendentes">Pendentes</button>
-      <button type="button" data-family-filter="concluidas">Concluidas</button>
+  <section class="family-panel family-recommendations-panel">
+    <div class="family-section-head">
+      <div>
+        <h2>Atividades indicadas</h2>
+        <p>${printableEscape(getFamilyActiveStudent().fullName || getFamilyActiveStudent().name)} recebe aqui somente atividades publicadas pela professora.</p>
+      </div>
+      <span>Somente leitura</span>
     </div>
-    <div class="family-activity-columns">
-      <section><h3>Atividades no livro</h3>${renderFamilyBookActivities()}</section>
-      <section><h3>Atividades online</h3><div data-family-online-list>${renderFamilyOnlineActivities("todas")}</div></section>
-    </div>
+    ${renderFamilyChildSelector()}
+    ${renderFamilyRecommendationList({ activitiesOnly: true })}
   </section>
 `;
 
@@ -9652,8 +10170,8 @@ const renderFamilyView = (view) => {
   const views = {
     inicio: renderFamilyHomeView(),
     semana: renderFamilyWeeklyBoard(),
-    recados: `<section class="family-panel"><div class="family-section-head"><h2>Recados</h2><span>Proxima fase</span></div>${renderFamilyEmpty("RECADOS PREPARADO.", "Esta tela consumira comunicados e recados publicados para a crianca ou turma correta.")}</section>`,
-    frequencia: `<section class="family-panel"><div class="family-section-head"><h2>Frequencia</h2><span>Proxima fase</span></div>${renderFamilyEmpty("FREQUENCIA PREPARADA.", "Consulta de presencas, faltas e justificativas da crianca vinculada.")}</section>`,
+    recados: `<section class="family-panel family-messages-panel"><div class="family-section-head"><h2>Recados da professora</h2><span>Somente leitura</span></div>${renderFamilyChildSelector()}<div class="family-message-list">${renderFamilyMessageList()}</div></section>`,
+    frequencia: renderFamilyAttendanceView(),
     atividades: renderFamilyActivitiesView(),
     descobertas: `<section class="family-panel"><div class="family-section-head"><h2>Biblioteca / Descobertas</h2><span>Preparado</span></div>${renderFamilyEmpty("BIBLIOTECA E DESCOBERTAS PREPARADAS.", "Livros, jogos e experiencias seguem preservados para conexao posterior.")}</section>`,
     escola: `<section class="family-panel"><div class="family-section-head"><h2>Minha Escola</h2><span>Portal institucional</span></div><a class="family-primary-link" href="escola.html">Abrir Minha Escola</a></section>`,
@@ -9796,6 +10314,14 @@ const initFamilyArea = () => {
       if (list) list.innerHTML = renderFamilyOnlineActivities(filterButton.dataset.familyFilter || "todas");
       return;
     }
+    const attendancePeriodButton = event.target.closest?.("[data-family-attendance-period]");
+    if (attendancePeriodButton) {
+      event.preventDefault();
+      const period = attendancePeriodButton.dataset.familyAttendancePeriod || "month";
+      writeFamilyAttendancePeriod(period);
+      if (isFamilyInstitutionalMode()) await loadInstitutionalWeek(area.dataset.weekStart || familyWeekStartIso(), { rerenderShell: true });
+      return;
+    }
     const editButton = event.target.closest?.("[data-edit-routine]");
     if (editButton) {
       event.preventDefault();
@@ -9827,6 +10353,15 @@ const initFamilyArea = () => {
     if (todayButton) {
       if (isFamilyInstitutionalMode()) await loadInstitutionalWeek(familyWeekStartIso());
       else renderWeek(familyWeekStartIso());
+      return;
+    }
+    const childButton = event.target.closest?.("[data-family-child]");
+    if (childButton) {
+      event.preventDefault();
+      const studentId = childButton.dataset.familyChild || "";
+      if (!studentId || studentId === familyInstitutionalState.selectedChildId) return;
+      writeFamilySelectedChildId(studentId);
+      if (isFamilyInstitutionalMode()) await loadInstitutionalWeek(area.dataset.weekStart || familyWeekStartIso(), { rerenderShell: true });
       return;
     }
     const backButton = event.target.closest?.("[data-family-back]");

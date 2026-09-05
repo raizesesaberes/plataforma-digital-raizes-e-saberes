@@ -13819,6 +13819,139 @@ td {
   box-shadow: 0 14px 32px rgba(8, 63, 45, 0.06);
 }
 
+.family-profile-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.family-profile-hero-card {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  border: 1px solid rgba(13, 71, 45, 0.1);
+  border-radius: 16px;
+  padding: 18px;
+  background: linear-gradient(135deg, #fbfff8, #f4faf3);
+}
+
+.family-profile-hero-card > img,
+.family-profile-hero-card .family-profile-initial {
+  width: 92px;
+  height: 92px;
+  border-radius: 28px;
+}
+
+.family-profile-hero-card > div {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.family-profile-hero-card span,
+.family-profile-grid span {
+  color: #607269;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.family-profile-hero-card h3 {
+  margin: 0;
+  color: #10281d;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+  line-height: 1.08;
+}
+
+.family-profile-hero-card p,
+.family-profile-readonly-note p {
+  margin: 0;
+  color: #4d6257;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.family-profile-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.family-profile-badges em {
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #edf6e8;
+  color: #0d6b4b;
+  font-size: 0.66rem;
+  font-style: normal;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.family-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.family-profile-grid article {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 12px;
+  align-items: center;
+  border: 1px solid rgba(13, 71, 45, 0.1);
+  border-radius: 14px;
+  padding: 14px;
+  background: #ffffff;
+}
+
+.family-profile-grid article > .premium-icon {
+  grid-row: span 2;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #eaf5e7;
+}
+
+.family-profile-grid strong {
+  min-width: 0;
+  color: #183529;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 0.92rem;
+  line-height: 1.18;
+  overflow-wrap: anywhere;
+}
+
+.family-profile-readonly-note {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  border: 1px solid rgba(214, 161, 21, 0.18);
+  border-radius: 14px;
+  padding: 14px;
+  background: #fff9e8;
+}
+
+.family-profile-readonly-note > .premium-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: #fff1c7;
+}
+
+.family-profile-readonly-note strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #6d4d09;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 0.9rem;
+}
+
 .family-home-card {
   min-height: 154px;
   display: grid;
@@ -13917,6 +14050,370 @@ td {
   margin: 6px 0;
   color: #162f24;
   font-family: Poppins, Inter, sans-serif;
+}
+
+.family-message-list {
+  display: grid;
+  gap: 12px;
+}
+
+.family-message-card {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding: 14px;
+}
+
+.family-message-card > div:nth-child(2) {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.family-message-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #edf6e8;
+  color: #0d6b4b;
+}
+
+.family-message-card.is-individual .family-message-icon {
+  background: #fff5dc;
+  color: #a35a00;
+}
+
+.family-message-card > div:nth-child(2) > span {
+  color: #0d6b4b;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.family-message-card p {
+  font-weight: 750;
+}
+
+.family-message-card dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 2px 0 0;
+}
+
+.family-message-card dl div {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+}
+
+.family-message-card dt,
+.family-message-card dd {
+  margin: 0;
+  color: #5f7169;
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.family-message-card dd {
+  color: #243a30;
+}
+
+.family-message-card aside {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+  min-width: 88px;
+}
+
+.family-message-card aside small {
+  color: #667468;
+  font-size: 0.7rem;
+  font-weight: 850;
+}
+
+.family-message-card aside em {
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: #edf6e8;
+  color: #0d6b4b;
+  font-size: 0.66rem;
+  font-style: normal;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.family-recommendations-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.family-recommendation-list {
+  display: grid;
+  gap: 12px;
+}
+
+.family-recommendation-card {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+  border: 1px solid rgba(13, 71, 45, 0.1);
+  border-radius: 14px;
+  padding: 14px;
+  background: #fbfdf8;
+}
+
+.family-recommendation-card.is-individual {
+  background: linear-gradient(135deg, #fffdf7, #fff8e8);
+}
+
+.family-recommendation-thumb {
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: #eaf5e7;
+  color: #0d6b4b;
+}
+
+.family-recommendation-card.is-individual .family-recommendation-thumb {
+  background: #fff1d8;
+  color: #a35a00;
+}
+
+.family-recommendation-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.family-recommendation-thumb .premium-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 0;
+  background: transparent;
+}
+
+.family-recommendation-body {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.family-recommendation-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.family-recommendation-kicker span,
+.family-recommendation-kicker em {
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: #edf6e8;
+  color: #0d6b4b;
+  font-size: 0.66rem;
+  font-style: normal;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.family-recommendation-kicker em {
+  background: #fff5dc;
+  color: #8f5d07;
+}
+
+.family-recommendation-card strong {
+  color: #14291f;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 0.98rem;
+  line-height: 1.2;
+}
+
+.family-recommendation-card dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 0;
+}
+
+.family-recommendation-card dl div {
+  min-width: 0;
+  display: flex;
+  gap: 4px;
+}
+
+.family-recommendation-card dt,
+.family-recommendation-card dd {
+  margin: 0;
+  color: #64746b;
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.family-recommendation-card dd {
+  color: #243a30;
+}
+
+.family-recommendation-card p,
+.family-section-head p {
+  margin: 0;
+  color: #4d6257;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.family-recommendation-card aside {
+  min-width: 92px;
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.family-recommendation-card aside small {
+  color: #667468;
+  font-size: 0.7rem;
+  font-weight: 850;
+}
+
+.family-recommendation-card aside a,
+.family-recommendation-card aside button {
+  min-height: 36px;
+  border: 1px solid rgba(13, 107, 75, 0.14);
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  background: #0d6b4b;
+  color: #fff;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.family-recommendation-card aside button:disabled {
+  background: #eef2ed;
+  color: #7b8c83;
+}
+
+.family-attendance-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.family-attendance-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.family-attendance-summary article {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 12px;
+  align-items: center;
+  border: 1px solid rgba(13, 71, 45, 0.1);
+  border-radius: 12px;
+  padding: 14px;
+  background: #fbfdf8;
+}
+
+.family-attendance-summary .premium-icon {
+  grid-row: span 2;
+}
+
+.family-attendance-summary span {
+  min-width: 0;
+  color: #607269;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.family-attendance-summary strong {
+  color: #14291f;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 1.7rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.family-attendance-list {
+  display: grid;
+  gap: 10px;
+}
+
+.family-attendance-record {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid rgba(13, 71, 45, 0.1);
+  border-radius: 12px;
+  padding: 14px;
+  background: #ffffff;
+}
+
+.family-attendance-record div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.family-attendance-record span {
+  color: #607269;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.family-attendance-record strong {
+  color: #172d23;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+.family-attendance-record p {
+  margin: 0;
+  color: #526358;
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.family-attendance-record em {
+  justify-self: end;
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: #edf6e8;
+  color: #0d6b4b;
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 950;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.family-attendance-record em.is-absent {
+  background: #fff1ed;
+  color: #b23a24;
+}
+
+.family-attendance-record em.is-justified {
+  background: #fff7d8;
+  color: #90620c;
 }
 
 .family-activity-card {
@@ -14030,6 +14527,82 @@ td {
   font-family: Poppins, Inter, sans-serif;
   font-size: 0.66rem;
   font-weight: 900;
+}
+
+.family-child-selector {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.7fr) minmax(0, 1.3fr);
+  gap: 12px;
+  align-items: center;
+  margin: 14px 0;
+  border: 1px solid rgba(13, 71, 45, 0.1);
+  border-radius: 12px;
+  padding: 12px;
+  background: #fbfdf8;
+}
+
+.family-child-selector > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.family-child-selector span,
+.family-child-selector small {
+  color: #667468;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.family-child-selector strong {
+  min-width: 0;
+  color: #183529;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 0.98rem;
+  overflow-wrap: anywhere;
+}
+
+.family-child-options {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.family-child-options button {
+  min-width: min(180px, 100%);
+  border: 1px solid rgba(13, 71, 45, 0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #ffffff;
+  color: #0b4b2d;
+  font-family: Poppins, Inter, sans-serif;
+  font-weight: 900;
+  text-align: left;
+  cursor: pointer;
+}
+
+.family-child-options button small {
+  display: block;
+  margin-top: 2px;
+  color: #718078;
+  font-size: 0.62rem;
+}
+
+.family-child-options button.is-active,
+.family-child-options button:hover,
+.family-child-options button:focus-visible {
+  border-color: #0d6b4b;
+  background: #0d6b4b;
+  color: #ffffff;
+  outline: none;
+}
+
+.family-child-options button.is-active small,
+.family-child-options button:hover small,
+.family-child-options button:focus-visible small {
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .family-week-grid {
@@ -14489,6 +15062,10 @@ td {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .family-profile-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .family-week-panel {
     grid-column: 1 / -1;
   }
@@ -14500,6 +15077,21 @@ td {
   .family-activity-columns,
   .family-progress-grid {
     grid-template-columns: 1fr;
+  }
+
+  .family-attendance-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .family-recommendation-card {
+    grid-template-columns: 62px minmax(0, 1fr);
+  }
+
+  .family-recommendation-card aside {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, auto);
+    justify-content: start;
+    justify-items: start;
   }
 
   .family-week-grid {
@@ -14624,6 +15216,65 @@ td {
     justify-content: start;
   }
 
+  .family-child-selector {
+    grid-template-columns: 1fr;
+  }
+
+  .family-child-options {
+    justify-content: stretch;
+  }
+
+  .family-child-options button {
+    flex: 1 1 100%;
+  }
+
+  .family-message-card {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .family-message-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .family-message-card aside {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, auto);
+    justify-content: start;
+    justify-items: start;
+  }
+
+  .family-recommendation-card {
+    grid-template-columns: 1fr;
+  }
+
+  .family-recommendation-thumb {
+    width: 54px;
+    height: 54px;
+  }
+
+  .family-recommendation-card aside {
+    grid-template-columns: 1fr;
+  }
+
+  .family-recommendation-card aside a,
+  .family-recommendation-card aside button {
+    width: 100%;
+  }
+
+  .family-attendance-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .family-attendance-record {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .family-attendance-record em {
+    justify-self: start;
+  }
+
   .family-week-grid {
     display: none;
   }
@@ -14664,14 +15315,21 @@ td {
   }
 
   .family-profile-card,
+  .family-profile-hero-card,
   .family-activity-card dl div,
   .family-profile-card dl div {
     grid-template-columns: 1fr;
   }
 
+  .family-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
   .family-profile-card > img,
+  .family-profile-hero-card > img,
   .family-profile-initial {
     width: 86px;
+    height: 86px;
     border-radius: 22px;
   }
 
