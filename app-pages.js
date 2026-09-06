@@ -91,14 +91,16 @@ const protectedRouteKeyByPage = {
   "aluno/atividade": "alunoAtividade",
   "colorir-descobrir": "colorirDescobrir",
 };
-const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "alunoAtividade", "missao", "arvore", "biblioteca", "jogos", "perfil", "viewer", "motorAtividade", "escolaColetiva"]);
+const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "alunoAtividade", "atividades", "missao", "arvore", "biblioteca", "jogos", "perfil", "viewer", "motorAtividade", "escolaColetiva"]);
 const earlyChildhoodAllowedRouteKeys = new Set(["familia", "educacaoInfantil", "jogos", "biblioteca", "viewer", "colorirDescobrir", "escolaColetiva"]);
 const schoolAllowedRouteKeys = new Set(["escolaColetiva", "jogos", "biblioteca", "viewer", "colorirDescobrir"]);
 const decodePlatformJwtPayload = (token) => {
   try {
     const [, payload] = String(token || "").split(".");
     if (!payload) return {};
-    return JSON.parse(atob(payload.replaceAll("-", "+").replaceAll("_", "/")));
+    const normalized = payload.replaceAll("-", "+").replaceAll("_", "/");
+    const padded = `${normalized}${"=".repeat((4 - (normalized.length % 4)) % 4)}`;
+    return JSON.parse(atob(padded));
   } catch (error) {
     return {};
   }
@@ -214,6 +216,23 @@ const normalizeRequestedPath = (path) => {
   return value.endsWith(".html") ? value : `${value}.html`;
 };
 
+const showPlatformRedirectState = (message = "Redirecionando para o acesso correto.") => {
+  const safeMessage = String(message || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+  document.documentElement.style.display = "";
+  if (document.body) {
+    document.body.innerHTML = `
+      <main class="platform-auth-redirect">
+        <strong>Acesso em verificacao</strong>
+        <p>${safeMessage}</p>
+      </main>
+    `;
+  }
+};
+
 const requirePlatformAuth = () => {
   if (typeof window === "undefined") {
     return;
@@ -230,12 +249,12 @@ const requirePlatformAuth = () => {
   const currentRole = getCurrentPlatformRole();
   if (protectedRouteKey) {
     if (!currentRole) {
-      document.documentElement.style.display = "none";
+      showPlatformRedirectState("Validando sua sessao antes de abrir este ambiente.");
       window.location.replace(`${platformAuth.loginPage}?next=${encodeURIComponent(currentPath)}&auth=supabase&reason=role`);
       return;
     }
     if (!canAccessPlatformRoute(protectedRouteKey, currentRole)) {
-      document.documentElement.style.display = "none";
+      showPlatformRedirectState("Seu perfil sera direcionado para o ambiente correto.");
       window.location.replace(getRoleHome(currentRole));
       return;
     }
@@ -252,7 +271,7 @@ const requirePlatformAuth = () => {
     return;
   }
 
-  document.documentElement.style.display = "none";
+  showPlatformRedirectState("Entre com seu usuario para continuar.");
   window.location.replace(`${platformAuth.loginPage}?next=${encodeURIComponent(currentPath)}`);
 };
 
@@ -1516,6 +1535,20 @@ const relatedCourse = getRelatedCourseForBook(activeBook);
 const relatedMaterial = getRelatedMaterialForLesson(
   typeof window === "undefined" ? undefined : new URLSearchParams(window.location.search).get("lesson")
 );
+const getRouteSearchParams = () => new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
+const getStudentLibraryHref = (extra = "") => `biblioteca.html?from=aluno${extra}`;
+const getStudentBookViewerHref = (bookId, page) =>
+  `book-viewer.html?book=${encodeURIComponent(bookId)}&from=aluno${page ? `&page=${encodeURIComponent(page)}` : ""}`;
+const isStudentLibraryView = () => getRouteSearchParams().get("from") === "aluno" || getCurrentPlatformRole() === "aluno";
+const isStudentReaderView = isStudentLibraryView();
+const readerBackHref = getRouteSearchParams().get("from") === "teacher"
+  ? "professor.html?view=biblioteca"
+  : isStudentReaderView
+    ? getStudentLibraryHref()
+    : "biblioteca.html";
+const readerBackLabel = getRouteSearchParams().get("from") === "teacher"
+  ? "Biblioteca do Professor"
+  : "Biblioteca";
 
 const collectionShowcaseCards = [
   {
@@ -2083,7 +2116,7 @@ const renderPremiumLibraryHome = () => {
       <section class="bv-hero">
         <div class="bv-hero-copy">
           <span>Biblioteca Viva Premium</span>
-          <h1>Ola, Pedro. Sua proxima descoberta esta pronta.</h1>
+          <h1>Ola, leitor. Sua proxima descoberta esta pronta.</h1>
           <p>Livros, videos, jogos e atividades organizados por idade, volume e unidade para voce nunca se perder.</p>
           <div class="bv-hero-actions">
             <a href="${getInfantilExperienceUrl((continueExperiences[0] || featuredPremiumExperience).id)}">${continueExperiences.length ? "Continuar experiencia" : "Comecar jornada"}</a>
@@ -2167,6 +2200,77 @@ const renderPremiumLibraryHome = () => {
           <span>↓</span>
           <div class="bv-age-map">${renderPremiumLibraryHierarchy()}</div>
         </div>
+      </section>
+    </div>
+  `;
+};
+
+const getStudentAvailableBooks = () =>
+  libraryStudentBooks
+    .filter((book) => book.href?.startsWith("book-viewer.html"))
+    .filter((book, index, list) => list.findIndex((item) => item.id === book.id) === index);
+
+const studentBookLink = (book = {}) => getStudentBookViewerHref(book.id || book.bookId || "livro-005");
+
+const renderStudentBookCard = (book = {}) => `
+  <article class="student-library-book" data-library-book-card data-book-collection="${printableEscape(book.collection || "")}" data-book-type="${printableEscape(book.type || "")}" data-book-stage="${printableEscape(book.level || book.year || "")}">
+    <figure>${studentLazyImg(book.catalogCover || book.cover || book.src || "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg", book.catalogTitle || book.title || "Livro")}</figure>
+    <div>
+      <span>${printableEscape(book.collection || "Biblioteca")}</span>
+      <h3>${printableEscape(book.catalogTitle || book.title || "Livro")}</h3>
+      <p>${printableEscape(book.level || book.year || "Educacao Infantil")}</p>
+      <small>${printableEscape(book.type || "Livro do Aluno")}</small>
+    </div>
+    <a href="${studentBookLink(book)}">LER</a>
+  </article>
+`;
+
+const renderStudentLibraryHome = () => {
+  const books = getStudentAvailableBooks();
+  const collections = [...new Set(books.map((book) => book.collection).filter(Boolean))];
+  const stages = [...new Set(books.map((book) => book.level || book.year).filter(Boolean))];
+  const recommendedBook = books.find((book) => (book.id || book.bookId) === "livro-005") || books[0];
+  return `
+    <div class="student-library-page" data-student-library>
+      <section class="student-library-hero">
+        <div>
+          <span>Biblioteca</span>
+          <h1>Livros para explorar</h1>
+          <p>Escolha uma leitura, abra o livro digital e continue explorando com calma.</p>
+        </div>
+        ${recommendedBook ? `
+          <a class="student-library-feature" href="${studentBookLink(recommendedBook)}">
+            ${studentLazyImg(recommendedBook.catalogCover || recommendedBook.cover || recommendedBook.src, recommendedBook.catalogTitle || recommendedBook.title || "Livro indicado")}
+            <strong>${printableEscape(recommendedBook.catalogTitle || recommendedBook.title)}</strong>
+            <small>${printableEscape(recommendedBook.level || recommendedBook.year || "")}</small>
+          </a>
+        ` : ""}
+      </section>
+
+      <section class="student-library-context" aria-label="Contexto da Biblioteca">
+        <article><span>Acervo</span><strong>Biblioteca do aluno</strong></article>
+        <article><span>Etapa</span><strong>Educacao Infantil</strong></article>
+        <article><span>Leitura</span><strong>Livros digitais</strong></article>
+      </section>
+
+      <section class="student-library-controls" aria-label="Filtros da Biblioteca">
+        <label><span>Buscar livro</span><input data-bv-search type="search" placeholder="Titulo, colecao ou etapa" /></label>
+        <div class="student-library-filter-row">
+          <button type="button" data-bv-filter-age="all" class="is-active">Todos</button>
+          ${stages.map((stage) => `<button type="button" data-bv-filter-age="${printableEscape(stage)}">${printableEscape(stage)}</button>`).join("")}
+          ${collections.map((collection) => `<button type="button" data-bv-filter-volume="${printableEscape(collection)}">${printableEscape(collection)}</button>`).join("")}
+        </div>
+      </section>
+
+      <section class="student-library-section">
+        <div class="student-section-heading">
+          <span>${books.length} livros</span>
+          <h2>Atividades de leitura</h2>
+        </div>
+        <div class="student-library-grid" data-bv-results>
+          ${books.map(renderStudentBookCard).join("")}
+        </div>
+        <p class="bv-empty-state" data-bv-empty hidden>Nenhum livro encontrado com estes filtros.</p>
       </section>
     </div>
   `;
@@ -2867,14 +2971,14 @@ const studentDashboardData = {
     subtitle: "Educacao Infantil 4 anos",
     progress: 45,
     cover: "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg",
-    href: "book-viewer.html?book=livro-005",
+    href: "book-viewer.html?book=livro-005&from=aluno",
   },
   libraryBanner: "assets/aluno/oficial-biblioteca-banner-v2.png",
   library: [
-    { title: "Infantil 4 - Volume 1", cover: "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg", href: "book-viewer.html?book=livro-005" },
-    { title: "Infantil 4 - Volume 2", cover: "assets/biblioteca/RAIZES_INFANTIL4_VOL2_BIBLIOTECA.jpg", href: "book-viewer.html?book=livro-006" },
-    { title: "Infantil 5 - Volume 1", cover: "assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.jpg", href: "book-viewer.html?book=livro-007" },
-    { title: "Infantil 5 - Volume 2", cover: "assets/biblioteca/RAIZES_INFANTIL5_VOL2_BIBLIOTECA.jpg", href: "book-viewer.html?book=livro-008" },
+    { title: "Infantil 4 - Volume 1", cover: "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg", href: "book-viewer.html?book=livro-005&from=aluno" },
+    { title: "Infantil 4 - Volume 2", cover: "assets/biblioteca/RAIZES_INFANTIL4_VOL2_BIBLIOTECA.jpg", href: "book-viewer.html?book=livro-006&from=aluno" },
+    { title: "Infantil 5 - Volume 1", cover: "assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.jpg", href: "book-viewer.html?book=livro-007&from=aluno" },
+    { title: "Infantil 5 - Volume 2", cover: "assets/biblioteca/RAIZES_INFANTIL5_VOL2_BIBLIOTECA.jpg", href: "book-viewer.html?book=livro-008&from=aluno" },
   ],
   xpGoal: {
     current: 125,
@@ -2894,10 +2998,10 @@ const studentDashboardData = {
     values: [22, 34, 48, 51, 62, 70, 86],
   },
   quickAccess: [
-    { label: "Continuar Leitura", detail: "Retome onde parou", icon: "📖", href: "book-viewer.html?book=livro-005" },
+    { label: "Continuar Leitura", detail: "Abrir livro", icon: "📖", href: "book-viewer.html?book=livro-005&from=aluno" },
     { label: "Minha Arvore", detail: "Veja seu crescimento", icon: "🌱", href: "arvore.html" },
     { label: "Jogos Digitais", detail: "Acesse as descobertas", icon: "▶", href: "jogos.html" },
-    { label: "Explorar Biblioteca", detail: "Descubra novos livros", icon: "📚", href: "biblioteca.html" },
+    { label: "Explorar Biblioteca", detail: "Descubra novos livros", icon: "📚", href: "biblioteca.html?from=aluno" },
   ],
 };
 
@@ -2978,14 +3082,14 @@ const profileAccessConfig = {
   aluno: {
     logoAlt: "Raizes e Saberes Educacional",
     eyebrow: "Ambiente do aluno",
-    name: "Pedro",
+    name: "Perfil do Aluno",
     search: "Buscar livros, jogos, atividades...",
     homeHref: "aluno.html",
     quickTitle: "Acessos rapidos",
     quick: [
       { label: "Continuar atividade", href: "aluno-atividades.html", tone: "green" },
       { label: "Ver minha arvore", href: "arvore.html", tone: "green" },
-      { label: "Abrir livro", href: "biblioteca.html", tone: "blue" },
+      { label: "Abrir livro", href: "biblioteca.html?from=aluno", tone: "blue" },
       { label: "Jogar", href: "jogos.html", tone: "purple" },
       { label: "Meu perfil", href: "perfil.html", tone: "teal" },
     ],
@@ -2993,7 +3097,7 @@ const profileAccessConfig = {
       { label: "Inicio", href: "aluno.html" },
       { label: "Missao do Dia", href: "missao.html" },
       { label: "Minha Arvore", href: "arvore.html" },
-      { label: "Biblioteca", href: "biblioteca.html" },
+      { label: "Biblioteca", href: "biblioteca.html?from=aluno" },
       { label: "Jogos", href: "jogos.html" },
       { label: "Perfil", href: "perfil.html" },
       { label: "Familia", href: "familia.html" },
@@ -3121,12 +3225,28 @@ const renderProfileShell = (role, content) => `
   </section>
 `;
 
-const renderStudentProfilePage = () => {
+const getStudentProfileInitials = (name = "") => {
+  const parts = String(name || "Aluno").trim().split(/\s+/).filter(Boolean);
+  return (parts.length > 1 ? `${parts[0][0]}${parts.at(-1)[0]}` : `${parts[0]?.[0] || "A"}`).toUpperCase();
+};
+
+const getStudentGamificationAudit = () => {
+  const gameSummary = getStudentGameSummary();
+  return {
+    xpEngine: "LOCAL",
+    levelEngine: "LOCAL",
+    achievementsEngine: studentDashboardData.medals?.length ? "LOCAL" : "GAP",
+    knowledgeTreeEngine: "PARTIAL",
+    gameProgressCount: gameSummary.completedCount || 0,
+  };
+};
+
+const renderStudentLegacyProfilePage = () => {
   const content = `
-    <section class="student-profile-static-map" aria-label="Perfil do aluno Pedro">
+    <section class="student-profile-static-map" aria-label="Perfil visual legado do aluno">
       <img
         src="assets/aluno/perfil-aluno-dashboard.png"
-        alt="Perfil do aluno Pedro com medalhas, progresso, conquistas e jogos concluidos"
+        alt="Perfil visual legado do aluno com medalhas, progresso, conquistas e jogos concluidos"
         loading="eager"
         decoding="async"
         onerror="this.hidden=true"
@@ -3137,8 +3257,107 @@ const renderStudentProfilePage = () => {
   return renderProfileShell("aluno", content);
 };
 
+const renderStudentProfilePage = () => {
+  if (!isStudentInstitutionalMode()) return renderStudentLegacyProfilePage();
+  const isBlocked = studentInstitutionalState.status !== "ready";
+  const profile = getActiveStudentProfile();
+  const gamification = getStudentGamificationAudit();
+  const profileContent = isBlocked
+    ? `<div data-student-profile-institutional>${renderStudentInstitutionalGate()}</div>`
+    : `
+      <section class="student-real-profile" data-student-profile-institutional>
+        <header class="student-real-profile-hero">
+          <div class="student-real-profile-avatar" aria-hidden="true">${getStudentProfileInitials(profile.fullName)}</div>
+          <div>
+            <span>Meu perfil</span>
+            <h2>${printableEscape(profile.fullName)}</h2>
+            <p>${printableEscape(profile.className)} · ${printableEscape(profile.schoolName)}</p>
+          </div>
+          <a href="aluno.html">Voltar ao inicio</a>
+        </header>
+
+        <section class="student-real-profile-grid" aria-label="Informacoes do aluno">
+          <article class="student-real-profile-card is-main">
+            ${premiumIcon("aluno")}
+            <div>
+              <span>Aluno</span>
+              <strong>${printableEscape(profile.fullName)}</strong>
+              <p>Perfil carregado a partir do vinculo escolar autenticado.</p>
+            </div>
+          </article>
+          <article class="student-real-profile-card">
+            ${premiumIcon("turmas")}
+            <div>
+              <span>Turma</span>
+              <strong>${printableEscape(profile.className)}</strong>
+              <p>Matricula ativa na escola atual.</p>
+            </div>
+          </article>
+          <article class="student-real-profile-card">
+            ${premiumIcon("escola")}
+            <div>
+              <span>Escola</span>
+              <strong>${printableEscape(profile.schoolName)}</strong>
+              <p>Ambiente institucional do aluno.</p>
+            </div>
+          </article>
+          <article class="student-real-profile-card">
+            ${premiumIcon("professor")}
+            <div>
+              <span>Professora</span>
+              <strong>${printableEscape(profile.teacherName)}</strong>
+              <p>Resolvida pelo vinculo ativo da turma.</p>
+            </div>
+          </article>
+        </section>
+
+        <section class="student-real-profile-grid is-progress" aria-label="Progresso e conquistas">
+          <article class="student-real-profile-card is-progress-card">
+            ${premiumIcon("jogos")}
+            <div>
+              <span>Progresso</span>
+              <strong>Acompanhamento em preparacao</strong>
+              <p>Jogos e atividades continuam disponiveis; XP e nivel serao exibidos quando houver acompanhamento institucional.</p>
+            </div>
+          </article>
+          <article class="student-real-profile-card is-progress-card">
+            ${premiumIcon("premio")}
+            <div>
+              <span>Conquistas</span>
+              <strong>Conquistas preservadas</strong>
+              <p>Os selos visuais existentes ficam guardados para a evolucao oficial das conquistas.</p>
+            </div>
+          </article>
+          <article class="student-real-profile-card is-progress-card">
+            ${premiumIcon("arvore")}
+            <div>
+              <span>Minha Arvore</span>
+              <strong>Espaco preparado</strong>
+              <p>A arvore atual permanece acessivel para evoluir com XP e conquistas reais.</p>
+            </div>
+          </article>
+        </section>
+
+        <section class="student-real-profile-actions" aria-label="Acessos do aluno">
+          <a href="aluno-atividades.html">${premiumIcon("atividades")}<span>Atividades</span></a>
+          <a href="biblioteca.html?from=aluno">${premiumIcon("biblioteca")}<span>Biblioteca</span></a>
+          <a href="jogos.html">${premiumIcon("jogos")}<span>Jogos</span></a>
+          <a href="arvore.html">${premiumIcon("arvore")}<span>Minha Arvore</span></a>
+        </section>
+
+        <section class="student-real-profile-readiness" aria-label="Preparacao do perfil">
+          <article><strong>Perfil</strong><span>Pronto</span></article>
+          <article><strong>Avatar</strong><span>Iniciais institucionais</span></article>
+          <article><strong>XP</strong><span>${gamification.xpEngine === "LOCAL" ? "Aguardando acompanhamento institucional" : "Pronto"}</span></article>
+          <article><strong>Conquistas</strong><span>${gamification.achievementsEngine === "LOCAL" ? "Aguardando acompanhamento institucional" : "Preparado"}</span></article>
+        </section>
+      </section>
+    `;
+  return renderProfileShell("aluno", profileContent);
+};
+
 const studentProfileHotspots = [
-  { className: "profile-hotspot-avatar", href: "perfil.html", label: "Abrir detalhes do perfil de Pedro" },
+  { className: "profile-hotspot-avatar", href: "perfil.html", label: "Abrir detalhes do perfil do aluno" },
   { className: "profile-hotspot-xp-top", href: "perfil.html", label: "Abrir historico de XP" },
   { className: "profile-hotspot-tree-top", href: "arvore.html", label: "Abrir Minha Arvore" },
   { className: "profile-hotspot-streak-top", href: "missao.html", label: "Abrir sequencia diaria" },
@@ -3258,8 +3477,8 @@ const renderStudentCurrentBook = (book) => `
 
 const renderStudentLibrary = (books, banner) => `
   <section class="student-card student-library-card" aria-labelledby="student-library-title">
-    <div class="student-card-head"><h2 id="student-library-title">📚 Biblioteca</h2><a href="biblioteca.html">Ver tudo</a></div>
-    <a class="student-library-banner" href="biblioteca.html" aria-label="Abrir Biblioteca">${studentLazyImg(banner, "Banner da Biblioteca")}</a>
+    <div class="student-card-head"><h2 id="student-library-title">📚 Biblioteca</h2><a href="biblioteca.html?from=aluno">Ver tudo</a></div>
+    <a class="student-library-banner" href="biblioteca.html?from=aluno" aria-label="Abrir Biblioteca">${studentLazyImg(banner, "Banner da Biblioteca")}</a>
   </section>
 `;
 
@@ -3531,7 +3750,10 @@ const studentInstitutionalState = {
   enrollment: null,
   classItem: null,
   school: null,
+  teachers: [],
   entries: [],
+  recommendations: [],
+  recommendationsError: "",
   calendarError: "",
   weekStartIso: "",
   hydratedDom: false,
@@ -4854,7 +5076,7 @@ const printableNormalize = (value) =>
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 
-const printableAllowedRoles = ["professor", "coordenador", "coordenador_pedagogico", "gestor", "gestor_escolar", "admin", "administrador", "administrador_nacional"];
+const printableAllowedRoles = ["professor", "aluno", "coordenador", "coordenador_pedagogico", "gestor", "gestor_escolar", "admin", "administrador", "administrador_nacional"];
 const printableAdminRoles = ["coordenador", "coordenador_pedagogico", "gestor", "gestor_escolar", "admin", "administrador", "administrador_nacional"];
 
 const getPrintableUserRole = () => {
@@ -5596,6 +5818,39 @@ const renderStudentUniversalActivities = () => {
         }
       </div>
     </section>
+  `;
+};
+
+const renderStudentAvailableActivitiesCatalog = () => {
+  const recommendedCodes = new Set(
+    getStudentVisibleRecommendations({ activitiesOnly: true })
+      .map((recommendation) => recommendation.contentId)
+      .filter(Boolean)
+  );
+  const activities = printableActivitiesDataService
+    .list({ admin: false })
+    .filter((activity) => !recommendedCodes.has(activity.codigo))
+    .slice(0, 12);
+  if (!activities.length) {
+    return `<p class="ua-empty">Nenhuma atividade disponivel no momento.</p>`;
+  }
+  return `
+    <div class="ua-student-grid student-available-activities">
+      ${activities
+        .map((activity) => `
+          <article class="ua-student-card">
+            <img src="${printableEscape(activity.miniatura || activity.arquivoPng || activity.arquivoA4 || "")}" alt="Atividade ${printableEscape(activity.codigo)}" loading="lazy" />
+            <div>
+              <mark>${printableEscape(activity.codigo)}</mark>
+              <strong>${printableEscape(activity.titulo || activity.codigo)}</strong>
+              <small>${printableEscape(activity.idade || activity.faixaEtaria || "Educacao Infantil")}</small>
+              <span>${printableEscape(activity.tipo || activity.tiposAtividade?.[0] || "Atividade imprimivel")}</span>
+            </div>
+            <a href="atividades.html?codigo=${encodeURIComponent(activity.codigo)}&from=aluno">Abrir</a>
+          </article>
+        `)
+        .join("")}
+    </div>
   `;
 };
 
@@ -7035,8 +7290,14 @@ const renderStudentPremiumSidebar = () => `
 const renderStudentPremiumTopbar = () => `
   <header class="student-premium-topbar">
     <label><span>Buscar</span><input type="search" placeholder="Buscar livros, jogos, atividades..." /></label>
-    <div>
-      <a href="perfil.html" aria-label="Abrir perfil">${getActiveStudentProfile().avatar ? studentLazyImg(getActiveStudentProfile().avatar, "", "student-top-avatar") : premiumIcon("aluno")}<strong>${printableEscape(getActiveStudentProfile().firstName)}</strong></a>
+    <div class="student-premium-topbar-right">
+      <a class="student-premium-user-pill" href="perfil.html" aria-label="Abrir perfil">${getActiveStudentProfile().avatar ? studentLazyImg(getActiveStudentProfile().avatar, "", "student-top-avatar") : premiumIcon("aluno")}<strong>${printableEscape(getActiveStudentProfile().firstName)}</strong></a>
+      <nav class="student-premium-global-actions" aria-label="Acoes globais do aluno">
+        <button type="button" data-platform-back>${premiumIcon("progresso")}<span>VOLTAR</span></button>
+        <a href="aluno.html">${premiumIcon("home")}<span>INICIO</span></a>
+        <a href="escola.html">${premiumIcon("escola")}<span>MINHA ESCOLA</span></a>
+        <button type="button" data-platform-logout>${premiumIcon("logout")}<span>SAIR</span></button>
+      </nav>
     </div>
   </header>
 `;
@@ -7064,7 +7325,7 @@ const renderStudentQuickRail = () => `
     </section>
     <section class="student-side-card is-warm">
       <h2>Agenda</h2>
-      ${renderPremiumEmpty("NENHUM ITEM PUBLICADO.", "A agenda sera conectada em etapa separada.", "orange")}
+      ${renderPremiumEmpty("NENHUM ITEM PUBLICADO.", "Quando a escola publicar compromissos, eles aparecerao aqui.", "orange")}
     </section>
   </aside>
 `;
@@ -7140,6 +7401,236 @@ const renderStudentInstitutionalWeeklyBoard = () => {
   `;
 };
 
+const studentRecommendationTeacherName = (teacher = null) => {
+  const profile = teacher?.profile || null;
+  return (
+    profile?.display_name ||
+    profile?.full_name ||
+    profile?.name ||
+    teacher?.full_name ||
+    teacher?.nome ||
+    teacher?.name ||
+    teacher?.email ||
+    getActiveStudentProfile().teacherName
+  );
+};
+
+const getStudentRecommendationActivity = (recommendation = {}) => {
+  const type = String(recommendation.contentType || recommendation.content_type || "").toLowerCase();
+  const code = recommendation.contentId || recommendation.content_id || "";
+  if (!code || !["printable_activity", "activity"].includes(type)) return null;
+  return printableActivitiesDataService.getByCode(code, { admin: false }) || null;
+};
+
+const mapStudentTeacherRecommendation = (row = {}, teachersById = new Map()) => {
+  const targetType = String(row.target_type || "").toLowerCase();
+  const profile = getActiveStudentProfile();
+  const teacher = teachersById.get(row.teacher_id) || (studentInstitutionalState.teachers || []).find((item) => item.id === row.teacher_id) || null;
+  const mapped = {
+    id: row.id || "",
+    schoolId: row.school_id || "",
+    teacherId: row.teacher_id || "",
+    contentType: row.content_type || "printable_activity",
+    contentId: row.content_id || "",
+    contentTitle: row.content_title || row.content_id || "Conteudo recomendado",
+    targetType,
+    classId: row.class_id || "",
+    studentId: row.student_id || "",
+    note: row.note || "",
+    status: row.status || "",
+    publishedAt: row.published_at || "",
+    createdAt: row.created_at || "",
+    teacherName: studentRecommendationTeacherName(teacher),
+    className: profile.className,
+    childName: targetType === "student" ? profile.fullName : "",
+  };
+  const activity = getStudentRecommendationActivity(mapped);
+  if (activity) {
+    mapped.activity = activity;
+    mapped.contentTitle = activity.titulo || activity.title || mapped.contentTitle;
+  }
+  mapped.typeLabel = recommendationTypeLabel(mapped.contentType);
+  mapped.destinationLabel = targetType === "student" ? "Para voce" : "Para sua turma";
+  mapped.date = formatTeacherClassMessageDate(mapped.publishedAt || mapped.createdAt);
+  return mapped;
+};
+
+const loadStudentTeacherRecommendations = async (client) => {
+  const student = studentInstitutionalState.student || {};
+  const enrollment = studentInstitutionalState.enrollment || {};
+  const school = studentInstitutionalState.school || {};
+  if (!student.id || !enrollment.class_id || !school.id) return [];
+  const requestOptions = { requireAuthenticated: true, allowedRoles: ["aluno", "admin"] };
+  const baseSelect =
+    "select=id,school_id,teacher_id,content_type,content_id,content_title,target_type,class_id,student_id,note,status,published_at,deleted_at,created_at";
+  const baseQuery = `?${baseSelect}&school_id=${supabaseEq(school.id)}&status=eq.published&deleted_at=is.null`;
+  const [classRows, studentRows] = await Promise.all([
+    client.request(
+      "pedagogical_recommendations",
+      `${baseQuery}&target_type=eq.class&class_id=${supabaseEq(enrollment.class_id)}&order=published_at.desc.nullslast&order=created_at.desc`,
+      requestOptions
+    ),
+    client.request(
+      "pedagogical_recommendations",
+      `${baseQuery}&target_type=eq.student&student_id=${supabaseEq(student.id)}&order=published_at.desc.nullslast&order=created_at.desc`,
+      requestOptions
+    ),
+  ]);
+  const rowsById = new Map();
+  [...(classRows || []), ...(studentRows || [])].forEach((row) => {
+    if (row?.id && row.status === "published" && !row.deleted_at) rowsById.set(row.id, row);
+  });
+  const rows = [...rowsById.values()].sort((a, b) =>
+    String(b.published_at || b.created_at || "").localeCompare(String(a.published_at || a.created_at || ""))
+  );
+  const knownTeachers = new Map((studentInstitutionalState.teachers || []).map((teacher) => [teacher.id, teacher]));
+  const missingTeacherIds = [...new Set(rows.map((row) => row.teacher_id).filter((id) => id && !knownTeachers.has(id)))];
+  const teacherRows = missingTeacherIds.length
+    ? await client
+        .request("teachers", `?select=id,profile_id,full_name,nome,email,status&id=${supabaseIn(missingTeacherIds)}`, requestOptions)
+        .catch(() => [])
+    : [];
+  const profileIds = [...new Set((teacherRows || []).map((teacher) => teacher.profile_id).filter(Boolean))];
+  const profileRows = profileIds.length
+    ? await client
+        .request("profiles", `?select=id,display_name,full_name,name,email&id=${supabaseIn(profileIds)}`, requestOptions)
+        .catch(() => [])
+    : [];
+  const profilesById = new Map((profileRows || []).map((profile) => [profile.id, profile]));
+  const teachersById = new Map(knownTeachers);
+  (teacherRows || []).forEach((teacher) => teachersById.set(teacher.id, { ...teacher, profile: profilesById.get(teacher.profile_id) || null }));
+  return rows.map((row) => mapStudentTeacherRecommendation(row, teachersById));
+};
+
+const getStudentVisibleRecommendations = ({ activitiesOnly = false } = {}) => {
+  const recommendations = isStudentInstitutionalMode() && studentInstitutionalState.status === "ready"
+    ? studentInstitutionalState.recommendations || []
+    : [];
+  return recommendations.filter((recommendation) => {
+    const status = String(recommendation.status || "").toLowerCase();
+    if (status !== "published") return false;
+    if (activitiesOnly) return ["printable_activity", "activity"].includes(String(recommendation.contentType || "").toLowerCase());
+    return true;
+  });
+};
+
+const studentRecommendationOpenHref = (recommendation = {}) => {
+  const type = String(recommendation.contentType || "").toLowerCase();
+  if (["printable_activity", "activity"].includes(type) && recommendation.contentId) {
+    return `atividades.html?codigo=${encodeURIComponent(recommendation.contentId)}&from=aluno&recommendation=${encodeURIComponent(recommendation.id || "")}`;
+  }
+  return "";
+};
+
+const renderStudentRecommendationCard = (recommendation = {}, { compact = false } = {}) => {
+  const activity = recommendation.activity || getStudentRecommendationActivity(recommendation);
+  const href = studentRecommendationOpenHref(recommendation);
+  const thumb = activity?.thumbnail || activity?.thumb || activity?.image || activity?.capa || activity?.miniatura || activity?.arquivoPng || "";
+  return `
+    <article class="family-recommendation-card student-recommendation-card ${recommendation.targetType === "student" ? "is-individual" : "is-class"}">
+      <div class="family-recommendation-thumb">
+        ${
+          thumb
+            ? `<img src="${printableEscape(thumb)}" alt="" onerror="this.hidden=true" />`
+            : premiumIcon(recommendation.targetType === "student" ? "aluno" : "atividades")
+        }
+      </div>
+      <div class="family-recommendation-body">
+        <div class="family-recommendation-kicker">
+          <span>${printableEscape(recommendation.typeLabel || recommendationTypeLabel(recommendation.contentType))}</span>
+          <em>${printableEscape(recommendation.destinationLabel || "Para sua turma")}</em>
+        </div>
+        <strong>${printableEscape(recommendation.contentTitle || "Recomendacao da professora")}</strong>
+        <dl>
+          <div><dt>Autoria</dt><dd>${printableEscape(recommendation.teacherName || getActiveStudentProfile().teacherName)}</dd></div>
+          <div><dt>Turma</dt><dd>${printableEscape(recommendation.className || getActiveStudentProfile().className)}</dd></div>
+        </dl>
+        ${recommendation.note && !compact ? `<p>${printableEscape(recommendation.note)}</p>` : ""}
+      </div>
+      <aside>
+        <small>${printableEscape(recommendation.date || "")}</small>
+        ${href ? `<a href="${href}">Abrir</a>` : `<button type="button" disabled>Abrir</button>`}
+      </aside>
+    </article>
+  `;
+};
+
+const renderStudentRecommendationList = ({ activitiesOnly = false, compact = false } = {}) => {
+  if (isStudentInstitutionalMode() && studentInstitutionalState.recommendationsError) {
+    return renderFamilyEmpty("NAO FOI POSSIVEL CARREGAR AS RECOMENDACOES.", studentInstitutionalState.recommendationsError);
+  }
+  const recommendations = getStudentVisibleRecommendations({ activitiesOnly });
+  if (!recommendations.length) {
+    return renderFamilyEmpty(activitiesOnly ? "Nenhuma atividade indicada no momento." : "Nenhuma recomendacao da professora no momento.");
+  }
+  return `<div class="family-recommendation-list student-recommendation-list">${recommendations.map((recommendation) => renderStudentRecommendationCard(recommendation, { compact })).join("")}</div>`;
+};
+
+const renderStudentInstitutionalGate = () => {
+  const message = studentInstitutionalState.status === "error"
+    ? studentInstitutionalState.error || "Nao foi possivel identificar o vinculo escolar deste aluno."
+    : "Validando sua sessao e buscando seu vinculo escolar.";
+  const title = studentInstitutionalState.status === "error"
+    ? "Nao foi possivel abrir o ambiente do aluno"
+    : "Carregando ambiente do aluno";
+  return `
+    <section class="student-institutional-gate ${studentInstitutionalState.status === "error" ? "is-error" : "is-loading"}">
+      ${premiumIcon(studentInstitutionalState.status === "error" ? "alerta" : "aluno")}
+      <div>
+        <strong>${title}</strong>
+        <p>${printableEscape(message)}</p>
+      </div>
+    </section>
+  `;
+};
+
+const renderStudentInstitutionalHomeContent = () => {
+  const profile = getActiveStudentProfile();
+  const isBlocked = isStudentInstitutionalMode() && studentInstitutionalState.status !== "ready";
+  if (isBlocked) return renderStudentInstitutionalGate();
+  return `
+    <section class="student-premium-hero">
+      <div>
+        <span>${isStudentInstitutionalMode() ? printableEscape(profile.schoolName) : "Aluno Ensino Fundamental"}</span>
+        <h1>OLA, ${printableEscape(getStudentFirstName().toUpperCase())}!</h1>
+        <p>${isStudentInstitutionalMode() ? `${printableEscape(profile.fullName)} · ${printableEscape(profile.className)} · ${printableEscape(profile.teacherName)}` : "Vamos descobrir coisas novas hoje?"}</p>
+      </div>
+      ${studentLazyImg("assets/aluno/oficial-hero-aluno.png", "", "student-hero-art")}
+    </section>
+
+    <section class="student-mission-card is-mission student-recommendations-home">
+      ${premiumIcon("atividades")}
+      <div>
+        <span>Recomendados pela Professora</span>
+        <strong>${getStudentVisibleRecommendations().length ? "ATIVIDADES PUBLICADAS PARA VOCE." : "NENHUMA ATIVIDADE PUBLICADA."}</strong>
+        <p>${getStudentVisibleRecommendations().length ? "Abra as indicacoes da sua turma ou as que foram enviadas especialmente para voce." : "Quando houver uma atividade real para este aluno, ela aparecera aqui."}</p>
+        <a href="aluno-atividades.html">VER ATIVIDADES</a>
+      </div>
+      ${isStudentInstitutionalMode() && studentInstitutionalState.status === "ready" ? renderStudentRecommendationList({ activitiesOnly: true, compact: true }) : ""}
+    </section>
+
+    <section class="student-mission-card is-continue">
+      ${premiumIcon("calendario")}
+      <div>
+        <span>Agenda</span>
+        <strong>${isStudentInstitutionalMode() && studentInstitutionalState.entries?.length ? "PUBLICACOES DA TURMA DISPONIVEIS." : "NENHUM COMPROMISSO PUBLICADO."}</strong>
+        <p>${isStudentInstitutionalMode() ? "Os recados e compromissos da turma aparecem na Minha Semana." : "Quando a escola publicar compromissos, eles aparecerao aqui."}</p>
+        <a href="aluno.html">INICIO</a>
+      </div>
+    </section>
+
+    ${renderStudentInstitutionalWeeklyBoard()}
+
+    <section class="student-premium-card-grid" aria-label="Areas principais do aluno">
+      ${[
+        { title: "Minha Turma", text: profile.className, href: "aluno.html", icon: "turmas", tone: "green", cta: "VER" },
+        { title: "Minha Escola", text: profile.schoolName || "Escola vinculada", href: "escola.html", icon: "escola", tone: "blue", cta: "VER" },
+        { title: "Meus Livros", text: "Materiais do aluno aparecem na Biblioteca.", href: "biblioteca.html", icon: "book", tone: "purple", cta: "ABRIR" },
+      ].map(renderStudentPremiumCard).join("")}
+    </section>
+  `;
+};
+
 const renderStudentSimpleDashboard = () => `
   <section class="student-premium-workspace" data-student-dashboard>
     ${renderStudentPremiumSidebar()}
@@ -7147,44 +7638,7 @@ const renderStudentSimpleDashboard = () => `
       ${renderStudentPremiumTopbar()}
       <div class="student-premium-grid">
         <main class="student-center">
-          <section class="student-premium-hero">
-            <div>
-              <span>${isStudentInstitutionalMode() ? printableEscape(getActiveStudentProfile().schoolName) : "Aluno Ensino Fundamental"}</span>
-              <h1>OLA, ${printableEscape(getStudentFirstName().toUpperCase())}!</h1>
-              <p>${isStudentInstitutionalMode() ? `${printableEscape(getActiveStudentProfile().fullName)} · ${printableEscape(getActiveStudentProfile().className)}` : "Vamos descobrir coisas novas hoje?"}</p>
-            </div>
-            ${studentLazyImg("assets/aluno/oficial-hero-aluno.png", "", "student-hero-art")}
-          </section>
-
-          <section class="student-mission-card is-mission">
-            ${premiumIcon("atividades")}
-            <div>
-              <span>Atividades</span>
-              <strong>NENHUMA ATIVIDADE PUBLICADA.</strong>
-              <p>Quando houver uma atividade real para este aluno, ela aparecera aqui.</p>
-              <a href="aluno-atividades.html">VER ATIVIDADES</a>
-            </div>
-          </section>
-
-          <section class="student-mission-card is-continue">
-            ${premiumIcon("calendario")}
-            <div>
-              <span>Agenda</span>
-              <strong>${isStudentInstitutionalMode() && studentInstitutionalState.entries?.length ? "PUBLICACOES DA TURMA DISPONIVEIS." : "NENHUM COMPROMISSO PUBLICADO."}</strong>
-              <p>${isStudentInstitutionalMode() ? "Os recados e compromissos da turma aparecem na Minha Semana." : "A agenda institucional do aluno sera conectada em etapa separada."}</p>
-              <a href="aluno.html">INICIO</a>
-            </div>
-          </section>
-
-          ${renderStudentInstitutionalWeeklyBoard()}
-
-          <section class="student-premium-card-grid" aria-label="Areas principais do aluno">
-            ${[
-              { title: "Minha Turma", text: getActiveStudentProfile().className, href: "aluno.html", icon: "turmas", tone: "green", cta: "VER" },
-              { title: "Minha Escola", text: getActiveStudentProfile().schoolName || "Escola vinculada", href: "aluno.html", icon: "escola", tone: "blue", cta: "VER" },
-              { title: "Meus Livros", text: "Materiais do aluno aparecem na Biblioteca.", href: "biblioteca.html", icon: "book", tone: "purple", cta: "ABRIR" },
-            ].map(renderStudentPremiumCard).join("")}
-          </section>
+          ${renderStudentInstitutionalHomeContent()}
         </main>
         ${renderStudentQuickRail()}
       </div>
@@ -7192,16 +7646,33 @@ const renderStudentSimpleDashboard = () => `
   </section>
 `;
 
-const renderStudentActivitiesPage = () => `
-  <div class="student-dashboard student-pedro-home" data-student-dashboard>
-    <section class="student-pedro-hero">
-      <div><span>MINHAS ATIVIDADES</span><h1>OLA, PEDRO!</h1></div>
-      ${studentLazyImg(pilotProfiles.student.avatar, "", "student-avatar")}
-      <button class="student-logout-button" type="button" data-platform-logout>SAIR</button>
-    </section>
-    ${renderStudentUniversalActivities()}
-  </div>
-`;
+const renderStudentActivitiesPage = () => {
+  const profile = getActiveStudentProfile();
+  const isBlocked = isStudentInstitutionalMode() && studentInstitutionalState.status !== "ready";
+  return `
+    <div class="student-dashboard student-pedro-home student-activities-shell" data-student-activities-institutional>
+      <section class="student-pedro-hero">
+        <div><span>MINHAS ATIVIDADES</span><h1>OLA, ${printableEscape(getStudentFirstName().toUpperCase())}!</h1><p>${printableEscape(profile.className)} · ${printableEscape(profile.teacherName || "")}</p></div>
+        ${profile.avatar ? studentLazyImg(profile.avatar, "", "student-avatar") : `<span class="student-avatar student-avatar-generic">${premiumIcon("aluno")}</span>`}
+        <button class="student-logout-button" type="button" data-platform-logout>SAIR</button>
+      </section>
+      ${
+        isBlocked
+          ? renderStudentInstitutionalGate()
+          : `
+            <section class="student-card student-recommendations-panel">
+              <div class="student-card-head"><h2>Indicadas para voce</h2><span>${getStudentVisibleRecommendations({ activitiesOnly: true }).length} publicadas</span></div>
+              ${renderStudentRecommendationList({ activitiesOnly: true })}
+            </section>
+            <section class="student-card">
+              <div class="student-card-head"><h2>Atividades disponiveis</h2><span>Acervo para abrir e imprimir</span></div>
+              ${renderStudentAvailableActivitiesCatalog()}
+            </section>
+          `
+      }
+    </div>
+  `;
+};
 
 const getStudentFirstName = () => {
   if (isStudentInstitutionalMode()) {
@@ -7449,6 +7920,91 @@ const getAdminFeatureStatusClass = (status) =>
   `is-${String(status || "em-desenvolvimento").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-")}`;
 const getAdminFeaturePolicy = (key) => getAdminFeature(key)?.roles || { admin: true, professor: false, aluno: false };
 
+const adminReadOnlyNav = [
+  ["painel", "Painel"],
+  ["usuarios", "Usuarios"],
+  ["escolas", "Escolas"],
+  ["conteudos", "Conteudos"],
+  ["implantacao", "Implantacao"],
+  ["auditoria", "Auditoria"],
+  ["ambientes", "Ambientes"],
+];
+
+const adminOperationalDoors = [
+  { key: "secretaria", label: "Admin / Secretaria", description: "Acompanhar operacao institucional da escola.", href: "secretaria.html" },
+  { key: "professor", label: "Admin / Professor", description: "Acompanhar a rotina pedagogica das turmas.", href: "professor.html" },
+  { key: "familia", label: "Admin / Familia", description: "Conferir a experiencia familiar vinculada a criancas.", href: "familia.html" },
+  { key: "aluno", label: "Admin / Aluno", description: "Conferir a experiencia do aluno com identidade real.", href: "aluno.html" },
+  { key: "escola", label: "Admin / Minha Escola", description: "Abrir a area institucional comum.", href: "escola.html" },
+];
+
+const adminOperationalState = {
+  status: "idle",
+  error: "",
+  data: null,
+};
+
+const countRows = (rows) => (Array.isArray(rows) ? rows.length : 0);
+const countActiveRows = (rows) =>
+  (Array.isArray(rows) ? rows : []).filter((row) => String(row.status || row.membership_status || "").toLowerCase() !== "inactive").length;
+
+const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
+  if (!force && adminOperationalState.status === "ready") return adminOperationalState;
+  if (!force && adminOperationalState.promise) return adminOperationalState.promise;
+  adminOperationalState.status = "loading";
+  adminOperationalState.error = "";
+  adminOperationalState.promise = (async () => {
+    try {
+      const client = createSupabaseRestClient();
+      const context = await client.getContext({ requireAuthenticated: true, allowedRoles: ["admin"] });
+      const options = { requireAuthenticated: true, allowedRoles: ["admin"] };
+      const [
+        schools,
+        profiles,
+        teachers,
+        students,
+        guardians,
+        classes,
+        enrollments,
+        schoolMemberships,
+        communications,
+      ] = await Promise.all([
+        client.request("schools", "?select=id,nome,status&order=nome.asc", options),
+        client.request("profiles", "?select=id,display_name,platform_role,status&order=display_name.asc", options),
+        client.request("teachers", "?select=id,school_id,profile_id,full_name,nome,status&order=full_name.asc", options),
+        client.request("students", "?select=id,school_id,class_id,nome,status&order=nome.asc", options),
+        client.request("guardians", "?select=id,school_id,full_name,status,access_status&order=full_name.asc", options),
+        client.request("classes", "?select=id,school_id,nome,status,school_year&order=nome.asc", options),
+        client.request("enrollments", "?select=id,school_id,class_id,student_id,status&order=created_at.desc", options),
+        client.request("school_memberships", "?select=id,school_id,profile_id,membership_role,status&order=started_at.desc", options).catch(() => []),
+        client.request("communications", "?select=id,school_id,status,audience_type,created_at&order=created_at.desc", options),
+      ]);
+      adminOperationalState.status = "ready";
+      adminOperationalState.data = {
+        context,
+        schools: schools || [],
+        profiles: profiles || [],
+        teachers: teachers || [],
+        students: students || [],
+        guardians: guardians || [],
+        classes: classes || [],
+        enrollments: enrollments || [],
+        schoolMemberships: schoolMemberships || [],
+        communications: communications || [],
+      };
+      return adminOperationalState;
+    } catch (error) {
+      adminOperationalState.status = "error";
+      adminOperationalState.error = error.message || "Nao foi possivel carregar o painel Admin.";
+      adminOperationalState.data = null;
+      return adminOperationalState;
+    } finally {
+      adminOperationalState.promise = null;
+    }
+  })();
+  return adminOperationalState.promise;
+};
+
 const renderAdminPlatformTabs = (active = "inicio") => `
   <nav class="admin-platform-tabs" aria-label="Todas as abas da plataforma">
     ${adminPlatformTabs
@@ -7459,6 +8015,101 @@ const renderAdminPlatformTabs = (active = "inicio") => `
       })
       .join("")}
   </nav>
+`;
+
+const renderAdminMetricCard = ({ label, value, detail }) => `
+  <article class="admin-metric-card" data-admin-search-item>
+    <span>${htmlEscape(label)}</span>
+    <strong>${htmlEscape(String(value))}</strong>
+    <small>${htmlEscape(detail)}</small>
+  </article>
+`;
+
+const renderAdminDoorCards = () => `
+  <section class="admin-board">
+    <div class="admin-section-head">
+      <h2>Portas administrativas</h2>
+      <span>Acesso autorizado sem trocar de usuario</span>
+    </div>
+    <div class="admin-door-grid">
+      ${adminOperationalDoors
+        .map(
+          (door) => `
+            <a class="admin-door-card" href="${door.href}" data-admin-search-item>
+              <span>${htmlEscape(door.label)}</span>
+              <strong>${htmlEscape(door.description)}</strong>
+            </a>
+          `
+        )
+        .join("")}
+    </div>
+  </section>
+`;
+
+const renderAdminReadOnlyHome = () => {
+  if (adminOperationalState.status === "loading" || adminOperationalState.status === "idle") {
+    return `
+      <section class="admin-board admin-loading-state">
+        <h2>Carregando painel</h2>
+        <p>Consultando o estado operacional com a sessao Admin atual.</p>
+      </section>
+      ${renderAdminDoorCards()}
+    `;
+  }
+  if (adminOperationalState.status === "error") {
+    return `
+      <section class="admin-board admin-empty-state">
+        <h2>Nao foi possivel carregar o painel</h2>
+        <p>${htmlEscape(adminOperationalState.error)}</p>
+      </section>
+      ${renderAdminDoorCards()}
+    `;
+  }
+  const data = adminOperationalState.data || {};
+  const activeCommunications = (data.communications || []).filter((item) => !["deleted", "archived"].includes(String(item.status || "").toLowerCase()));
+  const metrics = [
+    { label: "Escolas", value: countRows(data.schools), detail: `${countActiveRows(data.schools)} ativas` },
+    { label: "Usuarios e perfis", value: countRows(data.profiles), detail: `${countActiveRows(data.profiles)} ativos` },
+    { label: "Professores", value: countRows(data.teachers), detail: `${countActiveRows(data.teachers)} ativos` },
+    { label: "Alunos", value: countRows(data.students), detail: `${countActiveRows(data.students)} ativos` },
+    { label: "Responsaveis", value: countRows(data.guardians), detail: `${countActiveRows(data.guardians)} ativos` },
+    { label: "Turmas", value: countRows(data.classes), detail: `${countActiveRows(data.classes)} ativas` },
+    { label: "Matriculas", value: countRows(data.enrollments), detail: `${countActiveRows(data.enrollments)} ativas` },
+    { label: "Comunicacoes", value: activeCommunications.length, detail: "visiveis na operacao" },
+  ];
+  const adminSessionLabel = data.context?.role === "admin" ? "Administrador/TI" : data.context?.role || "Administrador/TI";
+  return `
+    <section class="admin-overview-grid" aria-label="Visao geral operacional">
+      ${metrics.map(renderAdminMetricCard).join("")}
+    </section>
+    <section class="admin-board admin-status-board">
+      <div class="admin-section-head">
+        <h2>Status da plataforma</h2>
+        <span>Painel de leitura</span>
+      </div>
+      <div class="admin-status-list">
+        <p><strong>Ambiente</strong><span>Principal</span></p>
+        <p><strong>Sessao</strong><span>${htmlEscape(adminSessionLabel)}</span></p>
+        <p><strong>Escopo</strong><span>Acompanhamento operacional</span></p>
+      </div>
+    </section>
+    ${renderAdminDoorCards()}
+  `;
+};
+
+const renderAdminPreparationView = (title, description, items = []) => `
+  <section class="admin-board admin-preparation-state">
+    <div class="admin-section-head">
+      <h2>${htmlEscape(title)}</h2>
+      <span>Em preparacao</span>
+    </div>
+    <p>${htmlEscape(description)}</p>
+    ${
+      items.length
+        ? `<div class="admin-preparation-list">${items.map((item) => `<span>${htmlEscape(item)}</span>`).join("")}</div>`
+        : ""
+    }
+  </section>
 `;
 
 const renderAdminHomologationHub = () => `
@@ -7494,19 +8145,14 @@ const renderAdminFeatureCard = (item) => `
 const renderAdminSidebar = (active = "inicio") => `
   <aside class="admin-sidebar">
     <div class="admin-id-card">
-      <span>ADMIN / TI</span>
+      <span>Administrador/TI</span>
       <strong>Raizes e Saberes</strong>
-      <small>${getPlatformSession().email || "admin.ti@raizesesaberes.com.br"}</small>
+      <small>${htmlEscape(getPlatformSession().email || "admin.banco@raizesesaberes.com")}</small>
     </div>
     <nav aria-label="Menu Admin">
-      ${adminWorkspaceNav
-        .map(([key, label]) =>
-          key === "heading"
-            ? `<strong class="tw-nav-heading">${label}</strong>`
-            : `<button type="button" data-admin-view="${key}" class="${key === active ? "is-active" : ""}">${label}</button>`
-        )
+      ${adminReadOnlyNav
+        .map(([key, label]) => `<button type="button" data-admin-view="${key}" class="${key === active ? "is-active" : ""}">${label}</button>`)
         .join("")}
-      <a class="platform-logout-button" href="secretaria.html">SECRETARIA</a>
       <button class="platform-logout-button" type="button" data-platform-logout>SAIR</button>
     </nav>
   </aside>
@@ -7536,22 +8182,9 @@ const renderAdminWorkspaceView = (view = "inicio") => {
   const development = adminFeatureRegistry.filter((item) => item.status === "EM DESENVOLVIMENTO");
   const homologated = adminFeatureRegistry.filter((item) => item.status === "HOMOLOGADO" || item.status === "PUBLICADO");
   const viewMap = {
+    painel: renderAdminReadOnlyHome(),
     inicio: `
-      <section class="admin-home-grid" aria-label="Areas principais do Admin">
-        ${["PLATAFORMA", "USUARIOS", "CONTEUDOS", "MOTORES", "GESTAO PEDAGOGICA", "EM DESENVOLVIMENTO", "HOMOLOGADOS", "STATUS DO SISTEMA"]
-          .map(
-            (title) => `
-              <article class="admin-home-card" data-admin-search-item>
-                <span>QG da Plataforma</span>
-                <strong>${title}</strong>
-                <p>Area preparada para diagnostico, homologacao e liberacao controlada por perfil.</p>
-              </article>
-            `
-          )
-          .join("")}
-      </section>
-      ${renderAdminHomologationHub()}
-      ${renderAdminPermissionMatrix()}
+      ${renderAdminReadOnlyHome()}
     `,
     plataforma: `
       <section class="admin-board">
@@ -7568,55 +8201,82 @@ const renderAdminWorkspaceView = (view = "inicio") => {
       </section>
     `,
     usuarios: `
-      <section class="admin-board admin-empty-state">
-        <h2>Usuarios</h2>
-        <p>Helena e Pedro usam usuarios reais do Supabase Auth. O usuario Admin/TI deve existir no Supabase com app_metadata.platform_role = admin antes do login real.</p>
-      </section>
-      ${renderAdminPermissionMatrix()}
+      ${renderAdminPreparationView("Usuarios", "Gestao de acessos, papeis e senhas sera implementada em fase propria. Nesta etapa o painel apenas confirma o estado operacional disponivel.", [
+        "Perfis",
+        "Papeis",
+        "Acessos",
+      ])}
     `,
-    professores: `<section class="admin-board admin-empty-state"><h2>Professores</h2><p>Ambiente da Professora Helena reaproveitado para regressao e validacao pedagogica.</p><a href="professor.html">Abrir ambiente professor</a></section>`,
-    alunos: `<section class="admin-board admin-empty-state"><h2>Alunos</h2><p>Ambiente do aluno Pedro reaproveitado para regressao e validacao infantil.</p><a href="aluno.html">Abrir ambiente aluno</a></section>`,
-    familia: `<section class="admin-board admin-empty-state"><h2>Familia</h2><p>Aba registrada para acompanhar a futura area da familia. Como a rota protegida hoje pertence ao aluno, o Admin/TI mantem este espaco como homologacao interna sem acesso indevido.</p></section>`,
+    escolas: renderAdminPreparationView("Escolas", "Cadastro, implantacao e acompanhamento de escolas serao liberados depois do painel inicial.", [
+      "Cadastro institucional",
+      "Implantacao",
+      "Acompanhamento",
+    ]),
+    professores: `<section class="admin-board admin-empty-state"><h2>Professores</h2><p>Acompanhe a rotina pedagogica e as turmas pelo ambiente do professor.</p><a href="professor.html">Abrir ambiente professor</a></section>`,
+    alunos: `<section class="admin-board admin-empty-state"><h2>Alunos</h2><p>Acompanhe a experiencia dos alunos vinculados ao ecossistema.</p><a href="aluno.html">Abrir ambiente aluno</a></section>`,
+    familia: `<section class="admin-board admin-empty-state"><h2>Familia</h2><p>Area preparada para acompanhar a experiencia familiar vinculada as criancas.</p></section>`,
     permissoes: renderAdminPermissionMatrix(),
     biblioteca: `<section class="admin-board"><div class="admin-section-head"><h2>Conteudos</h2><span>Biblioteca e materiais existentes</span></div><div class="admin-feature-grid">${byArea("Conteudos").map(renderAdminFeatureCard).join("")}</div></section>`,
-    atividades: `<section class="admin-board admin-empty-state"><h2>Atividades Imprimiveis</h2><p>Modulo administrativo existente reaproveitado. Use-o para curadoria e homologacao dos imprimiveis.</p><a href="admin-atividades.html">Abrir Admin de Atividades</a></section>`,
+    atividades: `<section class="admin-board admin-empty-state"><h2>Atividades Imprimiveis</h2><p>Modulo administrativo existente para curadoria dos imprimiveis.</p><a href="admin-atividades.html">Abrir Admin de Atividades</a></section>`,
     motores: `<section class="admin-board"><div class="admin-section-head"><h2>Motores</h2><span>Sem duplicar engines existentes</span></div><div class="admin-feature-grid">${byArea("Motores").map(renderAdminFeatureCard).join("")}</div></section>`,
     emDesenvolvimento: `<section class="admin-board"><div class="admin-section-head"><h2>Em desenvolvimento</h2><span>Acesso restrito ao Admin/TI</span></div><div class="admin-feature-grid">${development.map(renderAdminFeatureCard).join("")}</div></section>`,
-    homologados: `<section class="admin-board"><div class="admin-section-head"><h2>Homologados e publicados</h2><span>Disponiveis conforme perfil</span></div><div class="admin-feature-grid">${homologated.map(renderAdminFeatureCard).join("")}</div></section>`,
+    homologados: `<section class="admin-board"><div class="admin-section-head"><h2>Ambientes publicados</h2><span>Disponiveis conforme perfil</span></div><div class="admin-feature-grid">${homologated.map(renderAdminFeatureCard).join("")}</div></section>`,
     logs: `<section class="admin-board admin-empty-state"><h2>Logs</h2><p>Espaco reservado para backend seguro, Edge Function ou servico server-side. Nenhum segredo e exposto no frontend.</p></section>`,
     configuracoes: `<section class="admin-board admin-empty-state"><h2>Configuracoes</h2><p>Controle tecnico preparado para proximas etapas sem armazenar tokens, senhas ou service role no frontend.</p></section>`,
+    conteudos: renderAdminPreparationView("Conteudos", "Governanca de biblioteca, jogos, atividades e formacao sera organizada em fase propria.", [
+      "Biblioteca",
+      "Jogos e experiencias",
+      "Atividades imprimiveis",
+      "Formacao",
+    ]),
+    implantacao: renderAdminPreparationView("Implantacao", "O pacote de implantacao sera conectado aqui em uma fase especifica, sem executar processos automaticamente.", [
+      "Checklist",
+      "Importacao",
+      "Handoff",
+    ]),
+    auditoria: renderAdminPreparationView("Auditoria", "Eventos e trilhas ja existentes serao consolidados em uma tela segura de leitura.", [
+      "Comunicacoes",
+      "Recomendacoes",
+      "Matriculas",
+    ]),
+    ambientes: `
+      ${renderAdminDoorCards()}
+      ${renderAdminPreparationView("Modo de inspecao", "Acesso administrativo atual abre as rotas autorizadas mantendo o usuario Admin. Impersonacao segura sera decidida depois.", [
+        "Sem troca de sessao",
+        "Sem assumir identidade de aluno ou professor",
+        "Sem service role no navegador",
+      ])}
+    `,
   };
-  if (feature) {
+  if (feature && !adminReadOnlyNav.some(([key]) => key === view)) {
     return `<section class="admin-board admin-empty-state"><h2>${feature.label}</h2><p>Status atual: ${feature.status}. Modulo existente reaproveitado no QG sem criar tela duplicada.</p><a href="${feature.href}">Abrir modulo</a></section>`;
   }
-  return viewMap[view] || `<section class="admin-board admin-empty-state"><h2>${adminWorkspaceNav.find(([key]) => key === view)?.[1] || "Modulo"}</h2><p>Estrutura reservada para desenvolvimento futuro e liberacao segura por perfil.</p></section>`;
+  return viewMap[view] || renderAdminPreparationView(adminReadOnlyNav.find(([key]) => key === view)?.[1] || "Modulo", "Area prevista para fase propria.");
 };
 
 const renderAdminDashboard = () => `
   <section class="admin-workspace" data-admin-workspace>
-    ${renderAdminSidebar("inicio")}
+    ${renderAdminSidebar("painel")}
     <main class="admin-main">
       <header class="admin-topbar">
-        <label><span>Busca Admin</span><input type="search" placeholder="Buscar modulos, usuarios, status..." data-admin-search /></label>
-        <a class="admin-topbar-link" href="secretaria.html?v=secretaria-v1-validation-20260901f">Abrir Secretaria V1</a>
-        <button type="button" data-admin-view="status">Status</button>
-        <button type="button" data-admin-view="permissoes">Permissoes</button>
+        <label><span>Busca Admin</span><input type="search" placeholder="Buscar estado, modulos e portas..." data-admin-search /></label>
+        <button type="button" data-admin-back>VOLTAR</button>
+        <button type="button" data-admin-view="painel">INICIO</button>
+        <a class="admin-topbar-link" href="escola.html">MINHA ESCOLA</a>
         <button type="button" data-platform-logout>SAIR</button>
       </header>
-      ${renderAdminPlatformTabs("inicio")}
       <section class="admin-hero">
         <div>
-          <span>QG DA PLATAFORMA</span>
-          <h1>RAIZES E SABERES EDUCACIONAL</h1>
-          <p>Ambiente ADMIN / TI para acompanhar construcao, homologacao, liberacao por perfil e operacao tecnica da plataforma.</p>
+          <span>Administrador/TI</span>
+          <h1>Painel Admin</h1>
+          <p>Visao operacional do ecossistema Raizes e Saberes.</p>
         </div>
         <div class="admin-hero-badges">
-          <span>LOGIN UNICO</span>
-          <span>SUPABASE AUTH</span>
-          <span>PLATFORM_ROLE</span>
+          <span>Sessao autorizada</span>
+          <span>Leitura operacional</span>
         </div>
       </section>
-      <section class="admin-content" data-admin-content>${renderAdminWorkspaceView("inicio")}</section>
+      <section class="admin-content" data-admin-content>${renderAdminWorkspaceView("painel")}</section>
     </main>
   </section>
 `;
@@ -7628,12 +8288,26 @@ const initAdminWorkspace = () => {
   const activate = (view) => {
     workspace.querySelectorAll("[data-admin-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.adminView === view));
     if (content) content.innerHTML = renderAdminWorkspaceView(view);
+    if (view === "painel") {
+      ensureAdminReadOnlyData().then(() => {
+        if (content && workspace.querySelector('[data-admin-view="painel"]')?.classList.contains("is-active")) {
+          content.innerHTML = renderAdminWorkspaceView("painel");
+        }
+      });
+    }
   };
   workspace.addEventListener("click", (event) => {
     const button = event.target.closest?.("[data-admin-view]");
-    if (!button) return;
-    event.preventDefault();
-    activate(button.dataset.adminView || "inicio");
+    const backButton = event.target.closest?.("[data-admin-back]");
+    if (button) {
+      event.preventDefault();
+      activate(button.dataset.adminView || "painel");
+      return;
+    }
+    if (backButton) {
+      event.preventDefault();
+      window.history.back();
+    }
   });
   workspace.querySelector("[data-admin-search]")?.addEventListener("input", (event) => {
     const term = String(event.target.value || "").trim().toLowerCase();
@@ -7641,6 +8315,7 @@ const initAdminWorkspace = () => {
       item.hidden = term ? !item.textContent.toLowerCase().includes(term) : false;
     });
   });
+  activate("painel");
 };
 
 const schoolCollectiveData = {
@@ -7931,7 +8606,7 @@ const officialSchoolDateLabel = (value) => {
   return date.toLocaleDateString("pt-BR");
 };
 const officialSchoolShortcuts = [
-  { title: "BIBLIOTECA DIGITAL", detail: "Explore livros e leituras disponiveis.", href: "biblioteca.html", action: "ACESSAR BIBLIOTECA", icon: "book" },
+  { title: "BIBLIOTECA DIGITAL", detail: "Explore livros e leituras disponiveis.", href: "biblioteca.html?from=aluno", action: "ACESSAR BIBLIOTECA", icon: "book" },
   { title: "JOGOS E EXPERIENCIAS", detail: "Aprenda, descubra e participe.", href: "jogos.html", action: "ACESSAR JOGOS", icon: "game" },
 ];
 const officialSchoolNavIcon = {
@@ -8036,6 +8711,26 @@ const renderOfficialSchoolGameCards = () =>
             <h3>${game.title}</h3>
             <p>${game.description}</p>
             <a href="${game.href}" data-official-school-game="${game.id}">Jogar</a>
+          </div>
+        </article>
+      `
+    )
+    .join("");
+
+const getStudentOfficialGameHref = (game = {}) =>
+  game.id === "caixa-misteriosa" ? game.href : `jogos.html?game=${encodeURIComponent(game.id)}&origin=aluno`;
+
+const renderStudentOfficialGameCards = () =>
+  officialSchoolGames
+    .map(
+      (game) => `
+        <article class="official-school-game-card">
+          <img src="${game.image}" alt="" loading="lazy" decoding="async" onerror="this.hidden=true" />
+          <div>
+            <span>Jogo educativo</span>
+            <h3>${game.title}</h3>
+            <p>${game.description}</p>
+            <a href="${getStudentOfficialGameHref(game)}" data-official-student-game="${game.id}">JOGAR</a>
           </div>
         </article>
       `
@@ -10659,29 +11354,45 @@ const renderGamesModule = () => {
   const requestedGameId = getRequestedGameId();
   const currentRole = getCurrentPlatformRole();
   const isSchoolExperience = currentRole === "escola";
-  const schoolGameAllowed = !requestedGameId || officialSchoolGameIds.includes(requestedGameId);
-  if (isSchoolExperience && (!requestedGameId || !schoolGameAllowed)) {
+  const isStudentExperience = currentRole === "aluno";
+  const usesOfficialGames = isSchoolExperience || isStudentExperience;
+  const officialGameAllowed = !requestedGameId || officialSchoolGameIds.includes(requestedGameId);
+  if (isSchoolExperience && (!requestedGameId || !officialGameAllowed)) {
     return `
       <section class="official-school-panel official-school-games-page">
         <div class="official-school-section-head">
           <span>Escola V1</span>
           <h2>Jogos publicados</h2>
-          <p>Somente os quatro jogos homologados aparecem neste espaco publico da Escola.</p>
+          <p>Somente os jogos publicados para a escola aparecem neste espaco.</p>
         </div>
         <div class="official-school-games">${renderOfficialSchoolGameCards()}</div>
       </section>
     `;
   }
+  if (isStudentExperience && (!requestedGameId || !officialGameAllowed)) {
+    return `
+      <section class="official-school-panel official-school-games-page">
+        <div class="official-school-section-head">
+          <span>Jogos e Experiencias</span>
+          <h2>Escolha sua proxima descoberta</h2>
+          <p>Somente os jogos disponiveis para sua turma aparecem aqui.</p>
+        </div>
+        <div class="official-school-games">${renderStudentOfficialGameCards()}</div>
+      </section>
+    `;
+  }
   const playerAttribute = requestedGameId
-    ? ` data-game-id="${requestedGameId}"${isSchoolExperience ? ` data-published-games="${officialSchoolGameIds.join(",")}" data-collective-mode="school"` : ""}`
-    : "";
+    ? ` data-game-id="${requestedGameId}"${usesOfficialGames ? ` data-published-games="${officialSchoolGameIds.join(",")}"${isSchoolExperience ? ` data-collective-mode="school"` : ""}` : ""}`
+    : usesOfficialGames
+      ? ` data-published-games="${officialSchoolGameIds.join(",")}"${isSchoolExperience ? ` data-collective-mode="school"` : ""}`
+      : "";
   const intro = requestedGameId
-    ? `<span>Interacao coletiva livre. Ao finalizar, volte para a Escola pelo menu.</span>`
-    : `<span>Escolha uma experiencia, conquiste XP e acompanhe suas medalhas.</span>`;
+    ? `<span>Ao finalizar, use Voltar para retornar ao seu ambiente.</span>`
+    : `<span>Escolha um jogo, explore com calma e volte quando quiser.</span>`;
   return `
     <div class="screen-title">
-      <p>GAME-ENGINE-2.0</p>
-      <h1>Jogar e Descobrir</h1>
+      <p>Jogos e Experiencias</p>
+      <h1>Escolha sua proxima descoberta</h1>
       ${intro}
     </div>
     <div class="game-engine" data-game-engine${playerAttribute}></div>
@@ -10723,7 +11434,9 @@ const modules = {
     title: "Minhas Atividades",
     subtitle: "Atividades atribuidas ao aluno",
     code: "ALUNO-ATIVIDADES",
-    html: renderStudentActivitiesPage(),
+    get html() {
+      return renderStudentActivitiesPage();
+    },
   },
   alunoAtividade: {
     title: "Atividade Online",
@@ -10744,9 +11457,9 @@ const modules = {
     html: renderMissionPlayer(missionFixtures.colorMatch001),
   },
   jogos: {
-    title: "Jogar e Descobrir",
-    subtitle: "Hub oficial dos jogos digitais",
-    code: "GAME-ENGINE-2.0",
+    title: getCurrentPlatformRole() === "aluno" ? "Jogos e Experiencias" : "Jogar e Descobrir",
+    subtitle: getCurrentPlatformRole() === "aluno" ? "Descobertas para aprender brincando" : "Hub oficial dos jogos digitais",
+    code: getCurrentPlatformRole() === "aluno" ? "ALUNO-JOGOS" : "GAME-ENGINE-2.0",
     get html() {
       return renderGamesModule();
     },
@@ -10763,20 +11476,24 @@ const modules = {
     title: "Perfil",
     subtitle: "Progresso e conquistas do aluno",
     code: "ALUNO-PERFIL",
-    html: renderStudentProfilePage(),
+    get html() {
+      return renderStudentProfilePage();
+    },
   },
   biblioteca: {
-    title: "Biblioteca Viva 2.0",
-    subtitle: "Leitura, acompanhamento e aprendizagem integrados",
-    code: "MS-001",
-    html: `
-      <div class="screen-title">
-        <p>MS-001</p>
-        <h1>Biblioteca Viva</h1>
-        <span>Experiencias, livros, videos e atividades organizados para aprender sem se perder.</span>
-      </div>
-      ${renderPremiumLibrary()}
-    `,
+    title: isStudentLibraryView() ? "Biblioteca" : "Biblioteca Viva 2.0",
+    subtitle: isStudentLibraryView() ? "Livros para o aluno" : "Leitura, acompanhamento e aprendizagem integrados",
+    code: isStudentLibraryView() ? "ALUNO-BIBLIOTECA" : "MS-001",
+    html: isStudentLibraryView()
+      ? renderStudentLibraryHome()
+      : `
+        <div class="screen-title">
+          <p>MS-001</p>
+          <h1>Biblioteca Viva</h1>
+          <span>Experiencias, livros, videos e atividades organizados para aprender sem se perder.</span>
+        </div>
+        ${renderPremiumLibrary()}
+      `,
   },
   universidade: {
     title: "Universidade Raizes e Saberes",
@@ -11142,13 +11859,13 @@ const modules = {
     `,
   },
   viewer: {
-    title: "Book Viewer",
+    title: isStudentReaderView ? "Livro Digital" : "Book Viewer",
     subtitle: `${activeBook.title} - ${activeBook.subtitle}`,
-    code: "MS-002",
+    code: isStudentReaderView ? "ALUNO-LIVRO" : "MS-002",
     html: `
       <div class="book-reader" data-book-reader data-total-pages="${activeBook.totalPages}">
         <header class="reader-header">
-          <a class="reader-back" href="${getPrintableParams().get("from") === "teacher" ? "professor.html?view=biblioteca" : "biblioteca.html"}">&larr; ${getPrintableParams().get("from") === "teacher" ? "Biblioteca do Professor" : "Biblioteca"}</a>
+          <a class="reader-back" href="${readerBackHref}">&larr; ${readerBackLabel}</a>
           <div>
             <p>${activeBook.collection}</p>
             <h1>${activeBook.title}</h1>
@@ -11166,10 +11883,9 @@ const modules = {
             <h2>${activeBook.catalogTitle || activeBook.title}</h2>
             <p>${activeBook.type} &middot; ${activeBook.totalPages} paginas &middot; ${activeBook.collection}</p>
             <div class="reader-meta-grid">
-              <strong>Ultima pagina salva <b data-last-page-meta>1</b></strong>
+              <strong>${isStudentReaderView ? "Pagina atual" : "Ultima pagina salva"} <b data-last-page-meta>1</b></strong>
               <strong>Favorito <b data-favorite-meta>Nao</b></strong>
-              <strong>XP de leitura <b data-xp-meta>0</b></strong>
-              <strong>Historico <b data-history-meta>0 acessos</b></strong>
+              ${isStudentReaderView ? "" : `<strong>XP de leitura <b data-xp-meta>0</b></strong><strong>Historico <b data-history-meta>0 acessos</b></strong>`}
             </div>
           </div>
           <button type="button" data-reader-favorite aria-pressed="false">Favoritar</button>
@@ -11177,8 +11893,7 @@ const modules = {
         <nav class="reader-tabs" aria-label="Ferramentas do livro">
           <button type="button" class="is-active" data-reader-tab="sumario" aria-selected="true">Indice</button>
           <button type="button" data-reader-tab="busca" aria-selected="false">Busca</button>
-          <button type="button" data-reader-tab="pergunte" aria-selected="false">Pergunte ao Livro</button>
-          <button type="button" data-reader-tab="conquistas" aria-selected="false">Conquistas</button>
+          ${isStudentReaderView ? "" : `<button type="button" data-reader-tab="pergunte" aria-selected="false">Pergunte ao Livro</button><button type="button" data-reader-tab="conquistas" aria-selected="false">Conquistas</button>`}
         </nav>
 
         <div class="reader-layout">
@@ -11213,7 +11928,7 @@ const modules = {
               </label>
               <div class="reader-search-results" data-book-search-results></div>
             </div>
-            <div class="reader-tool-panel" data-reader-panel="pergunte" hidden>
+            ${isStudentReaderView ? "" : `<div class="reader-tool-panel" data-reader-panel="pergunte" hidden>
               <h3>Pergunte ao Livro</h3>
               <p>Espaco preparado para futura IA com base no conteudo do PDF. Nesta versao, a busca usa metadados, sumario e paginas renderizadas.</p>
               <textarea data-ask-book-input placeholder="Ex.: quais atividades trabalham linguagem oral?"></textarea>
@@ -11227,7 +11942,7 @@ const modules = {
                 <article><strong>Metade do livro</strong><span data-achievement-half>Pendente</span></article>
                 <article><strong>Livro concluido</strong><span data-achievement-finish>Pendente</span></article>
               </div>
-            </div>
+            </div>`}
           </aside>
         </div>
 
@@ -11240,16 +11955,16 @@ const modules = {
           <button type="button" data-next-page aria-label="Proxima pagina">&rsaquo;</button>
           <button type="button" data-fullscreen-reader aria-label="Tela cheia">[]</button>
         </div>
-        <section class="continue-exploring-panel">
+        ${isStudentReaderView ? "" : `<section class="continue-exploring-panel">
           <div>
             <span>Continue Explorando</span>
             <h2>${suggestedBook.catalogTitle}</h2>
             <p>${suggestedBook.level} &middot; ${suggestedBook.type}</p>
           </div>
           <a href="${suggestedBook.href}">Abrir sugestao</a>
-        </section>
+        </section>`}
         ${
-          relatedCourse
+          relatedCourse && !isStudentReaderView
             ? `
               <section class="ecosystem-link-panel reader-course-link">
                 <div>
@@ -11502,16 +12217,16 @@ const environments = {
   },
   aluno: {
     label: "Espaco do Aluno",
-    profile: "Pedro",
+    profile: "Aluno",
     search: "Buscar livros, missoes, atividades...",
     user: "Aluno",
-    avatar: "assets/aluno/oficial-avatar-aluno.png",
+    avatar: "",
     profileImage: "logo-sidebar-dark.png",
     nav: [
       ["aluno", "INICIO", "aluno.html"],
       ["missao", "MISSAO DO DIA", "missao.html"],
       ["arvore", "MINHA ARVORE", "arvore.html"],
-      ["biblioteca", "BIBLIOTECA", "biblioteca.html"],
+      ["biblioteca", "BIBLIOTECA", "biblioteca.html?from=aluno"],
       ["jogos", "JOGAR E DESCOBRIR", "jogos.html"],
       ["perfil", "PERFIL", "perfil.html"],
       ["familia", "FAMILIA", "familia.html"],
@@ -11521,7 +12236,7 @@ const environments = {
       ["aluno", "INICIO", "aluno.html"],
       ["missao", "MISSAO", "missao.html"],
       ["arvore", "ARVORE", "arvore.html"],
-      ["biblioteca", "BIBLIOTECA", "biblioteca.html"],
+      ["biblioteca", "BIBLIOTECA", "biblioteca.html?from=aluno"],
       ["jogos", "JOGAR", "jogos.html"],
       ["perfil", "PERFIL", "perfil.html"],
       ["familia", "FAMILIA", "familia.html"],
@@ -11900,9 +12615,12 @@ const initBookReader = () => {
     if (xpMeta) {
       xpMeta.textContent = String(Math.max(10, progress * 2));
     }
-    reader.querySelector("[data-achievement-start]").textContent = page >= 1 ? "Conquistado" : "Pendente";
-    reader.querySelector("[data-achievement-half]").textContent = progress >= 50 ? "Conquistado" : "Pendente";
-    reader.querySelector("[data-achievement-finish]").textContent = progress >= 100 ? "Conquistado" : "Pendente";
+    const achievementStart = reader.querySelector("[data-achievement-start]");
+    const achievementHalf = reader.querySelector("[data-achievement-half]");
+    const achievementFinish = reader.querySelector("[data-achievement-finish]");
+    if (achievementStart) achievementStart.textContent = page >= 1 ? "Conquistado" : "Pendente";
+    if (achievementHalf) achievementHalf.textContent = progress >= 50 ? "Conquistado" : "Pendente";
+    if (achievementFinish) achievementFinish.textContent = progress >= 100 ? "Conquistado" : "Pendente";
   };
 
   for (let currentPage = 1; currentPage <= book.totalPages; currentPage += 1) {
@@ -13915,6 +14633,10 @@ const normalizeStudentName = (student = {}) => student.nome || student.name || s
 const normalizeClassName = (classItem = {}) => classItem.nome || classItem.name || "Turma";
 const normalizeSchoolName = (school = {}) => school.nome || school.name || "Escola";
 const normalizeProfileName = (profile = {}) => profile.display_name || profile.nome || profile.name || profile.full_name || "";
+const normalizeStudentTeacherName = (teacher = {}) => {
+  const profile = teacher.profile || teacher.profiles || {};
+  return profile.display_name || profile.full_name || profile.nome || profile.name || teacher.display_name || teacher.full_name || teacher.nome || teacher.name || "";
+};
 const getSupabaseSessionEmail = () => {
   const session = getStoredSupabaseSession();
   const payload = decodeJwtPayload(session?.access_token);
@@ -13969,13 +14691,11 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
         allowedRoles: ["aluno", "admin"],
       }).catch(() => []);
       const profile = Array.isArray(profileRows) ? profileRows[0] || null : null;
-      let student = await getStudentCandidateByUserId(client, context.userId);
-      let publicUser = null;
+      const student = await getStudentCandidateByUserId(client, context.userId);
+      const publicUser = null;
       if (!student?.id) {
-        publicUser = await resolveLegacyPublicUserForAuth(client, context);
-        student = await getStudentCandidateByUserId(client, publicUser?.id);
+        throw new Error("Nao foi possivel identificar o vinculo escolar deste aluno.");
       }
-      if (!student?.id) throw new Error("Aluno vinculado a esta sessao nao foi encontrado.");
       const enrollmentRows = await client.request(
         "enrollments",
         `?select=*,classes(*),schools(*)&student_id=${supabaseEq(student.id)}&status=eq.active&limit=1`,
@@ -13984,6 +14704,32 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       const enrollment = Array.isArray(enrollmentRows) ? enrollmentRows[0] || null : null;
       const classItem = enrollment?.classes || null;
       const school = enrollment?.schools || null;
+      if (!enrollment?.id || !classItem?.id || !school?.id) {
+        throw new Error("Nao foi possivel identificar o vinculo escolar deste aluno.");
+      }
+      const teacherMembershipRows = await client.request(
+        "class_teacher_memberships",
+        `?select=id,role,status,teachers(id,profile_id,user_id,school_id,status)&class_id=${supabaseEq(classItem.id)}&status=eq.active`,
+        { requireAuthenticated: true, allowedRoles: ["aluno", "admin"] }
+      ).catch(() => []);
+      const teachers = (Array.isArray(teacherMembershipRows) ? teacherMembershipRows : [])
+        .map((row) => row.teachers)
+        .filter((teacher) => teacher?.id);
+      const teacherProfileIds = [...new Set(teachers.map((teacher) => teacher.profile_id).filter(Boolean))];
+      const teacherProfileRows = teacherProfileIds.length
+        ? await client.request(
+            "profiles",
+            `?select=id,display_name,platform_role,status&id=in.(${teacherProfileIds.map(encodeURIComponent).join(",")})`,
+            { requireAuthenticated: true, allowedRoles: ["aluno", "admin"] }
+          ).catch(() => [])
+        : [];
+      const teacherProfilesById = new Map(
+        (Array.isArray(teacherProfileRows) ? teacherProfileRows : []).map((profileItem) => [profileItem.id, profileItem])
+      );
+      const resolvedTeachers = teachers.map((teacher) => ({
+        ...teacher,
+        profile: teacherProfilesById.get(teacher.profile_id) || null,
+      }));
       studentInstitutionalState.weekStartIso = studentInstitutionalState.weekStartIso || familyWeekStartIso();
       studentInstitutionalState.calendarError = "";
       const weekDates = getFamilyWeekDates(studentInstitutionalState.weekStartIso);
@@ -14003,7 +14749,13 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       studentInstitutionalState.enrollment = enrollment;
       studentInstitutionalState.classItem = classItem;
       studentInstitutionalState.school = school;
+      studentInstitutionalState.teachers = resolvedTeachers;
       studentInstitutionalState.entries = (entries || []).filter((entry) => entry.status === "published").map(mapFamilyCalendarEntry);
+      studentInstitutionalState.recommendationsError = "";
+      studentInstitutionalState.recommendations = await loadStudentTeacherRecommendations(client).catch((error) => {
+        studentInstitutionalState.recommendationsError = error.message || "Nao foi possivel carregar as recomendacoes.";
+        return [];
+      });
       studentInstitutionalState.status = "ready";
       return studentInstitutionalState;
     } catch (error) {
@@ -14013,7 +14765,10 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       studentInstitutionalState.enrollment = null;
       studentInstitutionalState.classItem = null;
       studentInstitutionalState.school = null;
+      studentInstitutionalState.teachers = [];
       studentInstitutionalState.entries = [];
+      studentInstitutionalState.recommendations = [];
+      studentInstitutionalState.recommendationsError = "";
       return studentInstitutionalState;
     } finally {
       studentInstitutionalState.promise = null;
@@ -14028,6 +14783,7 @@ const getActiveStudentProfile = () => {
     const profile = studentInstitutionalState.profile || {};
     const fullName = normalizeStudentName(student);
     const displayName = fullName !== "Aluno" ? fullName : normalizeProfileName(profile) || "Aluno";
+    const teacherNames = (studentInstitutionalState.teachers || []).map(normalizeStudentTeacherName).filter(Boolean);
     return {
       id: student.id || "",
       name: displayName,
@@ -14035,6 +14791,7 @@ const getActiveStudentProfile = () => {
       fullName: displayName,
       className: normalizeClassName(studentInstitutionalState.classItem || {}) || "Turma",
       schoolName: normalizeSchoolName(studentInstitutionalState.school || {}) || "Escola",
+      teacherName: teacherNames.length ? teacherNames.join(", ") : "Professor(a) nao informado(a)",
       avatar: "",
       status: studentInstitutionalState.status,
       error: studentInstitutionalState.error,
@@ -14047,6 +14804,7 @@ const getActiveStudentProfile = () => {
     fullName: pilotProfiles.student.fullName,
     className: pilotProfiles.student.className,
     schoolName: "",
+    teacherName: "",
     avatar: pilotProfiles.student.avatar,
     status: "fallback",
     error: "",
@@ -17980,6 +18738,30 @@ const initStudentInstitutionalDashboard = () => {
   });
 };
 
+const initStudentInstitutionalActivities = () => {
+  const root = document.querySelector("[data-student-activities-institutional]");
+  if (!root || !isStudentInstitutionalMode()) return;
+  ensureStudentInstitutionalData().then(() => {
+    if (root.dataset.studentActivitiesHydrated === "true" || !document.body.contains(root)) return;
+    root.dataset.studentActivitiesHydrated = "true";
+    root.outerHTML = renderStudentActivitiesPage();
+    initPlatformLogout();
+    initPrintableActivities();
+  });
+};
+
+const initStudentInstitutionalProfile = () => {
+  const root = document.querySelector("[data-student-profile-institutional]");
+  if (!root || !isStudentInstitutionalMode()) return;
+  ensureStudentInstitutionalData().then(() => {
+    if (root.dataset.studentProfileHydrated === "true" || !document.body.contains(root)) return;
+    root.dataset.studentProfileHydrated = "true";
+    const page = root.closest(".profile-platform-page") || root;
+    page.outerHTML = renderStudentProfilePage();
+    initPlatformLogout();
+  });
+};
+
 const initPrintableActivities = () => {
   const root = document.querySelector("[data-printable-app]");
   if (!root) return;
@@ -18595,17 +19377,17 @@ const renderAppPage = () => {
   const activeModule = modules[activeKey] || modules.biblioteca;
   const currentRole = getCurrentPlatformRole();
   if (currentRole === "aluno" && !studentAllowedRouteKeys.has(activeKey)) {
-    document.documentElement.style.display = "none";
+    showPlatformRedirectState("Seu perfil de aluno sera direcionado para o ambiente correto.");
     window.location.replace(getRoleHome(currentRole));
     return;
   }
   if (currentRole === "educacao_infantil" && !earlyChildhoodAllowedRouteKeys.has(activeKey)) {
-    document.documentElement.style.display = "none";
+    showPlatformRedirectState("Seu perfil familiar sera direcionado para o ambiente correto.");
     window.location.replace(getRoleHome(currentRole));
     return;
   }
   if (currentRole === "escola" && !schoolAllowedRouteKeys.has(activeKey)) {
-    document.documentElement.style.display = "none";
+    showPlatformRedirectState("Seu perfil sera direcionado para Minha Escola.");
     window.location.replace(getRoleHome(currentRole));
     return;
   }
@@ -18621,7 +19403,7 @@ const renderAppPage = () => {
   }
   const environment = environments[environmentKey] || environments.biblioteca;
   if (currentRole && !canAccessPlatformRoute(activeKey, currentRole)) {
-    document.documentElement.style.display = "none";
+    showPlatformRedirectState("Seu perfil nao tem acesso a esta rota. Abrindo o ambiente correto.");
     window.location.replace(getRoleHome(currentRole));
     return;
   }
@@ -18672,6 +19454,7 @@ const renderAppPage = () => {
     return;
   }
 
+  const routeHtml = activeKey === "biblioteca" && currentRole === "aluno" ? renderStudentLibraryHome() : activeModule.html;
   const nav = environment.nav
     .map(([key, label, href]) =>
       key === "heading"
@@ -18706,11 +19489,14 @@ const renderAppPage = () => {
     : environmentKey === "secretaria"
       ? ""
     : `<nav class="module-switcher" aria-label="Modulos do Ecossistema">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>`;
+  const studentShellProfile = environmentKey === "aluno" ? getActiveStudentProfile() : null;
+  const shellUserFallback = studentShellProfile ? getStudentProfileInitials(studentShellProfile.fullName) : "MS";
+  const shellUserLabel = studentShellProfile ? printableEscape(studentShellProfile.firstName) : environment.user;
   const topActions = environmentKey === "escola"
     ? ""
     : environmentKey === "secretaria"
       ? `<div class="top-actions secretaria-top-actions" aria-label="Acoes da Secretaria"><button type="button" data-secretaria-back>${secretariaInlineIcon("progresso", "VOLTAR")}</button><a href="login.html">${secretariaInlineIcon("home", "INICIO")}</a><a href="escola.html">${secretariaInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${secretariaInlineIcon("sair", "SAIR")}</button></div>`
-    : `<div class="top-actions" aria-label="Acoes"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>MS</span>`}<strong>${environment.user}</strong></div></div>`;
+    : `<div class="top-actions" aria-label="Acoes"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>${shellUserFallback}</span>`}<strong>${shellUserLabel}</strong></div></div>`;
 
   mount.innerHTML = `
     <div class="app-shell" data-environment="${environmentKey}" data-active-module="${activeKey}">
@@ -18734,7 +19520,7 @@ const renderAppPage = () => {
           ${moduleSwitcher}
           ${topActions}
         </header>
-        <section class="screen is-active route-screen" data-route-screen="${activeKey}">${activeModule.html}</section>
+        <section class="screen is-active route-screen" data-route-screen="${activeKey}">${routeHtml}</section>
       </main>
     </div>
     <nav class="mobile-tabbar" aria-label="Navegacao mobile">${mobileNav}</nav>
@@ -18762,6 +19548,8 @@ const renderAppPage = () => {
   initCurationBatches();
   initTeacherWorkspace();
   initPrintableActivities();
+  initStudentInstitutionalActivities();
+  initStudentInstitutionalProfile();
   initUniversalActivityAssignmentUi();
   initUniversalActivityTeacherDeliveries();
   initUniversalActivityEngine();

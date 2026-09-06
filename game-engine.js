@@ -4866,7 +4866,7 @@
             ${abertura.frame ? `<img class="jardim-cinematic-frame" data-jardim-freeze-frame src="${escapeHtml(abertura.frame)}" alt="" loading="eager" decoding="async" />` : ""}
             <canvas class="jardim-cinematic-freeze" data-jardim-freeze-canvas aria-hidden="true"></canvas>
             <div class="jardim-cinematic-transition" data-jardim-transition aria-live="polite">
-              ${showDevMessage ? `<span>Vídeo 02 aguardando arquivo oficial.</span>` : ""}
+              ${showDevMessage ? `<span>Nova descoberta em preparo.</span>` : ""}
             </div>
             ${instrucao.signSrc ? `<img class="jardim-instruction-sign" data-jardim-instruction-panel src="${escapeHtml(instrucao.signSrc)}" alt="${escapeHtml(instrucao.signAlt || "")}" loading="eager" decoding="async" style="--jardim-sign-x:${Number(signPosition.x ?? 21)}%;--jardim-sign-y:${Number(signPosition.y ?? 66)}%;--jardim-sign-w:${Number(signPosition.width ?? 30)}%;" />` : ""}
             <button class="jardim-explore-button" type="button" data-game-action="start-video-03" disabled aria-disabled="true" aria-label="${escapeHtml(instrucao.exploreButtonLabel || "EXPLORAR")}" style="--jardim-explore-x:${Number(exploreHotspot.x ?? 50.5)}%;--jardim-explore-y:${Number(exploreHotspot.y ?? 49)}%;--jardim-explore-w:${Number(exploreHotspot.width ?? 28)}%;--jardim-explore-h:${Number(exploreHotspot.height ?? 13)}%;">
@@ -5830,7 +5830,7 @@
             ${components.confetti(28)}
             <article class="guided-success-card">
               <strong>ETAPA CORPO CONCLUIDA</strong>
-              <span>Cabeca preservada e corpo pintado com o mesmo motor.</span>
+              <span>Agora complete os detalhes da pintura.</span>
               <button class="game-secondary-button" type="button" data-game-action="begin-guided-painting">Voltar para a pintura</button>
             </article>
           </section>
@@ -6085,7 +6085,7 @@
           `).join("")}
           <div class="game-asset-strip" aria-label="Pranchas oficiais integradas">
             <img src="${this.game.assets.scenarios}" alt="Biblioteca de cenarios oficiais" />
-            <img src="${this.game.assets.flow}" alt="Fluxo visual homologado do jogo" />
+            <img src="${this.game.assets.flow}" alt="Fluxo visual do jogo" />
             <img src="${this.game.assets.library}" alt="Biblioteca oficial de objetos e efeitos" />
           </div>
         </section>
