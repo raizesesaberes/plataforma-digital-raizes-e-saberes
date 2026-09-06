@@ -7943,6 +7943,17 @@ const adminOperationalState = {
   data: null,
 };
 
+const ensureAdminSupabaseConfig = async () => {
+  if (typeof window === "undefined" || window.RAIZES_SUPABASE?.url) return;
+  await new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = `supabase-config.js?v=admin-ti-v1-fase01-20260906d-${Date.now()}`;
+    script.onload = () => (window.RAIZES_SUPABASE?.url ? resolve() : reject(new Error("Configuracao do Supabase nao foi carregada.")));
+    script.onerror = () => reject(new Error("Nao foi possivel carregar supabase-config.js."));
+    document.head.appendChild(script);
+  });
+};
+
 const countRows = (rows) => (Array.isArray(rows) ? rows.length : 0);
 const countActiveRows = (rows) =>
   (Array.isArray(rows) ? rows : []).filter((row) => String(row.status || row.membership_status || "").toLowerCase() !== "inactive").length;
@@ -7954,6 +7965,7 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
   adminOperationalState.error = "";
   adminOperationalState.promise = (async () => {
     try {
+      await ensureAdminSupabaseConfig();
       const client = createSupabaseRestClient();
       const context = await client.getContext({ requireAuthenticated: true, allowedRoles: ["admin"] });
       const options = { requireAuthenticated: true, allowedRoles: ["admin"] };
@@ -7970,7 +7982,7 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
       ] = await Promise.all([
         client.request("schools", "?select=id,nome,status&order=nome.asc", options),
         client.request("profiles", "?select=id,display_name,platform_role,status&order=display_name.asc", options),
-        client.request("teachers", "?select=id,school_id,profile_id,full_name,nome,status&order=full_name.asc", options),
+        client.request("teachers", "?select=id,school_id,profile_id,nome,status&order=nome.asc", options),
         client.request("students", "?select=id,school_id,class_id,nome,status&order=nome.asc", options),
         client.request("guardians", "?select=id,school_id,full_name,status,access_status&order=full_name.asc", options),
         client.request("classes", "?select=id,school_id,nome,status,school_year&order=nome.asc", options),
