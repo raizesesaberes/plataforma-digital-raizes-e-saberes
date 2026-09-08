@@ -5293,6 +5293,85 @@ h3 {
   font-weight: 800;
 }
 
+.login-recovery-message,
+.login-password-rules {
+  margin: 0;
+  color: #526b60;
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.login-recovery-message[data-tone="error"] {
+  color: #9f2424;
+}
+
+.login-forgot-button {
+  justify-self: start;
+  min-height: auto !important;
+  margin: -4px 0 0 !important;
+  border: 0 !important;
+  padding: 0 !important;
+  color: #06462f !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-family: Inter, sans-serif !important;
+  font-size: 0.9rem !important;
+  font-weight: 900 !important;
+  text-align: left;
+}
+
+.login-recovery-panel,
+.login-reset-status {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid rgba(6, 70, 47, 0.12);
+  border-radius: 8px;
+  background: #f8fbf7;
+}
+
+.login-recovery-panel[hidden],
+.login-reset-status[hidden] {
+  display: none;
+}
+
+.login-recovery-panel h2,
+.login-reset-status h2 {
+  margin: 0;
+  color: #063f2a;
+  font-family: Poppins, sans-serif;
+  font-size: 1rem;
+}
+
+.login-recovery-panel p,
+.login-reset-status p {
+  margin: 0;
+  color: #526b60;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.login-password-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.login-password-field button {
+  min-height: 52px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid rgba(6, 70, 47, 0.18);
+  border-radius: 8px;
+  color: #06462f;
+  background: #f4faf6;
+  box-shadow: none;
+  font-family: Inter, sans-serif;
+  font-size: 0.85rem;
+}
+
 .login-form button {
   min-height: 54px;
   margin-top: 4px;

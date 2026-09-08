@@ -49,13 +49,28 @@
             <input type="password" name="password" autocomplete="current-password" placeholder="Digite sua senha" required />
           </label>
           <p class="login-error" data-login-error role="alert" hidden>Credenciais invalidas para este ambiente.</p>
+          <button type="button" class="login-forgot-button" data-password-recovery-open>Esqueci minha senha</button>
           <button type="submit">Acessar Plataforma</button>
         </form>
+
+        <section class="login-recovery-panel" data-password-recovery-panel hidden>
+          <h2>Recuperar acesso</h2>
+          <p>Informe seu e-mail para receber as instrucoes de redefinicao de senha.</p>
+          <form class="login-form" data-password-recovery-form novalidate>
+            <label>
+              <span>E-mail / Usuario</span>
+              <input type="email" name="recovery_email" autocomplete="email" placeholder="usuario@raizesesaberes.com.br" required />
+            </label>
+            <p class="login-recovery-message" data-password-recovery-message role="status" hidden></p>
+            <button type="submit">Enviar instrucoes</button>
+            <button type="button" data-password-recovery-close>Voltar ao login</button>
+          </form>
+        </section>
 
         <a class="login-back" href="index.html">Voltar ao Site</a>
       </section>
     </main>
     <script src="supabase-config.js"></script>
-    <script src="login.js?v=auth-secretaria-20260902a"></script>
+    <script src="login.js?v=admin-ti-v1-fase03-password-recovery-20260906a"></script>
   </body>
 </html>

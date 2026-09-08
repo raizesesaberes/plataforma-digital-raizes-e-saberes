@@ -207,6 +207,11 @@ const errorMessage = document.querySelector("[data-login-error]");
 const accessCopy = document.querySelector("[data-login-access-copy]");
 const submitButton = form?.querySelector("button[type='submit']");
 const accessOptions = Array.from(document.querySelectorAll("[data-login-access-option]"));
+const recoveryPanel = document.querySelector("[data-password-recovery-panel]");
+const recoveryForm = document.querySelector("[data-password-recovery-form]");
+const recoveryOpenButton = document.querySelector("[data-password-recovery-open]");
+const recoveryCloseButton = document.querySelector("[data-password-recovery-close]");
+const recoveryMessage = document.querySelector("[data-password-recovery-message]");
 let selectedAccessRole = inferRequestedAccessRole() || "admin";
 
 const setSelectedAccessRole = (role) => {
@@ -312,6 +317,74 @@ const showLoginError = (message) => {
     errorMessage.textContent = message;
   }
 };
+
+const recoveryRedirectUrl = () => new URL("redefinir-senha.html", window.location.href).toString();
+
+const requestPasswordRecovery = async (email) => {
+  const config = window.RAIZES_SUPABASE || {};
+  const baseUrl = config.url?.replace(/\/$/, "");
+  if (!baseUrl || !config.anonKey) {
+    throw new Error("Nao foi possivel conectar ao servico de acesso.");
+  }
+  const response = await fetch(`${baseUrl}/auth/v1/recover?redirect_to=${encodeURIComponent(recoveryRedirectUrl())}`, {
+    method: "POST",
+    headers: {
+      apikey: config.anonKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email }),
+  });
+  if (!response.ok && ![400, 404].includes(response.status)) {
+    throw new Error("Nao foi possivel enviar as instrucoes agora.");
+  }
+  return true;
+};
+
+const showRecoveryMessage = (message, tone = "success") => {
+  if (!recoveryMessage) return;
+  recoveryMessage.hidden = false;
+  recoveryMessage.dataset.tone = tone;
+  recoveryMessage.textContent = message;
+};
+
+const setRecoveryBusy = (isBusy) => {
+  const button = recoveryForm?.querySelector("button[type='submit']");
+  if (button) {
+    button.disabled = isBusy;
+    button.textContent = isBusy ? "Enviando..." : "Enviar instrucoes";
+  }
+};
+
+recoveryOpenButton?.addEventListener("click", () => {
+  const email = form?.querySelector("[name='email']")?.value || "";
+  const recoveryEmail = recoveryForm?.querySelector("[name='recovery_email']");
+  if (recoveryEmail && !recoveryEmail.value) recoveryEmail.value = email;
+  if (recoveryPanel) recoveryPanel.hidden = false;
+  recoveryEmail?.focus();
+});
+
+recoveryCloseButton?.addEventListener("click", () => {
+  if (recoveryPanel) recoveryPanel.hidden = true;
+  if (recoveryMessage) recoveryMessage.hidden = true;
+});
+
+recoveryForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const email = String(new FormData(recoveryForm).get("recovery_email") || "").trim().toLowerCase();
+  if (!email) {
+    showRecoveryMessage("Informe o e-mail para receber as instrucoes.", "error");
+    return;
+  }
+  setRecoveryBusy(true);
+  try {
+    await requestPasswordRecovery(email);
+    showRecoveryMessage("Se existir uma conta para este e-mail, enviaremos as instrucoes de recuperacao.");
+  } catch (error) {
+    showRecoveryMessage(error.message || "Nao foi possivel enviar as instrucoes agora.", "error");
+  } finally {
+    setRecoveryBusy(false);
+  }
+});
 
 form?.addEventListener("submit", async (event) => {
   event.preventDefault();

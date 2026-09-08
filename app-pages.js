@@ -7920,21 +7920,43 @@ const getAdminFeatureStatusClass = (status) =>
 const getAdminFeaturePolicy = (key) => getAdminFeature(key)?.roles || { admin: true, professor: false, aluno: false };
 
 const adminReadOnlyNav = [
-  ["painel", "Painel"],
-  ["usuarios", "Usuarios"],
-  ["escolas", "Escolas"],
-  ["conteudos", "Conteudos"],
-  ["implantacao", "Implantacao"],
-  ["auditoria", "Auditoria"],
-  ["ambientes", "Ambientes"],
+  { key: "painel", label: "Painel", icon: "chart" },
+  { key: "usuarios", label: "Usuarios", icon: "users" },
+  { key: "escolas", label: "Escolas", icon: "escola" },
+  { key: "conteudos", label: "Conteudos", icon: "book" },
+  { key: "implantacao", label: "Implantacao", icon: "clipboard" },
+  { key: "auditoria", label: "Auditoria", icon: "check" },
+  { key: "ambientes", label: "Ambientes", icon: "site" },
 ];
 
+const adminInlineIcon = (icon, label = "") =>
+  `<i class="secretaria-icon admin-inline-icon" data-icon="${icon}" aria-hidden="true"></i>${label ? `<span>${printableEscape(label)}</span>` : ""}`;
+
+const adminMetricIcons = {
+  Escolas: "escola",
+  "Usuarios e perfis": "perfil",
+  Professores: "cap",
+  Alunos: "aluno",
+  Responsaveis: "family",
+  Turmas: "users",
+  Matriculas: "clipboard",
+  Comunicacoes: "mail",
+};
+
 const adminOperationalDoors = [
-  { key: "secretaria", label: "Admin / Secretaria", description: "Acompanhar operacao institucional da escola.", href: "secretaria.html" },
-  { key: "professor", label: "Admin / Professor", description: "Acompanhar a rotina pedagogica das turmas.", href: "professor.html" },
-  { key: "familia", label: "Admin / Familia", description: "Conferir a experiencia familiar vinculada a criancas.", href: "familia.html" },
-  { key: "aluno", label: "Admin / Aluno", description: "Conferir a experiencia do aluno com identidade real.", href: "aluno.html" },
-  { key: "escola", label: "Admin / Minha Escola", description: "Abrir a area institucional comum.", href: "escola.html" },
+  { key: "secretaria", icon: "clipboard", label: "Admin / Secretaria", description: "Acompanhar operacao institucional da escola.", href: "secretaria.html" },
+  { key: "professor", icon: "cap", label: "Admin / Professor", description: "Acompanhar a rotina pedagogica das turmas.", href: "professor.html" },
+  { key: "familia", icon: "family", label: "Admin / Familia", description: "Conferir a experiencia familiar vinculada a criancas.", href: "familia.html" },
+  { key: "aluno", icon: "aluno", label: "Admin / Aluno", description: "Conferir a experiencia do aluno com identidade real.", href: "aluno.html" },
+  { key: "escola", icon: "escola", label: "Admin / Minha Escola", description: "Abrir a area institucional comum.", href: "escola.html" },
+];
+
+const adminRoleCatalog = [
+  { role: "admin", label: "Admin/TI", aliases: ["administrador", "ti"], destination: "admin.html", guards: "Admin global" },
+  { role: "secretaria", label: "Secretaria", aliases: ["gestor", "coordenador"], destination: "secretaria.html", guards: "Operacao escolar" },
+  { role: "professor", label: "Professor", aliases: ["teacher"], destination: "professor.html", guards: "Professor vinculado" },
+  { role: "aluno", label: "Aluno", aliases: ["student"], destination: "aluno.html", guards: "Aluno vinculado" },
+  { role: "educacao_infantil", label: "Familia/EI", aliases: ["familia", "responsavel", "guardian"], destination: "familia.html", guards: "Responsavel vinculado" },
 ];
 
 const adminOperationalState = {
@@ -7971,6 +7993,7 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
       const options = { requireAuthenticated: true, allowedRoles: ["admin"] };
       const [
         schools,
+        authUsers,
         profiles,
         teachers,
         students,
@@ -7978,22 +8001,38 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
         classes,
         enrollments,
         schoolMemberships,
+        classTeacherMemberships,
+        studentGuardianLinks,
         communications,
       ] = await Promise.all([
         client.request("schools", "?select=id,nome,status&order=nome.asc", options),
-        client.request("profiles", "?select=id,display_name,platform_role,status&order=display_name.asc", options),
-        client.request("teachers", "?select=id,school_id,profile_id,nome,status&order=nome.asc", options),
-        client.request("students", "?select=id,school_id,class_id,nome,status&order=nome.asc", options),
-        client.request("guardians", "?select=id,school_id,full_name,status,access_status&order=full_name.asc", options),
-        client.request("classes", "?select=id,school_id,nome,status,school_year&order=nome.asc", options),
-        client.request("enrollments", "?select=id,school_id,class_id,student_id,status&order=created_at.desc", options),
-        client.request("school_memberships", "?select=id,school_id,profile_id,membership_role,status&order=started_at.desc", options).catch(() => []),
+        client.request("rpc/admin_list_auth_users", "", { ...options, method: "POST", body: "{}" }).catch(() => []),
+        client.request("rpc/secretaria_list_staff_profiles", "", { ...options, method: "POST", body: "{}" }).catch(() =>
+          client.request("profiles", "?select=id,display_name,platform_role,status&order=display_name.asc", options)
+        ),
+        client.request("rpc/secretaria_list_teachers", "", { ...options, method: "POST", body: "{}" }).catch(() =>
+          client.request("teachers", "?select=id,user_id,school_id,profile_id,disciplina,status", options).catch(() => [])
+        ),
+        client.request("rpc/secretaria_list_students", "", { ...options, method: "POST", body: "{}" }).catch(() =>
+          client.request("students", "?select=id,school_id,class_id,user_id,nome,email,status&order=nome.asc", options).catch(() => [])
+        ),
+        client.request("guardians", "?select=id,school_id,profile_id,full_name,email,phone,status,access_status,created_at&order=full_name.asc", options).catch(() => []),
+        client.request("rpc/secretaria_list_classes", "", { ...options, method: "POST", body: "{}" }).catch(() =>
+          client.request("classes", "?select=id,school_id,nome,status,school_year&order=nome.asc", options).catch(() => [])
+        ),
+        client.request("rpc/secretaria_list_enrollments", "", { ...options, method: "POST", body: "{}" }).catch(() =>
+          client.request("enrollments", "?select=id,school_id,class_id,student_id,status,school_year&order=created_at.desc", options).catch(() => [])
+        ),
+        client.request("school_memberships", "?select=id,school_id,profile_id,membership_role,status,started_at,ended_at&order=started_at.desc", options).catch(() => []),
+        client.request("rpc/secretaria_list_class_teacher_memberships", "", { ...options, method: "POST", body: "{}" }).catch(() => []),
+        client.request("student_guardian_links", "?select=id,student_id,guardian_id,relationship,is_primary,status,created_at&order=created_at.asc", options).catch(() => []),
         client.request("communications", "?select=id,school_id,status,audience_type,created_at&order=created_at.desc", options),
       ]);
       adminOperationalState.status = "ready";
       adminOperationalState.data = {
         context,
         schools: schools || [],
+        authUsers: authUsers || [],
         profiles: profiles || [],
         teachers: teachers || [],
         students: students || [],
@@ -8001,6 +8040,8 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
         classes: classes || [],
         enrollments: enrollments || [],
         schoolMemberships: schoolMemberships || [],
+        classTeacherMemberships: classTeacherMemberships || [],
+        studentGuardianLinks: studentGuardianLinks || [],
         communications: communications || [],
       };
       return adminOperationalState;
@@ -8030,9 +8071,12 @@ const renderAdminPlatformTabs = (active = "inicio") => `
 
 const renderAdminMetricCard = ({ label, value, detail }) => `
   <article class="admin-metric-card" data-admin-search-item>
-    <span>${printableEscape(label)}</span>
-    <strong>${printableEscape(String(value))}</strong>
-    <small>${printableEscape(detail)}</small>
+    ${adminInlineIcon(adminMetricIcons[label] || "chart")}
+    <div>
+      <span>${printableEscape(label)}</span>
+      <strong>${printableEscape(String(value))}</strong>
+      <small>${printableEscape(detail)}</small>
+    </div>
   </article>
 `;
 
@@ -8047,8 +8091,11 @@ const renderAdminDoorCards = () => `
         .map(
           (door) => `
             <a class="admin-door-card" href="${door.href}" data-admin-search-item>
-              <span>${printableEscape(door.label)}</span>
-              <strong>${printableEscape(door.description)}</strong>
+              ${adminInlineIcon(door.icon)}
+              <div>
+                <span>${printableEscape(door.label)}</span>
+                <strong>${printableEscape(door.description)}</strong>
+              </div>
             </a>
           `
         )
@@ -8056,6 +8103,49 @@ const renderAdminDoorCards = () => `
     </div>
   </section>
 `;
+
+const renderAdminStatusItems = (items) =>
+  items
+    .map(
+      (item) => `
+        <article class="admin-status-item" data-admin-search-item>
+          ${adminInlineIcon(item.icon)}
+          <div>
+            <strong>${printableEscape(item.label)}</strong>
+            <span>${printableEscape(item.value)}</span>
+          </div>
+        </article>
+      `
+    )
+    .join("");
+
+const renderAdminQuickAction = (item) => `
+  <button type="button" data-admin-view="${item.view}" data-admin-search-item>
+    ${adminInlineIcon(item.icon)}
+    <span>${printableEscape(item.label)}</span>
+    <b aria-hidden="true">›</b>
+  </button>
+`;
+
+const renderAdminRecentActivity = (items) => {
+  if (!items.length) {
+    return `<p class="admin-empty-note">Ainda nao ha atividade recente consolidada para exibir neste painel.</p>`;
+  }
+  return items
+    .slice(0, 4)
+    .map(
+      (item) => `
+        <article class="admin-recent-item" data-admin-search-item>
+          ${adminInlineIcon("mail")}
+          <div>
+            <strong>${printableEscape(item.title || "Comunicacao registrada")}</strong>
+            <span>${printableEscape(item.status || "publicado")}</span>
+          </div>
+        </article>
+      `
+    )
+    .join("");
+};
 
 const renderAdminReadOnlyHome = () => {
   if (adminOperationalState.status === "loading" || adminOperationalState.status === "idle") {
@@ -8078,31 +8168,82 @@ const renderAdminReadOnlyHome = () => {
   }
   const data = adminOperationalState.data || {};
   const activeCommunications = (data.communications || []).filter((item) => !["deleted", "archived"].includes(String(item.status || "").toLowerCase()));
-  const metrics = [
+  const primaryMetrics = [
     { label: "Escolas", value: countRows(data.schools), detail: `${countActiveRows(data.schools)} ativas` },
     { label: "Usuarios e perfis", value: countRows(data.profiles), detail: `${countActiveRows(data.profiles)} ativos` },
     { label: "Professores", value: countRows(data.teachers), detail: `${countActiveRows(data.teachers)} ativos` },
     { label: "Alunos", value: countRows(data.students), detail: `${countActiveRows(data.students)} ativos` },
     { label: "Responsaveis", value: countRows(data.guardians), detail: `${countActiveRows(data.guardians)} ativos` },
+  ];
+  const secondaryMetrics = [
     { label: "Turmas", value: countRows(data.classes), detail: `${countActiveRows(data.classes)} ativas` },
     { label: "Matriculas", value: countRows(data.enrollments), detail: `${countActiveRows(data.enrollments)} ativas` },
     { label: "Comunicacoes", value: activeCommunications.length, detail: "visiveis na operacao" },
   ];
   const adminSessionLabel = data.context?.role === "admin" ? "Administrador/TI" : data.context?.role || "Administrador/TI";
+  const currentEmail = getPlatformSession().email || "admin.banco@raizesesaberes.com";
+  const statusItems = secondaryMetrics.map((item) => ({
+    icon: adminMetricIcons[item.label] || "chart",
+    label: item.label,
+    value: `${item.value} - ${item.detail}`,
+  }));
+  const quickActions = [
+    { view: "usuarios", icon: "users", label: "Usuarios" },
+    { view: "escolas", icon: "escola", label: "Escolas" },
+    { view: "conteudos", icon: "book", label: "Conteudos" },
+    { view: "implantacao", icon: "clipboard", label: "Implantacao" },
+    { view: "auditoria", icon: "check", label: "Auditoria" },
+  ];
   return `
-    <section class="admin-overview-grid" aria-label="Visao geral operacional">
-      ${metrics.map(renderAdminMetricCard).join("")}
+    <section class="admin-context-strip" aria-label="Contexto Admin">
+      <article>
+        ${adminInlineIcon("perfil")}
+        <div>
+          <span>Administrador/TI</span>
+          <strong>${printableEscape(currentEmail)}</strong>
+          <small>${printableEscape(adminSessionLabel)}</small>
+        </div>
+      </article>
+      <article>
+        ${adminInlineIcon("check")}
+        <div>
+          <span>Ambiente</span>
+          <strong>Principal</strong>
+        </div>
+      </article>
+      <article>
+        ${adminInlineIcon("chart")}
+        <div>
+          <span>Escopo</span>
+          <strong>Acompanhamento operacional</strong>
+        </div>
+      </article>
     </section>
-    <section class="admin-board admin-status-board">
-      <div class="admin-section-head">
-        <h2>Status da plataforma</h2>
-        <span>Painel de leitura</span>
-      </div>
-      <div class="admin-status-list">
-        <p><strong>Ambiente</strong><span>Principal</span></p>
-        <p><strong>Sessao</strong><span>${printableEscape(adminSessionLabel)}</span></p>
-        <p><strong>Escopo</strong><span>Acompanhamento operacional</span></p>
-      </div>
+    <section class="admin-overview-grid" aria-label="Indicadores principais">
+      ${primaryMetrics.map(renderAdminMetricCard).join("")}
+    </section>
+    <section class="admin-operation-grid" aria-label="Operacao Admin">
+      <section class="admin-board admin-status-board">
+        <div class="admin-section-head">
+          <h2>Atencao / status</h2>
+          <span>Painel de leitura</span>
+        </div>
+        <div class="admin-status-list">${renderAdminStatusItems(statusItems)}</div>
+      </section>
+      <section class="admin-board admin-quick-board">
+        <div class="admin-section-head">
+          <h2>Acoes rapidas</h2>
+          <span>Modulos Admin</span>
+        </div>
+        <div class="admin-quick-list">${quickActions.map(renderAdminQuickAction).join("")}</div>
+      </section>
+      <section class="admin-board admin-recent-board">
+        <div class="admin-section-head">
+          <h2>Atividade recente</h2>
+          <span>${Math.min(activeCommunications.length, 4)} de ${activeCommunications.length} eventos</span>
+        </div>
+        <div class="admin-recent-list">${renderAdminRecentActivity(activeCommunications)}</div>
+      </section>
     </section>
     ${renderAdminDoorCards()}
   `;
@@ -8122,6 +8263,660 @@ const renderAdminPreparationView = (title, description, items = []) => `
     }
   </section>
 `;
+
+const adminRoleInfo = (role = "") => {
+  const normalized = String(role || "").toLowerCase();
+  return adminRoleCatalog.find((item) => item.role === normalized || item.aliases.includes(normalized)) || {
+    role: normalized || "sem_papel",
+    label: normalized || "Sem papel",
+    aliases: [],
+    destination: "login.html",
+    guards: "Nao autorizado",
+  };
+};
+
+const adminSchoolName = (school) => school?.nome || school?.name || "Escola nao informada";
+const adminClassName = (classItem) => classItem?.nome || classItem?.name || classItem?.class_name || "Turma nao informada";
+const adminShortId = (id = "") => String(id || "").slice(0, 8);
+
+const adminAccessStatus = ({ profile, teacher, student, guardian, authUser }) => {
+  const rawStatus = String(profile?.status || teacher?.status || student?.status || guardian?.status || "").toLowerCase();
+  const authStatus = String(authUser?.auth_status || "").toLowerCase();
+  if (authStatus === "deleted" || authStatus === "banned") return "INATIVO";
+  if (rawStatus === "inactive" || rawStatus === "archived") return "INATIVO";
+  if (authUser || profile?.id || student?.user_id || teacher?.profile_id || teacher?.user_id || guardian?.profile_id) return "ACESSO ATIVO";
+  if (teacher || guardian || student) return "SEM ACESSO CONFIGURADO";
+  return "VINCULO INSTITUCIONAL INCOMPLETO";
+};
+
+const adminAccessTone = (status = "") => {
+  if (status === "ACESSO ATIVO") return "success";
+  if (status === "INATIVO") return "danger";
+  if (status === "VINCULO INSTITUCIONAL INCOMPLETO") return "warning";
+  return "muted";
+};
+
+const adminStatusTone = (status = "") => {
+  const normalized = String(status || "").toLowerCase();
+  if (normalized === "active") return "success";
+  if (normalized === "inactive" || normalized === "archived") return "danger";
+  return "muted";
+};
+
+const adminStatusLabel = (status = "") => {
+  const normalized = String(status || "").toLowerCase();
+  if (normalized === "active") return "Ativo";
+  if (normalized === "inactive") return "Inativo";
+  if (normalized === "banned") return "Bloqueado";
+  if (normalized === "deleted") return "Removido";
+  if (normalized === "pending_confirmation") return "Confirmacao pendente";
+  if (normalized === "archived") return "Arquivado";
+  return status || "Nao informado";
+};
+
+const adminAuthRecordId = (authUser = {}) => authUser.auth_user_id || authUser.id || authUser.profile_id || "";
+const adminAuthRecordEmail = (authUser = null) => (authUser ? authUser.email || "E-mail Auth nao informado" : "");
+const adminAuthRecordRole = (authUser = {}, profile = null) =>
+  authUser.platform_role || authUser.auth_platform_role || profile?.platform_role || "";
+const adminUserAuthId = (user = {}) => (String(user.id || "").startsWith("auth:") ? String(user.id).slice(5) : user.authUserId || "");
+
+const adminMergeById = (left = [], right = []) => {
+  const merged = [];
+  const seen = new Set();
+  [...left, ...right].forEach((item) => {
+    if (!item) return;
+    const key = item.id || JSON.stringify(item);
+    if (seen.has(key)) return;
+    seen.add(key);
+    merged.push(item);
+  });
+  return merged;
+};
+
+const adminAddConsolidatedUser = (usersByKey, users, user) => {
+  const key = user.authKey || user.id;
+  const existing = usersByKey.get(key);
+  if (!existing) {
+    usersByKey.set(key, user);
+    users.push(user);
+    return user;
+  }
+  const existingEmailIsUseful = existing.email && !/nao exposto|sem acesso/i.test(existing.email);
+  existing.name = existing.name || user.name;
+  existing.email = existingEmailIsUseful ? existing.email : user.email || existing.email;
+  existing.role = existing.role || user.role;
+  existing.roleLabel = existing.roleLabel || user.roleLabel;
+  existing.rawRole = existing.rawRole || user.rawRole;
+  existing.schoolId = existing.schoolId || user.schoolId;
+  existing.schoolName = existing.schoolName === "Escola nao informada" ? user.schoolName : existing.schoolName;
+  existing.status = existing.status || user.status;
+  existing.accessStatus = existing.accessStatus === "ACESSO ATIVO" ? existing.accessStatus : user.accessStatus;
+  existing.authConfigured = existing.authConfigured || user.authConfigured;
+  existing.memberships = adminMergeById(existing.memberships, user.memberships);
+  existing.teachers = adminMergeById(existing.teachers, user.teachers);
+  existing.students = adminMergeById(existing.students, user.students);
+  existing.guardians = adminMergeById(existing.guardians, user.guardians);
+  return existing;
+};
+
+const buildAdminUsersIndex = () => {
+  const data = adminOperationalState.data || {};
+  const authUserById = new Map((data.authUsers || []).map((authUser) => [adminAuthRecordId(authUser), authUser]).filter(([id]) => id));
+  const profileById = new Map((data.profiles || []).map((profile) => [profile.id, profile]));
+  const schoolById = new Map((data.schools || []).map((school) => [school.id, school]));
+  const classById = new Map((data.classes || []).map((classItem) => [classItem.id, classItem]));
+  const membershipsByProfile = new Map();
+  const teachersByProfile = new Map();
+  const studentsByUser = new Map();
+  const guardiansByProfile = new Map();
+  const enrollmentsByStudent = new Map();
+  const classLinksByTeacher = new Map();
+  const guardianLinksByGuardian = new Map();
+
+  (data.schoolMemberships || []).forEach((membership) => {
+    if (!membership.profile_id) return;
+    membershipsByProfile.set(membership.profile_id, [...(membershipsByProfile.get(membership.profile_id) || []), membership]);
+  });
+  (data.teachers || []).forEach((teacher) => {
+    [teacher.profile_id, teacher.user_id].filter(Boolean).forEach((authId) => {
+      teachersByProfile.set(authId, [...(teachersByProfile.get(authId) || []), teacher]);
+    });
+  });
+  (data.students || []).forEach((student) => {
+    if (!student.user_id) return;
+    studentsByUser.set(student.user_id, [...(studentsByUser.get(student.user_id) || []), student]);
+  });
+  (data.guardians || []).forEach((guardian) => {
+    if (!guardian.profile_id) return;
+    guardiansByProfile.set(guardian.profile_id, [...(guardiansByProfile.get(guardian.profile_id) || []), guardian]);
+  });
+  (data.enrollments || []).forEach((enrollment) => {
+    if (!enrollment.student_id) return;
+    enrollmentsByStudent.set(enrollment.student_id, [...(enrollmentsByStudent.get(enrollment.student_id) || []), enrollment]);
+  });
+  (data.classTeacherMemberships || []).forEach((membership) => {
+    if (!membership.teacher_id) return;
+    classLinksByTeacher.set(membership.teacher_id, [...(classLinksByTeacher.get(membership.teacher_id) || []), membership]);
+  });
+  (data.studentGuardianLinks || []).forEach((link) => {
+    if (!link.guardian_id) return;
+    guardianLinksByGuardian.set(link.guardian_id, [...(guardianLinksByGuardian.get(link.guardian_id) || []), link]);
+  });
+
+  return {
+    data,
+    authUserById,
+    profileById,
+    schoolById,
+    classById,
+    membershipsByProfile,
+    teachersByProfile,
+    studentsByUser,
+    guardiansByProfile,
+    enrollmentsByStudent,
+    classLinksByTeacher,
+    guardianLinksByGuardian,
+  };
+};
+
+const adminUserClasses = (user, index) => {
+  const classes = new Map();
+  user.teachers.forEach((teacher) => {
+    (index.classLinksByTeacher.get(teacher.id) || [])
+      .filter((membership) => String(membership.status || "").toLowerCase() !== "inactive")
+      .forEach((membership) => {
+        const classItem = index.classById.get(membership.class_id);
+        if (classItem) classes.set(classItem.id, classItem);
+      });
+  });
+  user.students.forEach((student) => {
+    (index.enrollmentsByStudent.get(student.id) || [])
+      .filter((enrollment) => String(enrollment.status || "").toLowerCase() !== "inactive")
+      .forEach((enrollment) => {
+        const classItem = index.classById.get(enrollment.class_id);
+        if (classItem) classes.set(classItem.id, classItem);
+      });
+  });
+  user.guardians.forEach((guardian) => {
+    (index.guardianLinksByGuardian.get(guardian.id) || []).forEach((link) => {
+      (index.enrollmentsByStudent.get(link.student_id) || [])
+        .filter((enrollment) => String(enrollment.status || "").toLowerCase() !== "inactive")
+        .forEach((enrollment) => {
+          const classItem = index.classById.get(enrollment.class_id);
+          if (classItem) classes.set(classItem.id, classItem);
+        });
+    });
+  });
+  return [...classes.values()];
+};
+
+const buildAdminUsers = () => {
+  const index = buildAdminUsersIndex();
+  const users = [];
+  const usersByKey = new Map();
+  const session = getPlatformSession();
+
+  (index.data.profiles || []).forEach((profile) => {
+    const memberships = index.membershipsByProfile.get(profile.id) || [];
+    const teachers = index.teachersByProfile.get(profile.id) || [];
+    const students = index.studentsByUser.get(profile.id) || [];
+    const guardians = index.guardiansByProfile.get(profile.id) || [];
+    const primaryMembership = memberships.find((item) => String(item.status || "").toLowerCase() === "active") || memberships[0];
+    const authUser = index.authUserById.get(profile.id);
+    const schoolId = primaryMembership?.school_id || teachers[0]?.school_id || students[0]?.school_id || guardians[0]?.school_id || "";
+    const roleInfo = adminRoleInfo(adminAuthRecordRole(authUser, profile) || primaryMembership?.membership_role);
+    const name = normalizeProfileName(profile) || guardians[0]?.full_name || students[0]?.nome || adminAuthRecordEmail(authUser) || roleInfo.label;
+    const email = adminAuthRecordEmail(authUser) || (profile.id === session.userId ? session.email : guardians[0]?.email || students[0]?.email || "E-mail Auth nao exposto");
+    const accessStatus = adminAccessStatus({ profile, teacher: teachers[0], student: students[0], guardian: guardians[0], authUser });
+    adminAddConsolidatedUser(usersByKey, users, {
+      id: `auth:${profile.id}`,
+      authKey: `auth:${profile.id}`,
+      technicalId: profile.id,
+      authUserId: profile.id,
+      source: "profile",
+      name,
+      email,
+      role: roleInfo.role,
+      roleLabel: roleInfo.label,
+      rawRole: profile.platform_role || "",
+      schoolId,
+      schoolName: adminSchoolName(index.schoolById.get(schoolId)),
+      status: profile.status || "active",
+      accessStatus,
+      authConfigured: true,
+      memberships,
+      teachers,
+      students,
+      guardians,
+      classes: [],
+    });
+  });
+
+  (index.data.authUsers || []).forEach((authUser) => {
+    const authId = adminAuthRecordId(authUser);
+    if (!authId) return;
+    const profile = index.profileById.get(authUser.profile_id || authId);
+    const memberships = index.membershipsByProfile.get(authId) || [];
+    const teachers = index.teachersByProfile.get(authId) || [];
+    const students = index.studentsByUser.get(authId) || [];
+    const guardians = index.guardiansByProfile.get(authId) || [];
+    const primaryMembership = memberships.find((item) => String(item.status || "").toLowerCase() === "active") || memberships[0];
+    const schoolId = primaryMembership?.school_id || teachers[0]?.school_id || students[0]?.school_id || guardians[0]?.school_id || "";
+    const roleInfo = adminRoleInfo(adminAuthRecordRole(authUser, profile) || primaryMembership?.membership_role);
+    adminAddConsolidatedUser(usersByKey, users, {
+      id: `auth:${authId}`,
+      authKey: `auth:${authId}`,
+      technicalId: authId,
+      authUserId: authId,
+      source: "auth",
+      name: normalizeProfileName(profile) || authUser.display_name || guardians[0]?.full_name || students[0]?.nome || adminAuthRecordEmail(authUser),
+      email: adminAuthRecordEmail(authUser),
+      role: roleInfo.role,
+      roleLabel: roleInfo.label,
+      rawRole: adminAuthRecordRole(authUser, profile),
+      schoolId,
+      schoolName: adminSchoolName(index.schoolById.get(schoolId)),
+      status: authUser.auth_status || profile?.status || "active",
+      accessStatus: adminAccessStatus({ profile, teacher: teachers[0], student: students[0], guardian: guardians[0], authUser }),
+      authConfigured: true,
+      memberships,
+      teachers,
+      students,
+      guardians,
+      classes: [],
+    });
+  });
+
+  (index.data.teachers || []).forEach((teacher) => {
+    const authId = teacher.profile_id || teacher.user_id || "";
+    const authUser = index.authUserById.get(authId);
+    const key = authId ? `auth:${authId}` : `teacher:${teacher.id}`;
+    adminAddConsolidatedUser(usersByKey, users, {
+        id: key,
+        authKey: key,
+        technicalId: teacher.id,
+        authUserId: authId,
+        source: "teacher",
+        name: teacher.full_name || teacher.nome || `Professor institucional ${adminShortId(teacher.id)}`,
+        email: authId ? adminAuthRecordEmail(authUser) : "Sem acesso configurado",
+        role: "professor",
+        roleLabel: "Professor",
+        rawRole: "professor",
+        schoolId: teacher.school_id || "",
+        schoolName: adminSchoolName(index.schoolById.get(teacher.school_id)),
+        status: teacher.status || "active",
+        accessStatus: adminAccessStatus({ teacher, authUser }),
+        authConfigured: Boolean(authId),
+        memberships: [],
+        teachers: [teacher],
+        students: [],
+        guardians: [],
+        classes: [],
+      });
+  });
+
+  (index.data.guardians || []).forEach((guardian) => {
+    const authUser = index.authUserById.get(guardian.profile_id);
+    const key = guardian.profile_id ? `auth:${guardian.profile_id}` : `guardian:${guardian.id}`;
+    adminAddConsolidatedUser(usersByKey, users, {
+        id: key,
+        authKey: key,
+        technicalId: guardian.id,
+        authUserId: guardian.profile_id || "",
+        source: "guardian",
+        name: guardian.full_name || `Responsavel institucional ${adminShortId(guardian.id)}`,
+        email: adminAuthRecordEmail(authUser) || guardian.email || (guardian.profile_id ? "E-mail Auth nao exposto" : "Sem acesso configurado"),
+        role: "educacao_infantil",
+        roleLabel: "Familia/EI",
+        rawRole: "responsavel",
+        schoolId: guardian.school_id || "",
+        schoolName: adminSchoolName(index.schoolById.get(guardian.school_id)),
+        status: guardian.status || "active",
+        accessStatus: adminAccessStatus({ guardian, authUser }),
+        authConfigured: Boolean(guardian.profile_id),
+        memberships: [],
+        teachers: [],
+        students: [],
+        guardians: [guardian],
+        classes: [],
+      });
+  });
+
+  (index.data.students || []).forEach((student) => {
+    const authUser = index.authUserById.get(student.user_id);
+    const key = student.user_id ? `auth:${student.user_id}` : `student:${student.id}`;
+    adminAddConsolidatedUser(usersByKey, users, {
+        id: key,
+        authKey: key,
+        technicalId: student.id,
+        authUserId: student.user_id || "",
+        source: "student",
+        name: student.nome || `Aluno institucional ${adminShortId(student.id)}`,
+        email: adminAuthRecordEmail(authUser) || student.email || (student.user_id ? "E-mail Auth nao exposto" : "Sem acesso configurado"),
+        role: "aluno",
+        roleLabel: "Aluno",
+        rawRole: "aluno",
+        schoolId: student.school_id || "",
+        schoolName: adminSchoolName(index.schoolById.get(student.school_id)),
+        status: student.status || "active",
+        accessStatus: adminAccessStatus({ student, authUser }),
+        authConfigured: Boolean(student.user_id),
+        memberships: [],
+        teachers: [],
+        students: [student],
+        guardians: [],
+        classes: [],
+      });
+  });
+
+  users.forEach((user) => {
+    user.classes = adminUserClasses(user, index);
+  });
+  return { users, index };
+};
+
+const adminFindUserById = (userId) => {
+  const { users } = buildAdminUsers();
+  return users.find((user) => user.id === userId) || null;
+};
+
+const adminRecoveryRedirectUrl = () => new URL("redefinir-senha.html", window.location.href).toString();
+
+const adminRequestPasswordRecovery = async (email) => {
+  const config = getSupabaseConfig();
+  const baseUrl = config.url?.replace(/\/$/, "");
+  if (!baseUrl || !config.anonKey) {
+    throw new Error("Servico de acesso indisponivel.");
+  }
+  const response = await fetch(`${baseUrl}/auth/v1/recover?redirect_to=${encodeURIComponent(adminRecoveryRedirectUrl())}`, {
+    method: "POST",
+    headers: {
+      apikey: config.anonKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email }),
+  });
+  if (!response.ok && ![400, 404].includes(response.status)) {
+    const body = await response.text();
+    throw new Error(`Falha ao enviar recuperacao: ${response.status}${body ? ` - ${body}` : ""}`);
+  }
+  return true;
+};
+
+const adminLogPasswordRecovery = async ({ targetAuthUserId, targetEmail, result }) => {
+  const client = createSupabaseRestClient();
+  await client.request("rpc/admin_log_access_recovery_event", "", {
+    method: "POST",
+    body: JSON.stringify({
+      p_target_auth_user_id: targetAuthUserId,
+      p_target_email: targetEmail,
+      p_result: result,
+    }),
+    requireAuthenticated: true,
+    allowedRoles: ["admin"],
+  });
+};
+
+const adminHandlePasswordRecovery = async (userId, button) => {
+  const user = adminFindUserById(userId);
+  const targetAuthUserId = adminUserAuthId(user);
+  if (!user || !user.authConfigured || !targetAuthUserId || /nao exposto|sem acesso/i.test(user.email || "")) {
+    alert("Acesso ainda nao configurado para este usuario.");
+    return;
+  }
+  if (!window.confirm(`Enviar instrucoes de recuperacao para ${user.email}?`)) return;
+  if (button) {
+    button.disabled = true;
+    button.dataset.originalText = button.textContent;
+    button.textContent = "Enviando...";
+  }
+  try {
+    await adminRequestPasswordRecovery(user.email);
+    await adminLogPasswordRecovery({ targetAuthUserId, targetEmail: user.email, result: "sent" });
+    alert("Instrucoes de recuperacao enviadas.");
+  } catch (error) {
+    try {
+      await adminLogPasswordRecovery({ targetAuthUserId, targetEmail: user.email, result: "failed" });
+    } catch (auditError) {
+      // A falha de auditoria nao deve vazar dados sensiveis na interface.
+    }
+    alert(error.message || "Nao foi possivel enviar a recuperacao.");
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = button.dataset.originalText || "Enviar recuperacao de senha";
+    }
+  }
+};
+
+const adminUserFilters = () => {
+  const params = new URLSearchParams(window.location.search || "");
+  return {
+    query: params.get("q") || "",
+    role: params.get("role") || "all",
+    school: params.get("school") || "all",
+    status: params.get("status") || "all",
+    access: params.get("access") || "all",
+    selected: params.get("user") || "",
+  };
+};
+
+const adminUsersUrl = (changes = {}) => {
+  const params = new URLSearchParams(window.location.search || "");
+  params.set("view", "usuarios");
+  Object.entries(changes).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "" || value === "all") params.delete(key);
+    else params.set(key, value);
+  });
+  return `admin.html?${params.toString()}`;
+};
+
+const filterAdminUsers = (users, filters) =>
+  users.filter((user) => {
+    const term = filters.query.trim().toLowerCase();
+    const haystack = `${user.name} ${user.email} ${user.roleLabel} ${user.schoolName} ${user.accessStatus}`.toLowerCase();
+    if (term && !haystack.includes(term)) return false;
+    if (filters.role !== "all" && user.role !== filters.role) return false;
+    if (filters.school !== "all" && user.schoolId !== filters.school) return false;
+    if (filters.status !== "all") {
+      const active = String(user.status || "").toLowerCase() === "active";
+      if (filters.status === "active" && !active) return false;
+      if (filters.status === "inactive" && active) return false;
+    }
+    if (filters.access !== "all") {
+      const hasAccess = user.accessStatus === "ACESSO ATIVO";
+      if (filters.access === "configured" && !hasAccess) return false;
+      if (filters.access === "not_configured" && hasAccess) return false;
+    }
+    return true;
+  });
+
+const renderAdminUserBadge = (label, tone = "muted") => `<span class="admin-user-badge is-${tone}">${printableEscape(label)}</span>`;
+
+const renderAdminUsersFilter = ({ filters, schools }) => `
+  <form class="admin-users-filter" action="admin.html" method="get">
+    <input type="hidden" name="view" value="usuarios" />
+    <label>
+      <span>Buscar</span>
+      <input name="q" value="${printableEscape(filters.query)}" placeholder="Nome, e-mail, papel ou escola" />
+    </label>
+    <label>
+      <span>Papel</span>
+      <select name="role">
+        <option value="all">Todos</option>
+        ${adminRoleCatalog.map((role) => `<option value="${role.role}" ${filters.role === role.role ? "selected" : ""}>${role.label}</option>`).join("")}
+      </select>
+    </label>
+    <label>
+      <span>Escola</span>
+      <select name="school">
+        <option value="all">Todas</option>
+        ${schools.map((school) => `<option value="${printableEscape(school.id)}" ${filters.school === school.id ? "selected" : ""}>${printableEscape(adminSchoolName(school))}</option>`).join("")}
+      </select>
+    </label>
+    <label>
+      <span>Status</span>
+      <select name="status">
+        <option value="all">Todos</option>
+        <option value="active" ${filters.status === "active" ? "selected" : ""}>Ativo</option>
+        <option value="inactive" ${filters.status === "inactive" ? "selected" : ""}>Inativo</option>
+      </select>
+    </label>
+    <label>
+      <span>Acesso</span>
+      <select name="access">
+        <option value="all">Todos</option>
+        <option value="configured" ${filters.access === "configured" ? "selected" : ""}>Configurado</option>
+        <option value="not_configured" ${filters.access === "not_configured" ? "selected" : ""}>Sem acesso</option>
+      </select>
+    </label>
+    <button type="submit">${adminInlineIcon("search", "Filtrar")}</button>
+    <a href="admin.html?view=usuarios">Limpar</a>
+  </form>
+`;
+
+const renderAdminUsersList = ({ users, selectedId }) => {
+  if (!users.length) return `<div class="admin-empty-note">Nenhum usuario encontrado com os filtros atuais.</div>`;
+  return users
+    .map(
+      (user) => `
+        <a class="admin-user-row ${user.id === selectedId ? "is-active" : ""}" href="${adminUsersUrl({ user: user.id })}" data-admin-search-item>
+          <span class="admin-user-avatar">${printableEscape(user.name.slice(0, 2).toUpperCase())}</span>
+          <span class="admin-user-main">
+            <strong>${printableEscape(user.name)}</strong>
+            <small>${printableEscape(user.email)}</small>
+          </span>
+          <span class="admin-user-meta">
+            ${renderAdminUserBadge(user.roleLabel, "role")}
+            ${renderAdminUserBadge(user.accessStatus, adminAccessTone(user.accessStatus))}
+          </span>
+        </a>
+      `
+    )
+    .join("");
+};
+
+const renderAdminUserDetail = (user) => {
+  if (!user) {
+    return `
+      <aside class="admin-user-detail">
+        <h3>Selecione um usuario</h3>
+        <p>Escolha um perfil ou vinculo institucional para consultar os detalhes com seguranca.</p>
+      </aside>
+    `;
+  }
+  const memberships = user.memberships.length
+    ? user.memberships.map((item) => `${adminSchoolName((adminOperationalState.data?.schools || []).find((school) => school.id === item.school_id))} - ${item.membership_role || "membro"} - ${adminStatusLabel(item.status)}`)
+    : ["Sem membership ativo listado"];
+  const institutionalLinks = [
+    ...user.teachers.map((teacher) => `Professor - ${adminStatusLabel(teacher.status)}`),
+    ...user.students.map((student) => `Aluno - ${student.nome || adminShortId(student.id)} - ${adminStatusLabel(student.status)}`),
+    ...user.guardians.map((guardian) => `Responsavel - ${guardian.full_name || adminShortId(guardian.id)} - ${adminStatusLabel(guardian.status)}`),
+  ];
+  return `
+    <aside class="admin-user-detail">
+      <div class="admin-user-detail-head">
+        <span class="admin-user-avatar">${printableEscape(user.name.slice(0, 2).toUpperCase())}</span>
+        <div>
+          <h3>${printableEscape(user.name)}</h3>
+          <p>${printableEscape(user.email)}</p>
+        </div>
+      </div>
+      <div class="admin-user-detail-grid">
+        <article><span>Papel</span><strong>${printableEscape(user.roleLabel)}</strong></article>
+        <article><span>Status</span><strong>${printableEscape(adminStatusLabel(user.status))}</strong></article>
+        <article><span>Acesso Auth</span><strong>${user.authConfigured ? "Configurado" : "Nao configurado"}</strong></article>
+        <article><span>Escola</span><strong>${printableEscape(user.schoolName)}</strong></article>
+      </div>
+      <section>
+        <h4>Vinculos institucionais</h4>
+        <ul>${(institutionalLinks.length ? institutionalLinks : ["Vinculo incompleto"]).map((item) => `<li>${printableEscape(item)}</li>`).join("")}</ul>
+      </section>
+      <section>
+        <h4>Memberships</h4>
+        <ul>${memberships.map((item) => `<li>${printableEscape(item)}</li>`).join("")}</ul>
+      </section>
+      <section>
+        <h4>Turmas</h4>
+        <ul>${(user.classes.length ? user.classes.map(adminClassName) : ["Sem turma vinculada nesta leitura"]).map((item) => `<li>${printableEscape(item)}</li>`).join("")}</ul>
+      </section>
+      <section class="admin-user-safe-actions">
+        ${
+          user.authConfigured
+            ? `<button type="button" class="is-primary" data-admin-password-recovery="${printableEscape(user.id)}">${adminInlineIcon("mail", "Enviar recuperacao de senha")}</button>`
+            : `<p>Acesso ainda nao configurado.</p>`
+        }
+        <button type="button" disabled>Alterar papel sera tratado em fase propria</button>
+      </section>
+    </aside>
+  `;
+};
+
+const renderAdminRoleMatrix = () => `
+  <section class="admin-board admin-role-board">
+    <div class="admin-section-head">
+      <h2>Papeis e destinos</h2>
+      <span>Mapa operacional</span>
+    </div>
+    <div class="admin-role-grid">
+      ${adminRoleCatalog
+        .map(
+          (role) => `
+            <article>
+              ${adminInlineIcon(role.role === "educacao_infantil" ? "family" : role.role)}
+              <strong>${printableEscape(role.label)}</strong>
+              <span>${printableEscape(role.destination)}</span>
+              <small>Aliases: ${printableEscape(role.aliases.join(", ") || "nenhum")}</small>
+              <em>${printableEscape(role.guards)}</em>
+            </article>
+          `
+        )
+        .join("")}
+    </div>
+  </section>
+`;
+
+const renderAdminAccessEngineStatus = () => `
+  <section class="admin-board admin-engine-board">
+    <div class="admin-section-head">
+      <h2>Motores seguros</h2>
+      <span>Sem service role no navegador</span>
+    </div>
+    <div class="admin-engine-grid">
+      <article>${adminInlineIcon("check")}<strong>Leitura Admin</strong><span>Ativa por sessao autenticada.</span></article>
+      <article>${adminInlineIcon("warning")}<strong>Alterar papel</strong><span>GAP: exige RPC segura aprovada.</span></article>
+      <article>${adminInlineIcon("warning")}<strong>Criar acesso Auth</strong><span>GAP: exige fluxo server-side.</span></article>
+    </div>
+  </section>
+`;
+
+const renderAdminUsersConsole = () => {
+  if (adminOperationalState.status === "loading" || adminOperationalState.status === "idle") {
+    return `<section class="admin-board admin-loading-state"><h2>Carregando usuarios</h2><p>Consultando perfis e vinculos institucionais.</p></section>`;
+  }
+  if (adminOperationalState.status === "error") {
+    return `<section class="admin-board admin-empty-state"><h2>Nao foi possivel carregar usuarios</h2><p>${printableEscape(adminOperationalState.error)}</p></section>`;
+  }
+  const { users, index } = buildAdminUsers();
+  const filters = adminUserFilters();
+  const filtered = filterAdminUsers(users, filters);
+  const selected = users.find((user) => user.id === filters.selected) || filtered[0] || null;
+  return `
+    <section class="admin-board admin-users-console">
+      <div class="admin-section-head">
+        <h2>Usuarios e roles</h2>
+        <span>${filtered.length} de ${users.length} registros</span>
+      </div>
+      ${renderAdminUsersFilter({ filters, schools: index.data.schools || [] })}
+      <div class="admin-users-layout">
+        <div class="admin-users-list">${renderAdminUsersList({ users: filtered, selectedId: selected?.id || "" })}</div>
+        ${renderAdminUserDetail(selected)}
+      </div>
+    </section>
+    ${renderAdminRoleMatrix()}
+    ${renderAdminAccessEngineStatus()}
+  `;
+};
 
 const renderAdminHomologationHub = () => `
   <section class="admin-board admin-homologation-hub" aria-label="Acompanhamento de ambientes">
@@ -8154,6 +8949,10 @@ const renderAdminFeatureCard = (item) => `
 
 const renderAdminSidebar = (active = "inicio") => `
   <aside class="admin-sidebar">
+    <a class="admin-sidebar-logo" href="admin.html" aria-label="Raizes e Saberes">
+      <img src="logo-sidebar-dark.png" alt="Raizes e Saberes Ecossistema Educacional" onerror="this.hidden=true; this.nextElementSibling.hidden=false;" />
+      <span class="admin-sidebar-logo-fallback" hidden><strong>Raizes e Saberes</strong><em>Ecossistema Educacional</em></span>
+    </a>
     <div class="admin-id-card">
       <span>Administrador/TI</span>
       <strong>Raizes e Saberes</strong>
@@ -8161,9 +8960,9 @@ const renderAdminSidebar = (active = "inicio") => `
     </div>
     <nav aria-label="Menu Admin">
       ${adminReadOnlyNav
-        .map(([key, label]) => `<button type="button" data-admin-view="${key}" class="${key === active ? "is-active" : ""}">${label}</button>`)
+        .map((item) => `<button type="button" data-admin-view="${item.key}" class="${item.key === active ? "is-active" : ""}">${adminInlineIcon(item.icon, item.label)}</button>`)
         .join("")}
-      <button class="platform-logout-button" type="button" data-platform-logout>SAIR</button>
+      <button class="platform-logout-button" type="button" data-platform-logout>${adminInlineIcon("sair", "SAIR")}</button>
     </nav>
   </aside>
 `;
@@ -8210,13 +9009,7 @@ const renderAdminWorkspaceView = (view = "inicio") => {
         <div class="admin-feature-grid">${adminFeatureRegistry.map(renderAdminFeatureCard).join("")}</div>
       </section>
     `,
-    usuarios: `
-      ${renderAdminPreparationView("Usuarios", "Gestao de acessos, papeis e senhas sera implementada em fase propria. Nesta etapa o painel apenas confirma o estado operacional disponivel.", [
-        "Perfis",
-        "Papeis",
-        "Acessos",
-      ])}
-    `,
+    usuarios: renderAdminUsersConsole(),
     escolas: renderAdminPreparationView("Escolas", "Cadastro, implantacao e acompanhamento de escolas serao liberados depois do painel inicial.", [
       "Cadastro institucional",
       "Implantacao",
@@ -8258,10 +9051,10 @@ const renderAdminWorkspaceView = (view = "inicio") => {
       ])}
     `,
   };
-  if (feature && !adminReadOnlyNav.some(([key]) => key === view)) {
+  if (feature && !adminReadOnlyNav.some((item) => item.key === view)) {
     return `<section class="admin-board admin-empty-state"><h2>${feature.label}</h2><p>Status atual: ${feature.status}. Area existente reaproveitada sem criar tela duplicada.</p><a href="${feature.href}">Abrir area</a></section>`;
   }
-  return viewMap[view] || renderAdminPreparationView(adminReadOnlyNav.find(([key]) => key === view)?.[1] || "Modulo", "Area prevista para fase propria.");
+  return viewMap[view] || renderAdminPreparationView(adminReadOnlyNav.find((item) => item.key === view)?.label || "Modulo", "Area prevista para fase propria.");
 };
 
 const renderAdminDashboard = () => `
@@ -8270,10 +9063,12 @@ const renderAdminDashboard = () => `
     <main class="admin-main">
       <header class="admin-topbar">
         <label><span>Busca Admin</span><input type="search" placeholder="Buscar estado, modulos e portas..." data-admin-search /></label>
-        <button type="button" data-admin-back>VOLTAR</button>
-        <button type="button" data-admin-view="painel">INICIO</button>
-        <a class="admin-topbar-link" href="escola.html">MINHA ESCOLA</a>
-        <button type="button" data-platform-logout>SAIR</button>
+        <div class="admin-topbar-actions" aria-label="Navegacao global">
+          <button type="button" data-admin-back>${adminInlineIcon("back", "VOLTAR")}</button>
+          <button type="button" data-admin-view="painel">${adminInlineIcon("home", "INICIO")}</button>
+          <a class="admin-topbar-link" href="escola.html">${adminInlineIcon("escola", "MINHA ESCOLA")}</a>
+          <button type="button" data-platform-logout>${adminInlineIcon("sair", "SAIR")}</button>
+        </div>
       </header>
       <section class="admin-hero">
         <div>
@@ -8298,10 +9093,10 @@ const initAdminWorkspace = () => {
   const activate = (view) => {
     workspace.querySelectorAll("[data-admin-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.adminView === view));
     if (content) content.innerHTML = renderAdminWorkspaceView(view);
-    if (view === "painel") {
+    if (view === "painel" || view === "usuarios") {
       ensureAdminReadOnlyData().then(() => {
-        if (content && workspace.querySelector('[data-admin-view="painel"]')?.classList.contains("is-active")) {
-          content.innerHTML = renderAdminWorkspaceView("painel");
+        if (content && workspace.querySelector(`[data-admin-view="${view}"]`)?.classList.contains("is-active")) {
+          content.innerHTML = renderAdminWorkspaceView(view);
         }
       });
     }
@@ -8317,6 +9112,12 @@ const initAdminWorkspace = () => {
     if (backButton) {
       event.preventDefault();
       window.history.back();
+      return;
+    }
+    const recoveryButton = event.target.closest?.("[data-admin-password-recovery]");
+    if (recoveryButton) {
+      event.preventDefault();
+      adminHandlePasswordRecovery(recoveryButton.dataset.adminPasswordRecovery, recoveryButton);
     }
   });
   workspace.querySelector("[data-admin-search]")?.addEventListener("input", (event) => {
@@ -8325,7 +9126,7 @@ const initAdminWorkspace = () => {
       item.hidden = term ? !item.textContent.toLowerCase().includes(term) : false;
     });
   });
-  activate("painel");
+  activate(new URLSearchParams(window.location.search || "").get("view") || "painel");
 };
 
 const schoolCollectiveData = {
