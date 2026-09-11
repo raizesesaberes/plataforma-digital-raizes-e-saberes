@@ -63,7 +63,7 @@ const loginRoleLabels = {
   aluno: "Aluno Ensino Fundamental",
   professor: "Professor",
   escola: "Escola",
-  educacao_infantil: "Aluno Educacao Infantil",
+  educacao_infantil: "Aluno Educação Infantil",
   admin: "Admin / TI",
   gestor: "Gestor",
   coordenador: "Coordenador",
@@ -142,6 +142,10 @@ const getPostLoginDestination = (role) => {
   }
   return ["", "plataforma.html", "plataforma", "index.html", "index", "/"].includes(next) ? getRoleHome(role) : next;
 };
+const getDemoLoginDestination = (role = "admin") => {
+  const next = getNextPage();
+  return next || getRoleHome(role);
+};
 
 const getStoredSupabaseContext = () => {
   try {
@@ -199,7 +203,7 @@ if (
   localStorage.getItem(demoAccess.key) === "true" &&
   (!needsCuratorAccess || localStorage.getItem(demoAccess.curatorKey) === "true")
 ) {
-  window.location.replace(getNextPage());
+  window.location.replace(getDemoLoginDestination("admin"));
 }
 
 const form = document.querySelector("[data-login-form]");
@@ -225,7 +229,7 @@ const setSelectedAccessRole = (role) => {
 
 const syncAccessCopy = () => {
   if (accessCopy) {
-    accessCopy.textContent = "Entre com seu usuario e senha. A Plataforma Raizes e Saberes abrira automaticamente o ambiente correspondente ao seu perfil.";
+    accessCopy.textContent = "Entre com seu usuário e senha. A Plataforma Raízes e Saberes abrirá automaticamente o ambiente correspondente ao seu perfil.";
   }
   if (submitButton) {
     submitButton.textContent = "Entrar";
@@ -243,7 +247,7 @@ if (requiresSupabaseAuth) {
   const copy = accessCopy || document.querySelector(".login-copy span");
   if (copy) {
     copy.textContent = requiresQuestionBankRole
-      ? "Entre com o usuario Supabase Auth autorizado para salvar e liberar a pre-visualizacao oficial."
+      ? "Entre com o usuário Supabase Auth autorizado para salvar e liberar a pré-visualização oficial."
       : copy.textContent;
   }
 }
@@ -324,7 +328,7 @@ const requestPasswordRecovery = async (email) => {
   const config = window.RAIZES_SUPABASE || {};
   const baseUrl = config.url?.replace(/\/$/, "");
   if (!baseUrl || !config.anonKey) {
-    throw new Error("Nao foi possivel conectar ao servico de acesso.");
+    throw new Error("Não foi possível conectar ao serviço de acesso.");
   }
   const response = await fetch(`${baseUrl}/auth/v1/recover?redirect_to=${encodeURIComponent(recoveryRedirectUrl())}`, {
     method: "POST",
@@ -335,7 +339,7 @@ const requestPasswordRecovery = async (email) => {
     body: JSON.stringify({ email }),
   });
   if (!response.ok && ![400, 404].includes(response.status)) {
-    throw new Error("Nao foi possivel enviar as instrucoes agora.");
+    throw new Error("Não foi possível enviar as instruções agora.");
   }
   return true;
 };
@@ -351,7 +355,7 @@ const setRecoveryBusy = (isBusy) => {
   const button = recoveryForm?.querySelector("button[type='submit']");
   if (button) {
     button.disabled = isBusy;
-    button.textContent = isBusy ? "Enviando..." : "Enviar instrucoes";
+    button.textContent = isBusy ? "Enviando..." : "Enviar instruções";
   }
 };
 
@@ -372,15 +376,15 @@ recoveryForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const email = String(new FormData(recoveryForm).get("recovery_email") || "").trim().toLowerCase();
   if (!email) {
-    showRecoveryMessage("Informe o e-mail para receber as instrucoes.", "error");
+    showRecoveryMessage("Informe o e-mail para receber as instruções.", "error");
     return;
   }
   setRecoveryBusy(true);
   try {
     await requestPasswordRecovery(email);
-    showRecoveryMessage("Se existir uma conta para este e-mail, enviaremos as instrucoes de recuperacao.");
+    showRecoveryMessage("Se existir uma conta para este e-mail, enviaremos as instruções de recuperação.");
   } catch (error) {
-    showRecoveryMessage(error.message || "Nao foi possivel enviar as instrucoes agora.", "error");
+    showRecoveryMessage(error.message || "Não foi possível enviar as instruções agora.", "error");
   } finally {
     setRecoveryBusy(false);
   }
@@ -400,7 +404,7 @@ form?.addEventListener("submit", async (event) => {
   try {
     const context = await authenticateWithSupabase(email, password, { requireQuestionBankRole: requiresQuestionBankRole });
     if (context?.missingPlatformRole) {
-      showLoginError("Usuario autenticado, mas sem perfil de plataforma valido. Solicite platform_role em app_metadata.");
+      showLoginError("Usuário autenticado, mas sem perfil de plataforma válido. Solicite platform_role em app_metadata.");
       setLoginBusy(false);
       return;
     }
@@ -416,8 +420,8 @@ form?.addEventListener("submit", async (event) => {
   if (requiresSupabaseAuth) {
     showLoginError(
       requiresQuestionBankRole
-        ? "Entre com um usuario Supabase Auth valido e com perfil question_bank_role para salvar a avaliacao."
-        : "Entre com um usuario Supabase Auth valido e com perfil de plataforma autorizado."
+        ? "Entre com um usuário Supabase Auth válido e com perfil question_bank_role para salvar a avaliação."
+        : "Entre com um usuário Supabase Auth válido e com perfil de plataforma autorizado."
     );
     setLoginBusy(false);
     return;
@@ -431,8 +435,8 @@ form?.addEventListener("submit", async (event) => {
     if (errorMessage) {
       errorMessage.hidden = false;
       errorMessage.textContent = needsCuratorAccess
-        ? "Use as credenciais demonstrativas de curadoria para acessar esta area."
-        : "Credenciais invalidas para este ambiente.";
+        ? "Use as credenciais demonstrativas de curadoria para acessar esta área."
+        : "Credenciais inválidas para este ambiente.";
     }
     setLoginBusy(false);
     return;
@@ -442,5 +446,5 @@ form?.addEventListener("submit", async (event) => {
   if (isCurator) {
     localStorage.setItem(demoAccess.curatorKey, "true");
   }
-  window.location.replace(getNextPage());
+  window.location.replace(getDemoLoginDestination(selectedAccessRole));
 });

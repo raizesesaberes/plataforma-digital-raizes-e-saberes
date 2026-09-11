@@ -85,11 +85,11 @@ resetForm?.addEventListener("submit", async (event) => {
     return;
   }
   if (password !== passwordConfirm) {
-    showResetError("As senhas nao conferem.");
+    showResetError("As senhas não conferem.");
     return;
   }
   if (!baseUrl || !config.anonKey) {
-    showResetError("Nao foi possivel conectar ao servico de acesso.");
+    showResetError("Não foi possível conectar ao serviço de acesso.");
     return;
   }
 
@@ -105,7 +105,7 @@ resetForm?.addEventListener("submit", async (event) => {
       body: JSON.stringify({ password }),
     });
     if (!response.ok) {
-      throw new Error("Nao foi possivel redefinir a senha com este link.");
+      throw new Error("Não foi possível redefinir a senha com este link.");
     }
     localStorage.removeItem(resetSessionStorageKey);
     localStorage.removeItem("raizes:supabase-access-token");
@@ -113,7 +113,7 @@ resetForm?.addEventListener("submit", async (event) => {
     showResetSuccess("Senha atualizada. Volte ao login e acesse com a nova senha.");
     setResetComplete();
   } catch (error) {
-    showResetError(error.message || "Nao foi possivel redefinir a senha.");
+    showResetError(error.message || "Não foi possível redefinir a senha.");
     setResetBusy(false);
   }
 });

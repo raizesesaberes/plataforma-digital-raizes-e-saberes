@@ -187,7 +187,7 @@ const normalizeContentGovernanceType = (type = "") => {
   if (["printable_activity", "printable-activity", "atividade", "atividades"].includes(value)) return "activity";
   if (["books", "livro", "livros"].includes(value)) return "book";
   if (["games", "jogo", "jogos"].includes(value)) return "game";
-  if (["experiences", "experiencia", "experiencias"].includes(value)) return "experience";
+  if (["experiences", "experiência", "experiências"].includes(value)) return "experience";
   return value;
 };
 const isContentGovernanceRequired = () =>
@@ -244,7 +244,7 @@ const ensureContentGovernanceData = async ({ force = false } = {}) => {
       contentGovernanceState.status = "error";
       contentGovernanceState.schoolIds = [];
       contentGovernanceState.availability = [];
-      contentGovernanceState.error = error.message || "Nao foi possivel carregar a disponibilidade de conteudos.";
+      contentGovernanceState.error = error.message || "Não foi possível carregar a disponibilidade de conteúdos.";
     } finally {
       contentGovernanceState.promise = null;
     }
@@ -267,16 +267,16 @@ const isContentAvailableToSession = (type, id) => {
 };
 const filterContentForSession = (items = [], type, getId = (item) => item?.id) =>
   isContentGovernanceRequired() ? items.filter((item) => isContentAvailableToSession(type, getId(item))) : items;
-const renderContentGovernanceLoading = (title = "Conteudos") => `
+const renderContentGovernanceLoading = (title = "Conteúdos") => `
   <section class="bv-section">
     <div class="panel-head"><h2>${contentGovernanceEscape(title)}</h2><a>carregando</a></div>
-    <p class="bv-empty-state">Carregando conteudos disponiveis para sua escola.</p>
+    <p class="bv-empty-state">Carregando conteúdos disponíveis para sua escola.</p>
   </section>
 `;
-const renderContentUnavailableForSchool = ({ title = "Conteudo indisponivel", type = "conteudo", id = "" } = {}) => `
+const renderContentUnavailableForSchool = ({ title = "Conteúdo indisponível", type = "conteúdo", id = "" } = {}) => `
   <section class="bv-section">
     <div class="panel-head"><h2>${contentGovernanceEscape(title)}</h2><a>${contentGovernanceEscape(type)}</a></div>
-    <p class="bv-empty-state">Este conteudo nao esta disponivel para a sua escola neste momento.</p>
+    <p class="bv-empty-state">Este conteúdo não está disponível para a sua escola neste momento.</p>
     ${id ? `<p class="bv-empty-state">${contentGovernanceEscape(id)}</p>` : ""}
   </section>
 `;
@@ -325,7 +325,7 @@ const signOutPlatformSession = async ({ redirectTo } = {}) => {
       });
     }
   } catch (error) {
-    // A limpeza local abaixo garante que o navegador nao reaproveite a sessao.
+    // A limpeza local abaixo garante que o navegador não reaproveite a sessão.
   }
   clearPlatformSession();
   window.location.replace(redirectTo || `${platformRoute("/login.html", "login.html")}?logout=1`);
@@ -424,7 +424,7 @@ const showPlatformRedirectState = (message = "Redirecionando para o acesso corre
   if (document.body) {
     document.body.innerHTML = `
       <main class="platform-auth-redirect">
-        <strong>Acesso em verificacao</strong>
+        <strong>Acesso em verificação</strong>
         <p>${safeMessage}</p>
       </main>
     `;
@@ -447,12 +447,12 @@ const requirePlatformAuth = () => {
   const currentRole = getCurrentPlatformRole();
   if (protectedRouteKey) {
     if (!currentRole) {
-      showPlatformRedirectState("Validando sua sessao antes de abrir este ambiente.");
+      showPlatformRedirectState("Validando sua sessão antes de abrir este ambiente.");
       window.location.replace(`${platformAuth.loginPage}?next=${encodeURIComponent(currentPath)}&auth=supabase&reason=role`);
       return;
     }
     if (!canAccessPlatformRoute(protectedRouteKey, currentRole)) {
-      showPlatformRedirectState("Seu perfil sera direcionado para o ambiente correto.");
+      showPlatformRedirectState("Seu perfil será direcionado para o ambiente correto.");
       window.location.replace(getRoleHome(currentRole));
       return;
     }
@@ -469,7 +469,7 @@ const requirePlatformAuth = () => {
     return;
   }
 
-  showPlatformRedirectState("Entre com seu usuario para continuar.");
+  showPlatformRedirectState("Entre com seu usuário para continuar.");
   window.location.replace(`${platformAuth.loginPage}?next=${encodeURIComponent(currentPath)}`);
 };
 
@@ -477,37 +477,37 @@ requirePlatformAuth();
 
 const ecosystemModules = [
   ["index.html", "Site"],
-  ["plataforma.html", "Inicio"],
+  ["plataforma.html", "Início"],
   ["admin.html", "Admin / TI"],
   ["escola.html", "Escola"],
-  ["educacao-infantil.html", "Area da Escola Infantil"],
+  ["educacao-infantil.html", "Área da Escola Infantil"],
   ["aluno.html", "Aluno"],
-  ["arvore.html", "Minha Arvore"],
-  ["missao.html", "Missao do Dia"],
+  ["arvore.html", "Minha Árvore"],
+  ["missao.html", "Missão do Dia"],
   ["jogos.html", "Jogos"],
   ["perfil.html", "Perfil"],
   ["biblioteca.html", "Biblioteca"],
   ["universidade.html", "Universidade"],
   ["book-viewer.html", "Book Viewer"],
   ["professor.html", "Professor"],
-  ["atividades.html", "Atividades Imprimiveis"],
+  ["atividades.html", "Atividades Imprimíveis"],
   ["motor-atividade.html", "Motor de Atividades"],
   ["admin-atividades.html", "Admin Atividades"],
   ["avalia.html", "Avalia+"],
-  ["banco-questoes.html", "Banco de Questoes"],
+  ["banco-questoes.html", "Banco de Questões"],
   ["secretaria.html", "Secretaria"],
   ["gestor.html", "Gestor"],
-  ["familia.html", "Familia"],
+  ["familia.html", "Família"],
 ];
 
 const secretariaOfficialModules = [
   ["painel", "Painel", "secretaria.html?view=painel"],
   ["alunos", "Alunos", "secretaria.html?view=alunos"],
-  ["matriculas", "Matriculas", "secretaria.html?view=matriculas"],
-  ["responsaveis", "Responsaveis", "secretaria.html?view=responsaveis"],
+  ["matriculas", "Matrículas", "secretaria.html?view=matriculas"],
+  ["responsaveis", "Responsáveis", "secretaria.html?view=responsaveis"],
   ["turmas", "Turmas", "secretaria.html?view=turmas"],
   ["professores", "Professores", "secretaria.html?view=professores"],
-  ["frequencia", "Frequencia", "secretaria.html?view=frequencia"],
+  ["frequencia", "Frequência", "secretaria.html?view=frequencia"],
   ["documentos", "Documentos", "secretaria.html?view=documentos"],
   ["comunicados", "Comunicados", "secretaria.html?view=comunicados"],
 ];
@@ -538,22 +538,22 @@ const questionCurationStates = [
 
 const questionAccessRules = [
   ["Administrador nacional", "Acesso total, publica somente itens aprovados/homologados e audita fontes."],
-  ["Gestor da rede", "Visualiza indicadores, avaliacoes salvas e uso por escola/rede."],
+  ["Gestor da rede", "Visualiza indicadores, avaliações salvas e uso por escola/rede."],
   ["Curador", "Cadastra fontes, analisa licencas e bloqueia itens com risco juridico."],
-  ["Revisor pedagogico", "Revisa habilidade, descritor, gabarito, distratores e intervencao."],
-  ["Professor", "Pesquisa itens publicados, monta avaliacoes e envia itens autorais para curadoria."],
-  ["Aplicador", "Aplica avaliacoes atribuidas e registra data/status de aplicacao."],
+  ["Revisor pedagógico", "Revisa habilidade, descritor, gabarito, distratores e intervenção."],
+  ["Professor", "Pesquisa itens publicados, monta avaliações e envia itens autorais para curadoria."],
+  ["Aplicador", "Aplica avaliações atribuídas e registra data/status de aplicação."],
   ["Visualizador", "Consulta metadados liberados, sem editar, publicar ou aplicar."],
 ];
 
 const questionSourcesDemo = [
   {
     id: "fonte-rs-autoral",
-    name: "Raizes e Saberes - Banco Demonstrativo Ficticio",
+    name: "Raízes e Saberes - Banco Demonstrativo Fictício",
     origin: "Autoral",
-    author: "Equipe Pedagogica Raizes e Saberes",
+    author: "Equipe Pedagógica Raízes e Saberes",
     license: "Uso interno demonstrativo",
-    legalStatus: "Autorizado para demonstracao",
+    legalStatus: "Autorizado para demonstração",
     curationStatus: "HOMOLOGADO",
   },
 ];
@@ -561,17 +561,17 @@ const questionSourcesDemo = [
 const demoQuestionBankItems = [
   {
     id: "RS-DEMO-LP2-001",
-    title: "Localizar informacao explicita em bilhete",
+    title: "Localizar informação explícita em bilhete",
     component: "Lingua Portuguesa",
     stage: "Ensino Fundamental - Anos Iniciais",
     year: "2o ano",
     unit: "Leitura/escuta",
     object: "Compreensao em leitura",
     skill: "EF02LP12",
-    descriptor: "Matriz SAEB - localizar informacao explicita em texto curto",
+    descriptor: "Matriz SAEB - localizar informação explícita em texto curto",
     proficiency: "Basico",
     difficulty: "Facil",
-    cognitiveProcess: "Localizar informacao",
+    cognitiveProcess: "Localizar informação",
     type: "Multipla escolha",
     resource: "Texto-base",
     estimatedTime: 4,
@@ -579,12 +579,12 @@ const demoQuestionBankItems = [
     originType: "Autoral",
     legalClassification: questionLegalClassifications[1],
     sourceId: "fonte-rs-autoral",
-    author: "Equipe Pedagogica Raizes e Saberes",
+    author: "Equipe Pedagógica Raízes e Saberes",
     license: "Uso interno demonstrativo",
     createdAt: "2026-07-28",
     reviewedAt: "2026-07-28",
     version: "1.0",
-    reviewer: "Revisao pedagogica demonstrativa",
+    reviewer: "Revisão pedagógica demonstrativa",
     curationStatus: "HOMOLOGADO",
     publicationStatus: "PUBLICADO",
     statement: "Leia o bilhete e responda.",
@@ -593,7 +593,7 @@ const demoQuestionBankItems = [
     correctAlternative: 0,
     justification: "O bilhete pede que Lia leve o caderno azul.",
     distractors: ["Mochila vermelha nao aparece no texto.", "Livro de matematica nao e solicitado.", "Tesoura sem ponta nao aparece no bilhete."],
-    rightFeedback: "Voce localizou a informacao pedida no bilhete.",
+    rightFeedback: "Você localizou a informação pedida no bilhete.",
     wrongFeedback: "Volte ao bilhete e procure o objeto que Lia deve levar.",
     intervention: "Reler bilhetes curtos destacando palavras-chave.",
     usedCount: 8,
@@ -619,12 +619,12 @@ const demoQuestionBankItems = [
     originType: "Autoral",
     legalClassification: questionLegalClassifications[1],
     sourceId: "fonte-rs-autoral",
-    author: "Equipe Pedagogica Raizes e Saberes",
+    author: "Equipe Pedagógica Raízes e Saberes",
     license: "Uso interno demonstrativo",
     createdAt: "2026-07-28",
     reviewedAt: "2026-07-28",
     version: "1.0",
-    reviewer: "Revisao pedagogica demonstrativa",
+    reviewer: "Revisão pedagógica demonstrativa",
     curationStatus: "HOMOLOGADO",
     publicationStatus: "PUBLICADO",
     statement: "Em uma caixa havia 20 lapis. A professora colocou mais 10 lapis. Quantos lapis ficaram na caixa?",
@@ -633,7 +633,7 @@ const demoQuestionBankItems = [
     correctAlternative: 2,
     justification: "20 + 10 = 30.",
     distractors: ["10 considera apenas a quantidade acrescentada.", "20 considera apenas a quantidade inicial.", "40 acrescenta uma dezena a mais."],
-    rightFeedback: "Voce somou as dezenas corretamente.",
+    rightFeedback: "Você somou as dezenas corretamente.",
     wrongFeedback: "Monte a conta 20 + 10 e conte as dezenas.",
     intervention: "Usar material dourado ou quadro de dezenas para compor 20 + 10.",
     usedCount: 5,
@@ -659,12 +659,12 @@ const demoQuestionBankItems = [
     originType: "Autoral",
     legalClassification: questionLegalClassifications[1],
     sourceId: "fonte-rs-autoral",
-    author: "Equipe Pedagogica Raizes e Saberes",
+    author: "Equipe Pedagógica Raízes e Saberes",
     license: "Uso interno demonstrativo",
     createdAt: "2026-07-28",
     reviewedAt: "2026-07-28",
     version: "1.0",
-    reviewer: "Revisao pedagogica demonstrativa",
+    reviewer: "Revisão pedagógica demonstrativa",
     curationStatus: "APROVADO",
     publicationStatus: "PUBLICADO",
     statement: "No trecho, o que significa a expressao destacada?",
@@ -672,8 +672,8 @@ const demoQuestionBankItems = [
     alternatives: ["Bia ficou com sono.", "Bia ficou muito animada.", "Bia ficou com medo.", "Bia ficou sem entender."],
     correctAlternative: 1,
     justification: "A expressao indica entusiasmo e alegria com o resultado.",
-    distractors: ["Sono nao combina com o contexto de conquista.", "Medo nao aparece no texto.", "Nao ha indicio de duvida no trecho."],
-    rightFeedback: "Voce usou o contexto para entender a expressao.",
+    distractors: ["Sono não combina com o contexto de conquista.", "Medo não aparece no texto.", "Não há indício de dúvida no trecho."],
+    rightFeedback: "Você usou o contexto para entender a expressao.",
     wrongFeedback: "Observe o que aconteceu antes da expressao e o sentimento esperado.",
     intervention: "Comparar expressoes figuradas com situacoes do cotidiano.",
     usedCount: 0,
@@ -688,10 +688,10 @@ const demoQuestionBankItems = [
     unit: "Probabilidade e estatistica",
     object: "Leitura de grafico",
     skill: "EF05MA24",
-    descriptor: "Matriz SAEB - ler informacoes em graficos e tabelas",
+    descriptor: "Matriz SAEB - ler informações em gráficos e tabelas",
     proficiency: "Adequado",
     difficulty: "Media",
-    cognitiveProcess: "Interpretar informacao",
+    cognitiveProcess: "Interpretar informação",
     type: "Leitura de grafico",
     resource: "Grafico",
     estimatedTime: 7,
@@ -699,12 +699,12 @@ const demoQuestionBankItems = [
     originType: "Autoral",
     legalClassification: questionLegalClassifications[1],
     sourceId: "fonte-rs-autoral",
-    author: "Equipe Pedagogica Raizes e Saberes",
+    author: "Equipe Pedagógica Raízes e Saberes",
     license: "Uso interno demonstrativo",
     createdAt: "2026-07-28",
     reviewedAt: "2026-07-28",
     version: "1.0",
-    reviewer: "Revisao pedagogica demonstrativa",
+    reviewer: "Revisão pedagógica demonstrativa",
     curationStatus: "AGUARDANDO REVISAO PEDAGOGICA",
     publicationStatus: "NAO PUBLICADO",
     statement: "A turma registrou os livros lidos no mes: aventura 12, poesia 8, conto 10. Qual tipo teve mais leituras?",
@@ -713,8 +713,8 @@ const demoQuestionBankItems = [
     correctAlternative: 0,
     justification: "Aventura tem 12 leituras, maior valor entre os dados.",
     distractors: ["Poesia tem 8, menor que 12.", "Conto tem 10, menor que 12.", "Os valores sao diferentes."],
-    rightFeedback: "Voce comparou os valores do grafico corretamente.",
-    wrongFeedback: "Compare os tres numeros e encontre o maior.",
+    rightFeedback: "Você comparou os valores do grafico corretamente.",
+    wrongFeedback: "Compare os três números e encontre o maior.",
     intervention: "Construir grafico com barras fisicas e ordenar os valores.",
     usedCount: 0,
     lastUsedClass: "",
@@ -722,18 +722,18 @@ const demoQuestionBankItems = [
 ];
 
 const savedAssessmentDemo = [
-  { title: "Diagnostico 2o ano - leitura e numeros", status: "Rascunho", items: 2, className: "2o Ano A", date: "2026-08-05" },
+  { title: "Diagnóstico 2o ano - leitura e números", status: "Rascunho", items: 2, className: "2o Ano A", date: "2026-08-05" },
   { title: "Simulado 5o ano - LP e Matematica", status: "Pronto para aplicar", items: 8, className: "5o Ano B", date: "2026-08-12" },
 ];
 
 const masterBook001 = {
   id: "livro-mestre-001",
-  title: "Educacao Infantil 2 anos",
+  title: "Educação Infantil 2 anos",
   subtitle: "Livro do Aluno - Volume 1",
   catalogTitle: "Volume 1",
   level: "Infantil 2",
   type: "Livro do Aluno",
-  collection: "Colecao Raizes e Saberes",
+  collection: "Coleção Raízes e Saberes",
   totalPages: 126,
   basePath: "assets",
   cover: "assets/livro-mestre-001/pages/page-001.webp",
@@ -745,7 +745,7 @@ const masterBook001 = {
     ["Abertura", 1],
     ["Sumario", 10],
     ["Unidade 1 - Eu e meu mundo", 14],
-    ["Unidade 2 - Historias e imaginacao", 34],
+    ["Unidade 2 - Historias e imaginação", 34],
     ["Unidade 3 - Descobrindo o mundo", 56],
     ["Unidade 4 - Eu e os outros", 76],
     ["Projetos Integradores", 92],
@@ -759,12 +759,12 @@ const legacyInfantilBookCatalog = [
   masterBook001,
   {
     id: "livro-002",
-    title: "Educacao Infantil 2 anos",
+    title: "Educação Infantil 2 anos",
     subtitle: "Livro do Aluno - Volume 2",
     catalogTitle: "Volume 2",
     level: "Infantil 2",
     type: "Livro do Aluno",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 124,
     basePath: "assets",
     cover: "assets/livro-002/pages/page-001.jpg",
@@ -779,18 +779,18 @@ const legacyInfantilBookCatalog = [
       ["Convivencia e escola", 30],
       ["Rotina e descobertas", 50],
       ["Cores, tamanhos e comparacoes", 70],
-      ["Caminhos e organizacao", 90],
+      ["Caminhos e organização", 90],
       ["Descobrindo os seres vivos", 110],
     ],
   },
   {
     id: "laboratorio-sensorial-002",
-    title: "Educacao Infantil 2 anos",
+    title: "Educação Infantil 2 anos",
     subtitle: "Laboratorio Sensorial",
     catalogTitle: "Laboratorio Sensorial",
     level: "Infantil 2",
     type: "Laboratorio Sensorial",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 41,
     basePath: "assets",
     cover: "assets/laboratorio-sensorial-002/pages/page-001.jpg",
@@ -799,7 +799,7 @@ const legacyInfantilBookCatalog = [
     thumb: (page) => `assets/laboratorio-sensorial-002/thumbs/page-${String(page).padStart(3, "0")}.jpg`,
     page: (page) => `assets/laboratorio-sensorial-002/pages/page-${String(page).padStart(3, "0")}.jpg`,
     summary: [
-      ["Apresentacao", 1],
+      ["Apresentação", 1],
       ["Missoes sensoriais", 2],
       ["Explorando os sentidos", 5],
       ["Sons e corpo", 10],
@@ -811,12 +811,12 @@ const legacyInfantilBookCatalog = [
   },
   {
     id: "livro-003",
-    title: "Educacao Infantil 3 anos",
+    title: "Educação Infantil 3 anos",
     subtitle: "Livro do Aluno - Volume 1",
     catalogTitle: "Volume 1",
     level: "Infantil 3",
     type: "Livro do Aluno",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 151,
     basePath: "assets",
     cover: "assets/livro-003/pages/page-001.jpg",
@@ -826,9 +826,9 @@ const legacyInfantilBookCatalog = [
     page: (page) => `assets/livro-003/pages/page-${String(page).padStart(3, "0")}.jpg`,
     summary: [
       ["Abertura", 1],
-      ["Campos de experiencia", 8],
+      ["Campos de experiência", 8],
       ["Unidade 1 - Eu me comunico", 20],
-      ["Brincadeiras e imaginacao", 60],
+      ["Brincadeiras e imaginação", 60],
       ["Formas e descobertas", 100],
       ["Unidade 1 - Eu e minha familia", 120],
       ["Unidade 2 - Meu corpo e cuidados", 140],
@@ -837,12 +837,12 @@ const legacyInfantilBookCatalog = [
   },
   {
     id: "laboratorio-sensorial-003",
-    title: "Educacao Infantil 3 anos",
+    title: "Educação Infantil 3 anos",
     subtitle: "Laboratorio Sensorial",
     catalogTitle: "Laboratorio Sensorial",
     level: "Infantil 3",
     type: "Laboratorio Sensorial",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 47,
     basePath: "assets",
     cover: "assets/laboratorio-sensorial-003/pages/page-001.jpg",
@@ -851,7 +851,7 @@ const legacyInfantilBookCatalog = [
     thumb: (page) => `assets/laboratorio-sensorial-003/thumbs/page-${String(page).padStart(3, "0")}.jpg`,
     page: (page) => `assets/laboratorio-sensorial-003/pages/page-${String(page).padStart(3, "0")}.jpg`,
     summary: [
-      ["Apresentacao", 1],
+      ["Apresentação", 1],
       ["Missoes sensoriais", 2],
       ["Explorando os sentidos", 5],
       ["Sons e corpo", 12],
@@ -862,12 +862,12 @@ const legacyInfantilBookCatalog = [
   },
   {
     id: "livro-004",
-    title: "Educacao Infantil 3 anos",
+    title: "Educação Infantil 3 anos",
     subtitle: "Livro do Aluno - Volume 2",
     catalogTitle: "Volume 2",
     level: "Infantil 3",
     type: "Livro do Aluno",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 126,
     basePath: "assets",
     cover: "assets/livro-004/pages/page-001.jpg",
@@ -880,7 +880,7 @@ const legacyInfantilBookCatalog = [
       ["Volume 2 - 2o semestre", 2],
       ["Unidade 3", 10],
       ["Atividades", 30],
-      ["Experiencias", 50],
+      ["Experiências", 50],
       ["Descobertas", 70],
       ["Projetos", 90],
       ["Encerramento", 126],
@@ -888,12 +888,12 @@ const legacyInfantilBookCatalog = [
   },
   {
     id: "livro-005",
-    title: "Educacao Infantil 4 anos",
+    title: "Educação Infantil 4 anos",
     subtitle: "Livro do Aluno - Volume 1",
     catalogTitle: "Volume 1",
     level: "Infantil 4",
     type: "Livro do Aluno",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 142,
     basePath: "assets",
     cover: "assets/livro-005/pages/page-001.jpg",
@@ -906,7 +906,7 @@ const legacyInfantilBookCatalog = [
       ["Volume 1 - 1o semestre", 2],
       ["Unidade 1", 10],
       ["Atividades", 30],
-      ["Experiencias", 55],
+      ["Experiências", 55],
       ["Descobertas", 80],
       ["Projetos", 110],
       ["Encerramento", 142],
@@ -914,12 +914,12 @@ const legacyInfantilBookCatalog = [
   },
   {
     id: "livro-006",
-    title: "Educacao Infantil 4 anos",
+    title: "Educação Infantil 4 anos",
     subtitle: "Livro do Aluno - Volume 2",
     catalogTitle: "Volume 2",
     level: "Infantil 4",
     type: "Livro do Aluno",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 147,
     basePath: "assets",
     cover: "assets/livro-006/pages/page-001.jpg",
@@ -932,7 +932,7 @@ const legacyInfantilBookCatalog = [
       ["Volume 2 - 2o semestre", 2],
       ["Unidade 3", 10],
       ["Atividades", 35],
-      ["Experiencias", 65],
+      ["Experiências", 65],
       ["Descobertas", 95],
       ["Projetos", 120],
       ["Encerramento", 147],
@@ -940,12 +940,12 @@ const legacyInfantilBookCatalog = [
   },
   {
     id: "laboratorio-sensorial-004",
-    title: "Educacao Infantil 4 anos",
+    title: "Educação Infantil 4 anos",
     subtitle: "Laboratorio Sensorial",
     catalogTitle: "Laboratorio Sensorial",
     level: "Infantil 4",
     type: "Laboratorio Sensorial",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 57,
     basePath: "assets",
     cover: "assets/laboratorio-sensorial-004/pages/page-001.jpg",
@@ -954,7 +954,7 @@ const legacyInfantilBookCatalog = [
     thumb: (page) => `assets/laboratorio-sensorial-004/thumbs/page-${String(page).padStart(3, "0")}.jpg`,
     page: (page) => `assets/laboratorio-sensorial-004/pages/page-${String(page).padStart(3, "0")}.jpg`,
     summary: [
-      ["Apresentacao", 1],
+      ["Apresentação", 1],
       ["Missoes sensoriais", 2],
       ["Explorando os sentidos", 8],
       ["Experimentacoes", 18],
@@ -965,12 +965,12 @@ const legacyInfantilBookCatalog = [
   },
   {
     id: "livro-007",
-    title: "Educacao Infantil 5 anos",
+    title: "Educação Infantil 5 anos",
     subtitle: "Livro do Aluno - Volume 1",
     catalogTitle: "Volume 1",
     level: "Infantil 5",
     type: "Livro do Aluno",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 190,
     basePath: "assets",
     cover: "assets/livro-007/pages/page-001.jpg",
@@ -983,7 +983,7 @@ const legacyInfantilBookCatalog = [
       ["Volume 1 - 1o semestre", 2],
       ["Unidade 1", 10],
       ["Atividades", 45],
-      ["Experiencias", 85],
+      ["Experiências", 85],
       ["Descobertas", 125],
       ["Projetos", 160],
       ["Encerramento", 190],
@@ -991,12 +991,12 @@ const legacyInfantilBookCatalog = [
   },
   {
     id: "livro-008",
-    title: "Educacao Infantil 5 anos",
+    title: "Educação Infantil 5 anos",
     subtitle: "Livro do Aluno - Volume 2",
     catalogTitle: "Volume 2",
     level: "Infantil 5",
     type: "Livro do Aluno",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 169,
     basePath: "assets",
     cover: "assets/livro-008/pages/page-001.jpg",
@@ -1009,7 +1009,7 @@ const legacyInfantilBookCatalog = [
       ["Volume 2 - 2o semestre", 2],
       ["Unidade 3", 10],
       ["Atividades", 40],
-      ["Experiencias", 75],
+      ["Experiências", 75],
       ["Descobertas", 110],
       ["Projetos", 140],
       ["Encerramento", 169],
@@ -1017,12 +1017,12 @@ const legacyInfantilBookCatalog = [
   },
   {
     id: "laboratorio-sensorial-005",
-    title: "Educacao Infantil 5 anos",
+    title: "Educação Infantil 5 anos",
     subtitle: "Laboratorio Sensorial",
     catalogTitle: "Laboratorio Sensorial",
     level: "Infantil 5",
     type: "Laboratorio Sensorial",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 63,
     basePath: "assets",
     cover: "assets/laboratorio-sensorial-005/pages/page-001.jpg",
@@ -1031,7 +1031,7 @@ const legacyInfantilBookCatalog = [
     thumb: (page) => `assets/laboratorio-sensorial-005/thumbs/page-${String(page).padStart(3, "0")}.jpg`,
     page: (page) => `assets/laboratorio-sensorial-005/pages/page-${String(page).padStart(3, "0")}.jpg`,
     summary: [
-      ["Apresentacao", 1],
+      ["Apresentação", 1],
       ["Missoes sensoriais", 2],
       ["Explorando os sentidos", 8],
       ["Experimentacoes", 20],
@@ -1060,14 +1060,14 @@ const legacyInfantilBookCatalog = [
     page: (page) => `assets/avalia-portugues-2ano/pages/page-${String(page).padStart(3, "0")}.jpg`,
     summary: [
       ["Capa", 1],
-      ["Apresentacao", 2],
+      ["Apresentação", 2],
       ["Orientacoes de uso", 6],
       ["Unidades", 12],
-      ["Avaliacoes", 42],
+      ["Avaliações", 42],
       ["Simulados", 86],
-      ["Revisao", 118],
+      ["Revisão", 118],
       ["Recomposicao", 134],
-      ["Producao escrita", 150],
+      ["Produção escrita", 150],
     ],
   },
   {
@@ -1090,12 +1090,12 @@ const legacyInfantilBookCatalog = [
     page: (page) => `assets/avalia-matematica-2ano/pages/page-${String(page).padStart(3, "0")}.jpg`,
     summary: [
       ["Capa", 1],
-      ["Apresentacao", 2],
+      ["Apresentação", 2],
       ["Orientacoes de uso", 6],
       ["Unidades", 10],
-      ["Avaliacoes", 20],
+      ["Avaliações", 20],
       ["Simulados", 34],
-      ["Revisao", 46],
+      ["Revisão", 46],
       ["Encerramento", 56],
     ],
   },
@@ -1119,7 +1119,7 @@ const legacyInfantilBookCatalog = [
     page: (page) => `assets/avalia-matematica-6ano/pages/page-${String(page).padStart(3, "0")}.jpg`,
     summary: [
       ["Capa", 1],
-      ["Apresentacao", 2],
+      ["Apresentação", 2],
       ["Orientacoes de uso", 3],
       ["Atividades", 5],
       ["Simulado", 9],
@@ -1146,7 +1146,7 @@ const legacyInfantilBookCatalog = [
     page: (page) => `assets/avalia-portugues-6ano/pages/page-${String(page).padStart(3, "0")}.jpg`,
     summary: [
       ["Capa", 1],
-      ["Apresentacao", 2],
+      ["Apresentação", 2],
       ["Orientacoes de uso", 3],
       ["Atividades", 5],
       ["Simulado", 12],
@@ -1158,12 +1158,12 @@ const legacyInfantilBookCatalog = [
 const renewedInfantilBooks = [
   {
     id: "livro-005",
-    title: "Educacao Infantil 4 anos",
+    title: "Educação Infantil 4 anos",
     subtitle: "Livro do Aluno - Volume 1",
     catalogTitle: "Volume 1",
     level: "Infantil 4",
     type: "Livro do Aluno",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 120,
     basePath: "assets",
     cover: "assets/livro-005/pages/page-001.jpg",
@@ -1174,7 +1174,7 @@ const renewedInfantilBooks = [
     page: (page) => `assets/livro-005/pages/page-${String(page).padStart(3, "0")}.jpg`,
     summary: [
       ["Capa", 1],
-      ["Apresentacao", 2],
+      ["Apresentação", 2],
       ["Volume 1 - 1o semestre", 3],
       ["Atividades", 10],
       ["Projetos", 60],
@@ -1183,12 +1183,12 @@ const renewedInfantilBooks = [
   },
   {
     id: "livro-006",
-    title: "Educacao Infantil 4 anos",
+    title: "Educação Infantil 4 anos",
     subtitle: "Livro do Aluno - Volume 2",
     catalogTitle: "Volume 2",
     level: "Infantil 4",
     type: "Livro do Aluno",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 122,
     basePath: "assets",
     cover: "assets/livro-006/pages/page-001.jpg",
@@ -1199,7 +1199,7 @@ const renewedInfantilBooks = [
     page: (page) => `assets/livro-006/pages/page-${String(page).padStart(3, "0")}.jpg`,
     summary: [
       ["Capa", 1],
-      ["Apresentacao", 2],
+      ["Apresentação", 2],
       ["Volume 2 - 2o semestre", 3],
       ["Atividades", 10],
       ["Projetos", 60],
@@ -1208,12 +1208,12 @@ const renewedInfantilBooks = [
   },
   {
     id: "livro-007",
-    title: "Educacao Infantil 5 anos",
+    title: "Educação Infantil 5 anos",
     subtitle: "Livro do Aluno - Volume 1",
     catalogTitle: "Volume 1",
     level: "Infantil 5",
     type: "Livro do Aluno",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 128,
     basePath: "assets",
     cover: "assets/livro-007/pages/page-001.jpg",
@@ -1224,7 +1224,7 @@ const renewedInfantilBooks = [
     page: (page) => `assets/livro-007/pages/page-${String(page).padStart(3, "0")}.jpg`,
     summary: [
       ["Capa", 1],
-      ["Apresentacao", 2],
+      ["Apresentação", 2],
       ["Volume 1 - 1o semestre", 3],
       ["Atividades", 10],
       ["Projetos", 64],
@@ -1233,12 +1233,12 @@ const renewedInfantilBooks = [
   },
   {
     id: "livro-008",
-    title: "Educacao Infantil 5 anos",
+    title: "Educação Infantil 5 anos",
     subtitle: "Livro do Aluno - Volume 2",
     catalogTitle: "Volume 2",
     level: "Infantil 5",
     type: "Livro do Aluno",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 155,
     basePath: "assets",
     cover: "assets/livro-008/pages/page-001.jpg",
@@ -1249,7 +1249,7 @@ const renewedInfantilBooks = [
     page: (page) => `assets/livro-008/pages/page-${String(page).padStart(3, "0")}.jpg`,
     summary: [
       ["Capa", 1],
-      ["Apresentacao", 2],
+      ["Apresentação", 2],
       ["Volume 2 - 2o semestre", 3],
       ["Atividades", 10],
       ["Projetos", 78],
@@ -1261,12 +1261,12 @@ const renewedInfantilBooks = [
 const renewedProfessorGuideBooks = [
   {
     id: "guia-professor-004-v1",
-    title: "Guia do Professor - Educacao Infantil 4 anos",
+    title: "Guia do Professor - Educação Infantil 4 anos",
     subtitle: "Volume 1",
     catalogTitle: "Guia do Professor - Volume 1",
     level: "Infantil 4",
     type: "Guia do Professor",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 93,
     basePath: "assets",
     cover: "assets/guia-professor-004-v1/pages/page-001.jpg",
@@ -1277,8 +1277,8 @@ const renewedProfessorGuideBooks = [
     page: (page) => `assets/guia-professor-004-v1/pages/page-${String(page).padStart(3, "0")}.jpg`,
     summary: [
       ["Capa", 1],
-      ["Apresentacao", 2],
-      ["Orientacoes pedagogicas", 5],
+      ["Apresentação", 2],
+      ["Orientações pedagógicas", 5],
       ["Planejamento", 20],
       ["Atividades", 45],
       ["Encerramento", 93],
@@ -1286,12 +1286,12 @@ const renewedProfessorGuideBooks = [
   },
   {
     id: "guia-professor-004-v2",
-    title: "Guia do Professor - Educacao Infantil 4 anos",
+    title: "Guia do Professor - Educação Infantil 4 anos",
     subtitle: "Volume 2",
     catalogTitle: "Guia do Professor - Volume 2",
     level: "Infantil 4",
     type: "Guia do Professor",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 93,
     basePath: "assets",
     cover: "assets/guia-professor-004-v2/pages/page-001.jpg",
@@ -1302,8 +1302,8 @@ const renewedProfessorGuideBooks = [
     page: (page) => `assets/guia-professor-004-v2/pages/page-${String(page).padStart(3, "0")}.jpg`,
     summary: [
       ["Capa", 1],
-      ["Apresentacao", 2],
-      ["Orientacoes pedagogicas", 5],
+      ["Apresentação", 2],
+      ["Orientações pedagógicas", 5],
       ["Planejamento", 20],
       ["Atividades", 45],
       ["Encerramento", 93],
@@ -1311,12 +1311,12 @@ const renewedProfessorGuideBooks = [
   },
   {
     id: "guia-professor-005-v1",
-    title: "Guia do Professor - Educacao Infantil 5 anos",
+    title: "Guia do Professor - Educação Infantil 5 anos",
     subtitle: "Volume 1",
     catalogTitle: "Guia do Professor - Volume 1",
     level: "Infantil 5",
     type: "Guia do Professor",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 99,
     basePath: "assets",
     cover: "assets/guia-professor-005-v1/pages/page-001.jpg",
@@ -1327,8 +1327,8 @@ const renewedProfessorGuideBooks = [
     page: (page) => `assets/guia-professor-005-v1/pages/page-${String(page).padStart(3, "0")}.jpg`,
     summary: [
       ["Capa", 1],
-      ["Apresentacao", 2],
-      ["Orientacoes pedagogicas", 5],
+      ["Apresentação", 2],
+      ["Orientações pedagógicas", 5],
       ["Planejamento", 22],
       ["Atividades", 50],
       ["Encerramento", 99],
@@ -1336,12 +1336,12 @@ const renewedProfessorGuideBooks = [
   },
   {
     id: "guia-professor-005-v2",
-    title: "Guia do Professor - Educacao Infantil 5 anos",
+    title: "Guia do Professor - Educação Infantil 5 anos",
     subtitle: "Volume 2",
     catalogTitle: "Guia do Professor - Volume 2",
     level: "Infantil 5",
     type: "Guia do Professor",
-    collection: "Colecao Raizes e Saberes",
+    collection: "Coleção Raízes e Saberes",
     totalPages: 113,
     basePath: "assets",
     cover: "assets/guia-professor-005-v2/pages/page-001.jpg",
@@ -1352,8 +1352,8 @@ const renewedProfessorGuideBooks = [
     page: (page) => `assets/guia-professor-005-v2/pages/page-${String(page).padStart(3, "0")}.jpg`,
     summary: [
       ["Capa", 1],
-      ["Apresentacao", 2],
-      ["Orientacoes pedagogicas", 5],
+      ["Apresentação", 2],
+      ["Orientações pedagógicas", 5],
       ["Planejamento", 25],
       ["Atividades", 55],
       ["Encerramento", 113],
@@ -1383,7 +1383,7 @@ const createLibraryAssetFallback = ({ title = "Biblioteca Viva", note = "CAPA EM
   const fallback = document.createElement("div");
   fallback.className = "library-asset-fallback";
   fallback.setAttribute("role", "img");
-  fallback.setAttribute("aria-label", page ? `Miniatura da pagina ${page} indisponivel` : `${title} - ${note}`);
+  fallback.setAttribute("aria-label", page ? `Miniatura da página ${page} indisponível` : `${title} - ${note}`);
   fallback.innerHTML = page
     ? `<strong>${page}</strong><span>MINIATURA INDISPONIVEL</span>`
     : `<span>Biblioteca Viva</span><strong>${title}</strong><small>${note}</small>`;
@@ -1456,21 +1456,21 @@ const buildRecentReadingCards = () => {
 };
 
 const legacyLibraryBooks = [
-  { src: "assets/biblioteca/RAIZES_INFANTIL2_VOL1_BIBLIOTECA.webp", year: "Infantil 2", title: "Volume 1", type: "Livro do Aluno", href: "book-viewer.html?book=livro-mestre-001", collection: "Educacao Infantil", publishedAt: "2026-07-01" },
-  { src: "assets/biblioteca/RAIZES_INFANTIL2_VOL2_BIBLIOTECA.webp", year: "Infantil 2", title: "Volume 2", type: "Livro do Aluno", href: "book-viewer.html?book=livro-002", collection: "Educacao Infantil", publishedAt: "2026-07-01" },
+  { src: "assets/biblioteca/RAIZES_INFANTIL2_VOL1_BIBLIOTECA.webp", year: "Infantil 2", title: "Volume 1", type: "Livro do Aluno", href: "book-viewer.html?book=livro-mestre-001", collection: "Educação Infantil", publishedAt: "2026-07-01" },
+  { src: "assets/biblioteca/RAIZES_INFANTIL2_VOL2_BIBLIOTECA.webp", year: "Infantil 2", title: "Volume 2", type: "Livro do Aluno", href: "book-viewer.html?book=livro-002", collection: "Educação Infantil", publishedAt: "2026-07-01" },
   { src: "assets/biblioteca/RAIZES_LAB_SENSORIAL_INFANTIL2_BIBLIOTECA.webp", year: "Infantil 2", title: "Laboratorio Sensorial", type: "Material Sensorial", href: "book-viewer.html?book=laboratorio-sensorial-002", collection: "Laboratorio Sensorial", publishedAt: "2026-07-01" },
   { src: "assets/biblioteca/RAIZES_GUIA_ALFABETIZADOR_INFANTIL2_BIBLIOTECA.webp", year: "Infantil 2", title: "Guia do Alfabetizador", type: "Professor", href: "professor.html", collection: "Guias do Professor", publishedAt: "2026-07-08" },
-  { src: "assets/biblioteca/RAIZES_INFANTIL3_VOL1_BIBLIOTECA.webp", year: "Infantil 3", title: "Volume 1", type: "Livro do Aluno", href: "book-viewer.html?book=livro-003", collection: "Educacao Infantil", publishedAt: "2026-07-09" },
-  { src: "assets/biblioteca/RAIZES_INFANTIL3_VOL2_BIBLIOTECA.webp", year: "Infantil 3", title: "Volume 2", type: "Livro do Aluno", href: "book-viewer.html?book=livro-004", collection: "Educacao Infantil", publishedAt: "2026-07-09" },
+  { src: "assets/biblioteca/RAIZES_INFANTIL3_VOL1_BIBLIOTECA.webp", year: "Infantil 3", title: "Volume 1", type: "Livro do Aluno", href: "book-viewer.html?book=livro-003", collection: "Educação Infantil", publishedAt: "2026-07-09" },
+  { src: "assets/biblioteca/RAIZES_INFANTIL3_VOL2_BIBLIOTECA.webp", year: "Infantil 3", title: "Volume 2", type: "Livro do Aluno", href: "book-viewer.html?book=livro-004", collection: "Educação Infantil", publishedAt: "2026-07-09" },
   { src: "assets/biblioteca/RAIZES_LAB_SENSORIAL_INFANTIL3_BIBLIOTECA.webp", year: "Infantil 3", title: "Laboratorio Sensorial", type: "Material Sensorial", href: "book-viewer.html?book=laboratorio-sensorial-003", collection: "Laboratorio Sensorial", publishedAt: "2026-07-09" },
   { src: "assets/biblioteca/RAIZES_GUIA_ALFABETIZADOR_INFANTIL3_BIBLIOTECA.webp", year: "Infantil 3", title: "Guia do Alfabetizador", type: "Professor", href: "professor.html", collection: "Guias do Professor", publishedAt: "2026-07-09" },
-  { src: "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.webp", year: "Infantil 4", title: "Volume 1", type: "Livro do Aluno", href: "book-viewer.html?book=livro-005", collection: "Educacao Infantil", publishedAt: "2026-07-10" },
-  { src: "assets/biblioteca/RAIZES_INFANTIL4_VOL2_BIBLIOTECA.webp", year: "Infantil 4", title: "Volume 2", type: "Livro do Aluno", href: "book-viewer.html?book=livro-006", collection: "Educacao Infantil", publishedAt: "2026-07-10" },
-  { src: "assets/biblioteca/RAIZES_LAB_SENSORIAL_INFANTIL4_BIBLIOTECA.webp", year: "Infantil 4", title: "Lab Sensorial", type: "Experiencias", href: "book-viewer.html?book=laboratorio-sensorial-004", collection: "Laboratorio Sensorial", publishedAt: "2026-07-10" },
+  { src: "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.webp", year: "Infantil 4", title: "Volume 1", type: "Livro do Aluno", href: "book-viewer.html?book=livro-005", collection: "Educação Infantil", publishedAt: "2026-07-10" },
+  { src: "assets/biblioteca/RAIZES_INFANTIL4_VOL2_BIBLIOTECA.webp", year: "Infantil 4", title: "Volume 2", type: "Livro do Aluno", href: "book-viewer.html?book=livro-006", collection: "Educação Infantil", publishedAt: "2026-07-10" },
+  { src: "assets/biblioteca/RAIZES_LAB_SENSORIAL_INFANTIL4_BIBLIOTECA.webp", year: "Infantil 4", title: "Lab Sensorial", type: "Experiências", href: "book-viewer.html?book=laboratorio-sensorial-004", collection: "Laboratorio Sensorial", publishedAt: "2026-07-10" },
   { src: "assets/biblioteca/RAIZES_GUIA_ALFABETIZADOR_INFANTIL4_BIBLIOTECA.webp", year: "Infantil 4", title: "Guia do Alfabetizador", type: "Professor", href: "professor.html", collection: "Guias do Professor", publishedAt: "2026-07-10" },
-  { src: "assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.webp", year: "Infantil 5", title: "Volume 1", type: "Livro do Aluno", href: "book-viewer.html?book=livro-007", collection: "Educacao Infantil", publishedAt: "2026-07-11" },
-  { src: "assets/biblioteca/RAIZES_INFANTIL5_VOL2_BIBLIOTECA.webp", year: "Infantil 5", title: "Volume 2", type: "Livro do Aluno", href: "book-viewer.html?book=livro-008", collection: "Educacao Infantil", publishedAt: "2026-07-11" },
-  { src: "assets/biblioteca/RAIZES_LAB_SENSORIAL_INFANTIL5_BIBLIOTECA.webp", year: "Infantil 5", title: "Lab Sensorial", type: "Experiencias", href: "book-viewer.html?book=laboratorio-sensorial-005", collection: "Laboratorio Sensorial", publishedAt: "2026-07-11" },
+  { src: "assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.webp", year: "Infantil 5", title: "Volume 1", type: "Livro do Aluno", href: "book-viewer.html?book=livro-007", collection: "Educação Infantil", publishedAt: "2026-07-11" },
+  { src: "assets/biblioteca/RAIZES_INFANTIL5_VOL2_BIBLIOTECA.webp", year: "Infantil 5", title: "Volume 2", type: "Livro do Aluno", href: "book-viewer.html?book=livro-008", collection: "Educação Infantil", publishedAt: "2026-07-11" },
+  { src: "assets/biblioteca/RAIZES_LAB_SENSORIAL_INFANTIL5_BIBLIOTECA.webp", year: "Infantil 5", title: "Lab Sensorial", type: "Experiências", href: "book-viewer.html?book=laboratorio-sensorial-005", collection: "Laboratorio Sensorial", publishedAt: "2026-07-11" },
   { src: "assets/_legacy-root/RAIZES_GUIA_ALFABETIZADOR_INFANTIL5_BIBLIOTECA.webp", year: "Infantil 5", title: "Guia do Alfabetizador", type: "Professor", href: "professor.html", collection: "Guias do Professor", publishedAt: "2026-07-11" },
   {
     src: "assets/biblioteca/RAIZES_AVALIA_PORTUGUES_2ANO_BIBLIOTECA.jpg",
@@ -1532,8 +1532,8 @@ const legacyLibraryBooks = [
     actionLabel: "Ler Agora",
     searchTerms: "Avalia+ Português Portugues Língua Portuguesa Lingua Portuguesa 6º Ano 6o Ano Ensino Fundamental Anos Finais Livro do Aluno Aluno Avalia",
   },
-  { src: "assets/colecoes/colecao-ensino-fundamental-provisorio.webp", year: "Fundamental", title: "Colecao Ensino Fundamental", type: "Acervo em expansao", href: "#acervo-completo", collection: "Ensino Fundamental", publishedAt: "2026-07-11", status: "Em expansao" },
-  { src: "assets/colecoes/colecao-avalia-provisorio.webp", year: "Avalia+", title: "Colecao Avalia+", type: "Avaliacoes", href: "avalia.html", collection: "Avalia+", publishedAt: "2026-07-11", status: "Em expansao" },
+  { src: "assets/colecoes/colecao-ensino-fundamental-provisorio.webp", year: "Fundamental", title: "Coleção Ensino Fundamental", type: "Acervo em expansao", href: "#acervo-completo", collection: "Ensino Fundamental", publishedAt: "2026-07-11", status: "Em expansao" },
+  { src: "assets/colecoes/colecao-avalia-provisorio.webp", year: "Avalia+", title: "Coleção Avalia+", type: "Avaliações", href: "avalia.html", collection: "Avalia+", publishedAt: "2026-07-11", status: "Em expansao" },
 ];
 
 const renewedInfantilLibraryBooks = [
@@ -1545,12 +1545,12 @@ const renewedInfantilLibraryBooks = [
     component: "EDUCACAO INFANTIL",
     pages: "120 PAGINAS",
     href: "book-viewer.html?book=livro-005",
-    collection: "Educacao Infantil",
-    stage: "Educacao Infantil",
-    hierarchy: "Educacao Infantil > 4 anos > Livro do Aluno > Volume 1",
+    collection: "Educação Infantil",
+    stage: "Educação Infantil",
+    hierarchy: "Educação Infantil > 4 anos > Livro do Aluno > Volume 1",
     publishedAt: "2026-07-30",
     actionLabel: "Ler Agora",
-    searchTerms: "Educacao Infantil Educação Infantil Infantil 4 anos 4 Anos Livro do Aluno Volume 1 Primeiro Semestre",
+    searchTerms: "Educação Infantil Educação Infantil Infantil 4 anos 4 Anos Livro do Aluno Volume 1 Primeiro Semestre",
   },
   {
     src: "assets/biblioteca/RAIZES_INFANTIL4_VOL2_BIBLIOTECA.jpg",
@@ -1560,12 +1560,12 @@ const renewedInfantilLibraryBooks = [
     component: "EDUCACAO INFANTIL",
     pages: "122 PAGINAS",
     href: "book-viewer.html?book=livro-006",
-    collection: "Educacao Infantil",
-    stage: "Educacao Infantil",
-    hierarchy: "Educacao Infantil > 4 anos > Livro do Aluno > Volume 2",
+    collection: "Educação Infantil",
+    stage: "Educação Infantil",
+    hierarchy: "Educação Infantil > 4 anos > Livro do Aluno > Volume 2",
     publishedAt: "2026-07-30",
     actionLabel: "Ler Agora",
-    searchTerms: "Educacao Infantil Educação Infantil Infantil 4 anos 4 Anos Livro do Aluno Volume 2 Segundo Semestre",
+    searchTerms: "Educação Infantil Educação Infantil Infantil 4 anos 4 Anos Livro do Aluno Volume 2 Segundo Semestre",
   },
   {
     src: "assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.jpg",
@@ -1575,12 +1575,12 @@ const renewedInfantilLibraryBooks = [
     component: "EDUCACAO INFANTIL",
     pages: "128 PAGINAS",
     href: "book-viewer.html?book=livro-007",
-    collection: "Educacao Infantil",
-    stage: "Educacao Infantil",
-    hierarchy: "Educacao Infantil > 5 anos > Livro do Aluno > Volume 1",
+    collection: "Educação Infantil",
+    stage: "Educação Infantil",
+    hierarchy: "Educação Infantil > 5 anos > Livro do Aluno > Volume 1",
     publishedAt: "2026-07-30",
     actionLabel: "Ler Agora",
-    searchTerms: "Educacao Infantil Educação Infantil Infantil 5 anos 5 Anos Livro do Aluno Volume 1 Primeiro Semestre",
+    searchTerms: "Educação Infantil Educação Infantil Infantil 5 anos 5 Anos Livro do Aluno Volume 1 Primeiro Semestre",
   },
   {
     src: "assets/biblioteca/RAIZES_INFANTIL5_VOL2_BIBLIOTECA.jpg",
@@ -1590,12 +1590,12 @@ const renewedInfantilLibraryBooks = [
     component: "EDUCACAO INFANTIL",
     pages: "155 PAGINAS",
     href: "book-viewer.html?book=livro-008",
-    collection: "Educacao Infantil",
-    stage: "Educacao Infantil",
-    hierarchy: "Educacao Infantil > 5 anos > Livro do Aluno > Volume 2",
+    collection: "Educação Infantil",
+    stage: "Educação Infantil",
+    hierarchy: "Educação Infantil > 5 anos > Livro do Aluno > Volume 2",
     publishedAt: "2026-07-30",
     actionLabel: "Ler Agora",
-    searchTerms: "Educacao Infantil Educação Infantil Infantil 5 anos 5 Anos Livro do Aluno Volume 2 Segundo Semestre",
+    searchTerms: "Educação Infantil Educação Infantil Infantil 5 anos 5 Anos Livro do Aluno Volume 2 Segundo Semestre",
   },
 ];
 
@@ -1608,12 +1608,12 @@ const renewedProfessorGuideLibraryBooks = [
     component: "EDUCACAO INFANTIL",
     pages: "93 PAGINAS",
     href: "book-viewer.html?book=guia-professor-004-v1",
-    collection: "Educacao Infantil",
-    stage: "Educacao Infantil",
-    hierarchy: "Educacao Infantil > 4 anos > Guia do Professor > Volume 1",
+    collection: "Educação Infantil",
+    stage: "Educação Infantil",
+    hierarchy: "Educação Infantil > 4 anos > Guia do Professor > Volume 1",
     publishedAt: "2026-07-31",
     actionLabel: "Ler Agora",
-    searchTerms: "Educacao Infantil Educação Infantil Infantil 4 anos 4 Anos Guia do Professor Professor Volume 1 Primeiro Semestre",
+    searchTerms: "Educação Infantil Educação Infantil Infantil 4 anos 4 Anos Guia do Professor Professor Volume 1 Primeiro Semestre",
   },
   {
     src: "assets/biblioteca/RAIZES_GUIA_PROFESSOR_INFANTIL4_VOL2_BIBLIOTECA.jpg",
@@ -1623,12 +1623,12 @@ const renewedProfessorGuideLibraryBooks = [
     component: "EDUCACAO INFANTIL",
     pages: "93 PAGINAS",
     href: "book-viewer.html?book=guia-professor-004-v2",
-    collection: "Educacao Infantil",
-    stage: "Educacao Infantil",
-    hierarchy: "Educacao Infantil > 4 anos > Guia do Professor > Volume 2",
+    collection: "Educação Infantil",
+    stage: "Educação Infantil",
+    hierarchy: "Educação Infantil > 4 anos > Guia do Professor > Volume 2",
     publishedAt: "2026-07-31",
     actionLabel: "Ler Agora",
-    searchTerms: "Educacao Infantil Educação Infantil Infantil 4 anos 4 Anos Guia do Professor Professor Volume 2 Segundo Semestre",
+    searchTerms: "Educação Infantil Educação Infantil Infantil 4 anos 4 Anos Guia do Professor Professor Volume 2 Segundo Semestre",
   },
   {
     src: "assets/biblioteca/RAIZES_GUIA_PROFESSOR_INFANTIL5_VOL1_BIBLIOTECA.jpg",
@@ -1638,12 +1638,12 @@ const renewedProfessorGuideLibraryBooks = [
     component: "EDUCACAO INFANTIL",
     pages: "99 PAGINAS",
     href: "book-viewer.html?book=guia-professor-005-v1",
-    collection: "Educacao Infantil",
-    stage: "Educacao Infantil",
-    hierarchy: "Educacao Infantil > 5 anos > Guia do Professor > Volume 1",
+    collection: "Educação Infantil",
+    stage: "Educação Infantil",
+    hierarchy: "Educação Infantil > 5 anos > Guia do Professor > Volume 1",
     publishedAt: "2026-07-31",
     actionLabel: "Ler Agora",
-    searchTerms: "Educacao Infantil Educação Infantil Infantil 5 anos 5 Anos Guia do Professor Professor Volume 1 Primeiro Semestre",
+    searchTerms: "Educação Infantil Educação Infantil Infantil 5 anos 5 Anos Guia do Professor Professor Volume 1 Primeiro Semestre",
   },
   {
     src: "assets/biblioteca/RAIZES_GUIA_PROFESSOR_INFANTIL5_VOL2_BIBLIOTECA.jpg",
@@ -1653,12 +1653,12 @@ const renewedProfessorGuideLibraryBooks = [
     component: "EDUCACAO INFANTIL",
     pages: "113 PAGINAS",
     href: "book-viewer.html?book=guia-professor-005-v2",
-    collection: "Educacao Infantil",
-    stage: "Educacao Infantil",
-    hierarchy: "Educacao Infantil > 5 anos > Guia do Professor > Volume 2",
+    collection: "Educação Infantil",
+    stage: "Educação Infantil",
+    hierarchy: "Educação Infantil > 5 anos > Guia do Professor > Volume 2",
     publishedAt: "2026-07-31",
     actionLabel: "Ler Agora",
-    searchTerms: "Educacao Infantil Educação Infantil Infantil 5 anos 5 Anos Guia do Professor Professor Volume 2 Segundo Semestre",
+    searchTerms: "Educação Infantil Educação Infantil Infantil 5 anos 5 Anos Guia do Professor Professor Volume 2 Segundo Semestre",
   },
 ];
 
@@ -1666,7 +1666,7 @@ const libraryBooks = [
   ...renewedInfantilLibraryBooks,
   ...renewedProfessorGuideLibraryBooks,
   ...legacyLibraryBooks.filter(
-    (book) => !["Educacao Infantil", "Laboratorio Sensorial", "Guias do Professor"].includes(book.collection)
+    (book) => !["Educação Infantil", "Laboratorio Sensorial", "Guias do Professor"].includes(book.collection)
   ),
 ];
 
@@ -1685,16 +1685,16 @@ const ecosystemConnections = {
   byBook: {
     "livro-005": {
       label: "Curso relacionado disponivel",
-      title: "Educacao Inclusiva: Praticas que Acolhem",
-      lesson: "Aula: acolhimento e inclusao na rotina",
+      title: "Educação Inclusiva: Praticas que Acolhem",
+      lesson: "Aula: acolhimento e inclusão na rotina",
       href: "universidade.html?lesson=educacao-inclusiva-acolhem#curso-relacionado",
     },
   },
   byLesson: {
     "educacao-inclusiva-acolhem": {
       label: "Material didatico relacionado",
-      title: "Educacao Infantil 4 anos - Volume 1",
-      description: "Livro do Aluno conectado a aula de inclusao e acolhimento.",
+      title: "Educação Infantil 4 anos - Volume 1",
+      description: "Livro do Aluno conectado a aula de inclusão e acolhimento.",
       href: "book-viewer.html?book=livro-005&page=20",
     },
   },
@@ -1760,9 +1760,9 @@ const readerBackLabel = getRouteSearchParams().get("from") === "teacher"
 
 const collectionShowcaseCards = [
   {
-    title: "Educacao Infantil",
-    count: `${countMaterialsByCollection("Educacao Infantil")} livros`,
-    description: "Colecao renovada para a Educacao Infantil, iniciando pelos Livros do Aluno de 4 e 5 anos.",
+    title: "Educação Infantil",
+    count: `${countMaterialsByCollection("Educação Infantil")} livros`,
+    description: "Coleção renovada para a Educação Infantil, iniciando pelos Livros do Aluno de 4 e 5 anos.",
     icon: "⌂",
     href: "#acervo-completo",
     covers: [
@@ -1774,8 +1774,8 @@ const collectionShowcaseCards = [
   },
   {
     title: "Ensino Fundamental",
-    count: `${countMaterialsByCollection("Ensino Fundamental")} colecao`,
-    description: "Colecao alinhada a BNCC do 1o ao 9o ano, com trilhas integradas para ampliar repertorio e autonomia.",
+    count: `${countMaterialsByCollection("Ensino Fundamental")} coleção`,
+    description: "Coleção alinhada a BNCC do 1o ao 9o ano, com trilhas integradas para ampliar repertorio e autonomia.",
     icon: "▣",
     href: "#acervo-completo",
     coverGroup: "assets/colecoes/colecao-ensino-fundamental-provisorio.webp",
@@ -1784,7 +1784,7 @@ const collectionShowcaseCards = [
   {
     title: "Avalia+",
     count: `${countMaterialsByCollection("Avalia+")} materiais`,
-    description: "Avaliacoes diagnosticas, formativas e somativas para acompanhar resultados e orientar intervencoes.",
+    description: "Avaliações diagnosticas, formativas e somativas para acompanhar resultados e orientar intervenções.",
     icon: "✓",
     href: "avalia.html",
     coverGroup: "assets/colecoes/colecao-avalia-provisorio.webp",
@@ -1793,7 +1793,7 @@ const collectionShowcaseCards = [
   {
     title: "Materiais Complementares",
     count: "Em expansao",
-    description: "Recursos adicionais para enriquecer o ensino: atividades, projetos, jogos, videos e sequencias de apoio.",
+    description: "Recursos adicionais para enriquecer o ensino: atividades, projetos, jogos, vídeos e sequencias de apoio.",
     icon: "▤",
     href: "#acervo-completo",
     coverGroup: "assets/colecoes/colecao-materiais-complementares-provisorio.webp",
@@ -1819,7 +1819,7 @@ const collectionShowcaseCardsHtml = collectionShowcaseCards
             ${collection.status ? `<span class="collection-status">${collection.status}</span>` : ""}
             <p class="collection-count">📖 ${collection.count}</p>
             <p class="collection-description">${collection.description}</p>
-            <a class="collection-action" href="${collection.href}">Explorar Colecao <span>›</span></a>
+            <a class="collection-action" href="${collection.href}">Explorar Coleção <span>›</span></a>
           </div>
         </div>
       </article>
@@ -1906,7 +1906,7 @@ const libraryContinueBooks = withCatalogBook(allReadableBooks)
   .sort((first, second) => getReadingProgress(second.catalogBook.id, second.catalogBook.totalPages) - getReadingProgress(first.catalogBook.id, first.catalogBook.totalPages))
   .slice(0, 6);
 const libraryFavoriteBooks = withCatalogBook(allReadableBooks).filter(({ catalogBook }) => isFavoriteBook(catalogBook.id));
-const libraryRecommendedBooks = allReadableBooks.filter((book) => book.collection === "Educacao Infantil").slice(0, 8);
+const libraryRecommendedBooks = allReadableBooks.filter((book) => book.collection === "Educação Infantil").slice(0, 8);
 const libraryTeacherBooks = allReadableBooks.filter((book) => book.type === "Guia do Professor").slice(0, 4);
 const libraryStudentBooks = allReadableBooks.filter((book) => book.type === "Livro do Aluno").slice(0, 8);
 const libraryFeaturedBook = getCatalogBookFromLibraryBook(featuredLibraryBook) || defaultBook;
@@ -1956,10 +1956,10 @@ const buildFeaturedExperiencePanel = () => {
       </div>
       <div class="library-experience-content">
         <div class="panel-head">
-          <h2 id="library-experience-title">Experiencia digital vinculada</h2>
+          <h2 id="library-experience-title">Experiência digital vinculada</h2>
           <a href="book-viewer.html?book=${featuredInfantilExperience.bookId}&page=${pages[0] || 1}">Paginas ${pages.join(", ")}</a>
         </div>
-        <span class="library-experience-status">${state?.label || "Disponivel"}</span>
+        <span class="library-experience-status">${state?.label || "Disponível"}</span>
         <h3>${featuredInfantilExperience.title}</h3>
         <p>${featuredInfantilExperience.description}</p>
         <dl>
@@ -1970,7 +1970,7 @@ const buildFeaturedExperiencePanel = () => {
         </dl>
         ${asset?.provisionalFilePath ? `<p class="library-experience-note">${asset.note}</p>` : ""}
         <div class="library-experience-actions">
-          <button type="button" data-open-experience="${featuredInfantilExperience.id}">Viver esta experiencia</button>
+          <button type="button" data-open-experience="${featuredInfantilExperience.id}">Viver esta experiência</button>
           <a href="book-viewer.html?book=${featuredInfantilExperience.bookId}&page=${pages[0] || 1}">Localizar atividade</a>
         </div>
       </div>
@@ -1987,15 +1987,15 @@ const getInfantilExperienceProgress = (experienceId) =>
 const getInfantilExperienceStatus = (experience) => {
   const progress = getInfantilExperienceProgress(experience.id);
   if (progress?.status === "completed" || progress?.progressPercent >= 90 || progress?.percentWatched >= 90) {
-    return { key: "completed", label: "Concluida", percent: 100 };
+    return { key: "completed", label: "Concluída", percent: 100 };
   }
   if (progress?.status === "in_progress" || progress?.startedAt || progress?.progressPercent > 0 || progress?.percentWatched > 0) {
     return { key: "in-progress", label: "Em andamento", percent: Math.max(1, progress.progressPercent ?? progress.percentWatched ?? 1) };
   }
-  return { key: "not-started", label: experience.availability === "unavailable" ? "Indisponivel" : "Nao iniciada", percent: 0 };
+  return { key: "not-started", label: experience.availability === "unavailable" ? "Indisponível" : "Não iniciada", percent: 0 };
 };
 const getInfantilExperienceAction = (status) =>
-  status.key === "completed" ? "Viver novamente" : status.key === "in-progress" ? "Continuar experiencia" : "Viver esta experiencia";
+  status.key === "completed" ? "Viver novamente" : status.key === "in-progress" ? "Continuar experiência" : "Viver esta experiência";
 const getInfantilExperienceSearch = (experience) =>
   [
     experience.id,
@@ -2094,7 +2094,7 @@ const renderExperienceOfficialCard = (experience, { compact = false } = {}) => {
   const duration = experience.duration ? `${experience.duration}s` : "Em curadoria";
   return `
     <article class="bv-experience-card ${compact ? "is-compact" : ""} ${isFavorite ? "is-favorite" : ""}" data-bv-experience-card data-experience-code="${experience.id}" data-age-group="${experience.ageGroup}" data-volume="${experience.volume}" data-unit="${experience.unit || ""}" data-type="${experience.experienceType || ""}" data-status="${status.key}" data-favorite="${isFavorite ? "true" : "false"}" data-recent="${progress?.lastAccessedAt || ""}" data-search="${getInfantilExperienceSearch(experience)}">
-      <a class="bv-experience-cover" href="${getInfantilExperienceUrl(experience.id)}" aria-label="Abrir perfil da experiencia ${experience.title}">
+      <a class="bv-experience-cover" href="${getInfantilExperienceUrl(experience.id)}" aria-label="Abrir perfil da experiência ${experience.title}">
         <img src="${asset?.coverPath || "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg"}" alt="${experience.title}" loading="lazy" />
         <span>${status.label}</span>
       </a>
@@ -2145,8 +2145,8 @@ const renderPremiumLibraryHierarchy = () =>
 const renderBookNotFoundPage = (bookId) => `
   <div class="bv-premium">
     <section class="bv-section">
-      <div class="panel-head"><h2>Livro nao encontrado</h2><a>Biblioteca Viva</a></div>
-      <p class="bv-empty-state">Nao encontramos o livro ${bookId || ""} no catalogo oficial da colecao.</p>
+      <div class="panel-head"><h2>Livro não encontrado</h2><a>Biblioteca Viva</a></div>
+      <p class="bv-empty-state">Não encontramos o livro ${bookId || ""} no catálogo oficial da coleção.</p>
       <div class="bv-profile-actions"><a class="bv-card-action" href="biblioteca.html">Voltar para a Biblioteca</a></div>
     </section>
   </div>
@@ -2160,13 +2160,13 @@ const renderBookUnit = (unit, requestedPage) => {
     ? unitExperiences.filter((experience) => getBookPageExperiences(experience.bookId, requestedPage).some((item) => item.id === experience.id))
     : [];
   const isPageMatch = pageExperiences.length > 0;
-  const stateLabel = publishedExperiences.length ? "Disponivel" : unitExperiences.length ? "Em producao" : "Planejada";
+  const stateLabel = publishedExperiences.length ? "Disponível" : unitExperiences.length ? "Em produção" : "Planejada";
   return `
     <details class="bv-book-unit" ${isPageMatch || !requestedPage ? "open" : ""} data-bv-book-unit="${unit.code}">
       <summary>
         <span>${unit.code}</span>
         <strong>${unit.title}</strong>
-        <small>${stateLabel} · ${unitExperiences.length} experiencia${unitExperiences.length === 1 ? "" : "s"} · ${summary.percent}% concluido</small>
+        <small>${stateLabel} · ${unitExperiences.length} experiência${unitExperiences.length === 1 ? "" : "s"} · ${summary.percent}% concluído</small>
       </summary>
       <div class="bv-book-unit-body">
         <p>${unit.description || "Unidade vinculada ao percurso editorial do livro."}</p>
@@ -2180,7 +2180,7 @@ const renderBookUnit = (unit, requestedPage) => {
           <div class="bv-experience-grid">
             ${unitExperiences.map((experience) => renderExperienceOfficialCard(experience)).join("")}
           </div>
-        ` : `<p class="bv-empty-state">Esta unidade ainda nao possui experiencias publicadas para o aluno.</p>`}
+        ` : `<p class="bv-empty-state">Esta unidade ainda não possui experiências publicadas para o aluno.</p>`}
       </div>
     </details>
   `;
@@ -2189,7 +2189,7 @@ const renderBookUnit = (unit, requestedPage) => {
 const renderBookPage = (book, requestedPage) => {
   if (!book) return renderBookNotFoundPage(new URLSearchParams(window.location.search).get("book"));
   if (!isContentAvailableToSession("book", book.bookId)) {
-    return renderContentUnavailableForSchool({ title: "Livro indisponivel", type: "book", id: book.bookId });
+    return renderContentUnavailableForSchool({ title: "Livro indisponível", type: "book", id: book.bookId });
   }
   const bookExperiences = getGovernedInfantilExperiences(getBookExperiences(book.bookId));
   const publishedExperiences = bookExperiences.filter((experience) => experience.availability === "available" && experience.status === "published");
@@ -2210,7 +2210,7 @@ const renderBookPage = (book, requestedPage) => {
     <div class="bv-premium bv-book-page" data-bv-premium data-bv-book-page="${book.bookId}">
       <nav class="bv-profile-breadcrumb" aria-label="Caminho do livro">
         <a href="biblioteca.html">Biblioteca Viva</a>
-        <span>Educacao Infantil</span>
+        <span>Educação Infantil</span>
         <span>${book.ageGroup.replace("EI", "")} anos</span>
         <strong>${book.subtitle}</strong>
       </nav>
@@ -2227,7 +2227,7 @@ const renderBookPage = (book, requestedPage) => {
             <span>${book.ageGroup.replace("EI", "")} anos</span>
             <span>${book.volume.replace("V", "Volume ")}</span>
             <span>${book.semester}o semestre</span>
-            <span>${book.status === "available" ? "Disponivel" : "Planejado"}</span>
+            <span>${book.status === "available" ? "Disponível" : "Planejado"}</span>
           </div>
           <div class="bv-profile-progress">
             <i><b style="width:${summary.percent}%"></b></i>
@@ -2236,7 +2236,7 @@ const renderBookPage = (book, requestedPage) => {
             <span>${summary.available} disponiveis</span>
           </div>
           <div class="bv-profile-actions">
-            ${continueExperience ? `<a class="bv-card-action" href="${getInfantilExperienceUrl(continueExperience.id)}">${getInfantilExperienceStatus(continueExperience).key === "in-progress" ? "Continuar percurso" : "Abrir primeira experiencia"}</a>` : ""}
+            ${continueExperience ? `<a class="bv-card-action" href="${getInfantilExperienceUrl(continueExperience.id)}">${getInfantilExperienceStatus(continueExperience).key === "in-progress" ? "Continuar percurso" : "Abrir primeira experiência"}</a>` : ""}
             <a class="bv-card-action is-secondary" href="${getBookViewerUrl(book.bookId, requestedPage || 1)}">Abrir livro digital</a>
           </div>
         </div>
@@ -2244,7 +2244,7 @@ const renderBookPage = (book, requestedPage) => {
 
       <section class="bv-progress-panel" aria-label="Progresso do livro">
         <article><strong>${units.length}</strong><span>unidades</span></article>
-        <article><strong>${bookExperiences.length}</strong><span>experiencias</span></article>
+        <article><strong>${bookExperiences.length}</strong><span>experiências</span></article>
         <article><strong>${summary.started}</strong><span>iniciadas</span></article>
         <article><strong>${summary.completed}</strong><span>concluidas</span></article>
         <article><strong>${summary.available}</strong><span>disponiveis</span></article>
@@ -2252,19 +2252,19 @@ const renderBookPage = (book, requestedPage) => {
 
       ${requestedPage ? `
         <section class="bv-section bv-page-match">
-          <div class="panel-head"><h2>Pagina ${requestedPage}</h2><a>${pageExperiences.length ? `${pageExperiences.length} experiencia${pageExperiences.length === 1 ? "" : "s"}` : "sem experiencia"}</a></div>
+          <div class="panel-head"><h2>Pagina ${requestedPage}</h2><a>${pageExperiences.length ? `${pageExperiences.length} experiência${pageExperiences.length === 1 ? "" : "s"}` : "sem experiência"}</a></div>
           ${pageExperiences.length ? `
-            <p>A Biblioteca localizou os recursos digitais vinculados a esta pagina do livro.</p>
+            <p>A Biblioteca localizou os recursos digitais vinculados a esta página do livro.</p>
             <div class="bv-experience-grid">
               ${pageExperiences.map((experience, index) => renderExperienceOfficialCard(experience, { compact: index > 0 })).join("")}
             </div>
-          ` : `<p class="bv-empty-state">Ainda nao existe experiencia digital vinculada a pagina ${requestedPage} deste livro.</p>`}
+          ` : `<p class="bv-empty-state">Ainda não existe experiência digital vinculada a página ${requestedPage} deste livro.</p>`}
         </section>
       ` : ""}
 
       ${highlightExperience ? `
         <section class="bv-section">
-          <div class="panel-head"><h2>Experiencia principal</h2><a>${getExperiencePagesLabel(highlightExperience)}</a></div>
+          <div class="panel-head"><h2>Experiência principal</h2><a>${getExperiencePagesLabel(highlightExperience)}</a></div>
           <div class="bv-experience-grid">
             ${renderExperienceOfficialCard(highlightExperience)}
           </div>
@@ -2346,9 +2346,9 @@ const renderPremiumLibraryHome = () => {
         <div class="bv-hero-copy">
           <span>Biblioteca Viva Premium</span>
           <h1>Ola, leitor. Sua proxima descoberta esta pronta.</h1>
-          <p>Livros, videos, jogos e atividades organizados por idade, volume e unidade para voce nunca se perder.</p>
+          <p>Livros, vídeos, jogos e atividades organizados por idade, volume e unidade para voce nunca se perder.</p>
           <div class="bv-hero-actions">
-            ${featuredExperience ? `<a href="${getInfantilExperienceUrl((continueExperiences[0] || featuredExperience).id)}">${continueExperiences.length ? "Continuar experiencia" : "Comecar jornada"}</a>` : ""}
+            ${featuredExperience ? `<a href="${getInfantilExperienceUrl((continueExperiences[0] || featuredExperience).id)}">${continueExperiences.length ? "Continuar experiência" : "Comecar jornada"}</a>` : ""}
             <button type="button" data-bv-focus-search>Buscar</button>
           </div>
         </div>
@@ -2361,7 +2361,7 @@ const renderPremiumLibraryHome = () => {
       </section>
 
       <section class="bv-progress-panel" aria-label="Progresso visual da Biblioteca Viva">
-        <article data-bv-summary="percent"><strong>${summary.percent}%</strong><span>concluido</span><i><b style="width:${summary.percent}%"></b></i></article>
+        <article data-bv-summary="percent"><strong>${summary.percent}%</strong><span>concluído</span><i><b style="width:${summary.percent}%"></b></i></article>
         <article data-bv-summary="started"><strong>${summary.started}</strong><span>iniciadas</span></article>
         <article data-bv-summary="completed"><strong>${summary.completed}</strong><span>concluidas</span></article>
         <article data-bv-summary="inProgress"><strong>${summary.inProgress}</strong><span>em andamento</span></article>
@@ -2370,7 +2370,7 @@ const renderPremiumLibraryHome = () => {
       </section>
 
       <section class="bv-control-panel" aria-label="Busca e filtros da Biblioteca Viva">
-        <label class="bv-search"><span>Buscar experiencia</span><input data-bv-search type="search" placeholder="Titulo, codigo, idade, volume, unidade, habilidade..." /></label>
+        <label class="bv-search"><span>Buscar experiência</span><input data-bv-search type="search" placeholder="Titulo, codigo, idade, volume, unidade, habilidade..." /></label>
         <div class="bv-filter-row" aria-label="Filtros por faixa etaria">
           <button type="button" data-bv-filter-age="all" class="is-active">Todas</button>
           ${infantilExperienceCatalog.INFANTIL_AGE_GROUPS.map((ageGroup) => `<button type="button" data-bv-filter-age="${ageGroup}">${ageGroup.replace("EI", "")} anos</button>`).join("")}
@@ -2378,7 +2378,7 @@ const renderPremiumLibraryHome = () => {
         <div class="bv-filter-row" aria-label="Filtros por volume e status">
           <button type="button" data-bv-filter-volume="all" class="is-active">Todos volumes</button>
           ${infantilExperienceCatalog.INFANTIL_VOLUMES.map((volume) => `<button type="button" data-bv-filter-volume="${volume}">${volume.replace("V", "Volume ")}</button>`).join("")}
-          <button type="button" data-bv-filter-status="completed">Concluidas</button>
+          <button type="button" data-bv-filter-status="completed">Concluídas</button>
           <button type="button" data-bv-filter-status="in-progress">Em andamento</button>
           <button type="button" data-bv-filter-status="favorite">Favoritas</button>
           <button type="button" data-bv-filter-status="recent">Recentes</button>
@@ -2400,16 +2400,16 @@ const renderPremiumLibraryHome = () => {
       </section>
 
       <section class="bv-section">
-        <div class="panel-head"><h2>Experiencias recomendadas</h2><a>${recommended.length} itens</a></div>
+        <div class="panel-head"><h2>Experiências recomendadas</h2><a>${recommended.length} itens</a></div>
         <div class="bv-experience-grid" data-bv-results>
           ${recommended.map((experience) => renderExperienceOfficialCard(experience)).join("")}
         </div>
-        <p class="bv-empty-state" data-bv-empty hidden>Nenhuma experiencia encontrada com estes filtros.</p>
+        <p class="bv-empty-state" data-bv-empty hidden>Nenhuma experiência encontrada com estes filtros.</p>
       </section>
 
       <section class="bv-section bv-two-columns">
         <div>
-          <div class="panel-head"><h2>Ultimas acessadas</h2><a>recentes</a></div>
+          <div class="panel-head"><h2>Últimas acessadas</h2><a>recentes</a></div>
           <div class="bv-mini-list">
             ${(recent.length ? recent.map(({ experience }) => experience) : [featuredExperience].filter(Boolean)).map((experience) => renderExperienceOfficialCard(experience, { compact: true })).join("")}
           </div>
@@ -2417,15 +2417,15 @@ const renderPremiumLibraryHome = () => {
         <div>
           <div class="panel-head"><h2>Favoritos</h2><a>${favoriteExperiences.length} salvos</a></div>
           <div class="bv-mini-list">
-            ${favoriteExperiences.length ? favoriteExperiences.map((experience) => renderExperienceOfficialCard(experience, { compact: true })).join("") : `<p class="bv-empty-state">Toque em Favoritar para guardar suas experiencias preferidas.</p>`}
+            ${favoriteExperiences.length ? favoriteExperiences.map((experience) => renderExperienceOfficialCard(experience, { compact: true })).join("") : `<p class="bv-empty-state">Toque em Favoritar para guardar suas experiências preferidas.</p>`}
           </div>
         </div>
       </section>
 
       <section class="bv-section">
-        <div class="panel-head"><h2>Navegacao por colecao</h2><a>Educacao Infantil</a></div>
-        <div class="bv-breadcrumb-map" aria-label="Educacao Infantil organizada por idade, volume, unidade e experiencia">
-          <strong>Educacao Infantil</strong>
+        <div class="panel-head"><h2>Navegação por coleção</h2><a>Educação Infantil</a></div>
+        <div class="bv-breadcrumb-map" aria-label="Educação Infantil organizada por idade, volume, unidade e experiência">
+          <strong>Educação Infantil</strong>
           <span>↓</span>
           <div class="bv-age-map">${renderPremiumLibraryHierarchy()}</div>
         </div>
@@ -2447,7 +2447,7 @@ const renderStudentBookCard = (book = {}) => `
     <div>
       <span>${printableEscape(book.collection || "Biblioteca")}</span>
       <h3>${printableEscape(book.catalogTitle || book.title || "Livro")}</h3>
-      <p>${printableEscape(book.level || book.year || "Educacao Infantil")}</p>
+      <p>${printableEscape(book.level || book.year || "Educação Infantil")}</p>
       <small>${printableEscape(book.type || "Livro do Aluno")}</small>
     </div>
     <a href="${studentBookLink(book)}">LER</a>
@@ -2481,12 +2481,12 @@ const renderStudentLibraryHome = () => {
 
       <section class="student-library-context" aria-label="Contexto da Biblioteca">
         <article><span>Acervo</span><strong>Biblioteca do aluno</strong></article>
-        <article><span>Etapa</span><strong>Educacao Infantil</strong></article>
+        <article><span>Etapa</span><strong>Educação Infantil</strong></article>
         <article><span>Leitura</span><strong>Livros digitais</strong></article>
       </section>
 
       <section class="student-library-controls" aria-label="Filtros da Biblioteca">
-        <label><span>Buscar livro</span><input data-bv-search type="search" placeholder="Titulo, colecao ou etapa" /></label>
+        <label><span>Buscar livro</span><input data-bv-search type="search" placeholder="Titulo, coleção ou etapa" /></label>
         <div class="student-library-filter-row">
           <button type="button" data-bv-filter-age="all" class="is-active">Todos</button>
           ${stages.map((stage) => `<button type="button" data-bv-filter-age="${printableEscape(stage)}">${printableEscape(stage)}</button>`).join("")}
@@ -2509,7 +2509,7 @@ const renderStudentLibraryHome = () => {
 };
 const renderExperienceProfilePage = (experience) => {
   if (!isContentAvailableToSession("experience", experience.id)) {
-    return renderContentUnavailableForSchool({ title: "Experiencia indisponivel", type: "experience", id: experience.id });
+    return renderContentUnavailableForSchool({ title: "Experiência indisponível", type: "experience", id: experience.id });
   }
   const asset = getInfantilExperienceAsset(experience);
   const related = (experience.relatedExperienceCodes || [])
@@ -2526,7 +2526,7 @@ const renderExperienceProfilePage = (experience) => {
   const qrPayload = getExperienceQrPayload(experience.id);
   return `
     <div class="bv-profile" data-bv-profile="${experience.id}">
-      <nav class="bv-profile-breadcrumb" aria-label="Caminho da experiencia">
+      <nav class="bv-profile-breadcrumb" aria-label="Caminho da experiência">
         <a href="biblioteca.html">Biblioteca Viva</a>
         <a href="${location.book ? getBookLibraryUrl(location.book.bookId) : "biblioteca.html"}">${location.bookTitle}</a>
         <span>${experience.ageGroup.replace("EI", "")} anos</span>
@@ -2563,20 +2563,20 @@ const renderExperienceProfilePage = (experience) => {
         </figure>
       </section>
       <section class="bv-profile-grid">
-        <article><h2>Localizacao editorial</h2><p>Livro: ${location.bookTitle}</p><p>${location.volume?.replace("V", "Volume ")} · ${location.unit} · ${location.pages}</p><p>Atividade: ${location.activity}</p><a href="${getBookLibraryUrl(experience.bookId, experience.pageStart || experience.pages?.[0] || 1)}">Ver no percurso do livro</a></article>
+        <article><h2>Localização editorial</h2><p>Livro: ${location.bookTitle}</p><p>${location.volume?.replace("V", "Volume ")} · ${location.unit} · ${location.pages}</p><p>Atividade: ${location.activity}</p><a href="${getBookLibraryUrl(experience.bookId, experience.pageStart || experience.pages?.[0] || 1)}">Ver no percurso do livro</a></article>
         <article><h2>Atividade original</h2><p>${experience.activityDescription || experience.description}</p><p>${experience.sequenceTitle || ""}</p><a href="${getBookViewerUrl(experience.bookId || "livro-005", experience.pageStart || experience.pages?.[0] || 1)}">Abrir paginas no livro digital</a></article>
         <article><h2>Comando para o aluno</h2><p>${experience.studentInstruction || experience.instructions}</p></article>
-        <article><h2>Objetivo pedagogico</h2><p>${experience.pedagogicalObjective || experience.objective}</p></article>
-        <article><h2>Campos de experiencia</h2><ul>${(experience.experienceFields?.length ? experience.experienceFields : [experience.fieldOfExperience || "Em curadoria"]).map((field) => `<li>${field}</li>`).join("")}</ul></article>
+        <article><h2>Objetivo pedagógico</h2><p>${experience.pedagogicalObjective || experience.objective}</p></article>
+        <article><h2>Campos de experiência</h2><ul>${(experience.experienceFields?.length ? experience.experienceFields : [experience.fieldOfExperience || "Em curadoria"]).map((field) => `<li>${field}</li>`).join("")}</ul></article>
         <article><h2>Habilidades BNCC</h2><ul>${((experience.bnccCodes?.length ? experience.bnccCodes : experience.bnccSkills)?.length ? (experience.bnccCodes?.length ? experience.bnccCodes : experience.bnccSkills) : ["Em curadoria"]).map((skill) => `<li>${skill}</li>`).join("")}</ul></article>
         <article><h2>Recursos digitais</h2><ul>${resources.map((resource) => `<li>${resource.role} · ${resource.type} · ${resource.activity?.title || resource.asset?.title || resource.activityCode || resource.assetCode}</li>`).join("")}</ul>${renderExperienceResourceActions(experience, resources)}</article>
         <article><h2>Materiais complementares</h2><ul>${(experience.materials?.length ? experience.materials : ["Materiais em curadoria"]).map((material) => `<li>${material}</li>`).join("")}</ul></article>
         <article><h2>URL publica e QR Code</h2><p>${publicUrl}</p><small>Payload QR: ${qrPayload}</small></article>
-        <article><h2>Livro do Professor</h2><p>${experience.teacherGuidance?.teacherBookId || "Vinculo em preparacao"}</p><ul>${(experience.teacherGuidance?.materials || ["Orientacoes em curadoria"]).map((item) => `<li>${item}</li>`).join("")}</ul></article>
-        <article><h2>Historico resumido</h2><ul>${(progress?.history?.length ? progress.history.slice(-4).reverse().map((item) => `${item.event} · ${new Date(item.at).toLocaleDateString("pt-BR")} · ${item.progressPercent || 0}%`) : ["Sem historico para esta experiencia"]).map((item) => `<li>${item}</li>`).join("")}</ul></article>
+        <article><h2>Livro do Professor</h2><p>${experience.teacherGuidance?.teacherBookId || "Vínculo em preparação"}</p><ul>${(experience.teacherGuidance?.materials || ["Orientacoes em curadoria"]).map((item) => `<li>${item}</li>`).join("")}</ul></article>
+        <article><h2>Histórico resumido</h2><ul>${(progress?.history?.length ? progress.history.slice(-4).reverse().map((item) => `${item.event} · ${new Date(item.at).toLocaleDateString("pt-BR")} · ${item.progressPercent || 0}%`) : ["Sem historico para esta experiência"]).map((item) => `<li>${item}</li>`).join("")}</ul></article>
       </section>
       <section class="bv-section">
-        <div class="panel-head"><h2>Experiencias relacionadas</h2><a>${related.length || "em curadoria"}</a></div>
+        <div class="panel-head"><h2>Experiências relacionadas</h2><a>${related.length || "em curadoria"}</a></div>
         <div class="bv-experience-grid">
           ${(related.length ? related : getGovernedInfantilExperiences(allInfantilExperiences).filter((candidate) => candidate.id !== experience.id).slice(0, 3)).map((item) => renderExperienceOfficialCard(item)).join("")}
         </div>
@@ -2589,7 +2589,7 @@ const renderPremiumLibrary = () => {
     return `
       <section class="bv-section">
         <div class="panel-head"><h2>Biblioteca Viva</h2><a>catalogo carregando</a></div>
-        <p class="bv-empty-state">O catalogo de experiencias infantis precisa ser carregado antes da Biblioteca Viva Premium.</p>
+        <p class="bv-empty-state">O catalogo de experiências infantis precisa ser carregado antes da Biblioteca Viva Premium.</p>
       </section>
     `;
   }
@@ -2604,8 +2604,8 @@ const renderPremiumLibrary = () => {
   if (requestedExperience) {
     return experience ? renderExperienceProfilePage(experience) : `
       <section class="bv-section">
-        <div class="panel-head"><h2>Experiencia nao encontrada</h2><a>${requestedExperience}</a></div>
-        <p class="bv-empty-state">Esta experiencia ainda nao existe no catalogo oficial.</p>
+        <div class="panel-head"><h2>Experiência nao encontrada</h2><a>${requestedExperience}</a></div>
+        <p class="bv-empty-state">Esta experiência ainda não existe no catálogo oficial.</p>
       </section>
     `;
   }
@@ -2616,7 +2616,7 @@ const renderPremiumLibrary = () => {
 };
 const library2TeacherPanel = `
   <section class="wide-panel library-2-ops">
-    <div class="panel-head"><h2>Professor e Familia</h2><a>acompanhamento</a></div>
+    <div class="panel-head"><h2>Professor e Família</h2><a>acompanhamento</a></div>
     <div class="library-2-ops-grid">
       <article>
         <span>Professor</span>
@@ -2625,7 +2625,7 @@ const library2TeacherPanel = `
         <a href="professor.html">Abrir painel do professor</a>
       </article>
       <article>
-        <span>Familia</span>
+        <span>Família</span>
         <h3>Acompanhe a leitura em casa</h3>
         <p>Veja livros iniciados, progresso, conquistas e proximas recomendacoes para cada estudante.</p>
         <a href="familia.html">Abrir painel da familia</a>
@@ -2633,7 +2633,7 @@ const library2TeacherPanel = `
       <article>
         <span>Universidade</span>
         <h3>Materiais ligados aos cursos</h3>
-        <p>Use a formacao docente para sugerir livros, guias e trilhas de leitura relacionadas.</p>
+        <p>Use a formação docente para sugerir livros, guias e trilhas de leitura relacionadas.</p>
         <a href="universidade.html">Abrir Universidade</a>
       </article>
     </div>
@@ -2673,17 +2673,17 @@ const ecosystemModuleLinks = (activeKey, environmentKey = "") => {
       ? secretariaOfficialModules
     : environmentKey === "aluno"
       ? [
-          ["aluno.html", "Inicio"],
-          ["missao.html", "Missao do Dia"],
-          ["arvore.html", "Minha Arvore"],
+          ["aluno.html", "Início"],
+          ["missao.html", "Missão do Dia"],
+          ["arvore.html", "Minha Árvore"],
           ["biblioteca.html", "Biblioteca"],
           ["jogos.html", "Jogar e Descobrir"],
           ["perfil.html", "Perfil"],
-          ["familia.html", "Familia"],
+          ["familia.html", "Família"],
         ]
       : environmentKey === "educacaoInfantil"
         ? [
-            ["educacao-infantil.html", "Inicio"],
+            ["educacao-infantil.html", "Início"],
             ["index.html", "Site"],
             ["jogos.html", "Jogos"],
             ["biblioteca.html", "Biblioteca"],
@@ -2694,7 +2694,7 @@ const ecosystemModuleLinks = (activeKey, environmentKey = "") => {
       : environmentKey === "escola"
         ? [
             ["#back", "Voltar"],
-            ["#home", "Inicio"],
+            ["#home", "Início"],
             ["escola.html#inicio", "Minha Escola"],
             ["#logout", "Sair"],
           ]
@@ -2719,7 +2719,7 @@ const ecosystemModuleLinks = (activeKey, environmentKey = "") => {
       const isActive = environmentKey === "secretaria"
         ? new URLSearchParams(String(href).split("?")[1] || "").get("view") === getSecretariaCurrentView()
         : routeKeyByHref[href] === activeKey;
-      const schoolNavIcon = label === "Inicio" ? "home" : label === "Minha Escola" ? "escola" : "";
+      const schoolNavIcon = label === "Início" ? "home" : label === "Minha Escola" ? "escola" : "";
       const contents = environmentKey === "secretaria"
         ? secretariaInlineIcon(secretariaViewIcon[new URLSearchParams(String(href).split("?")[1] || "").get("view")] || "site", label)
         : environmentKey === "escola" && schoolNavIcon
@@ -2732,11 +2732,11 @@ const ecosystemModuleLinks = (activeKey, environmentKey = "") => {
 
 const knowledgeTreeStages = [
   { key: "seed", level: 1, label: "Semente", xpRange: "0 - 199 XP", minXp: 0, maxXp: 199, asset: "assets/knowledge-tree/stage-seed.webp", description: "Tudo comeca com uma pequena semente de curiosidade." },
-  { key: "sprout", level: 2, label: "Broto", xpRange: "200 - 499 XP", minXp: 200, maxXp: 499, asset: "assets/knowledge-tree/stage-sprout.webp", description: "Voce esta aprendendo e sua arvore comeca a crescer." },
+  { key: "sprout", level: 2, label: "Broto", xpRange: "200 - 499 XP", minXp: 200, maxXp: 499, asset: "assets/knowledge-tree/stage-sprout.webp", description: "Você esta aprendendo e sua arvore comeca a crescer." },
   { key: "leaves", level: 3, label: "Folhas", xpRange: "500 - 999 XP", minXp: 500, maxXp: 999, asset: "assets/knowledge-tree/stage-leaves.webp", description: "Seu conhecimento se fortalece e novas possibilidades surgem." },
-  { key: "flowers", level: 4, label: "Flores", xpRange: "1000 - 1999 XP", minXp: 1000, maxXp: 1999, asset: "assets/knowledge-tree/stage-flowers.webp", description: "Voce domina novos conteudos e suas conquistas florescem." },
+  { key: "flowers", level: 4, label: "Flores", xpRange: "1000 - 1999 XP", minXp: 1000, maxXp: 1999, asset: "assets/knowledge-tree/stage-flowers.webp", description: "Você domina novos conteúdos e suas conquistas florescem." },
   { key: "fruits", level: 5, label: "Frutos", xpRange: "2000+ XP", minXp: 2000, maxXp: 2999, asset: "assets/knowledge-tree/stage-fruits.webp", description: "Seu esforco da frutos e inspira outros ao seu redor." },
-  { key: "complete", level: 6, label: "Completa", xpRange: "3000+ XP", minXp: 3000, maxXp: 5000, asset: "assets/knowledge-tree/stage-complete.webp", description: "Arvore mestre: dedicacao, conquistas e inspiracao para a comunidade." },
+  { key: "complete", level: 6, label: "Completa", xpRange: "3000+ XP", minXp: 3000, maxXp: 5000, asset: "assets/knowledge-tree/stage-complete.webp", description: "Árvore mestre: dedicação, conquistas e inspiração para a comunidade." },
 ];
 
 const knowledgeTreeBadges = [
@@ -2824,13 +2824,13 @@ const renderKnowledgeTreeProgress = (state, label = "Progresso da arvore") => `
     <i role="progressbar" aria-label="${label}" aria-valuenow="${state.progress}" aria-valuemin="0" aria-valuemax="100">
       <span style="width:${state.progress}%"></span>
     </i>
-    <small>${state.xp} XP${state.nextStage ? ` · proximo estagio em ${state.nextStage.minXp} XP` : " · arvore completa"}</small>
+    <small>${state.xp} XP${state.nextStage ? ` · próximo estagio em ${state.nextStage.minXp} XP` : " · arvore completa"}</small>
   </div>
 `;
 
 const renderKnowledgeTreeStage = (state, variant = "default") => `
   <figure class="knowledge-tree-stage is-${variant}" data-tree-stage="${state.stage.key}">
-    ${knowledgeTreeImg(state.stage.asset, `Arvore Viva no estado ${state.stage.label}`, "knowledge-tree-art")}
+    ${knowledgeTreeImg(state.stage.asset, `Árvore Viva no estado ${state.stage.label}`, "knowledge-tree-art")}
     <figcaption>
       <strong>${state.stage.label}</strong>
       <span>${state.stage.description}</span>
@@ -2857,9 +2857,9 @@ const renderKnowledgeTreeSeasonLayer = (state) => `
 const renderKnowledgeTreeCompact = (data, className = "") => {
   const state = createKnowledgeTreeState(data);
   return `
-    <article class="knowledge-tree compact ${className}" aria-label="Arvore Viva compacta de ${state.student}">
+    <article class="knowledge-tree compact ${className}" aria-label="Árvore Viva compacta de ${state.student}">
       ${renderKnowledgeTreeStage(state, "compact")}
-      ${renderKnowledgeTreeProgress(state, "Progresso compacto da Arvore Viva")}
+      ${renderKnowledgeTreeProgress(state, "Progresso compacto da Árvore Viva")}
     </article>
   `;
 };
@@ -2867,13 +2867,13 @@ const renderKnowledgeTreeCompact = (data, className = "") => {
 const renderKnowledgeTreeLibrary = (data) => {
   const state = createKnowledgeTreeState(data);
   return `
-    <article class="knowledge-tree library" aria-label="Arvore Viva integrada a Biblioteca">
+    <article class="knowledge-tree library" aria-label="Árvore Viva integrada a Biblioteca">
       ${renderKnowledgeTreeStage(state, "library")}
       <div>
         <h3>Progresso de leitura</h3>
-        ${renderKnowledgeTreeProgress(state, "Progresso de leitura da Arvore Viva")}
+        ${renderKnowledgeTreeProgress(state, "Progresso de leitura da Árvore Viva")}
         <ul>
-          <li><strong>${state.booksCompleted}</strong><span>livros concluidos</span></li>
+          <li><strong>${state.booksCompleted}</strong><span>livros concluídos</span></li>
           <li><strong>${state.missionsCompleted}</strong><span>missoes concluidas</span></li>
         </ul>
       </div>
@@ -2884,10 +2884,10 @@ const renderKnowledgeTreeLibrary = (data) => {
 const renderKnowledgeTreeMission = (mission, data) => {
   const state = createKnowledgeTreeState(data);
   return `
-    <article class="knowledge-tree mission" aria-label="Arvore Viva na Missao do Dia">
+    <article class="knowledge-tree mission" aria-label="Árvore Viva na Missão do Dia">
       ${renderKnowledgeTreeStage(state, "mission")}
       <div>
-        <span>Missao do Dia</span>
+        <span>Missão do Dia</span>
         <h3>${mission.title}</h3>
         <p>${mission.description}</p>
         <strong>+${mission.rewardXp} XP para sua arvore</strong>
@@ -2899,8 +2899,8 @@ const renderKnowledgeTreeMission = (mission, data) => {
 
 const renderKnowledgeTreeLegend = () => `
   <section class="knowledge-tree-card knowledge-tree-legend" aria-labelledby="knowledge-tree-legend-title">
-    <h2 id="knowledge-tree-legend-title">Elementos da Arvore</h2>
-    <article>${knowledgeTreeImg("assets/knowledge-tree/icon-leaf.webp", "", "")}<div><strong>Folhas</strong><p>Conteudos estudados e atividades concluidas.</p></div></article>
+    <h2 id="knowledge-tree-legend-title">Elementos da Árvore</h2>
+    <article>${knowledgeTreeImg("assets/knowledge-tree/icon-leaf.webp", "", "")}<div><strong>Folhas</strong><p>Conteúdos estudados e atividades concluidas.</p></div></article>
     <article>${knowledgeTreeImg("assets/knowledge-tree/icon-flower.webp", "", "")}<div><strong>Flores</strong><p>Dominio de habilidades e novos aprendizados.</p></div></article>
     <article>${knowledgeTreeImg("assets/knowledge-tree/icon-fruit.webp", "", "")}<div><strong>Frutos</strong><p>Grandes conquistas e conclusao de missoes.</p></div></article>
     <article>${knowledgeTreeImg("assets/knowledge-tree/icon-medal.webp", "", "")}<div><strong>Medalhas</strong><p>Reconhecimentos especiais obtidos em desafios.</p></div></article>
@@ -2910,17 +2910,17 @@ const renderKnowledgeTreeLegend = () => `
 const renderKnowledgeTreeFull = (data) => {
   const state = createKnowledgeTreeState(data);
   return `
-    <div class="knowledge-tree-full" aria-label="Minha Arvore Viva completa">
+    <div class="knowledge-tree-full" aria-label="Minha Árvore Viva completa">
       <section class="knowledge-tree-hero">
         <div>
           <span>Asset 010</span>
-          <h1>Arvore do Conhecimento</h1>
+          <h1>Árvore do Conhecimento</h1>
           <p>Seu aprendizado cresce. Sua arvore floresce. Seu futuro se transforma.</p>
         </div>
         <aside><strong>⭐</strong><p>Cada conquista alimenta sua arvore e aproxima voce de grandes descobertas.</p></aside>
       </section>
 
-      <section class="knowledge-tree-levels" aria-label="Estados oficiais de evolucao">
+      <section class="knowledge-tree-levels" aria-label="Estados oficiais de evolução">
         ${knowledgeTreeStages.map((stage) => {
           const stageState = createKnowledgeTreeState({ ...state, xp: stage.minXp, medals: [] });
           return `<article class="${stage.key === state.stage.key ? "is-current" : ""}">
@@ -2945,24 +2945,24 @@ const renderKnowledgeTreeFull = (data) => {
           }).join("")}
         </section>
         <section class="knowledge-tree-card knowledge-tree-medal-tree">
-          <h2>Medalhas Aplicadas na Arvore</h2>
-          ${knowledgeTreeImg("assets/knowledge-tree/tree-complete-medals.webp", "Arvore completa com medalhas aplicadas", "knowledge-tree-master-art")}
+          <h2>Medalhas Aplicadas na Árvore</h2>
+          ${knowledgeTreeImg("assets/knowledge-tree/tree-complete-medals.webp", "Árvore completa com medalhas aplicadas", "knowledge-tree-master-art")}
           ${renderKnowledgeTreeBadgeLayer(state)}
         </section>
         <section class="knowledge-tree-card">
-          <h2>Integracao com Livros Concluidos</h2>
+          <h2>Integração com Livros Concluidos</h2>
           ${renderKnowledgeTreeLibrary(state)}
         </section>
         <section class="knowledge-tree-card">
-          <h2>Integracao com Missoes Digitais</h2>
-          ${renderKnowledgeTreeMission({ title: "Encontre as Cores", description: "Missao concluida adiciona XP, folhas e medalhas.", rewardXp: 25, href: "#", actionLabel: "Continuar missao" }, state)}
+          <h2>Integração com Missoes Digitais</h2>
+          ${renderKnowledgeTreeMission({ title: "Encontre as Cores", description: "Missão concluida adiciona XP, folhas e medalhas.", rewardXp: 25, href: "#", actionLabel: "Continuar missao" }, state)}
         </section>
       </section>
 
       <section class="knowledge-tree-bottom-grid">
         <article class="knowledge-tree-card"><h2>Como sua arvore cresce</h2><p>Leia livros, complete atividades, participe de missoes digitais, ganhe XP e acompanhe sua arvore florescer.</p></article>
         <article class="knowledge-tree-card"><h2>Beneficios</h2><p>Motiva, engaja, desenvolve autonomia, valoriza conquistas e conecta o aluno a comunidade.</p></article>
-        <article class="knowledge-tree-card"><h2>Cores e Significados</h2><div class="knowledge-tree-colors"><span>Crescimento</span><span>Alegria</span><span>Imaginacao</span><span>Confianca</span><span>Energia</span></div></article>
+        <article class="knowledge-tree-card"><h2>Cores e Significados</h2><div class="knowledge-tree-colors"><span>Crescimento</span><span>Alegria</span><span>Imaginação</span><span>Confianca</span><span>Energia</span></div></article>
       </section>
     </div>
   `;
@@ -2971,7 +2971,7 @@ const renderKnowledgeTreeFull = (data) => {
 const missionFixtures = {
   colorMatch001: {
     id: "color-match-001",
-    code: "Missao 001",
+    code: "Missão 001",
     type: "choice",
     status: "correct",
     title: "Encontre as Cores",
@@ -3044,14 +3044,14 @@ const missionEngine = {
 };
 
 const missionStateLabel = {
-  available: "Missao disponivel",
-  "in-progress": "Missao em andamento",
+  available: "Missão disponivel",
+  "in-progress": "Missão em andamento",
   correct: "Resposta correta",
   incorrect: "Resposta incorreta",
   hint: "Dica disponivel",
-  completed: "Missao concluida",
+  completed: "Missão concluida",
   reward: "Recompensa liberada",
-  next: "Proxima missao",
+  next: "Próxima missao",
 };
 
 const missionImg = (src, alt, className = "") =>
@@ -3060,7 +3060,7 @@ const missionImg = (src, alt, className = "") =>
 const renderMissionProgress = (mission, state) => `
   <div class="mission-progress" role="group" aria-label="Progresso da missao">
     <div><strong>${mission.code}</strong><span>${missionStateLabel[state.status] || missionStateLabel.available}</span></div>
-    <i role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${state.progress}" aria-label="Progresso da Missao do Dia"><span style="width:${state.progress}%"></span></i>
+    <i role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${state.progress}" aria-label="Progresso da Missão do Dia"><span style="width:${state.progress}%"></span></i>
   </div>
 `;
 
@@ -3108,7 +3108,7 @@ const renderMissionReward = (mission, state) => `
 const renderMissionResult = (mission, state) => {
   const isPositive = state.status === "correct" || state.status === "completed";
   const title = isPositive ? "Muito bem!" : state.status === "hint" ? "Uma dica para voce!" : "Tente novamente";
-  const message = isPositive ? "Voce encontrou a cor certa!" : state.status === "hint" ? mission.hint : "Observe a cor do objeto e escolha de novo.";
+  const message = isPositive ? "Você encontrou a cor certa!" : state.status === "hint" ? mission.hint : "Observe a cor do objeto e escolha de novo.";
   return `
     <aside class="mission-result is-${state.status}" aria-live="polite">
       <div class="mission-result-ribbon">${title}</div>
@@ -3132,8 +3132,8 @@ const renderMissionToolbar = (mission, state) => `
 `;
 
 const renderMissionCard = (mission) => `
-  <section class="mission-card" aria-label="Apresentacao da Missao do Dia">
-    <div class="mission-card-ribbon">Missao do Dia</div>
+  <section class="mission-card" aria-label="Apresentação da Missão do Dia">
+    <div class="mission-card-ribbon">Missão do Dia</div>
     ${missionImg(mission.introImage, "", "mission-card-art")}
     <article class="mission-card-note">
       <h2>Vamos aprender juntos!</h2>
@@ -3147,7 +3147,7 @@ const renderMissionPlayer = (mission) => {
   return `
     <div class="mission-module" data-mission-player data-mission-id="${mission.id}" data-mission-state='${JSON.stringify(state)}'>
       <header class="mission-header">
-        <div><span>⭐</span><strong>Missao do Dia</strong><small>${mission.subtitle}</small></div>
+        <div><span>⭐</span><strong>Missão do Dia</strong><small>${mission.subtitle}</small></div>
         <aside class="mission-xp-chip"><span>⭐</span><strong>${studentDashboardData.profile.xp} XP</strong><small>${studentDashboardData.profile.level}</small>${studentLazyImg(studentDashboardData.profile.avatar, "", "")}</aside>
       </header>
       ${renderMissionToolbar(mission, state)}
@@ -3203,7 +3203,7 @@ const studentDashboardData = {
     heroArt: "assets/aluno/oficial-hero-aluno.png",
   },
   dailyMission: {
-    code: "Missao 012",
+    code: "Missão 012",
     title: "A Caixa Misteriosa",
     description: "Ouca a dica, descubra o objeto e ganhe XP!",
     image: "assets/aluno/oficial-card-missao.png",
@@ -3211,7 +3211,7 @@ const studentDashboardData = {
   },
   currentBook: {
     title: "Volume 1",
-    subtitle: "Educacao Infantil 4 anos",
+    subtitle: "Educação Infantil 4 anos",
     progress: 45,
     cover: "assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg",
     href: "book-viewer.html?book=livro-005&from=aluno",
@@ -3236,13 +3236,13 @@ const studentDashboardData = {
     { title: "Curioso por Natureza", image: "assets/aluno/oficial-medalha-curioso.png" },
   ],
   evolution: {
-    title: "Voce esta indo muito bem!",
+    title: "Você esta indo muito bem!",
     labels: ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"],
     values: [22, 34, 48, 51, 62, 70, 86],
   },
   quickAccess: [
     { label: "Continuar Leitura", detail: "Abrir livro", icon: "📖", href: "book-viewer.html?book=livro-005&from=aluno" },
-    { label: "Minha Arvore", detail: "Veja seu crescimento", icon: "🌱", href: "arvore.html" },
+    { label: "Minha Árvore", detail: "Veja seu crescimento", icon: "🌱", href: "arvore.html" },
     { label: "Jogos Digitais", detail: "Acesse as descobertas", icon: "▶", href: "jogos.html" },
     { label: "Explorar Biblioteca", detail: "Descubra novos livros", icon: "📚", href: "biblioteca.html?from=aluno" },
   ],
@@ -3275,7 +3275,7 @@ const readStudentGameRecords = () => {
   try {
     return JSON.parse(localStorage.getItem(studentGameStorageKey) || "[]");
   } catch (error) {
-    console.warn("Nao foi possivel ler progresso dos jogos.", error);
+    console.warn("Não foi possível ler progresso dos jogos.", error);
     return [];
   }
 };
@@ -3315,7 +3315,7 @@ const createStudentDashboardView = () => {
     xpGoal: {
       ...studentDashboardData.xpGoal,
       current: xp,
-      nextText: xp >= studentDashboardData.xpGoal.target ? "Voce alcancou o objetivo atual. Continue jogando para ampliar suas conquistas!" : `Conquiste mais ${studentDashboardData.xpGoal.target - xp} XP para alcancar o Nivel 2!`,
+      nextText: xp >= studentDashboardData.xpGoal.target ? "Você alcancou o objetivo atual. Continue jogando para ampliar suas conquistas!" : `Conquiste mais ${studentDashboardData.xpGoal.target - xp} XP para alcancar o Nivel 2!`,
     },
     medals: studentDashboardData.medals,
   };
@@ -3323,7 +3323,7 @@ const createStudentDashboardView = () => {
 
 const profileAccessConfig = {
   aluno: {
-    logoAlt: "Raizes e Saberes Educacional",
+    logoAlt: "Raízes e Saberes Educacional",
     eyebrow: "Ambiente do aluno",
     name: "Perfil do Aluno",
     search: "Buscar livros, jogos, atividades...",
@@ -3337,21 +3337,21 @@ const profileAccessConfig = {
       { label: "Meu perfil", href: "perfil.html", tone: "teal" },
     ],
     tabs: [
-      { label: "Inicio", href: "aluno.html" },
-      { label: "Missao do Dia", href: "missao.html" },
-      { label: "Minha Arvore", href: "arvore.html" },
+      { label: "Início", href: "aluno.html" },
+      { label: "Missão do Dia", href: "missao.html" },
+      { label: "Minha Árvore", href: "arvore.html" },
       { label: "Biblioteca", href: "biblioteca.html?from=aluno" },
       { label: "Jogos", href: "jogos.html" },
       { label: "Perfil", href: "perfil.html" },
-      { label: "Familia", href: "familia.html" },
+      { label: "Família", href: "familia.html" },
       { label: "Atividades", href: "aluno-atividades.html" },
     ],
   },
   professor: {
-    logoAlt: "Raizes e Saberes Educacional",
+    logoAlt: "Raízes e Saberes Educacional",
     eyebrow: "Ambiente professor",
     name: "Professora Helena",
-    search: "Buscar conteudos, alunos, turmas, experiencias...",
+    search: "Buscar conteúdos, alunos, turmas, experiências...",
     homeHref: "professor.html",
     quickTitle: "Acessos rapidos",
     quick: [
@@ -3360,19 +3360,19 @@ const profileAccessConfig = {
       { label: "Criar planejamento", href: "professor.html?view=planejamentos", tone: "blue" },
       { label: "Ver producoes", href: "professor-aluno.html?id=pedro", tone: "purple" },
       { label: "Abrir biblioteca", href: "biblioteca.html", tone: "orange" },
-      { label: "Ver relatorios", href: "professor.html?view=relatorios", tone: "teal" },
+      { label: "Ver relatórios", href: "professor.html?view=relatórios", tone: "teal" },
     ],
     tabs: [
-      { label: "Inicio", href: "professor.html" },
+      { label: "Início", href: "professor.html" },
       { label: "Minha Turma", href: "professor-turma.html" },
       { label: "Alunos", href: "professor-aluno.html?id=pedro" },
       { label: "Biblioteca", href: "biblioteca.html" },
       { label: "Atividades", href: "atividades.html" },
-      { label: "Experiencias", href: "biblioteca.html#acervo-completo" },
+      { label: "Experiências", href: "biblioteca.html#acervo-completo" },
       { label: "Jogos", href: "jogos.html" },
       { label: "Planejamentos", href: "professor.html?view=planejamentos" },
-      { label: "Avaliacoes", href: "avalia.html" },
-      { label: "Relatorios", href: "professor.html?view=relatorios" },
+      { label: "Avaliações", href: "avalia.html" },
+      { label: "Relatórios", href: "professor.html?view=relatórios" },
       { label: "Universidade", href: "universidade.html" },
     ],
   },
@@ -3380,12 +3380,12 @@ const profileAccessConfig = {
 
 const profileConstructionCopy = {
   aluno: {
-    familia: ["Familia", "Este espaco vai receber comunicados e acompanhamento familiar assim que a proxima etapa for liberada."],
+    familia: ["Família", "Este espaco vai receber comunicados e acompanhamento familiar assim que a proxima etapa for liberada."],
   },
   professor: {
-    planejamentos: ["Planejamentos", "Este modulo esta reservado para o planejamento pedagogico completo da professora."],
-    relatorios: ["Relatorios", "Este modulo esta reservado para indicadores, devolutivas e acompanhamento da turma."],
-    avaliacoes: ["Avaliacoes", "Este modulo esta reservado para rotinas de avaliacao e acompanhamento."],
+    planejamentos: ["Planejamentos", "Este modulo esta reservado para o planejamento pedagógico completo da professora."],
+    relatórios: ["Relatórios", "Este modulo esta reservado para indicadores, devolutivas e acompanhamento da turma."],
+    avaliações: ["Avaliações", "Este modulo esta reservado para rotinas de avaliação e acompanhamento."],
     mensagens: ["Mensagens", "Este modulo esta reservado para comunicados e devolutivas."],
   },
 };
@@ -3398,7 +3398,7 @@ const getProfileViewParam = () => {
 const renderProfileTopTabs = (role) => {
   const config = profileAccessConfig[role];
   return `
-    <nav class="profile-top-tabs" aria-label="Abas de navegacao ${config.eyebrow}">
+    <nav class="profile-top-tabs" aria-label="Abas de navegação ${config.eyebrow}">
       ${config.tabs.map((tab, index) => `<a class="${index === 0 ? "is-active" : ""}" href="${tab.href}">${tab.label}</a>`).join("")}
     </nav>
   `;
@@ -3427,7 +3427,7 @@ const renderProfileSidebar = (role) => {
 const renderProfileHeader = (role) => {
   const config = profileAccessConfig[role];
   return `
-    <header class="profile-access-header" aria-label="Navegacao principal">
+    <header class="profile-access-header" aria-label="Navegação principal">
       <label class="profile-access-search">
         <span>Buscar</span>
         <input type="search" placeholder="${config.search}" />
@@ -3489,7 +3489,7 @@ const renderStudentLegacyProfilePage = () => {
     <section class="student-profile-static-map" aria-label="Perfil visual legado do aluno">
       <img
         src="assets/aluno/perfil-aluno-dashboard.png"
-        alt="Perfil visual legado do aluno com medalhas, progresso, conquistas e jogos concluidos"
+        alt="Perfil visual legado do aluno com medalhas, progresso, conquistas e jogos concluídos"
         loading="eager"
         decoding="async"
         onerror="this.hidden=true"
@@ -3519,7 +3519,7 @@ const renderStudentProfilePage = () => {
           <a href="aluno.html">Voltar ao inicio</a>
         </header>
 
-        <section class="student-real-profile-grid" aria-label="Informacoes do aluno">
+        <section class="student-real-profile-grid" aria-label="Informações do aluno">
           <article class="student-real-profile-card is-main">
             ${premiumIcon("aluno")}
             <div>
@@ -3533,7 +3533,7 @@ const renderStudentProfilePage = () => {
             <div>
               <span>Turma</span>
               <strong>${printableEscape(profile.className)}</strong>
-              <p>Matricula ativa na escola atual.</p>
+              <p>Matrícula ativa na escola atual.</p>
             </div>
           </article>
           <article class="student-real-profile-card">
@@ -3559,7 +3559,7 @@ const renderStudentProfilePage = () => {
             ${premiumIcon("jogos")}
             <div>
               <span>Progresso</span>
-              <strong>Acompanhamento em preparacao</strong>
+              <strong>Acompanhamento em preparação</strong>
               <p>Jogos e atividades continuam disponiveis; XP e nivel serao exibidos quando houver acompanhamento institucional.</p>
             </div>
           </article>
@@ -3568,13 +3568,13 @@ const renderStudentProfilePage = () => {
             <div>
               <span>Conquistas</span>
               <strong>Conquistas preservadas</strong>
-              <p>Os selos visuais existentes ficam guardados para a evolucao oficial das conquistas.</p>
+              <p>Os selos visuais existentes ficam guardados para a evolução oficial das conquistas.</p>
             </div>
           </article>
           <article class="student-real-profile-card is-progress-card">
             ${premiumIcon("arvore")}
             <div>
-              <span>Minha Arvore</span>
+              <span>Minha Árvore</span>
               <strong>Espaco preparado</strong>
               <p>A arvore atual permanece acessivel para evoluir com XP e conquistas reais.</p>
             </div>
@@ -3585,10 +3585,10 @@ const renderStudentProfilePage = () => {
           <a href="aluno-atividades.html">${premiumIcon("atividades")}<span>Atividades</span></a>
           <a href="biblioteca.html?from=aluno">${premiumIcon("biblioteca")}<span>Biblioteca</span></a>
           <a href="jogos.html">${premiumIcon("jogos")}<span>Jogos</span></a>
-          <a href="arvore.html">${premiumIcon("arvore")}<span>Minha Arvore</span></a>
+          <a href="arvore.html">${premiumIcon("arvore")}<span>Minha Árvore</span></a>
         </section>
 
-        <section class="student-real-profile-readiness" aria-label="Preparacao do perfil">
+        <section class="student-real-profile-readiness" aria-label="Preparação do perfil">
           <article><strong>Perfil</strong><span>Pronto</span></article>
           <article><strong>Avatar</strong><span>Iniciais institucionais</span></article>
           <article><strong>XP</strong><span>${gamification.xpEngine === "LOCAL" ? "Aguardando acompanhamento institucional" : "Pronto"}</span></article>
@@ -3602,7 +3602,7 @@ const renderStudentProfilePage = () => {
 const studentProfileHotspots = [
   { className: "profile-hotspot-avatar", href: "perfil.html", label: "Abrir detalhes do perfil do aluno" },
   { className: "profile-hotspot-xp-top", href: "perfil.html", label: "Abrir historico de XP" },
-  { className: "profile-hotspot-tree-top", href: "arvore.html", label: "Abrir Minha Arvore" },
+  { className: "profile-hotspot-tree-top", href: "arvore.html", label: "Abrir Minha Árvore" },
   { className: "profile-hotspot-streak-top", href: "missao.html", label: "Abrir sequencia diaria" },
   { className: "profile-hotspot-medal-organizador", href: "perfil.html", label: "Abrir conquista Pequeno Organizador" },
   { className: "profile-hotspot-medal-construtor", href: "perfil.html", label: "Abrir conquista Pequeno Construtor" },
@@ -3610,9 +3610,9 @@ const studentProfileHotspots = [
   { className: "profile-hotspot-medal-explorador", href: "perfil.html", label: "Abrir conquista Pequeno Explorador" },
   { className: "profile-hotspot-medal-leitor", href: "book-viewer.html?book=livro-005", label: "Abrir conquista Leitor Iniciante" },
   { className: "profile-hotspot-medal-natureza", href: "perfil.html", label: "Abrir conquista Curioso por Natureza" },
-  { className: "profile-hotspot-xp-panel", href: "perfil.html", label: "Abrir painel de XP e proximo nivel" },
+  { className: "profile-hotspot-xp-panel", href: "perfil.html", label: "Abrir painel de XP e próximo nivel" },
   { className: "profile-hotspot-last-activity", href: "book-viewer.html?book=livro-005", label: "Abrir ultima atividade Leitura Linguagem" },
-  { className: "profile-hotspot-games-summary", href: "jogos.html", label: "Abrir jogos concluidos" },
+  { className: "profile-hotspot-games-summary", href: "jogos.html", label: "Abrir jogos concluídos" },
   { className: "profile-hotspot-xp-summary", href: "perfil.html", label: "Abrir XP total" },
   { className: "profile-hotspot-achievements-summary", href: "perfil.html", label: "Abrir conquistas" },
   { className: "profile-hotspot-game-caixa", href: "jogos.html", label: "Abrir jogo A Caixa Misteriosa" },
@@ -3626,8 +3626,8 @@ const professorProfileHotspots = [
   { className: "professor-hotspot-avatar", href: "professor.html", label: "Abrir perfil da professora Helena" },
   { className: "professor-hotspot-turmas-top", href: "professor-turma.html", label: "Abrir minhas turmas" },
   { className: "professor-hotspot-planejadas-top", href: "atividades.html", label: "Abrir atividades planejadas" },
-  { className: "professor-hotspot-concluidas-top", href: "professor.html?view=relatorios", label: "Abrir atividades concluidas" },
-  { className: "professor-hotspot-xp-top", href: "universidade.html", label: "Abrir formacao e XP" },
+  { className: "professor-hotspot-concluidas-top", href: "professor.html?view=relatórios", label: "Abrir atividades concluidas" },
+  { className: "professor-hotspot-xp-top", href: "universidade.html", label: "Abrir formação e XP" },
   { className: "professor-hotspot-turma-a", href: "professor-turma.html", label: "Abrir Infantil 5 anos A" },
   { className: "professor-hotspot-turma-b", href: "professor-turma.html", label: "Abrir Infantil 5 anos B" },
   { className: "professor-hotspot-turma-4a", href: "professor-turma.html", label: "Abrir 4 Ano A" },
@@ -3640,20 +3640,20 @@ const professorProfileHotspots = [
   { className: "professor-hotspot-sex", href: "professor.html?view=planejamentos", label: "Abrir planejamento de sexta" },
   { className: "professor-hotspot-aula-1", href: "biblioteca.html", label: "Abrir aula de Linguagem" },
   { className: "professor-hotspot-aula-2", href: "biblioteca.html", label: "Abrir aula de Matematica" },
-  { className: "professor-hotspot-aula-3", href: "biblioteca.html", label: "Abrir aula de Ciencias" },
+  { className: "professor-hotspot-aula-3", href: "biblioteca.html", label: "Abrir aula de Ciências" },
   { className: "professor-hotspot-aula-4", href: "biblioteca.html", label: "Abrir aula de Historia" },
   { className: "professor-hotspot-aula-5", href: "biblioteca.html", label: "Abrir aula de Projeto" },
-  { className: "professor-hotspot-pendente-corrigir", href: "professor.html?view=avaliacoes", label: "Abrir atividades para corrigir" },
+  { className: "professor-hotspot-pendente-corrigir", href: "professor.html?view=avaliações", label: "Abrir atividades para corrigir" },
   { className: "professor-hotspot-pendente-revisar", href: "atividades.html", label: "Abrir atividades para revisar" },
   { className: "professor-hotspot-pendente-devolutivas", href: "professor.html?view=mensagens", label: "Abrir devolutivas" },
   { className: "professor-hotspot-pendente-publicar", href: "atividades.html", label: "Abrir atividades para publicar" },
-  { className: "professor-hotspot-correcoes", href: "professor.html?view=relatorios", label: "Abrir correcoes" },
+  { className: "professor-hotspot-correcoes", href: "professor.html?view=relatórios", label: "Abrir correcoes" },
   { className: "professor-hotspot-book-1", href: "book-viewer.html?book=livro-001", label: "Abrir livro integrado 1" },
   { className: "professor-hotspot-book-2", href: "book-viewer.html?book=livro-002", label: "Abrir livro integrado 2" },
   { className: "professor-hotspot-book-3", href: "book-viewer.html?book=livro-003", label: "Abrir livro integrado 3" },
   { className: "professor-hotspot-book-4", href: "book-viewer.html?book=livro-004", label: "Abrir livro integrado 4" },
   { className: "professor-hotspot-book-5", href: "book-viewer.html?book=livro-005", label: "Abrir livro integrado 5" },
-  { className: "professor-hotspot-bncc", href: "universidade.html", label: "Abrir conteudos alinhados a BNCC" },
+  { className: "professor-hotspot-bncc", href: "universidade.html", label: "Abrir conteúdos alinhados a BNCC" },
 ];
 
 const renderProfessorProfilePage = () => {
@@ -3693,12 +3693,12 @@ const renderStudentHero = ({ profile, tree }) => `
 
 const renderStudentMission = (mission) => `
   <section class="student-card student-mission-card" aria-labelledby="student-mission-title">
-    <div class="student-card-head"><h2 id="student-mission-title">⭐ Missao do Dia</h2></div>
+    <div class="student-card-head"><h2 id="student-mission-title">⭐ Missão do Dia</h2></div>
     <article>
       <div><small>${mission.code}</small><strong>${mission.title}</strong><p>${mission.description}</p></div>
       ${studentLazyImg(mission.image, "", "student-mission-art")}
     </article>
-    <a class="student-primary-action" href="${mission.href}">Iniciar Missao <span>›</span></a>
+    <a class="student-primary-action" href="${mission.href}">Iniciar Missão <span>›</span></a>
   </section>
 `;
 
@@ -3710,7 +3710,7 @@ const renderStudentCurrentBook = (book) => `
       <div>
         <h3>${book.title}</h3>
         <p>${book.subtitle}</p>
-        <strong>${book.progress}% concluido</strong>
+        <strong>${book.progress}% concluído</strong>
         <i><span style="width:${book.progress}%"></span></i>
       </div>
     </article>
@@ -3789,7 +3789,7 @@ const renderStudentPresentationDashboard = () => `
     <section class="student-presentation-dashboard" aria-label="Dashboard do Aluno">
       <img
         src="assets/aluno/oficial-dashboard-aluno.png"
-        alt="Dashboard oficial do aluno com saudacao, missoes, livro em andamento, evolucao, XP e biblioteca"
+        alt="Dashboard oficial do aluno com saudação, missoes, livro em andamento, evolução, XP e biblioteca"
         loading="eager"
         decoding="async"
         onerror="this.hidden=true"
@@ -3805,13 +3805,13 @@ const renderStudentPresentationDashboard = () => `
 `;
 
 const teacherWorkspaceNav = [
-  ["inicio", "Inicio", "home"],
+  ["inicio", "Início", "home"],
   ["turmas", "Minhas Turmas", "users"],
   ["planejamentos", "Planejamento", "calendar"],
-  ["atividades", "Atividades Imprimiveis", "doc"],
+  ["atividades", "Atividades Imprimíveis", "doc"],
   ["biblioteca", "Biblioteca", "book"],
   ["acompanhamento", "Acompanhamento", "chart"],
-  ["formacao", "Formacao", "cap"],
+  ["formação", "Formação", "cap"],
 ];
 
 const teacherAllowedRoles = ["professor", "teacher", "admin", "gestor", "coordenador"];
@@ -3836,19 +3836,19 @@ const teacherPlanningDays = [
 
 const teacherPlanningResourceTypes = [
   ["livro", "Livro"],
-  ["experiencia", "Experiencia"],
+  ["experiência", "Experiência"],
   ["atividade-imprimivel", "Atividade imprimivel"],
   ["biblioteca", "Biblioteca"],
-  ["experiencia-digital", "Jogo / experiencia digital"],
+  ["experiência-digital", "Jogo / experiência digital"],
   ["proposta-livre", "Proposta livre do professor"],
 ];
 
 const teacherPlanningRemoteResourceTypes = {
   livro: "livro",
-  experiencia: "experiencia",
+  experiência: "experiência",
   "atividade-imprimivel": "atividade",
   biblioteca: "livro",
-  "experiencia-digital": "atividade_online",
+  "experiência-digital": "atividade_online",
   "proposta-livre": "proposta_livre",
 };
 
@@ -3859,7 +3859,7 @@ const teacherPlanningCalendarTypes = [
   ["aula", "Aula"],
   ["lembrete", "Lembrete"],
   ["livro", "Livro"],
-  ["experiencia", "Experiencia"],
+  ["experiência", "Experiência"],
   ["atividade_online", "Atividade online"],
   ["outro", "Outro"],
 ];
@@ -4055,7 +4055,7 @@ const ensureTeacherAttendanceDay = async ({ force = false, classId = "", date = 
       teacherAttendanceState.status = "ready";
     } catch (error) {
       teacherAttendanceState.records = [];
-      teacherAttendanceState.error = error.message || "Nao foi possivel carregar a frequencia.";
+      teacherAttendanceState.error = error.message || "Não foi possível carregar a frequência.";
       teacherAttendanceState.status = "error";
     }
     return teacherAttendanceState;
@@ -4076,13 +4076,13 @@ const saveTeacherAttendanceDay = async ({ classId = "", date = "", records = [] 
     }),
   });
   teacherAttendanceState.result = result;
-  teacherAttendanceState.message = "Frequencia salva com sucesso.";
+  teacherAttendanceState.message = "Frequência salva com sucesso.";
   return result;
 };
 
 const teacherWorkspaceTasks = [
   { label: "Atividades pendentes na turma", count: pilotProfiles.student.pendingActivities, view: "turmas" },
-  { label: "Producoes concluidas", count: pilotProfiles.student.completedActivities, view: "relatorios" },
+  { label: "Produções concluidas", count: pilotProfiles.student.completedActivities, view: "relatórios" },
 ];
 
 const getTeacherBibliotecaResources = () => {
@@ -4107,8 +4107,8 @@ const getTeacherBibliotecaResources = () => {
 
 const renderTeacherCard = () => `
   <article class="tw-teacher-card">
-    <img src="logo-sidebar-dark.png" alt="Raizes e Saberes" onerror="this.hidden=true" />
-    <div><span>Professora</span><strong>${printableEscape(getTeacherDisplayName())}</strong><small>Area do Professor</small></div>
+    <img src="logo-sidebar-dark.png" alt="Raízes e Saberes" onerror="this.hidden=true" />
+    <div><span>Professora</span><strong>${printableEscape(getTeacherDisplayName())}</strong><small>Área do Professor</small></div>
   </article>
 `;
 
@@ -4146,9 +4146,9 @@ const teacherInlineIcon = (icon, label = "") => {
 };
 
 const renderTeacherTopbar = () => `
-  <header class="tw-topbar" aria-label="Acoes do professor">
-    <label><span>Pesquisar</span><input type="search" data-teacher-search placeholder="Buscar conteudos, alunos, turmas..." /></label>
-    <div class="tw-top-actions teacher-global-actions" aria-label="Acoes globais do Professor">
+  <header class="tw-topbar" aria-label="Ações do professor">
+    <label><span>Pesquisar</span><input type="search" data-teacher-search placeholder="Buscar conteúdos, alunos, turmas..." /></label>
+    <div class="tw-top-actions teacher-global-actions" aria-label="Ações globais do Professor">
       <button type="button" data-platform-back>${teacherInlineIcon("progresso", "VOLTAR")}</button>
       <button type="button" data-teacher-open-url="professor.html">${teacherInlineIcon("home", "INICIO")}</button>
       <button type="button" data-teacher-open-url="escola.html">${teacherInlineIcon("escola", "MINHA ESCOLA")}</button>
@@ -4240,8 +4240,8 @@ const getTeacherPlanningClassContext = (classId = "") => {
   const classItem = getTeacherPlanningClassById(classId) || getTeacherPlanningClasses()[0] || null;
   if (!classItem?.id) throw new Error("Nenhuma turma institucional disponivel para o planejamento.");
   const teacherId = classItem.teacherId || teacherInstitutionalState.teacherByClass?.[classItem.id] || teacherInstitutionalState.profile?.teacherId || "";
-  if (!teacherId) throw new Error("Vinculo teacher_id nao encontrado para esta turma.");
-  if (!classItem.schoolId) throw new Error("school_id nao encontrado para esta turma.");
+  if (!teacherId) throw new Error("Vínculo teacher_id não encontrado para esta turma.");
+  if (!classItem.schoolId) throw new Error("school_id não encontrado para esta turma.");
   return { classItem, teacherId, schoolId: classItem.schoolId };
 };
 
@@ -4395,7 +4395,7 @@ const saveTeacherPlanningToSupabase = async (formData) => {
 
 const finalizeTeacherPlanning = async (planId) => {
   const plan = (teacherPlanningState.plans || []).find((item) => item.id === planId);
-  if (!plan) throw new Error("Planejamento nao encontrado.");
+  if (!plan) throw new Error("Planejamento não encontrado.");
   const client = createSupabaseRestClient();
   await client.request("teacher_plans", `?id=${supabaseEq(planId)}`, {
     method: "PATCH",
@@ -4487,7 +4487,7 @@ const archiveTeacherPlanning = async (planId) => {
 const saveTeacherCalendarEntryToSupabase = async (formData) => {
   const planId = String(formData.get("planId") || "");
   const plan = teacherPlanningState.plans.find((item) => item.id === planId);
-  if (!plan) throw new Error("Proposta nao encontrada para publicacao.");
+  if (!plan) throw new Error("Proposta nao encontrada para publicação.");
   const { classItem, teacherId, schoolId } = getTeacherPlanningClassContext(plan.classId);
   const payload = {
     class_id: classItem.id,
@@ -4540,8 +4540,8 @@ const getTeacherMessageContextByClass = (classId = "") => {
   const classItem = getTeacherInstitutionalClasses().find((item) => item.id === classId) || getTeacherInstitutionalClasses()[0] || null;
   if (!classItem?.id) throw new Error("Turma institucional do aluno nao encontrada.");
   const teacherId = classItem.teacherId || teacherInstitutionalState.teacherByClass?.[classItem.id] || teacherInstitutionalState.profile?.teacherId || "";
-  if (!teacherId) throw new Error("Vinculo teacher_id nao encontrado para esta turma.");
-  if (!classItem.schoolId) throw new Error("school_id nao encontrado para esta turma.");
+  if (!teacherId) throw new Error("Vínculo teacher_id não encontrado para esta turma.");
+  if (!classItem.schoolId) throw new Error("school_id não encontrado para esta turma.");
   return { classItem, teacherId, schoolId: classItem.schoolId };
 };
 
@@ -4605,7 +4605,7 @@ const ensureTeacherClassMessages = async ({ force = false, weekStartIso = "", cl
       teacherClassMessagesState.status = "ready";
       return teacherClassMessagesState;
     } catch (error) {
-      teacherClassMessagesState.error = error.message || "Nao foi possivel carregar os recados.";
+      teacherClassMessagesState.error = error.message || "Não foi possível carregar os recados.";
       teacherClassMessagesState.messages = [];
       teacherClassMessagesState.status = "error";
       return teacherClassMessagesState;
@@ -4675,7 +4675,7 @@ const deleteTeacherClassMessage = async (communicationId = "") => {
 
 const recommendationStatusLabels = {
   published: "Publicado",
-  archived: "Retirado da publicacao",
+  archived: "Retirado da publicação",
   deleted: "Excluido",
 };
 
@@ -4684,13 +4684,13 @@ const recommendationTypeLabels = {
   activity: "Atividade",
   book: "Livro",
   game: "Jogo",
-  experience: "Experiencia",
+  experience: "Experiência",
   free_proposal: "Proposta livre",
-  other: "Conteudo",
+  other: "Conteúdo",
 };
 
 const recommendationStatusLabel = (value) => recommendationStatusLabels[String(value || "").toLowerCase()] || value || "Status nao informado";
-const recommendationTypeLabel = (value) => recommendationTypeLabels[String(value || "").toLowerCase()] || value || "Conteudo";
+const recommendationTypeLabel = (value) => recommendationTypeLabels[String(value || "").toLowerCase()] || value || "Conteúdo";
 
 const mapTeacherRecommendationRow = (row = {}) => ({
   id: row.id || row.recommendation_id || "",
@@ -4698,7 +4698,7 @@ const mapTeacherRecommendationRow = (row = {}) => ({
   teacherId: row.teacher_id || "",
   contentType: row.content_type || "printable_activity",
   contentId: row.content_id || "",
-  contentTitle: row.content_title || row.title || "Conteudo recomendado",
+  contentTitle: row.content_title || row.title || "Conteúdo recomendado",
   targetType: row.target_type || "class",
   classId: row.class_id || "",
   className: row.class_name || normalizeClassName(getTeacherInstitutionalClasses().find((item) => item.id === row.class_id) || {}),
@@ -4728,7 +4728,7 @@ const ensureTeacherRecommendations = async ({ force = false, classId = "" } = {}
       }
       teacherRecommendationsState.classId = selectedClassId;
       const client = createSupabaseRestClient();
-      const rows = await client.request("rpc/teacher_list_pedagogical_recommendations", "", {
+      const rows = await client.request("rpc/teacher_list_pedagógical_recommendations", "", {
         method: "POST",
         body: JSON.stringify({ p_class_id: selectedClassId }),
         requireAuthenticated: true,
@@ -4738,7 +4738,7 @@ const ensureTeacherRecommendations = async ({ force = false, classId = "" } = {}
       teacherRecommendationsState.status = "ready";
       return teacherRecommendationsState;
     } catch (error) {
-      teacherRecommendationsState.error = error.message || "Nao foi possivel carregar as recomendacoes.";
+      teacherRecommendationsState.error = error.message || "Não foi possível carregar as recomendações.";
       teacherRecommendationsState.items = [];
       teacherRecommendationsState.status = "error";
       return teacherRecommendationsState;
@@ -4757,7 +4757,7 @@ const createTeacherPedagogicalRecommendation = async ({ classId = "", contentTyp
     throw new Error("Aluno fora da turma autorizada.");
   }
   const client = createSupabaseRestClient();
-  const result = await client.request("rpc/teacher_create_pedagogical_recommendation", "", {
+  const result = await client.request("rpc/teacher_create_pedagógical_recommendation", "", {
     method: "POST",
     body: JSON.stringify({
       p_school_id: classItem.schoolId,
@@ -4772,32 +4772,32 @@ const createTeacherPedagogicalRecommendation = async ({ classId = "", contentTyp
     requireAuthenticated: true,
     allowedRoles: teacherAllowedRoles,
   });
-  teacherRecommendationsState.message = "Recomendacao publicada com sucesso.";
+  teacherRecommendationsState.message = "Recomendação publicada com sucesso.";
   await ensureTeacherRecommendations({ force: true, classId: classItem.id });
   return Array.isArray(result) ? result[0] || {} : result || {};
 };
 
 const setTeacherRecommendationStatus = async (recommendationId = "", toStatus = "") => {
   const client = createSupabaseRestClient();
-  await client.request("rpc/teacher_set_pedagogical_recommendation_status", "", {
+  await client.request("rpc/teacher_set_pedagógical_recommendation_status", "", {
     method: "POST",
     body: JSON.stringify({ p_recommendation_id: recommendationId, p_to_status: toStatus }),
     requireAuthenticated: true,
     allowedRoles: teacherAllowedRoles,
   });
-  teacherRecommendationsState.message = toStatus === "published" ? "Recomendacao publicada novamente." : "Recomendacao retirada da publicacao.";
+  teacherRecommendationsState.message = toStatus === "published" ? "Recomendação publicada novamente." : "Recomendação retirada da publicação.";
   await ensureTeacherRecommendations({ force: true, classId: teacherRecommendationsState.classId });
 };
 
 const deleteTeacherRecommendation = async (recommendationId = "") => {
   const client = createSupabaseRestClient();
-  await client.request("rpc/teacher_delete_pedagogical_recommendation", "", {
+  await client.request("rpc/teacher_delete_pedagógical_recommendation", "", {
     method: "POST",
     body: JSON.stringify({ p_recommendation_id: recommendationId }),
     requireAuthenticated: true,
     allowedRoles: teacherAllowedRoles,
   });
-  teacherRecommendationsState.message = "Recomendacao excluida.";
+  teacherRecommendationsState.message = "Recomendação excluida.";
   await ensureTeacherRecommendations({ force: true, classId: teacherRecommendationsState.classId });
 };
 
@@ -4825,7 +4825,7 @@ const renderTeacherClassWeekEntry = (entry) => `
 const renderTeacherClassWeekCell = (specificDate = "") => {
   const entries = getTeacherClassMessagesForDate(specificDate);
   if (!entries.length) {
-    return `<div class="family-week-cell is-empty"><span>Sem publicacao</span></div>`;
+    return `<div class="family-week-cell is-empty"><span>Sem publicação</span></div>`;
   }
   return `<div class="family-week-cell family-week-unscheduled">${entries.map(renderTeacherClassWeekEntry).join("")}</div>`;
 };
@@ -4843,11 +4843,11 @@ const renderTeacherClassWeeklyBoard = () => {
         <div class="family-week-actions" aria-label="Controles de semana">
           <button type="button" data-teacher-message-week-move="-1">Semana anterior</button>
           <button type="button" data-teacher-message-week-today>Hoje</button>
-          <button type="button" data-teacher-message-week-move="1">Proxima semana</button>
+          <button type="button" data-teacher-message-week-move="1">Próxima semana</button>
         </div>
       </div>
       <div class="family-week-grid" aria-label="Quadro semanal da turma" data-week-start="${printableEscape(weekStartIso)}">
-        <div class="family-week-corner">Publicacao</div>
+        <div class="family-week-corner">Publicação</div>
         ${familyWeekDays.map(([, short]) => `<div class="family-week-day">${short}</div>`).join("")}
         <div class="family-week-slot">Recados</div>
         ${familyWeekDays.map(([dayKey]) => renderTeacherClassWeekCell(weekDates[dayKey])).join("")}
@@ -4870,7 +4870,7 @@ const renderTeacherClassWeeklyBoard = () => {
 
 const renderTeacherPlanningProposalCard = (proposal) => {
   const publication = proposal.publication || null;
-  const publicationLabel = publication?.entry_date ? `${formatTeacherPlanningDate(publication.entry_date)}${publication.start_time ? ` · ${publication.start_time.slice(0, 5)}` : ""}` : "Nao publicado";
+  const publicationLabel = publication?.entry_date ? `${formatTeacherPlanningDate(publication.entry_date)}${publication.start_time ? ` · ${publication.start_time.slice(0, 5)}` : ""}` : "Não publicado";
   const statusLabel = getTeacherPlanningStatusLabel(proposal.status);
   const isFinalized = proposal.status === "published";
   return `
@@ -4879,14 +4879,14 @@ const renderTeacherPlanningProposalCard = (proposal) => {
     <strong>${printableEscape(proposal.title)}</strong>
     <small>${printableEscape(proposal.className)} · ${printableEscape(findTeacherPlanningLabel(teacherPlanningDays, proposal.day, "Dia"))} · ${printableEscape(formatTeacherPlanningDate(proposal.planDate))}</small>
     <div class="tw-planning-detail" data-planning-detail="${printableEscape(proposal.id)}" hidden>
-      <p>${printableEscape(proposal.note || "Sem observacao registrada.")}</p>
+      <p>${printableEscape(proposal.note || "Sem observação registrada.")}</p>
       <em>${printableEscape(isFinalized ? `Planejamento finalizado.${publication ? ` Ja usado na Minha Semana: ${publicationLabel}.` : ""}` : "Rascunho privado da professora.")}</em>
     </div>
     <div class="tw-planning-actions">
       <button type="button" data-planning-view="${printableEscape(proposal.id)}">VISUALIZAR</button>
       <button type="button" data-planning-edit="${printableEscape(proposal.id)}">EDITAR</button>
       ${isFinalized ? "" : `<button type="button" data-planning-finalize="${printableEscape(proposal.id)}">FINALIZAR</button>`}
-      <button type="button" disabled title="Acao futura: aproveitar este planejamento na Minha Semana.">USAR NA MINHA SEMANA</button>
+      <button type="button" disabled title="Ação futura: aproveitar este planejamento na Minha Semana.">USAR NA MINHA SEMANA</button>
       <button type="button" data-planning-remove="${printableEscape(proposal.id)}">ARQUIVAR</button>
     </div>
   </article>
@@ -4945,8 +4945,8 @@ const renderTeacherPlanningForm = () => `
         </select>
       </label>
       <label class="tw-planning-form-note">
-        <span>Observacao do professor</span>
-        <textarea name="note" rows="4" maxlength="420" placeholder="Registre uma orientacao breve para lembrar a intencao pedagogica."></textarea>
+        <span>Observação do professor</span>
+        <textarea name="note" rows="4" maxlength="420" placeholder="Registre uma orientação breve para lembrar a intencao pedagógica."></textarea>
       </label>
       <div class="tw-planning-form-actions">
         <button type="submit">SALVAR PROPOSTA</button>
@@ -4974,7 +4974,7 @@ const renderTeacherPublicationPanel = () => `
         <input type="date" name="entryDate" required />
       </label>
       <label>
-        <span>Inicio</span>
+        <span>Início</span>
         <input type="time" name="startTime" />
       </label>
       <label>
@@ -5066,7 +5066,7 @@ const renderTeacherActivitiesView = () => {
       <div class="tw-planning-heading">
         <div>
           <span>Atividades</span>
-          <h2>Atividades Imprimiveis</h2>
+          <h2>Atividades Imprimíveis</h2>
           <p>EXPLORE, VISUALIZE E IMPRIMA ATIVIDADES PARA SUAS TURMAS.</p>
         </div>
         <button type="button" data-teacher-open-url="atividades.html">ABRIR ATIVIDADES</button>
@@ -5081,13 +5081,13 @@ const renderTeacherActivitiesView = () => {
           </div>
         </article>
         <article class="tw-activity-entry" data-teacher-search-item>
-          <span>Experiencias digitais</span>
+          <span>Experiências digitais</span>
           <strong>Recursos digitais</strong>
-          <small>${experiences.length + activities.length ? `${experiences.length} experiencias e ${activities.length} atividades digitais encontradas.` : "Ainda nao ha experiencias associadas a este contexto."}</small>
-          <button type="button" data-teacher-view="experiencias">ABRIR EXPERIENCIAS</button>
+          <small>${experiences.length + activities.length ? `${experiences.length} experiências e ${activities.length} atividades digitais encontradas.` : "Ainda nao ha experiências associadas a este contexto."}</small>
+          <button type="button" data-teacher-view="experiências">ABRIR EXPERIENCIAS</button>
         </article>
         <article class="tw-activity-entry is-disabled" data-teacher-search-item>
-          <span>Indicacao pedagogica</span>
+          <span>Indicação pedagógica</span>
           <strong>Indicar para turma ou aluno</strong>
           <small>Escolha uma atividade e indique para uma turma ou para um aluno vinculado.</small>
           <button type="button" disabled>SELECIONE UMA ATIVIDADE</button>
@@ -5164,7 +5164,7 @@ const renderTeacherLibraryView = () => {
   const categoryCards = [
     studentBooks.length
       ? {
-          title: "Livros da Colecao",
+          title: "Livros da Coleção",
           label: "Material do aluno",
           count: `${studentBooks.length} materiais`,
           text: "Livros do aluno cadastrados no acervo existente.",
@@ -5184,10 +5184,10 @@ const renderTeacherLibraryView = () => {
       : null,
     digitalTotal
       ? {
-          title: "Conteudos Digitais",
-          label: "Experiencias",
+          title: "Conteúdos Digitais",
+          label: "Experiências",
           count: `${digitalTotal} itens`,
-          text: "Entrada para experiencias e recursos digitais ja existentes.",
+          text: "Entrada para experiências e recursos digitais ja existentes.",
           href: "biblioteca.html#acervo-completo",
           covers: studentBooks.map((book) => book.src),
         }
@@ -5222,12 +5222,12 @@ const renderTeacherLibraryView = () => {
 
 const renderTeacherInstitutionalStatus = (title = "CARREGANDO DADOS INSTITUCIONAIS.") => {
   if (teacherInstitutionalState.status === "error") {
-    return renderTeacherEmptyState("NAO FOI POSSIVEL IDENTIFICAR O VINCULO INSTITUCIONAL DESTE PROFESSOR.", teacherInstitutionalState.error || "Entre novamente e tente acessar a Area do Professor.");
+    return renderTeacherEmptyState("NAO FOI POSSIVEL IDENTIFICAR O VINCULO INSTITUCIONAL DESTE PROFESSOR.", teacherInstitutionalState.error || "Entre novamente e tente acessar a Área do Professor.");
   }
   if (teacherInstitutionalState.status === "empty") {
-    return renderTeacherEmptyState("NENHUMA TURMA VINCULADA AO PROFESSOR.", "A vinculacao institucional precisa estar ativa para liberar esta area.");
+    return renderTeacherEmptyState("NENHUMA TURMA VINCULADA AO PROFESSOR.", "A vinculação institucional precisa estar ativa para liberar esta area.");
   }
-  return renderTeacherEmptyState(title, "Validando sua sessao e buscando suas turmas autorizadas.");
+  return renderTeacherEmptyState(title, "Validando sua sessão e buscando suas turmas autorizadas.");
 };
 
 const renderClassCard = (classItem) => `
@@ -5237,11 +5237,11 @@ const renderClassCard = (classItem) => `
       <strong>${printableEscape(classItem.name)}</strong>
     </header>
     <dl class="tw-card-meta">
-      <div><dt>Escola</dt><dd>${printableEscape(classItem.schoolName || "Nao informada")}</dd></div>
-      <div><dt>Ano letivo</dt><dd>${printableEscape(classItem.schoolYear || "Nao informado")}</dd></div>
-      <div><dt>Turno</dt><dd>${printableEscape(classItem.shift || "Nao informado")}</dd></div>
+      <div><dt>Escola</dt><dd>${printableEscape(classItem.schoolName || "Não informada")}</dd></div>
+      <div><dt>Ano letivo</dt><dd>${printableEscape(classItem.schoolYear || "Não informado")}</dd></div>
+      <div><dt>Turno</dt><dd>${printableEscape(classItem.shift || "Não informado")}</dd></div>
       <div><dt>Alunos</dt><dd>${printableEscape(classItem.students || 0)}</dd></div>
-      <div><dt>Vinculo</dt><dd>${printableEscape(normalizeInstitutionalStatus(classItem.membershipRole || "professor"))}</dd></div>
+      <div><dt>Vínculo</dt><dd>${printableEscape(normalizeInstitutionalStatus(classItem.membershipRole || "professor"))}</dd></div>
       <div><dt>Status</dt><dd>${printableEscape(classItem.status || "Ativa")}</dd></div>
     </dl>
     <a class="tw-primary-link" href="${getTeacherClassHref(classItem)}">ABRIR TURMA</a>
@@ -5253,7 +5253,7 @@ const renderStudentCard = (student) => `
     ${student.avatar ? `<img class="tw-student-avatar" src="${printableEscape(student.avatar)}" alt="" loading="lazy" />` : `<span>${student.name.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span>`}
     <div>
       <strong>${printableEscape(student.name)}</strong>
-      <small>${printableEscape(student.className)} · Matricula ${printableEscape(student.enrollmentStatus || student.status || "Ativa")}</small>
+      <small>${printableEscape(student.className)} · Matrícula ${printableEscape(student.enrollmentStatus || student.status || "Ativa")}</small>
     </div>
     <a class="tw-primary-link" href="${getTeacherStudentHref(student)}">ABRIR ACOMPANHAMENTO</a>
   </article>
@@ -5397,7 +5397,7 @@ const printableActivitiesDataService = (() => {
     facets(items) {
       const unique = (values) => [...new Set(values.flat().filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
       return {
-        fields: unique(items.map((item) => item.camposExperiencia || [])),
+        fields: unique(items.map((item) => item.camposExperiência || [])),
         types: unique(items.map((item) => item.tiposAtividade || [])),
         materials: unique(items.map((item) => item.materiais || [])),
       };
@@ -5437,13 +5437,13 @@ const printableIncludes = (item, query) => {
     item.titulo,
     item.tema,
     item.objetivo,
-    item.orientacaoProfessor,
+    item.orientaçãoProfessor,
     item.descricao,
-    item.comandoCrianca,
+    item.comandoCriança,
     ...(item.materiais || []),
     ...(item.palavrasChave || []),
     ...(item.tiposAtividade || []),
-    ...(item.camposExperiencia || []),
+    ...(item.camposExperiência || []),
   ].join(" ");
   return printableNormalize(haystack).includes(printableNormalize(query));
 };
@@ -5464,7 +5464,7 @@ const getPrintableFilteredItems = ({ admin = false } = {}) => {
       matchesFavorite &&
       printableIncludes(item, query) &&
       (!age || item.faixaEtaria === age) &&
-      (!field || (item.camposExperiencia || []).includes(field)) &&
+      (!field || (item.camposExperiência || []).includes(field)) &&
       (!type || (item.tiposAtividade || []).includes(type)) &&
       (!material || (item.materiais || []).includes(material))
     );
@@ -5474,7 +5474,7 @@ const getPrintableFilteredItems = ({ admin = false } = {}) => {
     if (sort === "codigo") return String(a.codigo).localeCompare(String(b.codigo), "pt-BR");
     if (sort === "titulo") return String(a.titulo).localeCompare(String(b.titulo), "pt-BR");
     if (sort === "recentes") return String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
-    if (sort === "atualizadas") return String(b.updatedAt || b.dataAtualizacao || "").localeCompare(String(a.updatedAt || a.dataAtualizacao || ""));
+    if (sort === "atualizadas") return String(b.updatedAt || b.dataAtualização || "").localeCompare(String(a.updatedAt || a.dataAtualização || ""));
     if (sort === "visualizadas") return Number(b.visualizacoes || 0) - Number(a.visualizacoes || 0);
     if (sort === "baixadas") return Number(b.downloads || 0) - Number(a.downloads || 0);
     return 0;
@@ -5514,7 +5514,7 @@ const renderPrintableFilters = ({ admin = false } = {}) => {
           ${facets.fields.length ? `<label><span>Campo BNCC</span><select name="campo">${options(facets.fields, params.get("campo") || "")}</select></label>` : ""}
           ${facets.types.length ? `<label><span>Tipo</span><select name="tipo">${options(facets.types, params.get("tipo") || "")}</select></label>` : ""}
           ${facets.materials.length ? `<label><span>Material</span><select name="material">${options(facets.materials, params.get("material") || "")}</select></label>` : ""}
-          <label><span>Ordenacao</span><select name="ordem">
+          <label><span>Ordenação</span><select name="ordem">
             ${[
               ["relevancia", "Relevancia"],
               ["codigo", "Codigo"],
@@ -5538,7 +5538,7 @@ const printableStatusLabel = (status = "") => {
   if (normalized === "PUBLICADO") return "Publicado";
   if (normalized === "RASCUNHO") return "Rascunho";
   if (normalized === "ARQUIVADO") return "Retirado";
-  return status || "Nao informado";
+  return status || "Não informado";
 };
 
 const renderPrintableIndicateButton = (code) =>
@@ -5557,7 +5557,7 @@ const renderPrintableRecommendationDialog = () => {
         <input type="hidden" name="contentTitle" />
         <header>
           <div>
-            <span>Indicacao pedagogica</span>
+            <span>Indicação pedagógica</span>
             <h2>Indicar atividade</h2>
           </div>
           <button type="button" data-pa-recommendation-close aria-label="Fechar">Fechar</button>
@@ -5575,7 +5575,7 @@ const renderPrintableRecommendationDialog = () => {
                 <span>Destino</span>
                 <select name="targetType" data-pa-recommendation-target required>
                   <option value="class" ${selectedTarget === "class" ? "selected" : ""}>Toda a turma</option>
-                  <option value="student" ${selectedTarget === "student" ? "selected" : ""}>Aluno / Familia</option>
+                  <option value="student" ${selectedTarget === "student" ? "selected" : ""}>Aluno / Família</option>
                 </select>
               </label>
               <label data-pa-recommendation-student-wrap ${selectedTarget === "student" ? "" : "hidden"}>
@@ -5586,7 +5586,7 @@ const renderPrintableRecommendationDialog = () => {
                 </select>
               </label>
               <label class="pa-recommendation-note">
-                <span>Orientacao curta</span>
+                <span>Orientação curta</span>
                 <textarea name="note" rows="3" maxlength="280" placeholder="Opcional. Ex.: fazer em casa com apoio da familia."></textarea>
               </label>
               <p data-pa-recommendation-status>Escolha o destino antes de publicar.</p>
@@ -5625,7 +5625,7 @@ const renderPrintableActivityCard = (item) => {
         <mark>${printableEscape(item.codigo)}</mark>
         <h3>${printableEscape(item.titulo || "Titulo pendente")}</h3>
         <p>${printableEscape(item.idade || item.faixaEtaria || "Idade pendente")} · ${printableEscape((item.tiposAtividade || [])[0] || "Tipo pendente")}</p>
-        <small>${printableEscape((item.camposExperiencia || []).join(", ") || "Campo de experiencia pendente")}</small>
+        <small>${printableEscape((item.camposExperiência || []).join(", ") || "Campo de experiência pendente")}</small>
         <small><b>Materiais:</b> ${printableEscape((item.materiais || []).slice(0, 3).join(", ") || "pendentes")}</small>
       </div>
       <footer>
@@ -5653,10 +5653,10 @@ const renderPrintableMainPage = ({ admin = false } = {}) => {
   return `
     <section class="pa-shell" data-printable-app="${admin ? "admin" : "teacher"}">
       <header class="pa-hero">
-        <span>${admin ? "Conteudos > Atividades Imprimiveis" : "Professor"}</span>
-        <h1>Atividades Imprimiveis</h1>
-        <p>Encontre, visualize e imprima atividades para apoiar as experiencias da Educacao Infantil.</p>
-        ${admin ? `<a href="README_IMPORTACAO_ATIVIDADES.md">README de importacao</a>` : ""}
+        <span>${admin ? "Conteúdos > Atividades Imprimíveis" : "Professor"}</span>
+        <h1>Atividades Imprimíveis</h1>
+        <p>Encontre, visualize e imprima atividades para apoiar as experiências da Educação Infantil.</p>
+        ${admin ? `<a href="README_IMPORTACAO_ATIVIDADES.md">README de importação</a>` : ""}
       </header>
       ${admin ? "" : renderPrintableContextPanel()}
       ${admin ? "" : renderPrintableRecommendationDialog()}
@@ -5694,10 +5694,10 @@ const renderPrintableDetailPage = ({ admin = false } = {}) => {
   }
   const item = printableActivitiesDataService.getByCode(code, { admin });
   if (!item) {
-    return `<section class="pa-shell"><div class="pa-empty"><h1>Atividade nao encontrada</h1><p>O codigo informado nao existe ou nao esta publicado para este perfil.</p><a href="atividades.html">Voltar ao banco</a></div></section>`;
+    return `<section class="pa-shell"><div class="pa-empty"><h1>Atividade nao encontrada</h1><p>O codigo informado não existe ou nao esta publicado para este perfil.</p><a href="atividades.html">Voltar ao banco</a></div></section>`;
   }
   printableActivitiesDataService.markRecent(item.codigo);
-  printableActivitiesDataService.metric("visualizacao", { codigo: item.codigo });
+  printableActivitiesDataService.metric("visualização", { codigo: item.codigo });
   const preview = item.arquivoPng || item.miniatura || item.arquivoOriginal || "";
   const back = getPrintableParams().get("voltar") || "";
   const contextQuery = getPrintableContextQuery();
@@ -5705,40 +5705,40 @@ const renderPrintableDetailPage = ({ admin = false } = {}) => {
     ["Faixa etaria", item.faixaEtaria],
     ["Idade", item.idade],
     ["Objetivo", item.objetivo],
-    ["Orientacao", item.orientacaoProfessor],
+    ["Orientação", item.orientaçãoProfessor],
     ["Materiais", (item.materiais || []).join(", ")],
-    ["Campos de experiencia", (item.camposExperiencia || []).join(", ")],
+    ["Campos de experiência", (item.camposExperiência || []).join(", ")],
     ["Tipo de atividade", (item.tiposAtividade || []).join(", ")],
   ];
   const adminMeta = [
     ["Codigo", item.codigo],
     ["Faixa etaria", item.faixaEtaria],
     ["Idade", item.idade],
-    ["Versao", item.versao],
+    ["Versão", item.versao],
     ["Status", printableStatusLabel(item.status)],
-    ["Publicacao", item.dataPublicacao || "pendente"],
-    ["Atualizacao", item.dataAtualizacao || item.updatedAt || "pendente"],
+    ["Publicação", item.dataPublicação || "pendente"],
+    ["Atualização", item.dataAtualização || item.updatedAt || "pendente"],
     ["Objetivo", item.objetivo],
-    ["Campos de experiencias", (item.camposExperiencia || []).join(", ")],
+    ["Campos de experiências", (item.camposExperiência || []).join(", ")],
     ["Direitos de aprendizagem", (item.direitosAprendizagem || []).join(", ")],
     ["Tipo de atividade", (item.tiposAtividade || []).join(", ")],
     ["Materiais", (item.materiais || []).join(", ")],
-    ["Orientacao ao professor", item.orientacaoProfessor],
+    ["Orientação ao professor", item.orientaçãoProfessor],
     ["Palavras-chave", (item.palavrasChave || []).join(", ")],
   ];
   return `
     <section class="pa-shell pa-detail" data-printable-app="${admin ? "admin" : "teacher"}">
       <header class="pa-hero">
-        <span>${printableEscape(item.codigo)} · ${printableEscape(item.idade || item.faixaEtaria || "Educacao Infantil")}</span>
+        <span>${printableEscape(item.codigo)} · ${printableEscape(item.idade || item.faixaEtaria || "Educação Infantil")}</span>
         <h1>${printableEscape(item.titulo || "Titulo pendente")}</h1>
-        <p>${printableEscape(item.objetivo || "Atividade pronta para visualizacao e impressao.")}</p>
+        <p>${printableEscape(item.objetivo || "Atividade pronta para visualização e impressao.")}</p>
         <a href="atividades.html${printableEscape(back || contextQuery)}">Voltar aos resultados</a>
       </header>
       ${renderPrintableContextPanel()}
       ${admin ? "" : renderPrintableRecommendationDialog()}
       <div class="pa-detail-grid">
         <section class="pa-preview">
-          ${preview ? `<img src="${printableEscape(preview)}" alt="Visualizacao ampliada da atividade ${printableEscape(item.codigo)}" />` : `<div class="pa-empty"><h2>Arquivo pendente</h2><p>A atividade ainda nao possui arquivo valido associado.</p></div>`}
+          ${preview ? `<img src="${printableEscape(preview)}" alt="Visualização ampliada da atividade ${printableEscape(item.codigo)}" />` : `<div class="pa-empty"><h2>Arquivo pendente</h2><p>A atividade ainda não possui arquivo valido associado.</p></div>`}
           <div>
             ${renderPrintableIndicateButton(item.codigo)}
             <a href="${printableEscape(item.arquivoOriginal || "#")}" download data-pa-download="${printableEscape(item.codigo)}">Baixar</a>
@@ -5747,7 +5747,7 @@ const renderPrintableDetailPage = ({ admin = false } = {}) => {
           </div>
         </section>
         <aside class="pa-meta">
-          ${(admin ? adminMeta : teacherMeta).map(([label, value]) => `<article><strong>${printableEscape(label)}</strong><span>${printableEscape(value || "Nao informado")}</span></article>`).join("")}
+          ${(admin ? adminMeta : teacherMeta).map(([label, value]) => `<article><strong>${printableEscape(label)}</strong><span>${printableEscape(value || "Não informado")}</span></article>`).join("")}
         </aside>
       </div>
     </section>
@@ -5775,7 +5775,7 @@ const universalActivityToolProfiles = {
   ei2: ["pincel", "dedo", "rolinho", "esponja", "algodao", "papel", "barbante", "bolinhas", "borracha"],
   ei3: ["pincel", "dedo", "rolinho", "esponja", "algodao", "papel", "barbante", "bolinhas", "borracha", "giz", "carimbo", "adesivos", "formas"],
   ei4: ["pincel", "dedo", "rolinho", "esponja", "algodao", "papel", "barbante", "bolinhas", "borracha", "giz", "carimbo", "adesivos", "formas", "lapis", "tracos", "montagem", "arrastar"],
-  ei5: ["pincel", "dedo", "rolinho", "esponja", "algodao", "papel", "barbante", "bolinhas", "borracha", "giz", "carimbo", "adesivos", "formas", "lapis", "tracos", "montagem", "arrastar", "letras_moveis", "numeros", "ordenacao", "ligacao"],
+  ei5: ["pincel", "dedo", "rolinho", "esponja", "algodao", "papel", "barbante", "bolinhas", "borracha", "giz", "carimbo", "adesivos", "formas", "lapis", "tracos", "montagem", "arrastar", "letras_moveis", "números", "ordenação", "ligação"],
 };
 
 const universalActivityToolLabels = {
@@ -5848,7 +5848,7 @@ const getPrintableAssignmentContext = () => {
   return {
     type: "",
     id: "",
-    label: "Nao definido",
+    label: "Não definido",
     classId: universalActivityStudentProfile.classId,
     className: universalActivityStudentProfile.className,
     description: "Sem destino selecionado",
@@ -5875,9 +5875,9 @@ const renderPrintableContextPanel = () => {
   return `
     <section class="pa-context-panel" data-pa-context data-target-type="${printableEscape(context.type)}" data-target-id="${printableEscape(context.id)}">
       <div>
-        <span>${context.type ? "Indicacao pedagogica" : "Atividades imprimiveis"}</span>
+        <span>${context.type ? "Indicação pedagógica" : "Atividades imprimiveis"}</span>
         <strong>${printableEscape(context.description)}</strong>
-        <small>${context.type ? "Destino preservado para a futura indicacao. Nesta etapa a atividade pode ser visualizada e impressa." : "Escolha uma atividade para visualizar, baixar ou imprimir."}</small>
+        <small>${context.type ? "Destino preservado para a futura indicação. Nesta etapa a atividade pode ser visualizada e impressa." : "Escolha uma atividade para visualizar, baixar ou imprimir."}</small>
       </div>
       ${context.type ? `<a href="professor.html?view=atividades">Trocar contexto</a>` : ""}
     </section>
@@ -5893,7 +5893,7 @@ const getUniversalActivityTools = (activity, assignment) => {
 
 const getUniversalActivitySuggestedTools = (activity) => {
   if (activity?.ferramentasSugeridas?.length) return activity.ferramentasSugeridas;
-  const text = printableNormalize([activity?.titulo, activity?.objetivo, activity?.comandoCrianca, ...(activity?.materiais || [])].join(" "));
+  const text = printableNormalize([activity?.titulo, activity?.objetivo, activity?.comandoCriança, ...(activity?.materiais || [])].join(" "));
   const suggestions = [
     ["algodao", "algodao"],
     ["esponja", "esponja"],
@@ -6048,7 +6048,7 @@ const renderUniversalActivityAssignDialog = () => `
       <label><span>Destino</span><select name="scope"><option value="class">Turma inteira</option><option value="group">Grupo de alunos</option><option value="student">Aluno individual</option></select></label>
       <label><span>Turma</span><select name="classId">${universalActivityDemoClasses.map((item) => `<option value="${printableEscape(item.id)}">${printableEscape(item.name)}</option>`).join("")}</select></label>
       <fieldset data-ua-students><legend>Alunos</legend></fieldset>
-      <label><span>Orientacao opcional</span><textarea name="instructions" rows="3" placeholder="Ex.: use pintura com dedo e cole bolinhas no desenho."></textarea></label>
+      <label><span>Orientação opcional</span><textarea name="instructions" rows="3" placeholder="Ex.: use pintura com dedo e cole bolinhas no desenho."></textarea></label>
       <label><span>Prazo opcional</span><input name="dueDate" type="date" /></label>
       <label><span>Perfil de ferramentas</span><select name="toolProfile"><option value="ei2">EI2</option><option value="ei3">EI3</option><option value="ei4">EI4</option><option value="ei5">EI5</option></select></label>
       <label><span>Modo</span><select name="mode"><option value="livre">Modo livre</option><option value="sugerido">Modo sugerido</option></select></label>
@@ -6114,7 +6114,7 @@ const renderStudentAvailableActivitiesCatalog = () => {
             <div>
               <mark>${printableEscape(activity.codigo)}</mark>
               <strong>${printableEscape(activity.titulo || activity.codigo)}</strong>
-              <small>${printableEscape(activity.idade || activity.faixaEtaria || "Educacao Infantil")}</small>
+              <small>${printableEscape(activity.idade || activity.faixaEtaria || "Educação Infantil")}</small>
               <span>${printableEscape(activity.tipo || activity.tiposAtividade?.[0] || "Atividade imprimivel")}</span>
             </div>
             <a href="atividades.html?codigo=${encodeURIComponent(activity.codigo)}&from=aluno">Abrir</a>
@@ -6201,13 +6201,13 @@ const renderUniversalActivityTeacherDeliveries = () => {
           ? assignments
               .map((assignment) => {
                 const activity = getUniversalActivityByCode(assignment.activityCode);
-                const targetLabel = assignment.targetLabel || assignment.className || assignment.studentIds?.join(", ") || "Destinatario registrado";
+                const targetLabel = assignment.targetLabel || assignment.className || assignment.studentIds?.join(", ") || "Destinatário registrado";
                 return `
                   <article class="ua-delivery-card">
                     <div>
                       <mark>${printableEscape(assignment.activityCode)}</mark>
                       <strong>${printableEscape(activity?.titulo || assignment.activityCode)}</strong>
-                      <small>Destinatario: ${printableEscape(targetLabel)}</small>
+                      <small>Destinatário: ${printableEscape(targetLabel)}</small>
                       ${assignment.assignedAt ? `<small>Indicada em ${new Date(assignment.assignedAt).toLocaleString("pt-BR")}</small>` : ""}
                       ${assignment.status ? `<small>Status: ${printableEscape(assignment.status)}</small>` : ""}
                     </div>
@@ -6258,7 +6258,7 @@ const renderTeacherTrackingAssignment = (assignment) => {
       <div>
         <span>${printableEscape(assignment.activityCode)}</span>
         <strong>${printableEscape(activity?.titulo || assignment.activityCode)}</strong>
-        <small>Destinatario: ${printableEscape(targetLabel)}</small>
+        <small>Destinatário: ${printableEscape(targetLabel)}</small>
       </div>
       <mark>${printableEscape(status)}</mark>
     </article>
@@ -6269,12 +6269,12 @@ const renderTeacherTrackingProduction = (submission) => {
   const activity = getUniversalActivityByCode(submission.activityCode);
   return `
     <article class="tw-tracking-production" data-teacher-search-item>
-      ${submission.finalArtwork || submission.preview ? `<img src="${printableEscape(submission.finalArtwork || submission.preview)}" alt="Producao registrada de ${printableEscape(pilotProfiles.student.name)}" loading="lazy" />` : ""}
+      ${submission.finalArtwork || submission.preview ? `<img src="${printableEscape(submission.finalArtwork || submission.preview)}" alt="Produção registrada de ${printableEscape(pilotProfiles.student.name)}" loading="lazy" />` : ""}
       <div>
         <span>${printableEscape(submission.activityCode)}</span>
         <strong>${printableEscape(activity?.titulo || submission.activityCode)}</strong>
         ${submission.completedAt ? `<small>Registrada em ${new Date(submission.completedAt).toLocaleString("pt-BR")}</small>` : ""}
-        ${submission.lastSavedAt && !submission.completedAt ? `<small>Ultima edicao: ${new Date(submission.lastSavedAt).toLocaleString("pt-BR")}</small>` : ""}
+        ${submission.lastSavedAt && !submission.completedAt ? `<small>Última edição: ${new Date(submission.lastSavedAt).toLocaleString("pt-BR")}</small>` : ""}
       </div>
     </article>
   `;
@@ -6332,7 +6332,7 @@ const ensureTeacherTrackingAttendance = async ({ force = false, classId = "", pe
       teacherTrackingAttendanceState.status = "ready";
     } catch (error) {
       teacherTrackingAttendanceState.records = [];
-      teacherTrackingAttendanceState.error = error.message || "Nao foi possivel carregar a frequencia do periodo.";
+      teacherTrackingAttendanceState.error = error.message || "Não foi possível carregar a frequência do periodo.";
       teacherTrackingAttendanceState.status = "error";
     } finally {
       teacherTrackingAttendanceState.promise = null;
@@ -6367,7 +6367,7 @@ const teacherTrackingPublishedRecommendations = (classId = "", studentId = "") =
 const teacherTrackingAllPublishedRecommendations = (classId = "") =>
   (teacherRecommendationsState.items || []).filter((item) => item.classId === classId && item.status === "published");
 
-const teacherTrackingPedagogicalMessages = (classId = "", studentId = "") =>
+const teacherTrackingPedagógicalMessages = (classId = "", studentId = "") =>
   (teacherClassMessagesState.messages || []).filter(
     (message) =>
       message.classId === classId &&
@@ -6376,7 +6376,7 @@ const teacherTrackingPedagogicalMessages = (classId = "", studentId = "") =>
       (message.audienceType === "class" || (studentId && message.audienceType === "student" && message.studentId === studentId))
   );
 
-const teacherTrackingAllPedagogicalMessages = (classId = "") =>
+const teacherTrackingAllPedagógicalMessages = (classId = "") =>
   (teacherClassMessagesState.messages || []).filter(
     (message) =>
       message.classId === classId &&
@@ -6430,7 +6430,7 @@ const renderTeacherTrackingAttendanceList = (records = [], studentsById = {}) =>
           <div>
             <span>${printableEscape(record.attendance_date || "Data")}</span>
             <strong>${printableEscape(student.name || "Aluno")}</strong>
-            <small>${record.notes ? printableEscape(record.notes) : "Sem observacao"}</small>
+            <small>${record.notes ? printableEscape(record.notes) : "Sem observação"}</small>
           </div>
           <mark>${printableEscape(attendanceStatusLabel(record.status))}</mark>
         </article>
@@ -6459,8 +6459,8 @@ const renderTeacherTrackingView = () => {
   const recommendations = selectedClass ? teacherTrackingPublishedRecommendations(selectedClass.id, selectedStudent?.id || "") : [];
   const classRecommendations = recommendations.filter((item) => item.targetType === "class");
   const studentRecommendations = selectedStudent ? recommendations.filter((item) => item.targetType === "student" && item.studentId === selectedStudent.id) : [];
-  const allMessages = selectedClass ? teacherTrackingAllPedagogicalMessages(selectedClass.id) : [];
-  const messages = selectedClass ? teacherTrackingPedagogicalMessages(selectedClass.id, selectedStudent?.id || "") : [];
+  const allMessages = selectedClass ? teacherTrackingAllPedagógicalMessages(selectedClass.id) : [];
+  const messages = selectedClass ? teacherTrackingPedagógicalMessages(selectedClass.id, selectedStudent?.id || "") : [];
   const classMessages = messages.filter((item) => item.audienceType === "class");
   const studentMessages = selectedStudent ? messages.filter((item) => item.audienceType === "student" && item.studentId === selectedStudent.id) : [];
   if (institutionalReady) {
@@ -6470,7 +6470,7 @@ const renderTeacherTrackingView = () => {
           <div>
             <span>Acompanhamento</span>
             <h2>Acompanhamento</h2>
-            <p>Leitura pedagogica por turma e aluno, usando apenas registros reais disponiveis.</p>
+            <p>Leitura pedagógica por turma e aluno, usando apenas registros reais disponiveis.</p>
           </div>
           <div class="tw-tracking-filters">
             <label class="tw-class-selector">
@@ -6486,7 +6486,7 @@ const renderTeacherTrackingView = () => {
               </select>
             </label>
             <label class="tw-class-selector">
-              <span>Periodo</span>
+              <span>Período</span>
               <select data-tracking-period>
                 ${[7, 30, 90].map((days) => `<option value="${days}" ${days === periodDays ? "selected" : ""}>Ultimos ${days} dias</option>`).join("")}
               </select>
@@ -6495,12 +6495,12 @@ const renderTeacherTrackingView = () => {
         </div>
         ${
           selectedClass
-            ? `<div class="tw-tracking-summary" aria-label="Visao geral da turma">
+            ? `<div class="tw-tracking-summary" aria-label="Visão geral da turma">
                 ${renderTeacherTrackingMetric("Turma", selectedClass.name, selectedClass.schoolName || selectedClass.shift || "Turma institucional", "turmas")}
-                ${renderTeacherTrackingMetric("Alunos", String(students.length), "Matriculas ativas da turma", "alunos")}
-                ${renderTeacherTrackingMetric("Presenca", `${classAttendance.percent}%`, `${classAttendance.present} presencas · ${classAttendance.absent} faltas · ${classAttendance.justified} justificadas`, "frequencia")}
-                ${renderTeacherTrackingMetric("Recomendacoes", String(allRecommendations.length), "Publicadas para a turma e seus alunos", "biblioteca")}
-                ${renderTeacherTrackingMetric("Recados", String(allMessages.length), "Mensagens pedagogicas da turma", "comunicados")}
+                ${renderTeacherTrackingMetric("Alunos", String(students.length), "Matrículas ativas da turma", "alunos")}
+                ${renderTeacherTrackingMetric("Presenca", `${classAttendance.percent}%`, `${classAttendance.present} presenças · ${classAttendance.absent} faltas · ${classAttendance.justified} justificadas`, "frequencia")}
+                ${renderTeacherTrackingMetric("Recomendações", String(allRecommendations.length), "Publicadas para a turma e seus alunos", "biblioteca")}
+                ${renderTeacherTrackingMetric("Recados", String(allMessages.length), "Mensagens pedagógicas da turma", "comunicados")}
               </div>`
             : renderTeacherEmptyState("NENHUMA TURMA INSTITUCIONAL DISPONIVEL.")
         }
@@ -6514,20 +6514,20 @@ const renderTeacherTrackingView = () => {
                 ${student.avatar ? `<img class="tw-student-avatar" src="${printableEscape(student.avatar)}" alt="" loading="lazy" />` : `<span>${student.name.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span>`}
                 <div>
                   <strong>${printableEscape(student.name)}</strong>
-                  <small>${printableEscape(student.className)} · ${printableEscape(student.enrollmentStatus || "Matricula ativa")}</small>
+                  <small>${printableEscape(student.className)} · ${printableEscape(student.enrollmentStatus || "Matrícula ativa")}</small>
                 </div>
               </button>
             `).join("") : renderTeacherEmptyState("NENHUM ALUNO VINCULADO A ESTA TURMA.")}
           </div>
         </section>
         <section class="tw-board tw-tracking-section">
-          <div class="tw-section-head"><h2>Ficha pedagogica</h2><span>${selectedStudent ? printableEscape(selectedStudent.name) : "Aluno"}</span></div>
+          <div class="tw-section-head"><h2>Ficha pedagógica</h2><span>${selectedStudent ? printableEscape(selectedStudent.name) : "Aluno"}</span></div>
           ${
             selectedStudent
               ? `<div class="tw-tracking-student-detail">
-                  <article><span>Identificacao</span><strong>${printableEscape(selectedStudent.name)}</strong><small>${printableEscape(selectedClass.name)} · ${printableEscape(selectedClass.schoolName || "Escola")}</small></article>
-                  <article><span>Frequencia no periodo</span><strong>${selectedAttendance.percent}%</strong><small>${selectedAttendance.present} presencas · ${selectedAttendance.absent} faltas · ${selectedAttendance.justified} justificadas</small></article>
-                  <article><span>Recomendacoes</span><strong>${classRecommendations.length + studentRecommendations.length}</strong><small>${studentRecommendations.length} individual(is) e ${classRecommendations.length} da turma</small></article>
+                  <article><span>Identificação</span><strong>${printableEscape(selectedStudent.name)}</strong><small>${printableEscape(selectedClass.name)} · ${printableEscape(selectedClass.schoolName || "Escola")}</small></article>
+                  <article><span>Frequência no periodo</span><strong>${selectedAttendance.percent}%</strong><small>${selectedAttendance.present} presenças · ${selectedAttendance.absent} faltas · ${selectedAttendance.justified} justificadas</small></article>
+                  <article><span>Recomendações</span><strong>${classRecommendations.length + studentRecommendations.length}</strong><small>${studentRecommendations.length} individual(is) e ${classRecommendations.length} da turma</small></article>
                   <article><span>Recados</span><strong>${classMessages.length + studentMessages.length}</strong><small>${studentMessages.length} individual(is) e ${classMessages.length} da turma</small></article>
                 </div>`
               : renderTeacherEmptyState("SELECIONE UM ALUNO PARA VER O ACOMPANHAMENTO.")
@@ -6536,15 +6536,15 @@ const renderTeacherTrackingView = () => {
       </div>
       <div class="tw-tracking-grid is-wide">
         <section class="tw-board tw-tracking-section">
-          <div class="tw-section-head"><h2>Frequencia</h2><span>Ultimos ${periodDays} dias</span></div>
+          <div class="tw-section-head"><h2>Frequência</h2><span>Ultimos ${periodDays} dias</span></div>
           <div class="tw-tracking-list">${renderTeacherTrackingAttendanceList(attendanceRecords, studentById)}</div>
         </section>
         <section class="tw-board tw-tracking-section">
-          <div class="tw-section-head"><h2>Recomendacoes publicadas</h2><button type="button" data-teacher-view="atividades">Indicar atividade</button></div>
+          <div class="tw-section-head"><h2>Recomendações publicadas</h2><button type="button" data-teacher-view="atividades">Indicar atividade</button></div>
           <div class="tw-tracking-list">${allRecommendations.length ? allRecommendations.map(renderTeacherTrackingRecommendation).join("") : `<p class="ua-empty">NENHUMA RECOMENDACAO PUBLICADA PARA ESTE CONTEXTO.</p>`}</div>
         </section>
         <section class="tw-board tw-tracking-section">
-          <div class="tw-section-head"><h2>Recados pedagogicos</h2><button type="button" data-teacher-open-url="${selectedClass ? `${getTeacherClassHref(selectedClass)}?tab=recados` : "professor.html?view=turmas"}">Abrir recados</button></div>
+          <div class="tw-section-head"><h2>Recados pedagógicos</h2><button type="button" data-teacher-open-url="${selectedClass ? `${getTeacherClassHref(selectedClass)}?tab=recados` : "professor.html?view=turmas"}">Abrir recados</button></div>
           <div class="tw-tracking-list">${allMessages.length ? allMessages.slice(0, 6).map(renderTeacherTrackingMessage).join("") : `<p class="ua-empty">NENHUM RECADO PEDAGOGICO PUBLICADO PARA ESTE CONTEXTO.</p>`}</div>
         </section>
       </div>
@@ -6554,8 +6554,8 @@ const renderTeacherTrackingView = () => {
           <p class="ua-empty">AINDA NAO HA FONTE INSTITUCIONAL DE PROGRESSO DE ATIVIDADES CONECTADA A ESTA VISAO.</p>
         </section>
         <section class="tw-board tw-tracking-section">
-          <div class="tw-section-head"><h2>Observacoes pedagogicas</h2><span>Preparado</span></div>
-          <p class="ua-empty">As observacoes pedagogicas estruturadas aparecerao aqui quando estiverem disponiveis.</p>
+          <div class="tw-section-head"><h2>Observacoes pedagógicas</h2><span>Preparado</span></div>
+          <p class="ua-empty">As observacoes pedagógicas estruturadas aparecerao aqui quando estiverem disponiveis.</p>
         </section>
       </div>
     `;
@@ -6581,11 +6581,11 @@ const renderTeacherTrackingView = () => {
           </select>
         </label>
       </div>
-      <div class="tw-tracking-summary" aria-label="Visao geral da turma">
+      <div class="tw-tracking-summary" aria-label="Visão geral da turma">
         <article><span>Turma</span><strong>${printableEscape(pilotProfiles.class.name)}</strong><small>${printableEscape(pilotProfiles.class.shift || "Turma piloto")}</small></article>
         <article><span>Alunos</span><strong>${teacherWorkspaceStudents.length}</strong><small>Alunos vinculados a turma</small></article>
         <article><span>Atividades indicadas</span><strong>${assignments.length}</strong><small>Registros disponiveis</small></article>
-        <article><span>Producoes</span><strong>${productions.length}</strong><small>Producoes registradas</small></article>
+        <article><span>Produções</span><strong>${productions.length}</strong><small>Produções registradas</small></article>
       </div>
     </section>
     <section class="tw-board tw-tracking-section">
@@ -6602,7 +6602,7 @@ const renderTeacherTrackingView = () => {
       <div class="ua-delivery-detail" data-ua-delivery-detail></div>
     </section>
     <section class="tw-board tw-tracking-section">
-      <div class="tw-section-head"><h2>Producoes</h2><span>Registros da turma</span></div>
+      <div class="tw-section-head"><h2>Produções</h2><span>Registros da turma</span></div>
       <div class="tw-tracking-list">
         ${productions.length ? productions.map(renderTeacherTrackingProduction).join("") : `<p class="ua-empty">AINDA NAO HA PRODUCOES REGISTRADAS.</p>`}
       </div>
@@ -6616,11 +6616,11 @@ const renderTeacherTrackingView = () => {
       }
     </section>
     <section class="tw-board tw-tracking-section">
-      <div class="tw-section-head"><h2>Registros Pedagogicos</h2><span>Preparado</span></div>
+      <div class="tw-section-head"><h2>Registros Pedagógicos</h2><span>Preparado</span></div>
       <p class="ua-empty">NENHUM REGISTRO PEDAGOGICO DISPONIVEL.</p>
     </section>
     <section class="tw-board tw-tracking-section">
-      <div class="tw-section-head"><h2>Relatorios</h2><span>Futuro</span></div>
+      <div class="tw-section-head"><h2>Relatórios</h2><span>Futuro</span></div>
       <p class="ua-empty">RELATORIOS SERAO GERADOS FUTURAMENTE A PARTIR DE REGISTROS REAIS.</p>
     </section>
   `;
@@ -6628,66 +6628,66 @@ const renderTeacherTrackingView = () => {
 
 const teacherFormationCourses = [
   {
-    title: "Docencia Plural - Formacao em Interculturalidade e Bilinguismo",
+    title: "Docencia Plural - Formação em Interculturalidade e Bilinguismo",
     provider: "EV.G - Escola Virtual.Gov",
     category: "Inclusao e diversidade",
     workload: "40h",
     status: "Inscricoes abertas",
-    certificate: "Certificado informado pela instituicao",
-    image: "assets/universidade/curso-educacao-inclusiva.webp",
+    certificate: "Certificado informado pela instituição",
+    image: "assets/universidade/curso-educação-inclusiva.webp",
     href: "universidade.html?from=teacher#curso-docencia-plural-interculturalidade-bilinguismo",
   },
   {
-    title: "Formacao de Professores do Programa Aprender Valor",
+    title: "Formação de Professores do Programa Aprender Valor",
     provider: "EV.G - Escola Virtual.Gov",
-    category: "Educacao financeira",
+    category: "Educação financeira",
     workload: "40h",
     status: "Inscricoes abertas",
-    certificate: "Certificado informado pela instituicao",
-    image: "assets/universidade/trilha-praticas-pedagogicas.webp",
-    href: "universidade.html?from=teacher#curso-formacao-professores-programa-aprender-valor",
+    certificate: "Certificado informado pela instituição",
+    image: "assets/universidade/trilha-práticas-pedagógicas.webp",
+    href: "universidade.html?from=teacher#curso-formação-professores-programa-aprender-valor",
   },
   {
-    title: "Inclusao e Acessibilidade na Educacao",
+    title: "Inclusao e Acessibilidade na Educação",
     provider: "Mundi/IFSul",
-    category: "Educacao Inclusiva",
+    category: "Educação Inclusiva",
     workload: "30h",
-    status: "Disponivel",
-    certificate: "Certificado informado pela instituicao",
-    image: "assets/universidade/trilha-inclusao-diversidade.webp",
-    href: "universidade.html?from=teacher#curso-inclusao-acessibilidade-educacao-ifsul",
+    status: "Disponível",
+    certificate: "Certificado informado pela instituição",
+    image: "assets/universidade/trilha-inclusão-diversidade.webp",
+    href: "universidade.html?from=teacher#curso-inclusão-acessibilidade-educação-ifsul",
   },
 ];
 
 const teacherFormationMaterials = [
   {
-    title: "Curadoria de Educacao Inclusiva",
+    title: "Curadoria de Educação Inclusiva",
     type: "Centro de conhecimento",
     description: "Cursos e referencias para acolher diferentes necessidades de aprendizagem.",
-    href: "universidade.html?from=teacher#centro-educacao-inclusiva",
+    href: "universidade.html?from=teacher#centro-educação-inclusiva",
     icon: "book",
   },
   {
     title: "BNCC e projetos escolares",
     type: "Centro de conhecimento",
-    description: "Percursos para curriculo, planejamento e praticas alinhadas a escola.",
+    description: "Percursos para curriculo, planejamento e práticas alinhadas a escola.",
     href: "universidade.html?from=teacher#centro-bncc",
     icon: "clipboard",
   },
   {
     title: "Tecnologias Educacionais",
-    type: "Videos e recursos",
-    description: "Conteudos selecionados para uso pedagogico de tecnologias na escola.",
+    type: "Vídeos e recursos",
+    description: "Conteúdos selecionados para uso pedagógico de tecnologias na escola.",
     href: "universidade.html?from=teacher#centro-tecnologias-educacionais",
     icon: "play",
   },
 ];
 
 const teacherFormationPaths = [
-  ["Formacao Docente", "Percurso para estudo individual e aplicacao em sala.", "1 curso real vinculado"],
-  ["Gestao Pedagogica", "Percurso para leitura institucional e organizacao pedagogica.", "1 curso real vinculado"],
+  ["Formação Docente", "Percurso para estudo individual e aplicação em sala.", "1 curso real vinculado"],
+  ["Gestão Pedagógica", "Percurso para leitura institucional e organização pedagógica.", "1 curso real vinculado"],
   ["Avalia+", "Percurso preparado para diagnostico, devolutivas e acompanhamento.", "1 curso real vinculado"],
-  ["Tecnologias Educacionais", "Percurso para recursos digitais e boas praticas.", "1 curso real vinculado"],
+  ["Tecnologias Educacionais", "Percurso para recursos digitais e boas práticas.", "1 curso real vinculado"],
 ];
 
 const renderTeacherFormationCourse = (course) => `
@@ -6717,9 +6717,9 @@ const renderTeacherFormationView = () => `
   <section class="tw-board tw-formation-shell">
     <div class="tw-planning-heading">
       <div>
-        <span>Formacao</span>
-        <h2>Universidade Raizes e Saberes</h2>
-        <p>Cursos, trilhas e materiais selecionados para apoiar sua formacao continuada.</p>
+        <span>Formação</span>
+        <h2>Universidade Raízes e Saberes</h2>
+        <p>Cursos, trilhas e materiais selecionados para apoiar sua formação continuada.</p>
       </div>
       <button type="button" data-teacher-open-url="universidade.html?from=teacher">ABRIR UNIVERSIDADE</button>
     </div>
@@ -6741,11 +6741,11 @@ const renderTeacherFormationView = () => `
     </div>
     <div class="tw-tracking-grid">
       <section class="tw-board tw-tracking-section">
-        <div class="tw-section-head"><h2>Videos e materiais</h2><span>Acervo existente</span></div>
+        <div class="tw-section-head"><h2>Vídeos e materiais</h2><span>Acervo existente</span></div>
         <div class="tw-formation-grid">${teacherFormationMaterials.map(renderTeacherFormationMaterial).join("")}</div>
       </section>
       <section class="tw-board tw-tracking-section">
-        <div class="tw-section-head"><h2>Trilhas de formacao</h2><span>Percursos</span></div>
+        <div class="tw-section-head"><h2>Trilhas de formação</h2><span>Percursos</span></div>
         <div class="tw-tracking-list">
           ${teacherFormationPaths
             .map(
@@ -6766,11 +6766,11 @@ const renderTeacherFormationView = () => `
     </div>
     <div class="tw-tracking-grid">
       <section class="tw-board tw-tracking-section">
-        <div class="tw-section-head"><h2>Progresso formativo</h2><span>Em preparacao</span></div>
+        <div class="tw-section-head"><h2>Progresso formativo</h2><span>Em preparação</span></div>
         <p class="ua-empty">O acompanhamento de progresso ainda nao esta disponivel. Nenhum progresso ficticio foi exibido.</p>
       </section>
       <section class="tw-board tw-tracking-section">
-        <div class="tw-section-head"><h2>Certificados</h2><span>Em preparacao</span></div>
+        <div class="tw-section-head"><h2>Certificados</h2><span>Em preparação</span></div>
         <p class="ua-empty">A emissao de certificados ainda nao esta disponivel nesta etapa.</p>
       </section>
     </div>
@@ -6857,7 +6857,7 @@ const renderUniversalActivityMotorPage = () => {
   }
   const activity = getUniversalActivityByCode(assignment.activityCode);
   if (!activity) {
-    return `<section class="ua-motor-shell"><div class="pa-empty"><h1>Base nao encontrada</h1><p>O codigo ${printableEscape(assignment.activityCode)} nao existe no Banco de Atividades.</p><a href="aluno.html">Voltar</a></div></section>`;
+    return `<section class="ua-motor-shell"><div class="pa-empty"><h1>Base nao encontrada</h1><p>O codigo ${printableEscape(assignment.activityCode)} não existe no Banco de Atividades.</p><a href="aluno.html">Voltar</a></div></section>`;
   }
   getOrCreateUniversalActivitySubmission(assignment);
   const tools = getUniversalActivityTools(activity, assignment);
@@ -6914,7 +6914,7 @@ const renderTeacherQuickActions = () => `
       { label: "ATIVIDADES", icon: "clipboard", view: "atividades", tone: "green" },
       { label: "BIBLIOTECA", icon: "book", view: "biblioteca", tone: "orange" },
       { label: "ACOMPANHAMENTO", icon: "portfolio", view: "acompanhamento", tone: "purple" },
-      { label: "FORMACAO", icon: "cap", view: "formacao", tone: "teal" },
+      { label: "FORMACAO", icon: "cap", view: "formação", tone: "teal" },
     ]
       .map((item) => `<button type="button" class="quick-action is-${item.tone}" ${item.href ? `data-teacher-open-url="${item.href}"` : `data-teacher-view="${item.view}"`}>${premiumIcon(item.icon)}<span>${item.label}</span></button>`)
       .join("")}
@@ -6925,15 +6925,15 @@ const renderTeacherSideRail = () => `
   <aside class="teacher-right-rail" aria-label="Resumo do professor">
     <section class="teacher-side-card">
       <h2>Hoje</h2>
-      ${renderPremiumEmpty("SEM COMPROMISSOS PARA HOJE", "Sua agenda pedagogica aparecera aqui quando houver eventos.", "blue")}
+      ${renderPremiumEmpty("SEM COMPROMISSOS PARA HOJE", "Sua agenda pedagógica aparecera aqui quando houver eventos.", "blue")}
     </section>
     <section class="teacher-side-card is-clickable" data-teacher-view="notificacoes">
       <h2>Notificacoes</h2>
       ${renderPremiumEmpty("NENHUMA NOTIFICACAO NOVA", "Avisos importantes ficarao organizados neste painel.", "red")}
     </section>
     <section class="teacher-side-card is-clickable" data-teacher-view="calendario">
-      <h2>Proximos compromissos</h2>
-      ${renderPremiumEmpty("SEM COMPROMISSOS AGENDADOS", "Quando sua rotina for publicada, os proximos itens aparecerao aqui.", "blue")}
+      <h2>Próximos compromissos</h2>
+      ${renderPremiumEmpty("SEM COMPROMISSOS AGENDADOS", "Quando sua rotina for publicada, os próximos itens aparecerao aqui.", "blue")}
     </section>
     <section class="teacher-side-card is-clickable" data-teacher-view="mensagens">
       <h2>Mensagens</h2>
@@ -6963,9 +6963,9 @@ const renderTeacherPlanningStrip = () => `
     <h2>Planejamento</h2>
     <div class="teacher-planning-grid">
       ${[
-        { title: "Planejamento da semana", detail: "Sua organizacao semanal aparecera aqui.", icon: "calendar", tone: "green", view: "planejamentos" },
-        { title: "Experiencias", detail: "Conteudos para preparar novas propostas.", icon: "star", tone: "blue", view: "experiencias" },
-        { title: "Atividades digitais", detail: "Organizacao estrutural para futuras atribuicoes.", icon: "doc", tone: "purple", view: "atividades" },
+        { title: "Planejamento da semana", detail: "Sua organização semanal aparecera aqui.", icon: "calendar", tone: "green", view: "planejamentos" },
+        { title: "Experiências", detail: "Conteúdos para preparar novas propostas.", icon: "star", tone: "blue", view: "experiências" },
+        { title: "Atividades digitais", detail: "Organização estrutural para futuras atribuicoes.", icon: "doc", tone: "purple", view: "atividades" },
       ].map(renderTeacherContentCard).join("")}
     </div>
   </section>
@@ -7004,7 +7004,7 @@ const renderTeacherPremiumHome = () => `
     <main class="teacher-premium-main">
       <section class="teacher-premium-hero">
         <div>
-          <span>Area do Professor</span>
+          <span>Área do Professor</span>
           <h1>${printableEscape(getTeacherDisplayName())}</h1>
           <p>${teacherInstitutionalState.status === "ready" ? `${printableEscape(getTeacherCurrentSchoolName())} · ${getTeacherInstitutionalClasses().length} turma${getTeacherInstitutionalClasses().length === 1 ? "" : "s"} · ${getTeacherInstitutionalStudents().length} aluno${getTeacherInstitutionalStudents().length === 1 ? "" : "s"} vinculados.` : "Identificando vinculo institucional do professor autenticado."}</p>
         </div>
@@ -7013,7 +7013,7 @@ const renderTeacherPremiumHome = () => `
       ${renderTeacherHomeClassFeature()}
 
       <section class="teacher-premium-section">
-        <h2>Areas principais</h2>
+        <h2>Áreas principais</h2>
         <div class="teacher-metric-grid">
           ${[
             { title: "Minhas Turmas", text: `${getTeacherInstitutionalClasses().length} turma${getTeacherInstitutionalClasses().length === 1 ? "" : "s"}`, icon: "users", tone: "green", view: "turmas" },
@@ -7025,12 +7025,12 @@ const renderTeacherPremiumHome = () => `
       </section>
 
       <section class="teacher-premium-section">
-        <h2>Recursos pedagogicos</h2>
+        <h2>Recursos pedagógicos</h2>
         <div class="teacher-content-grid">
           ${[
-            { title: "Biblioteca Viva", detail: "Explorar conteudos", icon: "book", tone: "green", view: "biblioteca" },
-            { title: "Atividades Imprimiveis", detail: "Ver atividades", icon: "doc", tone: "purple", view: "atividades" },
-            { title: "Experiencias", detail: "Apoio ao planejamento", icon: "flask", tone: "teal", view: "experiencias" },
+            { title: "Biblioteca Viva", detail: "Explorar conteúdos", icon: "book", tone: "green", view: "biblioteca" },
+            { title: "Atividades Imprimíveis", detail: "Ver atividades", icon: "doc", tone: "purple", view: "atividades" },
+            { title: "Experiências", detail: "Apoio ao planejamento", icon: "flask", tone: "teal", view: "experiências" },
             { title: "Book Viewer", detail: "Abrir livros e guias", icon: "book", tone: "orange", view: "biblioteca" },
           ].map(renderTeacherContentCard).join("")}
         </div>
@@ -7056,10 +7056,10 @@ const renderTeacherPilotHome = () => `
 const renderTeacherClassTabs = (classItem, activeTab = "alunos") => {
   const tabs = [
     ["alunos", "Alunos"],
-    ["frequencia", "Frequencia"],
+    ["frequencia", "Frequência"],
     ["semana", "Minha Semana"],
     ["recados", "Recados"],
-    ["recomendacoes", "Recomendacoes"],
+    ["recomendacoes", "Recomendações"],
     ["desafio", "Desafio da Semana"],
   ];
   const activeTabs = new Set(["alunos", "frequencia", "semana", "recados", "recomendacoes"]);
@@ -7129,7 +7129,7 @@ const renderTeacherClassWeekPanel = (classItem) => {
         <div>
           <span>Minha Semana</span>
           <h2>Minha Semana - ${printableEscape(classItem.name)}</h2>
-          <p>Rotina coletiva da turma. Rascunhos ficam internos ate a publicacao da semana.</p>
+          <p>Rotina coletiva da turma. Rascunhos ficam internos ate a publicação da semana.</p>
         </div>
         <div class="tw-planning-toolbar">
           <button type="button" data-planning-week-move="-1">SEMANA ANTERIOR</button>
@@ -7184,7 +7184,7 @@ const renderTeacherClassWeekForm = (classItem) => `
         </select>
       </label>
       <label class="tw-planning-form-note">
-        <span>Observacao curta</span>
+        <span>Observação curta</span>
         <textarea name="note" rows="3" maxlength="280" placeholder="Opcional. Ex.: Trazer garrafinha."></textarea>
       </label>
       <div class="tw-planning-form-actions">
@@ -7198,12 +7198,12 @@ const renderTeacherClassWeekForm = (classItem) => `
 const renderTeacherClassMessageCard = (message) => {
   const destination =
     message.audienceType === "student"
-      ? `Aluno/Familia: ${message.studentName || "Aluno da turma"}`
+      ? `Aluno/Família: ${message.studentName || "Aluno da turma"}`
       : `Toda a turma: ${message.className}`;
   const statusLabel = communicationStatusLabel(message.status);
   const primaryAction =
     message.status === "published"
-      ? `<button type="button" data-teacher-message-status="${printableEscape(message.id)}" data-to-status="archived">Retirar da publicacao</button>`
+      ? `<button type="button" data-teacher-message-status="${printableEscape(message.id)}" data-to-status="archived">Retirar da publicação</button>`
       : `<button type="button" data-teacher-message-status="${printableEscape(message.id)}" data-to-status="published" data-destination="${printableEscape(destination)}">Publicar novamente</button>`;
   return `
     <article class="tw-message-card ${message.status === "archived" ? "is-archived" : ""}" data-teacher-search-item>
@@ -7230,7 +7230,7 @@ const renderTeacherClassMessagesPanel = (classItem, students = []) => {
         <div>
           <span>Recados</span>
           <h2>Recados - ${printableEscape(classItem.name)}</h2>
-          <p>Comunicacao pedagogica para toda a turma ou para aluno/familia da propria turma.</p>
+          <p>Comunicação pedagógica para toda a turma ou para aluno/familia da propria turma.</p>
         </div>
       </div>
       <form class="tw-planning-form tw-message-form" data-teacher-family-message-form>
@@ -7239,7 +7239,7 @@ const renderTeacherClassMessagesPanel = (classItem, students = []) => {
           <span>Destino</span>
           <select name="audienceType" data-teacher-message-audience required>
             <option value="class">Toda a turma</option>
-            <option value="student">Aluno / Familia</option>
+            <option value="student">Aluno / Família</option>
           </select>
         </label>
         <label data-teacher-message-student-wrap hidden>
@@ -7255,7 +7255,7 @@ const renderTeacherClassMessagesPanel = (classItem, students = []) => {
         </label>
         <label class="tw-planning-form-note">
           <span>Mensagem</span>
-          <textarea name="message" rows="4" required maxlength="900" placeholder="Escreva o recado pedagogico."></textarea>
+          <textarea name="message" rows="4" required maxlength="900" placeholder="Escreva o recado pedagógico."></textarea>
         </label>
         <div class="tw-planning-form-actions">
           <button type="submit">PUBLICAR RECADO</button>
@@ -7281,12 +7281,12 @@ const renderTeacherClassMessagesPanel = (classItem, students = []) => {
 const renderTeacherRecommendationCard = (recommendation) => {
   const destination =
     recommendation.targetType === "student"
-      ? `Aluno/Familia: ${recommendation.studentName || "Aluno da turma"}`
+      ? `Aluno/Família: ${recommendation.studentName || "Aluno da turma"}`
       : `Toda a turma: ${recommendation.className || "Turma"}`;
   const statusLabel = recommendationStatusLabel(recommendation.status);
   const primaryAction =
     recommendation.status === "published"
-      ? `<button type="button" data-teacher-recommendation-status="${printableEscape(recommendation.id)}" data-to-status="archived">Retirar da publicacao</button>`
+      ? `<button type="button" data-teacher-recommendation-status="${printableEscape(recommendation.id)}" data-to-status="archived">Retirar da publicação</button>`
       : `<button type="button" data-teacher-recommendation-status="${printableEscape(recommendation.id)}" data-to-status="published" data-destination="${printableEscape(destination)}">Publicar novamente</button>`;
   const detailHref =
     recommendation.contentType === "printable_activity"
@@ -7297,7 +7297,7 @@ const renderTeacherRecommendationCard = (recommendation) => {
       <div class="tw-message-main">
         <span>${printableEscape(destination)} · ${printableEscape(statusLabel)} · ${printableEscape(formatTeacherClassMessageDate(recommendation.publishedAt || recommendation.createdAt))}</span>
         <strong>${printableEscape(recommendation.contentTitle)}</strong>
-        <p>${printableEscape(recommendation.note || "Sem orientacao adicional.")}</p>
+        <p>${printableEscape(recommendation.note || "Sem orientação adicional.")}</p>
         <small>${printableEscape(recommendationTypeLabel(recommendation.contentType))} · ${printableEscape(recommendation.contentId)}</small>
       </div>
       <div class="tw-message-actions">
@@ -7315,16 +7315,16 @@ const renderTeacherRecommendationsPanel = (classItem, students = []) => {
     <section class="tw-board tw-class-messages-shell tw-recommendations-shell">
       <div class="tw-planning-heading">
         <div>
-          <span>Recomendacoes</span>
-          <h2>Recomendacoes - ${printableEscape(classItem.name)}</h2>
-          <p>Conteudos destacados para toda a turma ou para um aluno/familia da propria turma.</p>
+          <span>Recomendações</span>
+          <h2>Recomendações - ${printableEscape(classItem.name)}</h2>
+          <p>Conteúdos destacados para toda a turma ou para um aluno/familia da propria turma.</p>
         </div>
         <div class="tw-planning-toolbar">
           <a href="atividades.html?target=class&class=${encodeURIComponent(classItem.id)}">ESCOLHER ATIVIDADE</a>
         </div>
       </div>
       <div class="tw-section-head">
-        <h2>Recomendacoes publicadas</h2>
+        <h2>Recomendações publicadas</h2>
         <span>${teacherRecommendationsState.status === "ready" ? `${recommendations.length} registro${recommendations.length === 1 ? "" : "s"}` : "Carregando"}</span>
       </div>
       ${
@@ -7365,7 +7365,7 @@ const renderTeacherAttendancePanel = (classItem, students = []) => {
         <article class="tw-attendance-row" data-student-id="${printableEscape(student.id)}">
           <div>
             <strong>${printableEscape(student.name)}</strong>
-            <small>${printableEscape(student.enrollmentStatus || "Matricula ativa")}</small>
+            <small>${printableEscape(student.enrollmentStatus || "Matrícula ativa")}</small>
           </div>
           <fieldset>
             <legend>Status de ${printableEscape(student.name)}</legend>
@@ -7381,7 +7381,7 @@ const renderTeacherAttendancePanel = (classItem, students = []) => {
               .join("")}
           </fieldset>
           <label class="tw-attendance-note">
-            <span>Observacao</span>
+            <span>Observação</span>
             <input name="notes_${printableEscape(student.id)}" type="text" value="${printableEscape(notes)}" placeholder="Opcional" />
           </label>
         </article>
@@ -7392,7 +7392,7 @@ const renderTeacherAttendancePanel = (classItem, students = []) => {
     <section class="tw-board tw-attendance-board">
       <div class="tw-section-head">
         <div>
-          <h2>Frequencia - ${printableEscape(classItem?.name || "Turma")}</h2>
+          <h2>Frequência - ${printableEscape(classItem?.name || "Turma")}</h2>
           <span>${students.length} alunos ativos</span>
         </div>
       </div>
@@ -7408,7 +7408,7 @@ const renderTeacherAttendancePanel = (classItem, students = []) => {
         ${isError ? renderTeacherInstitutionalStatus(`ERRO AO CARREGAR FREQUENCIA: ${teacherAttendanceState.error}`) : ""}
         ${students.length ? `<div class="tw-attendance-list">${rows}</div>` : renderTeacherEmptyState("NENHUM ALUNO ATIVO NESTA TURMA.")}
         <div class="tw-attendance-footer">
-          <p data-attendance-feedback>${printableEscape(teacherAttendanceState.message || "A frequencia usa somente alunos ativos desta turma.")}</p>
+          <p data-attendance-feedback>${printableEscape(teacherAttendanceState.message || "A frequência usa somente alunos ativos desta turma.")}</p>
           <button type="submit" ${students.length ? "" : "disabled"}>SALVAR FREQUENCIA</button>
         </div>
       </form>
@@ -7435,7 +7435,7 @@ const renderTeacherClassPage = () => `
           if (activeTab === "semana") return renderTeacherClassWeekPanel(classItem);
           if (activeTab === "recados") return renderTeacherClassMessagesPanel(classItem, students);
           if (activeTab === "recomendacoes") return renderTeacherRecommendationsPanel(classItem, students);
-          if (activeTab === "desafio") return renderTeacherPreparedClassPanel("Desafio da Semana", "Espaco preparado para publicacao futura de desafios, sem Banco de Propostas nesta etapa.");
+          if (activeTab === "desafio") return renderTeacherPreparedClassPanel("Desafio da Semana", "Espaco preparado para publicação futura de desafios, sem Banco de Propostas nesta etapa.");
           return `
             <section class="tw-board">
               <div class="tw-section-head"><h2>Alunos</h2><span>${students.length} vinculos ativos</span></div>
@@ -7502,11 +7502,11 @@ const renderTeacherStudentPage = () => {
           ${isReady ? `
           <section class="tw-student-followup">
             <article class="tw-board">
-              <div class="tw-section-head"><h2>Visao geral</h2><span>Aluno da turma</span></div>
+              <div class="tw-section-head"><h2>Visão geral</h2><span>Aluno da turma</span></div>
               <dl class="tw-card-meta">
                 <div><dt>Nome</dt><dd>${printableEscape(student.fullName || student.name)}</dd></div>
                 <div><dt>Turma</dt><dd>${printableEscape(student.className)}</dd></div>
-                <div><dt>Escola</dt><dd>${printableEscape(classItem?.schoolName || "Nao informada")}</dd></div>
+                <div><dt>Escola</dt><dd>${printableEscape(classItem?.schoolName || "Não informada")}</dd></div>
                 <div><dt>Status</dt><dd>${printableEscape(student.status || "Ativo")}</dd></div>
               </dl>
             </article>
@@ -7515,15 +7515,15 @@ const renderTeacherStudentPage = () => {
               ${renderTeacherEmptyState("NENHUMA ATIVIDADE ENVIADA AINDA.", "Use o banco de atividades para escolher uma proposta quando necessario.")}
             </article>
             <article class="tw-board">
-              <div class="tw-section-head"><h2>Producoes</h2><span>Portfolio</span></div>
+              <div class="tw-section-head"><h2>Produções</h2><span>Portfolio</span></div>
               ${renderTeacherEmptyState("AINDA NAO HA PRODUCOES REGISTRADAS.")}
             </article>
             <article class="tw-board">
-              <div class="tw-section-head"><h2>Progresso</h2><span>Em preparacao</span></div>
+              <div class="tw-section-head"><h2>Progresso</h2><span>Em preparação</span></div>
               ${renderTeacherEmptyState("O PROGRESSO DO ALUNO APARECERA AQUI QUANDO HOUVER REGISTROS.")}
             </article>
             <article class="tw-board">
-              <div class="tw-section-head"><h2>Registros</h2><span>Historico</span></div>
+              <div class="tw-section-head"><h2>Registros</h2><span>Histórico</span></div>
               ${renderTeacherEmptyState("NENHUM REGISTRO PEDAGOGICO DISPONIVEL.")}
             </article>
           </section>
@@ -7535,19 +7535,19 @@ const renderTeacherStudentPage = () => {
 };
 
 const studentPremiumNav = [
-  ["aluno.html", "Inicio", "home"],
-  ["missao.html", "Missao do Dia", "star"],
-  ["arvore.html", "Minha Arvore", "tree"],
+  ["aluno.html", "Início", "home"],
+  ["missao.html", "Missão do Dia", "star"],
+  ["arvore.html", "Minha Árvore", "tree"],
   ["biblioteca.html", "Biblioteca", "book"],
   ["jogos.html", "Jogar e Descobrir", "game"],
   ["perfil.html", "Perfil", "user"],
-  ["familia.html", "Familia", "family"],
+  ["familia.html", "Família", "family"],
 ];
 
 const renderStudentPremiumSidebar = () => `
   <aside class="student-premium-sidebar" aria-label="Menu do aluno">
-    <a class="student-premium-logo" href="aluno.html" aria-label="Raizes e Saberes">
-      <img src="logo-sidebar-dark.png" alt="Raizes e Saberes" onerror="this.hidden=true" />
+    <a class="student-premium-logo" href="aluno.html" aria-label="Raízes e Saberes">
+      <img src="logo-sidebar-dark.png" alt="Raízes e Saberes" onerror="this.hidden=true" />
     </a>
     <nav>
       ${studentPremiumNav
@@ -7563,7 +7563,7 @@ const renderStudentPremiumTopbar = () => `
     <label><span>Buscar</span><input type="search" placeholder="Buscar livros, jogos, atividades..." /></label>
     <div class="student-premium-topbar-right">
       <a class="student-premium-user-pill" href="perfil.html" aria-label="Abrir perfil">${getActiveStudentProfile().avatar ? studentLazyImg(getActiveStudentProfile().avatar, "", "student-top-avatar") : premiumIcon("aluno")}<strong>${printableEscape(getActiveStudentProfile().firstName)}</strong></a>
-      <nav class="student-premium-global-actions" aria-label="Acoes globais do aluno">
+      <nav class="student-premium-global-actions" aria-label="Ações globais do aluno">
         <button type="button" data-platform-back>${premiumIcon("progresso")}<span>VOLTAR</span></button>
         <a href="aluno.html">${premiumIcon("home")}<span>INICIO</span></a>
         <a href="escola.html">${premiumIcon("escola")}<span>MINHA ESCOLA</span></a>
@@ -7630,7 +7630,7 @@ const renderStudentInstitutionalWeekEntry = (entry) => `
 
 const renderStudentInstitutionalWeekCell = (specificDate = "") => {
   const entries = getStudentInstitutionalEntriesForDate(specificDate);
-  if (!entries.length) return `<div class="family-week-cell is-empty"><span>Sem publicacao</span></div>`;
+  if (!entries.length) return `<div class="family-week-cell is-empty"><span>Sem publicação</span></div>`;
   return `<div class="family-week-cell family-week-unscheduled">${entries.map(renderStudentInstitutionalWeekEntry).join("")}</div>`;
 };
 
@@ -7651,7 +7651,7 @@ const renderStudentInstitutionalWeeklyBoard = () => {
       </div>
       ${statusMessage}
       <div class="family-week-grid" aria-label="Minha Semana do aluno" data-week-start="${printableEscape(weekStartIso)}">
-        <div class="family-week-corner">Publicacao</div>
+        <div class="family-week-corner">Publicação</div>
         ${familyWeekDays.map(([, short]) => `<div class="family-week-day">${short}</div>`).join("")}
         <div class="family-week-slot">Turma</div>
         ${familyWeekDays.map(([dayKey]) => renderStudentInstitutionalWeekCell(weekDates[dayKey])).join("")}
@@ -7703,7 +7703,7 @@ const mapStudentTeacherRecommendation = (row = {}, teachersById = new Map()) => 
     teacherId: row.teacher_id || "",
     contentType: row.content_type || "printable_activity",
     contentId: row.content_id || "",
-    contentTitle: row.content_title || row.content_id || "Conteudo recomendado",
+    contentTitle: row.content_title || row.content_id || "Conteúdo recomendado",
     targetType,
     classId: row.class_id || "",
     studentId: row.student_id || "",
@@ -7737,12 +7737,12 @@ const loadStudentTeacherRecommendations = async (client) => {
   const baseQuery = `?${baseSelect}&school_id=${supabaseEq(school.id)}&status=eq.published&deleted_at=is.null`;
   const [classRows, studentRows] = await Promise.all([
     client.request(
-      "pedagogical_recommendations",
+      "pedagógical_recommendations",
       `${baseQuery}&target_type=eq.class&class_id=${supabaseEq(enrollment.class_id)}&order=published_at.desc.nullslast&order=created_at.desc`,
       requestOptions
     ),
     client.request(
-      "pedagogical_recommendations",
+      "pedagógical_recommendations",
       `${baseQuery}&target_type=eq.student&student_id=${supabaseEq(student.id)}&order=published_at.desc.nullslast&order=created_at.desc`,
       requestOptions
     ),
@@ -7811,7 +7811,7 @@ const renderStudentRecommendationCard = (recommendation = {}, { compact = false 
           <span>${printableEscape(recommendation.typeLabel || recommendationTypeLabel(recommendation.contentType))}</span>
           <em>${printableEscape(recommendation.destinationLabel || "Para sua turma")}</em>
         </div>
-        <strong>${printableEscape(recommendation.contentTitle || "Recomendacao da professora")}</strong>
+        <strong>${printableEscape(recommendation.contentTitle || "Recomendação da professora")}</strong>
         <dl>
           <div><dt>Autoria</dt><dd>${printableEscape(recommendation.teacherName || getActiveStudentProfile().teacherName)}</dd></div>
           <div><dt>Turma</dt><dd>${printableEscape(recommendation.className || getActiveStudentProfile().className)}</dd></div>
@@ -7832,17 +7832,17 @@ const renderStudentRecommendationList = ({ activitiesOnly = false, compact = fal
   }
   const recommendations = getStudentVisibleRecommendations({ activitiesOnly });
   if (!recommendations.length) {
-    return renderFamilyEmpty(activitiesOnly ? "Nenhuma atividade indicada no momento." : "Nenhuma recomendacao da professora no momento.");
+    return renderFamilyEmpty(activitiesOnly ? "Nenhuma atividade indicada no momento." : "Nenhuma recomendação da professora no momento.");
   }
   return `<div class="family-recommendation-list student-recommendation-list">${recommendations.map((recommendation) => renderStudentRecommendationCard(recommendation, { compact })).join("")}</div>`;
 };
 
 const renderStudentInstitutionalGate = () => {
   const message = studentInstitutionalState.status === "error"
-    ? studentInstitutionalState.error || "Nao foi possivel identificar o vinculo escolar deste aluno."
-    : "Validando sua sessao e buscando seu vinculo escolar.";
+    ? studentInstitutionalState.error || "Não foi possível identificar o vinculo escolar deste aluno."
+    : "Validando sua sessão e buscando seu vinculo escolar.";
   const title = studentInstitutionalState.status === "error"
-    ? "Nao foi possivel abrir o ambiente do aluno"
+    ? "Não foi possível abrir o ambiente do aluno"
     : "Carregando ambiente do aluno";
   return `
     <section class="student-institutional-gate ${studentInstitutionalState.status === "error" ? "is-error" : "is-loading"}">
@@ -7905,7 +7905,7 @@ const renderStudentInstitutionalHomeContent = () => {
 
     ${renderStudentInstitutionalWeeklyBoard()}
 
-    <section class="student-premium-card-grid" aria-label="Areas principais do aluno">
+    <section class="student-premium-card-grid" aria-label="Áreas principais do aluno">
       ${[
         { title: "Minha Turma", text: profile.className, href: "aluno.html", icon: "turmas", tone: "green", cta: "VER" },
         { title: "Minha Escola", text: profile.schoolName || "Escola vinculada", href: "escola.html", icon: "escola", tone: "blue", cta: "VER" },
@@ -7980,8 +7980,8 @@ const renderTeacherWorkspaceView = (view) => {
   const institutionalStudents = getTeacherInstitutionalStudents();
   const resourceCards = [
     ...books.map((book) => ({ kind: "Livro", title: book.title, detail: `${book.subtitle} · ${book.ageGroup.replace("EI", "")} anos`, cover: book.coverAsset, href: book.viewerHref || `book-viewer.html?book=${encodeURIComponent(book.bookId || book.id)}` })),
-    ...experiences.map((experience) => ({ kind: "Exp", title: experience.title, detail: `${experience.unitTitle || experience.unit} · ${experience.pageStart || ""}-${experience.pageEnd || ""}`, view: "experiencias" })),
-    ...activities.slice(0, 3).map((activity) => ({ kind: "Ativ", title: activity.title, detail: activity.type, view: "experiencias" })),
+    ...experiences.map((experience) => ({ kind: "Exp", title: experience.title, detail: `${experience.unitTitle || experience.unit} · ${experience.pageStart || ""}-${experience.pageEnd || ""}`, view: "experiências" })),
+    ...activities.slice(0, 3).map((activity) => ({ kind: "Ativ", title: activity.title, detail: activity.type, view: "experiências" })),
   ];
   const viewMap = {
     inicio: `
@@ -8009,24 +8009,24 @@ const renderTeacherWorkspaceView = (view) => {
     calendario: `
       <section class="tw-board">
         <div class="tw-section-head"><h2>Calendario</h2><button type="button" data-teacher-view="planejamentos">Planejar</button></div>
-        ${renderPremiumEmpty("SEM COMPROMISSOS PARA HOJE", "Sua agenda pedagogica aparecera aqui quando houver eventos.", "blue")}
+        ${renderPremiumEmpty("SEM COMPROMISSOS PARA HOJE", "Sua agenda pedagógica aparecera aqui quando houver eventos.", "blue")}
       </section>
     `,
     mensagens: renderTeacherFamilyMessagesView(),
     acesso: `
       <section class="tw-board tw-card-grid">
         ${[
-          { title: "Abrir Biblioteca Viva", detail: "Livros, experiencias e atividades", view: "biblioteca" },
-          { title: "Corrigir avaliacoes", detail: "Nenhuma correcao pendente no momento", view: "avaliacoes" },
-          { title: "Ver relatorios", detail: "Relatorios reais aparecerao aqui", view: "relatorios" },
+          { title: "Abrir Biblioteca Viva", detail: "Livros, experiências e atividades", view: "biblioteca" },
+          { title: "Corrigir avaliações", detail: "Nenhuma correcao pendente no momento", view: "avaliações" },
+          { title: "Ver relatórios", detail: "Relatórios reais aparecerao aqui", view: "relatórios" },
         ].map((item) => renderRecommendationCard({ type: "Atalho", title: item.title, detail: item.detail, view: item.view, action: "Abrir" })).join("")}
       </section>
     `,
     perfil: `
       <section class="tw-board tw-card-grid">
         ${renderTeacherCard()}
-        <article class="tw-metric-card"><span>Agenda</span><strong>Manha e tarde</strong><small>Educacao Infantil</small></article>
-        <article class="tw-metric-card"><span>Turmas</span><strong>${institutionalClasses.length}</strong><small>Vinculos institucionais ativos</small></article>
+        <article class="tw-metric-card"><span>Agenda</span><strong>Manha e tarde</strong><small>Educação Infantil</small></article>
+        <article class="tw-metric-card"><span>Turmas</span><strong>${institutionalClasses.length}</strong><small>Vínculos institucionais ativos</small></article>
       </section>
     `,
     planejamentos: `
@@ -8061,92 +8061,92 @@ const renderTeacherWorkspaceView = (view) => {
       <section class="tw-board">
         <div class="tw-section-head"><h2>Favoritos</h2><button type="button" data-teacher-open-url="atividades.html?favoritos=1">Ver atividades favoritas</button></div>
         <div class="tw-card-grid">
-          <article class="tw-metric-card"><span>Biblioteca Viva</span><strong>Favoritos digitais</strong><small>Livros e experiencias continuam no modulo Biblioteca Viva.</small></article>
-          <article class="tw-metric-card"><span>Imprimiveis</span><strong>${printableActivitiesDataService.state().favorites.length}</strong><small>atividades salvas localmente neste dispositivo</small></article>
+          <article class="tw-metric-card"><span>Biblioteca Viva</span><strong>Favoritos digitais</strong><small>Livros e experiências continuam no modulo Biblioteca Viva.</small></article>
+          <article class="tw-metric-card"><span>Imprimíveis</span><strong>${printableActivitiesDataService.state().favorites.length}</strong><small>atividades salvas localmente neste dispositivo</small></article>
         </div>
       </section>
     `,
-    experiencias: `
+    experiências: `
       <section class="tw-board">
-        <div class="tw-section-head"><h2>Experiencias e atividades</h2><span>${experiences.length} experiencias · ${activities.length} atividades</span></div>
+        <div class="tw-section-head"><h2>Experiências e atividades</h2><span>${experiences.length} experiências · ${activities.length} atividades</span></div>
         <div class="tw-resource-grid">${resourceCards.filter((item) => item.kind !== "Livro").map(renderResourceCard).join("")}</div>
       </section>
     `,
     jogos: `
-      <section class="tw-board tw-placeholder"><h2>Jogos</h2><p>Jogos pedagogicos serao organizados aqui, usando o mesmo workspace.</p></section>
+      <section class="tw-board tw-placeholder"><h2>Jogos</h2><p>Jogos pedagógicos serao organizados aqui, usando o mesmo workspace.</p></section>
     `,
-    avaliacoes: `
+    avaliações: `
       <section class="tw-board">
-        <div class="tw-section-head"><h2>Avaliacoes</h2><button type="button" data-teacher-view="inicio">Voltar</button></div>
-        ${renderPremiumEmpty("NENHUMA AVALIACAO PENDENTE", "As avaliacoes reais aparecerao aqui quando forem publicadas.", "purple")}
+        <div class="tw-section-head"><h2>Avaliações</h2><button type="button" data-teacher-view="inicio">Voltar</button></div>
+        ${renderPremiumEmpty("NENHUMA AVALIACAO PENDENTE", "As avaliações reais aparecerao aqui quando forem publicadas.", "purple")}
       </section>
     `,
-    relatorios: `
+    relatórios: `
       ${renderUniversalActivityTeacherDeliveries()}
       <section class="tw-board">
-        <div class="tw-section-head"><h2>Relatorios</h2><button type="button" data-teacher-view="inicio">Voltar</button></div>
+        <div class="tw-section-head"><h2>Relatórios</h2><button type="button" data-teacher-view="inicio">Voltar</button></div>
         ${renderPremiumEmpty("RELATORIOS EM PREPARACAO", "Indicadores reais de progresso serao exibidos quando houver dados suficientes.", "blue")}
       </section>
     `,
-    formacao: `
+    formação: `
       ${renderTeacherFormationView()}
     `,
     universidade: `
       ${renderTeacherFormationView()}
     `,
     configuracoes: `
-      <section class="tw-board tw-placeholder"><h2>Configuracoes</h2><p>Preferencias do workspace, notificacoes e atalhos ficarao aqui.</p></section>
+      <section class="tw-board tw-placeholder"><h2>Configurações</h2><p>Preferências do workspace, notificações e atalhos ficarão aqui.</p></section>
     `,
   };
   return viewMap[view] || viewMap.inicio;
 };
 
 const adminFeatureRegistry = [
-  { key: "plataforma", label: "Plataforma", area: "Visao geral", status: "Legado preservado", href: "admin.html", roles: { admin: true, professor: true, aluno: true } },
-  { key: "professor", label: "Ambiente Professor", area: "Usuarios e acessos", status: "Disponivel", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
-  { key: "aluno", label: "Ambiente Aluno", area: "Usuarios e acessos", status: "Disponivel", href: "aluno.html", roles: { admin: true, professor: false, aluno: true } },
-  { key: "biblioteca", label: "Biblioteca Viva", area: "Conteudos", status: "Disponivel", href: "biblioteca.html", roles: { admin: true, professor: true, aluno: true } },
-  { key: "atividades", label: "Atividades Imprimiveis", area: "Conteudos", status: "Em acompanhamento", href: "admin-atividades.html", roles: { admin: true, professor: true, aluno: false } },
-  { key: "experiencias", label: "Experiencias Digitais", area: "Conteudos", status: "Em acompanhamento", href: "biblioteca.html#acervo-completo", roles: { admin: true, professor: true, aluno: true } },
-  { key: "jogos", label: "Jogos", area: "Conteudos", status: "Em preparacao", href: "jogos.html", roles: { admin: true, professor: true, aluno: true } },
-  { key: "planejamentos", label: "Planejamentos", area: "Gestao pedagogica", status: "Em preparacao", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
-  { key: "avaliacoes", label: "Avalia+", area: "Conteudos", status: "Em acompanhamento", href: "avalia.html", roles: { admin: true, professor: true, aluno: false } },
-  { key: "banco", label: "Banco de Questoes", area: "Conteudos", status: "Em acompanhamento", href: "banco-questoes.html", roles: { admin: true, professor: true, aluno: false } },
-  { key: "universidade", label: "Universidade", area: "Conteudos", status: "Em acompanhamento", href: "universidade.html", roles: { admin: true, professor: true, aluno: false } },
-  { key: "bookViewer", label: "Leitor Digital", area: "Recursos interativos", status: "Disponivel", href: "book-viewer.html", roles: { admin: true, professor: true, aluno: true } },
-  { key: "motorUniversal", label: "Atividades Interativas", area: "Recursos interativos", status: "Em preparacao", href: "motor-atividade.html", roles: { admin: true, professor: false, aluno: true } },
-  { key: "motorJogos", label: "Jogos Digitais", area: "Recursos interativos", status: "Em preparacao", href: "jogos.html", roles: { admin: true, professor: true, aluno: true } },
-  { key: "pintura", label: "Pintura / Desenho", area: "Recursos interativos", status: "Em preparacao", href: "motor-atividade.html", roles: { admin: true, professor: false, aluno: true } },
-  { key: "arrastar", label: "Arrastar e Soltar", area: "Recursos interativos", status: "Em preparacao", href: "motor-atividade.html", roles: { admin: true, professor: false, aluno: true } },
-  { key: "pareamento", label: "Pareamento", area: "Recursos interativos", status: "Em preparacao", href: "motor-atividade.html", roles: { admin: true, professor: false, aluno: true } },
-  { key: "audioVideo", label: "Audio / Video Interativo", area: "Recursos interativos", status: "Em preparacao", href: "biblioteca.html", roles: { admin: true, professor: true, aluno: true } },
-  { key: "atribuicoes", label: "Atribuicoes", area: "Gestao pedagogica", status: "Em preparacao", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
-  { key: "producoes", label: "Producoes dos Alunos", area: "Gestao pedagogica", status: "Em preparacao", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
-  { key: "relatorios", label: "Relatorios", area: "Gestao pedagogica", status: "Em preparacao", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "plataforma", label: "Plataforma", area: "Visão geral", status: "Legado preservado", href: "admin.html", roles: { admin: true, professor: true, aluno: true } },
+  { key: "professor", label: "Ambiente Professor", area: "Usuários e acessos", status: "Disponível", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "aluno", label: "Ambiente Aluno", area: "Usuários e acessos", status: "Disponível", href: "aluno.html", roles: { admin: true, professor: false, aluno: true } },
+  { key: "biblioteca", label: "Biblioteca Viva", area: "Conteúdos", status: "Disponível", href: "biblioteca.html", roles: { admin: true, professor: true, aluno: true } },
+  { key: "atividades", label: "Atividades Imprimíveis", area: "Conteúdos", status: "Em acompanhamento", href: "admin-atividades.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "experiencias", label: "Experiências Digitais", area: "Conteúdos", status: "Em acompanhamento", href: "biblioteca.html#acervo-completo", roles: { admin: true, professor: true, aluno: true } },
+  { key: "jogos", label: "Jogos", area: "Conteúdos", status: "Em preparação", href: "jogos.html", roles: { admin: true, professor: true, aluno: true } },
+  { key: "planejamentos", label: "Planejamentos", area: "Gestão pedagógica", status: "Em preparação", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "avaliacoes", label: "Avalia+", area: "Conteúdos", status: "Em acompanhamento", href: "avalia.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "banco", label: "Banco de Questões", area: "Conteúdos", status: "Em acompanhamento", href: "banco-questoes.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "universidade", label: "Universidade", area: "Conteúdos", status: "Em acompanhamento", href: "universidade.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "bookViewer", label: "Leitor Digital", area: "Recursos interativos", status: "Disponível", href: "book-viewer.html", roles: { admin: true, professor: true, aluno: true } },
+  { key: "motorUniversal", label: "Atividades Interativas", area: "Recursos interativos", status: "Em preparação", href: "motor-atividade.html", roles: { admin: true, professor: false, aluno: true } },
+  { key: "motorJogos", label: "Jogos Digitais", area: "Recursos interativos", status: "Em preparação", href: "jogos.html", roles: { admin: true, professor: true, aluno: true } },
+  { key: "pintura", label: "Pintura / Desenho", area: "Recursos interativos", status: "Em preparação", href: "motor-atividade.html", roles: { admin: true, professor: false, aluno: true } },
+  { key: "arrastar", label: "Arrastar e Soltar", area: "Recursos interativos", status: "Em preparação", href: "motor-atividade.html", roles: { admin: true, professor: false, aluno: true } },
+  { key: "pareamento", label: "Páreamento", area: "Recursos interativos", status: "Em preparação", href: "motor-atividade.html", roles: { admin: true, professor: false, aluno: true } },
+  { key: "audioVideo", label: "Áudio / Vídeo Interativo", area: "Recursos interativos", status: "Em preparação", href: "biblioteca.html", roles: { admin: true, professor: true, aluno: true } },
+  { key: "atribuicoes", label: "Atribuições", area: "Gestão pedagógica", status: "Em preparação", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "producoes", label: "Produções dos Alunos", area: "Gestão pedagógica", status: "Em preparação", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "relatorios", label: "Relatórios", area: "Gestão pedagógica", status: "Em preparação", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
   { key: "adminAtividades", label: "Curadoria de Atividades", area: "Sistema / TI", status: "Em acompanhamento", href: "admin-atividades.html", roles: { admin: true, professor: false, aluno: false } },
 ];
 
 const adminWorkspaceNav = [
-  ["heading", "Visao geral"],
-  ["inicio", "Inicio"],
+  ["heading", "Visão geral"],
+  ["inicio", "Início"],
   ["plataforma", "Painel da Plataforma"],
-  ["status", "Status dos Modulos"],
-  ["heading", "Usuarios e acessos"],
-  ["usuarios", "Usuarios"],
+  ["status", "Status dos Módulos"],
+  ["heading", "Usuários e acessos"],
+  ["usuarios", "Usuários"],
   ["professores", "Professores"],
   ["alunos", "Alunos"],
   ["gestores", "Gestores"],
   ["escolas", "Escolas"],
   ["turmas", "Turmas"],
-  ["permissoes", "Perfis e Permissoes"],
-  ["heading", "Conteudos"],
+  ["permissoes", "Perfis e Permissões"],
+  ["heading", "Conteúdos"],
   ["biblioteca", "Biblioteca Viva"],
-  ["atividades", "Atividades Imprimiveis"],
-  ["experiencias", "Experiencias Digitais"],
+  ["atividades", "Atividades Imprimíveis"],
+  ["experiências", "Experiências Digitais"],
   ["jogos", "Jogos"],
   ["planejamentos", "Planejamentos"],
-  ["avaliacoes", "Avaliacoes"],
-  ["banco", "Banco de Questoes"],
+  ["avaliacoes", "Avaliações"],
+  ["banco", "Banco de Questões"],
   ["universidade", "Universidade"],
   ["heading", "Recursos interativos"],
   ["bookViewer", "Leitor Digital"],
@@ -8154,51 +8154,51 @@ const adminWorkspaceNav = [
   ["motorJogos", "Jogos Digitais"],
   ["pintura", "Pintura / Desenho"],
   ["arrastar", "Arrastar e Soltar"],
-  ["pareamento", "Pareamento"],
-  ["audioVideo", "Audio / Video Interativo"],
+  ["páreamento", "Páreamento"],
+  ["audioVideo", "Áudio / Vídeo Interativo"],
   ["outrosMotores", "Outros recursos"],
-  ["heading", "Gestao pedagogica"],
-  ["atribuicoes", "Atribuicoes"],
+  ["heading", "Gestão pedagógica"],
+  ["atribuicoes", "Atribuições"],
   ["missoes", "Missoes"],
-  ["producoes", "Producoes dos Alunos"],
+  ["producoes", "Produções dos Alunos"],
   ["progresso", "Progresso"],
-  ["relatorios", "Relatorios"],
-  ["conquistas", "Conquistas / Gamificacao"],
-  ["heading", "Comunicacao"],
+  ["relatórios", "Relatórios"],
+  ["conquistas", "Conquistas / Gamificação"],
+  ["heading", "Comunicação"],
   ["mensagens", "Mensagens"],
   ["notificacoes", "Notificacoes"],
-  ["familia", "Familia"],
+  ["familia", "Família"],
   ["heading", "Sistema / TI"],
   ["adminAtividades", "Curadoria de Atividades"],
   ["assets", "Assets / Arquivos"],
-  ["configuracoes", "Configuracoes"],
+  ["configuracoes", "Configurações"],
   ["logs", "Logs"],
 ];
 
 const adminPlatformTabs = [
   { label: "Site", href: "index.html", status: "publico" },
-  { label: "Inicio", href: "admin.html", status: "pronto" },
+  { label: "Início", href: "admin.html", status: "pronto" },
   { label: "Admin / TI", view: "inicio", status: "ativo" },
   { label: "Escola", href: "escola.html", status: "homologar" },
-  { label: "Area da Escola Infantil", href: "educacao-infantil.html", status: "homologar" },
+  { label: "Área da Escola Infantil", href: "educacao-infantil.html", status: "homologar" },
   { label: "Aluno", href: "aluno.html", status: "homologar" },
-  { label: "Minha Arvore", href: "arvore.html", status: "pronto" },
-  { label: "Missao do Dia", href: "missao.html", status: "pronto" },
+  { label: "Minha Árvore", href: "arvore.html", status: "pronto" },
+  { label: "Missão do Dia", href: "missao.html", status: "pronto" },
   { label: "Jogos", href: "jogos.html", status: "teste" },
   { label: "Perfil", href: "perfil.html", status: "pronto" },
   { label: "Biblioteca", href: "biblioteca.html", status: "pronto" },
-  { label: "Aluno Educacao Infantil", href: "familia.html", status: "homologar" },
+  { label: "Aluno Educação Infantil", href: "familia.html", status: "homologar" },
   { label: "Universidade", href: "universidade.html", status: "teste" },
   { label: "Book Viewer", href: "book-viewer.html", status: "homologado" },
   { label: "Professor", href: "professor.html", status: "homologar" },
   { label: "Minha Turma", href: "professor-turma.html", status: "pronto" },
-  { label: "Atividades Imprimiveis", href: "atividades.html", status: "teste" },
+  { label: "Atividades Imprimíveis", href: "atividades.html", status: "teste" },
   { label: "Atividades Interativas", href: "motor-atividade.html", status: "construcao" },
   { label: "Admin Atividades", href: "admin-atividades.html", status: "ti" },
   { label: "Avalia+", href: "avalia.html", status: "teste" },
-  { label: "Banco de Questoes", href: "banco-questoes.html", status: "teste" },
-  { label: "Secretaria", href: "secretaria.html", status: "gestao" },
-  { label: "Gestor", href: "gestor.html", status: "gestao" },
+  { label: "Banco de Questões", href: "banco-questoes.html", status: "teste" },
+  { label: "Secretaria", href: "secretaria.html", status: "gestão" },
+  { label: "Gestor", href: "gestor.html", status: "gestão" },
 ];
 
 const getAdminFeature = (key) => adminFeatureRegistry.find((item) => item.key === key);
@@ -8208,10 +8208,10 @@ const getAdminFeaturePolicy = (key) => getAdminFeature(key)?.roles || { admin: t
 
 const adminReadOnlyNav = [
   { key: "painel", label: "Painel", icon: "chart" },
-  { key: "usuarios", label: "Usuarios", icon: "users" },
+  { key: "usuarios", label: "Usuários", icon: "users" },
   { key: "escolas", label: "Escolas", icon: "escola" },
-  { key: "conteudos", label: "Conteudos", icon: "book" },
-  { key: "implantacao", label: "Implantacao", icon: "clipboard" },
+  { key: "conteúdos", label: "Conteúdos", icon: "book" },
+  { key: "implantação", label: "Implantação", icon: "clipboard" },
   { key: "auditoria", label: "Auditoria", icon: "check" },
   { key: "ambientes", label: "Ambientes", icon: "site" },
 ];
@@ -8221,29 +8221,29 @@ const adminInlineIcon = (icon, label = "") =>
 
 const adminMetricIcons = {
   Escolas: "escola",
-  "Usuarios e perfis": "perfil",
+  "Usuários e perfis": "perfil",
   Professores: "cap",
   Alunos: "aluno",
-  Responsaveis: "family",
+  Responsáveis: "family",
   Turmas: "users",
-  Matriculas: "clipboard",
-  Comunicacoes: "mail",
+  Matrículas: "clipboard",
+  Comunicações: "mail",
 };
 
 const adminOperationalDoors = [
-  { key: "secretaria", icon: "clipboard", label: "Admin / Secretaria", description: "Acompanhar operacao institucional da escola.", href: "secretaria.html" },
-  { key: "professor", icon: "cap", label: "Admin / Professor", description: "Acompanhar a rotina pedagogica das turmas.", href: "professor.html" },
-  { key: "familia", icon: "family", label: "Admin / Familia", description: "Conferir a experiencia familiar vinculada a criancas.", href: "familia.html" },
-  { key: "aluno", icon: "aluno", label: "Admin / Aluno", description: "Conferir a experiencia do aluno com identidade real.", href: "aluno.html" },
-  { key: "escola", icon: "escola", label: "Admin / Minha Escola", description: "Abrir a area institucional comum.", href: "escola.html" },
+  { key: "secretaria", icon: "clipboard", label: "Admin / Secretaria", description: "Acompanhar operação institucional da escola.", href: "secretaria.html" },
+  { key: "professor", icon: "cap", label: "Admin / Professor", description: "Acompanhar a rotina pedagógica das turmas.", href: "professor.html" },
+  { key: "familia", icon: "family", label: "Admin / Família", description: "Conferir a experiência familiar vinculada a criancas.", href: "familia.html" },
+  { key: "aluno", icon: "aluno", label: "Admin / Aluno", description: "Conferir a experiência do aluno com identidade real.", href: "aluno.html" },
+  { key: "escola", icon: "escola", label: "Admin / Minha Escola", description: "Abrir a área institucional comum.", href: "escola.html" },
 ];
 
 const adminRoleCatalog = [
   { role: "admin", label: "Admin/TI", aliases: ["administrador", "ti"], destination: "admin.html", guards: "Admin global" },
-  { role: "secretaria", label: "Secretaria", aliases: ["gestor", "coordenador"], destination: "secretaria.html", guards: "Operacao escolar" },
+  { role: "secretaria", label: "Secretaria", aliases: ["gestor", "coordenador"], destination: "secretaria.html", guards: "Operação escolar" },
   { role: "professor", label: "Professor", aliases: ["teacher"], destination: "professor.html", guards: "Professor vinculado" },
   { role: "aluno", label: "Aluno", aliases: ["student"], destination: "aluno.html", guards: "Aluno vinculado" },
-  { role: "educacao_infantil", label: "Familia/EI", aliases: ["familia", "responsavel", "guardian"], destination: "familia.html", guards: "Responsavel vinculado" },
+  { role: "educacao_infantil", label: "Família/EI", aliases: ["familia", "responsavel", "guardian"], destination: "familia.html", guards: "Responsavel vinculado" },
 ];
 
 const adminRsSchoolControlledImportPackage = {
@@ -8251,8 +8251,8 @@ const adminRsSchoolControlledImportPackage = {
   schema_version: "RS-SCHOOL-TEMPLATE V1",
   school_year: "2026",
   classes: [
-    { class_name: "Infantil A", school_year: "2026", status: "active", age_group: "4 anos", shift: "manha", grade: "Educacao Infantil" },
-    { class_name: "Infantil B", school_year: "2026", status: "active", age_group: "5 anos", shift: "tarde", grade: "Educacao Infantil" },
+    { class_name: "Infantil A", school_year: "2026", status: "active", age_group: "4 anos", shift: "manha", grade: "Educação Infantil" },
+    { class_name: "Infantil B", school_year: "2026", status: "active", age_group: "5 anos", shift: "tarde", grade: "Educação Infantil" },
   ],
   teachers: [
     { full_name: "Professora Exemplo Um", email: "professora.um@example.invalid", status: "active" },
@@ -8291,8 +8291,8 @@ const ensureAdminSupabaseConfig = async () => {
   await new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src = `supabase-config.js?v=admin-ti-v1-fase01-20260906d-${Date.now()}`;
-    script.onload = () => (window.RAIZES_SUPABASE?.url ? resolve() : reject(new Error("Configuracao do Supabase nao foi carregada.")));
-    script.onerror = () => reject(new Error("Nao foi possivel carregar supabase-config.js."));
+    script.onload = () => (window.RAIZES_SUPABASE?.url ? resolve() : reject(new Error("Configuração do Supabase nao foi carregada.")));
+    script.onerror = () => reject(new Error("Não foi possível carregar supabase-config.js."));
     document.head.appendChild(script);
   });
 };
@@ -8374,7 +8374,7 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
       return adminOperationalState;
     } catch (error) {
       adminOperationalState.status = "error";
-      adminOperationalState.error = error.message || "Nao foi possivel carregar o painel Admin.";
+      adminOperationalState.error = error.message || "Não foi possível carregar o painel Admin.";
       adminOperationalState.data = null;
       return adminOperationalState;
     } finally {
@@ -8411,7 +8411,7 @@ const renderAdminDoorCards = () => `
   <section class="admin-board">
     <div class="admin-section-head">
       <h2>Portas administrativas</h2>
-      <span>Acesso autorizado sem trocar de usuario</span>
+      <span>Acesso autorizado sem trocar de usuário</span>
     </div>
     <div class="admin-door-grid">
       ${adminOperationalDoors
@@ -8456,7 +8456,7 @@ const renderAdminQuickAction = (item) => `
 
 const renderAdminRecentActivity = (items) => {
   if (!items.length) {
-    return `<p class="admin-empty-note">Ainda nao ha atividade recente consolidada para exibir neste painel.</p>`;
+    return `<p class="admin-empty-note">Ainda não há atividade recente consolidada para exibir neste painel.</p>`;
   }
   return items
     .slice(0, 4)
@@ -8465,7 +8465,7 @@ const renderAdminRecentActivity = (items) => {
         <article class="admin-recent-item" data-admin-search-item>
           ${adminInlineIcon("mail")}
           <div>
-            <strong>${printableEscape(item.title || "Comunicacao registrada")}</strong>
+            <strong>${printableEscape(item.title || "Comunicação registrada")}</strong>
             <span>${printableEscape(item.status || "publicado")}</span>
           </div>
         </article>
@@ -8479,7 +8479,7 @@ const renderAdminReadOnlyHome = () => {
     return `
       <section class="admin-board admin-loading-state">
         <h2>Carregando painel</h2>
-        <p>Consultando o estado operacional com a sessao Admin atual.</p>
+        <p>Consultando o estado operacional com a sessão Admin atual.</p>
       </section>
       ${renderAdminDoorCards()}
     `;
@@ -8487,7 +8487,7 @@ const renderAdminReadOnlyHome = () => {
   if (adminOperationalState.status === "error") {
     return `
       <section class="admin-board admin-empty-state">
-        <h2>Nao foi possivel carregar o painel</h2>
+        <h2>Não foi possível carregar o painel</h2>
         <p>${printableEscape(adminOperationalState.error)}</p>
       </section>
       ${renderAdminDoorCards()}
@@ -8497,15 +8497,15 @@ const renderAdminReadOnlyHome = () => {
   const activeCommunications = (data.communications || []).filter((item) => !["deleted", "archived"].includes(String(item.status || "").toLowerCase()));
   const primaryMetrics = [
     { label: "Escolas", value: countRows(data.schools), detail: `${countActiveRows(data.schools)} ativas` },
-    { label: "Usuarios e perfis", value: countRows(data.profiles), detail: `${countActiveRows(data.profiles)} ativos` },
+    { label: "Usuários e perfis", value: countRows(data.profiles), detail: `${countActiveRows(data.profiles)} ativos` },
     { label: "Professores", value: countRows(data.teachers), detail: `${countActiveRows(data.teachers)} ativos` },
     { label: "Alunos", value: countRows(data.students), detail: `${countActiveRows(data.students)} ativos` },
-    { label: "Responsaveis", value: countRows(data.guardians), detail: `${countActiveRows(data.guardians)} ativos` },
+    { label: "Responsáveis", value: countRows(data.guardians), detail: `${countActiveRows(data.guardians)} ativos` },
   ];
   const secondaryMetrics = [
     { label: "Turmas", value: countRows(data.classes), detail: `${countActiveRows(data.classes)} ativas` },
-    { label: "Matriculas", value: countRows(data.enrollments), detail: `${countActiveRows(data.enrollments)} ativas` },
-    { label: "Comunicacoes", value: activeCommunications.length, detail: "visiveis na operacao" },
+    { label: "Matrículas", value: countRows(data.enrollments), detail: `${countActiveRows(data.enrollments)} ativas` },
+    { label: "Comunicações", value: activeCommunications.length, detail: "visíveis na operação" },
   ];
   const adminSessionLabel = data.context?.role === "admin" ? "Administrador/TI" : data.context?.role || "Administrador/TI";
   const currentEmail = getPlatformSession().email || "admin.banco@raizesesaberes.com";
@@ -8515,10 +8515,10 @@ const renderAdminReadOnlyHome = () => {
     value: `${item.value} - ${item.detail}`,
   }));
   const quickActions = [
-    { view: "usuarios", icon: "users", label: "Gerenciar usuarios" },
+    { view: "usuarios", icon: "users", label: "Gerenciar usuários" },
     { view: "escolas", icon: "escola", label: "Gerenciar escolas" },
-    { view: "conteudos", icon: "book", label: "Gerenciar conteudos" },
-    { view: "implantacao", icon: "clipboard", label: "Acompanhar implantacao" },
+    { view: "conteudos", icon: "book", label: "Gerenciar conteúdos" },
+    { view: "implantacao", icon: "clipboard", label: "Acompanhar implantação" },
   ];
   return `
     <section class="admin-context-strip" aria-label="Contexto Admin">
@@ -8548,18 +8548,18 @@ const renderAdminReadOnlyHome = () => {
     <section class="admin-overview-grid" aria-label="Indicadores principais">
       ${primaryMetrics.map(renderAdminMetricCard).join("")}
     </section>
-    <section class="admin-operation-grid" aria-label="Operacao Admin">
+    <section class="admin-operation-grid" aria-label="Operação Admin">
       <section class="admin-board admin-status-board">
         <div class="admin-section-head">
-          <h2>Atencao / status</h2>
+          <h2>Atenção / status</h2>
           <span>Painel de leitura</span>
         </div>
         <div class="admin-status-list">${renderAdminStatusItems(statusItems)}</div>
       </section>
       <section class="admin-board admin-quick-board">
         <div class="admin-section-head">
-          <h2>Acoes rapidas</h2>
-          <span>Modulos Admin</span>
+          <h2>Ações rápidas</h2>
+          <span>Módulos Admin</span>
         </div>
         <div class="admin-quick-list">${quickActions.map(renderAdminQuickAction).join("")}</div>
       </section>
@@ -8579,7 +8579,7 @@ const renderAdminPreparationView = (title, description, items = []) => `
   <section class="admin-board admin-preparation-state">
     <div class="admin-section-head">
       <h2>${printableEscape(title)}</h2>
-      <span>Em preparacao</span>
+      <span>Em preparação</span>
     </div>
     <p>${printableEscape(description)}</p>
     ${
@@ -8597,7 +8597,7 @@ const adminRoleInfo = (role = "") => {
     label: normalized || "Sem papel",
     aliases: [],
     destination: "login.html",
-    guards: "Nao autorizado",
+    guards: "Não autorizado",
   };
 };
 
@@ -8635,9 +8635,9 @@ const adminStatusLabel = (status = "") => {
   if (normalized === "inactive") return "Inativo";
   if (normalized === "banned") return "Bloqueado";
   if (normalized === "deleted") return "Removido";
-  if (normalized === "pending_confirmation") return "Confirmacao pendente";
+  if (normalized === "pending_confirmation") return "Confirmação pendente";
   if (normalized === "archived") return "Arquivado";
-  return status || "Nao informado";
+  return status || "Não informado";
 };
 
 const adminAuthRecordId = (authUser = {}) => authUser.auth_user_id || authUser.id || authUser.profile_id || "";
@@ -8894,7 +8894,7 @@ const buildAdminUsers = () => {
         name: guardian.full_name || `Responsavel institucional ${adminShortId(guardian.id)}`,
         email: adminAuthRecordEmail(authUser) || guardian.email || (guardian.profile_id ? "E-mail Auth nao exposto" : "Sem acesso configurado"),
         role: "educacao_infantil",
-        roleLabel: "Familia/EI",
+        roleLabel: "Família/EI",
         rawRole: "responsavel",
         schoolId: guardian.school_id || "",
         schoolName: adminSchoolName(index.schoolById.get(guardian.school_id)),
@@ -8965,7 +8965,7 @@ const adminRequestPasswordRecovery = async (email) => {
   });
   if (!response.ok && ![400, 404].includes(response.status)) {
     const body = await response.text();
-    throw new Error(`Falha ao enviar recuperacao: ${response.status}${body ? ` - ${body}` : ""}`);
+    throw new Error(`Falha ao enviar recuperação: ${response.status}${body ? ` - ${body}` : ""}`);
   }
   return true;
 };
@@ -9081,8 +9081,8 @@ const renderAdminCreateAccessDialog = (user) => {
         <input type="hidden" name="targetInstitutionalId" value="${printableEscape(targetInstitutionalId)}" />
         <input type="hidden" name="expectedRole" value="${printableEscape(derivedRole)}" />
         <input type="hidden" name="schoolId" value="${printableEscape(user.schoolId)}" />
-        <section class="admin-access-review" aria-label="Revisao do acesso">
-          <article><span>Vinculo</span><strong>${printableEscape(user.roleLabel)}</strong></article>
+        <section class="admin-access-review" aria-label="Revisão do acesso">
+          <article><span>Vínculo</span><strong>${printableEscape(user.roleLabel)}</strong></article>
           <article><span>Papel derivado</span><strong>${printableEscape(adminCreateAccessDisplayRole(derivedRole))}</strong></article>
           <article><span>Escola</span><strong>${printableEscape(user.schoolName)}</strong></article>
           <article><span>Status atual</span><strong>Sem acesso configurado</strong></article>
@@ -9105,10 +9105,10 @@ const adminHandlePasswordRecovery = async (userId, button) => {
   const user = adminFindUserById(userId);
   const targetAuthUserId = adminUserAuthId(user);
   if (!user || !user.authConfigured || !targetAuthUserId || /nao exposto|sem acesso/i.test(user.email || "")) {
-    alert("Acesso ainda nao configurado para este usuario.");
+    alert("Acesso ainda não configurado para este usuario.");
     return;
   }
-  if (!window.confirm(`Enviar instrucoes de recuperacao para ${user.email}?`)) return;
+  if (!window.confirm(`Enviar instruções de recuperação para ${user.email}?`)) return;
   if (button) {
     button.disabled = true;
     button.dataset.originalText = button.textContent;
@@ -9117,18 +9117,18 @@ const adminHandlePasswordRecovery = async (userId, button) => {
   try {
     await adminRequestPasswordRecovery(user.email);
     await adminLogPasswordRecovery({ targetAuthUserId, targetEmail: user.email, result: "sent" });
-    alert("Instrucoes de recuperacao enviadas.");
+    alert("Instrucoes de recuperação enviadas.");
   } catch (error) {
     try {
       await adminLogPasswordRecovery({ targetAuthUserId, targetEmail: user.email, result: "failed" });
     } catch (auditError) {
       // A falha de auditoria nao deve vazar dados sensiveis na interface.
     }
-    alert(error.message || "Nao foi possivel enviar a recuperacao.");
+    alert(error.message || "Não foi possível enviar a recuperação.");
   } finally {
     if (button) {
       button.disabled = false;
-      button.textContent = button.dataset.originalText || "Enviar recuperacao de senha";
+      button.textContent = button.dataset.originalText || "Enviar recuperação de senha";
     }
   }
 };
@@ -9269,12 +9269,12 @@ const renderAdminUserDetail = (user) => {
       <div class="admin-user-detail-grid">
         <article><span>Papel</span><strong>${printableEscape(user.roleLabel)}</strong></article>
         <article><span>Status</span><strong>${printableEscape(adminStatusLabel(user.status))}</strong></article>
-        <article><span>Acesso Auth</span><strong>${user.authConfigured ? "Configurado" : "Nao configurado"}</strong></article>
+        <article><span>Acesso Auth</span><strong>${user.authConfigured ? "Configurado" : "Não configurado"}</strong></article>
         <article><span>Escola</span><strong>${printableEscape(user.schoolName)}</strong></article>
       </div>
       <section>
-        <h4>Vinculos institucionais</h4>
-        <ul>${(institutionalLinks.length ? institutionalLinks : ["Vinculo incompleto"]).map((item) => `<li>${printableEscape(item)}</li>`).join("")}</ul>
+        <h4>Vínculos institucionais</h4>
+        <ul>${(institutionalLinks.length ? institutionalLinks : ["Vínculo incompleto"]).map((item) => `<li>${printableEscape(item)}</li>`).join("")}</ul>
       </section>
       <section>
         <h4>Memberships</h4>
@@ -9287,10 +9287,10 @@ const renderAdminUserDetail = (user) => {
       <section class="admin-user-safe-actions">
         ${
           user.authConfigured
-            ? `<button type="button" class="is-primary" data-admin-password-recovery="${printableEscape(user.id)}">${adminInlineIcon("mail", "Enviar recuperacao de senha")}</button>`
+            ? `<button type="button" class="is-primary" data-admin-password-recovery="${printableEscape(user.id)}">${adminInlineIcon("mail", "Enviar recuperação de senha")}</button>`
             : `
               <button type="button" class="is-primary" data-admin-create-access-open="${printableEscape(user.id)}">${adminInlineIcon("mail", "Configurar acesso")}</button>
-              <p>Acesso ainda nao configurado.</p>
+              <p>Acesso ainda não configurado.</p>
               ${renderAdminCreateAccessDialog(user)}
             `
         }
@@ -9331,7 +9331,7 @@ const renderAdminAccessEngineStatus = () => `
       <span>Sem service role no navegador</span>
     </div>
     <div class="admin-engine-grid">
-      <article>${adminInlineIcon("check")}<strong>Leitura Admin</strong><span>Ativa por sessao autenticada.</span></article>
+      <article>${adminInlineIcon("check")}<strong>Leitura Admin</strong><span>Ativa por sessão autenticada.</span></article>
       <article>${adminInlineIcon("warning")}<strong>Alterar papel</strong><span>GAP: exige RPC segura aprovada.</span></article>
       <article>${adminInlineIcon("check")}<strong>Criar acesso Auth</strong><span>Ativo via funcao server-side com convite oficial.</span></article>
     </div>
@@ -9370,8 +9370,8 @@ const adminContentTypeLabels = {
   book: "Livros",
   activity: "Atividades",
   game: "Jogos",
-  experience: "Experiencias",
-  video: "Videos",
+  experience: "Experiências",
+  vídeo: "Vídeos",
   other: "Outros",
 };
 
@@ -9380,10 +9380,10 @@ const adminNormalizeContentType = (type = "") => {
   if (["printable_activity", "atividade", "atividade_imprimivel"].includes(normalized)) return "activity";
   if (["livro"].includes(normalized)) return "book";
   if (["jogo"].includes(normalized)) return "game";
-  if (["experiencia", "experiência"].includes(normalized)) return "experience";
-  if (["videoaula"].includes(normalized)) return "video";
+  if (["experiência", "experiência"].includes(normalized)) return "experience";
+  if (["vídeoaula"].includes(normalized)) return "vídeo";
   if (["free_proposal", "proposta_livre", "outro"].includes(normalized)) return "other";
-  return ["book", "activity", "game", "experience", "video", "other"].includes(normalized) ? normalized : "other";
+  return ["book", "activity", "game", "experience", "vídeo", "other"].includes(normalized) ? normalized : "other";
 };
 
 const adminContentKey = (type = "", id = "") => `${adminNormalizeContentType(type)}:${String(id || "").trim().toLowerCase()}`;
@@ -9399,7 +9399,7 @@ const adminAddContentCatalogItem = (items, seen, item = {}) => {
     type,
     id,
     title: item.title || item.contentTitle || id,
-    source: item.source || adminContentTypeLabels[type] || "Conteudo",
+    source: item.source || adminContentTypeLabels[type] || "Conteúdo",
     segment: item.segment || item.ageGroup || item.level || item.collection || "",
   });
 };
@@ -9418,7 +9418,7 @@ const buildAdminContentCatalog = () => {
     type: "activity",
     id: activity.codigo || activity.slug || activity.id,
     title: activity.titulo || activity.title || activity.nome,
-    source: "Atividades Imprimiveis",
+    source: "Atividades Imprimíveis",
     segment: activity.faixaEtaria || activity.ageGroup || activity.segment,
   }));
   const experiences = typeof window !== "undefined" ? window.RaizesInfantilExperiences : null;
@@ -9426,14 +9426,14 @@ const buildAdminContentCatalog = () => {
     type: "book",
     id: book.id || book.bookId,
     title: book.title,
-    source: "Colecao Infantil",
+    source: "Coleção Infantil",
     segment: [book.ageGroup, book.volume].filter(Boolean).join(" "),
   }));
   (experiences?.experienceDefinitions || []).forEach((experience) => adminAddContentCatalogItem(items, seen, {
     type: "experience",
     id: experience.id || experience.code,
     title: experience.title,
-    source: "Experiencias Digitais",
+    source: "Experiências Digitais",
     segment: [experience.ageGroup, experience.volume].filter(Boolean).join(" "),
   }));
   (experiences?.interactiveActivityDefinitions || []).forEach((activity) => adminAddContentCatalogItem(items, seen, {
@@ -9497,7 +9497,7 @@ const buildAdminSchoolSummaries = () => {
       const type = adminNormalizeContentType(item.content_type);
       acc[type] = (acc[type] || 0) + 1;
       return acc;
-    }, { book: 0, activity: 0, game: 0, experience: 0, video: 0, other: 0 });
+    }, { book: 0, activity: 0, game: 0, experience: 0, vídeo: 0, other: 0 });
     const years = [...new Set([installation?.school_year, ...enrollments.map((item) => item.school_year), ...classes.map((item) => item.school_year)].filter(Boolean))].sort();
     const configuredAccess = schoolUsers.filter((user) => user.authConfigured).length;
     const pendingAccess = schoolUsers.filter((user) => !user.authConfigured && user.accessStatus === "SEM ACESSO CONFIGURADO").length;
@@ -9517,11 +9517,11 @@ const buildAdminSchoolSummaries = () => {
     const stageStatus = String(installation?.current_stage || "").toLowerCase();
     const implementationStatus = stageStatus === "ativa"
       ? "ATIVA"
-      : stageStatus === "pronta_para_validacao"
+      : stageStatus === "pronta_para_validação"
         ? "PRONTA PARA VALIDACAO"
         : stageStatus === "dados_parciais"
           ? "DADOS PARCIAIS"
-          : stageStatus === "em_configuracao"
+          : stageStatus === "em_configuração"
             ? "EM CONFIGURACAO"
       : doneCount >= 9
         ? "PRONTA PARA VALIDACAO"
@@ -9536,9 +9536,9 @@ const buildAdminSchoolSummaries = () => {
       schoolId,
       name: adminSchoolName(school),
       code: installation?.school_code || school.codigo_inep || "Sem codigo",
-      status: school.status || "Nao informado",
+      status: school.status || "Não informado",
       years,
-      currentYear: years[years.length - 1] || "Nao configurado",
+      currentYear: years[years.length - 1] || "Não configurado",
       classes,
       enrollments,
       students,
@@ -9558,7 +9558,7 @@ const buildAdminSchoolSummaries = () => {
 };
 
 const renderAdminSchoolList = ({ summaries, selectedId }) => {
-  if (!summaries.length) return `<div class="admin-empty-note">Nenhuma escola foi retornada para a sessao Admin atual.</div>`;
+  if (!summaries.length) return `<div class="admin-empty-note">Nenhuma escola foi retornada para a sessão Admin atual.</div>`;
   return summaries.map((summary) => `
     <a class="admin-school-row ${summary.schoolId === selectedId ? "is-active" : ""}" href="${adminSchoolUrl(summary.schoolId)}" data-admin-search-item>
       <span class="admin-user-avatar">${printableEscape(summary.name.slice(0, 2).toUpperCase())}</span>
@@ -9586,7 +9586,7 @@ const renderAdminSchoolChecklist = (summary) => `
 
 const renderAdminSchoolDetail = (summary) => {
   if (!summary) {
-    return `<aside class="admin-user-detail"><h3>Selecione uma escola</h3><p>Escolha uma unidade para consultar estrutura, acessos e implantacao.</p></aside>`;
+    return `<aside class="admin-user-detail"><h3>Selecione uma escola</h3><p>Escolha uma unidade para consultar estrutura, acessos e implantação.</p></aside>`;
   }
   return `
     <aside class="admin-user-detail admin-school-detail">
@@ -9596,9 +9596,9 @@ const renderAdminSchoolDetail = (summary) => {
       </div>
       <div class="admin-user-detail-grid">
         <article><span>Ano letivo</span><strong>${printableEscape(summary.currentYear)}</strong></article>
-        <article><span>Implantacao</span><strong>${printableEscape(summary.implementationStatus)}</strong></article>
-        <article><span>Pacote</span><strong>${printableEscape(summary.installation?.package_version || "Nao registrado")}</strong></article>
-        <article><span>Validacao</span><strong>${printableEscape(adminStatusLabel(summary.installation?.validation_status || "pending"))}</strong></article>
+        <article><span>Implantação</span><strong>${printableEscape(summary.implementationStatus)}</strong></article>
+        <article><span>Pacote</span><strong>${printableEscape(summary.installation?.package_version || "Não registrado")}</strong></article>
+        <article><span>Validação</span><strong>${printableEscape(adminStatusLabel(summary.installation?.validation_status || "pending"))}</strong></article>
         <article><span>Acessos ativos</span><strong>${printableEscape(String(summary.configuredAccess))}</strong></article>
         <article><span>Sem acesso</span><strong>${printableEscape(String(summary.pendingAccess))}</strong></article>
       </div>
@@ -9611,21 +9611,21 @@ const renderAdminSchoolDetail = (summary) => {
         <h4>Estrutura</h4>
         <div class="admin-school-metrics">
           ${adminSchoolMetric("Turmas", summary.classes.filter(adminIsActive).length, "ativas")}
-          ${adminSchoolMetric("Matriculas", summary.enrollments.filter((item) => String(item.status || "").toLowerCase() === "active").length, "ativas")}
+          ${adminSchoolMetric("Matrículas", summary.enrollments.filter((item) => String(item.status || "").toLowerCase() === "active").length, "ativas")}
           ${adminSchoolMetric("Estudantes", summary.students.filter(adminIsActive).length, "ativos")}
           ${adminSchoolMetric("Professores", summary.teachers.filter(adminIsActive).length, "ativos")}
-          ${adminSchoolMetric("Responsaveis", summary.guardians.filter(adminIsActive).length, "ativos")}
-          ${adminSchoolMetric("Gestao", summary.memberships.filter(adminIsActive).length, "vinculos")}
+          ${adminSchoolMetric("Responsáveis", summary.guardians.filter(adminIsActive).length, "ativos")}
+          ${adminSchoolMetric("Gestão", summary.memberships.filter(adminIsActive).length, "vinculos")}
         </div>
       </section>
       <section>
-        <h4>Conteudos disponiveis</h4>
+        <h4>Conteúdos disponiveis</h4>
         <div class="admin-school-metrics">
           ${adminSchoolMetric("Livros", summary.contentCounts.book || 0, "liberados")}
           ${adminSchoolMetric("Atividades", summary.contentCounts.activity || 0, "liberadas")}
           ${adminSchoolMetric("Jogos", summary.contentCounts.game || 0, "liberados")}
-          ${adminSchoolMetric("Experiencias", summary.contentCounts.experience || 0, "liberadas")}
-          ${adminSchoolMetric("Videos", summary.contentCounts.video || 0, "liberados")}
+          ${adminSchoolMetric("Experiências", summary.contentCounts.experience || 0, "liberadas")}
+          ${adminSchoolMetric("Vídeos", summary.contentCounts.vídeo || 0, "liberados")}
           ${adminSchoolMetric("Outros", summary.contentCounts.other || 0, "liberados")}
         </div>
       </section>
@@ -9642,9 +9642,9 @@ const adminRsSchoolImportSummary = () => {
   return [
     { label: "Turmas", value: pkg.classes.length },
     { label: "Professores", value: pkg.teachers.length },
-    { label: "Vinculos docentes", value: pkg.teacher_classes.length },
+    { label: "Vínculos docentes", value: pkg.teacher_classes.length },
     { label: "Alunos", value: pkg.students.length },
-    { label: "Responsaveis", value: pkg.guardians.length },
+    { label: "Responsáveis", value: pkg.guardians.length },
   ];
 };
 
@@ -9708,10 +9708,10 @@ const renderAdminContentSchools = (availabilityRows = [], schoolsById = new Map(
 
 const renderAdminContentGovernanceConsole = () => {
   if (adminOperationalState.status === "loading" || adminOperationalState.status === "idle") {
-    return `<section class="admin-board admin-loading-state"><h2>Carregando conteudos</h2><p>Consultando catalogos e disponibilidade por escola.</p></section>`;
+    return `<section class="admin-board admin-loading-state"><h2>Carregando conteúdos</h2><p>Consultando catalogos e disponibilidade por escola.</p></section>`;
   }
   if (adminOperationalState.status === "error") {
-    return `<section class="admin-board admin-empty-state"><h2>Nao foi possivel carregar conteudos</h2><p>${printableEscape(adminOperationalState.error)}</p></section>`;
+    return `<section class="admin-board admin-empty-state"><h2>Não foi possível carregar conteúdos</h2><p>${printableEscape(adminOperationalState.error)}</p></section>`;
   }
   const data = adminOperationalState.data || {};
   const schools = data.schools || [];
@@ -9725,7 +9725,7 @@ const renderAdminContentGovernanceConsole = () => {
   return `
     <section class="admin-board admin-content-governance">
       <div class="admin-section-head">
-        <h2>Governanca de conteudos</h2>
+        <h2>Governanca de conteúdos</h2>
         <span>${catalog.length} itens de catalogo sem duplicar metadados</span>
       </div>
       <div class="admin-school-metrics">
@@ -9758,7 +9758,7 @@ const renderAdminContentGovernanceConsole = () => {
                     <option value="unavailable">Retirar</option>
                   </select>
                 </label>
-                <label><span>Inicio</span><input type="datetime-local" name="available_from" /></label>
+                <label><span>Início</span><input type="datetime-local" name="available_from" /></label>
                 <label><span>Fim</span><input type="datetime-local" name="available_until" /></label>
                 <button type="submit" class="is-primary">${adminInlineIcon("check", "Salvar")}</button>
                 <p data-admin-content-availability-status hidden></p>
@@ -9777,7 +9777,7 @@ const adminFormatSchoolValidation = (result = {}) => {
     .filter(([, value]) => value !== true)
     .map(([key]) => key);
   if (failed.length) return `Pendencias: ${failed.join(", ")}`;
-  return `Validacao aprovada - etapa: ${result.stage || "pronta_para_validacao"}.`;
+  return `Validação aprovada - etapa: ${result.stage || "pronta_para_validação"}.`;
 };
 
 const adminFormatImportCounts = (result = {}) => {
@@ -9802,7 +9802,7 @@ const renderAdminAssistedImportPanel = (summary) => {
   return `
     <section class="admin-board admin-import-board">
       <div class="admin-section-head">
-        <h2>Importacao assistida</h2>
+        <h2>Importação assistida</h2>
         <span>${printableEscape(summary.name)}</span>
       </div>
       <div class="admin-import-layout">
@@ -9815,7 +9815,7 @@ const renderAdminAssistedImportPanel = (summary) => {
         </div>
         <div class="admin-import-actions">
           <button type="button" data-admin-import-dry-run="${printableEscape(summary.schoolId)}">${adminInlineIcon("check", "Validar lote")}</button>
-          <button type="button" class="is-primary" data-admin-import-confirm="${printableEscape(summary.schoolId)}">${adminInlineIcon("clipboard", "Confirmar importacao")}</button>
+          <button type="button" class="is-primary" data-admin-import-confirm="${printableEscape(summary.schoolId)}">${adminInlineIcon("clipboard", "Confirmar importação")}</button>
           <p data-admin-import-status hidden></p>
         </div>
       </div>
@@ -9839,21 +9839,21 @@ const renderAdminCreateSchoolForm = () => `
   <section class="admin-board admin-create-school-board">
     <div class="admin-section-head">
       <h2>Nova escola</h2>
-      <span>Implantacao assistida</span>
+      <span>Implantação assistida</span>
     </div>
     <form class="admin-school-create-form" data-admin-create-school-form>
       <label><span>Nome</span><input name="p_nome" required placeholder="RS-SCHOOL-DEPLOYMENT-TEST" /></label>
       <label><span>Codigo institucional</span><input name="p_school_code" required placeholder="RS-SCHOOL-DEPLOYMENT-TEST" /></label>
       <label><span>Ano letivo inicial</span><input name="p_school_year" required inputmode="numeric" placeholder="2026" /></label>
-      <label><span>Municipio</span><input name="p_municipio" placeholder="Homologacao" /></label>
+      <label><span>Municipio</span><input name="p_municipio" placeholder="Homologação" /></label>
       <label><span>Estado</span><input name="p_estado" maxlength="2" placeholder="SP" /></label>
-      <label><span>Diretor</span><input name="p_diretor" placeholder="Responsavel pela implantacao" /></label>
+      <label><span>Diretor</span><input name="p_diretor" placeholder="Responsavel pela implantação" /></label>
       <input type="hidden" name="p_deployment_mode" value="test" />
       <p data-admin-create-school-status hidden></p>
       <button type="submit" class="is-primary">${adminInlineIcon("check", "Criar escola")}</button>
     </form>
-    <div class="admin-school-steps" aria-label="Etapas da implantacao">
-      ${["Identificacao", "Configuracao", "Estrutura inicial", "Importacao", "Validacao", "Ativacao"].map((step, index) => `<span>${index + 1}. ${printableEscape(step)}</span>`).join("")}
+    <div class="admin-school-steps" aria-label="Etapas da implantação">
+      ${["Identificação", "Configuração", "Estrutura inicial", "Importação", "Validação", "Ativação"].map((step, index) => `<span>${index + 1}. ${printableEscape(step)}</span>`).join("")}
     </div>
   </section>
 `;
@@ -9863,7 +9863,7 @@ const renderAdminSchoolsConsole = () => {
     return `<section class="admin-board admin-loading-state"><h2>Carregando escolas</h2><p>Consultando unidades, turmas, matriculas e acessos.</p></section>`;
   }
   if (adminOperationalState.status === "error") {
-    return `<section class="admin-board admin-empty-state"><h2>Nao foi possivel carregar escolas</h2><p>${printableEscape(adminOperationalState.error)}</p></section>`;
+    return `<section class="admin-board admin-empty-state"><h2>Não foi possível carregar escolas</h2><p>${printableEscape(adminOperationalState.error)}</p></section>`;
   }
   const summaries = buildAdminSchoolSummaries();
   const filters = adminSchoolFilters();
@@ -9885,10 +9885,10 @@ const renderAdminSchoolsConsole = () => {
 
 const renderAdminImplementationConsole = () => {
   if (adminOperationalState.status === "loading" || adminOperationalState.status === "idle") {
-    return `<section class="admin-board admin-loading-state"><h2>Carregando implantacao</h2><p>Calculando checklist a partir dos dados institucionais.</p></section>`;
+    return `<section class="admin-board admin-loading-state"><h2>Carregando implantação</h2><p>Calculando checklist a partir dos dados institucionais.</p></section>`;
   }
   if (adminOperationalState.status === "error") {
-    return `<section class="admin-board admin-empty-state"><h2>Nao foi possivel carregar implantacao</h2><p>${printableEscape(adminOperationalState.error)}</p></section>`;
+    return `<section class="admin-board admin-empty-state"><h2>Não foi possível carregar implantação</h2><p>${printableEscape(adminOperationalState.error)}</p></section>`;
   }
   const summaries = buildAdminSchoolSummaries();
   const filters = adminSchoolFilters();
@@ -9900,7 +9900,7 @@ const renderAdminImplementationConsole = () => {
     ${renderAdminAssistedImportPanel(selected)}
     <section class="admin-board admin-implementation-console">
       <div class="admin-section-head">
-        <h2>Implantacao</h2>
+        <h2>Implantação</h2>
         <span>Checklist calculado por escola</span>
       </div>
       <div class="admin-school-implementation-grid">
@@ -9915,9 +9915,9 @@ const renderAdminImplementationConsole = () => {
         `).join("")}
       </div>
     </section>
-    ${renderAdminPreparationView("Motores de escrita", "Criacao de nova escola esta preparada por RPC administrativa; importacao assistida segue limitada a dry-run nesta etapa.", [
+    ${renderAdminPreparationView("Motores de escrita", "Criação de nova escola esta preparada por RPC administrativa; importação assistida segue limitada a dry-run nesta etapa.", [
       "Nova escola: motor preparado",
-      "Importacao CSV/XLSX: parcial por pacote tecnico",
+      "Importação CSV/XLSX: parcial por pacote tecnico",
       "Acessos digitais: motor homologado",
     ])}
   `;
@@ -9928,7 +9928,7 @@ const renderAdminUsersConsole = () => {
     return `<section class="admin-board admin-loading-state"><h2>Carregando usuarios</h2><p>Consultando perfis e vinculos institucionais.</p></section>`;
   }
   if (adminOperationalState.status === "error") {
-    return `<section class="admin-board admin-empty-state"><h2>Nao foi possivel carregar usuarios</h2><p>${printableEscape(adminOperationalState.error)}</p></section>`;
+    return `<section class="admin-board admin-empty-state"><h2>Não foi possível carregar usuarios</h2><p>${printableEscape(adminOperationalState.error)}</p></section>`;
   }
   const { users, index } = buildAdminUsers();
   const filters = adminUserFilters();
@@ -9937,7 +9937,7 @@ const renderAdminUsersConsole = () => {
   return `
     <section class="admin-board admin-users-console">
       <div class="admin-section-head">
-        <h2>Usuarios e roles</h2>
+        <h2>Usuários e roles</h2>
         <span>${filtered.length} de ${users.length} registros</span>
       </div>
       ${renderAdminUsersFilter({ filters, schools: index.data.schools || [] })}
@@ -9959,11 +9959,11 @@ const renderAdminHomologationHub = () => `
     </div>
     <div class="admin-feature-grid">
       ${[
-        { label: "Home do Professor", area: "Professor", status: "Disponivel", href: "professor.html" },
-        { label: "Turmas da professora", area: "Professor", status: "Disponivel", href: "professor-turma.html" },
-        { label: "Home do Aluno", area: "Aluno", status: "Disponivel", href: "aluno.html" },
-        { label: "Atividades do Aluno", area: "Aluno", status: "Disponivel", href: "aluno-atividades.html" },
-        { label: "Missao, arvore e jogos", area: "Aluno", status: "Disponivel", href: "missao.html" },
+        { label: "Home do Professor", area: "Professor", status: "Disponível", href: "professor.html" },
+        { label: "Turmas da professora", area: "Professor", status: "Disponível", href: "professor-turma.html" },
+        { label: "Home do Aluno", area: "Aluno", status: "Disponível", href: "aluno.html" },
+        { label: "Atividades do Aluno", area: "Aluno", status: "Disponível", href: "aluno-atividades.html" },
+        { label: "Missão, árvore e jogos", area: "Aluno", status: "Disponível", href: "missao.html" },
       ].map(renderAdminFeatureCard).join("")}
     </div>
   </section>
@@ -9982,13 +9982,13 @@ const renderAdminFeatureCard = (item) => `
 
 const renderAdminSidebar = (active = "inicio") => `
   <aside class="admin-sidebar">
-    <a class="admin-sidebar-logo" href="admin.html" aria-label="Raizes e Saberes">
-      <img src="logo-sidebar-dark.png" alt="Raizes e Saberes Ecossistema Educacional" onerror="this.hidden=true; this.nextElementSibling.hidden=false;" />
-      <span class="admin-sidebar-logo-fallback" hidden><strong>Raizes e Saberes</strong><em>Ecossistema Educacional</em></span>
+    <a class="admin-sidebar-logo" href="admin.html" aria-label="Raízes e Saberes">
+      <img src="logo-sidebar-dark.png" alt="Raízes e Saberes Ecossistema Educacional" onerror="this.hidden=true; this.nextElementSibling.hidden=false;" />
+      <span class="admin-sidebar-logo-fallback" hidden><strong>Raízes e Saberes</strong><em>Ecossistema Educacional</em></span>
     </a>
     <div class="admin-id-card">
       <span>Administrador/TI</span>
-      <strong>Raizes e Saberes</strong>
+      <strong>Raízes e Saberes</strong>
       <small>${printableEscape(getPlatformSession().email || "admin.banco@raizesesaberes.com")}</small>
     </div>
     <nav aria-label="Menu Admin">
@@ -10003,15 +10003,15 @@ const renderAdminSidebar = (active = "inicio") => `
 const renderAdminPermissionMatrix = () => `
   <section class="admin-board">
     <div class="admin-section-head">
-      <h2>Liberacao por perfil</h2>
+      <h2>Liberação por perfil</h2>
       <span>Registro central preparado para feature flags</span>
     </div>
-    <div class="admin-permission-table" role="table" aria-label="Liberacao de funcionalidades por perfil">
+    <div class="admin-permission-table" role="table" aria-label="Liberação de funcionalidades por perfil">
       <div role="row"><strong>Funcionalidade</strong><strong>Admin</strong><strong>Professor</strong><strong>Aluno</strong></div>
       ${adminFeatureRegistry
         .map((item) => {
           const policy = getAdminFeaturePolicy(item.key);
-          return `<div role="row"><span>${item.label}</span><b>${policy.admin ? "SIM" : "NAO"}</b><b>${policy.professor ? "SIM" : "NAO"}</b><b>${policy.aluno ? "SIM" : "NAO"}</b></div>`;
+          return `<div role="row"><span>${item.label}</span><b>${policy.admin ? "SIM" : "NÃO"}</b><b>${policy.professor ? "SIM" : "NÃO"}</b><b>${policy.aluno ? "SIM" : "NÃO"}</b></div>`;
         })
         .join("")}
     </div>
@@ -10021,8 +10021,8 @@ const renderAdminPermissionMatrix = () => `
 const renderAdminWorkspaceView = (view = "inicio") => {
   const feature = getAdminFeature(view);
   const byArea = (area) => adminFeatureRegistry.filter((item) => item.area === area);
-  const development = adminFeatureRegistry.filter((item) => item.status === "Em preparacao");
-  const available = adminFeatureRegistry.filter((item) => item.status === "Disponivel");
+  const development = adminFeatureRegistry.filter((item) => item.status === "Em preparação");
+  const available = adminFeatureRegistry.filter((item) => item.status === "Disponível");
   const viewMap = {
     painel: renderAdminReadOnlyHome(),
     inicio: `
@@ -10030,7 +10030,7 @@ const renderAdminWorkspaceView = (view = "inicio") => {
     `,
     plataforma: `
       <section class="admin-board">
-        <div class="admin-section-head"><h2>Painel da Plataforma</h2><span>Fluxo de liberacao</span></div>
+        <div class="admin-section-head"><h2>Painel da Plataforma</h2><span>Fluxo de liberação</span></div>
         <div class="admin-flow">
           ${["Construir", "Revisar", "Liberar por perfil", "Acompanhar", "Publicar"].map((step) => `<article>${step}</article>`).join("")}
         </div>
@@ -10038,43 +10038,43 @@ const renderAdminWorkspaceView = (view = "inicio") => {
     `,
     status: `
       <section class="admin-board">
-        <div class="admin-section-head"><h2>Status dos modulos</h2><span>Estado atual da plataforma</span></div>
+        <div class="admin-section-head"><h2>Status dos módulos</h2><span>Estado atual da plataforma</span></div>
         <div class="admin-feature-grid">${adminFeatureRegistry.map(renderAdminFeatureCard).join("")}</div>
       </section>
     `,
     usuarios: renderAdminUsersConsole(),
     escolas: renderAdminSchoolsConsole(),
-    professores: `<section class="admin-board admin-empty-state"><h2>Professores</h2><p>Acompanhe a rotina pedagogica e as turmas pelo ambiente do professor.</p><a href="professor.html">Abrir ambiente professor</a></section>`,
-    alunos: `<section class="admin-board admin-empty-state"><h2>Alunos</h2><p>Acompanhe a experiencia dos alunos vinculados ao ecossistema.</p><a href="aluno.html">Abrir ambiente aluno</a></section>`,
-    familia: `<section class="admin-board admin-empty-state"><h2>Familia</h2><p>Area preparada para acompanhar a experiencia familiar vinculada as criancas.</p></section>`,
+    professores: `<section class="admin-board admin-empty-state"><h2>Professores</h2><p>Acompanhe a rotina pedagógica e as turmas pelo ambiente do professor.</p><a href="professor.html">Abrir ambiente professor</a></section>`,
+    alunos: `<section class="admin-board admin-empty-state"><h2>Alunos</h2><p>Acompanhe a experiência dos alunos vinculados ao ecossistema.</p><a href="aluno.html">Abrir ambiente aluno</a></section>`,
+    familia: `<section class="admin-board admin-empty-state"><h2>Família</h2><p>Área preparada para acompanhar a experiência familiar vinculada as criancas.</p></section>`,
     permissoes: renderAdminPermissionMatrix(),
-    biblioteca: `<section class="admin-board"><div class="admin-section-head"><h2>Conteudos</h2><span>Biblioteca e materiais existentes</span></div><div class="admin-feature-grid">${byArea("Conteudos").map(renderAdminFeatureCard).join("")}</div></section>`,
-    atividades: `<section class="admin-board admin-empty-state"><h2>Atividades Imprimiveis</h2><p>Area existente para curadoria dos imprimiveis.</p><a href="admin-atividades.html">Abrir curadoria</a></section>`,
-    motores: `<section class="admin-board"><div class="admin-section-head"><h2>Recursos interativos</h2><span>Experiencias digitais existentes</span></div><div class="admin-feature-grid">${byArea("Recursos interativos").map(renderAdminFeatureCard).join("")}</div></section>`,
+    biblioteca: `<section class="admin-board"><div class="admin-section-head"><h2>Conteúdos</h2><span>Biblioteca e materiais existentes</span></div><div class="admin-feature-grid">${byArea("Conteúdos").map(renderAdminFeatureCard).join("")}</div></section>`,
+    atividades: `<section class="admin-board admin-empty-state"><h2>Atividades Imprimíveis</h2><p>Área existente para curadoria dos imprimiveis.</p><a href="admin-atividades.html">Abrir curadoria</a></section>`,
+    motores: `<section class="admin-board"><div class="admin-section-head"><h2>Recursos interativos</h2><span>Experiências digitais existentes</span></div><div class="admin-feature-grid">${byArea("Recursos interativos").map(renderAdminFeatureCard).join("")}</div></section>`,
     emDesenvolvimento: `<section class="admin-board"><div class="admin-section-head"><h2>Em desenvolvimento</h2><span>Acesso restrito ao Admin/TI</span></div><div class="admin-feature-grid">${development.map(renderAdminFeatureCard).join("")}</div></section>`,
     homologados: `<section class="admin-board"><div class="admin-section-head"><h2>Ambientes publicados</h2><span>Disponiveis conforme perfil</span></div><div class="admin-feature-grid">${available.map(renderAdminFeatureCard).join("")}</div></section>`,
-    logs: `<section class="admin-board admin-empty-state"><h2>Logs</h2><p>Espaco reservado para uma etapa propria de auditoria, sem expor informacoes sensiveis nesta tela.</p></section>`,
-    configuracoes: `<section class="admin-board admin-empty-state"><h2>Configuracoes</h2><p>Controles administrativos serao liberados em etapas proprias, preservando seguranca e rastreabilidade.</p></section>`,
-    conteudos: renderAdminContentGovernanceConsole(),
-    implantacao: renderAdminImplementationConsole(),
+    logs: `<section class="admin-board admin-empty-state"><h2>Logs</h2><p>Espaco reservado para uma etapa propria de auditoria, sem expor informações sensiveis nesta tela.</p></section>`,
+    configuracoes: `<section class="admin-board admin-empty-state"><h2>Configurações</h2><p>Controles administrativos serao liberados em etapas proprias, preservando seguranca e rastreabilidade.</p></section>`,
+    conteúdos: renderAdminContentGovernanceConsole(),
+    implantação: renderAdminImplementationConsole(),
     auditoria: renderAdminPreparationView("Auditoria", "Eventos e trilhas ja existentes serao consolidados em uma tela segura de leitura.", [
-      "Comunicacoes",
-      "Recomendacoes",
-      "Matriculas",
+      "Comunicações",
+      "Recomendações",
+      "Matrículas",
     ]),
     ambientes: `
       ${renderAdminDoorCards()}
-      ${renderAdminPreparationView("Modo de inspecao", "Acesso administrativo atual abre as rotas autorizadas mantendo o usuario Admin. Visualizacao por perfil sera decidida em fase propria.", [
-        "Sem troca de sessao",
+      ${renderAdminPreparationView("Modo de inspecao", "Acesso administrativo atual abre as rotas autorizadas mantendo o usuario Admin. Visualização por perfil sera decidida em fase propria.", [
+        "Sem troca de sessão",
         "Sem assumir identidade de aluno ou professor",
         "Sem expor credenciais sensiveis",
       ])}
     `,
   };
   if (feature && !adminReadOnlyNav.some((item) => item.key === view)) {
-    return `<section class="admin-board admin-empty-state"><h2>${feature.label}</h2><p>Status atual: ${feature.status}. Area existente reaproveitada sem criar tela duplicada.</p><a href="${feature.href}">Abrir area</a></section>`;
+    return `<section class="admin-board admin-empty-state"><h2>${feature.label}</h2><p>Status atual: ${feature.status}. Área existente reaproveitada sem criar tela duplicada.</p><a href="${feature.href}">Abrir área</a></section>`;
   }
-  return viewMap[view] || renderAdminPreparationView(adminReadOnlyNav.find((item) => item.key === view)?.label || "Modulo", "Area prevista para fase propria.");
+  return viewMap[view] || renderAdminPreparationView(adminReadOnlyNav.find((item) => item.key === view)?.label || "Módulo", "Área prevista para fase propria.");
 };
 
 const renderAdminDashboard = () => `
@@ -10082,8 +10082,8 @@ const renderAdminDashboard = () => `
     ${renderAdminSidebar("painel")}
     <main class="admin-main">
       <header class="admin-topbar">
-        <label><span>Busca Admin</span><input type="search" placeholder="Buscar estado, modulos e portas..." data-admin-search /></label>
-        <div class="admin-topbar-actions" aria-label="Navegacao global">
+        <label><span>Busca Admin</span><input type="search" placeholder="Buscar estado, módulos e portas..." data-admin-search /></label>
+        <div class="admin-topbar-actions" aria-label="Navegação global">
           <button type="button" data-admin-back>${adminInlineIcon("back", "VOLTAR")}</button>
           <button type="button" data-platform-home>${adminInlineIcon("home", "INICIO")}</button>
           <a class="admin-topbar-link" href="escola.html">${adminInlineIcon("escola", "MINHA ESCOLA")}</a>
@@ -10094,7 +10094,7 @@ const renderAdminDashboard = () => `
         <div>
           <span>Administrador/TI</span>
           <h1>Painel Admin</h1>
-          <p>Visao operacional do ecossistema Raizes e Saberes.</p>
+          <p>Visão operacional do ecossistema Raízes e Saberes.</p>
         </div>
         <div class="admin-hero-badges">
           <span>Sessao autorizada</span>
@@ -10121,7 +10121,7 @@ const initAdminWorkspace = () => {
     }
     workspace.querySelectorAll("[data-admin-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.adminView === view));
     if (content) content.innerHTML = renderAdminWorkspaceView(view);
-    if (["painel", "usuarios", "escolas", "conteudos", "implantacao"].includes(view)) {
+    if (["painel", "usuarios", "escolas", "conteúdos", "implantação"].includes(view)) {
       ensureAdminReadOnlyData().then(() => {
         if (content && workspace.querySelector(`[data-admin-view="${view}"]`)?.classList.contains("is-active")) {
           content.innerHTML = renderAdminWorkspaceView(view);
@@ -10185,18 +10185,18 @@ const initAdminWorkspace = () => {
         });
         if (status) {
           status.dataset.tone = "success";
-          status.textContent = `${dryRun ? "Dry-run aprovado" : "Importacao concluida"} - ${adminFormatImportCounts(result)}`;
+          status.textContent = `${dryRun ? "Dry-run aprovado" : "Importação concluida"} - ${adminFormatImportCounts(result)}`;
         }
         if (!dryRun) {
           await ensureAdminReadOnlyData({ force: true });
           setTimeout(() => {
-            if (content) content.innerHTML = renderAdminWorkspaceView("implantacao");
+            if (content) content.innerHTML = renderAdminWorkspaceView("implantação");
           }, 900);
         }
       } catch (error) {
         if (status) {
           status.dataset.tone = "error";
-          status.textContent = error.message || "Nao foi possivel processar a importacao.";
+          status.textContent = error.message || "Não foi possível processar a importação.";
         }
       } finally {
         buttons.forEach((item) => { item.disabled = false; });
@@ -10225,7 +10225,7 @@ const initAdminWorkspace = () => {
         });
         if (status) {
           status.dataset.tone = result.ok ? "success" : "error";
-          status.textContent = `${activateSchool ? "Ativacao" : "Validacao"} ${result.ok ? "concluida" : "bloqueada"}. ${adminFormatSchoolValidation(result)}`;
+          status.textContent = `${activateSchool ? "Ativação" : "Validação"} ${result.ok ? "concluida" : "bloqueada"}. ${adminFormatSchoolValidation(result)}`;
         }
         await ensureAdminReadOnlyData({ force: true });
         setTimeout(() => {
@@ -10234,7 +10234,7 @@ const initAdminWorkspace = () => {
       } catch (error) {
         if (status) {
           status.dataset.tone = "error";
-          status.textContent = error.message || "Nao foi possivel processar a escola.";
+          status.textContent = error.message || "Não foi possível processar a escola.";
         }
       } finally {
         buttons.forEach((item) => { item.disabled = false; });
@@ -10271,15 +10271,15 @@ const initAdminWorkspace = () => {
         await ensureAdminReadOnlyData({ force: true });
         if (status) {
           status.dataset.tone = "success";
-          status.textContent = result.result === "removed" ? "Conteudo retirado da escola." : "Disponibilidade salva.";
+          status.textContent = result.result === "removed" ? "Conteúdo retirado da escola." : "Disponibilidade salva.";
         }
         setTimeout(() => {
-          if (content) content.innerHTML = renderAdminWorkspaceView("conteudos");
+          if (content) content.innerHTML = renderAdminWorkspaceView("conteúdos");
         }, 700);
       } catch (error) {
         if (status) {
           status.dataset.tone = "error";
-          status.textContent = error.message || "Nao foi possivel atualizar a disponibilidade.";
+          status.textContent = error.message || "Não foi possível atualizar a disponibilidade.";
         }
       } finally {
         if (submit) {
@@ -10318,14 +10318,14 @@ const initAdminWorkspace = () => {
         await ensureAdminReadOnlyData({ force: true });
         if (status) {
           status.dataset.tone = "success";
-          status.textContent = `Escola criada. Etapa atual: ${result.stage || "em_configuracao"}.`;
+          status.textContent = `Escola criada. Etapa atual: ${result.stage || "em_configuração"}.`;
         }
         createSchoolForm.reset();
         if (content) content.innerHTML = renderAdminWorkspaceView("escolas");
       } catch (error) {
         if (status) {
           status.dataset.tone = "error";
-          status.textContent = error.message || "Nao foi possivel criar a escola.";
+          status.textContent = error.message || "Não foi possível criar a escola.";
         }
       } finally {
         if (submit) {
@@ -10361,7 +10361,7 @@ const initAdminWorkspace = () => {
       const result = await adminInvokeCreateAuthAccess(payload);
       if (status) {
         status.dataset.tone = "success";
-        status.textContent = result.message || "Acesso criado com sucesso. O usuario recebera instrucoes para definir a senha.";
+        status.textContent = result.message || "Acesso criado com sucesso. O usuario recebera instruções para definir a senha.";
       }
       await ensureAdminReadOnlyData({ force: true });
       setTimeout(() => {
@@ -10372,7 +10372,7 @@ const initAdminWorkspace = () => {
     } catch (error) {
       if (status) {
         status.dataset.tone = "error";
-        status.textContent = error.message || "Nao foi possivel criar o acesso.";
+        status.textContent = error.message || "Não foi possível criar o acesso.";
       }
       if (submit) {
         submit.disabled = false;
@@ -10393,9 +10393,9 @@ const schoolCollectiveData = {
   institution: {
     school_id: "school-demo-descobertas",
     school_name: "Escola das Descobertas",
-    education_stage: "Educacao Infantil",
+    education_stage: "Educação Infantil",
     municipality_name: "Municipio das Descobertas",
-    network_name: "Rede Raizes e Saberes",
+    network_name: "Rede Raízes e Saberes",
     school_logo: "",
   },
   defaultAge: "4",
@@ -10462,7 +10462,7 @@ const schoolCollectiveData = {
       info: [
         { type: "COMUNICADO", title: "Reuniao de familias", message: "Sexta-feira as 18h.", tone: "orange" },
         { type: "EVENTO", title: "Semana da leitura", message: "24 a 28 de agosto.", tone: "green" },
-        { type: "LEMBRETE", title: "Identificacao", message: "Nao esqueca de identificar os materiais.", tone: "green" },
+        { type: "LEMBRETE", title: "Identificação", message: "Não esqueca de identificar os materiais.", tone: "green" },
       ],
     },
     5: {
@@ -10470,10 +10470,10 @@ const schoolCollectiveData = {
       icon: "flower",
       accent: "orange",
       challenge: {
-        title: "Missao dos pequenos cientistas",
+        title: "Missão dos pequenos cientistas",
         description: "Observe, compare e conte o que descobriu.",
         href: "jogos.html?idade=5",
-        image: "assets/home-official/banner_alfabetizacao.png",
+        image: "assets/home-official/banner_alfabetização.png",
       },
       games: [
         { title: "Construindo a Ponte", description: "Resolva desafios em equipe.", href: "jogos.html", image: "assets/games/construindo-ponte/screens/screen-intro.png" },
@@ -10484,7 +10484,7 @@ const schoolCollectiveData = {
         { title: "Infantil 5", volume: "Volume 2", href: "book-viewer.html?book=livro-005", image: "assets/biblioteca/RAIZES_INFANTIL5_VOL2_BIBLIOTECA.jpg" },
       ],
       suggestions: [
-        { type: "ESTUDO", title: "Prepare uma observacao sobre o jardim.", cta: "VER", href: "jogos.html", tone: "green" },
+        { type: "ESTUDO", title: "Prepare uma observação sobre o jardim.", cta: "VER", href: "jogos.html", tone: "green" },
       ],
       info: [
         { type: "EVENTO", title: "Mostra das descobertas", message: "Exposicao coletiva na sexta.", tone: "green" },
@@ -10508,7 +10508,7 @@ const officialSchoolGames = [
     id: "organizando-cesta",
     slug: "organizando-cesta",
     title: "Organizando a Cesta",
-    description: "Organize frutas e observe criterios de classificacao.",
+    description: "Organize frutas e observe criterios de classificação.",
     href: "jogos.html?game=organizando-cesta&origin=escola",
     image: "assets/game-engine-2/assets/organizando-cesta/custom/intro-banner.png",
     engine: "drag-drop / GameEngine",
@@ -10665,7 +10665,7 @@ const officialRoleLabel = (role) =>
     secretaria: "Secretaria",
     professor: "Professor",
     aluno: "Aluno",
-    educacao_infantil: "Familia / EI",
+    educacao_infantil: "Família / EI",
     gestor: "Gestor",
     coordenador: "Coordenador",
   })[normalizePlatformRole(role)] || "Perfil autorizado";
@@ -10694,7 +10694,7 @@ const renderSchoolEmpty = (title, message = "Assim que a escola publicar, este e
 `;
 
 const renderSchoolChallenge = (ageData) => {
-  if (!ageData.challenge) return renderSchoolEmpty("NOVO DESAFIO EM PREPARACAO.", "A equipe pedagogica ainda nao publicou um desafio para esta idade.");
+  if (!ageData.challenge) return renderSchoolEmpty("NOVO DESAFIO EM PREPARACAO.", "A equipe pedagógica ainda nao publicou um desafio para esta idade.");
   const challenge = ageData.challenge;
   return `
     <article class="school-challenge-card">
@@ -10768,7 +10768,7 @@ const renderSchoolSuggestions = (ageData) => {
 };
 
 const renderSchoolInfo = (ageData) => {
-  if (!ageData.info.length) return renderSchoolEmpty("NENHUM NOVO COMUNICADO DA ESCOLA.", "A escola ainda nao publicou informacoes para esta idade.");
+  if (!ageData.info.length) return renderSchoolEmpty("NENHUM NOVO COMUNICADO DA ESCOLA.", "A escola ainda nao publicou informações para esta idade.");
   return ageData.info
     .map(
       (item) => `
@@ -10789,7 +10789,7 @@ const renderOfficialSchoolGameCards = () =>
         <article class="official-school-game-card">
           <img src="${game.image}" alt="" loading="lazy" decoding="async" onerror="this.hidden=true" />
           <div>
-            <span>Interacao coletiva livre</span>
+            <span>Interação coletiva livre</span>
             <h3>${game.title}</h3>
             <p>${game.description}</p>
             <a href="${game.href}" data-official-school-game="${game.id}">Jogar</a>
@@ -10879,7 +10879,7 @@ const renderSchoolColoringModule = () => {
             <p data-school-color-curiosity>${firstFigure.curiosity_text}</p>
           </header>
           <div class="school-coloring-stage" data-school-color-stage>
-            <canvas width="760" height="520" data-school-color-canvas aria-label="Area de pintura"></canvas>
+            <canvas width="760" height="520" data-school-color-canvas aria-label="Área de pintura"></canvas>
             <div class="school-color-outline" data-school-color-outline>${renderSchoolFigureArt(firstFigure, "is-large")}</div>
           </div>
           <div class="school-coloring-tools" aria-label="Ferramentas de pintura">
@@ -10914,7 +10914,7 @@ const renderLegacySchoolInstitutionalDashboard = () => {
     <section class="official-school" data-official-school-legacy>
       <header class="official-school-hero" id="inicio">
         <div class="official-school-brand">
-          <img src="logo-sidebar-dark.png" alt="Raizes e Saberes" onerror="this.hidden=true" />
+          <img src="logo-sidebar-dark.png" alt="Raízes e Saberes" onerror="this.hidden=true" />
           <i></i>
           <div>
             <span>Portal educacional coletivo</span>
@@ -10928,10 +10928,10 @@ const renderLegacySchoolInstitutionalDashboard = () => {
         <div class="official-school-hero-copy">
           <span>${institution.network_name}</span>
           <h2>Bem-vindos a escola das descobertas.</h2>
-          <p>Jogos, leitura, desafios e pinturas em uma experiencia limpa para a comunidade escolar.</p>
+          <p>Jogos, leitura, desafios e pinturas em uma experiência limpa para a comunidade escolar.</p>
           <div>
             <a href="#jogos">Jogar e descobrir</a>
-            <a href="educacao-infantil.html">Educacao Infantil</a>
+            <a href="educacao-infantil.html">Educação Infantil</a>
           </div>
         </div>
         <img class="official-school-hero-art" src="assets/home-official/hero_children.png" alt="" onerror="this.hidden=true" />
@@ -10941,13 +10941,13 @@ const renderLegacySchoolInstitutionalDashboard = () => {
         <div class="official-school-section-head">
           <span>Acessos</span>
           <h2>Acessos da Comunidade Escolar</h2>
-          <p>Portas simples para entrar no ambiente correto, sempre respeitando o login unico.</p>
+          <p>Portas simples para entrar no ambiente correto, sempre respeitando o login único.</p>
         </div>
         <div class="official-school-access-grid">
-          <a href="educacao-infantil.html"><strong>Educacao Infantil</strong><span>Ambiente coletivo homologado</span></a>
+          <a href="educacao-infantil.html"><strong>Educação Infantil</strong><span>Ambiente coletivo homologado</span></a>
           <a href="login.html?next=%2Fprofessor&auth=supabase"><strong>Professor</strong><span>Entrar com perfil autorizado</span></a>
-          <a href="login.html?next=%2Faluno&auth=supabase"><strong>Aluno Fundamental</strong><span>Area do aluno em homologacao</span></a>
-          <a href="login.html?next=%2Faluno&auth=supabase"><strong>Aluno Medio</strong><span>Porta preparada para proxima fase</span></a>
+          <a href="login.html?next=%2Faluno&auth=supabase"><strong>Aluno Fundamental</strong><span>Área do aluno em homologação</span></a>
+          <a href="login.html?next=%2Faluno&auth=supabase"><strong>Aluno Médio</strong><span>Porta preparada para proxima fase</span></a>
         </div>
       </section>
 
@@ -10957,7 +10957,7 @@ const renderLegacySchoolInstitutionalDashboard = () => {
 
       <section class="official-school-panel" id="jogos">
         <div class="official-school-section-head">
-          <span>Interacao coletiva livre</span>
+          <span>Interação coletiva livre</span>
           <h2>Jogar e Descobrir</h2>
           <p>Somente os quatro jogos publicados para a Escola V1 aparecem aqui.</p>
           <a href="escola.html#jogos">Ver todos</a>
@@ -10989,7 +10989,7 @@ const renderLegacySchoolInstitutionalDashboard = () => {
       <section class="official-school-panel" id="informacoes">
         <div class="official-school-section-head">
           <span>Comunicados</span>
-          <h2>Informacoes da Escola</h2>
+          <h2>Informações da Escola</h2>
         </div>
         <div class="school-info-grid">${renderSchoolInfo(activeAge)}</div>
       </section>
@@ -11008,7 +11008,7 @@ const renderOfficialSchoolLoading = () => `
 
 const renderOfficialSchoolError = (message) => `
   <div class="official-school-real-status is-error">
-    <strong>Nao foi possivel abrir Minha Escola</strong>
+    <strong>Não foi possível abrir Minha Escola</strong>
     <span>${schoolOfficialEscape(message || "Entre novamente e tente acessar pelo comando Minha Escola.")}</span>
   </div>
 `;
@@ -11018,7 +11018,7 @@ const renderOfficialSchoolCommunicationCard = (communication = {}) => {
   const body = communication.body || communication.message || communication.content || "";
   const date = officialSchoolDateLabel(communication.communication_date || communication.published_at || communication.created_at);
   const audienceType = String(communication.audience_type || "school").toLowerCase();
-  const audienceLabel = audienceType === "class" ? "Turma" : audienceType === "student" ? "Aluno/Familia" : "Toda a escola";
+  const audienceLabel = audienceType === "class" ? "Turma" : audienceType === "student" ? "Aluno/Família" : "Toda a escola";
   return `
     <article class="official-school-communication-card">
       <div class="official-school-communication-icon" aria-hidden="true">${renderOfficialSchoolIcon("mail")}</div>
@@ -11058,7 +11058,7 @@ const renderOfficialSchoolWeeklyChallenge = () => `
       ${renderOfficialSchoolIcon("progresso")}
       <div>
         <strong>Nenhum desafio publicado para esta semana.</strong>
-        <span>Quando houver um desafio real para seu perfil, ele aparecera aqui com titulo, turma, professor, periodo e acao.</span>
+        <span>Quando houver um desafio real para seu perfil, ele aparecera aqui com titulo, turma, professor, periodo e ação.</span>
       </div>
     </div>
   </article>
@@ -11076,7 +11076,7 @@ const shouldShowOfficialSchoolRecommendation = (recommendation = {}, state = off
 
 const renderOfficialSchoolRecommendationCard = (recommendation = {}) => {
   const targetType = String(recommendation.target_type || "class").toLowerCase();
-  const destination = targetType === "student" ? "Aluno/Familia" : "Turma";
+  const destination = targetType === "student" ? "Aluno/Família" : "Turma";
   const detailHref =
     recommendation.content_type === "printable_activity"
       ? `atividades.html?codigo=${encodeURIComponent(recommendation.content_id || "")}`
@@ -11085,7 +11085,7 @@ const renderOfficialSchoolRecommendationCard = (recommendation = {}) => {
     <article class="official-school-communication-card">
       <div class="official-school-communication-icon" aria-hidden="true">${renderOfficialSchoolIcon("cap")}</div>
       <div>
-        <strong>${schoolOfficialEscape(recommendation.content_title || "Conteudo recomendado")}</strong>
+        <strong>${schoolOfficialEscape(recommendation.content_title || "Conteúdo recomendado")}</strong>
         <span class="official-school-communication-badge">${schoolOfficialEscape(`${recommendationTypeLabel(recommendation.content_type)} · ${destination}`)}</span>
         ${recommendation.note ? `<p>${schoolOfficialEscape(recommendation.note)}</p>` : ""}
         <span>${schoolOfficialEscape(officialSchoolDateLabel(recommendation.published_at || recommendation.created_at))}</span>
@@ -11104,7 +11104,7 @@ const renderOfficialSchoolTeacherRecommendations = (recommendations = []) => {
       <div class="official-school-section-head">
         <span>${renderOfficialSchoolIcon("cap")} Recomendados pela Professora</span>
         <h2>Recomendados pela Professora</h2>
-        <p>Atividades, livros, jogos e experiencias destacados para o seu perfil.</p>
+        <p>Atividades, livros, jogos e experiências destacados para o seu perfil.</p>
       </div>
       ${
         visibleRecommendations.length
@@ -11112,7 +11112,7 @@ const renderOfficialSchoolTeacherRecommendations = (recommendations = []) => {
           : `<div class="official-school-prepared-empty">
               ${renderOfficialSchoolIcon("book")}
               <div>
-                <strong>Nenhuma recomendacao publicada.</strong>
+                <strong>Nenhuma recomendação publicada.</strong>
                 <span>As recomendacoes reais aparecerao aqui quando forem liberadas para seu perfil.</span>
               </div>
             </div>`
@@ -11151,7 +11151,7 @@ const renderOfficialSchoolRealContent = () => {
         <span>MINHA ESCOLA</span>
         <p>BEM-VINDOS A</p>
         <h1>${schoolOfficialEscape(schoolName)}</h1>
-        <small>Um espaco de aprendizagem, convivencia e descobertas.</small>
+        <small>Um espaco de aprendizagem, convivência e descobertas.</small>
       </div>
     </header>
 
@@ -11177,7 +11177,7 @@ const renderOfficialSchoolRealContent = () => {
       <div class="official-school-section-head">
         <span>${renderOfficialSchoolIcon("escola")} Explore e Descubra</span>
         <h2>Biblioteca e Jogos</h2>
-        <p>Atalhos para os modulos ja existentes da plataforma.</p>
+        <p>Atalhos para os módulos ja existentes da plataforma.</p>
       </div>
       <div class="official-school-shortcut-list">
         ${officialSchoolShortcuts
@@ -11206,8 +11206,8 @@ const renderEarlyChildhoodDashboard = () => {
     <section class="school-collective" data-school-collective data-active-age="${defaultAge}">
       <header class="school-context-strip">
         <div>
-          <span>Area da Escola</span>
-          <h1>Educacao Infantil</h1>
+          <span>Área da Escola</span>
+          <h1>Educação Infantil</h1>
           <p>${institution.school_name} - ${institution.municipality_name}</p>
         </div>
         <div class="school-logo-slot">
@@ -11257,7 +11257,7 @@ const renderEarlyChildhoodDashboard = () => {
         </aside>
         <section class="school-panel school-info-panel">
           <div class="school-panel-head">
-            <h2>Informacoes da Escola</h2>
+            <h2>Informações da Escola</h2>
           </div>
           <div class="school-info-grid" data-school-slot="info">${renderSchoolInfo(activeAge)}</div>
         </section>
@@ -11425,7 +11425,7 @@ const loadOfficialSchoolData = async ({ force = false } = {}) => {
       );
       const recommendations = await requestOfficialSchoolRows(
         client,
-        "pedagogical_recommendations",
+        "pedagógical_recommendations",
         `?select=id,school_id,teacher_id,content_type,content_id,content_title,target_type,class_id,student_id,note,status,published_at,created_at&school_id=${supabaseEq(school.id)}&status=eq.published&order=published_at.desc&limit=12`,
         { optional: true }
       );
@@ -11607,13 +11607,13 @@ const renderProfessorDashboard = () => {
   return renderTeacherPilotHome();
 };
 
-const familyAreaData = {
+const familyÁreaData = {
   student: {
     id: pilotProfiles.student.id,
     name: pilotProfiles.student.name,
     fullName: pilotProfiles.student.fullName,
     avatar: pilotProfiles.student.avatar,
-    school: "Escola Raizes e Saberes",
+    school: "Escola Raízes e Saberes",
     className: pilotProfiles.student.className,
     ageGroup: "Infantil 4 anos",
     shift: pilotProfiles.class.shift,
@@ -11686,7 +11686,7 @@ const familyScheduleSlots = [
 
 const familyScheduleStudentId = () => {
   if (isFamilyInstitutionalMode?.() && familyInstitutionalState.student?.id) return familyInstitutionalState.student.id;
-  return familyAreaData.student.id || pilotProfiles.student.id;
+  return familyÁreaData.student.id || pilotProfiles.student.id;
 };
 const familyScheduleStorageKey = () => `raizes:family-weekly-schedule:${familyScheduleStudentId()}:v1`;
 const familyNoticeStorageKey = () => `raizes:family-schedule-notices:${familyScheduleStudentId()}:v1`;
@@ -11701,7 +11701,7 @@ const familyWriteJsonList = (key, value) => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.warn("Nao foi possivel salvar a rotina semanal.", error);
+    console.warn("Não foi possível salvar a rotina semanal.", error);
   }
 };
 const familyIsoDate = (date) => {
@@ -11735,7 +11735,7 @@ const writeFamilyAttendancePeriod = (period = "month") => {
   try {
     localStorage.setItem(familyAttendancePeriodStorageKey, familyInstitutionalState.attendancePeriod);
   } catch (error) {
-    console.warn("Nao foi possivel preservar o filtro de frequencia.", error);
+    console.warn("Não foi possível preservar o filtro de frequência.", error);
   }
 };
 const familyAttendanceRange = (period = readFamilyAttendancePeriod()) => {
@@ -11773,11 +11773,11 @@ const writeFamilySelectedChildId = (studentId = "") => {
   try {
     if (studentId) localStorage.setItem(familyChildSelectionStorageKey, studentId);
   } catch (error) {
-    console.warn("Nao foi possivel preservar a crianca selecionada.", error);
+    console.warn("Não foi possível preservar a crianca selecionada.", error);
   }
 };
 const getFamilyActiveStudent = () => {
-  if (!isFamilyInstitutionalMode()) return familyAreaData.student;
+  if (!isFamilyInstitutionalMode()) return familyÁreaData.student;
   const selectedChild = getFamilySelectedChild();
   if (familyInstitutionalState.status === "ready" && selectedChild?.student) {
     const student = selectedChild.student;
@@ -11796,10 +11796,10 @@ const getFamilyActiveStudent = () => {
   }
   return {
     id: "",
-    name: familyInstitutionalState.status === "error" ? "Crianca nao identificada" : "carregando",
-    fullName: familyInstitutionalState.status === "error" ? "Crianca nao identificada" : "Carregando crianca vinculada",
+    name: familyInstitutionalState.status === "error" ? "Criança nao identificada" : "carregando",
+    fullName: familyInstitutionalState.status === "error" ? "Criança nao identificada" : "Carregando crianca vinculada",
     avatar: "",
-    school: familyInstitutionalState.status === "error" ? "Vinculo indisponivel" : "Carregando escola",
+    school: familyInstitutionalState.status === "error" ? "Vínculo indisponivel" : "Carregando escola",
     className: familyInstitutionalState.status === "error" ? "Turma indisponivel" : "Carregando turma",
     ageGroup: "",
     shift: "",
@@ -11843,7 +11843,7 @@ const normalizeFamilyTeacherName = (teacher = {}) => {
 
 const getFamilyTeacherName = () =>
   (isFamilyInstitutionalMode() && normalizeFamilyTeacherName(getFamilySelectedChild()?.teacher || familyInstitutionalState.teacher)) ||
-  familyAreaData.teacher ||
+  familyÁreaData.teacher ||
   "Professora";
 
 const getFamilyTeacherNames = (selectedChild = getFamilySelectedChild()) => {
@@ -11871,7 +11871,7 @@ const mapFamilyCalendarEntry = (entry = {}) => ({
   school_id: entry.school_id || "",
   teacher_id: entry.teacher_id || "",
   plan_id: entry.plan_id || "",
-  title: entry.title || "Publicacao",
+  title: entry.title || "Publicação",
   description: entry.description || "",
   entry_date: entry.entry_date || "",
   start_time: entry.start_time || "",
@@ -12006,7 +12006,7 @@ const mapFamilyTeacherRecommendation = (row = {}, selectedChild = null, teachers
     teacherId: row.teacher_id || "",
     contentType: row.content_type || "printable_activity",
     contentId: row.content_id || "",
-    contentTitle: row.content_title || row.content_id || "Conteudo recomendado",
+    contentTitle: row.content_title || row.content_id || "Conteúdo recomendado",
     targetType,
     classId: row.class_id || "",
     studentId: row.student_id || "",
@@ -12041,14 +12041,14 @@ const loadFamilyTeacherRecommendations = async (client, selectedChild = null) =>
   const [classRows, studentRows] = await Promise.all([
     client
       .request(
-        "pedagogical_recommendations",
+        "pedagógical_recommendations",
         `${baseQuery}&target_type=eq.class&class_id=${supabaseEq(enrollment.class_id)}&order=published_at.desc.nullslast&order=created_at.desc`,
         requestOptions
       )
       .catch(() => []),
     client
       .request(
-        "pedagogical_recommendations",
+        "pedagógical_recommendations",
         `${baseQuery}&target_type=eq.student&student_id=${supabaseEq(student.id)}&order=published_at.desc.nullslast&order=created_at.desc`,
         requestOptions
       )
@@ -12217,7 +12217,7 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
       const guardians = Array.isArray(guardianRows) ? guardianRows : [];
       const children = await buildFamilyCanonicalChildren(client, guardians);
       if (!children.length) {
-        throw new Error("Nao foi possivel identificar a crianca vinculada a este responsavel.");
+        throw new Error("Não foi possível identificar a crianca vinculada a este responsavel.");
       }
       const selectedChild =
         children.find((child) => child.student?.id === familyInstitutionalState.selectedChildId) ||
@@ -12268,22 +12268,22 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
         if (entriesResult.status === "fulfilled") {
           familyInstitutionalState.entries = (entriesResult.value || []).filter((entry) => entry.status === "published").map(mapFamilyCalendarEntry);
         } else {
-          familyInstitutionalState.calendarError = entriesResult.reason?.message || "Nao foi possivel carregar a Minha Semana.";
+          familyInstitutionalState.calendarError = entriesResult.reason?.message || "Não foi possível carregar a Minha Semana.";
         }
         if (messagesResult.status === "fulfilled") {
           familyInstitutionalState.messages = messagesResult.value || [];
         } else {
-          familyInstitutionalState.messagesError = messagesResult.reason?.message || "Nao foi possivel carregar os recados.";
+          familyInstitutionalState.messagesError = messagesResult.reason?.message || "Não foi possível carregar os recados.";
         }
         if (attendanceResult.status === "fulfilled") {
           familyInstitutionalState.attendanceRecords = attendanceResult.value || [];
         } else {
-          familyInstitutionalState.attendanceError = attendanceResult.reason?.message || "Nao foi possivel carregar a frequencia.";
+          familyInstitutionalState.attendanceError = attendanceResult.reason?.message || "Não foi possível carregar a frequência.";
         }
         if (recommendationsResult.status === "fulfilled") {
           familyInstitutionalState.recommendations = recommendationsResult.value || [];
         } else {
-          familyInstitutionalState.recommendationsError = recommendationsResult.reason?.message || "Nao foi possivel carregar as recomendacoes.";
+          familyInstitutionalState.recommendationsError = recommendationsResult.reason?.message || "Não foi possível carregar as recomendações.";
         }
         const area = document.querySelector("[data-family-area]");
         if (area) {
@@ -12293,7 +12293,7 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
       });
       return familyInstitutionalState;
     } catch (error) {
-      familyInstitutionalState.error = error.message || "Nao foi possivel carregar a semana.";
+      familyInstitutionalState.error = error.message || "Não foi possível carregar a semana.";
       familyInstitutionalState.entries = [];
       familyInstitutionalState.messages = [];
       familyInstitutionalState.attendanceRecords = [];
@@ -12308,10 +12308,10 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
 };
 
 const familyAreaViews = [
-  ["inicio", "Inicio", "home"],
+  ["inicio", "Início", "home"],
   ["semana", "Minha Semana", "calendario"],
   ["recados", "Recados", "mensagens"],
-  ["frequencia", "Frequencia", "checklist"],
+  ["frequencia", "Frequência", "checklist"],
   ["atividades", "Atividades", "atividades"],
   ["descobertas", "Biblioteca / Descobertas", "biblioteca"],
   ["escola", "Minha Escola", "escola"],
@@ -12339,10 +12339,10 @@ const renderFamilyChildSelector = () => {
   return `
     <section class="family-child-selector" aria-label="Selecionar crianca">
       <div>
-        <span>Crianca atual</span>
+        <span>Criança atual</span>
         <strong>${printableEscape(normalizeFamilyStudentName(selectedChild?.student || {}))}</strong>
       </div>
-      <div class="family-child-options" role="group" aria-label="Criancas vinculadas">
+      <div class="family-child-options" role="group" aria-label="Crianças vinculadas">
         ${children
           .map((child) => {
             const studentId = child.student?.id || "";
@@ -12366,7 +12366,7 @@ const renderFamilyMessageList = () => {
   const messages =
     isFamilyInstitutionalMode() && familyInstitutionalState.status === "ready"
       ? familyInstitutionalState.messages || []
-      : familyAreaData.messages;
+      : familyÁreaData.messages;
   if (isFamilyInstitutionalMode() && familyInstitutionalState.messagesError) {
     return renderFamilyEmpty("NAO FOI POSSIVEL CARREGAR OS RECADOS.", familyInstitutionalState.messagesError);
   }
@@ -12383,7 +12383,7 @@ const renderFamilyMessageList = () => {
                 <dl>
                   <div><dt>Professora</dt><dd>${printableEscape(message.authorName || message.origin || getFamilyTeacherName())}</dd></div>
                   <div><dt>Turma</dt><dd>${printableEscape(message.className || getFamilyActiveStudent().className)}</dd></div>
-                  ${message.childName ? `<div><dt>Crianca</dt><dd>${printableEscape(message.childName)}</dd></div>` : ""}
+                  ${message.childName ? `<div><dt>Criança</dt><dd>${printableEscape(message.childName)}</dd></div>` : ""}
                 </dl>
               </div>
               <aside>
@@ -12399,16 +12399,16 @@ const renderFamilyMessageList = () => {
 
 const renderFamilyAttendanceView = () => {
   if (!isFamilyInstitutionalMode()) {
-    return `<section class="family-panel"><div class="family-section-head"><h2>Frequencia</h2><span>Somente leitura</span></div>${renderFamilyEmpty("FREQUENCIA PREPARADA.", "Os registros da crianca aparecerao aqui quando publicados pela escola.")}</section>`;
+    return `<section class="family-panel"><div class="family-section-head"><h2>Frequência</h2><span>Somente leitura</span></div>${renderFamilyEmpty("FREQUENCIA PREPARADA.", "Os registros da crianca aparecerao aqui quando publicados pela escola.")}</section>`;
   }
   if (familyInstitutionalState.status === "loading" || familyInstitutionalState.status === "idle") {
-    return `<section class="family-panel"><div class="family-section-head"><h2>Frequencia</h2><span>Carregando</span></div>${renderFamilyEmpty("CARREGANDO FREQUENCIA.", "Consultando os registros da crianca selecionada.")}</section>`;
+    return `<section class="family-panel"><div class="family-section-head"><h2>Frequência</h2><span>Carregando</span></div>${renderFamilyEmpty("CARREGANDO FREQUENCIA.", "Consultando os registros da crianca selecionada.")}</section>`;
   }
   if (familyInstitutionalState.status === "error") {
-    return `<section class="family-panel"><div class="family-section-head"><h2>Frequencia</h2><span>Indisponivel</span></div>${renderFamilyEmpty("NAO FOI POSSIVEL ABRIR A FREQUENCIA.", familyInstitutionalState.error)}</section>`;
+    return `<section class="family-panel"><div class="family-section-head"><h2>Frequência</h2><span>Indisponível</span></div>${renderFamilyEmpty("NAO FOI POSSIVEL ABRIR A FREQUENCIA.", familyInstitutionalState.error)}</section>`;
   }
   if (familyInstitutionalState.attendanceError) {
-    return `<section class="family-panel"><div class="family-section-head"><h2>Frequencia</h2><span>Indisponivel</span></div>${renderFamilyChildSelector()}${renderFamilyEmpty("NAO FOI POSSIVEL CARREGAR A FREQUENCIA.", familyInstitutionalState.attendanceError)}</section>`;
+    return `<section class="family-panel"><div class="family-section-head"><h2>Frequência</h2><span>Indisponível</span></div>${renderFamilyChildSelector()}${renderFamilyEmpty("NAO FOI POSSIVEL CARREGAR A FREQUENCIA.", familyInstitutionalState.attendanceError)}</section>`;
   }
   const student = getFamilyActiveStudent();
   const records = familyInstitutionalState.attendanceRecords || [];
@@ -12425,17 +12425,17 @@ const renderFamilyAttendanceView = () => {
     <section class="family-panel family-attendance-panel">
       <div class="family-section-head">
         <div>
-          <h2>Frequencia - ${printableEscape(student.fullName || student.name)}</h2>
+          <h2>Frequência - ${printableEscape(student.fullName || student.name)}</h2>
           <p>${printableEscape(student.className)} · ${printableEscape(range.label)}</p>
         </div>
         <span>Somente leitura</span>
       </div>
       ${renderFamilyChildSelector()}
-      <div class="family-filter-row" role="group" aria-label="Periodo da frequencia">
+      <div class="family-filter-row" role="group" aria-label="Período da frequência">
         <button type="button" class="${period === "week" ? "is-active" : ""}" data-family-attendance-period="week">Semana</button>
         <button type="button" class="${period === "month" ? "is-active" : ""}" data-family-attendance-period="month">Mes</button>
       </div>
-      <section class="family-attendance-summary" aria-label="Resumo da frequencia">
+      <section class="family-attendance-summary" aria-label="Resumo da frequência">
         <article>${premiumIcon("checklist")}<span>Presencas</span><strong>${summary.present}</strong></article>
         <article>${premiumIcon("alerta")}<span>Faltas</span><strong>${summary.absent}</strong></article>
         <article>${premiumIcon("info")}<span>Faltas justificadas</span><strong>${summary.justified}</strong></article>
@@ -12449,13 +12449,13 @@ const renderFamilyAttendanceView = () => {
                     <div>
                       <span>${printableEscape(record.date ? new Date(`${record.date}T00:00:00`).toLocaleDateString("pt-BR") : "Sem data")}</span>
                       <strong>${printableEscape(record.statusLabel)}</strong>
-                      ${record.notes ? `<p>Observacao: ${printableEscape(record.notes)}</p>` : ""}
+                      ${record.notes ? `<p>Observação: ${printableEscape(record.notes)}</p>` : ""}
                     </div>
                     <em class="${statusClass(record.status)}">${printableEscape(record.statusLabel)}</em>
                   </article>`
               )
               .join("")}</div>`
-          : renderFamilyEmpty("Ainda nao ha registros de frequencia para este periodo.")
+          : renderFamilyEmpty("Ainda nao ha registros de frequência para este periodo.")
       }
     </section>
   `;
@@ -12500,11 +12500,11 @@ const renderFamilyRecommendationCard = (recommendation = {}, { compact = false }
           <span>${printableEscape(recommendation.typeLabel || recommendationTypeLabel(recommendation.contentType))}</span>
           <em>${printableEscape(recommendation.destinationLabel || "Para a turma")}</em>
         </div>
-        <strong>${printableEscape(recommendation.contentTitle || "Recomendacao da professora")}</strong>
+        <strong>${printableEscape(recommendation.contentTitle || "Recomendação da professora")}</strong>
         <dl>
           <div><dt>Professora</dt><dd>${printableEscape(recommendation.teacherName || getFamilyTeacherName())}</dd></div>
           <div><dt>Turma</dt><dd>${printableEscape(recommendation.className || getFamilyActiveStudent().className)}</dd></div>
-          ${recommendation.childName ? `<div><dt>Crianca</dt><dd>${printableEscape(recommendation.childName)}</dd></div>` : ""}
+          ${recommendation.childName ? `<div><dt>Criança</dt><dd>${printableEscape(recommendation.childName)}</dd></div>` : ""}
         </dl>
         ${recommendation.note && !compact ? `<p>${printableEscape(recommendation.note)}</p>` : ""}
       </div>
@@ -12522,7 +12522,7 @@ const renderFamilyRecommendationList = ({ activitiesOnly = false, compact = fals
   }
   const recommendations = getFamilyVisibleRecommendations({ activitiesOnly });
   if (!recommendations.length) {
-    return renderFamilyEmpty(activitiesOnly ? "Nenhuma atividade indicada no momento." : "Nenhuma recomendacao da professora no momento.");
+    return renderFamilyEmpty(activitiesOnly ? "Nenhuma atividade indicada no momento." : "Nenhuma recomendação da professora no momento.");
   }
   return `<div class="family-recommendation-list">${recommendations.map((recommendation) => renderFamilyRecommendationCard(recommendation, { compact })).join("")}</div>`;
 };
@@ -12542,8 +12542,8 @@ const renderFamilyRecommendedByTeacher = () => `
 `;
 
 const renderFamilyBookActivities = () =>
-  familyAreaData.bookActivities.length
-    ? familyAreaData.bookActivities
+  familyÁreaData.bookActivities.length
+    ? familyÁreaData.bookActivities
         .map(
           (activity) => `
             <article class="family-activity-card">
@@ -12564,7 +12564,7 @@ const renderFamilyBookActivities = () =>
     : renderFamilyEmpty("NENHUMA ATIVIDADE NO LIVRO PUBLICADA.");
 
 const renderFamilyOnlineActivities = (filter = "todas") => {
-  const filtered = familyAreaData.onlineActivities.filter((activity) => {
+  const filtered = familyÁreaData.onlineActivities.filter((activity) => {
     if (filter === "pendentes") return ["NOVA", "EM ANDAMENTO"].includes(activity.status);
     if (filter === "concluidas") return ["CONCLUIDA", "ENVIADA"].includes(activity.status);
     return true;
@@ -12590,8 +12590,8 @@ const renderFamilyOnlineActivities = (filter = "todas") => {
 };
 
 const renderFamilyAgenda = () =>
-  familyAreaData.agenda.length
-    ? familyAreaData.agenda.map((item) => `<article class="family-list-card"><span>${item.date}</span><strong>${item.title}</strong><p>${item.detail}</p></article>`).join("")
+  familyÁreaData.agenda.length
+    ? familyÁreaData.agenda.map((item) => `<article class="family-list-card"><span>${item.date}</span><strong>${item.title}</strong><p>${item.detail}</p></article>`).join("")
     : renderFamilyEmpty("NENHUM COMPROMISSO PROGRAMADO.");
 
 const getFamilyWeekRange = (weekStartIso = familyWeekStartIso()) => {
@@ -12614,7 +12614,7 @@ const getFamilyWeekDates = (weekStartIso = familyWeekStartIso()) => {
 };
 
 const getFamilyRoutineRecords = () => familyReadJsonList(familyScheduleStorageKey());
-const getFamilyNoticeRecords = () => [...familyAreaData.scheduleNotices, ...familyReadJsonList(familyNoticeStorageKey())];
+const getFamilyNoticeRecords = () => [...familyÁreaData.scheduleNotices, ...familyReadJsonList(familyNoticeStorageKey())];
 const getFamilyRoutineRecord = (dayKey, slotKey) =>
   getFamilyRoutineRecords().find((item) => item.day_of_week === dayKey && String(item.slot_index) === String(slotKey));
 const getFamilyNoticeRecord = (specificDate, slotKey) =>
@@ -12666,7 +12666,7 @@ const renderFamilyInstitutionalWeekCell = (dayKey, slotKey, specificDate = "") =
   const entries = getFamilySlottedEntries(dayKey, slotKey, specificDate);
   return `
     <div class="family-week-cell ${!entries.length ? "is-empty" : ""}" data-day="${dayKey}" data-slot="${slotKey}" data-date="${specificDate}">
-      ${entries.length ? "" : `<div class="family-week-routine is-missing"><span>Sem publicacao</span></div>`}
+      ${entries.length ? "" : `<div class="family-week-routine is-missing"><span>Sem publicação</span></div>`}
       ${entries.map(renderFamilyInstitutionalEntryCard).join("")}
     </div>
   `;
@@ -12675,7 +12675,7 @@ const renderFamilyInstitutionalWeekCell = (dayKey, slotKey, specificDate = "") =
 const renderFamilyUnscheduledEntriesCell = (specificDate = "") => {
   const entries = getFamilyUnscheduledEntries(specificDate);
   if (!entries.length) {
-    return `<div class="family-week-cell is-empty"><span>Sem publicacao</span></div>`;
+    return `<div class="family-week-cell is-empty"><span>Sem publicação</span></div>`;
   }
   return `
     <div class="family-week-cell family-week-unscheduled">
@@ -12704,7 +12704,7 @@ const renderFamilyInstitutionalWeeklyBoard = (weekStartIso = familyInstitutional
       <div class="family-week-actions" aria-label="Controles de semana">
         <button type="button" data-week-move="-1">Semana anterior</button>
         <button type="button" data-week-today>Semana atual</button>
-        <button type="button" data-week-move="1">Proxima semana</button>
+        <button type="button" data-week-move="1">Próxima semana</button>
       </div>
     </div>
     ${renderFamilyChildSelector()}
@@ -12753,7 +12753,7 @@ const renderFamilyWeeklyBoard = (weekStartIso = familyWeekStartIso()) => {
       <div class="family-week-actions" aria-label="Controles de semana">
         <button type="button" data-week-move="-1">Semana anterior</button>
         <button type="button" data-week-today>Semana atual</button>
-        <button type="button" data-week-move="1">Proxima semana</button>
+        <button type="button" data-week-move="1">Próxima semana</button>
       </div>
     </div>
     <div class="family-week-grid" aria-label="Quadro semanal" data-week-start="${weekStartIso}">
@@ -12785,18 +12785,18 @@ const renderFamilyWeeklyBoard = (weekStartIso = familyWeekStartIso()) => {
 };
 
 const renderFamilyProgressSummary = () => {
-  const { progress } = familyAreaData;
+  const { progress } = familyÁreaData;
   return `
     <section class="family-panel family-summary-panel">
       <div class="family-section-head"><h2>Acompanhamento</h2><span>Resumo</span></div>
       <dl>
-        <div><dt>Frequencia</dt><dd>${familyAreaData.attendance?.summary || "Sem registro publicado"}</dd></div>
+        <div><dt>Frequência</dt><dd>${familyÁreaData.attendance?.summary || "Sem registro publicado"}</dd></div>
         <div><dt>XP</dt><dd>${progress.xp ? `${progress.xp} XP` : "0 XP"}</dd></div>
         <div><dt>Nivel</dt><dd>${progress.level || "Sem registro"}</dd></div>
-        <div><dt>Concluidas</dt><dd>${progress.completedActivities || 0}</dd></div>
+        <div><dt>Concluídas</dt><dd>${progress.completedActivities || 0}</dd></div>
       </dl>
       <div class="family-tree-mini">
-        <span>Minha Arvore</span>
+        <span>Minha Árvore</span>
         <i><b style="width:${progress.percent || 0}%"></b></i>
         <strong>${progress.percent || 0}%</strong>
       </div>
@@ -12806,14 +12806,14 @@ const renderFamilyProgressSummary = () => {
 };
 
 const renderFamilyProgress = (compact = false) => {
-  const { progress } = familyAreaData;
+  const { progress } = familyÁreaData;
   return `
     <section class="family-progress-grid">
-      <article class="family-metric-card"><span>Frequencia</span><strong>${familyAreaData.attendance?.summary || "Sem registro publicado"}</strong><small>Somente consulta</small></article>
+      <article class="family-metric-card"><span>Frequência</span><strong>${familyÁreaData.attendance?.summary || "Sem registro publicado"}</strong><small>Somente consulta</small></article>
       <article class="family-metric-card"><span>XP</span><strong>${progress.xp ? `${progress.xp} XP` : "Sem registro"}</strong><small>${progress.level || "Nivel nao publicado"}</small></article>
-      <article class="family-metric-card"><span>Atividades concluidas</span><strong>${progress.completedActivities || 0}</strong><small>Historico do aluno</small></article>
+      <article class="family-metric-card"><span>Atividades concluidas</span><strong>${progress.completedActivities || 0}</strong><small>Histórico do aluno</small></article>
       <article class="family-tree-card">
-        <span>Minha Arvore</span>
+        <span>Minha Árvore</span>
         <strong>${progress.percent || 0}%</strong>
         <i><b style="width:${progress.percent || 0}%"></b></i>
         <small>Progresso registrado</small>
@@ -12849,8 +12849,8 @@ const renderFamilyProfile = () => {
     <section class="family-panel family-profile-panel">
       <div class="family-section-head">
         <div>
-          <h2>Perfil da Crianca</h2>
-          <p>Consulta das informacoes institucionais da crianca selecionada.</p>
+          <h2>Perfil da Criança</h2>
+          <p>Consulta das informações institucionais da crianca selecionada.</p>
         </div>
         <span>Somente leitura</span>
       </div>
@@ -12858,7 +12858,7 @@ const renderFamilyProfile = () => {
       <article class="family-profile-hero-card">
         ${student.avatar ? `<img src="${student.avatar}" alt="" onerror="this.hidden=true" />` : `<div class="family-profile-initial">${printableEscape((student.name || "C").slice(0, 1).toUpperCase())}</div>`}
         <div>
-          <span>Crianca atual</span>
+          <span>Criança atual</span>
           <h3>${printableEscape(student.fullName || student.name)}</h3>
           <p>${printableEscape(student.className || "Turma nao informada")} · ${printableEscape(student.school || "Escola nao informada")}</p>
           <div class="family-profile-badges">
@@ -12869,19 +12869,19 @@ const renderFamilyProfile = () => {
         </div>
       </article>
       <section class="family-profile-grid" aria-label="Dados da crianca">
-        <article>${premiumIcon("turmas")}<span>Turma</span><strong>${printableEscape(student.className || "Nao informada")}</strong></article>
-        <article>${premiumIcon("calendario")}<span>Ano letivo</span><strong>${printableEscape(student.schoolYear || "Nao informado")}</strong></article>
-        <article>${premiumIcon("escola")}<span>Escola</span><strong>${printableEscape(student.school || "Nao informada")}</strong></article>
-        <article>${premiumIcon("professor")}<span>Professora(s)</span><strong>${printableEscape(teacherNames.join(", ") || "Nao informada")}</strong></article>
+        <article>${premiumIcon("turmas")}<span>Turma</span><strong>${printableEscape(student.className || "Não informada")}</strong></article>
+        <article>${premiumIcon("calendario")}<span>Ano letivo</span><strong>${printableEscape(student.schoolYear || "Não informado")}</strong></article>
+        <article>${premiumIcon("escola")}<span>Escola</span><strong>${printableEscape(student.school || "Não informada")}</strong></article>
+        <article>${premiumIcon("professor")}<span>Professora(s)</span><strong>${printableEscape(teacherNames.join(", ") || "Não informada")}</strong></article>
         ${student.ageGroup ? `<article>${premiumIcon("aluno")}<span>Etapa</span><strong>${printableEscape(student.ageGroup)}</strong></article>` : ""}
         ${student.shift ? `<article>${premiumIcon("calendario")}<span>Turno</span><strong>${printableEscape(student.shift)}</strong></article>` : ""}
         ${birthDate ? `<article>${premiumIcon("perfil")}<span>Nascimento</span><strong>${printableEscape(birthDate)}</strong></article>` : ""}
-        ${relationship ? `<article>${premiumIcon("familia")}<span>Vinculo familiar</span><strong>${printableEscape(relationship)}</strong></article>` : ""}
+        ${relationship ? `<article>${premiumIcon("familia")}<span>Vínculo familiar</span><strong>${printableEscape(relationship)}</strong></article>` : ""}
       </section>
       <section class="family-profile-readonly-note">
         ${premiumIcon("checklist")}
         <div>
-          <strong>Informacoes protegidas</strong>
+          <strong>Informações protegidas</strong>
           <p>Dados oficiais de matricula, turma, escola e vinculos sao mantidos pela Secretaria.</p>
         </div>
       </section>
@@ -12902,12 +12902,12 @@ const renderFamilyChildContext = () => {
   const childrenCount = familyInstitutionalState.children.length;
   return `
     <section class="family-context-grid" aria-label="Contexto da familia">
-      <article>${premiumIcon("familia")}<span>Responsavel</span><strong>${printableEscape(familyInstitutionalState.guardian?.full_name || familyInstitutionalState.profile?.display_name || "Familia")}</strong></article>
-      <article>${premiumIcon("aluno")}<span>Crianca</span><strong>${printableEscape(student.fullName)}</strong></article>
+      <article>${premiumIcon("familia")}<span>Responsavel</span><strong>${printableEscape(familyInstitutionalState.guardian?.full_name || familyInstitutionalState.profile?.display_name || "Família")}</strong></article>
+      <article>${premiumIcon("aluno")}<span>Criança</span><strong>${printableEscape(student.fullName)}</strong></article>
       <article>${premiumIcon("turmas")}<span>Turma</span><strong>${printableEscape(student.className)}</strong></article>
       <article>${premiumIcon("escola")}<span>Escola</span><strong>${printableEscape(student.school)}</strong></article>
       <article>${premiumIcon("professor")}<span>Professora</span><strong>${printableEscape(getFamilyTeacherName())}</strong></article>
-      <article>${premiumIcon("checklist")}<span>Vinculos ativos</span><strong>${childrenCount}</strong><small>${selectedChild?.link?.is_primary ? "Crianca principal" : "Crianca vinculada"}</small></article>
+      <article>${premiumIcon("checklist")}<span>Vínculos ativos</span><strong>${childrenCount}</strong><small>${selectedChild?.link?.is_primary ? "Criança principal" : "Criança vinculada"}</small></article>
     </section>
   `;
 };
@@ -12929,19 +12929,19 @@ const renderFamilyHomeView = () => `
         <div class="family-section-head"><h2>Minha Semana</h2><span>${printableEscape(getFamilyTeacherName())}</span></div>
         ${
           isFamilyInstitutionalMode() && familyInstitutionalState.status === "ready" && (familyInstitutionalState.entries || []).length
-            ? `<p>${familyInstitutionalState.entries.length} publicacao(oes) da semana para ${printableEscape(getFamilyActiveStudent().name)}.</p><a class="family-primary-link" href="familia.html?view=semana">Ver Minha Semana</a>`
-            : renderFamilyEmpty("A professora ainda nao publicou a programacao desta semana.")
+            ? `<p>${familyInstitutionalState.entries.length} publicação(oes) da semana para ${printableEscape(getFamilyActiveStudent().name)}.</p><a class="family-primary-link" href="familia.html?view=semana">Ver Minha Semana</a>`
+            : renderFamilyEmpty("A professora ainda nao publicou a programação desta semana.")
         }
       </div>
     </div>
     <div class="family-panel family-home-card">
       ${premiumIcon("checklist")}
       <div class="family-panel-body">
-        <div class="family-section-head"><h2>Frequencia</h2><span>Somente leitura</span></div>
+        <div class="family-section-head"><h2>Frequência</h2><span>Somente leitura</span></div>
         ${
           isFamilyInstitutionalMode() && familyInstitutionalState.status === "ready" && (familyInstitutionalState.attendanceRecords || []).length
-            ? `<p>${attendanceSummary(familyInstitutionalState.attendanceRecords).present} presencas no periodo selecionado.</p><a class="family-primary-link" href="familia.html?view=frequencia">Ver frequencia</a>`
-            : renderFamilyEmpty("Ainda nao ha registros de frequencia para este periodo.")
+            ? `<p>${attendanceSummary(familyInstitutionalState.attendanceRecords).present} presenças no periodo selecionado.</p><a class="family-primary-link" href="familia.html?view=frequencia">Ver frequência</a>`
+            : renderFamilyEmpty("Ainda nao ha registros de frequência para este periodo.")
         }
       </div>
     </div>
@@ -12967,9 +12967,9 @@ const renderFamilyView = (view) => {
     inicio: renderFamilyHomeView(),
     semana: renderFamilyWeeklyBoard(),
     recados: `<section class="family-panel family-messages-panel"><div class="family-section-head"><h2>Recados da professora</h2><span>Somente leitura</span></div>${renderFamilyChildSelector()}<div class="family-message-list">${renderFamilyMessageList()}</div></section>`,
-    frequencia: renderFamilyAttendanceView(),
+    frequência: renderFamilyAttendanceView(),
     atividades: renderFamilyActivitiesView(),
-    descobertas: `<section class="family-panel"><div class="family-section-head"><h2>Biblioteca / Descobertas</h2><span>Preparado</span></div>${renderFamilyEmpty("BIBLIOTECA E DESCOBERTAS PREPARADAS.", "Livros, jogos e experiencias seguem preservados para conexao posterior.")}</section>`,
+    descobertas: `<section class="family-panel"><div class="family-section-head"><h2>Biblioteca / Descobertas</h2><span>Preparado</span></div>${renderFamilyEmpty("BIBLIOTECA E DESCOBERTAS PREPARADAS.", "Livros, jogos e experiências seguem preservados para conexao posterior.")}</section>`,
     escola: `<section class="family-panel"><div class="family-section-head"><h2>Minha Escola</h2><span>Portal institucional</span></div><a class="family-primary-link" href="escola.html">Abrir Minha Escola</a></section>`,
     perfil: renderFamilyProfile(),
   };
@@ -12994,8 +12994,8 @@ const renderFamilyRoutineModal = () => `
         <input name="subject_or_activity" type="text" maxlength="42" placeholder="Ex.: Artes" required />
       </label>
       <label>
-        <span>Observacao opcional</span>
-        <textarea name="optional_note" maxlength="90" rows="2" placeholder="Material, combinados ou observacao curta"></textarea>
+        <span>Observação opcional</span>
+        <textarea name="optional_note" maxlength="90" rows="2" placeholder="Material, combinados ou observação curta"></textarea>
       </label>
       <div>
         <button type="submit">Salvar</button>
@@ -13011,46 +13011,46 @@ const renderFamilyDashboard = () => {
   const weekStartIso = familyInstitutionalState.weekStartIso || familyWeekStartIso();
   const displayName =
     isFamilyInstitutionalMode() && familyInstitutionalState.status === "ready"
-      ? familyInstitutionalState.profile?.display_name || familyInstitutionalState.guardian?.full_name || "Familia"
+      ? familyInstitutionalState.profile?.display_name || familyInstitutionalState.guardian?.full_name || "Família"
       : student.name;
   const heroTitle =
     isFamilyInstitutionalMode() && familyInstitutionalState.status === "error"
-      ? "Familia / Educacao Infantil"
-      : `Ola, familia de ${student.name}!`;
+      ? "Família / Educação Infantil"
+      : `Olá, família de ${student.name}!`;
   return `
     <main class="family-v1" data-family-area data-week-start="${weekStartIso}">
       <aside class="family-v1-sidebar">
-        <a class="family-v1-logo" href="familia.html"><img src="logo-sidebar-dark.png" alt="Raizes e Saberes Educacional" onerror="this.hidden=true" /></a>
+        <a class="family-v1-logo" href="familia.html"><img src="logo-sidebar-dark.png" alt="Raízes e Saberes Educacional" onerror="this.hidden=true" /></a>
         <div class="family-v1-person">
           ${student.avatar ? `<img src="${student.avatar}" alt="" onerror="this.hidden=true" />` : ""}
-          <span>Familia / EI</span>
+          <span>Família / EI</span>
           <strong>${printableEscape(displayName)}</strong>
           <small>${printableEscape(student.className || "Base institucional")}</small>
         </div>
-        <nav aria-label="Area Aluno e Familia">
+        <nav aria-label="Área Aluno e Família">
           ${familyAreaViews.map(([key, label, icon]) => `<a class="${key === view ? "is-active" : ""}" href="familia.html?view=${key}">${premiumIcon(icon)}<span>${label}</span></a>`).join("")}
         </nav>
       </aside>
       <section class="family-v1-main">
         <header class="family-v1-topbar">
-          <label><span>Buscar</span><input type="search" placeholder="Buscar conteudos, aluno, agenda..." data-family-search /></label>
+          <label><span>Buscar</span><input type="search" placeholder="Buscar conteúdos, aluno, agenda..." data-family-search /></label>
           <div class="family-global-actions" aria-label="Comandos globais">
             <button type="button" data-family-back>${premiumIcon("voltar")}<span>Voltar</span></button>
-            <a href="familia.html?view=inicio">${premiumIcon("home")}<span>Inicio</span></a>
+            <a href="familia.html?view=inicio">${premiumIcon("home")}<span>Início</span></a>
             <a href="escola.html">${premiumIcon("escola")}<span>Minha Escola</span></a>
             <button type="button" data-platform-logout>${premiumIcon("sair")}<span>Sair</span></button>
           </div>
         </header>
         <header class="family-v1-hero">
           <div>
-            <span>Familia / Educacao Infantil</span>
+            <span>Família / Educação Infantil</span>
             <h1>${printableEscape(heroTitle)}</h1>
             <p>${printableEscape(student.className)} · ${printableEscape(student.school)}</p>
           </div>
         </header>
         <section class="family-v1-content" data-family-content>${renderFamilyView(view)}</section>
       </section>
-      <nav class="family-v1-mobile" aria-label="Navegacao mobile">
+      <nav class="family-v1-mobile" aria-label="Navegação mobile">
         ${familyAreaViews.map(([key, label]) => `<a class="${key === view ? "is-active" : ""}" href="familia.html?view=${key}">${label}</a>`).join("")}
       </nav>
       ${renderFamilyRoutineModal()}
@@ -13197,7 +13197,7 @@ const initFamilyArea = () => {
   }
 };
 
-const getFamilyActivityById = (id) => familyAreaData.onlineActivities.find((activity) => activity.id === id);
+const getFamilyActivityById = (id) => familyÁreaData.onlineActivities.find((activity) => activity.id === id);
 
 const renderStudentOnlineActivityFocus = () => {
   const params = typeof window === "undefined" ? new URLSearchParams() : new URLSearchParams(window.location.search);
@@ -13211,8 +13211,8 @@ const renderStudentOnlineActivityFocus = () => {
       </header>
       <section class="student-focus-card">
         <span>Atividade online</span>
-        <h1>${activity?.title || "Atividade em preparacao"}</h1>
-        <p>${activity?.instructions || "Quando a professora disponibilizar uma atividade online, ela abrira aqui em modo foco com instrucoes simples para a crianca."}</p>
+        <h1>${activity?.title || "Atividade em preparação"}</h1>
+        <p>${activity?.instructions || "Quando a professora disponibilizar uma atividade online, ela abrira aqui em modo foco com instruções simples para a crianca."}</p>
         <div class="student-focus-engine">
           <strong>Motor da atividade</strong>
           <p>${activity?.engine ? "Motor configurado para esta atividade." : "Motor ainda nao publicado para esta atividade."}</p>
@@ -13263,13 +13263,13 @@ const ecosystemHomeResources = [
   },
   {
     title: "Avalia+",
-    description: "Diagnosticos, relatorios e intervencoes.",
+    description: "Diagnósticos, relatórios e intervenções.",
     icon: homeOfficialAsset("icon_avalia"),
     href: "avalia.html",
     tone: "blue",
   },
   {
-    title: "Banco de Questoes",
+    title: "Banco de Questões",
     description: `${demoQuestionBankItems.length} itens demonstrativos homologados.`,
     icon: homeOfficialAsset("icon_banco_questoes"),
     href: "banco-questoes.html",
@@ -13330,10 +13330,10 @@ const ecosystemHomeJourney = [
 const ecosystemHomeIndicators = [
   { value: ecosystemHomeStats.xp, label: "XP" },
   { value: ecosystemHomeStats.medals, label: "Medalhas" },
-  { value: `${ecosystemHomeStats.trainingHours}h`, label: "Horas de formacao" },
+  { value: `${ecosystemHomeStats.trainingHours}h`, label: "Horas de formação" },
   { value: ecosystemHomeStats.certificates, label: "Certificados" },
   { value: ecosystemHomeStats.booksRead, label: "Livros lidos" },
-  { value: ecosystemHomeStats.gamesCompleted, label: "Jogos concluidos" },
+  { value: ecosystemHomeStats.gamesCompleted, label: "Jogos concluídos" },
 ];
 
 const renderHomeSectionHeader = (title, action = "") => `
@@ -13348,25 +13348,25 @@ const homePresentationHotspots = [
   { className: "hotspot-resource-university", href: "universidade.html", label: "Abrir Universidade" },
   { className: "hotspot-resource-games", href: "jogos.html", label: "Abrir Jogos Educativos" },
   { className: "hotspot-resource-avalia", href: "avalia.html", label: "Abrir Avalia+" },
-  { className: "hotspot-resource-bank", href: "banco-questoes.html", label: "Abrir Banco de Questoes" },
+  { className: "hotspot-resource-bank", href: "banco-questoes.html", label: "Abrir Banco de Questões" },
   { className: "hotspot-resource-labs", href: "biblioteca.html#acervo-completo", label: "Abrir Laboratorios" },
   { className: "hotspot-mission-reading", href: defaultBook.href, label: "Abrir missao de leitura diaria" },
-  { className: "hotspot-mission-training", href: "universidade.html#formacao-raizes", label: "Abrir formacao em andamento" },
+  { className: "hotspot-mission-training", href: "universidade.html#formacao-raizes", label: "Abrir formação em andamento" },
   { className: "hotspot-mission-avalia", href: "banco-questoes.html", label: "Abrir questoes recomendadas" },
   { className: "hotspot-mission-games", href: "jogos.html", label: "Abrir jogos recomendados" },
   { className: "hotspot-mission-all", href: "missao.html", label: "Ver todas as missoes" },
-  { className: "hotspot-activity-course", href: "universidade.html#formacao-raizes", label: "Abrir historico do curso Avaliacao Diagnostica" },
+  { className: "hotspot-activity-course", href: "universidade.html#formacao-raizes", label: "Abrir historico do curso Avaliação Diagnostica" },
   { className: "hotspot-activity-medal", href: "perfil.html", label: "Abrir medalhas e conquistas" },
   { className: "hotspot-activity-reading", href: defaultBook.href, label: "Abrir leitura do Volume 1" },
-  { className: "hotspot-activity-history", href: "perfil.html", label: "Ver historico completo" },
+  { className: "hotspot-activity-history", href: "perfil.html", label: "Ver histórico completo" },
   { className: "hotspot-training-bncc", href: "universidade.html#formacao-raizes", label: "Abrir curso BNCC na Pratica" },
-  { className: "hotspot-training-diagnostic", href: "universidade.html#formacao-raizes", label: "Abrir curso Avaliacao Diagnostica" },
+  { className: "hotspot-training-diagnostic", href: "universidade.html#formacao-raizes", label: "Abrir curso Avaliação Diagnostica" },
   { className: "hotspot-training-saeb", href: "universidade.html#formacao-raizes", label: "Abrir curso SAEB Matematica" },
-  { className: "hotspot-training-hours", href: "universidade.html", label: "Abrir relatorio de formacao" },
+  { className: "hotspot-training-hours", href: "universidade.html", label: "Abrir relatorio de formação" },
   { className: "hotspot-training-certificates", href: "universidade.html#formacao-raizes", label: "Ver certificados" },
-  { className: "hotspot-training-literacy", href: "universidade.html#catalogo", label: "Abrir trilha Alfabetizacao" },
-  { className: "hotspot-training-intervention", href: "universidade.html#formacao-raizes", label: "Abrir curso Intervencao Pedagogica" },
-  { className: "hotspot-training-book", href: "biblioteca.html", label: "Abrir livro Praticas Pedagogicas" },
+  { className: "hotspot-training-literacy", href: "universidade.html#catalogo", label: "Abrir trilha Alfabetização" },
+  { className: "hotspot-training-intervention", href: "universidade.html#formacao-raizes", label: "Abrir curso Intervencao Pedagógica" },
+  { className: "hotspot-training-book", href: "biblioteca.html", label: "Abrir livro Praticas Pedagógicas" },
 ];
 
 const renderHomePresentationHotspots = () =>
@@ -13380,8 +13380,8 @@ const renderEcosystemHome = () => {
       <section class="ecosystem-hero">
         <div class="ecosystem-hero-copy">
           <span>Bem-vindo ao</span>
-          <h1>Ecossistema Raizes e Saberes</h1>
-          <p>Tudo o que voce precisa para ensinar, aprender e transformar a educacao em uma unica jornada.</p>
+          <h1>Ecossistema Raízes e Saberes</h1>
+          <p>Tudo o que voce precisa para ensinar, aprender e transformar a educação em uma única jornada.</p>
           <div class="ecosystem-hero-actions">
             ${ecosystemHomeResources.slice(0, 5).map((item) => `<a class="is-${item.tone}" href="${item.href}">${item.title}</a>`).join("")}
           </div>
@@ -13417,7 +13417,7 @@ const renderEcosystemHome = () => {
           <div class="home-static-map">
             <img
               src="assets/d1cbda35-0da3-4dcc-90c1-44395cebd20c.png"
-              alt="Recursos do Ecossistema, Painel de Formacao, Central de Missoes e Atividades Recentes"
+              alt="Recursos do Ecossistema, Painel de Formação, Central de Missoes e Atividades Recentes"
               loading="eager"
               onerror="this.hidden=true"
             />
@@ -13428,10 +13428,10 @@ const renderEcosystemHome = () => {
         <section class="ecosystem-news">
           ${renderHomeSectionHeader("Novidades e destaques")}
           <div>
-            <a href="universidade.html#formacao-raizes"><strong>Novo curso disponivel!</strong><span>Planejamento por Habilidades</span></a>
-            <a href="avalia.html"><strong>Live hoje as 19h</strong><span>Avaliacao e intervencao</span></a>
+            <a href="universidade.html#formacao-raizes"><strong>Novo curso disponível!</strong><span>Planejamento por Habilidades</span></a>
+            <a href="avalia.html"><strong>Live hoje as 19h</strong><span>Avaliação e intervenção</span></a>
             <a href="jogos.html"><strong>Novo jogo lancado!</strong><span>Organizando a Cesta</span></a>
-            <a href="universidade.html"><strong>Webinar ao vivo</strong><span>BNCC e praticas na sala de aula</span></a>
+            <a href="universidade.html"><strong>Webinar ao vivo</strong><span>BNCC e práticas na sala de aula</span></a>
           </div>
         </section>
       </main>
@@ -13483,7 +13483,7 @@ const renderGamesModule = () => {
     return `
       <section class="official-school-panel official-school-games-page">
         <div class="official-school-section-head">
-          <span>Jogos e Experiencias</span>
+          <span>Jogos e Experiências</span>
           <h2>Escolha sua proxima descoberta</h2>
           <p>Somente os jogos disponiveis para sua turma aparecem aqui.</p>
         </div>
@@ -13495,7 +13495,7 @@ const renderGamesModule = () => {
     return `
       <section class="official-school-panel official-school-games-page">
         <div class="official-school-section-head">
-          <span>Familia / EI</span>
+          <span>Família / EI</span>
           <h2>Jogos disponiveis</h2>
           <p>Somente os jogos liberados para a escola da crianca aparecem aqui.</p>
         </div>
@@ -13513,7 +13513,7 @@ const renderGamesModule = () => {
     : `<span>Escolha um jogo, explore com calma e volte quando quiser.</span>`;
   return `
     <div class="screen-title">
-      <p>Jogos e Experiencias</p>
+      <p>Jogos e Experiências</p>
       <h1>Escolha sua proxima descoberta</h1>
       ${intro}
     </div>
@@ -13524,7 +13524,7 @@ const renderGamesModule = () => {
 const modules = {
   plataforma: {
     title: "Home do Ecossistema",
-    subtitle: "Central de Comando Raizes e Saberes",
+    subtitle: "Central de Comando Raízes e Saberes",
     code: "HOME-ECO-001",
     html: renderEcosystemHome(),
   },
@@ -13536,7 +13536,7 @@ const modules = {
   },
   escolaColetiva: {
     title: "Acesso Escola",
-    subtitle: "Institucional e Comunicacao",
+    subtitle: "Institucional e Comunicação",
     code: "ESCOLA-INSTITUCIONAL-V1",
     get html() {
       return isContentGovernanceRequired() && !isContentGovernanceReady()
@@ -13545,8 +13545,8 @@ const modules = {
     },
   },
   educacaoInfantil: {
-    title: "Area da Escola Infantil",
-    subtitle: "Aba da escola no aluno da Educacao Infantil",
+    title: "Área da Escola Infantil",
+    subtitle: "Aba da escola no aluno da Educação Infantil",
     code: "EDUCACAO-INFANTIL-V1",
     html: renderEarlyChildhoodDashboard(),
   },
@@ -13558,7 +13558,7 @@ const modules = {
   },
   alunoAtividades: {
     title: "Minhas Atividades",
-    subtitle: "Atividades atribuidas ao aluno",
+    subtitle: "Atividades atribuídas ao aluno",
     code: "ALUNO-ATIVIDADES",
     get html() {
       return renderStudentActivitiesPage();
@@ -13571,19 +13571,19 @@ const modules = {
     html: renderStudentOnlineActivityFocus(),
   },
   arvore: {
-    title: "Minha Arvore",
-    subtitle: "Asset 010 - Arvore Viva",
+    title: "Minha Árvore",
+    subtitle: "Asset 010 - Árvore Viva",
     code: "PLAT-V2-006",
     html: renderKnowledgeTreeFull(knowledgeTreeFixtures.growing),
   },
   missao: {
-    title: "Missao do Dia",
+    title: "Missão do Dia",
     subtitle: "Uma nova aventura para aprender brincando",
     code: "PLAT-V2-007",
     html: renderMissionPlayer(missionFixtures.colorMatch001),
   },
   jogos: {
-    title: getCurrentPlatformRole() === "aluno" ? "Jogos e Experiencias" : "Jogar e Descobrir",
+    title: getCurrentPlatformRole() === "aluno" ? "Jogos e Experiências" : "Jogar e Descobrir",
     subtitle: getCurrentPlatformRole() === "aluno" ? "Descobertas para aprender brincando" : "Hub oficial dos jogos digitais",
     code: getCurrentPlatformRole() === "aluno" ? "ALUNO-JOGOS" : "GAME-ENGINE-2.0",
     get html() {
@@ -13617,56 +13617,56 @@ const modules = {
         <div class="screen-title">
           <p>MS-001</p>
           <h1>Biblioteca Viva</h1>
-          <span>Experiencias, livros, videos e atividades organizados para aprender sem se perder.</span>
+          <span>Experiências, livros, vídeos e atividades organizados para aprender sem se perder.</span>
         </div>
         ${renderPremiumLibrary()}
       `;
     },
   },
   universidade: {
-    title: "Universidade Raizes e Saberes",
+    title: "Universidade Raízes e Saberes",
     subtitle: "Catalogo publico de cursos gratuitos",
     code: "MS-008",
     html: `
       <div class="university-catalog-platform" data-course-catalog>
         ${
           getPrintableParams().get("from") === "teacher"
-            ? `<a class="university-teacher-return" href="professor.html?view=formacao">VOLTAR PARA AREA DO PROFESSOR</a>`
+            ? `<a class="university-teacher-return" href="professor.html?view=formacao">VOLTAR PARA ÁREA DO PROFESSOR</a>`
             : ""
         }
         <section class="university-public-hero" id="universidade">
           <div>
-            <span>Universidade Raizes e Saberes</span>
-            <h1>Descubra cursos gratuitos confiaveis para sua formacao profissional.</h1>
+            <span>Universidade Raízes e Saberes</span>
+            <h1>Descubra cursos gratuitos confiaveis para sua formação profissional.</h1>
             <p>Um nucleo publico de curadoria para pesquisar, comparar e acessar cursos gratuitos oferecidos por instituicoes externas.</p>
             <div class="university-hero-actions">
               <a href="#catalogo" data-catalog-section="catalogo">Encontrar cursos gratuitos</a>
-              <a href="#formacao-raizes" data-catalog-section="formacao-raizes">Formacao Raizes e Saberes</a>
+              <a href="#formacao-raizes" data-catalog-section="formacao-raizes">Formação Raízes e Saberes</a>
             </div>
           </div>
           <img src="assets/universidade/banner-principal.webp" alt="" />
         </section>
 
-        <nav class="university-gateway" aria-label="Areas da Universidade">
+        <nav class="university-gateway" aria-label="Áreas da Universidade">
           <a href="#formacao-raizes" data-catalog-section="formacao-raizes">
-            <strong>Formacao Raizes e Saberes</strong>
-            <span>Cursos proprios, trilhas, assessorias, encontros, historico e certificados em preparacao.</span>
+            <strong>Formação Raízes e Saberes</strong>
+            <span>Cursos proprios, trilhas, assessorias, encontros, historico e certificados em preparação.</span>
           </a>
           <a href="#catalogo" data-catalog-section="catalogo" class="is-primary">
             <strong>Encontre Cursos Gratuitos</strong>
-            <span>Catalogo publico com busca, filtros, rankings, comparacao e acesso ao curso na instituicao.</span>
+            <span>Catalogo publico com busca, filtros, rankings, comparação e acesso ao curso na instituição.</span>
           </a>
         </nav>
 
         <section class="university-prep-panel" id="formacao-raizes">
           <div>
-            <span>Area institucional</span>
-            <h2>Formacao Raizes e Saberes</h2>
-            <p>Espaco reservado para o LMS proprio da plataforma: cursos internos, formacao continuada, implantacao das colecoes, assessorias, webinarios, encontros, certificados e historico formativo.</p>
+            <span>Área institucional</span>
+            <h2>Formação Raízes e Saberes</h2>
+            <p>Espaco reservado para o LMS proprio da plataforma: cursos internos, formação continuada, implantação das colecoes, assessorias, webinarios, encontros, certificados e historico formativo.</p>
           </div>
           <ul>
-            <li>Cursos proprios em preparacao</li>
-            <li>Historico e certificados internos futuros</li>
+            <li>Cursos proprios em preparação</li>
+            <li>Histórico e certificados internos futuros</li>
             <li>Sem emissao de certificados nesta fase</li>
           </ul>
         </section>
@@ -13676,7 +13676,7 @@ const modules = {
             <div>
               <span>Motor de descoberta do conhecimento</span>
               <h2>Centros de Conhecimento</h2>
-              <p>Temas preparados para reunir cursos reais selecionados, livros, guias, legislacao, videos, especialistas, eventos e ferramentas em uma unica pagina de assunto.</p>
+              <p>Temas preparados para reunir cursos reais selecionados, livros, guias, legislação, vídeos, especialistas, eventos e ferramentas em uma única página de assunto.</p>
             </div>
           </header>
           <div class="knowledge-category-grid" data-knowledge-categories></div>
@@ -13690,14 +13690,14 @@ const modules = {
             <div>
               <span>Catalogo publico gratuito</span>
               <h2>Encontre cursos gratuitos</h2>
-              <p>Cursos reais selecionados para apresentacao, com curadoria da Raizes e Saberes e acesso ao ambiente oficial da instituicao ofertante.</p>
+              <p>Cursos reais selecionados para apresentação, com curadoria da Raízes e Saberes e acesso ao ambiente oficial da instituição ofertante.</p>
             </div>
           </header>
 
           <div class="catalog-tools">
             <label class="catalog-search">
               <span>Busca</span>
-              <input type="search" data-course-search placeholder="Buscar por curso, tema, instituicao ou publico" />
+              <input type="search" data-course-search placeholder="Buscar por curso, tema, instituição ou público" />
             </label>
             <div class="catalog-sort">
               <span>Ordenar</span>
@@ -13755,7 +13755,7 @@ const modules = {
             </aside>
             <div class="catalog-results">
               <div class="active-filter-row" data-active-course-filters></div>
-              <div class="catalog-result-head"><strong data-course-result-count></strong><span data-course-demo-note>Cursos reais selecionados para apresentacao.</span></div>
+              <div class="catalog-result-head"><strong data-course-result-count></strong><span data-course-demo-note>Cursos reais selecionados para apresentação.</span></div>
               <div class="catalog-loading" data-course-loading aria-hidden="true">
                 <span></span><span></span><span></span>
               </div>
@@ -13769,18 +13769,18 @@ const modules = {
 
         <section class="curation-admin-panel" id="administracao">
           <header>
-            <span>Administracao e curadoria</span>
-            <h2>Estrutura inicial para gestao do catalogo</h2>
+            <span>Administração e curadoria</span>
+            <h2>Estrutura inicial para gestão do catalogo</h2>
           </header>
           <div class="admin-action-grid">
-            <article>Cadastrar instituicao</article>
+            <article>Cadastrar instituição</article>
             <article>Cadastrar e editar curso</article>
             <article>Publicar e despublicar</article>
             <article>Verificar link oficial</article>
             <article>Adicionar categorias e tags</article>
             <article>Destacar ou arquivar curso</article>
             <article>Registrar notas internas</article>
-            <article>Atualizar informacoes verificadas</article>
+            <article>Atualizar informações verificadas</article>
             <article>Validar certificado externo enviado</article>
           </div>
         </section>
@@ -13799,20 +13799,20 @@ const modules = {
   },
   curadoria: {
     title: "Central de Curadoria",
-    subtitle: "Operacao interna da Universidade",
+    subtitle: "Operação interna da Universidade",
     code: "ADM-UNI",
     html: `
       <div class="curation-console">
         <section class="curation-hero" id="dashboard">
           <div>
-            <span>Area administrativa protegida</span>
+            <span>Área administrativa protegida</span>
             <h1>Central de Curadoria da Universidade</h1>
-            <p>Ambiente interno demonstrativo para administrar instituicoes, cursos, Centros de Conhecimento e recursos editoriais da Universidade Raizes e Saberes.</p>
+            <p>Ambiente interno demonstrativo para administrar instituicoes, cursos, Centros de Conhecimento e recursos editoriais da Universidade Raízes e Saberes.</p>
           </div>
           <aside>
-            <strong>Ultima atualizacao</strong>
+            <strong>Última atualização</strong>
             <span>28/07/2026 - 09h40</span>
-            <small>Dados demonstrativos para homologacao operacional.</small>
+            <small>Dados demonstrativos para homologação operacional.</small>
           </aside>
         </section>
 
@@ -13822,31 +13822,31 @@ const modules = {
           <article><span>Centros de Conhecimento</span><strong>18</strong></article>
           <article><span>Materiais</span><strong>342</strong></article>
           <article><span>Livros</span><strong>64</strong></article>
-          <article><span>Videos</span><strong>128</strong></article>
+          <article><span>Vídeos</span><strong>128</strong></article>
           <article><span>Eventos</span><strong>17</strong></article>
           <article><span>Especialistas</span><strong>42</strong></article>
           <article><span>Links pendentes</span><strong>31</strong></article>
-          <article><span>Aguardando revisao</span><strong>46</strong></article>
+          <article><span>Aguardando revisão</span><strong>46</strong></article>
           <article><span>Cursos publicados</span><strong>118</strong></article>
           <article><span>Cursos arquivados</span><strong>22</strong></article>
-          <article><span>Usuarios curadores</span><strong>8</strong></article>
+          <article><span>Usuários curadores</span><strong>8</strong></article>
         </section>
 
         <div class="curation-layout">
           <section class="curation-panel span-2">
-            <header><span>Atividades recentes</span><h2>Historico operacional</h2></header>
+            <header><span>Atividades recentes</span><h2>Histórico operacional</h2></header>
             <div class="curation-activity-list">
               <article><strong>Curso atualizado</strong><span>Mariana Curadora - alterou carga horaria - hoje, 09h12</span></article>
               <article><strong>Link verificado</strong><span>Equipe Editorial - marcou URL como valida - hoje, 08h44</span></article>
-              <article><strong>Centro relacionado</strong><span>Rafael Curador - adicionou curso a Educacao Inclusiva - ontem, 17h20</span></article>
-              <article><strong>Tag mesclada</strong><span>Coord. Curadoria - unificou tags alfabetizacao/letramento - ontem, 15h02</span></article>
+              <article><strong>Centro relacionado</strong><span>Rafael Curador - adicionou curso a Educação Inclusiva - ontem, 17h20</span></article>
+              <article><strong>Tag mesclada</strong><span>Coord. Curadoria - unificou tags alfabetização/letramento - ontem, 15h02</span></article>
             </div>
           </section>
 
           <section class="curation-panel">
             <header><span>Status editorial</span><h2>Fluxo padrao</h2></header>
             <div class="editorial-status-list">
-              <span>Rascunho</span><span>Em revisao</span><span>Aguardando publicacao</span><span>Publicado</span><span>Arquivado</span><span>Link quebrado</span><span>Revisao necessaria</span>
+              <span>Rascunho</span><span>Em revisão</span><span>Aguardando publicação</span><span>Publicado</span><span>Arquivado</span><span>Link quebrado</span><span>Revisão necessaria</span>
             </div>
           </section>
 
@@ -13854,14 +13854,14 @@ const modules = {
             <header><span>Lotes de Curadoria</span><h2>Esteira automatizada controlada pelo Codex</h2></header>
             <div class="batch-runtime-state" data-curation-state role="status">Carregando lote EDU-001...</div>
             <div class="batch-summary-grid" data-batch-summary aria-live="polite">
-              <article><strong>Lote EDU-001</strong><span>Primeiro lote real - Educacao</span><small>25 cursos encontrados · 22 importados · 3 descartados · 0 publicados</small></article>
-              <article><strong>Status</strong><span>Aguardando revisao</span><small>Publicacao bloqueada ate aprovacao da equipe.</small></article>
-              <article><strong>Alertas</strong><span>9 alertas de metadados</span><small>Carga horaria, URL individual ou classificacao exigem revisao.</small></article>
-              <article><strong>Duplicidades</strong><span>1 possivel duplicidade</span><small>Curso similar localizado por titulo e instituicao.</small></article>
+              <article><strong>Lote EDU-001</strong><span>Primeiro lote real - Educação</span><small>25 cursos encontrados · 22 importados · 3 descartados · 0 publicados</small></article>
+              <article><strong>Status</strong><span>Aguardando revisão</span><small>Publicação bloqueada ate aprovação da equipe.</small></article>
+              <article><strong>Alertas</strong><span>9 alertas de metadados</span><small>Carga horaria, URL individual ou classificação exigem revisão.</small></article>
+              <article><strong>Duplicidades</strong><span>1 possivel duplicidade</span><small>Curso similar localizado por titulo e instituição.</small></article>
             </div>
             <div class="batch-toolbar" data-batch-toolbar>
               <label><span>Filtro</span><select data-batch-filter><option value="all">Todos os itens</option><option value="alerts">Somente alertas</option><option value="duplicates">Possivel duplicidade</option><option value="approved">Aprovados</option><option value="published">Publicados</option></select></label>
-              <label><span>Observacao do curador</span><input data-curator-note placeholder="Registrar observacao antes da acao" /></label>
+              <label><span>Observação do curador</span><input data-curator-note placeholder="Registrar observação antes da ação" /></label>
             </div>
             <div class="batch-actions" data-batch-actions>
               <button type="button" data-batch-refresh>Atualizar lote</button>
@@ -13878,56 +13878,56 @@ const modules = {
           <section class="curation-panel span-3" id="instituicoes">
             <header><span>Instituicoes</span><h2>Cadastro completo</h2></header>
             <form class="curation-form">
-              <label><span>Nome</span><input value="Instituto Demonstrativo de Formacao" /></label>
+              <label><span>Nome</span><input value="Instituto Demonstrativo de Formação" /></label>
               <label><span>Sigla</span><input value="IDF" /></label>
-              <label><span>Tipo</span><select><option>Organizacao demonstrativa</option><option>Universidade</option><option>Orgao publico</option></select></label>
+              <label><span>Tipo</span><select><option>Organização demonstrativa</option><option>Universidade</option><option>Orgao publico</option></select></label>
               <label><span>Pais</span><input value="Brasil" /></label>
               <label><span>Estado</span><input value="SP" /></label>
               <label><span>Cidade</span><input value="Sao Paulo" /></label>
               <label><span>Site oficial</span><input value="https://example.org" /></label>
               <label><span>Logotipo</span><input value="logo-demonstrativo.webp" /></label>
-              <label><span>Imagem</span><input value="capa-instituicao-demo.webp" /></label>
+              <label><span>Imagem</span><input value="capa-instituição-demo.webp" /></label>
               <label><span>Contato</span><input value="curadoria@example.org" /></label>
-              <label><span>Status</span><select><option>Ativo</option><option>Em revisao</option><option>Arquivado</option></select></label>
-              <label><span>Ultima verificacao</span><input value="28/07/2026" /></label>
+              <label><span>Status</span><select><option>Ativo</option><option>Em revisão</option><option>Arquivado</option></select></label>
+              <label><span>Última verificação</span><input value="28/07/2026" /></label>
               <label><span>Responsavel</span><input value="Equipe Curadoria" /></label>
-              <label><span>Categorias</span><input value="Educacao, Formacao continuada" /></label>
+              <label><span>Categorias</span><input value="Educação, Formação continuada" /></label>
               <label><span>Tags</span><input value="demo, curso gratuito, professores" /></label>
               <label class="span-2"><span>Descricao</span><textarea>Registro demonstrativo para validar cadastro editorial de instituicoes.</textarea></label>
-              <label><span>Observacoes</span><textarea>Sem conteudo real nesta fase.</textarea></label>
+              <label><span>Observacoes</span><textarea>Sem conteúdo real nesta fase.</textarea></label>
             </form>
           </section>
 
           <section class="curation-panel span-3" id="cursos">
             <header><span>Cursos</span><h2>Formulario editorial</h2></header>
             <form class="curation-form">
-              <label><span>Titulo</span><input value="Avaliacao Formativa na Pratica" /></label>
-              <label><span>Instituicao</span><input value="Instituto Demonstrativo de Formacao" /></label>
+              <label><span>Titulo</span><input value="Avaliação Formativa na Pratica" /></label>
+              <label><span>Instituicao</span><input value="Instituto Demonstrativo de Formação" /></label>
               <label><span>Carga horaria</span><input value="20h" /></label>
-              <label><span>Categoria</span><input value="Praticas pedagogicas" /></label>
-              <label><span>Tema</span><input value="Avaliacao" /></label>
+              <label><span>Categoria</span><input value="Praticas pedagógicas" /></label>
+              <label><span>Tema</span><input value="Avaliação" /></label>
               <label><span>Nivel</span><select><option>Introdutorio</option><option>Intermediario</option><option>Avancado</option></select></label>
               <label><span>Idioma</span><input value="pt-BR" /></label>
               <label><span>Modalidade</span><select><option>Online</option><option>Hibrido</option><option>Presencial</option></select></label>
-              <label><span>Certificado</span><select><option>Disponivel</option><option>Nao informado</option></select></label>
+              <label><span>Certificado</span><select><option>Disponível</option><option>Não informado</option></select></label>
               <label><span>URL oficial</span><input value="https://example.org/curso-demonstrativo" /></label>
               <label><span>Prazo</span><input value="Sem prazo" /></label>
-              <label><span>Status</span><select><option>Em revisao</option><option>Publicado</option><option>Arquivado</option></select></label>
-              <label><span>Tags</span><input value="avaliacao, rubricas, professores" /></label>
-              <label><span>Centro de Conhecimento</span><input value="Avaliacao Formativa" /></label>
+              <label><span>Status</span><select><option>Em revisão</option><option>Publicado</option><option>Arquivado</option></select></label>
+              <label><span>Tags</span><input value="avaliação, rubricas, professores" /></label>
+              <label><span>Centro de Conhecimento</span><input value="Avaliação Formativa" /></label>
               <label><span>Trilhas relacionadas</span><input value="Professor, Coordenador" /></label>
-              <label><span>Ultima revisao</span><input value="28/07/2026" /></label>
+              <label><span>Última revisão</span><input value="28/07/2026" /></label>
               <label class="span-2"><span>Descricao curta</span><textarea>Ficha demonstrativa para validar curadoria editorial de cursos gratuitos.</textarea></label>
-              <label><span>Descricao completa</span><textarea>Conteudo demonstrativo. Curso real sera cadastrado apos verificacao manual.</textarea></label>
+              <label><span>Descricao completa</span><textarea>Conteúdo demonstrativo. Curso real sera cadastrado apos verificação manual.</textarea></label>
               <label><span>Observacoes da Curadoria</span><textarea>Validar link oficial antes de publicar.</textarea></label>
-              <label class="span-3"><span>Historico de alteracoes</span><textarea>28/07/2026 - Criado por Curadoria Demo. 28/07/2026 - Status alterado para Em revisao.</textarea></label>
+              <label class="span-3"><span>Histórico de alteracoes</span><textarea>28/07/2026 - Criado por Curadoria Demo. 28/07/2026 - Status alterado para Em revisão.</textarea></label>
             </form>
           </section>
 
           <section class="curation-panel span-2" id="centros">
             <header><span>Centros de Conhecimento</span><h2>Gerenciamento</h2></header>
             <div class="curation-action-grid">
-              <article>Criar Centro</article><article>Editar Centro</article><article>Arquivar</article><article>Relacionar cursos</article><article>Relacionar materiais</article><article>Relacionar especialistas</article><article>Relacionar legislacao</article><article>Relacionar eventos</article><article>Relacionar trilhas</article>
+              <article>Criar Centro</article><article>Editar Centro</article><article>Arquivar</article><article>Relacionar cursos</article><article>Relacionar materiais</article><article>Relacionar especialistas</article><article>Relacionar legislação</article><article>Relacionar eventos</article><article>Relacionar trilhas</article>
             </div>
           </section>
 
@@ -13944,7 +13944,7 @@ const modules = {
               <article><span>01</span><strong>Resumo</strong><small>20 min - Professor</small></article>
               <article><span>02</span><strong>Livro</strong><small>2h - leitura</small></article>
               <article><span>03</span><strong>Curso</strong><small>20h - online</small></article>
-              <article><span>04</span><strong>Video</strong><small>15 min</small></article>
+              <article><span>04</span><strong>Vídeo</strong><small>15 min</small></article>
               <article><span>05</span><strong>Guia</strong><small>40 min</small></article>
               <article><span>06</span><strong>Conclusao</strong><small>10 min</small></article>
             </div>
@@ -13955,26 +13955,26 @@ const modules = {
             <header><span>Recursos</span><h2>Cadastros preparados</h2></header>
             <div class="resource-admin-grid">
               <article><strong>Materiais</strong><span>PDF, Guia, Cartilha, Modelo, Checklist, Manual, Ferramenta, Link externo</span></article>
-              <article><strong>Legislacao</strong><span>Lei, Decreto, Resolucao, Parecer, Nota Tecnica, Manual</span></article>
+              <article><strong>Legislação</strong><span>Lei, Decreto, Resolução, Parecer, Nota Tecnica, Manual</span></article>
               <article><strong>Livros</strong><span>Titulo, autor, capa, descricao, temas, status</span></article>
-              <article><strong>Videos</strong><span>Titulo, URL, duracao, transcricao futura, status</span></article>
-              <article><strong>Podcasts</strong><span>Episodio, audio, duracao, apresentador, status</span></article>
-              <article><strong>Especialistas</strong><span>Foto, nome, especialidade, instituicao, biografia, links</span></article>
+              <article><strong>Vídeos</strong><span>Titulo, URL, duração, transcricao futura, status</span></article>
+              <article><strong>Podcasts</strong><span>Episodio, audio, duração, apresentador, status</span></article>
+              <article><strong>Especialistas</strong><span>Foto, nome, especialidade, instituição, biografia, links</span></article>
               <article><strong>Eventos</strong><span>Nome, data, formato, inscricao, status, materiais</span></article>
             </div>
           </section>
 
           <section class="curation-panel span-2" id="verificacao">
-            <header><span>Verificacao</span><h2>Conferencia editorial</h2></header>
+            <header><span>Verificação</span><h2>Conferencia editorial</h2></header>
             <div class="verification-table">
-              <article><strong>Curso demonstrativo</strong><span>Link valido</span><small>Responsavel: Marina - proxima revisao 12/08/2026</small></article>
-              <article><strong>Instituicao demonstrativa</strong><span>Revisao necessaria</span><small>Responsavel: Rafael - proxima revisao 05/08/2026</small></article>
-              <article><strong>Material futuro</strong><span>Link pendente</span><small>Responsavel: Equipe - proxima revisao 01/08/2026</small></article>
+              <article><strong>Curso demonstrativo</strong><span>Link valido</span><small>Responsavel: Marina - proxima revisão 12/08/2026</small></article>
+              <article><strong>Instituicao demonstrativa</strong><span>Revisão necessaria</span><small>Responsavel: Rafael - proxima revisão 05/08/2026</small></article>
+              <article><strong>Material futuro</strong><span>Link pendente</span><small>Responsavel: Equipe - proxima revisão 01/08/2026</small></article>
             </div>
           </section>
 
           <section class="curation-panel">
-            <header><span>Auditoria</span><h2>Historico</h2></header>
+            <header><span>Auditoria</span><h2>Histórico</h2></header>
             <div class="audit-list">
               <article><strong>Quem criou</strong><span>Curadoria Demo</span></article>
               <article><strong>Quem alterou</strong><span>Coord. Curadoria</span></article>
@@ -14011,9 +14011,9 @@ const modules = {
             <h2>${activeBook.catalogTitle || activeBook.title}</h2>
             <p>${activeBook.type} &middot; ${activeBook.totalPages} paginas &middot; ${activeBook.collection}</p>
             <div class="reader-meta-grid">
-              <strong>${isStudentReaderView ? "Pagina atual" : "Ultima pagina salva"} <b data-last-page-meta>1</b></strong>
-              <strong>Favorito <b data-favorite-meta>Nao</b></strong>
-              ${isStudentReaderView ? "" : `<strong>XP de leitura <b data-xp-meta>0</b></strong><strong>Historico <b data-history-meta>0 acessos</b></strong>`}
+              <strong>${isStudentReaderView ? "Pagina atual" : "Última página salva"} <b data-last-page-meta>1</b></strong>
+              <strong>Favorito <b data-favorite-meta>Não</b></strong>
+              ${isStudentReaderView ? "" : `<strong>XP de leitura <b data-xp-meta>0</b></strong><strong>Histórico <b data-history-meta>0 acessos</b></strong>`}
             </div>
           </div>
           <button type="button" data-reader-favorite aria-pressed="false">Favoritar</button>
@@ -14033,7 +14033,7 @@ const modules = {
           <section class="book-stage" data-book-stage aria-live="polite">
             <button class="reader-turn previous" type="button" data-prev-page aria-label="Pagina anterior">&lsaquo;</button>
             <figure class="reader-page" data-reader-page style="--zoom: 1">
-              <img data-page-image src="${activeBook.page(1)}" alt="${activeBook.title} pagina 1" loading="eager" />
+              <img data-page-image src="${activeBook.page(1)}" alt="${activeBook.title} página 1" loading="eager" />
               <figcaption class="reader-page-error" data-page-error hidden>
                 <strong>NAO FOI POSSIVEL CARREGAR ESTA PAGINA</strong>
                 <span data-page-error-detail></span>
@@ -14044,7 +14044,7 @@ const modules = {
                 </div>
               </figcaption>
             </figure>
-            <button class="reader-turn next" type="button" data-next-page aria-label="Proxima pagina">&rsaquo;</button>
+            <button class="reader-turn next" type="button" data-next-page aria-label="Próxima página">&rsaquo;</button>
           </section>
 
           <aside class="summary-rail reader-summary" aria-label="Sumario do livro">
@@ -14058,7 +14058,7 @@ const modules = {
             </div>
             ${isStudentReaderView ? "" : `<div class="reader-tool-panel" data-reader-panel="pergunte" hidden>
               <h3>Pergunte ao Livro</h3>
-              <p>Espaco preparado para futura IA com base no conteudo do PDF. Nesta versao, a busca usa metadados, sumario e paginas renderizadas.</p>
+              <p>Espaco preparado para futura IA com base no conteúdo do PDF. Nesta versao, a busca usa metadados, sumario e paginas renderizadas.</p>
               <textarea data-ask-book-input placeholder="Ex.: quais atividades trabalham linguagem oral?"></textarea>
               <button type="button" data-ask-book-button>Preparar pergunta</button>
               <output data-ask-book-output>Integre o motor de IA ao Supabase/Storage para responder com citacoes do PDF.</output>
@@ -14068,7 +14068,7 @@ const modules = {
               <div class="reader-achievement-list">
                 <article><strong>Primeira pagina</strong><span data-achievement-start>Pendente</span></article>
                 <article><strong>Metade do livro</strong><span data-achievement-half>Pendente</span></article>
-                <article><strong>Livro concluido</strong><span data-achievement-finish>Pendente</span></article>
+                <article><strong>Livro concluído</strong><span data-achievement-finish>Pendente</span></article>
               </div>
             </div>`}
           </aside>
@@ -14080,7 +14080,7 @@ const modules = {
           <button type="button" data-zoom-in aria-label="Aumentar zoom">+</button>
           <button type="button" data-prev-page aria-label="Pagina anterior">&lsaquo;</button>
           <strong data-page-label>1 / ${activeBook.totalPages}</strong>
-          <button type="button" data-next-page aria-label="Proxima pagina">&rsaquo;</button>
+          <button type="button" data-next-page aria-label="Próxima página">&rsaquo;</button>
           <button type="button" data-fullscreen-reader aria-label="Tela cheia">[]</button>
         </div>
         ${isStudentReaderView ? "" : `<section class="continue-exploring-panel">
@@ -14089,7 +14089,7 @@ const modules = {
             <h2>${suggestedBook.catalogTitle}</h2>
             <p>${suggestedBook.level} &middot; ${suggestedBook.type}</p>
           </div>
-          <a href="${suggestedBook.href}">Abrir sugestao</a>
+          <a href="${suggestedBook.href}">Abrir sugestão</a>
         </section>`}
         ${
           relatedCourse && !isStudentReaderView
@@ -14127,8 +14127,8 @@ const modules = {
     html: renderTeacherStudentPage(),
   },
   atividades: {
-    title: "Atividades Imprimiveis",
-    subtitle: "Atividades exclusivas para a Educacao Infantil",
+    title: "Atividades Imprimíveis",
+    subtitle: "Atividades exclusivas para a Educação Infantil",
     code: "PRINTABLE-ACTIVITIES-001",
     get html() {
       return renderPrintableActivitiesPage();
@@ -14141,8 +14141,8 @@ const modules = {
     html: renderUniversalActivityMotorPage(),
   },
   adminAtividades: {
-    title: "Admin Atividades Imprimiveis",
-    subtitle: "Conteudos > Atividades Imprimiveis",
+    title: "Admin Atividades Imprimíveis",
+    subtitle: "Conteúdos > Atividades Imprimíveis",
     code: "PRINTABLE-ACTIVITIES-ADMIN",
     get html() {
       return renderPrintableActivitiesPage({ admin: true });
@@ -14150,11 +14150,11 @@ const modules = {
   },
   avalia: {
     title: "Avalia+",
-    subtitle: "Inteligencia em avaliacao",
+    subtitle: "Inteligência em avaliação",
     code: "MS-004",
     html: `
-      <div class="dashboard-head blue"><div><p>MS-004</p><h1>AVALIA+</h1><span>Inteligencia em avaliacao</span></div></div>
-      <div class="metric-row"><article>Participacoes<strong>18.742</strong><span>95,4%</span></article><article>Desempenho Medio<strong>72,6%</strong><span>▲ 6,3 p.p.</span></article><article>Acertos<strong>16.842</strong><span>▲ 8,7%</span></article><article>Aprendizado Adequado<strong>68,4%</strong><span>▲ 7,1 p.p.</span></article><article>Atencao Especial<strong>24,8%</strong><span>▼ 3,2 p.p.</span></article><article>Critico<strong>6,8%</strong><span>▼ 3,9 p.p.</span></article></div>
+      <div class="dashboard-head blue"><div><p>MS-004</p><h1>AVALIA+</h1><span>Inteligência em avaliação</span></div></div>
+      <div class="metric-row"><article>Participações<strong>18.742</strong><span>95,4%</span></article><article>Desempenho Médio<strong>72,6%</strong><span>▲ 6,3 p.p.</span></article><article>Acertos<strong>16.842</strong><span>▲ 8,7%</span></article><article>Aprendizado Adequado<strong>68,4%</strong><span>▲ 7,1 p.p.</span></article><article>Atenção Especial<strong>24,8%</strong><span>▼ 3,2 p.p.</span></article><article>Critico<strong>6,8%</strong><span>▼ 3,9 p.p.</span></article></div>
       <div class="analytics-grid">
         <section class="panel span-2"><h2>Evolucao da Aprendizagem</h2><div class="line-chart blue-line"></div></section>
         <section class="panel span-2 digital-results-panel" data-digital-results>
@@ -14162,35 +14162,35 @@ const modules = {
           <div class="digital-results-grid" data-digital-results-grid></div>
           <div class="digital-results-detail" data-digital-results-detail></div>
         </section>
-        <section class="panel"><h2>Desempenho por Disciplina</h2><div class="bar-list blue-bars"><p>Lingua Portuguesa<i style="--value:78%"></i></p><p>Matematica<i style="--value:71%"></i></p><p>Ciencias<i style="--value:69%"></i></p><p>Historia<i style="--value:66%"></i></p><p>Geografia<i style="--value:65%"></i></p></div></section>
+        <section class="panel"><h2>Desempenho por Disciplina</h2><div class="bar-list blue-bars"><p>Lingua Portuguesa<i style="--value:78%"></i></p><p>Matematica<i style="--value:71%"></i></p><p>Ciências<i style="--value:69%"></i></p><p>Historia<i style="--value:66%"></i></p><p>Geografia<i style="--value:65%"></i></p></div></section>
         <section class="panel chart-card"><h2>Niveis de Aprendizagem</h2><div class="donut">18.742</div><ul class="legend"><li>Adequado 68,4%</li><li>Basico 24,8%</li><li>Critico 6,8%</li></ul></section>
-        <section class="panel span-2"><h2>Diagnosticos</h2><table><tr><td>EF04LP01</td><td>82,1%</td><td>Adequado</td></tr><tr><td>EF04MA05</td><td>71,4%</td><td>Basico</td></tr><tr><td>EF04CI03</td><td>68,7%</td><td>Basico</td></tr></table></section>
-        <section class="panel"><h2>Atividades Recentes</h2><ul class="clean-list"><li>Avaliacao de Matematica</li><li>Diagnostico de Leitura</li><li>Avaliacao de Ciencias</li></ul></section>
+        <section class="panel span-2"><h2>Diagnósticos</h2><table><tr><td>EF04LP01</td><td>82,1%</td><td>Adequado</td></tr><tr><td>EF04MA05</td><td>71,4%</td><td>Basico</td></tr><tr><td>EF04CI03</td><td>68,7%</td><td>Basico</td></tr></table></section>
+        <section class="panel"><h2>Atividades Recentes</h2><ul class="clean-list"><li>Avaliação de Matematica</li><li>Diagnóstico de Leitura</li><li>Avaliação de Ciências</li></ul></section>
       </div>
     `,
   },
   bancoQuestoes: {
-    title: "Banco de Questoes",
-    subtitle: "Banco inteligente de questoes, atividades e avaliacoes",
+    title: "Banco de Questões",
+    subtitle: "Banco inteligente de questoes, atividades e avaliações",
     code: "MS-004-BQ",
     html: `
       <div class="dashboard-head blue">
         <div>
           <p>MS-004-BQ</p>
-          <h1>Banco Inteligente de Questoes</h1>
+          <h1>Banco Inteligente de Questões</h1>
           <span>Itens autorais, adaptados e oficiais com origem, licenca, curadoria e historico de uso.</span>
         </div>
       </div>
       <section class="question-bank" data-question-bank>
         <div class="qb-notice" role="note">
-          <strong>Regra de publicacao</strong>
-          <span>Nenhum conteudo externo e publicado automaticamente. Materiais sem licenca aberta ficam bloqueados ou servem apenas como referencia pedagogica para itens novos e autorais.</span>
+          <strong>Regra de publicação</strong>
+          <span>Nenhum conteúdo externo e publicado automaticamente. Materiais sem licenca aberta ficam bloqueados ou servem apenas como referencia pedagógica para itens novos e autorais.</span>
         </div>
         <div class="metric-row qb-metrics">
           <article>Itens demonstrativos<strong data-qb-total>0</strong><span>Base ficticia autoral</span></article>
           <article>Publicados<strong data-qb-published>0</strong><span>Com curadoria concluida</span></article>
-          <article>Em revisao<strong data-qb-review>0</strong><span>Sem publicacao automatica</span></article>
-          <article>No carrinho<strong data-qb-cart-count>0</strong><span>Avaliacao em montagem</span></article>
+          <article>Em revisão<strong data-qb-review>0</strong><span>Sem publicação automatica</span></article>
+          <article>No carrinho<strong data-qb-cart-count>0</strong><span>Avaliação em montagem</span></article>
         </div>
         <div class="qb-layout">
           <aside class="panel qb-filters" aria-label="Filtros do banco de questoes">
@@ -14208,7 +14208,7 @@ const modules = {
             <label><span>Tipo de questao</span><select data-qb-filter="type"><option value="">Todos</option></select></label>
             <label><span>Recurso utilizado</span><select data-qb-filter="resource"><option value="">Todos</option></select></label>
             <label><span>Origem</span><select data-qb-filter="originType"><option value="">Todas</option></select></label>
-            <label><span>Status de revisao</span><select data-qb-filter="curationStatus"><option value="">Todos</option></select></label>
+            <label><span>Status de revisão</span><select data-qb-filter="curationStatus"><option value="">Todos</option></select></label>
             <label><span>Acessibilidade</span><select data-qb-filter="accessibility"><option value="">Todas</option></select></label>
             <label><span>Uso</span><select data-qb-used><option value="">Todas</option><option value="used">Ja utilizadas</option><option value="unused">Ineditas para a turma</option></select></label>
           </aside>
@@ -14216,7 +14216,7 @@ const modules = {
             <div class="qb-toolbar">
               <div><strong data-qb-result-count>0 itens</strong><span>Filtros combinaveis e resposta local rapida.</span></div>
               <select data-qb-sort aria-label="Ordenar questoes">
-                <option value="recent">Ultima revisao</option>
+                <option value="recent">Última revisão</option>
                 <option value="difficulty">Dificuldade</option>
                 <option value="skill">Habilidade</option>
                 <option value="year">Ano</option>
@@ -14225,30 +14225,30 @@ const modules = {
               </select>
             </div>
             <div class="qb-state" data-qb-loading>Carregando banco demonstrativo...</div>
-            <div class="qb-state error" data-qb-error hidden>Nao foi possivel carregar os itens demonstrativos.</div>
+            <div class="qb-state error" data-qb-error hidden>Não foi possível carregar os itens demonstrativos.</div>
             <div class="qb-grid" data-qb-grid></div>
             <div class="qb-state" data-qb-empty hidden>Nenhuma questao encontrada com os filtros atuais.</div>
             <section class="panel qb-detail" data-qb-detail aria-live="polite"></section>
             <section class="panel qb-builder">
-              <div class="panel-head"><h2>Construtor de Avaliacoes</h2><button type="button" data-qb-save-draft>Salvar rascunho</button></div>
+              <div class="panel-head"><h2>Construtor de Avaliações</h2><button type="button" data-qb-save-draft>Salvar rascunho</button></div>
               <div class="qb-builder-grid">
-                <label><span>Titulo</span><input data-qb-assessment-title value="Avaliacao diagnostica demonstrativa" /></label>
+                <label><span>Titulo</span><input data-qb-assessment-title value="Avaliação diagnóstica demonstrativa" /></label>
                 <label><span>Turma</span><select><option>2o Ano A</option><option>5o Ano B</option></select></label>
                 <label><span>Componente curricular</span><select data-qb-assessment-component><option>Lingua Portuguesa</option><option>Matematica</option></select></label>
                 <label><span>Ano escolar</span><select data-qb-assessment-year><option>2o ano</option><option>5o ano</option></select></label>
-                <label><span>Data de aplicacao</span><input type="date" value="2026-08-05" /></label>
-                <label><span>Capa</span><select><option>Raizes e Saberes - padrao</option><option>Sem capa</option></select></label>
+                <label><span>Data de aplicação</span><input type="date" value="2026-08-05" /></label>
+                <label><span>Capa</span><select><option>Raízes e Saberes - padrao</option><option>Sem capa</option></select></label>
                 <label class="span-2"><span>Orientacoes</span><textarea>Leia com atencao e marque apenas uma alternativa por questao.</textarea></label>
-                <label><span>Inicio digital</span><input type="datetime-local" data-qb-available-from /></label>
+                <label><span>Início digital</span><input type="datetime-local" data-qb-available-from /></label>
                 <label><span>Prazo final</span><input type="datetime-local" data-qb-due-at /></label>
                 <label><span>Tempo limite</span><input type="number" min="5" step="5" value="50" data-qb-time-limit /></label>
                 <label><span>Tentativas</span><input type="number" min="1" step="1" value="1" data-qb-max-attempts /></label>
-                <label><span>Resultado</span><select data-qb-result-mode><option value="immediate">Imediato</option><option value="score_only">Somente nota</option><option value="after_due">Apos o prazo</option><option value="manual">Liberacao manual</option><option value="hidden">Oculto</option></select></label>
-                <label><span>Embaralhar</span><select data-qb-shuffle><option value="none">Nao embaralhar</option><option value="questions">Questoes</option><option value="all">Questoes e alternativas</option></select></label>
+                <label><span>Resultado</span><select data-qb-result-mode><option value="immediate">Imediato</option><option value="score_only">Somente nota</option><option value="after_due">Apos o prazo</option><option value="manual">Liberação manual</option><option value="hidden">Oculto</option></select></label>
+                <label><span>Embaralhar</span><select data-qb-shuffle><option value="none">Não embaralhar</option><option value="questions">Questões</option><option value="all">Questões e alternativas</option></select></label>
               </div>
               <div class="qb-builder-actions">
-                <button type="button" data-qb-preview-local>Previa rapida - nao salva</button>
-                <button type="button" data-qb-preview="student">Pre-visualizar avaliacao</button>
+                <button type="button" data-qb-preview-local>Prévia rapida - nao salva</button>
+                <button type="button" data-qb-preview="student">Pre-visualizar avaliação</button>
                 <button type="button" data-qb-preview="teacher">Visualizar gabarito do professor</button>
                 <button type="button">Duplicar</button>
                 <button type="button">Gerar versoes</button>
@@ -14257,7 +14257,7 @@ const modules = {
               </div>
             </section>
             <section class="panel qb-saved">
-              <div class="panel-head"><h2>Avaliacoes salvas</h2><a href="#avaliacoes">Ver historico</a></div>
+              <div class="panel-head"><h2>Avaliações salvas</h2><a href="#avaliacoes">Ver histórico</a></div>
               <div data-qb-saved></div>
             </section>
             <section class="panel qb-access">
@@ -14265,13 +14265,13 @@ const modules = {
               <div data-qb-access></div>
             </section>
           </main>
-          <aside class="panel qb-cart" aria-label="Carrinho da avaliacao">
-            <div class="panel-head"><h2>Avaliacao</h2><button type="button" data-qb-clear-cart>Limpar</button></div>
+          <aside class="panel qb-cart" aria-label="Carrinho da avaliação">
+            <div class="panel-head"><h2>Avaliação</h2><button type="button" data-qb-clear-cart>Limpar</button></div>
             <div class="qb-selection-status" data-qb-selection-status aria-live="polite"></div>
             <div class="qb-cart-list" data-qb-cart-list></div>
             <div class="qb-cart-summary"><strong data-qb-cart-time>0 min</strong><span>tempo estimado</span></div>
             <div class="qb-preview" data-qb-preview-panel hidden></div>
-            <button type="button" class="qb-primary-action" data-qb-generate>Gerar avaliacao</button>
+            <button type="button" class="qb-primary-action" data-qb-generate>Gerar avaliação</button>
           </aside>
         </div>
       </section>
@@ -14279,11 +14279,11 @@ const modules = {
   },
   secretaria: {
     title: "Secretaria Municipal",
-    subtitle: "Gestao institucional",
+    subtitle: "Gestão institucional",
     code: "",
     html: `
       <section class="secretaria-v1" data-secretaria-v1>
-        <div class="dashboard-head"><div><h1>Secretaria</h1><span>Gestao institucional</span></div><button type="button" data-platform-logout>SAIR</button></div>
+        <div class="dashboard-head"><div><h1>Secretaria</h1><span>Gestão institucional</span></div><button type="button" data-platform-logout>SAIR</button></div>
         <section class="panel"><h2>Carregando Secretaria</h2><p>Consultando dados institucionais.</p></section>
       </section>
     `,
@@ -14294,19 +14294,19 @@ const modules = {
     code: "MS-006",
     html: `
       <div class="dashboard-head"><div><p>MS-006</p><h1>Painel do Gestor Escolar</h1><span>Escola Municipal Joao da Silva</span></div></div>
-      <div class="metric-row"><article>Estudantes<strong>582</strong><span>Ativos</span></article><article>Turmas<strong>23</strong><span>Ativas</span></article><article>Professores<strong>41</strong><span>Ativos</span></article><article>Desempenho Medio<strong>72,6%</strong><span>▲ 6,3 p.p.</span></article><article>Frequencia Media<strong>94,1%</strong><span>▲ 2,4 p.p.</span></article><article>Avalia+ Participacao<strong>92,3%</strong><span>▲ 4,1 p.p.</span></article></div>
+      <div class="metric-row"><article>Estudantes<strong>582</strong><span>Ativos</span></article><article>Turmas<strong>23</strong><span>Ativas</span></article><article>Professores<strong>41</strong><span>Ativos</span></article><article>Desempenho Médio<strong>72,6%</strong><span>▲ 6,3 p.p.</span></article><article>Frequência Media<strong>94,1%</strong><span>▲ 2,4 p.p.</span></article><article>Avalia+ Participação<strong>92,3%</strong><span>▲ 4,1 p.p.</span></article></div>
       <div class="analytics-grid">
         <section class="panel"><h2>Desempenho por Etapa</h2><div class="column-chart"></div></section>
         <section class="panel"><h2>Desempenho por Turma</h2><div class="bar-list"><p>6º Ano A<i style="--value:76%"></i></p><p>6º Ano B<i style="--value:72%"></i></p><p>7º Ano A<i style="--value:69%"></i></p><p>8º Ano A<i style="--value:74%"></i></p></div></section>
-        <section class="panel chart-card"><h2>Frequencia por Turma</h2><div class="donut">94,1%</div></section>
-        <section class="panel"><h2>Alertas Pedagogicos</h2><ul class="clean-list"><li>5 turmas com desempenho abaixo de 60%</li><li>12 estudantes com baixa frequencia</li><li>3 atividades atrasadas</li></ul></section>
+        <section class="panel chart-card"><h2>Frequência por Turma</h2><div class="donut">94,1%</div></section>
+        <section class="panel"><h2>Alertas Pedagógicos</h2><ul class="clean-list"><li>5 turmas com desempenho abaixo de 60%</li><li>12 estudantes com baixa frequência</li><li>3 atividades atrasadas</li></ul></section>
         <section class="panel span-2"><h2>Biblioteca Digital</h2><div class="book-strip small"><img src="assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg" alt="" /><img src="assets/biblioteca/RAIZES_INFANTIL4_VOL2_BIBLIOTECA.jpg" alt="" /><img src="assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.jpg" alt="" /></div></section>
-        <section class="panel"><h2>Atalhos Rapidos</h2><div class="shortcut-grid"><button>Lancar Frequencia</button><button>Registrar Atividade</button><button>Plano de Aula</button><button>Relatorios</button></div></section>
+        <section class="panel"><h2>Atalhos Rapidos</h2><div class="shortcut-grid"><button>Lancar Frequência</button><button>Registrar Atividade</button><button>Plano de Aula</button><button>Relatórios</button></div></section>
       </div>
     `,
   },
   familia: {
-    title: "Painel da Familia",
+    title: "Painel da Família",
     subtitle: "Acompanhe a jornada escolar dos seus filhos",
     code: "MS-007",
     get html() {
@@ -14324,25 +14324,25 @@ const environments = {
     avatar: "assets/universidade/avatar-ana-carolina.webp",
     profileImage: "logo-sidebar-dark.png",
     nav: [
-      ["plataforma", "Inicio", "plataforma.html"],
+      ["plataforma", "Início", "plataforma.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
       ["universidade", "Universidade", "universidade.html"],
       ["jogos", "Jogos Educativos", "jogos.html"],
       ["avalia", "Avalia+", "avalia.html"],
-      ["bancoQuestoes", "Banco de Questoes", "banco-questoes.html"],
+      ["bancoQuestoes", "Banco de Questões", "banco-questoes.html"],
       ["professor", "Professor", "professor.html"],
-      ["atividades", "Atividades Imprimiveis", "atividades.html"],
+      ["atividades", "Atividades Imprimíveis", "atividades.html"],
       ["aluno", "Aluno Fundamental", "aluno.html"],
       ["escolaColetiva", "Escola", "escola.html"],
-      ["educacaoInfantil", "Area da Escola Infantil", "educacao-infantil.html"],
+      ["educacaoInfantil", "Área da Escola Infantil", "educacao-infantil.html"],
       ["familia", "Aluno Infantil", "familia.html"],
       ["secretaria", "Secretaria", "secretaria.html"],
       ["gestor", "Gestor", "gestor.html"],
-      ["arvore", "Minha Arvore", "arvore.html"],
-      ["missao", "Missao do Dia", "missao.html"],
+      ["arvore", "Minha Árvore", "arvore.html"],
+      ["missao", "Missão do Dia", "missao.html"],
     ],
     mobile: [
-      ["plataforma", "Inicio", "plataforma.html"],
+      ["plataforma", "Início", "plataforma.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
       ["universidade", "Universidade", "universidade.html"],
       ["jogos", "Jogos", "jogos.html"],
@@ -14379,13 +14379,13 @@ const environments = {
   },
   educacaoInfantil: {
     label: "Aluno Infantil",
-    profile: "Educacao Infantil",
+    profile: "Educação Infantil",
     search: "Buscar jogos, livros e atividades...",
     user: "Aluno Infantil",
     avatar: "assets/aluno/oficial-avatar-aluno.png",
     profileImage: "logo-sidebar-dark.png",
     nav: [
-      ["educacaoInfantil", "Inicio", "educacao-infantil.html"],
+      ["educacaoInfantil", "Início", "educacao-infantil.html"],
       ["site", "Site", "index.html"],
       ["jogos", "Jogos", "jogos.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
@@ -14394,7 +14394,7 @@ const environments = {
       ["logout", "Sair", "#"],
     ],
     mobile: [
-      ["educacaoInfantil", "Inicio", "educacao-infantil.html"],
+      ["educacaoInfantil", "Início", "educacao-infantil.html"],
       ["site", "Site", "index.html"],
       ["jogos", "Jogos", "jogos.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
@@ -14430,33 +14430,33 @@ const environments = {
       ["viewer", "Book Viewer", "book-viewer.html"],
       ["recentes", "Livros Recentes", "#"],
       ["favoritos", "Favoritos", "#"],
-      ["colecoes", "Colecoes", "#"],
+      ["colecoes", "Coleções", "#"],
     ],
     mobile: [
       ["biblioteca", "Biblioteca", "biblioteca.html"],
       ["viewer", "Livro", "book-viewer.html"],
       ["recentes", "Recentes", "#"],
       ["favoritos", "Favoritos", "#"],
-      ["colecoes", "Colecoes", "#"],
+      ["colecoes", "Coleções", "#"],
     ],
   },
   universidade: {
     label: "Universidade",
-    profile: "Formacao que Transforma",
+    profile: "Formação que Transforma",
     search: "Buscar cursos, trilhas, temas...",
-    user: "Professor<br />Formacao",
+    user: "Professor<br />Formação",
     avatar: "assets/universidade/avatar-ana-carolina.webp",
     profileImage: "logo-sidebar-dark.png",
     nav: [
-      ["heading", "Formacao Raizes e Saberes", "#"],
-      ["universidade", "Inicio", "universidade.html#formacao-raizes"],
+      ["heading", "Formação Raízes e Saberes", "#"],
+      ["universidade", "Início", "universidade.html#formacao-raizes"],
       ["trilhas", "Trilhas de Aprendizagem", "#formacao-raizes"],
       ["cursos", "Meus Cursos", "#formacao-raizes"],
       ["certificados", "Certificados", "#formacao-raizes"],
-      ["videoaulas", "Videoaulas", "#formacao-raizes"],
-      ["avaliacoes", "Avaliacoes", "#formacao-raizes"],
+      ["videoaulas", "Vídeoaulas", "#formacao-raizes"],
+      ["avaliacoes", "Avaliações", "#formacao-raizes"],
       ["eventos", "Eventos", "#formacao-raizes"],
-      ["historico", "Historico Formativo", "#formacao-raizes"],
+      ["historico", "Histórico Formativo", "#formacao-raizes"],
       ["centros", "Centros de Conhecimento", "#centros-conhecimento"],
       ["heading", "Catalogo Gratuito", "#"],
       ["encontrar", "Encontrar Cursos", "#catalogo"],
@@ -14467,7 +14467,7 @@ const environments = {
       ["acessados", "Cursos Acessados", "#catalogo"],
     ],
     mobile: [
-      ["universidade", "Inicio", "universidade.html"],
+      ["universidade", "Início", "universidade.html"],
       ["trilhas", "Trilhas", "#"],
       ["cursos", "Meus Cursos", "#"],
       ["certificados", "Certificados", "#"],
@@ -14476,13 +14476,13 @@ const environments = {
   },
   curadoria: {
     label: "Central de Curadoria",
-    profile: "Administracao da Universidade",
-    search: "Buscar conteudos, cursos, instituicoes, logs...",
+    profile: "Administração da Universidade",
+    search: "Buscar conteúdos, cursos, instituicoes, logs...",
     user: "Equipe Curadoria<br />Acesso administrativo",
     profileImage: "logo-sidebar-dark.png",
     nav: [
       ["curadoria", "Dashboard", "curadoria.html#dashboard"],
-      ["adminAtividades", "Conteudos > Atividades Imprimiveis", "admin-atividades.html"],
+      ["adminAtividades", "Conteúdos > Atividades Imprimíveis", "admin-atividades.html"],
       ["lotes", "Lotes de Curadoria", "#lotes"],
       ["instituicoes", "Instituicoes", "#instituicoes"],
       ["cursos", "Cursos", "#cursos"],
@@ -14491,66 +14491,66 @@ const environments = {
       ["tags", "Tags", "#tags"],
       ["trilhas", "Trilhas", "#trilhas"],
       ["materiais", "Materiais", "#recursos"],
-      ["legislacao", "Legislacao", "#recursos"],
+      ["legislação", "Legislação", "#recursos"],
       ["livros", "Livros", "#recursos"],
-      ["videos", "Videos", "#recursos"],
+      ["vídeos", "Vídeos", "#recursos"],
       ["podcasts", "Podcasts", "#recursos"],
       ["eventos", "Eventos", "#recursos"],
       ["especialistas", "Especialistas", "#recursos"],
-      ["usuarios", "Usuarios", "#dashboard"],
-      ["relatorios", "Relatorios", "#dashboard"],
-      ["configuracoes", "Configuracoes", "#dashboard"],
-      ["logs", "Logs", "#verificacao"],
+      ["usuarios", "Usuários", "#dashboard"],
+      ["relatórios", "Relatórios", "#dashboard"],
+      ["configuracoes", "Configurações", "#dashboard"],
+      ["logs", "Logs", "#verificação"],
     ],
     mobile: [
       ["curadoria", "Dashboard", "curadoria.html"],
       ["instituicoes", "Instituicoes", "#instituicoes"],
       ["cursos", "Cursos", "#cursos"],
       ["centros", "Centros", "#centros"],
-      ["logs", "Logs", "#verificacao"],
+      ["logs", "Logs", "#verificação"],
     ],
   },
   professor: {
-    label: "Workspace Pedagogico",
+    label: "Workspace Pedagógico",
     profile: "Ambiente do Professor",
-    search: "Buscar no workspace pedagogico...",
+    search: "Buscar no workspace pedagógico...",
     user: "Professora Helena<br />Ver perfil",
     nav: [
-      ["professor", "Inicio", "professor.html"],
+      ["professor", "Início", "professor.html"],
       ["turmas", "Minhas Turmas", "professor-turma.html"],
       ["planejamentos", "Planejamento", "professor.html"],
-      ["atividades", "Atividades Imprimiveis", "atividades.html"],
+      ["atividades", "Atividades Imprimíveis", "atividades.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
       ["alunos", "Acompanhamento", "professor-aluno.html?id=pedro"],
-      ["universidade", "Formacao", "universidade.html"],
+      ["universidade", "Formação", "universidade.html"],
     ],
     mobile: [
-      ["professor", "Inicio", "professor.html"],
+      ["professor", "Início", "professor.html"],
       ["turmas", "Turmas", "professor-turma.html"],
       ["atividades", "Atividades", "atividades.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
-      ["universidade", "Formacao", "universidade.html"],
+      ["universidade", "Formação", "universidade.html"],
     ],
   },
   avalia: {
     label: "Avalia+",
-    profile: "Inteligencia em Avaliacao",
-    search: "Buscar diagnosticos, disciplinas, turmas...",
+    profile: "Inteligência em Avaliação",
+    search: "Buscar diagnósticos, disciplinas, turmas...",
     user: "Professora Helena<br />Ver perfil",
     nav: [
-      ["avalia", "Visao Geral", "avalia.html"],
-      ["diagnosticos", "Diagnosticos", "#"],
-      ["evolucao", "Evolucao", "#"],
+      ["avalia", "Visão Geral", "avalia.html"],
+      ["diagnósticos", "Diagnósticos", "#"],
+      ["evolucao", "Evolução", "#"],
       ["comparativos", "Comparativos", "#"],
       ["turmas", "Turmas", "#"],
       ["escolas", "Escolas", "#"],
       ["disciplinas", "Disciplinas", "#"],
-      ["relatorios", "Relatorios", "#"],
-      ["bancoQuestoes", "Banco de Questoes", "banco-questoes.html"],
+      ["relatórios", "Relatórios", "#"],
+      ["bancoQuestoes", "Banco de Questões", "banco-questoes.html"],
     ],
     mobile: [
-      ["avalia", "Inicio", "avalia.html"],
-      ["diagnosticos", "Diagnosticos", "#"],
+      ["avalia", "Início", "avalia.html"],
+      ["diagnósticos", "Diagnósticos", "#"],
       ["turmas", "Turmas", "#"],
       ["bancoQuestoes", "Banco", "banco-questoes.html"],
       ["mais", "Mais", "#"],
@@ -14558,7 +14558,7 @@ const environments = {
   },
   secretaria: {
     label: "Secretaria Municipal",
-    profile: "Operacao Institucional",
+    profile: "Operação Institucional",
     search: "Buscar alunos, matriculas, responsaveis e turmas...",
     user: "Secretaria<br />Perfil autorizado",
     nav: secretariaOfficialModules,
@@ -14570,33 +14570,33 @@ const environments = {
     search: "Buscar alunos, professores, turmas...",
     user: "Carlos Oliveira<br />Gestor Escolar",
     nav: [
-      ["gestor", "Visao Geral", "gestor.html"],
+      ["gestor", "Visão Geral", "gestor.html"],
       ["turmas", "Turmas", "#"],
       ["desempenho", "Desempenho", "#"],
-      ["frequencia", "Frequencia", "#"],
+      ["frequencia", "Frequência", "#"],
       ["avalia", "Avalia+", "avalia.html"],
       ["professores", "Professores", "#"],
       ["alunos", "Alunos", "#"],
       ["planejamento", "Planejamento", "#"],
       ["comunicados", "Comunicados", "#"],
       ["agenda", "Agenda", "#"],
-      ["relatorios", "Relatorios", "#"],
+      ["relatórios", "Relatórios", "#"],
     ],
     mobile: [
-      ["gestor", "Inicio", "gestor.html"],
+      ["gestor", "Início", "gestor.html"],
       ["turmas", "Turmas", "#"],
       ["desempenho", "Desempenho", "#"],
-      ["relatorios", "Relatorios", "#"],
+      ["relatórios", "Relatórios", "#"],
       ["mais", "Mais", "#"],
     ],
   },
   familia: {
-    label: "Aluno Educacao Infantil",
+    label: "Aluno Educação Infantil",
     profile: "Acompanhamento infantil",
     search: "Buscar recados, atividades e agenda...",
-    user: "Familia do Pedro<br />Responsavel",
+    user: "Família do Pedro<br />Responsavel",
     nav: [
-      ["familia", "Inicio", "familia.html"],
+      ["familia", "Início", "familia.html"],
       ["atividades", "Atividades", "familia.html?view=atividades"],
       ["agenda", "Agenda", "familia.html?view=agenda"],
       ["acompanhamento", "Acompanhamento", "familia.html?view=acompanhamento"],
@@ -14604,7 +14604,7 @@ const environments = {
       ["logout", "Sair", "#"],
     ],
     mobile: [
-      ["familia", "Inicio", "familia.html"],
+      ["familia", "Início", "familia.html"],
       ["atividades", "Atividades", "familia.html?view=atividades"],
       ["agenda", "Agenda", "familia.html?view=agenda"],
       ["acompanhamento", "Acomp.", "familia.html?view=acompanhamento"],
@@ -14730,7 +14730,7 @@ const initBookReader = () => {
       favoriteButton.classList.toggle("is-active", isFavorite);
     }
     if (favoriteMeta) {
-      favoriteMeta.textContent = isFavorite ? "Sim" : "Nao";
+      favoriteMeta.textContent = isFavorite ? "Sim" : "Não";
     }
   };
   const toggleFavorite = () => {
@@ -14761,8 +14761,8 @@ const initBookReader = () => {
     const button = document.createElement("button");
     button.type = "button";
     button.dataset.gotoPage = String(currentPage);
-    button.setAttribute("aria-label", `Abrir pagina ${currentPage}`);
-    button.innerHTML = `<img src="${book.thumb(currentPage)}" alt="Miniatura da pagina ${currentPage}" loading="lazy" /><span>${currentPage}</span>`;
+    button.setAttribute("aria-label", `Abrir página ${currentPage}`);
+    button.innerHTML = `<img src="${book.thumb(currentPage)}" alt="Miniatura da página ${currentPage}" loading="lazy" /><span>${currentPage}</span>`;
     pageTemplate.appendChild(button);
   }
   thumbnailList.appendChild(pageTemplate);
@@ -14833,7 +14833,7 @@ const initBookReader = () => {
     image.classList.add("is-loading");
     image.hidden = false;
     image.src = pageAssetPath;
-    image.alt = `${book.title} pagina ${page}`;
+    image.alt = `${book.title} página ${page}`;
 
     const progress = Math.round((page / book.totalPages) * 100);
     pageLabel.textContent = `${page} / ${book.totalPages}`;
@@ -15002,7 +15002,7 @@ const initBookReader = () => {
 
   image.addEventListener("error", () => {
     const failedPath = image.getAttribute("src") || "";
-    console.error("Erro ao carregar pagina do livro", {
+    console.error("Erro ao carregar página do livro", {
       bookId: book.id,
       page,
       assetPath: failedPath,
@@ -15015,7 +15015,7 @@ const initBookReader = () => {
       pageError.hidden = false;
     }
     if (pageErrorDetail) {
-      pageErrorDetail.textContent = `${book.id} - pagina ${page}`;
+      pageErrorDetail.textContent = `${book.id} - página ${page}`;
     }
   });
 
@@ -15089,7 +15089,7 @@ const initLibraryExperiences = () => {
     button.addEventListener("click", () => {
       const code = button.dataset.openExperience;
       if (!window.RSGameEngine?.openExperience) {
-        console.warn("Player de experiencias indisponivel.", { code });
+        console.warn("Player de experiências indisponivel.", { code });
         return;
       }
       window.RSGameEngine.openExperience(code);
@@ -15202,8 +15202,8 @@ const initPremiumLibrary = () => {
 
   const syncCardProgress = (record) => {
     const status = record.status === "completed" ? "completed" : record.status === "in_progress" ? "in-progress" : "not-started";
-    const label = status === "completed" ? "Concluida" : status === "in-progress" ? "Em andamento" : "Nao iniciada";
-    const action = status === "completed" ? "Viver novamente" : status === "in-progress" ? "Continuar experiencia" : "Viver esta experiencia";
+    const label = status === "completed" ? "Concluída" : status === "in-progress" ? "Em andamento" : "Não iniciada";
+    const action = status === "completed" ? "Viver novamente" : status === "in-progress" ? "Continuar experiência" : "Viver esta experiência";
     document.querySelectorAll(`[data-experience-code="${record.experienceCode}"]`).forEach((card) => {
       card.dataset.status = status;
       card.dataset.favorite = String(record.isFavorite);
@@ -15399,7 +15399,7 @@ const publishDigitalAssessmentDemo = (payload) => {
   state.assignments = [assignment, ...state.assignments.filter((item) => item.assessmentId !== assessmentId)];
   state.notifications.unshift({
     id: `notification-${Date.now()}`,
-    type: "avaliacao_disponivel",
+    type: "avaliação_disponivel",
     message: `${assignment.title} disponivel para ${assignment.className}.`,
     createdAt: new Date().toISOString(),
   });
@@ -15467,7 +15467,7 @@ const initDigitalStudentAssessments = () => {
             `;
           })
           .join("")
-      : `<div class="qb-state">Nenhuma avaliacao digital disponivel para sua turma.</div>`;
+      : `<div class="qb-state">Nenhuma avaliação digital disponivel para sua turma.</div>`;
   };
 
   const getOrCreateAttempt = (assignment) => {
@@ -15511,7 +15511,7 @@ const initDigitalStudentAssessments = () => {
         attempt.status === "CORRIGIDA" && resultVisibility !== "hidden"
           ? `<div class="digital-result-card"><strong>Resultado liberado</strong><span>Nota ${attempt.totalScore}/${assignment.totalPoints} · ${attempt.percentage}%</span><p>${attempt.answered} respostas registradas. Revise as habilidades indicadas pelo professor.</p></div>`
           : attempt.status === "CORRIGIDA"
-            ? `<div class="digital-result-card"><strong>Avaliacao entregue</strong><span>Resultado aguardando liberacao do professor.</span></div>`
+            ? `<div class="digital-result-card"><strong>Avaliação entregue</strong><span>Resultado aguardando liberação do professor.</span></div>`
           : ""
       }
       <article class="digital-question-player">
@@ -15533,14 +15533,14 @@ const initDigitalStudentAssessments = () => {
           attempt.status === "CORRIGIDA" && resultVisibility === "commented"
             ? `<p class="digital-feedback"><strong>${response.isCorrect ? "Acerto" : "Erro"}</strong> · Habilidade ${htmlEscape(question.skill)} · ${htmlEscape(question.justification || "Resultado corrigido automaticamente.")}</p>`
             : attempt.status === "CORRIGIDA" && resultVisibility === "score_only"
-              ? `<p class="digital-feedback"><strong>Nota registrada.</strong> O gabarito permanece oculto nesta configuracao.</p>`
+              ? `<p class="digital-feedback"><strong>Nota registrada.</strong> O gabarito permanece oculto nesta configuração.</p>`
             : ""
         }
       </article>
       <div class="digital-attempt-actions">
         <button type="button" data-digital-prev ${activeQuestionIndex === 0 ? "disabled" : ""}>Anterior</button>
-        <button type="button" data-digital-next ${activeQuestionIndex === assignment.questions.length - 1 ? "disabled" : ""}>Proxima</button>
-        <button type="button" data-digital-submit ${attempt.status !== "EM_ANDAMENTO" ? "disabled" : ""}>Entregar avaliacao</button>
+        <button type="button" data-digital-next ${activeQuestionIndex === assignment.questions.length - 1 ? "disabled" : ""}>Próxima</button>
+        <button type="button" data-digital-submit ${attempt.status !== "EM_ANDAMENTO" ? "disabled" : ""}>Entregar avaliação</button>
       </div>
     `;
   };
@@ -15565,9 +15565,9 @@ const initDigitalStudentAssessments = () => {
     if (button.hasAttribute("data-digital-close")) stage.hidden = true;
     if (button.hasAttribute("data-digital-prev")) activeQuestionIndex = Math.max(0, activeQuestionIndex - 1);
     if (button.hasAttribute("data-digital-next")) activeQuestionIndex = Math.min(assignment.questions.length - 1, activeQuestionIndex + 1);
-    if (button.hasAttribute("data-digital-submit") && window.confirm("Entregar avaliacao agora?")) {
+    if (button.hasAttribute("data-digital-submit") && window.confirm("Entregar avaliação agora?")) {
       state.attempts[attemptIndex] = scoreDigitalAttempt(assignment, attempt);
-      state.notifications.unshift({ id: `notification-${Date.now()}`, type: "avaliacao_entregue", message: `${digitalStudentProfile.name} entregou ${assignment.title}.`, createdAt: new Date().toISOString() });
+      state.notifications.unshift({ id: `notification-${Date.now()}`, type: "avaliação_entregue", message: `${digitalStudentProfile.name} entregou ${assignment.title}.`, createdAt: new Date().toISOString() });
       writeDigitalAssessmentState(state);
     }
     renderAttempt(assignment, readDigitalAssessmentState().attempts[attemptIndex]);
@@ -15609,7 +15609,7 @@ const initDigitalResultsPanel = () => {
           return `<article><strong>${htmlEscape(assignment.title)}</strong><span>${htmlEscape(assignment.className)} · ${related.length} iniciadas · ${delivered} entregues</span><b>${average}%</b><button type="button" data-result-assignment="${assignment.id}">Ver respostas</button></article>`;
         })
         .join("")
-    : `<div class="qb-state">Publique uma avaliacao no Banco de Questoes para acompanhar resultados aqui.</div>`;
+    : `<div class="qb-state">Publique uma avaliação no Banco de Questões para acompanhar resultados aqui.</div>`;
   root.addEventListener("click", (event) => {
     const button = event.target.closest("[data-result-assignment]");
     if (!button) return;
@@ -15673,16 +15673,16 @@ const initQuestionBank = () => {
   const uniq = (key) => [...new Set(demoQuestionBankItems.map((item) => item[key]).filter(Boolean))].sort();
   const localDevNotice = () =>
     mode === "fallback"
-      ? "Modo desenvolvimento: Supabase nao configurado; usando seed local somente como fallback."
+      ? "Modo desenvolvimento: Supabase não configurado; usando seed local somente como fallback."
       : (() => {
           const context = getSupabaseUserContext();
           if (context.userId && allowedAssessmentRoles.includes(context.role)) {
             return `Professor autenticado no Supabase Auth. Perfil: ${context.role}.`;
           }
           if (context.userId) {
-            return `Sessao Supabase ativa, mas perfil ${context.role || "sem perfil"} nao pode salvar avaliacoes.`;
+            return `Sessao Supabase ativa, mas perfil ${context.role || "sem perfil"} nao pode salvar avaliações.`;
           }
-          return "Modo demonstracao: leitura conectada ao Supabase real, mas salvamento exige login do professor.";
+          return "Modo demonstração: leitura conectada ao Supabase real, mas salvamento exige login do professor.";
         })();
 
   const populateFilterOptions = () => {
@@ -15792,7 +15792,7 @@ const initQuestionBank = () => {
     }
     return true;
   };
-  const showSessionRequired = (message = "Entre novamente para salvar a avaliacao no Supabase.") => {
+  const showSessionRequired = (message = "Entre novamente para salvar a avaliação no Supabase.") => {
     if (!selectionStatus) return;
     saveDraftSnapshot("login-required");
     const nextPath = `${window.location.pathname || "/banco-questoes.html"}?qbResume=1${window.location.hash || ""}`;
@@ -15880,7 +15880,7 @@ const initQuestionBank = () => {
   };
 
   const renderQuestionMiniature = (item, { showAnswer = false } = {}) => `
-    <div class="qb-miniature" aria-label="Miniatura pedagogica da questao ${htmlEscape(item.id)}">
+    <div class="qb-miniature" aria-label="Miniatura pedagógica da questao ${htmlEscape(item.id)}">
       <div class="qb-mini-head"><strong>${htmlEscape(item.id)}</strong><span>${htmlEscape(item.resource || "Texto")}</span></div>
       ${item.baseText ? `<blockquote>${htmlEscape(shortText(item.baseText, 130))}</blockquote>` : ""}
       <p>${htmlEscape(shortText(item.statement, 170))}</p>
@@ -15928,7 +15928,7 @@ const initQuestionBank = () => {
     }
     detail.innerHTML = `
       <div class="panel-head">
-        <h2>Visualizacao da questao</h2>
+        <h2>Visualização da questao</h2>
         <button type="button" data-qb-add="${item.id}" class="${isSelected(item.id) ? "is-selected" : ""}" aria-pressed="${isSelected(item.id)}" ${item.publicationStatus !== "PUBLICADO" || isSelected(item.id) ? "disabled" : ""}>${isSelected(item.id) ? "Selecionada" : "Selecionar esta questao"}</button>
       </div>
       <div class="qb-proof-page">
@@ -15952,10 +15952,10 @@ const initQuestionBank = () => {
           <span><b>Fonte e licenca</b>${htmlEscape(`${item.sourceName}. ${item.license}. ${item.legalStatus || ""}`)}</span>
         </div>
         <div class="qb-trace">
-          <article><strong>Justificativa pedagogica</strong><p>${htmlEscape(item.justification)}</p></article>
+          <article><strong>Justificativa pedagógica</strong><p>${htmlEscape(item.justification)}</p></article>
           <article><strong>Analise dos distratores</strong><p>${htmlEscape(item.distractors.join(" "))}</p></article>
           <article><strong>Intervencao</strong><p>${htmlEscape(item.intervention)}</p></article>
-          <article><strong>Historico</strong><p>Versao ${htmlEscape(item.version)}. Revisado por ${htmlEscape(item.reviewer)} em ${htmlEscape(item.reviewedAt)}. ${htmlEscape(history[0]?.comment || "Historico de curadoria disponivel apos carga remota.")}</p></article>
+          <article><strong>Histórico</strong><p>Versão ${htmlEscape(item.version)}. Revisado por ${htmlEscape(item.reviewer)} em ${htmlEscape(item.reviewedAt)}. ${htmlEscape(history[0]?.comment || "Histórico de curadoria disponivel apos carga remota.")}</p></article>
         </div>
       </div>
     `;
@@ -16005,7 +16005,7 @@ const initQuestionBank = () => {
                   <small>${htmlEscape(item.component)} &middot; ${htmlEscape(item.skill)} &middot; ${item.estimatedTime} min</small>
                   <div class="qb-cart-mini">${item.alternatives.slice(0, 4).map((alternative, optionIndex) => `<i>${optionLabel(optionIndex)} ${htmlEscape(shortText(alternative, 34))}</i>`).join("")}</div>
                 </div>
-                <input type="number" min="0" step="0.5" value="${cartPoints[item.id] ?? 1}" data-qb-points="${item.id}" aria-label="Pontuacao da questao ${item.id}" />
+                <input type="number" min="0" step="0.5" value="${cartPoints[item.id] ?? 1}" data-qb-points="${item.id}" aria-label="Pontuação da questao ${item.id}" />
                 <button type="button" data-qb-view="${item.id}" aria-label="Ver ${item.id}">Ver</button>
                 <button type="button" data-qb-up="${item.id}" aria-label="Mover ${item.id} para cima">^</button>
                 <button type="button" data-qb-down="${item.id}" aria-label="Mover ${item.id} para baixo">v</button>
@@ -16014,7 +16014,7 @@ const initQuestionBank = () => {
             `
           )
           .join("")
-      : `<div class="qb-state">Selecione questoes publicadas para montar uma avaliacao.</div>`;
+      : `<div class="qb-state">Selecione questoes publicadas para montar uma avaliação.</div>`;
     cartTime.textContent = `${items.reduce((sum, item) => sum + item.estimatedTime, 0)} min`;
     root.querySelectorAll("[data-qb-cart-count]").forEach((node) => {
       node.textContent = cart.length;
@@ -16032,7 +16032,7 @@ const initQuestionBank = () => {
     const isLocalPreview = options.local === true;
     const totalTime = items.reduce((sum, item) => sum + item.estimatedTime, 0);
     const totalPoints = items.reduce((sum, item) => sum + Number(cartPoints[item.id] ?? 1), 0);
-    const assessmentTitle = titleInput?.value || "Avaliacao";
+    const assessmentTitle = titleInput?.value || "Avaliação";
     const component = root.querySelector("[data-qb-assessment-component]")?.value || "";
     const year = root.querySelector("[data-qb-assessment-year]")?.value || "";
     const className = root.querySelectorAll(".qb-builder select")[0]?.value || "";
@@ -16044,7 +16044,7 @@ const initQuestionBank = () => {
     previewPanel.hidden = false;
     previewPanel.innerHTML = `
       <div class="panel-head">
-        <h2>${isLocalPreview ? "Previa rapida - nao salva" : isTeacher ? "Gabarito do professor" : isAnswerSheet ? "Folha de respostas" : "Previa da avaliacao"}</h2>
+        <h2>${isLocalPreview ? "Prévia rapida - nao salva" : isTeacher ? "Gabarito do professor" : isAnswerSheet ? "Folha de respostas" : "Prévia da avaliação"}</h2>
         ${
           isLocalPreview
             ? ""
@@ -16075,7 +16075,7 @@ const initQuestionBank = () => {
                 <span><b>USO DO PROFESSOR</b></span>
               </div>
               <table class="qb-answer-summary">
-                <thead><tr><th>Questao</th><th>Resposta</th><th>Valor</th><th>Habilidade</th><th>Descritor</th></tr></thead>
+                <thead><tr><th>Questão</th><th>Resposta</th><th>Valor</th><th>Habilidade</th><th>Descritor</th></tr></thead>
                 <tbody>${items
                   .map((item, index) => `<tr><td>${index + 1}</td><td>${optionLabel(item.correctAlternative)}</td><td>${htmlEscape(cartPoints[item.id] ?? 1)}</td><td>${htmlEscape(item.skill)}</td><td>${htmlEscape(shortText(item.descriptor, 80))}</td></tr>`)
                   .join("")}</tbody>
@@ -16118,15 +16118,15 @@ const initQuestionBank = () => {
                 </ol>
                 ${
                   isTeacher
-                    ? `<p><strong>Gabarito:</strong> ${optionLabel(item.correctAlternative)} &middot; ${htmlEscape(item.justification)}<br><strong>Habilidade:</strong> ${htmlEscape(item.skill)}<br><strong>Descritor:</strong> ${htmlEscape(item.descriptor)}<br><strong>Distratores:</strong> ${htmlEscape(item.distractors.join(" "))}<br><strong>Orientacao de correcao:</strong> ${htmlEscape(item.intervention || "Retomar a habilidade indicada com atividade de recomposicao.")}</p>`
+                    ? `<p><strong>Gabarito:</strong> ${optionLabel(item.correctAlternative)} &middot; ${htmlEscape(item.justification)}<br><strong>Habilidade:</strong> ${htmlEscape(item.skill)}<br><strong>Descritor:</strong> ${htmlEscape(item.descriptor)}<br><strong>Distratores:</strong> ${htmlEscape(item.distractors.join(" "))}<br><strong>Orientação de correcao:</strong> ${htmlEscape(item.intervention || "Retomar a habilidade indicada com atividade de recomposicao.")}</p>`
                     : `<p>${item.estimatedTime} min &middot; ${htmlEscape(item.component)} &middot; ${htmlEscape(item.skill)} &middot; Valor ${htmlEscape(cartPoints[item.id] ?? 1)}</p>`
                 }
-                <footer>Pagina simulada ${index + 1} de ${items.length} &middot; Versao ${htmlEscape(versionCode)}</footer>
+                <footer>Pagina simulada ${index + 1} de ${items.length} &middot; Versão ${htmlEscape(versionCode)}</footer>
               </article>
             `
           )
           .join("")}
-        <footer class="qb-preview-footer">RAIZES E SABERES EDUCACIONAL &middot; ${items.length} questoes &middot; ${totalTime} min &middot; Versao ${htmlEscape(versionCode)}</footer>
+        <footer class="qb-preview-footer">RAIZES E SABERES EDUCACIONAL &middot; ${items.length} questoes &middot; ${totalTime} min &middot; Versão ${htmlEscape(versionCode)}</footer>
       </div>
     `;
     previewPanel.setAttribute("tabindex", "-1");
@@ -16141,7 +16141,7 @@ const initQuestionBank = () => {
       ? assessments
           .map((assessment) => `<article><strong>${htmlEscape(assessment.title)}</strong><span>${htmlEscape(assessment.status)} &middot; ${assessment.items} itens &middot; ${htmlEscape(assessment.className)} &middot; ${htmlEscape(assessment.date)}</span><button type="button" data-qb-open-assessment="${assessment.id}">Abrir</button><button type="button" data-qb-duplicate-assessment="${assessment.id}">Duplicar</button><button type="button" data-qb-archive-assessment="${assessment.id}">Arquivar</button></article>`)
           .join("")
-      : `<div class="qb-state">Nenhuma avaliacao salva encontrada.</div>`;
+      : `<div class="qb-state">Nenhuma avaliação salva encontrada.</div>`;
   };
 
   const renderAccess = () => {
@@ -16168,13 +16168,13 @@ const initQuestionBank = () => {
   };
 
   const assessmentPayloadFromBuilder = () => ({
-    title: titleInput?.value?.trim() || "Avaliacao sem titulo",
+    title: titleInput?.value?.trim() || "Avaliação sem titulo",
     description: root.querySelector(".qb-builder textarea")?.value || "",
     instructions: root.querySelector(".qb-builder textarea")?.value || "",
     component: root.querySelector("[data-qb-assessment-component]")?.value || "",
     school_year: root.querySelector("[data-qb-assessment-year]")?.value || "",
     class_name: root.querySelectorAll(".qb-builder select")[0]?.value || "",
-    cover_template: root.querySelectorAll(".qb-builder select")[3]?.value || "Raizes e Saberes - padrao",
+    cover_template: root.querySelectorAll(".qb-builder select")[3]?.value || "Raízes e Saberes - padrao",
     application_date: root.querySelector(".qb-builder input[type='date']")?.value || null,
   });
 
@@ -16224,7 +16224,7 @@ const initQuestionBank = () => {
     } catch (error) {
       const message = String(error.message || "");
       if (message.includes("Sessao Supabase ausente") || message.includes("Sessao expirada") || message.includes("row-level security")) {
-        showSessionRequired("Selecao preservada. Entre novamente para salvar e liberar a pre-visualizacao oficial.");
+        showSessionRequired("Selecao preservada. Entre novamente para salvar e liberar a pre-visualização oficial.");
         return null;
       }
       throw error;
@@ -16266,7 +16266,7 @@ const initQuestionBank = () => {
       } catch (error) {
         const message = String(error.message || "");
         if (message.includes("Sessao Supabase ausente") || message.includes("Sessao expirada") || message.includes("row-level security")) {
-          showSessionRequired("Selecao preservada. Entre novamente para salvar antes da aplicacao digital oficial.");
+          showSessionRequired("Selecao preservada. Entre novamente para salvar antes da aplicação digital oficial.");
           return null;
         }
         throw error;
@@ -16275,7 +16275,7 @@ const initQuestionBank = () => {
     const shuffle = root.querySelector("[data-qb-shuffle]")?.value || "none";
     const assignment = publishDigitalAssessmentDemo({
       assessmentId: savedAssessment?.id || activeAssessmentId,
-      title: titleInput?.value?.trim() || "Avaliacao digital",
+      title: titleInput?.value?.trim() || "Avaliação digital",
       component: root.querySelector("[data-qb-assessment-component]")?.value || "",
       year: root.querySelector("[data-qb-assessment-year]")?.value || "",
       className: root.querySelectorAll(".qb-builder select")[0]?.value || "2o Ano A",
@@ -16301,7 +16301,7 @@ const initQuestionBank = () => {
         intervention: item.intervention,
       })),
     });
-    setSelectionStatus(`Avaliacao publicada para ${assignment.className}. Aluno ja pode responder em Minhas Avaliacoes.`, "success");
+    setSelectionStatus(`Avaliação publicada para ${assignment.className}. Aluno ja pode responder em Minhas Avaliações.`, "success");
     return assignment;
   };
 
@@ -16320,7 +16320,7 @@ const initQuestionBank = () => {
     cart.push(item.id);
     cartPoints[item.id] = cartPoints[item.id] ?? 1;
     saveDraftSnapshot("question-selected");
-    setSelectionStatus(`${item.id} selecionada para a avaliacao.`, "success");
+    setSelectionStatus(`${item.id} selecionada para a avaliação.`, "success");
   };
 
   const refresh = async () => {
@@ -16361,14 +16361,14 @@ const initQuestionBank = () => {
         activeAssessmentId = savedAssessment.id;
         saveDraftSnapshot("login-resumed-saved");
         renderPreview("student");
-        setSelectionStatus(`Avaliacao salva e pre-visualizacao oficial liberada. ID ${savedAssessment.id}.`, "success");
+        setSelectionStatus(`Avaliação salva e pre-visualização oficial liberada. ID ${savedAssessment.id}.`, "success");
         params.delete("qbResume");
         const nextSearch = params.toString();
         window.history.replaceState(null, "", `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}${window.location.hash}`);
         await render();
       }
     } catch (error) {
-      showSessionRequired("Login concluido, mas a sessao ainda nao autorizou o salvamento. Entre novamente com perfil professor.");
+      showSessionRequired("Login concluído, mas a sessão ainda nao autorizou o salvamento. Entre novamente com perfil professor.");
     }
   };
 
@@ -16397,7 +16397,7 @@ const initQuestionBank = () => {
           } catch (error) {
             const message = String(error.message || "");
             if (message.includes("Sessao Supabase ausente") || message.includes("Sessao expirada")) {
-              showSessionRequired("Questao removida localmente. Entre novamente para sincronizar no Supabase.");
+              showSessionRequired("Questão removida localmente. Entre novamente para sincronizar no Supabase.");
               needsRemoteSync = true;
             } else {
               throw error;
@@ -16405,7 +16405,7 @@ const initQuestionBank = () => {
           }
         }
         if (!needsRemoteSync) {
-          setSelectionStatus(`${button.dataset.qbRemove} removida da avaliacao.`, "info");
+          setSelectionStatus(`${button.dataset.qbRemove} removida da avaliação.`, "info");
         }
       }
       if (button.dataset.qbUp) {
@@ -16447,7 +16447,7 @@ const initQuestionBank = () => {
       if (button.hasAttribute("data-qb-preview-local")) {
         saveDraftSnapshot("local-preview");
         renderPreview("student", { local: true });
-        setSelectionStatus("Previa local aberta sem salvar no Supabase.", "info");
+        setSelectionStatus("Prévia local aberta sem salvar no Supabase.", "info");
       }
       if (button.hasAttribute("data-qb-close-preview")) {
         previewPanel.hidden = true;
@@ -16460,7 +16460,7 @@ const initQuestionBank = () => {
         if (savedAssessment || mode !== "supabase") {
           assessments = await questionBankDataService.listAssessments();
           renderPreview("student");
-          setSelectionStatus("Avaliacao salva e aberta em pre-visualizacao.", "success");
+          setSelectionStatus("Avaliação salva e aberta em pre-visualização.", "success");
         }
       }
       if (button.hasAttribute("data-qb-publish-digital")) {
@@ -16672,7 +16672,7 @@ const resolveSupabaseUserContext = async ({ requireAuthenticated = false, allowe
 const mapSupabaseError = (response, body) => {
   const text = body ? ` - ${body}` : "";
   if (response.status === 401) return `Sessao expirada ou token ausente.${text}`;
-  if (response.status === 403) return `Usuario sem permissao para esta acao.${text}`;
+  if (response.status === 403) return `Usuário sem permissao para esta ação.${text}`;
   if (response.status === 404) return `Tabela, rota ou registro inexistente no Supabase.${text}`;
   if (body?.includes("PGRST205") || body?.includes("Could not find the table")) {
     return `Tabela inexistente ou migration nao aplicada no Supabase.${text}`;
@@ -16693,7 +16693,7 @@ const createSupabaseRestClient = () => {
 
   const request = async (table, params = "", options = {}) => {
     if (!isConfigured) {
-      throw new Error("Supabase nao configurado. Crie supabase-config.js com URL e anon key publica.");
+      throw new Error("Supabase não configurado. Crie supabase-config.js com URL e anon key pública.");
     }
     const requestContext = await resolveSupabaseUserContext({
       requireAuthenticated: options.requireAuthenticated === true,
@@ -16757,7 +16757,7 @@ const institutionalStatusLabels = {
   avo: "Avo",
   tutor: "Tutor",
   outro: "Outro",
-  not_configured: "Acesso nao configurado",
+  not_configured: "Acesso não configurado",
 };
 const normalizeInstitutionalStatus = (status) => {
   const value = String(status || "").trim();
@@ -16850,7 +16850,7 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       const student = await getStudentCandidateByUserId(client, context.userId);
       const publicUser = null;
       if (!student?.id) {
-        throw new Error("Nao foi possivel identificar o vinculo escolar deste aluno.");
+        throw new Error("Não foi possível identificar o vinculo escolar deste aluno.");
       }
       const enrollmentRows = await client.request(
         "enrollments",
@@ -16861,7 +16861,7 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       const classItem = enrollment?.classes || null;
       const school = enrollment?.schools || null;
       if (!enrollment?.id || !classItem?.id || !school?.id) {
-        throw new Error("Nao foi possivel identificar o vinculo escolar deste aluno.");
+        throw new Error("Não foi possível identificar o vinculo escolar deste aluno.");
       }
       const teacherMembershipRows = await client.request(
         "class_teacher_memberships",
@@ -16909,12 +16909,12 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
                 `?select=id,class_id,school_id,teacher_id,plan_id,title,description,entry_date,start_time,end_time,entry_type,status,created_at&status=eq.published&class_id=${supabaseEq(enrollment.class_id)}&entry_date=gte.${encodeURIComponent(weekDates.seg)}&entry_date=lte.${encodeURIComponent(weekDates.sex)}&order=start_time.asc.nullslast&order=created_at.asc`,
                 { requireAuthenticated: true, allowedRoles: ["aluno", "admin"] }
               ).catch((error) => {
-                studentInstitutionalState.calendarError = error.message || "Nao foi possivel carregar a Minha Semana.";
+                studentInstitutionalState.calendarError = error.message || "Não foi possível carregar a Minha Semana.";
                 return [];
               })
             : Promise.resolve([]),
           loadStudentTeacherRecommendations(client).catch((error) => {
-            studentInstitutionalState.recommendationsError = error.message || "Nao foi possivel carregar as recomendacoes.";
+            studentInstitutionalState.recommendationsError = error.message || "Não foi possível carregar as recomendações.";
             return [];
           }),
         ]);
@@ -16927,7 +16927,7 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       return studentInstitutionalState;
     } catch (error) {
       studentInstitutionalState.status = "error";
-      studentInstitutionalState.error = error.message || "Nao foi possivel carregar o aluno institucional.";
+      studentInstitutionalState.error = error.message || "Não foi possível carregar o aluno institucional.";
       studentInstitutionalState.student = null;
       studentInstitutionalState.enrollment = null;
       studentInstitutionalState.classItem = null;
@@ -17022,7 +17022,7 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
       );
       const profile = Array.isArray(profileRows) ? profileRows[0] : null;
       if (!profile?.id) {
-        throw new Error("Profile institucional nao encontrado para a sessao autenticada.");
+        throw new Error("Profile institucional não encontrado para a sessão autenticada.");
       }
 
       const teacherRows = await client.request(
@@ -17032,7 +17032,7 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
       );
       const teacher = Array.isArray(teacherRows) ? teacherRows[0] : null;
       if (!teacher?.id || !teacher?.school_id) {
-        throw new Error("Nao foi possivel identificar o vinculo institucional deste professor.");
+        throw new Error("Não foi possível identificar o vinculo institucional deste professor.");
       }
 
       const schoolMembershipRows = await client.request(
@@ -17042,7 +17042,7 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
       );
       const schoolMembership = Array.isArray(schoolMembershipRows) ? schoolMembershipRows[0] : null;
       if (!schoolMembership?.id) {
-        throw new Error("School membership ativo nao encontrado para este professor.");
+        throw new Error("School membership ativo não encontrado para este professor.");
       }
 
       const membershipRows = await client.request(
@@ -17157,7 +17157,7 @@ const secretariaActiveStatuses = new Set(["active", "ativo"]);
 
 const isSecretariaActiveStatus = (status) => secretariaActiveStatuses.has(String(status || "active").toLowerCase());
 const secretariaStatusLabel = (status) => normalizeInstitutionalStatus(status || "active");
-const secretariaAccessLabel = (status) => String(status || "").toLowerCase() === "active" ? "Acesso configurado" : "Acesso nao configurado";
+const secretariaAccessLabel = (status) => String(status || "").toLowerCase() === "active" ? "Acesso configurado" : "Acesso não configurado";
 const secretariaBadgeTone = (status) => {
   const value = String(status || "").toLowerCase();
   if (["active", "ativo", "published", "received", "present"].includes(value)) return "success";
@@ -17314,7 +17314,7 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
     } catch (error) {
       Object.assign(secretariaInstitutionalState, {
         status: "error",
-        error: error.message || "Nao foi possivel carregar a Secretaria pelo Supabase.",
+        error: error.message || "Não foi possível carregar a Secretaria pelo Supabase.",
         schools: [],
         profiles: [],
         teachers: [],
@@ -17552,10 +17552,10 @@ const secretariaStudentEnrollment = (student, index = buildSecretariaIndex()) =>
   index.activeEnrollmentByStudent.get(student?.id) || (index.enrollmentsByStudent[student?.id] || [])[0] || null;
 
 const secretariaMovementLabels = {
-  enrollment_created: "Matricula criada",
+  enrollment_created: "Matrícula criada",
   class_transfer: "Transferencia de turma",
-  status_change: "Alteracao de status",
-  enrollment_closed: "Matricula encerrada",
+  status_change: "Alteração de status",
+  enrollment_closed: "Matrícula encerrada",
   reenrollment: "Rematricula",
 };
 
@@ -17570,13 +17570,13 @@ const secretariaDocumentStatusLabel = (status) => secretariaDocumentStatusLabels
 const communicationAudienceLabels = {
   school: "Escola",
   class: "Turma",
-  student: "Aluno/Familia",
+  student: "Aluno/Família",
 };
 const communicationTypeLabels = {
   institutional_announcement: "Comunicado institucional",
   notice: "Comunicado",
   message: "Mensagem",
-  weekly_information: "Informacao da semana",
+  weekly_information: "Informação da semana",
 };
 const communicationStatusLabels = {
   draft: "Rascunho",
@@ -17590,7 +17590,7 @@ const communicationStatusLabel = (value) => communicationStatusLabels[String(val
 const communicationAudienceSummary = ({ audienceType, school, classItem, student } = {}) => {
   if (audienceType === "school") return `Toda a escola: ${normalizeSchoolName(school || {})}`;
   if (audienceType === "class") return `Turma: ${normalizeClassName(classItem || {})}`;
-  if (audienceType === "student") return `Aluno/Familia: ${normalizeStudentName(student || {})}`;
+  if (audienceType === "student") return `Aluno/Família: ${normalizeStudentName(student || {})}`;
   return "Destino nao informado";
 };
 const communicationDisplayDate = (value) => {
@@ -17641,7 +17641,7 @@ const secretariaRecentActivities = (index = buildSecretariaIndex()) => {
     const classItem = index.classById.get(enrollment.class_id) || {};
     activities.push({
       at: enrollment.created_at || "",
-      label: `Matricula criada: ${normalizeStudentName(student)} em ${normalizeClassName(classItem)}`,
+      label: `Matrícula criada: ${normalizeStudentName(student)} em ${normalizeClassName(classItem)}`,
       href: secretariaLink("alunos", { student: enrollment.student_id }),
     });
   });
@@ -17649,7 +17649,7 @@ const secretariaRecentActivities = (index = buildSecretariaIndex()) => {
     const student = index.studentById.get(movement.student_id) || {};
     activities.push({
       at: movement.created_at || "",
-      label: `${secretariaMovementLabels[movement.movement_type] || "Movimentacao"}: ${normalizeStudentName(student)}`,
+      label: `${secretariaMovementLabels[movement.movement_type] || "Movimentação"}: ${normalizeStudentName(student)}`,
       href: secretariaLink("matriculas", { student: movement.student_id }),
     });
   });
@@ -17699,7 +17699,7 @@ const secretariaViewIcon = {
   responsaveis: "family",
   turmas: "users",
   professores: "cap",
-  frequencia: "calendar",
+  frequência: "calendar",
   documentos: "doc",
   comunicados: "mail",
 };
@@ -17952,10 +17952,10 @@ const renderSecretariaNav = (currentView) => {
     alunos: "Alunos",
     turmas: "Turmas",
     professores: "Professores",
-    matriculas: "Matriculas",
-    responsaveis: "Responsaveis",
+    matriculas: "Matrículas",
+    responsaveis: "Responsáveis",
     documentos: "Documentos",
-    frequencia: "Frequencia",
+    frequência: "Frequência",
     comunicados: "Comunicados",
   };
   return `<nav class="secretaria-official-nav" aria-label="Menu oficial da Secretaria">${secretariaOfficialViews
@@ -17971,7 +17971,7 @@ const renderSecretariaGlobalHeader = (index = buildSecretariaIndex()) => {
       <div class="secretaria-context-chip">
         <span class="secretaria-avatar">MS</span>
         <div>
-          <small>Usuario autenticado</small>
+          <small>Usuário autenticado</small>
           <strong>${htmlEscape(role)}</strong>
         </div>
       </div>
@@ -18023,18 +18023,18 @@ const renderSecretariaDashboardPanel = (index) => {
   ].filter((item) => item && item !== "Ano nao informado"))].sort();
   const schoolYear = activeYears[activeYears.length - 1] || "Ano nao informado";
   const alerts = [
-    { label: "Documentos pendentes", detail: "Itens que precisam de revisao ou assinatura", count: pendingDocuments.length, href: secretariaLink("documentos", { q: "pendente" }), icon: "doc", tone: "red" },
+    { label: "Documentos pendentes", detail: "Itens que precisam de revisão ou assinatura", count: pendingDocuments.length, href: secretariaLink("documentos", { q: "pendente" }), icon: "doc", tone: "red" },
     { label: "Alunos sem responsavel", detail: "Alunos ativos ainda sem responsavel vinculado", count: studentsWithoutGuardian.length, href: secretariaLink("alunos", { q: "sem responsavel" }), icon: "family", tone: "orange" },
-    { label: "Responsaveis sem acesso configurado", detail: "Responsaveis que ainda nao tem acesso a plataforma", count: guardiansWithoutAccess.length, href: secretariaLink("responsaveis", { q: "acesso nao configurado" }), icon: "admin", tone: "gold" },
+    { label: "Responsáveis sem acesso configurado", detail: "Responsáveis que ainda nao tem acesso a plataforma", count: guardiansWithoutAccess.length, href: secretariaLink("responsaveis", { q: "acesso não configurado" }), icon: "admin", tone: "gold" },
     { label: "Professores sem acesso configurado", detail: "Professores institucionais sem usuario Auth", count: teachersWithoutAccess.length, href: secretariaLink("professores", { q: "sem acesso" }), icon: "cap", tone: "blue" },
-    { label: "Matriculas que exigem atencao", detail: "Matriculas com pendencia ou inconsistencia", count: enrollmentAttention.length, href: secretariaLink("matriculas", { q: "pendencia" }), icon: "clipboard", tone: "purple" },
+    { label: "Matrículas que exigem atencao", detail: "Matrículas com pendencia ou inconsistencia", count: enrollmentAttention.length, href: secretariaLink("matriculas", { q: "pendencia" }), icon: "clipboard", tone: "purple" },
   ];
   const metrics = [
     { label: "Alunos ativos", value: activeStudents.length, icon: "users" },
-    { label: "Matriculas ativas", value: index.activeEnrollments.length, icon: "clipboard" },
+    { label: "Matrículas ativas", value: index.activeEnrollments.length, icon: "clipboard" },
     { label: "Turmas ativas", value: activeClasses.length, icon: "users" },
     { label: "Professores ativos", value: activeTeachers.length, icon: "cap" },
-    { label: "Responsaveis vinculados", value: uniqueGuardianCount, icon: "family" },
+    { label: "Responsáveis vinculados", value: uniqueGuardianCount, icon: "family" },
   ];
   return `
     <div class="secretaria-dashboard-grid">
@@ -18049,7 +18049,7 @@ const renderSecretariaDashboardPanel = (index) => {
       </div>
       <div class="secretaria-panel-grid secretaria-dashboard-operation">
         <section class="panel secretaria-attention-panel">
-          <div class="panel-head"><h2>${secretariaInlineIcon("bell", "Atencao necessaria")}</h2></div>
+          <div class="panel-head"><h2>${secretariaInlineIcon("bell", "Atenção necessaria")}</h2></div>
           <ul class="clean-list secretaria-alert-list">
             ${alerts.map((alert) => `
               <li class="is-${alert.tone}">
@@ -18064,10 +18064,10 @@ const renderSecretariaDashboardPanel = (index) => {
           <p class="secretaria-soft-note">Resolva os itens acima para manter a escola sempre organizada.</p>
         </section>
         <section class="panel secretaria-quick-panel">
-          <div class="panel-head"><h2>${secretariaInlineIcon("progresso", "Acoes rapidas")}</h2><span>Secretaria</span></div>
+          <div class="panel-head"><h2>${secretariaInlineIcon("progresso", "Ações rápidas")}</h2><span>Secretaria</span></div>
           <div class="secretaria-quick-actions">
             <a href="${secretariaLink("novoAluno")}">${secretariaInlineIcon("aluno", "Novo Aluno")}</a>
-            <a href="${secretariaLink("matriculas")}">${secretariaInlineIcon("clipboard", "Nova Matricula")}</a>
+            <a href="${secretariaLink("matriculas")}">${secretariaInlineIcon("clipboard", "Nova Matrícula")}</a>
             <a href="${secretariaLink("novoResponsavel")}">${secretariaInlineIcon("family", "Novo Responsavel")}</a>
             <a href="${secretariaLink("novaTurma")}">${secretariaInlineIcon("users", "Nova Turma")}</a>
             <a href="${secretariaLink("novoProfessor")}">${secretariaInlineIcon("cap", "Novo Professor")}</a>
@@ -18087,7 +18087,7 @@ const renderSecretariaDashboardPanel = (index) => {
 };
 
 const renderSecretariaEnrollmentManagement = (student, enrollment, classItem, index) => {
-  if (!enrollment?.id) return `<section class="panel"><h2>Gestao da matricula</h2><p>Aluno sem matricula para movimentar.</p></section>`;
+  if (!enrollment?.id) return `<section class="panel"><h2>Gestão da matrícula</h2><p>Aluno sem matrícula para movimentar.</p></section>`;
   const sameSchoolClasses = (secretariaInstitutionalState.classes || [])
     .filter((item) =>
       isSecretariaActiveStatus(item.status)
@@ -18102,7 +18102,7 @@ const renderSecretariaEnrollmentManagement = (student, enrollment, classItem, in
   const result = secretariaInstitutionalState.lastEnrollmentMovementResult;
   return `
     <section class="panel span-2">
-      <h2>Gestao da matricula</h2>
+      <h2>Gestão da matrícula</h2>
       <div class="analytics-grid secretaria-grid">
         <form data-secretaria-transfer-form>
           <h3>Transferir turma</h3>
@@ -18137,7 +18137,7 @@ const renderSecretariaEnrollmentManagement = (student, enrollment, classItem, in
           <button type="submit">Rematricular</button>
         </form>
       </div>
-      <p data-secretaria-enrollment-message>${result?.movement_id ? "Ultima movimentacao registrada com sucesso." : "Movimentacoes sao registradas no historico institucional."}</p>
+      <p data-secretaria-enrollment-message>${result?.movement_id ? "Última movimentação registrada com sucesso." : "Movimentações são registradas no histórico institucional."}</p>
     </section>
   `;
 };
@@ -18145,11 +18145,11 @@ const renderSecretariaEnrollmentManagement = (student, enrollment, classItem, in
 const renderSecretariaEnrollmentHistory = (student, index) => {
   const movements = secretariaStudentMovements(student, index);
   if (!movements.length) {
-    return `<section class="panel span-2"><h2>Historico de matricula</h2><p>Nenhuma movimentacao registrada para este aluno.</p></section>`;
+    return `<section class="panel span-2"><h2>Histórico de matrícula</h2><p>Nenhuma movimentação registrada para este aluno.</p></section>`;
   }
   return `
     <section class="panel span-2">
-      <h2>Historico de matricula</h2>
+      <h2>Histórico de matrícula</h2>
       <ul class="clean-list">
         ${movements.map((movement) => {
           const fromClass = index.classById.get(movement.from_class_id) || {};
@@ -18158,7 +18158,7 @@ const renderSecretariaEnrollmentHistory = (student, index) => {
           return `
             <li>
               <strong>${htmlEscape(secretariaFormatDateTime(movement.created_at))} · ${htmlEscape(secretariaMovementLabels[movement.movement_type] || normalizeInstitutionalStatus(movement.movement_type))}</strong>
-              <span>${htmlEscape(normalizeClassName(fromClass) || "Sem turma anterior")} -> ${htmlEscape(normalizeClassName(toClass) || "Sem turma nova")} · ${htmlEscape(secretariaStatusLabel(movement.from_status) || "sem status")} -> ${htmlEscape(secretariaStatusLabel(movement.to_status) || "sem status")} · ${htmlEscape(movement.reason || "Sem motivo")} · ${htmlEscape(normalizeProfileName(actor) || "Usuario institucional")}</span>
+              <span>${htmlEscape(normalizeClassName(fromClass) || "Sem turma anterior")} -> ${htmlEscape(normalizeClassName(toClass) || "Sem turma nova")} · ${htmlEscape(secretariaStatusLabel(movement.from_status) || "sem status")} -> ${htmlEscape(secretariaStatusLabel(movement.to_status) || "sem status")} · ${htmlEscape(movement.reason || "Sem motivo")} · ${htmlEscape(normalizeProfileName(actor) || "Usuário institucional")}</span>
             </li>
           `;
         }).join("")}
@@ -18179,12 +18179,12 @@ const renderSecretariaStudentDocuments = (student, index) => {
             <strong>${htmlEscape(type.name)}</strong>
             ${secretariaBadge(secretariaDocumentStatusLabel(document?.status || "pending"), secretariaBadgeTone(document?.status || "pending"))}
             <span>${document?.received_at ? `Recebido em ${htmlEscape(secretariaFormatDateTime(document.received_at))}` : "Aguardando conferencia"}${document?.file_reference ? ` · Arquivo informado` : ""}</span>
-            ${document?.notes ? `<span>Observacao: ${htmlEscape(document.notes)}</span>` : ""}
+            ${document?.notes ? `<span>Observação: ${htmlEscape(document.notes)}</span>` : ""}
             <form data-secretaria-document-form>
               <input type="hidden" name="student_id" value="${htmlEscape(student.id)}" />
               <input type="hidden" name="document_type_id" value="${htmlEscape(type.id)}" />
               <label><span>Status</span><select name="status" required>${secretariaDocumentStatusOptions.map((status) => `<option value="${htmlEscape(status)}" ${(document?.status || "pending") === status ? "selected" : ""}>${htmlEscape(secretariaDocumentStatusLabel(status))}</option>`).join("")}</select></label>
-              <label><span>Observacao</span><input name="notes" value="${htmlEscape(document?.notes || "")}" placeholder="observacao administrativa" /></label>
+              <label><span>Observação</span><input name="notes" value="${htmlEscape(document?.notes || "")}" placeholder="observação administrativa" /></label>
               <p class="secretaria-inline-note">Upload documental desabilitado no piloto. Operar somente status e metadados ate Storage privado ser homologado.</p>
               <button type="submit">Salvar documento</button>
             </form>
@@ -18197,7 +18197,7 @@ const renderSecretariaStudentDocuments = (student, index) => {
         ${events.map((event) => {
           const type = index.documentTypeById.get(event.document_type_id) || {};
           const actor = index.profileById.get(event.actor_id) || {};
-          return `<li><strong>${htmlEscape(secretariaFormatDateTime(event.created_at))}</strong><span>${htmlEscape(type.name || "Documento")} · ${htmlEscape(secretariaDocumentStatusLabel(event.from_status) || "sem status")} -> ${htmlEscape(secretariaDocumentStatusLabel(event.to_status) || "sem status")} · ${htmlEscape(normalizeProfileName(actor) || "Usuario institucional")}</span></li>`;
+          return `<li><strong>${htmlEscape(secretariaFormatDateTime(event.created_at))}</strong><span>${htmlEscape(type.name || "Documento")} · ${htmlEscape(secretariaDocumentStatusLabel(event.from_status) || "sem status")} -> ${htmlEscape(secretariaDocumentStatusLabel(event.to_status) || "sem status")} · ${htmlEscape(normalizeProfileName(actor) || "Usuário institucional")}</span></li>`;
         }).join("") || "<li>Nenhum evento documental registrado.</li>"}
       </ul>
     </section>
@@ -18206,7 +18206,7 @@ const renderSecretariaStudentDocuments = (student, index) => {
 
 const renderSecretariaEnrollmentDeclaration = (student, enrollment, classItem, school) => {
   if (!student?.id || !enrollment?.id) {
-    return `<section class="panel span-2"><h2>Declaracao de matricula</h2><p>Aluno sem matricula ativa para emissao.</p></section>`;
+    return `<section class="panel span-2"><h2>Declaração de matrícula</h2><p>Aluno sem matrícula ativa para emissao.</p></section>`;
   }
   const issueDate = new Date().toLocaleDateString("pt-BR");
   const schoolName = normalizeSchoolName(school) || "Escola";
@@ -18225,10 +18225,10 @@ const renderSecretariaEnrollmentDeclaration = (student, enrollment, classItem, s
   `;
   return `
     <section class="panel span-2">
-      <h2>Declaracao de matricula</h2>
+      <h2>Declaração de matrícula</h2>
       <div data-secretaria-declaration>${declarationHtml}</div>
       <button type="button" data-secretaria-print-declaration>IMPRIMIR / GERAR DECLARACAO</button>
-      <p>Declaracao gerada com os dados institucionais da matricula ativa.</p>
+      <p>Declaração gerada com os dados institucionais da matrícula ativa.</p>
     </section>
   `;
 };
@@ -18238,7 +18238,7 @@ const renderSecretariaStudentAttendance = (student, index) => {
   const summary = attendanceSummary(records);
   return `
     <section class="panel">
-      <h2>Frequencia</h2>
+      <h2>Frequência</h2>
       <dl>
         <div><dt>Dias registrados</dt><dd>${summary.total}</dd></div>
         <div><dt>Presencas</dt><dd>${summary.present}</dd></div>
@@ -18250,7 +18250,7 @@ const renderSecretariaStudentAttendance = (student, index) => {
         ${records.slice(0, 12).map((record) => {
           const classItem = index.classById.get(record.class_id) || {};
           return `<li><strong>${htmlEscape(record.attendance_date)}</strong>${secretariaBadge(attendanceStatusLabel(record.status), secretariaBadgeTone(record.status))}<span>${htmlEscape(normalizeClassName(classItem))}${record.notes ? ` · ${htmlEscape(record.notes)}` : ""}</span></li>`;
-        }).join("") || "<li>Nenhum registro de frequencia retornado pelo Supabase.</li>"}
+        }).join("") || "<li>Nenhum registro de frequência retornado pelo Supabase.</li>"}
       </ul>
     </section>
   `;
@@ -18287,8 +18287,8 @@ const renderSecretariaStudentDetail = (student, index) => {
         <div class="secretaria-student-actions">
           <a href="${secretariaLink("novoAluno", { student: student.id })}">Editar dados</a>
           <a href="${secretariaLink("novoResponsavel", { student: student.id })}">Vincular responsavel</a>
-          <a href="#gestao-matricula">Gerenciar matricula</a>
-          <a href="#declaracao-matricula">Gerar declaracao</a>
+          <a href="#gestao-matricula">Gerenciar matrícula</a>
+          <a href="#declaracao-matricula">Gerar declaração</a>
         </div>
       </div>
       <div class="secretaria-detail-sections">
@@ -18297,22 +18297,22 @@ const renderSecretariaStudentDetail = (student, index) => {
           <ul class="clean-list">
             <li>Nome: <strong>${htmlEscape(normalizeStudentName(student))}</strong></li>
             <li>Status: ${secretariaBadge(secretariaStatusLabel(student.status), secretariaBadgeTone(student.status))}</li>
-            <li>Identificacao: ${htmlEscape(student.id)}</li>
+            <li>Identificação: ${htmlEscape(student.id)}</li>
             <li>Cadastrado em: ${htmlEscape(secretariaFormatDateTime(student.created_at))}</li>
           </ul>
         </article>
         <article>
-          <h3>Matricula</h3>
+          <h3>Matrícula</h3>
           <ul class="clean-list">
             <li>Escola: ${htmlEscape(normalizeSchoolName(school))}</li>
             <li>Turma: ${htmlEscape(normalizeClassName(classItem))}</li>
             <li>Ano letivo: ${htmlEscape(secretariaSchoolYear(enrollment, classItem))}</li>
             <li>Status: ${secretariaBadge(secretariaStatusLabel(enrollment?.status), secretariaBadgeTone(enrollment?.status))}</li>
-            <li>Matricula: ${htmlEscape(enrollment?.id || "Sem matricula ativa")}</li>
+            <li>Matrícula: ${htmlEscape(enrollment?.id || "Sem matrícula ativa")}</li>
           </ul>
         </article>
         <article>
-          <h3>Responsaveis</h3>
+          <h3>Responsáveis</h3>
           <ul class="clean-list">
             ${allGuardians.map((item) => `<li><strong>${htmlEscape(item.name)}</strong>${secretariaBadge(secretariaAccessLabel(item.accessStatus), item.accessStatus === "active" ? "success" : "warning")}</li>`).join("") || "<li>Sem responsavel ativo vinculado.</li>"}
           </ul>
@@ -18350,7 +18350,7 @@ const renderSecretariaNewStudentView = (index) => {
         <div class="qb-builder-grid">
           <label>
             <span>Nome completo</span>
-            <input name="nome" autocomplete="off" required placeholder="Aluno Ficticio de Homologacao" />
+            <input name="nome" autocomplete="off" required placeholder="Aluno Fictício de Homologação" />
           </label>
           <label>
             <span>Data de nascimento</span>
@@ -18374,10 +18374,10 @@ const renderSecretariaNewStudentView = (index) => {
           </label>
         </div>
         <div class="qb-builder-actions">
-          <button type="submit">Salvar aluno e matricula</button>
+          <button type="submit">Salvar aluno e matrícula</button>
           <a href="${secretariaLink("alunos")}">Cancelar</a>
         </div>
-        <p data-secretaria-form-message>${result?.student_id ? "Ultimo cadastro salvo com aluno e matricula." : "Aluno e matricula sao salvos em uma operacao unica."}</p>
+        <p data-secretaria-form-message>${result?.student_id ? "Último cadastro salvo com aluno e matricula." : "Aluno e matrícula sao salvos em uma operação única."}</p>
       </form>
     </section>
   `;
@@ -18395,7 +18395,7 @@ const renderSecretariaStudentsView = (index) => {
         <li data-secretaria-search-item>
           <a href="${secretariaLink("alunos", { student: student.id })}"><strong>${htmlEscape(normalizeStudentName(student))}</strong></a>
           ${secretariaBadge(secretariaStatusLabel(student.status), secretariaBadgeTone(student.status))}
-          <span>${htmlEscape(normalizeClassName(classItem))} · ${htmlEscape(secretariaSchoolYear(enrollment, classItem))} · Matricula ${htmlEscape(secretariaStatusLabel(enrollment?.status))}</span>
+          <span>${htmlEscape(normalizeClassName(classItem))} · ${htmlEscape(secretariaSchoolYear(enrollment, classItem))} · Matrícula ${htmlEscape(secretariaStatusLabel(enrollment?.status))}</span>
         </li>
       `;
     })
@@ -18462,7 +18462,7 @@ const renderSecretariaClassesView = (index) => {
                 <label><span>Motivo</span><input name="reason" required placeholder="correcao administrativa" /></label>
                 <button type="submit">Salvar turma</button>
               </form>
-              <p data-secretaria-class-message>Edicao basica segura. School_id e ano letivo nao sao alterados aqui.</p>`
+              <p data-secretaria-class-message>Edição básica segura. School_id e ano letivo não são alterados aqui.</p>`
             : "<p>Selecione uma turma para abrir os vinculos reais.</p>"
         }
       </section>
@@ -18492,13 +18492,13 @@ const renderSecretariaNewClassView = (index) => {
           <label><span>Faixa/etapa</span><input name="age_group" placeholder="Infantil teste" /></label>
           <label><span>Turno</span><input name="turno" placeholder="Manha" /></label>
           <label><span>Ano escolar</span><input name="ano_escolar" placeholder="Infantil" /></label>
-          <label><span>Motivo</span><input name="reason" required placeholder="homologacao secretaria 03.5" /></label>
+          <label><span>Motivo</span><input name="reason" required placeholder="homologação secretaria 03.5" /></label>
         </div>
         <div class="qb-builder-actions">
           <button type="submit">Salvar turma</button>
           <a href="${secretariaLink("turmas")}">Cancelar</a>
         </div>
-        <p data-secretaria-class-message>${result?.class_id ? `Ultima turma criada: ${htmlEscape(result.class_id)}` : "A operacao valida duplicidade por escola e ano letivo."}</p>
+        <p data-secretaria-class-message>${result?.class_id ? `Última turma criada: ${htmlEscape(result.class_id)}` : "A operação valida duplicidade por escola e ano letivo."}</p>
       </form>
     </section>
   `;
@@ -18523,7 +18523,7 @@ const renderSecretariaNewTeacherView = (index) => {
       <form data-secretaria-teacher-form>
         <div class="secretaria-form-grid secretaria-teacher-form-grid">
           <label class="is-wide"><span>Nome completo</span><input name="full_name" required autocomplete="off" placeholder="Nome completo do professor" /></label>
-          <label><span>Disciplina/Area</span><input name="disciplina" autocomplete="off" placeholder="Ex.: Educacao Infantil" /></label>
+          <label><span>Disciplina/Área</span><input name="disciplina" autocomplete="off" placeholder="Ex.: Educação Infantil" /></label>
           <label><span>Status</span><select name="status" required><option value="active">Ativo</option><option value="inactive">Inativo</option></select></label>
           <label class="is-wide"><span>Escola</span><select name="school_id" required>${schools.map((school) => `<option value="${htmlEscape(school.id)}" ${school.id === defaultSchool.id ? "selected" : ""}>${htmlEscape(normalizeSchoolName(school))}</option>`).join("")}</select></label>
         </div>
@@ -18552,7 +18552,7 @@ const renderSecretariaTeachersView = (index) => {
       return `
         <li data-secretaria-search-item>
           <a href="${secretariaLink("professores", { teacher: teacher.id })}"><strong>${htmlEscape(secretariaTeacherName(teacher, index))}</strong></a>
-          ${secretariaBadge(teacher.profile_id ? "Acesso configurado" : "Acesso nao configurado", teacher.profile_id ? "success" : "warning")}
+          ${secretariaBadge(teacher.profile_id ? "Acesso configurado" : "Acesso não configurado", teacher.profile_id ? "success" : "warning")}
           <span>${htmlEscape(secretariaStatusLabel(teacher.status))} · ${htmlEscape(classNames.join(", ") || "Sem turma ativa")}</span>
         </li>
       `;
@@ -18574,12 +18574,12 @@ const renderSecretariaTeachersView = (index) => {
         <ul class="clean-list">${rows || "<li>Nenhum professor ativo retornado pelo Supabase.</li>"}</ul>
       </section>
       <section class="panel span-2">
-        <h2>${htmlEscape(selected ? secretariaTeacherName(selected, index) : "Vinculos do professor")}</h2>
+        <h2>${htmlEscape(selected ? secretariaTeacherName(selected, index) : "Vínculos do professor")}</h2>
         ${
           selected
             ? `<ul class="clean-list">
                 <li>Status: ${secretariaBadge(secretariaStatusLabel(selected.status), secretariaBadgeTone(selected.status))}</li>
-                <li>Acesso a plataforma: ${secretariaBadge(selected.profile_id ? "Acesso configurado" : "Acesso nao configurado", selected.profile_id ? "success" : "warning")}</li>
+                <li>Acesso a plataforma: ${secretariaBadge(selected.profile_id ? "Acesso configurado" : "Acesso não configurado", selected.profile_id ? "success" : "warning")}</li>
                 <li>Escola: ${htmlEscape(normalizeSchoolName(index.schoolById.get(selected.school_id) || {}))}</li>
                 <li>Turmas ativas: ${selectedClasses.length}</li>
                 ${activeMemberships.map((membership) => {
@@ -18595,9 +18595,9 @@ const renderSecretariaTeachersView = (index) => {
                 <label><span>Motivo</span><input name="reason" required placeholder="vinculo institucional" /></label>
                 <button type="submit">Vincular turma</button>
               </form>
-              <h3>Vinculos encerrados</h3>
+              <h3>Vínculos encerrados</h3>
               <ul class="clean-list">${endedMemberships.map((membership) => `<li>${htmlEscape(normalizeClassName(index.classById.get(membership.class_id) || {}))} · ${htmlEscape(secretariaStatusLabel(membership.status))} · encerrado em ${htmlEscape(secretariaFormatDateTime(membership.ended_at))}</li>`).join("") || "<li>Nenhum vinculo encerrado retornado.</li>"}</ul>
-              <h3>Historico professor-turma</h3>
+              <h3>Histórico professor-turma</h3>
               <ul class="clean-list">${teacherMovements.map((movement) => `<li><strong>${htmlEscape(secretariaMovementLabels[movement.movement_type] || normalizeInstitutionalStatus(movement.movement_type))}</strong><span>${htmlEscape(secretariaFormatDateTime(movement.created_at))} · ${htmlEscape(normalizeClassName(index.classById.get(movement.class_id) || {}))} · ${htmlEscape(secretariaStatusLabel(movement.from_status) || "sem status")} -> ${htmlEscape(secretariaStatusLabel(movement.to_status) || "sem status")} · ${htmlEscape(movement.reason || "Sem motivo")}</span></li>`).join("") || "<li>Nenhum movimento registrado.</li>"}</ul>
               <p data-secretaria-teacher-link-message>Operacoes professor-turma preservam o historico institucional.</p>`
             : "<p>Selecione um professor para abrir as turmas vinculadas.</p>"
@@ -18656,7 +18656,7 @@ const renderSecretariaEnrollmentsView = (index) => {
   return `
     <div class="analytics-grid secretaria-grid">
       <section class="panel span-2">
-        <div class="panel-head"><h2>Matriculas</h2><a href="${secretariaLink("novoAluno")}">NOVA MATRICULA</a></div>
+        <div class="panel-head"><h2>Matrículas</h2><a href="${secretariaLink("novoAluno")}">NOVA MATRÍCULA</a></div>
         <form class="secretaria-filter-row" method="get" action="secretaria.html">
           <input type="hidden" name="view" value="matriculas" />
           <label><span>Aluno</span><select name="student"><option value="">Todos</option>${(secretariaInstitutionalState.students || []).map((student) => `<option value="${htmlEscape(student.id)}" ${student.id === selectedStudentId ? "selected" : ""}>${htmlEscape(normalizeStudentName(student))}</option>`).join("")}</select></label>
@@ -18666,8 +18666,8 @@ const renderSecretariaEnrollmentsView = (index) => {
           <button type="submit">Filtrar</button>
         </form>
         <label class="app-search"><span>Buscar matricula</span><input type="search" placeholder="Buscar por aluno, turma ou escola" data-secretaria-search /></label>
-        <h3>Matriculas Ativas</h3>
-        <ul class="clean-list">${activeRows || "<li>Nenhuma matricula ativa retornada pelo Supabase.</li>"}</ul>
+        <h3>Matrículas Ativas</h3>
+        <ul class="clean-list">${activeRows || "<li>Nenhuma matrícula ativa retornada pelo Supabase.</li>"}</ul>
       </section>
       <section class="panel">
         <h2>Transferencias</h2>
@@ -18682,8 +18682,8 @@ const renderSecretariaEnrollmentsView = (index) => {
         <ul class="clean-list">${movements.filter((item) => item.movement_type === "reenrollment").map((item) => `<li><a href="${secretariaLink("alunos", { student: item.student_id })}">${htmlEscape(normalizeStudentName(index.studentById.get(item.student_id) || {}))}</a><span>${htmlEscape(secretariaFormatDateTime(item.created_at))}</span></li>`).join("") || "<li>Nenhuma rematricula registrada.</li>"}</ul>
       </section>
       <section class="panel span-2">
-        <div class="panel-head"><h2>Historico de Movimentacoes</h2><span>${movements.length} registro${movements.length === 1 ? "" : "s"}</span></div>
-        <ul class="clean-list">${movementRows || "<li>Nenhuma movimentacao retornada pelo Supabase.</li>"}</ul>
+        <div class="panel-head"><h2>Histórico de Movimentacoes</h2><span>${movements.length} registro${movements.length === 1 ? "" : "s"}</span></div>
+        <ul class="clean-list">${movementRows || "<li>Nenhuma movimentação retornada pelo Supabase.</li>"}</ul>
       </section>
     </div>
   `;
@@ -18722,7 +18722,7 @@ const renderSecretariaNewGuardianView = (index) => {
           </label>
           <label>
             <span>Nome completo</span>
-            <input name="full_name" autocomplete="off" placeholder="Responsavel Ficticio de Homologacao" />
+            <input name="full_name" autocomplete="off" placeholder="Responsável Fictício de Homologação" />
           </label>
           <label>
             <span>E-mail</span>
@@ -18733,7 +18733,7 @@ const renderSecretariaNewGuardianView = (index) => {
             <input name="phone" autocomplete="off" placeholder="+55 11 90000-0000" />
           </label>
           <label>
-            <span>Vinculo</span>
+            <span>Vínculo</span>
             <select name="relationship" required>
               <option value="responsavel">Responsavel</option>
               <option value="mae">Mae</option>
@@ -18752,7 +18752,7 @@ const renderSecretariaNewGuardianView = (index) => {
           <label>
             <span>Responsavel principal</span>
             <select name="is_primary">
-              <option value="false">Nao</option>
+              <option value="false">Não</option>
               <option value="true">Sim</option>
             </select>
           </label>
@@ -18761,7 +18761,7 @@ const renderSecretariaNewGuardianView = (index) => {
           <button type="submit">Salvar responsavel e vinculo</button>
           <a href="${secretariaLink("responsaveis")}">Cancelar</a>
         </div>
-        <p data-secretaria-guardian-message>${result?.guardian_id ? "Ultimo responsavel vinculado com sucesso." : "Responsavel e vinculo sao salvos em uma operacao unica."}</p>
+        <p data-secretaria-guardian-message>${result?.guardian_id ? "Ultimo responsavel vinculado com sucesso." : "Responsavel e vinculo sao salvos em uma operação única."}</p>
       </form>
     </section>
   `;
@@ -18804,22 +18804,22 @@ const renderSecretariaGuardiansView = (index) => {
   return `
     <div class="analytics-grid secretaria-grid">
       <section class="panel span-2">
-        <div class="panel-head"><h2>Responsaveis</h2><a href="${secretariaLink("novoResponsavel")}">NOVO RESPONSAVEL</a></div>
+        <div class="panel-head"><h2>Responsáveis</h2><a href="${secretariaLink("novoResponsavel")}">NOVO RESPONSÁVEL</a></div>
         <label class="app-search"><span>Buscar responsavel</span><input type="search" placeholder="Buscar por responsavel ou aluno" data-secretaria-search /></label>
         <ul class="clean-list">${institutionalRows}${authRows || ""}${institutionalRows || authRows ? "" : "<li>Nenhum vinculo ativo retornado pelo Supabase.</li>"}</ul>
       </section>
       <section class="panel span-2">
-        <h2>${htmlEscape(selectedInstitutionalGuardian?.full_name || (selectedProfileId ? normalizeProfileName(selectedProfile) || selectedProfileId : "Vinculos do responsavel"))}</h2>
+        <h2>${htmlEscape(selectedInstitutionalGuardian?.full_name || (selectedProfileId ? normalizeProfileName(selectedProfile) || selectedProfileId : "Vínculos do responsável"))}</h2>
         ${
           selectedInstitutionalGuardian
             ? `<ul class="clean-list">
                 <li>Acesso a plataforma: ${secretariaBadge(secretariaAccessLabel(selectedInstitutionalGuardian.access_status), selectedInstitutionalGuardian.access_status === "active" ? "success" : "warning")}</li>
-                <li>E-mail: ${htmlEscape(selectedInstitutionalGuardian.email || "Nao informado")}</li>
-                <li>Telefone: ${htmlEscape(selectedInstitutionalGuardian.phone || "Nao informado")}</li>
-                ${selectedInstitutionalLinks.map((link) => `<li><strong>${htmlEscape(normalizeStudentName(index.studentById.get(link.student_id) || {}))}</strong>${secretariaBadge(link.is_primary ? "Principal" : "Vinculo ativo", link.is_primary ? "success" : "info")}<span>${htmlEscape(secretariaStatusLabel(link.relationship))} · ${htmlEscape(secretariaStatusLabel(link.status))}</span></li>`).join("") || "<li>Sem vinculo ativo.</li>"}
+                <li>E-mail: ${htmlEscape(selectedInstitutionalGuardian.email || "Não informado")}</li>
+                <li>Telefone: ${htmlEscape(selectedInstitutionalGuardian.phone || "Não informado")}</li>
+                ${selectedInstitutionalLinks.map((link) => `<li><strong>${htmlEscape(normalizeStudentName(index.studentById.get(link.student_id) || {}))}</strong>${secretariaBadge(link.is_primary ? "Principal" : "Vínculo ativo", link.is_primary ? "success" : "info")}<span>${htmlEscape(secretariaStatusLabel(link.relationship))} · ${htmlEscape(secretariaStatusLabel(link.status))}</span></li>`).join("") || "<li>Sem vínculo ativo.</li>"}
               </ul>`
             : selectedProfileId
-              ? `<ul class="clean-list"><li>Acesso a plataforma: ${secretariaBadge("Acesso configurado", "success")}</li>${selectedGuardians.map((guardian) => `<li><strong>${htmlEscape(normalizeStudentName(index.studentById.get(guardian.student_id) || {}))}</strong><span>${htmlEscape(secretariaStatusLabel(guardian.relationship))} · ${htmlEscape(secretariaStatusLabel(guardian.status))}</span></li>`).join("") || "<li>Sem vinculo ativo.</li>"}</ul>`
+              ? `<ul class="clean-list"><li>Acesso a plataforma: ${secretariaBadge("Acesso configurado", "success")}</li>${selectedGuardians.map((guardian) => `<li><strong>${htmlEscape(normalizeStudentName(index.studentById.get(guardian.student_id) || {}))}</strong><span>${htmlEscape(secretariaStatusLabel(guardian.relationship))} · ${htmlEscape(secretariaStatusLabel(guardian.status))}</span></li>`).join("") || "<li>Sem vínculo ativo.</li>"}</ul>`
             : "<p>Selecione um responsavel para abrir os alunos vinculados.</p>"
         }
       </section>
@@ -18868,7 +18868,7 @@ const renderSecretariaAttendanceView = (index) => {
   const summary = attendanceSummary(records);
   return `
     <section class="panel span-2">
-      <div class="panel-head"><h2>Frequencia</h2><span>${records.length} registro${records.length === 1 ? "" : "s"}</span></div>
+      <div class="panel-head"><h2>Frequência</h2><span>${records.length} registro${records.length === 1 ? "" : "s"}</span></div>
       <form class="analytics-grid secretaria-grid" method="get" action="secretaria.html">
         <input type="hidden" name="view" value="frequencia" />
         <label><span>Turma</span><select name="class"><option value="">Todas</option>${(secretariaInstitutionalState.classes || []).map((classItem) => `<option value="${htmlEscape(classItem.id)}" ${classItem.id === selectedClassId ? "selected" : ""}>${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
@@ -18895,7 +18895,7 @@ const renderSecretariaAttendanceView = (index) => {
               <span>${htmlEscape(record.attendance_date)} · ${htmlEscape(normalizeClassName(classItem))}${record.notes ? ` · ${htmlEscape(record.notes)}` : ""}</span>
             </li>
           `;
-        }).join("") || "<li>Nenhum registro de frequencia retornado pelo Supabase.</li>"}
+        }).join("") || "<li>Nenhum registro de frequência retornado pelo Supabase.</li>"}
       </ul>
     </section>
   `;
@@ -18925,11 +18925,11 @@ const renderSecretariaCommunicationsView = (index) => {
   return `
     <div class="secretaria-communication-layout">
       <section class="panel span-2 secretaria-form-panel">
-        <div class="panel-head"><h2>${secretariaInlineIcon("mail", "Novo Comunicado")}</h2><span>Comunicacao institucional</span></div>
+        <div class="panel-head"><h2>${secretariaInlineIcon("mail", "Novo Comunicado")}</h2><span>Comunicação institucional</span></div>
         <form data-secretaria-communication-form>
           <div class="secretaria-form-grid secretaria-communication-form-grid">
-            <label><span>Destino</span><select name="audience_type" required data-secretaria-communication-audience><option value="school">Toda a escola</option><option value="class">Turma</option><option value="student">Aluno/Familia</option></select></label>
-            <label><span>Tipo</span><select name="communication_type" required><option value="institutional_announcement">Comunicado institucional</option><option value="notice">Comunicado</option><option value="message">Mensagem</option><option value="weekly_information">Informacao da semana</option></select></label>
+            <label><span>Destino</span><select name="audience_type" required data-secretaria-communication-audience><option value="school">Toda a escola</option><option value="class">Turma</option><option value="student">Aluno/Família</option></select></label>
+            <label><span>Tipo</span><select name="communication_type" required><option value="institutional_announcement">Comunicado institucional</option><option value="notice">Comunicado</option><option value="message">Mensagem</option><option value="weekly_information">Informação da semana</option></select></label>
             <label><span>Status</span><select name="status" required><option value="published">Publicado</option><option value="draft">Rascunho</option></select></label>
             <label data-secretaria-communication-class-wrap><span>Turma</span><select name="class_id" data-secretaria-communication-class><option value="">Selecione uma turma</option>${activeClasses.map((classItem) => `<option value="${htmlEscape(classItem.id)}">${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
             <label data-secretaria-communication-student-wrap><span>Aluno</span><select name="student_id" data-secretaria-communication-student><option value="">Selecione um aluno</option>${activeStudents.map((student) => {
@@ -18944,15 +18944,15 @@ const renderSecretariaCommunicationsView = (index) => {
             <a href="${secretariaLink("comunicados")}">Cancelar</a>
             <button type="submit" data-secretaria-communication-submit>PUBLICAR COMUNICADO</button>
           </div>
-          <p class="secretaria-form-hint" data-secretaria-communication-message>${secretariaInstitutionalState.lastCommunicationResult?.communication_id ? (secretariaInstitutionalState.lastCommunicationResult.status === "archived" ? "Comunicado retirado da publicacao com sucesso." : "Comunicado publicado com sucesso.") : "A visibilidade do comunicado segue o destino selecionado."}</p>
+          <p class="secretaria-form-hint" data-secretaria-communication-message>${secretariaInstitutionalState.lastCommunicationResult?.communication_id ? (secretariaInstitutionalState.lastCommunicationResult.status === "archived" ? "Comunicado retirado da publicação com sucesso." : "Comunicado publicado com sucesso.") : "A visibilidade do comunicado segue o destino selecionado."}</p>
         </form>
       </section>
       <section class="panel span-2 secretaria-list-panel">
-      <div class="panel-head"><h2>Pre-visualizacao</h2><span>Antes de publicar</span></div>
+      <div class="panel-head"><h2>Pré-visualização</h2><span>Antes de publicar</span></div>
       <article class="secretaria-communication-preview" data-secretaria-communication-preview>
         <strong>Novo comunicado</strong>
         <span>${htmlEscape(communicationAudienceSummary({ audienceType: "school", school: firstSchool, classItem: firstClass, student: firstStudent }))}</span>
-        <p>Preencha titulo e mensagem para conferir como o comunicado sera apresentado.</p>
+        <p>Preencha título e mensagem para conferir como o comunicado será apresentado.</p>
       </article>
       <div class="panel-head"><h2>Comunicados publicados</h2><span>${latestRows.length} registro${latestRows.length === 1 ? "" : "s"}</span></div>
       <form class="secretaria-filter-row" method="get" action="secretaria.html">
@@ -18975,7 +18975,7 @@ const renderSecretariaCommunicationsView = (index) => {
               : normalizeStudentName(student);
           const events = index.communicationEventsByCommunication[communication.id] || [];
           const actionButton = communication.status === "published"
-            ? `<button type="button" data-secretaria-communication-status="${htmlEscape(communication.id)}" data-to-status="archived" data-destination="${htmlEscape(communicationAudienceSummary({ audienceType: communication.audience_type, school: index.schoolById.get(communication.school_id) || {}, classItem, student }))}">Retirar da publicacao</button>`
+            ? `<button type="button" data-secretaria-communication-status="${htmlEscape(communication.id)}" data-to-status="archived" data-destination="${htmlEscape(communicationAudienceSummary({ audienceType: communication.audience_type, school: index.schoolById.get(communication.school_id) || {}, classItem, student }))}">Retirar da publicação</button>`
             : communication.status === "archived"
               ? `<button type="button" data-secretaria-communication-status="${htmlEscape(communication.id)}" data-to-status="published" data-destination="${htmlEscape(communicationAudienceSummary({ audienceType: communication.audience_type, school: index.schoolById.get(communication.school_id) || {}, classItem, student }))}">Publicar novamente</button>`
               : `<button type="button" data-secretaria-communication-status="${htmlEscape(communication.id)}" data-to-status="published" data-destination="${htmlEscape(communicationAudienceSummary({ audienceType: communication.audience_type, school: index.schoolById.get(communication.school_id) || {}, classItem, student }))}">Publicar</button>`;
@@ -18985,7 +18985,7 @@ const renderSecretariaCommunicationsView = (index) => {
               ${secretariaBadge(communicationStatusLabel(communication.status), secretariaBadgeTone(communication.status))}
               <span>${htmlEscape(communicationAudienceLabel(communication.audience_type))} · ${htmlEscape(destination)} · ${htmlEscape(communicationTypeLabel(communication.communication_type))} · ${htmlEscape(communicationDisplayDate(communication.created_at || communication.communication_date))}</span>
               <span>${htmlEscape(String(communication.body || "").slice(0, 140))}${String(communication.body || "").length > 140 ? "..." : ""}</span>
-              <span>Publicado por ${htmlEscape(normalizeProfileName(author) || communication.author_role || "Usuario institucional")} · Historico: ${events.length} evento${events.length === 1 ? "" : "s"}</span>
+              <span>Publicado por ${htmlEscape(normalizeProfileName(author) || communication.author_role || "Usuário institucional")} · Histórico: ${events.length} evento${events.length === 1 ? "" : "s"}</span>
               <div class="secretaria-list-actions">
                 <a href="${secretariaLink("comunicados", { q: communication.title })}">${communication.status === "draft" ? "Visualizar/Editar" : "Visualizar"}</a>
                 ${actionButton}
@@ -19016,7 +19016,7 @@ const renderSecretariaReadyView = () => {
     novoResponsavel: () => renderSecretariaNewGuardianView(index),
     documentos: () => renderSecretariaPendenciasView(index),
     pendencias: () => renderSecretariaPendenciasView(index),
-    frequencia: () => renderSecretariaAttendanceView(index),
+    frequência: () => renderSecretariaAttendanceView(index),
     comunicados: () => renderSecretariaCommunicationsView(index),
   }[view]();
   return `${renderSecretariaGlobalHeader(index)}${content}`;
@@ -19027,7 +19027,7 @@ const renderSecretariaDashboard = () => `
     <div class="dashboard-head">
       <div>
         <h1>Secretaria</h1>
-        <span>Gestao institucional</span>
+        <span>Gestão institucional</span>
       </div>
     </div>
     ${secretariaInstitutionalState.status === "ready" ? renderSecretariaReadyView() : renderSecretariaStatus()}
@@ -19086,17 +19086,17 @@ const initSecretariaInstitutional = () => {
     }
     if (preview) {
       const selectedSchool = schoolSelect?.selectedOptions[0]?.textContent?.trim() || "Escola";
-      const selectedClass = classSelect?.selectedOptions[0]?.textContent?.trim() || "Turma nao selecionada";
-      const selectedStudent = studentSelect?.selectedOptions[0]?.textContent?.trim() || "Aluno nao selecionado";
+      const selectedClass = classSelect?.selectedOptions[0]?.textContent?.trim() || "Turma não selecionada";
+      const selectedStudent = studentSelect?.selectedOptions[0]?.textContent?.trim() || "Aluno não selecionado";
       const audienceLabel = isSchool
         ? `Toda a escola: ${selectedSchool}`
         : isClass
           ? `Turma: ${selectedClass}`
-          : `Aluno/Familia: ${selectedStudent}`;
+          : `Aluno/Família: ${selectedStudent}`;
       preview.innerHTML = `
         <strong>${htmlEscape(titleInput?.value.trim() || "Novo comunicado")}</strong>
         <span>${htmlEscape(audienceLabel)}</span>
-        <p>${htmlEscape(bodyInput?.value.trim() || "Preencha titulo e mensagem para conferir como o comunicado sera apresentado.")}</p>
+        <p>${htmlEscape(bodyInput?.value.trim() || "Preencha título e mensagem para conferir como o comunicado será apresentado.")}</p>
       `;
     }
   };
@@ -19154,10 +19154,10 @@ const initSecretariaInstitutional = () => {
         await ensureSecretariaInstitutionalData({ force: true });
         window.location.href = secretariaLink("alunos", { student: result?.student_id });
       } catch (error) {
-        if (message) message.textContent = error.message || "Nao foi possivel concluir o cadastro.";
+        if (message) message.textContent = error.message || "Não foi possível concluir o cadastro.";
         if (submitButton) {
           submitButton.disabled = false;
-          submitButton.textContent = "Salvar aluno e matricula";
+          submitButton.textContent = "Salvar aluno e matrícula";
         }
       }
     });
@@ -19219,7 +19219,7 @@ const initSecretariaInstitutional = () => {
         await ensureSecretariaInstitutionalData({ force: true });
         window.location.href = secretariaLink("responsaveis", { guardian: result?.guardian_id });
       } catch (error) {
-        if (message) message.textContent = error.message || "Nao foi possivel concluir o vinculo.";
+        if (message) message.textContent = error.message || "Não foi possível concluir o vínculo.";
         if (submitButton) {
           submitButton.disabled = false;
           submitButton.textContent = "Salvar responsavel e vinculo";
@@ -19238,7 +19238,7 @@ const initSecretariaInstitutional = () => {
       const studentId = String(formData.get("student_id") || "").trim();
       const reason = String(formData.get("reason") || "").trim();
       if (!reason) {
-        if (message) message.textContent = "Informe o motivo da movimentacao.";
+        if (message) message.textContent = "Informe o motivo da movimentação.";
         return;
       }
       try {
@@ -19251,7 +19251,7 @@ const initSecretariaInstitutional = () => {
         await ensureSecretariaInstitutionalData({ force: true });
         window.location.href = secretariaLink("alunos", { student: studentId });
       } catch (error) {
-        if (message) message.textContent = error.message || "Nao foi possivel registrar a movimentacao.";
+        if (message) message.textContent = error.message || "Não foi possível registrar a movimentação.";
         if (submitButton) {
           submitButton.disabled = false;
           submitButton.textContent = submitButton.dataset.originalLabel || "Tentar novamente";
@@ -19314,7 +19314,7 @@ const initSecretariaInstitutional = () => {
         await ensureSecretariaInstitutionalData({ force: true });
         window.location.href = secretariaLink("turmas", { class: result?.class_id });
       } catch (error) {
-        if (message) message.textContent = error.message || "Nao foi possivel criar turma.";
+        if (message) message.textContent = error.message || "Não foi possível criar turma.";
         if (submitButton) {
           submitButton.disabled = false;
           submitButton.textContent = "Salvar turma";
@@ -19347,7 +19347,7 @@ const initSecretariaInstitutional = () => {
         await ensureSecretariaInstitutionalData({ force: true });
         window.location.href = secretariaLink("turmas", { class: result?.class_id });
       } catch (error) {
-        if (message) message.textContent = error.message || "Nao foi possivel editar turma.";
+        if (message) message.textContent = error.message || "Não foi possível editar turma.";
         if (submitButton) {
           submitButton.disabled = false;
           submitButton.textContent = "Salvar turma";
@@ -19377,7 +19377,7 @@ const initSecretariaInstitutional = () => {
         await ensureSecretariaInstitutionalData({ force: true });
         window.location.href = secretariaLink("professores", { teacher: result?.teacher_id });
       } catch (error) {
-        if (message) message.textContent = error.message || "Nao foi possivel criar professor.";
+        if (message) message.textContent = error.message || "Não foi possível criar professor.";
         if (submitButton) {
           submitButton.disabled = false;
           submitButton.textContent = "Salvar professor";
@@ -19407,7 +19407,7 @@ const initSecretariaInstitutional = () => {
         await ensureSecretariaInstitutionalData({ force: true });
         window.location.href = secretariaLink("professores", { teacher: result?.teacher_id });
       } catch (error) {
-        if (message) message.textContent = error.message || "Nao foi possivel vincular professor.";
+        if (message) message.textContent = error.message || "Não foi possível vincular professor.";
         if (submitButton) {
           submitButton.disabled = false;
           submitButton.textContent = "VINCULAR TURMA";
@@ -19435,7 +19435,7 @@ const initSecretariaInstitutional = () => {
         await ensureSecretariaInstitutionalData({ force: true });
         window.location.href = secretariaLink("professores", { teacher: teacherId });
       } catch (error) {
-        if (message) message.textContent = error.message || "Nao foi possivel encerrar vinculo.";
+        if (message) message.textContent = error.message || "Não foi possível encerrar vínculo.";
         if (submitButton) {
           submitButton.disabled = false;
           submitButton.textContent = "ENCERRAR VINCULO";
@@ -19469,7 +19469,7 @@ const initSecretariaInstitutional = () => {
         await ensureSecretariaInstitutionalData({ force: true });
         window.location.href = secretariaLink("alunos", { student: studentId });
       } catch (error) {
-        if (message) message.textContent = error.message || "Nao foi possivel atualizar documento.";
+        if (message) message.textContent = error.message || "Não foi possível atualizar documento.";
         if (submitButton) {
           submitButton.disabled = false;
           submitButton.textContent = "Salvar documento";
@@ -19493,7 +19493,7 @@ const initSecretariaInstitutional = () => {
           : String(formData.get("class_id") || "");
         const studentId = String(formData.get("student_id") || "");
         if (audienceType === "class" && !classId) throw new Error("Selecione uma turma para publicar para uma turma.");
-        if (audienceType === "student" && (!studentId || !classId)) throw new Error("Selecione um aluno com matricula ativa para publicar para Aluno/Familia.");
+        if (audienceType === "student" && (!studentId || !classId)) throw new Error("Selecione um aluno com matrícula ativa para publicar para Aluno/Família.");
         if (submitButton) {
           submitButton.disabled = true;
           submitButton.textContent = "PUBLICANDO...";
@@ -19514,7 +19514,7 @@ const initSecretariaInstitutional = () => {
         area.outerHTML = renderSecretariaDashboard();
         initSecretariaInstitutional();
       } catch (error) {
-        if (message) message.textContent = error.message || "Nao foi possivel publicar o comunicado.";
+        if (message) message.textContent = error.message || "Não foi possível publicar o comunicado.";
         if (submitButton) {
           submitButton.disabled = false;
           submitButton.textContent = "PUBLICAR COMUNICADO";
@@ -19530,7 +19530,7 @@ const initSecretariaInstitutional = () => {
       const destination = button.dataset.destination || "Destino nao informado";
       const prompt = toStatus === "published"
         ? `Publicar novamente para este publico?\n\n${destination}`
-        : `Retirar este comunicado da publicacao?\n\n${destination}`;
+        : `Retirar este comunicado da publicação?\n\n${destination}`;
       if (!window.confirm(prompt)) return;
       try {
         button.disabled = true;
@@ -19548,7 +19548,7 @@ const initSecretariaInstitutional = () => {
         area.outerHTML = renderSecretariaDashboard();
         initSecretariaInstitutional();
       } catch (error) {
-        if (message) message.textContent = error.message || "Nao foi possivel atualizar o comunicado.";
+        if (message) message.textContent = error.message || "Não foi possível atualizar o comunicado.";
         button.disabled = false;
         button.textContent = originalText;
       }
@@ -19569,7 +19569,7 @@ const initSecretariaInstitutional = () => {
         area.outerHTML = renderSecretariaDashboard();
         initSecretariaInstitutional();
       } catch (error) {
-        if (message) message.textContent = error.message || "Nao foi possivel excluir o comunicado.";
+        if (message) message.textContent = error.message || "Não foi possível excluir o comunicado.";
         button.disabled = false;
         button.textContent = "Excluir";
       }
@@ -19586,7 +19586,7 @@ const initSecretariaInstitutional = () => {
         <html lang="pt-BR">
           <head>
             <meta charset="utf-8" />
-            <title>Declaracao de Matricula</title>
+            <title>Declaração de Matrícula</title>
             <style>
               body { font-family: Arial, sans-serif; color: #1f2933; margin: 48px; line-height: 1.6; }
               .secretaria-declaration { max-width: 760px; margin: 0 auto; }
@@ -19609,7 +19609,7 @@ const initSecretariaInstitutional = () => {
       if (secretariaInstitutionalState.status !== "loading" || !document.body.contains(area)) return;
       Object.assign(secretariaInstitutionalState, {
         status: "error",
-        error: "Tempo limite ao consultar o Supabase. Verifique a sessao HTTP e tente recarregar.",
+        error: "Tempo limite ao consultar o Supabase. Verifique a sessão HTTP e tente recarregar.",
       });
       area.outerHTML = renderSecretariaDashboard();
       initSecretariaInstitutional();
@@ -19625,7 +19625,7 @@ const initSecretariaInstitutional = () => {
         window.clearTimeout(loadingTimeout);
         Object.assign(secretariaInstitutionalState, {
           status: "error",
-          error: error.message || "Nao foi possivel renderizar a Secretaria pelo Supabase.",
+          error: error.message || "Não foi possível renderizar a Secretaria pelo Supabase.",
         });
         if (!document.body.contains(area)) return;
         area.outerHTML = renderSecretariaDashboard();
@@ -19640,7 +19640,7 @@ const questionBankFallbackStore = {
     id: `demo-assessment-${index + 1}`,
     ...assessment,
     title: assessment.title,
-    description: "Avaliacao demonstrativa local.",
+    description: "Avaliação demonstrativa local.",
     component: index === 0 ? "Lingua Portuguesa" : "Matematica",
     year: index === 0 ? "2o ano" : "5o ano",
     instructions: "Leia com atencao e marque apenas uma alternativa por questao.",
@@ -19672,14 +19672,14 @@ const mapQuestionFromSupabase = (row) => {
     originType: row.source?.source_type || "Autoral",
     legalClassification: row.legal_classification,
     sourceId: row.source_id,
-    sourceName: row.source?.name || "Conteudo autoral Raizes e Saberes",
+    sourceName: row.source?.name || "Conteúdo autoral Raízes e Saberes",
     author: row.author_name,
-    license: row.license?.name || row.source?.license?.name || "Uso interno demonstrativo Raizes e Saberes",
+    license: row.license?.name || row.source?.license?.name || "Uso interno demonstrativo Raízes e Saberes",
     legalStatus: row.source?.legal_status || "",
     createdAt: row.created_at,
     reviewedAt: row.last_reviewed_at || row.updated_at || row.created_at,
     version: row.version,
-    reviewer: row.reviewer_name || "Revisao pendente",
+    reviewer: row.reviewer_name || "Revisão pendente",
     curationStatus: row.curation_status,
     publicationStatus: row.publication_status,
     statement: row.statement,
@@ -19733,7 +19733,7 @@ const questionBankDataService = (() => {
       return questionSourcesDemo;
     },
     async listLicenses() {
-      return [{ id: "demo-license", name: "Uso interno demonstrativo Raizes e Saberes" }];
+      return [{ id: "demo-license", name: "Uso interno demonstrativo Raízes e Saberes" }];
     },
     async listAssessments() {
       return questionBankFallbackStore.assessments;
@@ -19798,7 +19798,7 @@ const questionBankDataService = (() => {
       return null;
     },
     async getCurationHistory(questionId) {
-      return [{ comment: "Historico local demonstrativo.", question_id: questionId, created_at: new Date().toISOString() }];
+      return [{ comment: "Histórico local demonstrativo.", question_id: questionId, created_at: new Date().toISOString() }];
     },
   };
 
@@ -19971,7 +19971,7 @@ const questionBankDataService = (() => {
 
   const productionMissingConfig = {
     async listQuestions() {
-      throw new Error("Banco de Questoes sem conexao Supabase em ambiente de producao. Configure supabase-config.js com URL e anon key publica.");
+      throw new Error("Banco de Questões sem conexão Supabase em ambiente de produção. Configure supabase-config.js com URL e anon key pública.");
     },
   };
   const active = () => {
@@ -20031,7 +20031,7 @@ const initCurationBatches = () => {
 
   const api = async (table, params = "", options = {}) => {
     if (!config.url || !config.anonKey) {
-      throw new Error("Supabase nao configurado. Defina SUPABASE_URL e SUPABASE_ANON_KEY no ambiente e exponha somente valores publicos em supabase-config.js.");
+      throw new Error("Supabase não configurado. Defina SUPABASE_URL e SUPABASE_ANON_KEY no ambiente e exponha somente valores publicos em supabase-config.js.");
     }
     const baseUrl = config.url.replace(/\/$/, "");
     const authHeaders = token && !String(token).startsWith("sb_") ? { Authorization: `Bearer ${token}` } : {};
@@ -20109,7 +20109,7 @@ const initCurationBatches = () => {
     const duplicates = items.filter(isDuplicateCandidate).length;
     summaryNode.innerHTML = `
       <article><strong>${htmlEscape(batch.batch_code)}</strong><span>${htmlEscape(batch.title)}</span><small>${batch.found_count} encontrados · ${imported} importados · ${batch.discarded_count} descartados · ${published} publicados</small></article>
-      <article><strong>Status</strong><span>${htmlEscape(batch.status)}</span><small>Publicacao controlada por item aprovado.</small></article>
+      <article><strong>Status</strong><span>${htmlEscape(batch.status)}</span><small>Publicação controlada por item aprovado.</small></article>
       <article><strong>Alertas</strong><span>${alerts} alertas de metadados</span><small>Use o filtro para revisar campos pendentes.</small></article>
       <article><strong>Duplicidades</strong><span>${duplicates} possiveis relacoes</span><small>Decisao editorial exigida antes de destacar.</small></article>
     `;
@@ -20133,7 +20133,7 @@ const initCurationBatches = () => {
             <label class="batch-select"><input type="checkbox" data-batch-select="${item.id}" ${checked} /><span>Selecionar</span></label>
             <div>
               <strong>${htmlEscape(item.normalized_title)}</strong>
-              <span>${htmlEscape(provider)} · ${htmlEscape(category)} · ${htmlEscape(workload)} · ${htmlEscape(course.certificate_text || "Certificado em revisao")}</span>
+              <span>${htmlEscape(provider)} · ${htmlEscape(category)} · ${htmlEscape(workload)} · ${htmlEscape(course.certificate_text || "Certificado em revisão")}</span>
               <small>Centro: ${htmlEscape(course.knowledge_center || category)} · Status: ${htmlEscape(item.status)} · ${htmlEscape(confidenceLabel(item))}</small>
             </div>
             <div class="batch-row-actions">
@@ -20162,7 +20162,7 @@ const initCurationBatches = () => {
         <article><strong>Coleta</strong><span>${htmlEscape(batch?.verification_date || item.created_at || "Pendente")}</span></article>
         <article><strong>Status</strong><span>${htmlEscape(item.status)}</span></article>
         <article class="span-2"><strong>Confianca</strong><span>${htmlEscape(confidenceLabel(item))}</span></article>
-        <article class="span-2"><strong>Observacao da curadoria</strong><span>${htmlEscape(course.curator_notes || item.action_required || "Sem observacao registrada.")}</span></article>
+        <article class="span-2"><strong>Observação da curadoria</strong><span>${htmlEscape(course.curator_notes || item.action_required || "Sem observação registrada.")}</span></article>
       </div>
     `;
   };
@@ -20213,14 +20213,14 @@ const initCurationBatches = () => {
   const runSelected = async (status, onlyOne = false) => {
     const ids = Array.from(selectedIds);
     if (!ids.length) {
-      setState("Selecione pelo menos um item para executar a acao.", "error");
+      setState("Selecione pelo menos um item para executar a ação.", "error");
       return;
     }
     if (onlyOne && ids.length !== 1) {
-      setState("Selecione exatamente um item para publicacao/despublicacao controlada.", "error");
+      setState("Selecione exatamente um item para publicação/despublicação controlada.", "error");
       return;
     }
-    setState("Registrando acao editorial no Supabase...", "loading");
+    setState("Registrando ação editorial no Supabase...", "loading");
     for (const id of ids) {
       await updateItemStatus(id, status);
     }
@@ -20331,7 +20331,7 @@ const initTeacherWorkspace = () => {
     if (!panel || !form || !proposal) return;
     const publication = proposal.publication || {};
     panel.hidden = false;
-    panel.querySelector("h2").textContent = publication.id ? "Editar publicacao" : "Publicar na agenda";
+    panel.querySelector("h2").textContent = publication.id ? "Editar publicação" : "Publicar na agenda";
     form.elements.planId.value = proposal.id;
     form.elements.publicationId.value = publication.id || "";
     form.elements.title.value = publication.title || proposal.title || "";
@@ -20443,7 +20443,7 @@ const initTeacherWorkspace = () => {
         await publishTeacherClassWeekToSupabase(classItem.id);
         rerenderTeacherClassPage();
       } catch (error) {
-        window.alert(error.message || "Nao foi possivel publicar Minha Semana.");
+        window.alert(error.message || "Não foi possível publicar Minha Semana.");
       } finally {
         publishClassWeek.disabled = false;
       }
@@ -20499,7 +20499,7 @@ const initTeacherWorkspace = () => {
         await finalizeTeacherPlanning(proposal.id);
         await refreshPlanningView({ force: false });
       } catch (error) {
-        window.alert(error.message || "Nao foi possivel finalizar o planejamento.");
+        window.alert(error.message || "Não foi possível finalizar o planejamento.");
       } finally {
         finalizePlanning.disabled = false;
       }
@@ -20530,7 +20530,7 @@ const initTeacherWorkspace = () => {
         await archiveTeacherCalendarEntry(proposal.id);
         await refreshPlanningView({ force: false });
       } catch (error) {
-        window.alert(error.message || "Nao foi possivel retirar a publicacao.");
+        window.alert(error.message || "Não foi possível retirar a publicação.");
       } finally {
         unpublishPlanning.disabled = false;
       }
@@ -20542,7 +20542,7 @@ const initTeacherWorkspace = () => {
       const proposal = (teacherPlanningState.plans || []).find((item) => item.id === removePlanning.dataset.planningRemove);
       if (!proposal) return;
       const message = proposal.published
-        ? `Arquivar a proposta "${proposal.title}" e retirar a publicacao ativa da agenda?`
+        ? `Arquivar a proposta "${proposal.title}" e retirar a publicação ativa da agenda?`
         : `Arquivar a proposta "${proposal.title}" do planejamento?`;
       if (!window.confirm(message)) return;
       removePlanning.disabled = true;
@@ -20551,7 +20551,7 @@ const initTeacherWorkspace = () => {
         await archiveTeacherPlanning(proposal.id);
         await refreshPlanningView({ force: false });
       } catch (error) {
-        window.alert(error.message || "Nao foi possivel arquivar a proposta.");
+        window.alert(error.message || "Não foi possível arquivar a proposta.");
       } finally {
         removePlanning.disabled = false;
       }
@@ -20608,8 +20608,8 @@ const initTeacherWorkspace = () => {
       const message = (teacherClassMessagesState.messages || []).find((item) => item.id === messageStatus.dataset.teacherMessageStatus);
       if (!message) return;
       const toStatus = messageStatus.dataset.toStatus || "";
-      const destination = messageStatus.dataset.destination || (message.audienceType === "student" ? `Aluno/Familia: ${message.studentName}` : `Toda a turma: ${message.className}`);
-      const label = toStatus === "published" ? `Publicar novamente para ${destination}?` : `Retirar "${message.title}" da publicacao?`;
+      const destination = messageStatus.dataset.destination || (message.audienceType === "student" ? `Aluno/Família: ${message.studentName}` : `Toda a turma: ${message.className}`);
+      const label = toStatus === "published" ? `Publicar novamente para ${destination}?` : `Retirar "${message.title}" da publicação?`;
       if (!window.confirm(label)) return;
       messageStatus.disabled = true;
       messageStatus.textContent = toStatus === "published" ? "PUBLICANDO..." : "RETIRANDO...";
@@ -20617,7 +20617,7 @@ const initTeacherWorkspace = () => {
         await setTeacherClassMessageStatus(message.id, toStatus);
         rerenderTeacherClassPage();
       } catch (error) {
-        window.alert(error.message || "Nao foi possivel alterar o recado.");
+        window.alert(error.message || "Não foi possível alterar o recado.");
       }
       return;
     }
@@ -20633,7 +20633,7 @@ const initTeacherWorkspace = () => {
         await deleteTeacherClassMessage(message.id);
         rerenderTeacherClassPage();
       } catch (error) {
-        window.alert(error.message || "Nao foi possivel excluir o recado.");
+        window.alert(error.message || "Não foi possível excluir o recado.");
       }
       return;
     }
@@ -20643,8 +20643,8 @@ const initTeacherWorkspace = () => {
       const recommendation = (teacherRecommendationsState.items || []).find((item) => item.id === recommendationStatus.dataset.teacherRecommendationStatus);
       if (!recommendation) return;
       const toStatus = recommendationStatus.dataset.toStatus || "";
-      const destination = recommendationStatus.dataset.destination || (recommendation.targetType === "student" ? `Aluno/Familia: ${recommendation.studentName}` : `Toda a turma: ${recommendation.className}`);
-      const label = toStatus === "published" ? `Publicar novamente para ${destination}?` : `Retirar "${recommendation.contentTitle}" da publicacao?`;
+      const destination = recommendationStatus.dataset.destination || (recommendation.targetType === "student" ? `Aluno/Família: ${recommendation.studentName}` : `Toda a turma: ${recommendation.className}`);
+      const label = toStatus === "published" ? `Publicar novamente para ${destination}?` : `Retirar "${recommendation.contentTitle}" da publicação?`;
       if (!window.confirm(label)) return;
       recommendationStatus.disabled = true;
       recommendationStatus.textContent = toStatus === "published" ? "PUBLICANDO..." : "RETIRANDO...";
@@ -20652,7 +20652,7 @@ const initTeacherWorkspace = () => {
         await setTeacherRecommendationStatus(recommendation.id, toStatus);
         rerenderTeacherClassPage();
       } catch (error) {
-        window.alert(error.message || "Nao foi possivel alterar a recomendacao.");
+        window.alert(error.message || "Não foi possível alterar a recomendação.");
       }
       return;
     }
@@ -20661,14 +20661,14 @@ const initTeacherWorkspace = () => {
       event.preventDefault();
       const recommendation = (teacherRecommendationsState.items || []).find((item) => item.id === recommendationDelete.dataset.teacherRecommendationDelete);
       if (!recommendation) return;
-      if (!window.confirm("Excluir esta recomendacao definitivamente da operacao?")) return;
+      if (!window.confirm("Excluir esta recomendação definitivamente da operação?")) return;
       recommendationDelete.disabled = true;
       recommendationDelete.textContent = "EXCLUINDO...";
       try {
         await deleteTeacherRecommendation(recommendation.id);
         rerenderTeacherClassPage();
       } catch (error) {
-        window.alert(error.message || "Nao foi possivel excluir a recomendacao.");
+        window.alert(error.message || "Não foi possível excluir a recomendação.");
       }
       return;
     }
@@ -20733,7 +20733,7 @@ const initTeacherWorkspace = () => {
         }));
         await saveTeacherAttendanceDay({ classId, date, records });
         await ensureTeacherAttendanceDay({ force: true, classId, date });
-        teacherAttendanceState.message = "Frequencia salva com sucesso.";
+        teacherAttendanceState.message = "Frequência salva com sucesso.";
         const params = new URLSearchParams(window.location.search);
         params.set("id", classId);
         params.set("tab", "frequencia");
@@ -20747,7 +20747,7 @@ const initTeacherWorkspace = () => {
         content.innerHTML = renderTeacherWorkspaceView("mensagens");
       }
     } catch (error) {
-      window.alert(error.message || "Nao foi possivel salvar no Supabase.");
+      window.alert(error.message || "Não foi possível salvar no Supabase.");
     } finally {
       if (submitButton) {
         submitButton.disabled = false;
@@ -21072,12 +21072,12 @@ const initPrintableActivities = () => {
         studentId: String(data.get("studentId") || ""),
         note: String(data.get("note") || "").trim(),
       });
-      if (status) status.textContent = "Recomendacao publicada com sucesso.";
+      if (status) status.textContent = "Recomendação publicada com sucesso.";
       recommendationForm.reset();
       setTimeout(() => recommendationForm.closest("[data-pa-recommendation-dialog]")?.close?.(), 500);
     } catch (error) {
-      if (status) status.textContent = error.message || "Nao foi possivel publicar a recomendacao.";
-      else window.alert(error.message || "Nao foi possivel publicar a recomendacao.");
+      if (status) status.textContent = error.message || "Não foi possível publicar a recomendação.";
+      else window.alert(error.message || "Não foi possível publicar a recomendação.");
     } finally {
       if (submitButton) {
         submitButton.disabled = false;
@@ -21166,12 +21166,12 @@ const renderUniversalDeliveryDetail = (assignmentId, target) => {
   const activity = getUniversalActivityByCode(assignment.activityCode);
   const classInfo = getUniversalActivityClass(assignment.classId);
   const submissions = state.submissions.filter((item) => item.assignmentId === assignment.assignmentId);
-  const targetLabel = assignment.targetLabel || assignment.className || "Destinatario registrado";
+  const targetLabel = assignment.targetLabel || assignment.className || "Destinatário registrado";
   target.innerHTML = `
     <section class="ua-delivery-open">
-      <header><span>${printableEscape(assignment.activityCode)}</span><h3>Indicacao registrada</h3><small>${printableEscape(activity?.titulo || assignment.activityCode)}</small></header>
+      <header><span>${printableEscape(assignment.activityCode)}</span><h3>Indicação registrada</h3><small>${printableEscape(activity?.titulo || assignment.activityCode)}</small></header>
       <dl class="tw-card-meta">
-        <div><dt>Destinatario</dt><dd>${printableEscape(targetLabel)}</dd></div>
+        <div><dt>Destinatário</dt><dd>${printableEscape(targetLabel)}</dd></div>
         <div><dt>Turma</dt><dd>${printableEscape(classInfo.name)}</dd></div>
         ${assignment.assignedAt ? `<div><dt>Indicada em</dt><dd>${new Date(assignment.assignedAt).toLocaleString("pt-BR")}</dd></div>` : ""}
         ${assignment.status ? `<div><dt>Status</dt><dd>${printableEscape(assignment.status)}</dd></div>` : ""}
@@ -21186,14 +21186,14 @@ const renderUniversalDeliveryDetail = (assignmentId, target) => {
                   <article>
                     <strong>${printableEscape(student?.name || submission.studentName || submission.studentId)}</strong>
                     ${submission.status ? `<small>Status registrado: ${printableEscape(submission.status)}</small>` : ""}
-                    ${submission.lastSavedAt ? `<small>Ultima edicao: ${new Date(submission.lastSavedAt).toLocaleString("pt-BR")}</small>` : ""}
-                    ${submission.completedAt ? `<small>Conclusao: ${new Date(submission.completedAt).toLocaleString("pt-BR")}</small>` : ""}
-                    ${submission.finalArtwork || submission.preview ? `<img src="${printableEscape(submission.finalArtwork || submission.preview)}" alt="Producao de ${printableEscape(student?.name || submission.studentName || "aluno")}" />` : ""}
+                    ${submission.lastSavedAt ? `<small>Última edição: ${new Date(submission.lastSavedAt).toLocaleString("pt-BR")}</small>` : ""}
+                    ${submission.completedAt ? `<small>Conclusão: ${new Date(submission.completedAt).toLocaleString("pt-BR")}</small>` : ""}
+                    ${submission.finalArtwork || submission.preview ? `<img src="${printableEscape(submission.finalArtwork || submission.preview)}" alt="Produção de ${printableEscape(student?.name || submission.studentName || "aluno")}" />` : ""}
                   </article>
                 `;
               })
               .join("")
-          : `<p class="ua-empty">Nenhuma producao registrada para esta indicacao.</p>`
+          : `<p class="ua-empty">Nenhuma produção registrada para esta indicação.</p>`
       }
     </section>
   `;
@@ -21349,7 +21349,7 @@ const initUniversalActivityEngine = () => {
     }
     upsertUniversalActivitySubmission(submission);
     if (complete) syncUniversalActivityPortfolio(submission);
-    if (saveStatus) saveStatus.textContent = complete ? "Concluida" : `Salvo ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+    if (saveStatus) saveStatus.textContent = complete ? "Concluída" : `Salvo ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
   };
   const addObject = (point) => {
     pushUndo();
@@ -21471,7 +21471,7 @@ const initUniversalActivityEngine = () => {
       restoreSnapshot(redoStack.pop());
       saveSubmission();
     }
-    if (event.target.closest("[data-ua-clear]") && window.confirm("Limpar sua producao? A atividade original sera mantida.")) {
+    if (event.target.closest("[data-ua-clear]") && window.confirm("Limpar sua produção? A atividade original será mantida.")) {
       pushUndo();
       submission.canvasData = { strokes: [] };
       submission.objectsData = [];
@@ -21542,17 +21542,17 @@ const renderAppPage = () => {
   const activeModule = modules[activeKey] || modules.biblioteca;
   const currentRole = getCurrentPlatformRole();
   if (currentRole === "aluno" && !studentAllowedRouteKeys.has(activeKey)) {
-    showPlatformRedirectState("Seu perfil de aluno sera direcionado para o ambiente correto.");
+    showPlatformRedirectState("Seu perfil de aluno será direcionado para o ambiente correto.");
     window.location.replace(getRoleHome(currentRole));
     return;
   }
   if (currentRole === "educacao_infantil" && !earlyChildhoodAllowedRouteKeys.has(activeKey)) {
-    showPlatformRedirectState("Seu perfil familiar sera direcionado para o ambiente correto.");
+    showPlatformRedirectState("Seu perfil familiar será direcionado para o ambiente correto.");
     window.location.replace(getRoleHome(currentRole));
     return;
   }
   if (currentRole === "escola" && !schoolAllowedRouteKeys.has(activeKey)) {
-    showPlatformRedirectState("Seu perfil sera direcionado para Minha Escola.");
+    showPlatformRedirectState("Seu perfil será direcionado para Minha Escola.");
     window.location.replace(getRoleHome(currentRole));
     return;
   }
@@ -21568,11 +21568,11 @@ const renderAppPage = () => {
   }
   const environment = environments[environmentKey] || environments.biblioteca;
   if (currentRole && !canAccessPlatformRoute(activeKey, currentRole)) {
-    showPlatformRedirectState("Seu perfil nao tem acesso a esta rota. Abrindo o ambiente correto.");
+    showPlatformRedirectState("Seu perfil não tem acesso a esta rota. Abrindo o ambiente correto.");
     window.location.replace(getRoleHome(currentRole));
     return;
   }
-  document.title = `${activeModule.title} | Raizes e Saberes`;
+  document.title = `${activeModule.title} | Raízes e Saberes`;
   maybeRefreshContentGovernancePage(activeKey);
   rememberCurrentPlatformRoute();
 
@@ -21629,7 +21629,7 @@ const renderAppPage = () => {
       ? renderContentGovernanceLoading("Livro digital")
       : isContentAvailableToSession("book", activeBook.id)
         ? activeModule.html
-        : renderContentUnavailableForSchool({ title: "Livro indisponivel", type: "book", id: activeBook.id });
+        : renderContentUnavailableForSchool({ title: "Livro indisponível", type: "book", id: activeBook.id });
   }
   const nav = environment.nav
     .map(([key, label, href]) =>
@@ -21661,25 +21661,25 @@ const renderAppPage = () => {
   const shellLogoHref = currentRole ? getRoleHome(currentRole) : shellHomeHref;
   const topFilter = environmentKey === "escola" || environmentKey === "secretaria" ? "" : `<button class="top-filter" type="button">Filtros</button>`;
   const moduleSwitcher = environmentKey === "escola"
-    ? `<nav class="module-switcher official-school-switcher" aria-label="Navegacao da Escola">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>`
+    ? `<nav class="module-switcher official-school-switcher" aria-label="Navegação da Escola">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>`
     : environmentKey === "secretaria"
       ? ""
-    : `<nav class="module-switcher" aria-label="Modulos do Ecossistema">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>`;
+    : `<nav class="module-switcher" aria-label="Módulos do Ecossistema">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>`;
   const studentShellProfile = environmentKey === "aluno" ? getActiveStudentProfile() : null;
   const shellUserFallback = studentShellProfile ? getStudentProfileInitials(studentShellProfile.fullName) : "MS";
   const shellUserLabel = studentShellProfile ? printableEscape(studentShellProfile.firstName) : environment.user;
   const topActions = environmentKey === "escola"
     ? ""
     : environmentKey === "secretaria"
-      ? `<div class="top-actions secretaria-top-actions" aria-label="Acoes da Secretaria"><button type="button" data-secretaria-back>${secretariaInlineIcon("progresso", "VOLTAR")}</button><button type="button" data-platform-home>${secretariaInlineIcon("home", "INICIO")}</button><a href="escola.html">${secretariaInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${secretariaInlineIcon("sair", "SAIR")}</button></div>`
-    : `<div class="top-actions" aria-label="Acoes"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>${shellUserFallback}</span>`}<strong>${shellUserLabel}</strong></div></div>`;
+      ? `<div class="top-actions secretaria-top-actions" aria-label="Ações da Secretaria"><button type="button" data-secretaria-back>${secretariaInlineIcon("progresso", "VOLTAR")}</button><button type="button" data-platform-home>${secretariaInlineIcon("home", "INICIO")}</button><a href="escola.html">${secretariaInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${secretariaInlineIcon("sair", "SAIR")}</button></div>`
+    : `<div class="top-actions" aria-label="Ações"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>${shellUserFallback}</span>`}<strong>${shellUserLabel}</strong></div></div>`;
 
   mount.innerHTML = `
     <div class="app-shell" data-environment="${environmentKey}" data-active-module="${activeKey}">
-      <aside class="app-sidebar" aria-label="Navegacao principal">
-        <a class="sidebar-logo" href="${shellLogoHref}" aria-label="Raizes e Saberes">
-          <img src="logo-sidebar-dark.png" alt="Raizes e Saberes Ecossistema Educacional" onerror="this.hidden=true; this.nextElementSibling.hidden=false;" />
-          <span class="sidebar-logo-fallback" hidden><strong>Raizes e Saberes</strong><em>Ecossistema Educacional</em></span>
+      <aside class="app-sidebar" aria-label="Navegação principal">
+        <a class="sidebar-logo" href="${shellLogoHref}" aria-label="Raízes e Saberes">
+          <img src="logo-sidebar-dark.png" alt="Raízes e Saberes Ecossistema Educacional" onerror="this.hidden=true; this.nextElementSibling.hidden=false;" />
+          <span class="sidebar-logo-fallback" hidden><strong>Raízes e Saberes</strong><em>Ecossistema Educacional</em></span>
         </a>
         <div class="environment-label">${environment.label}</div>
         <nav class="app-nav" aria-label="Master Screens">${nav}</nav>
@@ -21690,7 +21690,7 @@ const renderAppPage = () => {
       </aside>
       <main class="app-main">
         <header class="app-topbar">
-          <a class="icon-button menu-toggle" href="${shellHomeHref}" aria-label="Inicio">☰</a>
+          <a class="icon-button menu-toggle" href="${shellHomeHref}" aria-label="Início">☰</a>
           <label class="app-search"><span>Pesquisar</span><input type="search" placeholder="${environment.search}" /></label>
           ${topFilter}
           ${moduleSwitcher}
@@ -21699,7 +21699,7 @@ const renderAppPage = () => {
         <section class="screen is-active route-screen" data-route-screen="${activeKey}">${routeHtml}</section>
       </main>
     </div>
-    <nav class="mobile-tabbar" aria-label="Navegacao mobile">${mobileNav}</nav>
+    <nav class="mobile-tabbar" aria-label="Navegação mobile">${mobileNav}</nav>
   `;
 
   requestAnimationFrame(() => {

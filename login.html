@@ -3,9 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Acesso demonstrativo a Plataforma Digital Raizes e Saberes." />
+    <meta name="description" content="Acesso demonstrativo a Plataforma Digital Raízes e Saberes." />
     <meta name="theme-color" content="#06462f" />
-    <title>Acesso a Plataforma | Raizes e Saberes</title>
+    <title>Acesso a Plataforma | Raízes e Saberes</title>
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="logo-app.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -16,24 +16,24 @@
   <body class="login-page">
     <main class="login-shell">
       <section class="login-panel" aria-labelledby="login-title">
-        <a class="login-brand" href="index.html" aria-label="Raizes e Saberes">
-          <img src="logo-premium-dark.png" alt="Raizes e Saberes Ecossistema Educacional" onerror="this.hidden=true; this.nextElementSibling.hidden=false;" />
-          <span hidden>Raizes e Saberes</span>
+        <a class="login-brand" href="index.html" aria-label="Raízes e Saberes">
+          <img src="logo-premium-dark.png" alt="Raízes e Saberes Ecossistema Educacional" onerror="this.hidden=true; this.nextElementSibling.hidden=false;" />
+          <span hidden>Raízes e Saberes</span>
         </a>
 
         <div class="login-copy">
-          <p>Ecossistema Raizes e Saberes</p>
-          <h1 id="login-title">Um unico acesso. Cada perfil no seu espaco.</h1>
-          <span data-login-access-copy>Entre com seu usuario e senha. A Plataforma Raizes e Saberes abrira automaticamente o ambiente correspondente ao seu perfil.</span>
+          <p>Ecossistema Raízes e Saberes</p>
+          <h1 id="login-title">Um único acesso. Cada perfil no seu espaço.</h1>
+          <span data-login-access-copy>Entre com seu usuário e senha. A Plataforma Raízes e Saberes abrirá automaticamente o ambiente correspondente ao seu perfil.</span>
         </div>
 
         <section class="login-access-map" aria-label="Acessos da plataforma">
           <h2>Acessos da Plataforma</h2>
           <div>
-            <button type="button" data-login-access-option="admin">Administracao / TI</button>
+            <button type="button" data-login-access-option="admin">Administração / TI</button>
             <button type="button" data-login-access-option="secretaria">Secretaria</button>
             <button type="button" data-login-access-option="escola">Escola</button>
-            <button type="button" data-login-access-option="educacao_infantil">Aluno Educacao Infantil</button>
+            <button type="button" data-login-access-option="educacao_infantil">Aluno Educação Infantil</button>
             <button type="button" data-login-access-option="professor">Professor</button>
             <button type="button" data-login-access-option="aluno">Aluno Ensino Fundamental</button>
           </div>
@@ -41,28 +41,28 @@
 
         <form class="login-form" data-login-form novalidate>
           <label>
-            <span>E-mail / Usuario</span>
+            <span>E-mail / Usuário</span>
             <input type="email" name="email" autocomplete="username" placeholder="usuario@raizesesaberes.com.br" required />
           </label>
           <label>
             <span>Senha</span>
             <input type="password" name="password" autocomplete="current-password" placeholder="Digite sua senha" required />
           </label>
-          <p class="login-error" data-login-error role="alert" hidden>Credenciais invalidas para este ambiente.</p>
+          <p class="login-error" data-login-error role="alert" hidden>Credenciais inválidas para este ambiente.</p>
           <button type="button" class="login-forgot-button" data-password-recovery-open>Esqueci minha senha</button>
           <button type="submit">Acessar Plataforma</button>
         </form>
 
         <section class="login-recovery-panel" data-password-recovery-panel hidden>
           <h2>Recuperar acesso</h2>
-          <p>Informe seu e-mail para receber as instrucoes de redefinicao de senha.</p>
+          <p>Informe seu e-mail para receber as instruções de redefinição de senha.</p>
           <form class="login-form" data-password-recovery-form novalidate>
             <label>
-              <span>E-mail / Usuario</span>
+              <span>E-mail / Usuário</span>
               <input type="email" name="recovery_email" autocomplete="email" placeholder="usuario@raizesesaberes.com.br" required />
             </label>
             <p class="login-recovery-message" data-password-recovery-message role="status" hidden></p>
-            <button type="submit">Enviar instrucoes</button>
+            <button type="submit">Enviar instruções</button>
             <button type="button" data-password-recovery-close>Voltar ao login</button>
           </form>
         </section>
@@ -71,6 +71,6 @@
       </section>
     </main>
     <script src="supabase-config.js"></script>
-    <script src="login.js?v=admin-ti-v1-fase03-password-recovery-20260906a"></script>
+    <script src="login.js?v=admin-ti-v1-login-loop-fix-20260911a"></script>
   </body>
 </html>
