@@ -657,6 +657,7 @@ REVOKE ALL ON FUNCTION public.class_diary_teacher_can_manage(uuid, uuid, uuid) F
 REVOKE ALL ON FUNCTION public.class_diary_validate_links(uuid, uuid, uuid, uuid, uuid) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.class_diary_can_read(uuid, uuid, uuid) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.class_diary_apply_activity_links(uuid, jsonb) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.class_diary_apply_activity_links(uuid, jsonb) FROM authenticated, service_role;
 REVOKE ALL ON FUNCTION public.teacher_upsert_class_diary_entry(uuid, uuid, uuid, uuid, date, text, text, text, uuid, uuid, jsonb) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.teacher_close_class_diary_entry(uuid) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.teacher_list_class_diary_entries(uuid, date, date) FROM PUBLIC, anon;

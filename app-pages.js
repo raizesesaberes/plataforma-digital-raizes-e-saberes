@@ -3923,6 +3923,23 @@ const teacherDiaryState = {
   entries: [],
 };
 
+const teacherStudentNotesState = {
+  status: "idle",
+  error: "",
+  message: "",
+  promise: null,
+  key: "",
+  notes: [],
+};
+
+const teacherDiaryPeriodState = {
+  status: "idle",
+  error: "",
+  promise: null,
+  key: "",
+  summary: null,
+};
+
 const secretariaInstitutionalState = {
   status: "idle",
   error: "",
@@ -3958,6 +3975,14 @@ const secretariaInstitutionalState = {
   lastAttendanceResult: null,
   lastCommunicationResult: null,
   hydratedDom: false,
+};
+
+const secretariaDiaryPeriodState = {
+  status: "idle",
+  error: "",
+  promise: null,
+  key: "",
+  summary: null,
 };
 
 const teacherClassMessagesState = {
@@ -4207,6 +4232,149 @@ const closeTeacherDiaryEntry = async (entryId = "") => {
   teacherDiaryState.message = "Diário fechado com sucesso.";
   await ensureTeacherDiaryEntries({ force: true, classId: getPrintableParams().get("id") || "", date: getTeacherDiaryDate() });
   return Array.isArray(result) ? result[0] || {} : result || {};
+};
+
+const normalizeRpcJson = (result) => (Array.isArray(result) ? result[0] || {} : result || {});
+
+const getDiaryPeriodDefaultRange = () => {
+  const to = new Date();
+  const from = new Date(to);
+  from.setDate(to.getDate() - 29);
+  return { from: toTeacherIsoDate(from), to: toTeacherIsoDate(to) };
+};
+
+const getTeacherDiaryPeriodRange = () => {
+  const defaults = getDiaryPeriodDefaultRange();
+  return {
+    from: getPrintableParams().get("diaryFrom") || defaults.from,
+    to: getPrintableParams().get("diaryTo") || defaults.to,
+  };
+};
+
+const getDiaryPeriodKey = (classId = "", from = "", to = "") => `${classId || ""}:${from || ""}:${to || ""}`;
+
+const ensureTeacherDiaryPeriodSummary = async ({ force = false, classId = "", from = "", to = "" } = {}) => {
+  const selectedClassId = classId || getPrintableParams().get("id") || getTeacherInstitutionalClasses()[0]?.id || "";
+  const range = { ...getTeacherDiaryPeriodRange(), from: from || getTeacherDiaryPeriodRange().from, to: to || getTeacherDiaryPeriodRange().to };
+  const key = getDiaryPeriodKey(selectedClassId, range.from, range.to);
+  if (!selectedClassId || !range.from || !range.to) return teacherDiaryPeriodState;
+  if (!force && teacherDiaryPeriodState.status === "ready" && teacherDiaryPeriodState.key === key) return teacherDiaryPeriodState;
+  if (!force && teacherDiaryPeriodState.promise && teacherDiaryPeriodState.key === key) return teacherDiaryPeriodState.promise;
+  teacherDiaryPeriodState.status = "loading";
+  teacherDiaryPeriodState.error = "";
+  teacherDiaryPeriodState.key = key;
+  teacherDiaryPeriodState.promise = (async () => {
+    try {
+      const client = createSupabaseRestClient();
+      const result = await client.request("rpc/teacher_get_class_diary_period_summary", "", {
+        method: "POST",
+        body: JSON.stringify({
+          p_class_id: selectedClassId,
+          p_from: range.from,
+          p_to: range.to,
+        }),
+        requireAuthenticated: true,
+        allowedRoles: teacherAllowedRoles,
+      });
+      const summary = normalizeRpcJson(result);
+      if (summary.error) throw new Error(summary.error);
+      teacherDiaryPeriodState.summary = summary;
+      teacherDiaryPeriodState.status = "ready";
+    } catch (error) {
+      teacherDiaryPeriodState.summary = null;
+      teacherDiaryPeriodState.error = error.message || "Não foi possível consolidar o período.";
+      teacherDiaryPeriodState.status = "error";
+    } finally {
+      teacherDiaryPeriodState.promise = null;
+    }
+    return teacherDiaryPeriodState;
+  })();
+  return teacherDiaryPeriodState.promise;
+};
+
+const mapTeacherStudentNoteRow = (row = {}) => ({
+  id: row.id || "",
+  schoolId: row.school_id || "",
+  classId: row.class_id || "",
+  teacherId: row.teacher_id || "",
+  studentId: row.student_id || "",
+  studentName: row.student_name || "Aluno",
+  diaryEntryId: row.diary_entry_id || "",
+  diaryEntryTitle: row.diary_entry_title || "",
+  noteDate: row.note_date || "",
+  noteText: row.note_text || "",
+  status: row.status || "active",
+  createdAt: row.created_at || "",
+  updatedAt: row.updated_at || "",
+});
+
+const getTeacherStudentNotesKey = (classId = "", studentId = "") => `${classId || ""}:${studentId || ""}`;
+
+const ensureTeacherStudentNotes = async ({ force = false, classId = "", studentId = "" } = {}) => {
+  const selectedClassId = classId || getPrintableParams().get("class") || "";
+  const selectedStudentId = studentId || getPrintableParams().get("id") || "";
+  const key = getTeacherStudentNotesKey(selectedClassId, selectedStudentId);
+  if (!selectedClassId || !selectedStudentId) return teacherStudentNotesState;
+  if (!force && teacherStudentNotesState.status === "ready" && teacherStudentNotesState.key === key) return teacherStudentNotesState;
+  if (!force && teacherStudentNotesState.promise && teacherStudentNotesState.key === key) return teacherStudentNotesState.promise;
+  teacherStudentNotesState.status = "loading";
+  teacherStudentNotesState.error = "";
+  teacherStudentNotesState.key = key;
+  teacherStudentNotesState.promise = (async () => {
+    try {
+      const client = createSupabaseRestClient();
+      const rows = await client.request("rpc/teacher_list_class_diary_student_notes", "", {
+        method: "POST",
+        body: JSON.stringify({
+          p_class_id: selectedClassId,
+          p_student_id: selectedStudentId,
+          p_from: null,
+          p_to: null,
+        }),
+        requireAuthenticated: true,
+        allowedRoles: teacherAllowedRoles,
+      });
+      teacherStudentNotesState.notes = (Array.isArray(rows) ? rows : []).map(mapTeacherStudentNoteRow);
+      teacherStudentNotesState.status = "ready";
+    } catch (error) {
+      teacherStudentNotesState.notes = [];
+      teacherStudentNotesState.error = error.message || "Não foi possível carregar observações individuais.";
+      teacherStudentNotesState.status = "error";
+    } finally {
+      teacherStudentNotesState.promise = null;
+    }
+    return teacherStudentNotesState;
+  })();
+  return teacherStudentNotesState.promise;
+};
+
+const saveTeacherStudentNote = async (formData) => {
+  await ensureTeacherInstitutionalData();
+  const classId = String(formData.get("classId") || "");
+  const studentId = String(formData.get("studentId") || "");
+  const classItem = getTeacherInstitutionalClasses().find((item) => item.id === classId);
+  const student = getTeacherInstitutionalStudents(classId).find((item) => item.id === studentId);
+  if (!classItem?.id || !student?.id) throw new Error("Aluno fora das turmas autorizadas do professor.");
+  const teacherId = classItem.teacherId || teacherInstitutionalState.teacherByClass?.[classItem.id] || teacherInstitutionalState.profile?.teacherId || "";
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/teacher_upsert_class_diary_student_note", "", {
+    method: "POST",
+    body: JSON.stringify({
+      p_note_id: String(formData.get("noteId") || "") || null,
+      p_school_id: classItem.schoolId,
+      p_class_id: classItem.id,
+      p_teacher_id: teacherId,
+      p_student_id: student.id,
+      p_diary_entry_id: String(formData.get("diaryEntryId") || "") || null,
+      p_note_date: String(formData.get("noteDate") || toTeacherIsoDate(new Date())),
+      p_note_text: String(formData.get("noteText") || "").trim(),
+    }),
+    requireAuthenticated: true,
+    allowedRoles: teacherAllowedRoles,
+  });
+  teacherStudentNotesState.message = "Observação individual salva com sucesso.";
+  await ensureTeacherStudentNotes({ force: true, classId: classItem.id, studentId: student.id });
+  return normalizeRpcJson(result);
 };
 
 const teacherWorkspaceTasks = [
@@ -7570,6 +7738,104 @@ const renderTeacherDiarySummary = (entry, classItem, date) => {
   `;
 };
 
+const renderDiaryPeriodMetrics = (summary = {}) => {
+  const attendanceTotal = Number(summary.attendance_total || 0);
+  const attendancePresent = Number(summary.attendance_present || 0);
+  const attendanceAbsent = Number(summary.attendance_absent || 0);
+  const attendanceJustified = Number(summary.attendance_justified || 0);
+  const presencePercent = attendanceTotal ? Math.round((attendancePresent / attendanceTotal) * 100) : 0;
+  return `
+    <div class="metric-row">
+      <article>Aulas registradas<strong>${Number(summary.registered_classes || 0)}</strong><span>Diários no período</span></article>
+      <article>Frequência<strong>${presencePercent}%</strong><span>${attendancePresent} presenças · ${attendanceAbsent} faltas · ${attendanceJustified} justificadas</span></article>
+      <article>Planejado x realizado<strong>${Number(summary.planned_count || 0)} / ${Number(summary.registered_classes || 0)}</strong><span>Propostas e aulas registradas</span></article>
+      <article>Observações<strong>${Number(summary.individual_note_count || 0)}</strong><span>Registros individuais</span></article>
+    </div>
+  `;
+};
+
+const renderTeacherDiaryPeriodSummary = (classItem) => {
+  const range = getTeacherDiaryPeriodRange();
+  const key = getDiaryPeriodKey(classItem?.id || "", range.from, range.to);
+  const isCurrent = teacherDiaryPeriodState.key === key;
+  const summary = isCurrent ? teacherDiaryPeriodState.summary : null;
+  const status = isCurrent ? teacherDiaryPeriodState.status : "idle";
+  const diaryEntries = Array.isArray(summary?.diary_entries) ? summary.diary_entries : [];
+  const plannedItems = Array.isArray(summary?.planned_items) ? summary.planned_items : [];
+  const notes = Array.isArray(summary?.individual_notes) ? summary.individual_notes : [];
+  return `
+    <section class="tw-board tw-tracking-section">
+      <div class="tw-section-head">
+        <h2>Consolidado do período</h2>
+        <span>${printableEscape(formatTeacherPlanningDate(range.from))} a ${printableEscape(formatTeacherPlanningDate(range.to))}</span>
+      </div>
+      <form class="tw-attendance-toolbar" data-teacher-diary-period-form>
+        <label>
+          <span>De</span>
+          <input type="date" name="diaryFrom" value="${printableEscape(range.from)}" />
+        </label>
+        <label>
+          <span>Até</span>
+          <input type="date" name="diaryTo" value="${printableEscape(range.to)}" />
+        </label>
+        <button type="submit">ATUALIZAR PERÍODO</button>
+      </form>
+      ${status === "loading" || status === "idle" ? renderTeacherInstitutionalStatus("CARREGANDO CONSOLIDADO DO PERIODO.") : ""}
+      ${status === "error" ? renderTeacherEmptyState("NAO FOI POSSIVEL CONSOLIDAR O PERIODO.", teacherDiaryPeriodState.error) : ""}
+      ${summary ? renderDiaryPeriodMetrics(summary) : ""}
+      ${summary ? `
+        <div class="tw-tracking-grid is-wide">
+          <section class="tw-tracking-section">
+            <div class="tw-section-head"><h2>Conteúdos ministrados</h2><span>${diaryEntries.length}</span></div>
+            <div class="tw-tracking-list">
+              ${diaryEntries.length ? diaryEntries.slice(0, 6).map((entry) => `
+                <article class="tw-tracking-item">
+                  <div>
+                    <span>${printableEscape(entry.entry_date || "Data")}</span>
+                    <strong>${printableEscape(entry.title || "Diário de Classe")}</strong>
+                    <small>${printableEscape(String(entry.taught_content || "Sem conteúdo ministrado.").slice(0, 150))}${String(entry.taught_content || "").length > 150 ? "..." : ""}</small>
+                  </div>
+                  <mark>${printableEscape(teacherDiaryStatusLabel(entry.status))}</mark>
+                </article>
+              `).join("") : `<p class="ua-empty">NENHUM CONTEUDO MINISTRADO REGISTRADO NO PERIODO.</p>`}
+            </div>
+          </section>
+          <section class="tw-tracking-section">
+            <div class="tw-section-head"><h2>Planejado</h2><span>${plannedItems.length}</span></div>
+            <div class="tw-tracking-list">
+              ${plannedItems.length ? plannedItems.slice(0, 6).map((plan) => `
+                <article class="tw-tracking-item">
+                  <div>
+                    <span>${printableEscape(plan.plan_date || "Data")}</span>
+                    <strong>${printableEscape(plan.title || "Planejamento")}</strong>
+                    <small>${printableEscape(plan.resource_type || "recurso")}</small>
+                  </div>
+                  <mark>${printableEscape(getTeacherPlanningStatusLabel(plan.status))}</mark>
+                </article>
+              `).join("") : `<p class="ua-empty">NENHUM PLANEJAMENTO NO PERIODO.</p>`}
+            </div>
+          </section>
+          <section class="tw-tracking-section">
+            <div class="tw-section-head"><h2>Observações individuais</h2><span>${notes.length}</span></div>
+            <div class="tw-tracking-list">
+              ${notes.length ? notes.slice(0, 6).map((note) => `
+                <article class="tw-tracking-item">
+                  <div>
+                    <span>${printableEscape(note.note_date || "Data")}</span>
+                    <strong>${printableEscape(note.student_name || "Aluno")}</strong>
+                    <small>${printableEscape(String(note.note_text || "").slice(0, 150))}${String(note.note_text || "").length > 150 ? "..." : ""}</small>
+                  </div>
+                  <mark>Individual</mark>
+                </article>
+              `).join("") : `<p class="ua-empty">NENHUMA OBSERVACAO INDIVIDUAL NO PERIODO.</p>`}
+            </div>
+          </section>
+        </div>
+      ` : ""}
+    </section>
+  `;
+};
+
 const renderTeacherDiaryPanel = (classItem, students = []) => {
   const date = getTeacherDiaryDate();
   const entry = getTeacherDiaryEntryForDate(classItem.id, date);
@@ -7667,6 +7933,7 @@ const renderTeacherDiaryPanel = (classItem, students = []) => {
             .join("") || "<li>Nenhum registro de Diário de Classe para esta turma.</li>"}
         </ul>
       </div>
+      ${renderTeacherDiaryPeriodSummary(classItem)}
     </section>
   `;
 };
@@ -7725,6 +7992,59 @@ const renderTeacherClassPage = () => `
   </section>
 `;
 
+const renderTeacherStudentNotesPanel = (student, classItem) => {
+  const notes = (teacherStudentNotesState.notes || []).filter((note) => note.studentId === student.id && note.classId === student.classId);
+  const diaryEntries = (teacherDiaryState.entries || []).filter((entry) => entry.classId === student.classId && entry.status !== "deleted");
+  const date = toTeacherIsoDate(new Date());
+  return `
+    <article class="tw-board">
+      <div class="tw-section-head"><h2>Observações pedagógicas</h2><span>${teacherStudentNotesState.status === "ready" ? `${notes.length} registro${notes.length === 1 ? "" : "s"}` : "Carregando"}</span></div>
+      <form class="tw-planning-form" data-teacher-student-note-form>
+        <input type="hidden" name="noteId" value="" />
+        <input type="hidden" name="classId" value="${printableEscape(student.classId)}" />
+        <input type="hidden" name="studentId" value="${printableEscape(student.id)}" />
+        <label>
+          <span>Data</span>
+          <input type="date" name="noteDate" value="${printableEscape(date)}" required />
+        </label>
+        <label>
+          <span>Diário vinculado</span>
+          <select name="diaryEntryId">
+            <option value="">Sem vínculo direto</option>
+            ${diaryEntries.map((entry) => `<option value="${printableEscape(entry.id)}">${printableEscape(entry.entryDate)} · ${printableEscape(entry.title)}</option>`).join("")}
+          </select>
+        </label>
+        <label class="tw-planning-form-note">
+          <span>Observação individual</span>
+          <textarea name="noteText" rows="4" maxlength="1800" required placeholder="Registre uma observação pedagógica individual, sem nota ou boletim."></textarea>
+        </label>
+        <div class="tw-planning-form-actions">
+          <button type="submit">SALVAR OBSERVAÇÃO</button>
+          <span>${printableEscape(teacherStudentNotesState.message || "Visível apenas para Professor, Secretaria/Gestão e Admin nesta V1.")}</span>
+        </div>
+      </form>
+      ${
+        teacherStudentNotesState.status === "loading"
+          ? renderTeacherInstitutionalStatus("CARREGANDO OBSERVACOES INDIVIDUAIS.")
+          : teacherStudentNotesState.status === "error"
+            ? renderTeacherEmptyState("NAO FOI POSSIVEL CARREGAR OBSERVACOES.", teacherStudentNotesState.error)
+            : `<div class="tw-tracking-list">
+                ${notes.length ? notes.map((note) => `
+                  <article class="tw-tracking-item">
+                    <div>
+                      <span>${printableEscape(note.noteDate || "Data")}${note.diaryEntryTitle ? ` · ${printableEscape(note.diaryEntryTitle)}` : ""}</span>
+                      <strong>${printableEscape(note.studentName || student.name)}</strong>
+                      <small>${printableEscape(note.noteText)}</small>
+                    </div>
+                    <mark>Individual</mark>
+                  </article>
+                `).join("") : `<p class="ua-empty">NENHUMA OBSERVACAO PEDAGOGICA INDIVIDUAL REGISTRADA.</p>`}
+              </div>`
+      }
+    </article>
+  `;
+};
+
 const renderTeacherStudentPage = () => {
   const studentId = getPrintableParams().get("id") || "";
   const institutionalReady = teacherInstitutionalState.status === "ready";
@@ -7782,6 +8102,7 @@ const renderTeacherStudentPage = () => {
               <div class="tw-section-head"><h2>Registros</h2><span>Histórico</span></div>
               ${renderTeacherEmptyState("NENHUM REGISTRO PEDAGOGICO DISPONIVEL.")}
             </article>
+            ${renderTeacherStudentNotesPanel(student, classItem)}
           </section>
           ` : `<section class="tw-board">${renderTeacherInstitutionalStatus(institutionalReady ? "ALUNO NAO ENCONTRADO NAS TURMAS AUTORIZADAS." : "CARREGANDO FICHA DO ALUNO.")}</section>`}
         </main>
@@ -17430,6 +17751,54 @@ const getSecretariaCurrentView = () => {
   return secretariaViews.includes(view) ? view : "painel";
 };
 
+const getSecretariaDiaryPeriodRange = () => {
+  const defaults = getDiaryPeriodDefaultRange();
+  const params = getSecretariaParams();
+  return {
+    from: params.get("diaryFrom") || defaults.from,
+    to: params.get("diaryTo") || defaults.to,
+  };
+};
+
+const ensureSecretariaDiaryPeriodSummary = async ({ force = false, classId = "", from = "", to = "" } = {}) => {
+  const selectedClassId = classId || getSecretariaParams().get("class") || "";
+  const range = { ...getSecretariaDiaryPeriodRange(), from: from || getSecretariaDiaryPeriodRange().from, to: to || getSecretariaDiaryPeriodRange().to };
+  const key = getDiaryPeriodKey(selectedClassId, range.from, range.to);
+  if (!selectedClassId || !range.from || !range.to) return secretariaDiaryPeriodState;
+  if (!force && secretariaDiaryPeriodState.status === "ready" && secretariaDiaryPeriodState.key === key) return secretariaDiaryPeriodState;
+  if (!force && secretariaDiaryPeriodState.promise && secretariaDiaryPeriodState.key === key) return secretariaDiaryPeriodState.promise;
+  secretariaDiaryPeriodState.status = "loading";
+  secretariaDiaryPeriodState.error = "";
+  secretariaDiaryPeriodState.key = key;
+  secretariaDiaryPeriodState.promise = (async () => {
+    try {
+      const client = createSupabaseRestClient();
+      const result = await client.request("rpc/secretaria_get_class_diary_period_summary", "", {
+        method: "POST",
+        body: JSON.stringify({
+          p_class_id: selectedClassId,
+          p_from: range.from,
+          p_to: range.to,
+        }),
+        requireAuthenticated: true,
+        allowedRoles: secretariaAllowedRoles,
+      });
+      const summary = normalizeRpcJson(result);
+      if (summary.error) throw new Error(summary.error);
+      secretariaDiaryPeriodState.summary = summary;
+      secretariaDiaryPeriodState.status = "ready";
+    } catch (error) {
+      secretariaDiaryPeriodState.summary = null;
+      secretariaDiaryPeriodState.error = error.message || "Não foi possível consolidar o período do Diário.";
+      secretariaDiaryPeriodState.status = "error";
+    } finally {
+      secretariaDiaryPeriodState.promise = null;
+    }
+    return secretariaDiaryPeriodState;
+  })();
+  return secretariaDiaryPeriodState.promise;
+};
+
 const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
   if (!force && secretariaInstitutionalState.status === "ready") return secretariaInstitutionalState;
   if (!force && secretariaInstitutionalState.promise) return secretariaInstitutionalState.promise;
@@ -18693,9 +19062,73 @@ const secretariaDiaryStatusLabel = (status = "") => {
 const renderSecretariaClassDiaryPanel = (classItem, index) => {
   if (!classItem?.id) return "";
   const entries = index.classDiaryByClass[classItem.id] || [];
+  const range = getSecretariaDiaryPeriodRange();
+  const key = getDiaryPeriodKey(classItem.id, range.from, range.to);
+  const isCurrent = secretariaDiaryPeriodState.key === key;
+  const status = isCurrent ? secretariaDiaryPeriodState.status : "idle";
+  const summary = isCurrent ? secretariaDiaryPeriodState.summary : null;
+  const notes = Array.isArray(summary?.individual_notes) ? summary.individual_notes : [];
+  const diaryEntries = Array.isArray(summary?.diary_entries) ? summary.diary_entries : [];
+  const plannedItems = Array.isArray(summary?.planned_items) ? summary.planned_items : [];
   return `
     <section class="panel span-2">
       <div class="panel-head"><h2>Diário de Classe</h2><span>${entries.length} registro${entries.length === 1 ? "" : "s"}</span></div>
+      <form class="secretaria-form-grid" data-secretaria-diary-period-form>
+        <input type="hidden" name="class_id" value="${htmlEscape(classItem.id)}" />
+        <label><span>De</span><input type="date" name="diaryFrom" value="${htmlEscape(range.from)}" /></label>
+        <label><span>Até</span><input type="date" name="diaryTo" value="${htmlEscape(range.to)}" /></label>
+        <div class="qb-builder-actions"><button type="submit">Atualizar período</button></div>
+      </form>
+      ${
+        status === "loading" || status === "idle"
+          ? `<p class="ua-empty">CARREGANDO CONSOLIDADO DO PERIODO.</p>`
+          : status === "error"
+            ? `<p class="ua-empty">${htmlEscape(secretariaDiaryPeriodState.error)}</p>`
+            : ""
+      }
+      ${summary ? `
+        <div class="metric-row">
+          <article>Aulas registradas<strong>${htmlEscape(String(summary.registered_classes || 0))}</strong><span>Diários no período</span></article>
+          <article>Frequência<strong>${htmlEscape(String(summary.attendance_present || 0))}</strong><span>presenças de ${htmlEscape(String(summary.attendance_total || 0))} registros</span></article>
+          <article>Planejado x realizado<strong>${htmlEscape(String(summary.planned_count || 0))} / ${htmlEscape(String(summary.registered_classes || 0))}</strong><span>ponte planejamento-diário</span></article>
+          <article>Observações<strong>${htmlEscape(String(summary.individual_note_count || 0))}</strong><span>individuais registradas</span></article>
+        </div>
+        <div class="analytics-grid secretaria-grid">
+          <section class="panel">
+            <div class="panel-head"><h2>Conteúdos do período</h2><span>${diaryEntries.length}</span></div>
+            <ul class="clean-list">
+              ${diaryEntries.slice(0, 6).map((entry) => `
+                <li>
+                  <strong>${htmlEscape(entry.entry_date || "Data")} · ${htmlEscape(entry.title || "Diário")}</strong>
+                  <span>${htmlEscape(String(entry.taught_content || "Sem conteúdo ministrado.").slice(0, 140))}${String(entry.taught_content || "").length > 140 ? "..." : ""}</span>
+                </li>
+              `).join("") || "<li>Nenhum conteúdo ministrado no período.</li>"}
+            </ul>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><h2>Planejamento relacionado</h2><span>${plannedItems.length}</span></div>
+            <ul class="clean-list">
+              ${plannedItems.slice(0, 6).map((plan) => `
+                <li>
+                  <strong>${htmlEscape(plan.plan_date || "Data")} · ${htmlEscape(plan.title || "Planejamento")}</strong>
+                  <span>${htmlEscape(plan.resource_type || "recurso")} · ${htmlEscape(plan.status || "status")}</span>
+                </li>
+              `).join("") || "<li>Nenhum planejamento no período.</li>"}
+            </ul>
+          </section>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Observações individuais</h2><span>Leitura da Secretaria</span></div>
+          <ul class="clean-list">
+            ${notes.slice(0, 10).map((note) => `
+              <li data-secretaria-search-item>
+                <strong>${htmlEscape(note.note_date || "Data")} · ${htmlEscape(note.student_name || "Aluno")}</strong>
+                <span>${htmlEscape(note.note_text || "")}</span>
+              </li>
+            `).join("") || "<li>Nenhuma observação individual no período.</li>"}
+          </ul>
+        </div>
+      ` : ""}
       <ul class="clean-list">
         ${entries
           .slice(0, 20)
@@ -19357,6 +19790,19 @@ const initSecretariaInstitutional = () => {
     }
     search.addEventListener("input", applySearchFilter);
   }
+  const diaryPeriodForm = area.querySelector("[data-secretaria-diary-period-form]");
+  if (diaryPeriodForm) {
+    diaryPeriodForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const data = new FormData(diaryPeriodForm);
+      const params = getSecretariaParams();
+      params.set("view", "turmas");
+      params.set("class", String(data.get("class_id") || params.get("class") || ""));
+      params.set("diaryFrom", String(data.get("diaryFrom") || ""));
+      params.set("diaryTo", String(data.get("diaryTo") || ""));
+      window.location.href = `${window.location.pathname}?${params.toString()}`;
+    });
+  }
   const syncCommunicationDestinationFields = () => {
     const audience = area.querySelector("[data-secretaria-communication-audience]");
     const classWrap = area.querySelector("[data-secretaria-communication-class-wrap]");
@@ -19933,6 +20379,18 @@ const initSecretariaInstitutional = () => {
         area.outerHTML = renderSecretariaDashboard();
         initSecretariaInstitutional();
       });
+  }
+  if (secretariaInstitutionalState.status === "ready" && getSecretariaCurrentView() === "turmas" && getSecretariaParams().get("class")) {
+    const classId = getSecretariaParams().get("class") || "";
+    const range = getSecretariaDiaryPeriodRange();
+    const before = `${secretariaDiaryPeriodState.status}:${secretariaDiaryPeriodState.key}`;
+    ensureSecretariaDiaryPeriodSummary({ classId, from: range.from, to: range.to }).then(() => {
+      const after = `${secretariaDiaryPeriodState.status}:${secretariaDiaryPeriodState.key}`;
+      if (before !== after && document.body.contains(area)) {
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+      }
+    });
   }
 };
 
@@ -20704,6 +21162,14 @@ const initTeacherWorkspace = () => {
     initTeacherWorkspace();
   };
 
+  const rerenderTeacherStudentPage = () => {
+    const currentWorkspace = document.querySelector("[data-teacher-workspace]") || workspace;
+    if (!document.body.contains(currentWorkspace)) return;
+    currentWorkspace.outerHTML = renderTeacherStudentPage();
+    requestAnimationFrame(() => document.querySelector(".teacher-workspace")?.classList.add("is-mounted"));
+    initTeacherWorkspace();
+  };
+
   const hydrateTeacherAttendanceIfNeeded = async ({ force = false } = {}) => {
     const path = window.location.pathname.split("/").pop() || "";
     if (path !== "professor-turma.html" || getTeacherClassTab() !== "frequencia" || teacherInstitutionalState.status !== "ready") return;
@@ -21015,13 +21481,15 @@ const initTeacherWorkspace = () => {
     const messageForm = event.target.closest("[data-teacher-family-message-form]");
     const attendanceForm = event.target.closest("[data-teacher-attendance-form]");
     const diaryForm = event.target.closest("[data-teacher-diary-form]");
-    if (!form && !publicationForm && !messageForm && !attendanceForm && !diaryForm) return;
+    const diaryPeriodForm = event.target.closest("[data-teacher-diary-period-form]");
+    const studentNoteForm = event.target.closest("[data-teacher-student-note-form]");
+    if (!form && !publicationForm && !messageForm && !attendanceForm && !diaryForm && !diaryPeriodForm && !studentNoteForm) return;
     event.preventDefault();
-    const submitButton = (form || publicationForm || messageForm || attendanceForm || diaryForm).querySelector("button[type='submit']");
+    const submitButton = (form || publicationForm || messageForm || attendanceForm || diaryForm || diaryPeriodForm || studentNoteForm).querySelector("button[type='submit']");
     const previousLabel = submitButton?.textContent || "";
     if (submitButton) {
       submitButton.disabled = true;
-      submitButton.textContent = form || attendanceForm || diaryForm ? "SALVANDO..." : publicationForm ? "PUBLICANDO..." : "ENVIANDO...";
+      submitButton.textContent = form || attendanceForm || diaryForm || studentNoteForm ? "SALVANDO..." : publicationForm ? "PUBLICANDO..." : "ATUALIZANDO...";
     }
     try {
       if (form) {
@@ -21064,6 +21532,21 @@ const initTeacherWorkspace = () => {
       if (diaryForm) {
         await saveTeacherDiaryEntry(new FormData(diaryForm));
         rerenderTeacherClassPage();
+        return;
+      }
+      if (diaryPeriodForm) {
+        const data = new FormData(diaryPeriodForm);
+        const params = new URLSearchParams(window.location.search);
+        params.set("tab", "diario");
+        params.set("diaryFrom", String(data.get("diaryFrom") || ""));
+        params.set("diaryTo", String(data.get("diaryTo") || ""));
+        window.location.href = `${window.location.pathname}?${params.toString()}`;
+        return;
+      }
+      if (studentNoteForm) {
+        const data = new FormData(studentNoteForm);
+        await saveTeacherStudentNote(data);
+        rerenderTeacherStudentPage();
         return;
       }
       if (form || publicationForm) await refreshPlanningView({ force: false });
@@ -21205,7 +21688,12 @@ const initTeacherWorkspace = () => {
       if (getTeacherClassTab() === "diario") {
         const date = getTeacherDiaryDate();
         teacherPlanningState.status = "idle";
-        ensureTeacherPlanningWeek({ force: true }).then(() => ensureTeacherAttendanceDay({ force: true, classId, date })).then(() => ensureTeacherDiaryEntries({ force: true, classId, date })).then(rerenderTeacherClassPage);
+        const range = getTeacherDiaryPeriodRange();
+        ensureTeacherPlanningWeek({ force: true })
+          .then(() => ensureTeacherAttendanceDay({ force: true, classId, date }))
+          .then(() => ensureTeacherDiaryEntries({ force: true, classId, date }))
+          .then(() => ensureTeacherDiaryPeriodSummary({ force: true, classId, from: range.from, to: range.to }))
+          .then(rerenderTeacherClassPage);
       }
       workspace.outerHTML = renderTeacherClassPage();
       requestAnimationFrame(() => document.querySelector(".teacher-workspace")?.classList.add("is-mounted"));
@@ -21213,6 +21701,14 @@ const initTeacherWorkspace = () => {
       return;
     }
     if (path === "professor-aluno.html") {
+      const studentId = getPrintableParams().get("id") || "";
+      const student = teacherInstitutionalState.studentsById?.[studentId] || null;
+      const classId = student?.classId || "";
+      if (studentId && classId) {
+        ensureTeacherStudentNotes({ force: true, classId, studentId })
+          .then(() => ensureTeacherDiaryEntries({ force: true, classId, date: getTeacherDiaryDate() }))
+          .then(rerenderTeacherStudentPage);
+      }
       workspace.outerHTML = renderTeacherStudentPage();
       requestAnimationFrame(() => document.querySelector(".teacher-workspace")?.classList.add("is-mounted"));
       initTeacherWorkspace();
