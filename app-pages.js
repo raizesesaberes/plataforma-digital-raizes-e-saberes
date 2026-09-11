@@ -29,6 +29,8 @@ const platformRoleHome = {
   secretaria: platformRoute("/secretaria", "secretaria.html"),
   admin: platformRoute("/admin", "admin.html"),
 };
+const platformNavigationStateKey = "raizes:platform-navigation-stack";
+const platformLegacyPages = new Set(["plataforma", "plataforma.html"]);
 const routeAccessRules = {
   admin: ["admin"],
   escolaColetiva: ["secretaria", "professor", "aluno", "educacao_infantil", "gestor", "coordenador", "admin"],
@@ -335,7 +337,7 @@ const canAccessPlatformRoute = (routeKey, role) => {
   if (!allowed) return true;
   return allowed.includes(role);
 };
-const getRoleHome = (role) => platformRoleHome[role] || "plataforma.html";
+const getRoleHome = (role) => platformRoleHome[normalizePlatformRole(role)] || platformRoute("/", "index.html");
 const getCurrentPageName = () => window.location.pathname.replace(/^\/+/, "").replace(/\/$/, "") || "biblioteca.html";
 const getProtectedRouteKeyForPath = () => {
   const normalizedPath = getCurrentPageName();
@@ -345,10 +347,71 @@ const getProtectedRouteKeyForPath = () => {
 };
 const normalizeRequestedPath = (path) => {
   const value = String(path || "").replace(/^\/+/, "");
-  if (!value) return "plataforma.html";
+  if (!value) return "index.html";
   if (value.startsWith("professor/")) return value;
   if (value.startsWith("aluno/")) return value;
   return value.endsWith(".html") ? value : `${value}.html`;
+};
+const getRoleHomeForCurrentSession = () => getRoleHome(getCurrentPlatformRole());
+const normalizePlatformNavigationPath = (value = "") => {
+  try {
+    const url = new URL(value || window.location.href, window.location.origin);
+    const path = normalizeRequestedPath(url.pathname.replace(/^\/+/, "") || "index.html");
+    return `${path}${url.search || ""}${url.hash || ""}`;
+  } catch (error) {
+    return normalizeRequestedPath(String(value || "").split(/[?#]/)[0] || "index.html");
+  }
+};
+const getRouteKeyForNavigationPath = (path = "") => {
+  const page = normalizeRequestedPath(String(path || "").split(/[?#]/)[0] || "index.html");
+  return protectedRouteKeyByPage[page] || protectedRouteKeyByPage[page.replace(/\.html$/, "")] || routeKeyByHref?.[page] || "";
+};
+const isLegacyPlatformNavigationPath = (path = "") =>
+  platformLegacyPages.has(String(path || "").split(/[?#]/)[0].replace(/^\/+/, ""));
+const isOfficialBackTarget = (path = "", role = getCurrentPlatformRole()) => {
+  const page = String(path || "").split(/[?#]/)[0].replace(/^\/+/, "");
+  if (!page || isLegacyPlatformNavigationPath(page) || page === "login.html" || page === "login" || page === "index.html" || page === "index") {
+    return false;
+  }
+  const routeKey = getRouteKeyForNavigationPath(path);
+  return routeKey ? canAccessPlatformRoute(routeKey, role) : false;
+};
+const readPlatformNavigationStack = () => {
+  try {
+    const stack = JSON.parse(sessionStorage.getItem(platformNavigationStateKey) || "[]");
+    return Array.isArray(stack) ? stack.filter(Boolean) : [];
+  } catch (error) {
+    return [];
+  }
+};
+const writePlatformNavigationStack = (stack = []) => {
+  try {
+    sessionStorage.setItem(platformNavigationStateKey, JSON.stringify(stack.slice(-20)));
+  } catch (error) {
+    return null;
+  }
+  return null;
+};
+const rememberCurrentPlatformRoute = () => {
+  if (typeof window === "undefined") return;
+  const current = normalizePlatformNavigationPath(window.location.href);
+  if (!isOfficialBackTarget(current)) return;
+  const stack = readPlatformNavigationStack();
+  if (stack[stack.length - 1] !== current) {
+    stack.push(current);
+    writePlatformNavigationStack(stack);
+  }
+};
+const navigateToRoleHome = () => {
+  window.location.href = getRoleHomeForCurrentSession();
+};
+const navigatePlatformBack = () => {
+  const current = normalizePlatformNavigationPath(window.location.href);
+  const stack = readPlatformNavigationStack();
+  while (stack.length && stack[stack.length - 1] === current) stack.pop();
+  const previous = [...stack].reverse().find((item) => isOfficialBackTarget(item));
+  writePlatformNavigationStack(previous ? stack.slice(0, stack.lastIndexOf(previous) + 1) : stack);
+  window.location.href = previous || getRoleHomeForCurrentSession();
 };
 
 const showPlatformRedirectState = (message = "Redirecionando para o acesso correto.") => {
@@ -2631,7 +2694,7 @@ const ecosystemModuleLinks = (activeKey, environmentKey = "") => {
       : environmentKey === "escola"
         ? [
             ["#back", "Voltar"],
-            ["plataforma.html", "Inicio"],
+            ["#home", "Inicio"],
             ["escola.html#inicio", "Minha Escola"],
             ["#logout", "Sair"],
           ]
@@ -2641,6 +2704,10 @@ const ecosystemModuleLinks = (activeKey, environmentKey = "") => {
       if (href === "#back") {
         const contents = environmentKey === "escola" ? secretariaInlineIcon("progresso", label) : label;
         return `<button class="module-switcher-back" type="button" data-platform-back>${contents}</button>`;
+      }
+      if (href === "#home") {
+        const contents = environmentKey === "escola" ? secretariaInlineIcon("home", label) : label;
+        return `<button class="module-switcher-back" type="button" data-platform-home>${contents}</button>`;
       }
       if (href === "#logout") {
         const contents = environmentKey === "escola" ? secretariaInlineIcon("sair", label) : label;
@@ -8035,7 +8102,7 @@ const renderTeacherWorkspaceView = (view) => {
 };
 
 const adminFeatureRegistry = [
-  { key: "plataforma", label: "Plataforma", area: "Visao geral", status: "Disponivel", href: "plataforma.html", roles: { admin: true, professor: true, aluno: true } },
+  { key: "plataforma", label: "Plataforma", area: "Visao geral", status: "Legado preservado", href: "admin.html", roles: { admin: true, professor: true, aluno: true } },
   { key: "professor", label: "Ambiente Professor", area: "Usuarios e acessos", status: "Disponivel", href: "professor.html", roles: { admin: true, professor: true, aluno: false } },
   { key: "aluno", label: "Ambiente Aluno", area: "Usuarios e acessos", status: "Disponivel", href: "aluno.html", roles: { admin: true, professor: false, aluno: true } },
   { key: "biblioteca", label: "Biblioteca Viva", area: "Conteudos", status: "Disponivel", href: "biblioteca.html", roles: { admin: true, professor: true, aluno: true } },
@@ -8110,7 +8177,7 @@ const adminWorkspaceNav = [
 
 const adminPlatformTabs = [
   { label: "Site", href: "index.html", status: "publico" },
-  { label: "Inicio", href: "plataforma.html", status: "pronto" },
+  { label: "Inicio", href: "admin.html", status: "pronto" },
   { label: "Admin / TI", view: "inicio", status: "ativo" },
   { label: "Escola", href: "escola.html", status: "homologar" },
   { label: "Area da Escola Infantil", href: "educacao-infantil.html", status: "homologar" },
@@ -10018,7 +10085,7 @@ const renderAdminDashboard = () => `
         <label><span>Busca Admin</span><input type="search" placeholder="Buscar estado, modulos e portas..." data-admin-search /></label>
         <div class="admin-topbar-actions" aria-label="Navegacao global">
           <button type="button" data-admin-back>${adminInlineIcon("back", "VOLTAR")}</button>
-          <button type="button" data-admin-view="painel">${adminInlineIcon("home", "INICIO")}</button>
+          <button type="button" data-platform-home>${adminInlineIcon("home", "INICIO")}</button>
           <a class="admin-topbar-link" href="escola.html">${adminInlineIcon("escola", "MINHA ESCOLA")}</a>
           <button type="button" data-platform-logout>${adminInlineIcon("sair", "SAIR")}</button>
         </div>
@@ -10043,7 +10110,15 @@ const initAdminWorkspace = () => {
   const workspace = document.querySelector("[data-admin-workspace]");
   if (!workspace) return;
   const content = workspace.querySelector("[data-admin-content]");
-  const activate = (view) => {
+  const activate = (view, { push = false } = {}) => {
+    if (push) {
+      const params = new URLSearchParams(window.location.search || "");
+      if (view === "painel") params.delete("view");
+      else params.set("view", view);
+      const nextUrl = `${window.location.pathname}${params.toString() ? `?${params}` : ""}${window.location.hash || ""}`;
+      window.history.pushState({}, "", nextUrl);
+      rememberCurrentPlatformRoute();
+    }
     workspace.querySelectorAll("[data-admin-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.adminView === view));
     if (content) content.innerHTML = renderAdminWorkspaceView(view);
     if (["painel", "usuarios", "escolas", "conteudos", "implantacao"].includes(view)) {
@@ -10059,12 +10134,12 @@ const initAdminWorkspace = () => {
     const backButton = event.target.closest?.("[data-admin-back]");
     if (button) {
       event.preventDefault();
-      activate(button.dataset.adminView || "painel");
+      activate(button.dataset.adminView || "painel", { push: true });
       return;
     }
     if (backButton) {
       event.preventDefault();
-      window.history.back();
+      navigatePlatformBack();
       return;
     }
     const recoveryButton = event.target.closest?.("[data-admin-password-recovery]");
@@ -13088,8 +13163,7 @@ const initFamilyArea = () => {
     const backButton = event.target.closest?.("[data-family-back]");
     if (backButton) {
       event.preventDefault();
-      if (window.history.length > 1) window.history.back();
-      else window.location.href = "familia.html?view=inicio";
+      navigatePlatformBack();
     }
   });
   area.querySelector("[data-routine-form]")?.addEventListener("submit", (event) => {
@@ -18964,11 +19038,7 @@ const initSecretariaInstitutional = () => {
   const area = document.querySelector("[data-secretaria-v1]");
   if (!area) return;
   document.querySelectorAll("[data-secretaria-back]").forEach((backButton) => backButton.addEventListener("click", () => {
-    if (window.history.length > 1) {
-      window.history.back();
-      return;
-    }
-    window.location.href = secretariaLink("painel");
+    navigatePlatformBack();
   }));
   const search = area.querySelector("[data-secretaria-search]");
   if (search) {
@@ -21434,15 +21504,17 @@ const initPlatformLogout = () => {
   platformLogoutInitialized = true;
   document.addEventListener("click", async (event) => {
     const backButton = event.target.closest?.("[data-platform-back]");
+    const homeButton = event.target.closest?.("[data-platform-home]");
     const siteButton = event.target.closest?.("[data-platform-site-logout]");
     const button = event.target.closest?.("[data-platform-logout]");
     if (backButton) {
       event.preventDefault();
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        window.location.href = "plataforma.html";
-      }
+      navigatePlatformBack();
+      return;
+    }
+    if (homeButton) {
+      event.preventDefault();
+      navigateToRoleHome();
       return;
     }
     if (siteButton) {
@@ -21502,6 +21574,7 @@ const renderAppPage = () => {
   }
   document.title = `${activeModule.title} | Raizes e Saberes`;
   maybeRefreshContentGovernancePage(activeKey);
+  rememberCurrentPlatformRoute();
 
   if (["professor", "professorTurma", "professorAluno"].includes(activeKey)) {
     mount.innerHTML = activeModule.html;
@@ -21584,8 +21657,8 @@ const renderAppPage = () => {
         : `<a class="${(environmentKey === "secretaria" ? key === getSecretariaCurrentView() : key === activeKey) ? "is-active" : ""}" href="${href}">${label}</a>`
     )
     .join("");
-  const shellHomeHref = environmentKey === "aluno" ? "aluno.html" : environmentKey === "escola" ? "escola.html" : "plataforma.html";
-  const shellLogoHref = environmentKey === "aluno" ? "aluno.html" : environmentKey === "escola" ? "escola.html" : "index.html";
+  const shellHomeHref = currentRole ? getRoleHome(currentRole) : environmentKey === "aluno" ? "aluno.html" : environmentKey === "escola" ? "escola.html" : platformRoute("/", "index.html");
+  const shellLogoHref = currentRole ? getRoleHome(currentRole) : shellHomeHref;
   const topFilter = environmentKey === "escola" || environmentKey === "secretaria" ? "" : `<button class="top-filter" type="button">Filtros</button>`;
   const moduleSwitcher = environmentKey === "escola"
     ? `<nav class="module-switcher official-school-switcher" aria-label="Navegacao da Escola">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>`
@@ -21598,7 +21671,7 @@ const renderAppPage = () => {
   const topActions = environmentKey === "escola"
     ? ""
     : environmentKey === "secretaria"
-      ? `<div class="top-actions secretaria-top-actions" aria-label="Acoes da Secretaria"><button type="button" data-secretaria-back>${secretariaInlineIcon("progresso", "VOLTAR")}</button><a href="login.html">${secretariaInlineIcon("home", "INICIO")}</a><a href="escola.html">${secretariaInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${secretariaInlineIcon("sair", "SAIR")}</button></div>`
+      ? `<div class="top-actions secretaria-top-actions" aria-label="Acoes da Secretaria"><button type="button" data-secretaria-back>${secretariaInlineIcon("progresso", "VOLTAR")}</button><button type="button" data-platform-home>${secretariaInlineIcon("home", "INICIO")}</button><a href="escola.html">${secretariaInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${secretariaInlineIcon("sair", "SAIR")}</button></div>`
     : `<div class="top-actions" aria-label="Acoes"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>${shellUserFallback}</span>`}<strong>${shellUserLabel}</strong></div></div>`;
 
   mount.innerHTML = `

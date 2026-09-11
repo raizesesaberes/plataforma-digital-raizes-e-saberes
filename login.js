@@ -80,19 +80,19 @@ const getRoleHome = (role) =>
     coordenador: platformRoute("/professor", "professor.html"),
     secretaria: platformRoute("/secretaria", "secretaria.html"),
     admin: platformRoute("/admin", "admin.html"),
-  })[normalizePlatformRole(role)] || "plataforma.html";
+  })[normalizePlatformRole(role)] || platformRoute("/", "index.html");
 
 const getNextPage = () => {
   const requestedPage = new URLSearchParams(window.location.search).get("next");
   if (!requestedPage) {
-    return "plataforma.html";
+    return "";
   }
 
   try {
     const decodedPage = decodeURIComponent(requestedPage);
-    return decodedPage.startsWith("http") ? "plataforma.html" : decodedPage;
+    return decodedPage.startsWith("http") ? "" : decodedPage;
   } catch (error) {
-    return "plataforma.html";
+    return "";
   }
 };
 
@@ -101,9 +101,9 @@ const needsCuratorAccess = nextPage.startsWith("curadoria.html");
 const getNextPageName = () => {
   try {
     const url = new URL(nextPage, window.location.origin);
-    return url.pathname.replace(/^\/+/, "").replace(/\/$/, "") || "plataforma.html";
+    return url.pathname.replace(/^\/+/, "").replace(/\/$/, "") || "";
   } catch (error) {
-    return String(nextPage || "plataforma.html").split(/[?#]/)[0].replace(/^\/+/, "").replace(/\/$/, "");
+    return String(nextPage || "").split(/[?#]/)[0].replace(/^\/+/, "").replace(/\/$/, "");
   }
 };
 const questionBankLoginPages = new Set(["avalia", "avalia.html", "banco-questoes", "banco-questoes.html"]);
@@ -140,7 +140,7 @@ const getPostLoginDestination = (role) => {
   if (requestedRole && !canRoleAccessRequestedRoute(role, requestedRole)) {
     return getRoleHome(role);
   }
-  return ["plataforma.html", "index.html", "/"].includes(next) ? getRoleHome(role) : next;
+  return ["", "plataforma.html", "plataforma", "index.html", "index", "/"].includes(next) ? getRoleHome(role) : next;
 };
 
 const getStoredSupabaseContext = () => {
