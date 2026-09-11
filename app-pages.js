@@ -3914,6 +3914,15 @@ const teacherAttendanceState = {
   result: null,
 };
 
+const teacherDiaryState = {
+  status: "idle",
+  error: "",
+  message: "",
+  promise: null,
+  key: "",
+  entries: [],
+};
+
 const secretariaInstitutionalState = {
   status: "idle",
   error: "",
@@ -3938,6 +3947,7 @@ const secretariaInstitutionalState = {
   studentDocumentEvents: [],
   attendanceRecords: [],
   attendanceEvents: [],
+  classDiaryEntries: [],
   communications: [],
   communicationEvents: [],
   lastCreateResult: null,
@@ -4078,6 +4088,125 @@ const saveTeacherAttendanceDay = async ({ classId = "", date = "", records = [] 
   teacherAttendanceState.result = result;
   teacherAttendanceState.message = "Frequência salva com sucesso.";
   return result;
+};
+
+const getTeacherDiaryDate = () => getPrintableParams().get("diaryDate") || getTeacherAttendanceDate();
+const getTeacherDiaryKey = (classId, date) => `${classId || ""}:${date || ""}`;
+
+const mapTeacherDiaryRow = (row = {}) => ({
+  id: row.id || "",
+  schoolId: row.school_id || "",
+  classId: row.class_id || "",
+  teacherId: row.teacher_id || "",
+  entryDate: row.entry_date || "",
+  title: row.title || "Diário de Classe",
+  taughtContent: row.taught_content || "",
+  pedagogicalNotes: row.pedagogical_notes || "",
+  planId: row.plan_id || "",
+  planTitle: row.plan_title || "",
+  calendarEntryId: row.calendar_entry_id || "",
+  calendarTitle: row.calendar_title || "",
+  status: row.status || "draft",
+  closedAt: row.closed_at || "",
+  createdAt: row.created_at || "",
+  updatedAt: row.updated_at || "",
+  activityLinkCount: Number(row.activity_link_count || 0),
+  attendanceTotal: Number(row.attendance_total || 0),
+  attendancePresent: Number(row.attendance_present || 0),
+  attendanceAbsent: Number(row.attendance_absent || 0),
+  attendanceJustified: Number(row.attendance_justified || 0),
+});
+
+const ensureTeacherDiaryEntries = async ({ force = false, classId = "", date = "" } = {}) => {
+  const selectedClassId = classId || getPrintableParams().get("id") || getTeacherInstitutionalClasses()[0]?.id || "";
+  const selectedDate = date || getTeacherDiaryDate();
+  const key = getTeacherDiaryKey(selectedClassId, selectedDate);
+  if (!selectedClassId || !selectedDate) return teacherDiaryState;
+  if (!force && teacherDiaryState.status === "ready" && teacherDiaryState.key === key) return teacherDiaryState;
+  if (!force && teacherDiaryState.promise && teacherDiaryState.key === key) return teacherDiaryState.promise;
+  teacherDiaryState.status = "loading";
+  teacherDiaryState.error = "";
+  teacherDiaryState.key = key;
+  teacherDiaryState.promise = (async () => {
+    try {
+      await ensureTeacherInstitutionalData();
+      if (teacherInstitutionalState.status !== "ready") {
+        throw new Error(teacherInstitutionalState.error || "Dados institucionais indisponiveis.");
+      }
+      const client = createSupabaseRestClient();
+      const rows = await client.request("rpc/teacher_list_class_diary_entries", "", {
+        method: "POST",
+        body: JSON.stringify({
+          p_class_id: selectedClassId,
+          p_from: null,
+          p_to: null,
+        }),
+        requireAuthenticated: true,
+        allowedRoles: teacherAllowedRoles,
+      });
+      teacherDiaryState.entries = (Array.isArray(rows) ? rows : []).map(mapTeacherDiaryRow);
+      teacherDiaryState.status = "ready";
+      return teacherDiaryState;
+    } catch (error) {
+      teacherDiaryState.entries = [];
+      teacherDiaryState.error = error.message || "Não foi possível carregar o Diário de Classe.";
+      teacherDiaryState.status = "error";
+      return teacherDiaryState;
+    } finally {
+      teacherDiaryState.promise = null;
+    }
+  })();
+  return teacherDiaryState.promise;
+};
+
+const getTeacherDiaryEntryForDate = (classId = "", date = getTeacherDiaryDate()) =>
+  (teacherDiaryState.entries || []).find((entry) => entry.classId === classId && entry.entryDate === date) || null;
+
+const saveTeacherDiaryEntry = async (formData) => {
+  await ensureTeacherInstitutionalData();
+  const classId = String(formData.get("classId") || "");
+  const classItem = getTeacherInstitutionalClasses().find((item) => item.id === classId);
+  if (!classItem?.id) throw new Error("Turma fora do vinculo autorizado do professor.");
+  const teacherId = classItem.teacherId || teacherInstitutionalState.teacherByClass?.[classItem.id] || teacherInstitutionalState.profile?.teacherId || "";
+  const activityType = String(formData.get("activityType") || "").trim();
+  const activityId = String(formData.get("activityId") || "").trim();
+  const activityLinks = activityType && activityId ? [{ activity_type: activityType, activity_id: activityId }] : [];
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/teacher_upsert_class_diary_entry", "", {
+    method: "POST",
+    body: JSON.stringify({
+      p_entry_id: String(formData.get("entryId") || "") || null,
+      p_school_id: classItem.schoolId,
+      p_class_id: classItem.id,
+      p_teacher_id: teacherId,
+      p_entry_date: String(formData.get("entryDate") || getTeacherDiaryDate()),
+      p_title: String(formData.get("title") || "Diário de Classe").trim(),
+      p_taught_content: String(formData.get("taughtContent") || "").trim(),
+      p_pedagogical_notes: String(formData.get("pedagogicalNotes") || "").trim(),
+      p_plan_id: String(formData.get("planId") || "") || null,
+      p_calendar_entry_id: String(formData.get("calendarEntryId") || "") || null,
+      p_activity_links: activityLinks,
+    }),
+    requireAuthenticated: true,
+    allowedRoles: teacherAllowedRoles,
+  });
+  teacherDiaryState.message = "Diário salvo como rascunho.";
+  await ensureTeacherDiaryEntries({ force: true, classId: classItem.id, date: String(formData.get("entryDate") || getTeacherDiaryDate()) });
+  return Array.isArray(result) ? result[0] || {} : result || {};
+};
+
+const closeTeacherDiaryEntry = async (entryId = "") => {
+  if (!entryId) throw new Error("Diário de Classe não encontrado para fechamento.");
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/teacher_close_class_diary_entry", "", {
+    method: "POST",
+    body: JSON.stringify({ p_entry_id: entryId }),
+    requireAuthenticated: true,
+    allowedRoles: teacherAllowedRoles,
+  });
+  teacherDiaryState.message = "Diário fechado com sucesso.";
+  await ensureTeacherDiaryEntries({ force: true, classId: getPrintableParams().get("id") || "", date: getTeacherDiaryDate() });
+  return Array.isArray(result) ? result[0] || {} : result || {};
 };
 
 const teacherWorkspaceTasks = [
@@ -7056,13 +7185,14 @@ const renderTeacherPilotHome = () => `
 const renderTeacherClassTabs = (classItem, activeTab = "alunos") => {
   const tabs = [
     ["alunos", "Alunos"],
+    ["diario", "Diário de Classe"],
     ["frequencia", "Frequência"],
     ["semana", "Minha Semana"],
     ["recados", "Recados"],
     ["recomendacoes", "Recomendações"],
     ["desafio", "Desafio da Semana"],
   ];
-  const activeTabs = new Set(["alunos", "frequencia", "semana", "recados", "recomendacoes"]);
+  const activeTabs = new Set(["alunos", "diario", "frequencia", "semana", "recados", "recomendacoes"]);
   return `
     <nav class="tw-class-tabs" aria-label="Espaco da turma">
       ${tabs
@@ -7416,6 +7546,131 @@ const renderTeacherAttendancePanel = (classItem, students = []) => {
   `;
 };
 
+const teacherDiaryStatusLabel = (status = "") => {
+  if (status === "closed") return "Fechado";
+  if (status === "deleted") return "Excluido";
+  return "Rascunho";
+};
+
+const renderTeacherDiarySummary = (entry, classItem, date) => {
+  const attendanceRecords = teacherAttendanceState.key === getTeacherAttendanceKey(classItem?.id, date)
+    ? teacherAttendanceState.records || []
+    : [];
+  const total = entry?.attendanceTotal || attendanceRecords.length;
+  const present = entry?.attendancePresent || attendanceRecords.filter((record) => record.status === "present").length;
+  const absent = entry?.attendanceAbsent || attendanceRecords.filter((record) => record.status === "absent").length;
+  const justified = entry?.attendanceJustified || attendanceRecords.filter((record) => record.status === "justified").length;
+  return `
+    <div class="metric-row">
+      <article>Frequência<strong>${total}</strong><span>alunos registrados</span></article>
+      <article>Presenças<strong>${present}</strong><span>na data</span></article>
+      <article>Faltas<strong>${absent}</strong><span>sem duplicar chamada</span></article>
+      <article>Justificadas<strong>${justified}</strong><span>consulta existente</span></article>
+    </div>
+  `;
+};
+
+const renderTeacherDiaryPanel = (classItem, students = []) => {
+  const date = getTeacherDiaryDate();
+  const entry = getTeacherDiaryEntryForDate(classItem.id, date);
+  const classPlans = (teacherPlanningState.plans || [])
+    .filter((plan) => plan.classId === classItem.id && plan.planDate === date && plan.status !== "archived")
+    .sort((a, b) => String(a.startTime || "99:99").localeCompare(String(b.startTime || "99:99")));
+  const calendarEntries = classPlans.map((plan) => plan.publication).filter((publication) => publication?.id);
+  const closed = entry?.status === "closed";
+  const loading = teacherDiaryState.status === "loading" || teacherPlanningState.status === "loading" || teacherAttendanceState.status === "loading";
+  const error = teacherDiaryState.status === "error" ? teacherDiaryState.error : "";
+  return `
+    <section class="tw-board tw-class-diary-shell">
+      <div class="tw-planning-heading">
+        <div>
+          <span>Diário de Classe</span>
+          <h2>Registro oficial - ${printableEscape(classItem.name)}</h2>
+          <p>Consolida frequência, planejamento e registro pedagógico da aula realizada.</p>
+        </div>
+        <div class="tw-planning-toolbar">
+          <label>
+            <span>Data</span>
+            <input type="date" value="${printableEscape(date)}" data-teacher-diary-date />
+          </label>
+        </div>
+      </div>
+      ${loading ? renderTeacherInstitutionalStatus("CARREGANDO DIARIO DE CLASSE.") : ""}
+      ${error ? renderTeacherEmptyState("NAO FOI POSSIVEL CARREGAR O DIARIO.", error) : ""}
+      ${teacherDiaryState.message ? `<p class="tw-operation-feedback">${printableEscape(teacherDiaryState.message)}</p>` : ""}
+      ${renderTeacherDiarySummary(entry, classItem, date)}
+      <form class="tw-planning-form tw-diary-form" data-teacher-diary-form>
+        <input type="hidden" name="entryId" value="${printableEscape(entry?.id || "")}" />
+        <input type="hidden" name="classId" value="${printableEscape(classItem.id)}" />
+        <input type="hidden" name="entryDate" value="${printableEscape(date)}" />
+        <label>
+          <span>Título do registro</span>
+          <input name="title" required maxlength="100" value="${printableEscape(entry?.title || "Diário de Classe")}" ${closed ? "disabled" : ""} />
+        </label>
+        <label>
+          <span>Planejamento relacionado</span>
+          <select name="planId" ${closed ? "disabled" : ""}>
+            <option value="">Sem vínculo direto</option>
+            ${classPlans.map((plan) => `<option value="${printableEscape(plan.id)}" ${plan.id === entry?.planId ? "selected" : ""}>${printableEscape(plan.title)}</option>`).join("")}
+          </select>
+        </label>
+        <label>
+          <span>Agenda publicada</span>
+          <select name="calendarEntryId" ${closed ? "disabled" : ""}>
+            <option value="">Sem publicação vinculada</option>
+            ${calendarEntries.map((publication) => `<option value="${printableEscape(publication.id)}" ${publication.id === entry?.calendarEntryId ? "selected" : ""}>${printableEscape(publication.title || publication.entry_date)}</option>`).join("")}
+          </select>
+        </label>
+        <label>
+          <span>Atividade vinculada</span>
+          <select name="activityType" ${closed ? "disabled" : ""}>
+            <option value="">Sem atividade nesta V1</option>
+            <option value="printable_activity">Atividade imprimível</option>
+            <option value="activity">Atividade digital</option>
+            <option value="book">Livro</option>
+            <option value="experience">Experiência</option>
+            <option value="game">Jogo</option>
+            <option value="assessment">Avaliação</option>
+            <option value="other">Outro</option>
+          </select>
+        </label>
+        <label>
+          <span>Código/ID da atividade</span>
+          <input name="activityId" maxlength="120" placeholder="Opcional" ${closed ? "disabled" : ""} />
+        </label>
+        <label class="tw-planning-form-note">
+          <span>Conteúdo ministrado</span>
+          <textarea name="taughtContent" rows="5" maxlength="1800" required placeholder="Registre o que foi efetivamente trabalhado na aula." ${closed ? "disabled" : ""}>${printableEscape(entry?.taughtContent || "")}</textarea>
+        </label>
+        <label class="tw-planning-form-note">
+          <span>Registro pedagógico</span>
+          <textarea name="pedagogicalNotes" rows="5" maxlength="1800" placeholder="Observação coletiva da aula/turma. Observações individuais ficam para etapa futura." ${closed ? "disabled" : ""}>${printableEscape(entry?.pedagogicalNotes || "")}</textarea>
+        </label>
+        <div class="tw-planning-form-actions">
+          <button type="submit" ${closed ? "disabled" : ""}>SALVAR RASCUNHO</button>
+          <button type="button" data-teacher-diary-close="${printableEscape(entry?.id || "")}" ${entry?.id && !closed ? "" : "disabled"}>FECHAR REGISTRO</button>
+          <span>${printableEscape(entry ? teacherDiaryStatusLabel(entry.status) : "Novo rascunho")} · ${students.length} alunos vinculados · ${entry?.activityLinkCount || 0} atividade${Number(entry?.activityLinkCount || 0) === 1 ? "" : "s"}</span>
+        </div>
+      </form>
+      <div class="tw-diary-history">
+        <div class="tw-section-head"><h2>Histórico</h2><span>${(teacherDiaryState.entries || []).filter((item) => item.classId === classItem.id).length} registro${(teacherDiaryState.entries || []).filter((item) => item.classId === classItem.id).length === 1 ? "" : "s"}</span></div>
+        <ul class="clean-list">
+          ${(teacherDiaryState.entries || [])
+            .filter((item) => item.classId === classItem.id)
+            .map((item) => `
+              <li data-teacher-search-item>
+                <a href="professor-turma.html?id=${encodeURIComponent(classItem.id)}&tab=diario&diaryDate=${encodeURIComponent(item.entryDate)}"><strong>${printableEscape(item.entryDate)} · ${printableEscape(item.title)}</strong></a>
+                <span>${printableEscape(teacherDiaryStatusLabel(item.status))} · Frequência ${item.attendanceTotal} · Atividades ${item.activityLinkCount}</span>
+                <span>${printableEscape(String(item.taughtContent || "Sem conteúdo ministrado registrado.").slice(0, 140))}${String(item.taughtContent || "").length > 140 ? "..." : ""}</span>
+              </li>
+            `)
+            .join("") || "<li>Nenhum registro de Diário de Classe para esta turma.</li>"}
+        </ul>
+      </div>
+    </section>
+  `;
+};
+
 const renderTeacherClassPage = () => `
   <section class="teacher-workspace teacher-pilot" data-teacher-workspace>
     ${renderTeacherSidebar("turmas")}
@@ -7431,6 +7686,7 @@ const renderTeacherClassPage = () => `
           if (!isReady) {
             return `<section class="tw-board">${renderTeacherInstitutionalStatus(teacherInstitutionalState.status === "ready" ? "TURMA NAO ENCONTRADA NAS SUAS TURMAS AUTORIZADAS." : "CARREGANDO ALUNOS DA TURMA.")}</section>`;
           }
+          if (activeTab === "diario") return renderTeacherDiaryPanel(classItem, students);
           if (activeTab === "frequencia") return renderTeacherAttendancePanel(classItem, students);
           if (activeTab === "semana") return renderTeacherClassWeekPanel(classItem);
           if (activeTab === "recados") return renderTeacherClassMessagesPanel(classItem, students);
@@ -17203,6 +17459,7 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
         studentDocumentEvents,
         attendanceRecords,
         attendanceEvents,
+        classDiaryEntries,
         communications,
         communicationEvents,
       ] = await Promise.all([
@@ -17272,6 +17529,11 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
           method: "POST",
           body: "{}",
         }),
+        client.request("rpc/secretaria_list_class_diary_entries", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }).catch(() => []),
         client.request("rpc/secretaria_list_communications", "", {
           ...options,
           method: "POST",
@@ -17307,6 +17569,7 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
         studentDocumentEvents: studentDocumentEvents || [],
         attendanceRecords: attendanceRecords || [],
         attendanceEvents: attendanceEvents || [],
+        classDiaryEntries: classDiaryEntries || [],
         communications: communications || [],
         communicationEvents: communicationEvents || [],
       });
@@ -17476,6 +17739,14 @@ const buildSecretariaIndex = () => {
     communicationEventsByCommunication[event.communication_id] = communicationEventsByCommunication[event.communication_id] || [];
     communicationEventsByCommunication[event.communication_id].push(event);
   });
+  const classDiaryByClass = {};
+  (state.classDiaryEntries || []).forEach((entry) => {
+    classDiaryByClass[entry.class_id] = classDiaryByClass[entry.class_id] || [];
+    classDiaryByClass[entry.class_id].push(entry);
+  });
+  Object.values(classDiaryByClass).forEach((entries) =>
+    entries.sort((a, b) => String(b.entry_date || "").localeCompare(String(a.entry_date || "")) || String(b.updated_at || "").localeCompare(String(a.updated_at || "")))
+  );
   return {
     schoolById,
     profileById,
@@ -17515,6 +17786,7 @@ const buildSecretariaIndex = () => {
     communicationsByClass,
     communicationsBySchool,
     communicationEventsByCommunication,
+    classDiaryByClass,
   };
 };
 
@@ -18412,6 +18684,35 @@ const renderSecretariaStudentsView = (index) => {
   `;
 };
 
+const secretariaDiaryStatusLabel = (status = "") => {
+  if (status === "closed") return "Fechado";
+  if (status === "deleted") return "Excluido";
+  return "Rascunho";
+};
+
+const renderSecretariaClassDiaryPanel = (classItem, index) => {
+  if (!classItem?.id) return "";
+  const entries = index.classDiaryByClass[classItem.id] || [];
+  return `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>Diário de Classe</h2><span>${entries.length} registro${entries.length === 1 ? "" : "s"}</span></div>
+      <ul class="clean-list">
+        ${entries
+          .slice(0, 20)
+          .map((entry) => `
+            <li data-secretaria-search-item>
+              <strong>${htmlEscape(entry.entry_date || "Data nao informada")} · ${htmlEscape(entry.title || "Diário de Classe")}</strong>
+              ${secretariaBadge(secretariaDiaryStatusLabel(entry.status), secretariaBadgeTone(entry.status))}
+              <span>Professor: ${htmlEscape(entry.teacher_name || "Professor")} · Frequência ${htmlEscape(String(entry.attendance_total || 0))} · Atividades ${htmlEscape(String(entry.activity_link_count || 0))}</span>
+              <span>${htmlEscape(String(entry.taught_content || "Sem conteúdo ministrado registrado.").slice(0, 160))}${String(entry.taught_content || "").length > 160 ? "..." : ""}</span>
+            </li>
+          `)
+          .join("") || "<li>Nenhum Diário de Classe registrado para esta turma.</li>"}
+      </ul>
+    </section>
+  `;
+};
+
 const renderSecretariaClassesView = (index) => {
   const selected = index.classById.get(getSecretariaParams().get("class")) || null;
   const rows = (secretariaInstitutionalState.classes || [])
@@ -18466,6 +18767,7 @@ const renderSecretariaClassesView = (index) => {
             : "<p>Selecione uma turma para abrir os vinculos reais.</p>"
         }
       </section>
+      ${selected ? renderSecretariaClassDiaryPanel(selected, index) : ""}
     </div>
   `;
 };
@@ -20672,6 +20974,22 @@ const initTeacherWorkspace = () => {
       }
       return;
     }
+    const diaryClose = event.target.closest("[data-teacher-diary-close]");
+    if (diaryClose) {
+      event.preventDefault();
+      const entryId = diaryClose.dataset.teacherDiaryClose || "";
+      if (!entryId) return;
+      if (!window.confirm("Fechar este Diário de Classe? Depois do fechamento, a edição fica bloqueada nesta versão.")) return;
+      diaryClose.disabled = true;
+      diaryClose.textContent = "FECHANDO...";
+      try {
+        await closeTeacherDiaryEntry(entryId);
+        rerenderTeacherClassPage();
+      } catch (error) {
+        window.alert(error.message || "Não foi possível fechar o Diário de Classe.");
+      }
+      return;
+    }
     const trackingStudentPick = event.target.closest("[data-tracking-student-pick]");
     if (trackingStudentPick) {
       event.preventDefault();
@@ -20696,13 +21014,14 @@ const initTeacherWorkspace = () => {
     const publicationForm = event.target.closest("[data-teacher-publication-form]");
     const messageForm = event.target.closest("[data-teacher-family-message-form]");
     const attendanceForm = event.target.closest("[data-teacher-attendance-form]");
-    if (!form && !publicationForm && !messageForm && !attendanceForm) return;
+    const diaryForm = event.target.closest("[data-teacher-diary-form]");
+    if (!form && !publicationForm && !messageForm && !attendanceForm && !diaryForm) return;
     event.preventDefault();
-    const submitButton = (form || publicationForm || messageForm || attendanceForm).querySelector("button[type='submit']");
+    const submitButton = (form || publicationForm || messageForm || attendanceForm || diaryForm).querySelector("button[type='submit']");
     const previousLabel = submitButton?.textContent || "";
     if (submitButton) {
       submitButton.disabled = true;
-      submitButton.textContent = form || attendanceForm ? "SALVANDO..." : publicationForm ? "PUBLICANDO..." : "ENVIANDO...";
+      submitButton.textContent = form || attendanceForm || diaryForm ? "SALVANDO..." : publicationForm ? "PUBLICANDO..." : "ENVIANDO...";
     }
     try {
       if (form) {
@@ -20739,6 +21058,11 @@ const initTeacherWorkspace = () => {
         params.set("tab", "frequencia");
         params.set("date", date);
         window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
+        rerenderTeacherClassPage();
+        return;
+      }
+      if (diaryForm) {
+        await saveTeacherDiaryEntry(new FormData(diaryForm));
         rerenderTeacherClassPage();
         return;
       }
@@ -20822,6 +21146,14 @@ const initTeacherWorkspace = () => {
       window.location.href = `${window.location.pathname}?${params.toString()}`;
       return;
     }
+    const diaryDate = event.target.closest("[data-teacher-diary-date]");
+    if (diaryDate) {
+      const params = new URLSearchParams(window.location.search);
+      params.set("diaryDate", diaryDate.value || getTeacherDiaryDate());
+      params.set("tab", "diario");
+      window.location.href = `${window.location.pathname}?${params.toString()}`;
+      return;
+    }
     const classSelect = event.target.closest("[data-teacher-family-message-form] select[name='classId']");
     const messageAudience = event.target.closest("[data-teacher-message-audience]");
     if (messageAudience) {
@@ -20869,6 +21201,11 @@ const initTeacherWorkspace = () => {
         teacherRecommendationsState.classId = classId;
         teacherRecommendationsState.status = "idle";
         ensureTeacherRecommendations({ force: true, classId }).then(rerenderTeacherClassPage);
+      }
+      if (getTeacherClassTab() === "diario") {
+        const date = getTeacherDiaryDate();
+        teacherPlanningState.status = "idle";
+        ensureTeacherPlanningWeek({ force: true }).then(() => ensureTeacherAttendanceDay({ force: true, classId, date })).then(() => ensureTeacherDiaryEntries({ force: true, classId, date })).then(rerenderTeacherClassPage);
       }
       workspace.outerHTML = renderTeacherClassPage();
       requestAnimationFrame(() => document.querySelector(".teacher-workspace")?.classList.add("is-mounted"));
