@@ -152,6 +152,141 @@ const getCurrentPlatformRole = () => {
   }
   return "";
 };
+const contentGovernanceConsumerRoles = new Set(["aluno", "educacao_infantil", "escola", "professor"]);
+const contentGovernanceRouteKeys = new Set([
+  "biblioteca",
+  "viewer",
+  "jogos",
+  "atividades",
+  "alunoAtividades",
+  "alunoAtividade",
+  "professor",
+  "professorTurma",
+  "professorAluno",
+  "escolaColetiva",
+  "familia",
+]);
+const contentGovernanceState = {
+  status: "idle",
+  schoolIds: [],
+  availability: [],
+  error: "",
+  promise: null,
+};
+const contentGovernanceEscape = (value) =>
+  String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+const normalizeContentGovernanceType = (type = "") => {
+  const value = String(type || "").trim().toLowerCase();
+  if (["printable_activity", "printable-activity", "atividade", "atividades"].includes(value)) return "activity";
+  if (["books", "livro", "livros"].includes(value)) return "book";
+  if (["games", "jogo", "jogos"].includes(value)) return "game";
+  if (["experiences", "experiencia", "experiencias"].includes(value)) return "experience";
+  return value;
+};
+const isContentGovernanceRequired = () =>
+  hasValidPlatformSession() && contentGovernanceConsumerRoles.has(getCurrentPlatformRole());
+const isContentGovernanceReady = () => !isContentGovernanceRequired() || contentGovernanceState.status === "ready";
+const isAvailabilityRowActive = (row, now = new Date()) => {
+  if (!row || row.deleted_at) return false;
+  if (String(row.status || "").toLowerCase() !== "available") return false;
+  const from = row.available_from ? new Date(row.available_from) : null;
+  const until = row.available_until ? new Date(row.available_until) : null;
+  if (from && !Number.isNaN(from.getTime()) && from > now) return false;
+  if (until && !Number.isNaN(until.getTime()) && until < now) return false;
+  return true;
+};
+const ensureContentGovernanceData = async ({ force = false } = {}) => {
+  if (!isContentGovernanceRequired()) {
+    contentGovernanceState.status = "ready";
+    contentGovernanceState.schoolIds = [];
+    contentGovernanceState.availability = [];
+    contentGovernanceState.error = "";
+    return contentGovernanceState;
+  }
+  if (!force && contentGovernanceState.status === "ready") return contentGovernanceState;
+  if (!force && contentGovernanceState.promise) return contentGovernanceState.promise;
+  contentGovernanceState.status = "loading";
+  contentGovernanceState.error = "";
+  contentGovernanceState.promise = (async () => {
+    try {
+      const client = createSupabaseRestClient();
+      const schoolsResult = await client.request("rpc/current_institutional_school_ids", "", {
+        method: "POST",
+        body: JSON.stringify({}),
+        requireAuthenticated: true,
+        allowedRoles: ["aluno", "educacao_infantil", "escola", "professor", "admin"],
+      });
+      const schoolIds = (Array.isArray(schoolsResult) ? schoolsResult : [schoolsResult])
+        .map((row) => (typeof row === "string" ? row : row?.school_id || row?.id || row))
+        .filter(Boolean);
+      const availability = schoolIds.length
+        ? await client.request(
+            "school_content_availability",
+            `?select=school_id,content_type,content_id,status,available_from,available_until,deleted_at&school_id=${supabaseIn(schoolIds)}&status=eq.available&deleted_at=is.null&limit=1000`,
+            {
+              requireAuthenticated: true,
+              allowedRoles: ["aluno", "educacao_infantil", "escola", "professor", "admin"],
+            }
+          )
+        : [];
+      contentGovernanceState.status = "ready";
+      contentGovernanceState.schoolIds = schoolIds;
+      contentGovernanceState.availability = Array.isArray(availability) ? availability : [];
+      contentGovernanceState.error = "";
+    } catch (error) {
+      contentGovernanceState.status = "error";
+      contentGovernanceState.schoolIds = [];
+      contentGovernanceState.availability = [];
+      contentGovernanceState.error = error.message || "Nao foi possivel carregar a disponibilidade de conteudos.";
+    } finally {
+      contentGovernanceState.promise = null;
+    }
+    return contentGovernanceState;
+  })();
+  return contentGovernanceState.promise;
+};
+const isContentAvailableToSession = (type, id) => {
+  if (!isContentGovernanceRequired()) return true;
+  if (!id || contentGovernanceState.status !== "ready") return false;
+  const normalizedType = normalizeContentGovernanceType(type);
+  const normalizedId = String(id || "");
+  const now = new Date();
+  return contentGovernanceState.availability.some(
+    (row) =>
+      normalizeContentGovernanceType(row.content_type) === normalizedType &&
+      String(row.content_id || "") === normalizedId &&
+      isAvailabilityRowActive(row, now)
+  );
+};
+const filterContentForSession = (items = [], type, getId = (item) => item?.id) =>
+  isContentGovernanceRequired() ? items.filter((item) => isContentAvailableToSession(type, getId(item))) : items;
+const renderContentGovernanceLoading = (title = "Conteudos") => `
+  <section class="bv-section">
+    <div class="panel-head"><h2>${contentGovernanceEscape(title)}</h2><a>carregando</a></div>
+    <p class="bv-empty-state">Carregando conteudos disponiveis para sua escola.</p>
+  </section>
+`;
+const renderContentUnavailableForSchool = ({ title = "Conteudo indisponivel", type = "conteudo", id = "" } = {}) => `
+  <section class="bv-section">
+    <div class="panel-head"><h2>${contentGovernanceEscape(title)}</h2><a>${contentGovernanceEscape(type)}</a></div>
+    <p class="bv-empty-state">Este conteudo nao esta disponivel para a sua escola neste momento.</p>
+    ${id ? `<p class="bv-empty-state">${contentGovernanceEscape(id)}</p>` : ""}
+  </section>
+`;
+const maybeRefreshContentGovernancePage = (activeKey) => {
+  if (!contentGovernanceRouteKeys.has(activeKey) || !isContentGovernanceRequired()) return;
+  if (contentGovernanceState.status === "idle") {
+    ensureContentGovernanceData().then(() => {
+      const mount = document.querySelector("[data-app-page]");
+      if (mount?.dataset.appPage === activeKey) renderAppPage();
+    });
+  }
+};
 const clearPlatformSession = () => {
   try {
     localStorage.removeItem(platformSessionKey);
@@ -1539,7 +1674,17 @@ const getRouteSearchParams = () => new URLSearchParams(typeof window === "undefi
 const getStudentLibraryHref = (extra = "") => `biblioteca.html?from=aluno${extra}`;
 const getStudentBookViewerHref = (bookId, page) =>
   `book-viewer.html?book=${encodeURIComponent(bookId)}&from=aluno${page ? `&page=${encodeURIComponent(page)}` : ""}`;
-const isStudentLibraryView = () => getRouteSearchParams().get("from") === "aluno" || getCurrentPlatformRole() === "aluno";
+const isPremiumLibraryDeepLink = () => {
+  const pageName = getCurrentPageName();
+  if (pageName !== "biblioteca.html" && pageName !== "biblioteca") {
+    return false;
+  }
+
+  const params = getRouteSearchParams();
+  return Boolean(params.get("experience") || params.get("book"));
+};
+const isStudentLibraryView = () =>
+  !isPremiumLibraryDeepLink() && (getRouteSearchParams().get("from") === "aluno" || getCurrentPlatformRole() === "aluno");
 const isStudentReaderView = isStudentLibraryView();
 const readerBackHref = getRouteSearchParams().get("from") === "teacher"
   ? "professor.html?view=biblioteca"
@@ -1619,9 +1764,13 @@ const collectionShowcaseCardsHtml = collectionShowcaseCards
   )
   .join("");
 
-const libraryBookCards = sortedLibraryBooks
-  .map(
-    (book) => `
+const getGovernedLibraryBookId = (book = {}) => book.id || book.bookId || getBookIdFromHref(book.href) || "";
+const getGovernedLibraryBooks = (books = []) =>
+  filterContentForSession(books, "book", getGovernedLibraryBookId);
+const renderLibraryBookCards = (books = sortedLibraryBooks) =>
+  getGovernedLibraryBooks(books)
+    .map(
+      (book) => `
       <article class="library-book-card" data-library-book-card data-book-href="${book.href}" data-book-collection="${book.collection || ""}" data-book-type="${book.type || ""}">
         <img src="${book.src}" alt="${book.year} ${book.title}" loading="lazy" />
         <div>
@@ -1635,8 +1784,8 @@ const libraryBookCards = sortedLibraryBooks
         </div>
       </article>
     `
-  )
-  .join("");
+    )
+    .join("");
 
 const getBookIdFromHref = (href = "") => new URLSearchParams((href.split("?")[1] || "").split("#")[0]).get("book") || "";
 const getCatalogBookFromLibraryBook = (book) => bookCatalog.find((candidate) => candidate.id === getBookIdFromHref(book.href));
@@ -1684,7 +1833,7 @@ const buildBookCarousel = (title, subtitle, books, label = "Ler Agora") => `
   <section class="wide-panel library-2-shelf">
     <div class="panel-head"><h2>${title}</h2><a>${subtitle}</a></div>
     <div class="library-2-rail">
-      ${withCatalogBook(books).map((item) => libraryShelfCard(item, label)).join("")}
+      ${withCatalogBook(getGovernedLibraryBooks(books)).map((item) => libraryShelfCard(item, label)).join("")}
     </div>
   </section>
 `;
@@ -1724,6 +1873,8 @@ const library2StatsHtml = `
 `;
 const infantilExperienceCatalog = typeof window === "undefined" ? null : window.RaizesInfantilExperiences;
 const featuredInfantilExperience = infantilExperienceCatalog?.getExperienceDefinition?.("RS-EI4-V1-EXP-001");
+const getGovernedInfantilExperiences = (experiences = []) =>
+  filterContentForSession(experiences, "experience", (experience) => experience.id);
 const getExperiencePlaybackAsset = (experience) =>
   experience ? infantilExperienceCatalog?.getExperienceAsset?.(experience.openingAssetCode) : null;
 const buildFeaturedExperiencePanel = () => {
@@ -1906,7 +2057,7 @@ const renderExperienceOfficialCard = (experience, { compact = false } = {}) => {
 };
 const renderPremiumLibraryHierarchy = () =>
   infantilExperienceCatalog.INFANTIL_AGE_GROUPS.map((ageGroup) => {
-    const experiencesByAge = allInfantilExperiences.filter((experience) => experience.ageGroup === ageGroup);
+    const experiencesByAge = getGovernedInfantilExperiences(allInfantilExperiences).filter((experience) => experience.ageGroup === ageGroup);
     return `
       <article class="bv-age-column" data-bv-age-column="${ageGroup}">
         <button type="button" data-bv-filter-age="${ageGroup}">${ageGroup.replace("EI", "")} anos</button>
@@ -1939,7 +2090,7 @@ const renderBookNotFoundPage = (bookId) => `
 `;
 
 const renderBookUnit = (unit, requestedPage) => {
-  const unitExperiences = unit.experiences || [];
+  const unitExperiences = getGovernedInfantilExperiences(unit.experiences || []);
   const publishedExperiences = unitExperiences.filter((experience) => experience.availability === "available" && experience.status === "published");
   const summary = getProgressSummaryForExperiences(unitExperiences);
   const pageExperiences = requestedPage
@@ -1974,10 +2125,16 @@ const renderBookUnit = (unit, requestedPage) => {
 
 const renderBookPage = (book, requestedPage) => {
   if (!book) return renderBookNotFoundPage(new URLSearchParams(window.location.search).get("book"));
-  const bookExperiences = getBookExperiences(book.bookId);
+  if (!isContentAvailableToSession("book", book.bookId)) {
+    return renderContentUnavailableForSchool({ title: "Livro indisponivel", type: "book", id: book.bookId });
+  }
+  const bookExperiences = getGovernedInfantilExperiences(getBookExperiences(book.bookId));
   const publishedExperiences = bookExperiences.filter((experience) => experience.availability === "available" && experience.status === "published");
-  const pageExperiences = requestedPage ? getBookPageExperiences(book.bookId, requestedPage) : [];
-  const units = getBookUnits(book.bookId);
+  const pageExperiences = requestedPage ? getGovernedInfantilExperiences(getBookPageExperiences(book.bookId, requestedPage)) : [];
+  const units = getBookUnits(book.bookId).map((unit) => ({
+    ...unit,
+    experiences: getGovernedInfantilExperiences(unit.experiences || []),
+  }));
   const summary = getProgressSummaryForExperiences(bookExperiences);
   const continueRecord = window.RSGameEngine?.getContinueWatching?.(getInfantilUserId())?.find((record) =>
     bookExperiences.some((experience) => experience.id === record.experienceCode)
@@ -2062,9 +2219,17 @@ const renderBookPage = (book, requestedPage) => {
 };
 
 const renderPremiumLibraryHome = () => {
+  if (isContentGovernanceRequired() && !isContentGovernanceReady()) {
+    return renderContentGovernanceLoading("Biblioteca Viva");
+  }
   const userId = getInfantilUserId();
-  const summary = window.RSGameEngine?.getExperienceSummary?.(userId, allInfantilExperiences) || {
-    available: availableInfantilExperiences.length,
+  const governedExperiences = getGovernedInfantilExperiences(allInfantilExperiences);
+  const governedAvailableExperiences = getGovernedInfantilExperiences(availableInfantilExperiences);
+  const featuredExperience = governedExperiences.find((experience) => experience.id === featuredPremiumExperience.id) || governedAvailableExperiences[0] || governedExperiences[0] || null;
+  const governedStudentBooks = getGovernedLibraryBooks(libraryStudentBooks);
+  const governedTeacherBooks = getGovernedLibraryBooks(libraryTeacherBooks);
+  const summary = window.RSGameEngine?.getExperienceSummary?.(userId, governedExperiences) || {
+    available: governedAvailableExperiences.length,
     started: 0,
     completed: 0,
     inProgress: 0,
@@ -2075,42 +2240,43 @@ const renderPremiumLibraryHome = () => {
   const continueRecords = window.RSGameEngine?.getContinueWatching?.(userId) || [];
   const favoriteCodes = window.RSGameEngine?.getUserFavorites?.(userId) || [];
   const continueExperiences = continueRecords
-    .map((record) => allInfantilExperiences.find((experience) => experience.id === record.experienceCode))
+    .map((record) => governedExperiences.find((experience) => experience.id === record.experienceCode))
     .filter(Boolean)
     .slice(0, 3);
   const favoriteExperiences = favoriteCodes
-    .map((code) => allInfantilExperiences.find((experience) => experience.id === code))
+    .map((code) => governedExperiences.find((experience) => experience.id === code))
     .filter(Boolean)
     .slice(0, 4);
   const recent = historyRecords
-    .map((record) => ({ experience: allInfantilExperiences.find((experience) => experience.id === record.experienceCode), progress: record }))
+    .map((record) => ({ experience: governedExperiences.find((experience) => experience.id === record.experienceCode), progress: record }))
     .filter((item) => item.experience)
     .slice(0, 4);
-  const lastExperience = recent[0]?.experience || featuredPremiumExperience;
-  const heroAsset = getInfantilExperienceAsset(featuredPremiumExperience);
-  const featuredBook = getExperienceOfficialBook(featuredPremiumExperience) || officialInfantilBooks[0];
-  const relatedRecommendations = (lastExperience.relatedExperienceCodes || [])
+  const lastExperience = recent[0]?.experience || featuredExperience;
+  const heroAsset = featuredExperience ? getInfantilExperienceAsset(featuredExperience) : null;
+  const featuredBook = featuredExperience ? getExperienceOfficialBook(featuredExperience) || officialInfantilBooks[0] : officialInfantilBooks[0];
+  const relatedRecommendations = (lastExperience?.relatedExperienceCodes || [])
     .map((code) => allInfantilExperiences.find((experience) => experience.id === code))
-    .filter((experience) => experience && experience.availability !== "unavailable");
+    .filter((experience) => experience && experience.availability !== "unavailable")
+    .filter((experience) => isContentAvailableToSession("experience", experience.id));
   const recommended = [
     ...relatedRecommendations,
-    ...availableInfantilExperiences.filter((experience) =>
-      experience.id !== lastExperience.id &&
-      experience.ageGroup === lastExperience.ageGroup &&
-      experience.volume === lastExperience.volume &&
+    ...governedAvailableExperiences.filter((experience) =>
+      experience.id !== lastExperience?.id &&
+      experience.ageGroup === lastExperience?.ageGroup &&
+      experience.volume === lastExperience?.volume &&
       getInfantilExperienceStatus(experience).key !== "completed"
     ),
-    ...availableInfantilExperiences.filter((experience) =>
-      experience.id !== lastExperience.id &&
-      experience.ageGroup === lastExperience.ageGroup &&
+    ...governedAvailableExperiences.filter((experience) =>
+      experience.id !== lastExperience?.id &&
+      experience.ageGroup === lastExperience?.ageGroup &&
       getInfantilExperienceStatus(experience).key !== "completed"
     ),
-    featuredPremiumExperience,
+    featuredExperience,
   ]
     .filter(Boolean)
     .filter((experience, index, list) => list.findIndex((item) => item.id === experience.id) === index)
     .slice(0, 6);
-  const continueList = continueExperiences.length ? continueExperiences : [featuredPremiumExperience];
+  const continueList = continueExperiences.length ? continueExperiences : [featuredExperience].filter(Boolean);
   return `
     <div class="bv-premium" data-bv-premium>
       <section class="bv-hero">
@@ -2119,16 +2285,16 @@ const renderPremiumLibraryHome = () => {
           <h1>Ola, leitor. Sua proxima descoberta esta pronta.</h1>
           <p>Livros, videos, jogos e atividades organizados por idade, volume e unidade para voce nunca se perder.</p>
           <div class="bv-hero-actions">
-            <a href="${getInfantilExperienceUrl((continueExperiences[0] || featuredPremiumExperience).id)}">${continueExperiences.length ? "Continuar experiencia" : "Comecar jornada"}</a>
+            ${featuredExperience ? `<a href="${getInfantilExperienceUrl((continueExperiences[0] || featuredExperience).id)}">${continueExperiences.length ? "Continuar experiencia" : "Comecar jornada"}</a>` : ""}
             <button type="button" data-bv-focus-search>Buscar</button>
           </div>
         </div>
-        <a class="bv-hero-feature" href="${getInfantilExperienceUrl(featuredPremiumExperience.id)}">
-          <img src="${heroAsset?.coverPath || featuredLibraryBook.src}" alt="${featuredPremiumExperience.title}" />
+        ${featuredExperience ? `<a class="bv-hero-feature" href="${getInfantilExperienceUrl(featuredExperience.id)}">
+          <img src="${heroAsset?.coverPath || featuredLibraryBook.src}" alt="${featuredExperience.title}" />
           <span>Destaque da semana</span>
-          <strong>${featuredPremiumExperience.title}</strong>
-          <small>${featuredPremiumExperience.bookTitle}</small>
-        </a>
+          <strong>${featuredExperience.title}</strong>
+          <small>${featuredExperience.bookTitle}</small>
+        </a>` : ""}
       </section>
 
       <section class="bv-progress-panel" aria-label="Progresso visual da Biblioteca Viva">
@@ -2156,8 +2322,8 @@ const renderPremiumLibraryHome = () => {
         </div>
       </section>
 
-      ${libraryStudentBooks.length ? buildBookCarousel("Material do aluno", `${libraryStudentBooks.length} livros existentes`, libraryStudentBooks, "Abrir livro") : ""}
-      ${libraryTeacherBooks.length ? buildBookCarousel("Guias do Professor", `${libraryTeacherBooks.length} guias existentes`, libraryTeacherBooks, "Abrir guia") : ""}
+      ${governedStudentBooks.length ? buildBookCarousel("Material do aluno", `${governedStudentBooks.length} livros disponiveis`, governedStudentBooks, "Abrir livro") : ""}
+      ${governedTeacherBooks.length ? buildBookCarousel("Guias do Professor", `${governedTeacherBooks.length} guias disponiveis`, governedTeacherBooks, "Abrir guia") : ""}
 
       <section class="bv-section bv-continue">
         <div class="panel-head"><h2>Continuar de onde parou</h2><a href="${featuredBook ? getBookLibraryUrl(featuredBook.bookId) : featuredLibraryBook.href}">Abrir livro</a></div>
@@ -2182,7 +2348,7 @@ const renderPremiumLibraryHome = () => {
         <div>
           <div class="panel-head"><h2>Ultimas acessadas</h2><a>recentes</a></div>
           <div class="bv-mini-list">
-            ${(recent.length ? recent.map(({ experience }) => experience) : [featuredPremiumExperience]).map((experience) => renderExperienceOfficialCard(experience, { compact: true })).join("")}
+            ${(recent.length ? recent.map(({ experience }) => experience) : [featuredExperience].filter(Boolean)).map((experience) => renderExperienceOfficialCard(experience, { compact: true })).join("")}
           </div>
         </div>
         <div>
@@ -2226,7 +2392,10 @@ const renderStudentBookCard = (book = {}) => `
 `;
 
 const renderStudentLibraryHome = () => {
-  const books = getStudentAvailableBooks();
+  if (isContentGovernanceRequired() && !isContentGovernanceReady()) {
+    return renderContentGovernanceLoading("Biblioteca do aluno");
+  }
+  const books = getGovernedLibraryBooks(getStudentAvailableBooks());
   const collections = [...new Set(books.map((book) => book.collection).filter(Boolean))];
   const stages = [...new Set(books.map((book) => book.level || book.year).filter(Boolean))];
   const recommendedBook = books.find((book) => (book.id || book.bookId) === "livro-005") || books[0];
@@ -2276,10 +2445,14 @@ const renderStudentLibraryHome = () => {
   `;
 };
 const renderExperienceProfilePage = (experience) => {
+  if (!isContentAvailableToSession("experience", experience.id)) {
+    return renderContentUnavailableForSchool({ title: "Experiencia indisponivel", type: "experience", id: experience.id });
+  }
   const asset = getInfantilExperienceAsset(experience);
   const related = (experience.relatedExperienceCodes || [])
     .map((code) => infantilExperienceCatalog?.getExperienceDefinition?.(code))
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((item) => isContentAvailableToSession("experience", item.id));
   const status = getInfantilExperienceStatus(experience);
   const progress = getInfantilExperienceProgress(experience.id);
   const primaryAction = getInfantilExperienceAction(status);
@@ -2342,7 +2515,7 @@ const renderExperienceProfilePage = (experience) => {
       <section class="bv-section">
         <div class="panel-head"><h2>Experiencias relacionadas</h2><a>${related.length || "em curadoria"}</a></div>
         <div class="bv-experience-grid">
-          ${(related.length ? related : allInfantilExperiences.filter((candidate) => candidate.id !== experience.id).slice(0, 3)).map((item) => renderExperienceOfficialCard(item)).join("")}
+          ${(related.length ? related : getGovernedInfantilExperiences(allInfantilExperiences).filter((candidate) => candidate.id !== experience.id).slice(0, 3)).map((item) => renderExperienceOfficialCard(item)).join("")}
         </div>
       </section>
     </div>
@@ -2356,6 +2529,9 @@ const renderPremiumLibrary = () => {
         <p class="bv-empty-state">O catalogo de experiencias infantis precisa ser carregado antes da Biblioteca Viva Premium.</p>
       </section>
     `;
+  }
+  if (isContentGovernanceRequired() && !isContentGovernanceReady()) {
+    return renderContentGovernanceLoading("Biblioteca Viva");
   }
   const params = typeof window === "undefined" ? new URLSearchParams() : new URLSearchParams(window.location.search);
   const requestedExperience = params.get("experience");
@@ -3756,6 +3932,7 @@ const studentInstitutionalState = {
   recommendationsError: "",
   calendarError: "",
   weekStartIso: "",
+  secondaryLoadedAt: "",
   hydratedDom: false,
 };
 
@@ -3843,9 +4020,21 @@ const teacherWorkspaceTasks = [
 
 const getTeacherBibliotecaResources = () => {
   const catalog = typeof window === "undefined" ? null : window.RaizesInfantilExperiences;
-  const books = (catalog?.officialBooks || []).filter((book) => book.status === "available").slice(0, 4);
-  const experiences = (catalog?.experienceDefinitions || []).filter((experience) => experience.status === "published").slice(0, 4);
-  const activities = (catalog?.interactiveActivityDefinitions || []).slice(0, 6);
+  const books = filterContentForSession(
+    (catalog?.officialBooks || []).filter((book) => book.status === "available"),
+    "book",
+    (book) => book.bookId || book.id || getBookIdFromHref(book.href)
+  ).slice(0, 4);
+  const experiences = filterContentForSession(
+    (catalog?.experienceDefinitions || []).filter((experience) => experience.status === "published"),
+    "experience",
+    (experience) => experience.id
+  ).slice(0, 4);
+  const activities = filterContentForSession(
+    catalog?.interactiveActivityDefinitions || [],
+    "activity",
+    (activity) => activity.codigo || activity.code || activity.id
+  ).slice(0, 6);
   return { books, experiences, activities };
 };
 
@@ -4898,8 +5087,11 @@ const renderTeacherLibraryShelf = (title, subtitle, books) =>
     : "";
 
 const renderTeacherLibraryView = () => {
-  const studentBooks = allReadableBooks.filter((book) => book.type === "Livro do Aluno");
-  const teacherGuides = allReadableBooks.filter((book) => book.type === "Guia do Professor");
+  if (isContentGovernanceRequired() && !isContentGovernanceReady()) {
+    return renderContentGovernanceLoading("Biblioteca do Professor");
+  }
+  const studentBooks = getGovernedLibraryBooks(allReadableBooks.filter((book) => book.type === "Livro do Aluno"));
+  const teacherGuides = getGovernedLibraryBooks(allReadableBooks.filter((book) => book.type === "Guia do Professor"));
   const { experiences, activities } = getTeacherBibliotecaResources();
   const digitalTotal = experiences.length + activities.length;
   const categoryCards = [
@@ -5116,7 +5308,9 @@ const canAccessPrintableActivities = ({ admin = false } = {}) => {
 const printableActivitiesDataService = (() => {
   const catalog = () => window.RaizesPrintableActivitiesCatalog || { ageGroups: [], bnccFields: [], activities: [] };
   const all = () => (catalog().activities || []).map((item) => ({ visualizacoes: 0, downloads: 0, impressoes: 0, ...item }));
-  const visible = ({ admin = false } = {}) => (admin ? all() : all().filter((item) => String(item.status || "").toUpperCase() === "PUBLICADO"));
+  const visible = ({ admin = false } = {}) =>
+    (admin ? all() : all().filter((item) => String(item.status || "").toUpperCase() === "PUBLICADO"))
+      .filter((item) => admin || isContentAvailableToSession("activity", item.codigo || item.slug || item.id));
   const storageKey = "raizes:printable-activities:user-state";
   const readUserState = () => {
     try {
@@ -5382,6 +5576,9 @@ const renderPrintableMainPage = ({ admin = false } = {}) => {
   if (!canAccessPrintableActivities({ admin })) {
     return `<section class="pa-shell"><div class="pa-empty"><h1>Acesso restrito</h1><p>Este modulo e exclusivo para professor, coordenador, gestor escolar e administrador.</p><a href="login.html?next=${encodeURIComponent(window.location.pathname.split("/").pop() + window.location.search)}">Entrar com perfil autorizado</a></div></section>`;
   }
+  if (!admin && isContentGovernanceRequired() && !isContentGovernanceReady()) {
+    return `<section class="pa-shell">${renderContentGovernanceLoading("Atividades")}</section>`;
+  }
   const params = getPrintableParams();
   const items = getPrintableFilteredItems({ admin });
   const total = printableActivitiesDataService.list({ admin }).length;
@@ -5420,7 +5617,14 @@ const renderPrintableMainPage = ({ admin = false } = {}) => {
 };
 
 const renderPrintableDetailPage = ({ admin = false } = {}) => {
+  if (!admin && isContentGovernanceRequired() && !isContentGovernanceReady()) {
+    return `<section class="pa-shell">${renderContentGovernanceLoading("Atividades")}</section>`;
+  }
   const code = getPrintableParams().get("codigo");
+  const unrestrictedItem = printableActivitiesDataService.getByCode(code, { admin: true });
+  if (!admin && unrestrictedItem && !isContentAvailableToSession("activity", unrestrictedItem.codigo || unrestrictedItem.slug || unrestrictedItem.id)) {
+    return `<section class="pa-shell">${renderContentUnavailableForSchool({ title: "Atividade indisponivel", type: "activity", id: code })}</section>`;
+  }
   const item = printableActivitiesDataService.getByCode(code, { admin });
   if (!item) {
     return `<section class="pa-shell"><div class="pa-empty"><h1>Atividade nao encontrada</h1><p>O codigo informado nao existe ou nao esta publicado para este perfil.</p><a href="atividades.html">Voltar ao banco</a></div></section>`;
@@ -7584,6 +7788,19 @@ const renderStudentInstitutionalGate = () => {
   `;
 };
 
+const renderStudentActivitiesSessionRequired = () => `
+  <div class="student-dashboard student-pedro-home student-activities-shell" data-student-activities-institutional>
+    <section class="student-pedro-hero">
+      <div><span>MINHAS ATIVIDADES</span><h1>ACESSO DO ALUNO</h1><p>Entre com o aluno institucional para abrir as atividades da escola.</p></div>
+      <span class="student-avatar student-avatar-generic">${premiumIcon("aluno")}</span>
+    </section>
+    ${renderContentUnavailableForSchool({ title: "Sessao do aluno necessaria", type: "aluno" })}
+    <section class="student-card">
+      <a href="login.html?next=${encodeURIComponent("aluno-atividades.html")}&auth=supabase">Entrar como aluno</a>
+    </section>
+  </div>
+`;
+
 const renderStudentInstitutionalHomeContent = () => {
   const profile = getActiveStudentProfile();
   const isBlocked = isStudentInstitutionalMode() && studentInstitutionalState.status !== "ready";
@@ -7647,8 +7864,11 @@ const renderStudentSimpleDashboard = () => `
 `;
 
 const renderStudentActivitiesPage = () => {
+  if (!isStudentInstitutionalMode()) {
+    return renderStudentActivitiesSessionRequired();
+  }
   const profile = getActiveStudentProfile();
-  const isBlocked = isStudentInstitutionalMode() && studentInstitutionalState.status !== "ready";
+  const isBlocked = studentInstitutionalState.status !== "ready";
   return `
     <div class="student-dashboard student-pedro-home student-activities-shell" data-student-activities-institutional>
       <section class="student-pedro-hero">
@@ -7959,6 +8179,40 @@ const adminRoleCatalog = [
   { role: "educacao_infantil", label: "Familia/EI", aliases: ["familia", "responsavel", "guardian"], destination: "familia.html", guards: "Responsavel vinculado" },
 ];
 
+const adminRsSchoolControlledImportPackage = {
+  package_version: "RS-SCHOOL-V1-DEPLOYMENT-2026-09-01",
+  schema_version: "RS-SCHOOL-TEMPLATE V1",
+  school_year: "2026",
+  classes: [
+    { class_name: "Infantil A", school_year: "2026", status: "active", age_group: "4 anos", shift: "manha", grade: "Educacao Infantil" },
+    { class_name: "Infantil B", school_year: "2026", status: "active", age_group: "5 anos", shift: "tarde", grade: "Educacao Infantil" },
+  ],
+  teachers: [
+    { full_name: "Professora Exemplo Um", email: "professora.um@example.invalid", status: "active" },
+    { full_name: "Professor Exemplo Dois", email: "professor.dois@example.invalid", status: "active" },
+  ],
+  teacher_classes: [
+    { teacher_email: "professora.um@example.invalid", class_name: "Infantil A", school_year: "2026", role: "principal", status: "active" },
+    { teacher_email: "professor.dois@example.invalid", class_name: "Infantil B", school_year: "2026", role: "principal", status: "active" },
+  ],
+  students: [
+    { full_name: "Aluno Exemplo Um", birth_date: "2021-02-10", class_name: "Infantil A", school_year: "2026", status: "active" },
+    { full_name: "Aluno Exemplo Dois", birth_date: "2021-04-18", class_name: "Infantil A", school_year: "2026", status: "active" },
+    { full_name: "Aluno Exemplo Tres", birth_date: "2021-07-25", class_name: "Infantil A", school_year: "2026", status: "active" },
+    { full_name: "Aluno Exemplo Quatro", birth_date: "2020-01-12", class_name: "Infantil B", school_year: "2026", status: "active" },
+    { full_name: "Aluno Exemplo Cinco", birth_date: "2020-05-21", class_name: "Infantil B", school_year: "2026", status: "active" },
+    { full_name: "Aluno Exemplo Seis", birth_date: "2020-09-03", class_name: "Infantil B", school_year: "2026", status: "active" },
+  ],
+  guardians: [
+    { guardian_name: "Responsavel Exemplo Um", email: "responsavel.um@example.invalid", phone: "11900000001", relationship: "mae", student_reference: "Aluno Exemplo Um", status: "active", is_primary: true },
+    { guardian_name: "Responsavel Exemplo Dois", email: "responsavel.dois@example.invalid", phone: "11900000002", relationship: "pai", student_reference: "Aluno Exemplo Dois", status: "active", is_primary: true },
+    { guardian_name: "Responsavel Exemplo Tres", email: "responsavel.tres@example.invalid", phone: "11900000003", relationship: "responsavel", student_reference: "Aluno Exemplo Tres", status: "active", is_primary: true },
+    { guardian_name: "Responsavel Exemplo Quatro", email: "responsavel.quatro@example.invalid", phone: "11900000004", relationship: "mae", student_reference: "Aluno Exemplo Quatro", status: "active", is_primary: true },
+    { guardian_name: "Responsavel Exemplo Cinco", email: "responsavel.cinco@example.invalid", phone: "11900000005", relationship: "pai", student_reference: "Aluno Exemplo Cinco", status: "active", is_primary: true },
+    { guardian_name: "Responsavel Exemplo Seis", email: "responsavel.seis@example.invalid", phone: "11900000006", relationship: "tutor", student_reference: "Aluno Exemplo Seis", status: "active", is_primary: true },
+  ],
+};
+
 const adminOperationalState = {
   status: "idle",
   error: "",
@@ -8003,9 +8257,11 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
         schoolMemberships,
         classTeacherMemberships,
         studentGuardianLinks,
+        installations,
+        contentAvailability,
         communications,
       ] = await Promise.all([
-        client.request("schools", "?select=id,nome,status&order=nome.asc", options),
+        client.request("schools", "?select=id,nome,codigo_inep,municipio,estado,diretor,status&order=nome.asc", options),
         client.request("rpc/admin_list_auth_users", "", { ...options, method: "POST", body: "{}" }).catch(() => []),
         client.request("rpc/secretaria_list_staff_profiles", "", { ...options, method: "POST", body: "{}" }).catch(() =>
           client.request("profiles", "?select=id,display_name,platform_role,status&order=display_name.asc", options)
@@ -8026,6 +8282,8 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
         client.request("school_memberships", "?select=id,school_id,profile_id,membership_role,status,started_at,ended_at&order=started_at.desc", options).catch(() => []),
         client.request("rpc/secretaria_list_class_teacher_memberships", "", { ...options, method: "POST", body: "{}" }).catch(() => []),
         client.request("student_guardian_links", "?select=id,student_id,guardian_id,relationship,is_primary,status,created_at&order=created_at.asc", options).catch(() => []),
+        client.request("rs_school_installations", "?select=id,school_id,school_code,deployment_mode,schema_version,package_version,school_year,current_stage,validation_status,created_at,updated_at&order=created_at.desc", options).catch(() => []),
+        client.request("school_content_availability", "?select=id,school_id,content_type,content_id,status,available_from,available_until,deleted_at,created_at,updated_at&order=updated_at.desc", options).catch(() => []),
         client.request("communications", "?select=id,school_id,status,audience_type,created_at&order=created_at.desc", options),
       ]);
       adminOperationalState.status = "ready";
@@ -8042,6 +8300,8 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
         schoolMemberships: schoolMemberships || [],
         classTeacherMemberships: classTeacherMemberships || [],
         studentGuardianLinks: studentGuardianLinks || [],
+        installations: installations || [],
+        contentAvailability: contentAvailability || [],
         communications: communications || [],
       };
       return adminOperationalState;
@@ -8188,11 +8448,10 @@ const renderAdminReadOnlyHome = () => {
     value: `${item.value} - ${item.detail}`,
   }));
   const quickActions = [
-    { view: "usuarios", icon: "users", label: "Usuarios" },
-    { view: "escolas", icon: "escola", label: "Escolas" },
-    { view: "conteudos", icon: "book", label: "Conteudos" },
-    { view: "implantacao", icon: "clipboard", label: "Implantacao" },
-    { view: "auditoria", icon: "check", label: "Auditoria" },
+    { view: "usuarios", icon: "users", label: "Gerenciar usuarios" },
+    { view: "escolas", icon: "escola", label: "Gerenciar escolas" },
+    { view: "conteudos", icon: "book", label: "Gerenciar conteudos" },
+    { view: "implantacao", icon: "clipboard", label: "Acompanhar implantacao" },
   ];
   return `
     <section class="admin-context-strip" aria-label="Contexto Admin">
@@ -8284,7 +8543,7 @@ const adminAccessStatus = ({ profile, teacher, student, guardian, authUser }) =>
   const authStatus = String(authUser?.auth_status || "").toLowerCase();
   if (authStatus === "deleted" || authStatus === "banned") return "INATIVO";
   if (rawStatus === "inactive" || rawStatus === "archived") return "INATIVO";
-  if (authUser || profile?.id || student?.user_id || teacher?.profile_id || teacher?.user_id || guardian?.profile_id) return "ACESSO ATIVO";
+  if (authUser) return "ACESSO ATIVO";
   if (teacher || guardian || student) return "SEM ACESSO CONFIGURADO";
   return "VINCULO INSTITUCIONAL INCOMPLETO";
 };
@@ -8463,16 +8722,17 @@ const buildAdminUsers = () => {
     const guardians = index.guardiansByProfile.get(profile.id) || [];
     const primaryMembership = memberships.find((item) => String(item.status || "").toLowerCase() === "active") || memberships[0];
     const authUser = index.authUserById.get(profile.id);
+    const authConfigured = Boolean(authUser);
     const schoolId = primaryMembership?.school_id || teachers[0]?.school_id || students[0]?.school_id || guardians[0]?.school_id || "";
     const roleInfo = adminRoleInfo(adminAuthRecordRole(authUser, profile) || primaryMembership?.membership_role);
     const name = normalizeProfileName(profile) || guardians[0]?.full_name || students[0]?.nome || adminAuthRecordEmail(authUser) || roleInfo.label;
     const email = adminAuthRecordEmail(authUser) || (profile.id === session.userId ? session.email : guardians[0]?.email || students[0]?.email || "E-mail Auth nao exposto");
     const accessStatus = adminAccessStatus({ profile, teacher: teachers[0], student: students[0], guardian: guardians[0], authUser });
     adminAddConsolidatedUser(usersByKey, users, {
-      id: `auth:${profile.id}`,
-      authKey: `auth:${profile.id}`,
+      id: authConfigured ? `auth:${profile.id}` : `profile:${profile.id}`,
+      authKey: authConfigured ? `auth:${profile.id}` : `profile:${profile.id}`,
       technicalId: profile.id,
-      authUserId: profile.id,
+      authUserId: authConfigured ? profile.id : "",
       source: "profile",
       name,
       email,
@@ -8483,7 +8743,7 @@ const buildAdminUsers = () => {
       schoolName: adminSchoolName(index.schoolById.get(schoolId)),
       status: profile.status || "active",
       accessStatus,
-      authConfigured: true,
+      authConfigured,
       memberships,
       teachers,
       students,
@@ -8530,12 +8790,12 @@ const buildAdminUsers = () => {
   (index.data.teachers || []).forEach((teacher) => {
     const authId = teacher.profile_id || teacher.user_id || "";
     const authUser = index.authUserById.get(authId);
-    const key = authId ? `auth:${authId}` : `teacher:${teacher.id}`;
+    const key = authId ? (authUser ? `auth:${authId}` : `profile:${authId}`) : `teacher:${teacher.id}`;
     adminAddConsolidatedUser(usersByKey, users, {
         id: key,
         authKey: key,
         technicalId: teacher.id,
-        authUserId: authId,
+        authUserId: authUser ? authId : "",
         source: "teacher",
         name: teacher.full_name || teacher.nome || `Professor institucional ${adminShortId(teacher.id)}`,
         email: authId ? adminAuthRecordEmail(authUser) : "Sem acesso configurado",
@@ -8546,7 +8806,7 @@ const buildAdminUsers = () => {
         schoolName: adminSchoolName(index.schoolById.get(teacher.school_id)),
         status: teacher.status || "active",
         accessStatus: adminAccessStatus({ teacher, authUser }),
-        authConfigured: Boolean(authId),
+        authConfigured: Boolean(authUser),
         memberships: [],
         teachers: [teacher],
         students: [],
@@ -8557,12 +8817,12 @@ const buildAdminUsers = () => {
 
   (index.data.guardians || []).forEach((guardian) => {
     const authUser = index.authUserById.get(guardian.profile_id);
-    const key = guardian.profile_id ? `auth:${guardian.profile_id}` : `guardian:${guardian.id}`;
+    const key = guardian.profile_id ? (authUser ? `auth:${guardian.profile_id}` : `profile:${guardian.profile_id}`) : `guardian:${guardian.id}`;
     adminAddConsolidatedUser(usersByKey, users, {
         id: key,
         authKey: key,
         technicalId: guardian.id,
-        authUserId: guardian.profile_id || "",
+        authUserId: authUser ? guardian.profile_id || "" : "",
         source: "guardian",
         name: guardian.full_name || `Responsavel institucional ${adminShortId(guardian.id)}`,
         email: adminAuthRecordEmail(authUser) || guardian.email || (guardian.profile_id ? "E-mail Auth nao exposto" : "Sem acesso configurado"),
@@ -8573,7 +8833,7 @@ const buildAdminUsers = () => {
         schoolName: adminSchoolName(index.schoolById.get(guardian.school_id)),
         status: guardian.status || "active",
         accessStatus: adminAccessStatus({ guardian, authUser }),
-        authConfigured: Boolean(guardian.profile_id),
+        authConfigured: Boolean(authUser),
         memberships: [],
         teachers: [],
         students: [],
@@ -8584,12 +8844,12 @@ const buildAdminUsers = () => {
 
   (index.data.students || []).forEach((student) => {
     const authUser = index.authUserById.get(student.user_id);
-    const key = student.user_id ? `auth:${student.user_id}` : `student:${student.id}`;
+    const key = student.user_id && authUser ? `auth:${student.user_id}` : `student:${student.id}`;
     adminAddConsolidatedUser(usersByKey, users, {
         id: key,
         authKey: key,
         technicalId: student.id,
-        authUserId: student.user_id || "",
+        authUserId: authUser ? student.user_id || "" : "",
         source: "student",
         name: student.nome || `Aluno institucional ${adminShortId(student.id)}`,
         email: adminAuthRecordEmail(authUser) || student.email || (student.user_id ? "E-mail Auth nao exposto" : "Sem acesso configurado"),
@@ -8600,7 +8860,7 @@ const buildAdminUsers = () => {
         schoolName: adminSchoolName(index.schoolById.get(student.school_id)),
         status: student.status || "active",
         accessStatus: adminAccessStatus({ student, authUser }),
-        authConfigured: Boolean(student.user_id),
+        authConfigured: Boolean(authUser),
         memberships: [],
         teachers: [],
         students: [student],
@@ -8655,6 +8915,123 @@ const adminLogPasswordRecovery = async ({ targetAuthUserId, targetEmail, result 
     requireAuthenticated: true,
     allowedRoles: ["admin"],
   });
+};
+
+const adminCreateAccessTargetType = (user = {}) => {
+  if (!user || user.authConfigured) return "";
+  if (user.source === "teacher" || user.teachers.length) return "teacher";
+  if (user.source === "student" || user.students.length) return "student";
+  if (user.source === "guardian" || user.guardians.length) return "guardian";
+  return "";
+};
+
+const adminDerivedAccessRole = (targetType = "") =>
+  ({
+    teacher: "professor",
+    student: "aluno",
+    guardian: "educacao_infantil",
+  })[targetType] || "";
+
+const adminCreateAccessTargetInstitutionalId = (user = {}) => {
+  const targetType = adminCreateAccessTargetType(user);
+  if (targetType === "teacher") return user.teachers?.[0]?.id || (user.source === "teacher" ? user.technicalId : "");
+  if (targetType === "student") return user.students?.[0]?.id || (user.source === "student" ? user.technicalId : "");
+  if (targetType === "guardian") return user.guardians?.[0]?.id || (user.source === "guardian" ? user.technicalId : "");
+  return "";
+};
+
+const adminCreateAccessDisplayRole = (role = "") => adminRoleInfo(role).label || role;
+
+const adminLooksLikeRealEmail = (email = "") => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
+
+const adminCreateAccessDefaultEmail = (user = {}) => {
+  const candidates = [
+    user.email,
+    user.teachers?.[0]?.email,
+    user.students?.[0]?.email,
+    user.guardians?.[0]?.email,
+  ];
+  return candidates.find((email) => adminLooksLikeRealEmail(email)) || "";
+};
+
+const adminCreateAccessRedirectUrl = () => new URL("redefinir-senha.html", window.location.href).toString();
+
+const adminInvokeCreateAuthAccess = async ({ targetType, targetInstitutionalId, email, expectedRole, schoolId }) => {
+  await ensureAdminSupabaseConfig();
+  const config = getSupabaseConfig();
+  const baseUrl = config.url?.replace(/\/$/, "");
+  const session = await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: ["admin"] });
+  if (!baseUrl || !config.anonKey) {
+    throw new Error("Servico de acesso indisponivel.");
+  }
+  const response = await fetch(`${baseUrl}/functions/v1/admin-create-auth-access`, {
+    method: "POST",
+    headers: {
+      apikey: config.anonKey,
+      Authorization: `Bearer ${session.token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      targetType,
+      targetInstitutionalId,
+      email,
+      expectedRole,
+      schoolId,
+      redirectTo: adminCreateAccessRedirectUrl(),
+    }),
+  });
+  const bodyText = await response.text();
+  let body = {};
+  try {
+    body = bodyText ? JSON.parse(bodyText) : {};
+  } catch (_error) {
+    body = {};
+  }
+  if (!response.ok || body.ok === false) {
+    throw new Error(body.message || body.code || `Falha ao criar acesso Auth: ${response.status}`);
+  }
+  return body;
+};
+
+const renderAdminCreateAccessDialog = (user) => {
+  const targetType = adminCreateAccessTargetType(user);
+  const derivedRole = adminDerivedAccessRole(targetType);
+  const targetInstitutionalId = adminCreateAccessTargetInstitutionalId(user);
+  const defaultEmail = adminCreateAccessDefaultEmail(user);
+  if (!targetType || !targetInstitutionalId || !derivedRole || derivedRole === "admin") {
+    return "";
+  }
+  return `
+    <dialog class="admin-access-dialog" data-admin-access-dialog="${printableEscape(user.id)}">
+      <form method="dialog" data-admin-create-access-form>
+        <header>
+          <span>Criar acesso digital</span>
+          <h3>${printableEscape(user.name)}</h3>
+          <button type="button" data-admin-create-access-close aria-label="Fechar">×</button>
+        </header>
+        <input type="hidden" name="userId" value="${printableEscape(user.id)}" />
+        <input type="hidden" name="targetType" value="${printableEscape(targetType)}" />
+        <input type="hidden" name="targetInstitutionalId" value="${printableEscape(targetInstitutionalId)}" />
+        <input type="hidden" name="expectedRole" value="${printableEscape(derivedRole)}" />
+        <input type="hidden" name="schoolId" value="${printableEscape(user.schoolId)}" />
+        <section class="admin-access-review" aria-label="Revisao do acesso">
+          <article><span>Vinculo</span><strong>${printableEscape(user.roleLabel)}</strong></article>
+          <article><span>Papel derivado</span><strong>${printableEscape(adminCreateAccessDisplayRole(derivedRole))}</strong></article>
+          <article><span>Escola</span><strong>${printableEscape(user.schoolName)}</strong></article>
+          <article><span>Status atual</span><strong>Sem acesso configurado</strong></article>
+        </section>
+        <label>
+          <span>E-mail do usuario</span>
+          <input type="email" name="email" value="${printableEscape(defaultEmail)}" placeholder="usuario@escola.com.br" required />
+        </label>
+        <p data-admin-create-access-status hidden></p>
+        <footer>
+          <button type="button" data-admin-create-access-close>Cancelar</button>
+          <button type="submit" class="is-primary">Criar acesso</button>
+        </footer>
+      </form>
+    </dialog>
+  `;
 };
 
 const adminHandlePasswordRecovery = async (userId, button) => {
@@ -8844,7 +9221,11 @@ const renderAdminUserDetail = (user) => {
         ${
           user.authConfigured
             ? `<button type="button" class="is-primary" data-admin-password-recovery="${printableEscape(user.id)}">${adminInlineIcon("mail", "Enviar recuperacao de senha")}</button>`
-            : `<p>Acesso ainda nao configurado.</p>`
+            : `
+              <button type="button" class="is-primary" data-admin-create-access-open="${printableEscape(user.id)}">${adminInlineIcon("mail", "Configurar acesso")}</button>
+              <p>Acesso ainda nao configurado.</p>
+              ${renderAdminCreateAccessDialog(user)}
+            `
         }
         <button type="button" disabled>Alterar papel sera tratado em fase propria</button>
       </section>
@@ -8885,10 +9266,595 @@ const renderAdminAccessEngineStatus = () => `
     <div class="admin-engine-grid">
       <article>${adminInlineIcon("check")}<strong>Leitura Admin</strong><span>Ativa por sessao autenticada.</span></article>
       <article>${adminInlineIcon("warning")}<strong>Alterar papel</strong><span>GAP: exige RPC segura aprovada.</span></article>
-      <article>${adminInlineIcon("warning")}<strong>Criar acesso Auth</strong><span>GAP: exige fluxo server-side.</span></article>
+      <article>${adminInlineIcon("check")}<strong>Criar acesso Auth</strong><span>Ativo via funcao server-side com convite oficial.</span></article>
     </div>
   </section>
 `;
+
+const adminIsActive = (row = {}) => {
+  const status = String(row.status || row.membership_status || "").toLowerCase();
+  return !["inactive", "archived", "ended", "cancelled", "deleted", "banned"].includes(status);
+};
+
+const adminSchoolFilters = () => {
+  const params = new URLSearchParams(window.location.search || "");
+  return {
+    selected: params.get("school") || "",
+  };
+};
+
+const adminSchoolUrl = (schoolId = "") => {
+  const params = new URLSearchParams(window.location.search || "");
+  params.set("view", "escolas");
+  if (schoolId) params.set("school", schoolId);
+  else params.delete("school");
+  return `admin.html?${params.toString()}`;
+};
+
+const adminSchoolMetric = (label, value, detail = "") => `
+  <article class="admin-school-metric">
+    <span>${printableEscape(label)}</span>
+    <strong>${printableEscape(String(value))}</strong>
+    <small>${printableEscape(detail)}</small>
+  </article>
+`;
+
+const adminContentTypeLabels = {
+  book: "Livros",
+  activity: "Atividades",
+  game: "Jogos",
+  experience: "Experiencias",
+  video: "Videos",
+  other: "Outros",
+};
+
+const adminNormalizeContentType = (type = "") => {
+  const normalized = String(type || "").trim().toLowerCase();
+  if (["printable_activity", "atividade", "atividade_imprimivel"].includes(normalized)) return "activity";
+  if (["livro"].includes(normalized)) return "book";
+  if (["jogo"].includes(normalized)) return "game";
+  if (["experiencia", "experiência"].includes(normalized)) return "experience";
+  if (["videoaula"].includes(normalized)) return "video";
+  if (["free_proposal", "proposta_livre", "outro"].includes(normalized)) return "other";
+  return ["book", "activity", "game", "experience", "video", "other"].includes(normalized) ? normalized : "other";
+};
+
+const adminContentKey = (type = "", id = "") => `${adminNormalizeContentType(type)}:${String(id || "").trim().toLowerCase()}`;
+
+const adminAddContentCatalogItem = (items, seen, item = {}) => {
+  const id = String(item.id || item.contentId || "").trim();
+  if (!id) return;
+  const type = adminNormalizeContentType(item.type || item.contentType);
+  const key = adminContentKey(type, id);
+  if (seen.has(key)) return;
+  seen.add(key);
+  items.push({
+    type,
+    id,
+    title: item.title || item.contentTitle || id,
+    source: item.source || adminContentTypeLabels[type] || "Conteudo",
+    segment: item.segment || item.ageGroup || item.level || item.collection || "",
+  });
+};
+
+const buildAdminContentCatalog = () => {
+  const items = [];
+  const seen = new Set();
+  (libraryBooks || []).forEach((book) => adminAddContentCatalogItem(items, seen, {
+    type: "book",
+    id: book.id,
+    title: book.title,
+    source: book.collection || "Biblioteca Viva",
+    segment: book.level || book.segment || book.collection,
+  }));
+  printableActivitiesDataService.list({ admin: true }).forEach((activity) => adminAddContentCatalogItem(items, seen, {
+    type: "activity",
+    id: activity.codigo || activity.slug || activity.id,
+    title: activity.titulo || activity.title || activity.nome,
+    source: "Atividades Imprimiveis",
+    segment: activity.faixaEtaria || activity.ageGroup || activity.segment,
+  }));
+  const experiences = typeof window !== "undefined" ? window.RaizesInfantilExperiences : null;
+  (experiences?.officialBooks || []).forEach((book) => adminAddContentCatalogItem(items, seen, {
+    type: "book",
+    id: book.id || book.bookId,
+    title: book.title,
+    source: "Colecao Infantil",
+    segment: [book.ageGroup, book.volume].filter(Boolean).join(" "),
+  }));
+  (experiences?.experienceDefinitions || []).forEach((experience) => adminAddContentCatalogItem(items, seen, {
+    type: "experience",
+    id: experience.id || experience.code,
+    title: experience.title,
+    source: "Experiencias Digitais",
+    segment: [experience.ageGroup, experience.volume].filter(Boolean).join(" "),
+  }));
+  (experiences?.interactiveActivityDefinitions || []).forEach((activity) => adminAddContentCatalogItem(items, seen, {
+    type: "activity",
+    id: activity.code || activity.id,
+    title: activity.title,
+    source: "Atividades Interativas",
+    segment: activity.bookId || activity.experienceCode || "",
+  }));
+  const games = typeof window !== "undefined" ? Object.values(window.RaizesGameEngine?.gameRepository?.games || {}) : [];
+  games.forEach((game) => adminAddContentCatalogItem(items, seen, {
+    type: "game",
+    id: game.id,
+    title: game.title,
+    source: game.category || "Jogos",
+    segment: game.scenario || game.subtitle || "",
+  }));
+  return items.sort((a, b) => `${a.type}:${a.title}`.localeCompare(`${b.type}:${b.title}`, "pt-BR"));
+};
+
+const adminAvailabilityIsActive = (item = {}, now = new Date()) => {
+  if (String(item.status || "").toLowerCase() !== "available" || item.deleted_at) return false;
+  const fromOk = !item.available_from || new Date(item.available_from) <= now;
+  const untilOk = !item.available_until || new Date(item.available_until) >= now;
+  return fromOk && untilOk;
+};
+
+const adminContentAvailabilityIndex = () => {
+  const now = new Date();
+  const rows = adminOperationalState.data?.contentAvailability || [];
+  const byContent = new Map();
+  const bySchool = new Map();
+  rows.forEach((row) => {
+    const normalized = { ...row, content_type: adminNormalizeContentType(row.content_type) };
+    const key = adminContentKey(normalized.content_type, normalized.content_id);
+    byContent.set(key, [...(byContent.get(key) || []), normalized]);
+    if (adminAvailabilityIsActive(normalized, now)) {
+      bySchool.set(normalized.school_id, [...(bySchool.get(normalized.school_id) || []), normalized]);
+    }
+  });
+  return { byContent, bySchool };
+};
+
+const buildAdminSchoolSummaries = () => {
+  const { users, index } = buildAdminUsers();
+  const data = index.data || {};
+  const installationBySchool = new Map((data.installations || []).map((item) => [item.school_id, item]));
+  const contentBySchool = adminContentAvailabilityIndex().bySchool;
+  return (data.schools || []).map((school) => {
+    const schoolId = school.id;
+    const installation = installationBySchool.get(schoolId) || null;
+    const classes = (data.classes || []).filter((item) => item.school_id === schoolId);
+    const enrollments = (data.enrollments || []).filter((item) => item.school_id === schoolId);
+    const students = (data.students || []).filter((item) => item.school_id === schoolId);
+    const teachers = (data.teachers || []).filter((item) => item.school_id === schoolId);
+    const guardians = (data.guardians || []).filter((item) => item.school_id === schoolId);
+    const memberships = (data.schoolMemberships || []).filter((item) => item.school_id === schoolId);
+    const schoolUsers = users.filter((user) => user.schoolId === schoolId);
+    const availableContent = contentBySchool.get(schoolId) || [];
+    const contentCounts = availableContent.reduce((acc, item) => {
+      const type = adminNormalizeContentType(item.content_type);
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, { book: 0, activity: 0, game: 0, experience: 0, video: 0, other: 0 });
+    const years = [...new Set([installation?.school_year, ...enrollments.map((item) => item.school_year), ...classes.map((item) => item.school_year)].filter(Boolean))].sort();
+    const configuredAccess = schoolUsers.filter((user) => user.authConfigured).length;
+    const pendingAccess = schoolUsers.filter((user) => !user.authConfigured && user.accessStatus === "SEM ACESSO CONFIGURADO").length;
+    const checklist = [
+      { label: "ESCOLA CONFIGURADA", done: Boolean(schoolId && String(school.status || "").toLowerCase() !== "archived") },
+      { label: "ANO LETIVO CONFIGURADO", done: Boolean(years.length) },
+      { label: "GESTAO VINCULADA", done: memberships.some(adminIsActive) },
+      { label: "TURMAS CRIADAS", done: classes.some(adminIsActive) },
+      { label: "PROFESSORES VINCULADOS", done: teachers.some(adminIsActive) },
+      { label: "ALUNOS CADASTRADOS", done: students.some(adminIsActive) },
+      { label: "MATRICULAS ATIVAS", done: enrollments.some((item) => String(item.status || "").toLowerCase() === "active") },
+      { label: "RESPONSAVEIS VINCULADOS", done: guardians.some(adminIsActive) },
+      { label: "ACESSOS CONFIGURADOS", done: schoolUsers.length > 0 && pendingAccess === 0 && configuredAccess > 0 },
+      { label: "VALIDACAO FINAL", done: String(installation?.validation_status || "").toLowerCase() === "passed" || String(installation?.current_stage || "").toLowerCase() === "ativa" },
+    ];
+    const doneCount = checklist.filter((item) => item.done).length;
+    const stageStatus = String(installation?.current_stage || "").toLowerCase();
+    const implementationStatus = stageStatus === "ativa"
+      ? "ATIVA"
+      : stageStatus === "pronta_para_validacao"
+        ? "PRONTA PARA VALIDACAO"
+        : stageStatus === "dados_parciais"
+          ? "DADOS PARCIAIS"
+          : stageStatus === "em_configuracao"
+            ? "EM CONFIGURACAO"
+      : doneCount >= 9
+        ? "PRONTA PARA VALIDACAO"
+        : doneCount >= 6
+          ? "DADOS PARCIAIS"
+          : doneCount >= 2
+            ? "EM CONFIGURACAO"
+            : "NAO INICIADA";
+    return {
+      school,
+      installation,
+      schoolId,
+      name: adminSchoolName(school),
+      code: installation?.school_code || school.codigo_inep || "Sem codigo",
+      status: school.status || "Nao informado",
+      years,
+      currentYear: years[years.length - 1] || "Nao configurado",
+      classes,
+      enrollments,
+      students,
+      teachers,
+      guardians,
+      memberships,
+      schoolUsers,
+      configuredAccess,
+      pendingAccess,
+      availableContent,
+      contentCounts,
+      checklist,
+      implementationStatus,
+      doneCount,
+    };
+  }).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+};
+
+const renderAdminSchoolList = ({ summaries, selectedId }) => {
+  if (!summaries.length) return `<div class="admin-empty-note">Nenhuma escola foi retornada para a sessao Admin atual.</div>`;
+  return summaries.map((summary) => `
+    <a class="admin-school-row ${summary.schoolId === selectedId ? "is-active" : ""}" href="${adminSchoolUrl(summary.schoolId)}" data-admin-search-item>
+      <span class="admin-user-avatar">${printableEscape(summary.name.slice(0, 2).toUpperCase())}</span>
+      <span class="admin-user-main">
+        <strong>${printableEscape(summary.name)}</strong>
+        <small>${printableEscape(summary.code)} - ${printableEscape(adminStatusLabel(summary.status))}</small>
+      </span>
+      <span class="admin-user-meta">
+        ${renderAdminUserBadge(summary.implementationStatus, summary.doneCount >= 8 ? "success" : "warning")}
+      </span>
+    </a>
+  `).join("");
+};
+
+const renderAdminSchoolChecklist = (summary) => `
+  <div class="admin-school-checklist">
+    ${summary.checklist.map((item) => `
+      <article class="${item.done ? "is-done" : ""}">
+        ${adminInlineIcon(item.done ? "check" : "warning")}
+        <span>${printableEscape(item.label)}</span>
+      </article>
+    `).join("")}
+  </div>
+`;
+
+const renderAdminSchoolDetail = (summary) => {
+  if (!summary) {
+    return `<aside class="admin-user-detail"><h3>Selecione uma escola</h3><p>Escolha uma unidade para consultar estrutura, acessos e implantacao.</p></aside>`;
+  }
+  return `
+    <aside class="admin-user-detail admin-school-detail">
+      <div>
+        <h3>${printableEscape(summary.name)}</h3>
+        <p>${printableEscape(summary.code)} - ${printableEscape(adminStatusLabel(summary.status))}</p>
+      </div>
+      <div class="admin-user-detail-grid">
+        <article><span>Ano letivo</span><strong>${printableEscape(summary.currentYear)}</strong></article>
+        <article><span>Implantacao</span><strong>${printableEscape(summary.implementationStatus)}</strong></article>
+        <article><span>Pacote</span><strong>${printableEscape(summary.installation?.package_version || "Nao registrado")}</strong></article>
+        <article><span>Validacao</span><strong>${printableEscape(adminStatusLabel(summary.installation?.validation_status || "pending"))}</strong></article>
+        <article><span>Acessos ativos</span><strong>${printableEscape(String(summary.configuredAccess))}</strong></article>
+        <article><span>Sem acesso</span><strong>${printableEscape(String(summary.pendingAccess))}</strong></article>
+      </div>
+      <div class="admin-school-actions">
+        <button type="button" data-admin-school-validate="${printableEscape(summary.schoolId)}">${adminInlineIcon("check", "Validar escola")}</button>
+        <button type="button" class="is-primary" data-admin-school-activate="${printableEscape(summary.schoolId)}">${adminInlineIcon("escola", "Ativar escola")}</button>
+        <p data-admin-school-action-status hidden></p>
+      </div>
+      <section>
+        <h4>Estrutura</h4>
+        <div class="admin-school-metrics">
+          ${adminSchoolMetric("Turmas", summary.classes.filter(adminIsActive).length, "ativas")}
+          ${adminSchoolMetric("Matriculas", summary.enrollments.filter((item) => String(item.status || "").toLowerCase() === "active").length, "ativas")}
+          ${adminSchoolMetric("Estudantes", summary.students.filter(adminIsActive).length, "ativos")}
+          ${adminSchoolMetric("Professores", summary.teachers.filter(adminIsActive).length, "ativos")}
+          ${adminSchoolMetric("Responsaveis", summary.guardians.filter(adminIsActive).length, "ativos")}
+          ${adminSchoolMetric("Gestao", summary.memberships.filter(adminIsActive).length, "vinculos")}
+        </div>
+      </section>
+      <section>
+        <h4>Conteudos disponiveis</h4>
+        <div class="admin-school-metrics">
+          ${adminSchoolMetric("Livros", summary.contentCounts.book || 0, "liberados")}
+          ${adminSchoolMetric("Atividades", summary.contentCounts.activity || 0, "liberadas")}
+          ${adminSchoolMetric("Jogos", summary.contentCounts.game || 0, "liberados")}
+          ${adminSchoolMetric("Experiencias", summary.contentCounts.experience || 0, "liberadas")}
+          ${adminSchoolMetric("Videos", summary.contentCounts.video || 0, "liberados")}
+          ${adminSchoolMetric("Outros", summary.contentCounts.other || 0, "liberados")}
+        </div>
+      </section>
+      <section>
+        <h4>Checklist</h4>
+        ${renderAdminSchoolChecklist(summary)}
+      </section>
+    </aside>
+  `;
+};
+
+const adminRsSchoolImportSummary = () => {
+  const pkg = adminRsSchoolControlledImportPackage;
+  return [
+    { label: "Turmas", value: pkg.classes.length },
+    { label: "Professores", value: pkg.teachers.length },
+    { label: "Vinculos docentes", value: pkg.teacher_classes.length },
+    { label: "Alunos", value: pkg.students.length },
+    { label: "Responsaveis", value: pkg.guardians.length },
+  ];
+};
+
+const adminInvokeRsSchoolImport = async ({ schoolId, dryRun }) => {
+  await ensureAdminSupabaseConfig();
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/admin_confirm_rs_school_import", "", {
+    requireAuthenticated: true,
+    allowedRoles: ["admin"],
+    method: "POST",
+    body: JSON.stringify({
+      p_school_id: schoolId,
+      p_package: adminRsSchoolControlledImportPackage,
+      p_dry_run: dryRun,
+    }),
+  });
+  return Array.isArray(result) ? result[0] || {} : result || {};
+};
+
+const adminInvokeValidateActivateSchool = async ({ schoolId, activate }) => {
+  await ensureAdminSupabaseConfig();
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/admin_validate_activate_school", "", {
+    requireAuthenticated: true,
+    allowedRoles: ["admin"],
+    method: "POST",
+    body: JSON.stringify({
+      p_school_id: schoolId,
+      p_activate: activate,
+    }),
+  });
+  return Array.isArray(result) ? result[0] || {} : result || {};
+};
+
+const adminInvokeSetContentAvailability = async ({ schoolId, contentType, contentId, status, availableFrom, availableUntil }) => {
+  await ensureAdminSupabaseConfig();
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/admin_set_school_content_availability", "", {
+    requireAuthenticated: true,
+    allowedRoles: ["admin"],
+    method: "POST",
+    body: JSON.stringify({
+      p_school_id: schoolId,
+      p_content_type: contentType,
+      p_content_id: contentId,
+      p_status: status,
+      p_available_from: availableFrom || null,
+      p_available_until: availableUntil || null,
+    }),
+  });
+  return Array.isArray(result) ? result[0] || {} : result || {};
+};
+
+const renderAdminContentSchools = (availabilityRows = [], schoolsById = new Map()) => {
+  const activeRows = availabilityRows.filter(adminAvailabilityIsActive);
+  if (!activeRows.length) return `<span class="admin-content-muted">Nenhuma escola liberada</span>`;
+  return activeRows
+    .map((row) => renderAdminUserBadge(adminSchoolName(schoolsById.get(row.school_id)), "success"))
+    .join("");
+};
+
+const renderAdminContentGovernanceConsole = () => {
+  if (adminOperationalState.status === "loading" || adminOperationalState.status === "idle") {
+    return `<section class="admin-board admin-loading-state"><h2>Carregando conteudos</h2><p>Consultando catalogos e disponibilidade por escola.</p></section>`;
+  }
+  if (adminOperationalState.status === "error") {
+    return `<section class="admin-board admin-empty-state"><h2>Nao foi possivel carregar conteudos</h2><p>${printableEscape(adminOperationalState.error)}</p></section>`;
+  }
+  const data = adminOperationalState.data || {};
+  const schools = data.schools || [];
+  const schoolsById = new Map(schools.map((school) => [school.id, school]));
+  const catalog = buildAdminContentCatalog();
+  const availabilityByContent = adminContentAvailabilityIndex().byContent;
+  const totals = catalog.reduce((acc, item) => {
+    acc[item.type] = (acc[item.type] || 0) + 1;
+    return acc;
+  }, {});
+  return `
+    <section class="admin-board admin-content-governance">
+      <div class="admin-section-head">
+        <h2>Governanca de conteudos</h2>
+        <span>${catalog.length} itens de catalogo sem duplicar metadados</span>
+      </div>
+      <div class="admin-school-metrics">
+        ${Object.entries(adminContentTypeLabels).map(([type, label]) => adminSchoolMetric(label, totals[type] || 0, "catalogo")).join("")}
+      </div>
+      <div class="admin-content-governance-list">
+        ${catalog.map((item) => {
+          const rows = availabilityByContent.get(adminContentKey(item.type, item.id)) || [];
+          return `
+            <article class="admin-content-item" data-admin-search-item>
+              <div class="admin-content-item-main">
+                ${renderAdminUserBadge(recommendationTypeLabel(item.type), "role")}
+                <strong>${printableEscape(item.title)}</strong>
+                <small>${printableEscape(item.id)}${item.segment ? ` - ${printableEscape(item.segment)}` : ""}</small>
+                <div class="admin-content-schools">${renderAdminContentSchools(rows, schoolsById)}</div>
+              </div>
+              <form class="admin-content-availability-form" data-admin-content-availability-form>
+                <input type="hidden" name="content_type" value="${printableEscape(item.type)}" />
+                <input type="hidden" name="content_id" value="${printableEscape(item.id)}" />
+                <label>
+                  <span>Escola</span>
+                  <select name="school_id" required>
+                    ${schools.map((school) => `<option value="${printableEscape(school.id)}">${printableEscape(adminSchoolName(school))}</option>`).join("")}
+                  </select>
+                </label>
+                <label>
+                  <span>Status</span>
+                  <select name="status">
+                    <option value="available">Disponibilizar</option>
+                    <option value="unavailable">Retirar</option>
+                  </select>
+                </label>
+                <label><span>Inicio</span><input type="datetime-local" name="available_from" /></label>
+                <label><span>Fim</span><input type="datetime-local" name="available_until" /></label>
+                <button type="submit" class="is-primary">${adminInlineIcon("check", "Salvar")}</button>
+                <p data-admin-content-availability-status hidden></p>
+              </form>
+            </article>
+          `;
+        }).join("")}
+      </div>
+    </section>
+  `;
+};
+
+const adminFormatSchoolValidation = (result = {}) => {
+  const checks = result.checks || {};
+  const failed = Object.entries(checks)
+    .filter(([, value]) => value !== true)
+    .map(([key]) => key);
+  if (failed.length) return `Pendencias: ${failed.join(", ")}`;
+  return `Validacao aprovada - etapa: ${result.stage || "pronta_para_validacao"}.`;
+};
+
+const adminFormatImportCounts = (result = {}) => {
+  const counts = result.counts || {};
+  const labels = [
+    ["valid_rows", "validas"],
+    ["invalid", "invalidas"],
+    ["existing", "existentes"],
+    ["classes_created", "turmas"],
+    ["teachers_created", "professores"],
+    ["teacher_links_created", "vinculos docentes"],
+    ["students_created", "alunos"],
+    ["enrollments_created", "matriculas"],
+    ["guardians_created", "responsaveis"],
+    ["family_links_created", "vinculos familiares"],
+  ];
+  return labels.map(([key, label]) => `${label}: ${counts[key] ?? 0}`).join(" - ");
+};
+
+const renderAdminAssistedImportPanel = (summary) => {
+  if (!summary) return "";
+  return `
+    <section class="admin-board admin-import-board">
+      <div class="admin-section-head">
+        <h2>Importacao assistida</h2>
+        <span>${printableEscape(summary.name)}</span>
+      </div>
+      <div class="admin-import-layout">
+        <div class="admin-import-package">
+          <strong>RS-SCHOOL V1 controlado</strong>
+          <span>${printableEscape(adminRsSchoolControlledImportPackage.package_version)}</span>
+          <div class="admin-import-counts">
+            ${adminRsSchoolImportSummary().map((item) => `<article><span>${printableEscape(item.label)}</span><strong>${printableEscape(String(item.value))}</strong></article>`).join("")}
+          </div>
+        </div>
+        <div class="admin-import-actions">
+          <button type="button" data-admin-import-dry-run="${printableEscape(summary.schoolId)}">${adminInlineIcon("check", "Validar lote")}</button>
+          <button type="button" class="is-primary" data-admin-import-confirm="${printableEscape(summary.schoolId)}">${adminInlineIcon("clipboard", "Confirmar importacao")}</button>
+          <p data-admin-import-status hidden></p>
+        </div>
+      </div>
+    </section>
+  `;
+};
+
+const adminInvokeCreateSchool = async (payload) => {
+  await ensureAdminSupabaseConfig();
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/admin_create_school", "", {
+    requireAuthenticated: true,
+    allowedRoles: ["admin"],
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return Array.isArray(result) ? result[0] || {} : result || {};
+};
+
+const renderAdminCreateSchoolForm = () => `
+  <section class="admin-board admin-create-school-board">
+    <div class="admin-section-head">
+      <h2>Nova escola</h2>
+      <span>Implantacao assistida</span>
+    </div>
+    <form class="admin-school-create-form" data-admin-create-school-form>
+      <label><span>Nome</span><input name="p_nome" required placeholder="RS-SCHOOL-DEPLOYMENT-TEST" /></label>
+      <label><span>Codigo institucional</span><input name="p_school_code" required placeholder="RS-SCHOOL-DEPLOYMENT-TEST" /></label>
+      <label><span>Ano letivo inicial</span><input name="p_school_year" required inputmode="numeric" placeholder="2026" /></label>
+      <label><span>Municipio</span><input name="p_municipio" placeholder="Homologacao" /></label>
+      <label><span>Estado</span><input name="p_estado" maxlength="2" placeholder="SP" /></label>
+      <label><span>Diretor</span><input name="p_diretor" placeholder="Responsavel pela implantacao" /></label>
+      <input type="hidden" name="p_deployment_mode" value="test" />
+      <p data-admin-create-school-status hidden></p>
+      <button type="submit" class="is-primary">${adminInlineIcon("check", "Criar escola")}</button>
+    </form>
+    <div class="admin-school-steps" aria-label="Etapas da implantacao">
+      ${["Identificacao", "Configuracao", "Estrutura inicial", "Importacao", "Validacao", "Ativacao"].map((step, index) => `<span>${index + 1}. ${printableEscape(step)}</span>`).join("")}
+    </div>
+  </section>
+`;
+
+const renderAdminSchoolsConsole = () => {
+  if (adminOperationalState.status === "loading" || adminOperationalState.status === "idle") {
+    return `<section class="admin-board admin-loading-state"><h2>Carregando escolas</h2><p>Consultando unidades, turmas, matriculas e acessos.</p></section>`;
+  }
+  if (adminOperationalState.status === "error") {
+    return `<section class="admin-board admin-empty-state"><h2>Nao foi possivel carregar escolas</h2><p>${printableEscape(adminOperationalState.error)}</p></section>`;
+  }
+  const summaries = buildAdminSchoolSummaries();
+  const filters = adminSchoolFilters();
+  const selected = summaries.find((item) => item.schoolId === filters.selected) || summaries[0] || null;
+  return `
+    ${renderAdminCreateSchoolForm()}
+    <section class="admin-board admin-schools-console">
+      <div class="admin-section-head">
+        <h2>Escolas</h2>
+        <span>${summaries.length} unidades reais</span>
+      </div>
+      <div class="admin-users-layout">
+        <div class="admin-users-list">${renderAdminSchoolList({ summaries, selectedId: selected?.schoolId || "" })}</div>
+        ${renderAdminSchoolDetail(selected)}
+      </div>
+    </section>
+  `;
+};
+
+const renderAdminImplementationConsole = () => {
+  if (adminOperationalState.status === "loading" || adminOperationalState.status === "idle") {
+    return `<section class="admin-board admin-loading-state"><h2>Carregando implantacao</h2><p>Calculando checklist a partir dos dados institucionais.</p></section>`;
+  }
+  if (adminOperationalState.status === "error") {
+    return `<section class="admin-board admin-empty-state"><h2>Nao foi possivel carregar implantacao</h2><p>${printableEscape(adminOperationalState.error)}</p></section>`;
+  }
+  const summaries = buildAdminSchoolSummaries();
+  const filters = adminSchoolFilters();
+  const selected = summaries.find((item) => item.schoolId === filters.selected)
+    || summaries.find((item) => item.code === "RS-SCHOOL-DEPLOYMENT-TEST")
+    || summaries[0]
+    || null;
+  return `
+    ${renderAdminAssistedImportPanel(selected)}
+    <section class="admin-board admin-implementation-console">
+      <div class="admin-section-head">
+        <h2>Implantacao</h2>
+        <span>Checklist calculado por escola</span>
+      </div>
+      <div class="admin-school-implementation-grid">
+        ${summaries.map((summary) => `
+          <article class="admin-school-implementation" data-admin-search-item>
+            <header>
+              <strong>${printableEscape(summary.name)}</strong>
+              ${renderAdminUserBadge(summary.implementationStatus, summary.doneCount >= 8 ? "success" : "warning")}
+            </header>
+            ${renderAdminSchoolChecklist(summary)}
+          </article>
+        `).join("")}
+      </div>
+    </section>
+    ${renderAdminPreparationView("Motores de escrita", "Criacao de nova escola esta preparada por RPC administrativa; importacao assistida segue limitada a dry-run nesta etapa.", [
+      "Nova escola: motor preparado",
+      "Importacao CSV/XLSX: parcial por pacote tecnico",
+      "Acessos digitais: motor homologado",
+    ])}
+  `;
+};
 
 const renderAdminUsersConsole = () => {
   if (adminOperationalState.status === "loading" || adminOperationalState.status === "idle") {
@@ -9010,11 +9976,7 @@ const renderAdminWorkspaceView = (view = "inicio") => {
       </section>
     `,
     usuarios: renderAdminUsersConsole(),
-    escolas: renderAdminPreparationView("Escolas", "Cadastro, implantacao e acompanhamento de escolas serao liberados depois do painel inicial.", [
-      "Cadastro institucional",
-      "Implantacao",
-      "Acompanhamento",
-    ]),
+    escolas: renderAdminSchoolsConsole(),
     professores: `<section class="admin-board admin-empty-state"><h2>Professores</h2><p>Acompanhe a rotina pedagogica e as turmas pelo ambiente do professor.</p><a href="professor.html">Abrir ambiente professor</a></section>`,
     alunos: `<section class="admin-board admin-empty-state"><h2>Alunos</h2><p>Acompanhe a experiencia dos alunos vinculados ao ecossistema.</p><a href="aluno.html">Abrir ambiente aluno</a></section>`,
     familia: `<section class="admin-board admin-empty-state"><h2>Familia</h2><p>Area preparada para acompanhar a experiencia familiar vinculada as criancas.</p></section>`,
@@ -9026,17 +9988,8 @@ const renderAdminWorkspaceView = (view = "inicio") => {
     homologados: `<section class="admin-board"><div class="admin-section-head"><h2>Ambientes publicados</h2><span>Disponiveis conforme perfil</span></div><div class="admin-feature-grid">${available.map(renderAdminFeatureCard).join("")}</div></section>`,
     logs: `<section class="admin-board admin-empty-state"><h2>Logs</h2><p>Espaco reservado para uma etapa propria de auditoria, sem expor informacoes sensiveis nesta tela.</p></section>`,
     configuracoes: `<section class="admin-board admin-empty-state"><h2>Configuracoes</h2><p>Controles administrativos serao liberados em etapas proprias, preservando seguranca e rastreabilidade.</p></section>`,
-    conteudos: renderAdminPreparationView("Conteudos", "Governanca de biblioteca, jogos, atividades e formacao sera organizada em fase propria.", [
-      "Biblioteca",
-      "Jogos e experiencias",
-      "Atividades imprimiveis",
-      "Formacao",
-    ]),
-    implantacao: renderAdminPreparationView("Implantacao", "O pacote de implantacao sera conectado aqui em uma fase especifica, sem executar processos automaticamente.", [
-      "Checklist",
-      "Importacao",
-      "Handoff",
-    ]),
+    conteudos: renderAdminContentGovernanceConsole(),
+    implantacao: renderAdminImplementationConsole(),
     auditoria: renderAdminPreparationView("Auditoria", "Eventos e trilhas ja existentes serao consolidados em uma tela segura de leitura.", [
       "Comunicacoes",
       "Recomendacoes",
@@ -9093,7 +10046,7 @@ const initAdminWorkspace = () => {
   const activate = (view) => {
     workspace.querySelectorAll("[data-admin-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.adminView === view));
     if (content) content.innerHTML = renderAdminWorkspaceView(view);
-    if (view === "painel" || view === "usuarios") {
+    if (["painel", "usuarios", "escolas", "conteudos", "implantacao"].includes(view)) {
       ensureAdminReadOnlyData().then(() => {
         if (content && workspace.querySelector(`[data-admin-view="${view}"]`)?.classList.contains("is-active")) {
           content.innerHTML = renderAdminWorkspaceView(view);
@@ -9101,7 +10054,7 @@ const initAdminWorkspace = () => {
       });
     }
   };
-  workspace.addEventListener("click", (event) => {
+  workspace.addEventListener("click", async (event) => {
     const button = event.target.closest?.("[data-admin-view]");
     const backButton = event.target.closest?.("[data-admin-back]");
     if (button) {
@@ -9118,6 +10071,238 @@ const initAdminWorkspace = () => {
     if (recoveryButton) {
       event.preventDefault();
       adminHandlePasswordRecovery(recoveryButton.dataset.adminPasswordRecovery, recoveryButton);
+      return;
+    }
+    const createAccessButton = event.target.closest?.("[data-admin-create-access-open]");
+    if (createAccessButton) {
+      event.preventDefault();
+      const dialog = workspace.querySelector(`[data-admin-access-dialog="${CSS.escape(createAccessButton.dataset.adminCreateAccessOpen)}"]`);
+      if (dialog?.showModal) dialog.showModal();
+      else dialog?.setAttribute("open", "");
+      return;
+    }
+    if (event.target.closest?.("[data-admin-create-access-close]")) {
+      event.preventDefault();
+      const dialog = event.target.closest("[data-admin-access-dialog]");
+      if (dialog?.close) dialog.close();
+      else dialog?.removeAttribute("open");
+      return;
+    }
+    const importDryRunButton = event.target.closest?.("[data-admin-import-dry-run]");
+    const importConfirmButton = event.target.closest?.("[data-admin-import-confirm]");
+    if (importDryRunButton || importConfirmButton) {
+      event.preventDefault();
+      const button = importDryRunButton || importConfirmButton;
+      const dryRun = Boolean(importDryRunButton);
+      const panel = button.closest(".admin-import-board");
+      const status = panel?.querySelector("[data-admin-import-status]");
+      const buttons = panel ? Array.from(panel.querySelectorAll("button")) : [button];
+      buttons.forEach((item) => { item.disabled = true; });
+      if (status) {
+        status.hidden = false;
+        status.dataset.tone = "muted";
+        status.textContent = dryRun ? "Validando lote..." : "Importando lote controlado...";
+      }
+      try {
+        const result = await adminInvokeRsSchoolImport({
+          schoolId: button.dataset.adminImportDryRun || button.dataset.adminImportConfirm,
+          dryRun,
+        });
+        if (status) {
+          status.dataset.tone = "success";
+          status.textContent = `${dryRun ? "Dry-run aprovado" : "Importacao concluida"} - ${adminFormatImportCounts(result)}`;
+        }
+        if (!dryRun) {
+          await ensureAdminReadOnlyData({ force: true });
+          setTimeout(() => {
+            if (content) content.innerHTML = renderAdminWorkspaceView("implantacao");
+          }, 900);
+        }
+      } catch (error) {
+        if (status) {
+          status.dataset.tone = "error";
+          status.textContent = error.message || "Nao foi possivel processar a importacao.";
+        }
+      } finally {
+        buttons.forEach((item) => { item.disabled = false; });
+      }
+      return;
+    }
+    const validateSchoolButton = event.target.closest?.("[data-admin-school-validate]");
+    const activateSchoolButton = event.target.closest?.("[data-admin-school-activate]");
+    if (validateSchoolButton || activateSchoolButton) {
+      event.preventDefault();
+      const button = validateSchoolButton || activateSchoolButton;
+      const activateSchool = Boolean(activateSchoolButton);
+      const panel = button.closest(".admin-school-detail");
+      const status = panel?.querySelector("[data-admin-school-action-status]");
+      const buttons = panel ? Array.from(panel.querySelectorAll(".admin-school-actions button")) : [button];
+      buttons.forEach((item) => { item.disabled = true; });
+      if (status) {
+        status.hidden = false;
+        status.dataset.tone = "muted";
+        status.textContent = activateSchool ? "Ativando escola..." : "Validando escola...";
+      }
+      try {
+        const result = await adminInvokeValidateActivateSchool({
+          schoolId: button.dataset.adminSchoolValidate || button.dataset.adminSchoolActivate,
+          activate: activateSchool,
+        });
+        if (status) {
+          status.dataset.tone = result.ok ? "success" : "error";
+          status.textContent = `${activateSchool ? "Ativacao" : "Validacao"} ${result.ok ? "concluida" : "bloqueada"}. ${adminFormatSchoolValidation(result)}`;
+        }
+        await ensureAdminReadOnlyData({ force: true });
+        setTimeout(() => {
+          if (content) content.innerHTML = renderAdminWorkspaceView("escolas");
+        }, 900);
+      } catch (error) {
+        if (status) {
+          status.dataset.tone = "error";
+          status.textContent = error.message || "Nao foi possivel processar a escola.";
+        }
+      } finally {
+        buttons.forEach((item) => { item.disabled = false; });
+      }
+      return;
+    }
+  });
+  workspace.addEventListener("submit", async (event) => {
+    const contentAvailabilityForm = event.target.closest?.("[data-admin-content-availability-form]");
+    if (contentAvailabilityForm) {
+      event.preventDefault();
+      const status = contentAvailabilityForm.querySelector("[data-admin-content-availability-status]");
+      const submit = contentAvailabilityForm.querySelector("button[type='submit']");
+      const formData = new FormData(contentAvailabilityForm);
+      const payload = {
+        schoolId: String(formData.get("school_id") || ""),
+        contentType: String(formData.get("content_type") || ""),
+        contentId: String(formData.get("content_id") || ""),
+        status: String(formData.get("status") || "available"),
+        availableFrom: String(formData.get("available_from") || ""),
+        availableUntil: String(formData.get("available_until") || ""),
+      };
+      if (status) {
+        status.hidden = false;
+        status.dataset.tone = "muted";
+        status.textContent = "Atualizando disponibilidade...";
+      }
+      if (submit) {
+        submit.disabled = true;
+        submit.textContent = "Salvando...";
+      }
+      try {
+        const result = await adminInvokeSetContentAvailability(payload);
+        await ensureAdminReadOnlyData({ force: true });
+        if (status) {
+          status.dataset.tone = "success";
+          status.textContent = result.result === "removed" ? "Conteudo retirado da escola." : "Disponibilidade salva.";
+        }
+        setTimeout(() => {
+          if (content) content.innerHTML = renderAdminWorkspaceView("conteudos");
+        }, 700);
+      } catch (error) {
+        if (status) {
+          status.dataset.tone = "error";
+          status.textContent = error.message || "Nao foi possivel atualizar a disponibilidade.";
+        }
+      } finally {
+        if (submit) {
+          submit.disabled = false;
+          submit.textContent = "Salvar";
+        }
+      }
+      return;
+    }
+    const createSchoolForm = event.target.closest?.("[data-admin-create-school-form]");
+    if (createSchoolForm) {
+      event.preventDefault();
+      const status = createSchoolForm.querySelector("[data-admin-create-school-status]");
+      const submit = createSchoolForm.querySelector("button[type='submit']");
+      const formData = new FormData(createSchoolForm);
+      const payload = {
+        p_nome: String(formData.get("p_nome") || "").trim(),
+        p_school_code: String(formData.get("p_school_code") || "").trim(),
+        p_school_year: String(formData.get("p_school_year") || "").trim(),
+        p_municipio: String(formData.get("p_municipio") || "").trim() || null,
+        p_estado: String(formData.get("p_estado") || "").trim().toUpperCase() || null,
+        p_diretor: String(formData.get("p_diretor") || "").trim() || null,
+        p_deployment_mode: "test",
+      };
+      if (status) {
+        status.hidden = false;
+        status.dataset.tone = "muted";
+        status.textContent = "Criando escola...";
+      }
+      if (submit) {
+        submit.disabled = true;
+        submit.textContent = "Criando escola...";
+      }
+      try {
+        const result = await adminInvokeCreateSchool(payload);
+        await ensureAdminReadOnlyData({ force: true });
+        if (status) {
+          status.dataset.tone = "success";
+          status.textContent = `Escola criada. Etapa atual: ${result.stage || "em_configuracao"}.`;
+        }
+        createSchoolForm.reset();
+        if (content) content.innerHTML = renderAdminWorkspaceView("escolas");
+      } catch (error) {
+        if (status) {
+          status.dataset.tone = "error";
+          status.textContent = error.message || "Nao foi possivel criar a escola.";
+        }
+      } finally {
+        if (submit) {
+          submit.disabled = false;
+          submit.textContent = "Criar escola";
+        }
+      }
+      return;
+    }
+    const form = event.target.closest?.("[data-admin-create-access-form]");
+    if (!form) return;
+    event.preventDefault();
+    const status = form.querySelector("[data-admin-create-access-status]");
+    const submit = form.querySelector("button[type='submit']");
+    const formData = new FormData(form);
+    const payload = {
+      targetType: String(formData.get("targetType") || ""),
+      targetInstitutionalId: String(formData.get("targetInstitutionalId") || ""),
+      email: String(formData.get("email") || "").trim().toLowerCase(),
+      expectedRole: String(formData.get("expectedRole") || ""),
+      schoolId: String(formData.get("schoolId") || ""),
+    };
+    if (status) {
+      status.hidden = false;
+      status.dataset.tone = "muted";
+      status.textContent = "Criando acesso...";
+    }
+    if (submit) {
+      submit.disabled = true;
+      submit.textContent = "Criando acesso...";
+    }
+    try {
+      const result = await adminInvokeCreateAuthAccess(payload);
+      if (status) {
+        status.dataset.tone = "success";
+        status.textContent = result.message || "Acesso criado com sucesso. O usuario recebera instrucoes para definir a senha.";
+      }
+      await ensureAdminReadOnlyData({ force: true });
+      setTimeout(() => {
+        const dialog = form.closest("[data-admin-access-dialog]");
+        if (dialog?.close) dialog.close();
+        if (content) content.innerHTML = renderAdminWorkspaceView("usuarios");
+      }, 900);
+    } catch (error) {
+      if (status) {
+        status.dataset.tone = "error";
+        status.textContent = error.message || "Nao foi possivel criar o acesso.";
+      }
+      if (submit) {
+        submit.disabled = false;
+        submit.textContent = "Criar acesso";
+      }
     }
   });
   workspace.querySelector("[data-admin-search]")?.addEventListener("input", (event) => {
@@ -9449,9 +10634,19 @@ const renderSchoolChallenge = (ageData) => {
   `;
 };
 
+const getSchoolGameIdFromHref = (href = "") => {
+  try {
+    const url = new URL(href, window.location.href);
+    return url.searchParams.get("game") || url.searchParams.get("jogo") || url.searchParams.get("id") || "";
+  } catch (error) {
+    return "";
+  }
+};
+const getSchoolBookIdFromHref = (href = "") => getBookIdFromHref(href);
 const renderSchoolGames = (ageData) => {
-  if (!ageData.games.length) return renderSchoolEmpty("NOVOS JOGOS CHEGAM EM BREVE.", "A curadoria ainda nao liberou jogos para esta idade.");
-  return ageData.games
+  const games = filterContentForSession(ageData.games, "game", (game) => getSchoolGameIdFromHref(game.href));
+  if (!games.length) return renderSchoolEmpty("NOVOS JOGOS CHEGAM EM BREVE.", "A curadoria ainda nao liberou jogos para esta idade.");
+  return games
     .map(
       (game) => `
         <article class="school-game-card">
@@ -9466,8 +10661,9 @@ const renderSchoolGames = (ageData) => {
 };
 
 const renderSchoolBooks = (ageData) => {
-  if (!ageData.books.length) return renderSchoolEmpty("NOVAS LEITURAS CHEGAM EM BREVE.", "A biblioteca coletiva sera atualizada pela equipe.");
-  return ageData.books
+  const books = filterContentForSession(ageData.books, "book", (book) => getSchoolBookIdFromHref(book.href));
+  if (!books.length) return renderSchoolEmpty("NOVAS LEITURAS CHEGAM EM BREVE.", "A biblioteca coletiva sera atualizada pela equipe.");
+  return books
     .map(
       (book) => `
         <article class="school-book-card">
@@ -9512,7 +10708,7 @@ const renderSchoolInfo = (ageData) => {
 };
 
 const renderOfficialSchoolGameCards = () =>
-  officialSchoolGames
+  filterContentForSession(officialSchoolGames, "game", (game) => game.id)
     .map(
       (game) => `
         <article class="official-school-game-card">
@@ -9532,7 +10728,7 @@ const getStudentOfficialGameHref = (game = {}) =>
   game.id === "caixa-misteriosa" ? game.href : `jogos.html?game=${encodeURIComponent(game.id)}&origin=aluno`;
 
 const renderStudentOfficialGameCards = () =>
-  officialSchoolGames
+  filterContentForSession(officialSchoolGames, "game", (game) => game.id)
     .map(
       (game) => `
         <article class="official-school-game-card">
@@ -9549,7 +10745,7 @@ const renderStudentOfficialGameCards = () =>
     .join("");
 
 const renderOfficialSchoolBooks = () =>
-  schoolLibraryHighlights
+  getGovernedLibraryBooks(schoolLibraryHighlights)
     .map(
       (book) => `
         <article class="official-school-book-card">
@@ -10976,31 +12172,50 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
       familyInstitutionalState.messagesError = "";
       familyInstitutionalState.attendanceError = "";
       familyInstitutionalState.recommendationsError = "";
+      familyInstitutionalState.entries = [];
+      familyInstitutionalState.messages = [];
+      familyInstitutionalState.attendanceRecords = [];
+      familyInstitutionalState.recommendations = [];
+      familyInstitutionalState.status = "ready";
 
       const weekDates = getFamilyWeekDates(familyInstitutionalState.weekStartIso);
-      const entries = await client.request(
-        "class_calendar_entries",
-        `?select=id,class_id,school_id,teacher_id,plan_id,title,description,entry_date,start_time,end_time,entry_type,status,created_at&status=eq.published&class_id=${supabaseEq(enrollment.class_id)}&entry_date=gte.${encodeURIComponent(weekDates.seg)}&entry_date=lte.${encodeURIComponent(weekDates.sex)}&order=start_time.asc.nullslast&order=created_at.asc`,
-        { requireAuthenticated: true, allowedRoles: familyInstitutionalAllowedRoles }
-      ).catch((error) => {
-        familyInstitutionalState.calendarError = error.message || "Nao foi possivel carregar a Minha Semana.";
-        return [];
+      Promise.allSettled([
+        client.request(
+          "class_calendar_entries",
+          `?select=id,class_id,school_id,teacher_id,plan_id,title,description,entry_date,start_time,end_time,entry_type,status,created_at&status=eq.published&class_id=${supabaseEq(enrollment.class_id)}&entry_date=gte.${encodeURIComponent(weekDates.seg)}&entry_date=lte.${encodeURIComponent(weekDates.sex)}&order=start_time.asc.nullslast&order=created_at.asc`,
+          { requireAuthenticated: true, allowedRoles: familyInstitutionalAllowedRoles }
+        ),
+        loadFamilyTeacherMessages(client, selectedChild),
+        loadFamilyAttendanceRecords(client, selectedChild),
+        loadFamilyTeacherRecommendations(client, selectedChild),
+      ]).then(([entriesResult, messagesResult, attendanceResult, recommendationsResult]) => {
+        if (familyInstitutionalState.selectedChildId !== student.id) return;
+        if (entriesResult.status === "fulfilled") {
+          familyInstitutionalState.entries = (entriesResult.value || []).filter((entry) => entry.status === "published").map(mapFamilyCalendarEntry);
+        } else {
+          familyInstitutionalState.calendarError = entriesResult.reason?.message || "Nao foi possivel carregar a Minha Semana.";
+        }
+        if (messagesResult.status === "fulfilled") {
+          familyInstitutionalState.messages = messagesResult.value || [];
+        } else {
+          familyInstitutionalState.messagesError = messagesResult.reason?.message || "Nao foi possivel carregar os recados.";
+        }
+        if (attendanceResult.status === "fulfilled") {
+          familyInstitutionalState.attendanceRecords = attendanceResult.value || [];
+        } else {
+          familyInstitutionalState.attendanceError = attendanceResult.reason?.message || "Nao foi possivel carregar a frequencia.";
+        }
+        if (recommendationsResult.status === "fulfilled") {
+          familyInstitutionalState.recommendations = recommendationsResult.value || [];
+        } else {
+          familyInstitutionalState.recommendationsError = recommendationsResult.reason?.message || "Nao foi possivel carregar as recomendacoes.";
+        }
+        const area = document.querySelector("[data-family-area]");
+        if (area) {
+          area.outerHTML = renderFamilyDashboard();
+          initFamilyArea();
+        }
       });
-
-      familyInstitutionalState.entries = (entries || []).filter((entry) => entry.status === "published").map(mapFamilyCalendarEntry);
-      familyInstitutionalState.messages = await loadFamilyTeacherMessages(client, selectedChild).catch((error) => {
-        familyInstitutionalState.messagesError = error.message || "Nao foi possivel carregar os recados.";
-        return [];
-      });
-      familyInstitutionalState.attendanceRecords = await loadFamilyAttendanceRecords(client, selectedChild).catch((error) => {
-        familyInstitutionalState.attendanceError = error.message || "Nao foi possivel carregar a frequencia.";
-        return [];
-      });
-      familyInstitutionalState.recommendations = await loadFamilyTeacherRecommendations(client, selectedChild).catch((error) => {
-        familyInstitutionalState.recommendationsError = error.message || "Nao foi possivel carregar as recomendacoes.";
-        return [];
-      });
-      familyInstitutionalState.status = "ready";
       return familyInstitutionalState;
     } catch (error) {
       familyInstitutionalState.error = error.message || "Nao foi possivel carregar a semana.";
@@ -12166,8 +13381,18 @@ const renderGamesModule = () => {
   const currentRole = getCurrentPlatformRole();
   const isSchoolExperience = currentRole === "escola";
   const isStudentExperience = currentRole === "aluno";
-  const usesOfficialGames = isSchoolExperience || isStudentExperience;
-  const officialGameAllowed = !requestedGameId || officialSchoolGameIds.includes(requestedGameId);
+  const isFamilyExperience = currentRole === "educacao_infantil";
+  const usesOfficialGames = isSchoolExperience || isStudentExperience || isFamilyExperience;
+  if (usesOfficialGames && isContentGovernanceRequired() && !isContentGovernanceReady()) {
+    return renderContentGovernanceLoading("Jogos");
+  }
+  const governedOfficialGameIds = usesOfficialGames
+    ? officialSchoolGameIds.filter((gameId) => isContentAvailableToSession("game", gameId))
+    : officialSchoolGameIds;
+  const officialGameAllowed = !requestedGameId || governedOfficialGameIds.includes(requestedGameId);
+  if (usesOfficialGames && requestedGameId && !officialGameAllowed) {
+    return renderContentUnavailableForSchool({ title: "Jogo indisponivel", type: "game", id: requestedGameId });
+  }
   if (isSchoolExperience && (!requestedGameId || !officialGameAllowed)) {
     return `
       <section class="official-school-panel official-school-games-page">
@@ -12192,10 +13417,22 @@ const renderGamesModule = () => {
       </section>
     `;
   }
+  if (isFamilyExperience && (!requestedGameId || !officialGameAllowed)) {
+    return `
+      <section class="official-school-panel official-school-games-page">
+        <div class="official-school-section-head">
+          <span>Familia / EI</span>
+          <h2>Jogos disponiveis</h2>
+          <p>Somente os jogos liberados para a escola da crianca aparecem aqui.</p>
+        </div>
+        <div class="official-school-games">${renderStudentOfficialGameCards()}</div>
+      </section>
+    `;
+  }
   const playerAttribute = requestedGameId
-    ? ` data-game-id="${requestedGameId}"${usesOfficialGames ? ` data-published-games="${officialSchoolGameIds.join(",")}"${isSchoolExperience ? ` data-collective-mode="school"` : ""}` : ""}`
+    ? ` data-game-id="${requestedGameId}"${usesOfficialGames ? ` data-published-games="${governedOfficialGameIds.join(",")}"${isSchoolExperience ? ` data-collective-mode="school"` : ""}` : ""}`
     : usesOfficialGames
-      ? ` data-published-games="${officialSchoolGameIds.join(",")}"${isSchoolExperience ? ` data-collective-mode="school"` : ""}`
+      ? ` data-published-games="${governedOfficialGameIds.join(",")}"${isSchoolExperience ? ` data-collective-mode="school"` : ""}`
       : "";
   const intro = requestedGameId
     ? `<span>Ao finalizar, use Voltar para retornar ao seu ambiente.</span>`
@@ -12227,7 +13464,11 @@ const modules = {
     title: "Acesso Escola",
     subtitle: "Institucional e Comunicacao",
     code: "ESCOLA-INSTITUCIONAL-V1",
-    html: renderSchoolInstitutionalDashboard(),
+    get html() {
+      return isContentGovernanceRequired() && !isContentGovernanceReady()
+        ? renderContentGovernanceLoading("Minha Escola")
+        : renderSchoolInstitutionalDashboard();
+    },
   },
   educacaoInfantil: {
     title: "Area da Escola Infantil",
@@ -12295,16 +13536,18 @@ const modules = {
     title: isStudentLibraryView() ? "Biblioteca" : "Biblioteca Viva 2.0",
     subtitle: isStudentLibraryView() ? "Livros para o aluno" : "Leitura, acompanhamento e aprendizagem integrados",
     code: isStudentLibraryView() ? "ALUNO-BIBLIOTECA" : "MS-001",
-    html: isStudentLibraryView()
-      ? renderStudentLibraryHome()
-      : `
+    get html() {
+      return isStudentLibraryView()
+        ? renderStudentLibraryHome()
+        : `
         <div class="screen-title">
           <p>MS-001</p>
           <h1>Biblioteca Viva</h1>
           <span>Experiencias, livros, videos e atividades organizados para aprender sem se perder.</span>
         </div>
         ${renderPremiumLibrary()}
-      `,
+      `;
+    },
   },
   universidade: {
     title: "Universidade Raizes e Saberes",
@@ -12813,7 +14056,9 @@ const modules = {
     title: "Atividades Imprimiveis",
     subtitle: "Atividades exclusivas para a Educacao Infantil",
     code: "PRINTABLE-ACTIVITIES-001",
-    html: renderPrintableActivitiesPage(),
+    get html() {
+      return renderPrintableActivitiesPage();
+    },
   },
   motorAtividade: {
     title: "Motor Universal de Atividades",
@@ -12825,7 +14070,9 @@ const modules = {
     title: "Admin Atividades Imprimiveis",
     subtitle: "Conteudos > Atividades Imprimiveis",
     code: "PRINTABLE-ACTIVITIES-ADMIN",
-    html: renderPrintableActivitiesPage({ admin: true }),
+    get html() {
+      return renderPrintableActivitiesPage({ admin: true });
+    },
   },
   avalia: {
     title: "Avalia+",
@@ -12988,7 +14235,9 @@ const modules = {
     title: "Painel da Familia",
     subtitle: "Acompanhe a jornada escolar dos seus filhos",
     code: "MS-007",
-    html: renderFamilyDashboard(),
+    get html() {
+      return renderFamilyDashboard();
+    },
   },
 };
 
@@ -15487,6 +16736,28 @@ const getStudentCandidateByUserId = async (client, userId) => {
   return Array.isArray(rows) ? rows[0] || null : null;
 };
 
+const rerenderStudentInstitutionalSurfaces = () => {
+  if (!isStudentInstitutionalMode() || studentInstitutionalState.status !== "ready") return;
+  const dashboard = document.querySelector("[data-student-dashboard]");
+  if (dashboard) {
+    dashboard.outerHTML = renderStudentSimpleDashboard();
+    requestAnimationFrame(() => document.querySelector("[data-student-dashboard]")?.classList.add("is-mounted"));
+    initStudentInstitutionalDashboard();
+  }
+  const activities = document.querySelector("[data-student-activities-institutional]");
+  if (activities) {
+    activities.outerHTML = renderStudentActivitiesPage();
+    initPlatformLogout();
+    initPrintableActivities();
+  }
+  const profileRoot = document.querySelector("[data-student-profile-institutional]");
+  if (profileRoot) {
+    const page = profileRoot.closest(".profile-platform-page") || profileRoot;
+    page.outerHTML = renderStudentProfilePage();
+    initPlatformLogout();
+  }
+};
+
 const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
   if (!isStudentInstitutionalMode()) return studentInstitutionalState;
   if (!force && studentInstitutionalState.status === "ready") return studentInstitutionalState;
@@ -15543,17 +16814,6 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       }));
       studentInstitutionalState.weekStartIso = studentInstitutionalState.weekStartIso || familyWeekStartIso();
       studentInstitutionalState.calendarError = "";
-      const weekDates = getFamilyWeekDates(studentInstitutionalState.weekStartIso);
-      const entries = enrollment?.class_id
-        ? await client.request(
-            "class_calendar_entries",
-            `?select=id,class_id,school_id,teacher_id,plan_id,title,description,entry_date,start_time,end_time,entry_type,status,created_at&status=eq.published&class_id=${supabaseEq(enrollment.class_id)}&entry_date=gte.${encodeURIComponent(weekDates.seg)}&entry_date=lte.${encodeURIComponent(weekDates.sex)}&order=start_time.asc.nullslast&order=created_at.asc`,
-            { requireAuthenticated: true, allowedRoles: ["aluno", "admin"] }
-          ).catch((error) => {
-            studentInstitutionalState.calendarError = error.message || "Nao foi possivel carregar a Minha Semana.";
-            return [];
-          })
-        : [];
       studentInstitutionalState.profile = profile;
       studentInstitutionalState.publicUser = publicUser;
       studentInstitutionalState.student = student;
@@ -15561,13 +16821,35 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       studentInstitutionalState.classItem = classItem;
       studentInstitutionalState.school = school;
       studentInstitutionalState.teachers = resolvedTeachers;
-      studentInstitutionalState.entries = (entries || []).filter((entry) => entry.status === "published").map(mapFamilyCalendarEntry);
+      studentInstitutionalState.entries = [];
       studentInstitutionalState.recommendationsError = "";
-      studentInstitutionalState.recommendations = await loadStudentTeacherRecommendations(client).catch((error) => {
-        studentInstitutionalState.recommendationsError = error.message || "Nao foi possivel carregar as recomendacoes.";
-        return [];
-      });
+      studentInstitutionalState.recommendations = [];
+      studentInstitutionalState.secondaryLoadedAt = "";
       studentInstitutionalState.status = "ready";
+      const refreshSecondaryData = async () => {
+        const weekDates = getFamilyWeekDates(studentInstitutionalState.weekStartIso);
+        const [entries, recommendations] = await Promise.all([
+          enrollment?.class_id
+            ? client.request(
+                "class_calendar_entries",
+                `?select=id,class_id,school_id,teacher_id,plan_id,title,description,entry_date,start_time,end_time,entry_type,status,created_at&status=eq.published&class_id=${supabaseEq(enrollment.class_id)}&entry_date=gte.${encodeURIComponent(weekDates.seg)}&entry_date=lte.${encodeURIComponent(weekDates.sex)}&order=start_time.asc.nullslast&order=created_at.asc`,
+                { requireAuthenticated: true, allowedRoles: ["aluno", "admin"] }
+              ).catch((error) => {
+                studentInstitutionalState.calendarError = error.message || "Nao foi possivel carregar a Minha Semana.";
+                return [];
+              })
+            : Promise.resolve([]),
+          loadStudentTeacherRecommendations(client).catch((error) => {
+            studentInstitutionalState.recommendationsError = error.message || "Nao foi possivel carregar as recomendacoes.";
+            return [];
+          }),
+        ]);
+        studentInstitutionalState.entries = (entries || []).filter((entry) => entry.status === "published").map(mapFamilyCalendarEntry);
+        studentInstitutionalState.recommendations = recommendations || [];
+        studentInstitutionalState.secondaryLoadedAt = new Date().toISOString();
+        rerenderStudentInstitutionalSurfaces();
+      };
+      refreshSecondaryData().catch(() => {});
       return studentInstitutionalState;
     } catch (error) {
       studentInstitutionalState.status = "error";
@@ -20219,6 +21501,7 @@ const renderAppPage = () => {
     return;
   }
   document.title = `${activeModule.title} | Raizes e Saberes`;
+  maybeRefreshContentGovernancePage(activeKey);
 
   if (["professor", "professorTurma", "professorAluno"].includes(activeKey)) {
     mount.innerHTML = activeModule.html;
@@ -20265,7 +21548,16 @@ const renderAppPage = () => {
     return;
   }
 
-  const routeHtml = activeKey === "biblioteca" && currentRole === "aluno" ? renderStudentLibraryHome() : activeModule.html;
+  let routeHtml = activeKey === "biblioteca" && currentRole === "aluno" && !isPremiumLibraryDeepLink()
+    ? renderStudentLibraryHome()
+    : activeModule.html;
+  if (activeKey === "viewer" && isContentGovernanceRequired()) {
+    routeHtml = !isContentGovernanceReady()
+      ? renderContentGovernanceLoading("Livro digital")
+      : isContentAvailableToSession("book", activeBook.id)
+        ? activeModule.html
+        : renderContentUnavailableForSchool({ title: "Livro indisponivel", type: "book", id: activeBook.id });
+  }
   const nav = environment.nav
     .map(([key, label, href]) =>
       key === "heading"

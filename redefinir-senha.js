@@ -38,7 +38,17 @@ const setResetBusy = (isBusy) => {
   }
 };
 
-const hasValidRecoveryToken = () => Boolean(resetTokens.accessToken && (!resetTokens.type || resetTokens.type === "recovery"));
+const setResetComplete = () => {
+  resetForm?.querySelectorAll("input, button").forEach((item) => {
+    item.disabled = true;
+  });
+  const button = resetForm?.querySelector("button[type='submit']");
+  if (button) {
+    button.textContent = "Senha atualizada";
+  }
+};
+
+const hasValidRecoveryToken = () => Boolean(resetTokens.accessToken && (!resetTokens.type || ["recovery", "invite"].includes(resetTokens.type)));
 
 if (!hasValidRecoveryToken()) {
   if (resetInvalid) resetInvalid.hidden = false;
@@ -101,9 +111,7 @@ resetForm?.addEventListener("submit", async (event) => {
     localStorage.removeItem("raizes:supabase-access-token");
     window.history.replaceState(null, "", "redefinir-senha.html");
     showResetSuccess("Senha atualizada. Volte ao login e acesse com a nova senha.");
-    resetForm.querySelectorAll("input, button").forEach((item) => {
-      item.disabled = true;
-    });
+    setResetComplete();
   } catch (error) {
     showResetError(error.message || "Nao foi possivel redefinir a senha.");
     setResetBusy(false);
