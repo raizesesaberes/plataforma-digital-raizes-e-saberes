@@ -13,6 +13,7 @@ const platformRoles = {
   gestor: ["gestor", "gestor_escolar", "manager"],
   coordenador: ["coordenador", "coordenador_pedagogico", "coordinator"],
   secretaria: ["secretaria", "secretaria_escolar", "secretaria-operacional"],
+  secretaria_municipal: ["secretaria_municipal"],
   admin: ["admin", "administrador", "administrador_nacional"],
 };
 const prefersFileRoutes = () =>
@@ -27,6 +28,7 @@ const platformRoleHome = {
   gestor: "gestor.html",
   coordenador: platformRoute("/professor", "professor.html"),
   secretaria: platformRoute("/secretaria", "secretaria.html"),
+  secretaria_municipal: "gestor.html",
   admin: platformRoute("/admin", "admin.html"),
 };
 const platformNavigationStateKey = "raizes:platform-navigation-stack";
@@ -55,7 +57,7 @@ const routeAccessRules = {
   avalia: ["professor", "gestor", "coordenador", "admin"],
   bancoQuestoes: ["professor", "gestor", "coordenador", "admin"],
   secretaria: ["secretaria", "gestor", "coordenador", "admin"],
-  gestor: ["gestor", "coordenador", "admin"],
+  gestor: ["gestor", "coordenador", "secretaria", "secretaria_municipal", "admin"],
 };
 const protectedRouteKeyByPage = {
   "professor.html": "professor",
@@ -4013,6 +4015,16 @@ const secretariaAnalyticsState = {
   promise: null,
   key: "",
   result: null,
+};
+
+const municipalNetworkState = {
+  status: "idle",
+  error: "",
+  promise: null,
+  key: "",
+  overview: null,
+  comparison: null,
+  users: [],
 };
 
 const teacherClassMessagesState = {
@@ -9124,6 +9136,328 @@ const analyticsService = (() => {
     getAlerts: (...args) => active().getAlerts(...args),
   };
 })();
+
+const municipalNetworkAllowedRoles = ["secretaria_municipal", "secretaria", "admin"];
+const municipalNetworkService = (() => {
+  const client = () => createSupabaseRestClient();
+  const emptyOverview = {
+    network: {},
+    period: {},
+    summary: {},
+    schools: [],
+    scope: { kind: "network", global_school_access: false },
+  };
+  const remote = {
+    async getOverview({ networkId, dateFrom, dateTo } = {}) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/network_get_overview", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: municipalNetworkAllowedRoles,
+        body: JSON.stringify({
+          p_network_id: networkId || null,
+          p_date_from: dateFrom || null,
+          p_date_to: dateTo || null,
+        }),
+      }));
+    },
+    async getSchoolComparison({ networkId, dateFrom, dateTo, metric } = {}) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/network_get_school_comparison", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: municipalNetworkAllowedRoles,
+        body: JSON.stringify({
+          p_network_id: networkId || null,
+          p_date_from: dateFrom || null,
+          p_date_to: dateTo || null,
+          p_metric: metric || "attendance_rate",
+        }),
+      }));
+    },
+    async getUsers({ networkId } = {}) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/network_get_users", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: municipalNetworkAllowedRoles,
+        body: JSON.stringify({ p_network_id: networkId || null }),
+      }));
+    },
+  };
+  const fallback = {
+    async getOverview() {
+      return { ...emptyOverview };
+    },
+    async getSchoolComparison() {
+      return { schools: [], public_ranking: false };
+    },
+    async getUsers() {
+      return { users: [] };
+    },
+  };
+  const active = () => {
+    const currentClient = client();
+    if (currentClient.isConfigured) return remote;
+    if (currentClient.canUseFallback) return fallback;
+    return remote;
+  };
+  return {
+    getOverview: (...args) => active().getOverview(...args),
+    getSchoolComparison: (...args) => active().getSchoolComparison(...args),
+    getUsers: (...args) => active().getUsers(...args),
+  };
+})();
+
+const municipalNetworkTabs = [
+  ["overview", "Visão Geral", "chart"],
+  ["schools", "Escolas", "escola"],
+  ["analytics", "Analytics", "chart"],
+  ["avalia", "Avalia+", "clipboard"],
+  ["attendance", "Frequência", "calendar"],
+  ["diary", "Diário", "doc"],
+  ["users", "Usuários", "users"],
+  ["reports", "Relatórios", "doc"],
+];
+const getMunicipalNetworkParams = () => new URLSearchParams(window.location.search);
+const getMunicipalNetworkView = () => {
+  const view = getMunicipalNetworkParams().get("view") || "overview";
+  return municipalNetworkTabs.some(([key]) => key === view) ? view : "overview";
+};
+const municipalNetworkLink = (view, extra = {}) => {
+  const params = new URLSearchParams();
+  params.set("view", view);
+  Object.entries(extra).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") params.set(key, value);
+  });
+  return `gestor.html?${params.toString()}`;
+};
+const getMunicipalNetworkPeriodRange = () => {
+  const defaults = getDiaryPeriodDefaultRange();
+  const params = getMunicipalNetworkParams();
+  return {
+    from: params.get("from") || defaults.from,
+    to: params.get("to") || defaults.to,
+  };
+};
+const municipalSchoolValue = (school, key, formatter = analyticsNumberLabel) => formatter(school?.[key]);
+const renderMunicipalStatus = () => {
+  const message = municipalNetworkState.status === "error"
+    ? municipalNetworkState.error || "Não foi possível carregar a Rede Municipal."
+    : "Carregando Rede Municipal.";
+  return `<section class="panel span-2"><h2>Secretaria Municipal</h2><p>${htmlEscape(message)}</p></section>`;
+};
+const ensureMunicipalNetworkData = async ({ force = false } = {}) => {
+  const range = getMunicipalNetworkPeriodRange();
+  const key = `${range.from}:${range.to}`;
+  if (!force && municipalNetworkState.status === "ready" && municipalNetworkState.key === key) return municipalNetworkState;
+  if (!force && municipalNetworkState.promise && municipalNetworkState.key === key) return municipalNetworkState.promise;
+  municipalNetworkState.status = "loading";
+  municipalNetworkState.error = "";
+  municipalNetworkState.key = key;
+  municipalNetworkState.promise = (async () => {
+    try {
+      const [overview, comparison, usersResult] = await Promise.all([
+        municipalNetworkService.getOverview({ dateFrom: range.from, dateTo: range.to }),
+        municipalNetworkService.getSchoolComparison({ dateFrom: range.from, dateTo: range.to, metric: "attendance_rate" }),
+        municipalNetworkService.getUsers({}),
+      ]);
+      if (overview?.error) throw new Error(overview.error);
+      if (comparison?.error) throw new Error(comparison.error);
+      if (usersResult?.error) throw new Error(usersResult.error);
+      municipalNetworkState.overview = overview || {};
+      municipalNetworkState.comparison = comparison || {};
+      municipalNetworkState.users = usersResult?.users || [];
+      municipalNetworkState.status = "ready";
+    } catch (error) {
+      municipalNetworkState.overview = null;
+      municipalNetworkState.comparison = null;
+      municipalNetworkState.users = [];
+      municipalNetworkState.error = error.message || "Não foi possível carregar a Rede Municipal.";
+      municipalNetworkState.status = "error";
+    } finally {
+      municipalNetworkState.promise = null;
+    }
+    return municipalNetworkState;
+  })();
+  return municipalNetworkState.promise;
+};
+const renderMunicipalTabs = (activeView) => `
+  <nav class="secretaria-official-nav" aria-label="Navegação da Secretaria Municipal">
+    ${municipalNetworkTabs.map(([key, label, icon]) => `<a class="${activeView === key ? "active" : ""}" href="${municipalNetworkLink(key)}">${secretariaInlineIcon(icon, label)}</a>`).join("")}
+  </nav>
+`;
+const renderMunicipalNetworkReadyView = () => {
+  const view = getMunicipalNetworkView();
+  const overview = municipalNetworkState.overview || {};
+  const network = overview.network || {};
+  const summary = overview.summary || {};
+  const schools = overview.schools || [];
+  const comparison = municipalNetworkState.comparison?.schools || schools;
+  const selectedSchoolId = getMunicipalNetworkParams().get("school") || "";
+  const selectedSchool = schools.find((school) => school.school_id === selectedSchoolId) || null;
+  const head = `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("escola", network.name || "Rede Municipal")}</h2><span>${htmlEscape(network.code || "REDE MUNICIPAL")}</span></div>
+      ${renderMunicipalTabs(view)}
+    </section>
+  `;
+  const overviewView = `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("chart", "Visão Geral")}</h2><span>${htmlEscape(network.municipality || "Município")} · ${htmlEscape(network.state || "")}</span></div>
+      <div class="metric-row">
+        <article>Escolas vinculadas<strong>${analyticsNumberLabel(summary.schools_total)}</strong><span>${analyticsNumberLabel(summary.schools_active)} ativas</span></article>
+        <article>Alunos ativos<strong>${analyticsNumberLabel(summary.active_students)}</strong><span>somente escolas vinculadas</span></article>
+        <article>Turmas<strong>${analyticsNumberLabel(summary.active_classes)}</strong><span>ativas no período</span></article>
+        <article>Professores<strong>${analyticsNumberLabel(summary.active_teachers)}</strong><span>cadastros ativos</span></article>
+        <article>Frequência média<strong>${analyticsPercentLabel(summary.attendance_rate)}</strong><span>dados consolidados</span></article>
+        <article>Participação Avalia+<strong>${analyticsPercentLabel(summary.assessment_participation)}</strong><span>sem ranking público</span></article>
+        <article>Média Avalia+<strong>${analyticsPercentLabel(summary.assessment_average)}</strong><span>resultados entregues</span></article>
+        <article>Aulas registradas<strong>${analyticsNumberLabel(summary.diary_entries)}</strong><span>Diário de Classe</span></article>
+      </div>
+    </section>
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("escola", "Escolas da Rede")}</h2><a href="${municipalNetworkLink("schools")}">Ver todas</a></div>
+      <ul class="clean-list">
+        ${schools.map((school) => `<li data-municipal-search-item><a href="${municipalNetworkLink("schools", { school: school.school_id })}"><strong>${htmlEscape(school.school_name || "Escola")}</strong></a><span>${municipalSchoolValue(school, "active_students")} alunos · ${municipalSchoolValue(school, "attendance_rate", analyticsPercentLabel)} frequência · Avalia+ ${municipalSchoolValue(school, "assessment_average", analyticsPercentLabel)}</span></li>`).join("") || "<li>Nenhuma escola vinculada retornada.</li>"}
+      </ul>
+    </section>
+  `;
+  const schoolDetail = selectedSchool ? `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("escola", selectedSchool.school_name || "Escola")}</h2><a href="${municipalNetworkLink("schools")}">Voltar</a></div>
+      <div class="metric-row">
+        <article>Status<strong>${htmlEscape(secretariaStatusLabel(selectedSchool.school_status))}</strong><span>cadastro escolar</span></article>
+        <article>Alunos<strong>${municipalSchoolValue(selectedSchool, "active_students")}</strong><span>ativos</span></article>
+        <article>Turmas<strong>${municipalSchoolValue(selectedSchool, "active_classes")}</strong><span>ativas</span></article>
+        <article>Professores<strong>${municipalSchoolValue(selectedSchool, "active_teachers")}</strong><span>ativos</span></article>
+        <article>Frequência<strong>${municipalSchoolValue(selectedSchool, "attendance_rate", analyticsPercentLabel)}</strong><span>período</span></article>
+        <article>Avalia+<strong>${municipalSchoolValue(selectedSchool, "assessment_average", analyticsPercentLabel)}</strong><span>${municipalSchoolValue(selectedSchool, "assessment_participation", analyticsPercentLabel)} participação</span></article>
+        <article>BNCC<strong>${municipalSchoolValue(selectedSchool, "bncc_percentage", analyticsPercentLabel)}</strong><span>${municipalSchoolValue(selectedSchool, "bncc_skills")} habilidade(s)</span></article>
+        <article>Diário<strong>${municipalSchoolValue(selectedSchool, "diary_entries")}</strong><span>aulas registradas</span></article>
+      </div>
+    </section>
+  ` : "";
+  const schoolsView = schoolDetail || `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("escola", "Escolas")}</h2><span>Read-only</span></div>
+      <ul class="clean-list">
+        ${schools.map((school) => `<li data-municipal-search-item><a href="${municipalNetworkLink("schools", { school: school.school_id })}"><strong>${htmlEscape(school.school_name || "Escola")}</strong></a>${secretariaBadge(secretariaStatusLabel(school.school_status), secretariaBadgeTone(school.school_status))}<span>${municipalSchoolValue(school, "active_students")} alunos · ${municipalSchoolValue(school, "active_classes")} turmas · ${municipalSchoolValue(school, "active_teachers")} professores · frequência ${municipalSchoolValue(school, "attendance_rate", analyticsPercentLabel)}</span></li>`).join("") || "<li>Nenhuma escola vinculada à rede.</li>"}
+      </ul>
+    </section>
+  `;
+  const analyticsView = `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("chart", "Comparativo entre escolas")}</h2><span>Sem ranking público</span></div>
+      <ul class="clean-list">
+        ${comparison.map((school) => `<li><strong>${htmlEscape(school.school_name || "Escola")}</strong><span>Frequência ${analyticsPercentLabel(school.attendance_rate)} · Avalia+ ${analyticsPercentLabel(school.assessment_average)} · Participação ${analyticsPercentLabel(school.assessment_participation)} · BNCC ${analyticsPercentLabel(school.bncc_percentage)} · Diário ${analyticsNumberLabel(school.diary_entries)}</span></li>`).join("") || "<li>Dados insuficientes para comparar escolas no período.</li>"}
+      </ul>
+    </section>
+  `;
+  const avaliaView = `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("clipboard", "Avalia+")}</h2><span>Consolidação read-only</span></div>
+      <div class="metric-row">
+        <article>Avaliações<strong>${analyticsNumberLabel(summary.assessment_assignments)}</strong><span>publicadas nas escolas vinculadas</span></article>
+        <article>Alunos atribuídos<strong>${analyticsNumberLabel(summary.assigned_students)}</strong><span>base consolidada</span></article>
+        <article>Concluídas<strong>${analyticsNumberLabel(summary.completed_students)}</strong><span>${analyticsPercentLabel(summary.assessment_participation)} participação</span></article>
+        <article>Média<strong>${analyticsPercentLabel(summary.assessment_average)}</strong><span>resultados finalizados</span></article>
+      </div>
+      <ul class="clean-list">
+        ${schools.map((school) => `<li><strong>${htmlEscape(school.school_name || "Escola")}</strong><span>${analyticsNumberLabel(school.assessment_assignments)} aplicações · participação ${analyticsPercentLabel(school.assessment_participation)} · média ${analyticsPercentLabel(school.assessment_average)} · BNCC ${analyticsPercentLabel(school.bncc_percentage)}</span></li>`).join("") || "<li>Sem aplicações do Avalia+ no período.</li>"}
+      </ul>
+    </section>
+  `;
+  const attendanceView = `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("calendar", "Frequência")}</h2><span>Rede → Escola</span></div>
+      <ul class="clean-list">
+        ${schools.map((school) => `<li><strong>${htmlEscape(school.school_name || "Escola")}</strong><span>${analyticsPercentLabel(school.attendance_rate)} de frequência média no período</span></li>`).join("") || "<li>Sem registros de frequência no período.</li>"}
+      </ul>
+    </section>
+  `;
+  const diaryView = `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("doc", "Diário")}</h2><span>Indicadores agregados</span></div>
+      <ul class="clean-list">
+        ${schools.map((school) => `<li><strong>${htmlEscape(school.school_name || "Escola")}</strong><span>${analyticsNumberLabel(school.diary_entries)} aula(s) registrada(s) no período</span></li>`).join("") || "<li>Sem registros do Diário no período.</li>"}
+      </ul>
+    </section>
+  `;
+  const usersView = `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("users", "Usuários da Rede")}</h2><span>Memberships explícitos</span></div>
+      <ul class="clean-list">
+        ${municipalNetworkState.users.map((user) => `<li><strong>${htmlEscape(user.display_name || "Usuário")}</strong>${secretariaBadge("Secretaria Municipal", "info")}<span>${htmlEscape(secretariaStatusLabel(user.status))}</span></li>`).join("") || "<li>Nenhum usuário de rede ativo retornado.</li>"}
+      </ul>
+    </section>
+  `;
+  const reportsView = `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("doc", "Relatórios")}</h2><span>Futuro</span></div>
+      <p>Relatórios oficiais PDF/XLSX ficam reservados para uma fase própria. Esta versão mantém somente leitura operacional e Analytics consolidado.</p>
+    </section>
+  `;
+  const body = {
+    overview: overviewView,
+    schools: schoolsView,
+    analytics: analyticsView,
+    avalia: avaliaView,
+    attendance: attendanceView,
+    diary: diaryView,
+    users: usersView,
+    reports: reportsView,
+  }[view] || overviewView;
+  return `${head}${body}`;
+};
+const renderMunicipalNetworkDashboard = () => `
+  <section class="secretaria-v1" data-municipal-network-v1>
+    <div class="dashboard-head">
+      <div>
+        <h1>Secretaria Municipal</h1>
+        <span>Rede Municipal · escolas vinculadas · Analytics consolidado</span>
+      </div>
+    </div>
+    ${municipalNetworkState.status === "ready" ? renderMunicipalNetworkReadyView() : renderMunicipalStatus()}
+  </section>
+`;
+const initMunicipalNetworkDashboard = () => {
+  const area = document.querySelector("[data-municipal-network-v1]");
+  if (!area) return;
+  const search = area.querySelector("[data-municipal-search]");
+  if (search) {
+    search.addEventListener("input", () => {
+      const query = search.value.trim().toLowerCase();
+      area.querySelectorAll("[data-municipal-search-item]").forEach((item) => {
+        item.hidden = query ? !item.textContent.toLowerCase().includes(query) : false;
+      });
+    });
+  }
+  if (municipalNetworkState.status !== "ready") {
+    const loadingTimeout = window.setTimeout(() => {
+      if (municipalNetworkState.status !== "loading" || !document.body.contains(area)) return;
+      municipalNetworkState.status = "error";
+      municipalNetworkState.error = "Tempo limite ao consultar a Rede Municipal. Recarregue a página após validar a sessão.";
+      area.outerHTML = renderMunicipalNetworkDashboard();
+      initMunicipalNetworkDashboard();
+    }, 12000);
+    ensureMunicipalNetworkData()
+      .then(() => {
+        window.clearTimeout(loadingTimeout);
+        if (!document.body.contains(area)) return;
+        area.outerHTML = renderMunicipalNetworkDashboard();
+        initMunicipalNetworkDashboard();
+      })
+      .catch((error) => {
+        window.clearTimeout(loadingTimeout);
+        municipalNetworkState.status = "error";
+        municipalNetworkState.error = error.message || "Não foi possível renderizar a Rede Municipal.";
+        if (!document.body.contains(area)) return;
+        area.outerHTML = renderMunicipalNetworkDashboard();
+        initMunicipalNetworkDashboard();
+      });
+  }
+};
 
 const renderTeacherAssessmentsView = () => {
   if (teacherInstitutionalState.status !== "ready") {
@@ -15637,21 +15971,12 @@ const modules = {
     `,
   },
   gestor: {
-    title: "Gestor Escolar",
-    subtitle: "Escola Municipal Joao da Silva",
-    code: "MS-006",
-    html: `
-      <div class="dashboard-head"><div><p>MS-006</p><h1>Painel do Gestor Escolar</h1><span>Escola Municipal Joao da Silva</span></div></div>
-      <div class="metric-row"><article>Estudantes<strong>582</strong><span>Ativos</span></article><article>Turmas<strong>23</strong><span>Ativas</span></article><article>Professores<strong>41</strong><span>Ativos</span></article><article>Desempenho Médio<strong>72,6%</strong><span>▲ 6,3 p.p.</span></article><article>Frequência Media<strong>94,1%</strong><span>▲ 2,4 p.p.</span></article><article>Avalia+ Participação<strong>92,3%</strong><span>▲ 4,1 p.p.</span></article></div>
-      <div class="analytics-grid">
-        <section class="panel"><h2>Desempenho por Etapa</h2><div class="column-chart"></div></section>
-        <section class="panel"><h2>Desempenho por Turma</h2><div class="bar-list"><p>6º Ano A<i style="--value:76%"></i></p><p>6º Ano B<i style="--value:72%"></i></p><p>7º Ano A<i style="--value:69%"></i></p><p>8º Ano A<i style="--value:74%"></i></p></div></section>
-        <section class="panel chart-card"><h2>Frequência por Turma</h2><div class="donut">94,1%</div></section>
-        <section class="panel"><h2>Alertas Pedagógicos</h2><ul class="clean-list"><li>5 turmas com desempenho abaixo de 60%</li><li>12 estudantes com baixa frequência</li><li>3 atividades atrasadas</li></ul></section>
-        <section class="panel span-2"><h2>Biblioteca Digital</h2><div class="book-strip small"><img src="assets/biblioteca/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.jpg" alt="" /><img src="assets/biblioteca/RAIZES_INFANTIL4_VOL2_BIBLIOTECA.jpg" alt="" /><img src="assets/biblioteca/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.jpg" alt="" /></div></section>
-        <section class="panel"><h2>Atalhos Rapidos</h2><div class="shortcut-grid"><button>Lancar Frequência</button><button>Registrar Atividade</button><button>Plano de Aula</button><button>Relatórios</button></div></section>
-      </div>
-    `,
+    title: "Secretaria Municipal",
+    subtitle: "Rede Municipal",
+    code: "REDE",
+    get html() {
+      return renderMunicipalNetworkDashboard();
+    },
   },
   familia: {
     title: "Painel da Família",
@@ -15913,29 +16238,28 @@ const environments = {
     mobile: secretariaOfficialModules.slice(0, 5),
   },
   gestor: {
-    label: "Gestor Escolar",
-    profile: "EM Joao da Silva",
-    search: "Buscar alunos, professores, turmas...",
-    user: "Carlos Oliveira<br />Gestor Escolar",
+    label: "Secretaria Municipal",
+    profile: "Rede Municipal",
+    search: "Buscar escolas, indicadores e usuarios...",
+    user: "Secretaria Municipal<br />Rede",
+    profileImage: "logo-sidebar-dark.png",
     nav: [
-      ["gestor", "Visão Geral", "gestor.html"],
-      ["turmas", "Turmas", "#"],
-      ["desempenho", "Desempenho", "#"],
-      ["frequencia", "Frequência", "#"],
-      ["avalia", "Avalia+", "avalia.html"],
-      ["professores", "Professores", "#"],
-      ["alunos", "Alunos", "#"],
-      ["planejamento", "Planejamento", "#"],
-      ["comunicados", "Comunicados", "#"],
-      ["agenda", "Agenda", "#"],
-      ["relatórios", "Relatórios", "#"],
+      ["overview", "Visão Geral", "gestor.html?view=overview"],
+      ["schools", "Escolas", "gestor.html?view=schools"],
+      ["analytics", "Analytics", "gestor.html?view=analytics"],
+      ["avalia", "Avalia+", "gestor.html?view=avalia"],
+      ["attendance", "Frequência", "gestor.html?view=attendance"],
+      ["diary", "Diário", "gestor.html?view=diary"],
+      ["users", "Usuários", "gestor.html?view=users"],
+      ["reports", "Relatórios", "gestor.html?view=reports"],
+      ["logout", "Sair", "#"],
     ],
     mobile: [
-      ["gestor", "Início", "gestor.html"],
-      ["turmas", "Turmas", "#"],
-      ["desempenho", "Desempenho", "#"],
-      ["relatórios", "Relatórios", "#"],
-      ["mais", "Mais", "#"],
+      ["overview", "Início", "gestor.html?view=overview"],
+      ["schools", "Escolas", "gestor.html?view=schools"],
+      ["analytics", "Analytics", "gestor.html?view=analytics"],
+      ["avalia", "Avalia+", "gestor.html?view=avalia"],
+      ["reports", "Mais", "gestor.html?view=reports"],
     ],
   },
   familia: {
@@ -23870,9 +24194,11 @@ const renderAppPage = () => {
           ? `<button class="app-nav-logout" type="button" data-platform-logout>${label}</button>`
         : key === "site"
           ? `<button class="app-nav-site" type="button" data-platform-site-logout>${label}</button>`
-        : `<a class="${(environmentKey === "secretaria" ? key === getSecretariaCurrentView() : key === activeKey) ? "is-active" : ""}" href="${href}">${
+        : `<a class="${(environmentKey === "secretaria" ? key === getSecretariaCurrentView() : environmentKey === "gestor" ? key === getMunicipalNetworkView() : key === activeKey) ? "is-active" : ""}" href="${href}">${
             environmentKey === "secretaria"
               ? secretariaInlineIcon(secretariaViewIcon[key] || "site", label)
+              : environmentKey === "gestor"
+                ? secretariaInlineIcon(municipalNetworkTabs.find(([tabKey]) => tabKey === key)?.[2] || "site", label)
               : environmentKey === "escola"
                 ? secretariaInlineIcon(officialSchoolNavIcon[key] || "escola", label)
                 : label
@@ -23883,9 +24209,9 @@ const renderAppPage = () => {
     .map(([key, label, href]) =>
       key === "logout"
         ? `<button class="mobile-logout-button" type="button" data-platform-logout>${label}</button>`
-        : key === "site"
-          ? `<button class="mobile-site-button" type="button" data-platform-site-logout>${label}</button>`
-        : `<a class="${(environmentKey === "secretaria" ? key === getSecretariaCurrentView() : key === activeKey) ? "is-active" : ""}" href="${href}">${label}</a>`
+      : key === "site"
+        ? `<button class="mobile-site-button" type="button" data-platform-site-logout>${label}</button>`
+        : `<a class="${(environmentKey === "secretaria" ? key === getSecretariaCurrentView() : environmentKey === "gestor" ? key === getMunicipalNetworkView() : key === activeKey) ? "is-active" : ""}" href="${href}">${label}</a>`
     )
     .join("");
   const shellHomeHref = currentRole ? getRoleHome(currentRole) : environmentKey === "aluno" ? "aluno.html" : environmentKey === "escola" ? "escola.html" : platformRoute("/", "index.html");
@@ -23941,6 +24267,7 @@ const renderAppPage = () => {
   initPlatformLogout();
   initSchoolCollectiveDashboard();
   initOfficialSchoolDashboard();
+  initMunicipalNetworkDashboard();
   window.initColorirDescobrir?.();
   initBookReader();
   initLibrarySearch();
