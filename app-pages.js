@@ -508,6 +508,7 @@ const secretariaOfficialModules = [
   ["turmas", "Turmas", "secretaria.html?view=turmas"],
   ["professores", "Professores", "secretaria.html?view=professores"],
   ["frequencia", "Frequência", "secretaria.html?view=frequencia"],
+  ["avalia", "Avalia+", "secretaria.html?view=avalia"],
   ["documentos", "Documentos", "secretaria.html?view=documentos"],
   ["comunicados", "Comunicados", "secretaria.html?view=comunicados"],
 ];
@@ -3995,6 +3996,14 @@ const secretariaDiaryPeriodState = {
   promise: null,
   key: "",
   summary: null,
+};
+
+const secretariaAvaliaResultsState = {
+  status: "idle",
+  error: "",
+  promise: null,
+  schoolId: "",
+  result: null,
 };
 
 const teacherClassMessagesState = {
@@ -8557,7 +8566,7 @@ const renderStudentActivitiesPage = () => {
 };
 
 const avaliaApplicationState = {
-  teacher: { status: "idle", error: "", assessments: [], assignments: [], message: "" },
+  teacher: { status: "idle", error: "", assessments: [], assignments: [], results: {}, resultStatus: "", resultError: "", message: "" },
   student: { status: "idle", error: "", assignments: [], attempts: [], activeAssignmentId: "", activeAttemptId: "", activeQuestionIndex: 0, message: "" },
 };
 
@@ -8580,6 +8589,12 @@ const avaliaDateTimeLabel = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Sem prazo";
   return date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+};
+
+const avaliaPercentLabel = (value) => {
+  const number = Number(value || 0);
+  if (!Number.isFinite(number)) return "0%";
+  return `${number.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
 };
 
 const avaliaInputDateTimeValue = (date = new Date()) => {
@@ -8648,6 +8663,12 @@ const avaliaApplicationService = (() => {
         })),
       });
     },
+    async getTeacherClassResults() {
+      return {};
+    },
+    async getSecretariaSchoolResults() {
+      return {};
+    },
     async listStudentAssignments() {
       const { state, assignments } = getDigitalAssignmentForStudent();
       return {
@@ -8709,6 +8730,24 @@ const avaliaApplicationService = (() => {
         }),
       }));
       return row;
+    },
+    async getTeacherClassResults(assignmentId) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/teacher_get_assessment_class_results", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: teacherAllowedRoles,
+        body: JSON.stringify({ p_assignment_id: assignmentId }),
+      }));
+    },
+    async getSecretariaSchoolResults(schoolId) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/secretaria_get_assessment_school_results", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: secretariaAllowedRoles,
+        body: JSON.stringify({ p_school_id: schoolId }),
+      }));
     },
     async listStudentAssignments() {
       const { request } = client();
@@ -8772,6 +8811,8 @@ const avaliaApplicationService = (() => {
     listTeacherAssessments: (...args) => active().listTeacherAssessments(...args),
     listTeacherAssignments: (...args) => active().listTeacherAssignments(...args),
     createAssignment: (...args) => active().createAssignment(...args),
+    getTeacherClassResults: (...args) => active().getTeacherClassResults(...args),
+    getSecretariaSchoolResults: (...args) => active().getSecretariaSchoolResults(...args),
     listStudentAssignments: (...args) => active().listStudentAssignments(...args),
     startAttempt: (...args) => active().startAttempt(...args),
     saveResponse: (...args) => active().saveResponse(...args),
@@ -8829,9 +8870,44 @@ const renderTeacherAssessmentAssignmentsList = (assignments = []) => {
             <strong>${printableEscape(assignment.assessment?.title || assignment.title || "Avaliacao")}</strong>
             <small>${printableEscape(targetLabel)} · ${avaliaDateTimeLabel(assignment.available_from)} ate ${avaliaDateTimeLabel(assignment.available_until)}</small>
             <small>${started} iniciadas · ${completed} concluidas</small>
+            <button type="button" class="qb-secondary-action" data-avalia-teacher-results="${htmlEscape(assignment.id)}">Resultados</button>
+            ${renderTeacherAssessmentResult(assignment.id)}
           </article>
         `;
       }).join("")}
+    </div>
+  `;
+};
+
+const renderTeacherAssessmentResult = (assignmentId) => {
+  const state = avaliaApplicationState.teacher;
+  if (state.resultStatus === assignmentId) return `<div class="qb-state">Carregando resultados da turma...</div>`;
+  if (state.resultError && state.resultError.assignmentId === assignmentId) return `<div class="qb-error">${printableEscape(state.resultError.message)}</div>`;
+  const result = state.results?.[assignmentId];
+  if (!result) return "";
+  const summary = result.summary || {};
+  const students = result.students || [];
+  const questions = result.questions || [];
+  const skills = result.skills || [];
+  return `
+    <div class="digital-result-card">
+      <strong>Resultado da turma</strong>
+      <span>${Number(summary.completed_students || 0)} entregues de ${Number(summary.assigned_students || 0)} alunos · média ${avaliaPercentLabel(summary.average_percentage)}</span>
+      <div class="metric-row">
+        <article>Participação<strong>${avaliaPercentLabel(summary.participation_percentage)}</strong><span>${Number(summary.started_students || 0)} iniciadas</span></article>
+        <article>Acertos médios<strong>${Number(summary.average_correct || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}</strong><span>por aluno</span></article>
+        <article>Maior resultado<strong>${avaliaPercentLabel(summary.highest_percentage)}</strong><span>consulta docente</span></article>
+        <article>Menor resultado<strong>${avaliaPercentLabel(summary.lowest_percentage)}</strong><span>sem ranking público</span></article>
+      </div>
+      <ul class="clean-list">
+        ${students.map((student) => `<li><strong>${printableEscape(student.student_name || "Aluno")}</strong><span>${printableEscape(avaliaStatusLabel(student.status))} · ${avaliaPercentLabel(student.score_percentage)} · ${Number(student.correct || 0)} acertos · ${Number(student.unanswered || 0)} sem resposta</span></li>`).join("") || "<li>Nenhum resultado individual concluído ainda.</li>"}
+      </ul>
+      <div class="digital-skill-report">
+        ${skills.map((skill) => `<span>${printableEscape(skill.bncc_skill || "Habilidade nao informada")} · ${avaliaPercentLabel(skill.performance_percentage)}</span>`).join("") || "<span>Habilidades aguardam respostas.</span>"}
+      </div>
+      <ul class="clean-list">
+        ${questions.map((question) => `<li><strong>${printableEscape(question.title || "Questao")}</strong><span>${printableEscape(question.bncc_skill || "Sem habilidade")} · erro ${avaliaPercentLabel(question.error_rate)} · ${Number(question.responses || 0)} respostas</span></li>`).join("") || "<li>Nenhuma questão consolidada.</li>"}
+      </ul>
     </div>
   `;
 };
@@ -16666,6 +16742,29 @@ const initTeacherAvaliaApplication = () => {
     }
   });
 
+  root.addEventListener("click", async (event) => {
+    const resultButton = event.target.closest("[data-avalia-teacher-results]");
+    if (!resultButton) return;
+    const assignmentId = resultButton.dataset.avaliaTeacherResults || "";
+    if (!assignmentId) return;
+    const statusNode = root.querySelector("[data-avalia-teacher-status]");
+    avaliaApplicationState.teacher.resultStatus = assignmentId;
+    avaliaApplicationState.teacher.resultError = "";
+    refreshTeacherAvaliaSurface();
+    try {
+      const result = await avaliaApplicationService.getTeacherClassResults(assignmentId);
+      avaliaApplicationState.teacher.results[assignmentId] = result;
+      avaliaApplicationState.teacher.resultStatus = "";
+      avaliaApplicationState.teacher.message = "Resultados carregados.";
+      refreshTeacherAvaliaSurface();
+    } catch (error) {
+      avaliaApplicationState.teacher.resultStatus = "";
+      avaliaApplicationState.teacher.resultError = { assignmentId, message: error.message || "Nao foi possivel carregar resultados." };
+      if (statusNode) statusNode.textContent = avaliaApplicationState.teacher.resultError.message;
+      refreshTeacherAvaliaSurface();
+    }
+  });
+
   root.addEventListener("submit", async (event) => {
     const form = event.target.closest("[data-avalia-assignment-form]");
     if (!form) return;
@@ -18368,8 +18467,8 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
 };
 
 const secretariaAllowedRoles = ["secretaria", "admin", "gestor", "coordenador"];
-const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "comunicados"];
-const secretariaOfficialViews = ["painel", "alunos", "matriculas", "responsaveis", "turmas", "professores", "frequencia", "documentos", "comunicados"];
+const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "avalia", "comunicados"];
+const secretariaOfficialViews = ["painel", "alunos", "matriculas", "responsaveis", "turmas", "professores", "frequencia", "avalia", "documentos", "comunicados"];
 const secretariaActiveStatuses = new Set(["active", "ativo"]);
 
 const isSecretariaActiveStatus = (status) => secretariaActiveStatuses.has(String(status || "active").toLowerCase());
@@ -18437,6 +18536,37 @@ const ensureSecretariaDiaryPeriodSummary = async ({ force = false, classId = "",
     return secretariaDiaryPeriodState;
   })();
   return secretariaDiaryPeriodState.promise;
+};
+
+const getSecretariaPrimarySchool = () =>
+  (secretariaInstitutionalState.schools || []).find((item) => isSecretariaActiveStatus(item.status))
+  || secretariaInstitutionalState.schools?.[0]
+  || {};
+
+const ensureSecretariaAvaliaResults = async ({ force = false, schoolId = "" } = {}) => {
+  const selectedSchoolId = schoolId || getSecretariaPrimarySchool().id || "";
+  if (!selectedSchoolId) return secretariaAvaliaResultsState;
+  if (!force && secretariaAvaliaResultsState.status === "ready" && secretariaAvaliaResultsState.schoolId === selectedSchoolId) return secretariaAvaliaResultsState;
+  if (!force && secretariaAvaliaResultsState.promise && secretariaAvaliaResultsState.schoolId === selectedSchoolId) return secretariaAvaliaResultsState.promise;
+  secretariaAvaliaResultsState.status = "loading";
+  secretariaAvaliaResultsState.error = "";
+  secretariaAvaliaResultsState.schoolId = selectedSchoolId;
+  secretariaAvaliaResultsState.promise = (async () => {
+    try {
+      const result = await avaliaApplicationService.getSecretariaSchoolResults(selectedSchoolId);
+      if (result.error) throw new Error(result.error);
+      secretariaAvaliaResultsState.result = result;
+      secretariaAvaliaResultsState.status = "ready";
+    } catch (error) {
+      secretariaAvaliaResultsState.result = null;
+      secretariaAvaliaResultsState.error = error.message || "Não foi possível carregar os resultados do Avalia+.";
+      secretariaAvaliaResultsState.status = "error";
+    } finally {
+      secretariaAvaliaResultsState.promise = null;
+    }
+    return secretariaAvaliaResultsState;
+  })();
+  return secretariaAvaliaResultsState.promise;
 };
 
 const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
@@ -18980,7 +19110,8 @@ const secretariaViewIcon = {
   responsaveis: "family",
   turmas: "users",
   professores: "cap",
-  frequência: "calendar",
+  frequencia: "calendar",
+  avalia: "chart",
   documentos: "doc",
   comunicados: "mail",
 };
@@ -19236,7 +19367,8 @@ const renderSecretariaNav = (currentView) => {
     matriculas: "Matrículas",
     responsaveis: "Responsáveis",
     documentos: "Documentos",
-    frequência: "Frequência",
+    frequencia: "Frequência",
+    avalia: "Avalia+",
     comunicados: "Comunicados",
   };
   return `<nav class="secretaria-official-nav" aria-label="Menu oficial da Secretaria">${secretariaOfficialViews
@@ -20375,6 +20507,59 @@ const renderSecretariaCommunicationsView = (index) => {
   `;
 };
 
+const renderSecretariaAvaliaResultsView = (index) => {
+  const school = getSecretariaPrimarySchool();
+  const state = secretariaAvaliaResultsState;
+  const result = state.result || {};
+  const summary = result.summary || {};
+  const assignments = result.assignments || [];
+  const skills = result.skills || [];
+  const distribution = result.distribution || {};
+  if (state.status === "loading" || state.status === "idle") {
+    return `<section class="panel span-2"><h2>Avalia+</h2><p>Carregando resultados agregados da escola.</p></section>`;
+  }
+  if (state.status === "error") {
+    return `<section class="panel span-2"><h2>Avalia+</h2><p>${htmlEscape(state.error)}</p></section>`;
+  }
+  return `
+    <div class="analytics-grid secretaria-grid">
+      <section class="panel span-2">
+        <div class="panel-head"><h2>${secretariaInlineIcon("chart", "Avalia+")}</h2><span>${htmlEscape(normalizeSchoolName(school))}</span></div>
+        <div class="metric-row">
+          <article>Alunos atribuídos<strong>${Number(summary.assigned_students || 0)}</strong><span>base das avaliações</span></article>
+          <article>Concluídas<strong>${Number(summary.completed_students || 0)}</strong><span>${avaliaPercentLabel(summary.participation_percentage)} participação</span></article>
+          <article>Média geral<strong>${avaliaPercentLabel(summary.average_percentage)}</strong><span>resultados entregues</span></article>
+          <article>Turmas avaliadas<strong>${Number(summary.classes_participating || 0)}</strong><span>sem ranking público</span></article>
+        </div>
+        <ul class="clean-list">
+          ${assignments.map((assignment) => `
+            <li data-secretaria-search-item>
+              <strong>${htmlEscape(assignment.assessment_title || "Avaliação")}</strong>
+              ${secretariaBadge(avaliaStatusLabel(assignment.status), secretariaBadgeTone(assignment.status))}
+              <span>${htmlEscape(assignment.class_name || "Turma")} · ${Number(assignment.completed_students || 0)}/${Number(assignment.assigned_students || 0)} entregues · média ${avaliaPercentLabel(assignment.average_percentage)}</span>
+            </li>
+          `).join("") || "<li>Nenhuma aplicação do Avalia+ retornada para esta escola.</li>"}
+        </ul>
+      </section>
+      <section class="panel">
+        <h2>Distribuição</h2>
+        <ul class="clean-list">
+          <li><strong>0 a 49%</strong><span>${Number(distribution["0_49"] || 0)} tentativa${Number(distribution["0_49"] || 0) === 1 ? "" : "s"}</span></li>
+          <li><strong>50 a 69%</strong><span>${Number(distribution["50_69"] || 0)} tentativa${Number(distribution["50_69"] || 0) === 1 ? "" : "s"}</span></li>
+          <li><strong>70 a 84%</strong><span>${Number(distribution["70_84"] || 0)} tentativa${Number(distribution["70_84"] || 0) === 1 ? "" : "s"}</span></li>
+          <li><strong>85 a 100%</strong><span>${Number(distribution["85_100"] || 0)} tentativa${Number(distribution["85_100"] || 0) === 1 ? "" : "s"}</span></li>
+        </ul>
+      </section>
+      <section class="panel">
+        <h2>Habilidades BNCC</h2>
+        <ul class="clean-list">
+          ${skills.map((skill) => `<li><strong>${htmlEscape(skill.bncc_skill || "Habilidade nao informada")}</strong><span>${avaliaPercentLabel(skill.performance_percentage)} · ${Number(skill.responses || 0)} respostas · ${Number(skill.questions || 0)} questões</span></li>`).join("") || "<li>Habilidades aguardam respostas dos alunos.</li>"}
+        </ul>
+      </section>
+    </div>
+  `;
+};
+
 const renderSecretariaReadyView = () => {
   const view = getSecretariaCurrentView();
   const index = buildSecretariaIndex();
@@ -20391,7 +20576,8 @@ const renderSecretariaReadyView = () => {
     novoResponsavel: () => renderSecretariaNewGuardianView(index),
     documentos: () => renderSecretariaPendenciasView(index),
     pendencias: () => renderSecretariaPendenciasView(index),
-    frequência: () => renderSecretariaAttendanceView(index),
+    frequencia: () => renderSecretariaAttendanceView(index),
+    avalia: () => renderSecretariaAvaliaResultsView(index),
     comunicados: () => renderSecretariaCommunicationsView(index),
   }[view]();
   return `${renderSecretariaGlobalHeader(index)}${content}`;
@@ -21026,6 +21212,17 @@ const initSecretariaInstitutional = () => {
     const before = `${secretariaDiaryPeriodState.status}:${secretariaDiaryPeriodState.key}`;
     ensureSecretariaDiaryPeriodSummary({ classId, from: range.from, to: range.to }).then(() => {
       const after = `${secretariaDiaryPeriodState.status}:${secretariaDiaryPeriodState.key}`;
+      if (before !== after && document.body.contains(area)) {
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+      }
+    });
+  }
+  if (secretariaInstitutionalState.status === "ready" && getSecretariaCurrentView() === "avalia") {
+    const schoolId = getSecretariaPrimarySchool().id || "";
+    const before = `${secretariaAvaliaResultsState.status}:${secretariaAvaliaResultsState.schoolId}`;
+    ensureSecretariaAvaliaResults({ schoolId }).then(() => {
+      const after = `${secretariaAvaliaResultsState.status}:${secretariaAvaliaResultsState.schoolId}`;
       if (before !== after && document.body.contains(area)) {
         area.outerHTML = renderSecretariaDashboard();
         initSecretariaInstitutional();
