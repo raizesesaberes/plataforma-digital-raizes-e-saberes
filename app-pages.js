@@ -5000,9 +5000,12 @@ const sendTeacherClassMessage = async (formData) => {
 
 const setTeacherClassMessageStatus = async (communicationId = "", toStatus = "") => {
   const client = createSupabaseRestClient();
-  await client.request("communications", `?id=${supabaseEq(communicationId)}`, {
-    method: "PATCH",
-    body: JSON.stringify({ status: toStatus }),
+  await client.request("rpc/secretaria_set_communication_status", "", {
+    method: "POST",
+    body: JSON.stringify({
+      p_communication_id: communicationId,
+      p_to_status: toStatus,
+    }),
     requireAuthenticated: true,
     allowedRoles: teacherAllowedRoles,
   });
