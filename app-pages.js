@@ -3809,10 +3809,22 @@ const teacherWorkspaceNav = [
   ["turmas", "Minhas Turmas", "users"],
   ["planejamentos", "Planejamento", "calendar"],
   ["atividades", "Atividades Imprimíveis", "doc"],
+  ["avaliacoes", "Avalia+", "avalia"],
   ["biblioteca", "Biblioteca", "book"],
   ["acompanhamento", "Acompanhamento", "chart"],
   ["formação", "Formação", "cap"],
 ];
+
+const teacherWorkspaceViewAliases = {
+  "avaliações": "avaliacoes",
+  avalia: "avaliacoes",
+  "avalia+": "avaliacoes",
+};
+
+const normalizeTeacherWorkspaceView = (view = "") => {
+  const key = String(view || "inicio").trim() || "inicio";
+  return teacherWorkspaceViewAliases[key] || key;
+};
 
 const teacherAllowedRoles = ["professor", "teacher", "admin", "gestor", "coordenador"];
 
@@ -7209,6 +7221,7 @@ const renderTeacherQuickActions = () => `
       { label: "MINHAS TURMAS", icon: "users", view: "turmas", tone: "lime" },
       { label: "PLANEJAMENTO", icon: "calendar", view: "planejamentos", tone: "blue" },
       { label: "ATIVIDADES", icon: "clipboard", view: "atividades", tone: "green" },
+      { label: "AVALIA+", icon: "avalia", view: "avaliacoes", tone: "blue" },
       { label: "BIBLIOTECA", icon: "book", view: "biblioteca", tone: "orange" },
       { label: "ACOMPANHAMENTO", icon: "portfolio", view: "acompanhamento", tone: "purple" },
       { label: "FORMACAO", icon: "cap", view: "formação", tone: "teal" },
@@ -8113,6 +8126,7 @@ const renderTeacherStudentPage = () => {
 
 const studentPremiumNav = [
   ["aluno.html", "Início", "home"],
+  ["aluno.html?view=avaliacoes", "Avaliações", "avalia"],
   ["missao.html", "Missão do Dia", "star"],
   ["arvore.html", "Minha Árvore", "tree"],
   ["biblioteca.html", "Biblioteca", "book"],
@@ -8128,7 +8142,11 @@ const renderStudentPremiumSidebar = () => `
     </a>
     <nav>
       ${studentPremiumNav
-        .map(([href, label, icon], index) => `<a class="${index === 0 ? "is-active" : ""}" href="${href}">${premiumIcon(icon)}<span>${label}</span></a>`)
+        .map(([href, label, icon], index) => {
+          const isAvalia = href.includes("view=avaliacoes") && getPrintableParams().get("view") === "avaliacoes";
+          const isHome = index === 0 && getPrintableParams().get("view") !== "avaliacoes";
+          return `<a class="${isHome || isAvalia ? "is-active" : ""}" href="${href}">${premiumIcon(icon)}<span>${label}</span></a>`;
+        })
         .join("")}
     </nav>
     <button class="student-premium-logout" type="button" data-platform-logout>${premiumIcon("logout")}<span>SAIR</span></button>
@@ -8499,7 +8517,7 @@ const renderStudentSimpleDashboard = () => `
       ${renderStudentPremiumTopbar()}
       <div class="student-premium-grid">
         <main class="student-center">
-          ${renderStudentInstitutionalHomeContent()}
+          ${getPrintableParams().get("view") === "avaliacoes" ? renderStudentAssessmentsView() : renderStudentInstitutionalHomeContent()}
         </main>
         ${renderStudentQuickRail()}
       </div>
@@ -8538,6 +8556,378 @@ const renderStudentActivitiesPage = () => {
   `;
 };
 
+const avaliaApplicationState = {
+  teacher: { status: "idle", error: "", assessments: [], assignments: [], message: "" },
+  student: { status: "idle", error: "", assignments: [], attempts: [], activeAssignmentId: "", activeAttemptId: "", activeQuestionIndex: 0, message: "" },
+};
+
+const avaliaStatusLabel = (status = "") => {
+  const value = String(status || "").toLowerCase();
+  if (value === "published") return "Publicada";
+  if (value === "draft") return "Rascunho";
+  if (value === "closed") return "Encerrada";
+  if (value === "archived") return "Arquivada";
+  if (value === "in_progress") return "Em andamento";
+  if (value === "submitted") return "Entregue";
+  if (value === "graded") return "Concluida";
+  if (value === "cancelled") return "Cancelada";
+  if (value === "expired") return "Expirada";
+  return status || "Disponivel";
+};
+
+const avaliaDateTimeLabel = (value) => {
+  if (!value) return "Sem prazo";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Sem prazo";
+  return date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+};
+
+const avaliaInputDateTimeValue = (date = new Date()) => {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+};
+
+const getAvaliaAssignmentQuestions = (assignment) =>
+  [...(assignment?.assessment?.questions || assignment?.assessment?.assessment_questions || [])].sort((a, b) => Number(a.position || 0) - Number(b.position || 0));
+
+const getAvaliaQuestion = (entry) => entry?.question || entry?.question_items || {};
+
+const getAvaliaQuestionAlternatives = (question = {}) =>
+  [...(question.alternatives || question.question_alternatives || [])].sort((a, b) => Number(a.position || 0) - Number(b.position || 0));
+
+const getAvaliaAttemptForAssignment = (assignmentId) =>
+  avaliaApplicationState.student.attempts.find((attempt) => attempt.assignment_id === assignmentId) || null;
+
+const getAvaliaActiveAssignment = () =>
+  avaliaApplicationState.student.assignments.find((assignment) => assignment.id === avaliaApplicationState.student.activeAssignmentId) || null;
+
+const getAvaliaActiveAttempt = () =>
+  avaliaApplicationState.student.attempts.find((attempt) => attempt.id === avaliaApplicationState.student.activeAttemptId) || null;
+
+const getAvaliaResponseForQuestion = (attempt, questionId) =>
+  (attempt?.responses || attempt?.assessment_responses || []).find((response) => response.question_id === questionId) || null;
+
+const unwrapAvaliaRpcResult = (result) => Array.isArray(result) ? result[0] : result;
+
+const avaliaApplicationService = (() => {
+  const assignmentSelect =
+    "*,assessment:assessments(id,title,description,component,school_year,instructions,total_points,status,questions:assessment_questions(id,question_id,position,points,question:question_items(id,code,internal_title,statement,base_text,bncc_skill,question_type,alternatives:question_alternatives(id,label,body,position))))";
+  const attemptSelect = "*,responses:assessment_responses(id,attempt_id,question_id,selected_alternative_id,response_text,is_correct,score_awarded,answered_at)";
+  const client = () => createSupabaseRestClient();
+
+  const fallback = {
+    async listTeacherAssessments() {
+      return questionBankDataService.listAssessments();
+    },
+    async listTeacherAssignments() {
+      const state = readDigitalAssessmentState();
+      return state.assignments.map((assignment) => ({
+        ...assignment,
+        assessment: { title: assignment.title, component: assignment.component, school_year: assignment.year },
+        attempts: state.attempts.filter((attempt) => attempt.assignmentId === assignment.id),
+      }));
+    },
+    async createAssignment(payload) {
+      const assessment = await questionBankDataService.getAssessmentById(payload.assessmentId);
+      return publishDigitalAssessmentDemo({
+        assessmentId: payload.assessmentId,
+        title: assessment?.title || "Avaliação digital",
+        component: assessment?.component || "",
+        year: assessment?.year || "",
+        className: payload.className || "Turma",
+        availableFrom: payload.availableFrom,
+        dueAt: payload.availableUntil,
+        timeLimitMinutes: payload.timeLimitMinutes,
+        maxAttempts: payload.maxAttempts,
+        questions: (assessment?.questions || []).map((entry) => ({
+          id: entry.question_id || entry.question?.uuid || entry.id,
+          statement: entry.question?.statement || entry.question?.internal_title || "Questao objetiva",
+          alternatives: entry.question?.alternatives || [],
+          correctAlternative: entry.question?.correctAlternative || 0,
+          points: entry.points || 1,
+        })),
+      });
+    },
+    async listStudentAssignments() {
+      const { state, assignments } = getDigitalAssignmentForStudent();
+      return {
+        assignments: assignments.map((assignment) => ({
+          ...assignment,
+          assessment: {
+            id: assignment.assessmentId,
+            title: assignment.title,
+            component: assignment.component,
+            school_year: assignment.year,
+            questions: assignment.questions.map((question, index) => ({
+              id: question.id,
+              question_id: question.id,
+              position: index + 1,
+              points: question.points || 1,
+              question: {
+                id: question.id,
+                statement: question.statement,
+                base_text: question.baseText,
+                bncc_skill: question.skill,
+                alternatives: (question.alternatives || []).map((body, optionIndex) => ({ id: `${question.id}-${optionIndex}`, body, label: String.fromCharCode(65 + optionIndex), position: optionIndex + 1 })),
+              },
+            })),
+          },
+        })),
+        attempts: state.attempts.map((attempt) => ({ ...attempt, assignment_id: attempt.assignmentId, responses: [] })),
+      };
+    },
+  };
+
+  const remote = {
+    async listTeacherAssessments() {
+      return questionBankDataService.listAssessments();
+    },
+    async listTeacherAssignments() {
+      const { request } = client();
+      return request(
+        "assessment_assignments",
+        "?select=*,assessment:assessments(id,title,component,school_year),attempts:assessment_attempts(id,status,student_id,score_percentage)&order=created_at.desc",
+        { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
+      );
+    },
+    async createAssignment(payload) {
+      const { request } = client();
+      const row = unwrapAvaliaRpcResult(await request("rpc/teacher_create_assessment_assignment", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: teacherAllowedRoles,
+        body: JSON.stringify({
+          p_assessment_id: payload.assessmentId,
+          p_target_type: payload.targetType,
+          p_class_id: payload.classId,
+          p_student_id: payload.studentId || null,
+          p_available_from: payload.availableFrom || new Date().toISOString(),
+          p_available_until: payload.availableUntil || null,
+          p_time_limit_minutes: payload.timeLimitMinutes ? Number(payload.timeLimitMinutes) : null,
+          p_max_attempts: Number(payload.maxAttempts || 1),
+          p_status: "published",
+        }),
+      }));
+      return row;
+    },
+    async listStudentAssignments() {
+      const { request } = client();
+      const [assignments, attempts] = await Promise.all([
+        request("assessment_assignments", `?select=${assignmentSelect}&order=available_from.desc`, {
+          requireAuthenticated: true,
+          allowedRoles: ["aluno", "admin"],
+        }),
+        request("assessment_attempts", `?select=${attemptSelect}&order=started_at.desc`, {
+          requireAuthenticated: true,
+          allowedRoles: ["aluno", "admin"],
+        }).catch(() => []),
+      ]);
+      return { assignments: assignments || [], attempts: attempts || [] };
+    },
+    async startAttempt(assignmentId) {
+      const { request } = client();
+      const row = unwrapAvaliaRpcResult(await request("rpc/student_start_assessment_attempt", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: ["aluno", "admin"],
+        body: JSON.stringify({ p_assignment_id: assignmentId }),
+      }));
+      return row;
+    },
+    async saveResponse({ attemptId, questionId, alternativeId }) {
+      const { request } = client();
+      const row = unwrapAvaliaRpcResult(await request("rpc/student_save_assessment_response", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: ["aluno", "admin"],
+        body: JSON.stringify({
+          p_attempt_id: attemptId,
+          p_question_id: questionId,
+          p_selected_alternative_id: alternativeId,
+          p_response_text: null,
+        }),
+      }));
+      return row;
+    },
+    async submitAttempt(attemptId) {
+      const { request } = client();
+      const row = unwrapAvaliaRpcResult(await request("rpc/student_submit_assessment_attempt", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: ["aluno", "admin"],
+        body: JSON.stringify({ p_attempt_id: attemptId }),
+      }));
+      return row;
+    },
+  };
+
+  const active = () => {
+    const currentClient = client();
+    if (currentClient.isConfigured) return remote;
+    if (currentClient.canUseFallback) return fallback;
+    return remote;
+  };
+
+  return {
+    mode: () => (client().isConfigured ? "supabase" : client().canUseFallback ? "fallback" : "missing-config"),
+    listTeacherAssessments: (...args) => active().listTeacherAssessments(...args),
+    listTeacherAssignments: (...args) => active().listTeacherAssignments(...args),
+    createAssignment: (...args) => active().createAssignment(...args),
+    listStudentAssignments: (...args) => active().listStudentAssignments(...args),
+    startAttempt: (...args) => active().startAttempt(...args),
+    saveResponse: (...args) => active().saveResponse(...args),
+    submitAttempt: (...args) => active().submitAttempt(...args),
+  };
+})();
+
+const renderTeacherAssessmentsView = () => {
+  if (teacherInstitutionalState.status !== "ready") {
+    return renderTeacherInstitutionalStatus("CARREGANDO VINCULO DO PROFESSOR PARA APLICAR AVALIACOES.");
+  }
+  const classes = getTeacherInstitutionalClasses();
+  if (!classes.length) {
+    return renderTeacherEmptyState("NENHUMA TURMA VINCULADA.", "A aplicacao de avaliacao exige uma turma institucional ativa.");
+  }
+  const state = avaliaApplicationState.teacher;
+  const selectedClassId = classes[0]?.id || "";
+  const selectedStudents = getTeacherInstitutionalStudents(selectedClassId);
+  return `
+    <div class="teacher-avalia-app" data-avalia-teacher-app>
+      <form class="tw-form-grid" data-avalia-assignment-form>
+        <label><span>Avaliacao existente</span><select name="assessmentId" data-avalia-assessment-select><option value="">Carregando avaliacoes...</option></select></label>
+        <label><span>Destino</span><select name="targetType" data-avalia-target-type><option value="class">Turma inteira</option><option value="student">Aluno especifico</option></select></label>
+        <label><span>Turma</span><select name="classId" data-avalia-class-select>${classes.map((classItem) => `<option value="${htmlEscape(classItem.id)}">${printableEscape(classItem.name)}</option>`).join("")}</select></label>
+        <label data-avalia-student-wrap hidden><span>Aluno</span><select name="studentId" data-avalia-student-select>${selectedStudents.map((student) => `<option value="${htmlEscape(student.id)}">${printableEscape(student.name)}</option>`).join("")}</select></label>
+        <label><span>Inicio</span><input type="datetime-local" name="availableFrom" value="${avaliaInputDateTimeValue()}" /></label>
+        <label><span>Prazo</span><input type="datetime-local" name="availableUntil" value="${avaliaInputDateTimeValue(new Date(Date.now() + 7 * 86400000))}" /></label>
+        <label><span>Tentativas</span><input type="number" min="1" step="1" name="maxAttempts" value="1" /></label>
+        <label><span>Tempo limite</span><input type="number" min="5" step="5" name="timeLimitMinutes" value="50" /></label>
+        <button type="submit" class="qb-primary-action">Publicar avaliacao</button>
+      </form>
+      <div class="qb-selection-status" data-avalia-teacher-status aria-live="polite">${printableEscape(state.message || state.error || "")}</div>
+      <section class="tw-board">
+        <div class="tw-section-head"><h2>Aplicacoes publicadas</h2><span data-avalia-assignment-count>${state.assignments.length} registros</span></div>
+        <div data-avalia-assignment-list>${renderTeacherAssessmentAssignmentsList(state.assignments)}</div>
+      </section>
+    </div>
+  `;
+};
+
+const renderTeacherAssessmentAssignmentsList = (assignments = []) => {
+  if (!assignments.length) return `<div class="qb-state">Nenhuma avaliacao publicada por este professor ainda.</div>`;
+  return `
+    <div class="tw-card-grid">
+      ${assignments.map((assignment) => {
+        const attempts = assignment.attempts || assignment.assessment_attempts || [];
+        const started = attempts.length;
+        const completed = attempts.filter((attempt) => ["submitted", "graded"].includes(String(attempt.status || "").toLowerCase())).length;
+        const targetLabel = assignment.target_type === "student"
+          ? teacherInstitutionalState.studentsById?.[assignment.student_id]?.name || "Aluno especifico"
+          : getTeacherInstitutionalClasses().find((classItem) => classItem.id === assignment.class_id)?.name || "Turma";
+        return `
+          <article class="tw-metric-card">
+            <span>${printableEscape(avaliaStatusLabel(assignment.status))}</span>
+            <strong>${printableEscape(assignment.assessment?.title || assignment.title || "Avaliacao")}</strong>
+            <small>${printableEscape(targetLabel)} · ${avaliaDateTimeLabel(assignment.available_from)} ate ${avaliaDateTimeLabel(assignment.available_until)}</small>
+            <small>${started} iniciadas · ${completed} concluidas</small>
+          </article>
+        `;
+      }).join("")}
+    </div>
+  `;
+};
+
+const renderStudentAssessmentsView = () => {
+  if (!isStudentInstitutionalMode()) {
+    return renderContentUnavailableForSchool({ title: "Sessao do aluno necessaria", type: "aluno" });
+  }
+  if (studentInstitutionalState.status !== "ready") return renderStudentInstitutionalGate();
+  const state = avaliaApplicationState.student;
+  const assignments = state.assignments || [];
+  const available = assignments.filter((assignment) => !getAvaliaAttemptForAssignment(assignment.id));
+  const inProgress = assignments.filter((assignment) => getAvaliaAttemptForAssignment(assignment.id)?.status === "in_progress");
+  const done = assignments.filter((assignment) => ["submitted", "graded"].includes(String(getAvaliaAttemptForAssignment(assignment.id)?.status || "").toLowerCase()));
+  return `
+    <section class="student-card" data-avalia-student-app>
+      <div class="student-card-head"><h2>Avaliações</h2><span data-avalia-student-count>${assignments.length} publicadas</span></div>
+      <div class="qb-selection-status" data-avalia-student-status aria-live="polite">${printableEscape(state.message || state.error || "")}</div>
+      <div class="student-premium-card-grid">
+        ${renderStudentAssessmentGroup("Disponiveis", available)}
+        ${renderStudentAssessmentGroup("Em andamento", inProgress)}
+        ${renderStudentAssessmentGroup("Concluidas", done)}
+      </div>
+      <div data-avalia-attempt-stage>${renderStudentAssessmentAttemptStage()}</div>
+    </section>
+  `;
+};
+
+const renderStudentAssessmentGroup = (title, assignments = []) => `
+  <article class="student-side-card">
+    <h2>${printableEscape(title)}</h2>
+    ${assignments.length ? assignments.map(renderStudentAssessmentCard).join("") : `<p>Nenhuma avaliacao nesta etapa.</p>`}
+  </article>
+`;
+
+const renderStudentAssessmentCard = (assignment) => {
+  const attempt = getAvaliaAttemptForAssignment(assignment.id);
+  const questions = getAvaliaAssignmentQuestions(assignment);
+  const action = !attempt ? "Iniciar" : attempt.status === "in_progress" ? "Continuar" : "Ver resultado";
+  return `
+    <div class="digital-assessment-card">
+      <div><strong>${printableEscape(assignment.assessment?.title || assignment.title || "Avaliacao")}</strong><span>${printableEscape(assignment.assessment?.component || "")} · ${questions.length} questoes</span></div>
+      <small>${avaliaDateTimeLabel(assignment.available_from)} ate ${avaliaDateTimeLabel(assignment.available_until)} · ${assignment.time_limit_minutes || "sem"} min · ${assignment.max_attempts || 1} tentativa</small>
+      <mark>${printableEscape(avaliaStatusLabel(attempt?.status || assignment.status))}</mark>
+      <button type="button" data-avalia-student-open="${htmlEscape(assignment.id)}">${action}</button>
+    </div>
+  `;
+};
+
+const renderStudentAssessmentAttemptStage = () => {
+  const assignment = getAvaliaActiveAssignment();
+  const attempt = getAvaliaActiveAttempt();
+  if (!assignment || !attempt) return "";
+  const questions = getAvaliaAssignmentQuestions(assignment);
+  const questionEntry = questions[avaliaApplicationState.student.activeQuestionIndex] || questions[0];
+  const question = getAvaliaQuestion(questionEntry);
+  if (!question?.id) return `<div class="qb-state">Avaliacao sem questoes objetivas disponiveis.</div>`;
+  const alternatives = getAvaliaQuestionAlternatives(question);
+  const response = getAvaliaResponseForQuestion(attempt, question.id);
+  const isClosed = String(attempt.status || "").toLowerCase() !== "in_progress";
+  const answeredCount = questions.filter((entry) => getAvaliaResponseForQuestion(attempt, getAvaliaQuestion(entry).id)).length;
+  return `
+    <section class="digital-attempt-stage">
+      <div class="digital-attempt-head">
+        <div><strong>${printableEscape(assignment.assessment?.title || "Avaliacao")}</strong><span>${avaliaApplicationState.student.activeQuestionIndex + 1}/${questions.length} · ${answeredCount} respondidas</span></div>
+        <button type="button" data-avalia-stage-close>Fechar</button>
+      </div>
+      ${isClosed ? `
+        <div class="digital-result-card">
+          <strong>Avaliacao concluida</strong>
+          <span>${attempt.answered_count || answeredCount} respondidas · ${attempt.correct_count || 0} acertos · ${attempt.incorrect_count || 0} erros · ${attempt.unanswered_count || 0} nao respondidas</span>
+          <p>Resultado: ${attempt.score_percentage ?? 0}%</p>
+        </div>
+      ` : ""}
+      <article class="digital-question-player">
+        ${question.base_text ? `<blockquote>${printableEscape(question.base_text)}</blockquote>` : ""}
+        <h3>${printableEscape(question.statement || question.internal_title || "Questao")}</h3>
+        <div class="digital-options">
+          ${alternatives.map((alternative, index) => `
+            <label>
+              <input type="radio" name="avalia-answer" value="${htmlEscape(alternative.id)}" ${response?.selected_alternative_id === alternative.id ? "checked" : ""} ${isClosed ? "disabled" : ""} />
+              <span><b>${printableEscape(alternative.label || String.fromCharCode(65 + index))}</b>${printableEscape(alternative.body || "")}</span>
+            </label>
+          `).join("")}
+        </div>
+      </article>
+      <div class="digital-attempt-actions">
+        <button type="button" data-avalia-prev ${avaliaApplicationState.student.activeQuestionIndex === 0 ? "disabled" : ""}>Anterior</button>
+        <button type="button" data-avalia-next ${avaliaApplicationState.student.activeQuestionIndex >= questions.length - 1 ? "disabled" : ""}>Proxima</button>
+        <button type="button" data-avalia-submit ${isClosed ? "disabled" : ""}>Entregar avaliacao</button>
+      </div>
+    </section>
+  `;
+};
+
 const getStudentFirstName = () => {
   if (isStudentInstitutionalMode()) {
     return getActiveStudentProfile().firstName;
@@ -8552,6 +8942,7 @@ const getStudentFirstName = () => {
 };
 
 const renderTeacherWorkspaceView = (view) => {
+  const normalizedView = normalizeTeacherWorkspaceView(view);
   const { books, experiences, activities } = getTeacherBibliotecaResources();
   const institutionalClasses = getTeacherInstitutionalClasses();
   const institutionalStudents = getTeacherInstitutionalStudents();
@@ -8594,7 +8985,7 @@ const renderTeacherWorkspaceView = (view) => {
       <section class="tw-board tw-card-grid">
         ${[
           { title: "Abrir Biblioteca Viva", detail: "Livros, experiências e atividades", view: "biblioteca" },
-          { title: "Corrigir avaliações", detail: "Nenhuma correcao pendente no momento", view: "avaliações" },
+          { title: "Corrigir avaliações", detail: "Nenhuma correcao pendente no momento", view: "avaliacoes" },
           { title: "Ver relatórios", detail: "Relatórios reais aparecerao aqui", view: "relatórios" },
         ].map((item) => renderRecommendationCard({ type: "Atalho", title: item.title, detail: item.detail, view: item.view, action: "Abrir" })).join("")}
       </section>
@@ -8652,10 +9043,10 @@ const renderTeacherWorkspaceView = (view) => {
     jogos: `
       <section class="tw-board tw-placeholder"><h2>Jogos</h2><p>Jogos pedagógicos serao organizados aqui, usando o mesmo workspace.</p></section>
     `,
-    avaliações: `
+    avaliacoes: `
       <section class="tw-board">
         <div class="tw-section-head"><h2>Avaliações</h2><button type="button" data-teacher-view="inicio">Voltar</button></div>
-        ${renderPremiumEmpty("NENHUMA AVALIACAO PENDENTE", "As avaliações reais aparecerao aqui quando forem publicadas.", "purple")}
+        ${renderTeacherAssessmentsView()}
       </section>
     `,
     relatórios: `
@@ -8675,7 +9066,7 @@ const renderTeacherWorkspaceView = (view) => {
       <section class="tw-board tw-placeholder"><h2>Configurações</h2><p>Preferências do workspace, notificações e atalhos ficarão aqui.</p></section>
     `,
   };
-  return viewMap[view] || viewMap.inicio;
+  return viewMap[normalizedView] || viewMap.inicio;
 };
 
 const adminFeatureRegistry = [
@@ -16205,6 +16596,252 @@ const initDigitalResultsPanel = () => {
   });
 };
 
+const refreshTeacherAvaliaSurface = () => {
+  const root = document.querySelector("[data-avalia-teacher-app]");
+  if (!root) return;
+  root.outerHTML = renderTeacherAssessmentsView();
+  requestAnimationFrame(initTeacherAvaliaApplication);
+};
+
+const loadTeacherAvaliaData = async ({ force = false } = {}) => {
+  const state = avaliaApplicationState.teacher;
+  if (!force && state.status === "ready") return state;
+  state.status = "loading";
+  state.error = "";
+  try {
+    const [assessments, assignments] = await Promise.all([
+      avaliaApplicationService.listTeacherAssessments(),
+      avaliaApplicationService.listTeacherAssignments(),
+    ]);
+    state.assessments = (assessments || []).filter((assessment) => Number(assessment.items || assessment.questions?.length || 0) > 0);
+    state.assignments = assignments || [];
+    state.status = "ready";
+    state.error = "";
+  } catch (error) {
+    state.status = "error";
+    state.error = error.message || "Nao foi possivel carregar Avalia+.";
+    state.assessments = [];
+    state.assignments = [];
+  }
+  return state;
+};
+
+const syncTeacherAvaliaForm = (root) => {
+  const assessmentSelect = root.querySelector("[data-avalia-assessment-select]");
+  const classSelect = root.querySelector("[data-avalia-class-select]");
+  const studentSelect = root.querySelector("[data-avalia-student-select]");
+  const studentWrap = root.querySelector("[data-avalia-student-wrap]");
+  const targetType = root.querySelector("[data-avalia-target-type]");
+  if (assessmentSelect) {
+    assessmentSelect.innerHTML = avaliaApplicationState.teacher.assessments.length
+      ? avaliaApplicationState.teacher.assessments
+          .map((assessment) => `<option value="${htmlEscape(assessment.id)}">${printableEscape(assessment.title)} · ${assessment.items || assessment.questions?.length || 0} questoes</option>`)
+          .join("")
+      : `<option value="">Nenhuma avaliacao com questoes</option>`;
+  }
+  const selectedClassId = classSelect?.value || getTeacherInstitutionalClasses()[0]?.id || "";
+  const students = getTeacherInstitutionalStudents(selectedClassId);
+  if (studentSelect) {
+    studentSelect.innerHTML = students.length
+      ? students.map((student) => `<option value="${htmlEscape(student.id)}">${printableEscape(student.name)}</option>`).join("")
+      : `<option value="">Nenhum aluno nesta turma</option>`;
+  }
+  if (studentWrap && targetType) studentWrap.hidden = targetType.value !== "student";
+};
+
+const initTeacherAvaliaApplication = () => {
+  const root = document.querySelector("[data-avalia-teacher-app]");
+  if (!root) return;
+  if (root.dataset.avaliaTeacherBound === "true") return;
+  root.dataset.avaliaTeacherBound = "true";
+
+  if (teacherInstitutionalState.status === "ready" && avaliaApplicationState.teacher.status === "idle") {
+    loadTeacherAvaliaData().then(refreshTeacherAvaliaSurface);
+    return;
+  }
+  syncTeacherAvaliaForm(root);
+
+  root.addEventListener("change", (event) => {
+    if (event.target.closest("[data-avalia-class-select]") || event.target.closest("[data-avalia-target-type]")) {
+      syncTeacherAvaliaForm(root);
+    }
+  });
+
+  root.addEventListener("submit", async (event) => {
+    const form = event.target.closest("[data-avalia-assignment-form]");
+    if (!form) return;
+    event.preventDefault();
+    const statusNode = root.querySelector("[data-avalia-teacher-status]");
+    const formData = new FormData(form);
+    const classId = String(formData.get("classId") || "");
+    const classItem = getTeacherInstitutionalClasses().find((item) => item.id === classId);
+    const assessmentId = String(formData.get("assessmentId") || "");
+    const targetType = String(formData.get("targetType") || "class");
+    if (!assessmentId || !classId) {
+      if (statusNode) statusNode.textContent = "Selecione uma avaliacao e uma turma.";
+      return;
+    }
+    if (statusNode) statusNode.textContent = "Publicando avaliacao...";
+    try {
+      await avaliaApplicationService.createAssignment({
+        assessmentId,
+        targetType,
+        classId,
+        className: classItem?.name || "",
+        studentId: targetType === "student" ? String(formData.get("studentId") || "") : "",
+        availableFrom: formData.get("availableFrom") ? new Date(String(formData.get("availableFrom"))).toISOString() : new Date().toISOString(),
+        availableUntil: formData.get("availableUntil") ? new Date(String(formData.get("availableUntil"))).toISOString() : null,
+        maxAttempts: Number(formData.get("maxAttempts") || 1),
+        timeLimitMinutes: formData.get("timeLimitMinutes") ? Number(formData.get("timeLimitMinutes")) : null,
+      });
+      avaliaApplicationState.teacher.message = "Avaliacao publicada com sucesso.";
+      await loadTeacherAvaliaData({ force: true });
+      refreshTeacherAvaliaSurface();
+    } catch (error) {
+      avaliaApplicationState.teacher.error = error.message || "Nao foi possivel publicar a avaliacao.";
+      if (statusNode) statusNode.textContent = avaliaApplicationState.teacher.error;
+    }
+  });
+};
+
+const refreshStudentAvaliaSurface = () => {
+  const root = document.querySelector("[data-avalia-student-app]");
+  if (!root) return;
+  root.outerHTML = renderStudentAssessmentsView();
+  requestAnimationFrame(initStudentAvaliaApplication);
+};
+
+const loadStudentAvaliaData = async ({ force = false } = {}) => {
+  const state = avaliaApplicationState.student;
+  if (!force && state.status === "ready") return state;
+  state.status = "loading";
+  state.error = "";
+  try {
+    const result = await avaliaApplicationService.listStudentAssignments();
+    state.assignments = result.assignments || [];
+    state.attempts = result.attempts || [];
+    if (state.activeAttemptId) {
+      const activeAttempt = state.attempts.find((attempt) => attempt.id === state.activeAttemptId);
+      if (!activeAttempt) state.activeAttemptId = "";
+    }
+    state.status = "ready";
+    state.error = "";
+  } catch (error) {
+    state.status = "error";
+    state.error = error.message || "Nao foi possivel carregar suas avaliacoes.";
+    state.assignments = [];
+    state.attempts = [];
+  }
+  return state;
+};
+
+const initStudentAvaliaApplication = () => {
+  const root = document.querySelector("[data-avalia-student-app]");
+  if (!root) return;
+  if (root.dataset.avaliaStudentBound === "true") return;
+  root.dataset.avaliaStudentBound = "true";
+
+  if (studentInstitutionalState.status === "ready" && avaliaApplicationState.student.status === "idle") {
+    loadStudentAvaliaData().then(refreshStudentAvaliaSurface);
+    return;
+  }
+
+  root.addEventListener("click", async (event) => {
+    const button = event.target.closest("button");
+    if (!button) return;
+    const statusNode = root.querySelector("[data-avalia-student-status]");
+
+    if (button.dataset.avaliaStudentOpen) {
+      const assignmentId = button.dataset.avaliaStudentOpen;
+      avaliaApplicationState.student.activeAssignmentId = assignmentId;
+      avaliaApplicationState.student.activeQuestionIndex = 0;
+      const existingAttempt = getAvaliaAttemptForAssignment(assignmentId);
+      if (existingAttempt) {
+        avaliaApplicationState.student.activeAttemptId = existingAttempt.id;
+        refreshStudentAvaliaSurface();
+        return;
+      }
+      if (statusNode) statusNode.textContent = "Iniciando avaliacao...";
+      try {
+        const attempt = await avaliaApplicationService.startAttempt(assignmentId);
+        avaliaApplicationState.student.activeAttemptId = attempt.id;
+        avaliaApplicationState.student.message = `Tentativa iniciada em ${avaliaDateTimeLabel(attempt.started_at)}.`;
+        await loadStudentAvaliaData({ force: true });
+        refreshStudentAvaliaSurface();
+      } catch (error) {
+        avaliaApplicationState.student.error = error.message || "Nao foi possivel iniciar a avaliacao.";
+        if (statusNode) statusNode.textContent = avaliaApplicationState.student.error;
+      }
+      return;
+    }
+
+    const assignment = getAvaliaActiveAssignment();
+    const attempt = getAvaliaActiveAttempt();
+    if (!assignment || !attempt) return;
+    const questions = getAvaliaAssignmentQuestions(assignment);
+
+    if (button.hasAttribute("data-avalia-stage-close")) {
+      avaliaApplicationState.student.activeAssignmentId = "";
+      avaliaApplicationState.student.activeAttemptId = "";
+      refreshStudentAvaliaSurface();
+      return;
+    }
+    if (button.hasAttribute("data-avalia-prev")) {
+      avaliaApplicationState.student.activeQuestionIndex = Math.max(0, avaliaApplicationState.student.activeQuestionIndex - 1);
+      refreshStudentAvaliaSurface();
+      return;
+    }
+    if (button.hasAttribute("data-avalia-next")) {
+      avaliaApplicationState.student.activeQuestionIndex = Math.min(questions.length - 1, avaliaApplicationState.student.activeQuestionIndex + 1);
+      refreshStudentAvaliaSurface();
+      return;
+    }
+    if (button.hasAttribute("data-avalia-submit")) {
+      const unanswered = questions.filter((entry) => !getAvaliaResponseForQuestion(attempt, getAvaliaQuestion(entry).id)).length;
+      if (!window.confirm(`Deseja entregar a avaliacao? ${unanswered} questao${unanswered === 1 ? "" : "es"} sem resposta.`)) return;
+      if (statusNode) statusNode.textContent = "Entregando avaliacao...";
+      try {
+        const result = await avaliaApplicationService.submitAttempt(attempt.id);
+        avaliaApplicationState.student.message = `Avaliacao entregue. Resultado ${result.score_percentage ?? 0}%.`;
+        await loadStudentAvaliaData({ force: true });
+        refreshStudentAvaliaSurface();
+      } catch (error) {
+        avaliaApplicationState.student.error = error.message || "Nao foi possivel entregar a avaliacao.";
+        if (statusNode) statusNode.textContent = avaliaApplicationState.student.error;
+      }
+    }
+  });
+
+  root.addEventListener("change", async (event) => {
+    const input = event.target.closest("input[name='avalia-answer']");
+    if (!input) return;
+    const assignment = getAvaliaActiveAssignment();
+    const attempt = getAvaliaActiveAttempt();
+    const questionEntry = getAvaliaAssignmentQuestions(assignment)[avaliaApplicationState.student.activeQuestionIndex];
+    const question = getAvaliaQuestion(questionEntry);
+    const statusNode = root.querySelector("[data-avalia-student-status]");
+    if (!assignment || !attempt || !question?.id || attempt.status !== "in_progress") return;
+    if (statusNode) statusNode.textContent = "Salvando resposta...";
+    try {
+      const response = await avaliaApplicationService.saveResponse({
+        attemptId: attempt.id,
+        questionId: question.id,
+        alternativeId: input.value,
+      });
+      const localAttempt = getAvaliaActiveAttempt();
+      localAttempt.responses = [
+        ...(localAttempt.responses || []).filter((item) => item.question_id !== response.question_id),
+        response,
+      ];
+      avaliaApplicationState.student.message = "Resposta salva.";
+      refreshStudentAvaliaSurface();
+    } catch (error) {
+      avaliaApplicationState.student.error = error.message || "Nao foi possivel salvar a resposta.";
+      if (statusNode) statusNode.textContent = avaliaApplicationState.student.error;
+    }
+  });
+};
+
 const initQuestionBank = () => {
   const root = document.querySelector("[data-question-bank]");
   if (!root) {
@@ -21039,7 +21676,12 @@ const initTeacherWorkspace = () => {
   const content = workspace.querySelector("[data-teacher-content]");
   const home = workspace.querySelector("[data-teacher-home]");
   const search = workspace.querySelector("[data-teacher-search]");
-  let activeTeacherView = "inicio";
+  const teacherWorkspaceViewKeys = new Set(["inicio", "notificacoes", "calendario", "mensagens", "acesso", "perfil", "planejamentos", "turmas", "alunos", "acompanhamento", "biblioteca", "atividades", "favoritos", "experiências", "jogos", "avaliacoes", "relatórios", "formação", "universidade", "configuracoes"]);
+  const getValidTeacherView = (view) => {
+    const normalized = normalizeTeacherWorkspaceView(view);
+    return teacherWorkspaceViewKeys.has(normalized) ? normalized : "inicio";
+  };
+  let activeTeacherView = getValidTeacherView(new URLSearchParams(window.location.search).get("view"));
 
   const getPlanningPanel = () => workspace.querySelector("[data-planning-panel]");
   const getPublicationPanel = () => workspace.querySelector("[data-publication-panel]");
@@ -21114,38 +21756,47 @@ const initTeacherWorkspace = () => {
     panel.querySelector("h2").textContent = "Publicar na agenda";
   };
 
-  const openView = (view) => {
+  const openView = (view, { updateUrl = true } = {}) => {
     if (!content) return;
-    activeTeacherView = view;
-    if (view === "inicio") {
+    const normalizedView = getValidTeacherView(view);
+    activeTeacherView = normalizedView;
+    if (updateUrl) {
+      const params = new URLSearchParams(window.location.search);
+      if (normalizedView === "inicio") params.delete("view");
+      else params.set("view", normalizedView);
+      const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`;
+      window.history.replaceState({}, "", nextUrl);
+    }
+    if (normalizedView === "inicio") {
       content.hidden = true;
       if (home) home.hidden = false;
     } else {
       content.hidden = false;
       if (home) home.hidden = true;
     }
-    content.innerHTML = renderTeacherWorkspaceView(view);
+    content.innerHTML = renderTeacherWorkspaceView(normalizedView);
     workspace.querySelectorAll("[data-teacher-view]").forEach((button) => {
-      button.classList.toggle("is-active", button.dataset.teacherView === view);
+      button.classList.toggle("is-active", getValidTeacherView(button.dataset.teacherView) === normalizedView);
     });
     initUniversalActivityTeacherDeliveries();
     initPrintableActivities();
+    initTeacherAvaliaApplication();
     if (search) search.value = "";
-    if (view === "planejamentos") {
+    if (normalizedView === "planejamentos") {
       ensureTeacherPlanningWeek().then(() => {
         if (activeTeacherView === "planejamentos" && content && document.body.contains(workspace)) {
           content.innerHTML = renderTeacherWorkspaceView("planejamentos");
         }
       });
     }
-    if (view === "mensagens") {
+    if (normalizedView === "mensagens") {
       ensureTeacherClassMessages().then(() => {
         if (activeTeacherView === "mensagens" && content && document.body.contains(workspace)) {
           content.innerHTML = renderTeacherWorkspaceView("mensagens");
         }
       });
     }
-    if (view === "acompanhamento") {
+    if (normalizedView === "acompanhamento") {
       ensureTeacherTrackingBundle({ force: true }).then(() => {
         if (activeTeacherView === "acompanhamento" && content && document.body.contains(workspace)) {
           content.innerHTML = renderTeacherWorkspaceView("acompanhamento");
@@ -21660,9 +22311,8 @@ const initTeacherWorkspace = () => {
     });
   });
 
-  const initialView = new URLSearchParams(window.location.search).get("view");
-  if (initialView && initialView !== "inicio") {
-    openView(initialView);
+  if (activeTeacherView !== "inicio") {
+    openView(activeTeacherView, { updateUrl: false });
   }
 
   ensureTeacherInstitutionalData().then(() => {
@@ -22556,9 +23206,11 @@ const renderAppPage = () => {
   initDigitalResultsPanel();
   initCurationBatches();
   initTeacherWorkspace();
+  initTeacherAvaliaApplication();
   initPrintableActivities();
   initStudentInstitutionalActivities();
   initStudentInstitutionalProfile();
+  initStudentAvaliaApplication();
   initUniversalActivityAssignmentUi();
   initUniversalActivityTeacherDeliveries();
   initUniversalActivityEngine();
