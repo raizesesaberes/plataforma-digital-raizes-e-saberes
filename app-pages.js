@@ -510,6 +510,7 @@ const secretariaOfficialModules = [
   ["turmas", "Turmas", "secretaria.html?view=turmas"],
   ["professores", "Professores", "secretaria.html?view=professores"],
   ["frequencia", "Frequência", "secretaria.html?view=frequencia"],
+  ["calendario", "Calendário", "secretaria.html?view=calendario"],
   ["avalia", "Avalia+", "secretaria.html?view=avalia"],
   ["analytics", "Analytics", "secretaria.html?view=analytics"],
   ["documentos", "Documentos", "secretaria.html?view=documentos"],
@@ -3983,6 +3984,7 @@ const secretariaInstitutionalState = {
   classDiaryEntries: [],
   communications: [],
   communicationEvents: [],
+  calendarEvents: [],
   lastCreateResult: null,
   lastGuardianResult: null,
   lastEnrollmentMovementResult: null,
@@ -3990,6 +3992,7 @@ const secretariaInstitutionalState = {
   lastDocumentResult: null,
   lastAttendanceResult: null,
   lastCommunicationResult: null,
+  lastCalendarResult: null,
   hydratedDom: false,
 };
 
@@ -4015,6 +4018,14 @@ const secretariaAnalyticsState = {
   promise: null,
   key: "",
   result: null,
+};
+
+const secretariaCalendarState = {
+  status: "idle",
+  error: "",
+  promise: null,
+  key: "",
+  events: [],
 };
 
 const municipalNetworkState = {
@@ -4080,6 +4091,7 @@ const studentInstitutionalState = {
   school: null,
   teachers: [],
   entries: [],
+  agendaEvents: [],
   messages: [],
   messagesError: "",
   recommendations: [],
@@ -4756,37 +4768,25 @@ const finalizeTeacherPlanning = async (planId) => {
 };
 
 const publishTeacherPlanPayload = async (plan) => {
-  const { classItem, teacherId, schoolId } = getTeacherPlanningClassContext(plan.classId);
+  const { classItem } = getTeacherPlanningClassContext(plan.classId);
   const publication = teacherPlanningState.publicationsByPlanId?.[plan.id] || null;
-  const payload = {
-    class_id: classItem.id,
-    school_id: schoolId,
-    teacher_id: teacherId,
-    plan_id: plan.id,
-    entry_date: plan.planDate,
-    start_time: plan.startTime || null,
-    end_time: null,
-    title: plan.title,
-    description: plan.note || null,
-    entry_type: normalizeTeacherPlanningCalendarType(plan.resourceType),
-    status: "published",
-  };
   const client = createSupabaseRestClient();
-  if (publication?.id) {
-    await client.request("class_calendar_entries", `?id=${supabaseEq(publication.id)}`, {
-      method: "PATCH",
-      body: JSON.stringify(payload),
-      requireAuthenticated: true,
-      allowedRoles: teacherAllowedRoles,
-    });
-  } else {
-    await client.request("class_calendar_entries", "", {
-      method: "POST",
-      body: JSON.stringify(payload),
-      requireAuthenticated: true,
-      allowedRoles: teacherAllowedRoles,
-    });
-  }
+  await client.request("rpc/teacher_upsert_calendar_entry", "", {
+    method: "POST",
+    requireAuthenticated: true,
+    allowedRoles: teacherAllowedRoles,
+    body: JSON.stringify({
+      p_entry_id: publication?.id || null,
+      p_plan_id: plan.id,
+      p_class_id: classItem.id,
+      p_entry_date: plan.planDate,
+      p_start_time: plan.startTime || null,
+      p_end_time: null,
+      p_title: plan.title,
+      p_description: plan.note || null,
+      p_entry_type: normalizeTeacherPlanningCalendarType(plan.resourceType),
+    }),
+  });
   await client.request("teacher_plans", `?id=${supabaseEq(plan.id)}`, {
     method: "PATCH",
     body: JSON.stringify({ status: "published" }),
@@ -4817,11 +4817,11 @@ const archiveTeacherPlanning = async (planId) => {
   const client = createSupabaseRestClient();
   const publication = teacherPlanningState.publicationsByPlanId?.[planId];
   if (publication?.id) {
-    await client.request("class_calendar_entries", `?id=${supabaseEq(publication.id)}`, {
-      method: "PATCH",
-      body: JSON.stringify({ status: "archived" }),
+    await client.request("rpc/teacher_archive_calendar_entry", "", {
+      method: "POST",
       requireAuthenticated: true,
       allowedRoles: teacherAllowedRoles,
+      body: JSON.stringify({ p_entry_id: publication.id }),
     });
   }
   await client.request("teacher_plans", `?id=${supabaseEq(planId)}`, {
@@ -4837,38 +4837,26 @@ const saveTeacherCalendarEntryToSupabase = async (formData) => {
   const planId = String(formData.get("planId") || "");
   const plan = teacherPlanningState.plans.find((item) => item.id === planId);
   if (!plan) throw new Error("Proposta nao encontrada para publicação.");
-  const { classItem, teacherId, schoolId } = getTeacherPlanningClassContext(plan.classId);
+  const { classItem } = getTeacherPlanningClassContext(plan.classId);
   const payload = {
-    class_id: classItem.id,
-    school_id: schoolId,
-    teacher_id: teacherId,
-    plan_id: plan.id,
-    entry_date: String(formData.get("entryDate") || plan.planDate),
-    start_time: String(formData.get("startTime") || "") || null,
-    end_time: String(formData.get("endTime") || "") || null,
-    title: String(formData.get("title") || plan.title).trim(),
-    description: String(formData.get("description") || "").trim() || null,
-    entry_type: String(formData.get("entryType") || normalizeTeacherPlanningCalendarType(plan.resourceType) || "outro"),
-    status: "published",
+    p_entry_id: String(formData.get("publicationId") || "") || null,
+    p_plan_id: plan.id,
+    p_class_id: classItem.id,
+    p_entry_date: String(formData.get("entryDate") || plan.planDate),
+    p_start_time: String(formData.get("startTime") || "") || null,
+    p_end_time: String(formData.get("endTime") || "") || null,
+    p_title: String(formData.get("title") || plan.title).trim(),
+    p_description: String(formData.get("description") || "").trim() || null,
+    p_entry_type: String(formData.get("entryType") || normalizeTeacherPlanningCalendarType(plan.resourceType) || "outro"),
   };
-  if (!payload.title) throw new Error("Informe um titulo publico para a agenda.");
-  const existingId = String(formData.get("publicationId") || "");
+  if (!payload.p_title) throw new Error("Informe um titulo publico para a agenda.");
   const client = createSupabaseRestClient();
-  if (existingId) {
-    await client.request("class_calendar_entries", `?id=${supabaseEq(existingId)}`, {
-      method: "PATCH",
-      body: JSON.stringify(payload),
-      requireAuthenticated: true,
-      allowedRoles: teacherAllowedRoles,
-    });
-  } else {
-    await client.request("class_calendar_entries", "", {
-      method: "POST",
-      body: JSON.stringify(payload),
-      requireAuthenticated: true,
-      allowedRoles: teacherAllowedRoles,
-    });
-  }
+  await client.request("rpc/teacher_upsert_calendar_entry", "", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    requireAuthenticated: true,
+    allowedRoles: teacherAllowedRoles,
+  });
   await ensureTeacherPlanningWeek({ force: true });
 };
 
@@ -4876,9 +4864,9 @@ const archiveTeacherCalendarEntry = async (planId) => {
   const publication = teacherPlanningState.publicationsByPlanId?.[planId];
   if (!publication?.id) return;
   const client = createSupabaseRestClient();
-  await client.request("class_calendar_entries", `?id=${supabaseEq(publication.id)}`, {
-    method: "PATCH",
-    body: JSON.stringify({ status: "archived" }),
+  await client.request("rpc/teacher_archive_calendar_entry", "", {
+    method: "POST",
+    body: JSON.stringify({ p_entry_id: publication.id }),
     requireAuthenticated: true,
     allowedRoles: teacherAllowedRoles,
   });
@@ -8298,7 +8286,7 @@ const renderStudentQuickRail = () => `
       <h2>Meus Atalhos</h2>
       ${[
         ["aluno-atividades.html", "Atividades", "atividades", "green"],
-        ["aluno.html", "Agenda", "calendario", "lime"],
+        ["aluno.html?view=agenda", "Agenda", "calendario", "lime"],
         ["biblioteca.html", "Abrir Livro", "book", "blue"],
         ["perfil.html", "Meu Perfil", "user", "teal"],
       ]
@@ -8317,7 +8305,9 @@ const renderStudentQuickRail = () => `
     </section>
     <section class="student-side-card is-warm">
       <h2>Agenda</h2>
-      ${renderPremiumEmpty("NENHUM ITEM PUBLICADO.", "Quando a escola publicar compromissos, eles aparecerao aqui.", "orange")}
+      ${isStudentInstitutionalMode() && studentInstitutionalState.status === "ready" && (studentInstitutionalState.agendaEvents || []).length
+        ? `<ul class="clean-list">${(studentInstitutionalState.agendaEvents || []).slice(0, 3).map((entry) => `<li><strong>${printableEscape(entry.title)}</strong><span>${printableEscape(formatFamilyCanonicalDate(entry.entry_date) || entry.entry_date || "")} · ${printableEscape(formatFamilyEntryTime(entry))}</span></li>`).join("")}</ul>`
+        : renderPremiumEmpty("NENHUM ITEM PUBLICADO.", "Quando a escola publicar compromissos, eles aparecerao aqui.", "orange")}
     </section>
   </aside>
 `;
@@ -8703,7 +8693,7 @@ const renderStudentSimpleDashboard = () => `
       ${renderStudentPremiumTopbar()}
       <div class="student-premium-grid">
         <main class="student-center">
-          ${getPrintableParams().get("view") === "avaliacoes" ? renderStudentAssessmentsView() : getPrintableParams().get("view") === "recados" ? renderStudentInboxView() : renderStudentInstitutionalHomeContent()}
+          ${getPrintableParams().get("view") === "avaliacoes" ? renderStudentAssessmentsView() : getPrintableParams().get("view") === "recados" ? renderStudentInboxView() : getPrintableParams().get("view") === "agenda" ? renderStudentInstitutionalWeeklyBoard() : renderStudentInstitutionalHomeContent()}
         </main>
         ${renderStudentQuickRail()}
       </div>
@@ -13412,6 +13402,7 @@ const familyInstitutionalState = {
   teacher: null,
   teacherMemberships: [],
   entries: [],
+  agendaEvents: [],
   calendarError: "",
   messages: [],
   messagesError: "",
@@ -13638,6 +13629,56 @@ const mapFamilyCalendarEntry = (entry = {}) => ({
   status: entry.status || "",
   created_at: entry.created_at || "",
 });
+
+const mapUnifiedCalendarEvent = (event = {}) => ({
+  id: event.source_id || event.id || "",
+  source_type: event.source_type || "class_calendar",
+  source_id: event.source_id || event.id || "",
+  class_id: event.class_id || "",
+  school_id: event.school_id || "",
+  student_id: event.student_id || "",
+  teacher_id: event.teacher_id || "",
+  plan_id: event.plan_id || "",
+  title: event.title || "Agenda",
+  description: event.description || "",
+  entry_date: event.event_date || event.entry_date || "",
+  start_time: event.start_time || "",
+  end_time: event.end_time || "",
+  entry_type: event.event_type || event.entry_type || "evento",
+  status: event.status || "published",
+  action_label: event.action_label || "",
+  href: event.href || "",
+  created_at: event.created_at || "",
+});
+
+const loadFamilyUnifiedCalendarEvents = async (client, studentId, weekStartIso = familyWeekStartIso()) => {
+  const dates = getFamilyWeekDates(weekStartIso);
+  const payload = await client.request("rpc/calendar_list_family_events", "", {
+    method: "POST",
+    requireAuthenticated: true,
+    allowedRoles: familyInstitutionalAllowedRoles,
+    body: JSON.stringify({
+      p_student_id: studentId,
+      p_from: dates.seg,
+      p_to: dates.sex,
+    }),
+  });
+  return (Array.isArray(payload) ? payload : []).map(mapUnifiedCalendarEvent);
+};
+
+const loadStudentUnifiedCalendarEvents = async (client, weekStartIso = familyWeekStartIso()) => {
+  const dates = getFamilyWeekDates(weekStartIso);
+  const payload = await client.request("rpc/student_list_calendar_events", "", {
+    method: "POST",
+    requireAuthenticated: true,
+    allowedRoles: ["aluno", "admin"],
+    body: JSON.stringify({
+      p_from: dates.seg,
+      p_to: dates.sex,
+    }),
+  });
+  return (Array.isArray(payload) ? payload : []).map(mapUnifiedCalendarEvent);
+};
 
 const mapFamilyTeacherMessage = (row = {}, selectedChild = null, authorProfile = null) => {
   const audienceType = String(row.audience_type || "").toLowerCase();
@@ -13986,25 +14027,22 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
       familyInstitutionalState.attendanceError = "";
       familyInstitutionalState.recommendationsError = "";
       familyInstitutionalState.entries = [];
+      familyInstitutionalState.agendaEvents = [];
       familyInstitutionalState.messages = [];
       familyInstitutionalState.attendanceRecords = [];
       familyInstitutionalState.recommendations = [];
       familyInstitutionalState.status = "ready";
 
-      const weekDates = getFamilyWeekDates(familyInstitutionalState.weekStartIso);
       Promise.allSettled([
-        client.request(
-          "class_calendar_entries",
-          `?select=id,class_id,school_id,teacher_id,plan_id,title,description,entry_date,start_time,end_time,entry_type,status,created_at&status=eq.published&class_id=${supabaseEq(enrollment.class_id)}&entry_date=gte.${encodeURIComponent(weekDates.seg)}&entry_date=lte.${encodeURIComponent(weekDates.sex)}&order=start_time.asc.nullslast&order=created_at.asc`,
-          { requireAuthenticated: true, allowedRoles: familyInstitutionalAllowedRoles }
-        ),
+        loadFamilyUnifiedCalendarEvents(client, student.id, familyInstitutionalState.weekStartIso),
         loadFamilyTeacherMessages(client, selectedChild),
         loadFamilyAttendanceRecords(client, selectedChild),
         loadFamilyTeacherRecommendations(client, selectedChild),
       ]).then(([entriesResult, messagesResult, attendanceResult, recommendationsResult]) => {
         if (familyInstitutionalState.selectedChildId !== student.id) return;
         if (entriesResult.status === "fulfilled") {
-          familyInstitutionalState.entries = (entriesResult.value || []).filter((entry) => entry.status === "published").map(mapFamilyCalendarEntry);
+          familyInstitutionalState.entries = (entriesResult.value || []).filter((entry) => entry.status === "published");
+          familyInstitutionalState.agendaEvents = familyInstitutionalState.entries;
         } else {
           familyInstitutionalState.calendarError = entriesResult.reason?.message || "Não foi possível carregar a Minha Semana.";
         }
@@ -14033,6 +14071,7 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
     } catch (error) {
       familyInstitutionalState.error = error.message || "Não foi possível carregar a semana.";
       familyInstitutionalState.entries = [];
+      familyInstitutionalState.agendaEvents = [];
       familyInstitutionalState.messages = [];
       familyInstitutionalState.attendanceRecords = [];
       familyInstitutionalState.recommendations = [];
@@ -14334,10 +14373,29 @@ const renderFamilyOnlineActivities = (filter = "todas") => {
     : renderFamilyEmpty("NAO HA ATIVIDADES ONLINE PENDENTES.");
 };
 
-const renderFamilyAgenda = () =>
-  familyÁreaData.agenda.length
+const renderFamilyAgenda = () => {
+  if (isFamilyInstitutionalMode() && familyInstitutionalState.status === "ready") {
+    const events = (familyInstitutionalState.agendaEvents || familyInstitutionalState.entries || [])
+      .slice()
+      .sort((a, b) => `${a.entry_date || ""} ${a.start_time || "99:99:99"}`.localeCompare(`${b.entry_date || ""} ${b.start_time || "99:99:99"}`));
+    if (familyInstitutionalState.calendarError) {
+      return renderFamilyEmpty("NAO FOI POSSIVEL CARREGAR A AGENDA.", familyInstitutionalState.calendarError);
+    }
+    return events.length
+      ? events.map((item) => `
+          <article class="family-list-card">
+            <span>${printableEscape(formatFamilyCanonicalDate(item.entry_date) || item.entry_date || "")} · ${printableEscape(formatFamilyEntryTime(item))}</span>
+            <strong>${printableEscape(item.title)}</strong>
+            <p>${printableEscape(item.description || item.entry_type || "Agenda da escola")}</p>
+            ${item.href ? `<a href="${printableEscape(item.href)}">${printableEscape(item.action_label || "Abrir")}</a>` : ""}
+          </article>
+        `).join("")
+      : renderFamilyEmpty("NENHUM COMPROMISSO PROGRAMADO.");
+  }
+  return familyÁreaData.agenda.length
     ? familyÁreaData.agenda.map((item) => `<article class="family-list-card"><span>${item.date}</span><strong>${item.title}</strong><p>${item.detail}</p></article>`).join("")
     : renderFamilyEmpty("NENHUM COMPROMISSO PROGRAMADO.");
+};
 
 const getFamilyWeekRange = (weekStartIso = familyWeekStartIso()) => {
   if (typeof Date === "undefined") return "Semana atual";
@@ -18920,6 +18978,7 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       studentInstitutionalState.school = school;
       studentInstitutionalState.teachers = resolvedTeachers;
       studentInstitutionalState.entries = [];
+      studentInstitutionalState.agendaEvents = [];
       studentInstitutionalState.messages = [];
       studentInstitutionalState.messagesError = "";
       studentInstitutionalState.recommendationsError = "";
@@ -18927,18 +18986,11 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       studentInstitutionalState.secondaryLoadedAt = "";
       studentInstitutionalState.status = "ready";
       const refreshSecondaryData = async () => {
-        const weekDates = getFamilyWeekDates(studentInstitutionalState.weekStartIso);
         const [entries, recommendations, messages] = await Promise.all([
-          enrollment?.class_id
-            ? client.request(
-                "class_calendar_entries",
-                `?select=id,class_id,school_id,teacher_id,plan_id,title,description,entry_date,start_time,end_time,entry_type,status,created_at&status=eq.published&class_id=${supabaseEq(enrollment.class_id)}&entry_date=gte.${encodeURIComponent(weekDates.seg)}&entry_date=lte.${encodeURIComponent(weekDates.sex)}&order=start_time.asc.nullslast&order=created_at.asc`,
-                { requireAuthenticated: true, allowedRoles: ["aluno", "admin"] }
-              ).catch((error) => {
-                studentInstitutionalState.calendarError = error.message || "Não foi possível carregar a Minha Semana.";
-                return [];
-              })
-            : Promise.resolve([]),
+          loadStudentUnifiedCalendarEvents(client, studentInstitutionalState.weekStartIso).catch((error) => {
+            studentInstitutionalState.calendarError = error.message || "Não foi possível carregar a Minha Semana.";
+            return [];
+          }),
           loadStudentTeacherRecommendations(client).catch((error) => {
             studentInstitutionalState.recommendationsError = error.message || "Não foi possível carregar as recomendações.";
             return [];
@@ -18948,7 +19000,8 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
             return [];
           }),
         ]);
-        studentInstitutionalState.entries = (entries || []).filter((entry) => entry.status === "published").map(mapFamilyCalendarEntry);
+        studentInstitutionalState.entries = (entries || []).filter((entry) => entry.status === "published");
+        studentInstitutionalState.agendaEvents = studentInstitutionalState.entries;
         studentInstitutionalState.recommendations = recommendations || [];
         studentInstitutionalState.messages = messages || [];
         studentInstitutionalState.secondaryLoadedAt = new Date().toISOString();
@@ -18965,6 +19018,7 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       studentInstitutionalState.school = null;
       studentInstitutionalState.teachers = [];
       studentInstitutionalState.entries = [];
+      studentInstitutionalState.agendaEvents = [];
       studentInstitutionalState.messages = [];
       studentInstitutionalState.messagesError = "";
       studentInstitutionalState.recommendations = [];
@@ -19184,8 +19238,8 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
 };
 
 const secretariaAllowedRoles = ["secretaria", "admin", "gestor", "coordenador"];
-const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "avalia", "analytics", "comunicados"];
-const secretariaOfficialViews = ["painel", "alunos", "matriculas", "responsaveis", "turmas", "professores", "frequencia", "avalia", "analytics", "documentos", "comunicados"];
+const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "calendario", "avalia", "analytics", "comunicados"];
+const secretariaOfficialViews = ["painel", "alunos", "matriculas", "responsaveis", "turmas", "professores", "frequencia", "calendario", "avalia", "analytics", "documentos", "comunicados"];
 const secretariaActiveStatuses = new Set(["active", "ativo"]);
 
 const isSecretariaActiveStatus = (status) => secretariaActiveStatuses.has(String(status || "active").toLowerCase());
@@ -19339,6 +19393,54 @@ const ensureSecretariaAnalytics = async ({ force = false, schoolId = "", from = 
     return secretariaAnalyticsState;
   })();
   return secretariaAnalyticsState.promise;
+};
+
+const getSecretariaCalendarRange = () => {
+  const defaults = getDiaryPeriodDefaultRange();
+  const params = getSecretariaParams();
+  return {
+    from: params.get("calendarFrom") || defaults.from,
+    to: params.get("calendarTo") || defaults.to,
+  };
+};
+
+const ensureSecretariaCalendarEvents = async ({ force = false, schoolId = "", classId = "", from = "", to = "" } = {}) => {
+  const selectedSchoolId = schoolId || getSecretariaPrimarySchool().id || "";
+  const selectedClassId = classId || getSecretariaParams().get("class") || "";
+  const range = { ...getSecretariaCalendarRange(), from: from || getSecretariaCalendarRange().from, to: to || getSecretariaCalendarRange().to };
+  const key = `${selectedSchoolId}:${selectedClassId}:${range.from}:${range.to}`;
+  if (!selectedSchoolId) return secretariaCalendarState;
+  if (!force && secretariaCalendarState.status === "ready" && secretariaCalendarState.key === key) return secretariaCalendarState;
+  if (!force && secretariaCalendarState.promise && secretariaCalendarState.key === key) return secretariaCalendarState.promise;
+  secretariaCalendarState.status = "loading";
+  secretariaCalendarState.error = "";
+  secretariaCalendarState.key = key;
+  secretariaCalendarState.promise = (async () => {
+    try {
+      const client = createSupabaseRestClient();
+      const rows = await client.request("rpc/secretaria_list_calendar_events", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: secretariaAllowedRoles,
+        body: JSON.stringify({
+          p_school_id: selectedSchoolId,
+          p_from: range.from,
+          p_to: range.to,
+          p_class_id: selectedClassId || null,
+        }),
+      });
+      secretariaCalendarState.events = (Array.isArray(rows) ? rows : []).map(mapUnifiedCalendarEvent);
+      secretariaCalendarState.status = "ready";
+    } catch (error) {
+      secretariaCalendarState.events = [];
+      secretariaCalendarState.error = error.message || "Não foi possível carregar o calendário.";
+      secretariaCalendarState.status = "error";
+    } finally {
+      secretariaCalendarState.promise = null;
+    }
+    return secretariaCalendarState;
+  })();
+  return secretariaCalendarState.promise;
 };
 
 const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
@@ -19954,6 +20056,7 @@ const secretariaViewIcon = {
   turmas: "users",
   professores: "cap",
   frequencia: "calendar",
+  calendario: "calendar",
   avalia: "chart",
   analytics: "chart",
   documentos: "doc",
@@ -20075,6 +20178,37 @@ const callSecretariaEndTeacherClassMembership = ({ membershipId, reason }) =>
   callSecretariaClassTeacherRpc("secretaria_end_teacher_class_membership", {
     p_membership_id: membershipId,
     p_reason: reason,
+  });
+
+const callSecretariaCalendarRpc = async (rpcName, payload) => {
+  const client = createSupabaseRestClient();
+  const result = await client.request(`rpc/${rpcName}`, "", {
+    method: "POST",
+    requireAuthenticated: true,
+    allowedRoles: secretariaAllowedRoles,
+    body: JSON.stringify(payload),
+  });
+  secretariaInstitutionalState.lastCalendarResult = result;
+  return result;
+};
+
+const callSecretariaUpsertCalendarEvent = ({ eventId, schoolId, classId, eventDate, startTime, endTime, title, description, eventType, status }) =>
+  callSecretariaCalendarRpc("secretaria_upsert_school_calendar_event", {
+    p_event_id: eventId || null,
+    p_school_id: schoolId,
+    p_class_id: classId || null,
+    p_event_date: eventDate,
+    p_start_time: startTime || null,
+    p_end_time: endTime || null,
+    p_title: title,
+    p_description: description || null,
+    p_event_type: eventType || "evento",
+    p_status: status || "published",
+  });
+
+const callSecretariaArchiveCalendarEvent = ({ eventId }) =>
+  callSecretariaCalendarRpc("secretaria_archive_school_calendar_event", {
+    p_event_id: eventId,
   });
 
 const callSecretariaSetStudentDocumentStatus = async ({ studentId, documentTypeId, status, notes, fileReference, receivedAt, expiresAt }) => {
@@ -21352,6 +21486,113 @@ const renderSecretariaCommunicationsView = (index) => {
   `;
 };
 
+const secretariaCalendarTypeOptions = [
+  ["evento", "Evento"],
+  ["reuniao", "Reunião"],
+  ["atividade", "Atividade"],
+  ["avaliacao", "Avaliação"],
+  ["lembrete", "Lembrete"],
+  ["aula", "Aula"],
+  ["outro", "Outro"],
+];
+
+const secretariaCalendarEventsForDate = (date = "") =>
+  (secretariaCalendarState.events || [])
+    .filter((event) => event.entry_date === date && event.status === "published")
+    .sort((a, b) => {
+      const aTime = a.start_time || "99:99:99";
+      const bTime = b.start_time || "99:99:99";
+      if (aTime !== bTime) return aTime.localeCompare(bTime);
+      return String(a.created_at || "").localeCompare(String(b.created_at || ""));
+    });
+
+const renderSecretariaCalendarWeek = (range) => {
+  const start = familyDateFromIso(range.from);
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+    return familyIsoDate(date);
+  });
+  return `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("calendar", "Semana")}</h2><span>Lista semanal</span></div>
+      <div class="family-week-grid secretaria-calendar-week" aria-label="Calendário semanal da Secretaria">
+        ${days.map((date) => `<div class="family-week-day">${htmlEscape(formatFamilyCanonicalDate(date) || date)}</div>`).join("")}
+        ${days.map((date) => {
+          const events = secretariaCalendarEventsForDate(date);
+          return `<div class="family-week-cell ${events.length ? "" : "is-empty"}">${events.length ? events.map((event) => `<article class="family-week-entry"><small>${htmlEscape(formatFamilyEntryTime(event))}</small><em>${htmlEscape(event.entry_type)}</em><strong>${htmlEscape(event.title)}</strong></article>`).join("") : "<span>Sem evento</span>"}</div>`;
+        }).join("")}
+      </div>
+    </section>
+  `;
+};
+
+const renderSecretariaCalendarView = (index) => {
+  const school = getSecretariaPrimarySchool();
+  const range = getSecretariaCalendarRange();
+  const selectedClassId = getSecretariaParams().get("class") || "";
+  const activeClasses = (secretariaInstitutionalState.classes || [])
+    .filter((classItem) => isSecretariaActiveStatus(classItem.status) && (!school.id || classItem.school_id === school.id))
+    .sort((a, b) => normalizeClassName(a).localeCompare(normalizeClassName(b), "pt-BR"));
+  const state = secretariaCalendarState;
+  const events = state.events || [];
+  const statusMessage =
+    state.status === "loading" || state.status === "idle"
+      ? `<p class="ua-empty">CARREGANDO CALENDARIO INSTITUCIONAL.</p>`
+      : state.status === "error"
+        ? `<p class="ua-empty">${htmlEscape(state.error)}</p>`
+        : "";
+  return `
+    <div class="analytics-grid secretaria-grid">
+      <section class="panel span-2">
+        <div class="panel-head"><h2>${secretariaInlineIcon("calendar", "Calendário")}</h2><span>${htmlEscape(normalizeSchoolName(school))}</span></div>
+        <form class="secretaria-form-grid" data-secretaria-calendar-filter>
+          <label><span>De</span><input type="date" name="calendarFrom" value="${htmlEscape(range.from)}" /></label>
+          <label><span>Até</span><input type="date" name="calendarTo" value="${htmlEscape(range.to)}" /></label>
+          <label><span>Turma</span><select name="class"><option value="">Toda a escola</option>${activeClasses.map((classItem) => `<option value="${htmlEscape(classItem.id)}" ${classItem.id === selectedClassId ? "selected" : ""}>${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
+          <button type="submit">Filtrar</button>
+        </form>
+        ${statusMessage}
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Novo evento</h2><span>Secretaria</span></div>
+        <form data-secretaria-calendar-form>
+          <input type="hidden" name="school_id" value="${htmlEscape(school.id || "")}" />
+          <label><span>Escopo</span><select name="class_id"><option value="">Toda a escola</option>${activeClasses.map((classItem) => `<option value="${htmlEscape(classItem.id)}">${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
+          <label><span>Data</span><input type="date" name="event_date" required value="${htmlEscape(range.from)}" /></label>
+          <label><span>Início</span><input type="time" name="start_time" /></label>
+          <label><span>Fim</span><input type="time" name="end_time" /></label>
+          <label><span>Tipo</span><select name="event_type">${secretariaCalendarTypeOptions.map(([key, label]) => `<option value="${htmlEscape(key)}">${htmlEscape(label)}</option>`).join("")}</select></label>
+          <label><span>Título</span><input name="title" required maxlength="90" placeholder="Reunião de responsáveis" /></label>
+          <label><span>Descrição</span><textarea name="description" rows="4" maxlength="420" placeholder="Orientações para famílias e alunos."></textarea></label>
+          <button type="submit">PUBLICAR EVENTO</button>
+          <p data-secretaria-calendar-message>${secretariaInstitutionalState.lastCalendarResult?.id ? "Último evento salvo com sucesso." : "Eventos da Secretaria seguem o escopo escola/turma."}</p>
+        </form>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Lista</h2><span>${events.length} evento${events.length === 1 ? "" : "s"}</span></div>
+        <ul class="clean-list">
+          ${events.map((event) => {
+            const classItem = index.classById.get(event.class_id) || {};
+            const isSchoolEvent = !event.class_id;
+            const canArchive = event.source_type === "school_calendar";
+            return `
+              <li data-secretaria-search-item>
+                <strong>${htmlEscape(formatFamilyCanonicalDate(event.entry_date) || event.entry_date)} · ${htmlEscape(event.title)}</strong>
+                ${secretariaBadge(event.entry_type || "evento", "info")}
+                <span>${htmlEscape(formatFamilyEntryTime(event))} · ${htmlEscape(isSchoolEvent ? "Toda a escola" : normalizeClassName(classItem))}</span>
+                ${event.description ? `<span>${htmlEscape(event.description)}</span>` : ""}
+                ${canArchive ? `<button type="button" data-secretaria-calendar-archive="${htmlEscape(event.source_id || event.id)}" data-title="${htmlEscape(event.title)}">Arquivar</button>` : ""}
+              </li>
+            `;
+          }).join("") || "<li>Nenhum evento no período.</li>"}
+        </ul>
+      </section>
+      ${renderSecretariaCalendarWeek(range)}
+    </div>
+  `;
+};
+
 const renderSecretariaAvaliaResultsView = (index) => {
   const school = getSecretariaPrimarySchool();
   const state = secretariaAvaliaResultsState;
@@ -21591,6 +21832,7 @@ const renderSecretariaReadyView = () => {
     documentos: () => renderSecretariaPendenciasView(index),
     pendencias: () => renderSecretariaPendenciasView(index),
     frequencia: () => renderSecretariaAttendanceView(index),
+    calendario: () => renderSecretariaCalendarView(index),
     avalia: () => renderSecretariaAvaliaResultsView(index),
     analytics: () => renderSecretariaAnalyticsView(index),
     comunicados: () => renderSecretariaCommunicationsView(index),
@@ -21644,6 +21886,78 @@ const initSecretariaInstitutional = () => {
       window.location.href = `${window.location.pathname}?${params.toString()}`;
     });
   }
+  const calendarFilterForm = area.querySelector("[data-secretaria-calendar-filter]");
+  if (calendarFilterForm) {
+    calendarFilterForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const data = new FormData(calendarFilterForm);
+      const params = getSecretariaParams();
+      params.set("view", "calendario");
+      params.set("calendarFrom", String(data.get("calendarFrom") || ""));
+      params.set("calendarTo", String(data.get("calendarTo") || ""));
+      const classId = String(data.get("class") || "");
+      if (classId) params.set("class", classId);
+      else params.delete("class");
+      window.location.href = `${window.location.pathname}?${params.toString()}`;
+    });
+  }
+  const calendarForm = area.querySelector("[data-secretaria-calendar-form]");
+  if (calendarForm) {
+    calendarForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = calendarForm.querySelector("[data-secretaria-calendar-message]");
+      const submitButton = calendarForm.querySelector("button[type='submit']");
+      const formData = new FormData(calendarForm);
+      try {
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "PUBLICANDO...";
+        }
+        if (message) message.textContent = "Publicando evento institucional...";
+        await callSecretariaUpsertCalendarEvent({
+          schoolId: String(formData.get("school_id") || ""),
+          classId: String(formData.get("class_id") || ""),
+          eventDate: String(formData.get("event_date") || ""),
+          startTime: String(formData.get("start_time") || ""),
+          endTime: String(formData.get("end_time") || ""),
+          title: String(formData.get("title") || "").trim(),
+          description: String(formData.get("description") || "").trim(),
+          eventType: String(formData.get("event_type") || "evento"),
+          status: "published",
+        });
+        await ensureSecretariaCalendarEvents({ force: true });
+        if (!document.body.contains(area)) return;
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+      } catch (error) {
+        if (message) message.textContent = error.message || "Não foi possível publicar o evento.";
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "PUBLICAR EVENTO";
+        }
+      }
+    });
+  }
+  area.querySelectorAll("[data-secretaria-calendar-archive]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const message = area.querySelector("[data-secretaria-calendar-message]");
+      const title = button.dataset.title || "este evento";
+      if (!window.confirm(`Arquivar "${title}" do calendario?`)) return;
+      try {
+        button.disabled = true;
+        button.textContent = "Arquivando...";
+        await callSecretariaArchiveCalendarEvent({ eventId: button.dataset.secretariaCalendarArchive });
+        await ensureSecretariaCalendarEvents({ force: true });
+        if (!document.body.contains(area)) return;
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+      } catch (error) {
+        if (message) message.textContent = error.message || "Não foi possível arquivar o evento.";
+        button.disabled = false;
+        button.textContent = "Arquivar";
+      }
+    });
+  });
   const syncCommunicationDestinationFields = () => {
     const audience = area.querySelector("[data-secretaria-communication-audience]");
     const classWrap = area.querySelector("[data-secretaria-communication-class-wrap]");
@@ -22238,6 +22552,19 @@ const initSecretariaInstitutional = () => {
     const before = `${secretariaAvaliaResultsState.status}:${secretariaAvaliaResultsState.schoolId}`;
     ensureSecretariaAvaliaResults({ schoolId }).then(() => {
       const after = `${secretariaAvaliaResultsState.status}:${secretariaAvaliaResultsState.schoolId}`;
+      if (before !== after && document.body.contains(area)) {
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+      }
+    });
+  }
+  if (secretariaInstitutionalState.status === "ready" && getSecretariaCurrentView() === "calendario") {
+    const schoolId = getSecretariaPrimarySchool().id || "";
+    const range = getSecretariaCalendarRange();
+    const classId = getSecretariaParams().get("class") || "";
+    const before = `${secretariaCalendarState.status}:${secretariaCalendarState.key}`;
+    ensureSecretariaCalendarEvents({ schoolId, classId, from: range.from, to: range.to }).then(() => {
+      const after = `${secretariaCalendarState.status}:${secretariaCalendarState.key}`;
       if (before !== after && document.body.contains(area)) {
         area.outerHTML = renderSecretariaDashboard();
         initSecretariaInstitutional();
