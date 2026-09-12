@@ -8712,17 +8712,16 @@ const avaliaApplicationService = (() => {
     },
     async listStudentAssignments() {
       const { request } = client();
-      const [assignments, attempts] = await Promise.all([
-        request("assessment_assignments", `?select=${assignmentSelect}&order=available_from.desc`, {
-          requireAuthenticated: true,
-          allowedRoles: ["aluno", "admin"],
-        }),
-        request("assessment_attempts", `?select=${attemptSelect}&order=started_at.desc`, {
-          requireAuthenticated: true,
-          allowedRoles: ["aluno", "admin"],
-        }).catch(() => []),
-      ]);
-      return { assignments: assignments || [], attempts: attempts || [] };
+      const payload = await request("rpc/student_list_assessment_assignments", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: ["aluno", "admin"],
+        body: JSON.stringify({}),
+      });
+      return {
+        assignments: payload?.assignments || [],
+        attempts: payload?.attempts || [],
+      };
     },
     async startAttempt(assignmentId) {
       const { request } = client();
@@ -16738,13 +16737,14 @@ const loadStudentAvaliaData = async ({ force = false } = {}) => {
 const initStudentAvaliaApplication = () => {
   const root = document.querySelector("[data-avalia-student-app]");
   if (!root) return;
-  if (root.dataset.avaliaStudentBound === "true") return;
-  root.dataset.avaliaStudentBound = "true";
 
-  if (studentInstitutionalState.status === "ready" && avaliaApplicationState.student.status === "idle") {
+  if (avaliaApplicationState.student.status === "idle") {
     loadStudentAvaliaData().then(refreshStudentAvaliaSurface);
     return;
   }
+
+  if (root.dataset.avaliaStudentBound === "true") return;
+  root.dataset.avaliaStudentBound = "true";
 
   root.addEventListener("click", async (event) => {
     const button = event.target.closest("button");
@@ -18029,7 +18029,10 @@ const rerenderStudentInstitutionalSurfaces = () => {
   const dashboard = document.querySelector("[data-student-dashboard]");
   if (dashboard) {
     dashboard.outerHTML = renderStudentSimpleDashboard();
-    requestAnimationFrame(() => document.querySelector("[data-student-dashboard]")?.classList.add("is-mounted"));
+    requestAnimationFrame(() => {
+      document.querySelector("[data-student-dashboard]")?.classList.add("is-mounted");
+      initStudentAvaliaApplication();
+    });
     initStudentInstitutionalDashboard();
   }
   const activities = document.querySelector("[data-student-activities-institutional]");
@@ -22379,7 +22382,10 @@ const initStudentInstitutionalDashboard = () => {
     if (studentInstitutionalState.hydratedDom || !document.body.contains(dashboard)) return;
     studentInstitutionalState.hydratedDom = true;
     dashboard.outerHTML = renderStudentSimpleDashboard();
-    requestAnimationFrame(() => document.querySelector("[data-student-dashboard]")?.classList.add("is-mounted"));
+    requestAnimationFrame(() => {
+      document.querySelector("[data-student-dashboard]")?.classList.add("is-mounted");
+      initStudentAvaliaApplication();
+    });
     initStudentInstitutionalDashboard();
   });
 };
@@ -23085,8 +23091,10 @@ const renderAppPage = () => {
     mount.innerHTML = renderStudentSimpleDashboard();
     initPlatformLogout();
     initStudentInstitutionalDashboard();
+    initStudentAvaliaApplication();
     requestAnimationFrame(() => {
       document.querySelector("[data-student-dashboard]")?.classList.add("is-mounted");
+      initStudentAvaliaApplication();
     });
     return;
   }
