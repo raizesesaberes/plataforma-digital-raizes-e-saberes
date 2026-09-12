@@ -4080,6 +4080,8 @@ const studentInstitutionalState = {
   school: null,
   teachers: [],
   entries: [],
+  messages: [],
+  messagesError: "",
   recommendations: [],
   recommendationsError: "",
   calendarError: "",
@@ -4899,7 +4901,7 @@ const formatTeacherClassMessageDate = (isoDate = "") => {
   return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
 };
 
-const mapTeacherClassMessage = (row = {}) => {
+const mapTeacherClassMessage = (row = {}, summary = null) => {
   const classItem = getTeacherInstitutionalClasses().find((item) => item.id === row.class_id) || {};
   const student = row.student_id ? teacherInstitutionalState.studentsById?.[row.student_id] || null : null;
   return {
@@ -4916,6 +4918,9 @@ const mapTeacherClassMessage = (row = {}) => {
     date: formatTeacherClassMessageDate(row.communication_date || row.created_at),
     status: row.status || "published",
     authorRole: row.author_role || "professor",
+    deliveredCount: Number(summary?.delivered_count || 0),
+    readCount: Number(summary?.read_count || 0),
+    unreadCount: Number(summary?.unread_count || 0),
   };
 };
 
@@ -4943,12 +4948,15 @@ const ensureTeacherClassMessages = async ({ force = false, weekStartIso = "", cl
         return teacherClassMessagesState;
       }
       const client = createSupabaseRestClient();
-      const rows = await client.request(
+      const [rows, deliverySummaries] = await Promise.all([
+        client.request(
         "communications",
         `?select=id,school_id,author_profile_id,author_role,communication_type,audience_type,class_id,student_id,title,body,communication_date,status,created_at,updated_at&communication_type=eq.message&class_id=${supabaseIn(classIds)}&status=neq.deleted&order=created_at.desc`,
         { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
-      );
-      teacherClassMessagesState.messages = (rows || []).map(mapTeacherClassMessage);
+        ),
+        communicationDeliverySummariesById(client, teacherAllowedRoles),
+      ]);
+      teacherClassMessagesState.messages = (rows || []).map((row) => mapTeacherClassMessage(row, deliverySummaries.get(row.id) || null));
       teacherClassMessagesState.status = "ready";
       return teacherClassMessagesState;
     } catch (error) {
@@ -7635,7 +7643,7 @@ const renderTeacherClassMessageCard = (message) => {
         <span>${printableEscape(destination)} · ${printableEscape(statusLabel)} · ${printableEscape(message.date)}</span>
         <strong>${printableEscape(message.title)}</strong>
         <p>${printableEscape(message.text)}</p>
-        <small>Origem: Professora</small>
+        <small>Origem: Professora · Entregues: ${message.deliveredCount || 0} · Lidas: ${message.readCount || 0} · Não lidas: ${message.unreadCount || 0}</small>
       </div>
       <div class="tw-message-actions">
         <button type="button" data-teacher-message-view="${printableEscape(message.id)}">Visualizar</button>
@@ -8240,6 +8248,7 @@ const renderTeacherStudentPage = () => {
 const studentPremiumNav = [
   ["aluno.html", "Início", "home"],
   ["aluno.html?view=avaliacoes", "Avaliações", "avalia"],
+  ["aluno.html?view=recados", "Recados", "mensagens"],
   ["missao.html", "Missão do Dia", "star"],
   ["arvore.html", "Minha Árvore", "tree"],
   ["biblioteca.html", "Biblioteca", "book"],
@@ -8256,9 +8265,11 @@ const renderStudentPremiumSidebar = () => `
     <nav>
       ${studentPremiumNav
         .map(([href, label, icon], index) => {
-          const isAvalia = href.includes("view=avaliacoes") && getPrintableParams().get("view") === "avaliacoes";
-          const isHome = index === 0 && getPrintableParams().get("view") !== "avaliacoes";
-          return `<a class="${isHome || isAvalia ? "is-active" : ""}" href="${href}">${premiumIcon(icon)}<span>${label}</span></a>`;
+          const viewParam = getPrintableParams().get("view") || "inicio";
+          const hrefView = new URL(href, window.location.origin).searchParams.get("view") || "inicio";
+          const isActive = hrefView === viewParam || (index === 0 && viewParam === "inicio");
+          const unread = hrefView === "recados" ? communicationUnreadCount(studentInstitutionalState.messages || []) : 0;
+          return `<a class="${isActive ? "is-active" : ""}" href="${href}">${premiumIcon(icon)}<span>${unread > 0 ? `${label} ${unread}` : label}</span></a>`;
         })
         .join("")}
     </nav>
@@ -8300,7 +8311,9 @@ const renderStudentQuickRail = () => `
     </section>
     <section class="student-side-card is-pink">
       <h2>Recado da Professora</h2>
-      ${renderPremiumEmpty("QUANDO SUA PROFESSORA ENVIAR UM RECADO, ELE APARECERA AQUI.", "", "pink")}
+      ${isStudentInstitutionalMode() && studentInstitutionalState.status === "ready" && (studentInstitutionalState.messages || []).length
+        ? renderStudentInboxList({ compact: true })
+        : renderPremiumEmpty("QUANDO SUA PROFESSORA ENVIAR UM RECADO, ELE APARECERA AQUI.", "", "pink")}
     </section>
     <section class="student-side-card is-warm">
       <h2>Agenda</h2>
@@ -8481,6 +8494,20 @@ const loadStudentTeacherRecommendations = async (client) => {
   return rows.map((row) => mapStudentTeacherRecommendation(row, teachersById));
 };
 
+const loadStudentCommunicationInbox = async (client) => {
+  const student = studentInstitutionalState.student || {};
+  const classItem = studentInstitutionalState.classItem || {};
+  if (!student.id) return [];
+  const rows = await callCommunicationInbox(client, { studentId: student.id, readFilter: "all", periodDays: 120, limit: 50 }, ["aluno", "admin"]);
+  return (rows || []).map((row) =>
+    mapCommunicationInboxItem(row, {
+      authorName: "Equipe escolar",
+      childName: normalizeFamilyStudentName(student),
+      className: normalizeClassName(classItem),
+    })
+  );
+};
+
 const getStudentVisibleRecommendations = ({ activitiesOnly = false } = {}) => {
   const recommendations = isStudentInstitutionalMode() && studentInstitutionalState.status === "ready"
     ? studentInstitutionalState.recommendations || []
@@ -8543,6 +8570,52 @@ const renderStudentRecommendationList = ({ activitiesOnly = false, compact = fal
     return renderFamilyEmpty(activitiesOnly ? "Nenhuma atividade indicada no momento." : "Nenhuma recomendação da professora no momento.");
   }
   return `<div class="family-recommendation-list student-recommendation-list">${recommendations.map((recommendation) => renderStudentRecommendationCard(recommendation, { compact })).join("")}</div>`;
+};
+
+const renderStudentInboxCard = (message = {}) => `
+  <article class="family-list-card family-message-card student-inbox-card ${message.readAt ? "is-read" : "is-unread"}">
+    <div class="family-message-icon">${premiumIcon(message.audienceType === "student" ? "aluno" : "mensagens")}</div>
+    <div>
+      <span>${printableEscape(message.audienceLabel || "Comunicado")}</span>
+      <strong>${printableEscape(message.title)}</strong>
+      <p>${printableEscape(message.text)}</p>
+      <dl>
+        <div><dt>Origem</dt><dd>${printableEscape(message.authorName || "Equipe escolar")}</dd></div>
+        <div><dt>Turma</dt><dd>${printableEscape(message.className || getActiveStudentProfile().className)}</dd></div>
+      </dl>
+    </div>
+    <aside>
+      <small>${printableEscape(message.date || "")}</small>
+      <em>${printableEscape(communicationDeliveryStateLabel(message))}</em>
+      ${message.deliveryId && !message.readAt ? `<button type="button" data-student-delivery-read="${printableEscape(message.deliveryId)}">Marcar como lido</button>` : ""}
+    </aside>
+  </article>
+`;
+
+const renderStudentInboxList = ({ compact = false } = {}) => {
+  if (studentInstitutionalState.messagesError) {
+    return renderFamilyEmpty("NAO FOI POSSIVEL CARREGAR OS RECADOS.", studentInstitutionalState.messagesError);
+  }
+  const messages = compact ? (studentInstitutionalState.messages || []).slice(0, 2) : studentInstitutionalState.messages || [];
+  if (!messages.length) return renderFamilyEmpty("Nenhum comunicado para voce no momento.");
+  return `<div class="family-message-list student-inbox-list">${messages.map(renderStudentInboxCard).join("")}</div>`;
+};
+
+const renderStudentInboxView = () => {
+  if (studentInstitutionalState.status !== "ready") return renderStudentInstitutionalGate();
+  const unread = communicationUnreadCount(studentInstitutionalState.messages || []);
+  return `
+    <section class="family-panel family-messages-panel student-inbox-panel">
+      <div class="family-section-head">
+        <div>
+          <h2>Recados</h2>
+          <p>Comunicados liberados para sua turma, escola ou para voce.</p>
+        </div>
+        <span>${unread > 0 ? `${unread} não lido${unread === 1 ? "" : "s"}` : "Tudo lido"}</span>
+      </div>
+      ${renderStudentInboxList()}
+    </section>
+  `;
 };
 
 const renderStudentInstitutionalGate = () => {
@@ -8630,7 +8703,7 @@ const renderStudentSimpleDashboard = () => `
       ${renderStudentPremiumTopbar()}
       <div class="student-premium-grid">
         <main class="student-center">
-          ${getPrintableParams().get("view") === "avaliacoes" ? renderStudentAssessmentsView() : renderStudentInstitutionalHomeContent()}
+          ${getPrintableParams().get("view") === "avaliacoes" ? renderStudentAssessmentsView() : getPrintableParams().get("view") === "recados" ? renderStudentInboxView() : renderStudentInstitutionalHomeContent()}
         </main>
         ${renderStudentQuickRail()}
       </div>
@@ -13592,35 +13665,15 @@ const mapFamilyTeacherMessage = (row = {}, selectedChild = null, authorProfile =
 
 const loadFamilyTeacherMessages = async (client, selectedChild = null) => {
   const student = selectedChild?.student || {};
-  const enrollment = selectedChild?.enrollment || {};
-  const school = selectedChild?.school || {};
-  if (!student.id || !enrollment.class_id || !school.id) return [];
-  const baseSelect =
-    "select=id,school_id,author_profile_id,author_role,communication_type,audience_type,class_id,student_id,title,body,communication_date,status,created_at,updated_at";
-  const requestOptions = { requireAuthenticated: true, allowedRoles: familyInstitutionalAllowedRoles };
-  const baseQuery =
-    `?${baseSelect}&school_id=${supabaseEq(school.id)}&communication_type=eq.message&author_role=eq.professor&status=eq.published`;
-  const [classRows, studentRows] = await Promise.all([
-    client
-      .request("communications", `${baseQuery}&audience_type=eq.class&class_id=${supabaseEq(enrollment.class_id)}&order=created_at.desc`, requestOptions)
-      .catch(() => []),
-    client
-      .request("communications", `${baseQuery}&audience_type=eq.student&student_id=${supabaseEq(student.id)}&order=created_at.desc`, requestOptions)
-      .catch(() => []),
-  ]);
-  const rowsById = new Map();
-  [...(classRows || []), ...(studentRows || [])].forEach((row) => {
-    if (row?.id && row.status === "published") rowsById.set(row.id, row);
-  });
-  const rows = [...rowsById.values()].sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
-  const authorIds = [...new Set(rows.map((row) => row.author_profile_id).filter(Boolean))];
-  const authorProfiles = authorIds.length
-    ? await client
-        .request("profiles", `?select=id,display_name,full_name,name,email&id=${supabaseIn(authorIds)}`, requestOptions)
-        .catch(() => [])
-    : [];
-  const profilesById = new Map((authorProfiles || []).map((profile) => [profile.id, profile]));
-  return rows.map((row) => mapFamilyTeacherMessage(row, selectedChild, profilesById.get(row.author_profile_id) || null));
+  if (!student.id) return [];
+  const rows = await callCommunicationInbox(client, { studentId: student.id, readFilter: "all", periodDays: 120, limit: 60 }, familyInstitutionalAllowedRoles);
+  return (rows || []).map((row) =>
+    mapCommunicationInboxItem(row, {
+      authorName: getFamilyTeacherName(),
+      childName: normalizeFamilyStudentName(student),
+      className: normalizeFamilyClassName(selectedChild?.classItem || familyInstitutionalState.classItem || {}),
+    })
+  );
 };
 
 const mapFamilyAttendanceRecord = (row = {}) => ({
@@ -14008,6 +14061,11 @@ const getFamilyView = () => {
   const view = new URLSearchParams(window.location.search).get("view") || "inicio";
   return familyAreaViews.some(([key]) => key === view) ? view : "inicio";
 };
+const familyAreaViewLabel = (key, label) => {
+  if (key !== "recados" || familyInstitutionalState.status !== "ready") return label;
+  const unread = communicationUnreadCount(familyInstitutionalState.messages || []);
+  return unread > 0 ? `${label} ${unread}` : label;
+};
 
 const renderFamilyEmpty = (title, text = "") => `
   <div class="family-empty-state">
@@ -14047,11 +14105,12 @@ const renderFamilyPhasePlaceholder = (title, text) => `
   </section>
 `;
 
-const renderFamilyMessageList = () => {
-  const messages =
+const renderFamilyMessageList = ({ compact = false } = {}) => {
+  const allMessages =
     isFamilyInstitutionalMode() && familyInstitutionalState.status === "ready"
       ? familyInstitutionalState.messages || []
       : familyÁreaData.messages;
+  const messages = compact ? allMessages.slice(0, 3) : allMessages;
   if (isFamilyInstitutionalMode() && familyInstitutionalState.messagesError) {
     return renderFamilyEmpty("NAO FOI POSSIVEL CARREGAR OS RECADOS.", familyInstitutionalState.messagesError);
   }
@@ -14059,7 +14118,7 @@ const renderFamilyMessageList = () => {
     ? messages
         .map(
           (message) => `
-            <article class="family-list-card family-message-card ${message.audienceType === "student" ? "is-individual" : "is-class"}">
+            <article class="family-list-card family-message-card ${message.audienceType === "student" ? "is-individual" : "is-class"} ${message.readAt ? "is-read" : "is-unread"}">
               <div class="family-message-icon">${premiumIcon(message.audienceType === "student" ? "aluno" : "turmas")}</div>
               <div>
                 <span>${printableEscape(message.audienceLabel || message.origin || "Recado da professora")}</span>
@@ -14073,7 +14132,8 @@ const renderFamilyMessageList = () => {
               </div>
               <aside>
                 <small>${printableEscape(message.date || "")}</small>
-                <em>${printableEscape(message.statusLabel || "Publicado")}</em>
+                <em>${printableEscape(message.deliveryId ? communicationDeliveryStateLabel(message) : message.statusLabel || "Publicado")}</em>
+                ${message.deliveryId && !message.readAt ? `<button type="button" data-family-delivery-read="${printableEscape(message.deliveryId)}">Marcar como lido</button>` : ""}
               </aside>
             </article>
           `
@@ -14604,8 +14664,9 @@ const renderFamilyHomeView = () => `
     <div class="family-panel family-home-card">
       ${premiumIcon("mensagens")}
       <div class="family-panel-body">
-        <div class="family-section-head"><h2>Recados</h2><span>${isFamilyInstitutionalMode() && familyInstitutionalState.status === "ready" ? `${familyInstitutionalState.messages.length} publicados` : "Professora"}</span></div>
-        ${isFamilyInstitutionalMode() ? renderFamilyMessageList() : renderFamilyEmpty("NENHUM NOVO RECADO NO MOMENTO.")}
+        <div class="family-section-head"><h2>Recados recentes</h2><span>${isFamilyInstitutionalMode() && familyInstitutionalState.status === "ready" ? `${communicationUnreadCount(familyInstitutionalState.messages || [])} não lido${communicationUnreadCount(familyInstitutionalState.messages || []) === 1 ? "" : "s"}` : "Professora"}</span></div>
+        ${isFamilyInstitutionalMode() ? renderFamilyMessageList({ compact: true }) : renderFamilyEmpty("NENHUM NOVO RECADO NO MOMENTO.")}
+        <a class="family-primary-link" href="familia.html?view=recados">Abrir comunicados</a>
       </div>
     </div>
     <div class="family-panel family-home-card">
@@ -14713,7 +14774,7 @@ const renderFamilyDashboard = () => {
           <small>${printableEscape(student.className || "Base institucional")}</small>
         </div>
         <nav aria-label="Área Aluno e Família">
-          ${familyAreaViews.map(([key, label, icon]) => `<a class="${key === view ? "is-active" : ""}" href="familia.html?view=${key}">${premiumIcon(icon)}<span>${label}</span></a>`).join("")}
+          ${familyAreaViews.map(([key, label, icon]) => `<a class="${key === view ? "is-active" : ""}" href="familia.html?view=${key}">${premiumIcon(icon)}<span>${familyAreaViewLabel(key, label)}</span></a>`).join("")}
         </nav>
       </aside>
       <section class="family-v1-main">
@@ -14736,7 +14797,7 @@ const renderFamilyDashboard = () => {
         <section class="family-v1-content" data-family-content>${renderFamilyView(view)}</section>
       </section>
       <nav class="family-v1-mobile" aria-label="Navegação mobile">
-        ${familyAreaViews.map(([key, label]) => `<a class="${key === view ? "is-active" : ""}" href="familia.html?view=${key}">${label}</a>`).join("")}
+        ${familyAreaViews.map(([key, label]) => `<a class="${key === view ? "is-active" : ""}" href="familia.html?view=${key}">${familyAreaViewLabel(key, label)}</a>`).join("")}
       </nav>
       ${renderFamilyRoutineModal()}
     </main>
@@ -14819,6 +14880,21 @@ const initFamilyArea = () => {
     if (noticeButton) {
       event.preventDefault();
       noticeButton.classList.toggle("is-expanded");
+      return;
+    }
+    const deliveryReadButton = event.target.closest?.("[data-family-delivery-read]");
+    if (deliveryReadButton) {
+      event.preventDefault();
+      deliveryReadButton.disabled = true;
+      deliveryReadButton.textContent = "Marcando...";
+      try {
+        await markCommunicationDeliveryRead(deliveryReadButton.dataset.familyDeliveryRead || "", familyInstitutionalAllowedRoles);
+        if (isFamilyInstitutionalMode()) await loadInstitutionalWeek(area.dataset.weekStart || familyWeekStartIso(), { rerenderShell: true });
+      } catch (error) {
+        window.alert(error.message || "Não foi possível marcar o comunicado como lido.");
+        deliveryReadButton.disabled = false;
+        deliveryReadButton.textContent = "Marcar como lido";
+      }
       return;
     }
     const weekMoveButton = event.target.closest?.("[data-week-move]");
@@ -18844,13 +18920,15 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       studentInstitutionalState.school = school;
       studentInstitutionalState.teachers = resolvedTeachers;
       studentInstitutionalState.entries = [];
+      studentInstitutionalState.messages = [];
+      studentInstitutionalState.messagesError = "";
       studentInstitutionalState.recommendationsError = "";
       studentInstitutionalState.recommendations = [];
       studentInstitutionalState.secondaryLoadedAt = "";
       studentInstitutionalState.status = "ready";
       const refreshSecondaryData = async () => {
         const weekDates = getFamilyWeekDates(studentInstitutionalState.weekStartIso);
-        const [entries, recommendations] = await Promise.all([
+        const [entries, recommendations, messages] = await Promise.all([
           enrollment?.class_id
             ? client.request(
                 "class_calendar_entries",
@@ -18865,9 +18943,14 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
             studentInstitutionalState.recommendationsError = error.message || "Não foi possível carregar as recomendações.";
             return [];
           }),
+          loadStudentCommunicationInbox(client).catch((error) => {
+            studentInstitutionalState.messagesError = error.message || "Não foi possível carregar os recados.";
+            return [];
+          }),
         ]);
         studentInstitutionalState.entries = (entries || []).filter((entry) => entry.status === "published").map(mapFamilyCalendarEntry);
         studentInstitutionalState.recommendations = recommendations || [];
+        studentInstitutionalState.messages = messages || [];
         studentInstitutionalState.secondaryLoadedAt = new Date().toISOString();
         rerenderStudentInstitutionalSurfaces();
       };
@@ -18882,6 +18965,8 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       studentInstitutionalState.school = null;
       studentInstitutionalState.teachers = [];
       studentInstitutionalState.entries = [];
+      studentInstitutionalState.messages = [];
+      studentInstitutionalState.messagesError = "";
       studentInstitutionalState.recommendations = [];
       studentInstitutionalState.recommendationsError = "";
       return studentInstitutionalState;
@@ -19288,6 +19373,7 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
         classDiaryEntries,
         communications,
         communicationEvents,
+        communicationDeliverySummaries,
       ] = await Promise.all([
         client.request("schools", "?select=id,nome,codigo_inep,municipio,estado,status&order=nome.asc", options),
         client.request("rpc/secretaria_list_staff_profiles", "", {
@@ -19370,6 +19456,11 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
           method: "POST",
           body: "{}",
         }).catch(() => []),
+        client.request("rpc/communication_list_delivery_summaries", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }).catch(() => []),
       ]);
 
       Object.assign(secretariaInstitutionalState, {
@@ -19398,6 +19489,7 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
         classDiaryEntries: classDiaryEntries || [],
         communications: communications || [],
         communicationEvents: communicationEvents || [],
+        communicationDeliverySummaries: communicationDeliverySummaries || [],
       });
       return secretariaInstitutionalState;
     } catch (error) {
@@ -19424,6 +19516,7 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
         attendanceEvents: [],
         communications: [],
         communicationEvents: [],
+        communicationDeliverySummaries: [],
       });
       return secretariaInstitutionalState;
     } finally {
@@ -19565,6 +19658,10 @@ const buildSecretariaIndex = () => {
     communicationEventsByCommunication[event.communication_id] = communicationEventsByCommunication[event.communication_id] || [];
     communicationEventsByCommunication[event.communication_id].push(event);
   });
+  const communicationDeliverySummaryByCommunication = {};
+  (state.communicationDeliverySummaries || []).forEach((summary) => {
+    if (summary.communication_id) communicationDeliverySummaryByCommunication[summary.communication_id] = summary;
+  });
   const classDiaryByClass = {};
   (state.classDiaryEntries || []).forEach((entry) => {
     classDiaryByClass[entry.class_id] = classDiaryByClass[entry.class_id] || [];
@@ -19612,6 +19709,7 @@ const buildSecretariaIndex = () => {
     communicationsByClass,
     communicationsBySchool,
     communicationEventsByCommunication,
+    communicationDeliverySummaryByCommunication,
     classDiaryByClass,
   };
 };
@@ -19696,6 +19794,64 @@ const communicationDisplayDate = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
   return date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+};
+const communicationDeliveryStateLabel = (message = {}) => (message.readAt ? "LIDO" : "NAO LIDO");
+const communicationUnreadCount = (messages = []) => {
+  const reported = messages.find((message) => Number.isFinite(Number(message.unreadCount)))?.unreadCount;
+  return Number.isFinite(Number(reported)) ? Number(reported) : messages.filter((message) => !message.readAt).length;
+};
+const mapCommunicationInboxItem = (row = {}, fallback = {}) => ({
+  deliveryId: row.delivery_id || "",
+  id: row.communication_id || row.id || "",
+  schoolId: row.school_id || "",
+  studentId: row.student_id || "",
+  title: row.title || "Comunicado",
+  text: row.body || "",
+  communicationType: row.communication_type || "message",
+  audienceType: String(row.audience_type || "").toLowerCase(),
+  audienceLabel: row.context_label || communicationAudienceLabel(row.audience_type),
+  authorName: row.author_name || fallback.authorName || "Equipe escolar",
+  className: row.class_name || fallback.className || "",
+  childName: row.child_name || fallback.childName || "",
+  readAt: row.read_at || "",
+  notificationStatus: row.notification_status || (row.read_at ? "read" : "unread"),
+  unreadCount: Number(row.unread_count || 0),
+  date: communicationDisplayDate(row.delivered_at || row.created_at || row.communication_date),
+  createdAt: row.created_at || "",
+  deliveredAt: row.delivered_at || "",
+  communicationDate: row.communication_date || "",
+});
+const callCommunicationInbox = async (client, { studentId = "", readFilter = "all", periodDays = 90, limit = 50 } = {}, allowedRoles = []) =>
+  client.request("rpc/communication_get_inbox", "", {
+    method: "POST",
+    body: JSON.stringify({
+      p_student_id: studentId || null,
+      p_read_filter: readFilter,
+      p_period_days: periodDays,
+      p_limit: limit,
+      p_offset: 0,
+    }),
+    requireAuthenticated: true,
+    allowedRoles,
+  });
+const markCommunicationDeliveryRead = async (deliveryId = "", allowedRoles = []) => {
+  if (!deliveryId) return null;
+  const client = createSupabaseRestClient();
+  return client.request("rpc/communication_mark_read", "", {
+    method: "POST",
+    body: JSON.stringify({ p_delivery_id: deliveryId }),
+    requireAuthenticated: true,
+    allowedRoles,
+  });
+};
+const communicationDeliverySummariesById = async (client, allowedRoles = []) => {
+  const rows = await client.request("rpc/communication_list_delivery_summaries", "", {
+    method: "POST",
+    body: "{}",
+    requireAuthenticated: true,
+    allowedRoles,
+  }).catch(() => []);
+  return new Map((rows || []).map((row) => [row.communication_id, row]));
 };
 const secretariaStudentDocumentTypes = (student, index = buildSecretariaIndex()) => {
   const schoolTypes = index.documentTypesBySchool[student?.school_id] || [];
@@ -21169,6 +21325,7 @@ const renderSecretariaCommunicationsView = (index) => {
               ? normalizeClassName(classItem)
               : normalizeStudentName(student);
           const events = index.communicationEventsByCommunication[communication.id] || [];
+          const deliverySummary = index.communicationDeliverySummaryByCommunication[communication.id] || {};
           const actionButton = communication.status === "published"
             ? `<button type="button" data-secretaria-communication-status="${htmlEscape(communication.id)}" data-to-status="archived" data-destination="${htmlEscape(communicationAudienceSummary({ audienceType: communication.audience_type, school: index.schoolById.get(communication.school_id) || {}, classItem, student }))}">Retirar da publicação</button>`
             : communication.status === "archived"
@@ -21180,7 +21337,7 @@ const renderSecretariaCommunicationsView = (index) => {
               ${secretariaBadge(communicationStatusLabel(communication.status), secretariaBadgeTone(communication.status))}
               <span>${htmlEscape(communicationAudienceLabel(communication.audience_type))} · ${htmlEscape(destination)} · ${htmlEscape(communicationTypeLabel(communication.communication_type))} · ${htmlEscape(communicationDisplayDate(communication.created_at || communication.communication_date))}</span>
               <span>${htmlEscape(String(communication.body || "").slice(0, 140))}${String(communication.body || "").length > 140 ? "..." : ""}</span>
-              <span>Publicado por ${htmlEscape(normalizeProfileName(author) || communication.author_role || "Usuário institucional")} · Histórico: ${events.length} evento${events.length === 1 ? "" : "s"}</span>
+              <span>Publicado por ${htmlEscape(normalizeProfileName(author) || communication.author_role || "Usuário institucional")} · Histórico: ${events.length} evento${events.length === 1 ? "" : "s"} · Entregues: ${Number(deliverySummary.delivered_count || 0)} · Lidos: ${Number(deliverySummary.read_count || 0)} · Não lidos: ${Number(deliverySummary.unread_count || 0)}</span>
               <div class="secretaria-list-actions">
                 <a href="${secretariaLink("comunicados", { q: communication.title })}">${communication.status === "draft" ? "Visualizar/Editar" : "Visualizar"}</a>
                 ${actionButton}
@@ -23445,6 +23602,25 @@ const initTeacherWorkspace = () => {
 const initStudentInstitutionalDashboard = () => {
   const dashboard = document.querySelector("[data-student-dashboard]");
   if (!dashboard || !isStudentInstitutionalMode()) return;
+  dashboard.addEventListener("click", async (event) => {
+    const readButton = event.target.closest?.("[data-student-delivery-read]");
+    if (!readButton) return;
+    event.preventDefault();
+    readButton.disabled = true;
+    readButton.textContent = "Marcando...";
+    try {
+      await markCommunicationDeliveryRead(readButton.dataset.studentDeliveryRead || "", ["aluno", "admin"]);
+      await ensureStudentInstitutionalData({ force: true });
+      if (!document.body.contains(dashboard)) return;
+      dashboard.outerHTML = renderStudentSimpleDashboard();
+      initStudentInstitutionalDashboard();
+      initStudentAvaliaApplication();
+    } catch (error) {
+      window.alert(error.message || "Não foi possível marcar o comunicado como lido.");
+      readButton.disabled = false;
+      readButton.textContent = "Marcar como lido";
+    }
+  });
   ensureStudentInstitutionalData().then(() => {
     if (studentInstitutionalState.hydratedDom || !document.body.contains(dashboard)) return;
     studentInstitutionalState.hydratedDom = true;
