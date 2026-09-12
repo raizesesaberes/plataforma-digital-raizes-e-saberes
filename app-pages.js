@@ -509,6 +509,7 @@ const secretariaOfficialModules = [
   ["professores", "Professores", "secretaria.html?view=professores"],
   ["frequencia", "Frequência", "secretaria.html?view=frequencia"],
   ["avalia", "Avalia+", "secretaria.html?view=avalia"],
+  ["analytics", "Analytics", "secretaria.html?view=analytics"],
   ["documentos", "Documentos", "secretaria.html?view=documentos"],
   ["comunicados", "Comunicados", "secretaria.html?view=comunicados"],
 ];
@@ -4006,6 +4007,14 @@ const secretariaAvaliaResultsState = {
   result: null,
 };
 
+const secretariaAnalyticsState = {
+  status: "idle",
+  error: "",
+  promise: null,
+  key: "",
+  result: null,
+};
+
 const teacherClassMessagesState = {
   status: "idle",
   error: "",
@@ -4037,6 +4046,14 @@ const teacherTrackingAttendanceState = {
   promise: null,
   key: "",
   records: [],
+};
+
+const teacherAnalyticsState = {
+  status: "idle",
+  error: "",
+  promise: null,
+  key: "",
+  result: null,
 };
 
 const studentInstitutionalState = {
@@ -6629,6 +6646,8 @@ const getTeacherTrackingStartDate = (periodDays = 30) => {
 
 const getTeacherTrackingAttendanceKey = (classId = "", periodDays = 30) => `${classId}:${periodDays}:${getTeacherTrackingStartDate(periodDays)}`;
 
+const getTeacherAnalyticsKey = (classId = "", periodDays = 30) => `${classId}:${periodDays}:${getTeacherTrackingStartDate(periodDays)}`;
+
 const ensureTeacherTrackingAttendance = async ({ force = false, classId = "", periodDays = 30 } = {}) => {
   if (!classId) return teacherTrackingAttendanceState;
   const key = getTeacherTrackingAttendanceKey(classId, periodDays);
@@ -6660,6 +6679,49 @@ const ensureTeacherTrackingAttendance = async ({ force = false, classId = "", pe
   return teacherTrackingAttendanceState.promise;
 };
 
+const ensureTeacherClassAnalytics = async ({ force = false, classId = "", periodDays = 30 } = {}) => {
+  if (!classId) return teacherAnalyticsState;
+  const key = getTeacherAnalyticsKey(classId, periodDays);
+  if (!force && teacherAnalyticsState.status === "ready" && teacherAnalyticsState.key === key) return teacherAnalyticsState;
+  if (!force && teacherAnalyticsState.promise && teacherAnalyticsState.key === key) return teacherAnalyticsState.promise;
+  teacherAnalyticsState.status = "loading";
+  teacherAnalyticsState.error = "";
+  teacherAnalyticsState.key = key;
+  teacherAnalyticsState.promise = (async () => {
+    try {
+      const dateFrom = getTeacherTrackingStartDate(periodDays);
+      const dateTo = toTeacherIsoDate(new Date());
+      const [overview, attendanceTrend, assessmentTrend, comparison, alerts] = await Promise.all([
+        analyticsService.getClassOverview({
+          classId,
+          dateFrom,
+          dateTo,
+        }),
+        analyticsService.getTrendSeries({ classId, metric: "attendance_rate", dateFrom, dateTo, granularity: "week" }),
+        analyticsService.getTrendSeries({ classId, metric: "assessment_average", dateFrom, dateTo, granularity: "week" }),
+        analyticsService.getPeriodComparison({ classId, currentFrom: dateFrom, currentTo: dateTo }),
+        analyticsService.getAlerts({ classId, dateFrom, dateTo }),
+      ]);
+      if (overview.error) throw new Error(overview.error);
+      teacherAnalyticsState.result = {
+        ...overview,
+        trends: { attendance: attendanceTrend, assessment: assessmentTrend },
+        comparison,
+        alerts,
+      };
+      teacherAnalyticsState.status = "ready";
+    } catch (error) {
+      teacherAnalyticsState.result = null;
+      teacherAnalyticsState.error = error.message || "Não foi possível carregar o Analytics da turma.";
+      teacherAnalyticsState.status = "error";
+    } finally {
+      teacherAnalyticsState.promise = null;
+    }
+    return teacherAnalyticsState;
+  })();
+  return teacherAnalyticsState.promise;
+};
+
 const ensureTeacherTrackingBundle = async ({ force = false } = {}) => {
   await ensureTeacherInstitutionalData();
   if (teacherInstitutionalState.status !== "ready") return;
@@ -6669,6 +6731,7 @@ const ensureTeacherTrackingBundle = async ({ force = false } = {}) => {
   teacherTrackingState.periodDays = periodDays;
   await Promise.all([
     ensureTeacherTrackingAttendance({ force, classId, periodDays }),
+    ensureTeacherClassAnalytics({ force, classId, periodDays }),
     ensureTeacherRecommendations({ force, classId }),
     ensureTeacherClassMessages({ force, classId }),
   ]);
@@ -6772,6 +6835,14 @@ const renderTeacherTrackingView = () => {
   const studentAttendance = selectedStudent ? attendanceRecords.filter((record) => record.student_id === selectedStudent.id) : [];
   const classAttendance = attendanceSummary(attendanceRecords);
   const selectedAttendance = attendanceSummary(studentAttendance);
+  const analyticsResult = teacherAnalyticsState.status === "ready" && teacherAnalyticsState.key === getTeacherAnalyticsKey(selectedClass?.id || "", periodDays)
+    ? teacherAnalyticsState.result || {}
+    : {};
+  const analyticsSummary = analyticsResult.summary || {};
+  const analyticsAssessment = analyticsResult.assessment || {};
+  const analyticsBncc = analyticsResult.bncc || [];
+  const analyticsTrends = analyticsResult.trends || {};
+  const analyticsAlerts = analyticsResult.alerts?.alerts || [];
   const studentById = Object.fromEntries(students.map((student) => [student.id, student]));
   const allRecommendations = selectedClass ? teacherTrackingAllPublishedRecommendations(selectedClass.id) : [];
   const recommendations = selectedClass ? teacherTrackingPublishedRecommendations(selectedClass.id, selectedStudent?.id || "") : [];
@@ -6817,6 +6888,8 @@ const renderTeacherTrackingView = () => {
                 ${renderTeacherTrackingMetric("Turma", selectedClass.name, selectedClass.schoolName || selectedClass.shift || "Turma institucional", "turmas")}
                 ${renderTeacherTrackingMetric("Alunos", String(students.length), "Matrículas ativas da turma", "alunos")}
                 ${renderTeacherTrackingMetric("Presenca", `${classAttendance.percent}%`, `${classAttendance.present} presenças · ${classAttendance.absent} faltas · ${classAttendance.justified} justificadas`, "frequencia")}
+                ${renderTeacherTrackingMetric("Avalia+", analyticsPercentLabel(analyticsSummary.assessment_average), `${analyticsNumberLabel(analyticsAssessment.completed_students)} entrega(s) · ${analyticsPercentLabel(analyticsSummary.assessment_participation)} participação`, "chart")}
+                ${renderTeacherTrackingMetric("BNCC", analyticsNumberLabel(analyticsSummary.bncc_skills), "Habilidades avaliadas no período", "chart")}
                 ${renderTeacherTrackingMetric("Recomendações", String(allRecommendations.length), "Publicadas para a turma e seus alunos", "biblioteca")}
                 ${renderTeacherTrackingMetric("Recados", String(allMessages.length), "Mensagens pedagógicas da turma", "comunicados")}
               </div>`
@@ -6864,6 +6937,22 @@ const renderTeacherTrackingView = () => {
         <section class="tw-board tw-tracking-section">
           <div class="tw-section-head"><h2>Recados pedagógicos</h2><button type="button" data-teacher-open-url="${selectedClass ? `${getTeacherClassHref(selectedClass)}?tab=recados` : "professor.html?view=turmas"}">Abrir recados</button></div>
           <div class="tw-tracking-list">${allMessages.length ? allMessages.slice(0, 6).map(renderTeacherTrackingMessage).join("") : `<p class="ua-empty">NENHUM RECADO PEDAGOGICO PUBLICADO PARA ESTE CONTEXTO.</p>`}</div>
+        </section>
+        <section class="tw-board tw-tracking-section">
+          <div class="tw-section-head"><h2>Analytics da turma</h2><span>Ultimos ${periodDays} dias</span></div>
+          ${
+            teacherAnalyticsState.status === "loading"
+              ? `<p class="ua-empty">CARREGANDO INDICADORES DA TURMA.</p>`
+              : teacherAnalyticsState.status === "error"
+                ? `<p class="ua-empty">${printableEscape(teacherAnalyticsState.error)}</p>`
+                : `<div class="tw-tracking-list">
+                    <article class="tw-tracking-item"><div><span>Frequência</span><strong>${analyticsPercentLabel(analyticsSummary.attendance_rate)}</strong><small>Presenças sobre registros reais</small></div><mark>${analyticsNumberLabel(analyticsResult.attendance?.total_records)} registros</mark></article>
+                    <article class="tw-tracking-item"><div><span>Avalia+</span><strong>${analyticsPercentLabel(analyticsSummary.assessment_average)}</strong><small>${analyticsNumberLabel(analyticsAssessment.completed_students)} entrega(s) no período</small></div><mark>${analyticsPercentLabel(analyticsSummary.assessment_participation)}</mark></article>
+                    <article class="tw-tracking-item"><div><span>BNCC</span><strong>${analyticsNumberLabel(analyticsSummary.bncc_skills)} habilidade(s)</strong><small>${analyticsBncc.slice(0, 3).map((skill) => `${skill.bncc_skill}: ${analyticsPercentLabel(skill.percentage)}`).join(" · ") || "Aguardando resultados"}</small></div><mark>Sem ranking</mark></article>
+                    <article class="tw-tracking-item"><div><span>Tendência</span><strong>${analyticsTrends.attendance?.has_trend ? analyticsDeltaLabel(analyticsTrends.attendance.delta_absolute) : "Sem tendência"}</strong><small>${htmlEscape(analyticsTrends.attendance?.message || "Dados insuficientes para comparar períodos.")}</small></div><mark>Frequência</mark></article>
+                    <article class="tw-tracking-item"><div><span>Alertas</span><strong>${analyticsNumberLabel(analyticsAlerts.length)}</strong><small>${analyticsAlerts.slice(0, 2).map((alert) => printableEscape(alert.message || "")).join(" · ") || "Nenhum alerta pelos limiares definidos"}</small></div><mark>Acompanhamento</mark></article>
+                  </div>`
+          }
         </section>
       </div>
       <div class="tw-tracking-grid">
@@ -8820,6 +8909,222 @@ const avaliaApplicationService = (() => {
   };
 })();
 
+const analyticsPercentLabel = (value) => {
+  const numeric = Number(value || 0);
+  if (!Number.isFinite(numeric)) return "0%";
+  return `${numeric.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+};
+
+const analyticsNumberLabel = (value) => Number(value || 0).toLocaleString("pt-BR");
+
+const analyticsDeltaLabel = (delta) => {
+  if (delta === null || delta === undefined || delta === "") return "sem comparação";
+  const value = Number(delta || 0);
+  if (!Number.isFinite(value)) return "sem comparação";
+  if (value === 0) return "estável";
+  return `${value > 0 ? "+" : ""}${value.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} p.p.`;
+};
+
+const analyticsMetricLabel = (metric) => ({
+  attendance_rate: "Frequência",
+  assessment_average: "Média Avalia+",
+  assessment_participation: "Participação Avalia+",
+  diary_entries_count: "Diário",
+  bncc_percentage: "BNCC",
+}[metric] || metric || "Indicador");
+
+const renderAnalyticsTrendCard = (title, trend = {}) => {
+  const points = trend.points || [];
+  const visiblePoints = points.slice(-6);
+  const maxValue = Math.max(1, ...visiblePoints.map((point) => Number(point.value || 0)));
+  const bars = visiblePoints.map((point) => {
+    const height = Math.max(8, Math.round((Number(point.value || 0) / maxValue) * 54));
+    return `<span title="${htmlEscape(point.period || "")}: ${analyticsPercentLabel(point.value)}" style="display:block;width:8px;height:${height}px;background:#1f7a3a;border-radius:999px;"></span>`;
+  }).join("");
+  const current = trend.current_value ?? visiblePoints[visiblePoints.length - 1]?.value ?? 0;
+  return `
+    <article>
+      <span>${htmlEscape(title)}</span>
+      <strong>${analyticsPercentLabel(current)}</strong>
+      <small>${trend.has_trend ? analyticsDeltaLabel(trend.delta_absolute) : htmlEscape(trend.message || "Dados insuficientes para comparar períodos.")}</small>
+      <div class="mini-bars" aria-hidden="true" style="display:flex;align-items:flex-end;gap:4px;min-height:58px;margin-top:10px;">${bars || "<span></span>"}</div>
+    </article>
+  `;
+};
+
+const renderAnalyticsAlertList = (alerts = []) => `
+  <ul class="clean-list">
+    ${alerts.length
+      ? alerts.slice(0, 8).map((alert) => `<li><strong>${htmlEscape(alert.level || "ATENÇÃO")}</strong><span>${htmlEscape(alert.message || "Requer acompanhamento")} · ${analyticsNumberLabel(alert.value)}${alert.type === "DIARY_WITHOUT_RECORDS" ? "" : "%"}</span></li>`).join("")
+      : "<li>Nenhum alerta gerado para os limiares definidos.</li>"
+    }
+  </ul>
+`;
+
+const analyticsService = (() => {
+  const client = () => createSupabaseRestClient();
+  const emptyPayload = {
+    period: {},
+    summary: {},
+    attendance: {},
+    assessment: {},
+    bncc: {},
+    diary: {},
+    classes: [],
+    students: [],
+  };
+  const remote = {
+    async getSchoolOverview({ schoolId, dateFrom, dateTo, schoolYear } = {}) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/analytics_get_school_overview", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: secretariaAllowedRoles,
+        body: JSON.stringify({
+          p_school_id: schoolId,
+          p_date_from: dateFrom || null,
+          p_date_to: dateTo || null,
+          p_school_year: schoolYear || null,
+        }),
+      }));
+    },
+    async getClassOverview({ classId, dateFrom, dateTo, schoolYear } = {}) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/analytics_get_class_overview", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: [...teacherAllowedRoles, ...secretariaAllowedRoles],
+        body: JSON.stringify({
+          p_class_id: classId,
+          p_date_from: dateFrom || null,
+          p_date_to: dateTo || null,
+          p_school_year: schoolYear || null,
+        }),
+      }));
+    },
+    async getStudentSnapshot({ studentId, dateFrom, dateTo, schoolYear } = {}) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/analytics_get_student_snapshot", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: ["aluno", "professor", "secretaria", "gestor", "coordenador", "admin"],
+        body: JSON.stringify({
+          p_student_id: studentId,
+          p_date_from: dateFrom || null,
+          p_date_to: dateTo || null,
+          p_school_year: schoolYear || null,
+        }),
+      }));
+    },
+    async getTrendSeries({ schoolId, classId, studentId, metric, dateFrom, dateTo, granularity, bnccSkill } = {}) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/analytics_get_trend_series", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: ["aluno", "professor", "secretaria", "gestor", "coordenador", "admin"],
+        body: JSON.stringify({
+          p_school_id: schoolId || null,
+          p_class_id: classId || null,
+          p_student_id: studentId || null,
+          p_metric: metric || "attendance_rate",
+          p_date_from: dateFrom || null,
+          p_date_to: dateTo || null,
+          p_granularity: granularity || "week",
+          p_bncc_skill: bnccSkill || null,
+        }),
+      }));
+    },
+    async getPeriodComparison({ schoolId, classId, studentId, currentFrom, currentTo, previousFrom, previousTo } = {}) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/analytics_get_period_comparison", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: ["aluno", "professor", "secretaria", "gestor", "coordenador", "admin"],
+        body: JSON.stringify({
+          p_school_id: schoolId || null,
+          p_class_id: classId || null,
+          p_student_id: studentId || null,
+          p_current_from: currentFrom || null,
+          p_current_to: currentTo || null,
+          p_previous_from: previousFrom || null,
+          p_previous_to: previousTo || null,
+        }),
+      }));
+    },
+    async getClassComparison({ schoolId, dateFrom, dateTo, metric } = {}) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/analytics_get_class_comparison", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: [...teacherAllowedRoles, ...secretariaAllowedRoles],
+        body: JSON.stringify({
+          p_school_id: schoolId,
+          p_date_from: dateFrom || null,
+          p_date_to: dateTo || null,
+          p_metric: metric || "attendance_rate",
+        }),
+      }));
+    },
+    async getAlerts({ schoolId, classId, dateFrom, dateTo, thresholds = {} } = {}) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/analytics_get_alerts", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: [...teacherAllowedRoles, ...secretariaAllowedRoles],
+        body: JSON.stringify({
+          p_school_id: schoolId || null,
+          p_class_id: classId || null,
+          p_date_from: dateFrom || null,
+          p_date_to: dateTo || null,
+          p_attendance_threshold: Number(thresholds.attendance || 80),
+          p_assessment_participation_threshold: Number(thresholds.assessmentParticipation || 70),
+          p_assessment_average_threshold: Number(thresholds.assessmentAverage || 60),
+          p_bncc_threshold: Number(thresholds.bncc || 60),
+          p_require_diary: thresholds.requireDiary !== false,
+        }),
+      }));
+    },
+  };
+  const fallback = {
+    async getSchoolOverview() {
+      return { ...emptyPayload };
+    },
+    async getClassOverview() {
+      return { ...emptyPayload };
+    },
+    async getStudentSnapshot() {
+      return { ...emptyPayload };
+    },
+    async getTrendSeries() {
+      return { points: [], point_count: 0, has_trend: false, message: "Sem dados no período." };
+    },
+    async getPeriodComparison() {
+      return { metrics: {} };
+    },
+    async getClassComparison() {
+      return { classes: [] };
+    },
+    async getAlerts() {
+      return { alerts: [], alert_count: 0 };
+    },
+  };
+  const active = () => {
+    const currentClient = client();
+    if (currentClient.isConfigured) return remote;
+    if (currentClient.canUseFallback) return fallback;
+    return remote;
+  };
+  return {
+    getSchoolOverview: (...args) => active().getSchoolOverview(...args),
+    getClassOverview: (...args) => active().getClassOverview(...args),
+    getStudentSnapshot: (...args) => active().getStudentSnapshot(...args),
+    getTrendSeries: (...args) => active().getTrendSeries(...args),
+    getPeriodComparison: (...args) => active().getPeriodComparison(...args),
+    getClassComparison: (...args) => active().getClassComparison(...args),
+    getAlerts: (...args) => active().getAlerts(...args),
+  };
+})();
+
 const renderTeacherAssessmentsView = () => {
   if (teacherInstitutionalState.status !== "ready") {
     return renderTeacherInstitutionalStatus("CARREGANDO VINCULO DO PROFESSOR PARA APLICAR AVALIACOES.");
@@ -8900,7 +9205,7 @@ const renderTeacherAssessmentResult = (assignmentId) => {
         <article>Menor resultado<strong>${avaliaPercentLabel(summary.lowest_percentage)}</strong><span>sem ranking público</span></article>
       </div>
       <ul class="clean-list">
-        ${students.map((student) => `<li><strong>${printableEscape(student.student_name || "Aluno")}</strong><span>${printableEscape(avaliaStatusLabel(student.status))} · ${avaliaPercentLabel(student.score_percentage)} · ${Number(student.correct || 0)} acertos · ${Number(student.unanswered || 0)} sem resposta</span></li>`).join("") || "<li>Nenhum resultado individual concluído ainda.</li>"}
+        ${students.map((student) => `<li><strong>${printableEscape(student.student_name || "Aluno")}</strong><span>${printableEscape(avaliaStatusLabel(student.status))} · ${avaliaPercentLabel(student.score_percentage)} · ${Number(student.correct_count || 0)} acertos · ${Number(student.incorrect_count || 0)} erros · ${Number(student.unanswered_count || 0)} sem resposta</span></li>`).join("") || "<li>Nenhum resultado individual concluído ainda.</li>"}
       </ul>
       <div class="digital-skill-report">
         ${skills.map((skill) => `<span>${printableEscape(skill.bncc_skill || "Habilidade nao informada")} · ${avaliaPercentLabel(skill.performance_percentage)}</span>`).join("") || "<span>Habilidades aguardam respostas.</span>"}
@@ -18467,8 +18772,8 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
 };
 
 const secretariaAllowedRoles = ["secretaria", "admin", "gestor", "coordenador"];
-const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "avalia", "comunicados"];
-const secretariaOfficialViews = ["painel", "alunos", "matriculas", "responsaveis", "turmas", "professores", "frequencia", "avalia", "documentos", "comunicados"];
+const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "avalia", "analytics", "comunicados"];
+const secretariaOfficialViews = ["painel", "alunos", "matriculas", "responsaveis", "turmas", "professores", "frequencia", "avalia", "analytics", "documentos", "comunicados"];
 const secretariaActiveStatuses = new Set(["active", "ativo"]);
 
 const isSecretariaActiveStatus = (status) => secretariaActiveStatuses.has(String(status || "active").toLowerCase());
@@ -18496,6 +18801,15 @@ const getSecretariaDiaryPeriodRange = () => {
   return {
     from: params.get("diaryFrom") || defaults.from,
     to: params.get("diaryTo") || defaults.to,
+  };
+};
+
+const getSecretariaAnalyticsPeriodRange = () => {
+  const defaults = getDiaryPeriodDefaultRange();
+  const params = getSecretariaParams();
+  return {
+    from: params.get("analyticsFrom") || defaults.from,
+    to: params.get("analyticsTo") || defaults.to,
   };
 };
 
@@ -18567,6 +18881,52 @@ const ensureSecretariaAvaliaResults = async ({ force = false, schoolId = "" } = 
     return secretariaAvaliaResultsState;
   })();
   return secretariaAvaliaResultsState.promise;
+};
+
+const ensureSecretariaAnalytics = async ({ force = false, schoolId = "", from = "", to = "" } = {}) => {
+  const selectedSchoolId = schoolId || getSecretariaPrimarySchool().id || "";
+  const range = { ...getSecretariaAnalyticsPeriodRange(), from: from || getSecretariaAnalyticsPeriodRange().from, to: to || getSecretariaAnalyticsPeriodRange().to };
+  const key = `${selectedSchoolId}:${range.from}:${range.to}`;
+  if (!selectedSchoolId) return secretariaAnalyticsState;
+  if (!force && secretariaAnalyticsState.status === "ready" && secretariaAnalyticsState.key === key) return secretariaAnalyticsState;
+  if (!force && secretariaAnalyticsState.promise && secretariaAnalyticsState.key === key) return secretariaAnalyticsState.promise;
+  secretariaAnalyticsState.status = "loading";
+  secretariaAnalyticsState.error = "";
+  secretariaAnalyticsState.key = key;
+  secretariaAnalyticsState.promise = (async () => {
+    try {
+      const [overview, attendanceTrend, assessmentTrend, diaryTrend, comparison, classComparison, alerts] = await Promise.all([
+        analyticsService.getSchoolOverview({
+          schoolId: selectedSchoolId,
+          dateFrom: range.from,
+          dateTo: range.to,
+        }),
+        analyticsService.getTrendSeries({ schoolId: selectedSchoolId, metric: "attendance_rate", dateFrom: range.from, dateTo: range.to, granularity: "week" }),
+        analyticsService.getTrendSeries({ schoolId: selectedSchoolId, metric: "assessment_average", dateFrom: range.from, dateTo: range.to, granularity: "week" }),
+        analyticsService.getTrendSeries({ schoolId: selectedSchoolId, metric: "diary_entries_count", dateFrom: range.from, dateTo: range.to, granularity: "week" }),
+        analyticsService.getPeriodComparison({ schoolId: selectedSchoolId, currentFrom: range.from, currentTo: range.to }),
+        analyticsService.getClassComparison({ schoolId: selectedSchoolId, dateFrom: range.from, dateTo: range.to, metric: "attendance_rate" }),
+        analyticsService.getAlerts({ schoolId: selectedSchoolId, dateFrom: range.from, dateTo: range.to }),
+      ]);
+      if (overview.error) throw new Error(overview.error);
+      secretariaAnalyticsState.result = {
+        ...overview,
+        trends: { attendance: attendanceTrend, assessment: assessmentTrend, diary: diaryTrend },
+        comparison,
+        classComparison,
+        alerts,
+      };
+      secretariaAnalyticsState.status = "ready";
+    } catch (error) {
+      secretariaAnalyticsState.result = null;
+      secretariaAnalyticsState.error = error.message || "Não foi possível carregar o Analytics.";
+      secretariaAnalyticsState.status = "error";
+    } finally {
+      secretariaAnalyticsState.promise = null;
+    }
+    return secretariaAnalyticsState;
+  })();
+  return secretariaAnalyticsState.promise;
 };
 
 const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
@@ -19112,6 +19472,7 @@ const secretariaViewIcon = {
   professores: "cap",
   frequencia: "calendar",
   avalia: "chart",
+  analytics: "chart",
   documentos: "doc",
   comunicados: "mail",
 };
@@ -20544,10 +20905,9 @@ const renderSecretariaAvaliaResultsView = (index) => {
       <section class="panel">
         <h2>Distribuição</h2>
         <ul class="clean-list">
-          <li><strong>0 a 49%</strong><span>${Number(distribution["0_49"] || 0)} tentativa${Number(distribution["0_49"] || 0) === 1 ? "" : "s"}</span></li>
-          <li><strong>50 a 69%</strong><span>${Number(distribution["50_69"] || 0)} tentativa${Number(distribution["50_69"] || 0) === 1 ? "" : "s"}</span></li>
-          <li><strong>70 a 84%</strong><span>${Number(distribution["70_84"] || 0)} tentativa${Number(distribution["70_84"] || 0) === 1 ? "" : "s"}</span></li>
-          <li><strong>85 a 100%</strong><span>${Number(distribution["85_100"] || 0)} tentativa${Number(distribution["85_100"] || 0) === 1 ? "" : "s"}</span></li>
+          <li><strong>Atenção</strong><span>${Number(distribution.attention || 0)} tentativa${Number(distribution.attention || 0) === 1 ? "" : "s"} abaixo de 50%</span></li>
+          <li><strong>Em desenvolvimento</strong><span>${Number(distribution.developing || 0)} tentativa${Number(distribution.developing || 0) === 1 ? "" : "s"} entre 50% e 69%</span></li>
+          <li><strong>Adequado</strong><span>${Number(distribution.adequate || 0)} tentativa${Number(distribution.adequate || 0) === 1 ? "" : "s"} a partir de 70%</span></li>
         </ul>
       </section>
       <section class="panel">
@@ -20556,6 +20916,176 @@ const renderSecretariaAvaliaResultsView = (index) => {
           ${skills.map((skill) => `<li><strong>${htmlEscape(skill.bncc_skill || "Habilidade nao informada")}</strong><span>${avaliaPercentLabel(skill.performance_percentage)} · ${Number(skill.responses || 0)} respostas · ${Number(skill.questions || 0)} questões</span></li>`).join("") || "<li>Habilidades aguardam respostas dos alunos.</li>"}
         </ul>
       </section>
+    </div>
+  `;
+};
+
+const renderSecretariaAnalyticsTabs = (activeTab) => {
+  const tabs = [
+    ["overview", "Visão geral"],
+    ["attendance", "Frequência"],
+    ["performance", "Desempenho"],
+    ["bncc", "BNCC"],
+    ["diary", "Diário"],
+  ];
+  return `
+    <nav class="secretaria-official-nav" aria-label="Abas do Analytics">
+      ${tabs.map(([key, label]) => `<a class="${activeTab === key ? "active" : ""}" href="${secretariaLink("analytics", { tab: key })}">${secretariaInlineIcon(key === "diary" ? "doc" : key === "attendance" ? "calendar" : "chart", label)}</a>`).join("")}
+    </nav>
+  `;
+};
+
+const renderSecretariaAnalyticsView = (index) => {
+  const school = getSecretariaPrimarySchool();
+  const state = secretariaAnalyticsState;
+  const result = state.result || {};
+  const summary = result.summary || {};
+  const attendance = result.attendance || {};
+  const assessment = result.assessment || {};
+  const bncc = result.bncc || {};
+  const diary = result.diary || {};
+  const classes = result.classes || [];
+  const trends = result.trends || {};
+  const comparison = result.comparison?.metrics || {};
+  const classComparison = result.classComparison?.classes || [];
+  const alerts = result.alerts?.alerts || [];
+  const activeTab = ["overview", "attendance", "performance", "bncc", "diary"].includes(getSecretariaParams().get("tab"))
+    ? getSecretariaParams().get("tab")
+    : "overview";
+  if (state.status === "loading" || state.status === "idle") {
+    return `<section class="panel span-2"><h2>Analytics</h2><p>Carregando indicadores institucionais em tempo real.</p></section>`;
+  }
+  if (state.status === "error") {
+    return `<section class="panel span-2"><h2>Analytics</h2><p>${htmlEscape(state.error)}</p></section>`;
+  }
+  const sparseNotice = `
+    <section class="panel">
+      <h2>Leitura do período</h2>
+      <p>Dados insuficientes para comparar períodos com segurança. Esta visão mostra somente consolidados reais do intervalo selecionado.</p>
+    </section>
+  `;
+  const overview = `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("chart", "Visão geral")}</h2><span>${htmlEscape(normalizeSchoolName(school))}</span></div>
+      <div class="metric-row">
+        <article>Alunos ativos<strong>${analyticsNumberLabel(summary.active_students)}</strong><span>matrículas ativas</span></article>
+        <article>Frequência média<strong>${analyticsPercentLabel(summary.attendance_rate)}</strong><span>presenças sobre registros</span></article>
+        <article>Participação Avalia+<strong>${analyticsPercentLabel(summary.assessment_participation)}</strong><span>conclusões sobre atribuídos</span></article>
+        <article>Média Avalia+<strong>${analyticsPercentLabel(summary.assessment_average)}</strong><span>resultados entregues</span></article>
+        <article>Aulas registradas<strong>${analyticsNumberLabel(summary.diary_entries)}</strong><span>Diário de Classe</span></article>
+      </div>
+      <ul class="clean-list">
+        ${classes.map((classItem) => `
+          <li data-secretaria-search-item>
+            <strong>${htmlEscape(classItem.name || "Turma")}</strong>
+            <span>${analyticsNumberLabel(classItem.active_students)} alunos · frequência ${analyticsPercentLabel(classItem.attendance_rate)} · Avalia+ ${analyticsPercentLabel(classItem.average_percentage)} · Diário ${analyticsNumberLabel(classItem.diary_entries)}</span>
+          </li>
+        `).join("") || "<li>Nenhuma turma ativa retornada para o período.</li>"}
+      </ul>
+    </section>
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("chart", "Tendências")}</h2><span>Sem inferência automática</span></div>
+      <div class="metric-row">
+        ${renderAnalyticsTrendCard("Frequência", trends.attendance || {})}
+        ${renderAnalyticsTrendCard("Média Avalia+", trends.assessment || {})}
+        ${renderAnalyticsTrendCard("Diário", trends.diary || {})}
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Alertas configuráveis</h2>
+      ${renderAnalyticsAlertList(alerts)}
+    </section>
+    ${sparseNotice}
+  `;
+  const attendanceTab = `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("calendar", "Frequência")}</h2><span>Período atual</span></div>
+      <div class="metric-row">
+        <article>Taxa média<strong>${analyticsPercentLabel(attendance.attendance_rate)}</strong><span>presentes / registros</span></article>
+        <article>Presenças<strong>${analyticsNumberLabel(attendance.present)}</strong><span>status present</span></article>
+        <article>Faltas<strong>${analyticsNumberLabel(attendance.absent)}</strong><span>status absent</span></article>
+        <article>Justificadas<strong>${analyticsNumberLabel(attendance.justified)}</strong><span>contagem separada</span></article>
+      </div>
+      <ul class="clean-list">
+        ${classes.slice().sort((a, b) => Number(a.attendance_rate || 0) - Number(b.attendance_rate || 0)).map((classItem) => `<li><strong>${htmlEscape(classItem.name || "Turma")}</strong><span>${analyticsPercentLabel(classItem.attendance_rate)} de frequência média</span></li>`).join("") || "<li>Sem registros de frequência no período.</li>"}
+      </ul>
+    </section>
+    <section class="panel">
+      <h2>Comparativo com período anterior</h2>
+      <ul class="clean-list">
+        <li><strong>Frequência</strong><span>${analyticsPercentLabel(comparison.attendance_rate?.current)} agora · ${analyticsPercentLabel(comparison.attendance_rate?.previous)} antes · ${analyticsDeltaLabel(comparison.attendance_rate?.delta_absolute)}</span></li>
+      </ul>
+    </section>
+  `;
+  const performanceTab = `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("chart", "Desempenho")}</h2><span>Avalia+</span></div>
+      <div class="metric-row">
+        <article>Avaliações aplicadas<strong>${analyticsNumberLabel(assessment.assignments)}</strong><span>publicadas no período</span></article>
+        <article>Alunos atribuídos<strong>${analyticsNumberLabel(assessment.assigned_students)}</strong><span>base esperada</span></article>
+        <article>Concluídas<strong>${analyticsNumberLabel(assessment.completed_students)}</strong><span>entregas reais</span></article>
+        <article>Participação<strong>${analyticsPercentLabel(assessment.participation_percentage)}</strong><span>sem ranking público</span></article>
+        <article>Média<strong>${analyticsPercentLabel(assessment.average_percentage)}</strong><span>resultados finalizados</span></article>
+      </div>
+      <ul class="clean-list">
+        ${classes.map((classItem) => `<li><strong>${htmlEscape(classItem.name || "Turma")}</strong><span>${analyticsNumberLabel(classItem.completed_students)} concluída(s) · média ${analyticsPercentLabel(classItem.average_percentage)}</span></li>`).join("") || "<li>Sem resultado do Avalia+ no período.</li>"}
+      </ul>
+    </section>
+    <section class="panel">
+      <h2>Comparativo entre turmas</h2>
+      <ul class="clean-list">
+        ${classComparison.slice(0, 6).map((item) => `<li><strong>${htmlEscape(item.class_name || "Turma")}</strong><span>Frequência ${analyticsPercentLabel(item.attendance_rate)} · Avalia+ ${analyticsPercentLabel(item.assessment_average)} · BNCC ${analyticsPercentLabel(item.bncc_percentage)}</span></li>`).join("") || "<li>Sem turmas para comparar no período.</li>"}
+      </ul>
+    </section>
+  `;
+  const bnccTab = `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("chart", "BNCC")}</h2><span>Habilidades avaliadas</span></div>
+      <div class="metric-row">
+        <article>Habilidades<strong>${analyticsNumberLabel(bncc.skills)}</strong><span>com respostas no período</span></article>
+        <article>Questões<strong>${analyticsNumberLabel(bncc.questions)}</strong><span>itens relacionados</span></article>
+        <article>Respostas<strong>${analyticsNumberLabel(bncc.responses)}</strong><span>tentativas entregues</span></article>
+        <article>Acertos<strong>${analyticsNumberLabel(bncc.correct)}</strong><span>${analyticsPercentLabel(bncc.percentage)} de aproveitamento</span></article>
+      </div>
+      <p>O detalhamento por habilidade permanece no Avalia+; esta aba consolida somente o painel escolar.</p>
+    </section>
+    <section class="panel">
+      <h2>Alerta BNCC</h2>
+      ${renderAnalyticsAlertList(alerts.filter((alert) => String(alert.type || "").includes("BNCC")))}
+    </section>
+  `;
+  const diaryTab = `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>${secretariaInlineIcon("doc", "Diário")}</h2><span>Registros pedagógicos</span></div>
+      <div class="metric-row">
+        <article>Aulas registradas<strong>${analyticsNumberLabel(diary.entries)}</strong><span>lançamentos reais</span></article>
+        <article>Dias com Diário<strong>${analyticsNumberLabel(diary.days_with_diary)}</strong><span>datas distintas</span></article>
+        <article>Fechados<strong>${analyticsNumberLabel(diary.closed_entries)}</strong><span>status closed</span></article>
+        <article>Atividades vinculadas<strong>${analyticsNumberLabel(diary.activity_links)}</strong><span>links pedagógicos</span></article>
+      </div>
+      <ul class="clean-list">
+        ${classes.map((classItem) => `<li><strong>${htmlEscape(classItem.name || "Turma")}</strong><span>${analyticsNumberLabel(classItem.diary_entries)} registro(s) no período</span></li>`).join("") || "<li>Sem registros do Diário no período.</li>"}
+      </ul>
+    </section>
+    <section class="panel">
+      <h2>Alertas do Diário</h2>
+      ${renderAnalyticsAlertList(alerts.filter((alert) => String(alert.type || "").includes("DIARY")))}
+    </section>
+  `;
+  const body = {
+    overview,
+    attendance: attendanceTab,
+    performance: performanceTab,
+    bncc: bnccTab,
+    diary: diaryTab,
+  }[activeTab];
+  return `
+    <div class="analytics-grid secretaria-grid">
+      <section class="panel span-2">
+        <div class="panel-head"><h2>${secretariaInlineIcon("chart", "Analytics")}</h2><span>${htmlEscape(result.period?.date_from || "")} a ${htmlEscape(result.period?.date_to || "")}</span></div>
+        ${renderSecretariaAnalyticsTabs(activeTab)}
+      </section>
+      ${body}
     </div>
   `;
 };
@@ -20578,6 +21108,7 @@ const renderSecretariaReadyView = () => {
     pendencias: () => renderSecretariaPendenciasView(index),
     frequencia: () => renderSecretariaAttendanceView(index),
     avalia: () => renderSecretariaAvaliaResultsView(index),
+    analytics: () => renderSecretariaAnalyticsView(index),
     comunicados: () => renderSecretariaCommunicationsView(index),
   }[view]();
   return `${renderSecretariaGlobalHeader(index)}${content}`;
@@ -21223,6 +21754,18 @@ const initSecretariaInstitutional = () => {
     const before = `${secretariaAvaliaResultsState.status}:${secretariaAvaliaResultsState.schoolId}`;
     ensureSecretariaAvaliaResults({ schoolId }).then(() => {
       const after = `${secretariaAvaliaResultsState.status}:${secretariaAvaliaResultsState.schoolId}`;
+      if (before !== after && document.body.contains(area)) {
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+      }
+    });
+  }
+  if (secretariaInstitutionalState.status === "ready" && getSecretariaCurrentView() === "analytics") {
+    const schoolId = getSecretariaPrimarySchool().id || "";
+    const range = getSecretariaAnalyticsPeriodRange();
+    const before = `${secretariaAnalyticsState.status}:${secretariaAnalyticsState.key}`;
+    ensureSecretariaAnalytics({ schoolId, from: range.from, to: range.to }).then(() => {
+      const after = `${secretariaAnalyticsState.status}:${secretariaAnalyticsState.key}`;
       if (before !== after && document.body.contains(area)) {
         area.outerHTML = renderSecretariaDashboard();
         initSecretariaInstitutional();
