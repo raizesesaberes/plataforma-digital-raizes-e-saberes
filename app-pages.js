@@ -20011,7 +20011,8 @@ const rerenderOfficialReportSurface = (audience = "secretaria") => {
   if (audience === "teacher") {
     const workspace = document.querySelector("[data-teacher-workspace]");
     const content = workspace?.querySelector("[data-teacher-content]");
-    if (workspace && content && activeTeacherView === "relatorios") {
+    const currentView = new URLSearchParams(window.location.search).get("view") || "";
+    if (workspace && content && currentView === "relatorios") {
       content.innerHTML = renderTeacherWorkspaceView("relatorios");
       bindOfficialReportControls(workspace, "teacher");
     }
