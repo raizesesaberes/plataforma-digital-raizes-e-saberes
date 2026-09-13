@@ -513,6 +513,7 @@ const secretariaOfficialModules = [
   ["calendario", "Calendário", "secretaria.html?view=calendario"],
   ["avalia", "Avalia+", "secretaria.html?view=avalia"],
   ["analytics", "Analytics", "secretaria.html?view=analytics"],
+  ["relatorios", "Relatórios", "secretaria.html?view=relatorios"],
   ["documentos", "Documentos", "secretaria.html?view=documentos"],
   ["comunicados", "Comunicados", "secretaria.html?view=comunicados"],
 ];
@@ -4078,6 +4079,12 @@ const teacherAnalyticsState = {
   key: "",
   result: null,
 };
+
+const officialReportsState = {
+  teacher: { status: "idle", error: "", promise: null, key: "", result: null },
+  secretaria: { status: "idle", error: "", promise: null, key: "", result: null },
+};
+
 
 const studentInstitutionalState = {
   status: "idle",
@@ -9203,6 +9210,142 @@ const analyticsService = (() => {
   };
 })();
 
+const officialReportCatalog = [
+  {
+    id: "attendance",
+    title: "Frequência",
+    roles: ["professor", "secretaria", "secretaria_municipal", "admin"],
+    scopes: ["student", "class", "school", "network"],
+    filters: ["period", "school", "class", "student"],
+    futureFormats: ["pdf", "xlsx", "csv"],
+  },
+  {
+    id: "diary",
+    title: "Diário de Classe",
+    roles: ["professor", "secretaria", "admin"],
+    scopes: ["class", "school"],
+    filters: ["period", "class", "teacher"],
+    futureFormats: ["pdf", "xlsx"],
+  },
+  {
+    id: "avalia",
+    title: "Avalia+",
+    roles: ["professor", "secretaria", "secretaria_municipal", "admin"],
+    scopes: ["class", "school", "network"],
+    filters: ["period", "class", "assessment"],
+    futureFormats: ["pdf", "xlsx", "csv"],
+  },
+  {
+    id: "school-analytics",
+    title: "Analytics da Escola",
+    roles: ["secretaria", "admin"],
+    scopes: ["school"],
+    filters: ["period", "school"],
+    futureFormats: ["pdf", "xlsx"],
+  },
+  {
+    id: "network-analytics",
+    title: "Analytics da Rede",
+    roles: ["secretaria_municipal", "admin"],
+    scopes: ["network"],
+    filters: ["period", "network"],
+    futureFormats: ["pdf", "xlsx"],
+  },
+];
+
+const getOfficialReport = (id = "") => officialReportCatalog.find((report) => report.id === id) || officialReportCatalog[0];
+const reportNumberLabel = (value) => Number(value || 0).toLocaleString("pt-BR");
+const reportPercentLabel = (value) => `${Number(value || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+const getReportDefaultRange = () => getDiaryPeriodDefaultRange();
+const getReportRangeFromParams = (params = new URLSearchParams()) => {
+  const defaults = getReportDefaultRange();
+  return {
+    from: params.get("reportFrom") || params.get("from") || defaults.from,
+    to: params.get("reportTo") || params.get("to") || defaults.to,
+  };
+};
+const renderOfficialReportCatalogCards = (allowedIds = []) => `
+  <div class="metric-row">
+    ${officialReportCatalog
+      .filter((report) => !allowedIds.length || allowedIds.includes(report.id))
+      .map((report) => `<article><span>${htmlEscape(report.title)}</span><strong>Live</strong><small>${htmlEscape(report.scopes.join(" · "))}</small></article>`)
+      .join("")}
+  </div>
+`;
+
+const officialReportsService = (() => {
+  const client = () => createSupabaseRestClient();
+  const post = async (rpc, body, allowedRoles) => normalizeRpcJson(await client().request(`rpc/${rpc}`, "", {
+    method: "POST",
+    requireAuthenticated: true,
+    allowedRoles,
+    body: JSON.stringify(body),
+  }));
+  return {
+    getAttendance: (payload, allowedRoles) => post("report_get_attendance", payload, allowedRoles),
+    getClassDiary: (payload, allowedRoles) => post("report_get_class_diary", payload, allowedRoles),
+    getAvalia: (payload, allowedRoles) => post("report_get_avalia", payload, allowedRoles),
+  };
+})();
+
+const renderOfficialReportSummary = (summary = {}) => {
+  const entries = Object.entries(summary || {}).filter(([, value]) => value !== null && value !== undefined && typeof value !== "object");
+  return `
+    <div class="metric-row">
+      ${entries.slice(0, 8).map(([key, value]) => {
+        const label = key.replaceAll("_", " ");
+        const formatted = String(key).includes("percent") || String(key).includes("rate") || String(key).includes("average")
+          ? reportPercentLabel(value)
+          : reportNumberLabel(value);
+        return `<article><span>${htmlEscape(label)}</span><strong>${htmlEscape(formatted)}</strong><small>dados live</small></article>`;
+      }).join("") || "<article><span>Dados</span><strong>0</strong><small>Sem registros no período.</small></article>"}
+    </div>
+  `;
+};
+
+const renderOfficialReportRows = (rows = []) => `
+  <ul class="clean-list">
+    ${(rows || []).slice(0, 40).map((row) => {
+      const title = row.student_name || row.class_name || row.school_name || row.assessment_title || row.title || row.entry_date || "Registro";
+      const detail = [
+        row.class_name,
+        row.school_name,
+        row.entry_date,
+        row.status,
+        row.attendance_rate !== undefined ? `frequência ${reportPercentLabel(row.attendance_rate)}` : "",
+        row.average_percentage !== undefined ? `média ${reportPercentLabel(row.average_percentage)}` : "",
+        row.present !== undefined ? `${reportNumberLabel(row.present)} presenças` : "",
+        row.absent !== undefined ? `${reportNumberLabel(row.absent)} faltas` : "",
+      ].filter(Boolean).join(" · ");
+      return `<li><strong>${htmlEscape(title)}</strong><span>${htmlEscape(detail || "Registro consolidado")}</span></li>`;
+    }).join("") || "<li>Sem linhas para o relatório no período selecionado.</li>"}
+  </ul>
+`;
+
+const renderOfficialReportPreview = ({ title, subtitle = "", range = {}, state = {}, confidential = false } = {}) => {
+  if (state.status === "loading" || state.status === "idle") {
+    return `<section class="panel span-2"><h2>${htmlEscape(title || "Relatório")}</h2><p>Carregando relatório live.</p></section>`;
+  }
+  if (state.status === "error") {
+    return `<section class="panel span-2"><h2>${htmlEscape(title || "Relatório")}</h2><p>${htmlEscape(state.error || "Não foi possível carregar o relatório.")}</p></section>`;
+  }
+  const result = state.result || {};
+  return `
+    <section class="panel span-2 official-report-preview">
+      <div class="panel-head">
+        <h2>${secretariaInlineIcon("doc", title || "Relatório")}</h2>
+        <button type="button" data-report-print>Imprimir MVP</button>
+      </div>
+      <p><strong>Raízes e Saberes</strong>${subtitle ? ` · ${htmlEscape(subtitle)}` : ""}</p>
+      <p>Período: ${htmlEscape(range.from || result.period?.date_from || "")} a ${htmlEscape(range.to || result.period?.date_to || "")} · Emissão: ${htmlEscape(new Date().toLocaleString("pt-BR"))}</p>
+      ${confidential ? `<p><strong>CONFIDENCIAL — USO INSTITUCIONAL</strong></p>` : ""}
+      ${renderOfficialReportSummary(result.summary || {})}
+      ${renderOfficialReportRows(result.rows || result.assignments || result.entries || [])}
+      <p>Prévia live. PDF oficial, XLSX, histórico de emissão, assinatura digital e QR Code ficam reservados para fase futura.</p>
+    </section>
+  `;
+};
+
 const municipalNetworkAllowedRoles = ["secretaria_municipal", "secretaria", "admin"];
 const municipalNetworkService = (() => {
   const client = () => createSupabaseRestClient();
@@ -9460,8 +9603,21 @@ const renderMunicipalNetworkReadyView = () => {
   `;
   const reportsView = `
     <section class="panel span-2">
-      <div class="panel-head"><h2>${secretariaInlineIcon("doc", "Relatórios")}</h2><span>Futuro</span></div>
-      <p>Relatórios oficiais PDF/XLSX ficam reservados para uma fase própria. Esta versão mantém somente leitura operacional e Analytics consolidado.</p>
+      <div class="panel-head"><h2>${secretariaInlineIcon("doc", "Relatórios")}</h2><button type="button" data-report-print>Imprimir MVP</button></div>
+      ${renderOfficialReportCatalogCards(["attendance", "avalia", "network-analytics"])}
+      <p><strong>Raízes e Saberes</strong> · ${htmlEscape(network.name || "Rede Municipal")} · Período ${htmlEscape(overview.period?.date_from || "")} a ${htmlEscape(overview.period?.date_to || "")}</p>
+      <div class="metric-row">
+        <article>Escolas<strong>${analyticsNumberLabel(summary.schools_total)}</strong><span>vinculadas à rede</span></article>
+        <article>Alunos<strong>${analyticsNumberLabel(summary.active_students)}</strong><span>ativos</span></article>
+        <article>Frequência<strong>${analyticsPercentLabel(summary.attendance_rate)}</strong><span>média consolidada</span></article>
+        <article>Avalia+<strong>${analyticsPercentLabel(summary.assessment_average)}</strong><span>${analyticsPercentLabel(summary.assessment_participation)} participação</span></article>
+        <article>BNCC<strong>${analyticsPercentLabel(summary.bncc_percentage)}</strong><span>${analyticsNumberLabel(summary.bncc_skills)} habilidade(s)</span></article>
+        <article>Diário<strong>${analyticsNumberLabel(summary.diary_entries)}</strong><span>aulas registradas</span></article>
+      </div>
+      <ul class="clean-list">
+        ${comparison.map((school) => `<li><strong>${htmlEscape(school.school_name || "Escola")}</strong><span>Frequência ${analyticsPercentLabel(school.attendance_rate)} · Avalia+ ${analyticsPercentLabel(school.assessment_average)} · BNCC ${analyticsPercentLabel(school.bncc_percentage)} · Diário ${analyticsNumberLabel(school.diary_entries)}</span></li>`).join("") || "<li>Dados insuficientes para consolidar escolas no período.</li>"}
+      </ul>
+      <p>Prévia live. PDF oficial, XLSX, snapshots e assinatura digital ficam reservados para fase futura.</p>
     </section>
   `;
   const body = {
@@ -9491,6 +9647,9 @@ const initMunicipalNetworkDashboard = () => {
   const area = document.querySelector("[data-municipal-network-v1]");
   if (!area) return;
   const search = area.querySelector("[data-municipal-search]");
+  area.querySelectorAll("[data-report-print]").forEach((button) => {
+    button.addEventListener("click", () => window.print());
+  });
   if (search) {
     search.addEventListener("input", () => {
       const query = search.value.trim().toLowerCase();
@@ -9613,6 +9772,47 @@ const renderTeacherAssessmentResult = (assignmentId) => {
       <ul class="clean-list">
         ${questions.map((question) => `<li><strong>${printableEscape(question.title || "Questao")}</strong><span>${printableEscape(question.bncc_skill || "Sem habilidade")} · erro ${avaliaPercentLabel(question.error_rate)} · ${Number(question.responses || 0)} respostas</span></li>`).join("") || "<li>Nenhuma questão consolidada.</li>"}
       </ul>
+    </div>
+  `;
+};
+
+const renderTeacherReportsView = () => {
+  if (teacherInstitutionalState.status !== "ready") {
+    return renderTeacherInstitutionalStatus("CARREGANDO VINCULO DO PROFESSOR PARA RELATORIOS.");
+  }
+  const classes = getTeacherInstitutionalClasses();
+  if (!classes.length) {
+    return renderTeacherEmptyState("NENHUMA TURMA VINCULADA.", "Relatórios do Professor exigem turma institucional ativa.");
+  }
+  const params = getTeacherReportParams();
+  const report = getOfficialReport(params.type);
+  const selectedClass = classes.find((classItem) => classItem.id === params.classId) || classes[0] || {};
+  const allowedReports = ["attendance", "diary", "avalia"];
+  return `
+    <div class="analytics-grid secretaria-grid">
+      <section class="panel span-2">
+        <div class="panel-head"><h2>${secretariaInlineIcon("doc", "Relatórios")}</h2><span>Professor · P0</span></div>
+        ${renderOfficialReportCatalogCards(allowedReports)}
+      </section>
+      <section class="panel span-2">
+        <form class="tw-form-grid" method="get" action="professor.html">
+          <input type="hidden" name="view" value="relatórios" />
+          <label><span>Relatório</span><select name="report">${allowedReports.map((id) => {
+            const item = getOfficialReport(id);
+            return `<option value="${htmlEscape(id)}" ${id === params.type ? "selected" : ""}>${htmlEscape(item.title)}</option>`;
+          }).join("")}</select></label>
+          <label><span>Turma</span><select name="class">${classes.map((classItem) => `<option value="${htmlEscape(classItem.id)}" ${classItem.id === params.classId ? "selected" : ""}>${htmlEscape(classItem.name || normalizeClassName(classItem))}</option>`).join("")}</select></label>
+          <label><span>De</span><input type="date" name="reportFrom" value="${htmlEscape(params.range.from)}" /></label>
+          <label><span>Até</span><input type="date" name="reportTo" value="${htmlEscape(params.range.to)}" /></label>
+          <button type="submit">Gerar preview</button>
+        </form>
+      </section>
+      ${renderOfficialReportPreview({
+        title: report.title,
+        subtitle: selectedClass.name || normalizeClassName(selectedClass),
+        range: params.range,
+        state: officialReportsState.teacher,
+      })}
     </div>
   `;
 };
@@ -9833,7 +10033,7 @@ const renderTeacherWorkspaceView = (view) => {
       ${renderUniversalActivityTeacherDeliveries()}
       <section class="tw-board">
         <div class="tw-section-head"><h2>Relatórios</h2><button type="button" data-teacher-view="inicio">Voltar</button></div>
-        ${renderPremiumEmpty("RELATORIOS EM PREPARACAO", "Indicadores reais de progresso serao exibidos quando houver dados suficientes.", "blue")}
+        ${renderTeacherReportsView()}
       </section>
     `,
     formação: `
@@ -19238,8 +19438,8 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
 };
 
 const secretariaAllowedRoles = ["secretaria", "admin", "gestor", "coordenador"];
-const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "calendario", "avalia", "analytics", "comunicados"];
-const secretariaOfficialViews = ["painel", "alunos", "matriculas", "responsaveis", "turmas", "professores", "frequencia", "calendario", "avalia", "analytics", "documentos", "comunicados"];
+const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "calendario", "avalia", "analytics", "relatorios", "comunicados"];
+const secretariaOfficialViews = ["painel", "alunos", "matriculas", "responsaveis", "turmas", "professores", "frequencia", "calendario", "avalia", "analytics", "relatorios", "documentos", "comunicados"];
 const secretariaActiveStatuses = new Set(["active", "ativo"]);
 
 const isSecretariaActiveStatus = (status) => secretariaActiveStatuses.has(String(status || "active").toLowerCase());
@@ -19441,6 +19641,144 @@ const ensureSecretariaCalendarEvents = async ({ force = false, schoolId = "", cl
     return secretariaCalendarState;
   })();
   return secretariaCalendarState.promise;
+};
+
+const getSecretariaReportParams = () => {
+  const params = getSecretariaParams();
+  const reportType = params.get("report") || "attendance";
+  const range = getReportRangeFromParams(params);
+  return {
+    type: ["attendance", "diary", "avalia", "school-analytics"].includes(reportType) ? reportType : "attendance",
+    schoolId: getSecretariaPrimarySchool().id || "",
+    classId: params.get("class") || "",
+    studentId: params.get("student") || "",
+    range,
+  };
+};
+
+const ensureSecretariaOfficialReport = async ({ force = false } = {}) => {
+  const report = getSecretariaReportParams();
+  const key = `secretaria:${report.type}:${report.schoolId}:${report.classId}:${report.studentId}:${report.range.from}:${report.range.to}`;
+  if (!report.schoolId) return officialReportsState.secretaria;
+  if (!force && officialReportsState.secretaria.status === "ready" && officialReportsState.secretaria.key === key) return officialReportsState.secretaria;
+  if (!force && officialReportsState.secretaria.promise && officialReportsState.secretaria.key === key) return officialReportsState.secretaria.promise;
+  officialReportsState.secretaria.status = "loading";
+  officialReportsState.secretaria.error = "";
+  officialReportsState.secretaria.key = key;
+  officialReportsState.secretaria.promise = (async () => {
+    try {
+      let result = null;
+      if (report.type === "attendance") {
+        result = await officialReportsService.getAttendance({
+          p_scope: report.classId ? "class" : "school",
+          p_school_id: report.schoolId,
+          p_class_id: report.classId || null,
+          p_student_id: report.studentId || null,
+          p_date_from: report.range.from,
+          p_date_to: report.range.to,
+        }, secretariaAllowedRoles);
+      } else if (report.type === "diary") {
+        result = await officialReportsService.getClassDiary({
+          p_school_id: report.schoolId,
+          p_class_id: report.classId || null,
+          p_teacher_id: null,
+          p_date_from: report.range.from,
+          p_date_to: report.range.to,
+        }, secretariaAllowedRoles);
+      } else if (report.type === "avalia") {
+        result = await officialReportsService.getAvalia({
+          p_school_id: report.schoolId,
+          p_class_id: report.classId || null,
+          p_assignment_id: null,
+          p_date_from: report.range.from,
+          p_date_to: report.range.to,
+        }, secretariaAllowedRoles);
+      } else {
+        result = await analyticsService.getSchoolOverview({
+          schoolId: report.schoolId,
+          dateFrom: report.range.from,
+          dateTo: report.range.to,
+        });
+      }
+      if (result?.error) throw new Error(result.error);
+      officialReportsState.secretaria.result = result || {};
+      officialReportsState.secretaria.status = "ready";
+    } catch (error) {
+      officialReportsState.secretaria.result = null;
+      officialReportsState.secretaria.error = error.message || "Não foi possível carregar o relatório.";
+      officialReportsState.secretaria.status = "error";
+    } finally {
+      officialReportsState.secretaria.promise = null;
+    }
+    return officialReportsState.secretaria;
+  })();
+  return officialReportsState.secretaria.promise;
+};
+
+const getTeacherReportParams = () => {
+  const params = getPrintableParams();
+  const reportType = params.get("report") || "attendance";
+  const classes = getTeacherInstitutionalClasses();
+  const classId = params.get("class") || teacherTrackingState.selectedClassId || classes[0]?.id || "";
+  return {
+    type: ["attendance", "diary", "avalia"].includes(reportType) ? reportType : "attendance",
+    classId,
+    range: getReportRangeFromParams(params),
+  };
+};
+
+const ensureTeacherOfficialReport = async ({ force = false } = {}) => {
+  const report = getTeacherReportParams();
+  const classItem = getTeacherInstitutionalClasses().find((item) => item.id === report.classId);
+  const key = `teacher:${report.type}:${report.classId}:${report.range.from}:${report.range.to}`;
+  if (!classItem?.id) return officialReportsState.teacher;
+  if (!force && officialReportsState.teacher.status === "ready" && officialReportsState.teacher.key === key) return officialReportsState.teacher;
+  if (!force && officialReportsState.teacher.promise && officialReportsState.teacher.key === key) return officialReportsState.teacher.promise;
+  officialReportsState.teacher.status = "loading";
+  officialReportsState.teacher.error = "";
+  officialReportsState.teacher.key = key;
+  officialReportsState.teacher.promise = (async () => {
+    try {
+      let result = null;
+      if (report.type === "attendance") {
+        result = await officialReportsService.getAttendance({
+          p_scope: "class",
+          p_school_id: classItem.schoolId || null,
+          p_class_id: classItem.id,
+          p_student_id: null,
+          p_date_from: report.range.from,
+          p_date_to: report.range.to,
+        }, teacherAllowedRoles);
+      } else if (report.type === "diary") {
+        result = await officialReportsService.getClassDiary({
+          p_school_id: classItem.schoolId || null,
+          p_class_id: classItem.id,
+          p_teacher_id: classItem.teacherId || teacherInstitutionalState.teacherByClass?.[classItem.id] || null,
+          p_date_from: report.range.from,
+          p_date_to: report.range.to,
+        }, teacherAllowedRoles);
+      } else {
+        result = await officialReportsService.getAvalia({
+          p_school_id: classItem.schoolId || null,
+          p_class_id: classItem.id,
+          p_assignment_id: null,
+          p_date_from: report.range.from,
+          p_date_to: report.range.to,
+        }, teacherAllowedRoles);
+      }
+      if (result?.error) throw new Error(result.error);
+      officialReportsState.teacher.result = result || {};
+      officialReportsState.teacher.status = "ready";
+    } catch (error) {
+      officialReportsState.teacher.result = null;
+      officialReportsState.teacher.error = error.message || "Não foi possível carregar o relatório.";
+      officialReportsState.teacher.status = "error";
+    } finally {
+      officialReportsState.teacher.promise = null;
+    }
+    return officialReportsState.teacher;
+  })();
+  return officialReportsState.teacher.promise;
 };
 
 const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
@@ -20059,6 +20397,7 @@ const secretariaViewIcon = {
   calendario: "calendar",
   avalia: "chart",
   analytics: "chart",
+  relatorios: "doc",
   documentos: "doc",
   comunicados: "mail",
 };
@@ -20347,6 +20686,8 @@ const renderSecretariaNav = (currentView) => {
     documentos: "Documentos",
     frequencia: "Frequência",
     avalia: "Avalia+",
+    analytics: "Analytics",
+    relatorios: "Relatórios",
     comunicados: "Comunicados",
   };
   return `<nav class="secretaria-official-nav" aria-label="Menu oficial da Secretaria">${secretariaOfficialViews
@@ -21815,6 +22156,44 @@ const renderSecretariaAnalyticsView = (index) => {
   `;
 };
 
+const renderSecretariaReportsView = (index) => {
+  const params = getSecretariaReportParams();
+  const report = getOfficialReport(params.type);
+  const school = getSecretariaPrimarySchool();
+  const classes = secretariaInstitutionalState.classes || [];
+  const students = secretariaInstitutionalState.students || [];
+  const allowedReports = ["attendance", "diary", "avalia", "school-analytics"];
+  return `
+    <div class="analytics-grid secretaria-grid">
+      <section class="panel span-2">
+        <div class="panel-head"><h2>${secretariaInlineIcon("doc", "Relatórios")}</h2><span>Catálogo P0 · live</span></div>
+        ${renderOfficialReportCatalogCards(allowedReports)}
+      </section>
+      <section class="panel span-2">
+        <form class="analytics-grid secretaria-grid" method="get" action="secretaria.html">
+          <input type="hidden" name="view" value="relatorios" />
+          <label><span>Relatório</span><select name="report">${allowedReports.map((id) => {
+            const item = getOfficialReport(id);
+            return `<option value="${htmlEscape(id)}" ${id === params.type ? "selected" : ""}>${htmlEscape(item.title)}</option>`;
+          }).join("")}</select></label>
+          <label><span>Turma</span><select name="class"><option value="">Todas</option>${classes.map((classItem) => `<option value="${htmlEscape(classItem.id)}" ${classItem.id === params.classId ? "selected" : ""}>${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
+          <label><span>Aluno</span><select name="student"><option value="">Todos</option>${students.map((student) => `<option value="${htmlEscape(student.id)}" ${student.id === params.studentId ? "selected" : ""}>${htmlEscape(normalizeStudentName(student))}</option>`).join("")}</select></label>
+          <label><span>De</span><input type="date" name="reportFrom" value="${htmlEscape(params.range.from)}" /></label>
+          <label><span>Até</span><input type="date" name="reportTo" value="${htmlEscape(params.range.to)}" /></label>
+          <button type="submit">Gerar preview</button>
+        </form>
+      </section>
+      ${renderOfficialReportPreview({
+        title: report.title,
+        subtitle: normalizeSchoolName(school),
+        range: params.range,
+        state: officialReportsState.secretaria,
+        confidential: Boolean(params.studentId),
+      })}
+    </div>
+  `;
+};
+
 const renderSecretariaReadyView = () => {
   const view = getSecretariaCurrentView();
   const index = buildSecretariaIndex();
@@ -21835,6 +22214,7 @@ const renderSecretariaReadyView = () => {
     calendario: () => renderSecretariaCalendarView(index),
     avalia: () => renderSecretariaAvaliaResultsView(index),
     analytics: () => renderSecretariaAnalyticsView(index),
+    relatorios: () => renderSecretariaReportsView(index),
     comunicados: () => renderSecretariaCommunicationsView(index),
   }[view]();
   return `${renderSecretariaGlobalHeader(index)}${content}`;
@@ -22577,6 +22957,16 @@ const initSecretariaInstitutional = () => {
     const before = `${secretariaAnalyticsState.status}:${secretariaAnalyticsState.key}`;
     ensureSecretariaAnalytics({ schoolId, from: range.from, to: range.to }).then(() => {
       const after = `${secretariaAnalyticsState.status}:${secretariaAnalyticsState.key}`;
+      if (before !== after && document.body.contains(area)) {
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+      }
+    });
+  }
+  if (secretariaInstitutionalState.status === "ready" && getSecretariaCurrentView() === "relatorios") {
+    const before = `${officialReportsState.secretaria.status}:${officialReportsState.secretaria.key}`;
+    ensureSecretariaOfficialReport().then(() => {
+      const after = `${officialReportsState.secretaria.status}:${officialReportsState.secretaria.key}`;
       if (before !== after && document.body.contains(area)) {
         area.outerHTML = renderSecretariaDashboard();
         initSecretariaInstitutional();
@@ -23335,6 +23725,9 @@ const initTeacherWorkspace = () => {
     initUniversalActivityTeacherDeliveries();
     initPrintableActivities();
     initTeacherAvaliaApplication();
+    workspace.querySelectorAll("[data-report-print]").forEach((button) => {
+      button.addEventListener("click", () => window.print());
+    });
     if (search) search.value = "";
     if (normalizedView === "planejamentos") {
       ensureTeacherPlanningWeek().then(() => {
@@ -23354,6 +23747,18 @@ const initTeacherWorkspace = () => {
       ensureTeacherTrackingBundle({ force: true }).then(() => {
         if (activeTeacherView === "acompanhamento" && content && document.body.contains(workspace)) {
           content.innerHTML = renderTeacherWorkspaceView("acompanhamento");
+        }
+      });
+    }
+    if (normalizedView === "relatórios") {
+      const before = `${officialReportsState.teacher.status}:${officialReportsState.teacher.key}`;
+      ensureTeacherOfficialReport().then(() => {
+        const after = `${officialReportsState.teacher.status}:${officialReportsState.teacher.key}`;
+        if (before !== after && activeTeacherView === "relatórios" && content && document.body.contains(workspace)) {
+          content.innerHTML = renderTeacherWorkspaceView("relatórios");
+          workspace.querySelectorAll("[data-report-print]").forEach((button) => {
+            button.addEventListener("click", () => window.print());
+          });
         }
       });
     }
