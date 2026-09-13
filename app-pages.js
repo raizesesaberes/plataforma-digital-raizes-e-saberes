@@ -3366,7 +3366,7 @@ const profileAccessConfig = {
       { label: "Criar planejamento", href: "professor.html?view=planejamentos", tone: "blue" },
       { label: "Ver producoes", href: "professor-aluno.html?id=pedro", tone: "purple" },
       { label: "Abrir biblioteca", href: "biblioteca.html", tone: "orange" },
-      { label: "Ver relatórios", href: "professor.html?view=relatórios", tone: "teal" },
+      { label: "Ver relatórios", href: "professor.html?view=relatorios", tone: "teal" },
     ],
     tabs: [
       { label: "Início", href: "professor.html" },
@@ -3378,7 +3378,7 @@ const profileAccessConfig = {
       { label: "Jogos", href: "jogos.html" },
       { label: "Planejamentos", href: "professor.html?view=planejamentos" },
       { label: "Avaliações", href: "avalia.html" },
-      { label: "Relatórios", href: "professor.html?view=relatórios" },
+      { label: "Relatórios", href: "professor.html?view=relatorios" },
       { label: "Universidade", href: "universidade.html" },
     ],
   },
@@ -3632,7 +3632,7 @@ const professorProfileHotspots = [
   { className: "professor-hotspot-avatar", href: "professor.html", label: "Abrir perfil da professora Helena" },
   { className: "professor-hotspot-turmas-top", href: "professor-turma.html", label: "Abrir minhas turmas" },
   { className: "professor-hotspot-planejadas-top", href: "atividades.html", label: "Abrir atividades planejadas" },
-  { className: "professor-hotspot-concluidas-top", href: "professor.html?view=relatórios", label: "Abrir atividades concluidas" },
+  { className: "professor-hotspot-concluidas-top", href: "professor.html?view=relatorios", label: "Abrir atividades concluidas" },
   { className: "professor-hotspot-xp-top", href: "universidade.html", label: "Abrir formação e XP" },
   { className: "professor-hotspot-turma-a", href: "professor-turma.html", label: "Abrir Infantil 5 anos A" },
   { className: "professor-hotspot-turma-b", href: "professor-turma.html", label: "Abrir Infantil 5 anos B" },
@@ -3653,7 +3653,7 @@ const professorProfileHotspots = [
   { className: "professor-hotspot-pendente-revisar", href: "atividades.html", label: "Abrir atividades para revisar" },
   { className: "professor-hotspot-pendente-devolutivas", href: "professor.html?view=mensagens", label: "Abrir devolutivas" },
   { className: "professor-hotspot-pendente-publicar", href: "atividades.html", label: "Abrir atividades para publicar" },
-  { className: "professor-hotspot-correcoes", href: "professor.html?view=relatórios", label: "Abrir correcoes" },
+  { className: "professor-hotspot-correcoes", href: "professor.html?view=relatorios", label: "Abrir correcoes" },
   { className: "professor-hotspot-book-1", href: "book-viewer.html?book=livro-001", label: "Abrir livro integrado 1" },
   { className: "professor-hotspot-book-2", href: "book-viewer.html?book=livro-002", label: "Abrir livro integrado 2" },
   { className: "professor-hotspot-book-3", href: "book-viewer.html?book=livro-003", label: "Abrir livro integrado 3" },
@@ -3816,6 +3816,7 @@ const teacherWorkspaceNav = [
   ["planejamentos", "Planejamento", "calendar"],
   ["atividades", "Atividades Imprimíveis", "doc"],
   ["avaliacoes", "Avalia+", "avalia"],
+  ["relatorios", "Relatórios", "doc"],
   ["biblioteca", "Biblioteca", "book"],
   ["acompanhamento", "Acompanhamento", "chart"],
   ["formação", "Formação", "cap"],
@@ -3825,6 +3826,7 @@ const teacherWorkspaceViewAliases = {
   "avaliações": "avaliacoes",
   avalia: "avaliacoes",
   "avalia+": "avaliacoes",
+  "relatórios": "relatorios",
 };
 
 const normalizeTeacherWorkspaceView = (view = "") => {
@@ -4081,10 +4083,10 @@ const teacherAnalyticsState = {
 };
 
 const officialReportsState = {
-  teacher: { status: "idle", error: "", promise: null, key: "", result: null },
-  secretaria: { status: "idle", error: "", promise: null, key: "", result: null },
+  teacher: { status: "idle", error: "", promise: null, key: "", result: null, historyStatus: "idle", history: [], exportStatus: "idle", exportError: "" },
+  secretaria: { status: "idle", error: "", promise: null, key: "", result: null, historyStatus: "idle", history: [], exportStatus: "idle", exportError: "" },
+  municipal: { status: "idle", error: "", promise: null, key: "", result: null, historyStatus: "idle", history: [], exportStatus: "idle", exportError: "" },
 };
-
 
 const studentInstitutionalState = {
   status: "idle",
@@ -4450,7 +4452,7 @@ const saveTeacherStudentNote = async (formData) => {
 
 const teacherWorkspaceTasks = [
   { label: "Atividades pendentes na turma", count: pilotProfiles.student.pendingActivities, view: "turmas" },
-  { label: "Produções concluidas", count: pilotProfiles.student.completedActivities, view: "relatórios" },
+  { label: "Produções concluidas", count: pilotProfiles.student.completedActivities, view: "relatorios" },
 ];
 
 const getTeacherBibliotecaResources = () => {
@@ -9281,12 +9283,91 @@ const officialReportsService = (() => {
     allowedRoles,
     body: JSON.stringify(body),
   }));
+  const invokeExport = async (payload = {}, allowedRoles = []) => {
+    const config = getSupabaseConfig();
+    const baseUrl = config.url?.replace(/\/$/, "");
+    if (!baseUrl || !config.anonKey) {
+      throw new Error("Supabase não configurado para emissão oficial.");
+    }
+    const context = await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles });
+    const response = await fetch(`${baseUrl}/functions/v1/official-report-export`, {
+      method: "POST",
+      headers: {
+        apikey: config.anonKey,
+        Authorization: `Bearer ${context.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    if (response.status === 401) {
+      const refreshed = await refreshStoredSupabaseSession();
+      if (refreshed?.access_token) return invokeExport(payload, allowedRoles);
+    }
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok || body?.ok === false) {
+      throw new Error(body?.message || body?.code || "Não foi possível emitir o relatório oficial.");
+    }
+    return body;
+  };
   return {
     getAttendance: (payload, allowedRoles) => post("report_get_attendance", payload, allowedRoles),
     getClassDiary: (payload, allowedRoles) => post("report_get_class_diary", payload, allowedRoles),
     getAvalia: (payload, allowedRoles) => post("report_get_avalia", payload, allowedRoles),
+    generate: (payload, allowedRoles) => invokeExport({ ...payload, action: "generate" }, allowedRoles),
+    listHistory: (allowedRoles) => invokeExport({ action: "list", limit: 8 }, allowedRoles),
   };
 })();
+
+const officialReportFormatLabel = (format = "") => String(format || "").toUpperCase();
+const officialReportStatusLabel = (status = "") => ({
+  requested: "Solicitado",
+  processing: "Processando",
+  ready: "Pronto",
+  failed: "Falhou",
+}[String(status || "").toLowerCase()] || normalizeInstitutionalStatus(status));
+
+const renderOfficialReportHistory = (state = {}) => {
+  const rows = Array.isArray(state.history) ? state.history : [];
+  const statusText = state.historyStatus === "loading"
+    ? "Carregando histórico de emissões."
+    : state.historyStatus === "error"
+      ? "Não foi possível carregar o histórico agora."
+      : "";
+  return `
+    <div class="official-report-history">
+      <h3>Relatórios emitidos</h3>
+      ${statusText ? `<p>${htmlEscape(statusText)}</p>` : ""}
+      <ul class="clean-list">
+        ${rows.map((item) => `<li><strong>${htmlEscape(item.report_identifier || "Relatório")}</strong><span>${htmlEscape(officialReportFormatLabel(item.format))} · ${htmlEscape(officialReportStatusLabel(item.status))} · ${htmlEscape(item.file_name || "")} · ${htmlEscape(secretariaFormatDateTime(item.ready_at || item.created_at))}</span></li>`).join("") || "<li>Nenhuma emissão oficial registrada para esta sessão.</li>"}
+      </ul>
+    </div>
+  `;
+};
+
+const renderOfficialReportExportControls = (state = {}) => `
+  <div class="official-report-actions">
+    <button type="button" data-report-export="pdf" ${state.exportStatus === "loading" ? "disabled" : ""}>Gerar PDF</button>
+    <button type="button" data-report-export="xlsx" ${state.exportStatus === "loading" ? "disabled" : ""}>Exportar XLSX</button>
+    <button type="button" data-report-print>Imprimir MVP</button>
+  </div>
+  ${state.exportStatus === "loading" ? "<p>Gerando arquivo oficial...</p>" : ""}
+  ${state.exportError ? `<p>${htmlEscape(state.exportError)}</p>` : ""}
+`;
+
+const downloadOfficialReportFile = (file = {}) => {
+  if (!file.base64 || !file.name || !file.mimeType) return;
+  const binary = atob(file.base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  const url = URL.createObjectURL(new Blob([bytes], { type: file.mimeType }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = file.name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
 
 const renderOfficialReportSummary = (summary = {}) => {
   const entries = Object.entries(summary || {}).filter(([, value]) => value !== null && value !== undefined && typeof value !== "object");
@@ -9334,14 +9415,15 @@ const renderOfficialReportPreview = ({ title, subtitle = "", range = {}, state =
     <section class="panel span-2 official-report-preview">
       <div class="panel-head">
         <h2>${secretariaInlineIcon("doc", title || "Relatório")}</h2>
-        <button type="button" data-report-print>Imprimir MVP</button>
+        ${renderOfficialReportExportControls(state)}
       </div>
       <p><strong>Raízes e Saberes</strong>${subtitle ? ` · ${htmlEscape(subtitle)}` : ""}</p>
       <p>Período: ${htmlEscape(range.from || result.period?.date_from || "")} a ${htmlEscape(range.to || result.period?.date_to || "")} · Emissão: ${htmlEscape(new Date().toLocaleString("pt-BR"))}</p>
       ${confidential ? `<p><strong>CONFIDENCIAL — USO INSTITUCIONAL</strong></p>` : ""}
       ${renderOfficialReportSummary(result.summary || {})}
       ${renderOfficialReportRows(result.rows || result.assignments || result.entries || [])}
-      <p>Prévia live. PDF oficial, XLSX, histórico de emissão, assinatura digital e QR Code ficam reservados para fase futura.</p>
+      <p>Prévia live. PDF oficial e XLSX congelam um snapshot imutável do relatório no momento da emissão.</p>
+      ${renderOfficialReportHistory(state)}
     </section>
   `;
 };
@@ -9603,7 +9685,7 @@ const renderMunicipalNetworkReadyView = () => {
   `;
   const reportsView = `
     <section class="panel span-2">
-      <div class="panel-head"><h2>${secretariaInlineIcon("doc", "Relatórios")}</h2><button type="button" data-report-print>Imprimir MVP</button></div>
+      <div class="panel-head"><h2>${secretariaInlineIcon("doc", "Relatórios")}</h2>${renderOfficialReportExportControls(officialReportsState.municipal)}</div>
       ${renderOfficialReportCatalogCards(["attendance", "avalia", "network-analytics"])}
       <p><strong>Raízes e Saberes</strong> · ${htmlEscape(network.name || "Rede Municipal")} · Período ${htmlEscape(overview.period?.date_from || "")} a ${htmlEscape(overview.period?.date_to || "")}</p>
       <div class="metric-row">
@@ -9617,7 +9699,8 @@ const renderMunicipalNetworkReadyView = () => {
       <ul class="clean-list">
         ${comparison.map((school) => `<li><strong>${htmlEscape(school.school_name || "Escola")}</strong><span>Frequência ${analyticsPercentLabel(school.attendance_rate)} · Avalia+ ${analyticsPercentLabel(school.assessment_average)} · BNCC ${analyticsPercentLabel(school.bncc_percentage)} · Diário ${analyticsNumberLabel(school.diary_entries)}</span></li>`).join("") || "<li>Dados insuficientes para consolidar escolas no período.</li>"}
       </ul>
-      <p>Prévia live. PDF oficial, XLSX, snapshots e assinatura digital ficam reservados para fase futura.</p>
+      <p>Prévia live. PDF oficial e XLSX congelam um snapshot imutável do relatório no momento da emissão.</p>
+      ${renderOfficialReportHistory(officialReportsState.municipal)}
     </section>
   `;
   const body = {
@@ -9647,9 +9730,7 @@ const initMunicipalNetworkDashboard = () => {
   const area = document.querySelector("[data-municipal-network-v1]");
   if (!area) return;
   const search = area.querySelector("[data-municipal-search]");
-  area.querySelectorAll("[data-report-print]").forEach((button) => {
-    button.addEventListener("click", () => window.print());
-  });
+  bindOfficialReportControls(area, "municipal");
   if (search) {
     search.addEventListener("input", () => {
       const query = search.value.trim().toLowerCase();
@@ -9681,6 +9762,16 @@ const initMunicipalNetworkDashboard = () => {
         area.outerHTML = renderMunicipalNetworkDashboard();
         initMunicipalNetworkDashboard();
       });
+  }
+  if (municipalNetworkState.status === "ready" && getMunicipalNetworkView() === "reports") {
+    const before = `${officialReportsState.municipal.historyStatus}:${officialReportsState.municipal.history?.length || 0}`;
+    ensureOfficialReportHistory("municipal").then(() => {
+      const after = `${officialReportsState.municipal.historyStatus}:${officialReportsState.municipal.history?.length || 0}`;
+      if (before !== after && document.body.contains(area)) {
+        area.outerHTML = renderMunicipalNetworkDashboard();
+        initMunicipalNetworkDashboard();
+      }
+    });
   }
 };
 
@@ -9796,7 +9887,7 @@ const renderTeacherReportsView = () => {
       </section>
       <section class="panel span-2">
         <form class="tw-form-grid" method="get" action="professor.html">
-          <input type="hidden" name="view" value="relatórios" />
+          <input type="hidden" name="view" value="relatorios" />
           <label><span>Relatório</span><select name="report">${allowedReports.map((id) => {
             const item = getOfficialReport(id);
             return `<option value="${htmlEscape(id)}" ${id === params.type ? "selected" : ""}>${htmlEscape(item.title)}</option>`;
@@ -9966,7 +10057,7 @@ const renderTeacherWorkspaceView = (view) => {
         ${[
           { title: "Abrir Biblioteca Viva", detail: "Livros, experiências e atividades", view: "biblioteca" },
           { title: "Corrigir avaliações", detail: "Nenhuma correcao pendente no momento", view: "avaliacoes" },
-          { title: "Ver relatórios", detail: "Relatórios reais aparecerao aqui", view: "relatórios" },
+          { title: "Ver relatórios", detail: "Relatórios reais aparecerao aqui", view: "relatorios" },
         ].map((item) => renderRecommendationCard({ type: "Atalho", title: item.title, detail: item.detail, view: item.view, action: "Abrir" })).join("")}
       </section>
     `,
@@ -10029,7 +10120,7 @@ const renderTeacherWorkspaceView = (view) => {
         ${renderTeacherAssessmentsView()}
       </section>
     `,
-    relatórios: `
+    relatorios: `
       ${renderUniversalActivityTeacherDeliveries()}
       <section class="tw-board">
         <div class="tw-section-head"><h2>Relatórios</h2><button type="button" data-teacher-view="inicio">Voltar</button></div>
@@ -19781,6 +19872,166 @@ const ensureTeacherOfficialReport = async ({ force = false } = {}) => {
   return officialReportsState.teacher.promise;
 };
 
+const getSecretariaOfficialReportExportPayload = (format = "pdf") => {
+  const report = getSecretariaReportParams();
+  const current = getOfficialReport(report.type === "school-analytics" ? "school-analytics" : report.type);
+  const scopeKind = report.classId ? "class" : "school";
+  return {
+    format,
+    reportType: report.type,
+    audience: "secretaria",
+    title: current.title,
+    subtitle: getSecretariaPrimarySchool().nome || "Secretaria Escolar",
+    scope: {
+      kind: scopeKind,
+      schoolId: report.schoolId || null,
+      classId: report.classId || null,
+      studentId: report.studentId || null,
+      networkId: null,
+    },
+    period: { from: report.range.from, to: report.range.to },
+    params: { source_view: "secretaria.relatorios" },
+  };
+};
+
+const getTeacherOfficialReportExportPayload = (format = "pdf") => {
+  const report = getTeacherReportParams();
+  const classItem = getTeacherInstitutionalClasses().find((item) => item.id === report.classId) || {};
+  const current = getOfficialReport(report.type);
+  return {
+    format,
+    reportType: report.type,
+    audience: "teacher",
+    title: current.title,
+    subtitle: normalizeClassName(classItem),
+    scope: {
+      kind: "class",
+      schoolId: classItem.schoolId || null,
+      classId: classItem.id || report.classId || null,
+      studentId: null,
+      networkId: null,
+    },
+    period: { from: report.range.from, to: report.range.to },
+    params: { source_view: "professor.relatorios" },
+  };
+};
+
+const getMunicipalOfficialReportExportPayload = (format = "pdf") => {
+  const range = getMunicipalNetworkPeriodRange();
+  const network = municipalNetworkState.overview?.network || {};
+  return {
+    format,
+    reportType: "network-analytics",
+    audience: "municipal",
+    title: "Analytics da Rede",
+    subtitle: network.name || "Secretaria Municipal",
+    scope: {
+      kind: "network",
+      schoolId: null,
+      classId: null,
+      studentId: null,
+      networkId: network.id || null,
+    },
+    period: { from: range.from, to: range.to },
+    params: { source_view: "gestor.reports" },
+  };
+};
+
+const officialReportAudienceConfig = {
+  secretaria: {
+    state: officialReportsState.secretaria,
+    roles: secretariaAllowedRoles,
+    getPayload: getSecretariaOfficialReportExportPayload,
+  },
+  teacher: {
+    state: officialReportsState.teacher,
+    roles: teacherAllowedRoles,
+    getPayload: getTeacherOfficialReportExportPayload,
+  },
+  municipal: {
+    state: officialReportsState.municipal,
+    roles: municipalNetworkAllowedRoles,
+    getPayload: getMunicipalOfficialReportExportPayload,
+  },
+};
+
+const ensureOfficialReportHistory = async (audience = "secretaria", { force = false } = {}) => {
+  const config = officialReportAudienceConfig[audience];
+  if (!config) return null;
+  const state = config.state;
+  if (!force && state.historyStatus === "ready") return state;
+  if (!force && state.historyPromise) return state.historyPromise;
+  state.historyStatus = "loading";
+  state.historyPromise = (async () => {
+    try {
+      const result = await officialReportsService.listHistory(config.roles);
+      state.history = Array.isArray(result?.reports) ? result.reports : [];
+      state.historyStatus = "ready";
+    } catch (error) {
+      state.history = [];
+      state.historyStatus = "error";
+    } finally {
+      state.historyPromise = null;
+    }
+    return state;
+  })();
+  return state.historyPromise;
+};
+
+const handleOfficialReportExport = async (audience = "secretaria", format = "pdf") => {
+  const config = officialReportAudienceConfig[audience];
+  if (!config) return;
+  const state = config.state;
+  state.exportStatus = "loading";
+  state.exportError = "";
+  rerenderOfficialReportSurface(audience);
+  try {
+    const result = await officialReportsService.generate(config.getPayload(format), config.roles);
+    downloadOfficialReportFile(result.file || {});
+    state.exportStatus = "ready";
+    await ensureOfficialReportHistory(audience, { force: true });
+  } catch (error) {
+    state.exportStatus = "error";
+    state.exportError = error.message || "Não foi possível gerar o arquivo oficial.";
+  }
+  rerenderOfficialReportSurface(audience);
+};
+
+const bindOfficialReportControls = (root, audience = "secretaria") => {
+  if (!root) return;
+  root.querySelectorAll("[data-report-print]").forEach((button) => {
+    button.addEventListener("click", () => window.print());
+  });
+  root.querySelectorAll("[data-report-export]").forEach((button) => {
+    button.addEventListener("click", () => handleOfficialReportExport(audience, button.dataset.reportExport || "pdf"));
+  });
+};
+
+const rerenderOfficialReportSurface = (audience = "secretaria") => {
+  if (audience === "teacher") {
+    const workspace = document.querySelector("[data-teacher-workspace]");
+    const content = workspace?.querySelector("[data-teacher-content]");
+    if (workspace && content && activeTeacherView === "relatorios") {
+      content.innerHTML = renderTeacherWorkspaceView("relatorios");
+      bindOfficialReportControls(workspace, "teacher");
+    }
+    return;
+  }
+  if (audience === "municipal") {
+    const area = document.querySelector("[data-municipal-network-v1]");
+    if (area) {
+      area.outerHTML = renderMunicipalNetworkDashboard();
+      initMunicipalNetworkDashboard();
+    }
+    return;
+  }
+  const area = document.querySelector("[data-secretaria-v1]");
+  if (area && getSecretariaCurrentView() === "relatorios") {
+    area.outerHTML = renderSecretariaDashboard();
+    initSecretariaInstitutional();
+  }
+};
+
 const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
   if (!force && secretariaInstitutionalState.status === "ready") return secretariaInstitutionalState;
   if (!force && secretariaInstitutionalState.promise) return secretariaInstitutionalState.promise;
@@ -22972,6 +23223,14 @@ const initSecretariaInstitutional = () => {
         initSecretariaInstitutional();
       }
     });
+    const historyBefore = `${officialReportsState.secretaria.historyStatus}:${officialReportsState.secretaria.history?.length || 0}`;
+    ensureOfficialReportHistory("secretaria").then(() => {
+      const historyAfter = `${officialReportsState.secretaria.historyStatus}:${officialReportsState.secretaria.history?.length || 0}`;
+      if (historyBefore !== historyAfter && document.body.contains(area)) {
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+      }
+    });
   }
 };
 
@@ -23620,7 +23879,7 @@ const initTeacherWorkspace = () => {
   const content = workspace.querySelector("[data-teacher-content]");
   const home = workspace.querySelector("[data-teacher-home]");
   const search = workspace.querySelector("[data-teacher-search]");
-  const teacherWorkspaceViewKeys = new Set(["inicio", "notificacoes", "calendario", "mensagens", "acesso", "perfil", "planejamentos", "turmas", "alunos", "acompanhamento", "biblioteca", "atividades", "favoritos", "experiências", "jogos", "avaliacoes", "relatórios", "formação", "universidade", "configuracoes"]);
+  const teacherWorkspaceViewKeys = new Set(["inicio", "notificacoes", "calendario", "mensagens", "acesso", "perfil", "planejamentos", "turmas", "alunos", "acompanhamento", "biblioteca", "atividades", "favoritos", "experiências", "jogos", "avaliacoes", "relatorios", "formação", "universidade", "configuracoes"]);
   const getValidTeacherView = (view) => {
     const normalized = normalizeTeacherWorkspaceView(view);
     return teacherWorkspaceViewKeys.has(normalized) ? normalized : "inicio";
@@ -23725,9 +23984,7 @@ const initTeacherWorkspace = () => {
     initUniversalActivityTeacherDeliveries();
     initPrintableActivities();
     initTeacherAvaliaApplication();
-    workspace.querySelectorAll("[data-report-print]").forEach((button) => {
-      button.addEventListener("click", () => window.print());
-    });
+    bindOfficialReportControls(workspace, "teacher");
     if (search) search.value = "";
     if (normalizedView === "planejamentos") {
       ensureTeacherPlanningWeek().then(() => {
@@ -23750,15 +24007,21 @@ const initTeacherWorkspace = () => {
         }
       });
     }
-    if (normalizedView === "relatórios") {
+    if (normalizedView === "relatorios") {
       const before = `${officialReportsState.teacher.status}:${officialReportsState.teacher.key}`;
       ensureTeacherOfficialReport().then(() => {
         const after = `${officialReportsState.teacher.status}:${officialReportsState.teacher.key}`;
-        if (before !== after && activeTeacherView === "relatórios" && content && document.body.contains(workspace)) {
-          content.innerHTML = renderTeacherWorkspaceView("relatórios");
-          workspace.querySelectorAll("[data-report-print]").forEach((button) => {
-            button.addEventListener("click", () => window.print());
-          });
+        if (before !== after && activeTeacherView === "relatorios" && content && document.body.contains(workspace)) {
+          content.innerHTML = renderTeacherWorkspaceView("relatorios");
+          bindOfficialReportControls(workspace, "teacher");
+        }
+      });
+      const historyBefore = `${officialReportsState.teacher.historyStatus}:${officialReportsState.teacher.history?.length || 0}`;
+      ensureOfficialReportHistory("teacher").then(() => {
+        const historyAfter = `${officialReportsState.teacher.historyStatus}:${officialReportsState.teacher.history?.length || 0}`;
+        if (historyBefore !== historyAfter && activeTeacherView === "relatorios" && content && document.body.contains(workspace)) {
+          content.innerHTML = renderTeacherWorkspaceView("relatorios");
+          bindOfficialReportControls(workspace, "teacher");
         }
       });
     }
