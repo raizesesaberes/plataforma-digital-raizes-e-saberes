@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Raízes e Saberes",
+    "slug": "raizes-e-saberes",
+    "scheme": "raizesesaberes",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/branding/rs_splash_phone.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#f7faf6"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "br.com.raizesesaberes.app"
+    },
+    "android": {
+      "package": "br.com.raizesesaberes.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0c4a2f"
+      }
+    },
+    "extra": {
+      "phase": "visual-shell-placeholders"
+    }
+  }
+}

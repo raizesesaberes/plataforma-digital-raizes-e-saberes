@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Raízes e Saberes - Preview Mobile</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #eef5ef;
+        --ink: #102033;
+        --muted: #5d6b63;
+        --brand: #0b5d3b;
+        --line: #dce7df;
+        --surface: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        align-items: center;
+        background: radial-gradient(circle at 20% 0%, #ffffff 0, #eef5ef 42%, #dfece2 100%);
+        color: var(--ink);
+        display: flex;
+        flex-direction: column;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        gap: 16px;
+        margin: 0;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      header {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: space-between;
+        max-width: 1120px;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: 20px;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      p {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+        margin: 4px 0 0;
+      }
+
+      .controls {
+        display: flex;
+        gap: 8px;
+      }
+
+      button {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        color: var(--brand);
+        cursor: pointer;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 900;
+        min-height: 40px;
+        padding: 0 14px;
+      }
+
+      button.active {
+        background: var(--brand);
+        border-color: var(--brand);
+        color: #ffffff;
+      }
+
+      .stage {
+        align-items: flex-start;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .device {
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        box-shadow: 0 24px 80px rgba(16, 32, 51, 0.25);
+        height: 844px;
+        overflow: hidden;
+        transform-origin: top center;
+        width: 390px;
+      }
+
+      .device.tablet {
+        border-radius: 0;
+        height: 768px;
+        width: 1024px;
+      }
+
+      iframe {
+        background: #ffffff;
+        border: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      @media (max-height: 980px) {
+        .device {
+          transform: scale(0.86);
+        }
+      }
+
+      @media (max-height: 820px) {
+        .device {
+          transform: scale(0.72);
+        }
+      }
+
+      @media (max-width: 520px) {
+        body {
+          padding: 12px;
+        }
+
+        header {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .controls {
+          width: 100%;
+        }
+
+        button {
+          flex: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>Preview Mobile</h1>
+        <p>Use Phone para celular e Tablet para validar o Golden Master sem redimensionar a janela.</p>
+      </div>
+      <div class="controls" aria-label="Selecionar dispositivo">
+        <button id="phoneButton" class="active" type="button">Phone 390x844</button>
+        <button id="tabletButton" type="button">Tablet 1024x768</button>
+      </div>
+    </header>
+
+    <main class="stage">
+      <div id="device" class="device">
+        <iframe title="App Raízes e Saberes" src="./index.html?device-preview=phone"></iframe>
+      </div>
+    </main>
+
+    <script>
+      const device = document.getElementById("device");
+      const iframe = document.querySelector("iframe");
+      const phoneButton = document.getElementById("phoneButton");
+      const tabletButton = document.getElementById("tabletButton");
+
+      function setDevice(kind) {
+        const tablet = kind === "tablet";
+        device.classList.toggle("tablet", tablet);
+        phoneButton.classList.toggle("active", !tablet);
+        tabletButton.classList.toggle("active", tablet);
+        iframe.src = `./index.html?device-preview=${kind}&ts=${Date.now()}`;
+      }
+
+      phoneButton.addEventListener("click", () => setDevice("phone"));
+      tabletButton.addEventListener("click", () => setDevice("tablet"));
+
+      const initialDevice = new URLSearchParams(window.location.search).get("device");
+      if (initialDevice === "tablet") {
+        setDevice("tablet");
+      }
+    </script>
+  </body>
+</html>

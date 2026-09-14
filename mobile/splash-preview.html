@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Raízes e Saberes - Splash Preview</title>
+    <style>
+      :root {
+        --ink: #063d2a;
+        --muted: #5d6b63;
+        --line: #dce7df;
+        --paper: #f7faf6;
+        --brand: #0b5d3b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background: linear-gradient(135deg, #f7faf6 0%, #e8f1ea 100%);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        margin: 0;
+        min-height: 100vh;
+        padding: 32px;
+      }
+
+      .toolbar {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        margin: 0 auto 18px;
+        max-width: 1180px;
+      }
+
+      h1 {
+        font-size: 24px;
+        line-height: 1.15;
+        margin: 0;
+      }
+
+      p {
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 700;
+        margin: 6px 0 0;
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      button {
+        background: #fff;
+        border: 1.5px solid var(--line);
+        border-radius: 12px;
+        color: var(--brand);
+        cursor: pointer;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 900;
+        padding: 12px 16px;
+      }
+
+      button.active {
+        background: var(--brand);
+        border-color: var(--brand);
+        color: #fff;
+      }
+
+      .stage {
+        align-items: center;
+        display: flex;
+        justify-content: center;
+        min-height: calc(100vh - 130px);
+      }
+
+      .device {
+        background: #0f1b2a;
+        border-radius: 34px;
+        box-shadow: 0 24px 80px rgba(11, 45, 29, 0.2);
+        padding: 10px;
+      }
+
+      .device.phone {
+        height: 844px;
+        width: 390px;
+      }
+
+      .device.tablet {
+        height: 768px;
+        width: 1024px;
+      }
+
+      .screen {
+        background: var(--paper);
+        border-radius: 24px;
+        height: 100%;
+        overflow: hidden;
+        width: 100%;
+      }
+
+      .screen img {
+        display: block;
+        height: 100%;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      @media (max-height: 920px) {
+        body {
+          padding: 20px;
+        }
+
+        .device.phone {
+          height: 760px;
+          width: 351px;
+        }
+
+        .device.tablet {
+          height: 691px;
+          width: 922px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="toolbar">
+        <div>
+          <h1>Preview Splash</h1>
+          <p>Conferência visual do splash nativo em phone e tablet.</p>
+        </div>
+        <div class="actions">
+          <button class="active" data-device="phone" type="button">Phone 390x844</button>
+          <button data-device="tablet" type="button">Tablet 1024x768</button>
+        </div>
+      </div>
+
+      <section class="stage">
+        <div id="device" class="device phone">
+          <div class="screen">
+            <img id="splash" alt="Splash Raízes e Saberes" src="./assets/assets/branding/rs_splash_phone.f28b5e8a84476cfbb3781b7d4d715808.png" />
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const assets = {
+        phone: "./assets/assets/branding/rs_splash_phone.f28b5e8a84476cfbb3781b7d4d715808.png",
+        tablet: "./assets/assets/branding/rs_splash_tablet.a99def604c07a46d93cd3d45479acc25.png"
+      };
+      const device = document.getElementById("device");
+      const splash = document.getElementById("splash");
+      const buttons = Array.from(document.querySelectorAll("button[data-device]"));
+
+      function setDevice(nextDevice) {
+        device.className = `device ${nextDevice}`;
+        splash.src = assets[nextDevice];
+        buttons.forEach((button) => button.classList.toggle("active", button.dataset.device === nextDevice));
+        const url = new URL(window.location.href);
+        url.searchParams.set("device", nextDevice);
+        window.history.replaceState(null, "", url);
+      }
+
+      buttons.forEach((button) => button.addEventListener("click", () => setDevice(button.dataset.device)));
+      setDevice(new URLSearchParams(window.location.search).get("device") === "tablet" ? "tablet" : "phone");
+    </script>
+  </body>
+</html>
