@@ -55,15 +55,69 @@ type SchoolRow = {
   nome?: string | null;
 };
 
+type EnrollmentRow = {
+  id?: string;
+  student_id?: string | null;
+  class_id?: string | null;
+  school_id?: string | null;
+  school_year?: string | null;
+  status?: string | null;
+  classes?: ClassRow | null;
+  schools?: SchoolRow | null;
+};
+
+export type StudentCalendarEventRow = {
+  source_type?: string | null;
+  source_id?: string | null;
+  school_id?: string | null;
+  class_id?: string | null;
+  student_id?: string | null;
+  event_date?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  title?: string | null;
+  description?: string | null;
+  event_type?: string | null;
+  status?: string | null;
+  action_label?: string | null;
+  href?: string | null;
+  created_at?: string | null;
+};
+
+export type NotificationCenterRow = {
+  item_type?: string | null;
+  delivery_id?: string | null;
+  source_type?: string | null;
+  source_id?: string | null;
+  school_id?: string | null;
+  student_id?: string | null;
+  title?: string | null;
+  summary?: string | null;
+  origin_label?: string | null;
+  priority?: string | null;
+  deep_link?: string | null;
+  delivered_at?: string | null;
+  read_at?: string | null;
+  notification_status?: string | null;
+  child_name?: string | null;
+  class_name?: string | null;
+  unread_count?: number | null;
+};
+
 export type AuthContext = {
   userId: string;
   email?: string;
   displayName?: string;
   platformRole?: string;
   route: MobileRoute;
+  enrollmentId?: string;
+  enrollmentStatus?: string;
+  schoolId?: string;
   schoolName?: string;
+  classId?: string;
   className?: string;
   studentId?: string;
+  studentContextStatus?: "ready" | "empty";
   teacherId?: string;
 };
 
@@ -144,14 +198,22 @@ export function profileForAuthContext(context: AuthContext): DemoProfile | null 
   }
 
   const base = demoProfiles[context.route];
-  const displayName = context.displayName || base.userName;
+  const crescerRoute = context.route === "crescer";
+  const rawDisplayName = context.displayName || base.userName;
+  const displayName = crescerRoute && rawDisplayName.includes("@") ? "Criança" : rawDisplayName;
   const firstName = displayName.split(" ")[0] || displayName;
+  const schoolName = crescerRoute ? context.schoolName || "Escola não encontrada" : context.schoolName || base.school;
+  const className = crescerRoute ? context.className || "Turma não encontrada" : context.className || base.className;
+  const crescerIntro =
+    context.className && context.schoolName
+      ? `${context.className} · ${context.schoolName}`
+      : "Não encontramos todos os dados da sua turma. Peça ajuda à escola.";
 
   return {
     ...base,
     userName: displayName,
-    school: context.schoolName || base.school,
-    className: context.className || base.className,
+    school: schoolName,
+    className,
     homeTitle:
       context.route === "professor"
         ? `Olá, ${displayName}`
@@ -161,8 +223,39 @@ export function profileForAuthContext(context: AuthContext): DemoProfile | null 
     homeIntro:
       context.route === "professor"
         ? `${context.schoolName || base.school} · rotina de hoje`
+        : crescerRoute
+          ? crescerIntro
         : base.homeIntro
   };
+}
+
+export async function listStudentCalendarEvents(pFrom: string, pTo: string): Promise<StudentCalendarEventRow[]> {
+  const rows = await authenticatedRpc<StudentCalendarEventRow[]>("student_list_calendar_events", {
+    p_from: pFrom,
+    p_to: pTo
+  });
+  return Array.isArray(rows) ? rows : [];
+}
+
+export async function listNotificationCenter(): Promise<NotificationCenterRow[]> {
+  const rows = await authenticatedRpc<NotificationCenterRow[]>("notification_get_center", {
+    p_student_id: null,
+    p_read_filter: "all",
+    p_period_days: 90,
+    p_limit: 80,
+    p_offset: 0
+  });
+  return Array.isArray(rows) ? rows : [];
+}
+
+export async function markNotificationDeliveryRead(deliveryId: string, itemType = "notification") {
+  if (!deliveryId) {
+    throw new Error("Notificação não encontrada.");
+  }
+
+  await authenticatedRpc(itemType === "communication" ? "communication_mark_read" : "notification_mark_read", {
+    p_delivery_id: deliveryId
+  });
 }
 
 async function resolveAuthContext(session: AuthSession): Promise<AuthContext> {
@@ -217,15 +310,25 @@ async function resolveAuthContext(session: AuthSession): Promise<AuthContext> {
       `select=id,nome,school_id,class_id,turma,status&user_id=eq.${encodeURIComponent(user.id)}&limit=1`,
       session
     );
-    const classRow = student?.class_id
-      ? await getFirst<ClassRow>(
-          "classes",
-          `select=id,nome,school_id,school_year,ano_escolar&id=eq.${encodeURIComponent(student.class_id)}&limit=1`,
+    const enrollment = student?.id
+      ? await getFirst<EnrollmentRow>(
+          "enrollments",
+          `select=id,student_id,class_id,school_id,school_year,status,classes(id,nome,school_id,school_year,ano_escolar),schools(id,nome)&student_id=eq.${encodeURIComponent(student.id)}&status=eq.active&limit=1`,
           session
         )
       : null;
-    const schoolId = student?.school_id || classRow?.school_id;
-    const school = schoolId ? await getFirst<SchoolRow>("schools", `select=id,nome&id=eq.${encodeURIComponent(schoolId)}&limit=1`, session) : null;
+    const classId = stringFrom(enrollment?.class_id) || stringFrom(student?.class_id);
+    const classRow = enrollment?.classes || (classId
+      ? await getFirst<ClassRow>(
+          "classes",
+          `select=id,nome,school_id,school_year,ano_escolar&id=eq.${encodeURIComponent(classId)}&limit=1`,
+          session
+        )
+      : null);
+    const schoolId = stringFrom(enrollment?.school_id) || stringFrom(student?.school_id) || stringFrom(classRow?.school_id);
+    const school = enrollment?.schools || (schoolId
+      ? await getFirst<SchoolRow>("schools", `select=id,nome&id=eq.${encodeURIComponent(schoolId)}&limit=1`, session)
+      : null);
     const className = stringFrom(classRow?.nome) || stringFrom(student?.turma);
     const route = platformRole === "educacao_infantil" || isEarlyChildhood(className, classRow, student) ? "crescer" : "fundamental";
 
@@ -234,12 +337,39 @@ async function resolveAuthContext(session: AuthSession): Promise<AuthContext> {
       route,
       displayName: stringFrom(student?.nome) || baseContext.displayName,
       studentId: student?.id,
+      enrollmentId: enrollment?.id,
+      enrollmentStatus: stringFrom(enrollment?.status),
+      schoolId,
       schoolName: stringFrom(school?.nome),
-      className
+      classId,
+      className,
+      studentContextStatus: student?.id && className && stringFrom(school?.nome) ? "ready" : "empty"
     };
   }
 
   return baseContext;
+}
+
+async function authenticatedRpc<T = unknown>(functionName: string, body: Record<string, unknown>): Promise<T> {
+  const stored = readStoredSession();
+  if (!stored?.access_token) {
+    throw new Error("Entre novamente para continuar.");
+  }
+
+  const session = await refreshIfNeeded(stored);
+  if (!session?.access_token) {
+    clearStoredSession();
+    throw new Error("Entre novamente para continuar.");
+  }
+
+  return authRequest<T>(
+    `/rest/v1/rpc/${functionName}`,
+    {
+      method: "POST",
+      body: JSON.stringify(body)
+    },
+    session
+  );
 }
 
 async function refreshIfNeeded(session: AuthSession) {

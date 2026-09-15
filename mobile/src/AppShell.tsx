@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import {
   AppHeader,
@@ -14,6 +14,13 @@ import {
   StatCard
 } from "./components/MobileKit";
 import { demoCollections, type DemoProfile, type ModuleKey } from "./data/fixtures";
+import {
+  listNotificationCenter,
+  listStudentCalendarEvents,
+  markNotificationDeliveryRead,
+  type NotificationCenterRow,
+  type StudentCalendarEventRow
+} from "./lib/mobileAuth";
 import { colors, shadow, spacing } from "./theme";
 
 type Route = {
@@ -21,13 +28,78 @@ type Route = {
   title: string;
 };
 
+type AsyncData<T> = {
+  status: "idle" | "loading" | "ready" | "empty" | "error";
+  items: T[];
+  message?: string;
+};
+
 export function AppShell({ profile, onLogout }: { profile: DemoProfile; onLogout: () => void }) {
   const [stack, setStack] = useState<Route[]>([{ key: "home", title: "Início" }]);
   const [readNotificationTitles, setReadNotificationTitles] = useState<string[]>([]);
+  const [crescerAgenda, setCrescerAgenda] = useState<AsyncData<CrescerAgendaItem>>({ status: "idle", items: [] });
+  const [crescerNotifications, setCrescerNotifications] = useState<AsyncData<CrescerNotification>>({ status: "idle", items: [] });
   const route = stack[stack.length - 1];
   const tone = profile.accent === "child" ? "child" : profile.accent === "blue" ? "blue" : profile.role === "professor" ? "teacher" : "paper";
 
   const moduleMap = useMemo(() => new Map(profile.modules.map((item) => [item.key, item])), [profile.modules]);
+  const crescerWeekRange = useMemo(() => getCurrentWeekRange(), []);
+
+  useEffect(() => {
+    if (profile.role !== "crescer") {
+      return;
+    }
+
+    let active = true;
+    setCrescerAgenda({ status: "loading", items: [] });
+
+    listStudentCalendarEvents(crescerWeekRange.from, crescerWeekRange.to)
+      .then((rows) => {
+        if (!active) return;
+        const items = rows.map(mapCalendarRowToAgendaItem).filter(Boolean) as CrescerAgendaItem[];
+        setCrescerAgenda({ status: items.length ? "ready" : "empty", items });
+      })
+      .catch(() => {
+        if (!active) return;
+        setCrescerAgenda({
+          status: "error",
+          items: [],
+          message: "Não conseguimos carregar sua agenda agora. Tente novamente em instantes."
+        });
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [profile.role, crescerWeekRange.from, crescerWeekRange.to]);
+
+  useEffect(() => {
+    if (profile.role !== "crescer") {
+      return;
+    }
+
+    let active = true;
+    setCrescerNotifications({ status: "loading", items: [] });
+
+    listNotificationCenter()
+      .then((rows) => {
+        if (!active) return;
+        const items = rows.map(mapNotificationRowToItem).filter(Boolean) as CrescerNotification[];
+        setCrescerNotifications({ status: items.length ? "ready" : "empty", items });
+      })
+      .catch(() => {
+        if (!active) return;
+        setCrescerNotifications({
+          status: "error",
+          items: [],
+          message: "Não conseguimos carregar suas novidades agora. Tente novamente em instantes."
+        });
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [profile.role]);
 
   function goTo(key: ModuleKey) {
     const title = String(key).startsWith("notification:")
@@ -66,6 +138,27 @@ export function AppShell({ profile, onLogout }: { profile: DemoProfile; onLogout
     setReadNotificationTitles((current) => (current.includes(title) ? current : [...current, title]));
   }
 
+  async function markCrescerNotificationRead(item: CrescerNotification) {
+    if (!item.deliveryId || !item.unread) {
+      return;
+    }
+
+    setCrescerNotifications((current) => ({
+      ...current,
+      items: current.items.map((entry) => (entry.deliveryId === item.deliveryId ? { ...entry, unread: false } : entry))
+    }));
+
+    try {
+      await markNotificationDeliveryRead(item.deliveryId, item.itemType);
+    } catch {
+      setCrescerNotifications((current) => ({
+        ...current,
+        items: current.items.map((entry) => (entry.deliveryId === item.deliveryId ? { ...entry, unread: true } : entry)),
+        message: "Não conseguimos marcar como vista agora."
+      }));
+    }
+  }
+
   return (
     <View style={styles.root}>
       <Screen tone={tone}>
@@ -87,6 +180,9 @@ export function AppShell({ profile, onLogout }: { profile: DemoProfile; onLogout
             onLogout={onLogout}
             readNotificationTitles={readNotificationTitles}
             onReadNotification={markNotificationRead}
+            crescerAgenda={crescerAgenda}
+            crescerNotifications={crescerNotifications}
+            onReadCrescerNotification={markCrescerNotificationRead}
           />
         )}
       </Screen>
@@ -472,8 +568,30 @@ type CrescerActivity = (typeof demoCollections.activities)[number];
 type CrescerBook = (typeof demoCollections.books)[number];
 type CrescerGame = (typeof demoCollections.games)[number];
 type CrescerAchievement = (typeof demoCollections.achievements.medals)[number];
-type CrescerAgendaItem = (typeof demoCollections.agenda.today)[number] | (typeof demoCollections.agenda.upcoming)[number];
-type CrescerNotification = (typeof demoCollections.childNotifications)[number];
+type CrescerAgendaItem = {
+  id: string;
+  type: "Atividade" | "Avaliação" | "Evento" | "Lembrete";
+  title: string;
+  day: string;
+  time: string;
+  description: string;
+  action: string;
+  dateIso: string;
+};
+type CrescerNotification = {
+  id: string;
+  deliveryId: string;
+  itemType: string;
+  type: "Recado" | "Agenda" | "Avaliação" | "Atividade" | "Notificação";
+  title: string;
+  summary: string;
+  origin: string;
+  time: string;
+  unread: boolean;
+  message: string;
+  action: string;
+  deepLink: string;
+};
 type CrescerProfilePreference = (typeof demoCollections.childProfile.preferences)[number];
 type FundamentalQuickAction = (typeof demoCollections.fundamental.quickActions)[number];
 type FundamentalActivity = (typeof demoCollections.fundamental.priorityActivities)[number];
@@ -853,8 +971,11 @@ function AchievementDetailScreen({ achievement }: { achievement: CrescerAchievem
   );
 }
 
-function AgendaScreen({ onOpenItem }: { onOpenItem: (item: CrescerAgendaItem) => void }) {
-  const agenda = demoCollections.agenda;
+function AgendaScreen({ state, onOpenItem }: { state: AsyncData<CrescerAgendaItem>; onOpenItem: (item: CrescerAgendaItem) => void }) {
+  const weekDays = getCurrentWeekDays();
+  const todayIso = toIsoDate(new Date());
+  const todayItems = state.items.filter((item) => item.dateIso === todayIso);
+  const upcomingItems = state.items.filter((item) => item.dateIso !== todayIso);
 
   return (
     <View>
@@ -865,7 +986,7 @@ function AgendaScreen({ onOpenItem }: { onOpenItem: (item: CrescerAgendaItem) =>
       </View>
 
       <View style={styles.weekStrip}>
-        {agenda.weekDays.map((day) => (
+        {weekDays.map((day) => (
           <View key={day.short} style={[styles.weekDayCard, day.isToday ? styles.weekDayToday : null]}>
             <Text style={styles.weekDayShort}>{day.short}</Text>
             <Text style={styles.weekDayNumber}>{day.day}</Text>
@@ -876,18 +997,28 @@ function AgendaScreen({ onOpenItem }: { onOpenItem: (item: CrescerAgendaItem) =>
 
       <SectionHeader title="Hoje" />
       <View style={styles.todayCard}>
-        {agenda.today.length === 0 ? (
+        {state.status === "loading" ? (
+          <Text style={styles.todayEmptyText}>Carregando seus compromissos...</Text>
+        ) : state.status === "error" ? (
+          <Text style={styles.todayEmptyText}>{state.message || "Não conseguimos carregar sua agenda agora."}</Text>
+        ) : todayItems.length === 0 ? (
           <Text style={styles.todayEmptyText}>Hoje não tem nenhum compromisso. Aproveite para explorar e brincar!</Text>
         ) : (
-          agenda.today.map((item) => <AgendaItemCard key={item.title} item={item} onPress={() => onOpenItem(item)} featured />)
+          todayItems.map((item) => <AgendaItemCard key={item.id} item={item} onPress={() => onOpenItem(item)} featured />)
         )}
       </View>
 
       <SectionHeader title="Próximos compromissos" />
       <View style={styles.agendaList}>
-        {agenda.upcoming.map((item) => (
-          <AgendaItemCard key={item.title} item={item} onPress={() => onOpenItem(item)} />
-        ))}
+        {state.status === "loading" ? (
+          <EmptyState title="Agenda carregando" body="Estamos buscando os compromissos autorizados da sua semana." />
+        ) : state.status === "error" ? (
+          <EmptyState title="Agenda indisponível" body={state.message || "Tente novamente em instantes."} />
+        ) : upcomingItems.length === 0 ? (
+          <EmptyState title="Semana tranquila" body="Nenhum outro compromisso apareceu para esta semana." />
+        ) : (
+          upcomingItems.map((item) => <AgendaItemCard key={item.id} item={item} onPress={() => onOpenItem(item)} />)
+        )}
       </View>
     </View>
   );
@@ -945,13 +1076,13 @@ function getAgendaMark(type: CrescerAgendaItem["type"]) {
 }
 
 function NotificationsScreen({
-  readTitles,
+  state,
   onOpenNotification
 }: {
-  readTitles: string[];
+  state: AsyncData<CrescerNotification>;
   onOpenNotification: (item: CrescerNotification) => void;
 }) {
-  const unreadCount = demoCollections.childNotifications.filter((item) => item.unread && !readTitles.includes(item.title)).length;
+  const unreadCount = state.items.filter((item) => item.unread).length;
 
   return (
     <View>
@@ -976,9 +1107,15 @@ function NotificationsScreen({
 
       <SectionHeader title="Chegou para você" />
       <View style={styles.notificationList}>
-        {demoCollections.childNotifications.map((item) => (
-          <NotificationCard key={item.title} item={item} isRead={!item.unread || readTitles.includes(item.title)} onPress={() => onOpenNotification(item)} />
-        ))}
+        {state.status === "loading" ? (
+          <EmptyState title="Novidades carregando" body="Estamos buscando as notificações autorizadas para você." />
+        ) : state.status === "error" ? (
+          <EmptyState title="Central indisponível" body={state.message || "Tente novamente em instantes."} />
+        ) : state.items.length === 0 ? (
+          <EmptyState title="Nada novo por aqui" body="Quando chegar uma novidade importante, ela aparecerá nesta central." />
+        ) : (
+          state.items.map((item) => <NotificationCard key={item.id} item={item} isRead={!item.unread} onPress={() => onOpenNotification(item)} />)
+        )}
       </View>
     </View>
   );
@@ -1036,6 +1173,208 @@ function getNotificationMark(type: CrescerNotification["type"]) {
   if (type === "Avaliação") return "✓";
   if (type === "Atividade") return "✎";
   return "!";
+}
+
+function getCurrentWeekRange() {
+  const today = new Date();
+  const monday = new Date(today);
+  const dayOffset = (today.getDay() + 6) % 7;
+  monday.setDate(today.getDate() - dayOffset);
+  const friday = new Date(monday);
+  friday.setDate(monday.getDate() + 4);
+
+  return {
+    from: toIsoDate(monday),
+    to: toIsoDate(friday)
+  };
+}
+
+function getCurrentWeekDays() {
+  const week = getCurrentWeekRange();
+  const monday = parseIsoDate(week.from);
+  const todayIso = toIsoDate(new Date());
+  const labels = ["segunda", "terça", "quarta", "quinta", "sexta"];
+  const shorts = ["Seg", "Ter", "Qua", "Qui", "Sex"];
+
+  return shorts.map((short, index) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + index);
+    const iso = toIsoDate(date);
+    return {
+      short,
+      day: String(date.getDate()).padStart(2, "0"),
+      label: labels[index],
+      isToday: iso === todayIso
+    };
+  });
+}
+
+function mapCalendarRowToAgendaItem(row: StudentCalendarEventRow): CrescerAgendaItem | null {
+  const id = stringValue(row.source_id) || `${stringValue(row.source_type) || "agenda"}-${stringValue(row.event_date)}-${stringValue(row.title)}`;
+  const dateIso = stringValue(row.event_date);
+  const title = stringValue(row.title);
+  if (!id || !dateIso || !title) {
+    return null;
+  }
+
+  const type = calendarTypeLabel(stringValue(row.event_type), stringValue(row.source_type));
+  return {
+    id,
+    type,
+    title,
+    day: friendlyCalendarDay(dateIso),
+    time: friendlyCalendarTime(row.start_time, row.end_time),
+    description: stringValue(row.description) || calendarDescription(type),
+    action: stringValue(row.action_label) || calendarAction(type),
+    dateIso
+  };
+}
+
+function mapNotificationRowToItem(row: NotificationCenterRow): CrescerNotification | null {
+  const deliveryId = stringValue(row.delivery_id);
+  if (!deliveryId) {
+    return null;
+  }
+
+  const itemType = stringValue(row.item_type) || "notification";
+  const type = notificationTypeLabel(itemType, stringValue(row.source_type), stringValue(row.origin_label));
+  const title = stringValue(row.title) || "Nova notificação";
+  const summary = stringValue(row.summary) || notificationSummary(type);
+
+  return {
+    id: `${itemType}:${deliveryId}`,
+    deliveryId,
+    itemType,
+    type,
+    title,
+    summary,
+    origin: stringValue(row.origin_label) || notificationOrigin(type),
+    time: friendlyNotificationTime(stringValue(row.delivered_at)),
+    unread: !stringValue(row.read_at) && stringValue(row.notification_status) !== "read",
+    message: summary,
+    action: notificationAction(type, stringValue(row.deep_link)),
+    deepLink: stringValue(row.deep_link) || ""
+  };
+}
+
+function calendarTypeLabel(eventType?: string, sourceType?: string): CrescerAgendaItem["type"] {
+  const value = `${eventType || ""} ${sourceType || ""}`.toLowerCase();
+  if (value.includes("assessment") || value.includes("avalia")) return "Avaliação";
+  if (value.includes("reminder") || value.includes("lembrete")) return "Lembrete";
+  if (value.includes("atividade") || value.includes("activity")) return "Atividade";
+  return "Evento";
+}
+
+function notificationTypeLabel(itemType?: string, sourceType?: string, origin?: string): CrescerNotification["type"] {
+  const value = `${itemType || ""} ${sourceType || ""} ${origin || ""}`.toLowerCase();
+  if (value.includes("communication") || value.includes("recado")) return "Recado";
+  if (value.includes("calendar") || value.includes("agenda")) return "Agenda";
+  if (value.includes("assessment") || value.includes("avalia")) return "Avaliação";
+  if (value.includes("activity") || value.includes("atividade")) return "Atividade";
+  return "Notificação";
+}
+
+function calendarDescription(type: CrescerAgendaItem["type"]) {
+  if (type === "Avaliação") return "Há uma avaliação disponível para acompanhar com calma.";
+  if (type === "Lembrete") return "Um lembrete importante para sua rotina.";
+  if (type === "Atividade") return "Uma atividade preparada para a turma.";
+  return "Um evento da sua turma ou escola.";
+}
+
+function calendarAction(type: CrescerAgendaItem["type"]) {
+  if (type === "Avaliação") return "Ver avaliação";
+  if (type === "Atividade") return "Ver atividade";
+  return "Ver na agenda";
+}
+
+function notificationSummary(type: CrescerNotification["type"]) {
+  if (type === "Recado") return "Você recebeu um novo recado.";
+  if (type === "Agenda") return "Tem uma novidade na sua semana.";
+  if (type === "Avaliação") return "Há uma avaliação para acompanhar.";
+  if (type === "Atividade") return "Uma atividade chegou para você.";
+  return "Chegou uma novidade importante.";
+}
+
+function notificationOrigin(type: CrescerNotification["type"]) {
+  if (type === "Recado") return "Recados";
+  if (type === "Agenda") return "Agenda";
+  if (type === "Avaliação") return "Avalia+";
+  if (type === "Atividade") return "Atividades";
+  return "Raízes e Saberes";
+}
+
+function notificationAction(type: CrescerNotification["type"], deepLink?: string) {
+  const link = (deepLink || "").toLowerCase();
+  if (type === "Agenda" || link.includes("agenda") || link.includes("semana")) return "Ver na agenda";
+  if (type === "Avaliação" || link.includes("avalia")) return "Ver avaliação";
+  if (type === "Recado" || link.includes("recado")) return "Ver recado";
+  if (type === "Atividade") return "Ver atividade";
+  return "Abrir novidade";
+}
+
+function friendlyCalendarDay(dateIso: string) {
+  const date = parseIsoDate(dateIso);
+  const todayIso = toIsoDate(new Date());
+  if (dateIso === todayIso) {
+    return "Hoje";
+  }
+
+  return capitalize(
+    date.toLocaleDateString("pt-BR", {
+      weekday: "long"
+    })
+  );
+}
+
+function friendlyCalendarTime(start?: string | null, end?: string | null) {
+  const startText = timeText(start);
+  const endText = timeText(end);
+  if (startText && endText) return `${startText} - ${endText}`;
+  return startText || "Dia todo";
+}
+
+function friendlyNotificationTime(value?: string) {
+  if (!value) return "Agora";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Agora";
+
+  const today = new Date();
+  const todayIso = toIsoDate(today);
+  const dateIso = toIsoDate(date);
+  if (dateIso === todayIso) return "Hoje";
+
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (dateIso === toIsoDate(yesterday)) return "Ontem";
+
+  return date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit"
+  });
+}
+
+function parseIsoDate(value: string) {
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+}
+
+function toIsoDate(date: Date) {
+  const local = new Date(date);
+  local.setMinutes(local.getMinutes() - local.getTimezoneOffset());
+  return local.toISOString().slice(0, 10);
+}
+
+function timeText(value?: string | null) {
+  const text = stringValue(value);
+  return text ? text.slice(0, 5) : "";
+}
+
+function stringValue(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : "";
+}
+
+function capitalize(value: string) {
+  return value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : value;
 }
 
 function CrescerProfileScreen({ onLogout }: { onLogout: () => void }) {
@@ -1155,7 +1494,10 @@ function ModuleScreen({
   onBack,
   onLogout,
   readNotificationTitles,
-  onReadNotification
+  onReadNotification,
+  crescerAgenda,
+  crescerNotifications,
+  onReadCrescerNotification
 }: {
   profile: DemoProfile;
   activeKey: ModuleKey;
@@ -1164,9 +1506,22 @@ function ModuleScreen({
   onLogout: () => void;
   readNotificationTitles: string[];
   onReadNotification: (title: string) => void;
+  crescerAgenda: AsyncData<CrescerAgendaItem>;
+  crescerNotifications: AsyncData<CrescerNotification>;
+  onReadCrescerNotification: (item: CrescerNotification) => void;
 }) {
   if (profile.role === "crescer") {
-    return <CrescerModule activeKey={activeKey} onOpen={onOpen} onBack={onBack} onLogout={onLogout} readNotificationTitles={readNotificationTitles} onReadNotification={onReadNotification} />;
+    return (
+      <CrescerModule
+        activeKey={activeKey}
+        onOpen={onOpen}
+        onBack={onBack}
+        onLogout={onLogout}
+        agendaState={crescerAgenda}
+        notificationState={crescerNotifications}
+        onReadNotification={onReadCrescerNotification}
+      />
+    );
   }
 
   if (profile.role === "fundamental") {
@@ -1185,15 +1540,17 @@ function CrescerModule({
   onOpen,
   onBack,
   onLogout,
-  readNotificationTitles,
+  agendaState,
+  notificationState,
   onReadNotification
 }: {
   activeKey: ModuleKey;
   onOpen: (key: ModuleKey) => void;
   onBack: () => void;
   onLogout: () => void;
-  readNotificationTitles: string[];
-  onReadNotification: (title: string) => void;
+  agendaState: AsyncData<CrescerAgendaItem>;
+  notificationState: AsyncData<CrescerNotification>;
+  onReadNotification: (item: CrescerNotification) => void;
 }) {
   if (activeKey === "discoveries") {
     return <DiscoveryScreen />;
@@ -1241,32 +1598,31 @@ function CrescerModule({
   }
 
   if (activeKey === "agenda") {
-    return <AgendaScreen onOpenItem={(item) => onOpen(`agenda:${item.title}` as ModuleKey)} />;
+    return <AgendaScreen state={agendaState} onOpenItem={(item) => onOpen(`agenda:${item.id}` as ModuleKey)} />;
   }
 
   if (String(activeKey).startsWith("agenda:")) {
-    const title = String(activeKey).replace("agenda:", "");
-    const allItems = [...demoCollections.agenda.today, ...demoCollections.agenda.upcoming];
-    const item = allItems.find((entry) => entry.title === title) ?? allItems[0];
-    return <AgendaDetailScreen item={item} onBack={onBack} />;
+    const id = String(activeKey).replace("agenda:", "");
+    const item = agendaState.items.find((entry) => entry.id === id) ?? agendaState.items[0];
+    return item ? <AgendaDetailScreen item={item} onBack={onBack} /> : <EmptyState title="Compromisso não encontrado" body="Volte para a agenda e escolha outro item." />;
   }
 
   if (activeKey === "notifications") {
     return (
       <NotificationsScreen
-        readTitles={readNotificationTitles}
+        state={notificationState}
         onOpenNotification={(item) => {
-          onReadNotification(item.title);
-          onOpen(`notification:${item.title}` as ModuleKey);
+          onReadNotification(item);
+          onOpen(`notification:${item.id}` as ModuleKey);
         }}
       />
     );
   }
 
   if (String(activeKey).startsWith("notification:")) {
-    const title = String(activeKey).replace("notification:", "");
-    const item = demoCollections.childNotifications.find((entry) => entry.title === title) ?? demoCollections.childNotifications[0];
-    return <NotificationDetailScreen item={item} onBack={onBack} />;
+    const id = String(activeKey).replace("notification:", "");
+    const item = notificationState.items.find((entry) => entry.id === id) ?? notificationState.items[0];
+    return item ? <NotificationDetailScreen item={item} onBack={onBack} /> : <EmptyState title="Notificação não encontrada" body="Volte para a central e escolha outra novidade." />;
   }
 
   if (activeKey === "family") {
