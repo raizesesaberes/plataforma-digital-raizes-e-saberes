@@ -15915,6 +15915,11 @@ td {
   padding: 14px;
 }
 
+.family-message-card.is-unread {
+  border-color: rgba(13, 107, 75, 0.28);
+  background: linear-gradient(90deg, rgba(237, 246, 232, 0.95), rgba(255, 255, 255, 0.98));
+}
+
 .family-message-card > div:nth-child(2) {
   min-width: 0;
   display: grid;
@@ -15994,6 +15999,28 @@ td {
   font-style: normal;
   font-weight: 900;
   text-transform: uppercase;
+}
+
+.family-message-card.is-unread aside em {
+  background: #0d6b4b;
+  color: #fff;
+}
+
+.family-message-card aside button {
+  border: 1px solid rgba(13, 107, 75, 0.18);
+  border-radius: 999px;
+  background: #fff;
+  color: #0d6b4b;
+  padding: 6px 10px;
+  font-size: 0.68rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.family-message-card aside button:hover,
+.family-message-card aside button:focus-visible {
+  background: #0d6b4b;
+  color: #fff;
 }
 
 .family-recommendations-panel {

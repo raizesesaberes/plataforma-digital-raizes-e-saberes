@@ -71,7 +71,7 @@ export function Screen({
 
 function getBackgroundEnvironment(tone: ScreenTone): BrandedEnvironment | null {
   if (tone === "child") return "crescer";
-  if (tone === "blue") return "student";
+  if (tone === "blue") return "teacher";
   if (tone === "teacher") return "teacher";
   return null;
 }
