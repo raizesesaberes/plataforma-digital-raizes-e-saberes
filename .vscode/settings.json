@@ -1,0 +1,32 @@
+{
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/.expo/**": true,
+    "**/.expo-home/**": true,
+    "**/.next/**": true,
+    "**/.turbo/**": true,
+    "**/.cache/**": true,
+    "**/.parcel-cache/**": true,
+    "**/.vite/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/coverage/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.expo": true,
+    "**/.expo-home": true,
+    "**/.next": true,
+    "**/.turbo": true,
+    "**/.cache": true,
+    "**/.parcel-cache": true,
+    "**/.vite": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/coverage": true
+  },
+  "git.autorefresh": false,
+  "git.autoRepositoryDetection": "subFolders"
+}
