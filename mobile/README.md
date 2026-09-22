@@ -1,14 +1,20 @@
 # App Raízes e Saberes
 
-Shell mobile visual em Expo/React Native para homologação de navegação e layout.
+App mobile em Expo/React Native do Ecossistema Educacional Raízes e Saberes.
 
-## Fase 01
+## Status V1
 
-- Sem Supabase obrigatório.
-- Sem integração remota.
-- Sem alterações em backend, RLS ou migrations.
-- Dados demonstrativos isolados em `src/data/fixtures.ts`.
-- WebView não é usado como app principal.
+- Raízes Crescer: FROZEN.
+- Fundamental/Médio: FROZEN.
+- Professor: FROZEN.
+- App Structural V1: FROZEN.
+- P0: ZERO.
+- P1: ZERO.
+- P2 runtime: ZERO.
+- Conteúdo definitivo e mobiliário editorial: FUTURE.
+- Próxima fase: NATIVE BUILD.
+
+Este checkpoint representa o Golden Master estrutural do App V1 após a última navegação aprovada. Não reabrir funcionalidades durante a fase nativa salvo regressão concreta.
 
 ## Rodar
 
@@ -17,5 +23,3 @@ cd mobile
 npm install
 npm run start
 ```
-
-Depois da homologação visual, a Fase 03 troca fixtures pelos motores reais já homologados na plataforma web.

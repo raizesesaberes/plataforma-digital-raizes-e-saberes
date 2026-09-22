@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 import type { Feather } from "@expo/vector-icons";
 
 export type IconName = ComponentProps<typeof Feather>["name"];
-export type DemoRole = "crescer" | "fundamental" | "professor";
+export type AppRole = "crescer" | "fundamental" | "professor";
 
 export type ModuleKey =
   | "home"
@@ -30,8 +30,8 @@ export type ModuleItem = {
   description: string;
 };
 
-export type DemoProfile = {
-  role: DemoRole;
+export type AppProfile = {
+  role: AppRole;
   title: string;
   subtitle: string;
   userName: string;
@@ -50,7 +50,7 @@ const commonModules = {
   profile: { key: "profile", label: "Perfil", icon: "user", description: "Identidade, escola, turma e preferências." }
 } satisfies Record<string, ModuleItem>;
 
-export const demoProfiles: Record<DemoRole, DemoProfile> = {
+export const appProfiles: Record<AppRole, AppProfile> = {
   crescer: {
     role: "crescer",
     title: "Raízes Crescer",
