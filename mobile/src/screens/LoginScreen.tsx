@@ -157,21 +157,21 @@ function getAssetFrame(width: number, height: number, aspectRatio: number) {
 }
 
 const phoneLoginRects = {
-  email: { left: "17.8%", top: "57.0%", width: "64.4%", height: "4.55%" },
-  password: { left: "17.8%", top: "62.8%", width: "64.4%", height: "4.55%" },
-  eye: { left: "72.2%", top: "63.1%", width: "7.5%", height: "3.9%" },
-  submit: { left: "17.8%", top: "68.9%", width: "64.4%", height: "5.3%" },
-  forgot: { left: "25.0%", top: "75.0%", width: "50.0%", height: "3.4%" },
-  support: { left: "28.0%", top: "80.9%", width: "44.0%", height: "5.2%" }
+  email: { left: "17.8%", top: "59.3%", width: "64.4%", height: "4.55%" },
+  password: { left: "17.8%", top: "65.1%", width: "64.4%", height: "4.55%" },
+  eye: { left: "72.2%", top: "65.4%", width: "7.5%", height: "3.9%" },
+  submit: { left: "17.8%", top: "71.2%", width: "64.4%", height: "5.3%" },
+  forgot: { left: "25.0%", top: "77.3%", width: "50.0%", height: "3.4%" },
+  support: { left: "28.0%", top: "83.2%", width: "44.0%", height: "5.2%" }
 } as const;
 
 const tabletLoginRects = {
-  email: { left: "36.3%", top: "56.3%", width: "27.4%", height: "4.2%" },
-  password: { left: "36.3%", top: "61.9%", width: "27.4%", height: "4.2%" },
-  eye: { left: "59.7%", top: "62.2%", width: "4.4%", height: "3.6%" },
-  submit: { left: "36.3%", top: "68.4%", width: "27.4%", height: "5.0%" },
-  forgot: { left: "40.0%", top: "75.0%", width: "20.0%", height: "2.8%" },
-  support: { left: "39.0%", top: "80.3%", width: "22.0%", height: "4.4%" }
+  email: { left: "36.3%", top: "58.0%", width: "27.4%", height: "4.2%" },
+  password: { left: "36.3%", top: "63.6%", width: "27.4%", height: "4.2%" },
+  eye: { left: "59.7%", top: "63.9%", width: "4.4%", height: "3.6%" },
+  submit: { left: "36.3%", top: "70.1%", width: "27.4%", height: "5.0%" },
+  forgot: { left: "40.0%", top: "76.7%", width: "20.0%", height: "2.8%" },
+  support: { left: "39.0%", top: "82.0%", width: "22.0%", height: "4.4%" }
 } as const;
 
 const styles = StyleSheet.create({

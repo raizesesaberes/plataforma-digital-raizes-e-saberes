@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions, type ImageSourcePropType } from "react-native";
 import {
   AppHeader,
   Badge,
@@ -95,6 +96,20 @@ import {
 } from "./services/library";
 import { colors, shadow, spacing } from "./theme";
 
+const crescerHomeIcons = {
+  achievements: require("../assets/crescer-home/icon_conquistas.png"),
+  activities: require("../assets/crescer-home/icon_atividades.png"),
+  agenda: require("../assets/crescer-home/icon_agenda.png"),
+  discoveries: require("../assets/crescer-home/icon_descobertas.png"),
+  family: require("../assets/crescer-home/icon_familia.png"),
+  games: require("../assets/crescer-home/icon_jogos.png"),
+  library: require("../assets/crescer-home/icon_biblioteca.png"),
+  mission: require("../assets/crescer-home/icon_missao.png"),
+  notifications: require("../assets/crescer-home/icon_notificacoes.png"),
+  pending: require("../assets/crescer-home/icon_pendencias.png"),
+  week: require("../assets/crescer-home/icon_semana.png")
+} as const satisfies Record<string, ImageSourcePropType>;
+
 type Route = {
   key: ModuleKey;
   title: string;
@@ -150,13 +165,15 @@ export function AppShell({ profile, session, onLogout }: { profile: AppProfile; 
   return (
     <View style={styles.root}>
       <Screen tone={tone}>
-        <AppHeader
-          title={route.title}
-          subtitle={profile.title}
-          onBack={stack.length > 1 ? goBack : undefined}
-          onHome={route.key !== "home" ? goHome : undefined}
-          onLogout={onLogout}
-        />
+        {profile.role === "crescer" && route.key === "home" ? null : (
+          <AppHeader
+            title={route.title}
+            subtitle={profile.title}
+            onBack={stack.length > 1 ? goBack : undefined}
+            onHome={route.key !== "home" ? goHome : undefined}
+            onLogout={onLogout}
+          />
+        )}
         {route.key === "home" ? (
           <HomeScreen profile={profile} session={session} onOpen={goTo} />
         ) : (
@@ -178,6 +195,10 @@ export function AppShell({ profile, session, onLogout }: { profile: AppProfile; 
 }
 
 function HomeScreen({ profile, session, onOpen }: { profile: AppProfile; session: MobileSession | null; onOpen: (key: ModuleKey) => void }) {
+  if (profile.role === "crescer") {
+    return <CrescerHomeScreen profile={profile} session={session} onOpen={onOpen} />;
+  }
+
   if (profile.role === "fundamental") {
     return <FundamentalHomeScreen profile={profile} session={session} onOpen={onOpen} />;
   }
@@ -189,13 +210,7 @@ function HomeScreen({ profile, session, onOpen }: { profile: AppProfile; session
   return (
     <View>
       <HeroCard profile={profile} />
-      {profile.role === "crescer" ? <CrescerMissionCard /> : null}
-      <View style={styles.statRow}>
-        <StatCard label="Pendências" value="2" icon="bell" />
-        <StatCard label="Semana" value="5 dias" icon="calendar" />
-      </View>
-
-      <SectionHeader title={profile.role === "crescer" ? "Vamos brincar e aprender" : "Ações principais"} />
+      <SectionHeader title="Ações principais" />
       {profile.modules.map((item) => (
         <ModuleCard key={item.key} item={item} onPress={() => onOpen(item.key)} />
       ))}
@@ -203,19 +218,257 @@ function HomeScreen({ profile, session, onOpen }: { profile: AppProfile; session
   );
 }
 
-function CrescerMissionCard() {
+function CrescerHomeScreen({ profile, session, onOpen }: { profile: AppProfile; session: MobileSession | null; onOpen: (key: ModuleKey) => void }) {
+  const [studentProfile, setStudentProfile] = useState<CrescerStudentProfile | null>(null);
+  const [calendarEvents, setCalendarEvents] = useState<CrescerCalendarEvent[]>([]);
+  const [notifications, setNotifications] = useState<CrescerNotificationCenterItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { width } = useWindowDimensions();
+  const tablet = width >= 700;
+
+  useEffect(() => {
+    let active = true;
+    if (!session) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    Promise.all([
+      getCrescerStudentProfile(session).catch(() => null),
+      getCrescerCalendarEvents(session).catch(() => []),
+      getCrescerNotificationCenter(session).catch(() => [])
+    ])
+      .then(([nextProfile, nextEvents, nextNotifications]) => {
+        if (!active) return;
+        setStudentProfile(nextProfile);
+        setCalendarEvents(nextEvents);
+        setNotifications(nextNotifications);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  const studentName = studentProfile?.name || profile.userName;
+  const firstName = studentName.split(" ")[0] || "aluno";
+  const initialsText = initials(studentName);
+  const pendingCount = notifications.filter((item) => item.unread).length;
+  const weekCount = countWeekDays(calendarEvents);
+  const learningCards: CrescerHomeCardSpec[] = [
+    { key: "discoveries", title: "Descobertas", body: "Explorar o mundo é incrível.", icon: "discoveries", tone: "mint" },
+    { key: "activities", title: "Atividades", body: "Criar, aprender e evoluir.", icon: "activities", tone: "sun" },
+    { key: "library", title: "Biblioteca", body: "Histórias para imaginar.", icon: "library", tone: "sky" },
+    { key: "games", title: "Jogos", body: "Brincar também é aprender.", icon: "games", tone: "lilac" }
+  ];
+  const dayCards: CrescerHomeCardSpec[] = [
+    { key: "achievements", title: "Conquistas", body: "Medalhas e progressos.", icon: "achievements", tone: "rose" },
+    { key: "agenda", title: "Agenda", body: calendarEvents.length ? `${calendarEvents.length} compromisso${calendarEvents.length === 1 ? "" : "s"}.` : "Sem compromissos agora.", icon: "agenda", tone: "sky" },
+    { key: "notifications", title: "Notificações", body: pendingCount ? `${pendingCount} aviso${pendingCount === 1 ? "" : "s"} novo${pendingCount === 1 ? "" : "s"}.` : "Nenhum aviso novo.", icon: "notifications", tone: "lilac" },
+    { key: "family", title: "Família", body: "Juntos na mesma jornada.", icon: "family", tone: "mint" }
+  ];
+
   return (
-    <View style={styles.missionCard}>
-      <View style={styles.missionIcon}>
-        <Text style={styles.missionEmoji}>★</Text>
+    <View style={styles.crescerHome}>
+      <View style={styles.crescerHomeHeader}>
+        <View style={styles.crescerBrandMark}>
+          <Feather name="book-open" size={28} color={colors.brand} />
+          <View>
+            <Text style={styles.crescerBrandTitle}>Raízes e Saberes</Text>
+            <Text style={styles.crescerBrandSubtitle}>Grandes futuros nascem aqui</Text>
+          </View>
+        </View>
       </View>
-      <View style={styles.missionText}>
-        <Text style={styles.missionLabel}>Missão de hoje</Text>
-        <Text style={styles.missionTitle}>Descobrir uma história e ganhar uma medalha</Text>
+
+      <View style={styles.crescerWelcomeCard}>
+        <View style={styles.crescerAvatar}>
+          <Text style={styles.crescerAvatarText}>{initialsText}</Text>
+        </View>
+        <View style={styles.crescerWelcomeText}>
+          <Text style={styles.crescerWelcomeTitle}>{loading ? "Carregando..." : `Olá, ${firstName}!`}</Text>
+          <Text style={styles.crescerWelcomeBody}>Hoje tem espaços preparados para brincar, ler e descobrir.</Text>
+        </View>
+        <View style={styles.crescerEncouragement}>
+          <Feather name="feather" size={18} color={colors.child} />
+          <Text style={styles.crescerEncouragementText}>Você consegue!</Text>
+        </View>
       </View>
-      <Badge label="Nova" />
+
+      <View style={styles.crescerMissionCard}>
+        <View style={styles.crescerMissionGlow} />
+        <View style={styles.crescerMissionRibbon} />
+        <View style={styles.crescerMissionIcon}>
+          <Image source={crescerHomeIcons.mission} resizeMode="contain" style={styles.crescerMissionIconImage} />
+        </View>
+        <View style={styles.crescerMissionText}>
+          <Text style={styles.crescerMissionLabel}>Missão de hoje</Text>
+          <Text style={styles.crescerMissionTitle}>Nenhuma missão publicada para agora.</Text>
+        </View>
+        <View style={styles.crescerMissionBadge}>
+          <Text style={styles.crescerMissionBadgeText}>Em breve</Text>
+        </View>
+      </View>
+
+      <View style={styles.crescerStatsRow}>
+        <CrescerStatCard icon={crescerHomeIcons.pending} value={String(pendingCount)} label="Pendências" />
+        <CrescerStatCard icon={crescerHomeIcons.week} value={weekCount ? `${weekCount} dias` : "0 dias"} label="Semana" />
+      </View>
+
+      <CrescerSectionTitle title="Vamos brincar e aprender" />
+      <View style={[styles.crescerLearningGrid, tablet && styles.crescerLearningGridTablet]}>
+        {learningCards.map((item) => (
+          <CrescerFeatureCard key={item.key} item={item} large onPress={() => onOpen(item.key)} />
+        ))}
+      </View>
+
+      <CrescerSectionTitle title="Meu dia" />
+      <View style={[styles.crescerDayGrid, tablet && styles.crescerDayGridTablet]}>
+        {dayCards.map((item) => (
+          <CrescerFeatureCard key={item.key} item={item} onPress={() => onOpen(item.key)} />
+        ))}
+      </View>
     </View>
   );
+}
+
+type CrescerHomeCardSpec = {
+  key: ModuleKey;
+  title: string;
+  body: string;
+  icon: "achievements" | "activities" | "agenda" | "discoveries" | "family" | "games" | "library" | "notifications";
+  tone: "lilac" | "mint" | "rose" | "sky" | "sun";
+};
+
+function CrescerStatCard({ icon, value, label }: { icon: ImageSourcePropType; value: string; label: string }) {
+  return (
+    <View style={styles.crescerStatCard}>
+      <View style={styles.crescerStatIcon}>
+        <Image source={icon} resizeMode="contain" style={styles.crescerStatIconImage} />
+      </View>
+      <View>
+        <Text style={styles.crescerStatValue}>{value}</Text>
+        <Text style={styles.crescerStatLabel}>{label}</Text>
+      </View>
+    </View>
+  );
+}
+
+function CrescerSectionTitle({ title }: { title: string }) {
+  return (
+    <View style={styles.crescerSectionTitleRow}>
+      <Text style={styles.crescerSectionTitle}>{title}</Text>
+      <View style={styles.crescerSectionStroke} />
+    </View>
+  );
+}
+
+function CrescerFeatureCard({ item, large = false, onPress }: { item: CrescerHomeCardSpec; large?: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={item.title}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.crescerFeatureCard,
+        large && styles.crescerFeatureCardLarge,
+        toneStyle(item.tone),
+        pressed && tonePressedStyle(item.tone),
+        pressed && styles.crescerFeatureCardPressed
+      ]}
+    >
+      {({ pressed }) => (
+        <>
+          <View style={[styles.crescerFeatureGlow, large && styles.crescerFeatureGlowLarge]} />
+          <View style={[styles.crescerFeatureIcon, large && styles.crescerFeatureIconLarge, iconToneStyle(item.tone), pressed && styles.crescerFeatureIconPressed]}>
+            <Image source={crescerHomeIcons[item.icon]} resizeMode="contain" style={[styles.crescerFeatureIconImage, large && styles.crescerFeatureIconImageLarge]} />
+          </View>
+          <View style={styles.crescerFeatureCopy}>
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={styles.crescerFeatureTitle}>
+              {item.title}
+            </Text>
+            <Text style={styles.crescerFeatureBody}>{item.body}</Text>
+          </View>
+          <View style={styles.crescerFeatureArrow}>
+            <Feather name="chevron-right" size={22} color={featureInk(item.tone)} />
+          </View>
+        </>
+      )}
+    </Pressable>
+  );
+}
+
+function CrescerModuleHero({
+  kicker,
+  title,
+  body,
+  icon,
+  tone = "mint"
+}: {
+  kicker: string;
+  title: string;
+  body: string;
+  icon: keyof typeof crescerHomeIcons;
+  tone?: CrescerHomeCardSpec["tone"];
+}) {
+  return (
+    <View style={[styles.crescerModuleHero, toneStyle(tone)]}>
+      <View style={styles.crescerModuleHeroGlow} />
+      <View style={styles.crescerModuleHeroCopy}>
+        <Text style={[styles.discoveryKicker, { color: featureInk(tone) }]}>{kicker}</Text>
+        <Text style={[styles.discoveryTitle, styles.crescerModuleHeroTitle]}>{title}</Text>
+        <Text style={styles.discoveryBody}>{body}</Text>
+      </View>
+      <Image source={crescerHomeIcons[icon]} resizeMode="contain" style={styles.crescerModuleHeroImage} />
+    </View>
+  );
+}
+
+function toneStyle(tone: CrescerHomeCardSpec["tone"]) {
+  if (tone === "sun") return styles.crescerToneSun;
+  if (tone === "sky") return styles.crescerToneSky;
+  if (tone === "lilac") return styles.crescerToneLilac;
+  if (tone === "rose") return styles.crescerToneRose;
+  return styles.crescerToneMint;
+}
+
+function tonePressedStyle(tone: CrescerHomeCardSpec["tone"]) {
+  if (tone === "sun") return styles.crescerToneSunPressed;
+  if (tone === "sky") return styles.crescerToneSkyPressed;
+  if (tone === "lilac") return styles.crescerToneLilacPressed;
+  if (tone === "rose") return styles.crescerToneRosePressed;
+  return styles.crescerToneMintPressed;
+}
+
+function iconToneStyle(tone: CrescerHomeCardSpec["tone"]) {
+  if (tone === "sun") return styles.crescerIconToneSun;
+  if (tone === "sky") return styles.crescerIconToneSky;
+  if (tone === "lilac") return styles.crescerIconToneLilac;
+  if (tone === "rose") return styles.crescerIconToneRose;
+  return styles.crescerIconToneMint;
+}
+
+function featureInk(tone: CrescerHomeCardSpec["tone"]) {
+  if (tone === "sun") return colors.warning;
+  if (tone === "sky") return "#1673a6";
+  if (tone === "lilac") return "#6d4bb5";
+  if (tone === "rose") return "#b04463";
+  return colors.child;
+}
+
+function countWeekDays(events: CrescerCalendarEvent[]) {
+  const days = new Set(events.map((item) => item.eventDate).filter(Boolean));
+  return days.size;
+}
+
+function initials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
 }
 
 function FundamentalHomeScreen({ profile, session, onOpen }: { profile: AppProfile; session: MobileSession | null; onOpen: (key: ModuleKey) => void }) {
@@ -283,16 +536,46 @@ function FundamentalHomeScreen({ profile, session, onOpen }: { profile: AppProfi
 }
 
 function FundamentalModuleShortcutCard({ module, onPress }: { module: { key: ModuleKey; label: string; description: string }; onPress: () => void }) {
-  const mark = module.key === "library" ? "B" : module.key === "agenda" ? "◷" : module.key === "notifications" ? "!" : module.key === "profile" ? "P" : "•";
+  const icon = fundamentalModuleIcon(module.key);
+  const tone = fundamentalModuleTone(module.key);
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={module.label} onPress={onPress} style={styles.fundamentalActionCard}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={module.label}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.fundamentalActionCard,
+        toneStyle(tone),
+        pressed && styles.crescerFeatureCardPressed,
+        pressed && tonePressedStyle(tone)
+      ]}
+    >
+      <View style={styles.crescerFeatureGlow} />
       <View style={styles.fundamentalActionMark}>
-        <Text style={styles.fundamentalActionMarkText}>{mark}</Text>
+        <Image source={icon} resizeMode="contain" style={styles.fundamentalActionImage} />
       </View>
       <Text style={styles.fundamentalActionTitle}>{module.label}</Text>
       <Text style={styles.fundamentalActionBody}>{module.description}</Text>
     </Pressable>
   );
+}
+
+function fundamentalModuleIcon(key: ModuleKey) {
+  if (key === "activities") return crescerHomeIcons.activities;
+  if (key === "library") return crescerHomeIcons.library;
+  if (key === "avalia") return crescerHomeIcons.achievements;
+  if (key === "agenda") return crescerHomeIcons.agenda;
+  if (key === "notifications") return crescerHomeIcons.notifications;
+  return crescerHomeIcons.family;
+}
+
+function fundamentalModuleTone(key: ModuleKey): CrescerHomeCardSpec["tone"] {
+  if (key === "activities") return "sun";
+  if (key === "library") return "sky";
+  if (key === "avalia") return "rose";
+  if (key === "agenda") return "sky";
+  if (key === "notifications") return "lilac";
+  return "mint";
 }
 
 function FundamentalQuickActionCard({ action, onPress }: { action: FundamentalQuickAction; onPress: () => void }) {
@@ -784,11 +1067,7 @@ function DiscoveryScreen({ session, onOpenDiscovery }: { session: MobileSession 
 
   return (
     <View>
-      <View style={styles.discoveryHero}>
-        <Text style={styles.discoveryKicker}>Vamos descobrir</Text>
-        <Text style={styles.discoveryTitle}>Descobertas</Text>
-        <Text style={styles.discoveryBody}>Escolha uma aventura para descobrir algo novo.</Text>
-      </View>
+      <CrescerModuleHero kicker="Vamos descobrir" title="Descobertas" body="Escolha uma aventura para descobrir algo novo." icon="discoveries" tone="mint" />
 
       {loading ? (
         <View style={styles.libraryStateCard}>
@@ -991,11 +1270,7 @@ function ActivitiesScreen({ session, onOpenActivity }: { session: MobileSession 
 
   return (
     <View>
-      <View style={styles.activitiesHero}>
-        <Text style={styles.discoveryKicker}>Vamos brincar?</Text>
-        <Text style={styles.discoveryTitle}>Atividades</Text>
-        <Text style={styles.discoveryBody}>Escolha uma atividade e continue aprendendo brincando!</Text>
-      </View>
+      <CrescerModuleHero kicker="Vamos brincar?" title="Atividades" body="Escolha uma atividade e continue aprendendo brincando!" icon="activities" tone="sun" />
 
       {loading ? (
         <View style={styles.libraryStateCard}>
@@ -1271,11 +1546,7 @@ function LibraryScreen({ session, onOpenBook }: { session: MobileSession | null;
 
   return (
     <View>
-      <View style={styles.libraryHero}>
-        <Text style={styles.discoveryKicker}>Estante da turma</Text>
-        <Text style={styles.discoveryTitle}>Biblioteca</Text>
-        <Text style={styles.discoveryBody}>Escolha uma história para ler e descobrir.</Text>
-      </View>
+      <CrescerModuleHero kicker="Estante da turma" title="Biblioteca" body="Escolha uma história para ler e descobrir." icon="library" tone="sky" />
 
       {loading ? (
         <View style={styles.libraryStateCard}>
@@ -1559,11 +1830,7 @@ function GamesScreen({ session, onOpenGame }: { session: MobileSession | null; o
 
   return (
     <View>
-      <View style={styles.gamesHero}>
-        <Text style={styles.discoveryKicker}>Hora de jogar</Text>
-        <Text style={styles.discoveryTitle}>Jogos</Text>
-        <Text style={styles.discoveryBody}>Escolha uma brincadeira e venha se divertir!</Text>
-      </View>
+      <CrescerModuleHero kicker="Hora de jogar" title="Jogos" body="Escolha uma brincadeira e venha se divertir!" icon="games" tone="lilac" />
 
       {loading ? (
         <View style={styles.libraryStateCard}>
@@ -2241,11 +2508,7 @@ function AchievementsScreen({ session, onOpenAchievement }: { session: MobileSes
 
   return (
     <View>
-      <View style={styles.achievementsHero}>
-        <Text style={styles.discoveryKicker}>Você conseguiu</Text>
-        <Text style={styles.discoveryTitle}>Conquistas</Text>
-        <Text style={styles.discoveryBody}>Veja tudo o que você já descobriu!</Text>
-      </View>
+      <CrescerModuleHero kicker="Você conseguiu" title="Conquistas" body="Veja tudo o que você já descobriu!" icon="achievements" tone="rose" />
 
       {loading ? (
         <View style={styles.libraryStateCard}>
@@ -2257,11 +2520,11 @@ function AchievementsScreen({ session, onOpenAchievement }: { session: MobileSes
         <EmptyState title="Conquistas indisponíveis" body="Tente entrar novamente em alguns instantes." />
       ) : (
         <>
-          <View style={styles.progressCelebrationCard}>
-            <View style={styles.progressAvatarRow}>
-              <View style={styles.progressAvatar}>
-                <Text style={styles.progressAvatarText}>PM</Text>
-              </View>
+      <View style={styles.progressCelebrationCard}>
+        <View style={styles.progressAvatarRow}>
+          <View style={styles.progressAvatar}>
+                <Image source={crescerHomeIcons.achievements} resizeMode="contain" style={styles.progressAvatarImage} />
+          </View>
               <View style={styles.progressNameBlock}>
                 <Text style={styles.progressName}>Pedro Miguel</Text>
                 <Text style={styles.progressLevel}>Nível {levelNumber}</Text>
@@ -2426,11 +2689,7 @@ function AgendaScreen({ onOpenItem }: { onOpenItem: (item: CrescerAgendaItem) =>
 
   return (
     <View>
-      <View style={styles.agendaHero}>
-        <Text style={styles.discoveryKicker}>Esta semana</Text>
-        <Text style={styles.discoveryTitle}>Agenda</Text>
-        <Text style={styles.discoveryBody}>Veja o que está chegando nesta semana.</Text>
-      </View>
+      <CrescerModuleHero kicker="Esta semana" title="Agenda" body="Veja o que está chegando nesta semana." icon="agenda" tone="sky" />
 
       <View style={styles.weekStrip}>
         {agenda.weekDays.map((day) => (
@@ -2465,7 +2724,7 @@ function AgendaItemCard({ item, onPress, featured }: { item: CrescerAgendaItem; 
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`${item.type}. ${item.title}`} onPress={onPress} style={[styles.agendaItemCard, featured ? styles.agendaItemFeatured : null]}>
       <View style={styles.agendaItemIcon}>
-        <Text style={styles.agendaItemIconText}>{getAgendaMark(item.type)}</Text>
+        <Image source={crescerHomeIcons.agenda} resizeMode="contain" style={styles.crescerListIconImage} />
       </View>
       <View style={styles.agendaItemCopy}>
         <Text style={styles.agendaType}>{item.type}</Text>
@@ -2523,15 +2782,11 @@ function NotificationsScreen({
 
   return (
     <View>
-      <View style={styles.notificationsHero}>
-        <Text style={styles.discoveryKicker}>Novidades para você</Text>
-        <Text style={styles.discoveryTitle}>Notificações</Text>
-        <Text style={styles.discoveryBody}>Veja as novidades que chegaram para você.</Text>
-      </View>
+      <CrescerModuleHero kicker="Novidades para você" title="Notificações" body="Veja as novidades que chegaram para você." icon="notifications" tone="lilac" />
 
       <View style={styles.notificationSummaryCard}>
         <View style={styles.notificationSummaryIcon}>
-          <Text style={styles.notificationSummaryMark}>!</Text>
+          <Image source={crescerHomeIcons.notifications} resizeMode="contain" style={styles.crescerListIconImage} />
         </View>
         <View style={styles.notificationSummaryCopy}>
           <Text style={styles.notificationSummaryLabel}>Novidades</Text>
@@ -2556,7 +2811,7 @@ function NotificationCard({ item, isRead, onPress }: { item: CrescerNotification
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`${item.type}. ${item.title}`} onPress={onPress} style={[styles.notificationCard, !isRead ? styles.notificationCardNew : null]}>
       <View style={styles.notificationIcon}>
-        <Text style={styles.notificationIconText}>{getNotificationMark(item.type)}</Text>
+        <Image source={crescerHomeIcons.notifications} resizeMode="contain" style={styles.crescerListIconImage} />
       </View>
       <View style={styles.notificationCopy}>
         <View style={styles.notificationMetaRow}>
@@ -2654,11 +2909,7 @@ function CrescerProfileScreen({ session, onLogout }: { session: MobileSession | 
 
   return (
     <View>
-      <View style={styles.profileHero}>
-        <Text style={styles.discoveryKicker}>Meu cantinho</Text>
-        <Text style={styles.discoveryTitle}>Meu perfil</Text>
-        <Text style={styles.discoveryBody}>Seu espaço no Raízes Crescer com os dados da sua turma.</Text>
-      </View>
+      <CrescerModuleHero kicker="Meu cantinho" title="Meu perfil" body="Seu espaço no Raízes Crescer com os dados da sua turma." icon="achievements" tone="mint" />
 
       {loading ? (
         <View style={styles.libraryStateCard}>
@@ -3044,11 +3295,7 @@ function CrescerFamilyScreen({ session, onOpen }: { session: MobileSession | nul
 
   return (
     <View>
-      <View style={styles.familyCrescerHero}>
-        <Text style={styles.discoveryKicker}>Família</Text>
-        <Text style={styles.discoveryTitle}>Acompanhamento da criança</Text>
-        <Text style={styles.discoveryBody}>Resumo simples da rotina, recados e agenda da turma.</Text>
-      </View>
+      <CrescerModuleHero kicker="Família" title="Acompanhamento da criança" body="Resumo simples da rotina, recados e agenda da turma." icon="family" tone="sun" />
 
       {loading ? (
         <View style={styles.libraryStateCard}>
@@ -3249,11 +3496,7 @@ function FamilySectionDetailScreen({ session, section, onBack }: { session: Mobi
 
   return (
     <View>
-      <View style={styles.familyCrescerHero}>
-        <Text style={styles.discoveryKicker}>Família</Text>
-        <Text style={styles.discoveryTitle}>{title}</Text>
-        <Text style={styles.discoveryBody}>{intro}</Text>
-      </View>
+      <CrescerModuleHero kicker="Família" title={title} body={intro} icon="family" tone="sun" />
       <View style={styles.familyDetailList}>
         {loading ? (
           <View style={styles.libraryStateCard}>
@@ -7679,6 +7922,446 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.md
   },
+  crescerHome: {
+    gap: spacing.lg,
+    paddingBottom: spacing.xl
+  },
+  crescerHomeHeader: {
+    alignItems: "center",
+    marginBottom: spacing.xs
+  },
+  crescerBrandMark: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.sm,
+    justifyContent: "center"
+  },
+  crescerBrandTitle: {
+    color: colors.brand,
+    fontSize: 23,
+    fontWeight: "900",
+    letterSpacing: 0,
+    lineHeight: 27
+  },
+  crescerBrandSubtitle: {
+    color: colors.brand,
+    fontSize: 12,
+    fontWeight: "800",
+    lineHeight: 15
+  },
+  crescerWelcomeCard: {
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(201, 232, 197, 0.92)",
+    borderRadius: 24,
+    borderWidth: 2,
+    flexDirection: "row",
+    gap: spacing.md,
+    minHeight: 112,
+    padding: spacing.md,
+    ...shadow
+  },
+  crescerAvatar: {
+    alignItems: "center",
+    backgroundColor: colors.childSoft,
+    borderColor: "#b9e0b8",
+    borderRadius: 28,
+    borderWidth: 2,
+    height: 74,
+    justifyContent: "center",
+    width: 74
+  },
+  crescerAvatarText: {
+    color: colors.child,
+    fontSize: 23,
+    fontWeight: "900"
+  },
+  crescerWelcomeText: {
+    flex: 1,
+    minWidth: 0
+  },
+  crescerWelcomeTitle: {
+    color: colors.brand,
+    fontSize: 24,
+    fontWeight: "900",
+    letterSpacing: 0,
+    lineHeight: 29
+  },
+  crescerWelcomeBody: {
+    color: colors.muted,
+    fontSize: 15,
+    fontWeight: "800",
+    lineHeight: 21,
+    marginTop: spacing.xs
+  },
+  crescerEncouragement: {
+    alignItems: "center",
+    gap: 2,
+    maxWidth: 72
+  },
+  crescerEncouragementText: {
+    color: colors.child,
+    fontSize: 13,
+    fontWeight: "900",
+    lineHeight: 16,
+    textAlign: "center"
+  },
+  crescerMissionCard: {
+    alignItems: "center",
+    backgroundColor: "rgba(255, 241, 194, 0.95)",
+    borderColor: "rgba(255, 255, 255, 0.92)",
+    borderRadius: 22,
+    borderWidth: 2,
+    flexDirection: "row",
+    gap: spacing.md,
+    minHeight: 92,
+    overflow: "hidden",
+    padding: spacing.md,
+    position: "relative",
+    shadowColor: "#c78a10",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14
+  },
+  crescerMissionGlow: {
+    backgroundColor: "rgba(255, 255, 255, 0.42)",
+    borderRadius: 999,
+    height: 118,
+    position: "absolute",
+    right: 74,
+    top: -44,
+    width: 118
+  },
+  crescerMissionRibbon: {
+    backgroundColor: "rgba(255, 222, 121, 0.46)",
+    borderRadius: 999,
+    height: 76,
+    position: "absolute",
+    right: -22,
+    top: 8,
+    transform: [{ rotate: "-12deg" }],
+    width: 146
+  },
+  crescerMissionIcon: {
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.72)",
+    borderRadius: 28,
+    height: 62,
+    justifyContent: "center",
+    shadowColor: "#c78a10",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    width: 62
+  },
+  crescerMissionIconImage: {
+    height: 44,
+    width: 44
+  },
+  crescerMissionText: {
+    flex: 1,
+    minWidth: 0
+  },
+  crescerMissionLabel: {
+    color: colors.warning,
+    fontSize: 12,
+    fontWeight: "900",
+    letterSpacing: 0,
+    textTransform: "uppercase"
+  },
+  crescerMissionTitle: {
+    color: colors.ink,
+    fontSize: 18,
+    fontWeight: "900",
+    letterSpacing: 0,
+    lineHeight: 23,
+    marginTop: spacing.xs
+  },
+  crescerMissionBadge: {
+    backgroundColor: "#f7df92",
+    borderRadius: 999,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs
+  },
+  crescerMissionBadgeText: {
+    color: colors.warning,
+    fontSize: 11,
+    fontWeight: "900",
+    textTransform: "uppercase"
+  },
+  crescerStatsRow: {
+    flexDirection: "row",
+    gap: spacing.md
+  },
+  crescerStatCard: {
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.92)",
+    borderColor: "#c9e8c5",
+    borderRadius: 20,
+    borderWidth: 2,
+    flex: 1,
+    flexDirection: "row",
+    gap: spacing.sm,
+    minHeight: 84,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm
+  },
+  crescerStatIcon: {
+    alignItems: "center",
+    backgroundColor: colors.brandSoft,
+    borderRadius: 25,
+    height: 60,
+    justifyContent: "center",
+    width: 60
+  },
+  crescerStatIconImage: {
+    height: 62,
+    width: 62
+  },
+  crescerStatValue: {
+    color: colors.brand,
+    fontSize: 25,
+    fontWeight: "900",
+    lineHeight: 29
+  },
+  crescerStatLabel: {
+    color: colors.muted,
+    fontSize: 14,
+    fontWeight: "800",
+    lineHeight: 18
+  },
+  crescerSectionTitleRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.md,
+    marginTop: spacing.xs
+  },
+  crescerSectionTitle: {
+    color: colors.brand,
+    fontSize: 25,
+    fontWeight: "900",
+    letterSpacing: 0,
+    lineHeight: 30
+  },
+  crescerSectionStroke: {
+    backgroundColor: "#f2a20f",
+    borderRadius: 999,
+    height: 5,
+    width: 56
+  },
+  crescerLearningGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.md
+  },
+  crescerLearningGridTablet: {
+    gap: spacing.lg
+  },
+  crescerDayGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.md
+  },
+  crescerDayGridTablet: {
+    gap: spacing.lg
+  },
+  crescerFeatureCard: {
+    alignItems: "center",
+    borderColor: "rgba(255, 255, 255, 0.92)",
+    borderRadius: 22,
+    borderWidth: 2,
+    flexBasis: "47%",
+    flexDirection: "row",
+    flexGrow: 1,
+    gap: 8,
+    minHeight: 100,
+    overflow: "hidden",
+    paddingHorizontal: 12,
+    paddingVertical: spacing.md,
+    paddingRight: 48,
+    position: "relative",
+    ...shadow
+  },
+  crescerFeatureCardLarge: {
+    alignItems: "stretch",
+    flexDirection: "column",
+    justifyContent: "flex-end",
+    minHeight: 178,
+    paddingHorizontal: spacing.md,
+    paddingTop: 78
+  },
+  crescerFeatureCardPressed: {
+    borderColor: "rgba(255, 255, 255, 1)",
+    shadowOpacity: 0.09,
+    transform: [{ translateY: 2 }, { scale: 0.985 }]
+  },
+  crescerFeatureGlow: {
+    backgroundColor: "rgba(255, 255, 255, 0.38)",
+    borderRadius: 999,
+    height: 82,
+    position: "absolute",
+    right: -28,
+    top: -28,
+    width: 82
+  },
+  crescerFeatureGlowLarge: {
+    height: 126,
+    left: -18,
+    right: undefined,
+    top: 14,
+    width: 126
+  },
+  crescerFeatureIcon: {
+    alignItems: "center",
+    backgroundColor: "transparent",
+    borderColor: "transparent",
+    borderRadius: 28,
+    borderWidth: 0,
+    height: 72,
+    justifyContent: "center",
+    shadowColor: "#4b6a49",
+    shadowOffset: { width: 0, height: 9 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    width: 62
+  },
+  crescerFeatureIconLarge: {
+    alignSelf: "center",
+    borderRadius: 46,
+    height: 116,
+    marginBottom: spacing.sm,
+    marginTop: -76,
+    transform: [{ rotate: "-6deg" }],
+    width: 154
+  },
+  crescerFeatureIconPressed: {
+    shadowOpacity: 0.08,
+    transform: [{ translateY: 2 }, { scale: 0.96 }]
+  },
+  crescerFeatureIconImage: {
+    height: 74,
+    width: 74
+  },
+  crescerFeatureIconImageLarge: {
+    height: 116,
+    width: 154
+  },
+  crescerFeatureCopy: {
+    flex: 1,
+    minWidth: 0,
+    paddingRight: 0
+  },
+  crescerFeatureTitle: {
+    color: colors.ink,
+    fontSize: 18,
+    fontWeight: "900",
+    letterSpacing: 0,
+    lineHeight: 22
+  },
+  crescerFeatureBody: {
+    color: colors.studentInk,
+    fontSize: 13,
+    fontWeight: "800",
+    lineHeight: 17,
+    marginTop: 2
+  },
+  crescerFeatureArrow: {
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.72)",
+    borderRadius: 18,
+    bottom: 14,
+    height: 34,
+    justifyContent: "center",
+    position: "absolute",
+    right: 12,
+    width: 34
+  },
+  crescerToneMint: {
+    backgroundColor: "rgba(227, 247, 221, 0.95)"
+  },
+  crescerToneSun: {
+    backgroundColor: "rgba(255, 241, 194, 0.95)"
+  },
+  crescerToneSky: {
+    backgroundColor: "rgba(222, 242, 255, 0.95)"
+  },
+  crescerToneLilac: {
+    backgroundColor: "rgba(238, 230, 255, 0.95)"
+  },
+  crescerToneRose: {
+    backgroundColor: "rgba(255, 231, 238, 0.95)"
+  },
+  crescerToneMintPressed: {
+    backgroundColor: "rgba(204, 241, 196, 0.98)"
+  },
+  crescerToneSunPressed: {
+    backgroundColor: "rgba(255, 229, 158, 0.98)"
+  },
+  crescerToneSkyPressed: {
+    backgroundColor: "rgba(196, 232, 255, 0.98)"
+  },
+  crescerToneLilacPressed: {
+    backgroundColor: "rgba(225, 211, 255, 0.98)"
+  },
+  crescerToneRosePressed: {
+    backgroundColor: "rgba(255, 213, 226, 0.98)"
+  },
+  crescerIconToneMint: {
+    backgroundColor: "rgba(218, 247, 212, 0.96)"
+  },
+  crescerIconToneSun: {
+    backgroundColor: "rgba(255, 234, 168, 0.96)"
+  },
+  crescerIconToneSky: {
+    backgroundColor: "rgba(208, 239, 255, 0.96)"
+  },
+  crescerIconToneLilac: {
+    backgroundColor: "rgba(229, 216, 255, 0.96)"
+  },
+  crescerIconToneRose: {
+    backgroundColor: "rgba(255, 218, 230, 0.96)"
+  },
+  crescerModuleHero: {
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 24,
+    borderWidth: 2,
+    flexDirection: "row",
+    minHeight: 184,
+    marginBottom: spacing.md,
+    overflow: "hidden",
+    padding: spacing.lg,
+    position: "relative",
+    ...shadow
+  },
+  crescerModuleHeroGlow: {
+    backgroundColor: "rgba(255, 255, 255, 0.45)",
+    borderRadius: 999,
+    height: 148,
+    position: "absolute",
+    right: -30,
+    top: -34,
+    width: 148
+  },
+  crescerModuleHeroCopy: {
+    flex: 1,
+    justifyContent: "center",
+    maxWidth: "62%",
+    minWidth: 0,
+    zIndex: 2
+  },
+  crescerModuleHeroTitle: {
+    fontSize: 28,
+    lineHeight: 33,
+    marginTop: spacing.xs
+  },
+  crescerModuleHeroImage: {
+    bottom: 0,
+    height: 148,
+    position: "absolute",
+    right: -8,
+    width: 168,
+    zIndex: 1
+  },
   fundamentalHero: {
     backgroundColor: colors.surface,
     borderColor: "#bcd4e8",
@@ -8053,14 +8736,15 @@ const styles = StyleSheet.create({
   },
   familyIdentityCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: "#d8ebd0",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 22,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     marginBottom: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   familyAvatar: {
     alignItems: "center",
@@ -8137,12 +8821,13 @@ const styles = StyleSheet.create({
     color: "#ecfdf3"
   },
   familySummaryCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     marginBottom: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   familySectionTitle: {
     color: colors.studentInk,
@@ -8163,15 +8848,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md
   },
   familyMetricCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 18,
     borderWidth: 2,
     flexBasis: "30%",
     flexGrow: 1,
     minHeight: 112,
     minWidth: 104,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   familyMetricValue: {
     color: colors.studentInk,
@@ -8192,13 +8878,14 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
   familyPreviewList: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     gap: spacing.sm,
     marginBottom: spacing.md,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   familyTimelineCard: {
     alignItems: "center",
@@ -8267,14 +8954,15 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md
   },
   familyQuickCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     flexBasis: "45%",
     flexGrow: 1,
     minHeight: 132,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   familyQuickMark: {
     alignItems: "center",
@@ -8303,13 +8991,14 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs
   },
   familyDetailList: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     gap: spacing.sm,
     marginBottom: spacing.md,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   familyReadOnlyNotice: {
     backgroundColor: colors.warningSoft,
@@ -12683,14 +13372,15 @@ const styles = StyleSheet.create({
   },
   discoveryCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     minHeight: 116,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   discoveryMark: {
     alignItems: "center",
@@ -12787,12 +13477,13 @@ const styles = StyleSheet.create({
     padding: spacing.lg
   },
   featuredActivity: {
-    backgroundColor: colors.surface,
-    borderColor: "#f1d985",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 24,
     borderWidth: 2,
     minHeight: 236,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   featuredActivityMark: {
     alignItems: "center",
@@ -12842,14 +13533,15 @@ const styles = StyleSheet.create({
   },
   activityCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     minHeight: 132,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   activityMark: {
     alignItems: "center",
@@ -12982,13 +13674,14 @@ const styles = StyleSheet.create({
   },
   libraryStateCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: "#c9e8c5",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 22,
     borderWidth: 2,
     gap: spacing.sm,
     marginTop: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   libraryStateTitle: {
     color: colors.ink,
@@ -13005,14 +13698,15 @@ const styles = StyleSheet.create({
     textAlign: "center"
   },
   featuredBook: {
-    backgroundColor: colors.surface,
-    borderColor: "#f1d985",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 24,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     minHeight: 194,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   featuredBookCopy: {
     flex: 1,
@@ -13054,14 +13748,15 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   bookCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     flexBasis: "47%",
     flexGrow: 1,
     minHeight: 220,
-    padding: spacing.sm
+    padding: spacing.sm,
+    ...shadow
   },
   bookCover: {
     alignItems: "center",
@@ -13235,13 +13930,14 @@ const styles = StyleSheet.create({
     padding: spacing.lg
   },
   featuredGame: {
-    backgroundColor: colors.surface,
-    borderColor: "#c9e8c5",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 24,
     borderWidth: 2,
     minHeight: 236,
     overflow: "hidden",
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   featuredGameIllustration: {
     alignItems: "center",
@@ -13307,12 +14003,13 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   gameCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 22,
     borderWidth: 2,
     minHeight: 190,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   gameCardIllustration: {
     alignItems: "center",
@@ -13591,12 +14288,13 @@ const styles = StyleSheet.create({
     padding: spacing.lg
   },
   progressCelebrationCard: {
-    backgroundColor: colors.surface,
-    borderColor: "#f1d985",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 24,
     borderWidth: 2,
     marginTop: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   progressAvatarRow: {
     alignItems: "center",
@@ -13605,11 +14303,15 @@ const styles = StyleSheet.create({
   },
   progressAvatar: {
     alignItems: "center",
-    backgroundColor: colors.childSoft,
+    backgroundColor: colors.warningSoft,
     borderRadius: 24,
     height: 64,
     justifyContent: "center",
     width: 64
+  },
+  progressAvatarImage: {
+    height: 68,
+    width: 68
   },
   progressAvatarText: {
     color: colors.child,
@@ -13659,14 +14361,15 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   medalCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 22,
     borderWidth: 2,
     flexBasis: "47%",
     flexGrow: 1,
     minHeight: 208,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   medalIcon: {
     alignItems: "center",
@@ -13846,8 +14549,8 @@ const styles = StyleSheet.create({
   },
   weekDayCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 16,
     borderWidth: 2,
     flex: 1,
@@ -13894,12 +14597,13 @@ const styles = StyleSheet.create({
     textAlign: "center"
   },
   todayCard: {
-    backgroundColor: colors.warningSoft,
-    borderColor: "#f1d985",
+    backgroundColor: "rgba(255, 241, 194, 0.9)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 24,
     borderWidth: 2,
     gap: spacing.md,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   todayEmptyText: {
     color: colors.muted,
@@ -13913,14 +14617,15 @@ const styles = StyleSheet.create({
   },
   agendaItemCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     minHeight: 132,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   agendaItemFeatured: {
     borderColor: "#c9e8c5"
@@ -14052,14 +14757,15 @@ const styles = StyleSheet.create({
   },
   notificationSummaryCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: "#f1d985",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 24,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     marginTop: spacing.md,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   notificationSummaryIcon: {
     alignItems: "center",
@@ -14068,6 +14774,10 @@ const styles = StyleSheet.create({
     height: 56,
     justifyContent: "center",
     width: 56
+  },
+  crescerListIconImage: {
+    height: 62,
+    width: 62
   },
   notificationSummaryMark: {
     color: colors.warning,
@@ -14096,14 +14806,15 @@ const styles = StyleSheet.create({
   },
   notificationCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     minHeight: 136,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   notificationCardNew: {
     borderColor: "#c9e8c5",
@@ -14254,14 +14965,15 @@ const styles = StyleSheet.create({
   },
   profileIdentityCard: {
     alignItems: "center",
-    backgroundColor: colors.childSoft,
-    borderColor: "#c9e8c5",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 26,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     marginTop: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   profileAvatar: {
     alignItems: "center",
@@ -14337,14 +15049,15 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   profileProgressCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     flexBasis: "47%",
     flexGrow: 1,
     minHeight: 156,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   profileProgressIcon: {
     alignItems: "center",
