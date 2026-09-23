@@ -7462,12 +7462,9 @@ function TeacherTrackingScreen({
 
   return (
     <View>
-      <View style={styles.teacherTrackingHero}>
-        <Text style={styles.teacherKicker}>Professor Mobile</Text>
-        <Text style={styles.teacherShellTitle}>Acompanhamento</Text>
-        <Text style={styles.teacherShellIntro}>Veja como sua turma está avançando.</Text>
+      <TeacherModuleHero title="Acompanhamento" intro="Veja como sua turma está avançando." icon={{ source: teacherHomeIcons.tracking, side: "left" }}>
         <Text style={styles.teacherAvaliaContext}>Turma selecionada: {selectedClass.className}</Text>
-      </View>
+      </TeacherModuleHero>
 
       <SectionHeader title="Turma" />
       <View style={styles.teacherAvaliaFilterRow}>
@@ -7656,14 +7653,11 @@ function TeacherCommunicationScreen({
 
   return (
     <View>
-      <View style={styles.teacherCommunicationHero}>
-        <Text style={styles.teacherKicker}>Professor Mobile</Text>
-        <Text style={styles.teacherShellTitle}>Comunicação</Text>
-        <Text style={styles.teacherShellIntro}>Envie recados para suas turmas e alunos.</Text>
+      <TeacherModuleHero title="Comunicação" intro="Envie recados para suas turmas e alunos." icon={{ source: teacherHomeIcons.communication, side: "left" }}>
         <Pressable accessibilityRole="button" accessibilityLabel="Novo recado" onPress={() => onModeChange("compose")} style={styles.teacherCommunicationPrimaryButton}>
           <Text style={styles.teacherCommunicationPrimaryText}>Novo recado</Text>
         </Pressable>
-      </View>
+      </TeacherModuleHero>
 
       {sent ? (
         <View style={styles.teacherCommunicationSentCard}>
@@ -7730,11 +7724,7 @@ function TeacherCommunicationComposer({
 }) {
   return (
     <View>
-      <View style={styles.teacherCommunicationHero}>
-        <Text style={styles.teacherKicker}>Novo recado</Text>
-        <Text style={styles.teacherShellTitle}>Comunicação</Text>
-        <Text style={styles.teacherShellIntro}>Escolha o destinatário e escreva uma mensagem objetiva.</Text>
-      </View>
+      <TeacherModuleHero title="Comunicação" intro="Escolha o destinatário e escreva uma mensagem objetiva." kicker="Novo recado" icon={{ source: teacherHomeIcons.communication, side: "left" }} />
 
       <SectionHeader title="Destinatário" action={recipientType} />
       <View style={styles.teacherCommunicationTypeRow}>
@@ -7856,11 +7846,7 @@ function TeacherCommunicationDetail({ item, onBack }: { item: TeacherCommunicati
 function TeacherShell({ title, intro, children }: { title: string; intro: string; children?: React.ReactNode }) {
   return (
     <View>
-      <View style={styles.teacherShellHero}>
-        <Text style={styles.teacherKicker}>Professor Mobile</Text>
-        <Text style={styles.teacherShellTitle}>{title}</Text>
-        <Text style={styles.teacherShellIntro}>{intro}</Text>
-      </View>
+      <TeacherModuleHero title={title} intro={intro} />
       <View style={styles.teacherShellList}>{children}</View>
     </View>
   );
@@ -12913,27 +12899,69 @@ const styles = StyleSheet.create({
     padding: spacing.md
   },
   teacherShellHero: {
-    backgroundColor: colors.surface,
-    borderColor: "#b8d7c7",
-    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.96)",
+    borderRadius: 24,
     borderWidth: 2,
     marginBottom: spacing.md,
-    padding: spacing.lg
+    minHeight: 152,
+    overflow: "hidden",
+    padding: spacing.lg,
+    position: "relative",
+    ...shadow
+  },
+  teacherShellHeroGlow: {
+    backgroundColor: "rgba(214, 244, 220, 0.72)",
+    borderRadius: 999,
+    height: 126,
+    position: "absolute",
+    right: -30,
+    top: 14,
+    width: 126
+  },
+  teacherShellHeroTop: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.md,
+    minHeight: 104
+  },
+  teacherShellHeroCopy: {
+    flex: 1,
+    zIndex: 2
+  },
+  teacherShellIconFrame: {
+    height: 102,
+    marginRight: -18,
+    overflow: "hidden",
+    position: "relative",
+    width: 112,
+    zIndex: 1
+  },
+  teacherShellSplitImage: {
+    height: 102,
+    left: 0,
+    position: "absolute",
+    top: 0,
+    width: 224
+  },
+  teacherShellHeroContent: {
+    marginTop: spacing.sm,
+    zIndex: 2
   },
   teacherShellTitle: {
     color: colors.ink,
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "900",
     letterSpacing: 0,
-    lineHeight: 29,
+    lineHeight: 31,
     marginTop: spacing.xs
   },
   teacherShellIntro: {
     color: colors.muted,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 21,
-    marginTop: spacing.sm
+    marginTop: spacing.xs
   },
   teacherShellList: {
     gap: spacing.md
