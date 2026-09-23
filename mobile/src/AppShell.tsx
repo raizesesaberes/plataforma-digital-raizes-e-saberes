@@ -110,6 +110,21 @@ const crescerHomeIcons = {
   week: require("../assets/crescer-home/icon_semana.png")
 } as const satisfies Record<string, ImageSourcePropType>;
 
+const teacherHomeIcons = {
+  avalia: require("../assets/teacher-home/icon_communication_avalia.png"),
+  classes: require("../assets/teacher-home/icon_classes_tracking.png"),
+  communication: require("../assets/teacher-home/icon_communication_avalia.png"),
+  diary: require("../assets/teacher-home/icon_notifications_diary.png"),
+  notifications: require("../assets/teacher-home/icon_notifications_diary.png"),
+  peopleCalendar: require("../assets/teacher-home/icon_people_calendar.png"),
+  tracking: require("../assets/teacher-home/icon_classes_tracking.png")
+} as const satisfies Record<string, ImageSourcePropType>;
+
+type TeacherSplitIcon = {
+  source: ImageSourcePropType;
+  side: "left" | "right";
+};
+
 type Route = {
   key: ModuleKey;
   title: string;
@@ -821,7 +836,8 @@ function mapTeacherNotificationItem(item: TeacherNotificationCenterItem): Teache
 const teacherQuickActions: TeacherQuickAction[] = [
   { label: "Enviar recado", description: "Comunicar turma ou estudante.", mark: "!", target: "communication" },
   { label: "Registrar aula", description: "Atualizar o Diário de Classe.", mark: "D", target: "diary" },
-  { label: "Abrir Avalia+", description: "Ver avaliações e resultados.", mark: "A+", target: "avalia" }
+  { label: "Avalia+", description: "Ver avaliações e resultados.", mark: "A+", target: "avalia" },
+  { label: "Minhas turmas", description: "Ver todas as turmas.", mark: "T", target: "classes" }
 ];
 
 function TeacherHomeScreen({ profile, session, onOpen }: { profile: AppProfile; session: MobileSession | null; onOpen: (key: ModuleKey) => void }) {
@@ -862,50 +878,36 @@ function TeacherHomeScreen({ profile, session, onOpen }: { profile: AppProfile; 
     { type: "Notificações", title: `${summary?.unreadNotifications ?? 0} não lidas`, meta: "Central do professor", mark: "!", target: "notifications" },
     { type: "Diário", title: "Registros da turma", meta: "Diário de Classe", mark: "D", target: "diary" }
   ];
-  const homeClasses = classes.map((item) => makeTeacherClassSummary(item, [])).slice(0, 5);
-
   return (
     <View>
       <View style={styles.teacherHero}>
+        <View style={styles.teacherHeroGlow} />
         <View style={styles.teacherHeroTop}>
-          <View style={styles.teacherAvatar}>
-            <Text style={styles.teacherAvatarText}>H</Text>
-          </View>
           <View style={styles.teacherHeroCopy}>
-            <Text style={styles.teacherKicker}>Professor Mobile</Text>
+            <Text style={styles.teacherKicker}>Professora</Text>
             <Text style={styles.teacherHeroTitle}>{loading ? "Carregando rotina" : `Olá, ${summary?.teacherName || "Professora"}`}</Text>
-            <Text style={styles.teacherHeroMeta}>{summary?.schoolName || "Escola não carregada"}</Text>
+            <Text style={styles.teacherHeroMeta}>Juntos por uma educação que floresce.</Text>
           </View>
+          <TeacherSplitIconView icon={{ source: teacherHomeIcons.peopleCalendar, side: "left" }} frameStyle={styles.teacherHeroIconFrame} imageStyle={styles.teacherHeroSplitImage} frameWidth={142} />
           <Pressable accessibilityRole="button" accessibilityLabel="Abrir notificações" onPress={() => onOpen("notifications")} style={styles.teacherBell}>
-            <Text style={styles.teacherBellText}>!</Text>
+            <TeacherSplitIconView icon={{ source: teacherHomeIcons.notifications, side: "left" }} frameStyle={styles.teacherBellIconFrame} imageStyle={styles.teacherBellSplitImage} frameWidth={38} />
+            {(summary?.unreadNotifications ?? 0) > 0 ? <Text style={styles.teacherBellBadge}>{summary?.unreadNotifications}</Text> : null}
           </Pressable>
+        </View>
+        <View style={styles.teacherQuoteBox}>
+          <Text style={styles.teacherQuoteText}>Educar também é acreditar em grandes começos.</Text>
         </View>
       </View>
 
-      <SectionHeader title="Hoje" />
+      <View style={styles.teacherSectionTop}>
+        <Text style={styles.teacherSectionTitle}>Hoje</Text>
+        <Text style={styles.teacherSectionDate}>Segunda-feira, 22 de setembro</Text>
+      </View>
       <View style={styles.teacherTodayGrid}>
         {homeCards.map((item) => (
           <TeacherTodayCard key={`${item.type}-${item.title}`} item={item} onPress={() => onOpen(item.target as ModuleKey)} />
         ))}
       </View>
-
-      <SectionHeader title="Próxima turma" />
-      <Pressable accessibilityRole="button" accessibilityLabel={`Abrir turma ${firstClass?.name || "turma"}`} onPress={() => onOpen("classes")} style={styles.teacherNextClassCard}>
-        <View style={styles.teacherNextClassTop}>
-          <View>
-            <Text style={[styles.teacherCardLabel, styles.teacherCardLabelOnDark]}>{firstClass?.schedule || "Turno"}</Text>
-            <Text style={styles.teacherNextClassTitle}>{firstClass?.name || "Nenhuma turma ativa"}</Text>
-            <Text style={styles.teacherNextClassBody}>{firstClass ? `${firstClass.stage} · ${firstClass.studentCount} alunos` : "Quando houver turma vinculada, ela aparecerá aqui."}</Text>
-          </View>
-          <View style={styles.teacherClassBadge}>
-            <Text style={styles.teacherClassBadgeText}>{firstClass ? `${firstClass.studentCount}` : "0"}</Text>
-          </View>
-        </View>
-        <View style={styles.teacherNextClassFooter}>
-          <Text style={styles.teacherNextClassRoom}>{summary?.schoolName || "Escola"}</Text>
-          <Text style={styles.teacherLinkText}>Abrir turma</Text>
-        </View>
-      </Pressable>
 
       <SectionHeader title="Ações rápidas" />
       <View style={styles.teacherQuickGrid}>
@@ -914,51 +916,49 @@ function TeacherHomeScreen({ profile, session, onOpen }: { profile: AppProfile; 
         ))}
       </View>
 
-      <SectionHeader title="Minhas turmas" action="Ver todas" />
-      <View style={styles.teacherClassList}>
-        {homeClasses.map((item) => (
-          <TeacherClassCard key={item.className} item={item} onPress={() => onOpen("classes")} />
-        ))}
-        {!loading && homeClasses.length === 0 ? <EmptyState title="Nenhuma turma ativa" body="Quando houver vínculo ativo, suas turmas aparecerão aqui." /> : null}
+      <View style={styles.teacherSectionTop}>
+        <Text style={styles.teacherSectionTitle}>Próxima turma</Text>
+        <Text style={styles.teacherSectionAction}>Ver todas ›</Text>
       </View>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Abrir turma ${firstClass?.name || "turma"}`} onPress={() => onOpen("classes")} style={styles.teacherNextClassCard}>
+        <View style={styles.teacherNextClassCopy}>
+          <Text style={[styles.teacherCardLabel, styles.teacherCardLabelOnDark]}>{firstClass?.schedule || "Turno"}</Text>
+          <Text style={styles.teacherNextClassTitle}>{firstClass?.name || "Nenhuma turma ativa"}</Text>
+          <Text style={styles.teacherNextClassBody}>{firstClass ? "08h00 - 09h40" : "Quando houver turma vinculada, ela aparecerá aqui."}</Text>
+          <Text style={styles.teacherNextClassStudents}>{firstClass ? `${firstClass.studentCount} alunos` : ""}</Text>
+        </View>
+        <TeacherSplitIconView icon={{ source: teacherHomeIcons.peopleCalendar, side: "left" }} frameStyle={styles.teacherNextClassIconFrame} imageStyle={styles.teacherNextClassSplitImage} frameWidth={176} />
+        <View style={styles.teacherNextClassButton}>
+          <Text style={styles.teacherNextClassButtonText}>Acessar turma ›</Text>
+        </View>
+      </Pressable>
 
-      <SectionHeader title="Agenda de hoje" action="Ver agenda" />
-      <View style={styles.teacherAgendaList}>
-        <EmptyState title="Agenda vazia" body="Abra a agenda para consultar os compromissos publicados." />
-      </View>
-
-      <View style={styles.teacherSummaryGrid}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Abrir comunicação" onPress={() => onOpen("communication")} style={styles.teacherSummaryCard}>
-          <Text style={styles.teacherCardLabel}>Comunicação</Text>
-          <Text style={styles.teacherSummaryTitle}>Recados da escola</Text>
-          <Text style={styles.teacherSummaryBody}>Abra Comunicação para consultar ou publicar recados reais.</Text>
-          <Text style={styles.teacherLinkText}>Novo recado</Text>
-        </Pressable>
-
-        <Pressable accessibilityRole="button" accessibilityLabel="Abrir Avalia+" onPress={() => onOpen("avalia")} style={styles.teacherSummaryCard}>
-          <Text style={styles.teacherCardLabel}>Avalia+</Text>
-          <Text style={styles.teacherSummaryTitle}>Avaliações reais</Text>
-          <Text style={styles.teacherSummaryBody}>Quando houver avaliações publicadas, elas aparecerão no módulo.</Text>
-          <Text style={styles.teacherLinkText}>Abrir Avalia+</Text>
-        </Pressable>
-      </View>
-
-      <SectionHeader title="Acompanhamento" />
+      <SectionHeader title="Resumo da semana" />
       <View style={styles.teacherTrackingGrid}>
-        <View style={styles.teacherTrackingCard}>
+        <View style={styles.teacherWeeklyCard}>
           <Text style={styles.teacherTrackingValue}>{summary?.activeClassLinks ?? 0}</Text>
           <Text style={styles.teacherTrackingLabel}>Turmas</Text>
           <Text style={styles.teacherTrackingHelper}>Turmas ativas</Text>
         </View>
-        <View style={styles.teacherTrackingCard}>
+        <View style={styles.teacherWeeklyCard}>
           <Text style={styles.teacherTrackingValue}>{summary?.totalStudents ?? 0}</Text>
           <Text style={styles.teacherTrackingLabel}>Alunos</Text>
           <Text style={styles.teacherTrackingHelper}>Vínculos ativos</Text>
         </View>
-        <View style={styles.teacherTrackingCard}>
+        <View style={styles.teacherWeeklyCard}>
           <Text style={styles.teacherTrackingValue}>{summary?.unreadNotifications ?? 0}</Text>
           <Text style={styles.teacherTrackingLabel}>Avisos</Text>
           <Text style={styles.teacherTrackingHelper}>Não lidos</Text>
+        </View>
+        <View style={styles.teacherWeeklyCard}>
+          <Text style={styles.teacherTrackingValue}>{summary?.todaysCalendarCount ?? 0}</Text>
+          <Text style={styles.teacherTrackingLabel}>Atividades</Text>
+          <Text style={styles.teacherTrackingHelper}>Planejadas</Text>
+        </View>
+        <View style={styles.teacherWeeklyCard}>
+          <Text style={styles.teacherTrackingValue}>{summary?.unreadNotifications ?? 0}</Text>
+          <Text style={styles.teacherTrackingLabel}>Avaliações</Text>
+          <Text style={styles.teacherTrackingHelper}>Publicadas</Text>
         </View>
       </View>
     </View>
@@ -966,10 +966,11 @@ function TeacherHomeScreen({ profile, session, onOpen }: { profile: AppProfile; 
 }
 
 function TeacherTodayCard({ item, onPress }: { item: TeacherTodayItem; onPress: () => void }) {
+  const icon = teacherTodayIcon(item.type);
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`${item.type}: ${item.title}`} onPress={onPress} style={styles.teacherTodayCard}>
       <View style={styles.teacherTodayMark}>
-        <Text style={styles.teacherTodayMarkText}>{item.mark}</Text>
+        <TeacherSplitIconView icon={icon} frameStyle={styles.teacherTodayIconFrame} imageStyle={styles.teacherTodaySplitImage} frameWidth={76} />
       </View>
       <Text style={styles.teacherTodayType}>{item.type}</Text>
       <Text style={styles.teacherTodayTitle}>{item.title}</Text>
@@ -979,15 +980,57 @@ function TeacherTodayCard({ item, onPress }: { item: TeacherTodayItem; onPress: 
 }
 
 function TeacherQuickActionCard({ action, onPress }: { action: TeacherQuickAction; onPress: () => void }) {
+  const icon = teacherQuickIcon(action.target);
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={action.label} onPress={onPress} style={styles.teacherQuickCard}>
       <View style={styles.teacherQuickMark}>
-        <Text style={styles.teacherQuickMarkText}>{action.mark}</Text>
+        <TeacherSplitIconView icon={icon} frameStyle={styles.teacherQuickIconFrame} imageStyle={styles.teacherQuickSplitImage} frameWidth={96} />
       </View>
       <Text style={styles.teacherQuickTitle}>{action.label}</Text>
       <Text style={styles.teacherQuickBody}>{action.description}</Text>
     </Pressable>
   );
+}
+
+function TeacherSplitIconView({
+  icon,
+  frameStyle,
+  imageStyle,
+  frameWidth
+}: {
+  icon: TeacherSplitIcon;
+  frameStyle: object;
+  imageStyle: object;
+  frameWidth: number;
+}) {
+  return (
+    <View style={frameStyle}>
+      <Image source={icon.source} resizeMode="contain" style={[imageStyle, { transform: [{ translateX: icon.side === "right" ? -frameWidth : 0 }] }]} />
+    </View>
+  );
+}
+
+function teacherTodayIcon(type: string): TeacherSplitIcon {
+  if (type === "Turmas") return { source: teacherHomeIcons.peopleCalendar, side: "left" };
+  if (type === "Agenda") return { source: teacherHomeIcons.peopleCalendar, side: "right" };
+  if (type === "Notificações") return { source: teacherHomeIcons.notifications, side: "left" };
+  return { source: teacherHomeIcons.notifications, side: "right" };
+}
+
+function teacherQuickIcon(target: ModuleKey | string): TeacherSplitIcon {
+  if (target === "communication") return { source: teacherHomeIcons.communication, side: "left" };
+  if (target === "diary") return { source: teacherHomeIcons.diary, side: "right" };
+  if (target === "avalia") return { source: teacherHomeIcons.avalia, side: "right" };
+  return { source: teacherHomeIcons.peopleCalendar, side: "left" };
+}
+
+function teacherModuleIcon(title: string): TeacherSplitIcon {
+  if (title.includes("Comunicação") || title.includes("recado")) return { source: teacherHomeIcons.communication, side: "left" };
+  if (title.includes("Diário")) return { source: teacherHomeIcons.diary, side: "right" };
+  if (title.includes("Avalia")) return { source: teacherHomeIcons.avalia, side: "right" };
+  if (title.includes("Notificações")) return { source: teacherHomeIcons.notifications, side: "left" };
+  if (title.includes("Frequência") || title.includes("turmas") || title.includes("Agenda")) return { source: teacherHomeIcons.peopleCalendar, side: "right" };
+  return { source: teacherHomeIcons.peopleCalendar, side: "left" };
 }
 
 function TeacherClassCard({ item, onPress }: { item: TeacherClassSummary; onPress: () => void }) {
@@ -2975,6 +3018,8 @@ function CrescerProfileScreen({ session, onLogout }: { session: MobileSession | 
 }
 
 function DiscoveryAdventureCard({ discovery, onPress }: { discovery: EarlyChildhoodDiscovery; onPress: () => void }) {
+  const actionLabel = discoveryActionLabel(discovery);
+
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`${discovery.title}. ${discovery.description}`} onPress={onPress} style={styles.discoveryCard}>
       <View style={styles.discoveryMark}>
@@ -2986,7 +3031,13 @@ function DiscoveryAdventureCard({ discovery, onPress }: { discovery: EarlyChildh
         <Text style={styles.discoveryCardBody}>{discovery.description}</Text>
         {discovery.discoveredHotspots.length ? <Text style={styles.discoveryCardBody}>{discovery.discoveredHotspots.length} pista explorada</Text> : null}
       </View>
-      <Text style={styles.discoveryChevron}>{discoveryActionLabel(discovery) === "Explorar" ? "›" : discoveryActionLabel(discovery)}</Text>
+      {actionLabel === "Explorar" ? (
+        <Text style={styles.discoveryChevron}>›</Text>
+      ) : (
+        <View style={styles.discoveryActionPill}>
+          <Text style={styles.discoveryActionText}>{actionLabel}</Text>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -5403,6 +5454,37 @@ function TeacherModule({ session, activeKey, onOpen, onLogout }: { session: Mobi
   return <TeacherShell title="Início" intro="Escolha uma área para continuar sua rotina docente." />;
 }
 
+function TeacherModuleHero({
+  title,
+  intro,
+  kicker = "Professora",
+  icon,
+  children
+}: {
+  title: string;
+  intro: string;
+  kicker?: string;
+  icon?: TeacherSplitIcon;
+  children?: React.ReactNode;
+}) {
+  const heroIcon = icon ?? teacherModuleIcon(title);
+
+  return (
+    <View style={styles.teacherShellHero}>
+      <View style={styles.teacherShellHeroGlow} />
+      <View style={styles.teacherShellHeroTop}>
+        <View style={styles.teacherShellHeroCopy}>
+          <Text style={styles.teacherKicker}>{kicker}</Text>
+          <Text style={styles.teacherShellTitle}>{title}</Text>
+          <Text style={styles.teacherShellIntro}>{intro}</Text>
+        </View>
+        <TeacherSplitIconView icon={heroIcon} frameStyle={styles.teacherShellIconFrame} imageStyle={styles.teacherShellSplitImage} frameWidth={112} />
+      </View>
+      {children ? <View style={styles.teacherShellHeroContent}>{children}</View> : null}
+    </View>
+  );
+}
+
 function TeacherAttendanceScreen({
   classes,
   selectedClass,
@@ -5443,10 +5525,7 @@ function TeacherAttendanceScreen({
 
   return (
     <View>
-      <View style={styles.teacherAttendanceHero}>
-        <Text style={styles.teacherKicker}>Professor Mobile</Text>
-        <Text style={styles.teacherShellTitle}>Frequência</Text>
-        <Text style={styles.teacherShellIntro}>Registre a chamada da turma.</Text>
+      <TeacherModuleHero title="Frequência" intro="Registre a chamada da turma." icon={{ source: teacherHomeIcons.peopleCalendar, side: "right" }}>
         <View style={styles.teacherAttendanceMetaRow}>
           <View style={styles.teacherAttendanceMetaPill}>
             <Text style={styles.teacherAttendanceMetaLabel}>Turma</Text>
@@ -5461,7 +5540,7 @@ function TeacherAttendanceScreen({
             <Text style={styles.teacherAttendanceMetaValue}>{selectedClass.students}</Text>
           </View>
         </View>
-      </View>
+      </TeacherModuleHero>
 
       <SectionHeader title="Turma" action="Selecionar" />
       {loading ? <EmptyState title="Carregando turmas" body="Aguarde enquanto buscamos suas turmas autorizadas." /> : null}
@@ -5609,11 +5688,7 @@ function TeacherClassesScreen({
 
   return (
     <View>
-      <View style={styles.teacherClassesHero}>
-        <Text style={styles.teacherKicker}>Professor Mobile</Text>
-        <Text style={styles.teacherShellTitle}>Minhas turmas</Text>
-        <Text style={styles.teacherShellIntro}>Acesse suas turmas e as principais ações do dia.</Text>
-      </View>
+      <TeacherModuleHero title="Minhas turmas" intro="Acesse suas turmas e as principais ações do dia." icon={{ source: teacherHomeIcons.peopleCalendar, side: "left" }} />
 
       <View style={styles.teacherClassFilterRow}>
         {(["Todas", "Educação Infantil", "Fundamental"] as const).map((item) => (
@@ -5869,14 +5944,11 @@ function TeacherAgendaScreen({
 
   return (
     <View>
-      <View style={styles.teacherAgendaHero}>
-        <Text style={styles.teacherKicker}>Professor Mobile</Text>
-        <Text style={styles.teacherShellTitle}>Agenda</Text>
-        <Text style={styles.teacherShellIntro}>Organize suas aulas e compromissos da semana.</Text>
+      <TeacherModuleHero title="Agenda" intro="Organize suas aulas e compromissos da semana." icon={{ source: teacherHomeIcons.peopleCalendar, side: "right" }}>
         <Pressable accessibilityRole="button" accessibilityLabel="Novo compromisso" onPress={onNewEvent} style={styles.teacherAgendaPrimaryButton}>
           <Text style={styles.teacherAgendaPrimaryText}>Novo compromisso</Text>
         </Pressable>
-      </View>
+      </TeacherModuleHero>
 
       <SectionHeader title="Semana" action="Seg a Sex" />
       <View style={styles.teacherAgendaWeekStrip}>
@@ -5961,11 +6033,7 @@ function TeacherAgendaForm({
 }) {
   return (
     <View>
-      <View style={styles.teacherAgendaHero}>
-        <Text style={styles.teacherKicker}>{mode === "edit" ? "Editar" : "Novo compromisso"}</Text>
-        <Text style={styles.teacherShellTitle}>Agenda</Text>
-        <Text style={styles.teacherShellIntro}>Registre uma aula, atividade, avaliação, evento ou lembrete.</Text>
-      </View>
+      <TeacherModuleHero title="Agenda" intro="Registre uma aula, atividade, avaliação, evento ou lembrete." kicker={mode === "edit" ? "Editar" : "Novo compromisso"} icon={{ source: teacherHomeIcons.peopleCalendar, side: "right" }} />
 
       <View style={styles.teacherAgendaFormCard}>
         <Text style={styles.teacherCommunicationFieldLabel}>Título</Text>
@@ -6272,10 +6340,7 @@ function TeacherDiaryScreen({
 
   return (
     <View>
-      <View style={styles.teacherDiaryHero}>
-        <Text style={styles.teacherKicker}>Professor Mobile</Text>
-        <Text style={styles.teacherShellTitle}>Diário de Classe</Text>
-        <Text style={styles.teacherShellIntro}>Registre o que foi trabalhado na aula.</Text>
+      <TeacherModuleHero title="Diário de Classe" intro="Registre o que foi trabalhado na aula." icon={{ source: teacherHomeIcons.diary, side: "right" }}>
         <View style={styles.teacherDiaryMetaGrid}>
           <View style={styles.teacherDiaryMetaPill}>
             <Text style={styles.teacherDiaryMetaLabel}>Turma</Text>
@@ -6286,7 +6351,7 @@ function TeacherDiaryScreen({
             <Text style={styles.teacherDiaryMetaValue}>{date}</Text>
           </View>
         </View>
-      </View>
+      </TeacherModuleHero>
 
       <SectionHeader title="Turma" action="Selecionar" />
       {loading ? <EmptyState title="Carregando turmas" body="Buscando suas turmas autorizadas." /> : null}
@@ -6637,12 +6702,9 @@ function TeacherAvaliaScreen({
 
   return (
     <View>
-      <View style={styles.teacherAvaliaHero}>
-        <Text style={styles.teacherKicker}>Professor Mobile</Text>
-        <Text style={styles.teacherShellTitle}>Avalia+</Text>
-        <Text style={styles.teacherShellIntro}>Aplique avaliações e acompanhe os resultados das suas turmas.</Text>
+      <TeacherModuleHero title="Avalia+" intro="Aplique avaliações e acompanhe os resultados das suas turmas." icon={{ source: teacherHomeIcons.avalia, side: "right" }}>
         <Text style={styles.teacherAvaliaContext}>Turma selecionada: {selectedClass.className}</Text>
-      </View>
+      </TeacherModuleHero>
 
       <View style={styles.teacherAvaliaSummaryGrid}>
         <TeacherAvaliaSummaryCard label="Disponíveis" value={available.length} />
@@ -6780,11 +6842,7 @@ function TeacherAvaliaApply({
 }) {
   return (
     <View>
-      <View style={styles.teacherAvaliaHero}>
-        <Text style={styles.teacherKicker}>Aplicar avaliação</Text>
-        <Text style={styles.teacherShellTitle}>{assessment.title}</Text>
-        <Text style={styles.teacherShellIntro}>Escolha a turma e o período de disponibilidade.</Text>
-      </View>
+      <TeacherModuleHero title={assessment.title} intro="Escolha a turma e o período de disponibilidade." kicker="Aplicar avaliação" icon={{ source: teacherHomeIcons.avalia, side: "right" }} />
 
       <View style={styles.teacherAvaliaDetailCard}>
         <Text style={styles.teacherCommunicationFieldLabel}>Turma</Text>
@@ -6928,11 +6986,7 @@ function TeacherAvaliaResults({
 
   return (
     <View>
-      <View style={styles.teacherAvaliaHero}>
-        <Text style={styles.teacherKicker}>Resultados</Text>
-        <Text style={styles.teacherShellTitle}>{assessment.title}</Text>
-        <Text style={styles.teacherShellIntro}>{assessment.className || selectedClass.className}</Text>
-      </View>
+      <TeacherModuleHero title={assessment.title} intro={assessment.className || selectedClass.className} kicker="Resultados" icon={{ source: teacherHomeIcons.avalia, side: "right" }} />
 
       <View style={styles.teacherAvaliaResultGrid}>
         <TeacherAvaliaResultStat label="Atribuídos" value={assigned} />
@@ -8048,15 +8102,18 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     height: 62,
     justifyContent: "center",
+    position: "relative",
     shadowColor: "#c78a10",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.14,
     shadowRadius: 10,
-    width: 62
+    width: 62,
+    zIndex: 2
   },
   crescerMissionIconImage: {
     height: 44,
-    width: 44
+    width: 44,
+    zIndex: 3
   },
   crescerMissionText: {
     flex: 1,
@@ -8112,11 +8169,14 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     height: 60,
     justifyContent: "center",
-    width: 60
+    position: "relative",
+    width: 60,
+    zIndex: 2
   },
   crescerStatIconImage: {
     height: 62,
-    width: 62
+    width: 62,
+    zIndex: 3
   },
   crescerStatValue: {
     color: colors.brand,
@@ -8219,11 +8279,13 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     height: 72,
     justifyContent: "center",
+    position: "relative",
     shadowColor: "#4b6a49",
     shadowOffset: { width: 0, height: 9 },
     shadowOpacity: 0.18,
     shadowRadius: 12,
-    width: 62
+    width: 62,
+    zIndex: 2
   },
   crescerFeatureIconLarge: {
     alignSelf: "center",
@@ -8240,11 +8302,13 @@ const styles = StyleSheet.create({
   },
   crescerFeatureIconImage: {
     height: 74,
-    width: 74
+    width: 74,
+    zIndex: 3
   },
   crescerFeatureIconImageLarge: {
     height: 116,
-    width: 154
+    width: 154,
+    zIndex: 3
   },
   crescerFeatureCopy: {
     flex: 1,
@@ -8363,12 +8427,14 @@ const styles = StyleSheet.create({
     zIndex: 1
   },
   fundamentalHero: {
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
-    borderRadius: 22,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 24,
     borderWidth: 2,
     marginBottom: spacing.md,
-    padding: spacing.lg
+    overflow: "hidden",
+    padding: spacing.lg,
+    ...shadow
   },
   fundamentalHeroTop: {
     alignItems: "center",
@@ -8377,8 +8443,8 @@ const styles = StyleSheet.create({
   },
   fundamentalAvatar: {
     alignItems: "center",
-    backgroundColor: colors.blueSoft,
-    borderColor: "#bcd4e8",
+    backgroundColor: colors.childSoft,
+    borderColor: "#c9e8c5",
     borderRadius: 20,
     borderWidth: 2,
     height: 64,
@@ -8386,7 +8452,7 @@ const styles = StyleSheet.create({
     width: 64
   },
   fundamentalAvatarText: {
-    color: colors.blue,
+    color: colors.brand,
     fontSize: 20,
     fontWeight: "900"
   },
@@ -8394,13 +8460,13 @@ const styles = StyleSheet.create({
     flex: 1
   },
   fundamentalKicker: {
-    color: colors.blue,
+    color: colors.brand,
     fontSize: 12,
     fontWeight: "900",
     textTransform: "uppercase"
   },
   fundamentalHeroTitle: {
-    color: colors.studentInk,
+    color: colors.brand,
     fontSize: 24,
     fontWeight: "900",
     letterSpacing: 0,
@@ -8472,12 +8538,13 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs
   },
   fundamentalContinueCard: {
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 22,
     borderWidth: 2,
     gap: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   fundamentalContinueCopy: {
     gap: spacing.xs
@@ -8537,13 +8604,14 @@ const styles = StyleSheet.create({
     marginTop: spacing.md
   },
   fundamentalHighlightCard: {
-    backgroundColor: colors.blueSoft,
-    borderColor: "#bcd4e8",
+    backgroundColor: "rgba(222, 242, 255, 0.95)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     flex: 1,
     minHeight: 172,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   fundamentalBadgeRow: {
     alignItems: "center",
@@ -8591,23 +8659,29 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   fundamentalActionCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 18,
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 22,
     borderWidth: 2,
     flexBasis: "47%",
     flexGrow: 1,
-    minHeight: 150,
-    padding: spacing.md
+    minHeight: 170,
+    overflow: "hidden",
+    padding: spacing.md,
+    position: "relative",
+    ...shadow
   },
   fundamentalActionMark: {
     alignItems: "center",
-    backgroundColor: colors.blueSoft,
-    borderRadius: 15,
-    height: 46,
+    backgroundColor: "transparent",
+    borderRadius: 28,
+    height: 74,
     justifyContent: "center",
     marginBottom: spacing.sm,
-    width: 46
+    width: 86
+  },
+  fundamentalActionImage: {
+    height: 80,
+    width: 92
   },
   fundamentalActionMarkText: {
     color: colors.blue,
@@ -8615,15 +8689,16 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   fundamentalActionTitle: {
-    color: colors.studentInk,
-    fontSize: 16,
+    color: colors.ink,
+    fontSize: 18,
     fontWeight: "900",
-    letterSpacing: 0
+    letterSpacing: 0,
+    lineHeight: 22
   },
   fundamentalActionBody: {
-    color: colors.muted,
+    color: colors.studentInk,
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 17,
     marginTop: spacing.xs
   },
@@ -8632,14 +8707,15 @@ const styles = StyleSheet.create({
   },
   fundamentalActivityCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 18,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 20,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     minHeight: 112,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   fundamentalActivityCopy: {
     flex: 1
@@ -8703,14 +8779,16 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs
   },
   fundamentalShellHero: {
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
-    borderRadius: 22,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 24,
     borderWidth: 2,
-    padding: spacing.lg
+    marginBottom: spacing.md,
+    padding: spacing.lg,
+    ...shadow
   },
   fundamentalShellTitle: {
-    color: colors.studentInk,
+    color: colors.brand,
     fontSize: 24,
     fontWeight: "900",
     letterSpacing: 0,
@@ -9021,12 +9099,13 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs
   },
   fundamentalFeaturedActivity: {
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 22,
     borderWidth: 2,
     gap: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   fundamentalFeaturedTop: {
     alignItems: "center",
@@ -9078,12 +9157,13 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   fundamentalActivityDetailCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     gap: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   fundamentalActivityDetailRow: {
     alignItems: "center",
@@ -9396,13 +9476,14 @@ const styles = StyleSheet.create({
     marginTop: spacing.md
   },
   assessmentSummaryCard: {
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 16,
     borderWidth: 2,
     flex: 1,
     minHeight: 90,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   assessmentSummaryValue: {
     color: colors.blue,
@@ -9421,13 +9502,14 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   assessmentCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     gap: spacing.md,
     minHeight: 164,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   assessmentCardTop: {
     alignItems: "center",
@@ -9819,12 +9901,13 @@ const styles = StyleSheet.create({
     textAlign: "center"
   },
   fundamentalAgendaTodayCard: {
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 22,
     borderWidth: 2,
     gap: spacing.sm,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   fundamentalAgendaEmptyText: {
     color: colors.muted,
@@ -9916,12 +9999,13 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   fundamentalAgendaCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     gap: spacing.md,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   fundamentalAgendaCardTop: {
     alignItems: "center",
@@ -10022,14 +10106,15 @@ const styles = StyleSheet.create({
   },
   fundamentalNotificationSummary: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: spacing.md,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   fundamentalNotificationSummaryLabel: {
     color: colors.blue,
@@ -10085,11 +10170,12 @@ const styles = StyleSheet.create({
     color: colors.surface
   },
   fundamentalNotificationEmptyCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   fundamentalNotificationEmptyText: {
     color: colors.muted,
@@ -10101,12 +10187,13 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   fundamentalNotificationCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     gap: spacing.md,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   fundamentalNotificationCardUnread: {
     borderColor: colors.blue,
@@ -10184,12 +10271,13 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   fundamentalNotificationDetailCard: {
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 22,
     borderWidth: 2,
     gap: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   fundamentalNotificationDetailHeader: {
     alignItems: "center",
@@ -10240,13 +10328,14 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   fundamentalProfileIdentityCard: {
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 24,
     borderWidth: 2,
     gap: spacing.md,
     marginTop: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   fundamentalProfileIdentityTop: {
     alignItems: "center",
@@ -10370,12 +10459,13 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
   fundamentalProfileSchoolCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     gap: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   fundamentalProfileSchoolTitle: {
     color: colors.studentInk,
@@ -10413,14 +10503,15 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   fundamentalProfileShortcut: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 18,
     borderWidth: 2,
     flexBasis: "30%",
     flexGrow: 1,
     minHeight: 136,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   fundamentalProfileShortcutMark: {
     alignItems: "center",
@@ -10450,11 +10541,12 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs
   },
   fundamentalProfileSettingsCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
-    overflow: "hidden"
+    overflow: "hidden",
+    ...shadow
   },
   fundamentalProfileSettingRow: {
     alignItems: "center",
@@ -10524,27 +10616,41 @@ const styles = StyleSheet.create({
   },
   fundamentalAccessibilityCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 18,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   teacherHero: {
-    backgroundColor: colors.surface,
-    borderColor: "#b8d7c7",
-    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.96)",
+    borderRadius: 24,
     borderWidth: 2,
     marginBottom: spacing.md,
+    minHeight: 176,
+    overflow: "hidden",
     padding: spacing.lg,
+    position: "relative",
     ...shadow
+  },
+  teacherHeroGlow: {
+    backgroundColor: "rgba(214, 244, 220, 0.72)",
+    borderRadius: 999,
+    height: 150,
+    position: "absolute",
+    right: -36,
+    top: 18,
+    width: 150
   },
   teacherHeroTop: {
     alignItems: "center",
     flexDirection: "row",
-    gap: spacing.md
+    gap: spacing.md,
+    minHeight: 132
   },
   teacherAvatar: {
     alignItems: "center",
@@ -10562,7 +10668,8 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   teacherHeroCopy: {
-    flex: 1
+    flex: 1,
+    zIndex: 2
   },
   teacherKicker: {
     color: colors.brand,
@@ -10578,32 +10685,113 @@ const styles = StyleSheet.create({
   },
   teacherHeroTitle: {
     color: colors.ink,
-    fontSize: 24,
+    fontSize: 31,
     fontWeight: "900",
     letterSpacing: 0,
-    lineHeight: 29,
+    lineHeight: 36,
     marginTop: spacing.xs
   },
   teacherHeroMeta: {
     color: colors.muted,
-    fontSize: 13,
-    fontWeight: "700",
-    lineHeight: 19,
+    fontSize: 15,
+    fontWeight: "800",
+    lineHeight: 21,
     marginTop: spacing.xs
+  },
+  teacherHeroIconFrame: {
+    height: 118,
+    marginRight: -20,
+    overflow: "hidden",
+    position: "relative",
+    width: 142,
+    zIndex: 1
+  },
+  teacherHeroSplitImage: {
+    height: 118,
+    left: 0,
+    position: "absolute",
+    top: 0,
+    width: 284
   },
   teacherBell: {
     alignItems: "center",
-    backgroundColor: colors.warningSoft,
-    borderColor: "#efd98f",
+    backgroundColor: "rgba(255,255,255,0.96)",
+    borderColor: "rgba(255,255,255,0.96)",
     borderRadius: 16,
     borderWidth: 2,
-    height: 42,
+    height: 48,
     justifyContent: "center",
+    position: "relative",
     width: 42
   },
-  teacherBellText: {
-    color: colors.warning,
-    fontSize: 18,
+  teacherBellIconFrame: {
+    height: 36,
+    overflow: "hidden",
+    position: "relative",
+    width: 38
+  },
+  teacherBellSplitImage: {
+    height: 36,
+    left: 0,
+    position: "absolute",
+    top: 0,
+    width: 76
+  },
+  teacherBellBadge: {
+    backgroundColor: colors.coral,
+    borderRadius: 999,
+    color: colors.surface,
+    fontSize: 11,
+    fontWeight: "900",
+    minWidth: 20,
+    overflow: "hidden",
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    position: "absolute",
+    right: -8,
+    textAlign: "center",
+    top: -8
+  },
+  teacherQuoteBox: {
+    alignSelf: "flex-end",
+    backgroundColor: "rgba(223, 244, 225, 0.88)",
+    borderRadius: 18,
+    marginTop: -16,
+    maxWidth: 178,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm
+  },
+  teacherQuoteText: {
+    color: colors.brandDark,
+    fontSize: 14,
+    fontWeight: "800",
+    lineHeight: 19
+  },
+  teacherSectionTop: {
+    alignItems: "flex-end",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: spacing.sm,
+    marginTop: spacing.sm
+  },
+  teacherSectionTitle: {
+    color: colors.ink,
+    fontSize: 24,
+    fontWeight: "900",
+    letterSpacing: 0,
+    lineHeight: 29
+  },
+  teacherSectionDate: {
+    color: colors.brandDark,
+    flexShrink: 1,
+    fontSize: 13,
+    fontWeight: "900",
+    lineHeight: 18,
+    textAlign: "right"
+  },
+  teacherSectionAction: {
+    color: colors.brand,
+    fontSize: 13,
     fontWeight: "900"
   },
   teacherTodayGrid: {
@@ -10613,27 +10801,38 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md
   },
   teacherTodayCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.96)",
+    borderRadius: 18,
     borderWidth: 2,
     flexBasis: "48%",
     flexGrow: 1,
-    minHeight: 136,
-    padding: spacing.md
+    minHeight: 154,
+    overflow: "hidden",
+    padding: spacing.md,
+    ...shadow
   },
   teacherTodayMark: {
     alignItems: "center",
-    backgroundColor: colors.brandSoft,
-    borderRadius: 12,
-    height: 34,
+    backgroundColor: "rgba(224, 248, 231, 0.86)",
+    borderRadius: 999,
+    height: 62,
     justifyContent: "center",
-    width: 34
+    marginBottom: spacing.sm,
+    width: 62
   },
-  teacherTodayMarkText: {
-    color: colors.brandDark,
-    fontSize: 14,
-    fontWeight: "900"
+  teacherTodayIconFrame: {
+    height: 68,
+    overflow: "hidden",
+    position: "relative",
+    width: 76
+  },
+  teacherTodaySplitImage: {
+    height: 68,
+    left: 0,
+    position: "absolute",
+    top: 0,
+    width: 152
   },
   teacherTodayType: {
     color: colors.brand,
@@ -10644,9 +10843,9 @@ const styles = StyleSheet.create({
   },
   teacherTodayTitle: {
     color: colors.ink,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "900",
-    lineHeight: 19,
+    lineHeight: 20,
     marginTop: 2
   },
   teacherTodayMeta: {
@@ -10658,15 +10857,17 @@ const styles = StyleSheet.create({
   },
   teacherNextClassCard: {
     backgroundColor: colors.brandDark,
-    borderRadius: 20,
-    marginBottom: spacing.md,
-    padding: spacing.lg
-  },
-  teacherNextClassTop: {
-    alignItems: "flex-start",
+    borderRadius: 22,
     flexDirection: "row",
-    gap: spacing.md,
-    justifyContent: "space-between"
+    minHeight: 140,
+    marginBottom: spacing.md,
+    overflow: "hidden",
+    padding: spacing.lg,
+    position: "relative"
+  },
+  teacherNextClassCopy: {
+    flex: 1,
+    zIndex: 2
   },
   teacherCardLabel: {
     color: colors.brand,
@@ -10679,43 +10880,56 @@ const styles = StyleSheet.create({
   },
   teacherNextClassTitle: {
     color: colors.surface,
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: "900",
     letterSpacing: 0,
-    lineHeight: 29,
+    lineHeight: 34,
     marginTop: spacing.xs
   },
   teacherNextClassBody: {
-    color: "#cfe4d7",
-    fontSize: 14,
+    color: "#f0fff5",
+    fontSize: 18,
     fontWeight: "700",
-    lineHeight: 20,
+    lineHeight: 24,
     marginTop: spacing.xs
   },
-  teacherClassBadge: {
-    backgroundColor: "#dff0e7",
-    borderRadius: 999,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs
+  teacherNextClassStudents: {
+    color: colors.surface,
+    fontSize: 15,
+    fontWeight: "900",
+    lineHeight: 20,
+    marginTop: 2
   },
-  teacherClassBadgeText: {
+  teacherNextClassIconFrame: {
+    bottom: -18,
+    height: 120,
+    overflow: "hidden",
+    position: "absolute",
+    right: 72,
+    width: 176
+  },
+  teacherNextClassSplitImage: {
+    height: 120,
+    left: 0,
+    position: "absolute",
+    top: 0,
+    width: 352
+  },
+  teacherNextClassButton: {
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.94)",
+    borderRadius: 999,
+    bottom: spacing.lg,
+    justifyContent: "center",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    position: "absolute",
+    right: spacing.md
+  },
+  teacherNextClassButtonText: {
     color: colors.brandDark,
     fontSize: 12,
     fontWeight: "900"
-  },
-  teacherNextClassFooter: {
-    alignItems: "center",
-    borderTopColor: "rgba(255,255,255,0.18)",
-    borderTopWidth: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: spacing.md,
-    paddingTop: spacing.md
-  },
-  teacherNextClassRoom: {
-    color: "#dff0e7",
-    fontSize: 13,
-    fontWeight: "800"
   },
   teacherLinkText: {
     color: colors.brand,
@@ -10729,41 +10943,54 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md
   },
   teacherQuickCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 16,
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.96)",
+    borderRadius: 18,
     borderWidth: 2,
     flexBasis: "48%",
     flexGrow: 1,
-    minHeight: 124,
-    padding: spacing.md
+    minHeight: 154,
+    overflow: "hidden",
+    padding: spacing.md,
+    ...shadow
   },
   teacherQuickMark: {
     alignItems: "center",
-    backgroundColor: colors.brandSoft,
-    borderRadius: 12,
-    height: 34,
+    backgroundColor: "rgba(224, 248, 231, 0.88)",
+    borderRadius: 999,
+    height: 76,
     justifyContent: "center",
-    width: 34
+    marginBottom: spacing.sm,
+    width: 76
   },
-  teacherQuickMarkText: {
-    color: colors.brandDark,
-    fontSize: 13,
-    fontWeight: "900"
+  teacherQuickIconFrame: {
+    height: 82,
+    overflow: "hidden",
+    position: "relative",
+    width: 96
+  },
+  teacherQuickSplitImage: {
+    height: 82,
+    left: 0,
+    position: "absolute",
+    top: 0,
+    width: 192
   },
   teacherQuickTitle: {
     color: colors.ink,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "900",
     lineHeight: 19,
-    marginTop: spacing.sm
+    textAlign: "center"
   },
   teacherQuickBody: {
     color: colors.muted,
     fontSize: 12,
     fontWeight: "700",
     lineHeight: 17,
-    marginTop: spacing.xs
+    marginTop: spacing.xs,
+    textAlign: "center"
   },
   teacherClassList: {
     gap: spacing.sm,
@@ -10879,6 +11106,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.sm
+  },
+  teacherWeeklyCard: {
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.96)",
+    borderRadius: 18,
+    borderWidth: 2,
+    flexBasis: "48%",
+    flexGrow: 1,
+    minHeight: 96,
+    padding: spacing.md,
+    ...shadow
   },
   teacherTrackingDetailCard: {
     backgroundColor: colors.surface,
@@ -13428,6 +13666,23 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 26,
     fontWeight: "500"
+  },
+  discoveryActionPill: {
+    alignItems: "center",
+    backgroundColor: colors.childSoft,
+    borderColor: "#c9e8c5",
+    borderRadius: 999,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 34,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 7
+  },
+  discoveryActionText: {
+    color: colors.child,
+    fontSize: 13,
+    fontWeight: "900",
+    letterSpacing: 0
   },
   discoverySceneCard: {
     backgroundColor: colors.surface,

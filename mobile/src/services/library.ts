@@ -902,18 +902,11 @@ export async function getAppRoleForSession(session: MobileSession): Promise<Sess
   if (platformRole === "professor") return "professor";
 
   if (platformRole === "aluno" || platformRole === "educacao_infantil") {
-    const students = await restGet<StudentRouteRow[]>(
-      session,
-      `students?select=id,enrollments(status,classes(nome,ano_escolar,school_year))&user_id=eq.${encodeURIComponent(session.userId)}&limit=1`
-    );
-    const student = students[0];
-    const activeEnrollment = student?.enrollments?.find((enrollment) => normalizeRouteValue(enrollment.status) === "active");
-    const classSegment = normalizeRouteValue([
-      activeEnrollment?.classes?.ano_escolar,
-      activeEnrollment?.classes?.school_year,
-      activeEnrollment?.classes?.nome
-    ].filter(Boolean).join(" "));
-    if (classSegment.includes("infantil") || platformRole === "educacao_infantil") return "crescer";
+    const rows = await rpc<RpcStudentContextRow[]>(session, "student_get_context", {});
+    const context = rows[0];
+    const segment = normalizeRouteValue(context?.segment);
+    const classSegment = normalizeRouteValue([context?.school_year, context?.age_group, context?.class_name].filter(Boolean).join(" "));
+    if (segment.includes("infantil") || classSegment.includes("infantil") || platformRole === "educacao_infantil") return "crescer";
     return "fundamental";
   }
 
