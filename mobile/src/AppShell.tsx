@@ -207,7 +207,7 @@ export function AppShell({ profile, session, onLogout }: { profile: AppProfile; 
           />
         )}
         {route.key === "home" ? (
-          <HomeScreen profile={profile} session={session} onOpen={goTo} />
+          <HomeScreen profile={profile} session={session} onOpen={goTo} onLogout={onLogout} />
         ) : (
           <ModuleScreen
             profile={profile}
@@ -226,9 +226,9 @@ export function AppShell({ profile, session, onLogout }: { profile: AppProfile; 
   );
 }
 
-function HomeScreen({ profile, session, onOpen }: { profile: AppProfile; session: MobileSession | null; onOpen: (key: ModuleKey) => void }) {
+function HomeScreen({ profile, session, onOpen, onLogout }: { profile: AppProfile; session: MobileSession | null; onOpen: (key: ModuleKey) => void; onLogout: () => void }) {
   if (profile.role === "crescer") {
-    return <CrescerHomeScreen profile={profile} session={session} onOpen={onOpen} />;
+    return <CrescerHomeScreen profile={profile} session={session} onOpen={onOpen} onLogout={onLogout} />;
   }
 
   if (profile.role === "fundamental") {
@@ -250,7 +250,7 @@ function HomeScreen({ profile, session, onOpen }: { profile: AppProfile; session
   );
 }
 
-function CrescerHomeScreen({ profile, session, onOpen }: { profile: AppProfile; session: MobileSession | null; onOpen: (key: ModuleKey) => void }) {
+function CrescerHomeScreen({ profile, session, onOpen, onLogout }: { profile: AppProfile; session: MobileSession | null; onOpen: (key: ModuleKey) => void; onLogout: () => void }) {
   const [studentProfile, setStudentProfile] = useState<CrescerStudentProfile | null>(null);
   const [calendarEvents, setCalendarEvents] = useState<CrescerCalendarEvent[]>([]);
   const [notifications, setNotifications] = useState<CrescerNotificationCenterItem[]>([]);
@@ -312,6 +312,9 @@ function CrescerHomeScreen({ profile, session, onOpen }: { profile: AppProfile; 
             <Text style={styles.crescerBrandSubtitle}>Grandes futuros nascem aqui</Text>
           </View>
         </View>
+        <Pressable accessibilityRole="button" accessibilityLabel="Sair do aplicativo" onPress={onLogout} style={styles.crescerLogoutButton}>
+          <Feather name="log-out" size={18} color={colors.brand} />
+        </Pressable>
       </View>
 
       <View style={styles.crescerWelcomeCard}>
@@ -397,6 +400,7 @@ function CrescerSectionTitle({ title }: { title: string }) {
 }
 
 function CrescerFeatureCard({ item, large = false, onPress }: { item: CrescerHomeCardSpec; large?: boolean; onPress: () => void }) {
+  const compact = !large;
   return (
     <Pressable
       accessibilityRole="button"
@@ -405,6 +409,7 @@ function CrescerFeatureCard({ item, large = false, onPress }: { item: CrescerHom
       style={({ pressed }) => [
         styles.crescerFeatureCard,
         large && styles.crescerFeatureCardLarge,
+        compact && styles.crescerFeatureCardCompact,
         toneStyle(item.tone),
         pressed && tonePressedStyle(item.tone),
         pressed && styles.crescerFeatureCardPressed
@@ -413,16 +418,16 @@ function CrescerFeatureCard({ item, large = false, onPress }: { item: CrescerHom
       {({ pressed }) => (
         <>
           <View style={[styles.crescerFeatureGlow, large && styles.crescerFeatureGlowLarge]} />
-          <View style={[styles.crescerFeatureIcon, large && styles.crescerFeatureIconLarge, iconToneStyle(item.tone), pressed && styles.crescerFeatureIconPressed]}>
-            <Image source={crescerHomeIcons[item.icon]} resizeMode="contain" style={[styles.crescerFeatureIconImage, large && styles.crescerFeatureIconImageLarge]} />
+          <View style={[styles.crescerFeatureIcon, large && styles.crescerFeatureIconLarge, compact && styles.crescerFeatureIconCompact, iconToneStyle(item.tone), pressed && styles.crescerFeatureIconPressed]}>
+            <Image source={crescerHomeIcons[item.icon]} resizeMode="contain" style={[styles.crescerFeatureIconImage, large && styles.crescerFeatureIconImageLarge, compact && styles.crescerFeatureIconImageCompact]} />
           </View>
           <View style={styles.crescerFeatureCopy}>
-            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={styles.crescerFeatureTitle}>
+            <Text numberOfLines={large ? 1 : 2} adjustsFontSizeToFit minimumFontScale={0.82} style={[styles.crescerFeatureTitle, compact && styles.crescerFeatureTitleCompact]}>
               {item.title}
             </Text>
-            <Text style={styles.crescerFeatureBody}>{item.body}</Text>
+            <Text numberOfLines={2} style={[styles.crescerFeatureBody, compact && styles.crescerFeatureBodyCompact]}>{item.body}</Text>
           </View>
-          <View style={styles.crescerFeatureArrow}>
+          <View style={[styles.crescerFeatureArrow, compact && styles.crescerFeatureArrowCompact]}>
             <Feather name="chevron-right" size={22} color={featureInk(item.tone)} />
           </View>
         </>
@@ -436,23 +441,25 @@ function CrescerModuleHero({
   title,
   body,
   icon,
-  tone = "mint"
+  tone = "mint",
+  wideCopy = false
 }: {
   kicker: string;
   title: string;
   body: string;
   icon: keyof typeof crescerHomeIcons;
   tone?: CrescerHomeCardSpec["tone"];
+  wideCopy?: boolean;
 }) {
   return (
     <View style={[styles.crescerModuleHero, toneStyle(tone)]}>
       <View style={styles.crescerModuleHeroGlow} />
-      <View style={styles.crescerModuleHeroCopy}>
+      <View style={[styles.crescerModuleHeroCopy, wideCopy && styles.crescerModuleHeroCopyWide]}>
         <Text style={[styles.discoveryKicker, { color: featureInk(tone) }]}>{kicker}</Text>
         <Text style={[styles.discoveryTitle, styles.crescerModuleHeroTitle]}>{title}</Text>
         <Text style={styles.discoveryBody}>{body}</Text>
       </View>
-      <Image source={crescerHomeIcons[icon]} resizeMode="contain" style={styles.crescerModuleHeroImage} />
+      <Image source={crescerHomeIcons[icon]} resizeMode="contain" style={[styles.crescerModuleHeroImage, wideCopy && styles.crescerModuleHeroImageCompact]} />
     </View>
   );
 }
@@ -1677,7 +1684,7 @@ function LibraryScreen({ session, onOpenBook }: { session: MobileSession | null;
 
   return (
     <View>
-      <CrescerModuleHero kicker="Estante da turma" title="Biblioteca" body="Escolha uma história para ler e descobrir." icon="library" tone="sky" />
+      <CrescerModuleHero kicker="Estante da turma" title="Biblioteca" body="Escolha uma história para ler e descobrir." icon="library" tone="sky" wideCopy />
 
       {loading ? (
         <View style={styles.libraryStateCard}>
@@ -8089,13 +8096,29 @@ const styles = StyleSheet.create({
   },
   crescerHomeHeader: {
     alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: spacing.xs
   },
   crescerBrandMark: {
     alignItems: "center",
     flexDirection: "row",
     gap: spacing.sm,
-    justifyContent: "center"
+    flex: 1,
+    justifyContent: "center",
+    minWidth: 0
+  },
+  crescerLogoutButton: {
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.92)",
+    borderColor: "#c9e8c5",
+    borderRadius: 18,
+    borderWidth: 2,
+    height: 44,
+    justifyContent: "center",
+    marginLeft: spacing.sm,
+    width: 44,
+    ...shadow
   },
   crescerBrandTitle: {
     color: colors.brand,
@@ -8357,6 +8380,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: 78
   },
+  crescerFeatureCardCompact: {
+    alignItems: "stretch",
+    flexDirection: "column",
+    gap: spacing.xs,
+    justifyContent: "flex-start",
+    minHeight: 148,
+    paddingHorizontal: spacing.sm,
+    paddingRight: spacing.sm,
+    paddingTop: spacing.sm
+  },
   crescerFeatureCardPressed: {
     borderColor: "rgba(255, 255, 255, 1)",
     shadowOpacity: 0.09,
@@ -8403,6 +8436,12 @@ const styles = StyleSheet.create({
     transform: [{ rotate: "-6deg" }],
     width: 154
   },
+  crescerFeatureIconCompact: {
+    alignSelf: "center",
+    height: 66,
+    marginBottom: 0,
+    width: 74
+  },
   crescerFeatureIconPressed: {
     shadowOpacity: 0.08,
     transform: [{ translateY: 2 }, { scale: 0.96 }]
@@ -8417,6 +8456,10 @@ const styles = StyleSheet.create({
     width: 154,
     zIndex: 3
   },
+  crescerFeatureIconImageCompact: {
+    height: 72,
+    width: 82
+  },
   crescerFeatureCopy: {
     flex: 1,
     minWidth: 0,
@@ -8429,12 +8472,22 @@ const styles = StyleSheet.create({
     letterSpacing: 0,
     lineHeight: 22
   },
+  crescerFeatureTitleCompact: {
+    textAlign: "center",
+    fontSize: 16,
+    lineHeight: 19
+  },
   crescerFeatureBody: {
     color: colors.studentInk,
     fontSize: 13,
     fontWeight: "800",
     lineHeight: 17,
     marginTop: 2
+  },
+  crescerFeatureBodyCompact: {
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: "center"
   },
   crescerFeatureArrow: {
     alignItems: "center",
@@ -8446,6 +8499,12 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 12,
     width: 34
+  },
+  crescerFeatureArrowCompact: {
+    bottom: 8,
+    height: 28,
+    right: 8,
+    width: 28
   },
   crescerToneMint: {
     backgroundColor: "rgba(227, 247, 221, 0.95)"
@@ -8520,6 +8579,9 @@ const styles = StyleSheet.create({
     minWidth: 0,
     zIndex: 2
   },
+  crescerModuleHeroCopyWide: {
+    maxWidth: "70%"
+  },
   crescerModuleHeroTitle: {
     fontSize: 28,
     lineHeight: 33,
@@ -8532,6 +8594,11 @@ const styles = StyleSheet.create({
     right: -8,
     width: 168,
     zIndex: 1
+  },
+  crescerModuleHeroImageCompact: {
+    height: 134,
+    right: -18,
+    width: 148
   },
   fundamentalHero: {
     backgroundColor: "rgba(255, 255, 255, 0.94)",
