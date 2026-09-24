@@ -120,6 +120,23 @@ const teacherHomeIcons = {
   tracking: require("../assets/teacher-home/icon_classes_tracking.png")
 } as const satisfies Record<string, ImageSourcePropType>;
 
+const teacherCatalogIcons = {
+  alertBell: require("../assets/icon-catalog/professor/prof_alert_bell.png"),
+  calendarClock: require("../assets/icon-catalog/professor/prof_calendar_clock.png"),
+  careSettings: require("../assets/icon-catalog/professor/prof_care_settings.png"),
+  chatBubbles: require("../assets/icon-catalog/professor/prof_chat_bubbles.png"),
+  checklist: require("../assets/icon-catalog/professor/prof_checklist.png"),
+  checklistPencil: require("../assets/icon-catalog/professor/prof_checklist_pencil.png"),
+  graduationBooks: require("../assets/icon-catalog/professor/prof_graduation_books.png"),
+  groupChat: require("../assets/icon-catalog/professor/prof_group_chat.png"),
+  growthChart: require("../assets/icon-catalog/professor/prof_growth_chart.png"),
+  ideaBooks: require("../assets/icon-catalog/professor/prof_idea_books.png"),
+  notebookPencil: require("../assets/icon-catalog/professor/prof_notebook_pencil.png"),
+  peopleSearch: require("../assets/icon-catalog/professor/prof_people_search.png"),
+  personEdit: require("../assets/icon-catalog/professor/prof_person_edit.png"),
+  trophy: require("../assets/icon-catalog/professor/prof_trophy.png")
+} as const satisfies Record<string, ImageSourcePropType>;
+
 type TeacherSplitIcon = {
   source: ImageSourcePropType;
   side: "left" | "right";
@@ -935,34 +952,48 @@ function TeacherHomeScreen({ profile, session, onOpen }: { profile: AppProfile; 
 
       <SectionHeader title="Resumo da semana" />
       <View style={styles.teacherTrackingGrid}>
-        <View style={styles.teacherWeeklyCard}>
-          <Text style={styles.teacherTrackingValue}>{summary?.activeClassLinks ?? 0}</Text>
-          <Text style={styles.teacherTrackingLabel}>Turmas</Text>
-          <Text style={styles.teacherTrackingHelper}>Turmas ativas</Text>
-        </View>
-        <View style={styles.teacherWeeklyCard}>
-          <Text style={styles.teacherTrackingValue}>{summary?.totalStudents ?? 0}</Text>
-          <Text style={styles.teacherTrackingLabel}>Alunos</Text>
-          <Text style={styles.teacherTrackingHelper}>Vínculos ativos</Text>
-        </View>
-        <View style={styles.teacherWeeklyCard}>
-          <Text style={styles.teacherTrackingValue}>{summary?.unreadNotifications ?? 0}</Text>
-          <Text style={styles.teacherTrackingLabel}>Avisos</Text>
-          <Text style={styles.teacherTrackingHelper}>Não lidos</Text>
-        </View>
-        <View style={styles.teacherWeeklyCard}>
-          <Text style={styles.teacherTrackingValue}>{summary?.todaysCalendarCount ?? 0}</Text>
-          <Text style={styles.teacherTrackingLabel}>Atividades</Text>
-          <Text style={styles.teacherTrackingHelper}>Planejadas</Text>
-        </View>
-        <View style={styles.teacherWeeklyCard}>
-          <Text style={styles.teacherTrackingValue}>{summary?.unreadNotifications ?? 0}</Text>
-          <Text style={styles.teacherTrackingLabel}>Avaliações</Text>
-          <Text style={styles.teacherTrackingHelper}>Publicadas</Text>
-        </View>
+        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.peopleSearch} value={summary?.activeClassLinks ?? 0} label="Turmas" helper="Turmas ativas" />
+        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.groupChat} value={summary?.totalStudents ?? 0} label="Alunos" helper="Vínculos ativos" />
+        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.alertBell} value={summary?.unreadNotifications ?? 0} label="Avisos" helper="Não lidos" />
+        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.calendarClock} value={summary?.todaysCalendarCount ?? 0} label="Atividades" helper="Planejadas" />
+        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.growthChart} value={summary?.unreadNotifications ?? 0} label="Avaliações" helper="Publicadas" />
       </View>
     </View>
   );
+}
+
+function TeacherWeeklyMetricCard({ icon, value, label, helper }: { icon: ImageSourcePropType; value: string | number; label: string; helper: string }) {
+  const tone = teacherWeeklyTone(label);
+
+  return (
+    <View style={[styles.teacherWeeklyCard, styles[`teacherWeeklyCard${tone}`]]}>
+      <View style={styles.teacherWeeklyGlow} />
+      <View style={styles.teacherWeeklyRelief} />
+      <View style={styles.teacherWeeklyIconFrame}>
+        <Image source={icon} resizeMode="contain" style={styles.teacherWeeklyIconImage} />
+      </View>
+      <View style={styles.teacherWeeklyCopy}>
+        <Text style={styles.teacherTrackingValue}>{value}</Text>
+        <Text style={styles.teacherTrackingLabel}>{label}</Text>
+        <Text style={styles.teacherTrackingHelper}>{helper}</Text>
+      </View>
+    </View>
+  );
+}
+
+function teacherWeeklyTone(label: string): "Classes" | "Students" | "Alerts" | "Activities" | "Assessments" {
+  if (label === "Turmas") return "Classes";
+  if (label === "Alunos") return "Students";
+  if (label === "Avisos") return "Alerts";
+  if (label === "Atividades") return "Activities";
+  return "Assessments";
+}
+
+function teacherProfileMetricTone(label: string): "Classes" | "Students" | "Activities" | "Assessments" {
+  if (label.includes("Turmas")) return "Classes";
+  if (label.includes("Compromissos")) return "Activities";
+  if (label.includes("Diário")) return "Students";
+  return "Assessments";
 }
 
 function TeacherTodayCard({ item, onPress }: { item: TeacherTodayItem; onPress: () => void }) {
@@ -1031,6 +1062,28 @@ function teacherModuleIcon(title: string): TeacherSplitIcon {
   if (title.includes("Notificações")) return { source: teacherHomeIcons.notifications, side: "left" };
   if (title.includes("Frequência") || title.includes("turmas") || title.includes("Agenda")) return { source: teacherHomeIcons.peopleCalendar, side: "right" };
   return { source: teacherHomeIcons.peopleCalendar, side: "left" };
+}
+
+function teacherClassActionIcon(label: string): ImageSourcePropType {
+  if (label.includes("chamada")) return teacherCatalogIcons.checklistPencil;
+  if (label.includes("recado")) return teacherCatalogIcons.groupChat;
+  if (label.includes("aula")) return teacherCatalogIcons.notebookPencil;
+  if (label.includes("Agenda")) return teacherCatalogIcons.calendarClock;
+  if (label.includes("Avalia")) return teacherCatalogIcons.growthChart;
+  return teacherCatalogIcons.peopleSearch;
+}
+
+function teacherProfileMetricIcon(label: string): ImageSourcePropType {
+  if (label.includes("Turmas")) return teacherCatalogIcons.peopleSearch;
+  if (label.includes("Compromissos")) return teacherCatalogIcons.calendarClock;
+  if (label.includes("Diário")) return teacherCatalogIcons.notebookPencil;
+  return teacherCatalogIcons.trophy;
+}
+
+function teacherProfilePreferenceIcon(title: string): ImageSourcePropType {
+  if (title.includes("Notificações")) return teacherCatalogIcons.alertBell;
+  if (title.includes("Acessibilidade")) return teacherCatalogIcons.careSettings;
+  return teacherCatalogIcons.chatBubbles;
 }
 
 function TeacherClassCard({ item, onPress }: { item: TeacherClassSummary; onPress: () => void }) {
@@ -5816,10 +5869,12 @@ function TeacherClassActionCard({
   action: { label: string; helper: string; mark: string; primary?: boolean };
   onPress: () => void;
 }) {
+  const icon = teacherClassActionIcon(action.label);
+
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={action.label} onPress={onPress} style={[styles.teacherClassActionCard, action.primary ? styles.teacherClassActionPrimary : null]}>
       <View style={[styles.teacherClassActionMark, action.primary ? styles.teacherClassActionMarkPrimary : null]}>
-        <Text style={[styles.teacherClassActionMarkText, action.primary ? styles.teacherClassActionMarkTextPrimary : null]}>{action.mark}</Text>
+        <Image source={icon} resizeMode="contain" style={styles.teacherClassActionIconImage} />
       </View>
       <Text style={[styles.teacherClassActionTitle, action.primary ? styles.teacherClassActionTitlePrimary : null]}>{action.label}</Text>
       <Text style={[styles.teacherClassActionBody, action.primary ? styles.teacherClassActionBodyPrimary : null]}>{action.helper}</Text>
@@ -7266,28 +7321,32 @@ function TeacherProfileScreen({
               <Text style={styles.teacherProfileClassChipBody}>{item.students}</Text>
             </View>
           ))}
-          {highlightedClasses.length === 0 ? <EmptyState title="Nenhuma turma ativa" body="Quando houver vínculo ativo, suas turmas aparecerão aqui." /> : null}
+          {highlightedClasses.length === 0 ? (
+            <View style={styles.teacherProfileEmptyClassState}>
+              <EmptyState title="Nenhuma turma ativa" body="Quando houver vínculo ativo, suas turmas aparecerão aqui." />
+            </View>
+          ) : null}
         </View>
       </View>
 
       <SectionHeader title="Resumo de rotina" />
       <View style={styles.teacherProfileRoutineGrid}>
-        <TeacherProfileMetric mark="T" value={activeClassLinks} label="Turmas" />
-        <TeacherProfileMetric mark="✓" value={summary?.todaysCalendarCount ?? 0} label="Compromissos hoje" />
-        <TeacherProfileMetric mark="D" value={diaryCount} label="Registros de Diário" />
-        <TeacherProfileMetric mark="A+" value={avaliaCount} label="Avaliações" />
+        <TeacherProfileMetric value={activeClassLinks} label="Turmas" />
+        <TeacherProfileMetric value={summary?.todaysCalendarCount ?? 0} label="Compromissos hoje" />
+        <TeacherProfileMetric value={diaryCount} label="Registros de Diário" />
+        <TeacherProfileMetric value={avaliaCount} label="Avaliações" />
       </View>
 
       <SectionHeader title="Preferências" />
       <View style={styles.teacherProfilePreferenceList}>
-        <TeacherProfilePreferenceCard mark="!" title="Notificações" description="Central de recados, prazos e avisos importantes." action="Abrir notificações" onPress={() => onOpen("notifications")} />
-        <TeacherProfilePreferenceCard mark="Aa" title="Acessibilidade" description="Texto, contraste e movimento para leitura confortável." action="Ajustar" onPress={onOpenAccessibility} />
-        <TeacherProfilePreferenceCard mark="♪" title="Som" description="Preferência visual para alertas do aplicativo." action="Em breve" />
+        <TeacherProfilePreferenceCard title="Notificações" description="Central de recados, prazos e avisos importantes." action="Abrir notificações" onPress={() => onOpen("notifications")} />
+        <TeacherProfilePreferenceCard title="Acessibilidade" description="Texto, contraste e movimento para leitura confortável." action="Ajustar" onPress={onOpenAccessibility} />
+        <TeacherProfilePreferenceCard title="Som" description="Preferência visual para alertas do aplicativo." action="Em breve" />
       </View>
 
       <View style={styles.teacherProfileFormationCard}>
         <View style={styles.teacherProfileFormationMark}>
-          <Text style={styles.teacherProfileFormationMarkText}>F</Text>
+          <Image source={teacherCatalogIcons.ideaBooks} resizeMode="contain" style={styles.teacherProfileFormationIconImage} />
         </View>
         <View style={styles.teacherProfileFormationCopy}>
           <Text style={styles.teacherProfileFormationTitle}>Formação</Text>
@@ -7303,11 +7362,16 @@ function TeacherProfileScreen({
   );
 }
 
-function TeacherProfileMetric({ mark, value, label }: { mark: string; value: string | number; label: string }) {
+function TeacherProfileMetric({ value, label }: { value: string | number; label: string }) {
+  const icon = teacherProfileMetricIcon(label);
+  const tone = teacherProfileMetricTone(label);
+
   return (
-    <View style={styles.teacherProfileMetricCard}>
+    <View style={[styles.teacherProfileMetricCard, styles[`teacherWeeklyCard${tone}`]]}>
+      <View style={styles.teacherWeeklyGlow} />
+      <View style={styles.teacherWeeklyRelief} />
       <View style={styles.teacherProfileMetricMark}>
-        <Text style={styles.teacherProfileMetricMarkText}>{mark}</Text>
+        <Image source={icon} resizeMode="contain" style={styles.teacherProfileMetricIconImage} />
       </View>
       <Text style={styles.teacherProfileMetricValue}>{value}</Text>
       <Text style={styles.teacherProfileMetricLabel}>{label}</Text>
@@ -7316,22 +7380,21 @@ function TeacherProfileMetric({ mark, value, label }: { mark: string; value: str
 }
 
 function TeacherProfilePreferenceCard({
-  mark,
   title,
   description,
   action,
   onPress
 }: {
-  mark: string;
   title: string;
   description: string;
   action: string;
   onPress?: () => void;
 }) {
+  const icon = teacherProfilePreferenceIcon(title);
   const content = (
     <>
       <View style={styles.teacherProfilePreferenceMark}>
-        <Text style={styles.teacherProfilePreferenceMarkText}>{mark}</Text>
+        <Image source={icon} resizeMode="contain" style={styles.teacherProfilePreferenceIconImage} />
       </View>
       <View style={styles.teacherProfilePreferenceCopy}>
         <Text style={styles.teacherProfilePreferenceTitle}>{title}</Text>
@@ -11094,15 +11157,90 @@ const styles = StyleSheet.create({
     gap: spacing.sm
   },
   teacherWeeklyCard: {
+    alignItems: "center",
     backgroundColor: "rgba(255, 255, 255, 0.94)",
     borderColor: "rgba(255, 255, 255, 0.96)",
-    borderRadius: 18,
+    borderRadius: 22,
     borderWidth: 2,
     flexBasis: "48%",
+    flexDirection: "row",
     flexGrow: 1,
-    minHeight: 96,
+    gap: spacing.sm,
+    minHeight: 118,
+    overflow: "hidden",
     padding: spacing.md,
-    ...shadow
+    position: "relative",
+    shadowColor: "#2f5a42",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.16,
+    shadowRadius: 16
+  },
+  teacherWeeklyCardClasses: {
+    backgroundColor: "#dff4ea",
+    borderColor: "rgba(255,255,255,0.92)",
+    shadowColor: "#2f7a51"
+  },
+  teacherWeeklyCardStudents: {
+    backgroundColor: "#fff1bf",
+    borderColor: "rgba(255,255,255,0.92)",
+    shadowColor: "#c78a10"
+  },
+  teacherWeeklyCardAlerts: {
+    backgroundColor: "#ffe5c8",
+    borderColor: "rgba(255,255,255,0.94)",
+    shadowColor: "#d2691e"
+  },
+  teacherWeeklyCardActivities: {
+    backgroundColor: "#dff2ff",
+    borderColor: "rgba(255,255,255,0.94)",
+    shadowColor: "#2872a6"
+  },
+  teacherWeeklyCardAssessments: {
+    backgroundColor: "#e9ecff",
+    borderColor: "rgba(255,255,255,0.94)",
+    shadowColor: "#4859a8"
+  },
+  teacherWeeklyGlow: {
+    backgroundColor: "rgba(255, 255, 255, 0.42)",
+    borderRadius: 999,
+    height: 92,
+    position: "absolute",
+    right: -24,
+    top: -30,
+    width: 92
+  },
+  teacherWeeklyRelief: {
+    backgroundColor: "rgba(255,255,255,0.24)",
+    borderRadius: 999,
+    bottom: -38,
+    height: 82,
+    left: 32,
+    position: "absolute",
+    transform: [{ rotate: "-10deg" }],
+    width: 142
+  },
+  teacherWeeklyIconFrame: {
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.58)",
+    borderRadius: 999,
+    height: 64,
+    justifyContent: "center",
+    overflow: "hidden",
+    shadowColor: "#4b6a49",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    width: 64,
+    zIndex: 2
+  },
+  teacherWeeklyIconImage: {
+    height: 62,
+    width: 62
+  },
+  teacherWeeklyCopy: {
+    flex: 1,
+    minWidth: 0,
+    zIndex: 2
   },
   teacherTrackingDetailCard: {
     backgroundColor: colors.surface,
@@ -11317,11 +11455,12 @@ const styles = StyleSheet.create({
   teacherClassActionCard: {
     backgroundColor: colors.surface,
     borderColor: colors.line,
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 2,
     flexBasis: "48%",
     flexGrow: 1,
-    minHeight: 118,
+    minHeight: 138,
+    overflow: "hidden",
     padding: spacing.md
   },
   teacherClassActionPrimary: {
@@ -11330,14 +11469,19 @@ const styles = StyleSheet.create({
   },
   teacherClassActionMark: {
     alignItems: "center",
-    backgroundColor: "#f3f6f3",
-    borderRadius: 12,
-    height: 34,
+    backgroundColor: "rgba(231,245,235,0.92)",
+    borderRadius: 999,
+    height: 58,
     justifyContent: "center",
-    width: 34
+    overflow: "hidden",
+    width: 58
   },
   teacherClassActionMarkPrimary: {
-    backgroundColor: colors.brandDark
+    backgroundColor: "rgba(255,255,255,0.94)"
+  },
+  teacherClassActionIconImage: {
+    height: 58,
+    width: 58
   },
   teacherClassActionMarkText: {
     color: colors.ink,
@@ -13321,6 +13465,7 @@ const styles = StyleSheet.create({
     borderColor: "#b8d7c7",
     borderRadius: 22,
     borderWidth: 2,
+    overflow: "hidden",
     padding: spacing.md
   },
   teacherProfileSectionTop: {
@@ -13361,7 +13506,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.xs,
-    marginTop: spacing.md
+    marginTop: spacing.md,
+    maxWidth: "100%",
+    overflow: "hidden",
+    width: "100%"
+  },
+  teacherProfileEmptyClassState: {
+    flexBasis: "100%",
+    flexGrow: 1,
+    maxWidth: "100%",
+    minWidth: 0,
+    width: "100%"
   },
   teacherProfileClassChip: {
     backgroundColor: colors.surface,
@@ -13389,22 +13544,38 @@ const styles = StyleSheet.create({
     gap: spacing.sm
   },
   teacherProfileMetricCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 18,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.96)",
+    borderRadius: 22,
     borderWidth: 2,
     flexBasis: "47%",
     flexGrow: 1,
-    minHeight: 118,
-    padding: spacing.md
+    minHeight: 136,
+    overflow: "hidden",
+    padding: spacing.md,
+    position: "relative",
+    shadowColor: "#2f5a42",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.16,
+    shadowRadius: 16
   },
   teacherProfileMetricMark: {
     alignItems: "center",
-    backgroundColor: colors.brandSoft,
-    borderRadius: 12,
-    height: 34,
+    backgroundColor: "rgba(255,255,255,0.58)",
+    borderRadius: 999,
+    height: 54,
     justifyContent: "center",
-    width: 34
+    overflow: "hidden",
+    shadowColor: "#4b6a49",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    width: 54,
+    zIndex: 2
+  },
+  teacherProfileMetricIconImage: {
+    height: 54,
+    width: 54
   },
   teacherProfileMetricMarkText: {
     color: colors.brandDark,
@@ -13416,14 +13587,16 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "900",
     lineHeight: 26,
-    marginTop: spacing.sm
+    marginTop: spacing.sm,
+    zIndex: 2
   },
   teacherProfileMetricLabel: {
     color: colors.muted,
     fontSize: 12,
     fontWeight: "800",
     lineHeight: 17,
-    marginTop: 2
+    marginTop: 2,
+    zIndex: 2
   },
   teacherProfilePreferenceList: {
     gap: spacing.sm
@@ -13443,11 +13616,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#e7f5eb",
     borderColor: "#b8d7c7",
-    borderRadius: 15,
+    borderRadius: 999,
     borderWidth: 2,
-    height: 40,
+    height: 52,
     justifyContent: "center",
-    width: 40
+    overflow: "hidden",
+    width: 52
+  },
+  teacherProfilePreferenceIconImage: {
+    height: 52,
+    width: 52
   },
   teacherProfilePreferenceMarkText: {
     color: colors.brandDark,
@@ -13491,11 +13669,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.surface,
     borderColor: "#d7eadc",
-    borderRadius: 14,
+    borderRadius: 999,
     borderWidth: 2,
-    height: 38,
+    height: 54,
     justifyContent: "center",
-    width: 38
+    overflow: "hidden",
+    width: 54
+  },
+  teacherProfileFormationIconImage: {
+    height: 54,
+    width: 54
   },
   teacherProfileFormationMarkText: {
     color: colors.brandDark,

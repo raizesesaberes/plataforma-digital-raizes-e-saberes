@@ -23,7 +23,7 @@ export function LoginScreen({ onSelectRole }: { onSelectRole: (role: AppRole, se
   const tablet = isTabletWidth(width);
   const loginRects = useMemo(() => (tablet ? tabletLoginRects : phoneLoginRects), [tablet]);
   const visualSource = loginAssetFor(width);
-  const visualAspectRatio = tablet ? 1448 / 1086 : 853 / 1844;
+  const visualAspectRatio = tablet ? 1448 / 1086 : 948 / 1659;
   const assetFrame = useMemo(() => getAssetFrame(width, height, visualAspectRatio), [height, visualAspectRatio, width]);
 
   async function submitCrescerLogin() {
@@ -47,7 +47,7 @@ export function LoginScreen({ onSelectRole }: { onSelectRole: (role: AppRole, se
 
   return (
     <View style={styles.screen}>
-      <Image source={visualSource} resizeMode="stretch" style={[styles.loginImage, assetFrame]} />
+      <Image source={visualSource} resizeMode="cover" style={[styles.loginImage, assetFrame]} />
       <View style={[styles.loginLayer, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
         <View style={[styles.assetOverlay, assetFrame]}>
           <Pressable onPress={() => emailInputRef.current?.focus()} style={[styles.loginFieldClip, focusedField === "email" && styles.loginFieldFocused, loginRects.email]}>
@@ -144,9 +144,11 @@ export function LoginScreen({ onSelectRole }: { onSelectRole: (role: AppRole, se
 }
 
 function getAssetFrame(width: number, height: number, aspectRatio: number) {
+  const widthBasedHeight = width / aspectRatio;
   const heightBasedWidth = height * aspectRatio;
-  const baseWidth = Math.min(width, heightBasedWidth);
-  const baseHeight = baseWidth / aspectRatio;
+  const useWidth = widthBasedHeight >= height;
+  const baseWidth = useWidth ? width : heightBasedWidth;
+  const baseHeight = useWidth ? widthBasedHeight : height;
 
   return {
     height: baseHeight,

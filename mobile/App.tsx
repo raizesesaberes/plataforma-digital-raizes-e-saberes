@@ -14,7 +14,7 @@ function SplashScreen({ onComplete }: { onComplete: () => void }) {
   const { width, height } = useWindowDimensions();
   const [progress, setProgress] = useState(0);
   const spin = useRef(new Animated.Value(0)).current;
-  const splashAspectRatio = width >= 700 ? 1448 / 1086 : 853 / 1844;
+  const splashAspectRatio = width >= 700 ? 1448 / 1086 : 948 / 1659;
   const assetFrame = useMemo(() => getAssetFrame(width, height, splashAspectRatio), [height, splashAspectRatio, width]);
 
   useEffect(() => {
@@ -51,7 +51,7 @@ function SplashScreen({ onComplete }: { onComplete: () => void }) {
 
   return (
     <View style={styles.splashScreen}>
-      <Image source={splashAssetFor(width)} resizeMode="stretch" style={[styles.splashImage, assetFrame]} />
+      <Image source={splashAssetFor(width)} resizeMode="cover" style={[styles.splashImage, assetFrame]} />
       <View style={[styles.splashLayer, assetFrame]}>
         <View style={styles.splashLoaderWrap}>
           <View style={styles.splashLoaderShadow}>
@@ -70,9 +70,11 @@ function SplashScreen({ onComplete }: { onComplete: () => void }) {
 }
 
 function getAssetFrame(width: number, height: number, aspectRatio: number) {
+  const widthBasedHeight = width / aspectRatio;
   const heightBasedWidth = height * aspectRatio;
-  const baseWidth = Math.min(width, heightBasedWidth);
-  const baseHeight = baseWidth / aspectRatio;
+  const useWidth = widthBasedHeight >= height;
+  const baseWidth = useWidth ? width : heightBasedWidth;
+  const baseHeight = useWidth ? widthBasedHeight : height;
 
   return {
     height: baseHeight,
