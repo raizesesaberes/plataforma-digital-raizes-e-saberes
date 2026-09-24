@@ -470,6 +470,11 @@ type ProfileRouteRow = {
   status: string | null;
 };
 
+type PublicUserRouteRow = {
+  perfil: string | null;
+  ativo: boolean | null;
+};
+
 type StudentRouteRow = {
   id: string;
   enrollments?: Array<{
@@ -897,13 +902,24 @@ export async function getAppRoleForSession(session: MobileSession): Promise<Sess
     `profiles?select=platform_role,status&id=eq.${encodeURIComponent(session.userId)}&limit=1`
   );
   const profile = profiles[0];
-  const platformRole = normalizeRouteValue(profile?.platform_role);
-  if (profile?.status && normalizeRouteValue(profile.status) !== "active") throw new Error("profile_inactive");
+  const profileRole = normalizeRouteValue(profile?.platform_role);
+  if (profile?.status && !isActiveStatus(profile.status)) throw new Error("profile_inactive");
+
+  const legacyUsers = await restGet<PublicUserRouteRow[]>(
+    session,
+    `users?select=perfil,ativo&id=eq.${encodeURIComponent(session.userId)}&limit=1`
+  );
+  const legacyUser = legacyUsers[0];
+  if (legacyUser?.ativo === false) throw new Error("public_user_inactive");
+
+  const legacyRole = normalizeRouteValue(legacyUser?.perfil);
+  const platformRole = profileRole && profileRole !== "user" ? profileRole : legacyRole;
   if (platformRole === "professor") return "professor";
 
   if (platformRole === "aluno" || platformRole === "educacao_infantil") {
     const rows = await rpc<RpcStudentContextRow[]>(session, "student_get_context", {});
     const context = rows[0];
+    if (!context?.student_id) throw new Error("student_context_missing");
     const segment = normalizeRouteValue(context?.segment);
     const classSegment = normalizeRouteValue([context?.school_year, context?.age_group, context?.class_name].filter(Boolean).join(" "));
     if (segment.includes("infantil") || classSegment.includes("infantil") || platformRole === "educacao_infantil") return "crescer";
@@ -1887,6 +1903,11 @@ function normalizeRouteValue(value: unknown) {
         .trim()
         .toLowerCase()
     : "";
+}
+
+function isActiveStatus(value: unknown) {
+  const status = normalizeRouteValue(value);
+  return status === "active" || status === "ativo";
 }
 
 function firstEmbedded<T extends Record<string, unknown>>(value: T | T[] | null | undefined): T {

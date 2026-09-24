@@ -598,7 +598,8 @@ function fundamentalModuleIcon(key: ModuleKey) {
   if (key === "avalia") return crescerHomeIcons.achievements;
   if (key === "agenda") return crescerHomeIcons.agenda;
   if (key === "notifications") return crescerHomeIcons.notifications;
-  return crescerHomeIcons.family;
+  if (key === "profile") return teacherCatalogIcons.personEdit;
+  return teacherCatalogIcons.notebookPencil;
 }
 
 function fundamentalModuleTone(key: ModuleKey): CrescerHomeCardSpec["tone"] {
@@ -610,11 +611,42 @@ function fundamentalModuleTone(key: ModuleKey): CrescerHomeCardSpec["tone"] {
   return "mint";
 }
 
+function fundamentalActivityIcon() {
+  return teacherCatalogIcons.checklistPencil;
+}
+
+function fundamentalAssessmentIcon(label?: string) {
+  const value = (label ?? "").toLowerCase();
+  if (value.includes("conclu")) return teacherCatalogIcons.trophy;
+  if (value.includes("andamento")) return teacherCatalogIcons.notebookPencil;
+  return teacherCatalogIcons.growthChart;
+}
+
+function fundamentalAgendaIcon(type: FundamentalAgendaItem["type"]) {
+  if (type === "Avaliação") return teacherCatalogIcons.growthChart;
+  if (type === "Atividade") return crescerHomeIcons.activities;
+  return crescerHomeIcons.agenda;
+}
+
+function fundamentalNotificationIcon(type: FundamentalNotification["type"]) {
+  if (type === "Avalia+") return teacherCatalogIcons.growthChart;
+  if (type === "Agenda") return crescerHomeIcons.agenda;
+  return crescerHomeIcons.notifications;
+}
+
+function fundamentalProfileStudyIcon(target: string) {
+  if (target === "activities") return crescerHomeIcons.activities;
+  if (target === "library") return crescerHomeIcons.library;
+  if (target === "avalia") return teacherCatalogIcons.growthChart;
+  if (target === "agenda") return crescerHomeIcons.agenda;
+  return teacherCatalogIcons.notebookPencil;
+}
+
 function FundamentalQuickActionCard({ action, onPress }: { action: FundamentalQuickAction; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={action.label} onPress={onPress} style={styles.fundamentalActionCard}>
       <View style={styles.fundamentalActionMark}>
-        <Text style={styles.fundamentalActionMarkText}>{action.mark}</Text>
+        <Image source={fundamentalProfileStudyIcon(action.key)} resizeMode="contain" style={styles.fundamentalActionImage} />
       </View>
       <Text style={styles.fundamentalActionTitle}>{action.label}</Text>
       <Text style={styles.fundamentalActionBody}>{action.description}</Text>
@@ -625,6 +657,9 @@ function FundamentalQuickActionCard({ action, onPress }: { action: FundamentalQu
 function FundamentalActivityCard({ activity, onPress }: { activity: FundamentalActivity; onPress?: () => void }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`Abrir atividade ${activity.title}`} onPress={onPress} style={styles.fundamentalActivityCard}>
+      <View style={styles.fundamentalActivityIcon}>
+        <Image source={fundamentalActivityIcon()} resizeMode="contain" style={styles.fundamentalActivityIconImage} />
+      </View>
       <View style={styles.fundamentalActivityCopy}>
         <Text style={styles.fundamentalActivitySubject}>{activity.schoolYear || "Atividade"}</Text>
         <Text style={styles.fundamentalActivityTitle}>{activity.title}</Text>
@@ -3439,8 +3474,13 @@ function CrescerFamilyScreen({ session, onOpen }: { session: MobileSession | nul
       </View>
 
       <View style={styles.familySummaryCard}>
-        <Text style={styles.familySectionTitle}>Resumo do dia</Text>
-        <Text style={styles.familySectionBody}>{daySummary}</Text>
+        <View style={styles.familySummaryIcon}>
+          <Image source={crescerHomeIcons.family} resizeMode="contain" style={styles.familySummaryIconImage} />
+        </View>
+        <View style={styles.familyTimelineCopy}>
+          <Text style={styles.familySectionTitle}>Resumo do dia</Text>
+          <Text style={styles.familySectionBody}>{daySummary}</Text>
+        </View>
       </View>
 
       <SectionHeader title="Frequência" />
@@ -3472,15 +3512,11 @@ function CrescerFamilyScreen({ session, onOpen }: { session: MobileSession | nul
 
       <FamilyQuickGrid
         items={[
-          { title: "Agenda", body: "Eventos e lembretes da turma.", mark: "◷", target: "family:agenda" },
-          { title: "Notificações", body: `${notifications.length} ${notifications.length === 1 ? "item" : "itens"} no centro.`, mark: "!", target: "family:notifications" }
+          { title: "Agenda", body: "Eventos e lembretes da turma.", icon: "agenda", target: "family:agenda" },
+          { title: "Notificações", body: `${notifications.length} ${notifications.length === 1 ? "item" : "itens"} no centro.`, icon: "notifications", target: "family:notifications" }
         ]}
         onOpen={onOpen}
       />
-      <View style={styles.familyReadOnlyNotice}>
-        <Text style={styles.familyReadOnlyTitle}>Somente acompanhamento</Text>
-        <Text style={styles.familyReadOnlyBody}>Esta área não permite alterar frequência, responder avaliações, registrar diário ou enviar recados como professor.</Text>
-      </View>
         </>
       )}
     </View>
@@ -3499,8 +3535,13 @@ function FamilyPreviewSection({ title, action, onPress, children }: { title: str
 }
 
 function FamilyMetricCard({ label, value, helper }: { label: string; value: string; helper: string }) {
+  const icon = familyMetricIcon(label);
+
   return (
     <View style={styles.familyMetricCard}>
+      <View style={styles.familyMetricIcon}>
+        <Image source={icon} resizeMode="contain" style={styles.familyMetricIconImage} />
+      </View>
       <Text style={styles.familyMetricValue}>{value}</Text>
       <Text style={styles.familyMetricLabel}>{label}</Text>
       <Text style={styles.familyMetricHelper}>{helper}</Text>
@@ -3535,13 +3576,19 @@ function FamilyMessageCard({ title, meta, unread }: { title: string; meta: strin
   );
 }
 
-function FamilyQuickGrid({ items, onOpen }: { items: Array<{ title: string; body: string; mark: string; target: string }>; onOpen: (key: ModuleKey) => void }) {
+function familyMetricIcon(label: string): ImageSourcePropType {
+  if (label.includes("Frequência")) return crescerHomeIcons.week;
+  if (label.includes("Presenças")) return crescerHomeIcons.agenda;
+  return crescerHomeIcons.activities;
+}
+
+function FamilyQuickGrid({ items, onOpen }: { items: Array<{ title: string; body: string; icon: "agenda" | "notifications"; target: string }>; onOpen: (key: ModuleKey) => void }) {
   return (
     <View style={styles.familyQuickGrid}>
       {items.map((item) => (
         <Pressable key={item.title} accessibilityRole="button" accessibilityLabel={item.title} onPress={() => onOpen(item.target as ModuleKey)} style={styles.familyQuickCard}>
           <View style={styles.familyQuickMark}>
-            <Text style={styles.familyQuickMarkText}>{item.mark}</Text>
+            <Image source={crescerHomeIcons[item.icon]} resizeMode="contain" style={styles.familyQuickIconImage} />
           </View>
           <Text style={styles.familyQuickTitle}>{item.title}</Text>
           <Text style={styles.familyQuickBody}>{item.body}</Text>
@@ -3624,10 +3671,6 @@ function FamilySectionDetailScreen({ session, section, onBack }: { session: Mobi
           <EmptyState title="Nada por aqui" body="A escola ainda não publicou itens para esta área." />
         )}
       </View>
-      <View style={styles.familyReadOnlyNotice}>
-        <Text style={styles.familyReadOnlyTitle}>Somente acompanhamento</Text>
-        <Text style={styles.familyReadOnlyBody}>Esta área não permite alterar frequência, responder avaliações, registrar diário ou enviar recados como professor.</Text>
-      </View>
       <PrimaryButton label="Voltar" onPress={onBack} />
     </View>
   );
@@ -3660,16 +3703,38 @@ function parseLocalDate(value: string) {
   return new Date(year, month - 1, day);
 }
 
-function FundamentalShell({ title, intro, children }: { title: string; intro: string; children: React.ReactNode }) {
+function FundamentalShell({ title, intro, icon, children }: { title: string; intro: string; icon?: ImageSourcePropType; children: React.ReactNode }) {
   return (
     <View>
-      <View style={styles.fundamentalShellHero}>
+      <View style={[styles.fundamentalShellHero, icon ? styles.fundamentalShellHeroWithIcon : null]}>
+        <View style={styles.fundamentalShellHeroCopy}>
+          <Text style={styles.fundamentalKicker}>Aluno Fundamental</Text>
+          <Text style={styles.fundamentalShellTitle}>{title}</Text>
+          <Text style={styles.fundamentalShellIntro}>{intro}</Text>
+        </View>
+        {icon ? (
+          <View style={styles.fundamentalShellHeroIconFrame}>
+            <Image source={icon} resizeMode="contain" style={styles.fundamentalShellHeroIconImage} />
+          </View>
+        ) : null}
+      </View>
+      <SectionHeader title="Conteúdo" />
+      <View style={styles.fundamentalShellList}>{children}</View>
+    </View>
+  );
+}
+
+function FundamentalModuleHeader({ title, intro, icon }: { title: string; intro: string; icon: ImageSourcePropType }) {
+  return (
+    <View style={[styles.fundamentalShellHero, styles.fundamentalShellHeroWithIcon]}>
+      <View style={styles.fundamentalShellHeroCopy}>
         <Text style={styles.fundamentalKicker}>Aluno Fundamental</Text>
         <Text style={styles.fundamentalShellTitle}>{title}</Text>
         <Text style={styles.fundamentalShellIntro}>{intro}</Text>
       </View>
-      <SectionHeader title="Conteúdo" />
-      <View style={styles.fundamentalShellList}>{children}</View>
+      <View style={styles.fundamentalShellHeroIconFrame}>
+        <Image source={icon} resizeMode="contain" style={styles.fundamentalShellHeroIconImage} />
+      </View>
     </View>
   );
 }
@@ -3710,11 +3775,7 @@ function FundamentalActivitiesScreen({ session, onOpenActivity }: { session: Mob
 
   return (
     <View>
-      <View style={styles.fundamentalShellHero}>
-        <Text style={styles.fundamentalKicker}>Aluno Fundamental</Text>
-        <Text style={styles.fundamentalShellTitle}>Atividades</Text>
-        <Text style={styles.fundamentalShellIntro}>Organize suas atividades e continue seus estudos.</Text>
-      </View>
+      <FundamentalModuleHeader title="Atividades" intro="Organize suas atividades e continue seus estudos." icon={fundamentalModuleIcon("activities")} />
 
       {loading ? (
         <View style={styles.libraryStateCard}>
@@ -3730,7 +3791,7 @@ function FundamentalActivitiesScreen({ session, onOpenActivity }: { session: Mob
           <Pressable accessibilityRole="button" accessibilityLabel={`Abrir atividade ${featured.title}`} onPress={() => onOpenActivity(featured)} style={styles.fundamentalFeaturedActivity}>
             <View style={styles.fundamentalFeaturedTop}>
               <View style={styles.fundamentalFeaturedIcon}>
-                <Text style={styles.fundamentalFeaturedIconText}>✓</Text>
+                <Image source={fundamentalActivityIcon()} resizeMode="contain" style={styles.fundamentalFeaturedIconImage} />
               </View>
               <View style={styles.fundamentalFeaturedCopy}>
                 <Text style={styles.fundamentalActivitySubject}>{featured.schoolYear || "Atividade"}</Text>
@@ -3969,11 +4030,7 @@ function FundamentalAvaliaScreen({ session }: { session: MobileSession | null })
 
   return (
     <View>
-      <View style={styles.fundamentalShellHero}>
-        <Text style={styles.fundamentalKicker}>Aluno Fundamental</Text>
-        <Text style={styles.fundamentalShellTitle}>Avalia+</Text>
-        <Text style={styles.fundamentalShellIntro}>Acompanhe suas avaliações e resultados.</Text>
-      </View>
+      <FundamentalModuleHeader title="Avalia+" intro="Acompanhe suas avaliações e resultados." icon={fundamentalModuleIcon("avalia")} />
 
       <View style={styles.assessmentSummaryGrid}>
         <AssessmentSummaryCard label="Disponíveis" value={available.length} />
@@ -4005,6 +4062,9 @@ function FundamentalAvaliaScreen({ session }: { session: MobileSession | null })
 function AssessmentSummaryCard({ label, value }: { label: string; value: number }) {
   return (
     <View style={styles.assessmentSummaryCard}>
+      <View style={styles.assessmentSummaryIcon}>
+        <Image source={fundamentalAssessmentIcon(label)} resizeMode="contain" style={styles.assessmentSummaryIconImage} />
+      </View>
       <Text style={styles.assessmentSummaryValue}>{value}</Text>
       <Text style={styles.assessmentSummaryLabel}>{label}</Text>
     </View>
@@ -4044,7 +4104,7 @@ function FundamentalAssessmentCard({ assessment }: { assessment: FundamentalAsse
     <View style={styles.assessmentCard}>
       <View style={styles.assessmentCardTop}>
         <View style={styles.assessmentIcon}>
-          <Text style={styles.assessmentIconText}>A+</Text>
+          <Image source={fundamentalAssessmentIcon(state)} resizeMode="contain" style={styles.assessmentIconImage} />
         </View>
         <View style={styles.assessmentCardCopy}>
           <Text style={styles.assessmentSubject}>{assessment.component || assessment.schoolYear || "Avaliação"}</Text>
@@ -4297,11 +4357,7 @@ function FundamentalAgendaScreen({
 
   return (
     <View>
-      <View style={styles.fundamentalShellHero}>
-        <Text style={styles.fundamentalKicker}>Aluno Fundamental</Text>
-        <Text style={styles.fundamentalShellTitle}>Agenda</Text>
-        <Text style={styles.fundamentalShellIntro}>Acompanhe seus compromissos, atividades e avaliações.</Text>
-      </View>
+      <FundamentalModuleHeader title="Agenda" intro="Acompanhe seus compromissos, atividades e avaliações." icon={fundamentalModuleIcon("agenda")} />
 
       <SectionHeader title="Hoje" />
       <View style={styles.fundamentalAgendaTodayCard}>
@@ -4386,7 +4442,7 @@ function FundamentalAgendaCompactItem({ item, onPress }: { item: FundamentalAgen
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`${item.action} ${item.title}`} onPress={onPress} style={styles.fundamentalAgendaCompactItem}>
       <View style={styles.fundamentalAgendaTypeMark}>
-        <Text style={styles.fundamentalAgendaTypeMarkText}>{item.mark}</Text>
+        <Image source={fundamentalAgendaIcon(item.type)} resizeMode="contain" style={styles.fundamentalAgendaTypeIconImage} />
       </View>
       <View style={styles.fundamentalAgendaCompactCopy}>
         <Text style={styles.fundamentalAgendaTypeText}>{item.type}</Text>
@@ -4411,7 +4467,7 @@ function FundamentalAgendaCard({
     <Pressable accessibilityRole="button" accessibilityLabel={`Abrir compromisso ${item.title}`} onPress={onPress} style={styles.fundamentalAgendaCard}>
       <View style={styles.fundamentalAgendaCardTop}>
         <View style={styles.fundamentalAgendaTypeMark}>
-          <Text style={styles.fundamentalAgendaTypeMarkText}>{item.mark}</Text>
+          <Image source={fundamentalAgendaIcon(item.type)} resizeMode="contain" style={styles.fundamentalAgendaTypeIconImage} />
         </View>
         <View style={styles.fundamentalAgendaCardCopy}>
           <View style={styles.fundamentalAgendaTypeRow}>
@@ -4447,7 +4503,7 @@ function FundamentalAgendaDetailScreen({ item, onOpenModule }: { item: Fundament
       <View style={styles.fundamentalAgendaDetailCard}>
         <View style={styles.fundamentalAgendaDetailHeader}>
           <View style={styles.fundamentalAgendaTypeMark}>
-            <Text style={styles.fundamentalAgendaTypeMarkText}>{item.mark}</Text>
+            <Image source={fundamentalAgendaIcon(item.type)} resizeMode="contain" style={styles.fundamentalAgendaTypeIconImage} />
           </View>
           <View style={styles.fundamentalAgendaCardCopy}>
             <Text style={styles.fundamentalAgendaTypeText}>{item.subject}</Text>
@@ -4535,11 +4591,7 @@ function FundamentalNotificationsScreen({
 
   return (
     <View>
-      <View style={styles.fundamentalShellHero}>
-        <Text style={styles.fundamentalKicker}>Aluno Fundamental</Text>
-        <Text style={styles.fundamentalShellTitle}>Notificações</Text>
-        <Text style={styles.fundamentalShellIntro}>Acompanhe recados, prazos e novidades importantes.</Text>
-      </View>
+      <FundamentalModuleHeader title="Notificações" intro="Acompanhe recados, prazos e novidades importantes." icon={fundamentalModuleIcon("notifications")} />
 
       <View style={styles.fundamentalNotificationSummary}>
         <View>
@@ -4548,11 +4600,10 @@ function FundamentalNotificationsScreen({
             {unreadCount > 0 ? `${unreadCount} ${unreadCount === 1 ? "nova" : "novas"}` : "Tudo em dia"}
           </Text>
         </View>
-        {unreadCount > 0 ? (
-          <View style={styles.fundamentalNotificationBadge}>
-            <Text style={styles.fundamentalNotificationBadgeText}>{unreadCount}</Text>
-          </View>
-        ) : null}
+        <View style={styles.fundamentalNotificationBadge}>
+          <Image source={crescerHomeIcons.notifications} resizeMode="contain" style={styles.fundamentalNotificationBadgeImage} />
+          {unreadCount > 0 ? <Text style={styles.fundamentalNotificationBadgeCount}>{unreadCount}</Text> : null}
+        </View>
       </View>
 
       <SectionHeader title="Filtros" />
@@ -4619,7 +4670,7 @@ function FundamentalNotificationCard({
     <Pressable accessibilityRole="button" accessibilityLabel={`Abrir notificação ${item.title}`} onPress={onPress} style={[styles.fundamentalNotificationCard, unread && styles.fundamentalNotificationCardUnread]}>
       <View style={styles.fundamentalNotificationTop}>
         <View style={styles.fundamentalNotificationMark}>
-          <Text style={styles.fundamentalNotificationMarkText}>{item.mark}</Text>
+          <Image source={fundamentalNotificationIcon(item.type)} resizeMode="contain" style={styles.fundamentalNotificationMarkImage} />
         </View>
         <View style={styles.fundamentalNotificationCopy}>
           <View style={styles.fundamentalNotificationTypeRow}>
@@ -4650,7 +4701,7 @@ function FundamentalNotificationDetailScreen({ item, onOpenModule }: { item: Fun
       <View style={styles.fundamentalNotificationDetailCard}>
         <View style={styles.fundamentalNotificationDetailHeader}>
           <View style={styles.fundamentalNotificationMark}>
-            <Text style={styles.fundamentalNotificationMarkText}>{item.mark}</Text>
+            <Image source={fundamentalNotificationIcon(item.type)} resizeMode="contain" style={styles.fundamentalNotificationMarkImage} />
           </View>
           <View style={styles.fundamentalNotificationCopy}>
             <Text style={styles.fundamentalNotificationType}>{item.origin}</Text>
@@ -4727,11 +4778,7 @@ function FundamentalProfileScreen({
 
   return (
     <View>
-      <View style={styles.fundamentalShellHero}>
-        <Text style={styles.fundamentalKicker}>Aluno Fundamental</Text>
-        <Text style={styles.fundamentalShellTitle}>Meu perfil</Text>
-        <Text style={styles.fundamentalShellIntro}>{loading ? "Carregando dados do aluno." : "Dados institucionais vinculados ao seu acesso."}</Text>
-      </View>
+      <FundamentalModuleHeader title="Meu perfil" intro={loading ? "Carregando dados do aluno." : "Dados institucionais vinculados ao seu acesso."} icon={fundamentalModuleIcon("profile")} />
 
       <View style={styles.fundamentalProfileIdentityCard}>
         <View style={styles.fundamentalProfileIdentityTop}>
@@ -4751,7 +4798,12 @@ function FundamentalProfileScreen({
 
       <SectionHeader title="Minha escola" />
       <View style={styles.fundamentalProfileSchoolCard}>
-        <Text style={styles.fundamentalProfileSchoolTitle}>{realSchool}</Text>
+        <View style={styles.fundamentalProfileSchoolHeader}>
+          <View style={styles.fundamentalProfileSchoolIcon}>
+            <Image source={teacherCatalogIcons.graduationBooks} resizeMode="contain" style={styles.fundamentalProfileSchoolIconImage} />
+          </View>
+          <Text style={styles.fundamentalProfileSchoolTitle}>{realSchool}</Text>
+        </View>
         <View style={styles.fundamentalProfileSchoolInfoRow}>
           <Text style={styles.fundamentalProfileSchoolInfoLabel}>Turma</Text>
           <Text style={styles.fundamentalProfileSchoolInfoValue}>{realClass}</Text>
@@ -4783,7 +4835,7 @@ function FundamentalProfileProgressCard({ item }: { item: FundamentalProfileProg
   return (
     <View style={styles.fundamentalProfileProgressCard}>
       <View style={styles.fundamentalProfileProgressMark}>
-        <Text style={styles.fundamentalProfileProgressMarkText}>{item.mark}</Text>
+        <Image source={teacherCatalogIcons.trophy} resizeMode="contain" style={styles.fundamentalProfileProgressIconImage} />
       </View>
       <Text style={styles.fundamentalProfileProgressValue}>{item.value}</Text>
       <Text style={styles.fundamentalProfileProgressLabel}>{item.label}</Text>
@@ -4796,7 +4848,7 @@ function FundamentalProfileStudyShortcut({ study, onPress }: { study: Fundamenta
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`Abrir ${study.title}`} onPress={onPress} style={styles.fundamentalProfileShortcut}>
       <View style={styles.fundamentalProfileShortcutMark}>
-        <Text style={styles.fundamentalProfileShortcutMarkText}>{study.mark}</Text>
+        <Image source={fundamentalProfileStudyIcon(study.target)} resizeMode="contain" style={styles.fundamentalProfileShortcutIconImage} />
       </View>
       <Text style={styles.fundamentalProfileShortcutTitle}>{study.title}</Text>
       <Text style={styles.fundamentalProfileShortcutBody}>{study.description}</Text>
@@ -8772,6 +8824,19 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     ...shadow
   },
+  fundamentalActivityIcon: {
+    alignItems: "center",
+    backgroundColor: colors.blueSoft,
+    borderRadius: 16,
+    height: 52,
+    justifyContent: "center",
+    overflow: "hidden",
+    width: 52
+  },
+  fundamentalActivityIconImage: {
+    height: 58,
+    width: 58
+  },
   fundamentalActivityCopy: {
     flex: 1
   },
@@ -8841,6 +8906,29 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     padding: spacing.lg,
     ...shadow
+  },
+  fundamentalShellHeroWithIcon: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.md,
+    justifyContent: "space-between",
+    minHeight: 160,
+    overflow: "hidden"
+  },
+  fundamentalShellHeroCopy: {
+    flex: 1,
+    minWidth: 0
+  },
+  fundamentalShellHeroIconFrame: {
+    alignItems: "center",
+    height: 112,
+    justifyContent: "center",
+    marginRight: -spacing.sm,
+    width: 128
+  },
+  fundamentalShellHeroIconImage: {
+    height: 124,
+    width: 140
   },
   fundamentalShellTitle: {
     color: colors.brand,
@@ -8954,13 +9042,29 @@ const styles = StyleSheet.create({
     color: "#ecfdf3"
   },
   familySummaryCard: {
+    alignItems: "center",
     backgroundColor: "rgba(255, 255, 255, 0.94)",
     borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
+    flexDirection: "row",
+    gap: spacing.md,
     marginBottom: spacing.md,
     padding: spacing.lg,
     ...shadow
+  },
+  familySummaryIcon: {
+    alignItems: "center",
+    backgroundColor: colors.warningSoft,
+    borderRadius: 22,
+    height: 70,
+    justifyContent: "center",
+    overflow: "hidden",
+    width: 70
+  },
+  familySummaryIconImage: {
+    height: 76,
+    width: 76
   },
   familySectionTitle: {
     color: colors.studentInk,
@@ -8991,6 +9095,20 @@ const styles = StyleSheet.create({
     minWidth: 104,
     padding: spacing.md,
     ...shadow
+  },
+  familyMetricIcon: {
+    alignItems: "center",
+    backgroundColor: colors.childSoft,
+    borderRadius: 18,
+    height: 54,
+    justifyContent: "center",
+    marginBottom: spacing.sm,
+    overflow: "hidden",
+    width: 54
+  },
+  familyMetricIconImage: {
+    height: 58,
+    width: 58
   },
   familyMetricValue: {
     color: colors.studentInk,
@@ -9101,15 +9219,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.brandSoft,
     borderRadius: 14,
-    height: 42,
+    height: 58,
     justifyContent: "center",
     marginBottom: spacing.sm,
-    width: 42
+    overflow: "hidden",
+    width: 58
   },
-  familyQuickMarkText: {
-    color: colors.brand,
-    fontSize: 18,
-    fontWeight: "900"
+  familyQuickIconImage: {
+    height: 62,
+    width: 62
   },
   familyQuickTitle: {
     color: colors.studentInk,
@@ -9133,26 +9251,6 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     ...shadow
   },
-  familyReadOnlyNotice: {
-    backgroundColor: colors.warningSoft,
-    borderColor: "#f1d890",
-    borderRadius: 18,
-    borderWidth: 2,
-    marginBottom: spacing.md,
-    padding: spacing.md
-  },
-  familyReadOnlyTitle: {
-    color: colors.studentInk,
-    fontSize: 15,
-    fontWeight: "900"
-  },
-  familyReadOnlyBody: {
-    color: colors.muted,
-    fontSize: 13,
-    fontWeight: "700",
-    lineHeight: 19,
-    marginTop: spacing.xs
-  },
   fundamentalFeaturedActivity: {
     backgroundColor: "rgba(255, 255, 255, 0.94)",
     borderColor: "rgba(255, 255, 255, 0.95)",
@@ -9169,11 +9267,16 @@ const styles = StyleSheet.create({
   },
   fundamentalFeaturedIcon: {
     alignItems: "center",
-    backgroundColor: colors.blueSoft,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     borderRadius: 18,
     height: 58,
     justifyContent: "center",
+    overflow: "hidden",
     width: 58
+  },
+  fundamentalFeaturedIconImage: {
+    height: 64,
+    width: 64
   },
   fundamentalFeaturedIconText: {
     color: colors.blue,
@@ -9536,9 +9639,23 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 2,
     flex: 1,
-    minHeight: 90,
+    minHeight: 118,
     padding: spacing.md,
     ...shadow
+  },
+  assessmentSummaryIcon: {
+    alignItems: "center",
+    backgroundColor: colors.blueSoft,
+    borderRadius: 14,
+    height: 42,
+    justifyContent: "center",
+    marginBottom: spacing.xs,
+    overflow: "hidden",
+    width: 42
+  },
+  assessmentSummaryIconImage: {
+    height: 46,
+    width: 46
   },
   assessmentSummaryValue: {
     color: colors.blue,
@@ -9577,7 +9694,12 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     height: 58,
     justifyContent: "center",
+    overflow: "hidden",
     width: 58
+  },
+  assessmentIconImage: {
+    height: 62,
+    width: 62
   },
   assessmentIconText: {
     color: colors.blue,
@@ -9985,7 +10107,12 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     height: 46,
     justifyContent: "center",
+    overflow: "hidden",
     width: 46
+  },
+  fundamentalAgendaTypeIconImage: {
+    height: 50,
+    width: 50
   },
   fundamentalAgendaTypeMarkText: {
     color: colors.blue,
@@ -10186,11 +10313,30 @@ const styles = StyleSheet.create({
   },
   fundamentalNotificationBadge: {
     alignItems: "center",
-    backgroundColor: colors.blue,
+    backgroundColor: colors.blueSoft,
     borderRadius: 18,
     height: 48,
     justifyContent: "center",
+    overflow: "hidden",
     width: 48
+  },
+  fundamentalNotificationBadgeImage: {
+    height: 54,
+    width: 54
+  },
+  fundamentalNotificationBadgeCount: {
+    backgroundColor: colors.coral,
+    borderRadius: 999,
+    color: colors.surface,
+    fontSize: 10,
+    fontWeight: "900",
+    lineHeight: 16,
+    minWidth: 16,
+    overflow: "hidden",
+    position: "absolute",
+    right: 3,
+    textAlign: "center",
+    top: 3
   },
   fundamentalNotificationBadgeText: {
     color: colors.surface,
@@ -10265,7 +10411,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     height: 50,
     justifyContent: "center",
+    overflow: "hidden",
     width: 50
+  },
+  fundamentalNotificationMarkImage: {
+    height: 54,
+    width: 54
   },
   fundamentalNotificationMarkText: {
     color: colors.blue,
@@ -10482,10 +10633,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.blueSoft,
     borderRadius: 14,
-    height: 38,
+    height: 46,
     justifyContent: "center",
     marginBottom: spacing.sm,
-    width: 38
+    overflow: "hidden",
+    width: 46
+  },
+  fundamentalProfileProgressIconImage: {
+    height: 50,
+    width: 50
   },
   fundamentalProfileProgressMarkText: {
     color: colors.blue,
@@ -10522,8 +10678,27 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     ...shadow
   },
+  fundamentalProfileSchoolHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.md
+  },
+  fundamentalProfileSchoolIcon: {
+    alignItems: "center",
+    backgroundColor: colors.blueSoft,
+    borderRadius: 16,
+    height: 54,
+    justifyContent: "center",
+    overflow: "hidden",
+    width: 54
+  },
+  fundamentalProfileSchoolIconImage: {
+    height: 62,
+    width: 62
+  },
   fundamentalProfileSchoolTitle: {
     color: colors.studentInk,
+    flex: 1,
     fontSize: 19,
     fontWeight: "900",
     letterSpacing: 0,
@@ -10570,12 +10745,17 @@ const styles = StyleSheet.create({
   },
   fundamentalProfileShortcutMark: {
     alignItems: "center",
-    backgroundColor: colors.blue,
+    backgroundColor: colors.blueSoft,
     borderRadius: 14,
-    height: 38,
+    height: 46,
     justifyContent: "center",
     marginBottom: spacing.sm,
-    width: 38
+    overflow: "hidden",
+    width: 46
+  },
+  fundamentalProfileShortcutIconImage: {
+    height: 50,
+    width: 50
   },
   fundamentalProfileShortcutMarkText: {
     color: colors.surface,
