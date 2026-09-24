@@ -2996,11 +2996,16 @@ function CrescerProfileScreen({ session, onLogout }: { session: MobileSession | 
   }, [session]);
 
   const unlockedAchievements = achievements.filter((item) => item.unlocked).length;
-  const progress = [
-    { label: "XP", value: String(xpSummary?.totalXp ?? 0), mark: "XP" },
-    { label: "Créditos", value: String(xpSummary?.creditsCount ?? 0), mark: "+" },
-    { label: "Conquistas", value: String(unlockedAchievements), mark: "*" },
-    { label: "Nível", value: String(xpSummary?.levelNumber ?? profile?.levelNumber ?? 1), mark: "N" }
+  const progress: Array<{
+    label: string;
+    value: string;
+    icon: CrescerHomeCardSpec["icon"];
+    tone: CrescerHomeCardSpec["tone"];
+  }> = [
+    { label: "XP", value: String(xpSummary?.totalXp ?? 0), icon: "achievements", tone: "sun" },
+    { label: "Créditos", value: String(xpSummary?.creditsCount ?? 0), icon: "activities", tone: "sky" },
+    { label: "Conquistas", value: String(unlockedAchievements), icon: "achievements", tone: "rose" },
+    { label: "Nível", value: String(xpSummary?.levelNumber ?? profile?.levelNumber ?? 1), icon: "discoveries", tone: "mint" }
   ];
 
   return (
@@ -3034,9 +3039,10 @@ function CrescerProfileScreen({ session, onLogout }: { session: MobileSession | 
       <SectionHeader title="Meu progresso" />
       <View style={styles.profileProgressGrid}>
         {progress.map((item) => (
-          <View key={item.label} style={styles.profileProgressCard}>
-            <View style={styles.profileProgressIcon}>
-              <Text style={styles.profileProgressMark}>{item.mark}</Text>
+          <View key={item.label} style={[styles.profileProgressCard, toneStyle(item.tone)]}>
+            <View style={styles.profileProgressGlow} />
+            <View style={[styles.profileProgressIcon, iconToneStyle(item.tone)]}>
+              <Image source={crescerHomeIcons[item.icon]} resizeMode="contain" style={styles.profileProgressIconImage} />
             </View>
             <Text style={styles.profileProgressValue}>{item.value}</Text>
             <Text style={styles.profileProgressLabel}>{item.label}</Text>
@@ -3047,7 +3053,7 @@ function CrescerProfileScreen({ session, onLogout }: { session: MobileSession | 
       <SectionHeader title="Minha escola" />
       <View style={styles.profileSchoolCard}>
         <View style={styles.profileSchoolIcon}>
-          <Text style={styles.profileSchoolIconText}>⌂</Text>
+          <Image source={crescerHomeIcons.library} resizeMode="contain" style={styles.profileSchoolIconImage} />
         </View>
         <View style={styles.profileSchoolCopy}>
           <Text style={styles.profileSchoolTitle}>{profile.schoolName}</Text>
@@ -15517,40 +15523,56 @@ const styles = StyleSheet.create({
   profileProgressCard: {
     backgroundColor: "rgba(255, 255, 255, 0.94)",
     borderColor: "rgba(255, 255, 255, 0.95)",
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 2,
     flexBasis: "47%",
     flexGrow: 1,
     minHeight: 156,
+    overflow: "hidden",
     padding: spacing.md,
+    position: "relative",
     ...shadow
+  },
+  profileProgressGlow: {
+    backgroundColor: "rgba(255, 255, 255, 0.38)",
+    borderRadius: 999,
+    height: 92,
+    position: "absolute",
+    right: -28,
+    top: -28,
+    width: 92
   },
   profileProgressIcon: {
     alignItems: "center",
-    backgroundColor: colors.warningSoft,
-    borderRadius: 18,
-    height: 54,
+    borderRadius: 999,
+    height: 68,
     justifyContent: "center",
     marginBottom: spacing.sm,
-    width: 54
+    shadowColor: "#4b6a49",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    width: 68,
+    zIndex: 2
   },
-  profileProgressMark: {
-    color: colors.warning,
-    fontSize: 24,
-    fontWeight: "900"
+  profileProgressIconImage: {
+    height: 70,
+    width: 70
   },
   profileProgressValue: {
     color: colors.ink,
     fontSize: 23,
     fontWeight: "900",
-    letterSpacing: 0
+    letterSpacing: 0,
+    zIndex: 2
   },
   profileProgressLabel: {
     color: colors.muted,
     fontSize: 12,
     fontWeight: "800",
     lineHeight: 17,
-    marginTop: 3
+    marginTop: 3,
+    zIndex: 2
   },
   profileSchoolCard: {
     alignItems: "center",
@@ -15570,10 +15592,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: 64
   },
-  profileSchoolIconText: {
-    color: colors.child,
-    fontSize: 26,
-    fontWeight: "900"
+  profileSchoolIconImage: {
+    height: 72,
+    width: 72
   },
   profileSchoolCopy: {
     flex: 1
