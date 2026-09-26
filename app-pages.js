@@ -2487,7 +2487,7 @@ const renderStudentLibraryHome = () => {
 
       <section class="student-library-context" aria-label="Contexto da Biblioteca">
         <article><span>Acervo</span><strong>Biblioteca do aluno</strong></article>
-        <article><span>Etapa</span><strong>Educação Infantil</strong></article>
+        <article><span>Etapa</span><strong>${printableEscape(getActiveStudentProfile().className || studentInstitutionalState.context?.school_year || "Aluno")}</strong></article>
         <article><span>Leitura</span><strong>Livros digitais</strong></article>
       </section>
 
@@ -3481,10 +3481,13 @@ const getStudentProfileInitials = (name = "") => {
 
 const getStudentGamificationAudit = () => {
   const gameSummary = getStudentGameSummary();
+  const progress = studentInstitutionalState.progress || {};
+  const medals = progress.medals || [];
+  const xpRecords = progress.xpRecords || [];
   return {
-    xpEngine: "LOCAL",
-    levelEngine: "LOCAL",
-    achievementsEngine: studentDashboardData.medals?.length ? "LOCAL" : "GAP",
+    xpEngine: xpRecords.length ? "REAL" : "EMPTY_REAL",
+    levelEngine: xpRecords.length ? "REAL" : "EMPTY_REAL",
+    achievementsEngine: medals.length ? "REAL" : "EMPTY_REAL",
     knowledgeTreeEngine: "PARTIAL",
     gameProgressCount: gameSummary.completedCount || 0,
   };
@@ -3565,16 +3568,16 @@ const renderStudentProfilePage = () => {
             ${premiumIcon("jogos")}
             <div>
               <span>Progresso</span>
-              <strong>Acompanhamento em preparação</strong>
-              <p>Jogos e atividades continuam disponiveis; XP e nivel serao exibidos quando houver acompanhamento institucional.</p>
+              <strong>${Number(studentInstitutionalState.progress?.xpTotal || 0)} XP</strong>
+              <p>${(studentInstitutionalState.progress?.xpRecords || []).length ? `${(studentInstitutionalState.progress?.xpRecords || []).length} registro(s) reais de progresso.` : "Sem registro de XP publicado para este aluno."}</p>
             </div>
           </article>
           <article class="student-real-profile-card is-progress-card">
             ${premiumIcon("premio")}
             <div>
               <span>Conquistas</span>
-              <strong>Conquistas preservadas</strong>
-              <p>Os selos visuais existentes ficam guardados para a evolução oficial das conquistas.</p>
+              <strong>${(studentInstitutionalState.progress?.medals || []).length} conquista(s)</strong>
+              <p>${(studentInstitutionalState.progress?.medals || []).length ? (studentInstitutionalState.progress.medals || []).slice(0, 2).map((item) => item.medal?.nome || "Conquista").join(", ") : "Sem conquista publicada para este aluno."}</p>
             </div>
           </article>
           <article class="student-real-profile-card is-progress-card">
@@ -3597,8 +3600,8 @@ const renderStudentProfilePage = () => {
         <section class="student-real-profile-readiness" aria-label="Preparação do perfil">
           <article><strong>Perfil</strong><span>Pronto</span></article>
           <article><strong>Avatar</strong><span>Iniciais institucionais</span></article>
-          <article><strong>XP</strong><span>${gamification.xpEngine === "LOCAL" ? "Aguardando acompanhamento institucional" : "Pronto"}</span></article>
-          <article><strong>Conquistas</strong><span>${gamification.achievementsEngine === "LOCAL" ? "Aguardando acompanhamento institucional" : "Preparado"}</span></article>
+          <article><strong>XP</strong><span>${gamification.xpEngine === "REAL" ? "Pronto" : "Sem dados reais"}</span></article>
+          <article><strong>Conquistas</strong><span>${gamification.achievementsEngine === "REAL" ? "Pronto" : "Sem dados reais"}</span></article>
         </section>
       </section>
     `;
@@ -3988,6 +3991,13 @@ const secretariaInstitutionalState = {
   communications: [],
   communicationEvents: [],
   calendarEvents: [],
+  academicYears: [],
+  academicTerms: [],
+  schoolDays: [],
+  classSubjects: [],
+  classScheduleSlots: [],
+  academicImportBatches: [],
+  academicImportRows: [],
   lastCreateResult: null,
   lastGuardianResult: null,
   lastEnrollmentMovementResult: null,
@@ -3996,6 +4006,8 @@ const secretariaInstitutionalState = {
   lastAttendanceResult: null,
   lastCommunicationResult: null,
   lastCalendarResult: null,
+  lastAcademicResult: null,
+  lastImportResult: null,
   hydratedDom: false,
 };
 
@@ -4092,6 +4104,7 @@ const studentInstitutionalState = {
   status: "idle",
   error: "",
   promise: null,
+  context: null,
   profile: null,
   publicUser: null,
   student: null,
@@ -4099,6 +4112,8 @@ const studentInstitutionalState = {
   classItem: null,
   school: null,
   teachers: [],
+  progress: { xpRecords: [], medals: [], xpTotal: 0 },
+  progressError: "",
   entries: [],
   agendaEvents: [],
   messages: [],
@@ -5083,7 +5098,7 @@ const ensureTeacherRecommendations = async ({ force = false, classId = "" } = {}
       }
       teacherRecommendationsState.classId = selectedClassId;
       const client = createSupabaseRestClient();
-      const rows = await client.request("rpc/teacher_list_pedagógical_recommendations", "", {
+      const rows = await client.request("rpc/teacher_list_pedagogical_recommendations", "", {
         method: "POST",
         body: JSON.stringify({ p_class_id: selectedClassId }),
         requireAuthenticated: true,
@@ -5112,7 +5127,7 @@ const createTeacherPedagogicalRecommendation = async ({ classId = "", contentTyp
     throw new Error("Aluno fora da turma autorizada.");
   }
   const client = createSupabaseRestClient();
-  const result = await client.request("rpc/teacher_create_pedagógical_recommendation", "", {
+  const result = await client.request("rpc/teacher_create_pedagogical_recommendation", "", {
     method: "POST",
     body: JSON.stringify({
       p_school_id: classItem.schoolId,
@@ -5134,7 +5149,7 @@ const createTeacherPedagogicalRecommendation = async ({ classId = "", contentTyp
 
 const setTeacherRecommendationStatus = async (recommendationId = "", toStatus = "") => {
   const client = createSupabaseRestClient();
-  await client.request("rpc/teacher_set_pedagógical_recommendation_status", "", {
+  await client.request("rpc/teacher_set_pedagogical_recommendation_status", "", {
     method: "POST",
     body: JSON.stringify({ p_recommendation_id: recommendationId, p_to_status: toStatus }),
     requireAuthenticated: true,
@@ -5146,7 +5161,7 @@ const setTeacherRecommendationStatus = async (recommendationId = "", toStatus = 
 
 const deleteTeacherRecommendation = async (recommendationId = "") => {
   const client = createSupabaseRestClient();
-  await client.request("rpc/teacher_delete_pedagógical_recommendation", "", {
+  await client.request("rpc/teacher_delete_pedagogical_recommendation", "", {
     method: "POST",
     body: JSON.stringify({ p_recommendation_id: recommendationId }),
     requireAuthenticated: true,
@@ -6448,6 +6463,9 @@ const renderStudentUniversalActivities = () => {
 };
 
 const renderStudentAvailableActivitiesCatalog = () => {
+  if (isStudentInstitutionalMode() && !isStudentEarlyChildhoodContext()) {
+    return `<p class="ua-empty">Nenhuma atividade destinada ao seu segmento no momento.</p>`;
+  }
   const recommendedCodes = new Set(
     getStudentVisibleRecommendations({ activitiesOnly: true })
       .map((recommendation) => recommendation.contentId)
@@ -6993,64 +7011,7 @@ const renderTeacherTrackingView = () => {
   if (teacherInstitutionalState.status === "error") {
     return `<section class="tw-board">${renderTeacherInstitutionalStatus(teacherInstitutionalState.error || "NAO FOI POSSIVEL CARREGAR ACOMPANHAMENTO.")}</section>`;
   }
-  return `
-    <section class="tw-board tw-tracking-shell">
-      <div class="tw-planning-heading">
-        <div>
-          <span>Acompanhamento</span>
-          <h2>Acompanhamento</h2>
-          <p>ACOMPANHE OS REGISTROS E AS EXPERIENCIAS DA SUA TURMA.</p>
-        </div>
-        <label class="tw-class-selector">
-          <span>Turma</span>
-          <select data-tracking-class>
-            <option value="${printableEscape(pilotProfiles.class.id)}">${printableEscape(pilotProfiles.class.name)}</option>
-          </select>
-        </label>
-      </div>
-      <div class="tw-tracking-summary" aria-label="Visão geral da turma">
-        <article><span>Turma</span><strong>${printableEscape(pilotProfiles.class.name)}</strong><small>${printableEscape(pilotProfiles.class.shift || "Turma piloto")}</small></article>
-        <article><span>Alunos</span><strong>${teacherWorkspaceStudents.length}</strong><small>Alunos vinculados a turma</small></article>
-        <article><span>Atividades indicadas</span><strong>${assignments.length}</strong><small>Registros disponiveis</small></article>
-        <article><span>Produções</span><strong>${productions.length}</strong><small>Produções registradas</small></article>
-      </div>
-    </section>
-    <section class="tw-board tw-tracking-section">
-      <div class="tw-section-head"><h2>Alunos</h2><span>${printableEscape(pilotProfiles.class.name)}</span></div>
-      <div class="tw-tracking-students">
-        ${teacherWorkspaceStudents.map(renderStudentCard).join("")}
-      </div>
-    </section>
-    <section class="tw-board tw-tracking-section" data-ua-deliveries>
-      <div class="tw-section-head"><h2>Atividades Indicadas</h2><button type="button" data-teacher-view="atividades">Indicar atividade</button></div>
-      <div class="tw-tracking-list">
-        ${assignments.length ? assignments.map(renderTeacherTrackingAssignment).join("") : `<p class="ua-empty">NENHUMA ATIVIDADE INDICADA AINDA.</p>`}
-      </div>
-      <div class="ua-delivery-detail" data-ua-delivery-detail></div>
-    </section>
-    <section class="tw-board tw-tracking-section">
-      <div class="tw-section-head"><h2>Produções</h2><span>Registros da turma</span></div>
-      <div class="tw-tracking-list">
-        ${productions.length ? productions.map(renderTeacherTrackingProduction).join("") : `<p class="ua-empty">AINDA NAO HA PRODUCOES REGISTRADAS.</p>`}
-      </div>
-    </section>
-    <section class="tw-board tw-tracking-section">
-      <div class="tw-section-head"><h2>Progresso</h2><span>Estados registrados</span></div>
-      ${
-        statuses.length
-          ? `<div class="tw-tracking-status-list">${statuses.map((status) => `<span>${printableEscape(status)}</span>`).join("")}</div>`
-          : `<p class="ua-empty">O PROGRESSO APARECERA AQUI QUANDO HOUVER REGISTROS.</p>`
-      }
-    </section>
-    <section class="tw-board tw-tracking-section">
-      <div class="tw-section-head"><h2>Registros Pedagógicos</h2><span>Preparado</span></div>
-      <p class="ua-empty">NENHUM REGISTRO PEDAGOGICO DISPONIVEL.</p>
-    </section>
-    <section class="tw-board tw-tracking-section">
-      <div class="tw-section-head"><h2>Relatórios</h2><span>Futuro</span></div>
-      <p class="ua-empty">RELATORIOS SERAO GERADOS FUTURAMENTE A PARTIR DE REGISTROS REAIS.</p>
-    </section>
-  `;
+  return `<section class="tw-board">${renderTeacherInstitutionalStatus("ACOMPANHAMENTO AGUARDANDO VINCULO INSTITUCIONAL REAL.")}</section>`;
 };
 
 const teacherFormationCourses = [
@@ -7061,7 +7022,7 @@ const teacherFormationCourses = [
     workload: "40h",
     status: "Inscricoes abertas",
     certificate: "Certificado informado pela instituição",
-    image: "assets/universidade/curso-educação-inclusiva.webp",
+    image: "assets/universidade/curso-educacao-inclusiva.webp",
     href: "universidade.html?from=teacher#curso-docencia-plural-interculturalidade-bilinguismo",
   },
   {
@@ -7071,7 +7032,7 @@ const teacherFormationCourses = [
     workload: "40h",
     status: "Inscricoes abertas",
     certificate: "Certificado informado pela instituição",
-    image: "assets/universidade/trilha-práticas-pedagógicas.webp",
+    image: "assets/universidade/trilha-praticas-pedagogicas.webp",
     href: "universidade.html?from=teacher#curso-formação-professores-programa-aprender-valor",
   },
   {
@@ -7081,7 +7042,7 @@ const teacherFormationCourses = [
     workload: "30h",
     status: "Disponível",
     certificate: "Certificado informado pela instituição",
-    image: "assets/universidade/trilha-inclusão-diversidade.webp",
+    image: "assets/universidade/trilha-inclusao-diversidade.webp",
     href: "universidade.html?from=teacher#curso-inclusão-acessibilidade-educação-ifsul",
   },
 ];
@@ -8304,7 +8265,14 @@ const renderStudentQuickRail = () => `
     </section>
     <section class="student-side-card">
       <h2>Acompanhamento</h2>
-      ${renderPremiumEmpty("SEM PROGRESSO PUBLICADO.", "Quando houver dados reais, eles aparecerao aqui.", "green")}
+      ${
+        (studentInstitutionalState.progress?.xpRecords || []).length || (studentInstitutionalState.progress?.medals || []).length
+          ? `<ul class="clean-list">
+              <li><strong>${Number(studentInstitutionalState.progress?.xpTotal || 0)} XP</strong><span>${(studentInstitutionalState.progress?.xpRecords || []).length} registro(s) reais</span></li>
+              <li><strong>${(studentInstitutionalState.progress?.medals || []).length} conquista(s)</strong><span>Selos vinculados ao aluno</span></li>
+            </ul>`
+          : renderPremiumEmpty("SEM PROGRESSO PUBLICADO.", "Quando houver dados reais, eles aparecerao aqui.", "green")
+      }
     </section>
     <section class="student-side-card is-pink">
       <h2>Recado da Professora</h2>
@@ -8457,12 +8425,12 @@ const loadStudentTeacherRecommendations = async (client) => {
   const baseQuery = `?${baseSelect}&school_id=${supabaseEq(school.id)}&status=eq.published&deleted_at=is.null`;
   const [classRows, studentRows] = await Promise.all([
     client.request(
-      "pedagógical_recommendations",
+      "pedagogical_recommendations",
       `${baseQuery}&target_type=eq.class&class_id=${supabaseEq(enrollment.class_id)}&order=published_at.desc.nullslast&order=created_at.desc`,
       requestOptions
     ),
     client.request(
-      "pedagógical_recommendations",
+      "pedagogical_recommendations",
       `${baseQuery}&target_type=eq.student&student_id=${supabaseEq(student.id)}&order=published_at.desc.nullslast&order=created_at.desc`,
       requestOptions
     ),
@@ -8586,6 +8554,7 @@ const renderStudentInboxCard = (message = {}) => `
     <aside>
       <small>${printableEscape(message.date || "")}</small>
       <em>${printableEscape(communicationDeliveryStateLabel(message))}</em>
+      ${message.href ? `<a href="${printableEscape(resolveCommunicationDeepLink(message.href))}">${printableEscape(message.actionLabel || "Abrir")}</a>` : ""}
       ${message.deliveryId && !message.readAt ? `<button type="button" data-student-delivery-read="${printableEscape(message.deliveryId)}">Marcar como lido</button>` : ""}
     </aside>
   </article>
@@ -8742,7 +8711,7 @@ const renderStudentActivitiesPage = () => {
 };
 
 const avaliaApplicationState = {
-  teacher: { status: "idle", error: "", assessments: [], assignments: [], results: {}, resultStatus: "", resultError: "", message: "" },
+  teacher: { status: "idle", error: "", assessments: [], assignments: [], results: {}, resultStatus: "", resultError: "", message: "", offlineImports: {}, printExports: {} },
   student: { status: "idle", error: "", assignments: [], attempts: [], activeAssignmentId: "", activeAttemptId: "", activeQuestionIndex: 0, message: "" },
 };
 
@@ -8757,6 +8726,11 @@ const avaliaStatusLabel = (status = "") => {
   if (value === "graded") return "Concluida";
   if (value === "cancelled") return "Cancelada";
   if (value === "expired") return "Expirada";
+  if (value === "AGENDADA") return "Agendada";
+  if (value === "EM_ANDAMENTO") return "Em andamento";
+  if (value === "CONCLUIDA") return "Concluida";
+  if (value === "INCOMPLETA") return "Incompleta";
+  if (value === "CANCELADA") return "Cancelada";
   return status || "Disponivel";
 };
 
@@ -8800,6 +8774,24 @@ const getAvaliaResponseForQuestion = (attempt, questionId) =>
 
 const unwrapAvaliaRpcResult = (result) => Array.isArray(result) ? result[0] : result;
 
+const parseAvaliaOfflineImportText = (text = "") => {
+  const lines = String(text || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (!lines.length) return [];
+  const delimiter = lines[0].includes(";") ? ";" : ",";
+  const headers = lines[0].split(delimiter).map((entry) => entry.trim().toLowerCase());
+  const hasHeader = headers.some((entry) => ["student_id", "student_email", "email", "student_name", "aluno", "question_position", "questao", "answer", "resposta"].includes(entry));
+  const dataLines = hasHeader ? lines.slice(1) : lines;
+  const defaultHeaders = ["student_email", "question_position", "answer"];
+  const activeHeaders = hasHeader ? headers : defaultHeaders;
+  return dataLines.map((line) => {
+    const cells = line.split(delimiter).map((entry) => entry.trim());
+    return activeHeaders.reduce((row, header, index) => {
+      row[header] = cells[index] || "";
+      return row;
+    }, {});
+  });
+};
+
 const avaliaApplicationService = (() => {
   const assignmentSelect =
     "*,assessment:assessments(id,title,description,component,school_year,instructions,total_points,status,questions:assessment_questions(id,question_id,position,points,question:question_items(id,code,internal_title,statement,base_text,bncc_skill,question_type,alternatives:question_alternatives(id,label,body,position))))";
@@ -8841,6 +8833,29 @@ const avaliaApplicationService = (() => {
     },
     async getTeacherClassResults() {
       return {};
+    },
+    async getPedagogicalIntelligence() {
+      return {};
+    },
+    async generatePrintExport(payload) {
+      return {
+        export: {
+          id: `local-export-${Date.now()}`,
+          export_type: payload.exportType,
+          format: payload.format || "PDF",
+          status: "ready",
+        },
+        payload: { local: true, ...payload },
+      };
+    },
+    async previewOfflineImport({ rows }) {
+      return {
+        batch: { id: `local-batch-${Date.now()}`, status: "validated", summary: { total_rows: rows.length, valid_rows: rows.length, invalid_rows: 0 } },
+        rows: rows.map((row, index) => ({ id: `local-row-${index + 1}`, row_number: index + 1, status: "valid", raw_payload: row })),
+      };
+    },
+    async confirmOfflineImport(batchId) {
+      return { batch: { id: batchId, status: "consolidated" }, consolidated_students: 0 };
     },
     async getSecretariaSchoolResults() {
       return {};
@@ -8889,7 +8904,7 @@ const avaliaApplicationService = (() => {
     },
     async createAssignment(payload) {
       const { request } = client();
-      const row = unwrapAvaliaRpcResult(await request("rpc/teacher_create_assessment_assignment", "", {
+      const result = normalizeRpcJson(await request("rpc/teacher_schedule_assessment_application_v2", "", {
         method: "POST",
         requireAuthenticated: true,
         allowedRoles: teacherAllowedRoles,
@@ -8902,10 +8917,15 @@ const avaliaApplicationService = (() => {
           p_available_until: payload.availableUntil || null,
           p_time_limit_minutes: payload.timeLimitMinutes ? Number(payload.timeLimitMinutes) : null,
           p_max_attempts: Number(payload.maxAttempts || 1),
-          p_status: "published",
+          p_cycle_name: payload.cycleName || null,
+          p_school_year: payload.schoolYear || null,
+          p_booklet_id: payload.bookletId || null,
+          p_token_required: Boolean(payload.tokenRequired),
+          p_shuffle_questions: Boolean(payload.shuffleQuestions),
+          p_shuffle_alternatives: Boolean(payload.shuffleAlternatives),
         }),
       }));
-      return row;
+      return result?.assignment || result;
     },
     async getTeacherClassResults(assignmentId) {
       const { request } = client();
@@ -8914,6 +8934,54 @@ const avaliaApplicationService = (() => {
         requireAuthenticated: true,
         allowedRoles: teacherAllowedRoles,
         body: JSON.stringify({ p_assignment_id: assignmentId }),
+      }));
+    },
+    async getPedagogicalIntelligence(assignmentId) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/teacher_get_assessment_pedagogical_intelligence", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: teacherAllowedRoles,
+        body: JSON.stringify({ p_assignment_id: assignmentId }),
+      }));
+    },
+    async generatePrintExport({ assessmentId, assignmentId, classId, bookletId, exportType = "STUDENT_TEST", format = "PDF" }) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/teacher_generate_assessment_print_export", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: teacherAllowedRoles,
+        body: JSON.stringify({
+          p_assessment_id: assessmentId,
+          p_assignment_id: assignmentId || null,
+          p_class_id: classId || null,
+          p_booklet_id: bookletId || null,
+          p_export_type: exportType,
+          p_format: format,
+        }),
+      }));
+    },
+    async previewOfflineImport({ assignmentId, sourceFormat = "CSV", fileName = "gabarito-fisico.csv", rows = [] }) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/teacher_preview_offline_assessment_import", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: teacherAllowedRoles,
+        body: JSON.stringify({
+          p_assignment_id: assignmentId,
+          p_source_format: sourceFormat,
+          p_file_name: fileName,
+          p_rows: rows,
+        }),
+      }));
+    },
+    async confirmOfflineImport(batchId) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/teacher_confirm_offline_assessment_import", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: teacherAllowedRoles,
+        body: JSON.stringify({ p_batch_id: batchId }),
       }));
     },
     async getSecretariaSchoolResults(schoolId) {
@@ -8938,40 +9006,45 @@ const avaliaApplicationService = (() => {
         attempts: payload?.attempts || [],
       };
     },
-    async startAttempt(assignmentId) {
+    async startAttempt(assignmentId, applicationToken = "") {
       const { request } = client();
-      const row = unwrapAvaliaRpcResult(await request("rpc/student_start_assessment_attempt", "", {
+      const result = normalizeRpcJson(await request("rpc/student_start_assessment_attempt_v2", "", {
         method: "POST",
         requireAuthenticated: true,
         allowedRoles: ["aluno", "admin"],
-        body: JSON.stringify({ p_assignment_id: assignmentId }),
+        body: JSON.stringify({ p_assignment_id: assignmentId, p_application_token: applicationToken || null }),
       }));
-      return row;
+      return result?.attempt || result;
     },
-    async saveResponse({ attemptId, questionId, alternativeId }) {
+    async saveResponse({ attemptId, questionId, alternativeId, responseText, autosaveSequence = 1 }) {
       const { request } = client();
-      const row = unwrapAvaliaRpcResult(await request("rpc/student_save_assessment_response", "", {
+      const result = normalizeRpcJson(await request("rpc/student_save_assessment_response_v2", "", {
         method: "POST",
         requireAuthenticated: true,
         allowedRoles: ["aluno", "admin"],
         body: JSON.stringify({
           p_attempt_id: attemptId,
           p_question_id: questionId,
-          p_selected_alternative_id: alternativeId,
-          p_response_text: null,
+          p_selected_alternative_id: alternativeId || null,
+          p_response_text: responseText || null,
+          p_autosave_sequence: autosaveSequence,
+          p_client_state: {
+            activeQuestionIndex: avaliaApplicationState.student.activeQuestionIndex,
+            savedAt: new Date().toISOString(),
+          },
         }),
       }));
-      return row;
+      return result?.response || result;
     },
     async submitAttempt(attemptId) {
       const { request } = client();
-      const row = unwrapAvaliaRpcResult(await request("rpc/student_submit_assessment_attempt", "", {
+      const result = normalizeRpcJson(await request("rpc/student_submit_assessment_attempt_v2", "", {
         method: "POST",
         requireAuthenticated: true,
         allowedRoles: ["aluno", "admin"],
         body: JSON.stringify({ p_attempt_id: attemptId }),
       }));
-      return row;
+      return result?.result || result?.attempt || result;
     },
   };
 
@@ -8988,6 +9061,10 @@ const avaliaApplicationService = (() => {
     listTeacherAssignments: (...args) => active().listTeacherAssignments(...args),
     createAssignment: (...args) => active().createAssignment(...args),
     getTeacherClassResults: (...args) => active().getTeacherClassResults(...args),
+    getPedagogicalIntelligence: (...args) => active().getPedagogicalIntelligence(...args),
+    generatePrintExport: (...args) => active().generatePrintExport(...args),
+    previewOfflineImport: (...args) => active().previewOfflineImport(...args),
+    confirmOfflineImport: (...args) => active().confirmOfflineImport(...args),
     getSecretariaSchoolResults: (...args) => active().getSecretariaSchoolResults(...args),
     listStudentAssignments: (...args) => active().listStudentAssignments(...args),
     startAttempt: (...args) => active().startAttempt(...args),
@@ -9171,6 +9248,36 @@ const analyticsService = (() => {
         }),
       }));
     },
+    async getAssessmentPedagogicalIntelligence({ schoolId, dateFrom, dateTo, component, schoolYear } = {}) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/secretaria_get_assessment_pedagogical_intelligence", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: secretariaAllowedRoles,
+        body: JSON.stringify({
+          p_school_id: schoolId,
+          p_date_from: dateFrom || null,
+          p_date_to: dateTo || null,
+          p_component: component || null,
+          p_school_year: schoolYear || null,
+        }),
+      }));
+    },
+    async getNetworkAssessmentPedagogicalIntelligence({ networkId, dateFrom, dateTo, component, schoolYear } = {}) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/network_get_assessment_pedagogical_intelligence", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: municipalNetworkAllowedRoles,
+        body: JSON.stringify({
+          p_network_id: networkId || null,
+          p_date_from: dateFrom || null,
+          p_date_to: dateTo || null,
+          p_component: component || null,
+          p_school_year: schoolYear || null,
+        }),
+      }));
+    },
   };
   const fallback = {
     async getSchoolOverview() {
@@ -9194,6 +9301,12 @@ const analyticsService = (() => {
     async getAlerts() {
       return { alerts: [], alert_count: 0 };
     },
+    async getAssessmentPedagogicalIntelligence() {
+      return {};
+    },
+    async getNetworkAssessmentPedagogicalIntelligence() {
+      return {};
+    },
   };
   const active = () => {
     const currentClient = client();
@@ -9209,6 +9322,8 @@ const analyticsService = (() => {
     getPeriodComparison: (...args) => active().getPeriodComparison(...args),
     getClassComparison: (...args) => active().getClassComparison(...args),
     getAlerts: (...args) => active().getAlerts(...args),
+    getAssessmentPedagogicalIntelligence: (...args) => active().getAssessmentPedagogicalIntelligence(...args),
+    getNetworkAssessmentPedagogicalIntelligence: (...args) => active().getNetworkAssessmentPedagogicalIntelligence(...args),
   };
 })();
 
@@ -9548,10 +9663,11 @@ const ensureMunicipalNetworkData = async ({ force = false } = {}) => {
   municipalNetworkState.key = key;
   municipalNetworkState.promise = (async () => {
     try {
-      const [overview, comparison, usersResult] = await Promise.all([
+      const [overview, comparison, usersResult, assessmentIntelligence] = await Promise.all([
         municipalNetworkService.getOverview({ dateFrom: range.from, dateTo: range.to }),
         municipalNetworkService.getSchoolComparison({ dateFrom: range.from, dateTo: range.to, metric: "attendance_rate" }),
         municipalNetworkService.getUsers({}),
+        analyticsService.getNetworkAssessmentPedagogicalIntelligence({ dateFrom: range.from, dateTo: range.to }).catch(() => ({})),
       ]);
       if (overview?.error) throw new Error(overview.error);
       if (comparison?.error) throw new Error(comparison.error);
@@ -9559,11 +9675,13 @@ const ensureMunicipalNetworkData = async ({ force = false } = {}) => {
       municipalNetworkState.overview = overview || {};
       municipalNetworkState.comparison = comparison || {};
       municipalNetworkState.users = usersResult?.users || [];
+      municipalNetworkState.assessmentIntelligence = assessmentIntelligence || {};
       municipalNetworkState.status = "ready";
     } catch (error) {
       municipalNetworkState.overview = null;
       municipalNetworkState.comparison = null;
       municipalNetworkState.users = [];
+      municipalNetworkState.assessmentIntelligence = null;
       municipalNetworkState.error = error.message || "Não foi possível carregar a Rede Municipal.";
       municipalNetworkState.status = "error";
     } finally {
@@ -9585,6 +9703,7 @@ const renderMunicipalNetworkReadyView = () => {
   const summary = overview.summary || {};
   const schools = overview.schools || [];
   const comparison = municipalNetworkState.comparison?.schools || schools;
+  const assessmentIntelligence = municipalNetworkState.assessmentIntelligence || {};
   const selectedSchoolId = getMunicipalNetworkParams().get("school") || "";
   const selectedSchool = schools.find((school) => school.school_id === selectedSchoolId) || null;
   const head = `
@@ -9658,6 +9777,7 @@ const renderMunicipalNetworkReadyView = () => {
         ${schools.map((school) => `<li><strong>${htmlEscape(school.school_name || "Escola")}</strong><span>${analyticsNumberLabel(school.assessment_assignments)} aplicações · participação ${analyticsPercentLabel(school.assessment_participation)} · média ${analyticsPercentLabel(school.assessment_average)} · BNCC ${analyticsPercentLabel(school.bncc_percentage)}</span></li>`).join("") || "<li>Sem aplicações do Avalia+ no período.</li>"}
       </ul>
     </section>
+    ${renderAvaliaPedagogicalIntelligencePanel(assessmentIntelligence, { title: "Inteligência pedagógica da rede" })}
   `;
   const attendanceView = `
     <section class="panel span-2">
@@ -9797,6 +9917,10 @@ const renderTeacherAssessmentsView = () => {
         <label><span>Prazo</span><input type="datetime-local" name="availableUntil" value="${avaliaInputDateTimeValue(new Date(Date.now() + 7 * 86400000))}" /></label>
         <label><span>Tentativas</span><input type="number" min="1" step="1" name="maxAttempts" value="1" /></label>
         <label><span>Tempo limite</span><input type="number" min="5" step="5" name="timeLimitMinutes" value="50" /></label>
+        <label><span>Ciclo avaliativo</span><input type="text" name="cycleName" placeholder="Ex.: Diagnostica 2026" /></label>
+        <label><span>Ano letivo</span><input type="text" name="schoolYear" value="${new Date().getFullYear()}" /></label>
+        <label><span>Token</span><select name="tokenRequired"><option value="0">Sem token</option><option value="1">Exigir token</option></select></label>
+        <label><span>Anti-cola</span><select name="shuffleMode"><option value="none">Ordem fixa</option><option value="questions">Embaralhar questoes</option><option value="all">Questoes e alternativas</option></select></label>
         <button type="submit" class="qb-primary-action">Publicar avaliacao</button>
       </form>
       <div class="qb-selection-status" data-avalia-teacher-status aria-live="polite">${printableEscape(state.message || state.error || "")}</div>
@@ -9821,16 +9945,94 @@ const renderTeacherAssessmentAssignmentsList = (assignments = []) => {
           : getTeacherInstitutionalClasses().find((classItem) => classItem.id === assignment.class_id)?.name || "Turma";
         return `
           <article class="tw-metric-card">
-            <span>${printableEscape(avaliaStatusLabel(assignment.status))}</span>
+            <span>${printableEscape(avaliaStatusLabel(assignment.application_status || assignment.status))}</span>
             <strong>${printableEscape(assignment.assessment?.title || assignment.title || "Avaliacao")}</strong>
             <small>${printableEscape(targetLabel)} · ${avaliaDateTimeLabel(assignment.available_from)} ate ${avaliaDateTimeLabel(assignment.available_until)}</small>
-            <small>${started} iniciadas · ${completed} concluidas</small>
+            <small>${started} iniciadas · ${completed} concluidas · ${assignment.token_required ? "token ativo" : "sem token"}${assignment.shuffle_questions ? " · anti-cola" : ""}</small>
             <button type="button" class="qb-secondary-action" data-avalia-teacher-results="${htmlEscape(assignment.id)}">Resultados</button>
+            <button type="button" class="qb-secondary-action" data-avalia-print-export="${htmlEscape(assignment.id)}" data-avalia-export-type="ANSWER_SHEET">Folha de respostas</button>
+            <button type="button" class="qb-secondary-action" data-avalia-print-export="${htmlEscape(assignment.id)}" data-avalia-export-type="ATTENDANCE_LIST">Lista de presenca</button>
+            ${renderTeacherOfflineImportPanel(assignment)}
             ${renderTeacherAssessmentResult(assignment.id)}
           </article>
         `;
       }).join("")}
     </div>
+  `;
+};
+
+const renderTeacherOfflineImportPanel = (assignment) => {
+  const state = avaliaApplicationState.teacher.offlineImports?.[assignment.id] || {};
+  const exportState = avaliaApplicationState.teacher.printExports?.[assignment.id] || {};
+  const rows = state.rows || [];
+  const batch = state.batch || {};
+  const canConfirm = batch.id && rows.length && rows.every((row) => row.status === "valid");
+  return `
+    <details class="digital-result-card">
+      <summary>Gabarito fisico / importacao offline</summary>
+      <p>CSV/XLSX colado com colunas: student_email;question_position;answer. A consolidacao usa o mesmo motor de resultados do Avalia+.</p>
+      ${exportState.message ? `<div class="qb-selection-status">${printableEscape(exportState.message)}</div>` : ""}
+      <textarea data-avalia-offline-csv="${htmlEscape(assignment.id)}" rows="4" placeholder="student_email;question_position;answer&#10;aluno@email.com;1;A"></textarea>
+      <div class="qb-card-actions">
+        <button type="button" data-avalia-offline-preview="${htmlEscape(assignment.id)}">Validar importacao</button>
+        <button type="button" data-avalia-offline-confirm="${htmlEscape(assignment.id)}" ${canConfirm ? "" : "disabled"}>Consolidar lote validado</button>
+      </div>
+      ${state.message ? `<div class="qb-selection-status">${printableEscape(state.message)}</div>` : ""}
+      ${state.error ? `<div class="qb-error">${printableEscape(state.error)}</div>` : ""}
+      ${rows.length ? `<ul class="clean-list">${rows.slice(0, 8).map((row) => `<li><strong>Linha ${Number(row.row_number || 0)}</strong><span>${printableEscape(row.status)}${row.error_code ? ` · ${printableEscape(row.error_code)}` : ""}</span></li>`).join("")}</ul>` : ""}
+    </details>
+  `;
+};
+
+const avaliaIntelligenceStatusLabel = (status = "") => String(status || "").replaceAll("_", " ").toLowerCase() || "sem status";
+const avaliaIntelligenceRows = (rows = [], emptyText = "Sem dados consolidados no período.") => `
+  <ul class="clean-list">
+    ${(rows || []).slice(0, 8).map((row) => {
+      const title = row.level_code || row.skill || row.bncc_skill || row.title || row.class_name || row.school_name || "Indicador";
+      const detail = [
+        row.label,
+        row.learning_status ? avaliaIntelligenceStatusLabel(row.learning_status) : "",
+        row.performance_percentage !== undefined ? `${avaliaPercentLabel(row.performance_percentage)} acerto` : "",
+        row.percent_correct !== undefined ? `${avaliaPercentLabel(row.percent_correct)} acerto` : "",
+        row.average_percentage !== undefined ? `média ${avaliaPercentLabel(row.average_percentage)}` : "",
+        row.responses !== undefined ? `${Number(row.responses || 0)} respostas` : "",
+        row.students !== undefined ? `${Number(row.students || 0)} alunos` : "",
+        row.difficulty_status ? `dificuldade ${avaliaIntelligenceStatusLabel(row.difficulty_status)}` : "",
+        row.discrimination_status ? `discriminação ${avaliaIntelligenceStatusLabel(row.discrimination_status)}` : "",
+        row.point_biserial_status ? `ponto-bisserial ${avaliaIntelligenceStatusLabel(row.point_biserial_status)}` : "",
+      ].filter(Boolean).join(" · ");
+      return `<li><strong>${printableEscape(title)}</strong><span>${printableEscape(detail || "Indicador consolidado")}</span></li>`;
+    }).join("") || `<li>${printableEscape(emptyText)}</li>`}
+  </ul>
+`;
+
+const renderAvaliaPedagogicalIntelligencePanel = (intelligence = {}, { title = "Inteligência pedagógica", compact = false } = {}) => {
+  const summary = intelligence.summary || {};
+  const proficiency = intelligence.proficiency?.distribution || [];
+  const curriculum = intelligence.curriculum || [];
+  const criticalSkills = curriculum.filter((item) => String(item.learning_status || "").toUpperCase() === "CRITICAL");
+  const items = intelligence.items || [];
+  const reliability = intelligence.reliability || {};
+  const evolution = intelligence.evolution || [];
+  const hasData = Number(summary.results || 0) > 0 || proficiency.length || curriculum.length || items.length;
+  if (!hasData && compact) return "";
+  return `
+    <section class="${compact ? "digital-result-card" : "panel span-2"}">
+      <div class="panel-head"><h2>${secretariaInlineIcon("chart", title)}</h2><span>Avalia+ 2.0</span></div>
+      <div class="metric-row">
+        <article>Resultados<strong>${analyticsNumberLabel(summary.results)}</strong><span>${analyticsNumberLabel(summary.students)} aluno(s)</span></article>
+        <article>Média<strong>${avaliaPercentLabel(summary.average_percentage)}</strong><span>escala 0-100</span></article>
+        <article>Habilidades críticas<strong>${analyticsNumberLabel(criticalSkills.length)}</strong><span>abaixo do limiar</span></article>
+        <article>Alfa de Cronbach<strong>${reliability.cronbach_alpha == null ? "n/a" : Number(reliability.cronbach_alpha).toLocaleString("pt-BR", { maximumFractionDigits: 3 })}</strong><span>${printableEscape(avaliaIntelligenceStatusLabel(reliability.status))}</span></article>
+      </div>
+      <h3>Proficiência</h3>
+      ${avaliaIntelligenceRows(proficiency, "Nenhum nível de proficiência consolidado.")}
+      <h3>BNCC / habilidades</h3>
+      ${avaliaIntelligenceRows(criticalSkills.length ? criticalSkills : curriculum, "Habilidades aguardam amostra suficiente.")}
+      <h3>Estatística dos itens</h3>
+      ${avaliaIntelligenceRows(items, "Itens aguardam respostas suficientes para estatística.")}
+      ${evolution.length > 1 ? `<h3>Evolução</h3>${avaliaIntelligenceRows(evolution.map((point) => ({ title: point.period, average_percentage: point.average_percentage, responses: point.results })), "Sem ciclos comparáveis.")}` : ""}
+    </section>
   `;
 };
 
@@ -9844,6 +10046,7 @@ const renderTeacherAssessmentResult = (assignmentId) => {
   const students = result.students || [];
   const questions = result.questions || [];
   const skills = result.skills || [];
+  const intelligence = result.intelligence || {};
   return `
     <div class="digital-result-card">
       <strong>Resultado da turma</strong>
@@ -9863,6 +10066,7 @@ const renderTeacherAssessmentResult = (assignmentId) => {
       <ul class="clean-list">
         ${questions.map((question) => `<li><strong>${printableEscape(question.title || "Questao")}</strong><span>${printableEscape(question.bncc_skill || "Sem habilidade")} · erro ${avaliaPercentLabel(question.error_rate)} · ${Number(question.responses || 0)} respostas</span></li>`).join("") || "<li>Nenhuma questão consolidada.</li>"}
       </ul>
+      ${renderAvaliaPedagogicalIntelligencePanel(intelligence, { title: "Inteligência da aplicação", compact: true })}
     </div>
   `;
 };
@@ -9947,7 +10151,8 @@ const renderStudentAssessmentCard = (assignment) => {
     <div class="digital-assessment-card">
       <div><strong>${printableEscape(assignment.assessment?.title || assignment.title || "Avaliacao")}</strong><span>${printableEscape(assignment.assessment?.component || "")} · ${questions.length} questoes</span></div>
       <small>${avaliaDateTimeLabel(assignment.available_from)} ate ${avaliaDateTimeLabel(assignment.available_until)} · ${assignment.time_limit_minutes || "sem"} min · ${assignment.max_attempts || 1} tentativa</small>
-      <mark>${printableEscape(avaliaStatusLabel(attempt?.status || assignment.status))}</mark>
+      <small>${assignment.token_required ? "Token obrigatorio" : "Acesso liberado"}${assignment.shuffle_questions ? " · ordem individual" : ""}</small>
+      <mark>${printableEscape(avaliaStatusLabel(attempt?.application_status || attempt?.status || assignment.application_status || assignment.status))}</mark>
       <button type="button" data-avalia-student-open="${htmlEscape(assignment.id)}">${action}</button>
     </div>
   `;
@@ -9965,10 +10170,12 @@ const renderStudentAssessmentAttemptStage = () => {
   const response = getAvaliaResponseForQuestion(attempt, question.id);
   const isClosed = String(attempt.status || "").toLowerCase() !== "in_progress";
   const answeredCount = questions.filter((entry) => getAvaliaResponseForQuestion(attempt, getAvaliaQuestion(entry).id)).length;
+  const remainingSeconds = attempt.remaining_seconds ?? attempt.progress?.remaining_seconds;
+  const remainingLabel = remainingSeconds == null ? "Sem cronometro" : `${Math.floor(Number(remainingSeconds) / 60)}min ${Number(remainingSeconds) % 60}s`;
   return `
     <section class="digital-attempt-stage">
       <div class="digital-attempt-head">
-        <div><strong>${printableEscape(assignment.assessment?.title || "Avaliacao")}</strong><span>${avaliaApplicationState.student.activeQuestionIndex + 1}/${questions.length} · ${answeredCount} respondidas</span></div>
+        <div><strong>${printableEscape(assignment.assessment?.title || "Avaliacao")}</strong><span>${avaliaApplicationState.student.activeQuestionIndex + 1}/${questions.length} · ${answeredCount} respondidas · ${printableEscape(remainingLabel)}</span></div>
         <button type="button" data-avalia-stage-close>Fechar</button>
       </div>
       ${isClosed ? `
@@ -9982,12 +10189,18 @@ const renderStudentAssessmentAttemptStage = () => {
         ${question.base_text ? `<blockquote>${printableEscape(question.base_text)}</blockquote>` : ""}
         <h3>${printableEscape(question.statement || question.internal_title || "Questao")}</h3>
         <div class="digital-options">
-          ${alternatives.map((alternative, index) => `
+          ${alternatives.length ? alternatives.map((alternative, index) => `
             <label>
               <input type="radio" name="avalia-answer" value="${htmlEscape(alternative.id)}" ${response?.selected_alternative_id === alternative.id ? "checked" : ""} ${isClosed ? "disabled" : ""} />
               <span><b>${printableEscape(alternative.label || String.fromCharCode(65 + index))}</b>${printableEscape(alternative.body || "")}</span>
             </label>
-          `).join("")}
+          `).join("") : `
+            <label>
+              <span><b>Resposta</b></span>
+              <textarea data-avalia-text-answer rows="5" ${isClosed ? "disabled" : ""}>${printableEscape(response?.response_text || "")}</textarea>
+            </label>
+            <button type="button" class="qb-secondary-action" data-avalia-save-text ${isClosed ? "disabled" : ""}>Salvar resposta</button>
+          `}
         </div>
       </article>
       <div class="digital-attempt-actions">
@@ -10249,7 +10462,9 @@ const adminReadOnlyNav = [
   { key: "painel", label: "Painel", icon: "chart" },
   { key: "usuarios", label: "Usuários", icon: "users" },
   { key: "escolas", label: "Escolas", icon: "escola" },
+  { key: "permissoes", label: "Perfis e permissões", icon: "perfil" },
   { key: "conteúdos", label: "Conteúdos", icon: "book" },
+  { key: "configuracoes", label: "Configurações", icon: "settings" },
   { key: "implantação", label: "Implantação", icon: "clipboard" },
   { key: "auditoria", label: "Auditoria", icon: "check" },
   { key: "ambientes", label: "Ambientes", icon: "site" },
@@ -12058,6 +12273,10 @@ const renderAdminPermissionMatrix = () => `
 `;
 
 const renderAdminWorkspaceView = (view = "inicio") => {
+  const normalizedView = {
+    conteudos: "conteúdos",
+    implantacao: "implantação",
+  }[view] || view;
   const feature = getAdminFeature(view);
   const byArea = (area) => adminFeatureRegistry.filter((item) => item.area === area);
   const development = adminFeatureRegistry.filter((item) => item.status === "Em preparação");
@@ -12113,7 +12332,7 @@ const renderAdminWorkspaceView = (view = "inicio") => {
   if (feature && !adminReadOnlyNav.some((item) => item.key === view)) {
     return `<section class="admin-board admin-empty-state"><h2>${feature.label}</h2><p>Status atual: ${feature.status}. Área existente reaproveitada sem criar tela duplicada.</p><a href="${feature.href}">Abrir área</a></section>`;
   }
-  return viewMap[view] || renderAdminPreparationView(adminReadOnlyNav.find((item) => item.key === view)?.label || "Módulo", "Área prevista para fase propria.");
+  return viewMap[normalizedView] || renderAdminPreparationView(adminReadOnlyNav.find((item) => item.key === normalizedView)?.label || "Módulo", "Área prevista para fase propria.");
 };
 
 const renderAdminDashboard = () => `
@@ -13464,7 +13683,7 @@ const loadOfficialSchoolData = async ({ force = false } = {}) => {
       );
       const recommendations = await requestOfficialSchoolRows(
         client,
-        "pedagógical_recommendations",
+        "pedagogical_recommendations",
         `?select=id,school_id,teacher_id,content_type,content_id,content_title,target_type,class_id,student_id,note,status,published_at,created_at&school_id=${supabaseEq(school.id)}&status=eq.published&order=published_at.desc&limit=12`,
         { optional: true }
       );
@@ -14111,14 +14330,14 @@ const loadFamilyTeacherRecommendations = async (client, selectedChild = null) =>
   const [classRows, studentRows] = await Promise.all([
     client
       .request(
-        "pedagógical_recommendations",
+        "pedagogical_recommendations",
         `${baseQuery}&target_type=eq.class&class_id=${supabaseEq(enrollment.class_id)}&order=published_at.desc.nullslast&order=created_at.desc`,
         requestOptions
       )
       .catch(() => []),
     client
       .request(
-        "pedagógical_recommendations",
+        "pedagogical_recommendations",
         `${baseQuery}&target_type=eq.student&student_id=${supabaseEq(student.id)}&order=published_at.desc.nullslast&order=created_at.desc`,
         requestOptions
       )
@@ -14184,14 +14403,14 @@ const buildFamilyCanonicalChildren = async (client, guardianRows = []) => {
   if (!guardianIds.length) return [];
   const linkRows = await client.request(
     "student_guardian_links",
-    `?select=id,student_id,guardian_id,relationship,is_primary,status,created_at&status=eq.active&guardian_id=${supabaseIn(guardianIds)}&order=is_primary.desc&order=created_at.asc`,
+    `?select=id,student_id,guardian_id,relationship,is_primary,status,created_at&status=in.(active,ativo)&guardian_id=${supabaseIn(guardianIds)}&order=is_primary.desc&order=created_at.asc`,
     { requireAuthenticated: true, allowedRoles: familyInstitutionalAllowedRoles }
   );
   const links = Array.isArray(linkRows) ? linkRows : [];
   const studentIds = [...new Set(links.map((link) => link.student_id).filter(Boolean))];
   if (!studentIds.length) return [];
   const [studentRows, enrollmentRows] = await Promise.all([
-    client.request("students", `?select=id,nome,school_id,class_id,status,user_id,data_nascimento&status=eq.active&id=${supabaseIn(studentIds)}&order=nome.asc`, {
+    client.request("students", `?select=id,nome,school_id,class_id,status,user_id,data_nascimento&status=in.(active,ativo)&id=${supabaseIn(studentIds)}&order=nome.asc`, {
       requireAuthenticated: true,
       allowedRoles: familyInstitutionalAllowedRoles,
     }),
@@ -14281,7 +14500,7 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
 
       const guardianRows = await client.request(
         "guardians",
-        `?select=id,school_id,profile_id,full_name,email,phone,status,access_status&status=eq.active&profile_id=${supabaseEq(context.userId)}&order=created_at.asc`,
+        `?select=id,school_id,profile_id,full_name,email,phone,status,access_status&status=in.(active,ativo)&profile_id=${supabaseEq(context.userId)}&order=created_at.asc`,
         { requireAuthenticated: true, allowedRoles: familyInstitutionalAllowedRoles }
       );
       const guardians = Array.isArray(guardianRows) ? guardianRows : [];
@@ -14377,18 +14596,32 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
 
 const familyAreaViews = [
   ["inicio", "Início", "home"],
-  ["semana", "Minha Semana", "calendario"],
+  ["agenda", "Agenda", "calendario"],
   ["recados", "Recados", "mensagens"],
   ["frequencia", "Frequência", "checklist"],
   ["atividades", "Atividades", "atividades"],
+  ["acompanhamento", "Acompanhamento", "progresso"],
   ["descobertas", "Biblioteca / Descobertas", "biblioteca"],
   ["escola", "Minha Escola", "escola"],
   ["perfil", "Perfil", "perfil"],
 ];
 
+const normalizeFamilyView = (view = "") => {
+  const normalized = String(view || "inicio").toLowerCase();
+  const aliases = {
+    semana: "agenda",
+    "minha-semana": "agenda",
+    calendário: "agenda",
+    calendario: "agenda",
+    "frequência": "frequencia",
+    progresso: "acompanhamento",
+  };
+  return aliases[normalized] || normalized;
+};
+
 const getFamilyView = () => {
   if (typeof window === "undefined") return "inicio";
-  const view = new URLSearchParams(window.location.search).get("view") || "inicio";
+  const view = normalizeFamilyView(new URLSearchParams(window.location.search).get("view") || "inicio");
   return familyAreaViews.some(([key]) => key === view) ? view : "inicio";
 };
 const familyAreaViewLabel = (key, label) => {
@@ -14463,6 +14696,7 @@ const renderFamilyMessageList = ({ compact = false } = {}) => {
               <aside>
                 <small>${printableEscape(message.date || "")}</small>
                 <em>${printableEscape(message.deliveryId ? communicationDeliveryStateLabel(message) : message.statusLabel || "Publicado")}</em>
+                ${message.href ? `<a href="${printableEscape(resolveCommunicationDeepLink(message.href))}">${printableEscape(message.actionLabel || "Abrir")}</a>` : ""}
                 ${message.deliveryId && !message.readAt ? `<button type="button" data-family-delivery-read="${printableEscape(message.deliveryId)}">Marcar como lido</button>` : ""}
               </aside>
             </article>
@@ -14879,6 +15113,31 @@ const renderFamilyWeeklyBoard = (weekStartIso = familyWeekStartIso()) => {
 };
 
 const renderFamilyProgressSummary = () => {
+  if (isFamilyInstitutionalMode()) {
+    if (familyInstitutionalState.status === "loading" || familyInstitutionalState.status === "idle") {
+      return `<section class="family-panel family-summary-panel"><div class="family-section-head"><h2>Acompanhamento</h2><span>Carregando</span></div>${renderFamilyEmpty("CARREGANDO ACOMPANHAMENTO.")}</section>`;
+    }
+    if (familyInstitutionalState.status === "error") {
+      return `<section class="family-panel family-summary-panel"><div class="family-section-head"><h2>Acompanhamento</h2><span>Indisponível</span></div>${renderFamilyEmpty("NAO FOI POSSIVEL ABRIR O ACOMPANHAMENTO.", familyInstitutionalState.error)}</section>`;
+    }
+    const records = familyInstitutionalState.attendanceRecords || [];
+    const summary = attendanceSummary(records);
+    const entries = familyInstitutionalState.entries || [];
+    const messages = familyInstitutionalState.messages || [];
+    const recommendations = familyInstitutionalState.recommendations || [];
+    return `
+      <section class="family-panel family-summary-panel">
+        <div class="family-section-head"><h2>Acompanhamento</h2><span>Resumo real</span></div>
+        <dl>
+          <div><dt>Frequência</dt><dd>${records.length ? `${summary.present} presenças` : "Sem registro publicado"}</dd></div>
+          <div><dt>Agenda</dt><dd>${entries.length ? `${entries.length} publicação(oes)` : "Sem agenda publicada"}</dd></div>
+          <div><dt>Recados</dt><dd>${messages.length ? `${messages.length} comunicado(s)` : "Sem comunicado publicado"}</dd></div>
+          <div><dt>Atividades</dt><dd>${recommendations.length ? `${recommendations.length} indicação(oes)` : "Sem atividade publicada"}</dd></div>
+        </dl>
+        <a class="family-primary-link" href="familia.html?view=acompanhamento">Ver acompanhamento</a>
+      </section>
+    `;
+  }
   const { progress } = familyÁreaData;
   return `
     <section class="family-panel family-summary-panel">
@@ -14900,6 +15159,46 @@ const renderFamilyProgressSummary = () => {
 };
 
 const renderFamilyProgress = (compact = false) => {
+  if (isFamilyInstitutionalMode()) {
+    if (familyInstitutionalState.status === "loading" || familyInstitutionalState.status === "idle") {
+      return `<section class="family-panel"><div class="family-section-head"><h2>Acompanhamento</h2><span>Carregando</span></div>${renderFamilyEmpty("CARREGANDO ACOMPANHAMENTO.", "Consultando os dados da crianca selecionada.")}</section>`;
+    }
+    if (familyInstitutionalState.status === "error") {
+      return `<section class="family-panel"><div class="family-section-head"><h2>Acompanhamento</h2><span>Indisponível</span></div>${renderFamilyEmpty("NAO FOI POSSIVEL ABRIR O ACOMPANHAMENTO.", familyInstitutionalState.error)}</section>`;
+    }
+    const student = getFamilyActiveStudent();
+    const records = familyInstitutionalState.attendanceRecords || [];
+    const summary = attendanceSummary(records);
+    const entries = familyInstitutionalState.entries || [];
+    const messages = familyInstitutionalState.messages || [];
+    const recommendations = familyInstitutionalState.recommendations || [];
+    return `
+      <section class="family-panel">
+        <div class="family-section-head">
+          <div>
+            <h2>Acompanhamento - ${printableEscape(student.fullName || student.name)}</h2>
+            <p>${printableEscape(student.className)} · ${printableEscape(student.school)}</p>
+          </div>
+          <span>Somente leitura</span>
+        </div>
+        ${renderFamilyChildSelector()}
+        <section class="family-progress-grid">
+          <article class="family-metric-card"><span>Frequência</span><strong>${records.length ? `${summary.present} presenças` : "EMPTY_REAL"}</strong><small>${records.length ? `${summary.absent} faltas · ${summary.justified} justificadas` : "Sem registro publicado"}</small></article>
+          <article class="family-metric-card"><span>Agenda</span><strong>${entries.length ? entries.length : "EMPTY_REAL"}</strong><small>${entries.length ? "Publicações da semana" : "Sem agenda publicada"}</small></article>
+          <article class="family-metric-card"><span>Recados</span><strong>${messages.length ? messages.length : "EMPTY_REAL"}</strong><small>${messages.length ? `${communicationUnreadCount(messages)} não lido(s)` : "Sem comunicado publicado"}</small></article>
+          <article class="family-metric-card"><span>Atividades</span><strong>${recommendations.length ? recommendations.length : "EMPTY_REAL"}</strong><small>${recommendations.length ? "Indicações da professora" : "Sem atividade publicada"}</small></article>
+        </section>
+      </section>
+      ${
+        compact
+          ? ""
+          : `<section class="family-panel family-recommendations-panel">
+              <div class="family-section-head"><h2>Atividades e orientações</h2><span>Dados reais</span></div>
+              ${renderFamilyRecommendationList()}
+            </section>`
+      }
+    `;
+  }
   const { progress } = familyÁreaData;
   return `
     <section class="family-progress-grid">
@@ -15024,7 +15323,7 @@ const renderFamilyHomeView = () => `
         <div class="family-section-head"><h2>Minha Semana</h2><span>${printableEscape(getFamilyTeacherName())}</span></div>
         ${
           isFamilyInstitutionalMode() && familyInstitutionalState.status === "ready" && (familyInstitutionalState.entries || []).length
-            ? `<p>${familyInstitutionalState.entries.length} publicação(oes) da semana para ${printableEscape(getFamilyActiveStudent().name)}.</p><a class="family-primary-link" href="familia.html?view=semana">Ver Minha Semana</a>`
+            ? `<p>${familyInstitutionalState.entries.length} publicação(oes) da semana para ${printableEscape(getFamilyActiveStudent().name)}.</p><a class="family-primary-link" href="familia.html?view=agenda">Ver agenda</a>`
             : renderFamilyEmpty("A professora ainda nao publicou a programação desta semana.")
         }
       </div>
@@ -15060,10 +15359,11 @@ const renderFamilyActivitiesView = () => `
 const renderFamilyView = (view) => {
   const views = {
     inicio: renderFamilyHomeView(),
-    semana: renderFamilyWeeklyBoard(),
+    agenda: renderFamilyWeeklyBoard(),
     recados: `<section class="family-panel family-messages-panel"><div class="family-section-head"><h2>Recados da professora</h2><span>Somente leitura</span></div>${renderFamilyChildSelector()}<div class="family-message-list">${renderFamilyMessageList()}</div></section>`,
-    frequência: renderFamilyAttendanceView(),
+    frequencia: renderFamilyAttendanceView(),
     atividades: renderFamilyActivitiesView(),
+    acompanhamento: renderFamilyProgress(),
     descobertas: `<section class="family-panel"><div class="family-section-head"><h2>Biblioteca / Descobertas</h2><span>Preparado</span></div>${renderFamilyEmpty("BIBLIOTECA E DESCOBERTAS PREPARADAS.", "Livros, jogos e experiências seguem preservados para conexao posterior.")}</section>`,
     escola: `<section class="family-panel"><div class="family-section-head"><h2>Minha Escola</h2><span>Portal institucional</span></div><a class="family-primary-link" href="escola.html">Abrir Minha Escola</a></section>`,
     perfil: renderFamilyProfile(),
@@ -15772,13 +16072,33 @@ const modules = {
           <div>
             <span>Área institucional</span>
             <h2>Formação Raízes e Saberes</h2>
-            <p>Espaco reservado para o LMS proprio da plataforma: cursos internos, formação continuada, implantação das colecoes, assessorias, webinarios, encontros, certificados e historico formativo.</p>
+            <p>Estrutura funcional preparada para receber cursos internos, formação continuada, implantação das colecoes, assessorias, webinarios, encontros, certificados e historico formativo.</p>
           </div>
           <ul>
-            <li>Cursos proprios em preparação</li>
-            <li>Histórico e certificados internos futuros</li>
-            <li>Sem emissao de certificados nesta fase</li>
+            <li>Catalogo interno por público e segmento</li>
+            <li>Cursos, módulos, aulas, vídeos e materiais de apoio</li>
+            <li>Progresso e certificados quando o motor formativo receber acervo real</li>
           </ul>
+        </section>
+
+        <section class="university-prep-panel" id="formacao-estrutura">
+          <div>
+            <span>Mobiliacao estrutural</span>
+            <h2>Armário pronto para cursos próprios</h2>
+            <p>Não há cursos internos definitivos publicados nesta fase. A ausência de acervo é tratada como EMPTY_REAL, preservando o espaço para inserir posteriormente capacitação inicial, formação continuada, vídeos, materiais e treinamento de uso da plataforma.</p>
+          </div>
+          <ul>
+            <li>Educação Infantil: pronto para trilhas e aulas</li>
+            <li>Ensino Fundamental: pronto para cursos por segmento</li>
+            <li>Professor: integrado à aba Formação</li>
+          </ul>
+        </section>
+
+        <section class="catalog-ranking-grid" aria-label="Estrutura da Formação Raízes">
+          <article><h3>Públicos</h3><div><button type="button">Educação Infantil</button><button type="button">Ensino Fundamental</button><button type="button">Professor</button></div></article>
+          <article><h3>Cursos e módulos</h3><div><button type="button">Cursos EMPTY_REAL</button><button type="button">Módulos EMPTY_REAL</button><button type="button">Aulas EMPTY_REAL</button></div></article>
+          <article><h3>Vídeos e materiais</h3><div><button type="button">Vídeos EMPTY_REAL</button><button type="button">PDFs EMPTY_REAL</button><button type="button">Apoios EMPTY_REAL</button></div></article>
+          <article><h3>Progresso</h3><div><button type="button">Histórico EMPTY_REAL</button><button type="button">Certificados EMPTY_REAL</button><button type="button">Conclusões EMPTY_REAL</button></div></article>
         </section>
 
         <section class="knowledge-center-shell" id="centros-conhecimento">
@@ -17800,6 +18120,84 @@ const initTeacherAvaliaApplication = () => {
   });
 
   root.addEventListener("click", async (event) => {
+    const exportButton = event.target.closest("[data-avalia-print-export]");
+    if (exportButton) {
+      const assignmentId = exportButton.dataset.avaliaPrintExport || "";
+      const exportType = exportButton.dataset.avaliaExportType || "ANSWER_SHEET";
+      const assignment = avaliaApplicationState.teacher.assignments.find((item) => item.id === assignmentId);
+      if (!assignment?.assessment_id) return;
+      avaliaApplicationState.teacher.printExports[assignmentId] = { message: "Gerando artefato impresso rastreado..." };
+      refreshTeacherAvaliaSurface();
+      try {
+        const result = await avaliaApplicationService.generatePrintExport({
+          assessmentId: assignment.assessment_id,
+          assignmentId,
+          classId: assignment.class_id,
+          bookletId: assignment.booklet_id || null,
+          exportType,
+          format: "PDF",
+        });
+        const fileName = result?.export?.file_name || (exportType === "ATTENDANCE_LIST" ? "lista-presenca.pdf" : "folha-respostas.pdf");
+        avaliaApplicationState.teacher.printExports[assignmentId] = { message: `${fileName} pronto para impressao/exportacao.` };
+        refreshTeacherAvaliaSurface();
+      } catch (error) {
+        avaliaApplicationState.teacher.printExports[assignmentId] = { message: error.message || "Nao foi possivel gerar o artefato impresso." };
+        refreshTeacherAvaliaSurface();
+      }
+      return;
+    }
+
+    const previewImportButton = event.target.closest("[data-avalia-offline-preview]");
+    if (previewImportButton) {
+      const assignmentId = previewImportButton.dataset.avaliaOfflinePreview || "";
+      const textarea = root.querySelector(`[data-avalia-offline-csv="${CSS.escape(assignmentId)}"]`);
+      const rows = parseAvaliaOfflineImportText(textarea?.value || "");
+      avaliaApplicationState.teacher.offlineImports[assignmentId] = { message: "Validando arquivo antes da consolidacao...", rows: [] };
+      refreshTeacherAvaliaSurface();
+      try {
+        const result = await avaliaApplicationService.previewOfflineImport({
+          assignmentId,
+          sourceFormat: "CSV",
+          fileName: "gabarito-fisico.csv",
+          rows,
+        });
+        const invalid = (result.rows || []).filter((row) => row.status !== "valid").length;
+        avaliaApplicationState.teacher.offlineImports[assignmentId] = {
+          batch: result.batch,
+          rows: result.rows || [],
+          message: invalid ? `Preview gerado com ${invalid} linha(s) pendente(s).` : "Preview validado. Pode consolidar.",
+        };
+        refreshTeacherAvaliaSurface();
+      } catch (error) {
+        avaliaApplicationState.teacher.offlineImports[assignmentId] = { error: error.message || "Nao foi possivel validar a importacao.", rows: [] };
+        refreshTeacherAvaliaSurface();
+      }
+      return;
+    }
+
+    const confirmImportButton = event.target.closest("[data-avalia-offline-confirm]");
+    if (confirmImportButton) {
+      const assignmentId = confirmImportButton.dataset.avaliaOfflineConfirm || "";
+      const state = avaliaApplicationState.teacher.offlineImports[assignmentId] || {};
+      if (!state.batch?.id) return;
+      avaliaApplicationState.teacher.offlineImports[assignmentId] = { ...state, message: "Consolidando no motor canonico de resultados..." };
+      refreshTeacherAvaliaSurface();
+      try {
+        const result = await avaliaApplicationService.confirmOfflineImport(state.batch.id);
+        avaliaApplicationState.teacher.offlineImports[assignmentId] = {
+          ...state,
+          batch: result.batch || state.batch,
+          message: `Importacao consolidada para ${Number(result.consolidated_students || 0)} aluno(s).`,
+        };
+        await loadTeacherAvaliaData({ force: true });
+        refreshTeacherAvaliaSurface();
+      } catch (error) {
+        avaliaApplicationState.teacher.offlineImports[assignmentId] = { ...state, error: error.message || "Nao foi possivel consolidar o lote." };
+        refreshTeacherAvaliaSurface();
+      }
+      return;
+    }
+
     const resultButton = event.target.closest("[data-avalia-teacher-results]");
     if (!resultButton) return;
     const assignmentId = resultButton.dataset.avaliaTeacherResults || "";
@@ -17809,8 +18207,11 @@ const initTeacherAvaliaApplication = () => {
     avaliaApplicationState.teacher.resultError = "";
     refreshTeacherAvaliaSurface();
     try {
-      const result = await avaliaApplicationService.getTeacherClassResults(assignmentId);
-      avaliaApplicationState.teacher.results[assignmentId] = result;
+      const [result, intelligence] = await Promise.all([
+        avaliaApplicationService.getTeacherClassResults(assignmentId),
+        avaliaApplicationService.getPedagogicalIntelligence(assignmentId).catch(() => ({})),
+      ]);
+      avaliaApplicationState.teacher.results[assignmentId] = { ...(result || {}), intelligence };
       avaliaApplicationState.teacher.resultStatus = "";
       avaliaApplicationState.teacher.message = "Resultados carregados.";
       refreshTeacherAvaliaSurface();
@@ -17832,6 +18233,7 @@ const initTeacherAvaliaApplication = () => {
     const classItem = getTeacherInstitutionalClasses().find((item) => item.id === classId);
     const assessmentId = String(formData.get("assessmentId") || "");
     const targetType = String(formData.get("targetType") || "class");
+    const shuffleMode = String(formData.get("shuffleMode") || "none");
     if (!assessmentId || !classId) {
       if (statusNode) statusNode.textContent = "Selecione uma avaliacao e uma turma.";
       return;
@@ -17848,6 +18250,11 @@ const initTeacherAvaliaApplication = () => {
         availableUntil: formData.get("availableUntil") ? new Date(String(formData.get("availableUntil"))).toISOString() : null,
         maxAttempts: Number(formData.get("maxAttempts") || 1),
         timeLimitMinutes: formData.get("timeLimitMinutes") ? Number(formData.get("timeLimitMinutes")) : null,
+        cycleName: String(formData.get("cycleName") || "").trim(),
+        schoolYear: String(formData.get("schoolYear") || "").trim(),
+        tokenRequired: String(formData.get("tokenRequired") || "0") === "1",
+        shuffleQuestions: shuffleMode === "questions" || shuffleMode === "all",
+        shuffleAlternatives: shuffleMode === "all",
       });
       avaliaApplicationState.teacher.message = "Avaliacao publicada com sucesso.";
       await loadTeacherAvaliaData({ force: true });
@@ -17919,7 +18326,15 @@ const initStudentAvaliaApplication = () => {
       }
       if (statusNode) statusNode.textContent = "Iniciando avaliacao...";
       try {
-        const attempt = await avaliaApplicationService.startAttempt(assignmentId);
+        const assignment = avaliaApplicationState.student.assignments.find((item) => item.id === assignmentId);
+        const applicationToken = assignment?.token_required
+          ? window.prompt("Informe o token de aplicação enviado pela escola.") || ""
+          : "";
+        if (assignment?.token_required && !applicationToken.trim()) {
+          if (statusNode) statusNode.textContent = "Token obrigatorio para iniciar.";
+          return;
+        }
+        const attempt = await avaliaApplicationService.startAttempt(assignmentId, applicationToken.trim());
         avaliaApplicationState.student.activeAttemptId = attempt.id;
         avaliaApplicationState.student.message = `Tentativa iniciada em ${avaliaDateTimeLabel(attempt.started_at)}.`;
         await loadStudentAvaliaData({ force: true });
@@ -17966,6 +18381,32 @@ const initStudentAvaliaApplication = () => {
         if (statusNode) statusNode.textContent = avaliaApplicationState.student.error;
       }
     }
+    if (button.hasAttribute("data-avalia-save-text")) {
+      const questionEntry = questions[avaliaApplicationState.student.activeQuestionIndex];
+      const question = getAvaliaQuestion(questionEntry);
+      const textarea = root.querySelector("[data-avalia-text-answer]");
+      if (!question?.id || attempt.status !== "in_progress") return;
+      if (statusNode) statusNode.textContent = "Salvando resposta...";
+      try {
+        const response = await avaliaApplicationService.saveResponse({
+          attemptId: attempt.id,
+          questionId: question.id,
+          responseText: textarea?.value || "",
+          autosaveSequence: Date.now(),
+        });
+        const localAttempt = getAvaliaActiveAttempt();
+        localAttempt.responses = [
+          ...(localAttempt.responses || []).filter((item) => item.question_id !== response.question_id),
+          response,
+        ];
+        avaliaApplicationState.student.message = "Resposta discursiva salva.";
+        refreshStudentAvaliaSurface();
+      } catch (error) {
+        avaliaApplicationState.student.error = error.message || "Nao foi possivel salvar a resposta.";
+        if (statusNode) statusNode.textContent = avaliaApplicationState.student.error;
+      }
+      return;
+    }
   });
 
   root.addEventListener("change", async (event) => {
@@ -17983,6 +18424,7 @@ const initStudentAvaliaApplication = () => {
         attemptId: attempt.id,
         questionId: question.id,
         alternativeId: input.value,
+        autosaveSequence: Date.now(),
       });
       const localAttempt = getAvaliaActiveAttempt();
       localAttempt.responses = [
@@ -18419,6 +18861,7 @@ const initQuestionBank = () => {
           isLocalPreview
             ? ""
             : `<button type="button" data-qb-print="${isTeacher ? "teacher" : isAnswerSheet ? "answers" : "student"}">${isTeacher ? "Gerar PDF do gabarito" : isAnswerSheet ? "Gerar folha de respostas" : "Gerar PDF do aluno"}</button>
+               <button type="button" data-qb-docx="${isTeacher ? "teacher" : isAnswerSheet ? "answers" : "student"}">${isTeacher ? "Gerar DOCX do gabarito" : isAnswerSheet ? "Gerar DOCX da folha" : "Gerar DOCX do aluno"}</button>
                ${isTeacher ? `<button type="button" data-qb-print="answers">Gerar folha de respostas</button>` : ""}`
         }
         <button type="button" data-qb-close-preview>Fechar</button>
@@ -18560,25 +19003,50 @@ const initQuestionBank = () => {
   const syncCartToAssessment = async () => {
     if (!cart.length) return null;
     syncPointInputs();
-    const assessment = await ensureAssessment();
-    const remote = await questionBankDataService.getAssessmentById(assessment.id);
-    const remoteIds = new Set(
-      (remote?.questions || []).map((entry) => entry.question?.code || entry.question_id).filter(Boolean)
-    );
-    for (const id of cart) {
-      const item = itemById(id);
-      if (!item) continue;
-      if (!remoteIds.has(item.id) && !remoteIds.has(item.uuid)) {
-        await questionBankDataService.addQuestionToAssessment(assessment.id, item.uuid || item.id, Number(cartPoints[item.id] ?? 1));
-      } else {
-        await questionBankDataService.updateQuestionPoints(assessment.id, item.uuid || item.id, Number(cartPoints[item.id] ?? 1));
-      }
+    if (!activeAssessmentId) {
+      const items = cart.map(itemById).filter(Boolean);
+      const assessment = await questionBankDataService.createAssessmentFromBank({
+        ...assessmentPayloadFromBuilder(),
+        questions: items.map((item, index) => ({
+          question_id: item.uuid || item.id,
+          position: index + 1,
+          points: Number(cartPoints[item.id] ?? 1),
+        })),
+        booklets: [
+          {
+            code: "A",
+            title: "Caderno A",
+            position: 1,
+            questions: items.map((item, index) => ({
+              question_id: item.uuid || item.id,
+              position: index + 1,
+            })),
+          },
+        ],
+      });
+      activeAssessmentId = assessment.id;
+      return assessment;
     }
-    await questionBankDataService.reorderQuestions(
-      assessment.id,
-      cart.map((id) => itemById(id)?.uuid || id)
-    );
-    return questionBankDataService.getAssessmentById(assessment.id);
+    const items = cart.map(itemById).filter(Boolean);
+    return questionBankDataService.replaceAssessmentItems(activeAssessmentId, {
+      ...assessmentPayloadFromBuilder(),
+      questions: items.map((item, index) => ({
+        question_id: item.uuid || item.id,
+        position: index + 1,
+        points: Number(cartPoints[item.id] ?? 1),
+      })),
+      booklets: [
+        {
+          code: "A",
+          title: "Caderno A",
+          position: 1,
+          questions: items.map((item, index) => ({
+            question_id: item.uuid || item.id,
+            position: index + 1,
+          })),
+        },
+      ],
+    });
   };
 
   const ensureSavedForPreview = async () => {
@@ -18601,14 +19069,47 @@ const initQuestionBank = () => {
     }
   };
 
-  const printPreview = (kind) => {
+  const printPreview = async (kind) => {
     const items = cart.map(itemById).filter(Boolean);
     if (!items.length) {
       setSelectionStatus("Selecione questoes antes de gerar PDF.", "error");
       return;
     }
+    if (mode === "supabase") {
+      const savedAssessment = await ensureSavedForPreview();
+      const assessmentId = savedAssessment?.assessment?.id || savedAssessment?.id || activeAssessmentId;
+      if (!assessmentId) {
+        return;
+      }
+      await questionBankDataService.generatePrintExport({
+        assessmentId,
+        exportType: kind === "teacher" ? "TEACHER_KEY" : kind === "answers" ? "ANSWER_SHEET" : "STUDENT_TEST",
+        format: "PDF",
+      });
+    }
     renderPreview(kind);
     window.setTimeout(() => window.print(), 80);
+  };
+
+  const generateDocxExport = async (kind) => {
+    const items = cart.map(itemById).filter(Boolean);
+    if (!items.length) {
+      setSelectionStatus("Selecione questoes antes de gerar DOCX.", "error");
+      return;
+    }
+    if (mode !== "supabase") {
+      setSelectionStatus("DOCX oficial exige avaliação salva no Supabase.", "error");
+      return;
+    }
+    const savedAssessment = await ensureSavedForPreview();
+    const assessmentId = savedAssessment?.assessment?.id || savedAssessment?.id || activeAssessmentId;
+    if (!assessmentId) return;
+    const result = await questionBankDataService.generatePrintExport({
+      assessmentId,
+      exportType: kind === "teacher" ? "TEACHER_KEY" : kind === "answers" ? "ANSWER_SHEET" : "STUDENT_TEST",
+      format: "DOCX",
+    });
+    setSelectionStatus(`${result?.export?.file_name || "DOCX"} preparado para exportacao oficial.`, "success");
   };
 
   previewPanel?.addEventListener("click", (event) => {
@@ -18618,7 +19119,14 @@ const initQuestionBank = () => {
       previewPanel.hidden = true;
     }
     if (button.dataset.qbPrint) {
-      printPreview(button.dataset.qbPrint);
+      printPreview(button.dataset.qbPrint).catch((error) => {
+        setSelectionStatus(error.message || "Nao foi possivel gerar o artefato impresso.", "error");
+      });
+    }
+    if (button.dataset.qbDocx) {
+      generateDocxExport(button.dataset.qbDocx).catch((error) => {
+        setSelectionStatus(error.message || "Nao foi possivel gerar o DOCX.", "error");
+      });
     }
   });
 
@@ -18909,7 +19417,7 @@ const htmlEscape = (value) =>
 
 const getSupabaseConfig = () => window.RAIZES_SUPABASE || {};
 const supabaseSessionStorageKey = "raizes:supabase-auth-session";
-const allowedAssessmentRoles = ["admin", "professor"];
+const allowedAssessmentRoles = ["admin", "administrador", "administrador_nacional", "gestor", "gestor_da_rede", "professor", "curator", "curador", "revisor", "revisor_pedagogico", "aprovador", "elaborador"];
 
 const decodeJwtPayload = (token) => {
   try {
@@ -19180,6 +19688,88 @@ const getStudentCandidateByUserId = async (client, userId) => {
   return Array.isArray(rows) ? rows[0] || null : null;
 };
 
+const getStudentCanonicalContext = async (client) => {
+  const rows = await client.request("rpc/student_get_context", "", {
+    method: "POST",
+    body: JSON.stringify({}),
+    requireAuthenticated: true,
+    allowedRoles: ["aluno", "admin"],
+  });
+  const context = Array.isArray(rows) ? rows[0] || null : rows || null;
+  if (!context?.student_id) {
+    throw new Error("Não foi possível identificar o vinculo escolar deste aluno.");
+  }
+  return context;
+};
+
+const mapStudentFromContext = (context = {}) => ({
+  id: context.student_id || "",
+  nome: context.student_name || "Aluno",
+  name: context.student_name || "Aluno",
+  school_id: context.school_id || "",
+  class_id: context.class_id || "",
+  turma: context.school_year || context.class_name || "",
+  status: "active",
+});
+
+const mapStudentEnrollmentFromContext = (context = {}) => ({
+  id: context.enrollment_id || `context-${context.student_id || "student"}`,
+  student_id: context.student_id || "",
+  class_id: context.class_id || "",
+  school_id: context.school_id || "",
+  school_year: context.school_year || "",
+  status: "active",
+  classes: mapStudentClassFromContext(context),
+  schools: mapStudentSchoolFromContext(context),
+});
+
+const mapStudentClassFromContext = (context = {}) => ({
+  id: context.class_id || "",
+  nome: context.class_name || "Turma",
+  name: context.class_name || "Turma",
+  school_id: context.school_id || "",
+  school_year: context.school_year || "",
+  age_group: context.age_group || context.segment || "",
+  status: "active",
+});
+
+const mapStudentSchoolFromContext = (context = {}) => ({
+  id: context.school_id || "",
+  nome: context.school_name || "Escola",
+  name: context.school_name || "Escola",
+  status: "active",
+});
+
+const loadStudentProgressSummary = async (client) => {
+  const student = studentInstitutionalState.student || {};
+  if (!student.id) return { xpRecords: [], medals: [], xpTotal: 0 };
+  const requestOptions = { requireAuthenticated: true, allowedRoles: ["aluno", "admin"] };
+  const [xpRows, studentMedalRows] = await Promise.all([
+    client
+      .request("xp_records", `?select=id,origem,pontos,created_at&student_id=${supabaseEq(student.id)}&order=created_at.desc&limit=50`, requestOptions)
+      .catch(() => []),
+    client
+      .request("student_medals", `?select=id,student_id,medal_id,data_conquista&student_id=${supabaseEq(student.id)}&order=data_conquista.desc&limit=50`, requestOptions)
+      .catch(() => []),
+  ]);
+  const medalIds = [...new Set((studentMedalRows || []).map((item) => item.medal_id).filter(Boolean))];
+  const medalRows = medalIds.length
+    ? await client
+        .request("medals", `?select=id,nome,descricao,pontos_bonus&id=${supabaseIn(medalIds)}`, requestOptions)
+        .catch(() => [])
+    : [];
+  const medalsById = new Map((medalRows || []).map((medal) => [medal.id, medal]));
+  const medals = (studentMedalRows || []).map((item) => ({
+    ...item,
+    medal: medalsById.get(item.medal_id) || null,
+  }));
+  return {
+    xpRecords: xpRows || [],
+    medals,
+    xpTotal: (xpRows || []).reduce((total, row) => total + Number(row.pontos || 0), 0),
+  };
+};
+
 const rerenderStudentInstitutionalSurfaces = () => {
   if (!isStudentInstitutionalMode() || studentInstitutionalState.status !== "ready") return;
   const dashboard = document.querySelector("[data-student-dashboard]");
@@ -19220,7 +19810,14 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
         allowedRoles: ["aluno", "admin"],
       }).catch(() => []);
       const profile = Array.isArray(profileRows) ? profileRows[0] || null : null;
-      const student = await getStudentCandidateByUserId(client, context.userId);
+      const studentContext = await getStudentCanonicalContext(client);
+      const student = await client
+        .request("students", `?select=*&id=${supabaseEq(studentContext.student_id)}&limit=1`, {
+          requireAuthenticated: true,
+          allowedRoles: ["aluno", "admin"],
+        })
+        .then((rows) => (Array.isArray(rows) ? rows[0] || null : null))
+        .catch(() => null) || mapStudentFromContext(studentContext);
       const publicUser = null;
       if (!student?.id) {
         throw new Error("Não foi possível identificar o vinculo escolar deste aluno.");
@@ -19229,10 +19826,10 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
         "enrollments",
         `?select=*,classes(*),schools(*)&student_id=${supabaseEq(student.id)}&status=eq.active&limit=1`,
         { requireAuthenticated: true, allowedRoles: ["aluno", "admin"] }
-      );
-      const enrollment = Array.isArray(enrollmentRows) ? enrollmentRows[0] || null : null;
-      const classItem = enrollment?.classes || null;
-      const school = enrollment?.schools || null;
+      ).catch(() => []);
+      const enrollment = (Array.isArray(enrollmentRows) ? enrollmentRows[0] || null : null) || mapStudentEnrollmentFromContext(studentContext);
+      const classItem = enrollment?.classes || mapStudentClassFromContext(studentContext);
+      const school = enrollment?.schools || mapStudentSchoolFromContext(studentContext);
       if (!enrollment?.id || !classItem?.id || !school?.id) {
         throw new Error("Não foi possível identificar o vinculo escolar deste aluno.");
       }
@@ -19261,6 +19858,7 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       }));
       studentInstitutionalState.weekStartIso = studentInstitutionalState.weekStartIso || familyWeekStartIso();
       studentInstitutionalState.calendarError = "";
+      studentInstitutionalState.context = studentContext;
       studentInstitutionalState.profile = profile;
       studentInstitutionalState.publicUser = publicUser;
       studentInstitutionalState.student = student;
@@ -19274,10 +19872,12 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       studentInstitutionalState.messagesError = "";
       studentInstitutionalState.recommendationsError = "";
       studentInstitutionalState.recommendations = [];
+      studentInstitutionalState.progress = { xpRecords: [], medals: [], xpTotal: 0 };
+      studentInstitutionalState.progressError = "";
       studentInstitutionalState.secondaryLoadedAt = "";
       studentInstitutionalState.status = "ready";
       const refreshSecondaryData = async () => {
-        const [entries, recommendations, messages] = await Promise.all([
+        const [entries, recommendations, messages, progress] = await Promise.all([
           loadStudentUnifiedCalendarEvents(client, studentInstitutionalState.weekStartIso).catch((error) => {
             studentInstitutionalState.calendarError = error.message || "Não foi possível carregar a Minha Semana.";
             return [];
@@ -19290,11 +19890,16 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
             studentInstitutionalState.messagesError = error.message || "Não foi possível carregar os recados.";
             return [];
           }),
+          loadStudentProgressSummary(client).catch((error) => {
+            studentInstitutionalState.progressError = error.message || "Não foi possível carregar o progresso.";
+            return { xpRecords: [], medals: [], xpTotal: 0 };
+          }),
         ]);
         studentInstitutionalState.entries = (entries || []).filter((entry) => entry.status === "published");
         studentInstitutionalState.agendaEvents = studentInstitutionalState.entries;
         studentInstitutionalState.recommendations = recommendations || [];
         studentInstitutionalState.messages = messages || [];
+        studentInstitutionalState.progress = progress || { xpRecords: [], medals: [], xpTotal: 0 };
         studentInstitutionalState.secondaryLoadedAt = new Date().toISOString();
         rerenderStudentInstitutionalSurfaces();
       };
@@ -19303,11 +19908,14 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
     } catch (error) {
       studentInstitutionalState.status = "error";
       studentInstitutionalState.error = error.message || "Não foi possível carregar o aluno institucional.";
+      studentInstitutionalState.context = null;
       studentInstitutionalState.student = null;
       studentInstitutionalState.enrollment = null;
       studentInstitutionalState.classItem = null;
       studentInstitutionalState.school = null;
       studentInstitutionalState.teachers = [];
+      studentInstitutionalState.progress = { xpRecords: [], medals: [], xpTotal: 0 };
+      studentInstitutionalState.progressError = "";
       studentInstitutionalState.entries = [];
       studentInstitutionalState.agendaEvents = [];
       studentInstitutionalState.messages = [];
@@ -19354,6 +19962,31 @@ const getActiveStudentProfile = () => {
     status: "fallback",
     error: "",
   };
+};
+
+const normalizeStudentSegmentValue = (value = "") =>
+  String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+
+const isStudentEarlyChildhoodContext = () => {
+  if (!isStudentInstitutionalMode()) return true;
+  const context = studentInstitutionalState.context || {};
+  const classItem = studentInstitutionalState.classItem || {};
+  const segmentText = [
+    context.segment,
+    context.age_group,
+    context.class_name,
+    classItem.age_group,
+    classItem.nome,
+    classItem.name,
+  ]
+    .map(normalizeStudentSegmentValue)
+    .join(" ");
+  if (!segmentText.trim()) return false;
+  return segmentText.includes("educacao_infantil") || segmentText.includes("infantil");
 };
 
 const mapInstitutionalClass = (classItem = {}, school = null, studentCount = 0) => ({
@@ -19652,7 +20285,7 @@ const ensureSecretariaAnalytics = async ({ force = false, schoolId = "", from = 
   secretariaAnalyticsState.key = key;
   secretariaAnalyticsState.promise = (async () => {
     try {
-      const [overview, attendanceTrend, assessmentTrend, diaryTrend, comparison, classComparison, alerts] = await Promise.all([
+      const [overview, attendanceTrend, assessmentTrend, diaryTrend, comparison, classComparison, alerts, assessmentIntelligence] = await Promise.all([
         analyticsService.getSchoolOverview({
           schoolId: selectedSchoolId,
           dateFrom: range.from,
@@ -19664,6 +20297,7 @@ const ensureSecretariaAnalytics = async ({ force = false, schoolId = "", from = 
         analyticsService.getPeriodComparison({ schoolId: selectedSchoolId, currentFrom: range.from, currentTo: range.to }),
         analyticsService.getClassComparison({ schoolId: selectedSchoolId, dateFrom: range.from, dateTo: range.to, metric: "attendance_rate" }),
         analyticsService.getAlerts({ schoolId: selectedSchoolId, dateFrom: range.from, dateTo: range.to }),
+        analyticsService.getAssessmentPedagogicalIntelligence({ schoolId: selectedSchoolId, dateFrom: range.from, dateTo: range.to }).catch(() => ({})),
       ]);
       if (overview.error) throw new Error(overview.error);
       secretariaAnalyticsState.result = {
@@ -19672,6 +20306,7 @@ const ensureSecretariaAnalytics = async ({ force = false, schoolId = "", from = 
         comparison,
         classComparison,
         alerts,
+        assessmentIntelligence,
       };
       secretariaAnalyticsState.status = "ready";
     } catch (error) {
@@ -19890,7 +20525,10 @@ const getSecretariaOfficialReportExportPayload = (format = "pdf") => {
       networkId: null,
     },
     period: { from: report.range.from, to: report.range.to },
-    params: { source_view: "secretaria.relatorios" },
+    params: {
+      source_view: "secretaria.relatorios",
+      include_avalia_pedagogical_intelligence: ["avalia", "school-analytics"].includes(report.type),
+    },
   };
 };
 
@@ -19912,7 +20550,10 @@ const getTeacherOfficialReportExportPayload = (format = "pdf") => {
       networkId: null,
     },
     period: { from: report.range.from, to: report.range.to },
-    params: { source_view: "professor.relatorios" },
+    params: {
+      source_view: "professor.relatorios",
+      include_avalia_pedagogical_intelligence: report.type === "avalia",
+    },
   };
 };
 
@@ -19933,7 +20574,10 @@ const getMunicipalOfficialReportExportPayload = (format = "pdf") => {
       networkId: network.id || null,
     },
     period: { from: range.from, to: range.to },
-    params: { source_view: "gestor.reports" },
+    params: {
+      source_view: "gestor.reports",
+      include_avalia_pedagogical_intelligence: true,
+    },
   };
 };
 
@@ -20066,6 +20710,7 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
         communications,
         communicationEvents,
         communicationDeliverySummaries,
+        academicCore,
       ] = await Promise.all([
         client.request("schools", "?select=id,nome,codigo_inep,municipio,estado,status&order=nome.asc", options),
         client.request("rpc/secretaria_list_staff_profiles", "", {
@@ -20153,6 +20798,11 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
           method: "POST",
           body: "{}",
         }).catch(() => []),
+        client.request("rpc/secretaria_list_academic_core", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }).catch(() => ({})),
       ]);
 
       Object.assign(secretariaInstitutionalState, {
@@ -20182,6 +20832,13 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
         communications: communications || [],
         communicationEvents: communicationEvents || [],
         communicationDeliverySummaries: communicationDeliverySummaries || [],
+        academicYears: academicCore?.academic_years || [],
+        academicTerms: academicCore?.academic_terms || [],
+        schoolDays: academicCore?.school_days || [],
+        classSubjects: academicCore?.class_subjects || [],
+        classScheduleSlots: academicCore?.class_schedule_slots || [],
+        academicImportBatches: academicCore?.import_batches || [],
+        academicImportRows: academicCore?.import_rows || [],
       });
       return secretariaInstitutionalState;
     } catch (error) {
@@ -20209,6 +20866,13 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
         communications: [],
         communicationEvents: [],
         communicationDeliverySummaries: [],
+        academicYears: [],
+        academicTerms: [],
+        schoolDays: [],
+        classSubjects: [],
+        classScheduleSlots: [],
+        academicImportBatches: [],
+        academicImportRows: [],
       });
       return secretariaInstitutionalState;
     } finally {
@@ -20354,6 +21018,38 @@ const buildSecretariaIndex = () => {
   (state.communicationDeliverySummaries || []).forEach((summary) => {
     if (summary.communication_id) communicationDeliverySummaryByCommunication[summary.communication_id] = summary;
   });
+  const academicYearById = new Map((state.academicYears || []).map((item) => [item.id, item]));
+  const academicTermsByYear = {};
+  (state.academicTerms || []).forEach((term) => {
+    academicTermsByYear[term.academic_year_id] = academicTermsByYear[term.academic_year_id] || [];
+    academicTermsByYear[term.academic_year_id].push(term);
+  });
+  Object.values(academicTermsByYear).forEach((terms) => terms.sort((a, b) => Number(a.term_order || 0) - Number(b.term_order || 0)));
+  const schoolDaysByYear = {};
+  (state.schoolDays || []).forEach((day) => {
+    const key = day.academic_year_id || "sem-ano";
+    schoolDaysByYear[key] = schoolDaysByYear[key] || [];
+    schoolDaysByYear[key].push(day);
+  });
+  Object.values(schoolDaysByYear).forEach((days) => days.sort((a, b) => String(a.day_date || "").localeCompare(String(b.day_date || ""))));
+  const classSubjectById = new Map((state.classSubjects || []).map((item) => [item.id, item]));
+  const classSubjectsByClass = {};
+  (state.classSubjects || []).forEach((subject) => {
+    classSubjectsByClass[subject.class_id] = classSubjectsByClass[subject.class_id] || [];
+    classSubjectsByClass[subject.class_id].push(subject);
+  });
+  Object.values(classSubjectsByClass).forEach((subjects) => subjects.sort((a, b) => String(a.component_name || "").localeCompare(String(b.component_name || ""), "pt-BR")));
+  const classScheduleSlotsByClass = {};
+  (state.classScheduleSlots || []).forEach((slot) => {
+    classScheduleSlotsByClass[slot.class_id] = classScheduleSlotsByClass[slot.class_id] || [];
+    classScheduleSlotsByClass[slot.class_id].push(slot);
+  });
+  Object.values(classScheduleSlotsByClass).forEach((slots) => slots.sort((a, b) => Number(a.weekday || 0) - Number(b.weekday || 0) || String(a.start_time || "").localeCompare(String(b.start_time || ""))));
+  const importRowsByBatch = {};
+  (state.academicImportRows || []).forEach((row) => {
+    importRowsByBatch[row.batch_id] = importRowsByBatch[row.batch_id] || [];
+    importRowsByBatch[row.batch_id].push(row);
+  });
   const classDiaryByClass = {};
   (state.classDiaryEntries || []).forEach((entry) => {
     classDiaryByClass[entry.class_id] = classDiaryByClass[entry.class_id] || [];
@@ -20402,6 +21098,13 @@ const buildSecretariaIndex = () => {
     communicationsBySchool,
     communicationEventsByCommunication,
     communicationDeliverySummaryByCommunication,
+    academicYearById,
+    academicTermsByYear,
+    schoolDaysByYear,
+    classSubjectById,
+    classSubjectsByClass,
+    classScheduleSlotsByClass,
+    importRowsByBatch,
     classDiaryByClass,
   };
 };
@@ -20508,11 +21211,24 @@ const mapCommunicationInboxItem = (row = {}, fallback = {}) => ({
   readAt: row.read_at || "",
   notificationStatus: row.notification_status || (row.read_at ? "read" : "unread"),
   unreadCount: Number(row.unread_count || 0),
+  actionLabel: row.action_label || "",
+  href: row.href || "",
+  sourceType: row.source_type || "",
+  sourceId: row.source_id || "",
   date: communicationDisplayDate(row.delivered_at || row.created_at || row.communication_date),
   createdAt: row.created_at || "",
   deliveredAt: row.delivered_at || "",
   communicationDate: row.communication_date || "",
 });
+const resolveCommunicationDeepLink = (href = "") => {
+  const target = String(href || "").trim();
+  if (!target) return "";
+  if (/^(https?:|mailto:|tel:)/i.test(target) || target.includes(".html")) return target;
+  const page = window.location.pathname.includes("familia") ? "familia.html" : "aluno.html";
+  if (target === "agenda") return `${page}?view=agenda`;
+  if (target === "avaliacoes") return "aluno.html?view=avaliacoes";
+  return target;
+};
 const callCommunicationInbox = async (client, { studentId = "", readFilter = "all", periodDays = 90, limit = 50 } = {}, allowedRoles = []) =>
   client.request("rpc/communication_get_inbox", "", {
     method: "POST",
@@ -20801,6 +21517,85 @@ const callSecretariaArchiveCalendarEvent = ({ eventId }) =>
   callSecretariaCalendarRpc("secretaria_archive_school_calendar_event", {
     p_event_id: eventId,
   });
+
+const callSecretariaAcademicRpc = async (rpcName, payload) => {
+  const client = createSupabaseRestClient();
+  const result = await client.request(`rpc/${rpcName}`, "", {
+    requireAuthenticated: true,
+    allowedRoles: secretariaAllowedRoles,
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  secretariaInstitutionalState.lastAcademicResult = result;
+  return result;
+};
+
+const callSecretariaUpsertAcademicYear = ({ schoolId, schoolYear, startDate, endDate, status }) =>
+  callSecretariaAcademicRpc("secretaria_upsert_academic_year", {
+    p_school_id: schoolId,
+    p_school_year: schoolYear,
+    p_start_date: startDate,
+    p_end_date: endDate,
+    p_status: status || "active",
+  });
+
+const callSecretariaUpsertAcademicTerm = ({ academicYearId, termName, termOrder, startDate, endDate, termType, status }) =>
+  callSecretariaAcademicRpc("secretaria_upsert_academic_term", {
+    p_academic_year_id: academicYearId,
+    p_term_name: termName,
+    p_term_order: Number(termOrder || 1),
+    p_start_date: startDate,
+    p_end_date: endDate,
+    p_term_type: termType || "bimestre",
+    p_status: status || "active",
+  });
+
+const callSecretariaUpsertSchoolDay = ({ schoolId, academicYearId, dayDate, dayType, title, description, status }) =>
+  callSecretariaAcademicRpc("secretaria_upsert_school_day", {
+    p_school_id: schoolId,
+    p_academic_year_id: academicYearId || null,
+    p_day_date: dayDate,
+    p_day_type: dayType || "letivo",
+    p_title: title || null,
+    p_description: description || null,
+    p_status: status || "active",
+  });
+
+const callSecretariaUpsertClassSubject = ({ schoolId, classId, componentName, componentCode, teacherId, workloadMinutesWeekly, status }) =>
+  callSecretariaAcademicRpc("secretaria_upsert_class_subject", {
+    p_school_id: schoolId,
+    p_class_id: classId,
+    p_component_name: componentName,
+    p_component_code: componentCode || null,
+    p_teacher_id: teacherId || null,
+    p_workload_minutes_weekly: workloadMinutesWeekly ? Number(workloadMinutesWeekly) : null,
+    p_status: status || "active",
+  });
+
+const callSecretariaUpsertClassScheduleSlot = ({ schoolId, classId, classSubjectId, teacherId, weekday, startTime, endTime, room, validFrom, validUntil, status }) =>
+  callSecretariaAcademicRpc("secretaria_upsert_class_schedule_slot", {
+    p_school_id: schoolId,
+    p_class_id: classId,
+    p_class_subject_id: classSubjectId || null,
+    p_teacher_id: teacherId || null,
+    p_weekday: Number(weekday || 1),
+    p_start_time: startTime,
+    p_end_time: endTime,
+    p_room: room || null,
+    p_valid_from: validFrom || null,
+    p_valid_until: validUntil || null,
+    p_status: status || "active",
+  });
+
+const callSecretariaCreateEnrollmentImportBatch = async ({ schoolId, fileName, rows }) => {
+  const result = await callSecretariaAcademicRpc("secretaria_create_enrollment_import_batch", {
+    p_school_id: schoolId,
+    p_file_name: fileName || "importacao-matriculas.csv",
+    p_rows: rows,
+  });
+  secretariaInstitutionalState.lastImportResult = result;
+  return result;
+};
 
 const callSecretariaSetStudentDocumentStatus = async ({ studentId, documentTypeId, status, notes, fileReference, receivedAt, expiresAt }) => {
   const client = createSupabaseRestClient();
@@ -21731,6 +22526,11 @@ const renderSecretariaEnrollmentsView = (index) => {
       </li>
     `;
   }).join("");
+  const school = getSecretariaPrimarySchool();
+  const importBatches = (secretariaInstitutionalState.academicImportBatches || [])
+    .filter((batch) => !school.id || batch.school_id === school.id)
+    .slice()
+    .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
   return `
     <div class="analytics-grid secretaria-grid">
       <section class="panel span-2">
@@ -21762,6 +22562,22 @@ const renderSecretariaEnrollmentsView = (index) => {
       <section class="panel span-2">
         <div class="panel-head"><h2>Histórico de Movimentacoes</h2><span>${movements.length} registro${movements.length === 1 ? "" : "s"}</span></div>
         <ul class="clean-list">${movementRows || "<li>Nenhuma movimentação retornada pelo Supabase.</li>"}</ul>
+      </section>
+      <section class="panel span-2">
+        <div class="panel-head"><h2>Importacao CSV</h2><span>${importBatches.length ? `${importBatches.length} lote(s)` : "EMPTY_REAL"}</span></div>
+        <form data-secretaria-import-form>
+          <input type="hidden" name="school_id" value="${htmlEscape(school.id || "")}" />
+          <label><span>Arquivo/origem</span><input name="file_name" placeholder="matriculas-2026.csv" /></label>
+          <label><span>CSV</span><textarea name="csv_rows" rows="6" placeholder="nome;data_nascimento;class_id;school_year&#10;Maria Silva;2016-03-12;uuid-da-turma;2026"></textarea></label>
+          <button type="submit">Importar matriculas</button>
+          <p data-secretaria-import-message>${secretariaInstitutionalState.lastImportResult?.batch_id ? `Ultimo lote processado: ${htmlEscape(secretariaInstitutionalState.lastImportResult.status || "")}` : "Use CSV com colunas nome, data_nascimento, class_id e school_year."}</p>
+        </form>
+        <ul class="clean-list">
+          ${importBatches.slice(0, 5).map((batch) => {
+            const summary = batch.summary || {};
+            return `<li><strong>${htmlEscape(batch.file_name || "Importacao de matriculas")}</strong>${secretariaBadge(secretariaStatusLabel(batch.status), secretariaBadgeTone(batch.status))}<span>${htmlEscape(secretariaFormatDateTime(batch.created_at))} · ${Number(summary.completed || 0)} concluida(s) · ${Number(summary.failed || 0)} falha(s)</span></li>`;
+          }).join("") || "<li>Nenhum lote de importacao executado.</li>"}
+        </ul>
       </section>
     </div>
   `;
@@ -22099,6 +22915,120 @@ const secretariaCalendarEventsForDate = (date = "") =>
       return String(a.created_at || "").localeCompare(String(b.created_at || ""));
     });
 
+const secretariaWeekdayLabels = {
+  1: "Segunda",
+  2: "Terca",
+  3: "Quarta",
+  4: "Quinta",
+  5: "Sexta",
+  6: "Sabado",
+  7: "Domingo",
+};
+
+const parseSecretariaEnrollmentCsv = (rawText) => {
+  const lines = String(rawText || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (lines.length < 2) return [];
+  const delimiter = lines[0].includes(";") ? ";" : ",";
+  const headers = lines[0].split(delimiter).map((header) => header.trim());
+  return lines.slice(1).map((line) => {
+    const values = line.split(delimiter).map((value) => value.trim());
+    return headers.reduce((row, header, index) => {
+      row[header] = values[index] || "";
+      return row;
+    }, {});
+  });
+};
+
+const renderSecretariaAcademicCalendarPanel = (index) => {
+  const school = getSecretariaPrimarySchool();
+  const academicYears = (secretariaInstitutionalState.academicYears || [])
+    .filter((year) => !school.id || year.school_id === school.id)
+    .sort((a, b) => String(b.school_year || "").localeCompare(String(a.school_year || "")));
+  const selectedYear = academicYears[0] || {};
+  const terms = selectedYear.id ? (index.academicTermsByYear[selectedYear.id] || []) : [];
+  const schoolDays = selectedYear.id ? (index.schoolDaysByYear[selectedYear.id] || []) : [];
+  const letiveDays = schoolDays.filter((day) => day.day_type === "letivo").length;
+  return `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>Ano letivo e periodos</h2><span>${academicYears.length ? `${academicYears.length} ano(s)` : "EMPTY_REAL"}</span></div>
+      <div class="metric-row">
+        <article>Ano ativo<strong>${htmlEscape(selectedYear.school_year || "-")}</strong><span>${selectedYear.start_date ? `${htmlEscape(formatFamilyCanonicalDate(selectedYear.start_date))} a ${htmlEscape(formatFamilyCanonicalDate(selectedYear.end_date))}` : "Configure o ano letivo"}</span></article>
+        <article>Periodos<strong>${terms.length}</strong><span>bimestres/etapas cadastrados</span></article>
+        <article>Dias letivos<strong>${letiveDays}</strong><span>calendario escolar</span></article>
+      </div>
+      <form class="secretaria-form-grid" data-secretaria-academic-year-form>
+        <input type="hidden" name="school_id" value="${htmlEscape(school.id || "")}" />
+        <label><span>Ano letivo</span><input name="school_year" required placeholder="2026" value="${htmlEscape(selectedYear.school_year || "")}" /></label>
+        <label><span>Inicio</span><input type="date" name="start_date" required value="${htmlEscape(selectedYear.start_date || "")}" /></label>
+        <label><span>Fim</span><input type="date" name="end_date" required value="${htmlEscape(selectedYear.end_date || "")}" /></label>
+        <button type="submit">Salvar ano</button>
+      </form>
+      <form class="secretaria-form-grid" data-secretaria-academic-term-form>
+        <label><span>Ano</span><select name="academic_year_id" required>${academicYears.map((year) => `<option value="${htmlEscape(year.id)}">${htmlEscape(year.school_year)}</option>`).join("")}</select></label>
+        <label><span>Periodo</span><input name="term_name" required placeholder="1o Bimestre" /></label>
+        <label><span>Ordem</span><input type="number" name="term_order" min="1" value="1" required /></label>
+        <label><span>Inicio</span><input type="date" name="start_date" required /></label>
+        <label><span>Fim</span><input type="date" name="end_date" required /></label>
+        <button type="submit">Salvar periodo</button>
+      </form>
+      <ul class="clean-list">${terms.map((term) => `<li><strong>${htmlEscape(term.term_name)}</strong><span>${htmlEscape(formatFamilyCanonicalDate(term.start_date))} a ${htmlEscape(formatFamilyCanonicalDate(term.end_date))} · ${htmlEscape(term.term_type)}</span></li>`).join("") || "<li>Nenhum periodo cadastrado.</li>"}</ul>
+      <p data-secretaria-academic-message>${secretariaInstitutionalState.lastAcademicResult?.id ? "Ultima configuracao academica salva." : "Ano letivo, periodos e dias letivos ficam no nucleo academico canonico."}</p>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Dias letivos</h2><span>${schoolDays.length} dia(s)</span></div>
+      <form data-secretaria-school-day-form>
+        <input type="hidden" name="school_id" value="${htmlEscape(school.id || "")}" />
+        <label><span>Ano</span><select name="academic_year_id">${academicYears.map((year) => `<option value="${htmlEscape(year.id)}">${htmlEscape(year.school_year)}</option>`).join("")}</select></label>
+        <label><span>Data</span><input type="date" name="day_date" required /></label>
+        <label><span>Tipo</span><select name="day_type"><option value="letivo">Letivo</option><option value="recesso">Recesso</option><option value="feriado">Feriado</option><option value="evento">Evento</option><option value="planejamento">Planejamento</option><option value="nao_letivo">Nao letivo</option></select></label>
+        <label><span>Titulo</span><input name="title" maxlength="90" placeholder="Conselho de classe" /></label>
+        <button type="submit">Salvar dia</button>
+      </form>
+      <ul class="clean-list">${schoolDays.slice(0, 8).map((day) => `<li><strong>${htmlEscape(formatFamilyCanonicalDate(day.day_date) || day.day_date)}</strong><span>${htmlEscape(day.day_type)} · ${htmlEscape(day.title || "Sem titulo")}</span></li>`).join("") || "<li>Nenhum dia letivo configurado.</li>"}</ul>
+    </section>
+  `;
+};
+
+const renderSecretariaClassSchedulePanel = (index) => {
+  const school = getSecretariaPrimarySchool();
+  const activeClasses = (secretariaInstitutionalState.classes || [])
+    .filter((classItem) => isSecretariaActiveStatus(classItem.status) && (!school.id || classItem.school_id === school.id))
+    .sort((a, b) => normalizeClassName(a).localeCompare(normalizeClassName(b), "pt-BR"));
+  const selectedClass = activeClasses[0] || {};
+  const subjects = selectedClass.id ? (index.classSubjectsByClass[selectedClass.id] || []) : [];
+  const slots = selectedClass.id ? (index.classScheduleSlotsByClass[selectedClass.id] || []) : [];
+  return `
+    <section class="panel span-2">
+      <div class="panel-head"><h2>Componentes e horarios</h2><span>${slots.length ? `${slots.length} horario(s)` : "EMPTY_REAL"}</span></div>
+      <form class="secretaria-form-grid" data-secretaria-class-subject-form>
+        <input type="hidden" name="school_id" value="${htmlEscape(school.id || "")}" />
+        <label><span>Turma</span><select name="class_id" required>${activeClasses.map((classItem) => `<option value="${htmlEscape(classItem.id)}">${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
+        <label><span>Componente</span><input name="component_name" required placeholder="Lingua Portuguesa" /></label>
+        <label><span>Codigo</span><input name="component_code" placeholder="LP" /></label>
+        <label><span>Professor</span><select name="teacher_id"><option value="">Sem professor fixo</option>${(secretariaInstitutionalState.teachers || []).map((teacher) => `<option value="${htmlEscape(teacher.id)}">${htmlEscape(secretariaTeacherName(teacher, index))}</option>`).join("")}</select></label>
+        <label><span>Carga semanal/min</span><input type="number" name="workload_minutes_weekly" min="1" placeholder="200" /></label>
+        <button type="submit">Salvar componente</button>
+      </form>
+      <form class="secretaria-form-grid" data-secretaria-class-schedule-form>
+        <input type="hidden" name="school_id" value="${htmlEscape(school.id || "")}" />
+        <label><span>Turma</span><select name="class_id" required>${activeClasses.map((classItem) => `<option value="${htmlEscape(classItem.id)}">${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
+        <label><span>Componente</span><select name="class_subject_id"><option value="">Sem componente</option>${subjects.map((subject) => `<option value="${htmlEscape(subject.id)}">${htmlEscape(subject.component_name)}</option>`).join("")}</select></label>
+        <label><span>Dia</span><select name="weekday">${Object.entries(secretariaWeekdayLabels).map(([key, label]) => `<option value="${htmlEscape(key)}">${htmlEscape(label)}</option>`).join("")}</select></label>
+        <label><span>Inicio</span><input type="time" name="start_time" required /></label>
+        <label><span>Fim</span><input type="time" name="end_time" required /></label>
+        <button type="submit">Salvar horario</button>
+      </form>
+      <ul class="clean-list">
+        ${slots.map((slot) => {
+          const subject = index.classSubjectById.get(slot.class_subject_id) || {};
+          const teacher = index.teacherById.get(slot.teacher_id) || {};
+          return `<li><strong>${htmlEscape(secretariaWeekdayLabels[slot.weekday] || `Dia ${slot.weekday}`)} · ${htmlEscape(String(slot.start_time || "").slice(0, 5))}-${htmlEscape(String(slot.end_time || "").slice(0, 5))}</strong><span>${htmlEscape(subject.component_name || "Componente nao informado")} · ${htmlEscape(secretariaTeacherName(teacher, index))}</span></li>`;
+        }).join("") || "<li>Nenhum horario cadastrado para a primeira turma ativa.</li>"}
+      </ul>
+    </section>
+  `;
+};
+
 const renderSecretariaCalendarWeek = (range) => {
   const start = familyDateFromIso(range.from);
   const days = Array.from({ length: 7 }, (_, index) => {
@@ -22182,6 +23112,8 @@ const renderSecretariaCalendarView = (index) => {
         </ul>
       </section>
       ${renderSecretariaCalendarWeek(range)}
+      ${renderSecretariaAcademicCalendarPanel(index)}
+      ${renderSecretariaClassSchedulePanel(index)}
     </div>
   `;
 };
@@ -22267,6 +23199,7 @@ const renderSecretariaAnalyticsView = (index) => {
   const comparison = result.comparison?.metrics || {};
   const classComparison = result.classComparison?.classes || [];
   const alerts = result.alerts?.alerts || [];
+  const assessmentIntelligence = result.assessmentIntelligence || {};
   const activeTab = ["overview", "attendance", "performance", "bncc", "diary"].includes(getSecretariaParams().get("tab"))
     ? getSecretariaParams().get("tab")
     : "overview";
@@ -22355,6 +23288,7 @@ const renderSecretariaAnalyticsView = (index) => {
         ${classComparison.slice(0, 6).map((item) => `<li><strong>${htmlEscape(item.class_name || "Turma")}</strong><span>Frequência ${analyticsPercentLabel(item.attendance_rate)} · Avalia+ ${analyticsPercentLabel(item.assessment_average)} · BNCC ${analyticsPercentLabel(item.bncc_percentage)}</span></li>`).join("") || "<li>Sem turmas para comparar no período.</li>"}
       </ul>
     </section>
+    ${renderAvaliaPedagogicalIntelligencePanel(assessmentIntelligence, { title: "Inteligência pedagógica da escola" })}
   `;
   const bnccTab = `
     <section class="panel span-2">
@@ -22367,6 +23301,7 @@ const renderSecretariaAnalyticsView = (index) => {
       </div>
       <p>O detalhamento por habilidade permanece no Avalia+; esta aba consolida somente o painel escolar.</p>
     </section>
+    ${renderAvaliaPedagogicalIntelligencePanel(assessmentIntelligence, { title: "Habilidades críticas Avalia+" })}
     <section class="panel">
       <h2>Alerta BNCC</h2>
       ${renderAnalyticsAlertList(alerts.filter((alert) => String(alert.type || "").includes("BNCC")))}
@@ -22590,6 +23525,115 @@ const initSecretariaInstitutional = () => {
       }
     });
   });
+  const bindSecretariaAcademicForm = (selector, action, pendingText) => {
+    const academicForm = area.querySelector(selector);
+    if (!academicForm) return;
+    academicForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = area.querySelector("[data-secretaria-academic-message]") || academicForm.querySelector("p");
+      const submitButton = academicForm.querySelector("button[type='submit']");
+      const formData = new FormData(academicForm);
+      try {
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Salvando...";
+        }
+        if (message) message.textContent = pendingText;
+        await action(formData);
+        await ensureSecretariaInstitutionalData({ force: true });
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+      } catch (error) {
+        if (message) message.textContent = error.message || "Não foi possível salvar a configuração acadêmica.";
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = submitButton.dataset.originalLabel || "Tentar novamente";
+        }
+      }
+    });
+  };
+  bindSecretariaAcademicForm("[data-secretaria-academic-year-form]", (formData) => callSecretariaUpsertAcademicYear({
+    schoolId: String(formData.get("school_id") || ""),
+    schoolYear: String(formData.get("school_year") || ""),
+    startDate: String(formData.get("start_date") || ""),
+    endDate: String(formData.get("end_date") || ""),
+    status: "active",
+  }), "Salvando ano letivo...");
+  bindSecretariaAcademicForm("[data-secretaria-academic-term-form]", (formData) => callSecretariaUpsertAcademicTerm({
+    academicYearId: String(formData.get("academic_year_id") || ""),
+    termName: String(formData.get("term_name") || ""),
+    termOrder: String(formData.get("term_order") || ""),
+    startDate: String(formData.get("start_date") || ""),
+    endDate: String(formData.get("end_date") || ""),
+    termType: "bimestre",
+    status: "active",
+  }), "Salvando período letivo...");
+  bindSecretariaAcademicForm("[data-secretaria-school-day-form]", (formData) => callSecretariaUpsertSchoolDay({
+    schoolId: String(formData.get("school_id") || ""),
+    academicYearId: String(formData.get("academic_year_id") || ""),
+    dayDate: String(formData.get("day_date") || ""),
+    dayType: String(formData.get("day_type") || "letivo"),
+    title: String(formData.get("title") || ""),
+    description: "",
+    status: "active",
+  }), "Salvando dia letivo...");
+  bindSecretariaAcademicForm("[data-secretaria-class-subject-form]", (formData) => callSecretariaUpsertClassSubject({
+    schoolId: String(formData.get("school_id") || ""),
+    classId: String(formData.get("class_id") || ""),
+    componentName: String(formData.get("component_name") || ""),
+    componentCode: String(formData.get("component_code") || ""),
+    teacherId: String(formData.get("teacher_id") || ""),
+    workloadMinutesWeekly: String(formData.get("workload_minutes_weekly") || ""),
+    status: "active",
+  }), "Salvando componente curricular...");
+  bindSecretariaAcademicForm("[data-secretaria-class-schedule-form]", (formData) => callSecretariaUpsertClassScheduleSlot({
+    schoolId: String(formData.get("school_id") || ""),
+    classId: String(formData.get("class_id") || ""),
+    classSubjectId: String(formData.get("class_subject_id") || ""),
+    teacherId: "",
+    weekday: String(formData.get("weekday") || "1"),
+    startTime: String(formData.get("start_time") || ""),
+    endTime: String(formData.get("end_time") || ""),
+    room: "",
+    validFrom: "",
+    validUntil: "",
+    status: "active",
+  }), "Salvando horário da turma...");
+  const importForm = area.querySelector("[data-secretaria-import-form]");
+  if (importForm) {
+    importForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = importForm.querySelector("[data-secretaria-import-message]");
+      const submitButton = importForm.querySelector("button[type='submit']");
+      const formData = new FormData(importForm);
+      const rows = parseSecretariaEnrollmentCsv(String(formData.get("csv_rows") || ""));
+      if (!rows.length) {
+        if (message) message.textContent = "Informe um CSV com cabeçalho e ao menos uma linha.";
+        return;
+      }
+      try {
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Importando...";
+        }
+        if (message) message.textContent = "Processando lote CSV pelo núcleo acadêmico...";
+        await callSecretariaCreateEnrollmentImportBatch({
+          schoolId: String(formData.get("school_id") || ""),
+          fileName: String(formData.get("file_name") || ""),
+          rows,
+        });
+        await ensureSecretariaInstitutionalData({ force: true });
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+      } catch (error) {
+        if (message) message.textContent = error.message || "Não foi possível importar o CSV.";
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Importar matriculas";
+        }
+      }
+    });
+  }
   const syncCommunicationDestinationFields = () => {
     const audience = area.querySelector("[data-secretaria-communication-audience]");
     const classWrap = area.querySelector("[data-secretaria-communication-class-wrap]");
@@ -23262,7 +24306,9 @@ const mapQuestionFromSupabase = (row) => {
     unit: row.thematic_unit || "",
     object: row.knowledge_object || "",
     skill: row.bncc_skill || "",
-    descriptor: row.reference_matrix || "",
+    descriptor: row.reference_matrix || row.curriculum_matrix || "",
+    curriculumMatrix: row.curriculum_matrix || row.reference_matrix || "",
+    curriculumSource: row.curriculum_source || "BNCC",
     proficiency: row.proficiency_level || "",
     difficulty: row.difficulty || "",
     cognitiveProcess: row.cognitive_process || "",
@@ -23283,12 +24329,16 @@ const mapQuestionFromSupabase = (row) => {
     reviewer: row.reviewer_name || "Revisão pendente",
     curationStatus: row.curation_status,
     publicationStatus: row.publication_status,
+    workflowStatus: row.workflow_status || (row.publication_status === "PUBLICADO" ? "APROVADO" : "EM_ELABORACAO"),
+    workflowVersion: row.workflow_version || 1,
     statement: row.statement,
+    commandText: row.command_text || row.statement,
     baseText: row.base_text || "",
     alternatives: alternatives.map((alternative) => alternative.body),
     alternativeRows: alternatives,
     correctAlternative: correctIndex >= 0 ? correctIndex : 0,
     justification: row.justification || "",
+    pedagogicalComment: row.pedagogical_comment || row.justification || "",
     distractors: alternatives.flatMap((alternative) => (alternative.distractor || []).map((entry) => entry.analysis)),
     rightFeedback: row.success_feedback || "",
     wrongFeedback: row.error_feedback || "",
@@ -23311,6 +24361,10 @@ const mapAssessmentFromSupabase = (row) => ({
   year: row.school_year || "",
   instructions: row.instructions || "",
   questions: [...(row.questions || [])].sort((a, b) => a.position - b.position),
+  booklets: [...(row.booklets || [])].sort((a, b) => a.position - b.position),
+  skillMap: row.skill_map || [],
+  maxBooklets: row.max_booklets || 1,
+  matrix: row.matrix || "",
   raw: row,
 });
 
@@ -23318,7 +24372,8 @@ const questionBankDataService = (() => {
   const client = () => createSupabaseRestClient();
   const questionSelect =
     "*,source:question_sources(*,license:question_licenses(*)),license:question_licenses(*),alternatives:question_alternatives(*,distractor:question_distractor_analyses(*)),media:question_media(*)";
-  const assessmentSelect = "*,questions:assessment_questions(*,question:question_items(code,internal_title,estimated_minutes,publication_status,curation_status))";
+  const assessmentSelect =
+    "*,questions:assessment_questions(*,question:question_items(code,internal_title,estimated_minutes,publication_status,curation_status,workflow_status,workflow_version,bncc_skill,reference_matrix,curriculum_matrix)),booklets:assessment_booklets(*,questions:assessment_booklet_questions(*))";
 
   const fallback = {
     async listQuestions() {
@@ -23354,6 +24409,46 @@ const questionBankDataService = (() => {
         year: payload.school_year,
       };
       questionBankFallbackStore.assessments.unshift(assessment);
+      return assessment;
+    },
+    async createAssessmentFromBank(payload) {
+      const assessment = await this.createAssessment(payload.assessment || payload);
+      const questions = (payload.questions || [])
+        .map((entry, index) => {
+          const question = questionBankFallbackStore.questions.find((item) => item.uuid === entry.question_id || item.id === entry.question_id);
+          if (!question) return null;
+          return {
+            id: `${assessment.id}-${entry.question_id}`,
+            question_id: question.uuid || question.id,
+            position: index + 1,
+            points: entry.points || 1,
+            question,
+          };
+        })
+        .filter(Boolean);
+      assessment.questions = questions;
+      assessment.items = questions.length;
+      assessment.booklets = [{ code: "A", title: "Caderno A", position: 1, question_count: questions.length }];
+      return assessment;
+    },
+    async replaceAssessmentItems(assessmentId, payload) {
+      const assessment = await this.updateAssessment(assessmentId, payload);
+      const questions = (payload.questions || [])
+        .map((entry, index) => {
+          const question = questionBankFallbackStore.questions.find((item) => item.uuid === entry.question_id || item.id === entry.question_id);
+          if (!question) return null;
+          return {
+            id: `${assessment.id}-${entry.question_id}`,
+            question_id: question.uuid || question.id,
+            position: index + 1,
+            points: entry.points || 1,
+            question,
+          };
+        })
+        .filter(Boolean);
+      assessment.questions = questions;
+      assessment.items = questions.length;
+      assessment.booklets = [{ code: "A", title: "Caderno A", position: 1, question_count: questions.length }];
       return assessment;
     },
     async updateAssessment(id, payload) {
@@ -23400,6 +24495,17 @@ const questionBankDataService = (() => {
     },
     async getCurationHistory(questionId) {
       return [{ comment: "Histórico local demonstrativo.", question_id: questionId, created_at: new Date().toISOString() }];
+    },
+    async generatePrintExport(payload) {
+      return {
+        export: {
+          id: `local-qb-export-${Date.now()}`,
+          export_type: payload.exportType,
+          format: payload.format || "PDF",
+          status: "ready",
+        },
+        payload,
+      };
     },
   };
 
@@ -23460,6 +24566,41 @@ const questionBankDataService = (() => {
       });
       return mapAssessmentFromSupabase(row);
     },
+    async createAssessmentFromBank(payload) {
+      const { request } = client();
+      await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedAssessmentRoles });
+      const result = await request("rpc/avalia_plus_create_assessment_from_bank", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: allowedAssessmentRoles,
+        body: JSON.stringify(payload),
+      });
+      return mapAssessmentFromSupabase({
+        ...(result.assessment || {}),
+        questions: result.questions || [],
+        booklets: result.booklets || [],
+        skill_map: result.skill_map || [],
+      });
+    },
+    async replaceAssessmentItems(assessmentId, payload) {
+      const { request } = client();
+      await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedAssessmentRoles });
+      const result = await request("rpc/avalia_plus_replace_assessment_items", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: allowedAssessmentRoles,
+        body: JSON.stringify({
+          p_assessment_id: assessmentId,
+          p_payload: payload,
+        }),
+      });
+      return mapAssessmentFromSupabase({
+        ...(result.assessment || {}),
+        questions: result.questions || [],
+        booklets: result.booklets || [],
+        skill_map: result.skill_map || [],
+      });
+    },
     async updateAssessment(id, payload) {
       const { request } = client();
       const [row] = await request("assessments", `?id=eq.${encodeURIComponent(id)}`, {
@@ -23491,61 +24632,116 @@ const questionBankDataService = (() => {
       return this.getAssessmentById(copy.id);
     },
     async addQuestionToAssessment(assessmentId, questionId, points = 1) {
-      const { request } = client();
       await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedAssessmentRoles });
-      const current = await request("assessment_questions", `?assessment_id=eq.${encodeURIComponent(assessmentId)}&select=position&order=position.desc&limit=1`, {
-        requireAuthenticated: true,
-        allowedRoles: allowedAssessmentRoles,
-      });
-      const nextPosition = (current[0]?.position || 0) + 1;
+      const assessment = await this.getAssessmentById(assessmentId);
       const question = await this.getQuestionById(questionId);
-      const [row] = await request("assessment_questions", "", {
-        method: "POST",
-        requireAuthenticated: true,
-        allowedRoles: allowedAssessmentRoles,
-        body: JSON.stringify({
-          assessment_id: assessmentId,
-          question_id: question.uuid || questionId,
-          position: nextPosition,
-          points,
-          version_snapshot: question.raw || {},
-        }),
+      const existing = (assessment?.questions || []).map((entry) => ({
+        question_id: entry.question_id || entry.question?.id || entry.question?.uuid,
+        points: entry.points || 1,
+      }));
+      if (!existing.some((entry) => entry.question_id === (question.uuid || questionId))) {
+        existing.push({ question_id: question.uuid || questionId, points });
+      }
+      const row = await this.replaceAssessmentItems(assessmentId, {
+        title: assessment.title,
+        description: assessment.description,
+        instructions: assessment.instructions,
+        component: assessment.component,
+        school_year: assessment.year,
+        class_name: assessment.className,
+        application_date: assessment.date === "Sem data" ? null : assessment.date,
+        questions: existing.map((entry, index) => ({ ...entry, position: index + 1 })),
+        booklets: [
+          {
+            code: "A",
+            title: "Caderno A",
+            position: 1,
+            questions: existing.map((entry, index) => ({ question_id: entry.question_id, position: index + 1 })),
+          },
+        ],
       });
       await this.registerUsage(question.uuid || questionId, assessmentId, "adicionada_em_avaliacao");
       return row;
     },
     async removeQuestionFromAssessment(assessmentId, questionId) {
-      const { request } = client();
-      await request("assessment_questions", `?assessment_id=eq.${encodeURIComponent(assessmentId)}&question_id=eq.${encodeURIComponent(questionId)}`, {
-        method: "DELETE",
-        requireAuthenticated: true,
-        allowedRoles: allowedAssessmentRoles,
-        prefer: "return=minimal",
+      const assessment = await this.getAssessmentById(assessmentId);
+      const existing = (assessment?.questions || [])
+        .filter((entry) => ![entry.question_id, entry.question?.id, entry.question?.uuid, entry.question?.code].includes(questionId))
+        .map((entry) => ({ question_id: entry.question_id || entry.question?.id || entry.question?.uuid, points: entry.points || 1 }))
+        .filter((entry) => entry.question_id);
+      return this.replaceAssessmentItems(assessmentId, {
+        title: assessment.title,
+        description: assessment.description,
+        instructions: assessment.instructions,
+        component: assessment.component,
+        school_year: assessment.year,
+        class_name: assessment.className,
+        application_date: assessment.date === "Sem data" ? null : assessment.date,
+        questions: existing.map((entry, index) => ({ ...entry, position: index + 1 })),
+        booklets: [
+          {
+            code: "A",
+            title: "Caderno A",
+            position: 1,
+            questions: existing.map((entry, index) => ({ question_id: entry.question_id, position: index + 1 })),
+          },
+        ],
       });
-      return this.getAssessmentById(assessmentId);
     },
     async reorderQuestions(assessmentId, orderedQuestionIds) {
-      const { request } = client();
-      await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedAssessmentRoles });
-      for (const [index, questionId] of orderedQuestionIds.entries()) {
-        await request("assessment_questions", `?assessment_id=eq.${encodeURIComponent(assessmentId)}&question_id=eq.${encodeURIComponent(questionId)}`, {
-          method: "PATCH",
-          requireAuthenticated: true,
-          allowedRoles: allowedAssessmentRoles,
-          body: JSON.stringify({ position: index + 1 }),
-        });
-      }
-      return this.getAssessmentById(assessmentId);
+      const assessment = await this.getAssessmentById(assessmentId);
+      const byId = new Map((assessment?.questions || []).map((entry) => [entry.question_id || entry.question?.id || entry.question?.uuid || entry.question?.code, entry]));
+      const byCode = new Map((assessment?.questions || []).map((entry) => [entry.question?.code, entry]));
+      const ordered = orderedQuestionIds
+        .map((questionId) => byId.get(questionId) || byCode.get(questionId))
+        .filter(Boolean)
+        .map((entry) => ({ question_id: entry.question_id || entry.question?.id || entry.question?.uuid, points: entry.points || 1 }))
+        .filter((entry) => entry.question_id);
+      return this.replaceAssessmentItems(assessmentId, {
+        title: assessment.title,
+        description: assessment.description,
+        instructions: assessment.instructions,
+        component: assessment.component,
+        school_year: assessment.year,
+        class_name: assessment.className,
+        application_date: assessment.date === "Sem data" ? null : assessment.date,
+        questions: ordered.map((entry, index) => ({ ...entry, position: index + 1 })),
+        booklets: [
+          {
+            code: "A",
+            title: "Caderno A",
+            position: 1,
+            questions: ordered.map((entry, index) => ({ question_id: entry.question_id, position: index + 1 })),
+          },
+        ],
+      });
     },
     async updateQuestionPoints(assessmentId, questionId, points = 1) {
-      const { request } = client();
-      await request("assessment_questions", `?assessment_id=eq.${encodeURIComponent(assessmentId)}&question_id=eq.${encodeURIComponent(questionId)}`, {
-        method: "PATCH",
-        requireAuthenticated: true,
-        allowedRoles: allowedAssessmentRoles,
-        body: JSON.stringify({ points }),
+      const assessment = await this.getAssessmentById(assessmentId);
+      const existing = (assessment?.questions || [])
+        .map((entry) => ({
+          question_id: entry.question_id || entry.question?.id || entry.question?.uuid,
+          points: [entry.question_id, entry.question?.id, entry.question?.uuid, entry.question?.code].includes(questionId) ? points : entry.points || 1,
+        }))
+        .filter((entry) => entry.question_id);
+      return this.replaceAssessmentItems(assessmentId, {
+        title: assessment.title,
+        description: assessment.description,
+        instructions: assessment.instructions,
+        component: assessment.component,
+        school_year: assessment.year,
+        class_name: assessment.className,
+        application_date: assessment.date === "Sem data" ? null : assessment.date,
+        questions: existing.map((entry, index) => ({ ...entry, position: index + 1 })),
+        booklets: [
+          {
+            code: "A",
+            title: "Caderno A",
+            position: 1,
+            questions: existing.map((entry, index) => ({ question_id: entry.question_id, position: index + 1 })),
+          },
+        ],
       });
-      return this.getAssessmentById(assessmentId);
     },
     async registerUsage(questionId, assessmentId, usageType = "visualizada") {
       const { request, getContext } = client();
@@ -23567,6 +24763,22 @@ const questionBankDataService = (() => {
       const question = await this.getQuestionById(questionId);
       const { request } = client();
       return request("question_curation_history", `?question_id=eq.${encodeURIComponent(question.uuid || questionId)}&select=*&order=created_at.desc&limit=8`);
+    },
+    async generatePrintExport({ assessmentId, exportType = "STUDENT_TEST", format = "PDF", classId = null, bookletId = null }) {
+      const { request } = client();
+      return normalizeRpcJson(await request("rpc/teacher_generate_assessment_print_export", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: allowedAssessmentRoles,
+        body: JSON.stringify({
+          p_assessment_id: assessmentId,
+          p_export_type: exportType,
+          p_format: format,
+          p_assignment_id: null,
+          p_class_id: classId,
+          p_booklet_id: bookletId,
+        }),
+      }));
     },
   };
 
@@ -23595,6 +24807,8 @@ const questionBankDataService = (() => {
     listAssessments: (...args) => active().listAssessments(...args),
     getAssessmentById: (...args) => active().getAssessmentById(...args),
     createAssessment: (...args) => active().createAssessment(...args),
+    createAssessmentFromBank: (...args) => active().createAssessmentFromBank(...args),
+    replaceAssessmentItems: (...args) => active().replaceAssessmentItems(...args),
     updateAssessment: (...args) => active().updateAssessment(...args),
     archiveAssessment: (...args) => active().archiveAssessment(...args),
     duplicateAssessment: (...args) => active().duplicateAssessment(...args),
@@ -23604,6 +24818,7 @@ const questionBankDataService = (() => {
     updateQuestionPoints: (...args) => active().updateQuestionPoints(...args),
     registerUsage: (...args) => active().registerUsage(...args),
     getCurationHistory: (...args) => active().getCurationHistory(...args),
+    generatePrintExport: (...args) => active().generatePrintExport(...args),
   };
 })();
 
@@ -24653,6 +25868,18 @@ const initStudentInstitutionalProfile = () => {
   });
 };
 
+const initStudentInstitutionalLibrary = () => {
+  const root = document.querySelector("[data-student-library]");
+  if (!root || !isStudentInstitutionalMode()) return;
+  ensureStudentInstitutionalData().then(() => {
+    if (root.dataset.studentLibraryHydrated === "true" || !document.body.contains(root)) return;
+    root.dataset.studentLibraryHydrated = "true";
+    root.outerHTML = renderStudentLibraryHome();
+    initLibrarySearch();
+    initLibraryAssetFallbacks();
+  });
+};
+
 const initPrintableActivities = () => {
   const root = document.querySelector("[data-printable-app]");
   if (!root) return;
@@ -25460,6 +26687,7 @@ const renderAppPage = () => {
   initPrintableActivities();
   initStudentInstitutionalActivities();
   initStudentInstitutionalProfile();
+  initStudentInstitutionalLibrary();
   initStudentAvaliaApplication();
   initUniversalActivityAssignmentUi();
   initUniversalActivityTeacherDeliveries();

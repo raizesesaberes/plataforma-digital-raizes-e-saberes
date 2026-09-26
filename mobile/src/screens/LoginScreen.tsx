@@ -1,82 +1,157 @@
 import React, { useMemo, useState } from "react";
 import { Feather } from "@expo/vector-icons";
 import {
+  ActivityIndicator,
   Image,
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
-  useWindowDimensions
+  useWindowDimensions,
+  type TextStyle
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isTabletWidth, loginAssetFor, splashAssetFor } from "../branding";
-import { demoProfiles, type DemoRole } from "../data/fixtures";
-import { colors, radii, shadow, spacing } from "../theme";
+import { colors, spacing } from "../theme";
 
-const roles: DemoRole[] = ["crescer", "fundamental", "professor"];
+const visibleCaretStyle = { caretColor: colors.brand } as unknown as TextStyle;
 
-export function LoginScreen({ onSelectRole }: { onSelectRole: (role: DemoRole) => void }) {
-  const [loginPreviewVisible, setLoginPreviewVisible] = useState(false);
+export function LoginScreen({
+  mode = "login",
+  loading,
+  errorMessage,
+  infoMessage,
+  onLogin,
+  onRecoverPassword
+}: {
+  mode?: "splash" | "login";
+  loading?: boolean;
+  errorMessage?: string | null;
+  infoMessage?: string | null;
+  onLogin: (email: string, password: string) => void;
+  onRecoverPassword: (email: string) => void;
+}) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [focusedField, setFocusedField] = useState<"email" | "password" | null>(null);
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const tablet = isTabletWidth(width);
   const loginRects = useMemo(() => (tablet ? tabletLoginRects : phoneLoginRects), [tablet]);
-  const visualSource = loginPreviewVisible ? loginAssetFor(width) : splashAssetFor(width);
-  const visualAspectRatio = loginPreviewVisible ? (tablet ? 1448 / 1086 : 853 / 1844) : tablet ? 2048 / 2732 : 1290 / 2796;
+  const visualSource = mode === "splash" ? splashAssetFor(width) : loginAssetFor(width);
+  const visualAspectRatio = mode === "splash" ? (tablet ? 2048 / 2732 : 1290 / 2796) : tablet ? 1448 / 1086 : 853 / 1844;
   const assetFrame = useMemo(
     () => getAssetFrame(width, height, visualAspectRatio),
     [height, visualAspectRatio, width]
   );
 
+  function submitLogin() {
+    if (loading) return;
+    onLogin(email, password);
+  }
+
+  function recoverPassword() {
+    onRecoverPassword(email);
+  }
+
   return (
     <View style={styles.screen}>
       <Image source={visualSource} resizeMode="stretch" style={[styles.loginImage, assetFrame]} />
       <View style={[styles.loginLayer, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
-        {loginPreviewVisible ? (
+        {mode === "login" ? (
           <View style={[styles.assetOverlay, assetFrame]}>
-            <Text style={[styles.visualInputLabel, loginRects.emailLabel]}>E-mail</Text>
-            <Text style={[styles.visualInputLabel, loginRects.passwordLabel]}>Senha</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel="Campo de e-mail" focusable={false} onPress={() => undefined} style={[styles.hotspot, loginRects.email]} />
-            <Pressable accessibilityRole="button" accessibilityLabel="Campo de senha" focusable={false} onPress={() => undefined} style={[styles.hotspot, loginRects.password]} />
+            <View style={[styles.loginFieldClip, focusedField === "email" && styles.loginFieldFocused, loginRects.email]}>
+              <TextInput
+                accessibilityLabel="E-mail"
+                autoCapitalize="none"
+                autoComplete="email"
+                autoCorrect={false}
+                editable={!loading}
+                keyboardType="email-address"
+                onBlur={() => setFocusedField(null)}
+                onChangeText={setEmail}
+                onFocus={() => setFocusedField("email")}
+                onSubmitEditing={() => undefined}
+                placeholder="E-mail"
+                placeholderTextColor="rgba(6, 61, 42, 0.58)"
+                returnKeyType="next"
+                selectionColor={colors.brand}
+                style={[styles.loginTextInput, visibleCaretStyle]}
+                textContentType="username"
+                value={email}
+              />
+              <View pointerEvents="none" style={styles.loginIconLayer}>
+                <Feather name="mail" size={14} color={colors.studentInk} />
+              </View>
+            </View>
+
+            <View style={[styles.loginFieldClip, focusedField === "password" && styles.loginFieldFocused, loginRects.password]}>
+              <TextInput
+                accessibilityLabel="Senha"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!loading}
+                onBlur={() => setFocusedField(null)}
+                onChangeText={setPassword}
+                onFocus={() => setFocusedField("password")}
+                onSubmitEditing={submitLogin}
+                placeholder="Senha"
+                placeholderTextColor="rgba(6, 61, 42, 0.58)"
+                returnKeyType="done"
+                secureTextEntry={!passwordVisible}
+                selectionColor={colors.brand}
+                style={[styles.loginTextInput, styles.passwordTextInput, visibleCaretStyle]}
+                textContentType="password"
+                value={password}
+              />
+              <View pointerEvents="none" style={styles.loginIconLayer}>
+                <Feather name="lock" size={14} color={colors.studentInk} />
+              </View>
+            </View>
+
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={passwordVisible ? "Ocultar senha" : "Mostrar senha"}
               focusable={false}
               onPress={() => setPasswordVisible((current) => !current)}
-              style={[styles.hotspot, loginRects.eye]}
-            />
-            <Pressable accessibilityRole="button" accessibilityLabel="Entrar" focusable={false} onPress={() => setLoginPreviewVisible(false)} style={[styles.hotspot, loginRects.submit]} />
-            <Pressable accessibilityRole="button" accessibilityLabel="Esqueci minha senha" focusable={false} onPress={() => setLoginPreviewVisible(false)} style={[styles.hotspot, loginRects.forgot]} />
-            <Pressable accessibilityRole="button" accessibilityLabel="Precisa de ajuda" focusable={false} onPress={() => setLoginPreviewVisible(false)} style={[styles.hotspot, loginRects.support]} />
+              style={[styles.eyeButton, loginRects.eye]}
+            >
+              <Feather name={passwordVisible ? "eye-off" : "eye"} size={15} color={colors.studentInk} />
+            </Pressable>
+
+            <Pressable accessibilityRole="button" accessibilityLabel="Entrar" focusable={false} onPress={submitLogin} style={[styles.submitButton, loginRects.submit]}>
+              <Text style={styles.submitText}>Entrar</Text>
+            </Pressable>
+
+            <Pressable accessibilityRole="button" accessibilityLabel="Esqueci minha senha" focusable={false} onPress={recoverPassword} style={[styles.forgotButton, loginRects.forgot]}>
+              <Text style={styles.forgotText}>Esqueci minha senha</Text>
+            </Pressable>
+
+            <Pressable accessibilityRole="button" accessibilityLabel="Precisa de ajuda" focusable={false} onPress={recoverPassword} style={[styles.supportButton, loginRects.support]}>
+              <Feather name="headphones" size={20} color={colors.studentInk} />
+              <View>
+                <Text style={styles.supportTitle}>Precisa de ajuda?</Text>
+                <Text style={styles.supportText}>Fale com o nosso suporte</Text>
+              </View>
+            </Pressable>
+
+            {loading ? (
+              <View style={[styles.loadingOverlay, loginRects.submit]}>
+                <ActivityIndicator color={colors.surface} size="small" />
+              </View>
+            ) : null}
+
+            {errorMessage || infoMessage ? (
+              <View style={[styles.feedback, errorMessage ? styles.feedbackError : styles.feedbackInfo, tablet ? styles.feedbackTablet : styles.feedbackPhone]}>
+                <Text style={styles.feedbackText}>{errorMessage || infoMessage}</Text>
+              </View>
+            ) : null}
           </View>
         ) : (
-          <View style={styles.selectorPanel}>
-            <View style={styles.selectorHeader}>
-              <Text style={styles.selectorEyebrow}>Raízes e Saberes</Text>
-              <Text style={styles.selectorTitle}>Um app. Cada perfil no seu espaço.</Text>
-              <Text style={styles.selectorBody}>Selecione um ambiente demonstrativo para homologar navegação e visual antes da integração com dados reais.</Text>
-            </View>
-            <View style={styles.roleList}>
-              {roles.map((role) => {
-                const profile = demoProfiles[role];
-                return (
-                  <Pressable key={role} accessibilityRole="button" accessibilityLabel={profile.title} style={styles.roleCard} onPress={() => onSelectRole(role)}>
-                    <View style={styles.roleIcon}>
-                      <Feather name={role === "crescer" ? "smile" : "user"} size={22} color={colors.brand} />
-                    </View>
-                    <View style={styles.roleText}>
-                      <Text style={styles.roleTitle}>{profile.title}</Text>
-                      <Text style={styles.roleSubtitle}>{profile.subtitle}</Text>
-                    </View>
-                    <Feather name="chevron-right" size={22} color={colors.muted} />
-                  </Pressable>
-                );
-              })}
-            </View>
-            <Pressable accessibilityRole="button" accessibilityLabel="Ver login visual" onPress={() => setLoginPreviewVisible(true)} style={styles.loginPreviewButton}>
-              <Text style={styles.loginPreviewText}>Ver login visual</Text>
-            </Pressable>
+          <View style={styles.splashLoader}>
+            <ActivityIndicator color={colors.brand} size="large" />
           </View>
         )}
       </View>
@@ -133,97 +208,147 @@ const styles = StyleSheet.create({
   assetOverlay: {
     position: "absolute"
   },
-  visualInputLabel: {
-    color: "rgba(6, 61, 42, 0.46)",
+  loginTextInput: {
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    bottom: 0,
+    color: colors.brandDark,
     fontSize: 12,
     fontWeight: "800",
-    position: "absolute"
+    height: "100%",
+    left: 0,
+    lineHeight: 15,
+    paddingBottom: 0,
+    paddingLeft: "17.5%",
+    paddingRight: "8%",
+    paddingTop: 0,
+    position: "absolute",
+    right: 0,
+    top: 0,
+    width: "100%",
+    zIndex: 2
   },
-  hotspot: {
-    position: "absolute"
+  passwordTextInput: {
+    paddingRight: "19%"
   },
-  selectorPanel: {
-    alignSelf: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.92)",
-    borderColor: "rgba(220, 231, 223, 0.92)",
-    borderRadius: radii.lg,
+  loginFieldClip: {
+    backgroundColor: "rgba(255, 255, 255, 0.72)",
+    borderColor: "rgba(8, 67, 47, 0.18)",
+    borderRadius: 999,
     borderWidth: 1.5,
-    marginTop: "12%",
-    maxWidth: 620,
-    padding: spacing.lg,
-    width: "88%",
-    ...shadow
+    overflow: "hidden",
+    position: "absolute"
   },
-  selectorHeader: {
-    marginBottom: spacing.md
+  loginFieldFocused: {
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderColor: "rgba(6, 94, 58, 0.72)",
+    shadowColor: "rgba(6, 94, 58, 0.2)",
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 8
   },
-  selectorEyebrow: {
-    color: colors.brand,
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 0,
-    textTransform: "uppercase"
-  },
-  selectorTitle: {
-    color: colors.ink,
-    fontSize: 24,
-    fontWeight: "900",
-    letterSpacing: 0,
-    marginTop: spacing.xs
-  },
-  selectorBody: {
-    color: colors.muted,
-    fontSize: 14,
-    fontWeight: "700",
-    lineHeight: 21,
-    marginTop: spacing.xs
-  },
-  roleList: {
-    gap: spacing.sm
-  },
-  roleCard: {
+  loginIconLayer: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: radii.md,
-    borderWidth: 1.5,
+    bottom: 0,
     flexDirection: "row",
-    gap: spacing.md,
-    padding: spacing.md
+    justifyContent: "flex-start",
+    left: 0,
+    overflow: "hidden",
+    paddingLeft: "8.5%",
+    position: "absolute",
+    right: 0,
+    top: 0,
+    zIndex: 1
   },
-  loginPreviewButton: {
+  eyeButton: {
     alignItems: "center",
-    alignSelf: "center",
-    marginTop: spacing.md,
-    minHeight: 42,
     justifyContent: "center",
-    paddingHorizontal: spacing.lg
+    position: "absolute"
   },
-  loginPreviewText: {
+  submitButton: {
+    alignItems: "center",
+    backgroundColor: colors.brand,
+    borderRadius: 999,
+    justifyContent: "center",
+    position: "absolute",
+    shadowColor: "rgba(6, 61, 42, 0.28)",
+    shadowOffset: { height: 5, width: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 10
+  },
+  submitText: {
+    color: colors.surface,
+    fontSize: 15,
+    fontWeight: "900",
+    letterSpacing: 0
+  },
+  forgotButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    position: "absolute"
+  },
+  forgotText: {
     color: colors.brand,
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: "900"
   },
-  roleIcon: {
+  supportButton: {
     alignItems: "center",
-    backgroundColor: colors.brandSoft,
-    borderRadius: radii.md,
-    height: 46,
+    flexDirection: "row",
+    gap: 7,
     justifyContent: "center",
-    width: 46
+    position: "absolute"
   },
-  roleText: {
-    flex: 1
+  supportTitle: {
+    color: colors.studentInk,
+    fontSize: 9,
+    fontWeight: "900",
+    lineHeight: 12
   },
-  roleTitle: {
-    color: colors.ink,
-    fontSize: 16,
-    fontWeight: "900"
-  },
-  roleSubtitle: {
-    color: colors.muted,
-    fontSize: 13,
+  supportText: {
+    color: colors.studentInk,
+    fontSize: 9,
     fontWeight: "700",
-    marginTop: 2
+    lineHeight: 12
+  },
+  loadingOverlay: {
+    alignItems: "center",
+    justifyContent: "center",
+    position: "absolute"
+  },
+  feedback: {
+    borderRadius: 10,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    position: "absolute"
+  },
+  feedbackError: {
+    backgroundColor: "rgba(200, 93, 67, 0.92)"
+  },
+  feedbackInfo: {
+    backgroundColor: "rgba(8, 96, 62, 0.92)"
+  },
+  feedbackPhone: {
+    left: "12%",
+    right: "12%",
+    top: "88%"
+  },
+  feedbackTablet: {
+    left: "34%",
+    right: "34%",
+    top: "80%"
+  },
+  feedbackText: {
+    color: colors.surface,
+    fontSize: 11,
+    fontWeight: "800",
+    lineHeight: 15,
+    textAlign: "center"
+  },
+  splashLoader: {
+    alignItems: "center",
+    flex: 1,
+    justifyContent: "flex-end",
+    paddingBottom: "12%"
   }
 });
