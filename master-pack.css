@@ -11734,6 +11734,31 @@ td {
   overflow-wrap: anywhere;
 }
 
+.student-recommendations-home {
+  grid-column: 1 / -1;
+  grid-template-columns: 88px minmax(280px, 1fr);
+  align-items: center;
+  min-width: 0;
+}
+
+.student-recommendations-home > div {
+  width: 100%;
+  min-width: 0;
+}
+
+.student-recommendations-home span,
+.student-recommendations-home strong,
+.student-recommendations-home p {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: normal;
+  white-space: normal;
+}
+
+.student-recommendations-home strong {
+  line-height: 1.2;
+}
+
 .student-premium-card > span {
   grid-column: 2;
   margin-top: auto;
@@ -19856,6 +19881,16 @@ td {
 
   .student-hero {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .student-recommendations-home {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+  }
+
+  .student-recommendations-home > .premium-icon {
+    width: 64px;
+    height: 64px;
   }
 
   .student-hero-art {
