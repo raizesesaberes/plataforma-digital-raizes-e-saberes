@@ -3990,6 +3990,9 @@ const secretariaInstitutionalState = {
   classDiaryEntries: [],
   communications: [],
   communicationEvents: [],
+  schoolAccessDailyEvents: [],
+  schoolAccessHistory: [],
+  schoolAccessKey: "",
   calendarEvents: [],
   academicYears: [],
   academicTerms: [],
@@ -4005,6 +4008,7 @@ const secretariaInstitutionalState = {
   lastDocumentResult: null,
   lastAttendanceResult: null,
   lastCommunicationResult: null,
+  lastSchoolAccessResult: null,
   lastCalendarResult: null,
   lastAcademicResult: null,
   lastImportResult: null,
@@ -4087,6 +4091,14 @@ const teacherTrackingAttendanceState = {
 };
 
 const teacherAnalyticsState = {
+  status: "idle",
+  error: "",
+  promise: null,
+  key: "",
+  result: null,
+};
+
+const teacherRecompositionState = {
   status: "idle",
   error: "",
   promise: null,
@@ -6685,6 +6697,7 @@ const getTeacherTrackingStartDate = (periodDays = 30) => {
 const getTeacherTrackingAttendanceKey = (classId = "", periodDays = 30) => `${classId}:${periodDays}:${getTeacherTrackingStartDate(periodDays)}`;
 
 const getTeacherAnalyticsKey = (classId = "", periodDays = 30) => `${classId}:${periodDays}:${getTeacherTrackingStartDate(periodDays)}`;
+const getTeacherRecompositionKey = (classId = "", periodDays = 30) => `${classId}:${periodDays}:${getTeacherTrackingStartDate(periodDays)}`;
 
 const ensureTeacherTrackingAttendance = async ({ force = false, classId = "", periodDays = 30 } = {}) => {
   if (!classId) return teacherTrackingAttendanceState;
@@ -6760,6 +6773,41 @@ const ensureTeacherClassAnalytics = async ({ force = false, classId = "", period
   return teacherAnalyticsState.promise;
 };
 
+const ensureTeacherRecompositionContext = async ({ force = false, classId = "", periodDays = 30 } = {}) => {
+  if (!classId) return teacherRecompositionState;
+  const key = getTeacherRecompositionKey(classId, periodDays);
+  if (!force && teacherRecompositionState.status === "ready" && teacherRecompositionState.key === key) return teacherRecompositionState;
+  if (!force && teacherRecompositionState.promise && teacherRecompositionState.key === key) return teacherRecompositionState.promise;
+  teacherRecompositionState.status = "loading";
+  teacherRecompositionState.error = "";
+  teacherRecompositionState.key = key;
+  teacherRecompositionState.promise = (async () => {
+    try {
+      const client = createSupabaseRestClient();
+      const result = await client.request("rpc/teacher_list_recomposition_context", "", {
+        method: "POST",
+        body: JSON.stringify({
+          p_class_id: classId,
+          p_date_from: getTeacherTrackingStartDate(periodDays),
+          p_date_to: toTeacherIsoDate(new Date()),
+        }),
+        requireAuthenticated: true,
+        allowedRoles: teacherAllowedRoles,
+      });
+      teacherRecompositionState.result = Array.isArray(result) ? result[0] || null : result || null;
+      teacherRecompositionState.status = "ready";
+    } catch (error) {
+      teacherRecompositionState.result = null;
+      teacherRecompositionState.error = error.message || "Não foi possível carregar recomposição e nivelamento.";
+      teacherRecompositionState.status = "error";
+    } finally {
+      teacherRecompositionState.promise = null;
+    }
+    return teacherRecompositionState;
+  })();
+  return teacherRecompositionState.promise;
+};
+
 const ensureTeacherTrackingBundle = async ({ force = false } = {}) => {
   await ensureTeacherInstitutionalData();
   if (teacherInstitutionalState.status !== "ready") return;
@@ -6770,6 +6818,7 @@ const ensureTeacherTrackingBundle = async ({ force = false } = {}) => {
   await Promise.all([
     ensureTeacherTrackingAttendance({ force, classId, periodDays }),
     ensureTeacherClassAnalytics({ force, classId, periodDays }),
+    ensureTeacherRecompositionContext({ force, classId, periodDays }),
     ensureTeacherRecommendations({ force, classId }),
     ensureTeacherClassMessages({ force, classId }),
   ]);
@@ -6856,6 +6905,65 @@ const renderTeacherTrackingAttendanceList = (records = [], studentsById = {}) =>
       `;
     })
     .join("");
+};
+
+const renderTeacherRecompositionSkill = (skill) => {
+  const critical = Number(skill.critical_students || 0);
+  const developing = Number(skill.developing_students || 0);
+  const status = critical > 0 ? "Critica" : developing > 0 ? "Em desenvolvimento" : "Consolidada";
+  return `
+    <article class="tw-tracking-item" data-teacher-search-item>
+      <div>
+        <span>${printableEscape(status)}</span>
+        <strong>${printableEscape(skill.skill_code || "Habilidade")}</strong>
+        <small>${printableEscape(skill.skill_label || "Descritor avaliado")} · domínio ${analyticsPercentLabel(skill.mastery_percentage)}</small>
+      </div>
+      <mark>${critical ? `${critical} crit.` : `${developing} acomp.`}</mark>
+    </article>
+  `;
+};
+
+const renderTeacherRecompositionPlan = (plan) => `
+  <article class="tw-tracking-item" data-teacher-search-item>
+    <div>
+      <span>${printableEscape(plan.target_type === "group" ? "Grupo" : plan.target_type === "student" ? "Aluno" : "Turma")}</span>
+      <strong>${printableEscape(plan.title || "Plano de recomposição")}</strong>
+      <small>${printableEscape(plan.target_skill || plan.descriptor || "Habilidade alvo")} · ${analyticsNumberLabel(plan.student_count)} aluno(s) · ${analyticsNumberLabel(plan.resource_count)} recurso(s)</small>
+    </div>
+    <mark>${printableEscape(plan.status || "active")}</mark>
+  </article>
+`;
+
+const renderTeacherRecompositionSection = () => {
+  if (teacherRecompositionState.status === "loading") return `<p class="ua-empty">CARREGANDO RECOMPOSICAO E NIVELAMENTO.</p>`;
+  if (teacherRecompositionState.status === "error") return `<p class="ua-empty">${printableEscape(teacherRecompositionState.error)}</p>`;
+  const context = teacherRecompositionState.result || {};
+  const gapMap = context.gap_map || {};
+  const skills = (gapMap.skills || []).filter((skill) => Number(skill.critical_students || 0) > 0 || Number(skill.developing_students || 0) > 0);
+  const plans = context.plans || [];
+  const recommendationsStatus = context.recommendations?.status || "EMPTY_REAL";
+  return `
+    <div class="tw-tracking-list">
+      <article class="tw-tracking-item">
+        <div>
+          <span>Mapa de lacunas</span>
+          <strong>${analyticsNumberLabel(gapMap.summary?.critical_skills || 0)} critica(s)</strong>
+          <small>${analyticsNumberLabel(gapMap.summary?.developing_skills || 0)} habilidade(s) em desenvolvimento · ${analyticsNumberLabel(gapMap.summary?.students_with_results || 0)} aluno(s) com resultado</small>
+        </div>
+        <mark>Avalia+</mark>
+      </article>
+      ${skills.slice(0, 5).map(renderTeacherRecompositionSkill).join("") || `<p class="ua-empty">SEM LACUNA CRITICA COM DADOS SUFICIENTES NO PERIODO.</p>`}
+      <article class="tw-tracking-item">
+        <div>
+          <span>Recomendações compatíveis</span>
+          <strong>${recommendationsStatus === "EMPTY_REAL" ? "EMPTY_REAL" : `${analyticsNumberLabel(context.recommendations?.items?.length || 0)} recurso(s)`}</strong>
+          <small>Usa o motor real de recomendações pedagógicas, sem criar conteúdo fictício.</small>
+        </div>
+        <mark>${printableEscape(recommendationsStatus)}</mark>
+      </article>
+      ${plans.slice(0, 5).map(renderTeacherRecompositionPlan).join("") || `<p class="ua-empty">NENHUM PLANO DE RECOMPOSICAO CRIADO PARA ESTA TURMA.</p>`}
+    </div>
+  `;
 };
 
 const renderTeacherTrackingView = () => {
@@ -6999,8 +7107,8 @@ const renderTeacherTrackingView = () => {
           <p class="ua-empty">AINDA NAO HA FONTE INSTITUCIONAL DE PROGRESSO DE ATIVIDADES CONECTADA A ESTA VISAO.</p>
         </section>
         <section class="tw-board tw-tracking-section">
-          <div class="tw-section-head"><h2>Observacoes pedagógicas</h2><span>Preparado</span></div>
-          <p class="ua-empty">As observacoes pedagógicas estruturadas aparecerao aqui quando estiverem disponiveis.</p>
+          <div class="tw-section-head"><h2>Recomposicao e nivelamento</h2><span>Avalia+</span></div>
+          ${renderTeacherRecompositionSection()}
         </section>
       </div>
     `;
@@ -13920,6 +14028,8 @@ const familyInstitutionalState = {
   attendanceError: "",
   recommendations: [],
   recommendationsError: "",
+  schoolAccessEvents: [],
+  schoolAccessError: "",
   weekStartIso: "",
   attendancePeriod: "month",
   hydratedDom: false,
@@ -14263,6 +14373,34 @@ const loadFamilyAttendanceRecords = async (client, selectedChild = null) => {
   return (rows || []).map(mapFamilyAttendanceRecord);
 };
 
+const mapFamilySchoolAccessEvent = (row = {}) => ({
+  id: row.event_id || row.id || "",
+  studentId: row.student_id || "",
+  classId: row.class_id || "",
+  eventType: row.event_type || "",
+  eventLabel: schoolAccessEventTypeLabel(row.event_type),
+  occurredAt: row.occurred_at || "",
+  displayTime: schoolAccessEventTime(row.occurred_at),
+  origin: row.origin || "",
+  status: row.status || "",
+});
+
+const loadFamilySchoolAccessEvents = async (client, selectedChild = null) => {
+  const student = selectedChild?.student || {};
+  if (!student.id) return [];
+  const rows = await client.request("rpc/family_get_school_access_events", "", {
+    method: "POST",
+    requireAuthenticated: true,
+    allowedRoles: familyInstitutionalAllowedRoles,
+    body: JSON.stringify({
+      p_student_id: student.id,
+      p_date_from: familyAttendanceRange("month").start,
+      p_date_to: familyAttendanceRange("month").end,
+    }),
+  });
+  return (Array.isArray(rows) ? rows : []).map(mapFamilySchoolAccessEvent);
+};
+
 const familyRecommendationTeacherName = (teacher = null) => {
   const profile = teacher?.profile || null;
   return (
@@ -14536,11 +14674,13 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
       familyInstitutionalState.messagesError = "";
       familyInstitutionalState.attendanceError = "";
       familyInstitutionalState.recommendationsError = "";
+      familyInstitutionalState.schoolAccessError = "";
       familyInstitutionalState.entries = [];
       familyInstitutionalState.agendaEvents = [];
       familyInstitutionalState.messages = [];
       familyInstitutionalState.attendanceRecords = [];
       familyInstitutionalState.recommendations = [];
+      familyInstitutionalState.schoolAccessEvents = [];
       familyInstitutionalState.status = "ready";
 
       Promise.allSettled([
@@ -14548,7 +14688,8 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
         loadFamilyTeacherMessages(client, selectedChild),
         loadFamilyAttendanceRecords(client, selectedChild),
         loadFamilyTeacherRecommendations(client, selectedChild),
-      ]).then(([entriesResult, messagesResult, attendanceResult, recommendationsResult]) => {
+        loadFamilySchoolAccessEvents(client, selectedChild),
+      ]).then(([entriesResult, messagesResult, attendanceResult, recommendationsResult, schoolAccessResult]) => {
         if (familyInstitutionalState.selectedChildId !== student.id) return;
         if (entriesResult.status === "fulfilled") {
           familyInstitutionalState.entries = (entriesResult.value || []).filter((entry) => entry.status === "published");
@@ -14571,6 +14712,11 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
         } else {
           familyInstitutionalState.recommendationsError = recommendationsResult.reason?.message || "Não foi possível carregar as recomendações.";
         }
+        if (schoolAccessResult.status === "fulfilled") {
+          familyInstitutionalState.schoolAccessEvents = schoolAccessResult.value || [];
+        } else {
+          familyInstitutionalState.schoolAccessError = schoolAccessResult.reason?.message || "Não foi possível carregar entrada e saída.";
+        }
         const area = document.querySelector("[data-family-area]");
         if (area) {
           area.outerHTML = renderFamilyDashboard();
@@ -14585,6 +14731,7 @@ const ensureFamilyInstitutionalWeek = async ({ force = false, weekStartIso = "" 
       familyInstitutionalState.messages = [];
       familyInstitutionalState.attendanceRecords = [];
       familyInstitutionalState.recommendations = [];
+      familyInstitutionalState.schoolAccessEvents = [];
       familyInstitutionalState.status = "error";
       return familyInstitutionalState;
     } finally {
@@ -15125,6 +15272,8 @@ const renderFamilyProgressSummary = () => {
     const entries = familyInstitutionalState.entries || [];
     const messages = familyInstitutionalState.messages || [];
     const recommendations = familyInstitutionalState.recommendations || [];
+    const schoolAccessEvents = familyInstitutionalState.schoolAccessEvents || [];
+    const lastSchoolAccess = schoolAccessEvents[0] || null;
     return `
       <section class="family-panel family-summary-panel">
         <div class="family-section-head"><h2>Acompanhamento</h2><span>Resumo real</span></div>
@@ -15133,6 +15282,7 @@ const renderFamilyProgressSummary = () => {
           <div><dt>Agenda</dt><dd>${entries.length ? `${entries.length} publicação(oes)` : "Sem agenda publicada"}</dd></div>
           <div><dt>Recados</dt><dd>${messages.length ? `${messages.length} comunicado(s)` : "Sem comunicado publicado"}</dd></div>
           <div><dt>Atividades</dt><dd>${recommendations.length ? `${recommendations.length} indicação(oes)` : "Sem atividade publicada"}</dd></div>
+          <div><dt>Entrada/Saída</dt><dd>${lastSchoolAccess ? `${lastSchoolAccess.eventLabel} · ${lastSchoolAccess.displayTime}` : "Sem movimento registrado"}</dd></div>
         </dl>
         <a class="family-primary-link" href="familia.html?view=acompanhamento">Ver acompanhamento</a>
       </section>
@@ -15172,6 +15322,7 @@ const renderFamilyProgress = (compact = false) => {
     const entries = familyInstitutionalState.entries || [];
     const messages = familyInstitutionalState.messages || [];
     const recommendations = familyInstitutionalState.recommendations || [];
+    const schoolAccessEvents = familyInstitutionalState.schoolAccessEvents || [];
     return `
       <section class="family-panel">
         <div class="family-section-head">
@@ -15187,8 +15338,23 @@ const renderFamilyProgress = (compact = false) => {
           <article class="family-metric-card"><span>Agenda</span><strong>${entries.length ? entries.length : "EMPTY_REAL"}</strong><small>${entries.length ? "Publicações da semana" : "Sem agenda publicada"}</small></article>
           <article class="family-metric-card"><span>Recados</span><strong>${messages.length ? messages.length : "EMPTY_REAL"}</strong><small>${messages.length ? `${communicationUnreadCount(messages)} não lido(s)` : "Sem comunicado publicado"}</small></article>
           <article class="family-metric-card"><span>Atividades</span><strong>${recommendations.length ? recommendations.length : "EMPTY_REAL"}</strong><small>${recommendations.length ? "Indicações da professora" : "Sem atividade publicada"}</small></article>
+          <article class="family-metric-card"><span>Entrada/Saída</span><strong>${schoolAccessEvents.length ? schoolAccessEvents[0].eventLabel : "EMPTY_REAL"}</strong><small>${schoolAccessEvents.length ? schoolAccessEvents[0].displayTime : "Sem movimento publicado"}</small></article>
         </section>
       </section>
+      ${
+        compact
+          ? ""
+          : `<section class="family-panel">
+              <div class="family-section-head"><h2>Entrada e saída</h2><span>Somente leitura</span></div>
+              ${
+                familyInstitutionalState.schoolAccessError
+                  ? renderFamilyEmpty("NAO FOI POSSIVEL CARREGAR ENTRADA E SAIDA.", familyInstitutionalState.schoolAccessError)
+                  : schoolAccessEvents.length
+                    ? `<div class="family-message-list">${schoolAccessEvents.slice(0, 8).map((row) => `<article><strong>${printableEscape(row.eventLabel)}</strong><span>${printableEscape(row.displayTime)} · ${printableEscape(row.origin || "escola")}</span></article>`).join("")}</div>`
+                    : renderFamilyEmpty("EMPTY_REAL: NENHUM MOVIMENTO REGISTRADO.")
+              }
+            </section>`
+      }
       ${
         compact
           ? ""
@@ -20162,8 +20328,8 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
 };
 
 const secretariaAllowedRoles = ["secretaria", "admin", "gestor", "coordenador"];
-const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "calendario", "avalia", "analytics", "relatorios", "comunicados"];
-const secretariaOfficialViews = ["painel", "alunos", "matriculas", "responsaveis", "turmas", "professores", "frequencia", "calendario", "avalia", "analytics", "relatorios", "documentos", "comunicados"];
+const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "calendario", "avalia", "analytics", "relatorios", "comunicados", "acesso"];
+const secretariaOfficialViews = ["painel", "alunos", "matriculas", "responsaveis", "turmas", "professores", "frequencia", "calendario", "avalia", "analytics", "relatorios", "documentos", "comunicados", "acesso"];
 const secretariaActiveStatuses = new Set(["active", "ativo"]);
 
 const isSecretariaActiveStatus = (status) => secretariaActiveStatuses.has(String(status || "active").toLowerCase());
@@ -20179,6 +20345,7 @@ const secretariaBadgeTone = (status) => {
 };
 const secretariaBadge = (label, tone = "neutral") => `<span class="secretaria-badge is-${tone}">${htmlEscape(label)}</span>`;
 const secretariaSchoolYear = (enrollment = {}, classItem = {}) => enrollment.school_year || classItem.school_year || classItem.ano_escolar || "Ano nao informado";
+const secretariaTodayIso = () => new Date().toISOString().slice(0, 10);
 const getSecretariaParams = () => new URLSearchParams(window.location.search);
 const getSecretariaCurrentView = () => {
   const view = getSecretariaParams().get("view") || "painel";
@@ -21368,6 +21535,7 @@ const secretariaViewIcon = {
   relatorios: "doc",
   documentos: "doc",
   comunicados: "mail",
+  acesso: "qr",
 };
 const secretariaInlineIcon = (icon, label = "") => `<i class="secretaria-icon" data-icon="${icon}" aria-hidden="true"></i>${label ? `<span>${htmlEscape(label)}</span>` : ""}`;
 
@@ -21428,6 +21596,50 @@ const callSecretariaReenrollStudent = ({ studentId, classId, schoolYear, reason 
     p_class_id: classId,
     p_school_year: schoolYear,
     p_reason: reason,
+  });
+
+const callSecretariaSchoolAccessRpc = async (rpcName, payload) => {
+  const client = createSupabaseRestClient();
+  const rawResult = await client.request(`rpc/${rpcName}`, "", {
+    method: "POST",
+    requireAuthenticated: true,
+    allowedRoles: secretariaAllowedRoles,
+    body: JSON.stringify(payload),
+  });
+  const result = ["school_access_list_daily_events", "school_access_get_history"].includes(rpcName)
+    ? rawResult
+    : normalizeRpcJson(rawResult);
+  secretariaInstitutionalState.lastSchoolAccessResult = result;
+  return result;
+};
+
+const callSecretariaIssueSchoolAccessIdentifier = ({ studentId }) =>
+  callSecretariaSchoolAccessRpc("school_access_issue_student_identifier", {
+    p_student_id: studentId,
+    p_status: "active",
+  });
+
+const callSecretariaRegisterSchoolAccessEvent = ({ code, eventType, origin }) =>
+  callSecretariaSchoolAccessRpc("school_access_register_event", {
+    p_code: code,
+    p_event_type: eventType,
+    p_origin: origin || "manual_code",
+  });
+
+const callSecretariaListSchoolAccessDailyEvents = ({ schoolId, eventDate, classId }) =>
+  callSecretariaSchoolAccessRpc("school_access_list_daily_events", {
+    p_school_id: schoolId,
+    p_event_date: eventDate || secretariaTodayIso(),
+    p_class_id: classId || null,
+  });
+
+const callSecretariaGetSchoolAccessHistory = ({ schoolId, studentId, dateFrom, dateTo, classId }) =>
+  callSecretariaSchoolAccessRpc("school_access_get_history", {
+    p_school_id: schoolId,
+    p_student_id: studentId || null,
+    p_date_from: dateFrom || "",
+    p_date_to: dateTo || "",
+    p_class_id: classId || null,
   });
 
 const callSecretariaClassTeacherRpc = async (rpcName, payload) => {
@@ -21736,6 +21948,7 @@ const renderSecretariaNav = (currentView) => {
     analytics: "Analytics",
     relatorios: "Relatórios",
     comunicados: "Comunicados",
+    acesso: "Entrada/Saída",
   };
   return `<nav class="secretaria-official-nav" aria-label="Menu oficial da Secretaria">${secretariaOfficialViews
     .map((view) => `<a class="${view === currentView ? "is-active" : ""}" href="${secretariaLink(view)}">${labels[view]}</a>`)
@@ -22795,6 +23008,111 @@ const renderSecretariaAttendanceView = (index) => {
   `;
 };
 
+const schoolAccessEventTypeLabel = (eventType) => String(eventType || "") === "exit" ? "Saída" : "Entrada";
+const schoolAccessStatusLabel = (status) => String(status || "") === "duplicate" ? "Duplicidade controlada" : "Registrado";
+const schoolAccessStatusTone = (status) => String(status || "") === "duplicate" ? "warning" : "success";
+const schoolAccessEventTime = (value) => {
+  if (!value) return "Horario nao informado";
+  try {
+    return new Date(value).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  } catch {
+    return String(value);
+  }
+};
+
+const renderSecretariaSchoolAccessView = (index) => {
+  const params = getSecretariaParams();
+  const school = getSecretariaPrimarySchool();
+  const selectedClassId = params.get("class") || "";
+  const selectedStudentId = params.get("student") || "";
+  const eventDate = params.get("date") || secretariaTodayIso();
+  const activeStudents = (secretariaInstitutionalState.students || []).filter((student) => isSecretariaActiveStatus(student.status));
+  const activeClasses = (secretariaInstitutionalState.classes || []).filter((classItem) => isSecretariaActiveStatus(classItem.status));
+  const enrollmentByStudent = new Map((secretariaInstitutionalState.enrollments || [])
+    .filter((enrollment) => isSecretariaActiveStatus(enrollment.status) && !enrollment.ended_at)
+    .map((enrollment) => [enrollment.student_id, enrollment]));
+  const dailyEvents = Array.isArray(secretariaInstitutionalState.schoolAccessDailyEvents) ? secretariaInstitutionalState.schoolAccessDailyEvents : [];
+  const historyRows = Array.isArray(secretariaInstitutionalState.schoolAccessHistory) ? secretariaInstitutionalState.schoolAccessHistory : [];
+  const lastResult = secretariaInstitutionalState.lastSchoolAccessResult || {};
+  const latestByStudent = new Map();
+  dailyEvents
+    .filter((row) => row.status === "recorded")
+    .slice()
+    .sort((a, b) => String(b.occurred_at || "").localeCompare(String(a.occurred_at || "")))
+    .forEach((row) => {
+      if (!latestByStudent.has(row.student_id)) latestByStudent.set(row.student_id, row);
+    });
+  const filteredDaily = dailyEvents.filter((row) =>
+    (!selectedClassId || row.class_id === selectedClassId)
+    && (!selectedStudentId || row.student_id === selectedStudentId)
+  );
+  return `
+    <div class="secretaria-communication-layout">
+      <section class="panel span-2 secretaria-form-panel">
+        <div class="panel-head"><h2>${secretariaInlineIcon("qr", "Entrada e Saída")}</h2><span>QR, código de barras e fallback manual</span></div>
+        <form class="secretaria-form-grid" data-secretaria-school-access-issue-form>
+          <input type="hidden" name="school_id" value="${htmlEscape(school.id || "")}" />
+          <label class="is-wide"><span>Aluno para identificação</span><select name="student_id" required><option value="">Selecione um aluno ativo</option>${activeStudents.map((student) => {
+            const enrollment = enrollmentByStudent.get(student.id) || {};
+            const classItem = index.classById.get(enrollment.class_id) || {};
+            return `<option value="${htmlEscape(student.id)}" ${student.id === selectedStudentId ? "selected" : ""}>${htmlEscape(normalizeStudentName(student))} · ${htmlEscape(normalizeClassName(classItem))}</option>`;
+          }).join("")}</select></label>
+          <button type="submit">Emitir QR/Código</button>
+          <p class="secretaria-form-hint is-wide" data-secretaria-school-access-issue-message>${lastResult.qr_payload ? `Identificador emitido: ${htmlEscape(lastResult.barcode_value || "")}` : "O QR contém apenas código opaco, sem nome, turma ou documento do aluno."}</p>
+        </form>
+        <form class="secretaria-form-grid" data-secretaria-school-access-scan-form>
+          <label class="is-wide"><span>Código lido/digitado</span><input name="code" autocomplete="off" placeholder="RSACCESS:RS-... ou RS-..." required /></label>
+          <label><span>Movimento</span><select name="event_type" required><option value="entry">Entrada</option><option value="exit">Saída</option></select></label>
+          <label><span>Origem</span><select name="origin" required><option value="manual_code">Código digitado</option><option value="qr_camera">Câmera/QR</option><option value="barcode">Código de barras</option></select></label>
+          <div class="qb-builder-actions secretaria-form-actions is-wide">
+            <button type="button" data-secretaria-school-access-camera>Usar câmera/QR</button>
+            <button type="submit">Registrar movimento</button>
+          </div>
+          <p class="secretaria-form-hint is-wide" data-secretaria-school-access-message>${lastResult.event_id ? `${schoolAccessEventTypeLabel(lastResult.event_type)} registrada (${schoolAccessStatusLabel(lastResult.status)}).` : "Use a câmera quando disponível ou digite o código como fallback operacional."}</p>
+        </form>
+      </section>
+      <section class="panel span-2 secretaria-list-panel">
+        <div class="panel-head"><h2>Painel do dia</h2><span>${filteredDaily.length} movimento${filteredDaily.length === 1 ? "" : "s"}</span></div>
+        <form class="analytics-grid secretaria-grid" method="get" action="secretaria.html">
+          <input type="hidden" name="view" value="acesso" />
+          <label><span>Data</span><input type="date" name="date" value="${htmlEscape(eventDate)}" /></label>
+          <label><span>Turma</span><select name="class"><option value="">Todas</option>${activeClasses.map((classItem) => `<option value="${htmlEscape(classItem.id)}" ${classItem.id === selectedClassId ? "selected" : ""}>${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
+          <label><span>Aluno</span><select name="student"><option value="">Todos</option>${activeStudents.map((student) => `<option value="${htmlEscape(student.id)}" ${student.id === selectedStudentId ? "selected" : ""}>${htmlEscape(normalizeStudentName(student))}</option>`).join("")}</select></label>
+          <button type="submit">Filtrar</button>
+        </form>
+        <div class="metric-row">
+          <article>Entradas<strong>${filteredDaily.filter((row) => row.event_type === "entry" && row.status === "recorded").length}</strong><span>registradas</span></article>
+          <article>Saídas<strong>${filteredDaily.filter((row) => row.event_type === "exit" && row.status === "recorded").length}</strong><span>registradas</span></article>
+          <article>Duplicidades<strong>${filteredDaily.filter((row) => row.status === "duplicate").length}</strong><span>controladas</span></article>
+          <article>Dentro agora<strong>${Array.from(latestByStudent.values()).filter((row) => row.event_type === "entry").length}</strong><span>status atual</span></article>
+        </div>
+        <ul class="clean-list">
+          ${filteredDaily.map((row) => `
+            <li data-secretaria-search-item>
+              <strong>${htmlEscape(row.student_name || "Aluno")}</strong>
+              ${secretariaBadge(schoolAccessEventTypeLabel(row.event_type), row.event_type === "entry" ? "success" : "info")}
+              ${secretariaBadge(schoolAccessStatusLabel(row.status), schoolAccessStatusTone(row.status))}
+              <span>${htmlEscape(row.class_name || "Turma nao informada")} · ${htmlEscape(schoolAccessEventTime(row.occurred_at))} · ${htmlEscape(row.origin || "manual")}</span>
+            </li>
+          `).join("") || "<li>EMPTY_REAL: nenhum movimento registrado para os filtros atuais.</li>"}
+        </ul>
+      </section>
+      <section class="panel span-2">
+        <div class="panel-head"><h2>Histórico</h2><span>${historyRows.length} registro${historyRows.length === 1 ? "" : "s"}</span></div>
+        <ul class="clean-list">
+          ${historyRows.slice(0, 12).map((row) => `
+            <li>
+              <strong>${htmlEscape(row.student_name || "Aluno")}</strong>
+              ${secretariaBadge(schoolAccessEventTypeLabel(row.event_type), row.event_type === "entry" ? "success" : "info")}
+              <span>${htmlEscape(row.class_name || "Turma nao informada")} · ${htmlEscape(schoolAccessEventTime(row.occurred_at))}</span>
+            </li>
+          `).join("") || "<li>Histórico será exibido após os primeiros registros reais.</li>"}
+        </ul>
+      </section>
+    </div>
+  `;
+};
+
 const renderSecretariaCommunicationsView = (index) => {
   const params = getSecretariaParams();
   const selectedAudience = params.get("audience") || "";
@@ -23403,6 +23721,7 @@ const renderSecretariaReadyView = () => {
     analytics: () => renderSecretariaAnalyticsView(index),
     relatorios: () => renderSecretariaReportsView(index),
     comunicados: () => renderSecretariaCommunicationsView(index),
+    acesso: () => renderSecretariaSchoolAccessView(index),
   }[view]();
   return `${renderSecretariaGlobalHeader(index)}${content}`;
 };
@@ -24056,6 +24375,94 @@ const initSecretariaInstitutional = () => {
       }
     });
   });
+  const accessIssueForm = area.querySelector("[data-secretaria-school-access-issue-form]");
+  if (accessIssueForm) {
+    accessIssueForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = accessIssueForm.querySelector("[data-secretaria-school-access-issue-message]");
+      const submitButton = accessIssueForm.querySelector("button[type='submit']");
+      const formData = new FormData(accessIssueForm);
+      try {
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Emitindo...";
+        }
+        if (message) message.textContent = "Emitindo identificador opaco...";
+        await callSecretariaIssueSchoolAccessIdentifier({ studentId: String(formData.get("student_id") || "") });
+        if (!document.body.contains(area)) return;
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+      } catch (error) {
+        if (message) message.textContent = error.message || "Não foi possível emitir o identificador.";
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Emitir QR/Código";
+        }
+      }
+    });
+  }
+  const accessScanForm = area.querySelector("[data-secretaria-school-access-scan-form]");
+  if (accessScanForm) {
+    accessScanForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = accessScanForm.querySelector("[data-secretaria-school-access-message]");
+      const submitButton = accessScanForm.querySelector("button[type='submit']");
+      const formData = new FormData(accessScanForm);
+      try {
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Registrando...";
+        }
+        if (message) message.textContent = "Registrando movimento escolar...";
+        await callSecretariaRegisterSchoolAccessEvent({
+          code: String(formData.get("code") || ""),
+          eventType: String(formData.get("event_type") || "entry"),
+          origin: String(formData.get("origin") || "manual_code"),
+        });
+        secretariaInstitutionalState.schoolAccessKey = "";
+        if (!document.body.contains(area)) return;
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+      } catch (error) {
+        if (message) message.textContent = error.message || "Não foi possível registrar o movimento.";
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Registrar movimento";
+        }
+      }
+    });
+  }
+  area.querySelector("[data-secretaria-school-access-camera]")?.addEventListener("click", async () => {
+    const message = area.querySelector("[data-secretaria-school-access-message]");
+    const codeInput = area.querySelector("[data-secretaria-school-access-scan-form] input[name='code']");
+    const originSelect = area.querySelector("[data-secretaria-school-access-scan-form] select[name='origin']");
+    try {
+      if (!("BarcodeDetector" in window) || !navigator.mediaDevices?.getUserMedia) {
+        if (message) message.textContent = "Leitor QR indisponível neste navegador. Use o código digitado.";
+        return;
+      }
+      if (message) message.textContent = "Abra a câmera do navegador e aponte para o QR.";
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      const video = document.createElement("video");
+      video.srcObject = stream;
+      await video.play();
+      const detector = new window.BarcodeDetector({ formats: ["qr_code", "code_128"] });
+      const scan = async () => {
+        const codes = await detector.detect(video);
+        if (codes?.[0]?.rawValue) {
+          stream.getTracks().forEach((track) => track.stop());
+          if (codeInput) codeInput.value = codes[0].rawValue;
+          if (originSelect) originSelect.value = codes[0].format === "qr_code" ? "qr_camera" : "barcode";
+          if (message) message.textContent = "Código lido. Confira e registre o movimento.";
+          return;
+        }
+        window.setTimeout(scan, 450);
+      };
+      scan();
+    } catch (error) {
+      if (message) message.textContent = error.message || "Não foi possível abrir a câmera. Use o código digitado.";
+    }
+  });
   const communicationForm = area.querySelector("[data-secretaria-communication-form]");
   if (communicationForm) {
     communicationForm.addEventListener("submit", async (event) => {
@@ -24258,6 +24665,28 @@ const initSecretariaInstitutional = () => {
         initSecretariaInstitutional();
       }
     });
+  }
+  if (secretariaInstitutionalState.status === "ready" && getSecretariaCurrentView() === "acesso") {
+    const schoolId = getSecretariaPrimarySchool().id || "";
+    const params = getSecretariaParams();
+    const eventDate = params.get("date") || secretariaTodayIso();
+    const classId = params.get("class") || "";
+    const studentId = params.get("student") || "";
+    const nextKey = `${schoolId}:${eventDate}:${classId}:${studentId}`;
+    if (schoolId && secretariaInstitutionalState.schoolAccessKey !== nextKey) {
+      Promise.allSettled([
+        callSecretariaListSchoolAccessDailyEvents({ schoolId, eventDate, classId }),
+        callSecretariaGetSchoolAccessHistory({ schoolId, studentId, dateFrom: eventDate, dateTo: eventDate, classId }),
+      ]).then(([dailyResult, historyResult]) => {
+        if (dailyResult.status === "fulfilled") secretariaInstitutionalState.schoolAccessDailyEvents = dailyResult.value || [];
+        if (historyResult.status === "fulfilled") secretariaInstitutionalState.schoolAccessHistory = historyResult.value || [];
+        secretariaInstitutionalState.schoolAccessKey = nextKey;
+        if (document.body.contains(area)) {
+          area.outerHTML = renderSecretariaDashboard();
+          initSecretariaInstitutional();
+        }
+      });
+    }
   }
   if (secretariaInstitutionalState.status === "ready" && getSecretariaCurrentView() === "relatorios") {
     const before = `${officialReportsState.secretaria.status}:${officialReportsState.secretaria.key}`;
