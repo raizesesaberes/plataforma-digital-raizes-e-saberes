@@ -22810,6 +22810,7 @@ const secretariaDocumentStatusOptions = ["pending", "received", "waived"];
 const secretariaClassSchoolYearOptions = ["Infantil 2", "Infantil 3", "Infantil 4", "Infantil 5", "1º Ano", "2º Ano", "3º Ano", "4º Ano", "5º Ano", "6º Ano", "7º Ano", "8º Ano", "9º Ano", "1ª Série EM", "2ª Série EM", "3ª Série EM"];
 const secretariaClassStageOptions = ["Educação Infantil", "Ensino Fundamental — Anos Iniciais", "Ensino Fundamental — Anos Finais", "Ensino Médio", "EJA"];
 const secretariaClassShiftOptions = ["Manhã", "Tarde", "Integral", "Noite"];
+const secretariaTeacherAreaFallbackOptions = ["Professor Polivalente — Anos Iniciais", "Educação Infantil", "Língua Portuguesa", "Matemática", "Ciências", "História", "Geografia", "Arte", "Educação Física", "Língua Inglesa"];
 const secretariaDocumentStatusLabels = {
   pending: "Pendente",
   received: "Recebido",
@@ -24081,14 +24082,15 @@ const renderSecretariaNewClassView = (index) => {
 };
 
 const renderSecretariaNewTeacherView = (index) => {
-  const schoolsFromTeachers = [...new Set((secretariaInstitutionalState.teachers || []).map((teacher) => teacher.school_id).filter(Boolean))]
-    .map((schoolId) => index.schoolById.get(schoolId) || { id: schoolId, nome: `Escola ${schoolId}` });
-  const schools = ((secretariaInstitutionalState.schools || []).filter((school) => isSecretariaActiveStatus(school.status)).length
-    ? (secretariaInstitutionalState.schools || []).filter((school) => isSecretariaActiveStatus(school.status))
-    : schoolsFromTeachers.length
-      ? schoolsFromTeachers
-      : [{ id: "11111111-1111-1111-1111-111111111111", nome: "Escola nao informada" }]);
-  const defaultSchool = schools[0] || {};
+  const selectedSchool = getSecretariaPrimarySchool();
+  const selectedClassIds = new Set((secretariaInstitutionalState.classes || [])
+    .filter((classItem) => !selectedSchool.id || classItem.school_id === selectedSchool.id)
+    .map((classItem) => classItem.id));
+  const canonicalAreas = [...new Set((secretariaInstitutionalState.classSubjects || [])
+    .filter((subject) => !selectedClassIds.size || selectedClassIds.has(subject.class_id))
+    .map((subject) => subject.component_name || subject.name || subject.disciplina)
+    .filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const teacherAreaOptions = [...new Set([...canonicalAreas, ...secretariaTeacherAreaFallbackOptions])];
   const result = secretariaInstitutionalState.lastTeacherClassResult;
   return `
     <section class="panel span-2 secretaria-form-panel secretaria-teacher-create">
@@ -24099,13 +24101,17 @@ const renderSecretariaNewTeacherView = (index) => {
       <form data-secretaria-teacher-form>
         <div class="secretaria-form-grid secretaria-teacher-form-grid">
           <label class="is-wide"><span>Nome completo</span><input name="full_name" required autocomplete="off" placeholder="Nome completo do professor" /></label>
-          <label><span>Disciplina/Área</span><input name="disciplina" autocomplete="off" placeholder="Ex.: Educação Infantil" /></label>
+          <label><span>Disciplina/Área</span><select name="disciplina"><option value="">Selecionar área</option>${teacherAreaOptions.map((option) => `<option value="${htmlEscape(option)}">${htmlEscape(option)}</option>`).join("")}</select></label>
           <label><span>Status</span><select name="status" required><option value="active">Ativo</option><option value="inactive">Inativo</option></select></label>
-          <label class="is-wide"><span>Escola</span><select name="school_id" required>${schools.map((school) => `<option value="${htmlEscape(school.id)}" ${school.id === defaultSchool.id ? "selected" : ""}>${htmlEscape(normalizeSchoolName(school))}</option>`).join("")}</select></label>
+          <div class="secretaria-context-field is-wide">
+            <span>Escola</span>
+            <strong>${htmlEscape(normalizeSchoolName(selectedSchool) || "Selecione uma escola no cabeçalho")}</strong>
+            <input type="hidden" name="school_id" value="${htmlEscape(selectedSchool.id || "")}" />
+          </div>
         </div>
         <div class="qb-builder-actions secretaria-form-actions">
           <a href="${secretariaLink("professores")}">Cancelar</a>
-          <button type="submit">Salvar professor</button>
+          <button type="submit" ${selectedSchool.id ? "" : "disabled"}>Salvar professor</button>
         </div>
         <p class="secretaria-form-hint">
           O professor sera cadastrado institucionalmente. O acesso digital podera ser configurado posteriormente.
@@ -25798,6 +25804,12 @@ const initSecretariaInstitutional = () => {
       const message = teacherForm.querySelector("[data-secretaria-teacher-message]");
       const submitButton = teacherForm.querySelector("button[type='submit']");
       const formData = new FormData(teacherForm);
+      const schoolId = String(formData.get("school_id") || "").trim();
+      const contextSchoolId = secretariaInstitutionalState.selectedSchoolId || getSecretariaPrimarySchool().id || "";
+      if (!schoolId || schoolId !== contextSchoolId) {
+        if (message) message.textContent = "O professor deve ser criado na escola atualmente selecionada.";
+        return;
+      }
       try {
         if (submitButton) {
           submitButton.disabled = true;
@@ -25805,7 +25817,7 @@ const initSecretariaInstitutional = () => {
         }
         if (message) message.textContent = "Criando professor institucional no Supabase...";
         const result = await callSecretariaCreateTeacher({
-          schoolId: String(formData.get("school_id") || ""),
+          schoolId,
           fullName: String(formData.get("full_name") || ""),
           status: String(formData.get("status") || "active"),
           disciplina: String(formData.get("disciplina") || ""),

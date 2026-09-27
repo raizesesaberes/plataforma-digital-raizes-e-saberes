@@ -4662,6 +4662,10 @@
   font-weight: 900;
 }
 
+.secretaria-context-field.is-wide {
+  grid-column: 1 / -1;
+}
+
 .secretaria-context-field strong {
   min-height: 48px;
   display: flex;
