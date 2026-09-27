@@ -56,6 +56,7 @@ const routeAccessRules = {
   adminAtividades: ["gestor", "coordenador", "admin"],
   avalia: ["professor", "gestor", "coordenador", "admin"],
   bancoQuestoes: ["professor", "gestor", "coordenador", "admin"],
+  suporte: ["professor", "aluno", "educacao_infantil", "escola", "gestor", "coordenador", "secretaria", "secretaria_municipal", "admin"],
   secretaria: ["secretaria", "gestor", "coordenador", "admin"],
   gestor: ["gestor", "coordenador", "secretaria", "secretaria_municipal", "admin"],
 };
@@ -81,6 +82,7 @@ const protectedRouteKeyByPage = {
   "universidade.html": "universidade",
   "avalia.html": "avalia",
   "banco-questoes.html": "bancoQuestoes",
+  "suporte.html": "suporte",
   "admin-atividades.html": "adminAtividades",
   "secretaria.html": "secretaria",
   "gestor.html": "gestor",
@@ -94,10 +96,11 @@ const protectedRouteKeyByPage = {
   "aluno/atividades": "alunoAtividades",
   "aluno/atividade": "alunoAtividade",
   "colorir-descobrir": "colorirDescobrir",
+  suporte: "suporte",
 };
-const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "alunoAtividade", "atividades", "missao", "arvore", "biblioteca", "jogos", "perfil", "viewer", "motorAtividade", "escolaColetiva"]);
-const earlyChildhoodAllowedRouteKeys = new Set(["familia", "educacaoInfantil", "jogos", "biblioteca", "viewer", "colorirDescobrir", "escolaColetiva"]);
-const schoolAllowedRouteKeys = new Set(["escolaColetiva", "jogos", "biblioteca", "viewer", "colorirDescobrir"]);
+const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "alunoAtividade", "atividades", "missao", "arvore", "biblioteca", "jogos", "perfil", "viewer", "motorAtividade", "escolaColetiva", "suporte"]);
+const earlyChildhoodAllowedRouteKeys = new Set(["familia", "educacaoInfantil", "jogos", "biblioteca", "viewer", "colorirDescobrir", "escolaColetiva", "suporte"]);
+const schoolAllowedRouteKeys = new Set(["escolaColetiva", "jogos", "biblioteca", "viewer", "colorirDescobrir", "suporte"]);
 const decodePlatformJwtPayload = (token) => {
   try {
     const [, payload] = String(token || "").split(".");
@@ -10473,6 +10476,7 @@ const adminFeatureRegistry = [
   { key: "avaliacoes", label: "Avalia+", area: "Conteúdos", status: "Em acompanhamento", href: "avalia.html", roles: { admin: true, professor: true, aluno: false } },
   { key: "banco", label: "Banco de Questões", area: "Conteúdos", status: "Em acompanhamento", href: "banco-questoes.html", roles: { admin: true, professor: true, aluno: false } },
   { key: "universidade", label: "Universidade", area: "Conteúdos", status: "Em acompanhamento", href: "universidade.html", roles: { admin: true, professor: true, aluno: false } },
+  { key: "suporte", label: "Help Desk / Suporte", area: "Sistema / TI", status: "Disponível", href: "suporte.html", roles: { admin: true, professor: true, aluno: true } },
   { key: "bookViewer", label: "Leitor Digital", area: "Recursos interativos", status: "Disponível", href: "book-viewer.html", roles: { admin: true, professor: true, aluno: true } },
   { key: "motorUniversal", label: "Atividades Interativas", area: "Recursos interativos", status: "Em preparação", href: "motor-atividade.html", roles: { admin: true, professor: false, aluno: true } },
   { key: "motorJogos", label: "Jogos Digitais", area: "Recursos interativos", status: "Em preparação", href: "jogos.html", roles: { admin: true, professor: true, aluno: true } },
@@ -10559,6 +10563,7 @@ const adminPlatformTabs = [
   { label: "Banco de Questões", href: "banco-questoes.html", status: "teste" },
   { label: "Secretaria", href: "secretaria.html", status: "gestão" },
   { label: "Gestor", href: "gestor.html", status: "gestão" },
+  { label: "Suporte", href: "suporte.html", status: "sla" },
 ];
 
 const getAdminFeature = (key) => adminFeatureRegistry.find((item) => item.key === key);
@@ -10571,6 +10576,7 @@ const adminReadOnlyNav = [
   { key: "usuarios", label: "Usuários", icon: "users" },
   { key: "escolas", label: "Escolas", icon: "escola" },
   { key: "permissoes", label: "Perfis e permissões", icon: "perfil" },
+  { key: "suporte", label: "Suporte / SLA", icon: "mail" },
   { key: "conteúdos", label: "Conteúdos", icon: "book" },
   { key: "configuracoes", label: "Configurações", icon: "settings" },
   { key: "implantação", label: "Implantação", icon: "clipboard" },
@@ -10648,6 +10654,322 @@ const adminOperationalState = {
   data: null,
 };
 
+const supportAllowedRoles = ["admin", "professor", "aluno", "educacao_infantil", "escola", "gestor", "coordenador", "secretaria", "secretaria_municipal"];
+const supportAgentRoles = ["admin", "gestor", "coordenador", "secretaria", "secretaria_municipal"];
+const supportStatusLabels = {
+  aberto: "Aberto",
+  em_atendimento: "Em atendimento",
+  aguardando_solicitante: "Aguardando solicitante",
+  resolvido: "Resolvido",
+  encerrado: "Encerrado",
+};
+const supportPriorityLabels = {
+  baixa: "Baixa",
+  normal: "Normal",
+  alta: "Alta",
+  urgente: "Urgente",
+};
+
+const formatSupportDateTime = (value = "") => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+};
+
+const supportState = {
+  status: "idle",
+  error: "",
+  tickets: [],
+  detail: null,
+  lastResult: null,
+};
+
+const supportService = (() => {
+  const client = () => createSupabaseRestClient();
+  const post = async (rpc, body = {}, roles = supportAllowedRoles) =>
+    client().request(`rpc/${rpc}`, "", {
+      method: "POST",
+      body: JSON.stringify(body),
+      requireAuthenticated: true,
+      allowedRoles: roles,
+    });
+  return {
+    createTicket: async (payload) => normalizeRpcJson(await post("support_create_ticket", payload)),
+    listMyTickets: async () => {
+      const result = await post("support_list_my_tickets", {});
+      return Array.isArray(result) ? result : [];
+    },
+    getTicketDetail: async (ticketId) => normalizeRpcJson(await post("support_get_ticket_detail", { p_ticket_id: ticketId })),
+    addInteraction: async (payload) => normalizeRpcJson(await post("support_add_ticket_interaction", payload)),
+    listAdminTickets: async (payload = {}) => {
+      const result = await post("support_list_admin_tickets", payload, supportAgentRoles);
+      return Array.isArray(result) ? result : [];
+    },
+    getIndicators: async (payload = {}) => normalizeRpcJson(await post("support_get_indicators", payload, supportAgentRoles)),
+    getReportPayload: async (payload = {}) => normalizeRpcJson(await post("support_get_report_payload", payload, supportAgentRoles)),
+  };
+})();
+
+const getSupportTicketTone = (ticket = {}) => {
+  const status = String(ticket.status || "").toLowerCase();
+  if (status === "resolvido" || status === "encerrado") return "success";
+  if (ticket.first_response_sla_status === "out" || ticket.resolution_sla_status === "out") return "warning";
+  if (status === "aberto") return "muted";
+  return "info";
+};
+
+const renderSupportBadge = (label, tone = "muted") => `<span class="admin-user-badge is-${tone}">${printableEscape(label)}</span>`;
+
+const renderSupportTicketRows = (tickets = [], { admin = false } = {}) => {
+  if (!tickets.length) {
+    return `<article class="admin-empty-card"><strong>Nenhum chamado encontrado</strong><span>A fila está vazia para o escopo autorizado.</span></article>`;
+  }
+  return tickets
+    .map((ticket) => {
+      const href = admin
+        ? `admin.html?view=suporte&ticket=${encodeURIComponent(ticket.id || "")}`
+        : `suporte.html?ticket=${encodeURIComponent(ticket.id || "")}`;
+      return `
+        <article class="admin-user-row" data-admin-search-item>
+          <div>
+            <strong>${printableEscape(ticket.protocol || "Sem protocolo")}</strong>
+            <span>${printableEscape(ticket.subject || "Chamado sem assunto")}</span>
+            <small>${printableEscape(ticket.category || "geral")} · ${printableEscape(ticket.school_name || "Escola não informada")} · ${formatSupportDateTime(ticket.created_at)}</small>
+          </div>
+          <div class="admin-user-actions">
+            ${renderSupportBadge(supportStatusLabels[ticket.status] || ticket.status || "Status", getSupportTicketTone(ticket))}
+            ${renderSupportBadge(supportPriorityLabels[ticket.priority] || ticket.priority || "Prioridade", ticket.priority === "urgente" ? "danger" : ticket.priority === "alta" ? "warning" : "muted")}
+            <a href="${href}">Abrir</a>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+};
+
+const renderSupportTicketDetail = (detail = null, { admin = false } = {}) => {
+  const ticket = detail?.ticket || null;
+  if (!ticket) {
+    return `<section class="admin-board admin-empty-state"><h2>Detalhe do chamado</h2><p>Selecione um chamado para ver histórico, interações e SLA.</p></section>`;
+  }
+  const interactions = detail?.interactions || [];
+  const events = detail?.events || [];
+  const currentStatus = String(ticket.status || "aberto");
+  const nextOptions = ["", "em_atendimento", "aguardando_solicitante", "resolvido", "encerrado"]
+    .filter((status) => admin || !status)
+    .map((status) => `<option value="${status}">${status ? supportStatusLabels[status] || status : "Manter status atual"}</option>`)
+    .join("");
+  return `
+    <section class="admin-board">
+      <div class="admin-section-head">
+        <h2>${printableEscape(ticket.protocol || "Chamado")}</h2>
+        <span>${printableEscape(supportStatusLabels[currentStatus] || currentStatus)}</span>
+      </div>
+      <div class="admin-overview-grid">
+        <article><span>Prioridade</span><strong>${printableEscape(supportPriorityLabels[ticket.priority] || ticket.priority || "-")}</strong><small>SLA configurável por prioridade</small></article>
+        <article><span>Primeira resposta</span><strong>${printableEscape(ticket.first_response_sla_status === "out" ? "Fora do SLA" : "Dentro/pendente")}</strong><small>${formatSupportDateTime(ticket.first_response_at)}</small></article>
+        <article><span>Resolução</span><strong>${printableEscape(ticket.resolution_sla_status === "out" ? "Fora do SLA" : "Dentro/pendente")}</strong><small>${formatSupportDateTime(ticket.resolved_at)}</small></article>
+      </div>
+      <article class="admin-school-detail">
+        <h3>${printableEscape(ticket.subject || "Chamado sem assunto")}</h3>
+        <p>${printableEscape(ticket.description || "Sem descrição.")}</p>
+        <small>${printableEscape(ticket.category || "geral")} · ${printableEscape(ticket.school_name || "Escola não informada")} · aberto em ${formatSupportDateTime(ticket.created_at)}</small>
+      </article>
+      <div class="admin-operation-grid">
+        <section>
+          <h3>Interações</h3>
+          <div class="admin-status-list">
+            ${interactions
+              .map((item) => `
+                <article class="admin-status-item">
+                  ${adminInlineIcon(item.is_internal ? "settings" : "mail")}
+                  <div>
+                    <strong>${printableEscape(item.author_name || "Usuário")}</strong>
+                    <span>${printableEscape(item.body || "")}</span>
+                    <small>${printableEscape(item.interaction_type || "mensagem")} · ${formatSupportDateTime(item.created_at)}</small>
+                  </div>
+                </article>
+              `)
+              .join("") || `<article class="admin-empty-card"><strong>Sem interações</strong><span>O histórico aparecerá aqui.</span></article>`}
+          </div>
+        </section>
+        <section>
+          <h3>Eventos</h3>
+          <div class="admin-status-list">
+            ${events
+              .map((item) => `
+                <article class="admin-status-item">
+                  ${adminInlineIcon("check")}
+                  <div>
+                    <strong>${printableEscape(item.event_type || "evento")}</strong>
+                    <span>${printableEscape(item.to_status ? `${item.from_status || "-"} → ${item.to_status}` : "Registro do chamado")}</span>
+                    <small>${formatSupportDateTime(item.created_at)}</small>
+                  </div>
+                </article>
+              `)
+              .join("") || `<article class="admin-empty-card"><strong>Sem eventos adicionais</strong><span>A trilha de auditoria ficará registrada aqui.</span></article>`}
+          </div>
+        </section>
+      </div>
+      <form class="admin-inline-form" data-support-interaction-form data-ticket-id="${printableEscape(ticket.id || "")}" data-admin-mode="${admin ? "1" : "0"}">
+        <label><span>Mensagem</span><textarea name="body" rows="3" required placeholder="Registrar resposta ou complemento"></textarea></label>
+        ${
+          admin
+            ? `<label><span>Status</span><select name="next_status">${nextOptions}</select></label><label><span>Nota interna</span><select name="is_internal"><option value="false">Não</option><option value="true">Sim</option></select></label>`
+            : ""
+        }
+        <p data-support-action-status hidden></p>
+        <button type="submit">Registrar interação</button>
+      </form>
+    </section>
+  `;
+};
+
+const renderSupportPortal = () => {
+  const currentEmail = getPlatformSession().email || getSupabaseSessionEmail() || "usuário autenticado";
+  const selectedTicket = new URLSearchParams(window.location.search || "").get("ticket") || "";
+  const selectedDetail = supportState.detail?.ticket?.id === selectedTicket ? supportState.detail : null;
+  return `
+    <section class="admin-workspace support-workspace" data-support-portal>
+      <main class="admin-main">
+        <header class="admin-topbar">
+          <label><span>Busca</span><input type="search" placeholder="Buscar chamados..." data-admin-search /></label>
+          <div class="admin-topbar-actions">
+            <button type="button" data-platform-home>${adminInlineIcon("home", "INÍCIO")}</button>
+            <button type="button" data-platform-logout>${adminInlineIcon("sair", "SAIR")}</button>
+          </div>
+        </header>
+        <section class="admin-hero">
+          <div>
+            <span>Help Desk / Suporte</span>
+            <h1>Meus chamados</h1>
+            <p>Acompanhe protocolos, respostas e soluções vinculadas ao seu acesso.</p>
+          </div>
+          <div class="admin-hero-badges">
+            <span>${printableEscape(currentEmail)}</span>
+            <span>Portal autorizado</span>
+          </div>
+        </section>
+        <section class="admin-content">
+          <section class="admin-board">
+            <div class="admin-section-head"><h2>Abrir chamado</h2><span>Protocolo automático</span></div>
+            <form class="admin-inline-form" data-support-ticket-form>
+              <label><span>Categoria</span><select name="p_category"><option value="acesso">Acesso</option><option value="pedagogico">Pedagógico</option><option value="tecnico">Técnico</option><option value="financeiro">Financeiro</option><option value="outros">Outros</option></select></label>
+              <label><span>Prioridade</span><select name="p_priority"><option value="normal">Normal</option><option value="baixa">Baixa</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></label>
+              <label><span>Assunto</span><input name="p_subject" required maxlength="180" placeholder="Resumo do atendimento" /></label>
+              <label><span>Descrição</span><textarea name="p_description" required rows="4" placeholder="Descreva o que precisa de suporte"></textarea></label>
+              <p data-support-action-status hidden></p>
+              <button type="submit">Abrir chamado</button>
+            </form>
+          </section>
+          <section class="admin-operation-grid">
+            <section class="admin-board">
+              <div class="admin-section-head"><h2>Histórico</h2><span>${supportState.tickets.length} chamados</span></div>
+              ${
+                supportState.status === "loading"
+                  ? renderAdminPreparationView("Carregando chamados", "Consultando protocolos autorizados.")
+                  : supportState.status === "error"
+                    ? `<article class="admin-empty-card"><strong>Erro ao carregar</strong><span>${printableEscape(supportState.error)}</span></article>`
+                    : renderSupportTicketRows(supportState.tickets)
+              }
+            </section>
+            ${renderSupportTicketDetail(selectedDetail)}
+          </section>
+        </section>
+      </main>
+    </section>
+  `;
+};
+
+const ensureSupportPortal = async ({ force = false } = {}) => {
+  if (!force && supportState.status === "ready") return supportState;
+  supportState.status = "loading";
+  supportState.error = "";
+  try {
+    await ensureAdminSupabaseConfig();
+    supportState.tickets = await supportService.listMyTickets();
+    const selectedTicket = new URLSearchParams(window.location.search || "").get("ticket") || supportState.tickets[0]?.id || "";
+    supportState.detail = selectedTicket ? await supportService.getTicketDetail(selectedTicket).catch(() => null) : null;
+    supportState.status = "ready";
+  } catch (error) {
+    supportState.status = "error";
+    supportState.error = error.message || "Não foi possível carregar suporte.";
+  }
+  return supportState;
+};
+
+const initSupportPortal = () => {
+  const workspace = document.querySelector("[data-support-portal]");
+  if (!workspace) return;
+  const rerender = async (force = false) => {
+    await ensureSupportPortal({ force });
+    const mount = document.querySelector("[data-app-page='suporte']");
+    if (mount) {
+      mount.innerHTML = renderSupportPortal();
+      initPlatformLogout();
+      initSupportPortal();
+    }
+  };
+  workspace.addEventListener("submit", async (event) => {
+    const createForm = event.target.closest?.("[data-support-ticket-form]");
+    const interactionForm = event.target.closest?.("[data-support-interaction-form]");
+    if (!createForm && !interactionForm) return;
+    event.preventDefault();
+    const form = createForm || interactionForm;
+    const status = form.querySelector("[data-support-action-status]");
+    const submit = form.querySelector("button[type='submit']");
+    if (status) {
+      status.hidden = false;
+      status.dataset.tone = "muted";
+      status.textContent = createForm ? "Abrindo chamado..." : "Registrando interação...";
+    }
+    if (submit) submit.disabled = true;
+    try {
+      if (createForm) {
+        const formData = new FormData(createForm);
+        const result = await supportService.createTicket({
+          p_school_id: null,
+          p_category: String(formData.get("p_category") || "outros"),
+          p_subject: String(formData.get("p_subject") || "").trim(),
+          p_description: String(formData.get("p_description") || "").trim(),
+          p_priority: String(formData.get("p_priority") || "normal"),
+          p_attachments: [],
+        });
+        supportState.lastResult = result;
+      } else {
+        const formData = new FormData(interactionForm);
+        await supportService.addInteraction({
+          p_ticket_id: interactionForm.dataset.ticketId,
+          p_body: String(formData.get("body") || "").trim(),
+          p_is_internal: false,
+          p_next_status: null,
+          p_solution: null,
+          p_assigned_to: null,
+        });
+      }
+      if (status) {
+        status.dataset.tone = "success";
+        status.textContent = createForm ? "Chamado aberto com sucesso." : "Interação registrada.";
+      }
+      setTimeout(() => rerender(true), 500);
+    } catch (error) {
+      if (status) {
+        status.dataset.tone = "error";
+        status.textContent = error.message || "Não foi possível concluir a ação.";
+      }
+    } finally {
+      if (submit) submit.disabled = false;
+    }
+  });
+  workspace.querySelector("[data-admin-search]")?.addEventListener("input", (event) => {
+    const term = String(event.target.value || "").trim().toLowerCase();
+    workspace.querySelectorAll("[data-admin-search-item]").forEach((item) => {
+      item.hidden = term ? !item.textContent.toLowerCase().includes(term) : false;
+    });
+  });
+};
+
 const ensureAdminSupabaseConfig = async () => {
   if (typeof window === "undefined" || window.RAIZES_SUPABASE?.url) return;
   await new Promise((resolve, reject) => {
@@ -10689,6 +11011,9 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
         installations,
         contentAvailability,
         communications,
+        supportTickets,
+        supportIndicators,
+        supportReport,
       ] = await Promise.all([
         client.request("schools", "?select=id,nome,codigo_inep,municipio,estado,diretor,status&order=nome.asc", options),
         client.request("rpc/admin_list_auth_users", "", { ...options, method: "POST", body: "{}" }).catch(() => []),
@@ -10714,6 +11039,9 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
         client.request("rs_school_installations", "?select=id,school_id,school_code,deployment_mode,schema_version,package_version,school_year,current_stage,validation_status,created_at,updated_at&order=created_at.desc", options).catch(() => []),
         client.request("school_content_availability", "?select=id,school_id,content_type,content_id,status,available_from,available_until,deleted_at,created_at,updated_at&order=updated_at.desc", options).catch(() => []),
         client.request("communications", "?select=id,school_id,status,audience_type,created_at&order=created_at.desc", options),
+        client.request("rpc/support_list_admin_tickets", "", { ...options, method: "POST", body: "{}" }).catch(() => []),
+        client.request("rpc/support_get_indicators", "", { ...options, method: "POST", body: "{}" }).then(normalizeRpcJson).catch(() => ({})),
+        client.request("rpc/support_get_report_payload", "", { ...options, method: "POST", body: JSON.stringify({ p_format: "XLSX" }) }).then(normalizeRpcJson).catch(() => ({})),
       ]);
       adminOperationalState.status = "ready";
       adminOperationalState.data = {
@@ -10732,6 +11060,9 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
         installations: installations || [],
         contentAvailability: contentAvailability || [],
         communications: communications || [],
+        supportTickets: supportTickets || [],
+        supportIndicators: supportIndicators || {},
+        supportReport: supportReport || {},
       };
       return adminOperationalState;
     } catch (error) {
@@ -10951,6 +11282,56 @@ const renderAdminPreparationView = (title, description, items = []) => `
     }
   </section>
 `;
+
+const renderAdminSupportConsole = () => {
+  const data = adminOperationalState.data || {};
+  const tickets = data.supportTickets || [];
+  const indicators = data.supportIndicators || {};
+  const selectedId = new URLSearchParams(window.location.search || "").get("ticket") || tickets[0]?.id || "";
+  const selectedTicket = tickets.find((ticket) => ticket.id === selectedId) || tickets[0] || null;
+  const summary = [
+    { label: "Chamados", value: indicators.total_tickets ?? tickets.length, detail: "protocolos no período" },
+    { label: "Abertos", value: indicators.open_tickets ?? tickets.filter((item) => !["resolvido", "encerrado"].includes(item.status)).length, detail: "em fila ou atendimento" },
+    { label: "Encerrados", value: indicators.closed_tickets ?? tickets.filter((item) => ["resolvido", "encerrado"].includes(item.status)).length, detail: "resolvidos/encerrados" },
+    { label: "SLA", value: `${Math.round(Number(indicators.sla_compliance_percent ?? 0))}%`, detail: "cumprimento estimado" },
+  ];
+  const report = data.supportReport || {};
+  return `
+    <section class="admin-overview-grid">
+      ${summary.map(renderAdminMetricCard).join("")}
+    </section>
+    <section class="admin-board">
+      <div class="admin-section-head">
+        <h2>Fila de atendimento</h2>
+        <span>${tickets.length} chamados autorizados</span>
+      </div>
+      <div class="admin-filter-row">
+        <label><span>Status</span><select disabled><option>Todos</option></select></label>
+        <label><span>Prioridade</span><select disabled><option>Todas</option></select></label>
+        <label><span>Categoria</span><select disabled><option>Todas</option></select></label>
+        <label><span>Escola</span><select disabled><option>Escopo autorizado</option></select></label>
+      </div>
+      <div class="admin-users-list">${renderSupportTicketRows(tickets, { admin: true })}</div>
+    </section>
+    ${renderSupportTicketDetail(selectedTicket ? { ticket: selectedTicket, interactions: [], events: [] } : null, { admin: true })}
+    <section class="admin-board">
+      <div class="admin-section-head">
+        <h2>Relatório oficial</h2>
+        <span>Motor existente</span>
+      </div>
+      <div class="admin-status-list">
+        <article class="admin-status-item">
+          ${adminInlineIcon("chart")}
+          <div>
+            <strong>${printableEscape(report.report_type || "support_sla")}</strong>
+            <span>${printableEscape(report.engine || "official_reports_p0_live")}</span>
+            <small>${printableEscape(report.format || "XLSX")} · ${printableEscape(report.rows?.length ? `${report.rows.length} linhas` : "sem linhas no escopo atual")}</small>
+          </div>
+        </article>
+      </div>
+    </section>
+  `;
+};
 
 const adminRoleInfo = (role = "") => {
   const normalized = String(role || "").toLowerCase();
@@ -12410,6 +12791,7 @@ const renderAdminWorkspaceView = (view = "inicio") => {
     `,
     usuarios: renderAdminUsersConsole(),
     escolas: renderAdminSchoolsConsole(),
+    suporte: renderAdminSupportConsole(),
     professores: `<section class="admin-board admin-empty-state"><h2>Professores</h2><p>Acompanhe a rotina pedagógica e as turmas pelo ambiente do professor.</p><a href="professor.html">Abrir ambiente professor</a></section>`,
     alunos: `<section class="admin-board admin-empty-state"><h2>Alunos</h2><p>Acompanhe a experiência dos alunos vinculados ao ecossistema.</p><a href="aluno.html">Abrir ambiente aluno</a></section>`,
     familia: `<section class="admin-board admin-empty-state"><h2>Família</h2><p>Área preparada para acompanhar a experiência familiar vinculada as criancas.</p></section>`,
@@ -12487,7 +12869,7 @@ const initAdminWorkspace = () => {
     }
     workspace.querySelectorAll("[data-admin-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.adminView === view));
     if (content) content.innerHTML = renderAdminWorkspaceView(view);
-    if (["painel", "usuarios", "escolas", "conteúdos", "implantação"].includes(view)) {
+    if (["painel", "usuarios", "escolas", "conteúdos", "implantação", "suporte"].includes(view)) {
       ensureAdminReadOnlyData().then(() => {
         if (content && workspace.querySelector(`[data-admin-view="${view}"]`)?.classList.contains("is-active")) {
           content.innerHTML = renderAdminWorkspaceView(view);
@@ -12698,6 +13080,45 @@ const initAdminWorkspace = () => {
           submit.disabled = false;
           submit.textContent = "Criar escola";
         }
+      }
+      return;
+    }
+    const supportInteractionForm = event.target.closest?.("[data-support-interaction-form]");
+    if (supportInteractionForm && supportInteractionForm.dataset.adminMode === "1") {
+      event.preventDefault();
+      const status = supportInteractionForm.querySelector("[data-support-action-status]");
+      const submit = supportInteractionForm.querySelector("button[type='submit']");
+      const formData = new FormData(supportInteractionForm);
+      if (status) {
+        status.hidden = false;
+        status.dataset.tone = "muted";
+        status.textContent = "Registrando atendimento...";
+      }
+      if (submit) submit.disabled = true;
+      try {
+        await supportService.addInteraction({
+          p_ticket_id: supportInteractionForm.dataset.ticketId,
+          p_body: String(formData.get("body") || "").trim(),
+          p_is_internal: String(formData.get("is_internal") || "false") === "true",
+          p_next_status: String(formData.get("next_status") || "") || null,
+          p_solution: String(formData.get("next_status") || "") === "resolvido" ? String(formData.get("body") || "").trim() : null,
+          p_assigned_to: null,
+        });
+        await ensureAdminReadOnlyData({ force: true });
+        if (status) {
+          status.dataset.tone = "success";
+          status.textContent = "Atendimento registrado.";
+        }
+        setTimeout(() => {
+          if (content) content.innerHTML = renderAdminWorkspaceView("suporte");
+        }, 700);
+      } catch (error) {
+        if (status) {
+          status.dataset.tone = "error";
+          status.textContent = error.message || "Não foi possível registrar atendimento.";
+        }
+      } finally {
+        if (submit) submit.disabled = false;
       }
       return;
     }
@@ -16873,6 +17294,14 @@ const modules = {
       </section>
     `,
   },
+  suporte: {
+    title: "Suporte",
+    subtitle: "Help Desk / SLA",
+    code: "SUPORTE-SLA-V1",
+    get html() {
+      return renderSupportPortal();
+    },
+  },
   secretaria: {
     title: "Secretaria Municipal",
     subtitle: "Gestão institucional",
@@ -17224,6 +17653,7 @@ const moduleEnvironment = {
   adminAtividades: "curadoria",
   avalia: "avalia",
   bancoQuestoes: "avalia",
+  suporte: "plataforma",
   secretaria: "secretaria",
   gestor: "gestor",
   familia: "familia",
@@ -26998,6 +27428,18 @@ const renderAppPage = () => {
     mount.innerHTML = activeModule.html;
     initPlatformLogout();
     initFamilyArea();
+    return;
+  }
+
+  if (activeKey === "suporte") {
+    mount.innerHTML = activeModule.html;
+    initPlatformLogout();
+    ensureSupportPortal().then(() => {
+      mount.innerHTML = renderSupportPortal();
+      initPlatformLogout();
+      initSupportPortal();
+    });
+    initSupportPortal();
     return;
   }
 
