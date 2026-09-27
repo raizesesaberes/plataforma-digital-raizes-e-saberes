@@ -10714,7 +10714,7 @@ const supportService = (() => {
 const getSupportTicketTone = (ticket = {}) => {
   const status = String(ticket.status || "").toLowerCase();
   if (status === "resolvido" || status === "encerrado") return "success";
-  if (ticket.first_response_sla_status === "out" || ticket.resolution_sla_status === "out") return "warning";
+  if (["out", "breached"].includes(ticket.first_response_sla_status || ticket.first_response_sla) || ["out", "breached"].includes(ticket.resolution_sla_status || ticket.resolution_sla)) return "warning";
   if (status === "aberto") return "muted";
   return "info";
 };
@@ -10768,8 +10768,8 @@ const renderSupportTicketDetail = (detail = null, { admin = false } = {}) => {
       </div>
       <div class="admin-overview-grid">
         <article><span>Prioridade</span><strong>${printableEscape(supportPriorityLabels[ticket.priority] || ticket.priority || "-")}</strong><small>SLA configurável por prioridade</small></article>
-        <article><span>Primeira resposta</span><strong>${printableEscape(ticket.first_response_sla_status === "out" ? "Fora do SLA" : "Dentro/pendente")}</strong><small>${formatSupportDateTime(ticket.first_response_at)}</small></article>
-        <article><span>Resolução</span><strong>${printableEscape(ticket.resolution_sla_status === "out" ? "Fora do SLA" : "Dentro/pendente")}</strong><small>${formatSupportDateTime(ticket.resolved_at)}</small></article>
+        <article><span>Primeira resposta</span><strong>${printableEscape(["out", "breached"].includes(ticket.first_response_sla_status || ticket.first_response_sla) ? "Fora do SLA" : "Dentro/pendente")}</strong><small>${formatSupportDateTime(ticket.first_response_at)}</small></article>
+        <article><span>Resolução</span><strong>${printableEscape(["out", "breached"].includes(ticket.resolution_sla_status || ticket.resolution_sla) ? "Fora do SLA" : "Dentro/pendente")}</strong><small>${formatSupportDateTime(ticket.resolved_at)}</small></article>
       </div>
       <article class="admin-school-detail">
         <h3>${printableEscape(ticket.subject || "Chamado sem assunto")}</h3>
@@ -11287,13 +11287,18 @@ const renderAdminSupportConsole = () => {
   const data = adminOperationalState.data || {};
   const tickets = data.supportTickets || [];
   const indicators = data.supportIndicators || {};
+  const totalTickets = Number(indicators.total_tickets ?? indicators.total ?? tickets.length ?? 0);
+  const openTickets = Number(indicators.open_tickets ?? indicators.open ?? tickets.filter((item) => !["resolvido", "encerrado"].includes(item.status)).length ?? 0);
+  const closedTickets = Number(indicators.closed_tickets ?? indicators.closed ?? tickets.filter((item) => ["resolvido", "encerrado"].includes(item.status)).length ?? 0);
+  const slaBase = Number(indicators.first_response_sla_met ?? 0) + Number(indicators.resolution_sla_met ?? 0);
+  const slaPercent = Number(indicators.sla_compliance_percent ?? (totalTickets ? (slaBase / Math.max(totalTickets, 1)) * 50 : 100));
   const selectedId = new URLSearchParams(window.location.search || "").get("ticket") || tickets[0]?.id || "";
   const selectedTicket = tickets.find((ticket) => ticket.id === selectedId) || tickets[0] || null;
   const summary = [
-    { label: "Chamados", value: indicators.total_tickets ?? tickets.length, detail: "protocolos no período" },
-    { label: "Abertos", value: indicators.open_tickets ?? tickets.filter((item) => !["resolvido", "encerrado"].includes(item.status)).length, detail: "em fila ou atendimento" },
-    { label: "Encerrados", value: indicators.closed_tickets ?? tickets.filter((item) => ["resolvido", "encerrado"].includes(item.status)).length, detail: "resolvidos/encerrados" },
-    { label: "SLA", value: `${Math.round(Number(indicators.sla_compliance_percent ?? 0))}%`, detail: "cumprimento estimado" },
+    { label: "Chamados", value: totalTickets, detail: "protocolos no período" },
+    { label: "Abertos", value: openTickets, detail: "em fila ou atendimento" },
+    { label: "Encerrados", value: closedTickets, detail: "resolvidos/encerrados" },
+    { label: "SLA", value: `${Math.round(slaPercent)}%`, detail: "cumprimento estimado" },
   ];
   const report = data.supportReport || {};
   return `
@@ -27313,6 +27318,192 @@ const initUniversalActivityEngine = () => {
 };
 
 let platformLogoutInitialized = false;
+const accessibilityStorageKey = "raizes:accessibility-web-2";
+const accessibilityDefaults = {
+  fontScale: 1,
+  zoom: false,
+  highContrast: false,
+  invertContrast: false,
+  linkHighlight: false,
+  textSpacing: false,
+  dyslexia: false,
+  readingRuler: false,
+  focusMask: false,
+  reducedMotion: false,
+};
+
+const readAccessibilityPreferences = () => {
+  try {
+    return { ...accessibilityDefaults, ...(JSON.parse(localStorage.getItem(accessibilityStorageKey) || "{}") || {}) };
+  } catch (_error) {
+    return { ...accessibilityDefaults };
+  }
+};
+
+const saveAccessibilityPreferences = (preferences) => {
+  try {
+    localStorage.setItem(accessibilityStorageKey, JSON.stringify(preferences));
+  } catch (_error) {
+    // Preferencias de acessibilidade continuam ativas na sessão mesmo se o navegador bloquear storage.
+  }
+};
+
+const applyAccessibilityPreferences = (preferences = readAccessibilityPreferences()) => {
+  const root = document.documentElement;
+  root.style.setProperty("--a11y-font-scale", String(preferences.fontScale || 1));
+  root.dataset.a11yHighContrast = preferences.highContrast ? "true" : "false";
+  root.dataset.a11yInvertContrast = preferences.invertContrast ? "true" : "false";
+  root.dataset.a11yLinkHighlight = preferences.linkHighlight ? "true" : "false";
+  root.dataset.a11yTextSpacing = preferences.textSpacing ? "true" : "false";
+  root.dataset.a11yDyslexia = preferences.dyslexia ? "true" : "false";
+  root.dataset.a11yReadingRuler = preferences.readingRuler ? "true" : "false";
+  root.dataset.a11yFocusMask = preferences.focusMask ? "true" : "false";
+  root.dataset.a11yZoom = preferences.zoom ? "true" : "false";
+  root.dataset.a11yReducedMotion = preferences.reducedMotion ? "true" : "false";
+};
+
+const getAccessibilityReadableText = () => {
+  const selection = String(window.getSelection?.() || "").trim();
+  if (selection) return selection;
+  const main = document.querySelector("main, [data-app-page], .route-screen, .admin-main") || document.body;
+  return String(main?.innerText || "").replace(/\s+/g, " ").trim().slice(0, 5000);
+};
+
+const renderAccessibilityPanel = () => `
+  <a class="a11y-skip-link" href="#conteudo-principal">Ir para o conteúdo principal</a>
+  <div class="a11y-reading-ruler" data-a11y-reading-ruler aria-hidden="true"></div>
+  <div class="a11y-focus-mask" data-a11y-focus-mask aria-hidden="true"></div>
+  <section class="a11y-panel" data-a11y-panel aria-label="Painel de acessibilidade">
+    <button class="a11y-toggle" type="button" data-a11y-toggle aria-expanded="false" aria-controls="a11y-panel-body">Acessibilidade</button>
+    <div class="a11y-panel-body" id="a11y-panel-body" data-a11y-body hidden>
+      <header>
+        <strong>Acessibilidade</strong>
+        <button type="button" data-a11y-close aria-label="Fechar painel">×</button>
+      </header>
+      <div class="a11y-control-grid">
+        <button type="button" data-a11y-action="fontDown">A-</button>
+        <button type="button" data-a11y-action="fontUp">A+</button>
+        <button type="button" data-a11y-toggle-pref="highContrast">Alto contraste</button>
+        <button type="button" data-a11y-toggle-pref="invertContrast">Inverter contraste</button>
+        <button type="button" data-a11y-toggle-pref="linkHighlight">Destacar links</button>
+        <button type="button" data-a11y-toggle-pref="textSpacing">Espaçamento</button>
+        <button type="button" data-a11y-toggle-pref="dyslexia">Modo dislexia</button>
+        <button type="button" data-a11y-toggle-pref="readingRuler">Régua de leitura</button>
+        <button type="button" data-a11y-toggle-pref="focusMask">Máscara de foco</button>
+        <button type="button" data-a11y-toggle-pref="zoom">Zoom</button>
+        <button type="button" data-a11y-toggle-pref="reducedMotion">Reduzir animações</button>
+        <button type="button" data-a11y-action="reset">Restaurar</button>
+      </div>
+      <div class="a11y-speech-controls">
+        <button type="button" data-a11y-action="speak">Ler texto</button>
+        <button type="button" data-a11y-action="stopSpeech">Parar leitura</button>
+      </div>
+      <p class="a11y-status" data-a11y-status aria-live="polite">Preferências salvas neste navegador.</p>
+    </div>
+  </section>
+`;
+
+const syncAccessibilityPanelState = (preferences = readAccessibilityPreferences()) => {
+  document.querySelectorAll("[data-a11y-toggle-pref]").forEach((button) => {
+    const key = button.dataset.a11yTogglePref;
+    button.setAttribute("aria-pressed", preferences[key] ? "true" : "false");
+  });
+};
+
+const initGlobalAccessibility = () => {
+  if (!document.body) return;
+  applyAccessibilityPreferences();
+  if (!document.querySelector("[data-a11y-panel]")) {
+    document.body.insertAdjacentHTML("beforeend", renderAccessibilityPanel());
+  }
+  const main = document.querySelector("main, .admin-main, [data-student-dashboard], [data-app-page]");
+  if (main && !main.id) main.id = "conteudo-principal";
+  syncAccessibilityPanelState();
+  if (document.body.dataset.a11yReady === "true") return;
+  document.body.dataset.a11yReady = "true";
+  document.addEventListener("click", (event) => {
+    const toggle = event.target.closest?.("[data-a11y-toggle]");
+    const close = event.target.closest?.("[data-a11y-close]");
+    const prefButton = event.target.closest?.("[data-a11y-toggle-pref]");
+    const actionButton = event.target.closest?.("[data-a11y-action]");
+    const body = document.querySelector("[data-a11y-body]");
+    const status = document.querySelector("[data-a11y-status]");
+    if (toggle) {
+      event.preventDefault();
+      const next = body?.hasAttribute("hidden");
+      if (body) body.hidden = !next;
+      toggle.setAttribute("aria-expanded", next ? "true" : "false");
+      return;
+    }
+    if (close) {
+      event.preventDefault();
+      if (body) body.hidden = true;
+      document.querySelector("[data-a11y-toggle]")?.setAttribute("aria-expanded", "false");
+      return;
+    }
+    if (prefButton) {
+      event.preventDefault();
+      const preferences = readAccessibilityPreferences();
+      const key = prefButton.dataset.a11yTogglePref;
+      preferences[key] = !preferences[key];
+      saveAccessibilityPreferences(preferences);
+      applyAccessibilityPreferences(preferences);
+      syncAccessibilityPanelState(preferences);
+      if (status) status.textContent = "Preferência atualizada.";
+      return;
+    }
+    if (actionButton) {
+      event.preventDefault();
+      const preferences = readAccessibilityPreferences();
+      const action = actionButton.dataset.a11yAction;
+      if (action === "fontUp") preferences.fontScale = Math.min(1.35, Number(preferences.fontScale || 1) + 0.1);
+      if (action === "fontDown") preferences.fontScale = Math.max(0.9, Number(preferences.fontScale || 1) - 0.1);
+      if (action === "reset") Object.assign(preferences, accessibilityDefaults);
+      if (action === "speak") {
+        const text = getAccessibilityReadableText();
+        window.speechSynthesis?.cancel();
+        if (text && "SpeechSynthesisUtterance" in window) {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = "pt-BR";
+          window.speechSynthesis.speak(utterance);
+          if (status) status.textContent = "Leitura em voz alta iniciada no dispositivo.";
+        } else if (status) {
+          status.textContent = "Não há texto disponível para leitura.";
+        }
+        return;
+      }
+      if (action === "stopSpeech") {
+        window.speechSynthesis?.cancel();
+        if (status) status.textContent = "Leitura pausada.";
+        return;
+      }
+      saveAccessibilityPreferences(preferences);
+      applyAccessibilityPreferences(preferences);
+      syncAccessibilityPanelState(preferences);
+      if (status) status.textContent = action === "reset" ? "Preferências restauradas." : "Tamanho de fonte atualizado.";
+    }
+  });
+  document.addEventListener("mousemove", (event) => {
+    const ruler = document.querySelector("[data-a11y-reading-ruler]");
+    const mask = document.querySelector("[data-a11y-focus-mask]");
+    if (ruler) ruler.style.setProperty("--a11y-y", `${event.clientY}px`);
+    if (mask) mask.style.setProperty("--a11y-y", `${event.clientY}px`);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.altKey && event.key.toLowerCase() === "a") {
+      event.preventDefault();
+      document.querySelector("[data-a11y-toggle]")?.click();
+    }
+    if (event.key === "Escape") {
+      const body = document.querySelector("[data-a11y-body]");
+      if (body && !body.hidden) {
+        body.hidden = true;
+        document.querySelector("[data-a11y-toggle]")?.setAttribute("aria-expanded", "false");
+      }
+    }
+  });
+};
+
 const initPlatformLogout = () => {
   if (platformLogoutInitialized) return;
   platformLogoutInitialized = true;
@@ -27399,6 +27590,7 @@ const renderAppPage = () => {
     initTeacherWorkspace();
     initUniversalActivityAssignmentUi();
     initUniversalActivityTeacherDeliveries();
+    initGlobalAccessibility();
     return;
   }
 
@@ -27409,6 +27601,7 @@ const renderAppPage = () => {
       document.querySelector(".admin-workspace")?.classList.add("is-mounted");
     });
     initAdminWorkspace();
+    initGlobalAccessibility();
     return;
   }
 
@@ -27421,6 +27614,7 @@ const renderAppPage = () => {
       document.querySelector("[data-student-dashboard]")?.classList.add("is-mounted");
       initStudentAvaliaApplication();
     });
+    initGlobalAccessibility();
     return;
   }
 
@@ -27428,6 +27622,7 @@ const renderAppPage = () => {
     mount.innerHTML = activeModule.html;
     initPlatformLogout();
     initFamilyArea();
+    initGlobalAccessibility();
     return;
   }
 
@@ -27440,12 +27635,14 @@ const renderAppPage = () => {
       initSupportPortal();
     });
     initSupportPortal();
+    initGlobalAccessibility();
     return;
   }
 
   if (activeKey === "alunoAtividade") {
     mount.innerHTML = activeModule.html;
     initPlatformLogout();
+    initGlobalAccessibility();
     return;
   }
 
@@ -27563,6 +27760,7 @@ const renderAppPage = () => {
   initUniversalActivityAssignmentUi();
   initUniversalActivityTeacherDeliveries();
   initUniversalActivityEngine();
+  initGlobalAccessibility();
 };
 
 renderAppPage();
