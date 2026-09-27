@@ -10608,11 +10608,15 @@ const adminOperationalDoors = [
 
 const adminRoleCatalog = [
   { role: "admin", label: "Admin/TI", aliases: ["administrador", "ti"], destination: "admin.html", guards: "Admin global" },
-  { role: "secretaria", label: "Secretaria", aliases: ["gestor", "coordenador"], destination: "secretaria.html", guards: "Operação escolar" },
+  { role: "secretaria", label: "Secretaria", aliases: ["coordenador"], destination: "secretaria.html", guards: "Operação escolar" },
+  { role: "gestor", label: "Gestor escolar", aliases: ["direcao", "diretor"], destination: "gestor.html", guards: "Gestão da escola" },
+  { role: "secretaria_municipal", label: "Rede/Municipal", aliases: ["rede", "rede_municipal"], destination: "secretaria.html", guards: "Gestão de rede autorizada" },
   { role: "professor", label: "Professor", aliases: ["teacher"], destination: "professor.html", guards: "Professor vinculado" },
   { role: "aluno", label: "Aluno", aliases: ["student"], destination: "aluno.html", guards: "Aluno vinculado" },
   { role: "educacao_infantil", label: "Família/EI", aliases: ["familia", "responsavel", "guardian"], destination: "familia.html", guards: "Responsavel vinculado" },
 ];
+
+const adminManagedRoles = ["admin", "secretaria", "gestor", "secretaria_municipal", "professor", "aluno", "educacao_infantil"];
 
 const adminRsSchoolControlledImportPackage = {
   package_version: "RS-SCHOOL-V1-DEPLOYMENT-2026-09-01",
@@ -10726,6 +10730,12 @@ const adminOperationalState = {
   status: "idle",
   error: "",
   data: null,
+};
+
+const adminAuditFilterState = {
+  module: "",
+  role: "",
+  action: "",
 };
 
 const supportAllowedRoles = ["admin", "professor", "aluno", "educacao_infantil", "escola", "gestor", "coordenador", "secretaria", "secretaria_municipal"];
@@ -11088,6 +11098,9 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
         supportTickets,
         supportIndicators,
         supportReport,
+        permissionFlags,
+        adminSettings,
+        auditEvents,
       ] = await Promise.all([
         client.request("schools", "?select=id,nome,codigo_inep,municipio,estado,diretor,status&order=nome.asc", options),
         client.request("rpc/admin_list_auth_users", "", { ...options, method: "POST", body: "{}" }).catch(() => []),
@@ -11116,6 +11129,18 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
         client.request("rpc/support_list_admin_tickets", "", { ...options, method: "POST", body: "{}" }).catch(() => []),
         client.request("rpc/support_get_indicators", "", { ...options, method: "POST", body: "{}" }).then(normalizeRpcJson).catch(() => ({})),
         client.request("rpc/support_get_report_payload", "", { ...options, method: "POST", body: JSON.stringify({ p_format: "XLSX" }) }).then(normalizeRpcJson).catch(() => ({})),
+        client.request("rpc/admin_list_permission_flags", "", { ...options, method: "POST", body: "{}" }).catch(() => []),
+        client.request("rpc/admin_get_habite_se_settings", "", { ...options, method: "POST", body: "{}" }).then(normalizeRpcJson).catch(() => ({})),
+        client.request("rpc/admin_list_audit_events", "", {
+          ...options,
+          method: "POST",
+          body: JSON.stringify({
+            p_module: adminAuditFilterState.module || null,
+            p_role: adminAuditFilterState.role || null,
+            p_action: adminAuditFilterState.action || null,
+            p_limit: 120,
+          }),
+        }).then(normalizeRpcJson).catch(() => []),
       ]);
       adminOperationalState.status = "ready";
       adminOperationalState.data = {
@@ -11137,6 +11162,9 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
         supportTickets: supportTickets || [],
         supportIndicators: supportIndicators || {},
         supportReport: supportReport || {},
+        permissionFlags: permissionFlags || [],
+        adminSettings: adminSettings || {},
+        auditEvents: auditEvents || [],
       };
       return adminOperationalState;
     } catch (error) {
@@ -11372,7 +11400,7 @@ const renderAdminSupportConsole = () => {
     { label: "Chamados", value: totalTickets, detail: "protocolos no período" },
     { label: "Abertos", value: openTickets, detail: "em fila ou atendimento" },
     { label: "Encerrados", value: closedTickets, detail: "resolvidos/encerrados" },
-    { label: "SLA", value: `${Math.round(slaPercent)}%`, detail: "cumprimento estimado" },
+    { label: "SLA", value: totalTickets ? `${Math.round(slaPercent)}%` : "—", detail: totalTickets ? "cumprimento estimado" : "Sem chamados no período" },
   ];
   const report = data.supportReport || {};
   return `
@@ -11459,6 +11487,17 @@ const adminStatusLabel = (status = "") => {
   if (normalized === "deleted") return "Removido";
   if (normalized === "pending_confirmation") return "Confirmação pendente";
   if (normalized === "archived") return "Arquivado";
+  if (normalized === "classes_configured") return "Turmas configuradas";
+  if (normalized === "staff_configured") return "Equipe configurada";
+  if (normalized === "students_configured") return "Alunos configurados";
+  if (normalized === "links_configured") return "Vínculos configurados";
+  if (normalized === "validation_passed") return "Validação aprovada";
+  if (normalized === "em_configuracao") return "Em configuração";
+  if (normalized === "dados_parciais") return "Dados parciais";
+  if (normalized === "pronta_para_validacao") return "Pronta para validação";
+  if (normalized === "ativa") return "Ativa";
+  if (normalized === "validated") return "Validado";
+  if (normalized === "confirmed") return "Confirmado";
   return status || "Não informado";
 };
 
@@ -11882,6 +11921,40 @@ const adminInvokeCreateAuthAccess = async ({ targetType, targetInstitutionalId, 
   return body;
 };
 
+const adminInvokeChangeRole = async ({ profileId, newRole, reason }) => {
+  await ensureAdminSupabaseConfig();
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/admin_change_institutional_role", "", {
+    requireAuthenticated: true,
+    allowedRoles: ["admin"],
+    method: "POST",
+    body: JSON.stringify({
+      p_profile_id: profileId,
+      p_new_role: newRole,
+      p_reason: reason || null,
+    }),
+  });
+  return Array.isArray(result) ? result[0] || {} : result || {};
+};
+
+const adminInvokeSetPermissionFlag = async ({ featureKey, roleKey, permissionScope, enabled, reason }) => {
+  await ensureAdminSupabaseConfig();
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/admin_set_permission_flag", "", {
+    requireAuthenticated: true,
+    allowedRoles: ["admin"],
+    method: "POST",
+    body: JSON.stringify({
+      p_feature_key: featureKey,
+      p_role_key: roleKey,
+      p_permission_scope: permissionScope,
+      p_enabled: enabled,
+      p_reason: reason || null,
+    }),
+  });
+  return Array.isArray(result) ? result[0] || {} : result || {};
+};
+
 const renderAdminCreateAccessDialog = (user) => {
   const targetType = adminCreateAccessTargetType(user);
   const derivedRole = adminDerivedAccessRole(targetType);
@@ -12116,7 +12189,21 @@ const renderAdminUserDetail = (user) => {
               ${renderAdminCreateAccessDialog(user)}
             `
         }
-        <button type="button" disabled>Alterar papel sera tratado em fase propria</button>
+        <form class="admin-role-change-form" data-admin-role-change-form>
+          <input type="hidden" name="profileId" value="${printableEscape(user.authUserId || (String(user.id || "").startsWith("profile:") ? String(user.id).slice(8) : ""))}" />
+          <label>
+            <span>Alterar papel institucional</span>
+            <select name="newRole" required>
+              ${adminManagedRoles.map((role) => `<option value="${role}" ${role === user.role ? "selected" : ""}>${printableEscape(adminRoleInfo(role).label)}</option>`).join("")}
+            </select>
+          </label>
+          <label>
+            <span>Justificativa</span>
+            <input name="reason" maxlength="240" placeholder="Motivo administrativo" />
+          </label>
+          <p data-admin-role-change-status hidden></p>
+          <button type="submit">Alterar papel</button>
+        </form>
       </section>
     </aside>
   `;
@@ -12154,7 +12241,7 @@ const renderAdminAccessEngineStatus = () => `
     </div>
     <div class="admin-engine-grid">
       <article>${adminInlineIcon("check")}<strong>Leitura Admin</strong><span>Ativa por sessão autenticada.</span></article>
-      <article>${adminInlineIcon("warning")}<strong>Alterar papel</strong><span>GAP: exige RPC segura aprovada.</span></article>
+      <article>${adminInlineIcon("check")}<strong>Alterar papel</strong><span>Ativo via RPC segura com auditoria.</span></article>
       <article>${adminInlineIcon("check")}<strong>Criar acesso Auth</strong><span>Ativo via funcao server-side com convite oficial.</span></article>
     </div>
   </section>
@@ -12874,10 +12961,10 @@ const renderAdminCreateSchoolForm = () => `
       <span>Implantação assistida</span>
     </div>
     <form class="admin-school-create-form" data-admin-create-school-form>
-      <label><span>Nome</span><input name="p_nome" required placeholder="RS-SCHOOL-DEPLOYMENT-TEST" /></label>
-      <label><span>Codigo institucional</span><input name="p_school_code" required placeholder="RS-SCHOOL-DEPLOYMENT-TEST" /></label>
+      <label><span>Nome</span><input name="p_nome" required placeholder="Nome oficial da escola" /></label>
+      <label><span>Codigo institucional</span><input name="p_school_code" required placeholder="Código da escola" /></label>
       <label><span>Ano letivo inicial</span><input name="p_school_year" required inputmode="numeric" placeholder="2026" /></label>
-      <label><span>Municipio</span><input name="p_municipio" placeholder="Homologação" /></label>
+      <label><span>Municipio</span><input name="p_municipio" placeholder="Município" /></label>
       <label><span>Estado</span><input name="p_estado" maxlength="2" placeholder="SP" /></label>
       <label><span>Diretor</span><input name="p_diretor" placeholder="Responsavel pela implantação" /></label>
       <input type="hidden" name="p_deployment_mode" value="test" />
@@ -12925,7 +13012,6 @@ const renderAdminImplementationConsole = () => {
   const summaries = buildAdminSchoolSummaries();
   const filters = adminSchoolFilters();
   const selected = summaries.find((item) => item.schoolId === filters.selected)
-    || summaries.find((item) => item.code === "RS-SCHOOL-DEPLOYMENT-TEST")
     || summaries[0]
     || null;
   return `
@@ -13032,23 +13118,163 @@ const renderAdminSidebar = (active = "inicio") => `
   </aside>
 `;
 
-const renderAdminPermissionMatrix = () => `
-  <section class="admin-board">
-    <div class="admin-section-head">
-      <h2>Liberação por perfil</h2>
-      <span>Registro central preparado para feature flags</span>
-    </div>
-    <div class="admin-permission-table" role="table" aria-label="Liberação de funcionalidades por perfil">
-      <div role="row"><strong>Funcionalidade</strong><strong>Admin</strong><strong>Professor</strong><strong>Aluno</strong></div>
-      ${adminFeatureRegistry
-        .map((item) => {
-          const policy = getAdminFeaturePolicy(item.key);
-          return `<div role="row"><span>${item.label}</span><b>${policy.admin ? "SIM" : "NÃO"}</b><b>${policy.professor ? "SIM" : "NÃO"}</b><b>${policy.aluno ? "SIM" : "NÃO"}</b></div>`;
-        })
-        .join("")}
-    </div>
-  </section>
-`;
+const adminPermissionRoleLabel = (role = "") =>
+  ({
+    admin: "Admin",
+    secretaria: "Secretaria",
+    gestor: "Gestor",
+    rede_municipal: "Rede/Municipal",
+    professor: "Professor",
+    aluno: "Aluno",
+    familia: "Família",
+  })[role] || role;
+
+const adminPermissionFeatureLabel = (feature = "") =>
+  ({
+    admin_dashboard: "Dashboard Admin",
+    secretaria: "Secretaria",
+    rede_municipal: "Rede/Municipal",
+    professor_web: "Professor Web",
+    aluno_web: "Aluno Web",
+    familia_web: "Família Web",
+    biblioteca: "Biblioteca",
+    avalia_plus: "Avalia+",
+    comunicacoes: "Comunicações",
+    gamificacao: "Gamificação",
+    suporte: "Help Desk",
+  })[feature] || feature;
+
+const renderAdminPermissionMatrix = () => {
+  const flags = adminOperationalState.data?.permissionFlags || [];
+  const rows = flags.length
+    ? flags
+    : adminFeatureRegistry.flatMap((item) => Object.entries(getAdminFeaturePolicy(item.key)).map(([role, enabled]) => ({
+        feature_key: item.key,
+        role_key: role,
+        permission_scope: role === "admin" ? "administrar" : "utilizar",
+        enabled,
+        locked: true,
+        description: "Política legada de exibição; autorização real segue no backend/RLS.",
+      })));
+  return `
+    <section class="admin-board">
+      <div class="admin-section-head">
+        <h2>Perfis e permissões</h2>
+        <span>Administrar x Utilizar · flags não substituem RLS</span>
+      </div>
+      <div class="admin-permission-table" role="table" aria-label="Liberação operacional por perfil">
+        <div role="row"><strong>Funcionalidade</strong><strong>Perfil</strong><strong>Escopo</strong><strong>Status</strong><strong>Ação</strong></div>
+        ${rows
+          .map((item) => `
+            <div role="row">
+              <span>${printableEscape(adminPermissionFeatureLabel(item.feature_key))}</span>
+              <b>${printableEscape(adminPermissionRoleLabel(item.role_key))}</b>
+              <b>${item.permission_scope === "administrar" ? "ADMINISTRAR" : "UTILIZAR"}</b>
+              <b>${item.enabled ? "Ativo" : "Bloqueado"}</b>
+              <button
+                type="button"
+                data-admin-permission-toggle
+                data-feature-key="${printableEscape(item.feature_key)}"
+                data-role-key="${printableEscape(item.role_key)}"
+                data-permission-scope="${printableEscape(item.permission_scope)}"
+                data-next-enabled="${item.enabled ? "false" : "true"}"
+                ${item.locked ? "disabled" : ""}
+              >${item.locked ? "Protegido" : item.enabled ? "Bloquear" : "Liberar"}</button>
+            </div>
+          `)
+          .join("")}
+      </div>
+      <p class="admin-content-muted">Essas flags controlam disponibilidade institucional de funcionalidades. Nenhuma flag concede acesso sem sessão, vínculo e RLS autorizados.</p>
+    </section>
+  `;
+};
+
+const renderAdminSettingsConsole = () => {
+  const settings = adminOperationalState.data?.adminSettings || {};
+  const institutional = settings.institutional || {};
+  const communication = settings.communication_permissions || {};
+  const gamification = settings.gamification || {};
+  const sla = Array.isArray(settings.sla) ? settings.sla : [];
+  const avalia = settings.avalia_plus || {};
+  const external = Array.isArray(settings.external_services) ? settings.external_services : [];
+  return `
+    <section class="admin-board admin-settings-board">
+      <div class="admin-section-head">
+        <h2>Configurações administrativas</h2>
+        <span>Parâmetros canônicos existentes</span>
+      </div>
+      <div class="admin-engine-grid">
+        <article>${adminInlineIcon("escola")}<strong>Dados institucionais</strong><span>${institutional.schools_active ?? 0} escolas ativas de ${institutional.schools_total ?? 0}</span></article>
+        <article>${adminInlineIcon("mail")}<strong>Comunicação</strong><span>Aluno ↔ aluno: ${printableEscape(communication.student_to_student_default || "BLOQUEADO")}</span></article>
+        <article>${adminInlineIcon("star")}<strong>Ranking/Gamificação</strong><span>${gamification.ranking_enabled_schools ?? 0} escolas com ranking ativo</span></article>
+        <article>${adminInlineIcon("clipboard")}<strong>Avalia+</strong><span>Itens: ${printableEscape(avalia.item_bank || "AGUARDANDO CONFIGURACAO")}</span></article>
+      </div>
+    </section>
+    <section class="admin-board">
+      <div class="admin-section-head"><h2>SLA</h2><span>Políticas configuradas</span></div>
+      <div class="admin-status-list">
+        ${sla.length ? sla.map((item) => `
+          <article class="admin-status-item">
+            ${adminInlineIcon("clock")}
+            <div>
+              <strong>${printableEscape(item.priority)}</strong>
+              <span>Primeira resposta: ${printableEscape(String(item.first_response_minutes))} min · Resolução: ${printableEscape(String(item.resolution_minutes))} min</span>
+              <small>${printableEscape(adminStatusLabel(item.status))}</small>
+            </div>
+          </article>
+        `).join("") : `<article class="admin-status-item">${adminInlineIcon("clock")}<div><strong>Sem SLA cadastrado</strong><span>Sem chamados no período</span></div></article>`}
+      </div>
+    </section>
+    <section class="admin-board">
+      <div class="admin-section-head"><h2>Serviços externos</h2><span>Status sem expor segredos</span></div>
+      <div class="admin-status-list">
+        ${external.map((item) => `
+          <article class="admin-status-item">
+            ${adminInlineIcon(item.status === "CONFIGURADO" ? "check" : "warning")}
+            <div>
+              <strong>${printableEscape(item.label)}</strong>
+              <span>${printableEscape(item.status)}</span>
+              <small>Credenciais e tokens não são exibidos nesta interface.</small>
+            </div>
+          </article>
+        `).join("")}
+      </div>
+    </section>
+  `;
+};
+
+const renderAdminAuditConsole = () => {
+  const rows = Array.isArray(adminOperationalState.data?.auditEvents) ? adminOperationalState.data.auditEvents : [];
+  const modules = ["", "usuarios", "permissoes", "implantacao", "matriculas", "comunicacoes", "suporte", "integracoes"];
+  const roles = ["", "admin", "secretaria", "gestor", "secretaria_municipal", "professor", "aluno", "educacao_infantil"];
+  return `
+    <section class="admin-board admin-audit-board">
+      <div class="admin-section-head">
+        <h2>Auditoria</h2>
+        <span>${rows.length} eventos consolidados</span>
+      </div>
+      <form class="admin-filter-row" data-admin-audit-filter-form>
+        <label><span>Módulo</span><select name="module">${modules.map((item) => `<option value="${item}" ${adminAuditFilterState.module === item ? "selected" : ""}>${item ? adminPermissionFeatureLabel(item) : "Todos"}</option>`).join("")}</select></label>
+        <label><span>Papel</span><select name="role">${roles.map((item) => `<option value="${item}" ${adminAuditFilterState.role === item ? "selected" : ""}>${item ? adminRoleInfo(item).label : "Todos"}</option>`).join("")}</select></label>
+        <label><span>Ação</span><input name="action" value="${printableEscape(adminAuditFilterState.action)}" placeholder="Ex.: role_changed" /></label>
+        <button type="submit">Filtrar</button>
+      </form>
+      <div class="admin-permission-table" role="table" aria-label="Eventos de auditoria">
+        <div role="row"><strong>QUEM</strong><strong>O QUE</strong><strong>QUANDO</strong><strong>ONDE/ESCOLA</strong><strong>MÓDULO</strong><strong>RESULTADO</strong></div>
+        ${rows.length ? rows.map((event) => `
+          <div role="row">
+            <span>${printableEscape(event.actor_name || "Sistema")}<small>${printableEscape(event.actor_role || "")}</small></span>
+            <b>${printableEscape(event.action || "ação")}</b>
+            <b>${printableEscape(formatTeacherClassMessageDate(event.created_at))}</b>
+            <b>${printableEscape(event.school_name || "Escopo global")}</b>
+            <b>${printableEscape(event.module || "-")}</b>
+            <b>${printableEscape(event.result || "-")}</b>
+          </div>
+        `).join("") : `<div role="row"><span>Sem eventos no filtro atual</span><b>—</b><b>—</b><b>—</b><b>—</b><b>—</b></div>`}
+      </div>
+    </section>
+  `;
+};
 
 const renderAdminWorkspaceView = (view = "inicio") => {
   const normalizedView = {
@@ -13090,15 +13316,11 @@ const renderAdminWorkspaceView = (view = "inicio") => {
     motores: `<section class="admin-board"><div class="admin-section-head"><h2>Recursos interativos</h2><span>Experiências digitais existentes</span></div><div class="admin-feature-grid">${byArea("Recursos interativos").map(renderAdminFeatureCard).join("")}</div></section>`,
     emDesenvolvimento: `<section class="admin-board"><div class="admin-section-head"><h2>Em desenvolvimento</h2><span>Acesso restrito ao Admin/TI</span></div><div class="admin-feature-grid">${development.map(renderAdminFeatureCard).join("")}</div></section>`,
     homologados: `<section class="admin-board"><div class="admin-section-head"><h2>Ambientes publicados</h2><span>Disponiveis conforme perfil</span></div><div class="admin-feature-grid">${available.map(renderAdminFeatureCard).join("")}</div></section>`,
-    logs: `<section class="admin-board admin-empty-state"><h2>Logs</h2><p>Espaco reservado para uma etapa propria de auditoria, sem expor informações sensiveis nesta tela.</p></section>`,
-    configuracoes: `<section class="admin-board admin-empty-state"><h2>Configurações</h2><p>Controles administrativos serao liberados em etapas proprias, preservando seguranca e rastreabilidade.</p></section>`,
+    logs: renderAdminAuditConsole(),
+    configuracoes: renderAdminSettingsConsole(),
     conteúdos: renderAdminContentGovernanceConsole(),
     implantação: renderAdminImplementationConsole(),
-    auditoria: renderAdminPreparationView("Auditoria", "Eventos e trilhas ja existentes serao consolidados em uma tela segura de leitura.", [
-      "Comunicações",
-      "Recomendações",
-      "Matrículas",
-    ]),
+    auditoria: renderAdminAuditConsole(),
     ambientes: `
       ${renderAdminDoorCards()}
       ${renderAdminPreparationView("Modo de inspecao", "Acesso administrativo atual abre as rotas autorizadas mantendo o usuario Admin. Visualização por perfil sera decidida em fase propria.", [
@@ -13158,7 +13380,7 @@ const initAdminWorkspace = () => {
     }
     workspace.querySelectorAll("[data-admin-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.adminView === view));
     if (content) content.innerHTML = renderAdminWorkspaceView(view);
-    if (["painel", "usuarios", "escolas", "conteúdos", "implantação", "suporte"].includes(view)) {
+    if (["painel", "usuarios", "escolas", "conteúdos", "implantação", "suporte", "permissoes", "configuracoes", "auditoria", "logs"].includes(view)) {
       ensureAdminReadOnlyData().then(() => {
         if (content && workspace.querySelector(`[data-admin-view="${view}"]`)?.classList.contains("is-active")) {
           content.innerHTML = renderAdminWorkspaceView(view);
@@ -13198,6 +13420,29 @@ const initAdminWorkspace = () => {
       const dialog = event.target.closest("[data-admin-access-dialog]");
       if (dialog?.close) dialog.close();
       else dialog?.removeAttribute("open");
+      return;
+    }
+    const permissionToggle = event.target.closest?.("[data-admin-permission-toggle]");
+    if (permissionToggle) {
+      event.preventDefault();
+      permissionToggle.disabled = true;
+      const originalText = permissionToggle.textContent;
+      permissionToggle.textContent = "Salvando...";
+      try {
+        await adminInvokeSetPermissionFlag({
+          featureKey: permissionToggle.dataset.featureKey,
+          roleKey: permissionToggle.dataset.roleKey,
+          permissionScope: permissionToggle.dataset.permissionScope,
+          enabled: permissionToggle.dataset.nextEnabled === "true",
+          reason: "Ajuste pela interface Admin Habite-se",
+        });
+        await ensureAdminReadOnlyData({ force: true });
+        if (content) content.innerHTML = renderAdminWorkspaceView("permissoes");
+      } catch (error) {
+        alert(error.message || "Não foi possível atualizar a permissão.");
+        permissionToggle.disabled = false;
+        permissionToggle.textContent = originalText;
+      }
       return;
     }
     const bulkConfirmButton = event.target.closest?.("[data-admin-bulk-import-confirm]");
@@ -13480,6 +13725,62 @@ const initAdminWorkspace = () => {
       } finally {
         if (submit) submit.disabled = false;
       }
+      return;
+    }
+    const roleChangeForm = event.target.closest?.("[data-admin-role-change-form]");
+    if (roleChangeForm) {
+      event.preventDefault();
+      const status = roleChangeForm.querySelector("[data-admin-role-change-status]");
+      const submit = roleChangeForm.querySelector("button[type='submit']");
+      const formData = new FormData(roleChangeForm);
+      const profileId = String(formData.get("profileId") || "");
+      if (!profileId) {
+        if (status) {
+          status.hidden = false;
+          status.dataset.tone = "error";
+          status.textContent = "Perfil Auth/public.profiles não localizado para alteração segura.";
+        }
+        return;
+      }
+      if (status) {
+        status.hidden = false;
+        status.dataset.tone = "muted";
+        status.textContent = "Alterando papel com auditoria...";
+      }
+      if (submit) submit.disabled = true;
+      try {
+        const result = await adminInvokeChangeRole({
+          profileId,
+          newRole: String(formData.get("newRole") || ""),
+          reason: String(formData.get("reason") || ""),
+        });
+        await ensureAdminReadOnlyData({ force: true });
+        if (status) {
+          status.dataset.tone = "success";
+          status.textContent = `Papel alterado para ${adminRoleInfo(result.new_role).label}.`;
+        }
+        setTimeout(() => {
+          if (content) content.innerHTML = renderAdminWorkspaceView("usuarios");
+        }, 700);
+      } catch (error) {
+        if (status) {
+          status.dataset.tone = "error";
+          status.textContent = error.message || "Não foi possível alterar o papel.";
+        }
+      } finally {
+        if (submit) submit.disabled = false;
+      }
+      return;
+    }
+    const auditFilterForm = event.target.closest?.("[data-admin-audit-filter-form]");
+    if (auditFilterForm) {
+      event.preventDefault();
+      const formData = new FormData(auditFilterForm);
+      adminAuditFilterState.module = String(formData.get("module") || "");
+      adminAuditFilterState.role = String(formData.get("role") || "");
+      adminAuditFilterState.action = String(formData.get("action") || "");
+      await ensureAdminReadOnlyData({ force: true });
+      if (content) content.innerHTML = renderAdminWorkspaceView("auditoria");
       return;
     }
     const form = event.target.closest?.("[data-admin-create-access-form]");
