@@ -13305,6 +13305,53 @@ td {
   font-weight: 900;
 }
 
+.admin-template-download {
+  border: 1px solid rgba(13, 107, 75, 0.14);
+  border-radius: 8px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  background: #fffdf4;
+}
+
+.admin-template-download div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.admin-template-download strong {
+  color: #073d35;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.25;
+}
+
+.admin-template-download span {
+  color: #526b60;
+  font-size: 0.74rem;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.admin-template-download button {
+  min-height: 38px;
+  border: 1px solid rgba(13, 107, 75, 0.18);
+  border-radius: 8px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: #e7f1ea;
+  color: #0d6b4b;
+  font-family: Poppins, Inter, sans-serif;
+  font-weight: 900;
+  cursor: pointer;
+}
+
 .admin-import-counts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
@@ -13537,8 +13584,13 @@ td {
 
   .admin-school-actions,
   .admin-content-item,
-  .admin-import-layout {
+  .admin-import-layout,
+  .admin-template-download {
     grid-template-columns: 1fr;
+  }
+
+  .admin-template-download button {
+    width: 100%;
   }
 
   .admin-school-steps {

@@ -10670,12 +10670,22 @@ const adminBulkImportHeaderAliases = {
   tipo: "tipo",
   entidade: "tipo",
   entity_type: "tipo",
+  tipo_de_importacao: "tipo",
   codigo_escola: "codigo_escola",
+  codigo_da_escola: "codigo_escola",
+  cod_escola: "codigo_escola",
+  codigo_unidade: "codigo_escola",
   school_code: "codigo_escola",
   codigo_inep: "codigo_escola",
+  cod_inep: "codigo_escola",
+  codigo: "codigo_escola",
   inep: "codigo_escola",
   escola: "nome_escola",
   nome_escola: "nome_escola",
+  nome_da_escola: "nome_escola",
+  nome_unidade: "nome_escola",
+  nome_da_unidade: "nome_escola",
+  unidade_escolar: "nome_escola",
   school_name: "nome_escola",
   municipio: "municipio",
   cidade: "municipio",
@@ -10684,12 +10694,18 @@ const adminBulkImportHeaderAliases = {
   uf: "estado",
   diretor: "diretor",
   principal: "diretor",
+  diretora: "diretor",
+  gestor: "diretor",
+  direcao: "diretor",
   turma: "nome_turma",
   nome_turma: "nome_turma",
+  nome_da_turma: "nome_turma",
   class_name: "nome_turma",
   ano_letivo: "ano_letivo",
   school_year: "ano_letivo",
   ano_serie: "ano_serie",
+  ano: "ano_serie",
+  serie: "ano_serie",
   grade: "ano_serie",
   turno: "turno",
   shift: "turno",
@@ -10697,25 +10713,154 @@ const adminBulkImportHeaderAliases = {
   age_group: "faixa_etaria",
   professor: "nome_professor",
   nome_professor: "nome_professor",
+  nome_do_professor: "nome_professor",
   teacher_name: "nome_professor",
   email_professor: "email_professor",
+  e_mail_professor: "email_professor",
+  email_do_professor: "email_professor",
   teacher_email: "email_professor",
   componente: "componente",
   disciplina: "componente",
   aluno: "nome_aluno",
   nome_aluno: "nome_aluno",
+  nome_do_aluno: "nome_aluno",
   student_name: "nome_aluno",
   data_nascimento: "data_nascimento",
+  data_de_nascimento: "data_nascimento",
   birth_date: "data_nascimento",
   responsavel: "nome_responsavel",
   nome_responsavel: "nome_responsavel",
+  nome_do_responsavel: "nome_responsavel",
   guardian_name: "nome_responsavel",
   email_responsavel: "email_responsavel",
+  e_mail_responsavel: "email_responsavel",
+  email_do_responsavel: "email_responsavel",
   guardian_email: "email_responsavel",
   telefone_responsavel: "telefone_responsavel",
+  telefone: "telefone_responsavel",
   phone: "telefone_responsavel",
   parentesco: "parentesco",
   relationship: "parentesco",
+  status: "status",
+  papel: "funcao",
+  funcao: "funcao",
+  role: "funcao",
+  principal_vinculo: "principal",
+  is_primary: "principal",
+};
+
+const adminBulkImportTemplates = {
+  school: {
+    label: "Escolas",
+    fileName: "modelo-importacao-escolas-raizes-e-saberes.xlsx",
+    headers: ["Nome da Escola", "Código", "Município", "Estado", "Diretor", "Ano Letivo"],
+    rows: [
+      ["Escola Municipal Vistoria Alfa", "ESC-001", "Município Exemplo", "PE", "Diretora Exemplo", "2026"],
+      ["Escola Municipal Vistoria Beta", "ESC-002", "Município Exemplo", "PE", "Diretor Exemplo", "2026"],
+    ],
+    instructions: [
+      ["Nome da Escola", "Obrigatório", "Nome oficial da unidade escolar.", "Texto"],
+      ["Código", "Obrigatório", "Código único da escola na rede. Use sempre o mesmo código para evitar duplicidade.", "Texto/código"],
+      ["Município", "Opcional", "Município da escola.", "Texto"],
+      ["Estado", "Opcional", "UF com duas letras.", "PE"],
+      ["Diretor", "Opcional", "Nome da direção atual.", "Texto"],
+      ["Ano Letivo", "Opcional", "Ano base da implantação.", "2026"],
+    ],
+  },
+  class: {
+    label: "Turmas",
+    fileName: "modelo-importacao-turmas-raizes-e-saberes.xlsx",
+    headers: ["Código da Escola", "Nome da Turma", "Ano Letivo", "Ano/Série", "Turno", "Status"],
+    rows: [["ESC-001", "5º Ano A", "2026", "5º Ano", "Manhã", "active"]],
+    instructions: [
+      ["Código da Escola", "Obrigatório", "Código da escola já cadastrada ou presente no mesmo lote.", "Texto/código"],
+      ["Nome da Turma", "Obrigatório", "Nome oficial da turma.", "Texto"],
+      ["Ano Letivo", "Opcional", "Ano base da turma.", "2026"],
+      ["Ano/Série", "Opcional", "Ano, série ou etapa.", "Texto"],
+      ["Turno", "Opcional", "Manhã, tarde, integral etc.", "Texto"],
+      ["Status", "Opcional", "Use active para ativo.", "active"],
+    ],
+  },
+  teacher: {
+    label: "Professores",
+    fileName: "modelo-importacao-professores-raizes-e-saberes.xlsx",
+    headers: ["Código da Escola", "Nome do Professor", "E-mail do Professor", "Componente", "Status"],
+    rows: [["ESC-001", "Helena Professora", "helena.professora@example.com", "Língua Portuguesa", "active"]],
+    instructions: [
+      ["Código da Escola", "Obrigatório", "Código da escola do professor.", "Texto/código"],
+      ["Nome do Professor", "Obrigatório se não houver e-mail", "Nome completo.", "Texto"],
+      ["E-mail do Professor", "Recomendado", "E-mail único para vínculo/login quando aplicável.", "email@dominio.com"],
+      ["Componente", "Opcional", "Componente curricular principal.", "Texto"],
+      ["Status", "Opcional", "Use active para ativo.", "active"],
+    ],
+  },
+  student: {
+    label: "Alunos",
+    fileName: "modelo-importacao-alunos-raizes-e-saberes.xlsx",
+    headers: ["Código da Escola", "Nome do Aluno", "Data de Nascimento", "Nome da Turma", "Ano Letivo", "Status"],
+    rows: [["ESC-001", "Aluno Exemplo Um", "2015-03-10", "5º Ano A", "2026", "active"]],
+    instructions: [
+      ["Código da Escola", "Obrigatório", "Código da escola do aluno.", "Texto/código"],
+      ["Nome do Aluno", "Obrigatório", "Nome completo do aluno.", "Texto"],
+      ["Data de Nascimento", "Opcional", "Formato ISO recomendado.", "AAAA-MM-DD"],
+      ["Nome da Turma", "Opcional", "Turma para matrícula/vínculo quando aplicável.", "Texto"],
+      ["Ano Letivo", "Opcional", "Ano base.", "2026"],
+      ["Status", "Opcional", "Use active para ativo.", "active"],
+    ],
+  },
+  guardian: {
+    label: "Responsáveis",
+    fileName: "modelo-importacao-responsaveis-raizes-e-saberes.xlsx",
+    headers: ["Código da Escola", "Nome do Responsável", "E-mail do Responsável", "Telefone", "Parentesco", "Status"],
+    rows: [["ESC-001", "Responsável Exemplo", "responsavel@example.com", "81999990000", "mãe", "active"]],
+    instructions: [
+      ["Código da Escola", "Obrigatório", "Código da escola do vínculo.", "Texto/código"],
+      ["Nome do Responsável", "Obrigatório se não houver e-mail", "Nome completo.", "Texto"],
+      ["E-mail do Responsável", "Recomendado", "E-mail único para vínculo/login quando aplicável.", "email@dominio.com"],
+      ["Telefone", "Opcional", "Telefone de contato.", "Texto"],
+      ["Parentesco", "Opcional", "mãe, pai, responsável, tutor etc.", "Texto"],
+      ["Status", "Opcional", "Use active para ativo.", "active"],
+    ],
+  },
+  enrollment: {
+    label: "Matrículas",
+    fileName: "modelo-importacao-matriculas-raizes-e-saberes.xlsx",
+    headers: ["Código da Escola", "Nome do Aluno", "Nome da Turma", "Ano Letivo", "Status"],
+    rows: [["ESC-001", "Aluno Exemplo Um", "5º Ano A", "2026", "active"]],
+    instructions: [
+      ["Código da Escola", "Obrigatório", "Código da escola.", "Texto/código"],
+      ["Nome do Aluno", "Obrigatório", "Aluno já cadastrado ou presente no lote.", "Texto"],
+      ["Nome da Turma", "Obrigatório", "Turma de destino.", "Texto"],
+      ["Ano Letivo", "Opcional", "Ano da matrícula.", "2026"],
+      ["Status", "Opcional", "Use active para ativo.", "active"],
+    ],
+  },
+  teacher_class_link: {
+    label: "Vínculo Professor/Turma",
+    fileName: "modelo-importacao-vinculo-professor-turma-raizes-e-saberes.xlsx",
+    headers: ["Código da Escola", "Nome do Professor", "E-mail do Professor", "Nome da Turma", "Papel"],
+    rows: [["ESC-001", "Helena Professora", "helena.professora@example.com", "5º Ano A", "principal"]],
+    instructions: [
+      ["Código da Escola", "Obrigatório", "Código da escola.", "Texto/código"],
+      ["Nome do Professor", "Obrigatório se não houver e-mail", "Professor já cadastrado ou presente no lote.", "Texto"],
+      ["E-mail do Professor", "Recomendado", "E-mail do professor.", "email@dominio.com"],
+      ["Nome da Turma", "Obrigatório", "Turma do vínculo.", "Texto"],
+      ["Papel", "Opcional", "Função no vínculo.", "principal"],
+    ],
+  },
+  guardian_student_link: {
+    label: "Vínculo Responsável/Aluno",
+    fileName: "modelo-importacao-vinculo-responsavel-aluno-raizes-e-saberes.xlsx",
+    headers: ["Código da Escola", "Nome do Responsável", "E-mail do Responsável", "Nome do Aluno", "Parentesco"],
+    rows: [["ESC-001", "Responsável Exemplo", "responsavel@example.com", "Aluno Exemplo Um", "mãe"]],
+    instructions: [
+      ["Código da Escola", "Obrigatório", "Código da escola.", "Texto/código"],
+      ["Nome do Responsável", "Obrigatório se não houver e-mail", "Responsável já cadastrado ou presente no lote.", "Texto"],
+      ["E-mail do Responsável", "Recomendado", "E-mail do responsável.", "email@dominio.com"],
+      ["Nome do Aluno", "Obrigatório", "Aluno do vínculo.", "Texto"],
+      ["Parentesco", "Opcional", "mãe, pai, responsável, tutor etc.", "Texto"],
+    ],
+  },
 };
 
 const adminBulkImportState = {
@@ -12660,6 +12805,60 @@ const adminLoadXlsxReader = () => new Promise((resolve, reject) => {
   document.head.appendChild(script);
 });
 
+const adminSelectedBulkImportTemplate = (importType = "") => {
+  const normalized = adminCanonicalBulkImportHeader(importType);
+  const key = normalized === "tipo" ? "" : String(importType || "").trim();
+  return adminBulkImportTemplates[key] || null;
+};
+
+const adminBuildTemplateInstructions = (template) => ([
+  ["Modelo Oficial", template.label],
+  ["Como usar", "Preencha a aba DADOS, mantenha os cabeçalhos oficiais e envie a planilha em Admin > Implantação."],
+  ["Fluxo recomendado", "Selecionar tipo, baixar modelo, preencher, fazer upload, pré-visualizar, corrigir erros e confirmar."],
+  ["Duplicidade", "Códigos e e-mails devem ser mantidos estáveis para evitar duplicidades em reenvios."],
+  [],
+  ["Campo", "Obrigatório", "Descrição", "Formato esperado"],
+  ...template.instructions,
+]);
+
+const adminCsvEscapeCell = (value = "") => {
+  const text = String(value ?? "");
+  return /[",;\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+
+const adminDownloadTextFile = (fileName, content, mimeType = "text/csv;charset=utf-8") => {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 800);
+};
+
+const adminDownloadBulkImportTemplate = async (importType = "") => {
+  const template = adminSelectedBulkImportTemplate(importType);
+  if (!template) throw new Error("Selecione um tipo de importação antes de baixar o modelo oficial.");
+  try {
+    const XLSX = await adminLoadXlsxReader();
+    const workbook = XLSX.utils.book_new();
+    const dataSheet = XLSX.utils.aoa_to_sheet([template.headers, ...template.rows]);
+    const instructionSheet = XLSX.utils.aoa_to_sheet(adminBuildTemplateInstructions(template));
+    dataSheet["!cols"] = template.headers.map((header) => ({ wch: Math.max(18, String(header).length + 4) }));
+    instructionSheet["!cols"] = [{ wch: 28 }, { wch: 18 }, { wch: 76 }, { wch: 22 }];
+    XLSX.utils.book_append_sheet(workbook, dataSheet, "DADOS");
+    XLSX.utils.book_append_sheet(workbook, instructionSheet, "INSTRUCOES");
+    XLSX.writeFile(workbook, template.fileName);
+  } catch (error) {
+    const rows = [template.headers, ...template.rows]
+      .map((row) => row.map(adminCsvEscapeCell).join(";"))
+      .join("\n");
+    adminDownloadTextFile(template.fileName.replace(/\.xlsx$/i, ".csv"), rows);
+  }
+};
+
 const adminReadBulkImportFile = async (file) => {
   if (!file) throw new Error("Selecione um arquivo CSV ou XLSX.");
   const extension = file.name.split(".").pop()?.toLowerCase() || "";
@@ -12701,6 +12900,17 @@ const adminFormatBulkImportReport = (preview = null) => {
   return lines.map(([label, value]) => `<article><span>${printableEscape(label)}</span><strong>${printableEscape(String(value ?? 0))}</strong></article>`).join("");
 };
 
+const adminHumanBulkImportError = (error = {}) => {
+  if (error.message) return error.message;
+  const field = String(error.field || "campo").replace(/_/g, " ");
+  const code = String(error.error || "INVALID");
+  if (code === "REQUIRED") return `Campo obrigatório "${field}" ausente.`;
+  if (code === "MISSING_REQUIRED_DATA") return "Campos obrigatórios ausentes. Confira o modelo oficial ou o mapeamento de colunas.";
+  if (code === "UNSUPPORTED_ENTITY") return "Tipo de importação não reconhecido. Selecione um tipo válido.";
+  if (code === "DUPLICATE_IN_FILE") return "Linha duplicada dentro do próprio arquivo.";
+  return code;
+};
+
 const adminRenderBulkImportErrors = (errors = []) => {
   if (!errors.length) return `<p class="admin-content-muted">Nenhum erro de linha encontrado.</p>`;
   return `
@@ -12710,7 +12920,7 @@ const adminRenderBulkImportErrors = (errors = []) => {
         <div role="row">
           <span>${printableEscape(String(error.row || "-"))}</span>
           <span>${printableEscape(error.field || "-")}</span>
-          <span>${printableEscape(error.error || "INVALID")}</span>
+          <span>${printableEscape(adminHumanBulkImportError(error))}</span>
         </div>
       `).join("")}
     </div>
@@ -12922,8 +13132,15 @@ const renderAdminAssistedImportPanel = (summary) => {
               </label>
               <label><span>Ano letivo</span><input name="school_year" value="2026" inputmode="numeric" /></label>
             </div>
+            <div class="admin-template-download">
+              <div>
+                <strong>Opção recomendada: baixar e preencher o modelo oficial</strong>
+                <span>Escolha o tipo acima e baixe uma planilha com cabeçalhos oficiais, exemplos e instruções. Não precisa editar JSON.</span>
+              </div>
+              <button type="button" data-admin-download-bulk-template>${adminInlineIcon("download", "Baixar modelo")}</button>
+            </div>
             <label class="admin-bulk-mapping">
-              <span>Mapeamento de colunas opcional</span>
+              <span>Opção alternativa: importar planilha própria e mapear colunas</span>
               <textarea name="column_mapping" rows="3" placeholder='{"Nome da Escola":"nome_escola","Código INEP":"codigo_escola"}'></textarea>
             </label>
             <div class="admin-import-actions">
@@ -13444,6 +13661,34 @@ const initAdminWorkspace = () => {
         alert(error.message || "Não foi possível atualizar a permissão.");
         permissionToggle.disabled = false;
         permissionToggle.textContent = originalText;
+      }
+      return;
+    }
+    const templateButton = event.target.closest?.("[data-admin-download-bulk-template]");
+    if (templateButton) {
+      event.preventDefault();
+      const form = templateButton.closest("[data-admin-bulk-import-form]");
+      const status = templateButton.closest(".admin-import-board")?.querySelector("[data-admin-import-status]");
+      const importType = form?.querySelector("[name='import_type']")?.value || "";
+      templateButton.disabled = true;
+      if (status) {
+        status.hidden = false;
+        status.dataset.tone = "muted";
+        status.textContent = "Preparando modelo oficial...";
+      }
+      try {
+        await adminDownloadBulkImportTemplate(importType);
+        if (status) {
+          status.dataset.tone = "success";
+          status.textContent = "Modelo oficial gerado. Preencha a aba DADOS e envie neste mesmo fluxo.";
+        }
+      } catch (error) {
+        if (status) {
+          status.dataset.tone = "error";
+          status.textContent = error.message || "Não foi possível gerar o modelo oficial.";
+        }
+      } finally {
+        templateButton.disabled = false;
       }
       return;
     }
