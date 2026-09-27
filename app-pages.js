@@ -12888,6 +12888,7 @@ const adminFormatBulkImportReport = (preview = null) => {
     ["Duplicadas", report.duplicate_rows],
     ["Novas", report.new_rows],
     ["Atualizações", report.update_rows],
+    ["Sem alteração", report.unchanged_existing],
     ["Escolas", counts.schools],
     ["Turmas", counts.classes],
     ["Professores", counts.teachers],
