@@ -21840,6 +21840,22 @@ const getSecretariaPrimarySchool = () =>
   || secretariaInstitutionalState.schools?.[0]
   || {};
 
+const getSecretariaCurrentSchoolYear = (school = getSecretariaPrimarySchool()) => {
+  const schoolId = school?.id || secretariaInstitutionalState.selectedSchoolId || "";
+  const years = [
+    ...(secretariaInstitutionalState.academicYears || [])
+      .filter((item) => !schoolId || item.school_id === schoolId)
+      .map((item) => item.school_year),
+    ...(secretariaInstitutionalState.classes || [])
+      .filter((item) => !schoolId || item.school_id === schoolId)
+      .map((item) => item.school_year),
+    ...(secretariaInstitutionalState.enrollments || [])
+      .filter((item) => !schoolId || item.school_id === schoolId)
+      .map((item) => item.school_year),
+  ].filter(Boolean).sort();
+  return years[years.length - 1] || "2026";
+};
+
 const ensureSecretariaAvaliaResults = async ({ force = false, schoolId = "" } = {}) => {
   const selectedSchoolId = schoolId || getSecretariaPrimarySchool().id || "";
   if (!selectedSchoolId) return secretariaAvaliaResultsState;
@@ -22791,6 +22807,9 @@ const secretariaMovementLabels = {
 
 const secretariaEnrollmentStatusOptions = ["active", "transferred", "ended", "cancelled", "archived"];
 const secretariaDocumentStatusOptions = ["pending", "received", "waived"];
+const secretariaClassSchoolYearOptions = ["Infantil 2", "Infantil 3", "Infantil 4", "Infantil 5", "1º Ano", "2º Ano", "3º Ano", "4º Ano", "5º Ano", "6º Ano", "7º Ano", "8º Ano", "9º Ano", "1ª Série EM", "2ª Série EM", "3ª Série EM"];
+const secretariaClassStageOptions = ["Educação Infantil", "Ensino Fundamental — Anos Iniciais", "Ensino Fundamental — Anos Finais", "Ensino Médio", "EJA"];
+const secretariaClassShiftOptions = ["Manhã", "Tarde", "Integral", "Noite"];
 const secretariaDocumentStatusLabels = {
   pending: "Pendente",
   received: "Recebido",
@@ -23485,12 +23504,8 @@ const renderSecretariaDashboardPanel = (index) => {
   const enrollmentAttention = secretariaEnrollmentsNeedingAttention(index);
   const recentActivities = secretariaRecentActivities(index);
   const visibleActivities = recentActivities.slice(0, 5);
-  const school = activeSchools[0] || secretariaInstitutionalState.schools[0] || {};
-  const activeYears = [...new Set([
-    ...(secretariaInstitutionalState.classes || []).map((item) => item.school_year),
-    ...(secretariaInstitutionalState.enrollments || []).map((item) => item.school_year),
-  ].filter((item) => item && item !== "Ano nao informado"))].sort();
-  const schoolYear = activeYears[activeYears.length - 1] || "Ano nao informado";
+  const school = getSecretariaPrimarySchool() || activeSchools[0] || secretariaInstitutionalState.schools[0] || {};
+  const schoolYear = getSecretariaCurrentSchoolYear(school);
   const alerts = [
     { label: "Documentos pendentes", detail: "Itens que precisam de revisão ou assinatura", count: pendingDocuments.length, href: secretariaLink("documentos", { q: "pendente" }), icon: "doc", tone: "red" },
     { label: "Alunos sem responsavel", detail: "Alunos ativos ainda sem responsavel vinculado", count: studentsWithoutGuardian.length, href: secretariaLink("alunos", { q: "sem responsavel" }), icon: "family", tone: "orange" },
@@ -24034,31 +24049,29 @@ const renderSecretariaClassesView = (index) => {
 };
 
 const renderSecretariaNewClassView = (index) => {
-  const schoolsFromClasses = [...new Set((secretariaInstitutionalState.classes || []).map((classItem) => classItem.school_id).filter(Boolean))]
-    .map((schoolId) => index.schoolById.get(schoolId) || { id: schoolId, nome: `Escola ${schoolId}` });
-  const schools = ((secretariaInstitutionalState.schools || []).filter((school) => isSecretariaActiveStatus(school.status)).length
-    ? (secretariaInstitutionalState.schools || []).filter((school) => isSecretariaActiveStatus(school.status))
-    : schoolsFromClasses.length
-      ? schoolsFromClasses
-      : [{ id: "11111111-1111-1111-1111-111111111111", nome: "Escola nao informada" }]);
-  const defaultSchool = schools[0] || secretariaInstitutionalState.schools[0] || {};
+  const selectedSchool = getSecretariaPrimarySchool();
+  const selectedSchoolYear = getSecretariaCurrentSchoolYear(selectedSchool);
   const result = secretariaInstitutionalState.lastTeacherClassResult;
   return `
     <section class="panel span-2">
       <div class="panel-head"><h2>Nova Turma</h2><a href="${secretariaLink("turmas")}">Voltar para turmas</a></div>
       <form data-secretaria-class-form>
         <div class="qb-builder-grid">
-          <label><span>Escola</span><select name="school_id" required>${schools.map((school) => `<option value="${htmlEscape(school.id)}" ${school.id === defaultSchool.id ? "selected" : ""}>${htmlEscape(normalizeSchoolName(school))}</option>`).join("")}</select></label>
-          <label><span>Nome da turma</span><input name="nome" required placeholder="Infantil Teste Secretaria A" /></label>
-          <label><span>Ano letivo</span><input name="school_year" required value="2026" /></label>
+          <div class="secretaria-context-field">
+            <span>Escola</span>
+            <strong>${htmlEscape(normalizeSchoolName(selectedSchool) || "Selecione uma escola no cabeçalho")}</strong>
+            <input type="hidden" name="school_id" value="${htmlEscape(selectedSchool.id || "")}" />
+          </div>
+          <label><span>Nome da turma</span><input name="nome" required autocomplete="off" placeholder="Ex.: 5º Ano A — Vistoria" /></label>
+          <label><span>Ano letivo</span><input name="school_year" required value="${htmlEscape(selectedSchoolYear)}" inputmode="numeric" /></label>
           <label><span>Status</span><select name="status" required><option value="active">Ativo</option><option value="inactive">Inativo</option></select></label>
-          <label><span>Faixa/etapa</span><input name="age_group" placeholder="Infantil teste" /></label>
-          <label><span>Turno</span><input name="turno" placeholder="Manha" /></label>
-          <label><span>Ano escolar</span><input name="ano_escolar" placeholder="Infantil" /></label>
-          <label><span>Motivo</span><input name="reason" required placeholder="homologação secretaria 03.5" /></label>
+          <label><span>Faixa/etapa</span><select name="age_group"><option value="">Selecionar etapa</option>${secretariaClassStageOptions.map((option) => `<option value="${htmlEscape(option)}">${htmlEscape(option)}</option>`).join("")}</select></label>
+          <label><span>Turno</span><select name="turno"><option value="">Selecionar turno</option>${secretariaClassShiftOptions.map((option) => `<option value="${htmlEscape(option)}">${htmlEscape(option)}</option>`).join("")}</select></label>
+          <label><span>Ano escolar</span><select name="ano_escolar"><option value="">Selecionar ano escolar</option>${secretariaClassSchoolYearOptions.map((option) => `<option value="${htmlEscape(option)}">${htmlEscape(option)}</option>`).join("")}</select></label>
+          <label><span>Motivo</span><input name="reason" required autocomplete="off" placeholder="Ex.: implantação inicial da escola" /></label>
         </div>
         <div class="qb-builder-actions">
-          <button type="submit">Salvar turma</button>
+          <button type="submit" ${selectedSchool.id ? "" : "disabled"}>Salvar turma</button>
           <a href="${secretariaLink("turmas")}">Cancelar</a>
         </div>
         <p data-secretaria-class-message>${result?.class_id ? `Última turma criada: ${htmlEscape(result.class_id)}` : "A operação valida duplicidade por escola e ano letivo."}</p>
@@ -25706,6 +25719,11 @@ const initSecretariaInstitutional = () => {
       const submitButton = classForm.querySelector("button[type='submit']");
       const formData = new FormData(classForm);
       const schoolId = String(formData.get("school_id") || "").trim();
+      const contextSchoolId = secretariaInstitutionalState.selectedSchoolId || getSecretariaPrimarySchool().id || "";
+      if (!schoolId || schoolId !== contextSchoolId) {
+        if (message) message.textContent = "A turma deve ser criada na escola atualmente selecionada.";
+        return;
+      }
       const nome = String(formData.get("nome") || "").trim();
       const schoolYear = String(formData.get("school_year") || "").trim();
       const duplicate = findSecretariaDuplicateClass({ nome, schoolId, schoolYear });

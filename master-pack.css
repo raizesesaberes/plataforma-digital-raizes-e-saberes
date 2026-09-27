@@ -4654,6 +4654,26 @@
   gap: 14px;
 }
 
+.secretaria-context-field {
+  display: grid;
+  gap: 7px;
+  color: var(--rs-muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.secretaria-context-field strong {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #dfe7de;
+  border-radius: 8px;
+  background: #f7fbf6;
+  color: var(--rs-ink);
+  font: 800 0.92rem Inter, sans-serif;
+  padding: 0 14px;
+}
+
 .secretaria-v1 .qb-builder-grid input,
 .secretaria-v1 .qb-builder-grid select,
 .secretaria-v1 form:not(.secretaria-filter-row) input,
