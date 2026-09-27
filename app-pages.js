@@ -12878,6 +12878,8 @@ const adminReadBulkImportFile = async (file) => {
   return { ...adminParseCsvText(text), sourceFormat: "CSV" };
 };
 
+const adminBulkImportPreviewContractVersion = "admin-import-preview-idempotency-v2";
+
 const adminFormatBulkImportReport = (preview = null) => {
   const report = preview?.report || {};
   const counts = report.counts || {};
@@ -13818,6 +13820,7 @@ const initAdminWorkspace = () => {
         adminBulkImportState.sourceFormat = parsed.sourceFormat;
         const idempotencyKey = [
           "admin-ui",
+          adminBulkImportPreviewContractVersion,
           parsed.sourceFormat,
           file?.name || "planilha",
           String(file?.size || rows.length),
