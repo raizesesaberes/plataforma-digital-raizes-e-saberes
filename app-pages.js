@@ -27317,6 +27317,173 @@ const initUniversalActivityEngine = () => {
   window.setInterval(() => saveSubmission(), 12000);
 };
 
+const initCanonicalVideoPlayer = () => {
+  if (typeof window === "undefined" || window.RaizesVideoPlayer) return;
+
+  const ensureStyles = () => {
+    if (document.getElementById("raizes-video-player-style")) return;
+    const style = document.createElement("style");
+    style.id = "raizes-video-player-style";
+    style.textContent = `
+      .raizes-video-player{display:grid;gap:12px;width:100%;max-width:100%;background:#0b1f18;color:#f8fff9;border-radius:18px;padding:14px;box-shadow:0 18px 44px rgba(7,48,31,.24)}
+      .raizes-video-stage{position:relative;overflow:hidden;border-radius:14px;background:#07140f;aspect-ratio:16/9}
+      .raizes-video-stage video{display:block;width:100%;height:100%;object-fit:contain;background:#07140f}
+      .raizes-video-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+      .raizes-video-controls button,.raizes-video-controls select{min-height:36px;border:0;border-radius:999px;background:#fff;color:#0b5134;font-weight:800;padding:0 12px}
+      .raizes-video-controls input[type="range"]{flex:1 1 160px;accent-color:#f5a400}
+      .raizes-video-status{font-size:12px;font-weight:800;color:#dff8e9}
+      .raizes-video-status[data-complete="true"]{color:#ffd36b}
+    `;
+    document.head.appendChild(style);
+  };
+
+  const safeNumber = (value, fallback = 0) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+
+  const emit = (handler, payload) => {
+    if (typeof handler === "function") handler(payload);
+  };
+
+  const mount = (target, options = {}) => {
+    const host = typeof target === "string" ? document.querySelector(target) : target;
+    if (!host) return null;
+    ensureStyles();
+
+    const storageKey = `raizes:video:${options.assetId || options.sourceId || options.src || "local"}:position`;
+    const savedPosition = safeNumber(options.resumePosition ?? localStorage.getItem(storageKey), 0);
+    const sourceList = Array.isArray(options.sources) && options.sources.length
+      ? options.sources
+      : [{ src: options.src || options.mp4Url || "", type: options.type || "video/mp4", label: options.quality || "Auto" }].filter((source) => source.src);
+    const captionList = Array.isArray(options.captions) ? options.captions : [];
+
+    host.innerHTML = `
+      <div class="raizes-video-player" data-raizes-video-player>
+        <div class="raizes-video-stage">
+          <video preload="metadata" playsinline ${options.poster ? `poster="${printableEscape(options.poster)}"` : ""}></video>
+        </div>
+        <div class="raizes-video-controls" aria-label="Controles do vídeo">
+          <button type="button" data-video-action="toggle">Reproduzir</button>
+          <input type="range" min="0" max="100" value="0" step="0.1" aria-label="Progresso do vídeo" data-video-progress />
+          <select aria-label="Velocidade" data-video-speed>
+            ${(options.speeds || [0.75, 1, 1.25, 1.5, 2]).map((speed) => `<option value="${speed}" ${speed === 1 ? "selected" : ""}>${speed}x</option>`).join("")}
+          </select>
+          <select aria-label="Qualidade" data-video-quality ${sourceList.length <= 1 ? "disabled" : ""}>
+            ${sourceList.map((source, index) => `<option value="${index}">${printableEscape(source.label || `Fonte ${index + 1}`)}</option>`).join("")}
+          </select>
+          <button type="button" data-video-action="fullscreen">Tela cheia</button>
+          <span class="raizes-video-status" data-video-status>0%</span>
+        </div>
+      </div>
+    `;
+
+    const video = host.querySelector("video");
+    const toggle = host.querySelector('[data-video-action="toggle"]');
+    const fullscreen = host.querySelector('[data-video-action="fullscreen"]');
+    const progress = host.querySelector("[data-video-progress]");
+    const speed = host.querySelector("[data-video-speed]");
+    const quality = host.querySelector("[data-video-quality]");
+    const status = host.querySelector("[data-video-status]");
+    let lastProgressEmit = 0;
+
+    const loadSource = (source) => {
+      if (!source?.src) return;
+      video.innerHTML = "";
+      const element = document.createElement("source");
+      element.src = source.src;
+      element.type = source.type || (source.src.includes(".m3u8") ? "application/x-mpegURL" : "video/mp4");
+      video.appendChild(element);
+      captionList.forEach((caption) => {
+        if (!caption?.src) return;
+        const track = document.createElement("track");
+        track.kind = caption.kind || "subtitles";
+        track.label = caption.label || caption.language || "Legenda";
+        track.srclang = caption.language || "pt-BR";
+        track.src = caption.src;
+        if (caption.default) track.default = true;
+        video.appendChild(track);
+      });
+      video.load();
+    };
+
+    const emitEvent = (eventType, extra = {}) => {
+      const duration = safeNumber(video.duration, options.durationSeconds || 0);
+      const position = safeNumber(video.currentTime, 0);
+      const percent = duration > 0 ? Math.min(100, Math.max(0, (position / duration) * 100)) : 0;
+      localStorage.setItem(storageKey, String(Math.floor(position)));
+      emit(options.onEvent, {
+        asset_id: options.assetId,
+        source_module: options.sourceModule,
+        source_id: options.sourceId,
+        event_type: eventType,
+        position_seconds: Math.floor(position),
+        duration_seconds: duration > 0 ? Math.floor(duration) : null,
+        playback_rate: video.playbackRate,
+        quality_label: sourceList[safeNumber(quality?.value, 0)]?.label || "Auto",
+        ...extra,
+      });
+      if (status) {
+        status.textContent = `${Math.round(percent)}%`;
+        status.dataset.complete = String(percent >= 95 || eventType === "COMPLETE");
+      }
+      if (progress && duration > 0) progress.value = String(percent);
+    };
+
+    loadSource(sourceList[0]);
+
+    video.addEventListener("loadedmetadata", () => {
+      if (savedPosition > 0 && Number.isFinite(video.duration) && savedPosition < video.duration) {
+        video.currentTime = savedPosition;
+      }
+      emitEvent("PROGRESS");
+    });
+    video.addEventListener("play", () => {
+      toggle.textContent = "Pausar";
+      emitEvent("PLAY");
+    });
+    video.addEventListener("pause", () => {
+      toggle.textContent = "Reproduzir";
+      emitEvent("PAUSE");
+    });
+    video.addEventListener("timeupdate", () => {
+      const now = Date.now();
+      if (now - lastProgressEmit > 15000) {
+        lastProgressEmit = now;
+        emitEvent("PROGRESS");
+      } else {
+        const duration = safeNumber(video.duration, 0);
+        if (progress && duration > 0) progress.value = String((video.currentTime / duration) * 100);
+      }
+    });
+    video.addEventListener("ended", () => emitEvent("COMPLETE"));
+    toggle.addEventListener("click", () => (video.paused ? video.play() : video.pause()));
+    fullscreen.addEventListener("click", () => host.querySelector(".raizes-video-stage")?.requestFullscreen?.());
+    progress.addEventListener("input", () => {
+      const duration = safeNumber(video.duration, 0);
+      if (duration > 0) video.currentTime = (safeNumber(progress.value, 0) / 100) * duration;
+    });
+    progress.addEventListener("change", () => emitEvent("SEEK"));
+    speed.addEventListener("change", () => {
+      video.playbackRate = safeNumber(speed.value, 1);
+      emitEvent("SPEED_CHANGE");
+    });
+    quality.addEventListener("change", () => {
+      const current = video.currentTime;
+      const paused = video.paused;
+      loadSource(sourceList[safeNumber(quality.value, 0)]);
+      video.addEventListener("loadedmetadata", () => {
+        video.currentTime = current;
+        if (!paused) video.play();
+      }, { once: true });
+    });
+
+    return { host, video, emitEvent };
+  };
+
+  window.RaizesVideoPlayer = { mount };
+};
+
 let platformLogoutInitialized = false;
 const accessibilityStorageKey = "raizes:accessibility-web-2";
 const accessibilityDefaults = {
@@ -27590,6 +27757,7 @@ const renderAppPage = () => {
     initTeacherWorkspace();
     initUniversalActivityAssignmentUi();
     initUniversalActivityTeacherDeliveries();
+    initCanonicalVideoPlayer();
     initGlobalAccessibility();
     return;
   }
@@ -27601,6 +27769,7 @@ const renderAppPage = () => {
       document.querySelector(".admin-workspace")?.classList.add("is-mounted");
     });
     initAdminWorkspace();
+    initCanonicalVideoPlayer();
     initGlobalAccessibility();
     return;
   }
@@ -27614,6 +27783,7 @@ const renderAppPage = () => {
       document.querySelector("[data-student-dashboard]")?.classList.add("is-mounted");
       initStudentAvaliaApplication();
     });
+    initCanonicalVideoPlayer();
     initGlobalAccessibility();
     return;
   }
@@ -27622,6 +27792,7 @@ const renderAppPage = () => {
     mount.innerHTML = activeModule.html;
     initPlatformLogout();
     initFamilyArea();
+    initCanonicalVideoPlayer();
     initGlobalAccessibility();
     return;
   }
@@ -27635,6 +27806,7 @@ const renderAppPage = () => {
       initSupportPortal();
     });
     initSupportPortal();
+    initCanonicalVideoPlayer();
     initGlobalAccessibility();
     return;
   }
@@ -27642,6 +27814,7 @@ const renderAppPage = () => {
   if (activeKey === "alunoAtividade") {
     mount.innerHTML = activeModule.html;
     initPlatformLogout();
+    initCanonicalVideoPlayer();
     initGlobalAccessibility();
     return;
   }
@@ -27760,6 +27933,7 @@ const renderAppPage = () => {
   initUniversalActivityAssignmentUi();
   initUniversalActivityTeacherDeliveries();
   initUniversalActivityEngine();
+  initCanonicalVideoPlayer();
   initGlobalAccessibility();
 };
 
