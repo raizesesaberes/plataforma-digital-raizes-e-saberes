@@ -10648,6 +10648,80 @@ const adminRsSchoolControlledImportPackage = {
   ],
 };
 
+const adminBulkImportEntityOptions = [
+  { value: "auto", label: "Identificar automaticamente por coluna tipo" },
+  { value: "school", label: "Escolas" },
+  { value: "class", label: "Turmas" },
+  { value: "teacher", label: "Professores" },
+  { value: "student", label: "Alunos" },
+  { value: "guardian", label: "Responsáveis" },
+  { value: "enrollment", label: "Matrículas" },
+  { value: "teacher_class_link", label: "Vínculos professor/turma" },
+  { value: "guardian_student_link", label: "Vínculos responsável/aluno" },
+];
+
+const adminBulkImportHeaderAliases = {
+  tipo: "tipo",
+  entidade: "tipo",
+  entity_type: "tipo",
+  codigo_escola: "codigo_escola",
+  school_code: "codigo_escola",
+  codigo_inep: "codigo_escola",
+  inep: "codigo_escola",
+  escola: "nome_escola",
+  nome_escola: "nome_escola",
+  school_name: "nome_escola",
+  municipio: "municipio",
+  cidade: "municipio",
+  city: "municipio",
+  estado: "estado",
+  uf: "estado",
+  diretor: "diretor",
+  principal: "diretor",
+  turma: "nome_turma",
+  nome_turma: "nome_turma",
+  class_name: "nome_turma",
+  ano_letivo: "ano_letivo",
+  school_year: "ano_letivo",
+  ano_serie: "ano_serie",
+  grade: "ano_serie",
+  turno: "turno",
+  shift: "turno",
+  faixa_etaria: "faixa_etaria",
+  age_group: "faixa_etaria",
+  professor: "nome_professor",
+  nome_professor: "nome_professor",
+  teacher_name: "nome_professor",
+  email_professor: "email_professor",
+  teacher_email: "email_professor",
+  componente: "componente",
+  disciplina: "componente",
+  aluno: "nome_aluno",
+  nome_aluno: "nome_aluno",
+  student_name: "nome_aluno",
+  data_nascimento: "data_nascimento",
+  birth_date: "data_nascimento",
+  responsavel: "nome_responsavel",
+  nome_responsavel: "nome_responsavel",
+  guardian_name: "nome_responsavel",
+  email_responsavel: "email_responsavel",
+  guardian_email: "email_responsavel",
+  telefone_responsavel: "telefone_responsavel",
+  phone: "telefone_responsavel",
+  parentesco: "parentesco",
+  relationship: "parentesco",
+};
+
+const adminBulkImportState = {
+  status: "idle",
+  rows: [],
+  columns: [],
+  fileName: "",
+  sourceFormat: "CSV",
+  preview: null,
+  error: "",
+};
+
 const adminOperationalState = {
   status: "idle",
   error: "",
@@ -12396,6 +12470,195 @@ const adminRsSchoolImportSummary = () => {
   ];
 };
 
+const adminNormalizeBulkImportHeader = (header = "") =>
+  String(header || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+const adminCanonicalBulkImportHeader = (header = "") => {
+  const normalized = adminNormalizeBulkImportHeader(header);
+  return adminBulkImportHeaderAliases[normalized] || normalized;
+};
+
+const adminParseCsvLine = (line = "", separator = ";") => {
+  const cells = [];
+  let current = "";
+  let quoted = false;
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    const next = line[index + 1];
+    if (char === '"' && quoted && next === '"') {
+      current += '"';
+      index += 1;
+    } else if (char === '"') {
+      quoted = !quoted;
+    } else if (char === separator && !quoted) {
+      cells.push(current.trim());
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  cells.push(current.trim());
+  return cells;
+};
+
+const adminParseCsvText = (text = "") => {
+  const lines = String(text || "")
+    .replace(/^\uFEFF/, "")
+    .split(/\r?\n/)
+    .filter((line) => line.trim().length);
+  if (lines.length < 2) return { rows: [], columns: [] };
+  const separator = (lines[0].match(/;/g) || []).length >= (lines[0].match(/,/g) || []).length ? ";" : ",";
+  const rawHeaders = adminParseCsvLine(lines[0], separator);
+  const columns = rawHeaders.map(adminCanonicalBulkImportHeader);
+  const rows = lines.slice(1).map((line) => {
+    const cells = adminParseCsvLine(line, separator);
+    return columns.reduce((acc, column, index) => {
+      acc[column] = cells[index] || "";
+      return acc;
+    }, {});
+  });
+  return { rows, columns };
+};
+
+const adminApplyBulkColumnMapping = (rows = [], mapping = {}) => {
+  if (!mapping || typeof mapping !== "object" || Array.isArray(mapping)) return rows;
+  const normalizedMapping = Object.entries(mapping).reduce((acc, [from, to]) => {
+    const source = adminCanonicalBulkImportHeader(from);
+    const target = adminCanonicalBulkImportHeader(to);
+    if (source && target) acc[source] = target;
+    return acc;
+  }, {});
+  if (!Object.keys(normalizedMapping).length) return rows;
+  return rows.map((row) => Object.entries(row).reduce((acc, [key, value]) => {
+    acc[normalizedMapping[key] || key] = value;
+    return acc;
+  }, {}));
+};
+
+const adminParseBulkColumnMapping = (value = "") => {
+  const trimmed = String(value || "").trim();
+  if (!trimmed) return {};
+  const parsed = JSON.parse(trimmed);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Mapeamento de colunas precisa ser um objeto JSON.");
+  }
+  return parsed;
+};
+
+const adminLoadXlsxReader = () => new Promise((resolve, reject) => {
+  if (window.XLSX?.read) {
+    resolve(window.XLSX);
+    return;
+  }
+  const existing = document.querySelector("script[data-admin-xlsx-reader]");
+  if (existing) {
+    existing.addEventListener("load", () => resolve(window.XLSX), { once: true });
+    existing.addEventListener("error", () => reject(new Error("Não foi possível carregar o leitor XLSX.")), { once: true });
+    return;
+  }
+  const script = document.createElement("script");
+  script.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+  script.async = true;
+  script.dataset.adminXlsxReader = "true";
+  script.onload = () => window.XLSX?.read ? resolve(window.XLSX) : reject(new Error("Leitor XLSX indisponível."));
+  script.onerror = () => reject(new Error("Não foi possível carregar o leitor XLSX."));
+  document.head.appendChild(script);
+});
+
+const adminReadBulkImportFile = async (file) => {
+  if (!file) throw new Error("Selecione um arquivo CSV ou XLSX.");
+  const extension = file.name.split(".").pop()?.toLowerCase() || "";
+  if (extension === "xlsx" || file.type.includes("spreadsheet")) {
+    const XLSX = await adminLoadXlsxReader();
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: "array" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const jsonRows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+    const rows = jsonRows.map((row) => Object.entries(row).reduce((acc, [key, value]) => {
+      acc[adminCanonicalBulkImportHeader(key)] = String(value ?? "").trim();
+      return acc;
+    }, {}));
+    return { rows, columns: rows[0] ? Object.keys(rows[0]) : [], sourceFormat: "XLSX" };
+  }
+  const text = await file.text();
+  return { ...adminParseCsvText(text), sourceFormat: "CSV" };
+};
+
+const adminFormatBulkImportReport = (preview = null) => {
+  const report = preview?.report || {};
+  const counts = report.counts || {};
+  const lines = [
+    ["Total", report.total_rows],
+    ["Válidas", report.valid_rows],
+    ["Inválidas", report.invalid_rows],
+    ["Duplicadas", report.duplicate_rows],
+    ["Novas", report.new_rows],
+    ["Atualizações", report.update_rows],
+    ["Escolas", counts.schools],
+    ["Turmas", counts.classes],
+    ["Professores", counts.teachers],
+    ["Alunos", counts.students],
+    ["Responsáveis", counts.guardians],
+    ["Matrículas", counts.enrollments],
+    ["Prof./turma", counts.teacher_class_links],
+    ["Resp./aluno", counts.guardian_student_links],
+  ];
+  return lines.map(([label, value]) => `<article><span>${printableEscape(label)}</span><strong>${printableEscape(String(value ?? 0))}</strong></article>`).join("");
+};
+
+const adminRenderBulkImportErrors = (errors = []) => {
+  if (!errors.length) return `<p class="admin-content-muted">Nenhum erro de linha encontrado.</p>`;
+  return `
+    <div class="admin-import-errors" role="table" aria-label="Erros de importação">
+      <div role="row"><strong>Linha</strong><strong>Campo</strong><strong>Motivo</strong></div>
+      ${errors.slice(0, 80).map((error) => `
+        <div role="row">
+          <span>${printableEscape(String(error.row || "-"))}</span>
+          <span>${printableEscape(error.field || "-")}</span>
+          <span>${printableEscape(error.error || "INVALID")}</span>
+        </div>
+      `).join("")}
+    </div>
+  `;
+};
+
+const adminInvokeNetworkBulkImportPreview = async ({ rows, sourceFormat, importType, schoolYear, columnMapping, idempotencyKey }) => {
+  await ensureAdminSupabaseConfig();
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/admin_preview_network_bulk_import", "", {
+    requireAuthenticated: true,
+    allowedRoles: ["admin"],
+    method: "POST",
+    body: JSON.stringify({
+      p_rows: rows,
+      p_source_format: sourceFormat || "CSV",
+      p_import_type: importType || "auto",
+      p_school_year: schoolYear || "2026",
+      p_column_mapping: columnMapping || {},
+      p_idempotency_key: idempotencyKey || null,
+    }),
+  });
+  return Array.isArray(result) ? result[0] || {} : result || {};
+};
+
+const adminInvokeNetworkBulkImportConfirm = async (batchId) => {
+  await ensureAdminSupabaseConfig();
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/admin_confirm_network_bulk_import", "", {
+    requireAuthenticated: true,
+    allowedRoles: ["admin"],
+    method: "POST",
+    body: JSON.stringify({ p_batch_id: batchId }),
+  });
+  return Array.isArray(result) ? result[0] || {} : result || {};
+};
+
 const adminInvokeRsSchoolImport = async ({ schoolId, dryRun }) => {
   await ensureAdminSupabaseConfig();
   const client = createSupabaseRestClient();
@@ -12547,24 +12810,45 @@ const adminFormatImportCounts = (result = {}) => {
 
 const renderAdminAssistedImportPanel = (summary) => {
   if (!summary) return "";
+  const preview = adminBulkImportState.preview;
+  const canConfirm = preview?.batch_id && preview?.status === "validated";
   return `
     <section class="admin-board admin-import-board">
       <div class="admin-section-head">
-        <h2>Importação assistida</h2>
-        <span>${printableEscape(summary.name)}</span>
+        <h2>Implantação em massa</h2>
+        <span>CSV/XLSX operacional</span>
       </div>
       <div class="admin-import-layout">
         <div class="admin-import-package">
-          <strong>RS-SCHOOL V1 controlado</strong>
-          <span>${printableEscape(adminRsSchoolControlledImportPackage.package_version)}</span>
-          <div class="admin-import-counts">
-            ${adminRsSchoolImportSummary().map((item) => `<article><span>${printableEscape(item.label)}</span><strong>${printableEscape(String(item.value))}</strong></article>`).join("")}
-          </div>
+          <strong>Planilha da rede</strong>
+          <span>Escolas, turmas, professores, alunos, responsáveis, matrículas e vínculos.</span>
+          <form class="admin-bulk-import-form" data-admin-bulk-import-form>
+            <div class="admin-bulk-import-grid">
+              <label><span>Arquivo</span><input type="file" name="bulk_file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required /></label>
+              <label>
+                <span>Tipo</span>
+                <select name="import_type">
+                  ${adminBulkImportEntityOptions.map((option) => `<option value="${printableEscape(option.value)}">${printableEscape(option.label)}</option>`).join("")}
+                </select>
+              </label>
+              <label><span>Ano letivo</span><input name="school_year" value="2026" inputmode="numeric" /></label>
+            </div>
+            <label class="admin-bulk-mapping">
+              <span>Mapeamento de colunas opcional</span>
+              <textarea name="column_mapping" rows="3" placeholder='{"Nome da Escola":"nome_escola","Código INEP":"codigo_escola"}'></textarea>
+            </label>
+            <div class="admin-import-actions">
+              <button type="submit">${adminInlineIcon("check", "Pré-visualizar e validar")}</button>
+              <button type="button" class="is-primary" data-admin-bulk-import-confirm ${canConfirm ? "" : "disabled"}>${adminInlineIcon("clipboard", "Confirmar importação")}</button>
+            </div>
+          </form>
         </div>
-        <div class="admin-import-actions">
-          <button type="button" data-admin-import-dry-run="${printableEscape(summary.schoolId)}">${adminInlineIcon("check", "Validar lote")}</button>
-          <button type="button" class="is-primary" data-admin-import-confirm="${printableEscape(summary.schoolId)}">${adminInlineIcon("clipboard", "Confirmar importação")}</button>
-          <p data-admin-import-status hidden></p>
+        <div class="admin-import-preview">
+          <strong>${adminBulkImportState.fileName ? printableEscape(adminBulkImportState.fileName) : "Aguardando arquivo"}</strong>
+          <small>${adminBulkImportState.columns.length ? `Colunas: ${adminBulkImportState.columns.map(printableEscape).join(", ")}` : "Use uma planilha com cabeçalho."}</small>
+          <div class="admin-import-counts">${adminFormatBulkImportReport(preview)}</div>
+          ${preview ? adminRenderBulkImportErrors(preview.errors || []) : `<p class="admin-content-muted">O preview valida linhas, duplicidades e permissões antes de qualquer gravação.</p>`}
+          <p data-admin-import-status ${adminBulkImportState.error || adminBulkImportState.status !== "idle" ? "" : "hidden"} data-tone="${adminBulkImportState.error ? "error" : adminBulkImportState.status === "confirmed" ? "success" : "muted"}">${printableEscape(adminBulkImportState.error || (adminBulkImportState.status === "confirmed" ? "Importação confirmada e persistida." : adminBulkImportState.status === "preview" ? "Preview validado. Confirme para persistir." : ""))}</p>
         </div>
       </div>
     </section>
@@ -12663,9 +12947,9 @@ const renderAdminImplementationConsole = () => {
         `).join("")}
       </div>
     </section>
-    ${renderAdminPreparationView("Motores de escrita", "Criação de nova escola esta preparada por RPC administrativa; importação assistida segue limitada a dry-run nesta etapa.", [
+    ${renderAdminPreparationView("Motores de escrita", "Criação de escola individual e implantação em massa usam RPCs administrativas com preview, confirmação, idempotência e relatório final.", [
       "Nova escola: motor preparado",
-      "Importação CSV/XLSX: parcial por pacote tecnico",
+      "Importação CSV/XLSX: operacional pela interface Admin",
       "Acessos digitais: motor homologado",
     ])}
   `;
@@ -12916,6 +13200,29 @@ const initAdminWorkspace = () => {
       else dialog?.removeAttribute("open");
       return;
     }
+    const bulkConfirmButton = event.target.closest?.("[data-admin-bulk-import-confirm]");
+    if (bulkConfirmButton) {
+      event.preventDefault();
+      if (!adminBulkImportState.preview?.batch_id) return;
+      const panel = bulkConfirmButton.closest(".admin-import-board");
+      const buttons = panel ? Array.from(panel.querySelectorAll("button")) : [bulkConfirmButton];
+      buttons.forEach((item) => { item.disabled = true; });
+      adminBulkImportState.status = "confirming";
+      adminBulkImportState.error = "";
+      if (content) content.innerHTML = renderAdminWorkspaceView("implantação");
+      try {
+        const result = await adminInvokeNetworkBulkImportConfirm(adminBulkImportState.preview.batch_id);
+        adminBulkImportState.preview = result;
+        adminBulkImportState.status = "confirmed";
+        await ensureAdminReadOnlyData({ force: true });
+        if (content) content.innerHTML = renderAdminWorkspaceView("implantação");
+      } catch (error) {
+        adminBulkImportState.status = "error";
+        adminBulkImportState.error = error.message || "Não foi possível confirmar a importação.";
+        if (content) content.innerHTML = renderAdminWorkspaceView("implantação");
+      }
+      return;
+    }
     const importDryRunButton = event.target.closest?.("[data-admin-import-dry-run]");
     const importConfirmButton = event.target.closest?.("[data-admin-import-confirm]");
     if (importDryRunButton || importConfirmButton) {
@@ -12996,6 +13303,54 @@ const initAdminWorkspace = () => {
     }
   });
   workspace.addEventListener("submit", async (event) => {
+    const bulkImportForm = event.target.closest?.("[data-admin-bulk-import-form]");
+    if (bulkImportForm) {
+      event.preventDefault();
+      const submit = bulkImportForm.querySelector("button[type='submit']");
+      const formData = new FormData(bulkImportForm);
+      const file = formData.get("bulk_file");
+      adminBulkImportState.status = "loading";
+      adminBulkImportState.error = "";
+      adminBulkImportState.preview = null;
+      if (submit) submit.disabled = true;
+      if (content) content.innerHTML = renderAdminWorkspaceView("implantação");
+      try {
+        const parsed = await adminReadBulkImportFile(file);
+        const mapping = adminParseBulkColumnMapping(String(formData.get("column_mapping") || ""));
+        const rows = adminApplyBulkColumnMapping(parsed.rows, mapping);
+        if (!rows.length) throw new Error("Arquivo sem linhas válidas para preview.");
+        adminBulkImportState.rows = rows;
+        adminBulkImportState.columns = parsed.columns;
+        adminBulkImportState.fileName = file?.name || "planilha";
+        adminBulkImportState.sourceFormat = parsed.sourceFormat;
+        const idempotencyKey = [
+          "admin-ui",
+          parsed.sourceFormat,
+          file?.name || "planilha",
+          String(file?.size || rows.length),
+          String(formData.get("import_type") || "auto"),
+          String(formData.get("school_year") || "2026"),
+        ].join(":");
+        const preview = await adminInvokeNetworkBulkImportPreview({
+          rows,
+          sourceFormat: parsed.sourceFormat,
+          importType: String(formData.get("import_type") || "auto"),
+          schoolYear: String(formData.get("school_year") || "2026"),
+          columnMapping: mapping,
+          idempotencyKey,
+        });
+        adminBulkImportState.preview = preview;
+        adminBulkImportState.status = preview.status === "validated" ? "preview" : preview.status === "confirmed" ? "confirmed" : "error";
+        adminBulkImportState.error = ["validated", "confirmed"].includes(preview.status) ? "" : "Preview encontrou erros. Corrija as linhas indicadas antes de confirmar.";
+      } catch (error) {
+        adminBulkImportState.status = "error";
+        adminBulkImportState.error = error.message || "Não foi possível validar a planilha.";
+      } finally {
+        if (submit) submit.disabled = false;
+        if (content) content.innerHTML = renderAdminWorkspaceView("implantação");
+      }
+      return;
+    }
     const contentAvailabilityForm = event.target.closest?.("[data-admin-content-availability-form]");
     if (contentAvailabilityForm) {
       event.preventDefault();
