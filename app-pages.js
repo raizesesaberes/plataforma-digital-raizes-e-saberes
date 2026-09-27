@@ -23819,10 +23819,11 @@ const renderSecretariaStudentDetail = (student, index) => {
 };
 
 const renderSecretariaNewStudentView = (index) => {
+  const selectedSchool = getSecretariaPrimarySchool();
   const activeClasses = (secretariaInstitutionalState.classes || [])
-    .filter((classItem) => isSecretariaActiveStatus(classItem.status))
+    .filter((classItem) => isSecretariaActiveStatus(classItem.status) && (!selectedSchool.id || classItem.school_id === selectedSchool.id))
     .sort((a, b) => normalizeClassName(a).localeCompare(normalizeClassName(b), "pt-BR"));
-  const defaultClass = activeClasses.find((classItem) => normalizeClassName(classItem) === "Infantil 4 A") || activeClasses[0] || {};
+  const defaultClass = activeClasses[0] || {};
   const defaultYear = secretariaSchoolYear({}, defaultClass) === "Ano nao informado" ? "2026" : secretariaSchoolYear({}, defaultClass);
   const result = secretariaInstitutionalState.lastCreateResult;
   return `
@@ -23835,7 +23836,7 @@ const renderSecretariaNewStudentView = (index) => {
         <div class="qb-builder-grid">
           <label>
             <span>Nome completo</span>
-            <input name="nome" autocomplete="off" required placeholder="Aluno Fictício de Homologação" />
+            <input name="nome" autocomplete="off" required placeholder="Nome completo do aluno" />
           </label>
           <label>
             <span>Data de nascimento</span>
@@ -25567,10 +25568,15 @@ const initSecretariaInstitutional = () => {
       const status = String(formData.get("status") || "active").trim();
       const index = buildSecretariaIndex();
       const classItem = index.classById.get(classId);
+      const contextSchoolId = secretariaInstitutionalState.selectedSchoolId || getSecretariaPrimarySchool().id || "";
       const classYear = secretariaSchoolYear({}, classItem || {});
       const duplicate = findSecretariaDuplicateStudent({ nome, dataNascimento, classItem }, index);
       if (!nome || !classItem?.id || !schoolYear) {
         if (message) message.textContent = "Preencha nome completo, turma e ano letivo.";
+        return;
+      }
+      if (!contextSchoolId || classItem.school_id !== contextSchoolId) {
+        if (message) message.textContent = "Selecione uma turma da escola atualmente selecionada.";
         return;
       }
       if (classYear !== "Ano nao informado" && schoolYear !== classYear) {
