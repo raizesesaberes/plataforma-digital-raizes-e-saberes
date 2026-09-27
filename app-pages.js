@@ -3972,6 +3972,8 @@ const secretariaInstitutionalState = {
   loadedAt: "",
   promise: null,
   context: null,
+  selectedSchoolId: "",
+  authorizedSchools: [],
   schools: [],
   profiles: [],
   teachers: [],
@@ -21422,6 +21424,7 @@ const secretariaAllowedRoles = ["secretaria", "admin", "gestor", "coordenador"];
 const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "calendario", "avalia", "analytics", "relatorios", "comunicados", "acesso"];
 const secretariaOfficialViews = ["painel", "alunos", "matriculas", "responsaveis", "turmas", "professores", "frequencia", "calendario", "avalia", "analytics", "relatorios", "documentos", "comunicados", "acesso"];
 const secretariaActiveStatuses = new Set(["active", "ativo"]);
+const secretariaSchoolContextStorageKey = "raizes.secretaria.selectedSchoolId";
 
 const isSecretariaActiveStatus = (status) => secretariaActiveStatuses.has(String(status || "active").toLowerCase());
 const secretariaStatusLabel = (status) => normalizeInstitutionalStatus(status || "active");
@@ -21441,6 +21444,88 @@ const getSecretariaParams = () => new URLSearchParams(window.location.search);
 const getSecretariaCurrentView = () => {
   const view = getSecretariaParams().get("view") || "painel";
   return secretariaViews.includes(view) ? view : "painel";
+};
+
+const getStoredSecretariaSchoolId = () => {
+  try {
+    return window.localStorage?.getItem(secretariaSchoolContextStorageKey) || "";
+  } catch {
+    return "";
+  }
+};
+
+const setStoredSecretariaSchoolId = (schoolId = "") => {
+  try {
+    if (schoolId) window.localStorage?.setItem(secretariaSchoolContextStorageKey, schoolId);
+    else window.localStorage?.removeItem(secretariaSchoolContextStorageKey);
+  } catch {}
+};
+
+const getRequestedSecretariaSchoolId = () => getSecretariaParams().get("school") || getStoredSecretariaSchoolId() || "";
+
+const resolveSecretariaSelectedSchool = (schools = []) => {
+  const activeSchools = (schools || []).filter((school) => isSecretariaActiveStatus(school.status));
+  const candidates = activeSchools.length ? activeSchools : (schools || []);
+  const requestedId = getRequestedSecretariaSchoolId();
+  return (schools || []).find((school) => school.id === requestedId) || candidates[0] || {};
+};
+
+const normalizeSecretariaSchoolScopedData = (payload = {}, selectedSchoolId = "") => {
+  const selectedSchools = (payload.schools || []).filter((school) => !selectedSchoolId || school.id === selectedSchoolId);
+  const selectedClassIds = new Set((payload.classes || []).filter((item) => !selectedSchoolId || item.school_id === selectedSchoolId).map((item) => item.id));
+  const selectedStudentIds = new Set((payload.students || []).filter((item) => !selectedSchoolId || item.school_id === selectedSchoolId || selectedClassIds.has(item.class_id)).map((item) => item.id));
+  const selectedTeacherIds = new Set((payload.teachers || []).filter((item) => !selectedSchoolId || item.school_id === selectedSchoolId).map((item) => item.id));
+  const selectedGuardianIds = new Set();
+  const selectedProfileIds = new Set();
+  const guardianLinks = (payload.guardianLinks || []).filter((item) => selectedStudentIds.has(item.student_id));
+  guardianLinks.forEach((link) => {
+    if (link.guardian_id) selectedGuardianIds.add(link.guardian_id);
+  });
+  const guardians = (payload.guardians || []).filter((item) => selectedStudentIds.has(item.student_id) || (!selectedSchoolId || item.school_id === selectedSchoolId));
+  guardians.forEach((guardian) => {
+    if (guardian.profile_id) selectedProfileIds.add(guardian.profile_id);
+  });
+  const institutionalGuardians = (payload.institutionalGuardians || []).filter((item) => selectedGuardianIds.has(item.id) || (!selectedSchoolId || item.school_id === selectedSchoolId));
+  institutionalGuardians.forEach((guardian) => {
+    if (guardian.profile_id) selectedProfileIds.add(guardian.profile_id);
+  });
+  (payload.teachers || []).forEach((teacher) => {
+    if (selectedTeacherIds.has(teacher.id) && teacher.profile_id) selectedProfileIds.add(teacher.profile_id);
+  });
+  return {
+    schools: selectedSchools,
+    profiles: payload.profiles || [],
+    teachers: (payload.teachers || []).filter((item) => selectedTeacherIds.has(item.id)),
+    classes: (payload.classes || []).filter((item) => selectedClassIds.has(item.id)),
+    students: (payload.students || []).filter((item) => selectedStudentIds.has(item.id)),
+    enrollments: (payload.enrollments || []).filter((item) => (!selectedSchoolId || item.school_id === selectedSchoolId) || selectedStudentIds.has(item.student_id) || selectedClassIds.has(item.class_id)),
+    enrollmentMovements: (payload.enrollmentMovements || []).filter((item) => selectedStudentIds.has(item.student_id) || selectedClassIds.has(item.from_class_id) || selectedClassIds.has(item.to_class_id)),
+    guardians,
+    institutionalGuardians,
+    guardianLinks,
+    classTeacherMemberships: (payload.classTeacherMemberships || []).filter((item) => selectedClassIds.has(item.class_id) || selectedTeacherIds.has(item.teacher_id)),
+    teacherClassMovements: (payload.teacherClassMovements || []).filter((item) => (!selectedSchoolId || item.school_id === selectedSchoolId) || selectedClassIds.has(item.class_id) || selectedTeacherIds.has(item.teacher_id)),
+    schoolMemberships: (payload.schoolMemberships || []).filter((item) => !selectedSchoolId || item.school_id === selectedSchoolId),
+    documentTypes: (payload.documentTypes || []).filter((item) => !item.school_id || !selectedSchoolId || item.school_id === selectedSchoolId),
+    studentDocuments: (payload.studentDocuments || []).filter((item) => selectedStudentIds.has(item.student_id)),
+    studentDocumentEvents: (payload.studentDocumentEvents || []).filter((item) => selectedStudentIds.has(item.student_id)),
+    attendanceRecords: (payload.attendanceRecords || []).filter((item) => selectedStudentIds.has(item.student_id) || selectedClassIds.has(item.class_id)),
+    attendanceEvents: (payload.attendanceEvents || []).filter((item) => {
+      if (!item.attendance_record_id) return false;
+      return (payload.attendanceRecords || []).some((record) => record.id === item.attendance_record_id && (selectedStudentIds.has(record.student_id) || selectedClassIds.has(record.class_id)));
+    }),
+    classDiaryEntries: (payload.classDiaryEntries || []).filter((item) => selectedClassIds.has(item.class_id) || (!selectedSchoolId || item.school_id === selectedSchoolId)),
+    communications: (payload.communications || []).filter((item) => !selectedSchoolId || item.school_id === selectedSchoolId),
+    communicationEvents: (payload.communicationEvents || []).filter((item) => (payload.communications || []).some((communication) => communication.id === item.communication_id && (!selectedSchoolId || communication.school_id === selectedSchoolId))),
+    communicationDeliverySummaries: (payload.communicationDeliverySummaries || []).filter((item) => (payload.communications || []).some((communication) => communication.id === item.communication_id && (!selectedSchoolId || communication.school_id === selectedSchoolId))),
+    academicYears: (payload.academicYears || []).filter((item) => !selectedSchoolId || item.school_id === selectedSchoolId),
+    academicTerms: (payload.academicTerms || []).filter((item) => (payload.academicYears || []).some((year) => year.id === item.academic_year_id && (!selectedSchoolId || year.school_id === selectedSchoolId))),
+    schoolDays: (payload.schoolDays || []).filter((item) => !selectedSchoolId || item.school_id === selectedSchoolId),
+    classSubjects: (payload.classSubjects || []).filter((item) => selectedClassIds.has(item.class_id) || (!selectedSchoolId || item.school_id === selectedSchoolId)),
+    classScheduleSlots: (payload.classScheduleSlots || []).filter((item) => selectedClassIds.has(item.class_id) || (!selectedSchoolId || item.school_id === selectedSchoolId)),
+    academicImportBatches: (payload.academicImportBatches || []).filter((item) => !selectedSchoolId || item.school_id === selectedSchoolId),
+    academicImportRows: (payload.academicImportRows || []).filter((item) => (payload.academicImportBatches || []).some((batch) => batch.id === item.batch_id && (!selectedSchoolId || batch.school_id === selectedSchoolId))),
+  };
 };
 
 const getSecretariaDiaryPeriodRange = () => {
@@ -21501,7 +21586,8 @@ const ensureSecretariaDiaryPeriodSummary = async ({ force = false, classId = "",
 };
 
 const getSecretariaPrimarySchool = () =>
-  (secretariaInstitutionalState.schools || []).find((item) => isSecretariaActiveStatus(item.status))
+  (secretariaInstitutionalState.schools || []).find((item) => item.id === secretariaInstitutionalState.selectedSchoolId)
+  || (secretariaInstitutionalState.schools || []).find((item) => isSecretariaActiveStatus(item.status))
   || secretariaInstitutionalState.schools?.[0]
   || {};
 
@@ -21946,7 +22032,7 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
       const context = await client.getContext({ requireAuthenticated: true, allowedRoles: secretariaAllowedRoles });
       const options = { requireAuthenticated: true, allowedRoles: secretariaAllowedRoles };
       const [
-        schools,
+        authorizedSchools,
         profiles,
         teachers,
         classes,
@@ -21970,7 +22056,11 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
         communicationDeliverySummaries,
         academicCore,
       ] = await Promise.all([
-        client.request("schools", "?select=id,nome,codigo_inep,municipio,estado,status&order=nome.asc", options),
+        client.request("rpc/secretaria_list_authorized_schools", "", {
+          ...options,
+          method: "POST",
+          body: "{}",
+        }),
         client.request("rpc/secretaria_list_staff_profiles", "", {
           ...options,
           method: "POST",
@@ -22062,13 +22152,12 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
           body: "{}",
         }).catch(() => ({})),
       ]);
-
-      Object.assign(secretariaInstitutionalState, {
-        status: "ready",
-        error: "",
-        loadedAt: new Date().toISOString(),
+      const selectedSchool = resolveSecretariaSelectedSchool(authorizedSchools || []);
+      const selectedSchoolId = selectedSchool?.id || "";
+      if (selectedSchoolId) setStoredSecretariaSchoolId(selectedSchoolId);
+      const scoped = normalizeSecretariaSchoolScopedData({
         context,
-        schools: schools || [],
+        schools: authorizedSchools || [],
         profiles: profiles || [],
         teachers: teachers || [],
         classes: classes || [],
@@ -22097,12 +22186,55 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
         classScheduleSlots: academicCore?.class_schedule_slots || [],
         academicImportBatches: academicCore?.import_batches || [],
         academicImportRows: academicCore?.import_rows || [],
+      }, selectedSchoolId);
+
+      Object.assign(secretariaInstitutionalState, {
+        status: "ready",
+        error: "",
+        loadedAt: new Date().toISOString(),
+        context,
+        selectedSchoolId,
+        authorizedSchools: authorizedSchools || [],
+        schools: scoped.schools,
+        profiles: scoped.profiles,
+        teachers: scoped.teachers,
+        classes: scoped.classes,
+        students: scoped.students,
+        enrollments: scoped.enrollments,
+        enrollmentMovements: scoped.enrollmentMovements,
+        guardians: scoped.guardians,
+        institutionalGuardians: scoped.institutionalGuardians,
+        guardianLinks: scoped.guardianLinks,
+        classTeacherMemberships: scoped.classTeacherMemberships,
+        teacherClassMovements: scoped.teacherClassMovements,
+        schoolMemberships: scoped.schoolMemberships,
+        documentTypes: scoped.documentTypes,
+        studentDocuments: scoped.studentDocuments,
+        studentDocumentEvents: scoped.studentDocumentEvents,
+        attendanceRecords: scoped.attendanceRecords,
+        attendanceEvents: scoped.attendanceEvents,
+        classDiaryEntries: scoped.classDiaryEntries,
+        communications: scoped.communications,
+        communicationEvents: scoped.communicationEvents,
+        communicationDeliverySummaries: scoped.communicationDeliverySummaries,
+        schoolAccessDailyEvents: [],
+        schoolAccessHistory: [],
+        schoolAccessKey: "",
+        academicYears: scoped.academicYears,
+        academicTerms: scoped.academicTerms,
+        schoolDays: scoped.schoolDays,
+        classSubjects: scoped.classSubjects,
+        classScheduleSlots: scoped.classScheduleSlots,
+        academicImportBatches: scoped.academicImportBatches,
+        academicImportRows: scoped.academicImportRows,
       });
       return secretariaInstitutionalState;
     } catch (error) {
       Object.assign(secretariaInstitutionalState, {
         status: "error",
         error: error.message || "Não foi possível carregar a Secretaria pelo Supabase.",
+        selectedSchoolId: "",
+        authorizedSchools: [],
         schools: [],
         profiles: [],
         teachers: [],
@@ -22607,6 +22739,8 @@ const secretariaStudentMovements = (student, index = buildSecretariaIndex()) =>
 const secretariaLink = (view, extra = {}) => {
   const params = new URLSearchParams();
   params.set("view", view);
+  const schoolId = secretariaInstitutionalState.selectedSchoolId || getRequestedSecretariaSchoolId();
+  if (schoolId) params.set("school", schoolId);
   Object.entries(extra).forEach(([key, value]) => {
     if (value) params.set(key, value);
   });
@@ -23047,7 +23181,8 @@ const renderSecretariaNav = (currentView) => {
 };
 
 const renderSecretariaGlobalHeader = (index = buildSecretariaIndex()) => {
-  const school = (secretariaInstitutionalState.schools || []).find((item) => isSecretariaActiveStatus(item.status)) || secretariaInstitutionalState.schools?.[0] || {};
+  const school = getSecretariaPrimarySchool();
+  const authorizedSchools = secretariaInstitutionalState.authorizedSchools || [];
   const role = secretariaInstitutionalState.context?.role || "perfil autorizado";
   return `
     <header class="secretaria-global-header" aria-label="Contexto autenticado da Secretaria">
@@ -23063,7 +23198,9 @@ const renderSecretariaGlobalHeader = (index = buildSecretariaIndex()) => {
         ${secretariaInlineIcon("escola")}
         <div>
           <small>Escola atual</small>
-          <strong>${htmlEscape(normalizeSchoolName(school) || "Escola nao carregada")}</strong>
+          <select class="secretaria-context-select" data-secretaria-school-selector aria-label="Selecionar escola atual da Secretaria">
+            ${authorizedSchools.map((item) => `<option value="${htmlEscape(item.id)}" ${item.id === school.id ? "selected" : ""}>${htmlEscape(normalizeSchoolName(item))}</option>`).join("")}
+          </select>
         </div>
       </div>
     </header>
@@ -24832,6 +24969,49 @@ const renderSecretariaDashboard = () => `
 const initSecretariaInstitutional = () => {
   const area = document.querySelector("[data-secretaria-v1]");
   if (!area) return;
+  const schoolSelector = area.querySelector("[data-secretaria-school-selector]");
+  if (schoolSelector) {
+    schoolSelector.addEventListener("change", () => {
+      const schoolId = schoolSelector.value || "";
+      setStoredSecretariaSchoolId(schoolId);
+      Object.assign(secretariaAvaliaResultsState, { status: "idle", schoolId: "", result: null, promise: null });
+      Object.assign(secretariaAnalyticsState, { status: "idle", key: "", result: null, promise: null });
+      Object.assign(secretariaCalendarState, { status: "idle", key: "", events: [], promise: null });
+      Object.assign(secretariaDiaryPeriodState, { status: "idle", key: "", summary: null, promise: null });
+      Object.assign(officialReportsState.secretaria, { status: "idle", key: "", result: null, promise: null });
+      Object.assign(secretariaInstitutionalState, {
+        status: "idle",
+        lastCreateResult: null,
+        lastGuardianResult: null,
+        lastEnrollmentMovementResult: null,
+        lastTeacherClassResult: null,
+        lastDocumentResult: null,
+        lastAttendanceResult: null,
+        lastCommunicationResult: null,
+        lastSchoolAccessResult: null,
+        lastCalendarResult: null,
+        lastAcademicResult: null,
+        lastImportResult: null,
+        schoolAccessDailyEvents: [],
+        schoolAccessHistory: [],
+        schoolAccessKey: "",
+      });
+      const params = getSecretariaParams();
+      params.set("view", getSecretariaCurrentView());
+      if (schoolId) params.set("school", schoolId);
+      else params.delete("school");
+      ["student", "class", "teacher", "guardian"].forEach((key) => params.delete(key));
+      window.location.href = `${window.location.pathname}?${params.toString()}`;
+    });
+  }
+  area.querySelectorAll("form[method='get'][action='secretaria.html']").forEach((form) => {
+    if (form.querySelector("input[name='school']")) return;
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "school";
+    input.value = secretariaInstitutionalState.selectedSchoolId || getRequestedSecretariaSchoolId();
+    form.prepend(input);
+  });
   document.querySelectorAll("[data-secretaria-back]").forEach((backButton) => backButton.addEventListener("click", () => {
     navigatePlatformBack();
   }));

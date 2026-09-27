@@ -4055,6 +4055,18 @@
   font: 800 1.02rem Poppins, sans-serif;
 }
 
+.secretaria-context-select {
+  display: block;
+  width: min(100%, 380px);
+  margin-top: 5px;
+  border: 1px solid rgba(15, 111, 69, 0.22);
+  border-radius: 8px;
+  background: #f8fff9;
+  color: var(--rs-ink);
+  font: 800 1.02rem Poppins, sans-serif;
+  padding: 8px 36px 8px 10px;
+}
+
 .secretaria-avatar {
   display: inline-grid;
   place-items: center;
