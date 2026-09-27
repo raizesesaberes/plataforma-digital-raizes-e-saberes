@@ -24295,12 +24295,18 @@ const renderSecretariaEnrollmentsView = (index) => {
 
 const renderSecretariaNewGuardianView = (index) => {
   const params = getSecretariaParams();
+  const selectedSchool = getSecretariaPrimarySchool();
+  const selectedSchoolId = selectedSchool.id || "";
   const selectedStudentId = params.get("student") || "";
   const activeStudents = (secretariaInstitutionalState.students || [])
-    .filter((student) => isSecretariaActiveStatus(student.status))
+    .filter((student) => isSecretariaActiveStatus(student.status) && (!selectedSchoolId || student.school_id === selectedSchoolId))
     .sort((a, b) => normalizeStudentName(a).localeCompare(normalizeStudentName(b), "pt-BR"));
+  const activeStudentIds = new Set(activeStudents.map((student) => student.id));
+  const guardianIdsInSchoolContext = new Set((secretariaInstitutionalState.guardians || [])
+    .filter((link) => activeStudentIds.has(link.student_id))
+    .map((link) => link.guardian_id));
   const existingGuardians = (secretariaInstitutionalState.institutionalGuardians || [])
-    .filter((guardian) => isSecretariaActiveStatus(guardian.status))
+    .filter((guardian) => isSecretariaActiveStatus(guardian.status) && (!selectedSchoolId || guardian.school_id === selectedSchoolId || guardianIdsInSchoolContext.has(guardian.id)))
     .sort((a, b) => String(a.full_name || "").localeCompare(String(b.full_name || ""), "pt-BR"));
   const result = secretariaInstitutionalState.lastGuardianResult;
   return `
@@ -24310,6 +24316,10 @@ const renderSecretariaNewGuardianView = (index) => {
         <a href="${secretariaLink("responsaveis")}">Voltar para responsaveis</a>
       </div>
       <form data-secretaria-guardian-form>
+        <div class="secretaria-context-field">
+          <span>Escola</span>
+          <strong>${htmlEscape(normalizeSchoolName(selectedSchool) || "Escola não informada")}</strong>
+        </div>
         <div class="qb-builder-grid">
           <label>
             <span>Aluno</span>
@@ -24326,15 +24336,15 @@ const renderSecretariaNewGuardianView = (index) => {
           </label>
           <label>
             <span>Nome completo</span>
-            <input name="full_name" autocomplete="off" placeholder="Responsável Fictício de Homologação" />
+            <input name="full_name" autocomplete="off" placeholder="Nome completo do responsável" />
           </label>
           <label>
             <span>E-mail</span>
-            <input name="email" type="email" autocomplete="off" placeholder="responsavel.homologacao@example.test" />
+            <input name="email" type="email" autocomplete="off" placeholder="email@dominio.com.br" />
           </label>
           <label>
             <span>Telefone</span>
-            <input name="phone" autocomplete="off" placeholder="+55 11 90000-0000" />
+            <input name="phone" autocomplete="off" placeholder="(00) 00000-0000" />
           </label>
           <label>
             <span>Vínculo</span>
@@ -25629,10 +25639,15 @@ const initSecretariaInstitutional = () => {
       const index = buildSecretariaIndex();
       const student = index.studentById.get(studentId);
       const enrollment = secretariaStudentEnrollment(student, index);
+      const contextSchoolId = secretariaInstitutionalState.selectedSchoolId || getSecretariaPrimarySchool().id || "";
       const duplicate = guardianId ? null : findSecretariaDuplicateGuardian({ fullName, email, phone, schoolId: enrollment?.school_id }, index);
       const existingLink = duplicate ? (index.guardianLinksByGuardian[duplicate.id] || []).find((link) => link.student_id === studentId && link.relationship === relationship) : null;
       if (!student?.id || (!guardianId && !fullName)) {
         if (message) message.textContent = "Selecione o aluno e informe o responsavel ou escolha um existente.";
+        return;
+      }
+      if (!contextSchoolId || enrollment?.school_id !== contextSchoolId || student.school_id !== contextSchoolId) {
+        if (message) message.textContent = "Selecione um aluno da escola atualmente selecionada.";
         return;
       }
       if (existingLink) {
