@@ -13319,8 +13319,11 @@ const adminHumanizeBulkImportConfirmError = (error) => {
   if (/student_guardian_links_relationship_check|23514|relationship|vinculo de responsavel|vínculo de responsável/i.test(message)) {
     return "A implantação não foi concluída. Foi encontrada uma inconsistência no vínculo entre responsável e aluno. Nenhum dado foi confirmado.";
   }
+  if (/Pacote contem registros invalidos|Pacote contém registros inválidos|invalidos|inválidos/i.test(message)) {
+    return "A implantação não foi concluída. Foi encontrada uma inconsistência entre as abas da planilha. Nenhum dado foi confirmado.";
+  }
   if (/Supabase|PGRST|constraint|violates|uuid|json/i.test(message)) {
-    return "A implantação não foi concluída. Revise o relatório do preview e tente novamente após corrigir as inconsistências.";
+    return "A implantação não foi concluída. Nenhum dado foi confirmado. Tente novamente ou acione o suporte com o relatório do lote.";
   }
   return message || "Não foi possível confirmar a importação.";
 };

@@ -11923,7 +11923,7 @@ td {
 .admin-sidebar {
   display: grid;
   grid-template-rows: auto auto 1fr;
-  gap: 16px;
+  gap: 18px;
   max-height: 100vh;
   overflow: auto;
   padding: 18px;
@@ -11932,17 +11932,19 @@ td {
 }
 
 .admin-sidebar-logo {
-  min-height: 176px;
+  min-height: 190px;
   display: grid;
   place-items: center;
-  padding: 8px 4px 16px;
+  padding: 8px 4px 18px;
   color: #fff;
   text-decoration: none;
 }
 
 .admin-sidebar-logo img {
   width: min(100%, 154px);
+  max-height: 172px;
   height: auto;
+  object-fit: contain;
   filter: drop-shadow(0 16px 20px rgba(0, 0, 0, 0.24));
 }
 
