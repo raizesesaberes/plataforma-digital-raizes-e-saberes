@@ -10864,6 +10864,32 @@ const adminBulkImportTemplates = {
   },
 };
 
+const adminBulkFriendlyMappingFields = [
+  ["tipo", "Tipo de importação"],
+  ["nome_escola", "Nome da escola"],
+  ["codigo_escola", "Código da escola"],
+  ["municipio", "Município"],
+  ["estado", "Estado/UF"],
+  ["diretor", "Diretor(a)"],
+  ["ano_letivo", "Ano letivo"],
+  ["nome_turma", "Nome da turma"],
+  ["ano_serie", "Ano/Série"],
+  ["turno", "Turno"],
+  ["faixa_etaria", "Faixa/etapa"],
+  ["nome_professor", "Nome do professor"],
+  ["email_professor", "E-mail do professor"],
+  ["componente", "Componente/área"],
+  ["nome_aluno", "Nome do aluno"],
+  ["data_nascimento", "Data de nascimento"],
+  ["nome_responsavel", "Nome do responsável"],
+  ["email_responsavel", "E-mail do responsável"],
+  ["telefone_responsavel", "Telefone"],
+  ["parentesco", "Vínculo/parentesco"],
+  ["principal", "Responsável principal"],
+  ["status", "Status"],
+  ["funcao", "Papel/função"],
+];
+
 const adminUnifiedBulkImportSheets = [
   { name: "ESCOLAS", type: "school" },
   { name: "TURMAS", type: "class" },
@@ -13007,9 +13033,21 @@ const adminParseBulkColumnMapping = (value = "") => {
   if (!trimmed) return {};
   const parsed = JSON.parse(trimmed);
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw new Error("Mapeamento de colunas precisa ser um objeto JSON.");
+    throw new Error("Mapeamento de colunas inválido.");
   }
   return parsed;
+};
+
+const adminBuildFriendlyBulkColumnMapping = (form) => {
+  const legacyMapping = adminParseBulkColumnMapping(String(form?.querySelector?.("[name='column_mapping']")?.value || ""));
+  const visualMapping = Array.from(form?.querySelectorAll?.("[data-admin-bulk-mapping-row]") || [])
+    .reduce((acc, row) => {
+      const source = String(row.querySelector("[data-admin-mapping-source]")?.value || "").trim();
+      const target = String(row.querySelector("[data-admin-mapping-target]")?.value || "").trim();
+      if (source && target) acc[source] = target;
+      return acc;
+    }, {});
+  return { ...legacyMapping, ...visualMapping };
 };
 
 const adminLoadXlsxReader = () => new Promise((resolve, reject) => {
@@ -13470,15 +13508,34 @@ const renderAdminAssistedImportPanel = (summary) => {
             </div>
             <div class="admin-template-download">
               <div>
-                <strong>Opção recomendada: baixar e preencher o modelo oficial</strong>
-                <span>Escolha o tipo acima e baixe uma planilha com cabeçalhos oficiais, exemplos e instruções. Não precisa editar JSON.</span>
+                <strong>Modelo oficial Raízes e Saberes — recomendado</strong>
+                <span>Escolha o tipo acima, baixe a planilha oficial, preencha e envie. A plataforma reconhece os campos automaticamente.</span>
               </div>
               <button type="button" data-admin-download-bulk-template>${adminInlineIcon("download", "Baixar modelo")}</button>
             </div>
-            <label class="admin-bulk-mapping">
-              <span>Opção alternativa: importar planilha própria e mapear colunas</span>
-              <textarea name="column_mapping" rows="3" placeholder='{"Nome da Escola":"nome_escola","Código INEP":"codigo_escola"}'></textarea>
-            </label>
+            <input type="hidden" name="column_mapping" value="" />
+            <details class="admin-bulk-custom-mapping">
+              <summary>
+                <span>Tenho minha própria planilha</span>
+                <strong>Mapear colunas</strong>
+              </summary>
+              <p>Use esta opção apenas quando não estiver usando o modelo oficial. Relacione as colunas da sua planilha aos campos da plataforma.</p>
+              <div class="admin-bulk-mapping-table" aria-label="Mapeamento visual de colunas">
+                <div class="admin-bulk-mapping-head">
+                  <span>Coluna da sua planilha</span>
+                  <span>Campo da plataforma</span>
+                </div>
+                ${Array.from({ length: 8 }).map(() => `
+                  <div class="admin-bulk-mapping-row" data-admin-bulk-mapping-row>
+                    <input type="text" data-admin-mapping-source placeholder="Ex.: Nome estudante" autocomplete="off" />
+                    <select data-admin-mapping-target>
+                      <option value="">Selecione o campo</option>
+                      ${adminBulkFriendlyMappingFields.map(([value, label]) => `<option value="${printableEscape(value)}">${printableEscape(label)}</option>`).join("")}
+                    </select>
+                  </div>
+                `).join("")}
+              </div>
+            </details>
             <div class="admin-import-actions">
               <button type="submit">${adminInlineIcon("check", "Pré-visualizar e validar")}</button>
               <button type="button" class="is-primary" data-admin-bulk-import-confirm ${canConfirm ? "" : "disabled"}>${adminInlineIcon("clipboard", confirmLabel)}</button>
@@ -14213,7 +14270,7 @@ const initAdminWorkspace = () => {
         const requestedImportType = String(formData.get("import_type") || "auto");
         const rpcImportType = requestedImportType === "network_unified" ? "auto" : requestedImportType;
         const parsed = await adminReadBulkImportFile(file, requestedImportType);
-        const mapping = adminParseBulkColumnMapping(String(formData.get("column_mapping") || ""));
+        const mapping = adminBuildFriendlyBulkColumnMapping(bulkImportForm);
         const rows = adminApplyBulkColumnMapping(parsed.rows, mapping);
         if (!rows.length) throw new Error("Arquivo sem linhas válidas para preview.");
         adminBulkImportState.rows = rows;
