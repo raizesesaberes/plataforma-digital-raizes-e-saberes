@@ -10656,6 +10656,7 @@ const adminRsSchoolControlledImportPackage = {
 
 const adminBulkImportEntityOptions = [
   { value: "auto", label: "Identificar automaticamente por coluna tipo" },
+  { value: "network_unified", label: "Rede completa — Importação unificada" },
   { value: "school", label: "Escolas" },
   { value: "class", label: "Turmas" },
   { value: "teacher", label: "Professores" },
@@ -10861,6 +10862,29 @@ const adminBulkImportTemplates = {
       ["Parentesco", "Opcional", "mãe, pai, responsável, tutor etc.", "Texto"],
     ],
   },
+};
+
+const adminUnifiedBulkImportSheets = [
+  { name: "ESCOLAS", type: "school" },
+  { name: "TURMAS", type: "class" },
+  { name: "PROFESSORES", type: "teacher" },
+  { name: "ALUNOS", type: "student" },
+  { name: "RESPONSAVEIS", type: "guardian" },
+  { name: "MATRICULAS", type: "enrollment" },
+  { name: "PROFESSOR_TURMA", type: "teacher_class_link" },
+  { name: "RESPONSAVEL_ALUNO", type: "guardian_student_link" },
+];
+
+adminBulkImportTemplates.network_unified = {
+  label: "Rede completa — Importação unificada",
+  fileName: "modelo-implantacao-rede-completa-raizes-e-saberes.xlsx",
+  sheets: adminUnifiedBulkImportSheets,
+  instructions: [
+    ["Rede completa", "Obrigatório", "Use uma aba por entidade. O preview global valida todas antes de persistir.", "XLSX"],
+    ["Ordem lógica", "Obrigatório", "Escolas → Turmas/Professores/Alunos → Matrículas/Vínculos.", "Automática"],
+    ["Referências", "Obrigatório", "Use o mesmo Código da Escola nas abas relacionadas.", "Código estável"],
+    ["Confirmação", "Obrigatório", "Só confirme após o preview global ficar sem erros.", "Confirmar implantação da rede"],
+  ],
 };
 
 const adminBulkImportState = {
@@ -12811,6 +12835,13 @@ const adminSelectedBulkImportTemplate = (importType = "") => {
   return adminBulkImportTemplates[key] || null;
 };
 
+const adminNormalizeWorksheetName = (value = "") => String(value || "")
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .replace(/[^a-zA-Z0-9]+/g, "_")
+  .replace(/^_+|_+$/g, "")
+  .toUpperCase();
+
 const adminBuildTemplateInstructions = (template) => ([
   ["Modelo Oficial", template.label],
   ["Como usar", "Preencha a aba DADOS, mantenha os cabeçalhos oficiais e envie a planilha em Admin > Implantação."],
@@ -12820,6 +12851,33 @@ const adminBuildTemplateInstructions = (template) => ([
   ["Campo", "Obrigatório", "Descrição", "Formato esperado"],
   ...template.instructions,
 ]);
+
+const adminBuildUnifiedTemplateInstructions = (template) => {
+  const rows = [
+    ["Modelo Oficial", template.label],
+    ["Como usar", "Selecione Rede completa — Importação unificada, baixe este XLSX, preencha as abas necessárias e envie o mesmo arquivo em Admin > Implantação."],
+    ["Fluxo recomendado", "Baixar modelo → preencher abas → upload → preview global → corrigir erros → Confirmar implantação da rede."],
+    ["Persistência", "A confirmação é feita somente depois do preview global. Reenviar a mesma planilha não deve duplicar registros."],
+    ["Referências", "Turmas, professores, alunos, matrículas e vínculos devem usar o Código da Escola da aba ESCOLAS ou de uma escola já cadastrada."],
+    [],
+    ["Aba", "Tipo", "Contrato", "Observação"],
+  ];
+  template.sheets.forEach((sheet) => {
+    const source = adminBulkImportTemplates[sheet.type];
+    rows.push([sheet.name, source?.label || sheet.type, (source?.headers || []).join(", "), "Campos iguais ao modelo individual homologado."]);
+  });
+  rows.push([]);
+  rows.push(["Dependência", "Regra"]);
+  [
+    ["ESCOLA → TURMA", "Turma usa Código da Escola."],
+    ["ESCOLA → PROFESSOR", "Professor usa Código da Escola."],
+    ["ESCOLA → ALUNO", "Aluno usa Código da Escola."],
+    ["ALUNO + TURMA → MATRICULA", "Matrícula usa Nome do Aluno, Nome da Turma, Código da Escola e Ano Letivo."],
+    ["PROFESSOR + TURMA → VINCULO", "Vínculo usa professor, turma e escola."],
+    ["RESPONSAVEL + ALUNO → VINCULO", "Vínculo usa responsável, aluno e escola."],
+  ].forEach((row) => rows.push(row));
+  return rows;
+};
 
 const adminCsvEscapeCell = (value = "") => {
   const text = String(value ?? "");
@@ -12844,6 +12902,20 @@ const adminDownloadBulkImportTemplate = async (importType = "") => {
   try {
     const XLSX = await adminLoadXlsxReader();
     const workbook = XLSX.utils.book_new();
+    if (template.sheets?.length) {
+      template.sheets.forEach((sheet) => {
+        const source = adminBulkImportTemplates[sheet.type];
+        if (!source) return;
+        const worksheet = XLSX.utils.aoa_to_sheet([source.headers, ...source.rows]);
+        worksheet["!cols"] = source.headers.map((header) => ({ wch: Math.max(18, String(header).length + 4) }));
+        XLSX.utils.book_append_sheet(workbook, worksheet, sheet.name);
+      });
+      const instructionSheet = XLSX.utils.aoa_to_sheet(adminBuildUnifiedTemplateInstructions(template));
+      instructionSheet["!cols"] = [{ wch: 26 }, { wch: 28 }, { wch: 96 }, { wch: 46 }];
+      XLSX.utils.book_append_sheet(workbook, instructionSheet, "INSTRUCOES");
+      XLSX.writeFile(workbook, template.fileName);
+      return;
+    }
     const dataSheet = XLSX.utils.aoa_to_sheet([template.headers, ...template.rows]);
     const instructionSheet = XLSX.utils.aoa_to_sheet(adminBuildTemplateInstructions(template));
     dataSheet["!cols"] = template.headers.map((header) => ({ wch: Math.max(18, String(header).length + 4) }));
@@ -12852,6 +12924,17 @@ const adminDownloadBulkImportTemplate = async (importType = "") => {
     XLSX.utils.book_append_sheet(workbook, instructionSheet, "INSTRUCOES");
     XLSX.writeFile(workbook, template.fileName);
   } catch (error) {
+    if (template.sheets?.length) {
+      const rows = [
+        ["Aba", "Tipo", "Cabeçalhos"],
+        ...template.sheets.map((sheet) => {
+          const source = adminBulkImportTemplates[sheet.type];
+          return [sheet.name, source?.label || sheet.type, (source?.headers || []).join(" | ")];
+        }),
+      ].map((row) => row.map(adminCsvEscapeCell).join(";")).join("\n");
+      adminDownloadTextFile(template.fileName.replace(/\.xlsx$/i, ".csv"), rows);
+      return;
+    }
     const rows = [template.headers, ...template.rows]
       .map((row) => row.map(adminCsvEscapeCell).join(";"))
       .join("\n");
@@ -12859,13 +12942,37 @@ const adminDownloadBulkImportTemplate = async (importType = "") => {
   }
 };
 
-const adminReadBulkImportFile = async (file) => {
+const adminReadBulkImportFile = async (file, importType = "auto") => {
   if (!file) throw new Error("Selecione um arquivo CSV ou XLSX.");
   const extension = file.name.split(".").pop()?.toLowerCase() || "";
   if (extension === "xlsx" || file.type.includes("spreadsheet")) {
     const XLSX = await adminLoadXlsxReader();
     const buffer = await file.arrayBuffer();
     const workbook = XLSX.read(buffer, { type: "array" });
+    if (importType === "network_unified") {
+      const rows = [];
+      const columns = new Set(["tipo", "_aba", "_linha"]);
+      const sheetsByName = new Map(workbook.SheetNames.map((name) => [adminNormalizeWorksheetName(name), name]));
+      adminUnifiedBulkImportSheets.forEach((expectedSheet) => {
+        const actualName = sheetsByName.get(adminNormalizeWorksheetName(expectedSheet.name));
+        if (!actualName) return;
+        const sheet = workbook.Sheets[actualName];
+        const jsonRows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        jsonRows.forEach((row, index) => {
+          const normalizedRow = { tipo: expectedSheet.type, _aba: expectedSheet.name, _linha: String(index + 2) };
+          Object.entries(row).forEach(([key, value]) => {
+            const canonical = adminCanonicalBulkImportHeader(key);
+            normalizedRow[canonical] = String(value ?? "").trim();
+            columns.add(canonical);
+          });
+          if (Object.entries(normalizedRow).some(([key, value]) => !["tipo", "_aba", "_linha"].includes(key) && String(value || "").trim())) {
+            rows.push(normalizedRow);
+          }
+        });
+      });
+      if (!rows.length) throw new Error("Modelo unificado sem linhas preenchidas nas abas oficiais.");
+      return { rows, columns: Array.from(columns), sourceFormat: "XLSX", unified: true };
+    }
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const jsonRows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
     const rows = jsonRows.map((row) => Object.entries(row).reduce((acc, [key, value]) => {
@@ -12874,11 +12981,14 @@ const adminReadBulkImportFile = async (file) => {
     }, {}));
     return { rows, columns: rows[0] ? Object.keys(rows[0]) : [], sourceFormat: "XLSX" };
   }
+  if (importType === "network_unified") {
+    throw new Error("A importação unificada da rede exige XLSX com abas oficiais.");
+  }
   const text = await file.text();
   return { ...adminParseCsvText(text), sourceFormat: "CSV" };
 };
 
-const adminBulkImportPreviewContractVersion = "admin-import-preview-idempotency-v2";
+const adminBulkImportPreviewContractVersion = "admin-import-preview-unified-v4";
 
 const adminFormatBulkImportReport = (preview = null) => {
   const report = preview?.report || {};
@@ -12916,11 +13026,13 @@ const adminHumanBulkImportError = (error = {}) => {
 
 const adminRenderBulkImportErrors = (errors = []) => {
   if (!errors.length) return `<p class="admin-content-muted">Nenhum erro de linha encontrado.</p>`;
+  const hasSheet = errors.some((error) => error.sheet || error.aba);
   return `
     <div class="admin-import-errors" role="table" aria-label="Erros de importação">
-      <div role="row"><strong>Linha</strong><strong>Campo</strong><strong>Motivo</strong></div>
+      <div role="row">${hasSheet ? "<strong>Aba</strong>" : ""}<strong>Linha</strong><strong>Campo</strong><strong>Motivo</strong></div>
       ${errors.slice(0, 80).map((error) => `
         <div role="row">
+          ${hasSheet ? `<span>${printableEscape(error.sheet || error.aba || "-")}</span>` : ""}
           <span>${printableEscape(String(error.row || "-"))}</span>
           <span>${printableEscape(error.field || "-")}</span>
           <span>${printableEscape(adminHumanBulkImportError(error))}</span>
@@ -13114,6 +13226,8 @@ const renderAdminAssistedImportPanel = (summary) => {
   if (!summary) return "";
   const preview = adminBulkImportState.preview;
   const canConfirm = preview?.batch_id && preview?.status === "validated";
+  const selectedImportType = preview?.report?.import_type || "";
+  const confirmLabel = selectedImportType === "network_unified" ? "Confirmar implantação da rede" : "Confirmar importação";
   return `
     <section class="admin-board admin-import-board">
       <div class="admin-section-head">
@@ -13148,7 +13262,7 @@ const renderAdminAssistedImportPanel = (summary) => {
             </label>
             <div class="admin-import-actions">
               <button type="submit">${adminInlineIcon("check", "Pré-visualizar e validar")}</button>
-              <button type="button" class="is-primary" data-admin-bulk-import-confirm ${canConfirm ? "" : "disabled"}>${adminInlineIcon("clipboard", "Confirmar importação")}</button>
+              <button type="button" class="is-primary" data-admin-bulk-import-confirm ${canConfirm ? "" : "disabled"}>${adminInlineIcon("clipboard", confirmLabel)}</button>
             </div>
           </form>
         </div>
@@ -13810,7 +13924,9 @@ const initAdminWorkspace = () => {
       if (submit) submit.disabled = true;
       if (content) content.innerHTML = renderAdminWorkspaceView("implantação");
       try {
-        const parsed = await adminReadBulkImportFile(file);
+        const requestedImportType = String(formData.get("import_type") || "auto");
+        const rpcImportType = requestedImportType === "network_unified" ? "auto" : requestedImportType;
+        const parsed = await adminReadBulkImportFile(file, requestedImportType);
         const mapping = adminParseBulkColumnMapping(String(formData.get("column_mapping") || ""));
         const rows = adminApplyBulkColumnMapping(parsed.rows, mapping);
         if (!rows.length) throw new Error("Arquivo sem linhas válidas para preview.");
@@ -13824,17 +13940,18 @@ const initAdminWorkspace = () => {
           parsed.sourceFormat,
           file?.name || "planilha",
           String(file?.size || rows.length),
-          String(formData.get("import_type") || "auto"),
+          requestedImportType,
           String(formData.get("school_year") || "2026"),
         ].join(":");
         const preview = await adminInvokeNetworkBulkImportPreview({
           rows,
           sourceFormat: parsed.sourceFormat,
-          importType: String(formData.get("import_type") || "auto"),
+          importType: rpcImportType,
           schoolYear: String(formData.get("school_year") || "2026"),
           columnMapping: mapping,
           idempotencyKey,
         });
+        preview.report = { ...(preview.report || {}), import_type: requestedImportType };
         adminBulkImportState.preview = preview;
         adminBulkImportState.status = preview.status === "validated" ? "preview" : preview.status === "confirmed" ? "confirmed" : "error";
         adminBulkImportState.error = ["validated", "confirmed"].includes(preview.status) ? "" : "Preview encontrou erros. Corrija as linhas indicadas antes de confirmar.";
