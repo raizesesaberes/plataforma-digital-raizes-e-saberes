@@ -13034,6 +13034,18 @@ td {
   color: #fff;
 }
 
+.admin-school-actions a.admin-new-school-link {
+  min-width: 156px;
+  justify-content: center;
+}
+
+.admin-school-actions a.admin-new-school-link > span {
+  display: inline;
+  color: inherit;
+  font-size: 0.82rem;
+  line-height: 1;
+}
+
 .admin-school-actions button.is-danger {
   border-color: rgba(159, 29, 29, 0.22);
   background: #fee2e2;

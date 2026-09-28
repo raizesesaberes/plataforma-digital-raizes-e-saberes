@@ -13555,7 +13555,7 @@ const renderAdminSchoolsConsole = () => {
           <span>Central operacional para redes com muitas unidades</span>
         </div>
         <div class="admin-school-actions">
-          <a class="admin-primary-link" href="${adminSchoolUrl(selected?.schoolId || "", { create: "1" })}">${adminInlineIcon("plus", "+ Nova escola")}</a>
+          <a class="admin-primary-link admin-new-school-link" href="${adminSchoolUrl(selected?.schoolId || "", { create: "1" })}">${adminInlineIcon("escola")}<span>+ Nova escola</span></a>
           <a href="admin.html?view=implantação">${adminInlineIcon("upload", "Importar escolas")}</a>
         </div>
       </div>
