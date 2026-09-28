@@ -13314,6 +13314,17 @@ const adminInvokeNetworkBulkImportConfirm = async (batchId) => {
   return Array.isArray(result) ? result[0] || {} : result || {};
 };
 
+const adminHumanizeBulkImportConfirmError = (error) => {
+  const message = String(error?.message || "");
+  if (/student_guardian_links_relationship_check|23514|relationship|vinculo de responsavel|vínculo de responsável/i.test(message)) {
+    return "A implantação não foi concluída. Foi encontrada uma inconsistência no vínculo entre responsável e aluno. Nenhum dado foi confirmado.";
+  }
+  if (/Supabase|PGRST|constraint|violates|uuid|json/i.test(message)) {
+    return "A implantação não foi concluída. Revise o relatório do preview e tente novamente após corrigir as inconsistências.";
+  }
+  return message || "Não foi possível confirmar a importação.";
+};
+
 const adminInvokeRsSchoolImport = async ({ schoolId, dryRun }) => {
   await ensureAdminSupabaseConfig();
   const client = createSupabaseRestClient();
@@ -14118,7 +14129,7 @@ const initAdminWorkspace = () => {
         if (content) content.innerHTML = renderAdminWorkspaceView("implantação");
       } catch (error) {
         adminBulkImportState.status = "error";
-        adminBulkImportState.error = error.message || "Não foi possível confirmar a importação.";
+        adminBulkImportState.error = adminHumanizeBulkImportConfirmError(error);
         if (content) content.innerHTML = renderAdminWorkspaceView("implantação");
       }
       return;
