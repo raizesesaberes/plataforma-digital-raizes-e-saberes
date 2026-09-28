@@ -12436,6 +12436,7 @@ const adminSchoolFilters = () => {
     pageSize: [20, 50, 100].includes(Number(params.get("page_size"))) ? Number(params.get("page_size")) : 20,
     create: params.get("create") === "1",
     selected: params.get("school") || "",
+    section: params.get("school_section") || "summary",
   };
 };
 
@@ -12695,36 +12696,41 @@ const renderAdminSchoolsFilter = ({ filters, summaries }) => {
   return `
     <form class="admin-users-filter admin-schools-filter" action="admin.html" method="get">
       <input type="hidden" name="view" value="escolas" />
-      <label><span>Buscar</span><input name="q" value="${printableEscape(filters.query)}" placeholder="Nome, código, município ou diretor" /></label>
-      <label><span>Status</span><select name="status">
-        <option value="all">Todos</option>
-        <option value="active" ${filters.status === "active" ? "selected" : ""}>Ativas</option>
-        <option value="inactive" ${filters.status === "inactive" ? "selected" : ""}>Inativas</option>
-        <option value="archived" ${filters.status === "archived" ? "selected" : ""}>Arquivadas</option>
-      </select></label>
-      <label><span>Implantação</span><select name="implementation">
-        <option value="all">Todas</option>
-        ${implementations.map((status) => `<option value="${printableEscape(status)}" ${filters.implementation === status ? "selected" : ""}>${printableEscape(status)}</option>`).join("")}
-      </select></label>
-      <label><span>Município</span><select name="city">
-        <option value="all">Todos</option>
-        ${cities.map((city) => `<option value="${printableEscape(city)}" ${filters.city === city ? "selected" : ""}>${printableEscape(city)}</option>`).join("")}
-      </select></label>
-      <label><span>Ano letivo</span><select name="year">
-        <option value="all">Todos</option>
-        ${years.map((year) => `<option value="${printableEscape(year)}" ${filters.year === year ? "selected" : ""}>${printableEscape(year)}</option>`).join("")}
-      </select></label>
-      <label><span>Ordenar</span><select name="sort">
-        <option value="name" ${filters.sort === "name" ? "selected" : ""}>Nome</option>
-        <option value="code" ${filters.sort === "code" ? "selected" : ""}>Código</option>
-        <option value="status" ${filters.sort === "status" ? "selected" : ""}>Status</option>
-        <option value="implementation" ${filters.sort === "implementation" ? "selected" : ""}>Implantação</option>
-      </select></label>
-      <label><span>Por página</span><select name="page_size">
-        ${[20, 50, 100].map((size) => `<option value="${size}" ${filters.pageSize === size ? "selected" : ""}>${size}</option>`).join("")}
-      </select></label>
-      <button type="submit">${adminInlineIcon("search", "Filtrar")}</button>
-      <a href="admin.html?view=escolas">Limpar</a>
+      <label class="admin-school-primary-search"><span>Buscar escola</span><input name="q" value="${printableEscape(filters.query)}" placeholder="Buscar escola por nome ou código..." /></label>
+      <button type="submit" class="admin-school-search-button">${adminInlineIcon("search", "Buscar")}</button>
+      <details class="admin-school-advanced-filters" ${filters.status !== "all" || filters.implementation !== "all" || filters.city !== "all" || filters.year !== "all" || filters.sort !== "name" || filters.pageSize !== 20 ? "open" : ""}>
+        <summary>Filtros avançados</summary>
+        <div>
+          <label><span>Status</span><select name="status">
+            <option value="all">Todos</option>
+            <option value="active" ${filters.status === "active" ? "selected" : ""}>Ativas</option>
+            <option value="inactive" ${filters.status === "inactive" ? "selected" : ""}>Inativas</option>
+            <option value="archived" ${filters.status === "archived" ? "selected" : ""}>Arquivadas</option>
+          </select></label>
+          <label><span>Implantação</span><select name="implementation">
+            <option value="all">Todas</option>
+            ${implementations.map((status) => `<option value="${printableEscape(status)}" ${filters.implementation === status ? "selected" : ""}>${printableEscape(status)}</option>`).join("")}
+          </select></label>
+          <label><span>Município</span><select name="city">
+            <option value="all">Todos</option>
+            ${cities.map((city) => `<option value="${printableEscape(city)}" ${filters.city === city ? "selected" : ""}>${printableEscape(city)}</option>`).join("")}
+          </select></label>
+          <label><span>Ano letivo</span><select name="year">
+            <option value="all">Todos</option>
+            ${years.map((year) => `<option value="${printableEscape(year)}" ${filters.year === year ? "selected" : ""}>${printableEscape(year)}</option>`).join("")}
+          </select></label>
+          <label><span>Ordenar</span><select name="sort">
+            <option value="name" ${filters.sort === "name" ? "selected" : ""}>Nome</option>
+            <option value="code" ${filters.sort === "code" ? "selected" : ""}>Código</option>
+            <option value="status" ${filters.sort === "status" ? "selected" : ""}>Status</option>
+            <option value="implementation" ${filters.sort === "implementation" ? "selected" : ""}>Implantação</option>
+          </select></label>
+          <label><span>Por página</span><select name="page_size">
+            ${[20, 50, 100].map((size) => `<option value="${size}" ${filters.pageSize === size ? "selected" : ""}>${size}</option>`).join("")}
+          </select></label>
+          <a href="admin.html?view=escolas">Limpar filtros</a>
+        </div>
+      </details>
     </form>
   `;
 };
@@ -12739,17 +12745,17 @@ const renderAdminSchoolLocator = ({ summaries, selectedId, filters }) => {
   return `
     ${renderAdminSchoolsFilter({ filters, summaries })}
     <div class="admin-school-table" role="table" aria-label="Localizador de escolas">
-      <div role="row">
-        <strong>Escola</strong><strong>Código</strong><strong>Município/UF</strong><strong>Ano</strong><strong>Status</strong><strong>Implantação</strong>
+      <div class="admin-school-table-head" role="row">
+        <strong>Escola</strong><strong>Código</strong><strong>Município/UF</strong><strong>Status</strong><strong>Implantação</strong><strong>Ação</strong>
       </div>
       ${paginated.rows.map((summary) => `
-        <a role="row" class="${summary.schoolId === selectedId ? "is-active" : ""}" href="${adminSchoolUrl(summary.schoolId, { page: paginated.page, page_size: filters.pageSize, q: filters.query, status: filters.status, implementation: filters.implementation, city: filters.city, year: filters.year, sort: filters.sort })}" data-admin-search-item>
-          <span><strong>${printableEscape(summary.name)}</strong><small>${printableEscape(summary.diretor || "Responsável não informado")}</small></span>
+        <a role="row" class="admin-school-table-row ${summary.schoolId === selectedId ? "is-active" : ""}" href="${adminSchoolUrl(summary.schoolId, { page: paginated.page, page_size: filters.pageSize, q: filters.query, status: filters.status, implementation: filters.implementation, city: filters.city, year: filters.year, sort: filters.sort, school_section: "summary" })}" data-admin-search-item>
+          <span class="admin-school-table-name"><strong>${printableEscape(summary.name)}</strong><small>${printableEscape(summary.diretor || "Responsável não informado")}</small></span>
           <span>${printableEscape(summary.code)}</span>
           <span>${printableEscape([summary.municipio, summary.estado].filter(Boolean).join(" / ") || "Não informado")}</span>
-          <span>${printableEscape(summary.currentYear)}</span>
           <span>${renderAdminUserBadge(adminStatusLabel(summary.status), String(summary.status).toLowerCase() === "active" ? "success" : "muted")}</span>
           <span>${renderAdminUserBadge(summary.implementationStatus, summary.doneCount >= 8 ? "success" : "warning")}</span>
+          <span><b>Gerenciar</b></span>
         </a>
       `).join("")}
     </div>
@@ -12761,6 +12767,20 @@ const renderAdminSchoolLocator = ({ summaries, selectedId, filters }) => {
       </div>
     </div>
   `;
+};
+
+const adminSchoolDetailSections = [
+  ["summary", "Resumo"],
+  ["structure", "Estrutura"],
+  ["access", "Usuários e acessos"],
+  ["content", "Conteúdos"],
+  ["implementation", "Implantação"],
+  ["audit", "Auditoria"],
+];
+
+const adminActiveSchoolDetailSection = () => {
+  const requested = adminSchoolFilters().section;
+  return adminSchoolDetailSections.some(([key]) => key === requested) ? requested : "summary";
 };
 
 const adminFormatSchoolLifecycleDependencies = (dependencies = {}) => {
@@ -12800,6 +12820,70 @@ const renderAdminSchoolDetail = (summary) => {
     return `<section class="admin-board admin-user-detail"><h3>Selecione uma escola</h3><p>Escolha uma unidade no localizador para consultar estrutura, acessos, conteúdos e implantação.</p></section>`;
   }
   const active = String(summary.status || "").toLowerCase() === "active";
+  const section = adminActiveSchoolDetailSection();
+  const sectionUrl = (sectionKey) => adminSchoolUrl(summary.schoolId, { school_section: sectionKey });
+  const renderSection = () => {
+    if (section === "structure") return `
+      <section>
+        <h4>Estrutura</h4>
+        <div class="admin-school-metrics">
+          ${adminSchoolMetric("Turmas", summary.classes.filter(adminIsActive).length, "ativas")}
+          ${adminSchoolMetric("Matrículas", summary.enrollments.filter((item) => String(item.status || "").toLowerCase() === "active").length, "ativas")}
+          ${adminSchoolMetric("Ano letivo", summary.currentYear, "contexto")}
+          ${adminSchoolMetric("Gestão", summary.memberships.filter(adminIsActive).length, "vínculos")}
+        </div>
+      </section>
+    `;
+    if (section === "access") return `
+      <section>
+        <h4>Usuários e acessos</h4>
+        <div class="admin-school-metrics">
+          ${adminSchoolMetric("Acessos ativos", summary.configuredAccess, "Auth")}
+          ${adminSchoolMetric("Sem acesso", summary.pendingAccess, "operacional")}
+          ${adminSchoolMetric("Usuários", summary.schoolUsers.length, "vinculados")}
+          ${adminSchoolMetric("Responsáveis", summary.guardians.filter(adminIsActive).length, "ativos")}
+        </div>
+      </section>
+    `;
+    if (section === "content") return `
+      <section>
+        <h4>Conteúdos</h4>
+        <div class="admin-school-metrics">
+          ${adminSchoolMetric("Livros", summary.contentCounts.book || 0, "liberados")}
+          ${adminSchoolMetric("Atividades", summary.contentCounts.activity || 0, "liberadas")}
+          ${adminSchoolMetric("Jogos", summary.contentCounts.game || 0, "liberados")}
+          ${adminSchoolMetric("Experiências", summary.contentCounts.experience || 0, "liberadas")}
+          ${adminSchoolMetric("Vídeos", summary.contentCounts.vídeo || 0, "liberados")}
+          ${adminSchoolMetric("Outros", summary.contentCounts.other || 0, "liberados")}
+        </div>
+      </section>
+    `;
+    if (section === "implementation") return `
+      <section>
+        <h4>Implantação</h4>
+        ${renderAdminSchoolChecklist(summary)}
+      </section>
+    `;
+    if (section === "audit") return `
+      <section>
+        <h4>Auditoria</h4>
+        <p class="admin-content-muted">Eventos administrativos são registrados na trilha canônica de implantação da escola.</p>
+      </section>
+    `;
+    return `
+      <section>
+        <h4>Resumo</h4>
+        <div class="admin-school-metrics">
+          ${adminSchoolMetric("Turmas", summary.classes.filter(adminIsActive).length, "ativas")}
+          ${adminSchoolMetric("Alunos", summary.students.filter(adminIsActive).length, "ativos")}
+          ${adminSchoolMetric("Matrículas", summary.enrollments.filter((item) => String(item.status || "").toLowerCase() === "active").length, "ativas")}
+          ${adminSchoolMetric("Professores", summary.teachers.filter(adminIsActive).length, "ativos")}
+          ${adminSchoolMetric("Acessos", summary.configuredAccess, "configurados")}
+          ${adminSchoolMetric("Sem acesso", summary.pendingAccess, "pendentes")}
+        </div>
+      </section>
+    `;
+  };
   return `
     <section class="admin-board admin-school-detail">
       <div class="admin-school-detail-main-head">
@@ -12812,8 +12896,7 @@ const renderAdminSchoolDetail = (summary) => {
           <a href="secretaria.html?school=${printableEscape(summary.schoolId)}">${adminInlineIcon("escola", "Abrir escola")}</a>
           <button type="button" disabled>${adminInlineIcon("edit", "Editar dados")}</button>
           <button type="button" data-admin-school-validate="${printableEscape(summary.schoolId)}">${adminInlineIcon("check", "Validar escola")}</button>
-          <button type="button" class="is-primary" data-admin-school-activate="${printableEscape(summary.schoolId)}">${adminInlineIcon("escola", "Ativar escola")}</button>
-          <button type="button" data-admin-school-lifecycle="${printableEscape(summary.schoolId)}" data-admin-school-lifecycle-action="${active ? "deactivate" : "reactivate"}" data-admin-school-code="${printableEscape(summary.code)}">${adminInlineIcon("warning", active ? "Desativar" : "Reativar")}</button>
+          <button type="button" class="is-primary" data-admin-school-lifecycle="${printableEscape(summary.schoolId)}" data-admin-school-lifecycle-action="${active ? "deactivate" : "reactivate"}" data-admin-school-code="${printableEscape(summary.code)}">${adminInlineIcon("warning", active ? "Desativar escola" : "Reativar escola")}</button>
           <details class="admin-school-more-actions">
             <summary>Mais ações</summary>
             <button type="button" class="is-danger" data-admin-school-lifecycle="${printableEscape(summary.schoolId)}" data-admin-school-lifecycle-action="delete" data-admin-school-code="${printableEscape(summary.code)}">${adminInlineIcon("trash", "Excluir escola")}</button>
@@ -12826,58 +12909,12 @@ const renderAdminSchoolDetail = (summary) => {
         <article><span>Status da implantação</span><strong>${printableEscape(summary.implementationStatus)}</strong></article>
         <article><span>Ano letivo</span><strong>${printableEscape(summary.currentYear)}</strong></article>
         <article><span>Código</span><strong>${printableEscape(summary.code)}</strong></article>
-        <article><span>Pacote</span><strong>${printableEscape(summary.installation?.package_version || "Não registrado")}</strong></article>
-        <article><span>Validação</span><strong>${printableEscape(adminStatusLabel(summary.installation?.validation_status || "pending"))}</strong></article>
-        <article><span>Acessos ativos</span><strong>${printableEscape(String(summary.configuredAccess))}</strong></article>
-        <article><span>Sem acesso</span><strong>${printableEscape(String(summary.pendingAccess))}</strong></article>
       </div>
+      <nav class="admin-school-detail-nav" aria-label="Seções da escola">
+        ${adminSchoolDetailSections.map(([key, label]) => `<a class="${section === key ? "is-active" : ""}" href="${sectionUrl(key)}">${printableEscape(label)}</a>`).join("")}
+      </nav>
       <div class="admin-school-detail-tabs">
-        <section>
-          <h4>Visão geral</h4>
-          <div class="admin-school-metrics">
-            ${adminSchoolMetric("Turmas", summary.classes.filter(adminIsActive).length, "ativas")}
-            ${adminSchoolMetric("Alunos", summary.students.filter(adminIsActive).length, "ativos")}
-            ${adminSchoolMetric("Matrículas", summary.enrollments.filter((item) => String(item.status || "").toLowerCase() === "active").length, "ativas")}
-            ${adminSchoolMetric("Professores", summary.teachers.filter(adminIsActive).length, "ativos")}
-            ${adminSchoolMetric("Responsáveis", summary.guardians.filter(adminIsActive).length, "ativos")}
-            ${adminSchoolMetric("Acessos", summary.configuredAccess, "configurados")}
-          </div>
-        </section>
-        <section>
-          <h4>Estrutura</h4>
-          <div class="admin-school-metrics">
-            ${adminSchoolMetric("Gestão", summary.memberships.filter(adminIsActive).length, "vínculos")}
-            ${adminSchoolMetric("Sem acesso", summary.pendingAccess, "pendentes")}
-            ${adminSchoolMetric("Ano letivo", summary.currentYear, "contexto")}
-          </div>
-        </section>
-        <section>
-          <h4>Usuários e acessos</h4>
-          <div class="admin-school-metrics">
-            ${adminSchoolMetric("Acessos ativos", summary.configuredAccess, "Auth")}
-            ${adminSchoolMetric("Sem acesso", summary.pendingAccess, "operacional")}
-            ${adminSchoolMetric("Usuários", summary.schoolUsers.length, "vinculados")}
-          </div>
-        </section>
-        <section>
-          <h4>Conteúdos</h4>
-          <div class="admin-school-metrics">
-            ${adminSchoolMetric("Livros", summary.contentCounts.book || 0, "liberados")}
-            ${adminSchoolMetric("Atividades", summary.contentCounts.activity || 0, "liberadas")}
-            ${adminSchoolMetric("Jogos", summary.contentCounts.game || 0, "liberados")}
-            ${adminSchoolMetric("Experiências", summary.contentCounts.experience || 0, "liberadas")}
-            ${adminSchoolMetric("Vídeos", summary.contentCounts.vídeo || 0, "liberados")}
-            ${adminSchoolMetric("Outros", summary.contentCounts.other || 0, "liberados")}
-          </div>
-        </section>
-        <section>
-          <h4>Implantação</h4>
-          ${renderAdminSchoolChecklist(summary)}
-        </section>
-        <section>
-          <h4>Auditoria</h4>
-          <p class="admin-content-muted">Eventos administrativos são registrados na trilha canônica de implantação da escola.</p>
-        </section>
+        ${renderSection()}
       </div>
     </section>
   `;
