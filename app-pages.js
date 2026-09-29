@@ -519,6 +519,7 @@ const secretariaOfficialModules = [
   ["relatorios", "Relatórios", "secretaria.html?view=relatorios"],
   ["documentos", "Documentos", "secretaria.html?view=documentos"],
   ["comunicados", "Comunicados", "secretaria.html?view=comunicados"],
+  ["acessosAlunos", "Acessos dos Alunos", "secretaria.html?view=acessosAlunos"],
 ];
 
 const questionLegalClassifications = [
@@ -3995,6 +3996,7 @@ const secretariaInstitutionalState = {
   classDiaryEntries: [],
   communications: [],
   communicationEvents: [],
+  studentCredentials: [],
   schoolAccessDailyEvents: [],
   schoolAccessHistory: [],
   schoolAccessKey: "",
@@ -4013,6 +4015,7 @@ const secretariaInstitutionalState = {
   lastDocumentResult: null,
   lastAttendanceResult: null,
   lastCommunicationResult: null,
+  lastStudentAccessResult: null,
   lastSchoolAccessResult: null,
   lastCalendarResult: null,
   lastAcademicResult: null,
@@ -22144,8 +22147,8 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
 };
 
 const secretariaAllowedRoles = ["secretaria", "admin", "gestor", "coordenador"];
-const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "calendario", "avalia", "analytics", "relatorios", "comunicados", "acesso"];
-const secretariaOfficialViews = ["painel", "alunos", "matriculas", "responsaveis", "turmas", "professores", "frequencia", "calendario", "avalia", "analytics", "relatorios", "documentos", "comunicados", "acesso"];
+const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "calendario", "avalia", "analytics", "relatorios", "comunicados", "acessosAlunos", "acesso"];
+const secretariaOfficialViews = ["painel", "alunos", "matriculas", "responsaveis", "turmas", "professores", "frequencia", "calendario", "avalia", "analytics", "relatorios", "documentos", "comunicados", "acessosAlunos", "acesso"];
 const secretariaActiveStatuses = new Set(["active", "ativo"]);
 const secretariaSchoolContextStorageKey = "raizes.secretaria.selectedSchoolId";
 
@@ -22241,6 +22244,7 @@ const normalizeSecretariaSchoolScopedData = (payload = {}, selectedSchoolId = ""
     communications: (payload.communications || []).filter((item) => !selectedSchoolId || item.school_id === selectedSchoolId),
     communicationEvents: (payload.communicationEvents || []).filter((item) => (payload.communications || []).some((communication) => communication.id === item.communication_id && (!selectedSchoolId || communication.school_id === selectedSchoolId))),
     communicationDeliverySummaries: (payload.communicationDeliverySummaries || []).filter((item) => (payload.communications || []).some((communication) => communication.id === item.communication_id && (!selectedSchoolId || communication.school_id === selectedSchoolId))),
+    studentCredentials: (payload.studentCredentials || []).filter((item) => selectedStudentIds.has(item.student_id) || (!selectedSchoolId || item.school_id === selectedSchoolId)),
     academicYears: (payload.academicYears || []).filter((item) => !selectedSchoolId || item.school_id === selectedSchoolId),
     academicTerms: (payload.academicTerms || []).filter((item) => (payload.academicYears || []).some((year) => year.id === item.academic_year_id && (!selectedSchoolId || year.school_id === selectedSchoolId))),
     schoolDays: (payload.schoolDays || []).filter((item) => !selectedSchoolId || item.school_id === selectedSchoolId),
@@ -22776,6 +22780,7 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
         teachers,
         classes,
         students,
+        studentCredentials,
         enrollments,
         enrollmentMovements,
         guardians,
@@ -22820,6 +22825,7 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
           method: "POST",
           body: "{}",
         }),
+        client.request("student_institutional_credentials", "?select=id,student_id,school_id,login,status,password_version,last_reset_at,password_changed_at,last_sign_in_at,blocked_at,unblocked_at,created_at,updated_at&order=created_at.desc", options).catch(() => []),
         client.request("rpc/secretaria_list_enrollments", "", {
           ...options,
           method: "POST",
@@ -22901,6 +22907,7 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
         teachers: teachers || [],
         classes: classes || [],
         students: students || [],
+        studentCredentials: studentCredentials || [],
         enrollments: enrollments || [],
         enrollmentMovements: enrollmentMovements || [],
         guardians: guardians || [],
@@ -22939,6 +22946,7 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
         teachers: scoped.teachers,
         classes: scoped.classes,
         students: scoped.students,
+        studentCredentials: scoped.studentCredentials,
         enrollments: scoped.enrollments,
         enrollmentMovements: scoped.enrollmentMovements,
         guardians: scoped.guardians,
@@ -22979,6 +22987,7 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
         teachers: [],
         classes: [],
         students: [],
+        studentCredentials: [],
         enrollments: [],
         enrollmentMovements: [],
         guardians: [],
@@ -23018,6 +23027,7 @@ const buildSecretariaIndex = () => {
   const teacherById = new Map((state.teachers || []).map((item) => [item.id, item]));
   const classById = new Map((state.classes || []).map((item) => [item.id, item]));
   const studentById = new Map((state.students || []).map((item) => [item.id, item]));
+  const studentCredentialByStudent = new Map((state.studentCredentials || []).map((item) => [item.student_id, item]));
   const institutionalGuardianById = new Map((state.institutionalGuardians || []).map((item) => [item.id, item]));
   const enrollmentsByStudent = {};
   (state.enrollments || []).forEach((enrollment) => {
@@ -23193,6 +23203,7 @@ const buildSecretariaIndex = () => {
     teacherById,
     classById,
     studentById,
+    studentCredentialByStudent,
     institutionalGuardianById,
     enrollmentsByStudent,
     activeEnrollments,
@@ -23503,6 +23514,7 @@ const secretariaViewIcon = {
   relatorios: "doc",
   documentos: "doc",
   comunicados: "mail",
+  acessosAlunos: "key",
   acesso: "qr",
 };
 const secretariaInlineIcon = (icon, label = "") => `<i class="secretaria-icon" data-icon="${icon}" aria-hidden="true"></i>${label ? `<span>${htmlEscape(label)}</span>` : ""}`;
@@ -23889,6 +23901,43 @@ const callSecretariaCreateGuardianLink = async ({ studentId, fullName, relations
   return result;
 };
 
+const callSecretariaStudentCredentialAction = async (payload = {}) => {
+  await ensureAdminSupabaseConfig();
+  const config = getSupabaseConfig();
+  const baseUrl = config.url?.replace(/\/$/, "");
+  const session = await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: secretariaAllowedRoles });
+  if (!baseUrl || !config.anonKey) {
+    throw new Error("Serviço de credenciais indisponível.");
+  }
+  const response = await fetch(`${baseUrl}/functions/v1/student-institutional-credentials`, {
+    method: "POST",
+    headers: {
+      apikey: config.anonKey,
+      Authorization: `Bearer ${session.token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const bodyText = await response.text();
+  let body = {};
+  try {
+    body = bodyText ? JSON.parse(bodyText) : {};
+  } catch (_error) {
+    body = {};
+  }
+  if (!response.ok || body.ok === false) {
+    throw new Error(body.message || body.code || `Falha ao operar credenciais: ${response.status}`);
+  }
+  const credentials = Array.isArray(body.credentials)
+    ? body.credentials
+    : body.credential
+      ? [body.credential]
+      : [];
+  const result = { ...body, credentials };
+  secretariaInstitutionalState.lastStudentAccessResult = result;
+  return result;
+};
+
 const findSecretariaDuplicateGuardian = ({ fullName, email, phone, schoolId }, index = buildSecretariaIndex()) => {
   const normalizedName = String(fullName || "").trim().toLowerCase();
   const normalizedEmail = String(email || "").trim().toLowerCase();
@@ -23916,6 +23965,7 @@ const renderSecretariaNav = (currentView) => {
     analytics: "Analytics",
     relatorios: "Relatórios",
     comunicados: "Comunicados",
+    acessosAlunos: "Acessos dos Alunos",
     acesso: "Entrada/Saída",
   };
   return `<nav class="secretaria-official-nav" aria-label="Menu oficial da Secretaria">${secretariaOfficialViews
@@ -25094,6 +25144,224 @@ const renderSecretariaSchoolAccessView = (index) => {
   `;
 };
 
+const studentCredentialStatusLabels = {
+  active: "Ativo",
+  pending_auth: "Pendente Auth",
+  blocked: "Bloqueado",
+  archived: "Arquivado",
+};
+const studentCredentialStatusLabel = (status = "") => studentCredentialStatusLabels[String(status || "pending_auth").toLowerCase()] || secretariaStatusLabel(status);
+const studentCredentialStatusTone = (status = "") => {
+  const value = String(status || "").toLowerCase();
+  if (value === "active") return "success";
+  if (value === "blocked") return "danger";
+  if (value === "pending_auth") return "warning";
+  return "neutral";
+};
+const studentAccessLoginUrl = () => new URL("login.html", window.location.href).toString();
+const latestStudentCredentialDate = (credential = {}) =>
+  credential.last_reset_at || credential.password_changed_at || credential.updated_at || credential.created_at || "";
+const normalizeStudentAccessResultCredentials = (result = {}) =>
+  Array.isArray(result.credentials) ? result.credentials : result.credential ? [result.credential] : [];
+const studentCredentialVoucherRows = (credentials = [], index = buildSecretariaIndex()) =>
+  credentials.map((credential) => {
+    const student = index.studentById.get(credential.student_id) || {};
+    const enrollment = secretariaStudentEnrollment(student, index) || {};
+    const classItem = index.classById.get(enrollment.class_id) || {};
+    const school = index.schoolById.get(credential.school_id || student.school_id || enrollment.school_id) || getSecretariaPrimarySchool() || {};
+    return {
+      credential,
+      student,
+      classItem,
+      school,
+      login: credential.login || "",
+      password: credential.initial_password || "",
+    };
+  });
+const renderStudentCredentialResultPanel = (index = buildSecretariaIndex()) => {
+  const result = secretariaInstitutionalState.lastStudentAccessResult || null;
+  const credentials = normalizeStudentAccessResultCredentials(result);
+  if (!result || !credentials.length) {
+    return `
+      <section class="panel secretaria-access-warning">
+        <div class="panel-head"><h2>Senhas</h2><span>Segurança</span></div>
+        <p>Senhas atuais não são exibidas. A senha inicial ou temporária aparece somente logo após gerar ou redefinir o acesso.</p>
+      </section>
+    `;
+  }
+  const rows = studentCredentialVoucherRows(credentials, index);
+  const withPasswords = rows.filter((row) => row.password);
+  return `
+    <section class="panel span-2 secretaria-credential-result">
+      <div class="panel-head"><h2>Credenciais recém-geradas</h2><span>${withPasswords.length || rows.length} comprovante${(withPasswords.length || rows.length) === 1 ? "" : "s"}</span></div>
+      <p class="secretaria-form-hint">Exibição temporária. Imprima ou salve o comprovante agora; a senha não fica disponível novamente pela plataforma.</p>
+      <div class="secretaria-credential-voucher-grid">
+        ${rows.map(({ credential, student, classItem, school, login, password }) => `
+          <article class="secretaria-credential-voucher">
+            <small>${htmlEscape(normalizeSchoolName(school))}</small>
+            <strong>${htmlEscape(normalizeStudentName(student))}</strong>
+            <span>${htmlEscape(normalizeClassName(classItem))}</span>
+            <code>${htmlEscape(login || "Login indisponível")}</code>
+            ${password ? `<mark>${htmlEscape(password)}</mark>` : `<em>Acesso já existia; senha não exibida.</em>`}
+            ${secretariaBadge(studentCredentialStatusLabel(credential.status), studentCredentialStatusTone(credential.status))}
+          </article>
+        `).join("")}
+      </div>
+      <div class="qb-builder-actions secretaria-form-actions">
+        <button type="button" data-secretaria-student-access-print="last">Imprimir/PDF comprovantes</button>
+      </div>
+    </section>
+  `;
+};
+const renderSecretariaStudentAccessCenterView = (index) => {
+  const params = getSecretariaParams();
+  const school = getSecretariaPrimarySchool();
+  const selectedClassId = params.get("class") || "";
+  const selectedStatus = params.get("status") || "";
+  const query = String(params.get("q") || "").trim().toLowerCase();
+  const page = Math.max(1, Number(params.get("page") || 1));
+  const pageSize = 50;
+  const activeClasses = (secretariaInstitutionalState.classes || []).filter((classItem) => isSecretariaActiveStatus(classItem.status));
+  const activeStudents = (secretariaInstitutionalState.students || []).filter((student) => isSecretariaActiveStatus(student.status));
+  const rows = activeStudents.map((student) => {
+    const enrollment = secretariaStudentEnrollment(student, index) || {};
+    const classItem = index.classById.get(enrollment.class_id) || {};
+    const credential = index.studentCredentialByStudent.get(student.id) || null;
+    const statusKey = credential ? String(credential.status || "active").toLowerCase() : "sem_acesso";
+    return { student, enrollment, classItem, credential, statusKey };
+  });
+  const withAccess = rows.filter((row) => row.credential);
+  const withoutAccess = rows.filter((row) => !row.credential);
+  const blocked = rows.filter((row) => row.statusKey === "blocked");
+  const filteredRows = rows.filter((row) => {
+    const matchesClass = !selectedClassId || row.enrollment.class_id === selectedClassId;
+    const matchesStatus =
+      !selectedStatus
+      || (selectedStatus === "sem_acesso" ? !row.credential : row.statusKey === selectedStatus);
+    const haystack = `${normalizeStudentName(row.student)} ${normalizeClassName(row.classItem)} ${row.credential?.login || ""}`.toLowerCase();
+    const matchesQuery = !query || haystack.includes(query);
+    return matchesClass && matchesStatus && matchesQuery;
+  });
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pagedRows = filteredRows.slice((safePage - 1) * pageSize, safePage * pageSize);
+  return `
+    <div class="secretaria-access-center">
+      <section class="panel span-2">
+        <div class="panel-head"><h2>${secretariaInlineIcon("key", "Acessos dos Alunos")}</h2><span>${htmlEscape(normalizeSchoolName(school))}</span></div>
+        <div class="metric-row">
+          <article>Total de alunos<strong>${rows.length}</strong><span>contexto atual</span></article>
+          <article>Com acesso<strong>${withAccess.length}</strong><span>credencial emitida</span></article>
+          <article>Sem acesso<strong>${withoutAccess.length}</strong><span>pendente</span></article>
+          <article>Bloqueados<strong>${blocked.length}</strong><span>acesso suspenso</span></article>
+        </div>
+      </section>
+      ${renderStudentCredentialResultPanel(index)}
+      <section class="panel span-2 secretaria-form-panel">
+        <div class="panel-head"><h2>Emissão em lote</h2><span>Edge Function canônica</span></div>
+        <div class="secretaria-form-grid">
+          <label><span>Turma</span><select data-secretaria-student-access-class><option value="">Selecione uma turma</option>${activeClasses.map((classItem) => `<option value="${htmlEscape(classItem.id)}">${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
+          <label><span>Limite técnico</span><input type="number" min="1" max="5000" value="1000" data-secretaria-student-access-limit /></label>
+          <div class="qb-builder-actions secretaria-form-actions is-wide">
+            <button type="button" data-secretaria-student-access-action="provision_class">Gerar acessos da turma</button>
+            <button type="button" data-secretaria-student-access-action="provision_school">Gerar acessos da escola</button>
+          </div>
+          <p class="secretaria-form-hint is-wide" data-secretaria-student-access-message>Operações em lote são idempotentes: alunos com acesso ativo não recebem nova senha sem reset explícito.</p>
+        </div>
+      </section>
+      <section class="panel span-2 secretaria-list-panel">
+        <div class="panel-head"><h2>Alunos e credenciais</h2><span>${filteredRows.length} registro${filteredRows.length === 1 ? "" : "s"}</span></div>
+        <form class="analytics-grid secretaria-grid" method="get" action="secretaria.html">
+          <input type="hidden" name="view" value="acessosAlunos" />
+          <label><span>Turma</span><select name="class"><option value="">Todas</option>${activeClasses.map((classItem) => `<option value="${htmlEscape(classItem.id)}" ${classItem.id === selectedClassId ? "selected" : ""}>${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
+          <label><span>Status</span><select name="status"><option value="">Todos</option><option value="sem_acesso" ${selectedStatus === "sem_acesso" ? "selected" : ""}>Sem acesso</option><option value="active" ${selectedStatus === "active" ? "selected" : ""}>Ativo</option><option value="blocked" ${selectedStatus === "blocked" ? "selected" : ""}>Bloqueado</option><option value="pending_auth" ${selectedStatus === "pending_auth" ? "selected" : ""}>Pendente Auth</option></select></label>
+          <label class="is-wide"><span>Busca</span><input name="q" value="${htmlEscape(params.get("q") || "")}" placeholder="Aluno, turma ou login" /></label>
+          <button type="submit">Filtrar</button>
+        </form>
+        <ul class="clean-list secretaria-credential-list">
+          ${pagedRows.map(({ student, classItem, credential, statusKey }) => `
+            <li data-secretaria-search-item>
+              <div>
+                <strong>${htmlEscape(normalizeStudentName(student))}</strong>
+                <span>${htmlEscape(normalizeClassName(classItem))} · ${credential?.login ? `Login: ${htmlEscape(credential.login)}` : "Sem login institucional"}</span>
+                <small>${credential ? `Última alteração: ${htmlEscape(secretariaFormatDateTime(latestStudentCredentialDate(credential)))}` : "Senha será exibida apenas na emissão inicial."}</small>
+              </div>
+              <div class="secretaria-list-actions">
+                ${secretariaBadge(credential ? studentCredentialStatusLabel(statusKey) : "Sem acesso", credential ? studentCredentialStatusTone(statusKey) : "warning")}
+                ${credential
+                  ? `
+                    <button type="button" data-secretaria-student-access-action="reset_password" data-student-id="${htmlEscape(student.id)}">Resetar senha</button>
+                    ${statusKey === "blocked"
+                      ? `<button type="button" data-secretaria-student-access-action="unblock" data-student-id="${htmlEscape(student.id)}">Desbloquear</button>`
+                      : `<button type="button" data-secretaria-student-access-action="block" data-student-id="${htmlEscape(student.id)}">Bloquear</button>`}
+                  `
+                  : `<button type="button" data-secretaria-student-access-action="provision_student" data-student-id="${htmlEscape(student.id)}">Gerar acesso</button>`}
+              </div>
+            </li>
+          `).join("") || "<li>EMPTY_REAL: nenhum aluno encontrado para os filtros atuais.</li>"}
+        </ul>
+        <div class="secretaria-pagination">
+          <span>Página ${safePage} de ${totalPages}</span>
+          ${safePage > 1 ? `<a href="${secretariaLink("acessosAlunos", { class: selectedClassId, status: selectedStatus, q: params.get("q") || "", page: String(safePage - 1) })}">Anterior</a>` : ""}
+          ${safePage < totalPages ? `<a href="${secretariaLink("acessosAlunos", { class: selectedClassId, status: selectedStatus, q: params.get("q") || "", page: String(safePage + 1) })}">Próxima</a>` : ""}
+        </div>
+      </section>
+      <section class="panel span-2 secretaria-access-warning">
+        <div class="panel-head"><h2>Entrega por contato</h2><span>Operacional</span></div>
+        <p>CONTACT_DELIVERY=EMPTY_REAL nesta etapa: a central emite comprovante imprimível/PDF. Envio por e-mail institucional pode usar o mesmo motor quando canal autorizado estiver configurado.</p>
+      </section>
+    </div>
+  `;
+};
+
+const printStudentCredentialVouchers = (credentials = [], index = buildSecretariaIndex()) => {
+  const rows = studentCredentialVoucherRows(credentials, index).filter((row) => row.login);
+  if (!rows.length) return;
+  const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
+  if (!printWindow) return;
+  const loginUrl = studentAccessLoginUrl();
+  printWindow.document.write(`
+    <!doctype html>
+    <html lang="pt-BR">
+      <head>
+        <meta charset="utf-8" />
+        <title>Credenciais Institucionais dos Alunos</title>
+        <style>
+          body { font-family: Arial, sans-serif; color: #12372a; margin: 32px; background: #fff; }
+          header { border-bottom: 2px solid #0f6b47; margin-bottom: 24px; padding-bottom: 16px; }
+          h1 { margin: 0; font-size: 24px; }
+          .voucher { break-inside: avoid; border: 1px solid #b8d8c4; border-radius: 12px; padding: 18px; margin: 0 0 16px; }
+          .voucher strong { display: block; font-size: 20px; margin-bottom: 6px; }
+          .voucher code, .voucher mark { display: inline-block; font-size: 18px; margin: 8px 8px 8px 0; padding: 8px 10px; border-radius: 8px; }
+          .voucher code { background: #eef7f1; }
+          .voucher mark { background: #ffe8a3; }
+          .notice { font-size: 12px; color: #50675b; }
+          @media print { body { margin: 18mm; } }
+        </style>
+      </head>
+      <body>
+        <header>
+          <h1>Raízes e Saberes Educacional</h1>
+          <p>Comprovante de acesso institucional do aluno</p>
+        </header>
+        ${rows.map(({ student, classItem, school, login, password }) => `
+          <section class="voucher">
+            <small>${htmlEscape(normalizeSchoolName(school))} · ${htmlEscape(normalizeClassName(classItem))}</small>
+            <strong>${htmlEscape(normalizeStudentName(student))}</strong>
+            <span>Endereço de acesso: ${htmlEscape(loginUrl)}</span><br />
+            <code>Login: ${htmlEscape(login)}</code>
+            ${password ? `<mark>Senha temporária: ${htmlEscape(password)}</mark>` : `<p>Senha não exibida. Gere ou redefina a senha para emitir um comprovante completo.</p>`}
+            <p class="notice">O QR Code, quando usado, deve apontar apenas para a página de login. Nunca compartilhe senha em QR Code.</p>
+          </section>
+        `).join("")}
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+};
+
 const renderSecretariaCommunicationsView = (index) => {
   const params = getSecretariaParams();
   const selectedAudience = params.get("audience") || "";
@@ -25702,6 +25970,7 @@ const renderSecretariaReadyView = () => {
     analytics: () => renderSecretariaAnalyticsView(index),
     relatorios: () => renderSecretariaReportsView(index),
     comunicados: () => renderSecretariaCommunicationsView(index),
+    acessosAlunos: () => renderSecretariaStudentAccessCenterView(index),
     acesso: () => renderSecretariaSchoolAccessView(index),
   }[view]();
   return `${renderSecretariaGlobalHeader(index)}${content}`;
@@ -25741,6 +26010,7 @@ const initSecretariaInstitutional = () => {
         lastDocumentResult: null,
         lastAttendanceResult: null,
         lastCommunicationResult: null,
+        lastStudentAccessResult: null,
         lastSchoolAccessResult: null,
         lastCalendarResult: null,
         lastAcademicResult: null,
@@ -26507,6 +26777,63 @@ const initSecretariaInstitutional = () => {
     } catch (error) {
       if (message) message.textContent = error.message || "Não foi possível abrir a câmera. Use o código digitado.";
     }
+  });
+  area.querySelectorAll("[data-secretaria-student-access-action]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const action = button.dataset.secretariaStudentAccessAction || "";
+      const message = area.querySelector("[data-secretaria-student-access-message]");
+      const index = buildSecretariaIndex();
+      const school = getSecretariaPrimarySchool();
+      const classSelect = area.querySelector("[data-secretaria-student-access-class]");
+      const limitInput = area.querySelector("[data-secretaria-student-access-limit]");
+      const studentId = button.dataset.studentId || "";
+      const classId = classSelect?.value || "";
+      const payload = { action };
+      const confirmMessages = {
+        provision_student: "Gerar acesso institucional para este aluno?",
+        provision_class: "Gerar acessos para alunos sem credencial nesta turma?",
+        provision_school: "Gerar acessos para alunos sem credencial desta escola?",
+        reset_password: "Resetar a senha deste aluno? A senha anterior deixará de valer.",
+        block: "Bloquear o acesso institucional deste aluno?",
+        unblock: "Desbloquear o acesso institucional deste aluno?",
+      };
+      if (action === "provision_student" || action === "reset_password" || action === "block" || action === "unblock") payload.studentId = studentId;
+      if (action === "provision_class") payload.classId = classId;
+      if (action === "provision_school") payload.schoolId = school.id || "";
+      if (action === "provision_class" || action === "provision_school") payload.limit = Number(limitInput?.value || 1000);
+      if (action === "provision_class" && !classId) {
+        if (message) message.textContent = "Selecione uma turma para gerar acessos em lote.";
+        return;
+      }
+      if (!payload.studentId && ["provision_student", "reset_password", "block", "unblock"].includes(action)) return;
+      if (!window.confirm(confirmMessages[action] || "Confirmar operação de credencial?")) return;
+      try {
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = "Processando...";
+        if (message) message.textContent = "Operando credenciais pelo canal seguro...";
+        const result = await callSecretariaStudentCredentialAction(payload);
+        await ensureSecretariaInstitutionalData({ force: true });
+        if (!document.body.contains(area)) return;
+        const count = normalizeStudentAccessResultCredentials(result).length;
+        secretariaInstitutionalState.lastStudentAccessResult = result;
+        area.outerHTML = renderSecretariaDashboard();
+        initSecretariaInstitutional();
+        const nextMessage = document.querySelector("[data-secretaria-student-access-message]");
+        if (nextMessage) nextMessage.textContent = `${count || 1} operação${(count || 1) === 1 ? "" : "es"} concluída${(count || 1) === 1 ? "" : "s"}.`;
+        button.textContent = originalText;
+      } catch (error) {
+        if (message) message.textContent = error.message || "Não foi possível operar credenciais.";
+        button.disabled = false;
+        button.textContent = button.dataset.originalLabel || button.textContent.replace("Processando...", "Tentar novamente");
+      }
+    });
+  });
+  area.querySelectorAll("[data-secretaria-student-access-print]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const credentials = normalizeStudentAccessResultCredentials(secretariaInstitutionalState.lastStudentAccessResult || {});
+      printStudentCredentialVouchers(credentials, buildSecretariaIndex());
+    });
   });
   const communicationForm = area.querySelector("[data-secretaria-communication-form]");
   if (communicationForm) {

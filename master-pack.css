@@ -4818,6 +4818,95 @@
   background: #f8fbf7;
 }
 
+.secretaria-access-center {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.secretaria-credential-result {
+  border-color: rgba(15, 107, 71, 0.18);
+  background:
+    linear-gradient(135deg, rgba(230, 246, 236, 0.92), rgba(255, 251, 236, 0.88)),
+    #fff;
+}
+
+.secretaria-credential-voucher-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.secretaria-credential-voucher {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #d8eadc;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 12px 28px rgba(18, 77, 51, 0.08);
+}
+
+.secretaria-credential-voucher code,
+.secretaria-credential-voucher mark {
+  width: max-content;
+  max-width: 100%;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.secretaria-credential-voucher code {
+  background: #eaf7ef;
+  color: #06462f;
+}
+
+.secretaria-credential-voucher mark {
+  background: #ffe8a3;
+  color: #4c3600;
+}
+
+.secretaria-credential-voucher em,
+.secretaria-access-warning p,
+.secretaria-credential-list small {
+  color: var(--rs-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.secretaria-credential-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+}
+
+.secretaria-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+  color: var(--rs-muted);
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.secretaria-pagination a {
+  min-height: 34px;
+  padding: 8px 12px;
+  border: 1px solid #dfe7de;
+  border-radius: 8px;
+  background: #fff;
+  color: #06462f;
+  text-decoration: none;
+}
+
 .line-chart,
 .column-chart {
   height: 230px;
