@@ -25161,8 +25161,11 @@ const studentCredentialStatusTone = (status = "") => {
 const studentAccessLoginUrl = () => new URL("login.html", window.location.href).toString();
 const latestStudentCredentialDate = (credential = {}) =>
   credential.last_reset_at || credential.password_changed_at || credential.updated_at || credential.created_at || "";
-const normalizeStudentAccessResultCredentials = (result = {}) =>
-  Array.isArray(result.credentials) ? result.credentials : result.credential ? [result.credential] : [];
+const normalizeStudentAccessResultCredentials = (result) => {
+  if (!result || typeof result !== "object") return [];
+  if (Array.isArray(result.credentials)) return result.credentials;
+  return result.credential ? [result.credential] : [];
+};
 const studentCredentialVoucherRows = (credentials = [], index = buildSecretariaIndex()) =>
   credentials.map((credential) => {
     const student = index.studentById.get(credential.student_id) || {};
