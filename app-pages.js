@@ -25233,7 +25233,8 @@ const renderSecretariaStudentAccessCenterView = (index) => {
     const statusKey = credential ? String(credential.status || "active").toLowerCase() : "sem_acesso";
     return { student, enrollment, classItem, credential, statusKey };
   });
-  const withAccess = rows.filter((row) => row.credential);
+  const activeAccess = rows.filter((row) => row.statusKey === "active");
+  const pendingAuth = rows.filter((row) => row.statusKey === "pending_auth");
   const withoutAccess = rows.filter((row) => !row.credential);
   const blocked = rows.filter((row) => row.statusKey === "blocked");
   const filteredRows = rows.filter((row) => {
@@ -25254,7 +25255,8 @@ const renderSecretariaStudentAccessCenterView = (index) => {
         <div class="panel-head"><h2>${secretariaInlineIcon("key", "Acessos dos Alunos")}</h2><span>${htmlEscape(normalizeSchoolName(school))}</span></div>
         <div class="metric-row">
           <article>Total de alunos<strong>${rows.length}</strong><span>contexto atual</span></article>
-          <article>Com acesso<strong>${withAccess.length}</strong><span>credencial emitida</span></article>
+          <article>Com acesso<strong>${activeAccess.length}</strong><span>credenciais ativas</span></article>
+          <article>Pendentes Auth<strong>${pendingAuth.length}</strong><span>requerem reconciliação</span></article>
           <article>Sem acesso<strong>${withoutAccess.length}</strong><span>pendente</span></article>
           <article>Bloqueados<strong>${blocked.length}</strong><span>acesso suspenso</span></article>
         </div>
@@ -25291,7 +25293,9 @@ const renderSecretariaStudentAccessCenterView = (index) => {
               </div>
               <div class="secretaria-list-actions">
                 ${secretariaBadge(credential ? studentCredentialStatusLabel(statusKey) : "Sem acesso", credential ? studentCredentialStatusTone(statusKey) : "warning")}
-                ${credential
+                ${credential && statusKey === "pending_auth"
+                  ? `<button type="button" data-secretaria-student-access-action="provision_student" data-student-id="${htmlEscape(student.id)}">Tentar novamente</button>`
+                  : credential
                   ? `
                     <button type="button" data-secretaria-student-access-action="reset_password" data-student-id="${htmlEscape(student.id)}">Resetar senha</button>
                     ${statusKey === "blocked"
@@ -25320,49 +25324,64 @@ const renderSecretariaStudentAccessCenterView = (index) => {
 const printStudentCredentialVouchers = (credentials = [], index = buildSecretariaIndex()) => {
   const rows = studentCredentialVoucherRows(credentials, index).filter((row) => row.login);
   if (!rows.length) return;
-  const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
+  const printWindow = window.open("", "_blank", "width=900,height=700");
   if (!printWindow) return;
   const loginUrl = studentAccessLoginUrl();
-  printWindow.document.write(`
+  const printHtml = `
     <!doctype html>
     <html lang="pt-BR">
       <head>
         <meta charset="utf-8" />
         <title>Credenciais Institucionais dos Alunos</title>
         <style>
+          * { box-sizing: border-box; }
           body { font-family: Arial, sans-serif; color: #12372a; margin: 32px; background: #fff; }
           header { border-bottom: 2px solid #0f6b47; margin-bottom: 24px; padding-bottom: 16px; }
-          h1 { margin: 0; font-size: 24px; }
-          .voucher { break-inside: avoid; border: 1px solid #b8d8c4; border-radius: 12px; padding: 18px; margin: 0 0 16px; }
+          h1 { margin: 0; font-size: 24px; text-transform: uppercase; }
+          header p { margin: 6px 0 0; color: #52685e; }
+          .voucher { break-inside: avoid; page-break-inside: avoid; border: 1px solid #b8d8c4; border-radius: 12px; padding: 18px; margin: 0 0 16px; }
+          .voucher small { display: block; color: #52685e; margin-bottom: 8px; }
           .voucher strong { display: block; font-size: 20px; margin-bottom: 6px; }
-          .voucher code, .voucher mark { display: inline-block; font-size: 18px; margin: 8px 8px 8px 0; padding: 8px 10px; border-radius: 8px; }
-          .voucher code { background: #eef7f1; }
-          .voucher mark { background: #ffe8a3; }
-          .notice { font-size: 12px; color: #50675b; }
-          @media print { body { margin: 18mm; } }
+          .voucher span { display: block; margin: 4px 0; }
+          .access-line { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+          .access-line code, .access-line mark { display: inline-block; font-size: 18px; padding: 8px 10px; border-radius: 8px; }
+          .access-line code { background: #eef7f1; }
+          .access-line mark { background: #ffe8a3; color: #4a3200; }
+          .notice { font-size: 12px; color: #50675b; border-top: 1px solid #e3eee7; margin-top: 12px; padding-top: 10px; }
+          @page { size: A4; margin: 18mm; }
+          @media print { body { margin: 0; } }
         </style>
       </head>
       <body>
         <header>
-          <h1>Raízes e Saberes Educacional</h1>
+          <h1>Raízes e Saberes</h1>
           <p>Comprovante de acesso institucional do aluno</p>
         </header>
         ${rows.map(({ student, classItem, school, login, password }) => `
           <section class="voucher">
-            <small>${htmlEscape(normalizeSchoolName(school))} · ${htmlEscape(normalizeClassName(classItem))}</small>
+            <small>${htmlEscape(normalizeSchoolName(school))}</small>
             <strong>${htmlEscape(normalizeStudentName(student))}</strong>
-            <span>Endereço de acesso: ${htmlEscape(loginUrl)}</span><br />
-            <code>Login: ${htmlEscape(login)}</code>
-            ${password ? `<mark>Senha temporária: ${htmlEscape(password)}</mark>` : `<p>Senha não exibida. Gere ou redefina a senha para emitir um comprovante completo.</p>`}
-            <p class="notice">O QR Code, quando usado, deve apontar apenas para a página de login. Nunca compartilhe senha em QR Code.</p>
+            <span>Turma: ${htmlEscape(normalizeClassName(classItem))}</span>
+            <span>Endereço de acesso: ${htmlEscape(loginUrl)}</span>
+            <div class="access-line">
+              <code>Login: ${htmlEscape(login)}</code>
+              ${password ? `<mark>Senha inicial: ${htmlEscape(password)}</mark>` : `<code>Senha: redefina para emitir novo comprovante</code>`}
+            </div>
+            <p class="notice">A senha é temporária e aparece somente nesta emissão. Se o comprovante for perdido, use Resetar senha para gerar uma nova.</p>
           </section>
         `).join("")}
       </body>
     </html>
+  `;
+  printWindow.document.open();
+  printWindow.document.write(`
+    ${printHtml}
   `);
   printWindow.document.close();
-  printWindow.focus();
-  printWindow.print();
+  window.setTimeout(() => {
+    printWindow.focus();
+    printWindow.print();
+  }, 250);
 };
 
 const renderSecretariaCommunicationsView = (index) => {
@@ -26810,8 +26829,8 @@ const initSecretariaInstitutional = () => {
       }
       if (!payload.studentId && ["provision_student", "reset_password", "block", "unblock"].includes(action)) return;
       if (!window.confirm(confirmMessages[action] || "Confirmar operação de credencial?")) return;
+      const originalText = button.textContent || "";
       try {
-        const originalText = button.textContent;
         button.disabled = true;
         button.textContent = "Processando...";
         if (message) message.textContent = "Operando credenciais pelo canal seguro...";
@@ -26828,7 +26847,7 @@ const initSecretariaInstitutional = () => {
       } catch (error) {
         if (message) message.textContent = error.message || "Não foi possível operar credenciais.";
         button.disabled = false;
-        button.textContent = button.dataset.originalLabel || button.textContent.replace("Processando...", "Tentar novamente");
+        button.textContent = originalText || "Repetir operação";
       }
     });
   });
