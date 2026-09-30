@@ -26,20 +26,36 @@ const json = (body: JsonRecord, status = 200) =>
 
 const platformAdminRoles = new Set(["admin", "admin_ti", "administrador", "administrador_nacional", "ti"]);
 const schoolOperatorRoles = new Set(["gestor", "coordenador", "direcao", "secretaria", "admin", "admin_ti"]);
-const passwordAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#%";
+const friendlyPasswordWords = [
+  "ABACATE", "ABELHA", "AMORA", "ARCO", "AREIA", "ARVORE", "AZUL",
+  "BALAO", "BOLA", "BOLO", "BONECA", "BORBOLETA", "BRISA",
+  "CAJU", "CAMPO", "CANOA", "CASA", "CASTELO", "CHAVE", "CHUVA",
+  "COELHO", "COLA", "CORAL", "COUVE", "DADO", "DOCE",
+  "ESTRELA", "FADA", "FAROFA", "FESTA", "FLOR", "FOCA",
+  "GATO", "GELO", "GIRAFA", "GOIABA", "JANELA", "JOGO",
+  "LAGO", "LAPIS", "LARANJA", "LATA", "LEAO", "LIVRO", "LUA",
+  "MACA", "MALA", "MESA", "MILHO", "MOLA", "MORANGO",
+  "NAVIO", "NINHO", "NUVEM", "ONDA", "PANELA", "PANO",
+  "PAPEL", "PATO", "PERA", "PIPA", "PRAIA", "QUADRO",
+  "REDE", "RIO", "RODA", "ROSA", "SALA", "SAPATO", "SOL",
+  "TAPETE", "TATU", "TELA", "TERRA", "TIGRE", "UVA", "VELA",
+  "VENTO", "VERDE", "VIDRO", "ZEBRA",
+];
 
 const randomInt = (max: number) => {
+  if (!Number.isSafeInteger(max) || max <= 0) return 0;
+  const limit = Math.floor(0x100000000 / max) * max;
   const bytes = new Uint32Array(1);
-  crypto.getRandomValues(bytes);
+  do {
+    crypto.getRandomValues(bytes);
+  } while (bytes[0] >= limit);
   return bytes[0] % max;
 };
 
 const generatePassword = () => {
-  let password = "";
-  for (let index = 0; index < 14; index += 1) {
-    password += passwordAlphabet[randomInt(passwordAlphabet.length)];
-  }
-  return password;
+  const word = friendlyPasswordWords[randomInt(friendlyPasswordWords.length)];
+  const digits = String(randomInt(10000)).padStart(4, "0");
+  return `${word}-${digits}`;
 };
 
 const safeMessage = (code: string) => {
