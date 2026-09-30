@@ -53,6 +53,7 @@ const safeMessage = (code: string) => {
     server_misconfigured: "Servico administrativo indisponivel.",
     auth_create_failed: "Nao foi possivel criar o acesso tecnico do aluno.",
     auth_update_failed: "Nao foi possivel atualizar a senha tecnica do aluno.",
+    finalize_failed: "Nao foi possivel concluir o vinculo institucional do aluno.",
     provisioning_failed: "Nao foi possivel provisionar a credencial institucional.",
   };
   return messages[code] || "Nao foi possivel concluir a operacao.";
@@ -216,7 +217,7 @@ const provisionOne = async (
   );
 
   if (finalizeError || !finalized?.ok) {
-    throw new Error(finalizeError?.message || "finalize_failed");
+    throw new Error("finalize_failed");
   }
 
   return {
@@ -365,7 +366,7 @@ Deno.serve(async (request) => {
     return fail("invalid_action", 400);
   } catch (error) {
     const code = error instanceof Error ? error.message : "provisioning_failed";
-    if (code === "auth_create_failed" || code === "auth_update_failed") {
+    if (code === "auth_create_failed" || code === "auth_update_failed" || code === "finalize_failed") {
       return fail(code, 502);
     }
     return fail("provisioning_failed", 500);
