@@ -509,6 +509,7 @@ const secretariaOfficialModules = [
   ["painel", "Painel", "secretaria.html?view=painel"],
   ["alunos", "Alunos", "secretaria.html?view=alunos"],
   ["matriculas", "Matrículas", "secretaria.html?view=matriculas"],
+  ["acessosAlunos", "Acessos dos Alunos", "secretaria.html?view=acessosAlunos"],
   ["responsaveis", "Responsáveis", "secretaria.html?view=responsaveis"],
   ["turmas", "Turmas", "secretaria.html?view=turmas"],
   ["professores", "Professores", "secretaria.html?view=professores"],
@@ -519,7 +520,6 @@ const secretariaOfficialModules = [
   ["relatorios", "Relatórios", "secretaria.html?view=relatorios"],
   ["documentos", "Documentos", "secretaria.html?view=documentos"],
   ["comunicados", "Comunicados", "secretaria.html?view=comunicados"],
-  ["acessosAlunos", "Acessos dos Alunos", "secretaria.html?view=acessosAlunos"],
 ];
 
 const questionLegalClassifications = [
@@ -22148,7 +22148,7 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
 
 const secretariaAllowedRoles = ["secretaria", "admin", "gestor", "coordenador"];
 const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "calendario", "avalia", "analytics", "relatorios", "comunicados", "acessosAlunos", "acesso"];
-const secretariaOfficialViews = ["painel", "alunos", "matriculas", "responsaveis", "turmas", "professores", "frequencia", "calendario", "avalia", "analytics", "relatorios", "documentos", "comunicados", "acessosAlunos", "acesso"];
+const secretariaOfficialViews = ["painel", "alunos", "matriculas", "acessosAlunos", "responsaveis", "turmas", "professores", "frequencia", "calendario", "avalia", "analytics", "relatorios", "documentos", "comunicados", "acesso"];
 const secretariaActiveStatuses = new Set(["active", "ativo"]);
 const secretariaSchoolContextStorageKey = "raizes.secretaria.selectedSchoolId";
 
