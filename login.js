@@ -206,9 +206,13 @@ const recoveryForm = document.querySelector("[data-password-recovery-form]");
 const recoveryOpenButton = document.querySelector("[data-password-recovery-open]");
 const recoveryCloseButton = document.querySelector("[data-password-recovery-close]");
 const recoveryMessage = document.querySelector("[data-password-recovery-message]");
+const passwordInput = form?.querySelector("[data-password-input]");
+const passwordToggle = form?.querySelector("[data-password-toggle]");
 const institutionalLoginPattern = /^[A-Z]{2,12}-\d{4,8}$/;
 const normalizeInstitutionalIdentifier = (identifier) => String(identifier || "").trim().toUpperCase();
 const isStudentInstitutionalIdentifier = (identifier) => institutionalLoginPattern.test(normalizeInstitutionalIdentifier(identifier));
+const invalidCredentialMessage =
+  "Login/e-mail ou senha incorretos. Verifique os dados e digite exatamente como aparecem no seu comprovante, respeitando letras maiúsculas e minúsculas.";
 
 const syncAccessCopy = () => {
   if (accessCopy) {
@@ -318,7 +322,7 @@ const authenticateStudentInstitutional = async (login, password) => {
     result = null;
   }
   if (!response.ok || !result?.ok || !result?.session?.access_token) {
-    const error = new Error(result?.message || "Login ou senha inválidos. Confira os dados impressos pela Secretaria.");
+    const error = new Error(result?.message || invalidCredentialMessage);
     error.code = result?.code || "invalid_credentials";
     throw error;
   }
@@ -381,6 +385,15 @@ const setRecoveryBusy = (isBusy) => {
   }
 };
 
+passwordToggle?.addEventListener("click", () => {
+  if (!passwordInput) return;
+  const shouldShow = passwordInput.type === "password";
+  passwordInput.type = shouldShow ? "text" : "password";
+  passwordToggle.setAttribute("aria-label", shouldShow ? "Ocultar senha" : "Mostrar senha");
+  passwordToggle.setAttribute("aria-pressed", String(shouldShow));
+  passwordInput.focus({ preventScroll: true });
+});
+
 recoveryOpenButton?.addEventListener("click", () => {
   const identifier = form?.querySelector("[name='email']")?.value || "";
   if (!requiresSupabaseAuth && isStudentInstitutionalIdentifier(identifier)) {
@@ -438,7 +451,7 @@ form?.addEventListener("submit", async (event) => {
       window.location.replace(getPostLoginDestination(context.platformRole));
       return;
     } catch (error) {
-      showLoginError(error.message || "Login ou senha inválidos. Confira os dados impressos pela Secretaria.");
+      showLoginError(error.code === "invalid_credentials" ? invalidCredentialMessage : error.message || invalidCredentialMessage);
       setLoginBusy(false);
       return;
     }
@@ -479,7 +492,7 @@ form?.addEventListener("submit", async (event) => {
       errorMessage.hidden = false;
       errorMessage.textContent = needsCuratorAccess
         ? "Use as credenciais demonstrativas de curadoria para acessar esta área."
-        : "Credenciais inválidas para este ambiente.";
+        : invalidCredentialMessage;
     }
     setLoginBusy(false);
     return;

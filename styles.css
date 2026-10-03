@@ -5240,12 +5240,13 @@ h3 {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
+  align-items: stretch;
 }
 
 .login-password-field button {
   min-height: 52px;
   margin: 0;
-  padding: 0 12px;
+  padding: 0 14px;
   border: 1px solid rgba(6, 70, 47, 0.18);
   border-radius: 8px;
   color: #06462f;
@@ -5253,6 +5254,28 @@ h3 {
   box-shadow: none;
   font-family: Inter, sans-serif;
   font-size: 0.85rem;
+}
+
+.login-password-field input {
+  min-width: 0;
+}
+
+.login-password-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 52px;
+  cursor: pointer;
+}
+
+.login-password-toggle svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+.login-password-toggle:focus-visible {
+  outline: 3px solid rgba(46, 125, 50, 0.22);
+  outline-offset: 2px;
 }
 
 .login-form button {
@@ -5268,6 +5291,16 @@ h3 {
   letter-spacing: 0;
   cursor: pointer;
   box-shadow: 0 16px 34px rgba(6, 70, 47, 0.22);
+}
+
+.login-form .login-password-toggle {
+  min-height: 52px;
+  margin: 0;
+  border: 1px solid rgba(6, 70, 47, 0.18);
+  color: #06462f;
+  background: #f4faf6;
+  box-shadow: none;
+  font-family: Inter, sans-serif;
 }
 
 .login-form button[type="button"] {
