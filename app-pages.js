@@ -4140,11 +4140,24 @@ const studentInstitutionalState = {
   messagesError: "",
   recommendations: [],
   recommendationsError: "",
+  personalSchedule: null,
+  personalScheduleError: "",
   calendarError: "",
   weekStartIso: "",
   secondaryLoadedAt: "",
   hydratedDom: false,
 };
+
+const studentPersonalScheduleDays = [
+  ["monday", "Segunda", "SEG"],
+  ["tuesday", "Terça", "TER"],
+  ["wednesday", "Quarta", "QUA"],
+  ["thursday", "Quinta", "QUI"],
+  ["friday", "Sexta", "SEX"],
+];
+
+let studentPersonalScheduleEditing = false;
+let studentPersonalScheduleDraft = null;
 
 const getTeacherInstitutionalClasses = () => teacherInstitutionalState.classes || [];
 const getTeacherInstitutionalStudents = (classId = "") => {
@@ -8542,6 +8555,180 @@ const renderStudentInstitutionalWeeklyBoard = () => {
   `;
 };
 
+const createDefaultStudentPersonalScheduleSlots = () =>
+  Array.from({ length: 6 }, (_, index) => ({
+    slot: index + 1,
+    start_time: "",
+    end_time: "",
+    monday: "",
+    tuesday: "",
+    wednesday: "",
+    thursday: "",
+    friday: "",
+  }));
+
+const normalizeStudentScheduleText = (value = "", maxLength = 80) =>
+  String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxLength);
+
+const normalizeStudentPersonalScheduleSlot = (slot = {}, index = 0) => {
+  const normalized = {
+    slot: Number(slot.slot || index + 1) || index + 1,
+    start_time: normalizeStudentScheduleText(slot.start_time || slot.startTime || "", 5),
+    end_time: normalizeStudentScheduleText(slot.end_time || slot.endTime || "", 5),
+  };
+  studentPersonalScheduleDays.forEach(([key]) => {
+    normalized[key] = normalizeStudentScheduleText(slot[key] || "");
+  });
+  return normalized;
+};
+
+const normalizeStudentPersonalSchedulePayload = (payload = null) => {
+  const rawSlots = Array.isArray(payload?.slots) ? payload.slots : [];
+  const defaults = createDefaultStudentPersonalScheduleSlots();
+  const slots = defaults.map((fallback, index) => normalizeStudentPersonalScheduleSlot(rawSlots[index] || fallback, index));
+  return {
+    studentId: payload?.student_id || studentInstitutionalState.student?.id || "",
+    schoolId: payload?.school_id || studentInstitutionalState.school?.id || "",
+    classId: payload?.class_id || studentInstitutionalState.classItem?.id || "",
+    schoolYear: payload?.school_year || studentInstitutionalState.enrollment?.school_year || "",
+    exists: Boolean(payload?.exists),
+    updatedAt: payload?.updated_at || "",
+    slots,
+  };
+};
+
+const getStudentPersonalSchedule = () =>
+  normalizeStudentPersonalSchedulePayload(studentPersonalScheduleDraft || studentInstitutionalState.personalSchedule || {});
+
+const isStudentPersonalScheduleEmpty = (schedule = getStudentPersonalSchedule()) =>
+  !schedule.slots.some((slot) =>
+    [slot.start_time, slot.end_time, ...studentPersonalScheduleDays.map(([key]) => slot[key])].some((value) => String(value || "").trim())
+  );
+
+const loadStudentPersonalSchedule = async (client) => {
+  const result = await client.request("rpc/student_get_personal_schedule", "", {
+    method: "POST",
+    body: JSON.stringify({}),
+    requireAuthenticated: true,
+    allowedRoles: ["aluno", "admin"],
+  });
+  return normalizeStudentPersonalSchedulePayload(normalizeRpcJson(result));
+};
+
+const saveStudentPersonalSchedule = async (slots = []) => {
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/student_save_personal_schedule", "", {
+    method: "POST",
+    body: JSON.stringify({ p_slots: slots.map((slot, index) => normalizeStudentPersonalScheduleSlot(slot, index)) }),
+    requireAuthenticated: true,
+    allowedRoles: ["aluno", "admin"],
+  });
+  return normalizeStudentPersonalSchedulePayload(normalizeRpcJson(result));
+};
+
+const collectStudentPersonalScheduleForm = (form) => {
+  if (!form) return createDefaultStudentPersonalScheduleSlots();
+  return createDefaultStudentPersonalScheduleSlots().map((slot, index) => {
+    const next = {
+      ...slot,
+      start_time: form.elements[`start-${index}`]?.value || "",
+      end_time: form.elements[`end-${index}`]?.value || "",
+    };
+    studentPersonalScheduleDays.forEach(([key]) => {
+      next[key] = form.elements[`${key}-${index}`]?.value || "";
+    });
+    return normalizeStudentPersonalScheduleSlot(next, index);
+  });
+};
+
+const renderStudentPersonalScheduleCell = (slot = {}, key = "", editing = false, rowIndex = 0) => {
+  const value = slot[key] || "";
+  if (editing) {
+    return `
+      <td>
+        <input
+          type="text"
+          name="${key}-${rowIndex}"
+          value="${printableEscape(value)}"
+          maxlength="80"
+          placeholder="Disciplina"
+          aria-label="${printableEscape(studentPersonalScheduleDays.find(([dayKey]) => dayKey === key)?.[1] || key)} - horário ${rowIndex + 1}"
+        />
+      </td>
+    `;
+  }
+  return `<td>${value ? `<span>${printableEscape(value)}</span>` : `<em>Adicionar aula</em>`}</td>`;
+};
+
+const renderStudentPersonalScheduleRow = (slot = {}, index = 0, editing = false) => {
+  const start = slot.start_time || "";
+  const end = slot.end_time || "";
+  return `
+    <tr>
+      <th scope="row">
+        ${
+          editing
+            ? `<div class="student-schedule-time-edit">
+                <input type="time" name="start-${index}" value="${printableEscape(start)}" aria-label="Início do horário ${index + 1}" />
+                <span>às</span>
+                <input type="time" name="end-${index}" value="${printableEscape(end)}" aria-label="Fim do horário ${index + 1}" />
+              </div>`
+            : `<span>${start && end ? `${printableEscape(start)} – ${printableEscape(end)}` : `${index + 1}º horário`}</span>`
+        }
+      </th>
+      ${studentPersonalScheduleDays.map(([key]) => renderStudentPersonalScheduleCell(slot, key, editing, index)).join("")}
+    </tr>
+  `;
+};
+
+const renderStudentPersonalScheduleBoard = () => {
+  if (!isStudentInstitutionalMode()) return "";
+  const schedule = getStudentPersonalSchedule();
+  const editing = studentPersonalScheduleEditing;
+  const isEmpty = isStudentPersonalScheduleEmpty(schedule);
+  const error = studentInstitutionalState.personalScheduleError;
+  return `
+    <section class="student-class-schedule-panel" data-student-personal-schedule>
+      <div class="student-class-schedule-head">
+        <div class="student-class-schedule-title">
+          ${premiumIcon("calendario")}
+          <div>
+            <h2>Meu Horário de Aula</h2>
+            <p>Aqui você vê e organiza as aulas da sua semana.</p>
+          </div>
+        </div>
+        <div class="student-class-schedule-actions">
+          ${
+            editing
+              ? `<button type="button" class="is-light" data-student-schedule-cancel>Cancelar</button><button type="submit" form="student-personal-schedule-form" data-student-schedule-save>Salvar horário</button>`
+              : `<button type="button" data-student-schedule-edit>${premiumIcon("clipboard")} Editar horário</button>`
+          }
+        </div>
+      </div>
+      ${error ? `<div class="student-schedule-alert">${printableEscape(error)}</div>` : ""}
+      ${isEmpty && !editing ? `<p class="student-schedule-empty">Monte seu horário de aula para consultar sua semana rapidamente.</p>` : ""}
+      <form id="student-personal-schedule-form" data-student-schedule-form>
+        <div class="student-class-schedule-scroll">
+          <table class="student-class-schedule-table">
+            <thead>
+              <tr>
+                <th scope="col">Horário</th>
+                ${studentPersonalScheduleDays.map(([, label]) => `<th scope="col">${label}</th>`).join("")}
+              </tr>
+            </thead>
+            <tbody>
+              ${schedule.slots.map((slot, index) => renderStudentPersonalScheduleRow(slot, index, editing)).join("")}
+            </tbody>
+          </table>
+        </div>
+      </form>
+    </section>
+  `;
+};
+
 const studentRecommendationTeacherName = (teacher = null) => {
   const profile = teacher?.profile || null;
   return (
@@ -8813,27 +9000,7 @@ const renderStudentInstitutionalHomeContent = () => {
       ${studentLazyImg("assets/aluno/oficial-hero-aluno.png", "", "student-hero-art")}
     </section>
 
-    <section class="student-mission-card is-mission student-recommendations-home">
-      ${premiumIcon("atividades")}
-      <div>
-        <span>Recomendados pela Professora</span>
-        <strong>${getStudentVisibleRecommendations().length ? "ATIVIDADES PUBLICADAS PARA VOCE." : "NENHUMA ATIVIDADE PUBLICADA."}</strong>
-        <p>${getStudentVisibleRecommendations().length ? "Abra as indicacoes da sua turma ou as que foram enviadas especialmente para voce." : "Quando houver uma atividade real para este aluno, ela aparecera aqui."}</p>
-        <a href="aluno-atividades.html">VER ATIVIDADES</a>
-      </div>
-      ${isStudentInstitutionalMode() && studentInstitutionalState.status === "ready" ? renderStudentRecommendationList({ activitiesOnly: true, compact: true }) : ""}
-    </section>
-
-    <section class="student-mission-card is-continue">
-      ${premiumIcon("calendario")}
-      <div>
-        <span>Agenda</span>
-        <strong>${isStudentInstitutionalMode() && studentInstitutionalState.entries?.length ? "PUBLICACOES DA TURMA DISPONIVEIS." : "NENHUM COMPROMISSO PUBLICADO."}</strong>
-        <p>${isStudentInstitutionalMode() ? "Os recados e compromissos da turma aparecem na Minha Semana." : "Quando a escola publicar compromissos, eles aparecerao aqui."}</p>
-        <a href="aluno.html">INICIO</a>
-      </div>
-    </section>
-
+    ${renderStudentPersonalScheduleBoard()}
     ${renderStudentInstitutionalWeeklyBoard()}
 
     <section class="student-premium-card-grid" aria-label="Áreas principais do aluno">
@@ -21927,12 +22094,14 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       studentInstitutionalState.messagesError = "";
       studentInstitutionalState.recommendationsError = "";
       studentInstitutionalState.recommendations = [];
+      studentInstitutionalState.personalSchedule = normalizeStudentPersonalSchedulePayload(null);
+      studentInstitutionalState.personalScheduleError = "";
       studentInstitutionalState.progress = { xpRecords: [], medals: [], xpTotal: 0 };
       studentInstitutionalState.progressError = "";
       studentInstitutionalState.secondaryLoadedAt = "";
       studentInstitutionalState.status = "ready";
       const refreshSecondaryData = async () => {
-        const [entries, recommendations, messages, progress] = await Promise.all([
+        const [entries, recommendations, messages, progress, personalSchedule] = await Promise.all([
           loadStudentUnifiedCalendarEvents(client, studentInstitutionalState.weekStartIso).catch((error) => {
             studentInstitutionalState.calendarError = error.message || "Não foi possível carregar a Minha Semana.";
             return [];
@@ -21949,12 +22118,17 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
             studentInstitutionalState.progressError = error.message || "Não foi possível carregar o progresso.";
             return { xpRecords: [], medals: [], xpTotal: 0 };
           }),
+          loadStudentPersonalSchedule(client).catch((error) => {
+            studentInstitutionalState.personalScheduleError = error.message || "Não foi possível carregar o horário de aula.";
+            return normalizeStudentPersonalSchedulePayload(null);
+          }),
         ]);
         studentInstitutionalState.entries = (entries || []).filter((entry) => entry.status === "published");
         studentInstitutionalState.agendaEvents = studentInstitutionalState.entries;
         studentInstitutionalState.recommendations = recommendations || [];
         studentInstitutionalState.messages = messages || [];
         studentInstitutionalState.progress = progress || { xpRecords: [], medals: [], xpTotal: 0 };
+        studentInstitutionalState.personalSchedule = personalSchedule;
         studentInstitutionalState.secondaryLoadedAt = new Date().toISOString();
         rerenderStudentInstitutionalSurfaces();
       };
@@ -21977,6 +22151,8 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       studentInstitutionalState.messagesError = "";
       studentInstitutionalState.recommendations = [];
       studentInstitutionalState.recommendationsError = "";
+      studentInstitutionalState.personalSchedule = normalizeStudentPersonalSchedulePayload(null);
+      studentInstitutionalState.personalScheduleError = "";
       return studentInstitutionalState;
     } finally {
       studentInstitutionalState.promise = null;
@@ -28748,6 +28924,26 @@ const initStudentInstitutionalDashboard = () => {
   if (!dashboard || !isStudentInstitutionalMode()) return;
   initStudentHomeSearch(dashboard);
   dashboard.addEventListener("click", async (event) => {
+    const scheduleEditButton = event.target.closest?.("[data-student-schedule-edit]");
+    if (scheduleEditButton) {
+      event.preventDefault();
+      studentPersonalScheduleDraft = getStudentPersonalSchedule();
+      studentPersonalScheduleEditing = true;
+      dashboard.outerHTML = renderStudentSimpleDashboard();
+      initStudentInstitutionalDashboard();
+      initStudentAvaliaApplication();
+      return;
+    }
+    const scheduleCancelButton = event.target.closest?.("[data-student-schedule-cancel]");
+    if (scheduleCancelButton) {
+      event.preventDefault();
+      studentPersonalScheduleDraft = null;
+      studentPersonalScheduleEditing = false;
+      dashboard.outerHTML = renderStudentSimpleDashboard();
+      initStudentInstitutionalDashboard();
+      initStudentAvaliaApplication();
+      return;
+    }
     const readButton = event.target.closest?.("[data-student-delivery-read]");
     if (!readButton) return;
     event.preventDefault();
@@ -28764,6 +28960,32 @@ const initStudentInstitutionalDashboard = () => {
       window.alert(error.message || "Não foi possível marcar o comunicado como lido.");
       readButton.disabled = false;
       readButton.textContent = "Marcar como lido";
+    }
+  });
+  dashboard.addEventListener("submit", async (event) => {
+    const form = event.target.closest?.("[data-student-schedule-form]");
+    if (!form) return;
+    event.preventDefault();
+    const saveButton = dashboard.querySelector("[data-student-schedule-save]");
+    if (saveButton) {
+      saveButton.disabled = true;
+      saveButton.textContent = "Salvando...";
+    }
+    try {
+      const saved = await saveStudentPersonalSchedule(collectStudentPersonalScheduleForm(form));
+      studentInstitutionalState.personalSchedule = saved;
+      studentInstitutionalState.personalScheduleError = "";
+      studentPersonalScheduleDraft = null;
+      studentPersonalScheduleEditing = false;
+      dashboard.outerHTML = renderStudentSimpleDashboard();
+      initStudentInstitutionalDashboard();
+      initStudentAvaliaApplication();
+    } catch (error) {
+      studentInstitutionalState.personalScheduleError = error.message || "Não foi possível salvar o horário de aula.";
+      studentPersonalScheduleDraft = normalizeStudentPersonalSchedulePayload({ slots: collectStudentPersonalScheduleForm(form) });
+      dashboard.outerHTML = renderStudentSimpleDashboard();
+      initStudentInstitutionalDashboard();
+      initStudentAvaliaApplication();
     }
   });
   ensureStudentInstitutionalData().then(() => {

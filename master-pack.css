@@ -11884,6 +11884,207 @@ td {
   background: #7048c8;
 }
 
+.student-class-schedule-panel {
+  border: 1px solid rgba(6, 70, 47, 0.1);
+  border-radius: 18px;
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 16px 36px rgba(8, 63, 45, 0.06);
+}
+
+.student-class-schedule-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.student-class-schedule-title {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  min-width: 0;
+}
+
+.student-class-schedule-title > .premium-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: #eaf5e7;
+}
+
+.student-class-schedule-title > .premium-icon::before {
+  width: 30px;
+  height: 30px;
+}
+
+.student-class-schedule-title h2 {
+  margin: 0;
+  color: #075b34;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.student-class-schedule-title p,
+.student-schedule-empty {
+  margin: 2px 0 0;
+  color: #2b3d33;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.student-class-schedule-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.student-class-schedule-actions button {
+  min-height: 42px;
+  border: 1px solid rgba(19, 115, 63, 0.22);
+  border-radius: 999px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #13733f;
+  color: #fff;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.student-class-schedule-actions button.is-light {
+  background: #f7fff7;
+  color: #075b34;
+}
+
+.student-class-schedule-actions button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.student-class-schedule-actions .premium-icon {
+  width: 18px;
+  height: 18px;
+  background: transparent;
+}
+
+.student-class-schedule-actions .premium-icon::before {
+  width: 18px;
+  height: 18px;
+  background: currentColor;
+}
+
+.student-schedule-alert {
+  border: 1px solid rgba(196, 86, 45, 0.2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff6ef;
+  color: #873a17;
+  font-weight: 800;
+}
+
+.student-class-schedule-scroll {
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.student-class-schedule-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: separate;
+  border-spacing: 5px 7px;
+  table-layout: fixed;
+}
+
+.student-class-schedule-table th,
+.student-class-schedule-table td {
+  height: 42px;
+  border: 1px solid rgba(6, 70, 47, 0.08);
+  border-radius: 10px;
+  padding: 8px 10px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.student-class-schedule-table thead th {
+  background: #eef7e9;
+  color: #075b34;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.student-class-schedule-table tbody th {
+  background: #fff;
+  color: #075b34;
+  font-family: Poppins, Inter, sans-serif;
+  font-weight: 900;
+}
+
+.student-class-schedule-table td {
+  background: linear-gradient(180deg, #f8fff6, #eef8ee);
+  color: #12352a;
+  font-weight: 850;
+}
+
+.student-class-schedule-table tbody tr:nth-child(2n) td {
+  background: linear-gradient(180deg, #f7fbff, #eaf5ff);
+}
+
+.student-class-schedule-table tbody tr:nth-child(3n) td {
+  background: linear-gradient(180deg, #fffdf7, #fff0cf);
+}
+
+.student-class-schedule-table td em {
+  color: #7d9187;
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 750;
+}
+
+.student-class-schedule-table input {
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  border: 1px solid rgba(6, 70, 47, 0.16);
+  border-radius: 9px;
+  padding: 0 8px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #12352a;
+  font: inherit;
+  font-size: 0.86rem;
+  text-align: center;
+}
+
+.student-schedule-time-edit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+
+.student-schedule-time-edit span {
+  color: #5f7469;
+  font-size: 0.66rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.student-schedule-time-edit input {
+  padding: 0 4px;
+  font-size: 0.78rem;
+}
+
 .student-card-art {
   min-height: 150px;
   border: 2px dashed rgba(17, 131, 63, 0.28);
@@ -15570,6 +15771,19 @@ td {
   .student-premium-hero {
     min-height: auto;
     padding: 24px;
+  }
+
+  .student-class-schedule-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .student-class-schedule-actions {
+    justify-content: flex-start;
+  }
+
+  .student-class-schedule-table {
+    min-width: 680px;
   }
 
   .teacher-metric-grid,
