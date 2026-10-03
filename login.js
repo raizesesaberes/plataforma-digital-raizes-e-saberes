@@ -437,7 +437,7 @@ form?.addEventListener("submit", async (event) => {
   const identifier = String(formData.get("email") || "").trim();
   const email = identifier.toLowerCase();
   const password = String(formData.get("password") || "");
-  const studentMode = isStudentInstitutionalIdentifier(identifier) && !requiresSupabaseAuth;
+  const studentMode = isStudentInstitutionalIdentifier(identifier) && !requiresQuestionBankRole;
 
   if (errorMessage) {
     errorMessage.hidden = true;
