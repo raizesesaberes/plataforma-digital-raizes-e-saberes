@@ -59,17 +59,6 @@ const hasValidPlatformRole = (role) => validPlatformRoles.has(normalizePlatformR
 const prefersFileRoutes = () =>
   window.location.protocol === "file:" || ["localhost", "127.0.0.1", ""].includes(window.location.hostname);
 const platformRoute = (cleanPath, filePath) => (prefersFileRoutes() ? filePath : cleanPath);
-const loginRoleLabels = {
-  aluno: "Aluno Ensino Fundamental",
-  professor: "Professor",
-  escola: "Escola",
-  educacao_infantil: "Aluno Educação Infantil",
-  admin: "Admin / TI",
-  gestor: "Gestor",
-  coordenador: "Coordenador",
-  secretaria: "Secretaria",
-};
-
 const getRoleHome = (role) =>
   ({
     professor: platformRoute("/professor", "professor.html"),
@@ -212,59 +201,36 @@ const accessCopy = document.querySelector("[data-login-access-copy]");
 const submitButton = form?.querySelector("button[type='submit']");
 const identifierLabel = form?.querySelector("[data-login-identifier-label]");
 const identifierInput = form?.querySelector("[data-login-identifier-input]");
-const modeNote = form?.querySelector("[data-login-mode-note]");
-const accessOptions = Array.from(document.querySelectorAll("[data-login-access-option]"));
 const recoveryPanel = document.querySelector("[data-password-recovery-panel]");
 const recoveryForm = document.querySelector("[data-password-recovery-form]");
 const recoveryOpenButton = document.querySelector("[data-password-recovery-open]");
 const recoveryCloseButton = document.querySelector("[data-password-recovery-close]");
 const recoveryMessage = document.querySelector("[data-password-recovery-message]");
-let selectedAccessRole = inferRequestedAccessRole() || "admin";
-const studentInstitutionalLoginRoles = new Set(["aluno", "educacao_infantil"]);
-const isStudentInstitutionalLoginMode = () => studentInstitutionalLoginRoles.has(normalizePlatformRole(selectedAccessRole));
-
-const setSelectedAccessRole = (role) => {
-  selectedAccessRole = normalizePlatformRole(role) || selectedAccessRole;
-  accessOptions.forEach((option) => {
-    const isSelected = normalizePlatformRole(option.dataset.loginAccessOption) === selectedAccessRole;
-    option.classList.toggle("is-selected", isSelected);
-    option.setAttribute("aria-pressed", String(isSelected));
-  });
-  syncAccessCopy();
-};
+const institutionalLoginPattern = /^[A-Z]{2,12}-\d{4,8}$/;
+const normalizeInstitutionalIdentifier = (identifier) => String(identifier || "").trim().toUpperCase();
+const isStudentInstitutionalIdentifier = (identifier) => institutionalLoginPattern.test(normalizeInstitutionalIdentifier(identifier));
 
 const syncAccessCopy = () => {
-  const studentMode = isStudentInstitutionalLoginMode() && !requiresSupabaseAuth;
   if (accessCopy) {
-    accessCopy.textContent = studentMode
-      ? "Alunos entram com o login institucional impresso pela Secretaria e a senha inicial ou redefinida."
-      : "Profissionais entram com e-mail e senha. A Plataforma Raízes e Saberes abrirá automaticamente o ambiente correspondente ao perfil.";
+    accessCopy.textContent =
+      "Entre com seu login ou e-mail e senha. A Plataforma Raízes e Saberes abrirá automaticamente o ambiente correspondente ao seu perfil.";
   }
-  if (identifierLabel) identifierLabel.textContent = studentMode ? "Login institucional" : "E-mail";
+  if (identifierLabel) identifierLabel.textContent = "Login / E-mail";
   if (identifierInput) {
-    identifierInput.type = studentMode ? "text" : "email";
+    identifierInput.type = "text";
     identifierInput.autocomplete = "username";
-    identifierInput.placeholder = studentMode ? "EMCS-000001" : "usuario@raizesesaberes.com.br";
-    identifierInput.inputMode = studentMode ? "text" : "email";
-  }
-  if (modeNote) {
-    modeNote.textContent = studentMode
-      ? "Modo aluno: use o login institucional do comprovante. Esqueci minha senha deve ser solicitado na Secretaria."
-      : "Modo profissionais: use o e-mail institucional e a senha do seu perfil.";
+    identifierInput.placeholder = "Login ou e-mail";
+    identifierInput.inputMode = "text";
   }
   if (recoveryOpenButton) {
-    recoveryOpenButton.textContent = studentMode ? "Esqueci minha senha: procurar Secretaria" : "Esqueci minha senha";
+    recoveryOpenButton.textContent = "Esqueci minha senha";
   }
   if (submitButton) {
     submitButton.textContent = "Entrar";
   }
 };
 
-setSelectedAccessRole(selectedAccessRole);
-
-accessOptions.forEach((option) => {
-  option.addEventListener("click", () => setSelectedAccessRole(option.dataset.loginAccessOption));
-});
+syncAccessCopy();
 
 if (requiresSupabaseAuth) {
   const copy = accessCopy || document.querySelector(".login-copy span");
@@ -416,13 +382,15 @@ const setRecoveryBusy = (isBusy) => {
 };
 
 recoveryOpenButton?.addEventListener("click", () => {
-  if (isStudentInstitutionalLoginMode() && !requiresSupabaseAuth) {
+  const identifier = form?.querySelector("[name='email']")?.value || "";
+  if (!requiresSupabaseAuth && isStudentInstitutionalIdentifier(identifier)) {
     showLoginError("Para redefinir a senha do aluno, procure a Secretaria da escola.");
     return;
   }
-  const email = form?.querySelector("[name='email']")?.value || "";
   const recoveryEmail = recoveryForm?.querySelector("[name='recovery_email']");
-  if (recoveryEmail && !recoveryEmail.value) recoveryEmail.value = email;
+  if (recoveryEmail && !recoveryEmail.value && String(identifier).includes("@")) {
+    recoveryEmail.value = identifier;
+  }
   if (recoveryPanel) recoveryPanel.hidden = false;
   recoveryEmail?.focus();
 });
@@ -456,7 +424,7 @@ form?.addEventListener("submit", async (event) => {
   const identifier = String(formData.get("email") || "").trim();
   const email = identifier.toLowerCase();
   const password = String(formData.get("password") || "");
-  const studentMode = isStudentInstitutionalLoginMode() && !requiresSupabaseAuth;
+  const studentMode = isStudentInstitutionalIdentifier(identifier) && !requiresSupabaseAuth;
 
   if (errorMessage) {
     errorMessage.hidden = true;
@@ -465,7 +433,7 @@ form?.addEventListener("submit", async (event) => {
 
   if (studentMode) {
     try {
-      const context = await authenticateStudentInstitutional(identifier, password);
+      const context = await authenticateStudentInstitutional(normalizeInstitutionalIdentifier(identifier), password);
       localStorage.setItem(demoAccess.key, "true");
       window.location.replace(getPostLoginDestination(context.platformRole));
       return;
@@ -521,5 +489,5 @@ form?.addEventListener("submit", async (event) => {
   if (isCurator) {
     localStorage.setItem(demoAccess.curatorKey, "true");
   }
-  window.location.replace(getDemoLoginDestination(selectedAccessRole));
+  window.location.replace(getDemoLoginDestination("admin"));
 });

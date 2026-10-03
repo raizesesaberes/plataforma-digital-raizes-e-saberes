@@ -23,27 +23,14 @@
 
         <div class="login-copy">
           <p>Ecossistema Raízes e Saberes</p>
-          <h1 id="login-title">Um único acesso. Cada perfil no seu espaço.</h1>
-          <span data-login-access-copy>Entre com seu usuário e senha. A Plataforma Raízes e Saberes abrirá automaticamente o ambiente correspondente ao seu perfil.</span>
+          <h1 id="login-title">Acesse a Plataforma</h1>
+          <span data-login-access-copy>Entre com seu login ou e-mail e senha. A Plataforma Raízes e Saberes abrirá automaticamente o ambiente correspondente ao seu perfil.</span>
         </div>
 
-        <section class="login-access-map" aria-label="Acessos da plataforma">
-          <h2>Acessos da Plataforma</h2>
-          <div>
-            <button type="button" data-login-access-option="admin">Administração / TI</button>
-            <button type="button" data-login-access-option="secretaria">Secretaria</button>
-            <button type="button" data-login-access-option="escola">Escola</button>
-            <button type="button" data-login-access-option="educacao_infantil">Aluno Educação Infantil</button>
-            <button type="button" data-login-access-option="professor">Professor</button>
-            <button type="button" data-login-access-option="aluno">Aluno Ensino Fundamental</button>
-          </div>
-        </section>
-
         <form class="login-form" data-login-form novalidate>
-          <div class="login-mode-note" data-login-mode-note role="status"></div>
           <label>
-            <span data-login-identifier-label>E-mail / Usuário</span>
-            <input type="email" name="email" autocomplete="username" placeholder="usuario@raizesesaberes.com.br" required data-login-identifier-input />
+            <span data-login-identifier-label>Login / E-mail</span>
+            <input type="text" name="email" autocomplete="username" placeholder="Login ou e-mail" required data-login-identifier-input />
           </label>
           <label>
             <span>Senha</span>
@@ -51,7 +38,7 @@
           </label>
           <p class="login-error" data-login-error role="alert" hidden>Credenciais inválidas para este ambiente.</p>
           <button type="button" class="login-forgot-button" data-password-recovery-open>Esqueci minha senha</button>
-          <button type="submit">Acessar Plataforma</button>
+          <button type="submit">Entrar</button>
         </form>
 
         <section class="login-recovery-panel" data-password-recovery-panel hidden>
@@ -59,7 +46,7 @@
           <p>Informe seu e-mail para receber as instruções de redefinição de senha.</p>
           <form class="login-form" data-password-recovery-form novalidate>
             <label>
-              <span>E-mail / Usuário</span>
+              <span>Login / E-mail</span>
               <input type="email" name="recovery_email" autocomplete="email" placeholder="usuario@raizesesaberes.com.br" required />
             </label>
             <p class="login-recovery-message" data-password-recovery-message role="status" hidden></p>
@@ -72,6 +59,6 @@
       </section>
     </main>
     <script src="supabase-config.js"></script>
-    <script src="login.js?v=admin-ti-v1-login-loop-fix-20260911a"></script>
+    <script src="login.js?v=acessos04-single-login-20261003"></script>
   </body>
 </html>
