@@ -25263,10 +25263,10 @@ const renderSecretariaStudentAccessCenterView = (index) => {
       </section>
       ${renderStudentCredentialResultPanel(index)}
       <section class="panel span-2 secretaria-form-panel">
-        <div class="panel-head"><h2>Emissão em lote</h2><span>Edge Function canônica</span></div>
+        <div class="panel-head"><h2>Emissão em lote</h2><span>Credenciais institucionais</span></div>
         <div class="secretaria-form-grid">
           <label><span>Turma</span><select data-secretaria-student-access-class><option value="">Selecione uma turma</option>${activeClasses.map((classItem) => `<option value="${htmlEscape(classItem.id)}">${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
-          <label><span>Limite técnico</span><input type="number" min="1" max="5000" value="1000" data-secretaria-student-access-limit /></label>
+          <input type="hidden" value="1000" data-secretaria-student-access-limit />
           <div class="qb-builder-actions secretaria-form-actions is-wide">
             <button type="button" data-secretaria-student-access-action="provision_class">Gerar acessos da turma</button>
             <button type="button" data-secretaria-student-access-action="provision_school">Gerar acessos da escola</button>
@@ -25327,6 +25327,10 @@ const printStudentCredentialVouchers = (credentials = [], index = buildSecretari
   const printWindow = window.open("", "_blank", "width=900,height=700");
   if (!printWindow) return;
   const loginUrl = studentAccessLoginUrl();
+  const pages = [];
+  for (let offset = 0; offset < rows.length; offset += 4) {
+    pages.push(rows.slice(offset, offset + 4));
+  }
   const printHtml = `
     <!doctype html>
     <html lang="pt-BR">
@@ -25335,40 +25339,76 @@ const printStudentCredentialVouchers = (credentials = [], index = buildSecretari
         <title>Credenciais Institucionais dos Alunos</title>
         <style>
           * { box-sizing: border-box; }
-          body { font-family: Arial, sans-serif; color: #12372a; margin: 32px; background: #fff; }
-          header { border-bottom: 2px solid #0f6b47; margin-bottom: 24px; padding-bottom: 16px; }
-          h1 { margin: 0; font-size: 24px; text-transform: uppercase; }
-          header p { margin: 6px 0 0; color: #52685e; }
-          .voucher { break-inside: avoid; page-break-inside: avoid; border: 1px solid #b8d8c4; border-radius: 12px; padding: 18px; margin: 0 0 16px; }
-          .voucher small { display: block; color: #52685e; margin-bottom: 8px; }
-          .voucher strong { display: block; font-size: 20px; margin-bottom: 6px; }
-          .voucher span { display: block; margin: 4px 0; }
-          .access-line { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
-          .access-line code, .access-line mark { display: inline-block; font-size: 18px; padding: 8px 10px; border-radius: 8px; }
+          html, body { margin: 0; padding: 0; background: #fff; }
+          body { font-family: Arial, sans-serif; color: #12372a; }
+          .sheet {
+            width: 210mm;
+            min-height: 297mm;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            page-break-after: always;
+            break-after: page;
+          }
+          .sheet:last-child { page-break-after: auto; break-after: auto; }
+          .voucher {
+            break-inside: avoid;
+            page-break-inside: avoid;
+            min-height: 148.5mm;
+            padding: 11mm;
+            border: 0;
+            border-right: 1px dashed #aecfba;
+            border-bottom: 1px dashed #aecfba;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+          }
+          .voucher:nth-child(2n) { border-right: 0; }
+          .voucher:nth-child(n + 3) { border-bottom: 0; }
+          .voucher.is-empty { color: transparent; }
+          .voucher h1 { margin: 0 0 5mm; font-size: 17px; text-transform: uppercase; letter-spacing: 0; color: #0f6b47; }
+          .voucher small { display: block; color: #52685e; margin-bottom: 4mm; font-size: 11px; line-height: 1.35; }
+          .voucher strong { display: block; font-size: 17px; margin-bottom: 2.5mm; line-height: 1.2; }
+          .voucher span { display: block; margin: 1.8mm 0; font-size: 12px; line-height: 1.35; }
+          .access-line { display: grid; gap: 2.5mm; margin: 5mm 0 4mm; }
+          .access-line code, .access-line mark { display: block; font-size: 18px; padding: 3mm 3.5mm; border-radius: 6px; line-height: 1.15; }
           .access-line code { background: #eef7f1; }
           .access-line mark { background: #ffe8a3; color: #4a3200; }
-          .notice { font-size: 12px; color: #50675b; border-top: 1px solid #e3eee7; margin-top: 12px; padding-top: 10px; }
-          @page { size: A4; margin: 18mm; }
-          @media print { body { margin: 0; } }
+          .notice { font-size: 10.5px; color: #50675b; border-top: 1px solid #e3eee7; margin-top: 3mm; padding-top: 3mm; line-height: 1.35; }
+          @page { size: A4; margin: 0; }
+          @media print {
+            html, body { width: 210mm; min-height: 297mm; }
+            .sheet { margin: 0; }
+          }
         </style>
       </head>
       <body>
-        <header>
-          <h1>Raízes e Saberes</h1>
-          <p>Comprovante de acesso institucional do aluno</p>
-        </header>
-        ${rows.map(({ student, classItem, school, login, password }) => `
-          <section class="voucher">
-            <small>${htmlEscape(normalizeSchoolName(school))}</small>
-            <strong>${htmlEscape(normalizeStudentName(student))}</strong>
-            <span>Turma: ${htmlEscape(normalizeClassName(classItem))}</span>
-            <span>Endereço de acesso: ${htmlEscape(loginUrl)}</span>
-            <div class="access-line">
-              <code>Login: ${htmlEscape(login)}</code>
-              ${password ? `<mark>Senha inicial: ${htmlEscape(password)}</mark>` : `<code>Senha: redefina para emitir novo comprovante</code>`}
-            </div>
-            <p class="notice">A senha é temporária e aparece somente nesta emissão. Se o comprovante for perdido, use Resetar senha para gerar uma nova.</p>
-          </section>
+        ${pages.map((pageRows) => `
+          <main class="sheet">
+            ${[0, 1, 2, 3].map((slot) => {
+              const row = pageRows[slot];
+              if (!row) return `<section class="voucher is-empty" aria-hidden="true"></section>`;
+              const { student, classItem, school, login, password } = row;
+              return `
+                <section class="voucher">
+                  <div>
+                    <h1>Raízes e Saberes</h1>
+                    <small>Escola: ${htmlEscape(normalizeSchoolName(school))}</small>
+                    <strong>${htmlEscape(normalizeStudentName(student))}</strong>
+                    <span>Turma: ${htmlEscape(normalizeClassName(classItem))}</span>
+                    <span>Endereço de acesso: ${htmlEscape(loginUrl)}</span>
+                  </div>
+                  <div>
+                    <div class="access-line">
+                      <code>Login: ${htmlEscape(login)}</code>
+                      ${password ? `<mark>Senha inicial: ${htmlEscape(password)}</mark>` : `<code>Senha: redefina para emitir novo comprovante</code>`}
+                    </div>
+                    <p class="notice">Guarde este comprovante. A senha aparece somente nesta emissão. Se perder, solicite Resetar senha na secretaria.</p>
+                  </div>
+                </section>
+              `;
+            }).join("")}
+          </main>
         `).join("")}
       </body>
     </html>
