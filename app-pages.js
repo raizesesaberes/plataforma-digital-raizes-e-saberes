@@ -12354,6 +12354,44 @@ const adminInvokeCreateAuthAccess = async ({ targetType, targetInstitutionalId, 
   return body;
 };
 
+const adminInvokeChangeAuthEmail = async ({ targetType, targetInstitutionalId, targetAuthUserId, schoolId, newEmail }) => {
+  await ensureAdminSupabaseConfig();
+  const config = getSupabaseConfig();
+  const baseUrl = config.url?.replace(/\/$/, "");
+  const session = await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: ["admin"] });
+  if (!baseUrl || !config.anonKey) {
+    throw new Error("Servico de acesso indisponivel.");
+  }
+  const response = await fetch(`${baseUrl}/functions/v1/admin-change-auth-email`, {
+    method: "POST",
+    headers: {
+      apikey: config.anonKey,
+      Authorization: `Bearer ${session.token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      targetType,
+      targetInstitutionalId,
+      targetAuthUserId,
+      schoolId,
+      newEmail,
+      redirectTo: adminCreateAccessRedirectUrl(),
+      sendRecovery: true,
+    }),
+  });
+  const bodyText = await response.text();
+  let body = {};
+  try {
+    body = bodyText ? JSON.parse(bodyText) : {};
+  } catch (_error) {
+    body = {};
+  }
+  if (!response.ok || body.ok === false) {
+    throw new Error(body.message || body.code || `Falha ao alterar e-mail: ${response.status}`);
+  }
+  return body;
+};
+
 const adminInvokeChangeRole = async ({ profileId, newRole, reason }) => {
   await ensureAdminSupabaseConfig();
   const client = createSupabaseRestClient();
@@ -12423,6 +12461,54 @@ const renderAdminCreateAccessDialog = (user) => {
         <footer>
           <button type="button" data-admin-create-access-close>Cancelar</button>
           <button type="submit" class="is-primary">Criar acesso</button>
+        </footer>
+      </form>
+    </dialog>
+  `;
+};
+
+const adminCanChangeAccessEmail = (user = {}) =>
+  Boolean(user.authConfigured && user.authUserId && (user.source === "teacher" || user.teachers?.length));
+
+const renderAdminChangeEmailDialog = (user) => {
+  if (!adminCanChangeAccessEmail(user)) return "";
+  const teacher = user.teachers?.[0] || {};
+  const currentEmail = adminLooksLikeRealEmail(user.email) ? user.email : teacher.email || "";
+  return `
+    <dialog class="admin-access-dialog" data-admin-email-dialog="${printableEscape(user.id)}">
+      <form method="dialog" data-admin-change-email-form>
+        <header>
+          <span>Alterar e-mail de acesso</span>
+          <h3>${printableEscape(user.name)}</h3>
+          <button type="button" data-admin-change-email-close aria-label="Fechar">×</button>
+        </header>
+        <input type="hidden" name="userId" value="${printableEscape(user.id)}" />
+        <input type="hidden" name="targetType" value="teacher" />
+        <input type="hidden" name="targetInstitutionalId" value="${printableEscape(teacher.id || user.technicalId || "")}" />
+        <input type="hidden" name="targetAuthUserId" value="${printableEscape(user.authUserId || "")}" />
+        <input type="hidden" name="schoolId" value="${printableEscape(user.schoolId || "")}" />
+        <section class="admin-access-review" aria-label="Revisão da troca de e-mail">
+          <article><span>Identidade</span><strong>Mesma conta Auth</strong></article>
+          <article><span>Papel</span><strong>${printableEscape(user.roleLabel)}</strong></article>
+          <article><span>Escola</span><strong>${printableEscape(user.schoolName)}</strong></article>
+          <article><span>Turmas</span><strong>${printableEscape((user.classes || []).map(adminClassName).join(", ") || "Sem turma listada")}</strong></article>
+        </section>
+        <label>
+          <span>E-mail atual</span>
+          <input type="email" name="currentEmail" value="${printableEscape(currentEmail)}" readonly />
+        </label>
+        <label>
+          <span>Novo e-mail</span>
+          <input type="email" name="newEmail" placeholder="novo.email@dominio.com.br" required />
+        </label>
+        <label>
+          <span>Confirmar novo e-mail</span>
+          <input type="email" name="confirmEmail" placeholder="repita o novo e-mail" required />
+        </label>
+        <p data-admin-change-email-status hidden></p>
+        <footer>
+          <button type="button" data-admin-change-email-close>Cancelar</button>
+          <button type="submit" class="is-primary">Alterar e-mail</button>
         </footer>
       </form>
     </dialog>
@@ -12615,7 +12701,14 @@ const renderAdminUserDetail = (user) => {
       <section class="admin-user-safe-actions">
         ${
           user.authConfigured
-            ? `<button type="button" class="is-primary" data-admin-password-recovery="${printableEscape(user.id)}">${adminInlineIcon("mail", "Enviar recuperação de senha")}</button>`
+            ? `
+              <button type="button" class="is-primary" data-admin-password-recovery="${printableEscape(user.id)}">${adminInlineIcon("mail", "Enviar recuperação de senha")}</button>
+              ${
+                adminCanChangeAccessEmail(user)
+                  ? `<button type="button" data-admin-change-email-open="${printableEscape(user.id)}">${adminInlineIcon("mail", "Alterar e-mail de acesso")}</button>${renderAdminChangeEmailDialog(user)}`
+                  : ""
+              }
+            `
             : `
               <button type="button" class="is-primary" data-admin-create-access-open="${printableEscape(user.id)}">${adminInlineIcon("mail", "Configurar acesso")}</button>
               <p>Acesso ainda não configurado.</p>
@@ -14299,6 +14392,21 @@ const initAdminWorkspace = () => {
       else dialog?.removeAttribute("open");
       return;
     }
+    const changeEmailButton = event.target.closest?.("[data-admin-change-email-open]");
+    if (changeEmailButton) {
+      event.preventDefault();
+      const dialog = workspace.querySelector(`[data-admin-email-dialog="${CSS.escape(changeEmailButton.dataset.adminChangeEmailOpen)}"]`);
+      if (dialog?.showModal) dialog.showModal();
+      else dialog?.setAttribute("open", "");
+      return;
+    }
+    if (event.target.closest?.("[data-admin-change-email-close]")) {
+      event.preventDefault();
+      const dialog = event.target.closest("[data-admin-email-dialog]");
+      if (dialog?.close) dialog.close();
+      else dialog?.removeAttribute("open");
+      return;
+    }
     const permissionToggle = event.target.closest?.("[data-admin-permission-toggle]");
     if (permissionToggle) {
       event.preventDefault();
@@ -14730,6 +14838,75 @@ const initAdminWorkspace = () => {
         }
       } finally {
         if (submit) submit.disabled = false;
+      }
+      return;
+    }
+    const emailChangeForm = event.target.closest?.("[data-admin-change-email-form]");
+    if (emailChangeForm) {
+      event.preventDefault();
+      const status = emailChangeForm.querySelector("[data-admin-change-email-status]");
+      const submit = emailChangeForm.querySelector("button[type='submit']");
+      const formData = new FormData(emailChangeForm);
+      const currentEmail = String(formData.get("currentEmail") || "").trim().toLowerCase();
+      const newEmail = String(formData.get("newEmail") || "").trim().toLowerCase();
+      const confirmEmail = String(formData.get("confirmEmail") || "").trim().toLowerCase();
+      if (!adminLooksLikeRealEmail(newEmail) || newEmail !== confirmEmail) {
+        if (status) {
+          status.hidden = false;
+          status.dataset.tone = "error";
+          status.textContent = "Informe e confirme um novo e-mail válido.";
+        }
+        return;
+      }
+      if (newEmail === currentEmail) {
+        if (status) {
+          status.hidden = false;
+          status.dataset.tone = "error";
+          status.textContent = "O novo e-mail precisa ser diferente do atual.";
+        }
+        return;
+      }
+      const userId = String(formData.get("userId") || "");
+      const user = adminFindUserById(userId);
+      if (!user || !window.confirm(`Confirmar troca do e-mail de acesso de ${user.name}?\n\nAtual: ${currentEmail}\nNovo: ${newEmail}\n\nO novo endereço passará a ser usado para login e recuperação de senha.`)) {
+        return;
+      }
+      if (status) {
+        status.hidden = false;
+        status.dataset.tone = "muted";
+        status.textContent = "Alterando e-mail com auditoria...";
+      }
+      if (submit) {
+        submit.disabled = true;
+        submit.textContent = "Alterando...";
+      }
+      try {
+        const result = await adminInvokeChangeAuthEmail({
+          targetType: String(formData.get("targetType") || ""),
+          targetInstitutionalId: String(formData.get("targetInstitutionalId") || ""),
+          targetAuthUserId: String(formData.get("targetAuthUserId") || ""),
+          schoolId: String(formData.get("schoolId") || ""),
+          newEmail,
+        });
+        await ensureAdminReadOnlyData({ force: true });
+        if (status) {
+          status.dataset.tone = "success";
+          status.textContent = result.message || "E-mail de acesso alterado com sucesso.";
+        }
+        setTimeout(() => {
+          const dialog = emailChangeForm.closest("[data-admin-email-dialog]");
+          if (dialog?.close) dialog.close();
+          if (content) content.innerHTML = renderAdminWorkspaceView("usuarios");
+        }, 900);
+      } catch (error) {
+        if (status) {
+          status.dataset.tone = "error";
+          status.textContent = error.message || "Não foi possível alterar o e-mail.";
+        }
+        if (submit) {
+          submit.disabled = false;
+          submit.textContent = "Alterar e-mail";
+        }
       }
       return;
     }
