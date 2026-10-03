@@ -5139,6 +5139,19 @@ h3 {
   gap: 16px;
 }
 
+.login-mode-note {
+  display: block;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(6, 70, 47, 0.14);
+  border-radius: 8px;
+  background: #f4faf6;
+  color: #335246;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .login-access-map {
   display: grid;
   gap: 12px;

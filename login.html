@@ -40,9 +40,10 @@
         </section>
 
         <form class="login-form" data-login-form novalidate>
+          <div class="login-mode-note" data-login-mode-note role="status"></div>
           <label>
-            <span>E-mail / Usuário</span>
-            <input type="email" name="email" autocomplete="username" placeholder="usuario@raizesesaberes.com.br" required />
+            <span data-login-identifier-label>E-mail / Usuário</span>
+            <input type="email" name="email" autocomplete="username" placeholder="usuario@raizesesaberes.com.br" required data-login-identifier-input />
           </label>
           <label>
             <span>Senha</span>
