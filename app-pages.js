@@ -8353,7 +8353,7 @@ const renderStudentPremiumSidebar = () => `
 
 const renderStudentPremiumTopbar = () => `
   <header class="student-premium-topbar">
-    <label><span>Buscar</span><input type="search" placeholder="Buscar livros, jogos, atividades..." /></label>
+    <label class="student-premium-search"><span>Buscar</span><input type="search" placeholder="Buscar livros, jogos, atividades..." data-student-premium-search autocomplete="off" /><div class="student-premium-search-results" data-student-premium-search-results hidden></div></label>
     <div class="student-premium-topbar-right">
       <a class="student-premium-user-pill" href="perfil.html" aria-label="Abrir perfil">${getActiveStudentProfile().avatar ? studentLazyImg(getActiveStudentProfile().avatar, "", "student-top-avatar") : premiumIcon("aluno")}<strong>${printableEscape(getActiveStudentProfile().firstName)}</strong></a>
       <nav class="student-premium-global-actions" aria-label="Ações globais do aluno">
@@ -8412,6 +8412,72 @@ const renderStudentPremiumCard = ({ title, text, href, icon, tone, cta }) => `
     <span>${cta}</span>
   </a>
 `;
+
+const normalizeStudentSearchText = (value = "") =>
+  String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+const getStudentHomeSearchItems = () => {
+  if (!isStudentInstitutionalMode() || studentInstitutionalState.status !== "ready") return [];
+  const items = [];
+  getStudentVisibleRecommendations({ activitiesOnly: true }).forEach((recommendation) => {
+    const href = studentRecommendationOpenHref(recommendation);
+    if (!href) return;
+    items.push({
+      type: "Atividade",
+      title: recommendation.contentTitle || "Atividade recomendada",
+      detail: recommendation.destinationLabel || getActiveStudentProfile().className,
+      href,
+      icon: "atividades",
+    });
+  });
+  getGovernedLibraryBooks(getStudentAvailableBooks()).forEach((book) => {
+    items.push({
+      type: "Livro",
+      title: [book.year, book.title].filter(Boolean).join(" - ") || book.title || "Livro",
+      detail: [book.collection, book.type].filter(Boolean).join(" · ") || "Biblioteca",
+      href: book.href || "biblioteca.html",
+      icon: "book",
+    });
+  });
+  filterContentForSession(officialSchoolGames, "game", (game) => game.id).forEach((game) => {
+    items.push({
+      type: "Jogo",
+      title: game.title || "Jogo educativo",
+      detail: game.description || "Jogar e descobrir",
+      href: getStudentOfficialGameHref(game),
+      icon: "game",
+    });
+  });
+  return items;
+};
+
+const renderStudentHomeSearchResults = (query = "") => {
+  const normalizedQuery = normalizeStudentSearchText(query);
+  if (normalizedQuery.length < 2) return "";
+  const results = getStudentHomeSearchItems()
+    .filter((item) => normalizeStudentSearchText([item.type, item.title, item.detail].join(" ")).includes(normalizedQuery))
+    .slice(0, 8);
+  if (!results.length) {
+    return `<div class="student-search-empty"><strong>Nenhum resultado encontrado.</strong><span>Busque por livros, jogos ou atividades publicadas para voce.</span></div>`;
+  }
+  return `
+    <div class="student-search-list" role="listbox">
+      ${results
+        .map(
+          (item) => `
+            <a href="${printableEscape(item.href)}" role="option">
+              ${premiumIcon(item.icon)}
+              <span><b>${printableEscape(item.title)}</b><small>${printableEscape(item.type)} · ${printableEscape(item.detail || "")}</small></span>
+            </a>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+};
 
 const getStudentInstitutionalEntriesForDate = (specificDate = "") =>
   (studentInstitutionalState.entries || [])
@@ -16885,6 +16951,10 @@ const getFamilyWeekRange = (weekStartIso = familyWeekStartIso()) => {
   const friday = new Date(monday);
   friday.setDate(monday.getDate() + 4);
   const months = ["Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+  const shortMonths = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
+  if (monday.getMonth() !== friday.getMonth() || monday.getFullYear() !== friday.getFullYear()) {
+    return `${String(monday.getDate()).padStart(2, "0")} ${shortMonths[monday.getMonth()]} a ${String(friday.getDate()).padStart(2, "0")} ${shortMonths[friday.getMonth()]}`;
+  }
   return `${String(monday.getDate()).padStart(2, "0")} a ${String(friday.getDate()).padStart(2, "0")} de ${months[friday.getMonth()]}`;
 };
 
@@ -21820,7 +21890,7 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
       }
       const teacherMembershipRows = await client.request(
         "class_teacher_memberships",
-        `?select=id,role,status,teachers(id,profile_id,user_id,school_id,status)&class_id=${supabaseEq(classItem.id)}&status=eq.active`,
+        `?select=id,role,status,teachers(id,profile_id,user_id,school_id,status,full_name,email,disciplina)&class_id=${supabaseEq(classItem.id)}&status=eq.active`,
         { requireAuthenticated: true, allowedRoles: ["aluno", "admin"] }
       ).catch(() => []);
       const teachers = (Array.isArray(teacherMembershipRows) ? teacherMembershipRows : [])
@@ -28676,6 +28746,7 @@ const initTeacherWorkspace = () => {
 const initStudentInstitutionalDashboard = () => {
   const dashboard = document.querySelector("[data-student-dashboard]");
   if (!dashboard || !isStudentInstitutionalMode()) return;
+  initStudentHomeSearch(dashboard);
   dashboard.addEventListener("click", async (event) => {
     const readButton = event.target.closest?.("[data-student-delivery-read]");
     if (!readButton) return;
@@ -28704,6 +28775,31 @@ const initStudentInstitutionalDashboard = () => {
       initStudentAvaliaApplication();
     });
     initStudentInstitutionalDashboard();
+  });
+};
+
+const initStudentHomeSearch = (root = document) => {
+  const input = root.querySelector("[data-student-premium-search]");
+  const results = root.querySelector("[data-student-premium-search-results]");
+  if (!input || !results || input.dataset.studentSearchBound === "true") return;
+  input.dataset.studentSearchBound = "true";
+  const render = () => {
+    const html = renderStudentHomeSearchResults(input.value || "");
+    results.innerHTML = html;
+    results.hidden = !html;
+  };
+  input.addEventListener("input", render);
+  input.addEventListener("focus", render);
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      input.value = "";
+      render();
+      input.blur();
+    }
+  });
+  root.addEventListener("click", (event) => {
+    if (event.target.closest?.(".student-premium-search")) return;
+    results.hidden = true;
   });
 };
 
