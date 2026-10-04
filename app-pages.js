@@ -12480,127 +12480,48 @@ const adminPrintProfessionalAccessReceipt = (receipt) => {
   const login = receipt.dataset.accessLogin || "";
   const temporaryPassword = receipt.dataset.accessPassword || "";
   if (!login || !temporaryPassword) return;
-  const printWindow = window.open("", "_blank", "noopener,noreferrer,width=860,height=720");
-  if (!printWindow) return;
-  printWindow.document.open();
-  printWindow.document.write(`
-    <!doctype html>
-    <html lang="pt-BR">
-      <head>
-        <meta charset="utf-8" />
-        <title>Acesso do professor - Raízes e Saberes</title>
-        <style>
-          @page { size: A4; margin: 18mm; }
-          * { box-sizing: border-box; }
-          body {
-            margin: 0;
-            background: #fff;
-            color: #122033;
-            font-family: Arial, Helvetica, sans-serif;
-          }
-          main {
-            width: 100%;
-            min-height: calc(297mm - 36mm);
-            border: 1px solid #d7e7dc;
-            border-radius: 12px;
-            padding: 24px;
-            display: grid;
-            align-content: start;
-            gap: 18px;
-          }
-          header {
-            border-bottom: 2px solid #0d6b4b;
-            padding-bottom: 14px;
-          }
-          span {
-            display: block;
-            color: #0d6b4b;
-            font-size: 12px;
-            font-weight: 800;
-            letter-spacing: .04em;
-            text-transform: uppercase;
-          }
-          h1 {
-            margin: 5px 0 0;
-            color: #0d6b4b;
-            font-size: 24px;
-            line-height: 1.2;
-          }
-          dl {
-            margin: 0;
-            display: grid;
-            grid-template-columns: 150px minmax(0, 1fr);
-            gap: 10px 14px;
-          }
-          dt {
-            color: #526b60;
-            font-weight: 700;
-          }
-          dd {
-            margin: 0;
-            color: #122033;
-            font-weight: 800;
-            overflow-wrap: anywhere;
-          }
-          .secret {
-            border: 1px dashed #0d6b4b;
-            border-radius: 10px;
-            padding: 14px 16px;
-            background: #f3f9f5;
-          }
-          .secret dd {
-            font-size: 20px;
-            letter-spacing: .02em;
-          }
-          p {
-            margin: 0;
-            border-left: 4px solid #0d6b4b;
-            padding: 10px 12px;
-            background: #f7fbf8;
-            color: #244238;
-            line-height: 1.45;
-            font-weight: 700;
-          }
-          footer {
-            margin-top: 8px;
-            color: #526b60;
-            font-size: 12px;
-          }
-          @media print {
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          }
-        </style>
-      </head>
-      <body>
-        <main>
-          <header>
-            <span>RAÍZES E SABERES</span>
-            <h1>ACESSO DO PROFESSOR</h1>
-          </header>
-          <dl>
-            <dt>Nome do professor</dt>
-            <dd>${printableEscape(teacherName)}</dd>
-            <dt>Escola</dt>
-            <dd>${printableEscape(schoolName)}</dd>
-          </dl>
-          <dl class="secret">
-            <dt>Login / e-mail</dt>
-            <dd>${printableEscape(login)}</dd>
-            <dt>Senha provisória</dt>
-            <dd>${printableEscape(temporaryPassword)}</dd>
-          </dl>
-          <p>Esta é uma senha provisória. No primeiro acesso, você deverá cadastrar sua nova senha.</p>
-          <dl>
-            <dt>Endereço de acesso</dt>
-            <dd>raizesesaberes.com.br/login</dd>
-          </dl>
-          <footer>Comprovante gerado para entrega física ao professor. Não compartilhe esta senha por canais públicos.</footer>
-        </main>
-        <script>window.onload = () => setTimeout(() => window.print(), 120);<\/script>
-      </body>
-    </html>
-  `);
-  printWindow.document.close();
+  document.querySelector("[data-admin-access-print-frame]")?.remove();
+  const printFrame = document.createElement("section");
+  printFrame.className = "admin-access-print-frame";
+  printFrame.dataset.adminAccessPrintFrame = "true";
+  printFrame.innerHTML = `
+    <main>
+      <header>
+        <span>RAÍZES E SABERES</span>
+        <h1>ACESSO DO PROFESSOR</h1>
+      </header>
+      <dl>
+        <dt>Professor</dt>
+        <dd>${printableEscape(teacherName)}</dd>
+        <dt>Escola</dt>
+        <dd>${printableEscape(schoolName)}</dd>
+      </dl>
+      <dl class="is-secret">
+        <dt>Login</dt>
+        <dd>${printableEscape(login)}</dd>
+        <dt>Senha provisória</dt>
+        <dd>${printableEscape(temporaryPassword)}</dd>
+      </dl>
+      <section class="is-guidance">
+        <strong>Primeiro acesso</strong>
+        <p>Utilize os dados acima para entrar na Plataforma Raízes e Saberes. No primeiro acesso, você deverá cadastrar uma nova senha.</p>
+      </section>
+      <dl>
+        <dt>Acesso</dt>
+        <dd>raizesesaberes.com.br/login</dd>
+      </dl>
+    </main>
+  `;
+  document.body.appendChild(printFrame);
+  const cleanup = () => {
+    printFrame.remove();
+    window.removeEventListener("afterprint", cleanup);
+  };
+  window.addEventListener("afterprint", cleanup, { once: true });
+  requestAnimationFrame(() => {
+    window.print();
+    window.setTimeout(cleanup, 1200);
+  });
 };
 
 const renderAdminCreateAccessDialog = (user) => {
