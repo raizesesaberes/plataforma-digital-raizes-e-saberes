@@ -298,6 +298,10 @@ const authenticateWithSupabase = async (email, password, { requireQuestionBankRo
   if (!hasValidPlatformRole(context.platformRole)) {
     return { ...context, missingPlatformRole: true };
   }
+  const userMetadata = authData?.user?.user_metadata || {};
+  if (userMetadata.password_change_required === true) {
+    return { ...context, requiresPasswordChange: true };
+  }
   return context;
 };
 
@@ -465,6 +469,10 @@ form?.addEventListener("submit", async (event) => {
       return;
     }
     if (context) {
+      if (context.requiresPasswordChange) {
+        window.location.replace("redefinir-senha.html?force=1");
+        return;
+      }
       localStorage.setItem(demoAccess.key, "true");
       window.location.replace(getPostLoginDestination(context.platformRole || context.questionBankRole));
       return;

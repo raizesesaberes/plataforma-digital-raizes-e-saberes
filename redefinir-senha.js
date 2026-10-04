@@ -5,10 +5,18 @@ const getResetSupabaseConfig = () => window.RAIZES_SUPABASE || {};
 const getResetParams = () => {
   const hashParams = new URLSearchParams(String(window.location.hash || "").replace(/^#/, ""));
   const queryParams = new URLSearchParams(window.location.search || "");
+  let storedSession = null;
+  try {
+    storedSession = JSON.parse(localStorage.getItem(resetSessionStorageKey) || "null");
+  } catch (_error) {
+    storedSession = null;
+  }
+  const forceSession = queryParams.get("force") === "1" ? storedSession : null;
   return {
-    accessToken: hashParams.get("access_token") || queryParams.get("access_token") || "",
-    refreshToken: hashParams.get("refresh_token") || queryParams.get("refresh_token") || "",
-    type: hashParams.get("type") || queryParams.get("type") || "",
+    accessToken: hashParams.get("access_token") || queryParams.get("access_token") || forceSession?.access_token || "",
+    refreshToken: hashParams.get("refresh_token") || queryParams.get("refresh_token") || forceSession?.refresh_token || "",
+    type: hashParams.get("type") || queryParams.get("type") || (forceSession ? "temporary_password" : ""),
+    force: Boolean(forceSession),
   };
 };
 
@@ -48,7 +56,8 @@ const setResetComplete = () => {
   }
 };
 
-const hasValidRecoveryToken = () => Boolean(resetTokens.accessToken && (!resetTokens.type || ["recovery", "invite"].includes(resetTokens.type)));
+const hasValidRecoveryToken = () =>
+  Boolean(resetTokens.accessToken && (!resetTokens.type || ["recovery", "invite", "temporary_password"].includes(resetTokens.type)));
 
 if (!hasValidRecoveryToken()) {
   if (resetInvalid) resetInvalid.hidden = false;
@@ -102,7 +111,14 @@ resetForm?.addEventListener("submit", async (event) => {
         Authorization: `Bearer ${resetTokens.accessToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({
+        password,
+        data: {
+          password_change_required: false,
+          temporary_password_issued_at: null,
+          temporary_password_reason: null,
+        },
+      }),
     });
     if (!response.ok) {
       throw new Error("Não foi possível redefinir a senha com este link.");

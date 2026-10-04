@@ -29,6 +29,26 @@ const json = (body: Record<string, unknown>, status = 200) =>
 const normalizeEmail = (value = "") => value.trim().toLowerCase();
 const isValidEmail = (value = "") => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 const adminRoles = new Set(["admin", "admin_ti", "administrador", "administrador_nacional", "ti"]);
+const passwordWords = [
+  "ARTE", "AULA", "BRISA", "CASA", "CEDRO", "CLARO", "CONTO", "ESTUDO",
+  "FLOR", "FOLHA", "FONTE", "LIVRO", "MAPA", "MUNDO", "NOTA", "PONTE",
+  "RAIZ", "REDE", "RIO", "RODA", "SABER", "SEMENTE", "SOL", "TEXTO",
+  "TRILHA", "VIDA", "VOZ", "ZELAR", "CAMPO", "JARDIM", "LUA", "PATIO",
+];
+
+const randomInt = (max: number) => {
+  const values = new Uint32Array(1);
+  crypto.getRandomValues(values);
+  return values[0] % max;
+};
+
+const generateTemporaryPassword = () => {
+  const word = passwordWords[randomInt(passwordWords.length)];
+  const digits = String(randomInt(10000)).padStart(4, "0");
+  const suffixAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const suffix = `${suffixAlphabet[randomInt(suffixAlphabet.length)]}${suffixAlphabet[randomInt(suffixAlphabet.length)]}`;
+  return `${word}-${digits}-${suffix}`;
+};
 
 const expectedRoleByTarget: Record<TargetType, string> = {
   teacher: "professor",
@@ -295,15 +315,24 @@ Deno.serve(async (request) => {
 
   const displayName = target.full_name || target.nome || email;
   const reusableProfileId = targetType !== "student" ? target.profile_id || null : null;
+  const temporaryPassword = targetType === "teacher" ? generateTemporaryPassword() : "";
   const createAttributes = {
     ...(reusableProfileId ? { id: reusableProfileId } : {}),
     email,
     email_confirm: true,
+    ...(temporaryPassword ? { password: temporaryPassword } : {}),
     app_metadata: { platform_role: profileRoleByTarget[targetType] },
     user_metadata: {
       display_name: displayName,
       institutional_target_type: targetType,
       institutional_target_id: targetInstitutionalId,
+      ...(temporaryPassword
+        ? {
+            password_change_required: true,
+            temporary_password_issued_at: new Date().toISOString(),
+            temporary_password_reason: "admin_initial_access",
+          }
+        : {}),
     },
   };
   const { data: createData, error: createError } = await adminClient.auth.admin.createUser(createAttributes);
@@ -474,15 +503,28 @@ Deno.serve(async (request) => {
         schoolId: target.school_id,
         result: "created",
       }).catch(() => null);
-    const recoveryResponse = await fetch(`${supabaseUrl}/auth/v1/recover?redirect_to=${encodeURIComponent(payload.redirectTo || "")}`, {
-      method: "POST",
-      headers: {
-        apikey: anonKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email }),
-    });
-    initialRecoverySent = recoveryResponse.ok;
+    if (temporaryPassword) {
+      await adminClient.from("admin_professional_password_events").insert({
+        admin_user_id: caller.id,
+        target_type: "teacher",
+        target_institutional_id: targetInstitutionalId,
+        target_auth_user_id: authUserId,
+        target_email: email,
+        school_id: target.school_id,
+        action: "temporary_password_created",
+        result: "created",
+      }).catch(() => null);
+    } else {
+      const recoveryResponse = await fetch(`${supabaseUrl}/auth/v1/recover?redirect_to=${encodeURIComponent(payload.redirectTo || "")}`, {
+        method: "POST",
+        headers: {
+          apikey: anonKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+      initialRecoverySent = recoveryResponse.ok;
+    }
   } catch (error) {
     if (targetType === "teacher") {
       await adminClient
@@ -559,8 +601,12 @@ Deno.serve(async (request) => {
     derivedRole,
     schoolId: target.school_id,
     initialRecoverySent,
+    temporaryPassword: temporaryPassword || null,
+    mustChangePassword: Boolean(temporaryPassword),
     message: initialRecoverySent
       ? "Acesso criado com sucesso. O usuario recebera instrucoes para definir a senha."
-      : "Acesso criado com sucesso. Envie a recuperacao de senha para o usuario definir a senha.",
+      : temporaryPassword
+        ? "Acesso criado com sucesso. Entregue a senha provisoria ao professor."
+        : "Acesso criado com sucesso. Envie a recuperacao de senha para o usuario definir a senha.",
   });
 });

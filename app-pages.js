@@ -12392,6 +12392,36 @@ const adminInvokeChangeAuthEmail = async ({ targetType, targetInstitutionalId, t
   return body;
 };
 
+const adminInvokeResetProfessorTempPassword = async ({ teacherId, authUserId, schoolId }) => {
+  await ensureAdminSupabaseConfig();
+  const config = getSupabaseConfig();
+  const baseUrl = config.url?.replace(/\/$/, "");
+  const session = await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: ["admin"] });
+  if (!baseUrl || !config.anonKey) {
+    throw new Error("Servico de acesso indisponivel.");
+  }
+  const response = await fetch(`${baseUrl}/functions/v1/admin-reset-professor-temp-password`, {
+    method: "POST",
+    headers: {
+      apikey: config.anonKey,
+      Authorization: `Bearer ${session.token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ teacherId, authUserId, schoolId }),
+  });
+  const bodyText = await response.text();
+  let body = {};
+  try {
+    body = bodyText ? JSON.parse(bodyText) : {};
+  } catch (_error) {
+    body = {};
+  }
+  if (!response.ok || body.ok === false) {
+    throw new Error(body.message || body.code || `Falha ao gerar senha provisoria: ${response.status}`);
+  }
+  return body;
+};
+
 const adminInvokeChangeRole = async ({ profileId, newRole, reason }) => {
   await ensureAdminSupabaseConfig();
   const client = createSupabaseRestClient();
@@ -12426,6 +12456,19 @@ const adminInvokeSetPermissionFlag = async ({ featureKey, roleKey, permissionSco
   return Array.isArray(result) ? result[0] || {} : result || {};
 };
 
+const adminRenderAccessReceipt = ({ email, temporaryPassword, title = "Acesso criado com sucesso" } = {}) => {
+  if (!email || !temporaryPassword) return "";
+  return `
+    <section class="admin-access-receipt" data-admin-access-receipt>
+      <strong>${printableEscape(title)}</strong>
+      <p>Login: <mark>${printableEscape(email)}</mark></p>
+      <p>Senha provisória: <mark>${printableEscape(temporaryPassword)}</mark></p>
+      <small>Entregue estes dados ao professor. Por segurança, a senha provisória será exibida somente agora.</small>
+      <button type="button" data-admin-copy-access="${printableEscape(`${email}\n${temporaryPassword}`)}">Copiar acesso</button>
+    </section>
+  `;
+};
+
 const renderAdminCreateAccessDialog = (user) => {
   const targetType = adminCreateAccessTargetType(user);
   const derivedRole = adminDerivedAccessRole(targetType);
@@ -12457,7 +12500,7 @@ const renderAdminCreateAccessDialog = (user) => {
           <span>E-mail do usuario</span>
           <input type="email" name="email" value="${printableEscape(defaultEmail)}" placeholder="usuario@escola.com.br" required />
         </label>
-        <p data-admin-create-access-status hidden></p>
+        <div data-admin-create-access-status hidden></div>
         <footer>
           <button type="button" data-admin-create-access-close>Cancelar</button>
           <button type="submit" class="is-primary">Criar acesso</button>
@@ -12468,6 +12511,9 @@ const renderAdminCreateAccessDialog = (user) => {
 };
 
 const adminCanChangeAccessEmail = (user = {}) =>
+  Boolean(user.authConfigured && user.authUserId && (user.source === "teacher" || user.teachers?.length));
+
+const adminCanResetProfessorTempPassword = (user = {}) =>
   Boolean(user.authConfigured && user.authUserId && (user.source === "teacher" || user.teachers?.length));
 
 const renderAdminChangeEmailDialog = (user) => {
@@ -12706,6 +12752,11 @@ const renderAdminUserDetail = (user) => {
               ${
                 adminCanChangeAccessEmail(user)
                   ? `<button type="button" data-admin-change-email-open="${printableEscape(user.id)}">${adminInlineIcon("mail", "Alterar e-mail de acesso")}</button>${renderAdminChangeEmailDialog(user)}`
+                  : ""
+              }
+              ${
+                adminCanResetProfessorTempPassword(user)
+                  ? `<button type="button" data-admin-professor-temp-password="${printableEscape(user.id)}">${adminInlineIcon("key", "Gerar nova senha provisória")}</button>`
                   : ""
               }
             `
@@ -14377,6 +14428,55 @@ const initAdminWorkspace = () => {
       adminHandlePasswordRecovery(recoveryButton.dataset.adminPasswordRecovery, recoveryButton);
       return;
     }
+    const copyAccessButton = event.target.closest?.("[data-admin-copy-access]");
+    if (copyAccessButton) {
+      event.preventDefault();
+      const [login, password] = String(copyAccessButton.dataset.adminCopyAccess || "").split("\n");
+      const text = `Login: ${login || ""}\nSenha provisória: ${password || ""}`;
+      try {
+        await navigator.clipboard.writeText(text);
+        copyAccessButton.textContent = "Acesso copiado";
+      } catch (_error) {
+        window.prompt("Copie o acesso provisório:", text);
+      }
+      return;
+    }
+    const tempPasswordButton = event.target.closest?.("[data-admin-professor-temp-password]");
+    if (tempPasswordButton) {
+      event.preventDefault();
+      const user = adminFindUserById(tempPasswordButton.dataset.adminProfessorTempPassword);
+      const teacher = user?.teachers?.[0] || {};
+      if (!user || !teacher.id || !user.authUserId) {
+        alert("Professor com acesso Auth não identificado.");
+        return;
+      }
+      if (!window.confirm(`Gerar nova senha provisória para ${user.name}?\n\nA senha anterior deixará de valer.`)) return;
+      tempPasswordButton.disabled = true;
+      tempPasswordButton.dataset.originalText = tempPasswordButton.textContent;
+      tempPasswordButton.textContent = "Gerando senha...";
+      try {
+        const result = await adminInvokeResetProfessorTempPassword({
+          teacherId: teacher.id,
+          authUserId: user.authUserId,
+          schoolId: user.schoolId,
+        });
+        const detail = tempPasswordButton.closest(".admin-user-detail");
+        const actions = tempPasswordButton.closest(".admin-user-safe-actions");
+        const existingReceipt = detail?.querySelector("[data-admin-access-receipt]");
+        existingReceipt?.remove();
+        actions?.insertAdjacentHTML("afterbegin", adminRenderAccessReceipt({
+          email: result.email || user.email,
+          temporaryPassword: result.temporaryPassword,
+          title: "Nova senha provisória gerada",
+        }));
+      } catch (error) {
+        alert(error.message || "Não foi possível gerar a senha provisória.");
+      } finally {
+        tempPasswordButton.disabled = false;
+        tempPasswordButton.textContent = tempPasswordButton.dataset.originalText || "Gerar nova senha provisória";
+      }
+      return;
+    }
     const createAccessButton = event.target.closest?.("[data-admin-create-access-open]");
     if (createAccessButton) {
       event.preventDefault();
@@ -14947,14 +15047,29 @@ const initAdminWorkspace = () => {
       const result = await adminInvokeCreateAuthAccess(payload);
       if (status) {
         status.dataset.tone = "success";
-        status.textContent = result.message || "Acesso criado com sucesso. O usuario recebera instruções para definir a senha.";
+        if (result.temporaryPassword) {
+          status.innerHTML = adminRenderAccessReceipt({
+            email: result.email || payload.email,
+            temporaryPassword: result.temporaryPassword,
+            title: "Acesso criado com sucesso",
+          });
+        } else {
+          status.textContent = result.message || "Acesso criado com sucesso. O usuario recebera instruções para definir a senha.";
+        }
       }
       await ensureAdminReadOnlyData({ force: true });
-      setTimeout(() => {
-        const dialog = form.closest("[data-admin-access-dialog]");
-        if (dialog?.close) dialog.close();
-        if (content) content.innerHTML = renderAdminWorkspaceView("usuarios");
-      }, 900);
+      if (result.temporaryPassword) {
+        if (submit) {
+          submit.disabled = true;
+          submit.textContent = "Acesso criado";
+        }
+      } else {
+        setTimeout(() => {
+          const dialog = form.closest("[data-admin-access-dialog]");
+          if (dialog?.close) dialog.close();
+          if (content) content.innerHTML = renderAdminWorkspaceView("usuarios");
+        }, 900);
+      }
     } catch (error) {
       if (status) {
         status.dataset.tone = "error";
