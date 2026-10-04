@@ -12522,7 +12522,6 @@ const adminPrintProfessionalAccessReceipt = (receipt) => {
   window.addEventListener("afterprint", cleanup, { once: true });
   requestAnimationFrame(() => {
     window.print();
-    window.setTimeout(cleanup, 1200);
   });
 };
 
