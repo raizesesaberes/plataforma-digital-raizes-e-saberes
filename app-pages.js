@@ -10255,25 +10255,79 @@ const renderTeacherAssessmentsView = () => {
   const state = avaliaApplicationState.teacher;
   const selectedClassId = classes[0]?.id || "";
   const selectedStudents = getTeacherInstitutionalStudents(selectedClassId);
+  const assessmentCount = state.assessments.length;
+  const assignmentCount = state.assignments.length;
   return `
     <div class="teacher-avalia-app" data-avalia-teacher-app>
-      <form class="tw-form-grid" data-avalia-assignment-form>
-        <label><span>Avaliacao existente</span><select name="assessmentId" data-avalia-assessment-select><option value="">Carregando avaliacoes...</option></select></label>
-        <label><span>Destino</span><select name="targetType" data-avalia-target-type><option value="class">Turma inteira</option><option value="student">Aluno especifico</option></select></label>
-        <label><span>Turma</span><select name="classId" data-avalia-class-select>${classes.map((classItem) => `<option value="${htmlEscape(classItem.id)}">${printableEscape(classItem.name)}</option>`).join("")}</select></label>
-        <label data-avalia-student-wrap hidden><span>Aluno</span><select name="studentId" data-avalia-student-select>${selectedStudents.map((student) => `<option value="${htmlEscape(student.id)}">${printableEscape(student.name)}</option>`).join("")}</select></label>
-        <label><span>Inicio</span><input type="datetime-local" name="availableFrom" value="${avaliaInputDateTimeValue()}" /></label>
-        <label><span>Prazo</span><input type="datetime-local" name="availableUntil" value="${avaliaInputDateTimeValue(new Date(Date.now() + 7 * 86400000))}" /></label>
-        <label><span>Tentativas</span><input type="number" min="1" step="1" name="maxAttempts" value="1" /></label>
-        <label><span>Tempo limite</span><input type="number" min="5" step="5" name="timeLimitMinutes" value="50" /></label>
-        <label><span>Ciclo avaliativo</span><input type="text" name="cycleName" placeholder="Ex.: Diagnostica 2026" /></label>
-        <label><span>Ano letivo</span><input type="text" name="schoolYear" value="${new Date().getFullYear()}" /></label>
-        <label><span>Token</span><select name="tokenRequired"><option value="0">Sem token</option><option value="1">Exigir token</option></select></label>
-        <label><span>Anti-cola</span><select name="shuffleMode"><option value="none">Ordem fixa</option><option value="questions">Embaralhar questoes</option><option value="all">Questoes e alternativas</option></select></label>
-        <button type="submit" class="qb-primary-action">Publicar avaliacao</button>
+      <section class="teacher-avalia-hero">
+        <div>
+          <span>Avalia+</span>
+          <h2>Crie, organize e publique avaliações para suas turmas</h2>
+          <p>Use o Banco de Questões para selecionar itens, monte a avaliação e publique a aplicação para turma inteira ou aluno específico.</p>
+        </div>
+        <div class="teacher-avalia-hero-metrics">
+          <article><strong>${assessmentCount}</strong><span>avaliações com questões</span></article>
+          <article><strong>${assignmentCount}</strong><span>aplicações publicadas</span></article>
+        </div>
+      </section>
+      <nav class="teacher-avalia-nav" aria-label="Fluxo Avalia+">
+        <a href="banco-questoes.html" class="is-primary"><strong>Banco de Questões</strong><span>Pesquisar e selecionar itens</span></a>
+        <a href="banco-questoes.html#nova-questao"><strong>+ Nova questão</strong><span>Autoria pelo banco canônico</span></a>
+        <a href="banco-questoes.html#construtor"><strong>+ Nova avaliação</strong><span>Montar avaliação com itens</span></a>
+        <a href="#aplicacoes"><strong>Aplicações</strong><span>Configurar e publicar</span></a>
+        <a href="#resultados"><strong>Resultados</strong><span>Acompanhar entregas</span></a>
+      </nav>
+      <section class="tw-board" id="minhas-avaliacoes">
+        <div class="tw-section-head"><h2>Minhas avaliações</h2><a href="banco-questoes.html#construtor">Montar avaliação</a></div>
+        <div class="teacher-avalia-assessment-list">
+          ${state.status === "loading"
+            ? `<div class="qb-state">Carregando avaliações com questões...</div>`
+            : state.assessments.length
+              ? state.assessments.slice(0, 6).map((assessment) => `
+                  <article>
+                    <strong>${printableEscape(assessment.title || "Avaliação")}</strong>
+                    <span>${printableEscape(assessment.component || "Componente")} · ${printableEscape(assessment.year || assessment.school_year || "Ano não informado")} · ${Number(assessment.items || assessment.questions?.length || 0)} questão${Number(assessment.items || assessment.questions?.length || 0) === 1 ? "" : "ões"}</span>
+                  </article>
+                `).join("")
+              : `<div class="qb-state">Nenhuma avaliação com questões pronta para publicação. Acesse o Banco de Questões para selecionar itens e montar uma avaliação.</div>`}
+        </div>
+      </section>
+      <form class="teacher-avalia-publication-form" data-avalia-assignment-form id="aplicacoes">
+        <div class="tw-section-head">
+          <h2>Publicar avaliação</h2>
+          <span>Aplicações</span>
+        </div>
+        <fieldset>
+          <legend>Avaliação</legend>
+          <label class="span-2"><span>Avaliação existente</span><select name="assessmentId" data-avalia-assessment-select><option value="">Carregando avaliações...</option></select></label>
+        </fieldset>
+        <fieldset>
+          <legend>Destino</legend>
+          <label><span>Público</span><select name="targetType" data-avalia-target-type><option value="class">Turma inteira</option><option value="student">Aluno específico</option></select></label>
+          <label><span>Turma</span><select name="classId" data-avalia-class-select>${classes.map((classItem) => `<option value="${htmlEscape(classItem.id)}">${printableEscape(classItem.name)}</option>`).join("")}</select></label>
+          <label data-avalia-student-wrap hidden><span>Aluno</span><select name="studentId" data-avalia-student-select>${selectedStudents.map((student) => `<option value="${htmlEscape(student.id)}">${printableEscape(student.name)}</option>`).join("")}</select></label>
+        </fieldset>
+        <fieldset>
+          <legend>Período</legend>
+          <label><span>Início</span><input type="datetime-local" name="availableFrom" value="${avaliaInputDateTimeValue()}" /></label>
+          <label><span>Prazo</span><input type="datetime-local" name="availableUntil" value="${avaliaInputDateTimeValue(new Date(Date.now() + 7 * 86400000))}" /></label>
+        </fieldset>
+        <fieldset>
+          <legend>Regras</legend>
+          <label><span>Tentativas</span><input type="number" min="1" step="1" name="maxAttempts" value="1" /></label>
+          <label><span>Tempo limite</span><input type="number" min="5" step="5" name="timeLimitMinutes" value="50" /></label>
+          <label><span>Token</span><select name="tokenRequired"><option value="0">Sem token</option><option value="1">Exigir token</option></select></label>
+          <label><span>Anti-cola</span><select name="shuffleMode"><option value="none">Ordem fixa</option><option value="questions">Embaralhar questões</option><option value="all">Questões e alternativas</option></select></label>
+        </fieldset>
+        <fieldset>
+          <legend>Dados pedagógicos</legend>
+          <label><span>Ciclo avaliativo</span><input type="text" name="cycleName" placeholder="Ex.: Diagnóstica 2026" /></label>
+          <label><span>Ano letivo</span><input type="text" name="schoolYear" value="${new Date().getFullYear()}" /></label>
+        </fieldset>
+        <button type="submit" class="qb-primary-action">Publicar avaliação</button>
       </form>
       <div class="qb-selection-status" data-avalia-teacher-status aria-live="polite">${printableEscape(state.message || state.error || "")}</div>
-      <section class="tw-board">
+      <section class="tw-board" id="resultados">
         <div class="tw-section-head"><h2>Aplicacoes publicadas</h2><span data-avalia-assignment-count>${state.assignments.length} registros</span></div>
         <div data-avalia-assignment-list>${renderTeacherAssessmentAssignmentsList(state.assignments)}</div>
       </section>
@@ -19333,7 +19387,11 @@ const modules = {
             <div class="qb-grid" data-qb-grid></div>
             <div class="qb-state" data-qb-empty hidden>Nenhuma questao encontrada com os filtros atuais.</div>
             <section class="panel qb-detail" data-qb-detail aria-live="polite"></section>
-            <section class="panel qb-builder">
+            <section class="panel qb-authoring-entry" id="nova-questao">
+              <div class="panel-head"><h2>Nova questão</h2><span>Workflow editorial</span></div>
+              <p>A autoria de novos itens usa o motor canônico de workflow do Avalia+. Neste ambiente, o professor pode selecionar questões publicadas e montar avaliações; criação/aprovação editorial permanece controlada pelos perfis autorizados.</p>
+            </section>
+            <section class="panel qb-builder" id="construtor">
               <div class="panel-head"><h2>Construtor de Avaliações</h2><button type="button" data-qb-save-draft>Salvar rascunho</button></div>
               <div class="qb-builder-grid">
                 <label><span>Titulo</span><input data-qb-assessment-title value="Avaliação diagnóstica demonstrativa" /></label>
