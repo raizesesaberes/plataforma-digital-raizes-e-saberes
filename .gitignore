@@ -8,6 +8,7 @@ node_modules/
 .cache/
 .parcel-cache/
 .vite/
+supabase/.temp/
 dist/
 build/
 coverage/
