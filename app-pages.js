@@ -12513,7 +12513,9 @@ const adminPrintProfessionalAccessReceipt = (receipt) => {
     </main>
   `;
   document.body.appendChild(printFrame);
+  document.body.classList.add("is-admin-access-printing");
   const cleanup = () => {
+    document.body.classList.remove("is-admin-access-printing");
     printFrame.remove();
     window.removeEventListener("afterprint", cleanup);
   };

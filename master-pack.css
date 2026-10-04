@@ -14403,35 +14403,38 @@ td {
 }
 
 @media print {
-  body:has([data-admin-access-print-frame]) * {
-    visibility: hidden !important;
+  @page {
+    size: A4;
+    margin: 18mm;
   }
 
-  body:has([data-admin-access-print-frame]) {
+  body.is-admin-access-printing {
     margin: 0 !important;
     background: #fff !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  [data-admin-access-print-frame],
-  [data-admin-access-print-frame] * {
-    visibility: visible !important;
+  body.is-admin-access-printing > :not([data-admin-access-print-frame]) {
+    display: none !important;
   }
 
-  [data-admin-access-print-frame] {
-    position: fixed;
-    inset: 0;
+  body.is-admin-access-printing [data-admin-access-print-frame] {
     display: block !important;
-    padding: 18mm;
+    position: static;
+    width: 100%;
+    min-height: auto;
+    padding: 0;
     background: #fff;
     color: #122033;
     font-family: Arial, Helvetica, sans-serif;
   }
 
-  [data-admin-access-print-frame] main {
+  body.is-admin-access-printing [data-admin-access-print-frame] main {
     width: 100%;
-    min-height: calc(297mm - 36mm);
+    min-height: auto;
+    break-inside: avoid;
+    page-break-inside: avoid;
     border: 1px solid #d7e7dc;
     border-radius: 12px;
     padding: 24px;
@@ -14440,12 +14443,12 @@ td {
     gap: 18px;
   }
 
-  [data-admin-access-print-frame] header {
+  body.is-admin-access-printing [data-admin-access-print-frame] header {
     border-bottom: 2px solid #0d6b4b;
     padding-bottom: 14px;
   }
 
-  [data-admin-access-print-frame] header span {
+  body.is-admin-access-printing [data-admin-access-print-frame] header span {
     display: block;
     color: #0d6b4b;
     font-size: 12px;
@@ -14454,45 +14457,45 @@ td {
     text-transform: uppercase;
   }
 
-  [data-admin-access-print-frame] h1 {
+  body.is-admin-access-printing [data-admin-access-print-frame] h1 {
     margin: 5px 0 0;
     color: #0d6b4b;
     font-size: 24px;
     line-height: 1.2;
   }
 
-  [data-admin-access-print-frame] dl {
+  body.is-admin-access-printing [data-admin-access-print-frame] dl {
     margin: 0;
     display: grid;
     grid-template-columns: 150px minmax(0, 1fr);
     gap: 10px 14px;
   }
 
-  [data-admin-access-print-frame] dt {
+  body.is-admin-access-printing [data-admin-access-print-frame] dt {
     color: #526b60;
     font-weight: 700;
   }
 
-  [data-admin-access-print-frame] dd {
+  body.is-admin-access-printing [data-admin-access-print-frame] dd {
     margin: 0;
     color: #122033;
     font-weight: 800;
     overflow-wrap: anywhere;
   }
 
-  [data-admin-access-print-frame] .is-secret {
+  body.is-admin-access-printing [data-admin-access-print-frame] .is-secret {
     border: 1px dashed #0d6b4b;
     border-radius: 10px;
     padding: 14px 16px;
     background: #f3f9f5;
   }
 
-  [data-admin-access-print-frame] .is-secret dd {
+  body.is-admin-access-printing [data-admin-access-print-frame] .is-secret dd {
     font-size: 20px;
     letter-spacing: .02em;
   }
 
-  [data-admin-access-print-frame] .is-guidance {
+  body.is-admin-access-printing [data-admin-access-print-frame] .is-guidance {
     border-left: 4px solid #0d6b4b;
     padding: 10px 12px;
     background: #f7fbf8;
@@ -14500,13 +14503,13 @@ td {
     line-height: 1.45;
   }
 
-  [data-admin-access-print-frame] .is-guidance strong {
+  body.is-admin-access-printing [data-admin-access-print-frame] .is-guidance strong {
     display: block;
     margin-bottom: 3px;
     color: #0d6b4b;
   }
 
-  [data-admin-access-print-frame] .is-guidance p {
+  body.is-admin-access-printing [data-admin-access-print-frame] .is-guidance p {
     margin: 0;
     font-weight: 700;
   }
