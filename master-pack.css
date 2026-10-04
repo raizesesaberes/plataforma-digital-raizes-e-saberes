@@ -13232,6 +13232,49 @@ td {
   gap: 8px;
 }
 
+.admin-access-receipt {
+  border: 1px solid rgba(13, 107, 75, 0.18);
+  border-radius: 8px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  background: #eaf6ee;
+  color: #0d6b4b;
+}
+
+.admin-access-receipt strong {
+  color: #0d6b4b;
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 0.96rem;
+}
+
+.admin-access-receipt p {
+  margin: 0;
+  color: #244238;
+  font-weight: 850;
+}
+
+.admin-access-receipt mark {
+  border-radius: 6px;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #122033;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-weight: 900;
+}
+
+.admin-access-receipt small {
+  color: #526b60;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.admin-access-receipt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .admin-user-safe-actions button,
 .admin-user-safe-actions p {
   min-height: 38px;
@@ -13241,6 +13284,15 @@ td {
   color: #526b60;
   font-family: Poppins, Inter, sans-serif;
   font-weight: 900;
+}
+
+.admin-user-safe-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  cursor: pointer;
 }
 
 .admin-user-safe-actions p {
@@ -13260,6 +13312,26 @@ td {
 
 .admin-user-safe-actions button.is-primary .admin-inline-icon {
   color: inherit;
+}
+
+.admin-user-safe-actions button .admin-inline-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 0;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  background: transparent;
+  color: currentColor;
+}
+
+.admin-user-safe-actions button .admin-inline-icon::before {
+  background: currentColor;
+}
+
+.admin-user-safe-actions button.is-primary .admin-inline-icon,
+.admin-user-safe-actions button.is-primary .admin-inline-icon::before {
+  color: #fff;
 }
 
 .admin-school-row {
@@ -14273,7 +14345,7 @@ td {
   font-weight: 750;
 }
 
-.admin-access-dialog p[data-admin-create-access-status] {
+.admin-access-dialog [data-admin-create-access-status] {
   margin: 0;
   border: 1px solid rgba(7, 61, 53, 0.12);
   border-radius: 8px;
@@ -14284,13 +14356,13 @@ td {
   line-height: 1.4;
 }
 
-.admin-access-dialog p[data-tone="success"] {
+.admin-access-dialog [data-admin-create-access-status][data-tone="success"] {
   border-color: rgba(13, 107, 75, 0.18);
   background: #e1f2e8;
   color: #0d6b4b;
 }
 
-.admin-access-dialog p[data-tone="error"] {
+.admin-access-dialog [data-admin-create-access-status][data-tone="error"] {
   border-color: rgba(159, 29, 29, 0.16);
   background: #fee2e2;
   color: #9f1d1d;

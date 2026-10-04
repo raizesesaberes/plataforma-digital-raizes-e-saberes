@@ -12456,17 +12456,151 @@ const adminInvokeSetPermissionFlag = async ({ featureKey, roleKey, permissionSco
   return Array.isArray(result) ? result[0] || {} : result || {};
 };
 
-const adminRenderAccessReceipt = ({ email, temporaryPassword, title = "Acesso criado com sucesso" } = {}) => {
+const adminRenderAccessReceipt = ({ email, temporaryPassword, title = "Acesso criado com sucesso", teacherName = "", schoolName = "" } = {}) => {
   if (!email || !temporaryPassword) return "";
+  const copyPayload = `${email}\n${temporaryPassword}`;
   return `
-    <section class="admin-access-receipt" data-admin-access-receipt>
+    <section class="admin-access-receipt" data-admin-access-receipt data-access-name="${printableEscape(teacherName)}" data-access-school="${printableEscape(schoolName)}" data-access-login="${printableEscape(email)}" data-access-password="${printableEscape(temporaryPassword)}">
       <strong>${printableEscape(title)}</strong>
       <p>Login: <mark>${printableEscape(email)}</mark></p>
       <p>Senha provisória: <mark>${printableEscape(temporaryPassword)}</mark></p>
       <small>Entregue estes dados ao professor. Por segurança, a senha provisória será exibida somente agora.</small>
-      <button type="button" data-admin-copy-access="${printableEscape(`${email}\n${temporaryPassword}`)}">Copiar acesso</button>
+      <div class="admin-access-receipt-actions">
+        <button type="button" data-admin-copy-access="${printableEscape(copyPayload)}">Copiar acesso</button>
+        <button type="button" data-admin-print-access>Imprimir acesso</button>
+      </div>
     </section>
   `;
+};
+
+const adminPrintProfessionalAccessReceipt = (receipt) => {
+  if (!receipt) return;
+  const teacherName = receipt.dataset.accessName || "Professor";
+  const schoolName = receipt.dataset.accessSchool || "Escola";
+  const login = receipt.dataset.accessLogin || "";
+  const temporaryPassword = receipt.dataset.accessPassword || "";
+  if (!login || !temporaryPassword) return;
+  const printWindow = window.open("", "_blank", "noopener,noreferrer,width=860,height=720");
+  if (!printWindow) return;
+  printWindow.document.open();
+  printWindow.document.write(`
+    <!doctype html>
+    <html lang="pt-BR">
+      <head>
+        <meta charset="utf-8" />
+        <title>Acesso do professor - Raízes e Saberes</title>
+        <style>
+          @page { size: A4; margin: 18mm; }
+          * { box-sizing: border-box; }
+          body {
+            margin: 0;
+            background: #fff;
+            color: #122033;
+            font-family: Arial, Helvetica, sans-serif;
+          }
+          main {
+            width: 100%;
+            min-height: calc(297mm - 36mm);
+            border: 1px solid #d7e7dc;
+            border-radius: 12px;
+            padding: 24px;
+            display: grid;
+            align-content: start;
+            gap: 18px;
+          }
+          header {
+            border-bottom: 2px solid #0d6b4b;
+            padding-bottom: 14px;
+          }
+          span {
+            display: block;
+            color: #0d6b4b;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+          }
+          h1 {
+            margin: 5px 0 0;
+            color: #0d6b4b;
+            font-size: 24px;
+            line-height: 1.2;
+          }
+          dl {
+            margin: 0;
+            display: grid;
+            grid-template-columns: 150px minmax(0, 1fr);
+            gap: 10px 14px;
+          }
+          dt {
+            color: #526b60;
+            font-weight: 700;
+          }
+          dd {
+            margin: 0;
+            color: #122033;
+            font-weight: 800;
+            overflow-wrap: anywhere;
+          }
+          .secret {
+            border: 1px dashed #0d6b4b;
+            border-radius: 10px;
+            padding: 14px 16px;
+            background: #f3f9f5;
+          }
+          .secret dd {
+            font-size: 20px;
+            letter-spacing: .02em;
+          }
+          p {
+            margin: 0;
+            border-left: 4px solid #0d6b4b;
+            padding: 10px 12px;
+            background: #f7fbf8;
+            color: #244238;
+            line-height: 1.45;
+            font-weight: 700;
+          }
+          footer {
+            margin-top: 8px;
+            color: #526b60;
+            font-size: 12px;
+          }
+          @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          }
+        </style>
+      </head>
+      <body>
+        <main>
+          <header>
+            <span>RAÍZES E SABERES</span>
+            <h1>ACESSO DO PROFESSOR</h1>
+          </header>
+          <dl>
+            <dt>Nome do professor</dt>
+            <dd>${printableEscape(teacherName)}</dd>
+            <dt>Escola</dt>
+            <dd>${printableEscape(schoolName)}</dd>
+          </dl>
+          <dl class="secret">
+            <dt>Login / e-mail</dt>
+            <dd>${printableEscape(login)}</dd>
+            <dt>Senha provisória</dt>
+            <dd>${printableEscape(temporaryPassword)}</dd>
+          </dl>
+          <p>Esta é uma senha provisória. No primeiro acesso, você deverá cadastrar sua nova senha.</p>
+          <dl>
+            <dt>Endereço de acesso</dt>
+            <dd>raizesesaberes.com.br/login</dd>
+          </dl>
+          <footer>Comprovante gerado para entrega física ao professor. Não compartilhe esta senha por canais públicos.</footer>
+        </main>
+        <script>window.onload = () => setTimeout(() => window.print(), 120);<\/script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
 };
 
 const renderAdminCreateAccessDialog = (user) => {
@@ -14441,6 +14575,12 @@ const initAdminWorkspace = () => {
       }
       return;
     }
+    const printAccessButton = event.target.closest?.("[data-admin-print-access]");
+    if (printAccessButton) {
+      event.preventDefault();
+      adminPrintProfessionalAccessReceipt(printAccessButton.closest("[data-admin-access-receipt]"));
+      return;
+    }
     const tempPasswordButton = event.target.closest?.("[data-admin-professor-temp-password]");
     if (tempPasswordButton) {
       event.preventDefault();
@@ -14468,6 +14608,8 @@ const initAdminWorkspace = () => {
           email: result.email || user.email,
           temporaryPassword: result.temporaryPassword,
           title: "Nova senha provisória gerada",
+          teacherName: user.name,
+          schoolName: user.schoolName,
         }));
       } catch (error) {
         alert(error.message || "Não foi possível gerar a senha provisória.");
@@ -15052,6 +15194,8 @@ const initAdminWorkspace = () => {
             email: result.email || payload.email,
             temporaryPassword: result.temporaryPassword,
             title: "Acesso criado com sucesso",
+            teacherName: form.closest("[data-admin-access-dialog]")?.querySelector("header h3")?.textContent || "",
+            schoolName: form.querySelector(".admin-access-review article:nth-child(3) strong")?.textContent || "",
           });
         } else {
           status.textContent = result.message || "Acesso criado com sucesso. O usuario recebera instruções para definir a senha.";
