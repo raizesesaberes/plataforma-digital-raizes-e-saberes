@@ -180,21 +180,6 @@ const getSessionRoleFromAuthData = (authData) => {
   );
 };
 
-if (!isLogoutReturn) {
-  const context = getStoredSupabaseContext();
-  if (context.userId && hasValidPlatformRole(context.role) && Number(context.expiresAt || 0) > Math.floor(Date.now() / 1000) + 60) {
-    window.location.replace(getPostLoginDestination(context.role));
-  }
-}
-
-if (
-  !requiresSupabaseAuth &&
-  localStorage.getItem(demoAccess.key) === "true" &&
-  (!needsCuratorAccess || localStorage.getItem(demoAccess.curatorKey) === "true")
-) {
-  window.location.replace(getDemoLoginDestination("admin"));
-}
-
 const form = document.querySelector("[data-login-form]");
 const errorMessage = document.querySelector("[data-login-error]");
 const accessCopy = document.querySelector("[data-login-access-copy]");
