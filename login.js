@@ -292,7 +292,8 @@ const authenticateWithSupabase = async (email, password, { requireQuestionBankRo
   if (!response.ok) {
     return false;
   }
-  const context = saveSupabaseSession(await response.json());
+  const authData = await response.json();
+  const context = saveSupabaseSession(authData);
   if (!context?.userId) return false;
   if (requireQuestionBankRole && !context.questionBankRole) return false;
   if (!hasValidPlatformRole(context.platformRole)) {
