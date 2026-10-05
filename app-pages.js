@@ -19843,7 +19843,7 @@ const environments = {
   bancoQuestoes: {
     label: "Banco de Questões",
     profile: "Workflow Editorial",
-    search: "Buscar questões, habilidades, descritores...",
+    search: "Buscar questões, habilidades, códigos...",
     user: "Admin Banco<br />Editorial",
     profileImage: "logo-sidebar-dark.png",
     nav: [
@@ -31229,8 +31229,11 @@ const renderAppPage = () => {
     : environmentKey === "secretaria"
       ? `<div class="top-actions secretaria-top-actions" aria-label="Ações da Secretaria"><button type="button" data-secretaria-back>${secretariaInlineIcon("progresso", "VOLTAR")}</button><button type="button" data-platform-home>${secretariaInlineIcon("home", "INICIO")}</button><a href="escola.html">${secretariaInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${secretariaInlineIcon("sair", "SAIR")}</button></div>`
     : environmentKey === "bancoQuestoes"
-      ? `<div class="top-actions qb-official-actions" aria-label="Ações do Banco de Questões"><div class="user-chip"><span>AB</span><strong>${environment.user}</strong></div><button type="button" data-platform-back>VOLTAR</button><button type="button" data-platform-home>INÍCIO</button><a href="admin.html">ADMIN/TI</a><button type="button" data-platform-logout>SAIR</button></div>`
+      ? `<div class="admin-topbar-actions" aria-label="Navegação global"><button type="button" data-platform-back>${adminInlineIcon("back", "VOLTAR")}</button><button type="button" data-platform-home>${adminInlineIcon("home", "INICIO")}</button><a class="admin-topbar-link" href="escola.html">${adminInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${adminInlineIcon("sair", "SAIR")}</button></div>`
     : `<div class="top-actions" aria-label="Ações"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>${shellUserFallback}</span>`}<strong>${shellUserLabel}</strong></div></div>`;
+  const topbarClass = environmentKey === "bancoQuestoes" ? "app-topbar admin-topbar" : "app-topbar";
+  const topbarMenu = environmentKey === "bancoQuestoes" ? "" : `<a class="icon-button menu-toggle" href="${shellHomeHref}" aria-label="Início">☰</a>`;
+  const topbarSearchLabel = environmentKey === "bancoQuestoes" ? "Busca Banco" : "Pesquisar";
 
   mount.innerHTML = `
     <div class="app-shell" data-environment="${environmentKey}" data-active-module="${activeKey}">
@@ -31247,9 +31250,9 @@ const renderAppPage = () => {
         </section>
       </aside>
       <main class="app-main">
-        <header class="app-topbar">
-          <a class="icon-button menu-toggle" href="${shellHomeHref}" aria-label="Início">☰</a>
-          <label class="app-search"><span>Pesquisar</span><input type="search" placeholder="${environment.search}" /></label>
+        <header class="${topbarClass}">
+          ${topbarMenu}
+          <label class="app-search"><span>${topbarSearchLabel}</span><input type="search" placeholder="${environment.search}" /></label>
           ${topFilter}
           ${moduleSwitcher}
           ${topActions}

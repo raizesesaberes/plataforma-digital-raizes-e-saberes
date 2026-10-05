@@ -4988,35 +4988,11 @@ td {
 }
 
 .app-shell[data-environment="bancoQuestoes"] .app-topbar {
-  grid-template-columns: auto minmax(220px, 1fr) auto;
-  border-bottom: 1px solid #dce8df;
-  background: rgba(255, 255, 255, 0.96);
+  grid-template-columns: minmax(260px, 1fr) auto;
 }
 
 .app-shell[data-environment="bancoQuestoes"] .module-switcher {
   display: none;
-}
-
-.qb-official-actions {
-  gap: 8px;
-}
-
-.qb-official-actions a,
-.qb-official-actions button {
-  min-height: 34px;
-  padding: 0 12px;
-  border: 1px solid #d7e4db;
-  border-radius: var(--rs-radius);
-  background: #fff;
-  color: #12382c;
-  font-weight: 900;
-  text-decoration: none;
-}
-
-.qb-official-actions .user-chip {
-  border-color: #cfe1d5;
-  background: #eff8f2;
-  color: #12382c;
 }
 
 .question-bank [hidden] {
