@@ -19389,7 +19389,41 @@ const modules = {
             <section class="panel qb-detail" data-qb-detail aria-live="polite"></section>
             <section class="panel qb-authoring-entry" id="nova-questao">
               <div class="panel-head"><h2>Nova questão</h2><span>Workflow editorial</span></div>
-              <p>A autoria de novos itens usa o motor canônico de workflow do Avalia+. Neste ambiente, o professor pode selecionar questões publicadas e montar avaliações; criação/aprovação editorial permanece controlada pelos perfis autorizados.</p>
+              <p data-qb-editorial-status>A autoria e a publicação usam o motor canônico do Avalia+. Professor comum pode consultar itens publicados; publicação global exige perfil editorial autorizado.</p>
+              <form class="qb-editorial-form" data-qb-editorial-form>
+                <div class="qb-builder-grid">
+                  <label><span>Código</span><input data-qb-editorial="code" placeholder="Opcional. Ex.: RS-HOMO-MA5-002" /></label>
+                  <label><span>Título interno</span><input data-qb-editorial="internal_title" required placeholder="Título para a equipe editorial" /></label>
+                  <label><span>Segmento</span><select data-qb-editorial="stage"><option>Ensino Fundamental - Anos Iniciais</option><option>Ensino Fundamental - Anos Finais</option><option>Educação Infantil</option></select></label>
+                  <label><span>Ano</span><select data-qb-editorial="school_year"><option>5o ano</option><option>2o ano</option><option>1o ano</option><option>3o ano</option><option>4o ano</option></select></label>
+                  <label><span>Componente curricular</span><select data-qb-editorial="component"><option>Matematica</option><option>Lingua Portuguesa</option><option>Ciencias</option><option>Historia</option><option>Geografia</option></select></label>
+                  <label><span>Tipo de questão</span><select data-qb-editorial="question_type"><option>Multipla escolha</option><option>Leitura de grafico</option></select></label>
+                  <label><span>Habilidade BNCC</span><input data-qb-editorial="bncc_skill" placeholder="Ex.: EF05MA24" /></label>
+                  <label><span>Dificuldade</span><select data-qb-editorial="difficulty"><option>Media</option><option>Facil</option><option>Dificil</option></select></label>
+                  <label class="span-2"><span>Objeto do conhecimento</span><input data-qb-editorial="knowledge_object" placeholder="Objeto do conhecimento / descritor" /></label>
+                  <label class="span-2"><span>Enunciado</span><textarea data-qb-editorial="statement" required placeholder="Escreva o enunciado da questão."></textarea></label>
+                  <label class="span-2"><span>Comando/pergunta</span><textarea data-qb-editorial="command_text" placeholder="Comando apresentado ao estudante."></textarea></label>
+                  <label class="span-2"><span>Texto-base</span><textarea data-qb-editorial="base_text" placeholder="Opcional."></textarea></label>
+                </div>
+                <div class="qb-editorial-alternatives" data-qb-editorial-alternatives>
+                  ${["A", "B", "C", "D"].map((label, index) => `
+                    <label>
+                      <span>Alternativa ${label}</span>
+                      <input data-qb-alternative="${label}" placeholder="Texto da alternativa ${label}" />
+                      <input type="radio" name="qb-correct-answer" value="${label}" ${index === 0 ? "checked" : ""} aria-label="Marcar alternativa ${label} como correta" />
+                    </label>
+                  `).join("")}
+                </div>
+                <div class="qb-builder-grid">
+                  <label class="span-2"><span>Justificativa pedagógica</span><textarea data-qb-editorial="justification" placeholder="Explique o gabarito e o objetivo pedagógico."></textarea></label>
+                  <label class="span-2"><span>Intervenção recomendada</span><textarea data-qb-editorial="recommended_intervention" placeholder="Opcional."></textarea></label>
+                </div>
+                <div class="qb-builder-actions">
+                  <button type="button" data-qb-create-draft>Salvar rascunho</button>
+                  <button type="button" data-qb-submit-review>Salvar e enviar para revisão</button>
+                </div>
+              </form>
+              <div class="qb-review-queue" data-qb-review-queue></div>
             </section>
             <section class="panel qb-builder" id="construtor">
               <div class="panel-head"><h2>Construtor de Avaliações</h2><button type="button" data-qb-save-draft>Salvar rascunho</button></div>
@@ -21204,6 +21238,9 @@ const initQuestionBank = () => {
   const previewPanel = root.querySelector("[data-qb-preview-panel]");
   const titleInput = root.querySelector("[data-qb-assessment-title]");
   const builderFields = [...root.querySelectorAll(".qb-builder input, .qb-builder select, .qb-builder textarea")];
+  const editorialForm = root.querySelector("[data-qb-editorial-form]");
+  const editorialStatus = root.querySelector("[data-qb-editorial-status]");
+  const reviewQueue = root.querySelector("[data-qb-review-queue]");
   let questions = [];
   let assessments = [];
   let selectedId = null;
@@ -21353,6 +21390,136 @@ const initQuestionBank = () => {
     selectionStatus.innerHTML = `${htmlEscape(message)} <a href="login.html?auth=supabase&next=${next}">Entrar novamente</a>`;
     selectionStatus.dataset.tone = "error";
     selectionStatus.hidden = false;
+  };
+  const getQuestionBankRole = () => getSupabaseUserContext().role || "anonymous";
+  const canAuthorQuestion = () => allowedQuestionEditorialRoles.includes(getQuestionBankRole());
+  const canReviewQuestion = () => allowedQuestionReviewRoles.includes(getQuestionBankRole());
+  const canPublishQuestion = () => allowedQuestionPublishRoles.includes(getQuestionBankRole());
+  const setEditorialStatus = (message, tone = "info") => {
+    if (!editorialStatus) return;
+    editorialStatus.textContent = message;
+    editorialStatus.dataset.tone = tone;
+  };
+  const collectEditorialPayload = () => {
+    const fieldValue = (name) => editorialForm?.querySelector(`[data-qb-editorial="${name}"]`)?.value?.trim() || "";
+    const alternatives = [...(editorialForm?.querySelectorAll("[data-qb-alternative]") || [])]
+      .map((input) => ({
+        label: input.dataset.qbAlternative,
+        body: input.value.trim(),
+        is_correct: editorialForm?.querySelector("input[name='qb-correct-answer']:checked")?.value === input.dataset.qbAlternative,
+      }))
+      .filter((alternative) => alternative.body);
+    const payload = {
+      code: fieldValue("code"),
+      internal_title: fieldValue("internal_title"),
+      component: fieldValue("component"),
+      stage: fieldValue("stage"),
+      school_year: fieldValue("school_year"),
+      knowledge_object: fieldValue("knowledge_object"),
+      bncc_skill: fieldValue("bncc_skill"),
+      difficulty: fieldValue("difficulty"),
+      question_type: fieldValue("question_type"),
+      statement: fieldValue("statement"),
+      command_text: fieldValue("command_text") || fieldValue("statement"),
+      base_text: fieldValue("base_text"),
+      correct_answer: alternatives.find((alternative) => alternative.is_correct)?.label || "",
+      justification: fieldValue("justification"),
+      pedagogical_comment: fieldValue("justification"),
+      recommended_intervention: fieldValue("recommended_intervention"),
+      estimated_minutes: "3",
+      author_name: "Equipe Editorial Raízes e Saberes",
+      metadata: {
+        source: "question_bank_editorial_ui",
+        created_from: "banco-questoes",
+      },
+    };
+    const missing = [];
+    if (!payload.internal_title) missing.push("Título interno");
+    if (!payload.component) missing.push("Componente curricular");
+    if (!payload.stage) missing.push("Segmento");
+    if (!payload.school_year) missing.push("Ano");
+    if (!payload.question_type) missing.push("Tipo de questão");
+    if (!payload.statement) missing.push("Enunciado");
+    if (alternatives.length < 2) missing.push("ao menos duas alternativas");
+    if (alternatives.filter((alternative) => alternative.is_correct).length !== 1) missing.push("exatamente uma alternativa correta");
+    if (!payload.correct_answer) missing.push("resposta correta");
+    return { payload, alternatives, missing };
+  };
+  const clearEditorialForm = () => {
+    editorialForm?.reset();
+  };
+  const renderReviewQueue = () => {
+    if (!reviewQueue) return;
+    const queue = questions.filter((item) => item.workflowStatus === "EM_REVISAO" || item.publicationStatus !== "PUBLICADO");
+    reviewQueue.innerHTML = `
+      <div class="panel-head"><h2>Fila editorial</h2><span>${queue.length} item(ns) pendente(s)</span></div>
+      ${
+        queue.length
+          ? queue
+              .map((item) => `
+                <article class="qb-review-item" data-qb-review-item="${htmlEscape(item.uuid || item.id)}">
+                  <div>
+                    <strong>${htmlEscape(item.id)}</strong>
+                    <span>${htmlEscape(item.component)} · ${htmlEscape(item.year)} · ${htmlEscape(item.workflowStatus)} · ${htmlEscape(item.publicationStatus)}</span>
+                    <p>${htmlEscape(shortText(item.statement || item.title, 150))}</p>
+                  </div>
+                  <div class="qb-card-actions">
+                    <button type="button" data-qb-view="${htmlEscape(item.id)}">Ver</button>
+                    <button type="button" data-qb-workflow-review="${htmlEscape(item.uuid || item.id)}" ${canReviewQuestion() || canAuthorQuestion() ? "" : "disabled"}>Enviar para revisão</button>
+                    <button type="button" data-qb-workflow-approve="${htmlEscape(item.uuid || item.id)}" ${canPublishQuestion() ? "" : "disabled"}>Aprovar e publicar</button>
+                    <button type="button" data-qb-workflow-archive="${htmlEscape(item.uuid || item.id)}" ${canReviewQuestion() ? "" : "disabled"}>Arquivar</button>
+                  </div>
+                </article>
+              `)
+              .join("")
+          : `<div class="qb-state">Nenhuma questão pendente de revisão.</div>`
+      }
+    `;
+  };
+  const createEditorialQuestion = async ({ submitForReview = false } = {}) => {
+    if (mode !== "supabase") {
+      setEditorialStatus("A criação editorial exige conexão Supabase real.", "error");
+      return;
+    }
+    if (!canAuthorQuestion()) {
+      showSessionRequired("Entre com perfil editorial autorizado para criar questões.");
+      return;
+    }
+    const { payload, alternatives, missing } = collectEditorialPayload();
+    if (missing.length) {
+      setEditorialStatus(`Preencha: ${missing.join(", ")}.`, "error");
+      return;
+    }
+    setEditorialStatus(submitForReview ? "Criando questão e enviando para revisão..." : "Salvando rascunho...", "loading");
+    const created = await questionBankDataService.createQuestionItem(payload);
+    const questionId = created.uuid || created.raw?.id;
+    await questionBankDataService.replaceQuestionAlternatives(questionId, alternatives);
+    if (submitForReview) {
+      await questionBankDataService.setQuestionWorkflow(questionId, "EM_REVISAO", "Enviado para revisão pela interface editorial.");
+    }
+    clearEditorialForm();
+    await refresh();
+    setEditorialStatus(submitForReview ? "Questão criada e enviada para revisão." : "Rascunho criado.", "success");
+  };
+  const moveQuestionWorkflow = async (questionId, status) => {
+    if (mode !== "supabase") {
+      setEditorialStatus("Workflow editorial exige conexão Supabase real.", "error");
+      return;
+    }
+    const allowed = status === "APROVADO" ? canPublishQuestion() : canReviewQuestion() || canAuthorQuestion();
+    if (!allowed) {
+      showSessionRequired("Entre com perfil editorial autorizado para alterar o workflow.");
+      return;
+    }
+    const labels = {
+      EM_REVISAO: "Enviado para revisão pela fila editorial.",
+      APROVADO: "Aprovado e publicado pela fila editorial.",
+      ARQUIVADO: "Arquivado pela fila editorial.",
+    };
+    setEditorialStatus("Atualizando workflow...", "loading");
+    await questionBankDataService.setQuestionWorkflow(questionId, status, labels[status] || "Atualização editorial.");
+    await refresh();
+    setEditorialStatus(labels[status] || "Workflow atualizado.", "success");
   };
   const installSupabaseSessionListener = () => {
     if (mode !== "supabase") return;
@@ -21713,6 +21880,7 @@ const initQuestionBank = () => {
     renderCart();
     renderSaved();
     renderAccess();
+    renderReviewQueue();
   };
 
   const setError = (message) => {
@@ -22085,6 +22253,21 @@ const initQuestionBank = () => {
       if (button.hasAttribute("data-qb-publish-digital")) {
         await publishCurrentAssessmentDigitally();
       }
+      if (button.hasAttribute("data-qb-create-draft")) {
+        await createEditorialQuestion({ submitForReview: false });
+      }
+      if (button.hasAttribute("data-qb-submit-review")) {
+        await createEditorialQuestion({ submitForReview: true });
+      }
+      if (button.dataset.qbWorkflowReview) {
+        await moveQuestionWorkflow(button.dataset.qbWorkflowReview, "EM_REVISAO");
+      }
+      if (button.dataset.qbWorkflowApprove) {
+        await moveQuestionWorkflow(button.dataset.qbWorkflowApprove, "APROVADO");
+      }
+      if (button.dataset.qbWorkflowArchive) {
+        await moveQuestionWorkflow(button.dataset.qbWorkflowArchive, "ARQUIVADO");
+      }
       if (button.dataset.qbOpenAssessment) {
         const assessment = await questionBankDataService.getAssessmentById(button.dataset.qbOpenAssessment);
         activeAssessmentId = assessment.id;
@@ -22159,6 +22342,9 @@ const htmlEscape = (value) =>
 const getSupabaseConfig = () => window.RAIZES_SUPABASE || {};
 const supabaseSessionStorageKey = "raizes:supabase-auth-session";
 const allowedAssessmentRoles = ["admin", "administrador", "administrador_nacional", "gestor", "gestor_da_rede", "professor", "curator", "curador", "revisor", "revisor_pedagogico", "aprovador", "elaborador"];
+const allowedQuestionEditorialRoles = ["admin", "administrador", "administrador_nacional", "curator", "curador", "elaborador"];
+const allowedQuestionReviewRoles = ["admin", "administrador", "administrador_nacional", "curator", "curador", "revisor", "revisor_pedagogico", "aprovador"];
+const allowedQuestionPublishRoles = ["admin", "administrador", "administrador_nacional", "curator", "curador", "aprovador"];
 
 const decodeJwtPayload = (token) => {
   try {
@@ -28135,6 +28321,18 @@ const questionBankDataService = (() => {
         payload,
       };
     },
+    async createQuestionItem() {
+      throw new Error("Criação editorial exige Supabase real e perfil autorizado.");
+    },
+    async updateQuestionItem() {
+      throw new Error("Edição editorial exige Supabase real e perfil autorizado.");
+    },
+    async replaceQuestionAlternatives() {
+      throw new Error("Alternativas editoriais exigem Supabase real e perfil autorizado.");
+    },
+    async setQuestionWorkflow() {
+      throw new Error("Workflow editorial exige Supabase real e perfil autorizado.");
+    },
   };
 
   const remote = {
@@ -28408,6 +28606,68 @@ const questionBankDataService = (() => {
         }),
       }));
     },
+    async createQuestionItem(payload) {
+      const { request } = client();
+      await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedQuestionEditorialRoles });
+      const row = await request("rpc/avalia_plus_create_item", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: allowedQuestionEditorialRoles,
+        body: JSON.stringify({ p_item: payload }),
+      });
+      return mapQuestionFromSupabase({ ...row, alternatives: [], media: [] });
+    },
+    async updateQuestionItem(questionId, payload) {
+      const { request } = client();
+      await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedQuestionReviewRoles });
+      const [row] = await request("question_items", `?id=eq.${encodeURIComponent(questionId)}`, {
+        method: "PATCH",
+        requireAuthenticated: true,
+        allowedRoles: allowedQuestionReviewRoles,
+        body: JSON.stringify({ ...payload, updated_at: new Date().toISOString() }),
+      });
+      return row ? mapQuestionFromSupabase({ ...row, alternatives: [], media: [] }) : null;
+    },
+    async replaceQuestionAlternatives(questionId, alternatives = []) {
+      const { request } = client();
+      await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedQuestionReviewRoles });
+      await request("question_alternatives", `?question_id=eq.${encodeURIComponent(questionId)}`, {
+        method: "DELETE",
+        requireAuthenticated: true,
+        allowedRoles: allowedQuestionReviewRoles,
+        headers: { Prefer: "return=minimal" },
+      });
+      if (!alternatives.length) return [];
+      return request("question_alternatives", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: allowedQuestionReviewRoles,
+        body: JSON.stringify(
+          alternatives.map((alternative, index) => ({
+            question_id: questionId,
+            label: alternative.label,
+            body: alternative.body,
+            is_correct: alternative.is_correct,
+            position: index + 1,
+          }))
+        ),
+      });
+    },
+    async setQuestionWorkflow(questionId, status, comment = "") {
+      const { request } = client();
+      await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedQuestionReviewRoles });
+      const row = await request("rpc/avalia_plus_set_item_workflow", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: allowedQuestionReviewRoles,
+        body: JSON.stringify({
+          p_question_id: questionId,
+          p_status: status,
+          p_comment: comment,
+        }),
+      });
+      return mapQuestionFromSupabase({ ...row, alternatives: [], media: [] });
+    },
   };
 
   const productionMissingConfig = {
@@ -28447,6 +28707,10 @@ const questionBankDataService = (() => {
     registerUsage: (...args) => active().registerUsage(...args),
     getCurationHistory: (...args) => active().getCurationHistory(...args),
     generatePrintExport: (...args) => active().generatePrintExport(...args),
+    createQuestionItem: (...args) => active().createQuestionItem(...args),
+    updateQuestionItem: (...args) => active().updateQuestionItem(...args),
+    replaceQuestionAlternatives: (...args) => active().replaceQuestionAlternatives(...args),
+    setQuestionWorkflow: (...args) => active().setQuestionWorkflow(...args),
   };
 })();
 
