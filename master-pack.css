@@ -5219,7 +5219,16 @@ td {
 .qb-editorial-queue-panel,
 .qb-results-bridge,
 .qb-authoring-entry {
-  max-width: 1120px;
+  width: min(100%, 1480px);
+  max-width: none;
+}
+
+.question-bank[data-qb-active-view="nova"] .qb-results {
+  width: 100%;
+}
+
+.question-bank[data-qb-active-view="nova"] .qb-form-block {
+  padding: 18px;
 }
 
 .qb-role-grid {
@@ -5294,6 +5303,93 @@ td {
 .qb-builder textarea {
   min-height: 84px;
   resize: vertical;
+}
+
+.qb-authoring-entry .qb-builder-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px 18px;
+}
+
+.qb-authoring-entry .qb-identification-grid {
+  grid-template-columns: minmax(180px, 0.32fr) minmax(420px, 1fr);
+}
+
+.qb-authoring-entry .qb-pedagogical-grid .span-2,
+.qb-authoring-entry .qb-question-grid .span-2,
+.qb-authoring-entry .qb-curation-grid .span-2 {
+  grid-column: 1 / -1;
+}
+
+.qb-authoring-entry input,
+.qb-authoring-entry select,
+.qb-authoring-entry textarea,
+.qb-editorial-alternatives input:not([type="radio"]) {
+  min-height: 46px;
+  padding: 12px 13px;
+  font-size: 0.92rem;
+}
+
+.qb-authoring-entry textarea {
+  overflow: auto;
+  max-height: 420px;
+  line-height: 1.55;
+  field-sizing: content;
+}
+
+.qb-authoring-entry textarea[data-qb-editorial="statement"] {
+  min-height: 150px;
+}
+
+.qb-authoring-entry textarea[data-qb-editorial="command_text"] {
+  min-height: 118px;
+}
+
+.qb-authoring-entry textarea[data-qb-editorial="base_text"] {
+  min-height: 190px;
+}
+
+.qb-authoring-entry textarea[data-qb-editorial="justification"] {
+  min-height: 170px;
+}
+
+.qb-authoring-entry textarea[data-qb-editorial="recommended_intervention"] {
+  min-height: 148px;
+}
+
+.qb-authoring-entry .qb-curation-grid {
+  grid-template-columns: 1fr;
+}
+
+.qb-editorial-alternatives {
+  gap: 14px 18px;
+}
+
+.qb-editorial-alternatives label {
+  grid-template-columns: minmax(0, 1fr) minmax(92px, auto);
+  align-items: end;
+  padding: 12px;
+  border: 1px solid var(--rs-line);
+  border-radius: var(--rs-radius);
+  background: #fff;
+}
+
+.qb-editorial-alternatives label input[type="radio"] {
+  justify-self: end;
+  width: 20px;
+  height: 20px;
+  margin: 0 4px 13px 0;
+  accent-color: #0f5f45;
+}
+
+.qb-editorial-alternatives label::after {
+  content: "Gabarito";
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  align-self: start;
+  color: #0f5f45;
+  font-size: 0.72rem;
+  font-weight: 900;
 }
 
 .qb-results {
@@ -5994,6 +6090,23 @@ td {
 
   .qb-grid {
     grid-template-columns: 1fr;
+  }
+
+  .qb-authoring-entry .qb-identification-grid,
+  .qb-authoring-entry .qb-pedagogical-grid,
+  .qb-authoring-entry .qb-question-grid,
+  .qb-authoring-entry .qb-curation-grid,
+  .qb-editorial-alternatives {
+    grid-template-columns: 1fr;
+  }
+
+  .qb-editorial-alternatives label::after {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .qb-editorial-alternatives label input[type="radio"] {
+    justify-self: start;
   }
 
   .qb-toolbar {

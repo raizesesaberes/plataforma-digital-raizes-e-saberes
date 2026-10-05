@@ -19452,14 +19452,14 @@ const modules = {
               <form class="qb-editorial-form" data-qb-editorial-form>
                 <section class="qb-form-block">
                   <h3>Identificação</h3>
-                  <div class="qb-builder-grid">
+                  <div class="qb-builder-grid qb-identification-grid">
                     <label><span>Código</span><input data-qb-editorial="code" placeholder="Opcional. Ex.: RS-HOMO-MA5-002" /></label>
                     <label><span>Título interno</span><input data-qb-editorial="internal_title" required placeholder="Título para a equipe editorial" /></label>
                   </div>
                 </section>
                 <section class="qb-form-block">
                   <h3>Classificação pedagógica</h3>
-                  <div class="qb-builder-grid">
+                  <div class="qb-builder-grid qb-pedagogical-grid">
                     <label><span>Segmento</span><select data-qb-editorial="stage"><option>Ensino Fundamental - Anos Iniciais</option><option>Ensino Fundamental - Anos Finais</option><option>Educação Infantil</option></select></label>
                     <label><span>Ano</span><select data-qb-editorial="school_year"><option>5o ano</option><option>2o ano</option><option>1o ano</option><option>3o ano</option><option>4o ano</option></select></label>
                     <label><span>Componente curricular</span><select data-qb-editorial="component"><option>Matematica</option><option>Lingua Portuguesa</option><option>Ciencias</option><option>Historia</option><option>Geografia</option></select></label>
@@ -19471,7 +19471,7 @@ const modules = {
                 </section>
                 <section class="qb-form-block">
                   <h3>Questão</h3>
-                  <div class="qb-builder-grid">
+                  <div class="qb-builder-grid qb-question-grid">
                     <label class="span-2"><span>Enunciado</span><textarea data-qb-editorial="statement" required placeholder="Escreva o enunciado da questão."></textarea></label>
                     <label class="span-2"><span>Comando/pergunta</span><textarea data-qb-editorial="command_text" placeholder="Comando apresentado ao estudante."></textarea></label>
                     <label class="span-2"><span>Texto-base</span><textarea data-qb-editorial="base_text" placeholder="Opcional."></textarea></label>
@@ -19491,7 +19491,7 @@ const modules = {
                 </section>
                 <section class="qb-form-block">
                   <h3>Curadoria</h3>
-                  <div class="qb-builder-grid">
+                  <div class="qb-builder-grid qb-curation-grid">
                     <label class="span-2"><span>Justificativa pedagógica</span><textarea data-qb-editorial="justification" placeholder="Explique o gabarito e o objetivo pedagógico."></textarea></label>
                     <label class="span-2"><span>Intervenção recomendada</span><textarea data-qb-editorial="recommended_intervention" placeholder="Opcional."></textarea></label>
                   </div>
@@ -21531,6 +21531,18 @@ const initQuestionBank = () => {
     editorialStatus.textContent = message;
     editorialStatus.dataset.tone = tone;
   };
+  const autoGrowEditorialTextarea = (textarea) => {
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    const maxHeight = Number.parseInt(getComputedStyle(textarea).maxHeight, 10) || 420;
+    textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+  };
+  const installEditorialTextareaAutoGrow = () => {
+    editorialForm?.querySelectorAll("textarea").forEach((textarea) => {
+      autoGrowEditorialTextarea(textarea);
+      textarea.addEventListener("input", () => autoGrowEditorialTextarea(textarea));
+    });
+  };
   const collectEditorialPayload = () => {
     const fieldValue = (name) => editorialForm?.querySelector(`[data-qb-editorial="${name}"]`)?.value?.trim() || "";
     const alternatives = [...(editorialForm?.querySelectorAll("[data-qb-alternative]") || [])]
@@ -22548,6 +22560,7 @@ const initQuestionBank = () => {
   });
 
   restoreDraftSnapshot();
+  installEditorialTextareaAutoGrow();
   syncQuestionBankView();
   window.addEventListener("popstate", syncQuestionBankView);
   installSupabaseSessionListener();
