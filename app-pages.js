@@ -19380,20 +19380,36 @@ const modules = {
           <span>Itens autorais, adaptados e oficiais com origem, licenca, curadoria e historico de uso.</span>
         </div>
       </div>
-      <section class="question-bank" data-question-bank>
+      <section class="question-bank" data-question-bank data-qb-active-view="dashboard">
         <div class="qb-notice" role="note">
           <strong>Regra de publicação</strong>
           <span>Nenhum conteúdo externo e publicado automaticamente. Materiais sem licenca aberta ficam bloqueados ou servem apenas como referencia pedagógica para itens novos e autorais.</span>
         </div>
-        <div class="metric-row qb-metrics">
-          <article>Itens demonstrativos<strong data-qb-total>0</strong><span>Base ficticia autoral</span></article>
+        <section class="qb-view-panel qb-dashboard-view" data-qb-panel="dashboard" aria-label="Visão geral do Banco de Questões">
+          <div class="metric-row qb-metrics">
+          <article>Total de questões<strong data-qb-total>0</strong><span>Banco editorial ativo</span></article>
           <article>Publicados<strong data-qb-published>0</strong><span>Com curadoria concluida</span></article>
           <article>Em revisão<strong data-qb-review>0</strong><span>Sem publicação automatica</span></article>
-          <article>No carrinho<strong data-qb-cart-count>0</strong><span>Avaliação em montagem</span></article>
-        </div>
-        <div class="qb-layout">
+          <article>Rascunhos<strong data-qb-draft>0</strong><span>Em elaboração</span></article>
+          <article>Arquivadas<strong data-qb-archived>0</strong><span>Fora da fila ativa</span></article>
+          </div>
+          <div class="qb-dashboard-actions" aria-label="Ações rápidas">
+            <a href="banco-questoes.html?view=nova">+ Nova questão</a>
+            <a href="banco-questoes.html?view=editorial">Revisar pendências</a>
+            <a href="banco-questoes.html?view=avaliacoes">Montar avaliação</a>
+          </div>
+          <div class="qb-dashboard-summary">
+            <section class="panel"><div class="panel-head"><h2>Por ano</h2><span>Questões</span></div><div data-qb-year-summary></div></section>
+            <section class="panel"><div class="panel-head"><h2>Por componente</h2><span>Questões</span></div><div data-qb-component-summary></div></section>
+            <section class="panel"><div class="panel-head"><h2>Por status</h2><span>Workflow</span></div><div data-qb-status-summary></div></section>
+          </div>
+        </section>
+        <div class="qb-layout" data-qb-main-layout>
           <aside class="panel qb-filters" aria-label="Filtros do banco de questoes">
             <div class="panel-head"><h2>Pesquisa e filtros</h2><button type="button" data-qb-clear>Limpar</button></div>
+            <details class="qb-filter-drawer" open>
+              <summary>Filtros avançados</summary>
+              <div class="qb-filter-grid">
             <label><span>Buscar</span><input type="search" data-qb-search placeholder="Codigo, habilidade, enunciado..." /></label>
             <label><span>Etapa</span><select data-qb-filter="stage"><option value="">Todas</option></select></label>
             <label><span>Ano</span><select data-qb-filter="year"><option value="">Todos</option></select></label>
@@ -19410,6 +19426,8 @@ const modules = {
             <label><span>Status de revisão</span><select data-qb-filter="curationStatus"><option value="">Todos</option></select></label>
             <label><span>Acessibilidade</span><select data-qb-filter="accessibility"><option value="">Todas</option></select></label>
             <label><span>Uso</span><select data-qb-used><option value="">Todas</option><option value="used">Ja utilizadas</option><option value="unused">Ineditas para a turma</option></select></label>
+              </div>
+            </details>
           </aside>
           <main class="qb-results">
             <div class="qb-toolbar">
@@ -19428,45 +19446,66 @@ const modules = {
             <div class="qb-grid" data-qb-grid></div>
             <div class="qb-state" data-qb-empty hidden>Nenhuma questao encontrada com os filtros atuais.</div>
             <section class="panel qb-detail" data-qb-detail aria-live="polite"></section>
-            <section class="panel qb-authoring-entry" id="nova-questao">
+            <section class="panel qb-authoring-entry" id="nova-questao" data-qb-panel="nova">
               <div class="panel-head"><h2>Nova questão</h2><span>Workflow editorial</span></div>
               <p data-qb-editorial-status>A autoria e a publicação usam o motor canônico do Avalia+. Professor comum pode consultar itens publicados; publicação global exige perfil editorial autorizado.</p>
               <form class="qb-editorial-form" data-qb-editorial-form>
-                <div class="qb-builder-grid">
-                  <label><span>Código</span><input data-qb-editorial="code" placeholder="Opcional. Ex.: RS-HOMO-MA5-002" /></label>
-                  <label><span>Título interno</span><input data-qb-editorial="internal_title" required placeholder="Título para a equipe editorial" /></label>
-                  <label><span>Segmento</span><select data-qb-editorial="stage"><option>Ensino Fundamental - Anos Iniciais</option><option>Ensino Fundamental - Anos Finais</option><option>Educação Infantil</option></select></label>
-                  <label><span>Ano</span><select data-qb-editorial="school_year"><option>5o ano</option><option>2o ano</option><option>1o ano</option><option>3o ano</option><option>4o ano</option></select></label>
-                  <label><span>Componente curricular</span><select data-qb-editorial="component"><option>Matematica</option><option>Lingua Portuguesa</option><option>Ciencias</option><option>Historia</option><option>Geografia</option></select></label>
-                  <label><span>Tipo de questão</span><select data-qb-editorial="question_type"><option>Multipla escolha</option><option>Leitura de grafico</option></select></label>
-                  <label><span>Habilidade BNCC</span><input data-qb-editorial="bncc_skill" placeholder="Ex.: EF05MA24" /></label>
-                  <label><span>Dificuldade</span><select data-qb-editorial="difficulty"><option>Media</option><option>Facil</option><option>Dificil</option></select></label>
-                  <label class="span-2"><span>Objeto do conhecimento</span><input data-qb-editorial="knowledge_object" placeholder="Objeto do conhecimento / descritor" /></label>
-                  <label class="span-2"><span>Enunciado</span><textarea data-qb-editorial="statement" required placeholder="Escreva o enunciado da questão."></textarea></label>
-                  <label class="span-2"><span>Comando/pergunta</span><textarea data-qb-editorial="command_text" placeholder="Comando apresentado ao estudante."></textarea></label>
-                  <label class="span-2"><span>Texto-base</span><textarea data-qb-editorial="base_text" placeholder="Opcional."></textarea></label>
-                </div>
-                <div class="qb-editorial-alternatives" data-qb-editorial-alternatives>
-                  ${["A", "B", "C", "D"].map((label, index) => `
-                    <label>
-                      <span>Alternativa ${label}</span>
-                      <input data-qb-alternative="${label}" placeholder="Texto da alternativa ${label}" />
-                      <input type="radio" name="qb-correct-answer" value="${label}" ${index === 0 ? "checked" : ""} aria-label="Marcar alternativa ${label} como correta" />
-                    </label>
-                  `).join("")}
-                </div>
-                <div class="qb-builder-grid">
-                  <label class="span-2"><span>Justificativa pedagógica</span><textarea data-qb-editorial="justification" placeholder="Explique o gabarito e o objetivo pedagógico."></textarea></label>
-                  <label class="span-2"><span>Intervenção recomendada</span><textarea data-qb-editorial="recommended_intervention" placeholder="Opcional."></textarea></label>
-                </div>
+                <section class="qb-form-block">
+                  <h3>Identificação</h3>
+                  <div class="qb-builder-grid">
+                    <label><span>Código</span><input data-qb-editorial="code" placeholder="Opcional. Ex.: RS-HOMO-MA5-002" /></label>
+                    <label><span>Título interno</span><input data-qb-editorial="internal_title" required placeholder="Título para a equipe editorial" /></label>
+                  </div>
+                </section>
+                <section class="qb-form-block">
+                  <h3>Classificação pedagógica</h3>
+                  <div class="qb-builder-grid">
+                    <label><span>Segmento</span><select data-qb-editorial="stage"><option>Ensino Fundamental - Anos Iniciais</option><option>Ensino Fundamental - Anos Finais</option><option>Educação Infantil</option></select></label>
+                    <label><span>Ano</span><select data-qb-editorial="school_year"><option>5o ano</option><option>2o ano</option><option>1o ano</option><option>3o ano</option><option>4o ano</option></select></label>
+                    <label><span>Componente curricular</span><select data-qb-editorial="component"><option>Matematica</option><option>Lingua Portuguesa</option><option>Ciencias</option><option>Historia</option><option>Geografia</option></select></label>
+                    <label><span>Tipo de questão</span><select data-qb-editorial="question_type"><option>Multipla escolha</option><option>Leitura de grafico</option></select></label>
+                    <label><span>Habilidade BNCC</span><input data-qb-editorial="bncc_skill" placeholder="Ex.: EF05MA24" /></label>
+                    <label><span>Dificuldade</span><select data-qb-editorial="difficulty"><option>Media</option><option>Facil</option><option>Dificil</option></select></label>
+                    <label class="span-2"><span>Objeto do conhecimento</span><input data-qb-editorial="knowledge_object" placeholder="Objeto do conhecimento / descritor" /></label>
+                  </div>
+                </section>
+                <section class="qb-form-block">
+                  <h3>Questão</h3>
+                  <div class="qb-builder-grid">
+                    <label class="span-2"><span>Enunciado</span><textarea data-qb-editorial="statement" required placeholder="Escreva o enunciado da questão."></textarea></label>
+                    <label class="span-2"><span>Comando/pergunta</span><textarea data-qb-editorial="command_text" placeholder="Comando apresentado ao estudante."></textarea></label>
+                    <label class="span-2"><span>Texto-base</span><textarea data-qb-editorial="base_text" placeholder="Opcional."></textarea></label>
+                  </div>
+                </section>
+                <section class="qb-form-block">
+                  <h3>Alternativas e gabarito</h3>
+                  <div class="qb-editorial-alternatives" data-qb-editorial-alternatives>
+                    ${["A", "B", "C", "D"].map((label, index) => `
+                      <label>
+                        <span>Alternativa ${label}</span>
+                        <input data-qb-alternative="${label}" placeholder="Texto da alternativa ${label}" />
+                        <input type="radio" name="qb-correct-answer" value="${label}" ${index === 0 ? "checked" : ""} aria-label="Marcar alternativa ${label} como correta" />
+                      </label>
+                    `).join("")}
+                  </div>
+                </section>
+                <section class="qb-form-block">
+                  <h3>Curadoria</h3>
+                  <div class="qb-builder-grid">
+                    <label class="span-2"><span>Justificativa pedagógica</span><textarea data-qb-editorial="justification" placeholder="Explique o gabarito e o objetivo pedagógico."></textarea></label>
+                    <label class="span-2"><span>Intervenção recomendada</span><textarea data-qb-editorial="recommended_intervention" placeholder="Opcional."></textarea></label>
+                  </div>
+                </section>
                 <div class="qb-builder-actions">
                   <button type="button" data-qb-create-draft>Salvar rascunho</button>
                   <button type="button" data-qb-submit-review>Salvar e enviar para revisão</button>
                 </div>
               </form>
+            </section>
+            <section class="panel qb-editorial-queue-panel" id="fila-editorial" data-qb-panel="editorial">
               <div class="qb-review-queue" data-qb-review-queue></div>
             </section>
-            <section class="panel qb-builder" id="construtor">
+            <section class="panel qb-builder" id="construtor" data-qb-panel="avaliacoes">
               <div class="panel-head"><h2>Construtor de Avaliações</h2><button type="button" data-qb-save-draft>Salvar rascunho</button></div>
               <div class="qb-builder-grid">
                 <label><span>Titulo</span><input data-qb-assessment-title value="Avaliação diagnóstica demonstrativa" /></label>
@@ -19493,16 +19532,25 @@ const modules = {
                 <button type="button">Preparar PDF futuro</button>
               </div>
             </section>
-            <section class="panel qb-saved">
-              <div class="panel-head"><h2>Avaliações salvas</h2><a href="#avaliacoes">Ver histórico</a></div>
+            <section class="panel qb-saved" data-qb-panel="avaliacoes">
+              <div class="panel-head"><h2>Avaliações salvas</h2><a href="banco-questoes.html?view=avaliacoes">Ver histórico</a></div>
               <div data-qb-saved></div>
             </section>
-            <section class="panel qb-access">
-              <div class="panel-head"><h2>Controle de acesso</h2><a href="#perfis">Perfis</a></div>
+            <section class="panel qb-results-bridge" data-qb-panel="resultados">
+              <div class="panel-head"><h2>Aplicações e Resultados</h2><a href="avalia.html">Abrir Avalia+</a></div>
+              <p>As aplicações por turma, resultados e relatórios continuam no motor Avalia+ existente. Esta view concentra o acesso editorial sem duplicar regras de aplicação.</p>
+              <div class="qb-dashboard-actions"><a href="avalia.html">Abrir painel Avalia+</a><a href="banco-questoes.html?view=avaliacoes">Montar avaliação</a></div>
+            </section>
+            <section class="panel qb-access" data-qb-panel="admin">
+              <div class="panel-head"><h2>Administração</h2><a href="banco-questoes.html?view=admin">Perfis</a></div>
+              <p>Controle de acesso, perfis editoriais, fontes/licenças e configurações ficam isolados da rotina de autoria e revisão.</p>
+              <div class="qb-role-grid">
+                <span>Administrador nacional</span><span>Gestor da rede</span><span>Curador</span><span>Revisor pedagógico</span><span>Professor</span><span>Aplicador</span><span>Visualizador</span>
+              </div>
               <div data-qb-access></div>
             </section>
           </main>
-          <aside class="panel qb-cart" aria-label="Carrinho da avaliação">
+          <aside class="panel qb-cart" aria-label="Carrinho da avaliação" data-qb-panel="avaliacoes">
             <div class="panel-head"><h2>Avaliação</h2><button type="button" data-qb-clear-cart>Limpar</button></div>
             <div class="qb-selection-status" data-qb-selection-status aria-live="polite"></div>
             <div class="qb-cart-list" data-qb-cart-list></div>
@@ -19799,17 +19847,20 @@ const environments = {
     user: "Admin Banco<br />Editorial",
     profileImage: "logo-sidebar-dark.png",
     nav: [
-      ["bancoQuestoes", "Visão geral", "banco-questoes.html"],
-      ["novaQuestao", "Nova questão", "banco-questoes.html#nova-questao"],
-      ["filaEditorial", "Fila editorial", "banco-questoes.html#nova-questao"],
-      ["avalia", "Avalia+", "avalia.html"],
-      ["admin", "Admin", "admin.html"],
+      ["dashboard", "Visão geral", "banco-questoes.html?view=dashboard"],
+      ["banco", "Banco de Questões", "banco-questoes.html?view=banco"],
+      ["nova", "Nova questão", "banco-questoes.html?view=nova"],
+      ["editorial", "Fila editorial", "banco-questoes.html?view=editorial"],
+      ["avaliacoes", "Avaliações", "banco-questoes.html?view=avaliacoes"],
+      ["resultados", "Aplicações e Resultados", "banco-questoes.html?view=resultados"],
+      ["admin", "Administração", "banco-questoes.html?view=admin"],
     ],
     mobile: [
-      ["bancoQuestoes", "Banco", "banco-questoes.html"],
-      ["novaQuestao", "Nova", "banco-questoes.html#nova-questao"],
-      ["filaEditorial", "Fila", "banco-questoes.html#nova-questao"],
-      ["avalia", "Avalia+", "avalia.html"],
+      ["dashboard", "Visão", "banco-questoes.html?view=dashboard"],
+      ["banco", "Banco", "banco-questoes.html?view=banco"],
+      ["nova", "Nova", "banco-questoes.html?view=nova"],
+      ["editorial", "Fila", "banco-questoes.html?view=editorial"],
+      ["avaliacoes", "Avaliações", "banco-questoes.html?view=avaliacoes"],
     ],
   },
   secretaria: {
@@ -19897,6 +19948,22 @@ const moduleEnvironment = {
   secretaria: "secretaria",
   gestor: "gestor",
   familia: "familia",
+};
+
+const questionBankViews = new Set(["dashboard", "banco", "nova", "editorial", "avaliacoes", "resultados", "admin"]);
+const questionBankHashView = {
+  "nova-questao": "nova",
+  construtor: "avaliacoes",
+  avaliacoes: "avaliacoes",
+  "fila-editorial": "editorial",
+};
+const getQuestionBankCurrentView = () => {
+  if (typeof window === "undefined") return "dashboard";
+  const params = new URLSearchParams(window.location.search || "");
+  const queryView = params.get("view");
+  if (questionBankViews.has(queryView)) return queryView;
+  const hashView = questionBankHashView[String(window.location.hash || "").replace(/^#/, "")];
+  return hashView || "dashboard";
 };
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -21446,7 +21513,10 @@ const initQuestionBank = () => {
   const showSessionRequired = (message = "Entre novamente para salvar a avaliação no Supabase.") => {
     if (!selectionStatus) return;
     saveDraftSnapshot("login-required");
-    const nextPath = `${window.location.pathname || "/banco-questoes.html"}?qbResume=1${window.location.hash || ""}`;
+    const params = new URLSearchParams(window.location.search || "");
+    params.set("qbResume", "1");
+    if (!params.get("view")) params.set("view", getActiveQuestionBankView());
+    const nextPath = `${window.location.pathname || "/banco-questoes.html"}?${params.toString()}${window.location.hash || ""}`;
     const next = encodeURIComponent(nextPath);
     selectionStatus.innerHTML = `${htmlEscape(message)} <a href="login.html?auth=supabase&next=${next}">Entrar novamente</a>`;
     selectionStatus.dataset.tone = "error";
@@ -21523,8 +21593,36 @@ const initQuestionBank = () => {
     if (normalized === "ARQUIVADO") return "ARQUIVADO";
     return normalized.replaceAll("_", " ");
   };
+  const getActiveQuestionBankView = () => getQuestionBankCurrentView();
+  const syncQuestionBankView = () => {
+    const activeView = getActiveQuestionBankView();
+    root.dataset.qbActiveView = activeView;
+    root.querySelectorAll("[data-qb-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.qbPanel !== activeView;
+    });
+    const mainLayout = root.querySelector("[data-qb-main-layout]");
+    if (mainLayout) {
+      mainLayout.hidden = activeView === "dashboard";
+    }
+    document.querySelectorAll('.app-shell[data-environment="bancoQuestoes"] .app-nav a, .app-shell[data-environment="bancoQuestoes"] + .mobile-tabbar a').forEach((link) => {
+      const href = link.getAttribute("href") || "";
+      const params = new URLSearchParams(href.split("?")[1] || "");
+      link.classList.toggle("is-active", params.get("view") === activeView || (!params.get("view") && activeView === "dashboard"));
+    });
+  };
+  const goToQuestionBankView = (view) => {
+    if (!questionBankViews.has(view)) return;
+    const params = new URLSearchParams(window.location.search || "");
+    params.set("view", view);
+    params.delete("qbResume");
+    window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}`);
+    syncQuestionBankView();
+  };
   const focusQuestionBankHashTarget = () => {
     const hash = String(window.location.hash || "").replace(/^#/, "");
+    if (hash && questionBankHashView[hash]) {
+      goToQuestionBankView(questionBankHashView[hash]);
+    }
     if (!hash) return;
     const target = document.getElementById(hash);
     if (!target || !root.contains(target)) return;
@@ -21537,9 +21635,17 @@ const initQuestionBank = () => {
   const renderReviewQueue = () => {
     if (!reviewQueue) return;
     const queue = questions.filter((item) => getEditorialWorkflowStatus(item) === "EM_REVISAO" || item.publicationStatus !== "PUBLICADO");
+    const statusCounts = {
+      RASCUNHO: questions.filter((item) => getEditorialWorkflowStatus(item) === "EM_ELABORACAO").length,
+      "EM REVISÃO": questions.filter((item) => getEditorialWorkflowStatus(item) === "EM_REVISAO").length,
+      "APROVADO/PUBLICADO": questions.filter((item) => getEditorialWorkflowStatus(item) === "APROVADO" && item.publicationStatus === "PUBLICADO").length,
+      ARQUIVADO: questions.filter((item) => getEditorialWorkflowStatus(item) === "ARQUIVADO").length,
+    };
     reviewQueue.innerHTML = `
       <div class="panel-head"><h2>Fila editorial</h2><span>${queue.length} item(ns) pendente(s)</span></div>
-      <div class="qb-state">RASCUNHO | EM REVISÃO | APROVADO/PUBLICADO | ARQUIVADO</div>
+      <div class="qb-editorial-tabs" aria-label="Status editoriais">
+        ${Object.entries(statusCounts).map(([label, total]) => `<span>${label}<strong>${total}</strong></span>`).join("")}
+      </div>
       ${
         queue.length
           ? queue
@@ -21682,11 +21788,33 @@ const initQuestionBank = () => {
   const renderMetrics = (items) => {
     root.querySelector("[data-qb-total]").textContent = questions.length;
     root.querySelector("[data-qb-published]").textContent = questions.filter((item) => item.publicationStatus === "PUBLICADO").length;
-    root.querySelector("[data-qb-review]").textContent = questions.filter((item) => !["HOMOLOGADO", "APROVADO"].includes(item.curationStatus)).length;
+    root.querySelector("[data-qb-review]").textContent = questions.filter((item) => getEditorialWorkflowStatus(item) === "EM_REVISAO").length;
+    root.querySelector("[data-qb-draft]").textContent = questions.filter((item) => getEditorialWorkflowStatus(item) === "EM_ELABORACAO").length;
+    root.querySelector("[data-qb-archived]").textContent = questions.filter((item) => getEditorialWorkflowStatus(item) === "ARQUIVADO").length;
     root.querySelectorAll("[data-qb-cart-count]").forEach((node) => {
       node.textContent = cart.length;
     });
     root.querySelector("[data-qb-result-count]").textContent = `${items.length} ${items.length === 1 ? "item" : "itens"}`;
+  };
+  const renderSummaryList = (selector, entries) => {
+    const node = root.querySelector(selector);
+    if (!node) return;
+    node.innerHTML = entries.length
+      ? entries.map(([label, total]) => `<article class="qb-summary-row"><span>${htmlEscape(label)}</span><strong>${total}</strong></article>`).join("")
+      : `<div class="qb-state">Sem dados para exibir.</div>`;
+  };
+  const summarizeBy = (key, mapper = (value) => value || "Nao informado") => {
+    const counts = new Map();
+    questions.forEach((item) => {
+      const label = mapper(item[key], item);
+      counts.set(label, (counts.get(label) || 0) + 1);
+    });
+    return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 6);
+  };
+  const renderDashboardSummaries = () => {
+    renderSummaryList("[data-qb-year-summary]", summarizeBy("year"));
+    renderSummaryList("[data-qb-component-summary]", summarizeBy("component"));
+    renderSummaryList("[data-qb-status-summary]", summarizeBy("workflowStatus", (_value, item) => formatEditorialStatus(getEditorialWorkflowStatus(item), item.publicationStatus)));
   };
 
   const renderQuestionMiniature = (item, { showAnswer = false } = {}) => `
@@ -21966,11 +22094,13 @@ const initQuestionBank = () => {
     grid.innerHTML = items.map(renderCard).join("");
     empty.hidden = items.length > 0;
     renderMetrics(items);
+    renderDashboardSummaries();
     await renderDetail();
     renderCart();
     renderSaved();
     renderAccess();
     renderReviewQueue();
+    syncQuestionBankView();
     focusQuestionBankHashTarget();
   };
 
@@ -22418,6 +22548,8 @@ const initQuestionBank = () => {
   });
 
   restoreDraftSnapshot();
+  syncQuestionBankView();
+  window.addEventListener("popstate", syncQuestionBankView);
   installSupabaseSessionListener();
   refresh();
 };
@@ -30947,6 +31079,7 @@ const renderAppPage = () => {
     environmentKey = "escola";
   }
   const environment = environments[environmentKey] || environments.biblioteca;
+  const questionBankView = environmentKey === "bancoQuestoes" ? getQuestionBankCurrentView() : "";
   if (currentRole && !canAccessPlatformRoute(activeKey, currentRole)) {
     showPlatformRedirectState("Seu perfil não tem acesso a esta rota. Abrindo o ambiente correto.");
     window.location.replace(getRoleHome(currentRole));
@@ -31045,7 +31178,7 @@ const renderAppPage = () => {
           ? `<button class="app-nav-logout" type="button" data-platform-logout>${label}</button>`
         : key === "site"
           ? `<button class="app-nav-site" type="button" data-platform-site-logout>${label}</button>`
-        : `<a class="${(environmentKey === "secretaria" ? key === getSecretariaCurrentView() : environmentKey === "gestor" ? key === getMunicipalNetworkView() : key === activeKey) ? "is-active" : ""}" href="${href}">${
+        : `<a class="${(environmentKey === "bancoQuestoes" ? key === questionBankView : environmentKey === "secretaria" ? key === getSecretariaCurrentView() : environmentKey === "gestor" ? key === getMunicipalNetworkView() : key === activeKey) ? "is-active" : ""}" href="${href}">${
             environmentKey === "secretaria"
               ? secretariaInlineIcon(secretariaViewIcon[key] || "site", label)
               : environmentKey === "gestor"
@@ -31062,15 +31195,17 @@ const renderAppPage = () => {
         ? `<button class="mobile-logout-button" type="button" data-platform-logout>${label}</button>`
       : key === "site"
         ? `<button class="mobile-site-button" type="button" data-platform-site-logout>${label}</button>`
-        : `<a class="${(environmentKey === "secretaria" ? key === getSecretariaCurrentView() : environmentKey === "gestor" ? key === getMunicipalNetworkView() : key === activeKey) ? "is-active" : ""}" href="${href}">${label}</a>`
+        : `<a class="${(environmentKey === "bancoQuestoes" ? key === questionBankView : environmentKey === "secretaria" ? key === getSecretariaCurrentView() : environmentKey === "gestor" ? key === getMunicipalNetworkView() : key === activeKey) ? "is-active" : ""}" href="${href}">${label}</a>`
     )
     .join("");
   const shellHomeHref = currentRole ? getRoleHome(currentRole) : environmentKey === "aluno" ? "aluno.html" : environmentKey === "escola" ? "escola.html" : platformRoute("/", "index.html");
   const shellLogoHref = currentRole ? getRoleHome(currentRole) : shellHomeHref;
-  const topFilter = environmentKey === "escola" || environmentKey === "secretaria" ? "" : `<button class="top-filter" type="button">Filtros</button>`;
+  const topFilter = environmentKey === "escola" || environmentKey === "secretaria" || environmentKey === "bancoQuestoes" ? "" : `<button class="top-filter" type="button">Filtros</button>`;
   const moduleSwitcher = environmentKey === "escola"
     ? `<nav class="module-switcher official-school-switcher" aria-label="Navegação da Escola">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>`
     : environmentKey === "secretaria"
+      ? ""
+    : environmentKey === "bancoQuestoes"
       ? ""
     : `<nav class="module-switcher" aria-label="Módulos do Ecossistema">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>`;
   const studentShellProfile = environmentKey === "aluno" ? getActiveStudentProfile() : null;
@@ -31080,6 +31215,8 @@ const renderAppPage = () => {
     ? ""
     : environmentKey === "secretaria"
       ? `<div class="top-actions secretaria-top-actions" aria-label="Ações da Secretaria"><button type="button" data-secretaria-back>${secretariaInlineIcon("progresso", "VOLTAR")}</button><button type="button" data-platform-home>${secretariaInlineIcon("home", "INICIO")}</button><a href="escola.html">${secretariaInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${secretariaInlineIcon("sair", "SAIR")}</button></div>`
+    : environmentKey === "bancoQuestoes"
+      ? `<div class="top-actions qb-official-actions" aria-label="Ações do Banco de Questões"><div class="user-chip"><span>AB</span><strong>${environment.user}</strong></div><button type="button" data-platform-back>VOLTAR</button><button type="button" data-platform-home>INÍCIO</button><a href="admin.html">ADMIN/TI</a><button type="button" data-platform-logout>SAIR</button></div>`
     : `<div class="top-actions" aria-label="Ações"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>${shellUserFallback}</span>`}<strong>${shellUserLabel}</strong></div></div>`;
 
   mount.innerHTML = `
