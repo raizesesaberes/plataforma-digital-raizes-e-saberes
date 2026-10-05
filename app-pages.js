@@ -14011,7 +14011,47 @@ const renderAdminContentGovernanceConsole = () => {
     acc[item.type] = (acc[item.type] || 0) + 1;
     return acc;
   }, {});
+  const contentSessionRole = normalizePlatformRole(getPlatformSession().role || "");
+  const contentQuestionBankRoles = [
+    "admin",
+    "administrador",
+    "administrador_nacional",
+    "curator",
+    "curador",
+    "elaborador",
+    "revisor",
+    "revisor_pedagogico",
+    "aprovador",
+  ];
+  const canSeeQuestionBank =
+    contentQuestionBankRoles.includes(contentSessionRole);
   return `
+    ${canSeeQuestionBank ? `
+      <section class="admin-board admin-question-bank-entry" data-admin-question-bank-entry>
+        <div class="admin-section-head">
+          <h2>Banco de Questões</h2>
+          <span>Porta editorial canônica do Avalia+</span>
+        </div>
+        <div class="admin-feature-grid">
+          <article class="admin-feature-card" data-admin-search-item>
+            <div>
+              <span>Conteúdos · Avalia+</span>
+              <strong>Banco de Questões</strong>
+              <small class="is-publicado">204 questões</small>
+            </div>
+            <a href="banco-questoes.html">Abrir</a>
+          </article>
+          <article class="admin-feature-card" data-admin-search-item>
+            <div>
+              <span>Workflow editorial</span>
+              <strong>Nova questão e fila editorial</strong>
+              <small>Rascunho · revisão · publicação</small>
+            </div>
+            <a href="banco-questoes.html#nova-questao">Acessar</a>
+          </article>
+        </div>
+      </section>
+    ` : ""}
     <section class="admin-board admin-content-governance">
       <div class="admin-section-head">
         <h2>Governanca de conteúdos</h2>
