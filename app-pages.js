@@ -19449,32 +19449,32 @@ const modules = {
             <section class="panel qb-authoring-entry" id="nova-questao" data-qb-panel="nova">
               <div class="panel-head"><h2>Nova questão</h2><span>Workflow editorial</span></div>
               <p data-qb-editorial-status>A autoria e a publicação usam o motor canônico do Avalia+. Professor comum pode consultar itens publicados; publicação global exige perfil editorial autorizado.</p>
-              <form class="qb-editorial-form" data-qb-editorial-form>
+              <form class="qb-editorial-form question-authoring-form" data-qb-editorial-form>
                 <section class="qb-form-block">
                   <h3>Identificação</h3>
-                  <div class="qb-builder-grid qb-identification-grid">
-                    <label><span>Código</span><input data-qb-editorial="code" placeholder="Opcional. Ex.: RS-HOMO-MA5-002" /></label>
-                    <label><span>Título interno</span><input data-qb-editorial="internal_title" required placeholder="Título para a equipe editorial" /></label>
+                  <div class="question-form-grid question-form-grid--identification">
+                    <label class="question-form-field"><span>Código</span><input data-qb-editorial="code" placeholder="Opcional. Ex.: RS-HOMO-MA5-002" /></label>
+                    <label class="question-form-field"><span>Título interno</span><input data-qb-editorial="internal_title" required placeholder="Título para a equipe editorial" /></label>
                   </div>
                 </section>
                 <section class="qb-form-block">
                   <h3>Classificação pedagógica</h3>
-                  <div class="qb-builder-grid qb-pedagogical-grid">
-                    <label><span>Segmento</span><select data-qb-editorial="stage"><option>Ensino Fundamental - Anos Iniciais</option><option>Ensino Fundamental - Anos Finais</option><option>Educação Infantil</option></select></label>
-                    <label><span>Ano</span><select data-qb-editorial="school_year"><option>5o ano</option><option>2o ano</option><option>1o ano</option><option>3o ano</option><option>4o ano</option></select></label>
-                    <label><span>Componente curricular</span><select data-qb-editorial="component"><option>Matematica</option><option>Lingua Portuguesa</option><option>Ciencias</option><option>Historia</option><option>Geografia</option></select></label>
-                    <label><span>Tipo de questão</span><select data-qb-editorial="question_type"><option>Multipla escolha</option><option>Leitura de grafico</option></select></label>
-                    <label><span>Habilidade BNCC</span><input data-qb-editorial="bncc_skill" placeholder="Ex.: EF05MA24" /></label>
-                    <label><span>Dificuldade</span><select data-qb-editorial="difficulty"><option>Media</option><option>Facil</option><option>Dificil</option></select></label>
-                    <label class="span-2"><span>Objeto do conhecimento</span><input data-qb-editorial="knowledge_object" placeholder="Objeto do conhecimento / descritor" /></label>
+                  <div class="question-form-grid question-form-grid--classification">
+                    <label class="question-form-field"><span>Segmento</span><select data-qb-editorial="stage"><option>Ensino Fundamental - Anos Iniciais</option><option>Ensino Fundamental - Anos Finais</option><option>Educação Infantil</option></select></label>
+                    <label class="question-form-field"><span>Ano</span><select data-qb-editorial="school_year"><option>5o ano</option><option>2o ano</option><option>1o ano</option><option>3o ano</option><option>4o ano</option></select></label>
+                    <label class="question-form-field"><span>Componente curricular</span><select data-qb-editorial="component"><option>Matematica</option><option>Lingua Portuguesa</option><option>Ciencias</option><option>Historia</option><option>Geografia</option></select></label>
+                    <label class="question-form-field"><span>Tipo de questão</span><select data-qb-editorial="question_type"><option>Multipla escolha</option><option>Leitura de grafico</option></select></label>
+                    <label class="question-form-field"><span>Habilidade BNCC</span><input data-qb-editorial="bncc_skill" placeholder="Ex.: EF05MA24" /></label>
+                    <label class="question-form-field"><span>Dificuldade</span><select data-qb-editorial="difficulty"><option>Media</option><option>Facil</option><option>Dificil</option></select></label>
+                    <label class="question-form-field question-form-field--full"><span>Objeto do conhecimento</span><input data-qb-editorial="knowledge_object" placeholder="Objeto do conhecimento / descritor" /></label>
                   </div>
                 </section>
                 <section class="qb-form-block">
                   <h3>Questão</h3>
-                  <div class="qb-builder-grid qb-question-grid">
-                    <label class="span-2"><span>Enunciado</span><textarea data-qb-editorial="statement" required placeholder="Escreva o enunciado da questão."></textarea></label>
-                    <label class="span-2"><span>Comando/pergunta</span><textarea data-qb-editorial="command_text" placeholder="Comando apresentado ao estudante."></textarea></label>
-                    <label class="span-2"><span>Texto-base</span><textarea data-qb-editorial="base_text" placeholder="Opcional."></textarea></label>
+                  <div class="question-form-grid question-form-grid--text">
+                    <label class="question-form-field question-form-field--full"><span>Enunciado</span><textarea data-qb-editorial="statement" required placeholder="Escreva o enunciado da questão."></textarea></label>
+                    <label class="question-form-field question-form-field--full"><span>Comando/pergunta</span><textarea data-qb-editorial="command_text" placeholder="Comando apresentado ao estudante."></textarea></label>
+                    <label class="question-form-field question-form-field--full"><span>Texto-base</span><textarea data-qb-editorial="base_text" placeholder="Opcional."></textarea></label>
                   </div>
                 </section>
                 <section class="qb-form-block">
@@ -19491,9 +19491,9 @@ const modules = {
                 </section>
                 <section class="qb-form-block">
                   <h3>Curadoria</h3>
-                  <div class="qb-builder-grid qb-curation-grid">
-                    <label class="span-2"><span>Justificativa pedagógica</span><textarea data-qb-editorial="justification" placeholder="Explique o gabarito e o objetivo pedagógico."></textarea></label>
-                    <label class="span-2"><span>Intervenção recomendada</span><textarea data-qb-editorial="recommended_intervention" placeholder="Opcional."></textarea></label>
+                  <div class="question-form-grid question-form-grid--curation">
+                    <label class="question-form-field question-form-field--full"><span>Justificativa pedagógica</span><textarea data-qb-editorial="justification" placeholder="Explique o gabarito e o objetivo pedagógico."></textarea></label>
+                    <label class="question-form-field question-form-field--full"><span>Intervenção recomendada</span><textarea data-qb-editorial="recommended_intervention" placeholder="Opcional."></textarea></label>
                   </div>
                 </section>
                 <div class="qb-builder-actions">

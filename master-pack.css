@@ -5305,59 +5305,84 @@ td {
   resize: vertical;
 }
 
-.qb-authoring-entry .qb-builder-grid {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 14px 18px;
+.question-authoring-form {
+  width: 100%;
 }
 
-.qb-authoring-entry .qb-identification-grid {
-  grid-template-columns: minmax(180px, 0.32fr) minmax(420px, 1fr);
+.question-form-grid {
+  display: grid;
+  width: 100%;
+  gap: 16px 20px;
 }
 
-.qb-authoring-entry .qb-pedagogical-grid .span-2,
-.qb-authoring-entry .qb-question-grid .span-2,
-.qb-authoring-entry .qb-curation-grid .span-2 {
+.question-form-grid--identification {
+  grid-template-columns: minmax(180px, 1fr) minmax(0, 3fr);
+}
+
+.question-form-grid--classification {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.question-form-grid--text,
+.question-form-grid--curation {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.question-form-field {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: 7px;
+  color: var(--rs-muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.question-form-field--full {
   grid-column: 1 / -1;
 }
 
-.qb-authoring-entry input,
-.qb-authoring-entry select,
-.qb-authoring-entry textarea,
+.question-form-field input,
+.question-form-field select,
+.question-form-field textarea,
 .qb-editorial-alternatives input:not([type="radio"]) {
+  width: 100%;
+  min-width: 0;
   min-height: 46px;
   padding: 12px 13px;
-  font-size: 0.92rem;
+  border: 1px solid var(--rs-line);
+  border-radius: var(--rs-radius);
+  background: #fff;
+  color: var(--rs-ink);
+  font: 700 0.92rem Inter, sans-serif;
 }
 
-.qb-authoring-entry textarea {
+.question-form-field textarea {
   overflow: auto;
   max-height: 420px;
   line-height: 1.55;
+  resize: vertical;
   field-sizing: content;
 }
 
-.qb-authoring-entry textarea[data-qb-editorial="statement"] {
-  min-height: 150px;
+.question-form-field textarea[data-qb-editorial="statement"] {
+  min-height: 112px;
 }
 
-.qb-authoring-entry textarea[data-qb-editorial="command_text"] {
-  min-height: 118px;
+.question-form-field textarea[data-qb-editorial="command_text"] {
+  min-height: 92px;
 }
 
-.qb-authoring-entry textarea[data-qb-editorial="base_text"] {
-  min-height: 190px;
+.question-form-field textarea[data-qb-editorial="base_text"] {
+  min-height: 144px;
 }
 
-.qb-authoring-entry textarea[data-qb-editorial="justification"] {
-  min-height: 170px;
+.question-form-field textarea[data-qb-editorial="justification"] {
+  min-height: 132px;
 }
 
-.qb-authoring-entry textarea[data-qb-editorial="recommended_intervention"] {
-  min-height: 148px;
-}
-
-.qb-authoring-entry .qb-curation-grid {
-  grid-template-columns: 1fr;
+.question-form-field textarea[data-qb-editorial="recommended_intervention"] {
+  min-height: 112px;
 }
 
 .qb-editorial-alternatives {
@@ -6092,10 +6117,8 @@ td {
     grid-template-columns: 1fr;
   }
 
-  .qb-authoring-entry .qb-identification-grid,
-  .qb-authoring-entry .qb-pedagogical-grid,
-  .qb-authoring-entry .qb-question-grid,
-  .qb-authoring-entry .qb-curation-grid,
+  .question-form-grid--identification,
+  .question-form-grid--classification,
   .qb-editorial-alternatives {
     grid-template-columns: 1fr;
   }
