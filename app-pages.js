@@ -82,6 +82,7 @@ const protectedRouteKeyByPage = {
   "universidade.html": "universidade",
   "avalia.html": "avalia",
   "banco-questoes.html": "bancoQuestoes",
+  "banco-questoes": "bancoQuestoes",
   "suporte.html": "suporte",
   "admin-atividades.html": "adminAtividades",
   "secretaria.html": "secretaria",
@@ -19791,6 +19792,26 @@ const environments = {
       ["mais", "Mais", "#"],
     ],
   },
+  bancoQuestoes: {
+    label: "Banco de Questões",
+    profile: "Workflow Editorial",
+    search: "Buscar questões, habilidades, descritores...",
+    user: "Admin Banco<br />Editorial",
+    profileImage: "logo-sidebar-dark.png",
+    nav: [
+      ["bancoQuestoes", "Visão geral", "banco-questoes.html"],
+      ["novaQuestao", "Nova questão", "banco-questoes.html#nova-questao"],
+      ["filaEditorial", "Fila editorial", "banco-questoes.html#nova-questao"],
+      ["avalia", "Avalia+", "avalia.html"],
+      ["admin", "Admin", "admin.html"],
+    ],
+    mobile: [
+      ["bancoQuestoes", "Banco", "banco-questoes.html"],
+      ["novaQuestao", "Nova", "banco-questoes.html#nova-questao"],
+      ["filaEditorial", "Fila", "banco-questoes.html#nova-questao"],
+      ["avalia", "Avalia+", "avalia.html"],
+    ],
+  },
   secretaria: {
     label: "Secretaria Municipal",
     profile: "Operação Institucional",
@@ -19871,7 +19892,7 @@ const moduleEnvironment = {
   motorAtividade: "aluno",
   adminAtividades: "curadoria",
   avalia: "avalia",
-  bancoQuestoes: "avalia",
+  bancoQuestoes: "bancoQuestoes",
   suporte: "plataforma",
   secretaria: "secretaria",
   gestor: "gestor",
@@ -21431,7 +21452,7 @@ const initQuestionBank = () => {
     selectionStatus.dataset.tone = "error";
     selectionStatus.hidden = false;
   };
-  const getQuestionBankRole = () => getSupabaseUserContext().role || "anonymous";
+  const getQuestionBankRole = () => getSupabaseQuestionBankRole() || "anonymous";
   const canAuthorQuestion = () => allowedQuestionEditorialRoles.includes(getQuestionBankRole());
   const canReviewQuestion = () => allowedQuestionReviewRoles.includes(getQuestionBankRole());
   const canPublishQuestion = () => allowedQuestionPublishRoles.includes(getQuestionBankRole());
@@ -21488,29 +21509,58 @@ const initQuestionBank = () => {
   const clearEditorialForm = () => {
     editorialForm?.reset();
   };
+  const getEditorialWorkflowStatus = (item = {}) => {
+    if (item.workflowStatus) return item.workflowStatus;
+    if (item.publicationStatus === "PUBLICADO") return "APROVADO";
+    if (item.id === "RS-DEMO-MA5-001") return "EM_REVISAO";
+    return "EM_ELABORACAO";
+  };
+  const formatEditorialStatus = (status, publicationStatus = "") => {
+    const normalized = String(status || "").toUpperCase();
+    if (normalized === "EM_ELABORACAO") return "RASCUNHO";
+    if (normalized === "EM_REVISAO") return "EM REVISÃO";
+    if (normalized === "APROVADO") return publicationStatus === "PUBLICADO" ? "APROVADO/PUBLICADO" : "APROVADO";
+    if (normalized === "ARQUIVADO") return "ARQUIVADO";
+    return normalized.replaceAll("_", " ");
+  };
+  const focusQuestionBankHashTarget = () => {
+    const hash = String(window.location.hash || "").replace(/^#/, "");
+    if (!hash) return;
+    const target = document.getElementById(hash);
+    if (!target || !root.contains(target)) return;
+    window.setTimeout(() => {
+      target.setAttribute("tabindex", "-1");
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ block: "start", behavior: "smooth" });
+    }, 0);
+  };
   const renderReviewQueue = () => {
     if (!reviewQueue) return;
-    const queue = questions.filter((item) => item.workflowStatus === "EM_REVISAO" || item.publicationStatus !== "PUBLICADO");
+    const queue = questions.filter((item) => getEditorialWorkflowStatus(item) === "EM_REVISAO" || item.publicationStatus !== "PUBLICADO");
     reviewQueue.innerHTML = `
       <div class="panel-head"><h2>Fila editorial</h2><span>${queue.length} item(ns) pendente(s)</span></div>
+      <div class="qb-state">RASCUNHO | EM REVISÃO | APROVADO/PUBLICADO | ARQUIVADO</div>
       ${
         queue.length
           ? queue
-              .map((item) => `
-                <article class="qb-review-item" data-qb-review-item="${htmlEscape(item.uuid || item.id)}">
-                  <div>
-                    <strong>${htmlEscape(item.id)}</strong>
-                    <span>${htmlEscape(item.component)} · ${htmlEscape(item.year)} · ${htmlEscape(item.workflowStatus)} · ${htmlEscape(item.publicationStatus)}</span>
-                    <p>${htmlEscape(shortText(item.statement || item.title, 150))}</p>
-                  </div>
-                  <div class="qb-card-actions">
-                    <button type="button" data-qb-view="${htmlEscape(item.id)}">Ver</button>
-                    <button type="button" data-qb-workflow-review="${htmlEscape(item.uuid || item.id)}" ${canReviewQuestion() || canAuthorQuestion() ? "" : "disabled"}>Enviar para revisão</button>
-                    <button type="button" data-qb-workflow-approve="${htmlEscape(item.uuid || item.id)}" ${canPublishQuestion() ? "" : "disabled"}>Aprovar e publicar</button>
-                    <button type="button" data-qb-workflow-archive="${htmlEscape(item.uuid || item.id)}" ${canReviewQuestion() ? "" : "disabled"}>Arquivar</button>
-                  </div>
-                </article>
-              `)
+              .map((item) => {
+                const workflowStatus = getEditorialWorkflowStatus(item);
+                return `
+                  <article class="qb-review-item" data-qb-review-item="${htmlEscape(item.uuid || item.id)}">
+                    <div>
+                      <strong>${htmlEscape(item.id)}</strong>
+                      <span>${htmlEscape(item.component)} · ${htmlEscape(item.year)} · ${htmlEscape(formatEditorialStatus(workflowStatus, item.publicationStatus))} · ${htmlEscape(item.publicationStatus)}</span>
+                      <p>${htmlEscape(shortText(item.statement || item.title, 150))}</p>
+                    </div>
+                    <div class="qb-card-actions">
+                      <button type="button" data-qb-view="${htmlEscape(item.id)}">Ver</button>
+                      <button type="button" data-qb-workflow-review="${htmlEscape(item.uuid || item.id)}" ${canReviewQuestion() || canAuthorQuestion() ? "" : "disabled"}>Enviar para revisão</button>
+                      <button type="button" data-qb-workflow-approve="${htmlEscape(item.uuid || item.id)}" ${canPublishQuestion() ? "" : "disabled"}>Aprovar e publicar</button>
+                      <button type="button" data-qb-workflow-archive="${htmlEscape(item.uuid || item.id)}" ${canReviewQuestion() ? "" : "disabled"}>Arquivar</button>
+                    </div>
+                  </article>
+                `;
+              })
               .join("")
           : `<div class="qb-state">Nenhuma questão pendente de revisão.</div>`
       }
@@ -21921,6 +21971,7 @@ const initQuestionBank = () => {
     renderSaved();
     renderAccess();
     renderReviewQueue();
+    focusQuestionBankHashTarget();
   };
 
   const setError = (message) => {
@@ -22475,6 +22526,23 @@ const getSupabaseUserContext = () => {
       payload.app_role ||
       (payload.role === "service_role" ? "service_role" : "anonymous"),
   };
+};
+
+const getSupabaseQuestionBankRole = () => {
+  const config = getSupabaseConfig();
+  const token = getSupabaseAccessToken(config);
+  const payload = decodeJwtPayload(token);
+  const appMetadata = payload.app_metadata || {};
+  return (
+    appMetadata.question_bank_role ||
+    payload.question_bank_role ||
+    appMetadata.platform_role ||
+    appMetadata.app_role ||
+    appMetadata.role ||
+    payload.platform_role ||
+    payload.app_role ||
+    (payload.role === "service_role" ? "service_role" : "anonymous")
+  );
 };
 
 const resolveSupabaseUserContext = async ({ requireAuthenticated = false, allowedRoles = [] } = {}) => {
