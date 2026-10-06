@@ -4979,22 +4979,6 @@ td {
   gap: 18px;
 }
 
-.app-shell[data-environment="bancoQuestoes"] {
-  background: #f5f8f5;
-}
-
-.app-shell[data-environment="bancoQuestoes"] .app-sidebar {
-  background: linear-gradient(180deg, #0f5f45 0%, #0b4334 100%);
-}
-
-.app-shell[data-environment="bancoQuestoes"] .app-topbar {
-  grid-template-columns: minmax(260px, 1fr) auto;
-}
-
-.app-shell[data-environment="bancoQuestoes"] .module-switcher {
-  display: none;
-}
-
 .question-bank [hidden] {
   display: none !important;
 }

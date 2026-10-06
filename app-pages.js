@@ -10880,6 +10880,16 @@ const adminReadOnlyNav = [
 const adminInlineIcon = (icon, label = "") =>
   `<i class="secretaria-icon admin-inline-icon" data-icon="${icon}" aria-hidden="true"></i>${label ? `<span>${printableEscape(label)}</span>` : ""}`;
 
+const questionBankAdminNavIcons = {
+  dashboard: "chart",
+  banco: "book",
+  nova: "clipboard",
+  editorial: "check",
+  avaliacoes: "doc",
+  resultados: "portfolio",
+  admin: "admin",
+};
+
 const adminMetricIcons = {
   Escolas: "escola",
   "Usuários e perfis": "perfil",
@@ -19919,6 +19929,36 @@ const environments = {
   },
 };
 
+const renderQuestionBankAdminSidebar = (activeView = "dashboard") => {
+  const session = getPlatformSession();
+  const email = session.email || "admin.banco@raizesesaberes.com";
+  return `
+    <aside class="admin-sidebar" aria-label="Menu Banco de Questões">
+      <a class="admin-sidebar-logo" href="admin.html" aria-label="Raízes e Saberes">
+        <img src="logo-sidebar-dark.png" alt="Raízes e Saberes Ecossistema Educacional" onerror="this.hidden=true; this.nextElementSibling.hidden=false;" />
+        <span class="admin-sidebar-logo-fallback" hidden><strong>Raízes e Saberes</strong><em>Ecossistema Educacional</em></span>
+      </a>
+      <div class="admin-id-card">
+        <span>Admin Banco / Editorial</span>
+        <strong>Raízes e Saberes</strong>
+        <small>${printableEscape(email)}</small>
+      </div>
+      <nav aria-label="Banco de Questões">
+        ${environments.bancoQuestoes.nav
+          .map(([key, label, href]) => `
+            <button
+              type="button"
+              data-question-bank-shell-href="${printableEscape(href)}"
+              class="${key === activeView ? "is-active" : ""}"
+            >${adminInlineIcon(questionBankAdminNavIcons[key] || "site", label)}</button>
+          `)
+          .join("")}
+        <button class="platform-logout-button" type="button" data-platform-logout>${adminInlineIcon("sair", "SAIR")}</button>
+      </nav>
+    </aside>
+  `;
+};
+
 const moduleEnvironment = {
   plataforma: "plataforma",
   admin: "admin",
@@ -21343,6 +21383,21 @@ const initStudentAvaliaApplication = () => {
   });
 };
 
+const initQuestionBankShellNavigation = () => {
+  document.querySelectorAll("[data-question-bank-shell-href]").forEach((button) => {
+    if (button.dataset.questionBankShellBound === "true") {
+      return;
+    }
+    button.dataset.questionBankShellBound = "true";
+    button.addEventListener("click", () => {
+      const href = button.dataset.questionBankShellHref;
+      if (href) {
+        window.location.href = href;
+      }
+    });
+  });
+};
+
 const initQuestionBank = () => {
   const root = document.querySelector("[data-question-bank]");
   if (!root) {
@@ -21616,8 +21671,8 @@ const initQuestionBank = () => {
     if (mainLayout) {
       mainLayout.hidden = activeView === "dashboard";
     }
-    document.querySelectorAll('.app-shell[data-environment="bancoQuestoes"] .app-nav a, .app-shell[data-environment="bancoQuestoes"] + .mobile-tabbar a').forEach((link) => {
-      const href = link.getAttribute("href") || "";
+    document.querySelectorAll("[data-question-bank-shell-href], .question-bank-workspace + .mobile-tabbar a").forEach((link) => {
+      const href = link.dataset.questionBankShellHref || link.getAttribute("href") || "";
       const params = new URLSearchParams(href.split("?")[1] || "");
       link.classList.toggle("is-active", params.get("view") === activeView || (!params.get("view") && activeView === "dashboard"));
     });
@@ -31182,6 +31237,42 @@ const renderAppPage = () => {
       : isContentAvailableToSession("book", activeBook.id)
         ? activeModule.html
         : renderContentUnavailableForSchool({ title: "Livro indisponível", type: "book", id: activeBook.id });
+  }
+  if (environmentKey === "bancoQuestoes") {
+    const mobileNav = environment.mobile
+      .map(([key, label, href]) => `<a class="${key === questionBankView ? "is-active" : ""}" href="${href}">${label}</a>`)
+      .join("");
+
+    mount.innerHTML = `
+      <section class="admin-workspace question-bank-workspace" data-question-bank-workspace>
+        ${renderQuestionBankAdminSidebar(questionBankView)}
+        <main class="admin-main">
+          <header class="admin-topbar">
+            <label><span>Busca Banco de Questões</span><input type="search" placeholder="${environment.search}" /></label>
+            <div class="admin-topbar-actions" aria-label="Navegação global">
+              <button type="button" data-platform-back>${adminInlineIcon("back", "VOLTAR")}</button>
+              <button type="button" data-platform-home>${adminInlineIcon("home", "INICIO")}</button>
+              <a class="admin-topbar-link" href="escola.html">${adminInlineIcon("escola", "MINHA ESCOLA")}</a>
+              <button type="button" data-platform-logout>${adminInlineIcon("sair", "SAIR")}</button>
+            </div>
+          </header>
+          <section class="screen is-active route-screen" data-route-screen="${activeKey}">${routeHtml}</section>
+        </main>
+      </section>
+      <nav class="mobile-tabbar" aria-label="Navegação mobile">${mobileNav}</nav>
+    `;
+
+    requestAnimationFrame(() => {
+      document.querySelector(".route-screen")?.classList.add("is-mounted");
+    });
+
+    initPlatformLogout();
+    initQuestionBankShellNavigation();
+    initQuestionBank();
+    initDigitalResultsPanel();
+    initCanonicalVideoPlayer();
+    initGlobalAccessibility();
+    return;
   }
   const nav = environment.nav
     .map(([key, label, href]) =>
