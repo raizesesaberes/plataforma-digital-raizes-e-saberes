@@ -5406,6 +5406,57 @@ td {
   font-weight: 700;
 }
 
+.qb-scope-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.qb-scope-tabs button {
+  min-height: 36px;
+  border: 1px solid rgba(7, 61, 53, 0.14);
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #fff;
+  color: #24463c;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.qb-scope-tabs button:hover,
+.qb-scope-tabs button:focus-visible,
+.qb-scope-tabs button.is-active {
+  background: #0d6b4b;
+  color: #fff;
+  outline: none;
+}
+
+.qb-adaptation-context {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border: 1px solid #b9dfcc;
+  border-radius: 8px;
+  background: #edf8f1;
+  color: #0a4d39;
+}
+
+.qb-adaptation-context[hidden] {
+  display: none;
+}
+
+.qb-adaptation-context strong {
+  font-family: Poppins, Inter, sans-serif;
+  font-size: 0.84rem;
+  letter-spacing: 0;
+}
+
+.qb-adaptation-context span {
+  font-weight: 800;
+}
+
 .qb-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

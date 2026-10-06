@@ -19442,6 +19442,11 @@ const modules = {
           <main class="qb-results">
             <div class="qb-toolbar">
               <div><strong data-qb-result-count>0 itens</strong><span>Filtros combinaveis e resposta local rapida.</span></div>
+              <div class="qb-scope-tabs" aria-label="Escopo das questões">
+                <button type="button" class="is-active" data-qb-scope="all">Todas</button>
+                <button type="button" data-qb-scope="official">Oficiais Raízes e Saberes</button>
+                <button type="button" data-qb-scope="mine">Minhas questões</button>
+              </div>
               <select data-qb-sort aria-label="Ordenar questoes">
                 <option value="recent">Última revisão</option>
                 <option value="difficulty">Dificuldade</option>
@@ -19458,6 +19463,7 @@ const modules = {
             <section class="panel qb-detail" data-qb-detail aria-live="polite"></section>
             <section class="panel qb-authoring-entry" id="nova-questao" data-qb-panel="nova">
               <div class="panel-head"><h2>Nova questão</h2><span>Workflow editorial</span></div>
+              <div class="qb-adaptation-context" data-qb-adaptation-context hidden></div>
               <p data-qb-editorial-status>A autoria e a publicação usam o motor canônico do Avalia+. Professor comum pode consultar itens publicados; publicação global exige perfil editorial autorizado.</p>
               <form class="qb-editorial-form question-authoring-form" data-qb-editorial-form>
                 <section class="qb-form-block">
@@ -19507,6 +19513,7 @@ const modules = {
                   </div>
                 </section>
                 <div class="qb-builder-actions">
+                  <button type="button" data-qb-cancel-adaptation hidden>Cancelar</button>
                   <button type="button" data-qb-create-draft>Salvar rascunho</button>
                   <button type="button" data-qb-submit-review>Salvar e enviar para revisão</button>
                 </div>
@@ -21424,6 +21431,11 @@ const initQuestionBank = () => {
   const editorialForm = root.querySelector("[data-qb-editorial-form]");
   const editorialStatus = root.querySelector("[data-qb-editorial-status]");
   const reviewQueue = root.querySelector("[data-qb-review-queue]");
+  const scopeTabs = [...root.querySelectorAll("[data-qb-scope]")];
+  const adaptationContext = root.querySelector("[data-qb-adaptation-context]");
+  const createDraftButton = root.querySelector("[data-qb-create-draft]");
+  const submitReviewButton = root.querySelector("[data-qb-submit-review]");
+  const cancelAdaptationButton = root.querySelector("[data-qb-cancel-adaptation]");
   let questions = [];
   let assessments = [];
   let selectedId = null;
@@ -21431,6 +21443,8 @@ const initQuestionBank = () => {
   let cart = [];
   let cartPoints = {};
   let mode = questionBankDataService.mode();
+  let scopeFilter = localStorage.getItem("raizes:question-bank-scope") || "all";
+  let editorialMode = { type: "create", source: null };
   const cartStorageKey = "raizes:question-bank-cart";
   const draftStorageKey = "raizes:question-bank-draft";
   let didAttemptLoginResume = false;
@@ -21581,6 +21595,15 @@ const initQuestionBank = () => {
   const canAuthorQuestion = () => allowedQuestionEditorialRoles.includes(getQuestionBankRole());
   const canReviewQuestion = () => allowedQuestionReviewRoles.includes(getQuestionBankRole());
   const canPublishQuestion = () => allowedQuestionPublishRoles.includes(getQuestionBankRole());
+  const canAdaptQuestion = () => allowedQuestionAdaptationRoles.includes(getQuestionBankRole());
+  const getCurrentQuestionBankUserId = () => getSupabaseUserContext().userId || "";
+  const getQuestionScopeKind = (item = {}) => {
+    const origin = String(item.originType || "").toUpperCase();
+    if (origin === "TEACHER_ADAPTATION") return "ADAPTADA";
+    if (origin === "TEACHER_AUTHORIAL") return "AUTORAL";
+    return "OFICIAL";
+  };
+  const isMineQuestion = (item = {}) => Boolean(item.ownerUserId && item.ownerUserId === getCurrentQuestionBankUserId());
   const setEditorialStatus = (message, tone = "info") => {
     if (!editorialStatus) return;
     editorialStatus.textContent = message;
@@ -21631,6 +21654,17 @@ const initQuestionBank = () => {
         created_from: "banco-questoes",
       },
     };
+    if (editorialMode.type === "adapt" && editorialMode.source) {
+      payload.author_name = "Professor(a) - adaptação";
+      payload.source_question_id = editorialMode.source.uuid || editorialMode.source.raw?.id || "";
+      payload.metadata = {
+        source: "teacher_adaptation_ui",
+        created_from: "banco-questoes",
+        origin: "TEACHER_ADAPTATION",
+        source_question_code: editorialMode.source.id,
+        source_question_id: editorialMode.source.uuid || editorialMode.source.raw?.id || "",
+      };
+    }
     const missing = [];
     if (!payload.internal_title) missing.push("Título interno");
     if (!payload.component) missing.push("Componente curricular");
@@ -21645,6 +21679,63 @@ const initQuestionBank = () => {
   };
   const clearEditorialForm = () => {
     editorialForm?.reset();
+    editorialForm?.querySelectorAll("textarea").forEach(autoGrowEditorialTextarea);
+  };
+  const setEditorialMode = (nextMode = { type: "create", source: null }) => {
+    editorialMode = nextMode;
+    const isAdapting = editorialMode.type === "adapt" && editorialMode.source;
+    if (adaptationContext) {
+      adaptationContext.hidden = !isAdapting;
+      adaptationContext.innerHTML = isAdapting
+        ? `<strong>ADAPTANDO UMA QUESTÃO</strong><span>Baseada em: ${htmlEscape(editorialMode.source.id)} · Questão original preservada</span>`
+        : "";
+    }
+    if (createDraftButton) {
+      createDraftButton.textContent = isAdapting ? "Salvar minha versão" : "Salvar rascunho";
+    }
+    if (submitReviewButton) {
+      submitReviewButton.hidden = isAdapting;
+    }
+    if (cancelAdaptationButton) {
+      cancelAdaptationButton.hidden = !isAdapting;
+    }
+  };
+  const setEditorialFieldValue = (name, value = "") => {
+    const field = editorialForm?.querySelector(`[data-qb-editorial="${name}"]`);
+    if (!field) return;
+    field.value = value || "";
+    if (field.tagName === "TEXTAREA") autoGrowEditorialTextarea(field);
+  };
+  const startQuestionAdaptation = (item) => {
+    if (!item) return;
+    clearEditorialForm();
+    setEditorialMode({ type: "adapt", source: item });
+    setEditorialFieldValue("code", "");
+    setEditorialFieldValue("internal_title", `${item.title || item.id} - adaptação`);
+    setEditorialFieldValue("stage", item.stage);
+    setEditorialFieldValue("school_year", item.year);
+    setEditorialFieldValue("component", item.component);
+    setEditorialFieldValue("question_type", item.type);
+    setEditorialFieldValue("bncc_skill", item.skill);
+    setEditorialFieldValue("difficulty", item.difficulty);
+    setEditorialFieldValue("knowledge_object", item.object || item.descriptor);
+    setEditorialFieldValue("statement", item.statement);
+    setEditorialFieldValue("command_text", item.commandText || item.statement);
+    setEditorialFieldValue("base_text", item.baseText);
+    setEditorialFieldValue("justification", item.justification || item.pedagogicalComment);
+    setEditorialFieldValue("recommended_intervention", item.intervention);
+    [...(editorialForm?.querySelectorAll("[data-qb-alternative]") || [])].forEach((input, index) => {
+      input.value = item.alternatives?.[index] || "";
+    });
+    const correctLabel = optionLabel(item.correctAlternative || 0);
+    const correctInput = editorialForm?.querySelector(`input[name='qb-correct-answer'][value="${correctLabel}"]`);
+    if (correctInput) correctInput.checked = true;
+    setEditorialStatus(`Editando cópia derivada. O item oficial ${item.id} não será alterado.`, "info");
+    goToQuestionBankView("nova");
+    window.setTimeout(() => {
+      root.querySelector("#nova-questao")?.scrollIntoView({ block: "start", behavior: "smooth" });
+      editorialForm?.querySelector('[data-qb-editorial="statement"]')?.focus({ preventScroll: true });
+    }, 0);
   };
   const getEditorialWorkflowStatus = (item = {}) => {
     if (item.workflowStatus) return item.workflowStatus;
@@ -21675,6 +21766,9 @@ const initQuestionBank = () => {
       const href = link.dataset.questionBankShellHref || link.getAttribute("href") || "";
       const params = new URLSearchParams(href.split("?")[1] || "");
       link.classList.toggle("is-active", params.get("view") === activeView || (!params.get("view") && activeView === "dashboard"));
+    });
+    scopeTabs.forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.qbScope === scopeFilter);
     });
   };
   const goToQuestionBankView = (view) => {
@@ -21742,6 +21836,32 @@ const initQuestionBank = () => {
   const createEditorialQuestion = async ({ submitForReview = false } = {}) => {
     if (mode !== "supabase") {
       setEditorialStatus("A criação editorial exige conexão Supabase real.", "error");
+      return;
+    }
+    if (editorialMode.type === "adapt") {
+      if (!canAdaptQuestion()) {
+        showSessionRequired("Entre com perfil professor autorizado para salvar sua adaptação.");
+        return;
+      }
+      const source = editorialMode.source;
+      const { payload, alternatives, missing } = collectEditorialPayload();
+      if (missing.length) {
+        setEditorialStatus(`Preencha: ${missing.join(", ")}.`, "error");
+        return;
+      }
+      setEditorialStatus("Salvando sua versão adaptada...", "loading");
+      const adapted = await questionBankDataService.adaptQuestionItem(source.uuid || source.raw?.id, {
+        ...payload,
+        alternatives,
+      });
+      clearEditorialForm();
+      setEditorialMode();
+      await refresh();
+      selectedId = adapted.id;
+      scopeFilter = "mine";
+      localStorage.setItem("raizes:question-bank-scope", scopeFilter);
+      goToQuestionBankView("banco");
+      setEditorialStatus(`Minha versão salva: ${adapted.id}. Original ${source.id} preservada.`, "success");
       return;
     }
     if (!canAuthorQuestion()) {
@@ -21830,7 +21950,13 @@ const initQuestionBank = () => {
     const items = questions.filter((item) => {
       const fieldMatches = Object.entries(filterValues).every(([key, value]) => !value || item[key] === value);
       const useMatches = !usedValue || (usedValue === "used" ? item.usedCount > 0 : item.usedCount === 0);
-      return fieldMatches && useMatches && matchesSearch(item);
+      const scopeMatches =
+        scopeFilter === "mine"
+          ? isMineQuestion(item) || (mode !== "supabase" && ["ADAPTADA", "AUTORAL"].includes(getQuestionScopeKind(item)))
+          : scopeFilter === "official"
+            ? getQuestionScopeKind(item) === "OFICIAL"
+            : true;
+      return fieldMatches && useMatches && scopeMatches && matchesSearch(item);
     });
     return items.sort((a, b) => {
       if (sort.value === "difficulty") {
@@ -21905,7 +22031,7 @@ const initQuestionBank = () => {
     <article class="qb-card ${item.id === selectedId ? "is-focused" : ""} ${isSelected(item.id) ? "is-selected" : ""}" data-qb-card="${htmlEscape(item.id)}">
       <div class="qb-card-top">
         <span>${htmlEscape(item.id)}</span>
-        <mark>${item.publicationStatus === "PUBLICADO" ? "Publicada" : htmlEscape(item.publicationStatus)}</mark>
+        <mark>${htmlEscape(getQuestionScopeKind(item))}</mark>
       </div>
       <h3>${htmlEscape(shortText(item.statement || item.title, 110))}</h3>
       <p>${htmlEscape(item.component)} &middot; ${htmlEscape(item.year)} &middot; ${htmlEscape(item.skill)}</p>
@@ -21914,6 +22040,7 @@ const initQuestionBank = () => {
       <div class="qb-tags"><span>${htmlEscape(item.type)}</span><span>${htmlEscape(item.difficulty)}</span><span>${htmlEscape(item.proficiency)}</span><span>${item.estimatedTime} min</span><span>${htmlEscape(item.resource)}</span></div>
       <div class="qb-card-actions">
         <button type="button" data-qb-view="${item.id}" aria-label="Ver questao ${htmlEscape(item.id)}">Ver questao</button>
+        <button type="button" data-qb-adapt="${item.id}" ${item.publicationStatus === "PUBLICADO" && canAdaptQuestion() ? "" : "disabled"}>Adaptar questão</button>
         <button type="button" data-qb-add="${item.id}" class="${isSelected(item.id) ? "is-selected" : ""}" aria-pressed="${isSelected(item.id)}" ${item.publicationStatus !== "PUBLICADO" || isSelected(item.id) ? "disabled" : ""}>${isSelected(item.id) ? "Selecionada" : "Selecionar"}</button>
       </div>
     </article>
@@ -21934,12 +22061,15 @@ const initQuestionBank = () => {
     detail.innerHTML = `
       <div class="panel-head">
         <h2>Visualização da questao</h2>
-        <button type="button" data-qb-add="${item.id}" class="${isSelected(item.id) ? "is-selected" : ""}" aria-pressed="${isSelected(item.id)}" ${item.publicationStatus !== "PUBLICADO" || isSelected(item.id) ? "disabled" : ""}>${isSelected(item.id) ? "Selecionada" : "Selecionar esta questao"}</button>
+        <div class="qb-card-actions">
+          <button type="button" data-qb-adapt="${item.id}" ${item.publicationStatus === "PUBLICADO" && canAdaptQuestion() ? "" : "disabled"}>Adaptar questão</button>
+          <button type="button" data-qb-add="${item.id}" class="${isSelected(item.id) ? "is-selected" : ""}" aria-pressed="${isSelected(item.id)}" ${item.publicationStatus !== "PUBLICADO" || isSelected(item.id) ? "disabled" : ""}>${isSelected(item.id) ? "Selecionada" : "Selecionar esta questao"}</button>
+        </div>
       </div>
       <div class="qb-proof-page">
         <div class="qb-proof-header">
           <strong>${htmlEscape(item.id)}</strong>
-          <span>${htmlEscape(item.component)} &middot; ${htmlEscape(item.year)} &middot; ${item.estimatedTime} min</span>
+          <span>${htmlEscape(getQuestionScopeKind(item))} &middot; ${htmlEscape(item.component)} &middot; ${htmlEscape(item.year)} &middot; ${item.estimatedTime} min</span>
         </div>
         ${item.baseText ? `<blockquote>${htmlEscape(item.baseText)}</blockquote>` : ""}
         <h3>${htmlEscape(item.statement)}</h3>
@@ -21954,6 +22084,7 @@ const initQuestionBank = () => {
           <span><b>Objeto</b>${htmlEscape(item.object)}</span>
           <span><b>Dificuldade</b>${htmlEscape(item.difficulty)}</span>
           <span><b>Tempo estimado</b>${item.estimatedTime} min</span>
+          <span><b>Tipo</b>${htmlEscape(getQuestionScopeKind(item))}${item.sourceQuestionCode ? ` · Derivada de ${htmlEscape(item.sourceQuestionCode)}` : ""}</span>
           <span><b>Fonte e licenca</b>${htmlEscape(`${item.sourceName}. ${item.license}. ${item.legalStatus || ""}`)}</span>
         </div>
         <div class="qb-trace">
@@ -22460,6 +22591,14 @@ const initQuestionBank = () => {
         button.textContent = "Selecionando";
         selectQuestion(button.dataset.qbAdd);
       }
+      if (button.dataset.qbAdapt) {
+        const item = itemById(button.dataset.qbAdapt);
+        if (!item || item.publicationStatus !== "PUBLICADO") {
+          setSelectionStatus("Somente questões publicadas podem ser usadas como base de adaptação.", "error");
+        } else {
+          startQuestionAdaptation(item);
+        }
+      }
       if (button.dataset.qbRemove) {
         const item = itemById(button.dataset.qbRemove);
         let needsRemoteSync = false;
@@ -22547,6 +22686,11 @@ const initQuestionBank = () => {
       if (button.hasAttribute("data-qb-submit-review")) {
         await createEditorialQuestion({ submitForReview: true });
       }
+      if (button.hasAttribute("data-qb-cancel-adaptation")) {
+        clearEditorialForm();
+        setEditorialMode();
+        setEditorialStatus("Adaptação cancelada. Nenhuma alteração foi salva.", "info");
+      }
       if (button.dataset.qbWorkflowReview) {
         await moveQuestionWorkflow(button.dataset.qbWorkflowReview, "EM_REVISAO");
       }
@@ -22597,6 +22741,14 @@ const initQuestionBank = () => {
     });
   });
 
+  scopeTabs.forEach((button) => {
+    button.addEventListener("click", () => {
+      scopeFilter = button.dataset.qbScope || "all";
+      localStorage.setItem("raizes:question-bank-scope", scopeFilter);
+      render();
+    });
+  });
+
   builderFields.forEach((control) => {
     control.addEventListener("change", () => {
       saveDraftSnapshot("builder-changed");
@@ -22633,6 +22785,7 @@ const htmlEscape = (value) =>
 const getSupabaseConfig = () => window.RAIZES_SUPABASE || {};
 const supabaseSessionStorageKey = "raizes:supabase-auth-session";
 const allowedAssessmentRoles = ["admin", "administrador", "administrador_nacional", "gestor", "gestor_da_rede", "professor", "curator", "curador", "revisor", "revisor_pedagogico", "aprovador", "elaborador"];
+const allowedQuestionAdaptationRoles = ["admin", "administrador", "administrador_nacional", "gestor", "gestor_da_rede", "professor", "curator", "curador", "revisor", "revisor_pedagogico", "aprovador", "elaborador"];
 const allowedQuestionEditorialRoles = ["admin", "administrador", "administrador_nacional", "curator", "curador", "elaborador"];
 const allowedQuestionReviewRoles = ["admin", "administrador", "administrador_nacional", "curator", "curador", "revisor", "revisor_pedagogico", "aprovador"];
 const allowedQuestionPublishRoles = ["admin", "administrador", "administrador_nacional", "curator", "curador", "aprovador"];
@@ -28416,8 +28569,10 @@ const questionBankFallbackStore = {
 };
 
 const mapQuestionFromSupabase = (row) => {
-  const alternatives = [...(row.alternatives || [])].sort((a, b) => a.position - b.position);
+  const alternatives = [...(row.alternatives || [])].sort((a, b) => (a.position || 0) - (b.position || 0));
   const correctIndex = alternatives.findIndex((alternative) => alternative.is_correct);
+  const metadata = row.metadata || {};
+  const provenance = row.provenance || {};
   return {
     id: row.code,
     uuid: row.id,
@@ -28438,7 +28593,12 @@ const mapQuestionFromSupabase = (row) => {
     resource: row.media?.[0]?.media_type || (row.base_text ? "Texto-base" : "Texto-base"),
     estimatedTime: row.estimated_minutes || 0,
     accessibility: row.accessibility_notes || "",
-    originType: row.source?.source_type || "Autoral",
+    originType: row.origin_type || metadata.origin || row.source?.source_type || "GLOBAL_RAIZES",
+    ownershipScope: row.ownership_scope || "GLOBAL_RAIZES",
+    ownerUserId: row.owner_user_id || row.author_user_id || "",
+    sourceQuestionId: row.source_question_id || provenance.source_question_id || metadata.source_question_id || "",
+    sourceQuestionCode: provenance.source_question_code || metadata.source_question_code || "",
+    adaptedAt: row.adapted_at || "",
     legalClassification: row.legal_classification,
     sourceId: row.source_id,
     sourceName: row.source?.name || "Conteúdo autoral Raízes e Saberes",
@@ -28631,6 +28791,32 @@ const questionBankDataService = (() => {
     },
     async createQuestionItem() {
       throw new Error("Criação editorial exige Supabase real e perfil autorizado.");
+    },
+    async adaptQuestionItem(sourceQuestionId, payload = {}) {
+      const source = await this.getQuestionById(sourceQuestionId);
+      if (!source) throw new Error("Questão original não encontrada.");
+      const adapted = {
+        ...source,
+        id: `LOCAL-ADAPT-${Date.now().toString().slice(-6)}`,
+        uuid: `local-adapt-${Date.now()}`,
+        title: payload.internal_title || `${source.title} - adaptação`,
+        statement: payload.statement || source.statement,
+        commandText: payload.command_text || source.commandText,
+        baseText: payload.base_text ?? source.baseText,
+        alternatives: (payload.alternatives || []).map((item) => item.body).filter(Boolean).length
+          ? payload.alternatives.map((item) => item.body)
+          : source.alternatives,
+        correctAlternative: Math.max(0, (payload.alternatives || []).findIndex((item) => item.is_correct)),
+        justification: payload.justification || source.justification,
+        intervention: payload.recommended_intervention || source.intervention,
+        originType: "TEACHER_ADAPTATION",
+        ownershipScope: "TEACHER_PRIVATE",
+        ownerUserId: getSupabaseUserContext().userId || "local-professor",
+        sourceQuestionId: source.uuid || source.id,
+        sourceQuestionCode: source.id,
+      };
+      questionBankFallbackStore.questions.unshift(adapted);
+      return adapted;
     },
     async updateQuestionItem() {
       throw new Error("Edição editorial exige Supabase real e perfil autorizado.");
@@ -28925,6 +29111,24 @@ const questionBankDataService = (() => {
       });
       return mapQuestionFromSupabase({ ...row, alternatives: [], media: [] });
     },
+    async adaptQuestionItem(sourceQuestionId, payload) {
+      const { request } = client();
+      await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedQuestionAdaptationRoles });
+      const row = await request("rpc/avalia_plus_adapt_question", "", {
+        method: "POST",
+        requireAuthenticated: true,
+        allowedRoles: allowedQuestionAdaptationRoles,
+        body: JSON.stringify({
+          p_source_question_id: sourceQuestionId,
+          p_item: payload,
+        }),
+      });
+      const alternatives = await request("question_alternatives", `?question_id=eq.${encodeURIComponent(row.id)}&select=*&order=position.asc`, {
+        requireAuthenticated: true,
+        allowedRoles: allowedQuestionAdaptationRoles,
+      });
+      return mapQuestionFromSupabase({ ...row, alternatives, media: [] });
+    },
     async updateQuestionItem(questionId, payload) {
       const { request } = client();
       await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedQuestionReviewRoles });
@@ -29016,6 +29220,7 @@ const questionBankDataService = (() => {
     getCurationHistory: (...args) => active().getCurationHistory(...args),
     generatePrintExport: (...args) => active().generatePrintExport(...args),
     createQuestionItem: (...args) => active().createQuestionItem(...args),
+    adaptQuestionItem: (...args) => active().adaptQuestionItem(...args),
     updateQuestionItem: (...args) => active().updateQuestionItem(...args),
     replaceQuestionAlternatives: (...args) => active().replaceQuestionAlternatives(...args),
     setQuestionWorkflow: (...args) => active().setQuestionWorkflow(...args),
