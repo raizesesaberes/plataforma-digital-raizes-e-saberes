@@ -13113,6 +13113,32 @@ const adminNormalizeContentType = (type = "") => {
 };
 
 const adminContentKey = (type = "", id = "") => `${adminNormalizeContentType(type)}:${String(id || "").trim().toLowerCase()}`;
+const adminContentUrl = (params = {}) => {
+  const search = new URLSearchParams(window.location.search || "");
+  search.set("view", "conteudos");
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "" || value === "all") search.delete(key);
+    else search.set(key, value);
+  });
+  return `admin.html?${search.toString()}`;
+};
+const adminContentTypeFromParam = (type = "") => {
+  const normalized = String(type || "").trim().toLowerCase();
+  const aliases = {
+    books: "book",
+    atividades: "activity",
+    activities: "activity",
+    jogos: "game",
+    games: "game",
+    experiencias: "experience",
+    experiences: "experience",
+    videos: "vídeo",
+    vídeos: "vídeo",
+    other: "other",
+    outros: "other",
+  };
+  return aliases[normalized] || adminNormalizeContentType(normalized);
+};
 
 const adminAddContentCatalogItem = (items, seen, item = {}) => {
   const id = String(item.id || item.contentId || "").trim();
@@ -14006,73 +14032,91 @@ const renderAdminContentSchools = (availabilityRows = [], schoolsById = new Map(
     .join("");
 };
 
-const renderAdminContentGovernanceConsole = () => {
-  if (adminOperationalState.status === "loading" || adminOperationalState.status === "idle") {
-    return `<section class="admin-board admin-loading-state"><h2>Carregando conteúdos</h2><p>Consultando catalogos e disponibilidade por escola.</p></section>`;
-  }
-  if (adminOperationalState.status === "error") {
-    return `<section class="admin-board admin-empty-state"><h2>Não foi possível carregar conteúdos</h2><p>${printableEscape(adminOperationalState.error)}</p></section>`;
-  }
-  const data = adminOperationalState.data || {};
-  const schools = data.schools || [];
-  const schoolsById = new Map(schools.map((school) => [school.id, school]));
-  const catalog = buildAdminContentCatalog();
-  const availabilityByContent = adminContentAvailabilityIndex().byContent;
-  const totals = catalog.reduce((acc, item) => {
-    acc[item.type] = (acc[item.type] || 0) + 1;
-    return acc;
-  }, {});
-  const contentSessionRole = normalizePlatformRole(getPlatformSession().role || "");
-  const contentQuestionBankRoles = [
-    "admin",
-    "administrador",
-    "administrador_nacional",
-    "curator",
-    "curador",
-    "elaborador",
-    "revisor",
-    "revisor_pedagogico",
-    "aprovador",
-  ];
-  const canSeeQuestionBank =
-    contentQuestionBankRoles.includes(contentSessionRole);
+const renderAdminContentModuleCard = ({ title, total, detail, href, status = "Em implantação" }) => `
+  <article class="admin-feature-card admin-content-hub-card" data-admin-search-item>
+    <div>
+      <span>${printableEscape(status)}</span>
+      <strong>${printableEscape(title)}</strong>
+      <small>${printableEscape(total)}${detail ? ` · ${printableEscape(detail)}` : ""}</small>
+    </div>
+    <a href="${printableEscape(href)}">Gerenciar</a>
+  </article>
+`;
+
+const renderAdminContentTypeManager = ({ catalog, type, availabilityByContent, schoolsById }) => {
+  const params = new URLSearchParams(window.location.search || "");
+  const q = String(params.get("q") || "").trim().toLowerCase();
+  const sourceFilter = String(params.get("source") || "");
+  const segmentFilter = String(params.get("segment") || "");
+  const pageSize = Math.max(10, Math.min(50, Number(params.get("page_size") || 20)));
+  const page = Math.max(1, Number(params.get("page") || 1));
+  const typeItems = catalog.filter((item) => item.type === type);
+  const sources = [...new Set(typeItems.map((item) => item.source).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const segments = [...new Set(typeItems.map((item) => item.segment).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const filtered = typeItems.filter((item) => {
+    const haystack = [item.title, item.id, item.source, item.segment].join(" ").toLowerCase();
+    return (!q || haystack.includes(q)) && (!sourceFilter || item.source === sourceFilter) && (!segmentFilter || item.segment === segmentFilter);
+  });
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageItems = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const label = adminContentTypeLabels[type] || "Conteúdos";
+  const pageUrl = (next = {}) => adminContentUrl({ type, q, source: sourceFilter, segment: segmentFilter, page_size: pageSize, ...next });
   return `
-    ${canSeeQuestionBank ? `
-      <section class="admin-board admin-question-bank-entry" data-admin-question-bank-entry>
-        <div class="admin-section-head">
-          <h2>Banco de Questões</h2>
-          <span>Porta editorial canônica do Avalia+</span>
-        </div>
-        <div class="admin-feature-grid">
-          <article class="admin-feature-card" data-admin-search-item>
-            <div>
-              <span>Conteúdos · Avalia+</span>
-              <strong>Banco de Questões</strong>
-              <small class="is-publicado">204 questões</small>
-            </div>
-            <a href="banco-questoes.html">Abrir</a>
-          </article>
-          <article class="admin-feature-card" data-admin-search-item>
-            <div>
-              <span>Workflow editorial</span>
-              <strong>Nova questão e fila editorial</strong>
-              <small>Rascunho · revisão · publicação</small>
-            </div>
-            <a href="banco-questoes.html#nova-questao">Acessar</a>
-          </article>
-        </div>
-      </section>
-    ` : ""}
+    <section class="admin-board admin-content-type-manager">
+      <div class="admin-section-head">
+        <h2>${printableEscape(label)}</h2>
+        <span>${filtered.length} de ${typeItems.length} itens · busca, filtros e paginação</span>
+      </div>
+      <form class="admin-content-filterbar" action="admin.html" method="get">
+        <input type="hidden" name="view" value="conteudos" />
+        <input type="hidden" name="type" value="${printableEscape(type)}" />
+        <label><span>Busca</span><input name="q" value="${printableEscape(q)}" placeholder="Título, código, origem..." /></label>
+        <label><span>Origem</span><select name="source"><option value="">Todas</option>${sources.map((source) => `<option value="${printableEscape(source)}" ${source === sourceFilter ? "selected" : ""}>${printableEscape(source)}</option>`).join("")}</select></label>
+        <label><span>Segmento</span><select name="segment"><option value="">Todos</option>${segments.map((segment) => `<option value="${printableEscape(segment)}" ${segment === segmentFilter ? "selected" : ""}>${printableEscape(segment)}</option>`).join("")}</select></label>
+        <label><span>Itens por página</span><select name="page_size">${[10, 20, 50].map((size) => `<option value="${size}" ${size === pageSize ? "selected" : ""}>${size}</option>`).join("")}</select></label>
+        <button type="submit">Filtrar</button>
+        <a href="${printableEscape(adminContentUrl({ type, q: "", source: "", segment: "", page_size: "", page: 1 }))}">Limpar</a>
+      </form>
+      <div class="admin-content-governance-list">
+        ${pageItems.length ? pageItems.map((item) => {
+          const rows = availabilityByContent.get(adminContentKey(item.type, item.id)) || [];
+          return `
+            <article class="admin-content-item" data-admin-search-item>
+              <div class="admin-content-item-main">
+                ${renderAdminUserBadge(recommendationTypeLabel(item.type), "role")}
+                <strong>${printableEscape(item.title)}</strong>
+                <small>${printableEscape(item.id)}${item.segment ? ` - ${printableEscape(item.segment)}` : ""}</small>
+                <div class="admin-content-schools">${renderAdminContentSchools(rows, schoolsById)}</div>
+              </div>
+              <a class="admin-content-manage-link" href="${printableEscape(adminContentUrl({ type: "exceptions", content_type: item.type, content_id: item.id }))}">Exceções</a>
+            </article>
+          `;
+        }).join("") : `<div class="admin-empty-state"><h2>Nenhum item encontrado</h2><p>Ajuste a busca ou os filtros.</p></div>`}
+      </div>
+      <div class="admin-content-pagination">
+        <a href="${printableEscape(pageUrl({ page: Math.max(1, safePage - 1) }))}" aria-disabled="${safePage <= 1}">Anterior</a>
+        <span>Página ${safePage} de ${totalPages}</span>
+        <a href="${printableEscape(pageUrl({ page: Math.min(totalPages, safePage + 1) }))}" aria-disabled="${safePage >= totalPages}">Próxima</a>
+      </div>
+    </section>
+  `;
+};
+
+const renderAdminSchoolExceptionsManager = ({ catalog, availabilityByContent, schools, schoolsById }) => {
+  const params = new URLSearchParams(window.location.search || "");
+  const selectedType = adminContentTypeFromParam(params.get("content_type") || "");
+  const selectedId = String(params.get("content_id") || "");
+  const exceptionItems = selectedId ? catalog.filter((item) => item.type === selectedType && item.id === selectedId) : catalog.slice(0, 20);
+  return `
     <section class="admin-board admin-content-governance">
       <div class="admin-section-head">
-        <h2>Governanca de conteúdos</h2>
-        <span>${catalog.length} itens de catalogo sem duplicar metadados</span>
+        <h2>Exceções por Escola</h2>
+        <span>Liberações especiais, pilotos, embargos e bloqueios excepcionais</span>
       </div>
-      <div class="admin-school-metrics">
-        ${Object.entries(adminContentTypeLabels).map(([type, label]) => adminSchoolMetric(label, totals[type] || 0, "catalogo")).join("")}
-      </div>
+      <p class="admin-content-muted">Este é o mecanismo legado conteúdo × escola. Ele permanece para exceções, mas a distribuição principal passa por Produtos, Coleções, Contratos e Entitlements.</p>
       <div class="admin-content-governance-list">
-        ${catalog.map((item) => {
+        ${exceptionItems.map((item) => {
           const rows = availabilityByContent.get(adminContentKey(item.type, item.id)) || [];
           return `
             <article class="admin-content-item" data-admin-search-item>
@@ -14106,6 +14150,102 @@ const renderAdminContentGovernanceConsole = () => {
             </article>
           `;
         }).join("")}
+      </div>
+      ${selectedId ? `<a class="admin-content-back-link" href="${printableEscape(adminContentUrl({ type: "exceptions" }))}">Ver primeiras exceções</a>` : `<p class="admin-content-muted">Mostrando os primeiros 20 itens. Use “Exceções” em uma lista por tipo para abrir um item específico.</p>`}
+    </section>
+  `;
+};
+
+const renderAdminContentGovernanceConsole = () => {
+  if (adminOperationalState.status === "loading" || adminOperationalState.status === "idle") {
+    return `<section class="admin-board admin-loading-state"><h2>Carregando conteúdos</h2><p>Consultando catalogos e disponibilidade por escola.</p></section>`;
+  }
+  if (adminOperationalState.status === "error") {
+    return `<section class="admin-board admin-empty-state"><h2>Não foi possível carregar conteúdos</h2><p>${printableEscape(adminOperationalState.error)}</p></section>`;
+  }
+  const data = adminOperationalState.data || {};
+  const schools = data.schools || [];
+  const schoolsById = new Map(schools.map((school) => [school.id, school]));
+  const catalog = buildAdminContentCatalog();
+  const availabilityByContent = adminContentAvailabilityIndex().byContent;
+  const totals = catalog.reduce((acc, item) => {
+    acc[item.type] = (acc[item.type] || 0) + 1;
+    return acc;
+  }, {});
+  const params = new URLSearchParams(window.location.search || "");
+  const contentTypeView = String(params.get("type") || "");
+  const contentPlaceholderViews = {
+    products: ["Produtos e Coleções", "As coleções e produtos comerciais serão conectados na Fase 1B."],
+    entitlements: ["Contratos e Entitlements", "Os direitos por rede/escola serão exibidos após a homologação do motor."],
+    coverage: ["Cobertura do Acervo", "A cobertura por segmento, ano, componente e tipo depende da catalogação no Acervo Mestre."],
+    "contract-health": ["Saúde dos Contratos", "Os estados READY / WARNING / BLOCKED serão conectados aos health checks de contrato."],
+    references: ["Referências e arquivos", "A auditoria de assets e metadados será conectada ao motor de conteúdo."],
+  };
+  if (contentPlaceholderViews[contentTypeView]) {
+    const [title, description] = contentPlaceholderViews[contentTypeView];
+    return renderAdminPreparationView(title, description, [
+      "Sem criação de dados nesta missão.",
+      "CONTENT_RESOLVER_FLAG permanece OFF.",
+      "Use Exceções por Escola apenas para piloto, embargo ou liberação especial.",
+    ]);
+  }
+  const normalizedContentTypeView = adminContentTypeFromParam(contentTypeView);
+  if (contentTypeView === "exceptions") {
+    return renderAdminSchoolExceptionsManager({ catalog, availabilityByContent, schools, schoolsById });
+  }
+  if (contentTypeView && ["book", "activity", "game", "experience", "vídeo", "other"].includes(normalizedContentTypeView)) {
+    return renderAdminContentTypeManager({ catalog, type: normalizedContentTypeView, availabilityByContent, schoolsById });
+  }
+  const contentSessionRole = normalizePlatformRole(getPlatformSession().role || "");
+  const contentQuestionBankRoles = [
+    "admin",
+    "administrador",
+    "administrador_nacional",
+    "curator",
+    "curador",
+    "elaborador",
+    "revisor",
+    "revisor_pedagogico",
+    "aprovador",
+  ];
+  const canSeeQuestionBank =
+    contentQuestionBankRoles.includes(contentSessionRole);
+  return `
+    <section class="admin-board admin-content-central">
+      <div class="admin-section-head">
+        <h2>Central de Conteúdos</h2>
+        <span>Acervo Mestre → Coleções/Produtos → Contratos/Entitlements → Redes/Escolas</span>
+      </div>
+      <div class="admin-content-flow" aria-label="Arquitetura operacional de conteúdo">
+        ${["Acervo Mestre", "Coleções / Produtos", "Contratos / Entitlements", "Redes / Escolas"].map((step) => `<article>${step}</article>`).join("")}
+      </div>
+    </section>
+    <section class="admin-board">
+      <div class="admin-section-head"><h2>Acervo Mestre</h2><span>Entrada por módulo, sem renderização massiva de itens</span></div>
+      <div class="admin-feature-grid">
+        ${canSeeQuestionBank ? renderAdminContentModuleCard({ title: "Banco de Questões", total: "205 questões", detail: "Aprovadas/publicadas no banco editorial", status: "Saúde: publicado", href: "banco-questoes.html?view=dashboard" }) : ""}
+        ${renderAdminContentModuleCard({ title: "Livros", total: `${totals.book || 0} itens`, detail: "Biblioteca Viva", status: "Catálogo disponível", href: adminContentUrl({ type: "book", page: 1 }) })}
+        ${renderAdminContentModuleCard({ title: "Atividades", total: `${totals.activity || 0} itens`, detail: "Imprimíveis e interativas", status: "Catálogo disponível", href: adminContentUrl({ type: "activity", page: 1 }) })}
+        ${renderAdminContentModuleCard({ title: "Jogos e Interações", total: `${totals.game || 0} itens`, detail: "Motores interativos", status: "Catálogo disponível", href: adminContentUrl({ type: "game", page: 1 }) })}
+        ${renderAdminContentModuleCard({ title: "Vídeos", total: `${totals.vídeo || 0} itens`, detail: "Mídias pedagógicas", status: "Em implantação", href: adminContentUrl({ type: "vídeo", page: 1 }) })}
+        ${renderAdminContentModuleCard({ title: "Experiências", total: `${totals.experience || 0} itens`, detail: "Experiências digitais", status: "Catálogo disponível", href: adminContentUrl({ type: "experience", page: 1 }) })}
+        ${renderAdminContentModuleCard({ title: "Outros", total: `${totals.other || 0} itens`, detail: "Recursos complementares", status: "Em implantação", href: adminContentUrl({ type: "other", page: 1 }) })}
+      </div>
+    </section>
+    <section class="admin-board">
+      <div class="admin-section-head"><h2>Distribuição e Acesso</h2><span>Modelo principal por produto/contrato, com exceções isoladas</span></div>
+      <div class="admin-feature-grid">
+        ${renderAdminContentModuleCard({ title: "Produtos e Coleções", total: "Em implantação", detail: "Conjuntos que compõem produtos comerciais", status: "Fase 1B", href: adminContentUrl({ type: "products" }) })}
+        ${renderAdminContentModuleCard({ title: "Contratos e Entitlements", total: "Em implantação", detail: "Direitos por rede/escola", status: "Fase 1B", href: adminContentUrl({ type: "entitlements" }) })}
+        ${renderAdminContentModuleCard({ title: "Exceções por Escola", total: `${adminOperationalState.data?.contentAvailability?.length || 0} regras`, detail: "Pilotos, embargos e liberações especiais", status: "Legado preservado", href: adminContentUrl({ type: "exceptions" }) })}
+      </div>
+    </section>
+    <section class="admin-board">
+      <div class="admin-section-head"><h2>Saúde e Cobertura</h2><span>Indicadores conectados progressivamente ao Acervo Mestre</span></div>
+      <div class="admin-feature-grid">
+        ${renderAdminContentModuleCard({ title: "Cobertura do Acervo", total: "Em implantação", detail: "Segmento → Ano → Componente → Tipo", status: "Aguardando catalogação", href: adminContentUrl({ type: "coverage" }) })}
+        ${renderAdminContentModuleCard({ title: "Saúde dos Contratos", total: "Em implantação", detail: "READY / WARNING / BLOCKED", status: "Aguardando entitlements", href: adminContentUrl({ type: "contract-health" }) })}
+        ${renderAdminContentModuleCard({ title: "Referências e arquivos", total: "Em implantação", detail: "Assets ausentes e metadados incompletos", status: "Aguardando motor", href: adminContentUrl({ type: "references" }) })}
       </div>
     </section>
   `;
@@ -14655,20 +14795,24 @@ const initAdminWorkspace = () => {
   if (!workspace) return;
   const content = workspace.querySelector("[data-admin-content]");
   const activate = (view, { push = false } = {}) => {
+    const activeView = {
+      conteudos: "conteúdos",
+      implantacao: "implantação",
+    }[view] || view;
     if (push) {
       const params = new URLSearchParams(window.location.search || "");
-      if (view === "painel") params.delete("view");
-      else params.set("view", view);
+      if (activeView === "painel") params.delete("view");
+      else params.set("view", activeView);
       const nextUrl = `${window.location.pathname}${params.toString() ? `?${params}` : ""}${window.location.hash || ""}`;
       window.history.pushState({}, "", nextUrl);
       rememberCurrentPlatformRoute();
     }
-    workspace.querySelectorAll("[data-admin-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.adminView === view));
-    if (content) content.innerHTML = renderAdminWorkspaceView(view);
-    if (["painel", "usuarios", "escolas", "conteúdos", "implantação", "suporte", "permissoes", "configuracoes", "auditoria", "logs"].includes(view)) {
+    workspace.querySelectorAll("[data-admin-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.adminView === activeView));
+    if (content) content.innerHTML = renderAdminWorkspaceView(activeView);
+    if (["painel", "usuarios", "escolas", "conteúdos", "implantação", "suporte", "permissoes", "configuracoes", "auditoria", "logs"].includes(activeView)) {
       ensureAdminReadOnlyData().then(() => {
-        if (content && workspace.querySelector(`[data-admin-view="${view}"]`)?.classList.contains("is-active")) {
-          content.innerHTML = renderAdminWorkspaceView(view);
+        if (content && workspace.querySelector(`[data-admin-view="${activeView}"]`)?.classList.contains("is-active")) {
+          content.innerHTML = renderAdminWorkspaceView(activeView);
         }
       });
     }

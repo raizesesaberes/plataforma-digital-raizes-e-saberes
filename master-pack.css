@@ -14626,6 +14626,109 @@ td {
   gap: 14px;
 }
 
+.admin-content-central {
+  gap: 14px;
+}
+
+.admin-content-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-content-flow article {
+  min-height: 58px;
+  border: 1px solid rgba(7, 61, 53, 0.12);
+  border-radius: 8px;
+  padding: 12px;
+  display: grid;
+  place-items: center;
+  background: #f8fbf7;
+  color: #0d6b4b;
+  font-family: Poppins, Inter, sans-serif;
+  font-weight: 900;
+  text-align: center;
+}
+
+.admin-content-hub-card small {
+  color: #526b60;
+}
+
+.admin-content-filterbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.3fr) repeat(3, minmax(140px, 0.8fr)) auto auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.admin-content-filterbar label {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.admin-content-filterbar span {
+  color: #526b60;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-content-filterbar input,
+.admin-content-filterbar select {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  border: 1px solid rgba(7, 61, 53, 0.14);
+  border-radius: 8px;
+  padding: 0 10px;
+  background: #fff;
+  color: #122033;
+  font: inherit;
+  font-weight: 750;
+}
+
+.admin-content-filterbar button,
+.admin-content-filterbar a,
+.admin-content-manage-link,
+.admin-content-back-link,
+.admin-content-pagination a {
+  min-height: 38px;
+  border: 1px solid rgba(13, 107, 75, 0.22);
+  border-radius: 8px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #0d6b4b;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.admin-content-filterbar button {
+  background: #0d6b4b;
+  color: #fff;
+}
+
+.admin-content-manage-link {
+  align-self: center;
+}
+
+.admin-content-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  color: #526b60;
+  font-weight: 900;
+}
+
+.admin-content-pagination a[aria-disabled="true"] {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
 .admin-content-governance-list {
   display: grid;
   gap: 10px;
@@ -15132,6 +15235,11 @@ td {
 }
 
 @media (max-width: 980px) {
+  .admin-content-flow,
+  .admin-content-filterbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .admin-school-create-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -15155,6 +15263,8 @@ td {
 }
 
 @media (max-width: 640px) {
+  .admin-content-flow,
+  .admin-content-filterbar,
   .admin-school-create-form,
   .admin-school-metrics,
   .admin-school-actions,
