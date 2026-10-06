@@ -21831,6 +21831,10 @@ const initQuestionBank = () => {
     if (message.includes("row-level security") || message.includes("UNAUTHORIZED")) return "Seu perfil não tem permissão para concluir esta ação.";
     if (message.includes("SOURCE_QUESTION_NOT_ADAPTABLE")) return "Esta questão não pode ser adaptada.";
     if (message.includes("SCHOOL_REQUIRED_FOR_ADAPTATION")) return "Não foi possível identificar sua escola para salvar a adaptação.";
+    if (message.includes("OBJECTIVE_QUESTION_REQUIRES_ALTERNATIVES")) return "Questões objetivas precisam de alternativas válidas antes de seguir no workflow.";
+    if (message.includes("OBJECTIVE_QUESTION_ALTERNATIVE_BODY_REQUIRED")) return "Todas as alternativas precisam ter texto preenchido.";
+    if (message.includes("OBJECTIVE_QUESTION_REQUIRES_EXACTLY_ONE_CORRECT_ALTERNATIVE")) return "Marque exatamente uma alternativa correta.";
+    if (message.includes("OBJECTIVE_QUESTION_ALTERNATIVES_MUST_BE_ARRAY")) return "Formato inválido das alternativas. Revise a questão e tente novamente.";
     if (message.includes("Preencha:")) return message;
     return "Não foi possível concluir o salvamento. Tente novamente.";
   };
@@ -22363,7 +22367,10 @@ const initQuestionBank = () => {
     let created = null;
     let questionId = "";
     try {
-      created = await questionBankDataService.createQuestionItem(payload);
+      created = await questionBankDataService.createQuestionItem({
+        ...payload,
+        alternatives,
+      });
       questionId = created.uuid || created.raw?.id;
     } catch (error) {
       logQuestionBankTechnicalError("create_question_item", error, { code: payload.code, component: payload.component, school_year: payload.school_year });
@@ -22376,23 +22383,6 @@ const initQuestionBank = () => {
         action,
       });
       showQuestionBankToast("Não foi possível salvar a questão.", "error");
-      return;
-    }
-    try {
-      await questionBankDataService.replaceQuestionAlternatives(questionId, alternatives);
-    } catch (error) {
-      logQuestionBankTechnicalError("replace_question_alternatives", error, { questionId, code: created?.id });
-      const safeMessage = getSafeQuestionBankErrorMessage(error);
-      const message = `✓ Questão ${created.id} salva como rascunho, mas não foi possível concluir as alternativas. ${safeMessage}`;
-      setEditorialStatus(message, "error");
-      setEditorialActionFeedback({
-        state: "ERROR",
-        message,
-        tone: "warning",
-        action,
-      });
-      showQuestionBankToast(`Questão ${created.id} salva como rascunho. Complemente antes de criar outra.`, "warning");
-      await refresh();
       return;
     }
     if (submitForReview) {
@@ -29863,7 +29853,8 @@ const questionBankDataService = (() => {
         allowedRoles: allowedQuestionEditorialRoles,
         body: JSON.stringify({ p_item: itemPayload }),
       });
-      return mapQuestionFromSupabase({ ...row, alternatives: [], media: [] });
+      const alternatives = await this.listAlternatives(row.id);
+      return mapQuestionFromSupabase({ ...row, alternatives, media: [] });
     },
     async adaptQuestionItem(sourceQuestionId, payload) {
       const { request } = client();
@@ -29897,26 +29888,14 @@ const questionBankDataService = (() => {
     async replaceQuestionAlternatives(questionId, alternatives = []) {
       const { request } = client();
       await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedQuestionEditRoles });
-      await request("question_alternatives", `?question_id=eq.${encodeURIComponent(questionId)}`, {
-        method: "DELETE",
-        requireAuthenticated: true,
-        allowedRoles: allowedQuestionEditRoles,
-        headers: { Prefer: "return=minimal" },
-      });
-      if (!alternatives.length) return [];
-      return request("question_alternatives", "", {
+      return request("rpc/avalia_plus_replace_question_alternatives", "", {
         method: "POST",
         requireAuthenticated: true,
         allowedRoles: allowedQuestionEditRoles,
-        body: JSON.stringify(
-          alternatives.map((alternative, index) => ({
-            question_id: questionId,
-            label: alternative.label,
-            body: alternative.body,
-            is_correct: alternative.is_correct,
-            position: index + 1,
-          }))
-        ),
+        body: JSON.stringify({
+          p_question_id: questionId,
+          p_alternatives: alternatives,
+        }),
       });
     },
     async setQuestionWorkflow(questionId, status, comment = "") {
