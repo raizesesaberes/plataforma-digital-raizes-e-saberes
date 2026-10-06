@@ -5872,7 +5872,8 @@ td {
 }
 
 .qb-answer-key,
-.qb-readonly-note {
+.qb-readonly-note,
+.qb-preview-missing {
   padding: 10px 12px;
   border: 1px solid #b9d9c5;
   border-radius: var(--rs-radius);
@@ -5886,6 +5887,12 @@ td {
   border-color: #dfe6ee;
   background: #f6f8fb;
   color: #526070;
+}
+
+.qb-preview-missing {
+  border-color: #f0d28a;
+  background: #fff8e5;
+  color: #7b4d00;
 }
 
 .qb-detail-meta,

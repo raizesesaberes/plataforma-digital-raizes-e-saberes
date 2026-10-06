@@ -19514,6 +19514,7 @@ const modules = {
                 </section>
                 <div class="qb-builder-actions">
                   <button type="button" data-qb-cancel-adaptation hidden>Cancelar</button>
+                  <button type="button" data-qb-preview-editorial-form>Pré-visualizar questão</button>
                   <button type="button" data-qb-create-draft>Salvar rascunho</button>
                   <button type="button" data-qb-submit-review>Salvar e enviar para revisão</button>
                 </div>
@@ -21794,6 +21795,75 @@ const initQuestionBank = () => {
     if (!payload.correct_answer) missing.push("resposta correta");
     return { payload, alternatives, missing };
   };
+  const collectEditorialPreviewItem = () => {
+    const { payload, missing } = collectEditorialPayload();
+    const rawAlternatives = [...(editorialForm?.querySelectorAll("[data-qb-alternative]") || [])].map((input) => ({
+      label: input.dataset.qbAlternative,
+      body: input.value.trim(),
+      is_correct: editorialForm?.querySelector("input[name='qb-correct-answer']:checked")?.value === input.dataset.qbAlternative,
+    }));
+    const correctIndex = Math.max(0, rawAlternatives.findIndex((alternative) => alternative.is_correct));
+    const previewId = payload.code || "QUESTAO-NAO-SALVA";
+    return {
+      item: {
+        id: previewId,
+        uuid: "",
+        title: payload.internal_title || "Questão ainda sem título",
+        component: payload.component || "Componente não informado",
+        stage: payload.stage || "Segmento não informado",
+        year: payload.school_year || "Ano não informado",
+        unit: "",
+        object: payload.knowledge_object || "",
+        skill: payload.bncc_skill || "",
+        descriptor: payload.reference_matrix || payload.knowledge_object || "",
+        curriculumMatrix: payload.curriculum_matrix || payload.reference_matrix || "",
+        curriculumSource: payload.curriculum_source || "BNCC",
+        proficiency: "",
+        difficulty: payload.difficulty || "Dificuldade não informada",
+        cognitiveProcess: "",
+        type: payload.question_type || "Tipo não informado",
+        resource: payload.base_text ? "Texto-base" : "Texto",
+        estimatedTime: Number(payload.estimated_minutes || 3),
+        accessibility: "",
+        originType: "TEACHER_AUTHORIAL",
+        ownershipScope: "UNSAVED_PREVIEW",
+        ownerUserId: getCurrentQuestionBankUserId(),
+        sourceQuestionId: "",
+        sourceQuestionCode: "",
+        adaptedAt: "",
+        legalClassification: payload.legal_classification || "ITEM_AUTORAL_RAIZES_SABERES_ALINHADO_SAEB",
+        sourceId: "",
+        sourceName: "Pré-visualização local - ainda não salva",
+        author: payload.author_name || "Equipe Editorial Raízes e Saberes",
+        license: "Uso interno demonstrativo Raízes e Saberes",
+        legalStatus: "Aguardando salvamento",
+        createdAt: "",
+        reviewedAt: "Ainda não salvo",
+        version: "prévia",
+        reviewer: "Revisão pendente",
+        curationStatus: "RASCUNHO",
+        publicationStatus: "NAO_PUBLICADO",
+        workflowStatus: "EM_ELABORACAO",
+        workflowVersion: 0,
+        statement: payload.statement || "Enunciado ainda não preenchido.",
+        commandText: payload.command_text || payload.statement || "Comando/pergunta ainda não preenchido.",
+        baseText: payload.base_text || "",
+        alternatives: rawAlternatives.map((alternative) => alternative.body || `Alternativa ${alternative.label} ainda não preenchida.`),
+        alternativeRows: rawAlternatives,
+        correctAlternative: correctIndex,
+        justification: payload.justification || "",
+        pedagogicalComment: payload.pedagogical_comment || payload.justification || "",
+        distractors: [],
+        rightFeedback: "",
+        wrongFeedback: "",
+        intervention: payload.recommended_intervention || "",
+        usedCount: 0,
+        lastUsedClass: "",
+        raw: { metadata: { unsaved_preview: true } },
+      },
+      missing,
+    };
+  };
   const clearEditorialForm = () => {
     editorialForm?.reset();
     editorialForm?.querySelectorAll("textarea").forEach(autoGrowEditorialTextarea);
@@ -22437,6 +22507,41 @@ const initQuestionBank = () => {
       actions.push(`<button type="button" data-qb-editorial-edit="${htmlEscape(item.id)}" ${canReviewQuestion() ? "" : "disabled"}>Revisar/editar</button>`);
     }
     return actions.join("");
+  };
+  const renderEditorialFormPreviewActions = () => `
+    <button type="button" data-qb-close-editorial-preview>Voltar e editar</button>
+    <button type="button" data-qb-create-draft>Salvar rascunho</button>
+    <button type="button" data-qb-submit-review>Salvar e enviar para revisão</button>
+  `;
+
+  const openEditorialFormPreview = () => {
+    if (!editorialPreviewPanel) return;
+    const { item, missing } = collectEditorialPreviewItem();
+    editorialPreviewPanel.hidden = false;
+    editorialPreviewPanel.innerHTML = `
+      <div class="panel-head">
+        <div>
+          <h2>Pré-visualização da questão</h2>
+          <span>${htmlEscape(item.id)} · questão ainda não salva</span>
+        </div>
+        <div class="qb-editorial-preview-actions">${renderEditorialFormPreviewActions()}</div>
+      </div>
+      <div class="qb-preview-sheet qb-editorial-preview-sheet">
+        <div class="qb-readonly-note">Pré-visualização — questão ainda não salva. Nenhum item será criado e nenhum status será alterado ao abrir esta prévia.</div>
+        ${
+          missing.length
+            ? `<div class="qb-preview-missing"><strong>Campos essenciais pendentes:</strong> ${htmlEscape(missing.join(", "))}.</div>`
+            : ""
+        }
+        ${renderQuestionProof(item, { showAnswerKey: true })}
+        ${renderQuestionMetadata(item, [])}
+      </div>
+    `;
+    editorialPreviewPanel.setAttribute("tabindex", "-1");
+    window.setTimeout(() => {
+      editorialPreviewPanel.focus({ preventScroll: true });
+      editorialPreviewPanel.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 0);
   };
 
   const openQuestionPreview = async (questionId) => {
@@ -23088,10 +23193,15 @@ const initQuestionBank = () => {
         await publishCurrentAssessmentDigitally();
       }
       if (button.hasAttribute("data-qb-create-draft")) {
+        if (editorialPreviewPanel) editorialPreviewPanel.hidden = true;
         await createEditorialQuestion({ submitForReview: false });
       }
       if (button.hasAttribute("data-qb-submit-review")) {
+        if (editorialPreviewPanel) editorialPreviewPanel.hidden = true;
         await createEditorialQuestion({ submitForReview: true });
+      }
+      if (button.hasAttribute("data-qb-preview-editorial-form")) {
+        openEditorialFormPreview();
       }
       if (button.hasAttribute("data-qb-cancel-adaptation")) {
         clearEditorialForm();
