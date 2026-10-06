@@ -19517,6 +19517,7 @@ const modules = {
                   <button type="button" data-qb-create-draft>Salvar rascunho</button>
                   <button type="button" data-qb-submit-review>Salvar e enviar para revisão</button>
                 </div>
+                <div class="qb-action-feedback" data-qb-action-feedback aria-live="polite" aria-atomic="true"></div>
               </form>
             </section>
             <section class="panel qb-editorial-queue-panel" id="fila-editorial" data-qb-panel="editorial">
@@ -21436,6 +21437,7 @@ const initQuestionBank = () => {
   const createDraftButton = root.querySelector("[data-qb-create-draft]");
   const submitReviewButton = root.querySelector("[data-qb-submit-review]");
   const cancelAdaptationButton = root.querySelector("[data-qb-cancel-adaptation]");
+  const actionFeedback = root.querySelector("[data-qb-action-feedback]");
   let questions = [];
   let assessments = [];
   let selectedId = null;
@@ -21445,6 +21447,8 @@ const initQuestionBank = () => {
   let mode = questionBankDataService.mode();
   let scopeFilter = localStorage.getItem("raizes:question-bank-scope") || "all";
   let editorialMode = { type: "create", source: null };
+  let editorialActionState = "IDLE";
+  let partialReviewQuestionId = "";
   const cartStorageKey = "raizes:question-bank-cart";
   const draftStorageKey = "raizes:question-bank-draft";
   let didAttemptLoginResume = false;
@@ -21609,6 +21613,97 @@ const initQuestionBank = () => {
     editorialStatus.textContent = message;
     editorialStatus.dataset.tone = tone;
   };
+  const editorialActionLabels = {
+    draft: {
+      idle: "Salvar rascunho",
+      loading: "SALVANDO...",
+      success: "✓ SALVO",
+    },
+    review: {
+      idle: "Salvar e enviar para revisão",
+      loading: "SALVANDO E ENVIANDO...",
+      success: "✓ ENVIADO",
+    },
+    adapt: {
+      idle: "Salvar minha versão",
+      loading: "SALVANDO...",
+      success: "✓ SALVA",
+    },
+  };
+  const getSafeQuestionBankErrorMessage = (error) => {
+    const message = String(error?.message || error || "").trim();
+    if (!message) return "Não foi possível concluir o salvamento. Tente novamente.";
+    if (message.includes("duplicate key") || message.includes("23505") || message.includes("question_items_code_key")) return "Código já utilizado.";
+    if (message.includes("Sessao Supabase ausente") || message.includes("Sessao expirada") || message.includes("JWT")) return "Sua sessão expirou. Entre novamente.";
+    if (message.includes("row-level security") || message.includes("UNAUTHORIZED")) return "Seu perfil não tem permissão para concluir esta ação.";
+    if (message.includes("SOURCE_QUESTION_NOT_ADAPTABLE")) return "Esta questão não pode ser adaptada.";
+    if (message.includes("SCHOOL_REQUIRED_FOR_ADAPTATION")) return "Não foi possível identificar sua escola para salvar a adaptação.";
+    if (message.includes("Preencha:")) return message;
+    return "Não foi possível concluir o salvamento. Tente novamente.";
+  };
+  const showQuestionBankToast = (message, tone = "info") => {
+    const toast = document.createElement("div");
+    toast.className = `qb-toast is-${tone}`;
+    toast.setAttribute("role", "status");
+    toast.textContent = message;
+    document.body.append(toast);
+    window.setTimeout(() => toast.classList.add("is-visible"), 0);
+    window.setTimeout(() => {
+      toast.classList.remove("is-visible");
+      window.setTimeout(() => toast.remove(), 180);
+    }, 3600);
+  };
+  const setEditorialButtonsDisabled = (disabled) => {
+    [createDraftButton, submitReviewButton, cancelAdaptationButton].forEach((button) => {
+      if (button && !button.hidden) button.disabled = disabled;
+    });
+  };
+  const resetEditorialActionButtons = () => {
+    if (createDraftButton) {
+      createDraftButton.textContent = editorialMode.type === "adapt" ? editorialActionLabels.adapt.idle : editorialActionLabels.draft.idle;
+      createDraftButton.classList.remove("is-loading", "is-success", "is-error");
+      createDraftButton.removeAttribute("aria-busy");
+    }
+    if (submitReviewButton) {
+      submitReviewButton.textContent = editorialActionLabels.review.idle;
+      submitReviewButton.classList.remove("is-loading", "is-success", "is-error");
+      submitReviewButton.removeAttribute("aria-busy");
+    }
+    setEditorialButtonsDisabled(false);
+  };
+  const setEditorialActionFeedback = ({ state = "IDLE", message = "", tone = "info", action = "draft", retryQuestionId = "" } = {}) => {
+    editorialActionState = state;
+    const primaryButton = action === "review" ? submitReviewButton : createDraftButton;
+    if (actionFeedback) {
+      actionFeedback.dataset.state = state.toLowerCase();
+      actionFeedback.dataset.tone = tone;
+      actionFeedback.innerHTML = message
+        ? `<span>${htmlEscape(message)}</span>${retryQuestionId ? `<button type="button" data-qb-retry-review="${htmlEscape(retryQuestionId)}">Tentar enviar novamente</button>` : ""}`
+        : "";
+    }
+    resetEditorialActionButtons();
+    if (state === "LOADING") {
+      setEditorialButtonsDisabled(true);
+      if (primaryButton) {
+        primaryButton.disabled = true;
+        primaryButton.classList.add("is-loading");
+        primaryButton.setAttribute("aria-busy", "true");
+        primaryButton.textContent = editorialActionLabels[action]?.loading || "Salvando...";
+      }
+    }
+    if (state === "SUCCESS" && primaryButton) {
+      primaryButton.classList.add("is-success");
+      primaryButton.textContent = editorialActionLabels[action]?.success || "✓ Salvo";
+      window.setTimeout(() => {
+        if (editorialActionState === "SUCCESS") {
+          resetEditorialActionButtons();
+        }
+      }, 2600);
+    }
+    if (state === "ERROR" && primaryButton) {
+      primaryButton.classList.add("is-error");
+    }
+  };
   const autoGrowEditorialTextarea = (textarea) => {
     if (!textarea) return;
     textarea.style.height = "auto";
@@ -21691,7 +21786,7 @@ const initQuestionBank = () => {
         : "";
     }
     if (createDraftButton) {
-      createDraftButton.textContent = isAdapting ? "Salvar minha versão" : "Salvar rascunho";
+      createDraftButton.textContent = isAdapting ? editorialActionLabels.adapt.idle : editorialActionLabels.draft.idle;
     }
     if (submitReviewButton) {
       submitReviewButton.hidden = isAdapting;
@@ -21699,6 +21794,7 @@ const initQuestionBank = () => {
     if (cancelAdaptationButton) {
       cancelAdaptationButton.hidden = !isAdapting;
     }
+    resetEditorialActionButtons();
   };
   const setEditorialFieldValue = (name, value = "") => {
     const field = editorialForm?.querySelector(`[data-qb-editorial="${name}"]`);
@@ -21834,55 +21930,165 @@ const initQuestionBank = () => {
     `;
   };
   const createEditorialQuestion = async ({ submitForReview = false } = {}) => {
+    if (editorialActionState === "LOADING") {
+      return;
+    }
     if (mode !== "supabase") {
-      setEditorialStatus("A criação editorial exige conexão Supabase real.", "error");
+      const message = "A criação editorial exige conexão Supabase real.";
+      setEditorialStatus(message, "error");
+      setEditorialActionFeedback({ state: "ERROR", message, tone: "error", action: submitForReview ? "review" : "draft" });
       return;
     }
     if (editorialMode.type === "adapt") {
       if (!canAdaptQuestion()) {
         showSessionRequired("Entre com perfil professor autorizado para salvar sua adaptação.");
+        setEditorialActionFeedback({ state: "ERROR", message: "Sua sessão expirou. Entre novamente.", tone: "error", action: "adapt" });
         return;
       }
       const source = editorialMode.source;
       const { payload, alternatives, missing } = collectEditorialPayload();
       if (missing.length) {
-        setEditorialStatus(`Preencha: ${missing.join(", ")}.`, "error");
+        const message = `Preencha: ${missing.join(", ")}.`;
+        setEditorialStatus(message, "error");
+        setEditorialActionFeedback({ state: "ERROR", message, tone: "error", action: "adapt" });
         return;
       }
       setEditorialStatus("Salvando sua versão adaptada...", "loading");
-      const adapted = await questionBankDataService.adaptQuestionItem(source.uuid || source.raw?.id, {
-        ...payload,
-        alternatives,
-      });
-      clearEditorialForm();
-      setEditorialMode();
-      await refresh();
-      selectedId = adapted.id;
-      scopeFilter = "mine";
-      localStorage.setItem("raizes:question-bank-scope", scopeFilter);
-      goToQuestionBankView("banco");
-      setEditorialStatus(`Minha versão salva: ${adapted.id}. Original ${source.id} preservada.`, "success");
+      setEditorialActionFeedback({ state: "LOADING", message: "Salvando sua versão adaptada...", tone: "loading", action: "adapt" });
+      try {
+        const adapted = await questionBankDataService.adaptQuestionItem(source.uuid || source.raw?.id, {
+          ...payload,
+          alternatives,
+        });
+        await refresh();
+        selectedId = adapted.id;
+        scopeFilter = "mine";
+        localStorage.setItem("raizes:question-bank-scope", scopeFilter);
+        const message = `✓ Minha versão ${adapted.id} salva com sucesso. Original ${source.id} preservada.`;
+        setEditorialStatus(message, "success");
+        setEditorialActionFeedback({ state: "SUCCESS", message, tone: "success", action: "adapt" });
+        showQuestionBankToast(message, "success");
+        goToQuestionBankView("banco");
+      } catch (error) {
+        const message = getSafeQuestionBankErrorMessage(error);
+        setEditorialStatus(message, "error");
+        setEditorialActionFeedback({ state: "ERROR", message: `Não foi possível salvar a adaptação. ${message}`, tone: "error", action: "adapt" });
+        showQuestionBankToast("Não foi possível salvar a adaptação.", "error");
+      }
       return;
     }
     if (!canAuthorQuestion()) {
       showSessionRequired("Entre com perfil editorial autorizado para criar questões.");
+      setEditorialActionFeedback({ state: "ERROR", message: "Sua sessão expirou. Entre novamente.", tone: "error", action: submitForReview ? "review" : "draft" });
       return;
     }
     const { payload, alternatives, missing } = collectEditorialPayload();
     if (missing.length) {
-      setEditorialStatus(`Preencha: ${missing.join(", ")}.`, "error");
+      const message = `Preencha: ${missing.join(", ")}.`;
+      setEditorialStatus(message, "error");
+      setEditorialActionFeedback({ state: "ERROR", message, tone: "error", action: submitForReview ? "review" : "draft" });
       return;
     }
+    const action = submitForReview ? "review" : "draft";
     setEditorialStatus(submitForReview ? "Criando questão e enviando para revisão..." : "Salvando rascunho...", "loading");
-    const created = await questionBankDataService.createQuestionItem(payload);
-    const questionId = created.uuid || created.raw?.id;
-    await questionBankDataService.replaceQuestionAlternatives(questionId, alternatives);
-    if (submitForReview) {
-      await questionBankDataService.setQuestionWorkflow(questionId, "EM_REVISAO", "Enviado para revisão pela interface editorial.");
+    setEditorialActionFeedback({
+      state: "LOADING",
+      message: submitForReview ? "Salvando e enviando para revisão..." : "Salvando rascunho...",
+      tone: "loading",
+      action,
+    });
+    let created = null;
+    let questionId = "";
+    try {
+      created = await questionBankDataService.createQuestionItem(payload);
+      questionId = created.uuid || created.raw?.id;
+    } catch (error) {
+      const safeMessage = getSafeQuestionBankErrorMessage(error);
+      setEditorialStatus(safeMessage, "error");
+      setEditorialActionFeedback({
+        state: "ERROR",
+        message: `Não foi possível salvar a questão. ${safeMessage}`,
+        tone: "error",
+        action,
+      });
+      showQuestionBankToast("Não foi possível salvar a questão.", "error");
+      return;
     }
-    clearEditorialForm();
+    try {
+      await questionBankDataService.replaceQuestionAlternatives(questionId, alternatives);
+    } catch (error) {
+      const safeMessage = getSafeQuestionBankErrorMessage(error);
+      const message = `✓ Questão ${created.id} salva como rascunho, mas não foi possível concluir as alternativas. ${safeMessage}`;
+      setEditorialStatus(message, "error");
+      setEditorialActionFeedback({
+        state: "ERROR",
+        message,
+        tone: "warning",
+        action,
+      });
+      showQuestionBankToast(`Questão ${created.id} salva como rascunho. Complemente antes de criar outra.`, "warning");
+      await refresh();
+      return;
+    }
+    if (submitForReview) {
+      try {
+        await questionBankDataService.setQuestionWorkflow(questionId, "EM_REVISAO", "Enviado para revisão pela interface editorial.");
+      } catch (error) {
+        partialReviewQuestionId = questionId;
+        const safeMessage = getSafeQuestionBankErrorMessage(error);
+        const message = `✓ Questão ${created.id} salva como rascunho, mas não foi possível enviá-la para revisão. ${safeMessage}`;
+        setEditorialStatus(message, "error");
+        setEditorialActionFeedback({
+          state: "ERROR",
+          message,
+          tone: "warning",
+          action,
+          retryQuestionId: questionId,
+        });
+        showQuestionBankToast(`Questão ${created.id} salva como rascunho. Envio para revisão pendente.`, "warning");
+        await refresh();
+        return;
+      }
+    }
     await refresh();
-    setEditorialStatus(submitForReview ? "Questão criada e enviada para revisão." : "Rascunho criado.", "success");
+    const successMessage = submitForReview
+      ? `✓ Questão ${created.id} salva e enviada para revisão com sucesso.`
+      : `✓ Rascunho ${created.id} salvo com sucesso.`;
+    setEditorialStatus(successMessage, "success");
+    setEditorialActionFeedback({ state: "SUCCESS", message: successMessage, tone: "success", action });
+    showQuestionBankToast(successMessage, "success");
+    if (submitForReview) {
+      selectedId = created.id;
+      goToQuestionBankView("editorial");
+    }
+  };
+  const retrySubmitReview = async (questionId) => {
+    if (!questionId || editorialActionState === "LOADING") return;
+    if (!canAuthorQuestion() && !canReviewQuestion()) {
+      showSessionRequired("Entre com perfil editorial autorizado para enviar para revisão.");
+      return;
+    }
+    setEditorialActionFeedback({ state: "LOADING", message: "Enviando rascunho salvo para revisão...", tone: "loading", action: "review" });
+    try {
+      await questionBankDataService.setQuestionWorkflow(questionId, "EM_REVISAO", "Enviado para revisão pela interface editorial após nova tentativa.");
+      partialReviewQuestionId = "";
+      await refresh();
+      const message = "✓ Questão salva e enviada para revisão com sucesso.";
+      setEditorialStatus(message, "success");
+      setEditorialActionFeedback({ state: "SUCCESS", message, tone: "success", action: "review" });
+      showQuestionBankToast(message, "success");
+      goToQuestionBankView("editorial");
+    } catch (error) {
+      const safeMessage = getSafeQuestionBankErrorMessage(error);
+      setEditorialStatus(safeMessage, "error");
+      setEditorialActionFeedback({
+        state: "ERROR",
+        message: `A questão continua salva como rascunho, mas não foi possível enviá-la para revisão. ${safeMessage}`,
+        tone: "warning",
+        action: "review",
+        retryQuestionId: questionId,
+      });
+    }
   };
   const moveQuestionWorkflow = async (questionId, status) => {
     if (mode !== "supabase") {
@@ -22690,6 +22896,10 @@ const initQuestionBank = () => {
         clearEditorialForm();
         setEditorialMode();
         setEditorialStatus("Adaptação cancelada. Nenhuma alteração foi salva.", "info");
+        setEditorialActionFeedback({ state: "IDLE", message: "", tone: "info" });
+      }
+      if (button.dataset.qbRetryReview) {
+        await retrySubmitReview(button.dataset.qbRetryReview || partialReviewQuestionId);
       }
       if (button.dataset.qbWorkflowReview) {
         await moveQuestionWorkflow(button.dataset.qbWorkflowReview, "EM_REVISAO");

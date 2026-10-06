@@ -5637,6 +5637,120 @@ td {
   color: var(--rs-green-700);
 }
 
+.qb-builder-actions button.is-loading {
+  position: relative;
+  padding-left: 34px;
+  cursor: wait;
+  background: #17235d;
+  color: #fff;
+}
+
+.qb-builder-actions button.is-loading::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #fff;
+  border-radius: 999px;
+  animation: qb-spin 0.8s linear infinite;
+}
+
+.qb-builder-actions button.is-success {
+  border-color: #9bd4b3;
+  background: #e8f5ec;
+  color: #0d6b4b;
+}
+
+.qb-builder-actions button.is-error {
+  border-color: #f0b4b4;
+  background: #fff4f4;
+  color: #9d1c1c;
+}
+
+.qb-action-feedback {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: -4px;
+  color: #486056;
+  font-weight: 900;
+}
+
+.qb-action-feedback[data-state="loading"] {
+  color: #17235d;
+}
+
+.qb-action-feedback[data-tone="success"] {
+  color: #0d6b4b;
+}
+
+.qb-action-feedback[data-tone="error"] {
+  color: #9d1c1c;
+}
+
+.qb-action-feedback[data-tone="warning"] {
+  color: #7a4b00;
+}
+
+.qb-action-feedback button {
+  min-height: 34px;
+  border: 1px solid rgba(7, 61, 53, 0.16);
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #fff;
+  color: #0d6b4b;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.qb-toast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 80;
+  max-width: min(420px, calc(100vw - 36px));
+  padding: 12px 14px;
+  border: 1px solid rgba(7, 61, 53, 0.12);
+  border-radius: 8px;
+  background: #fff;
+  color: #122033;
+  box-shadow: 0 20px 44px rgba(18, 32, 51, 0.16);
+  font-weight: 900;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.qb-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.qb-toast.is-success {
+  border-color: #9bd4b3;
+  color: #0d6b4b;
+}
+
+.qb-toast.is-error {
+  border-color: #f0b4b4;
+  color: #9d1c1c;
+}
+
+.qb-toast.is-warning {
+  border-color: #f4d28e;
+  color: #7a4b00;
+}
+
+@keyframes qb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .qb-state {
   padding: 18px;
   border: 1px dashed #cfd8e3;
