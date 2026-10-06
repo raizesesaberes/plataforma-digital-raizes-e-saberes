@@ -22338,8 +22338,7 @@ const initQuestionBank = () => {
         action,
       });
       try {
-        await questionBankDataService.updateQuestionItem(source.uuid || source.raw?.id, payload);
-        await questionBankDataService.replaceQuestionAlternatives(source.uuid || source.raw?.id, alternatives);
+        await questionBankDataService.updateQuestionItem(source.uuid || source.raw?.id, payload, alternatives);
         if (submitForReview) {
           await questionBankDataService.setQuestionWorkflow(source.uuid || source.raw?.id, "EM_REVISAO", "Enviado para revisão após edição pela interface editorial.");
         }
@@ -29904,16 +29903,21 @@ const questionBankDataService = (() => {
       });
       return mapQuestionFromSupabase({ ...row, alternatives, media: [] });
     },
-    async updateQuestionItem(questionId, payload) {
+    async updateQuestionItem(questionId, payload, alternatives = null) {
       const { request } = client();
       await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedQuestionEditRoles });
-      const [row] = await request("question_items", `?id=eq.${encodeURIComponent(questionId)}`, {
-        method: "PATCH",
+      const row = await request("rpc/avalia_plus_update_question_item", "", {
+        method: "POST",
         requireAuthenticated: true,
         allowedRoles: allowedQuestionEditRoles,
-        body: JSON.stringify({ ...payload, updated_at: new Date().toISOString() }),
+        body: JSON.stringify({
+          p_question_id: questionId,
+          p_item: payload,
+          p_alternatives: alternatives,
+        }),
       });
-      return row ? mapQuestionFromSupabase({ ...row, alternatives: [], media: [] }) : null;
+      const nextAlternatives = await this.listAlternatives(row.id);
+      return row ? mapQuestionFromSupabase({ ...row, alternatives: nextAlternatives, media: [] }) : null;
     },
     async replaceQuestionAlternatives(questionId, alternatives = []) {
       const { request } = client();
