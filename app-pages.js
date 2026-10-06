@@ -21634,12 +21634,27 @@ const initQuestionBank = () => {
     const message = String(error?.message || error || "").trim();
     if (!message) return "Não foi possível concluir o salvamento. Tente novamente.";
     if (message.includes("duplicate key") || message.includes("23505") || message.includes("question_items_code_key")) return "Código já utilizado.";
+    if (
+      message.includes("QUESTION_PROVENANCE_NOT_CONFIGURED") ||
+      message.includes('null value in column "source_id"') ||
+      message.includes('null value in column "license_id"') ||
+      message.includes("source_id") ||
+      message.includes("license_id")
+    ) return "Fonte/licença editorial não configurada para criação. Acione Admin Banco.";
     if (message.includes("Sessao Supabase ausente") || message.includes("Sessao expirada") || message.includes("JWT")) return "Sua sessão expirou. Entre novamente.";
     if (message.includes("row-level security") || message.includes("UNAUTHORIZED")) return "Seu perfil não tem permissão para concluir esta ação.";
     if (message.includes("SOURCE_QUESTION_NOT_ADAPTABLE")) return "Esta questão não pode ser adaptada.";
     if (message.includes("SCHOOL_REQUIRED_FOR_ADAPTATION")) return "Não foi possível identificar sua escola para salvar a adaptação.";
     if (message.includes("Preencha:")) return message;
     return "Não foi possível concluir o salvamento. Tente novamente.";
+  };
+  const logQuestionBankTechnicalError = (stage, error, context = {}) => {
+    console.error("[Banco de Questões] Falha técnica no fluxo editorial", {
+      stage,
+      message: error?.message || String(error || ""),
+      context,
+      error,
+    });
   };
   const showQuestionBankToast = (message, tone = "info") => {
     const toast = document.createElement("div");
@@ -21970,6 +21985,7 @@ const initQuestionBank = () => {
         showQuestionBankToast(message, "success");
         goToQuestionBankView("banco");
       } catch (error) {
+        logQuestionBankTechnicalError("adapt_question", error, { sourceQuestionId: source?.uuid || source?.raw?.id || source?.id || "" });
         const message = getSafeQuestionBankErrorMessage(error);
         setEditorialStatus(message, "error");
         setEditorialActionFeedback({ state: "ERROR", message: `Não foi possível salvar a adaptação. ${message}`, tone: "error", action: "adapt" });
@@ -22003,6 +22019,7 @@ const initQuestionBank = () => {
       created = await questionBankDataService.createQuestionItem(payload);
       questionId = created.uuid || created.raw?.id;
     } catch (error) {
+      logQuestionBankTechnicalError("create_question_item", error, { code: payload.code, component: payload.component, school_year: payload.school_year });
       const safeMessage = getSafeQuestionBankErrorMessage(error);
       setEditorialStatus(safeMessage, "error");
       setEditorialActionFeedback({
@@ -22017,6 +22034,7 @@ const initQuestionBank = () => {
     try {
       await questionBankDataService.replaceQuestionAlternatives(questionId, alternatives);
     } catch (error) {
+      logQuestionBankTechnicalError("replace_question_alternatives", error, { questionId, code: created?.id });
       const safeMessage = getSafeQuestionBankErrorMessage(error);
       const message = `✓ Questão ${created.id} salva como rascunho, mas não foi possível concluir as alternativas. ${safeMessage}`;
       setEditorialStatus(message, "error");
@@ -22034,6 +22052,7 @@ const initQuestionBank = () => {
       try {
         await questionBankDataService.setQuestionWorkflow(questionId, "EM_REVISAO", "Enviado para revisão pela interface editorial.");
       } catch (error) {
+        logQuestionBankTechnicalError("set_question_workflow_review", error, { questionId, code: created?.id });
         partialReviewQuestionId = questionId;
         const safeMessage = getSafeQuestionBankErrorMessage(error);
         const message = `✓ Questão ${created.id} salva como rascunho, mas não foi possível enviá-la para revisão. ${safeMessage}`;
@@ -22079,6 +22098,7 @@ const initQuestionBank = () => {
       showQuestionBankToast(message, "success");
       goToQuestionBankView("editorial");
     } catch (error) {
+      logQuestionBankTechnicalError("retry_set_question_workflow_review", error, { questionId });
       const safeMessage = getSafeQuestionBankErrorMessage(error);
       setEditorialStatus(safeMessage, "error");
       setEditorialActionFeedback({
@@ -28866,6 +28886,50 @@ const questionBankDataService = (() => {
     "*,source:question_sources(*,license:question_licenses(*)),license:question_licenses(*),alternatives:question_alternatives(*,distractor:question_distractor_analyses(*)),media:question_media(*)";
   const assessmentSelect =
     "*,questions:assessment_questions(*,question:question_items(code,internal_title,estimated_minutes,publication_status,curation_status,workflow_status,workflow_version,bncc_skill,reference_matrix,curriculum_matrix)),booklets:assessment_booklets(*,questions:assessment_booklet_questions(*))";
+  const normalizeQuestionBankText = (value = "") =>
+    String(value)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+  const pickDefaultQuestionSource = (sources = []) => {
+    const validSources = sources.filter((source) => source?.id && (source.license_id || source.license?.id));
+    return (
+      validSources.find((source) => normalizeQuestionBankText(source.name).includes("raizes e saberes") && normalizeQuestionBankText(source.name).includes("banco demonstrativo")) ||
+      validSources.find((source) => normalizeQuestionBankText(source.institution_name || source.author_name || source.name).includes("raizes e saberes")) ||
+      validSources.find((source) => ["HOMOLOGADO", "APROVADO"].includes(String(source.curation_status || "").toUpperCase())) ||
+      validSources[0] ||
+      null
+    );
+  };
+  const pickDefaultQuestionLicense = (licenses = [], source = null) => {
+    const sourceLicenseId = source?.license_id || source?.license?.id || "";
+    if (sourceLicenseId) return licenses.find((license) => license.id === sourceLicenseId) || source?.license || { id: sourceLicenseId };
+    return (
+      licenses.find((license) => normalizeQuestionBankText(license.name).includes("raizes e saberes")) ||
+      licenses.find((license) => license.publication_allowed) ||
+      licenses[0] ||
+      null
+    );
+  };
+  const buildQuestionProvenancePayload = (payload, source, license) => {
+    const sourceId = payload.source_id || source?.id || "";
+    const licenseId = payload.license_id || source?.license_id || source?.license?.id || license?.id || "";
+    if (!sourceId || !licenseId) {
+      throw new Error("QUESTION_PROVENANCE_NOT_CONFIGURED");
+    }
+    return {
+      ...payload,
+      source_id: sourceId,
+      license_id: licenseId,
+      legal_classification: payload.legal_classification || "ITEM_AUTORAL_RAIZES_SABERES_ALINHADO_SAEB",
+      metadata: {
+        ...(payload.metadata || {}),
+        provenance_resolved_by: payload.source_id && payload.license_id ? "question_bank_payload" : "question_bank_editorial_ui",
+        source_name: source?.name || payload.metadata?.source_name || "",
+        license_name: license?.name || source?.license?.name || payload.metadata?.license_name || "",
+      },
+    };
+  };
 
   const fallback = {
     async listQuestions() {
@@ -29313,11 +29377,18 @@ const questionBankDataService = (() => {
     async createQuestionItem(payload) {
       const { request } = client();
       await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedQuestionEditorialRoles });
+      let itemPayload = payload;
+      if (!itemPayload.source_id || !itemPayload.license_id) {
+        const [sources, licenses] = await Promise.all([this.listSources(), this.listLicenses()]);
+        const source = pickDefaultQuestionSource(sources);
+        const license = pickDefaultQuestionLicense(licenses, source);
+        itemPayload = buildQuestionProvenancePayload(itemPayload, source, license);
+      }
       const row = await request("rpc/avalia_plus_create_item", "", {
         method: "POST",
         requireAuthenticated: true,
         allowedRoles: allowedQuestionEditorialRoles,
-        body: JSON.stringify({ p_item: payload }),
+        body: JSON.stringify({ p_item: itemPayload }),
       });
       return mapQuestionFromSupabase({ ...row, alternatives: [], media: [] });
     },
