@@ -14032,14 +14032,34 @@ const renderAdminContentSchools = (availabilityRows = [], schoolsById = new Map(
     .join("");
 };
 
-const renderAdminContentModuleCard = ({ title, total, detail, href, status = "Em implantação" }) => `
-  <article class="admin-feature-card admin-content-hub-card" data-admin-search-item>
-    <div>
-      <span>${printableEscape(status)}</span>
-      <strong>${printableEscape(title)}</strong>
-      <small>${printableEscape(total)}${detail ? ` · ${printableEscape(detail)}` : ""}</small>
+const adminContentStatusTone = (status = "") => {
+  const normalized = String(status).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (normalized.includes("operacional")) return "operational";
+  if (normalized.includes("sem conteudo")) return "empty";
+  if (normalized.includes("preservado")) return "legacy";
+  return "building";
+};
+
+const renderAdminContentModuleCard = ({
+  title,
+  count = "",
+  countLabel = "",
+  description,
+  href,
+  status = "EM IMPLANTAÇÃO",
+  icon = "book",
+}) => `
+  <article class="admin-content-module-card" data-admin-search-item>
+    <div class="admin-content-module-top">
+      <span class="admin-content-module-icon">${adminInlineIcon(icon)}</span>
+      <span class="admin-content-status-chip is-${adminContentStatusTone(status)}">${printableEscape(status)}</span>
     </div>
-    <a href="${printableEscape(href)}">Gerenciar</a>
+    <div class="admin-content-module-body">
+      <strong>${printableEscape(title)}</strong>
+      ${count !== "" ? `<div class="admin-content-module-count"><b>${printableEscape(String(count))}</b>${countLabel ? `<span>${printableEscape(countLabel)}</span>` : ""}</div>` : ""}
+      <p>${printableEscape(description || "")}</p>
+    </div>
+    <a href="${printableEscape(href)}">GERENCIAR <span aria-hidden="true">→</span></a>
   </article>
 `;
 
@@ -14210,42 +14230,56 @@ const renderAdminContentGovernanceConsole = () => {
   ];
   const canSeeQuestionBank =
     contentQuestionBankRoles.includes(contentSessionRole);
+  const contentFlowSteps = [
+    { icon: "book", title: "Acervo Mestre", description: "Catálogo editorial por módulo." },
+    { icon: "portfolio", title: "Coleções e Produtos", description: "Composição dos pacotes pedagógicos." },
+    { icon: "check", title: "Contratos e Acessos", description: "Disponibilidade por rede e escola." },
+    { icon: "escola", title: "Redes e Escolas", description: "Entrega institucional do conteúdo." },
+  ];
+  const statusFromCount = (count) => Number(count || 0) > 0 ? "OPERACIONAL" : "SEM CONTEÚDO";
   return `
     <section class="admin-board admin-content-central">
       <div class="admin-section-head">
         <h2>Central de Conteúdos</h2>
-        <span>Acervo Mestre → Coleções/Produtos → Contratos/Entitlements → Redes/Escolas</span>
+        <span>Acervo Mestre → Produtos → Acessos → Escolas</span>
       </div>
       <div class="admin-content-flow" aria-label="Arquitetura operacional de conteúdo">
-        ${["Acervo Mestre", "Coleções / Produtos", "Contratos / Entitlements", "Redes / Escolas"].map((step) => `<article>${step}</article>`).join("")}
+        ${contentFlowSteps.map((step, index) => `
+          <article>
+            <span class="admin-content-flow-icon">${adminInlineIcon(step.icon)}</span>
+            <strong>${printableEscape(step.title)}</strong>
+            <small>${printableEscape(step.description)}</small>
+          </article>
+          ${index < contentFlowSteps.length - 1 ? `<span class="admin-content-flow-arrow" aria-hidden="true">→</span>` : ""}
+        `).join("")}
       </div>
     </section>
     <section class="admin-board">
-      <div class="admin-section-head"><h2>Acervo Mestre</h2><span>Entrada por módulo, sem renderização massiva de itens</span></div>
-      <div class="admin-feature-grid">
-        ${canSeeQuestionBank ? renderAdminContentModuleCard({ title: "Banco de Questões", total: "205 questões", detail: "Aprovadas/publicadas no banco editorial", status: "Saúde: publicado", href: "banco-questoes.html?view=dashboard" }) : ""}
-        ${renderAdminContentModuleCard({ title: "Livros", total: `${totals.book || 0} itens`, detail: "Biblioteca Viva", status: "Catálogo disponível", href: adminContentUrl({ type: "book", page: 1 }) })}
-        ${renderAdminContentModuleCard({ title: "Atividades", total: `${totals.activity || 0} itens`, detail: "Imprimíveis e interativas", status: "Catálogo disponível", href: adminContentUrl({ type: "activity", page: 1 }) })}
-        ${renderAdminContentModuleCard({ title: "Jogos e Interações", total: `${totals.game || 0} itens`, detail: "Motores interativos", status: "Catálogo disponível", href: adminContentUrl({ type: "game", page: 1 }) })}
-        ${renderAdminContentModuleCard({ title: "Vídeos", total: `${totals.vídeo || 0} itens`, detail: "Mídias pedagógicas", status: "Em implantação", href: adminContentUrl({ type: "vídeo", page: 1 }) })}
-        ${renderAdminContentModuleCard({ title: "Experiências", total: `${totals.experience || 0} itens`, detail: "Experiências digitais", status: "Catálogo disponível", href: adminContentUrl({ type: "experience", page: 1 }) })}
-        ${renderAdminContentModuleCard({ title: "Outros", total: `${totals.other || 0} itens`, detail: "Recursos complementares", status: "Em implantação", href: adminContentUrl({ type: "other", page: 1 }) })}
+      <div class="admin-section-head"><h2>Acervo Mestre</h2><span>Visão por módulo</span></div>
+      <div class="admin-content-module-grid">
+        ${canSeeQuestionBank ? renderAdminContentModuleCard({ title: "Banco de Questões", count: 205, countLabel: "questões", description: "Questões editoriais aprovadas, publicadas e em preparação.", status: "OPERACIONAL", icon: "clipboard", href: "banco-questoes.html?view=dashboard" }) : ""}
+        ${renderAdminContentModuleCard({ title: "Livros", count: totals.book || 0, countLabel: "itens", description: "Obras e materiais da Biblioteca Viva.", status: statusFromCount(totals.book), icon: "book", href: adminContentUrl({ type: "book", page: 1 }) })}
+        ${renderAdminContentModuleCard({ title: "Atividades", count: totals.activity || 0, countLabel: "itens", description: "Atividades imprimíveis, digitais e de apoio pedagógico.", status: statusFromCount(totals.activity), icon: "doc", href: adminContentUrl({ type: "activity", page: 1 }) })}
+        ${renderAdminContentModuleCard({ title: "Jogos e Interações", count: totals.game || 0, countLabel: "itens", description: "Jogos, objetos interativos e experiências guiadas.", status: statusFromCount(totals.game), icon: "site", href: adminContentUrl({ type: "game", page: 1 }) })}
+        ${renderAdminContentModuleCard({ title: "Vídeos", count: totals.vídeo || 0, countLabel: "itens", description: "Mídias pedagógicas em organização para distribuição.", status: Number(totals.vídeo || 0) > 0 ? "OPERACIONAL" : "EM IMPLANTAÇÃO", icon: "chart", href: adminContentUrl({ type: "vídeo", page: 1 }) })}
+        ${renderAdminContentModuleCard({ title: "Experiências", count: totals.experience || 0, countLabel: "itens", description: "Percursos digitais e propostas práticas de aprendizagem.", status: statusFromCount(totals.experience), icon: "portfolio", href: adminContentUrl({ type: "experience", page: 1 }) })}
+        ${Number(totals.other || 0) > 0 ? renderAdminContentModuleCard({ title: "Outros", count: totals.other || 0, countLabel: "itens", description: "Recursos complementares fora das categorias principais.", status: "OPERACIONAL", icon: "settings", href: adminContentUrl({ type: "other", page: 1 }) }) : ""}
       </div>
     </section>
     <section class="admin-board">
-      <div class="admin-section-head"><h2>Distribuição e Acesso</h2><span>Modelo principal por produto/contrato, com exceções isoladas</span></div>
-      <div class="admin-feature-grid">
-        ${renderAdminContentModuleCard({ title: "Produtos e Coleções", total: "Em implantação", detail: "Conjuntos que compõem produtos comerciais", status: "Fase 1B", href: adminContentUrl({ type: "products" }) })}
-        ${renderAdminContentModuleCard({ title: "Contratos e Entitlements", total: "Em implantação", detail: "Direitos por rede/escola", status: "Fase 1B", href: adminContentUrl({ type: "entitlements" }) })}
-        ${renderAdminContentModuleCard({ title: "Exceções por Escola", total: `${adminOperationalState.data?.contentAvailability?.length || 0} regras`, detail: "Pilotos, embargos e liberações especiais", status: "Legado preservado", href: adminContentUrl({ type: "exceptions" }) })}
+      <div class="admin-section-head"><h2>Distribuição e Acesso</h2><span>Produtos, acessos e exceções</span></div>
+      <div class="admin-content-module-grid">
+        ${renderAdminContentModuleCard({ title: "Produtos e Coleções", description: "Organize quais conteúdos fazem parte de cada produto.", status: "EM IMPLANTAÇÃO", icon: "portfolio", href: adminContentUrl({ type: "products" }) })}
+        ${renderAdminContentModuleCard({ title: "Contratos e Acessos", description: "Defina quais redes e escolas possuem acesso aos produtos.", status: "EM IMPLANTAÇÃO", icon: "check", href: adminContentUrl({ type: "entitlements" }) })}
+        ${renderAdminContentModuleCard({ title: "Exceções por Escola", count: adminOperationalState.data?.contentAvailability?.length || 0, countLabel: "regras", description: "Liberações, bloqueios, pilotos e embargos especiais.", status: "OPERACIONAL", icon: "escola", href: adminContentUrl({ type: "exceptions" }) })}
       </div>
     </section>
     <section class="admin-board">
-      <div class="admin-section-head"><h2>Saúde e Cobertura</h2><span>Indicadores conectados progressivamente ao Acervo Mestre</span></div>
-      <div class="admin-feature-grid">
-        ${renderAdminContentModuleCard({ title: "Cobertura do Acervo", total: "Em implantação", detail: "Segmento → Ano → Componente → Tipo", status: "Aguardando catalogação", href: adminContentUrl({ type: "coverage" }) })}
-        ${renderAdminContentModuleCard({ title: "Saúde dos Contratos", total: "Em implantação", detail: "READY / WARNING / BLOCKED", status: "Aguardando entitlements", href: adminContentUrl({ type: "contract-health" }) })}
-        ${renderAdminContentModuleCard({ title: "Referências e arquivos", total: "Em implantação", detail: "Assets ausentes e metadados incompletos", status: "Aguardando motor", href: adminContentUrl({ type: "references" }) })}
+      <div class="admin-section-head"><h2>Saúde e Cobertura</h2><span>Monitoramento</span></div>
+      <div class="admin-content-module-grid">
+        ${renderAdminContentModuleCard({ title: "Cobertura do Acervo", description: "Acompanhe cobertura por segmento, ano, componente e tipo.", status: "EM IMPLANTAÇÃO", icon: "chart", href: adminContentUrl({ type: "coverage" }) })}
+        ${renderAdminContentModuleCard({ title: "Saúde dos Contratos", description: "Monitore a situação operacional dos acessos contratados.", status: "EM IMPLANTAÇÃO", icon: "check", href: adminContentUrl({ type: "contract-health" }) })}
+        ${renderAdminContentModuleCard({ title: "Referências e arquivos", description: "Acompanhe arquivos, referências e metadados do catálogo.", status: "EM IMPLANTAÇÃO", icon: "doc", href: adminContentUrl({ type: "references" }) })}
       </div>
     </section>
   `;
