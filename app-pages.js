@@ -21780,7 +21780,8 @@ const initQuestionBank = () => {
   const canAuthorQuestion = () => allowedQuestionEditorialRoles.includes(getQuestionBankRole());
   const canReviewQuestion = () => allowedQuestionReviewRoles.includes(getQuestionBankRole());
   const canPublishQuestion = () => allowedQuestionPublishRoles.includes(getQuestionBankRole());
-  const canAdaptQuestion = () => allowedQuestionAdaptationRoles.includes(getQuestionBankRole());
+  const canEditOfficialQuestion = () => canAuthorQuestion() || canReviewQuestion() || canPublishQuestion();
+  const canAdaptQuestion = () => allowedQuestionAdaptationRoles.includes(getQuestionBankRole()) && !canEditOfficialQuestion();
   const getCurrentQuestionBankUserId = () => getSupabaseUserContext().userId || "";
   const getQuestionScopeKind = (item = {}) => {
     const origin = String(item.originType || "").toUpperCase();
@@ -21865,7 +21866,11 @@ const initQuestionBank = () => {
   };
   const resetEditorialActionButtons = () => {
     if (createDraftButton) {
-      createDraftButton.textContent = editorialMode.type === "adapt" ? editorialActionLabels.adapt.idle : editorialActionLabels.draft.idle;
+      createDraftButton.textContent = editorialMode.type === "adapt"
+        ? editorialActionLabels.adapt.idle
+        : editorialMode.type === "edit"
+          ? editorialActionLabels.edit.idle
+          : editorialActionLabels.draft.idle;
       createDraftButton.classList.remove("is-loading", "is-success", "is-error");
       createDraftButton.removeAttribute("aria-busy");
     }
@@ -22054,12 +22059,27 @@ const initQuestionBank = () => {
     editorialMode = nextMode;
     const isAdapting = editorialMode.type === "adapt" && editorialMode.source;
     const isEditing = editorialMode.type === "edit" && editorialMode.source;
+    const authoringHead = root.querySelector("#nova-questao .panel-head");
+    if (authoringHead) {
+      const title = authoringHead.querySelector("h2");
+      const subtitle = authoringHead.querySelector("span");
+      if (title) {
+        title.textContent = isEditing ? "Editar questão oficial" : isAdapting ? "Adaptar questão" : "Nova questão";
+      }
+      if (subtitle) {
+        subtitle.textContent = isEditing
+          ? editorialMode.source.id
+          : isAdapting
+            ? `Base: ${editorialMode.source.id}`
+            : "Workflow editorial";
+      }
+    }
     if (adaptationContext) {
       adaptationContext.hidden = !isAdapting && !isEditing;
       adaptationContext.innerHTML = isAdapting
         ? `<strong>ADAPTANDO UMA QUESTÃO</strong><span>Baseada em: ${htmlEscape(editorialMode.source.id)} · Questão original preservada</span>`
         : isEditing
-          ? `<strong>EDITANDO QUESTÃO</strong><span>${htmlEscape(editorialMode.source.id)} · alterações exigem salvamento explícito</span>`
+          ? `<strong>EDITANDO QUESTÃO OFICIAL</strong><span>${htmlEscape(editorialMode.source.id)} · a questão oficial será atualizada somente ao salvar alterações</span>`
         : "";
     }
     if (createDraftButton) {
@@ -22070,7 +22090,7 @@ const initQuestionBank = () => {
     }
     if (cancelAdaptationButton) {
       cancelAdaptationButton.hidden = !isAdapting && !isEditing;
-      cancelAdaptationButton.textContent = isEditing ? "Cancelar edição" : "Cancelar adaptação";
+      cancelAdaptationButton.textContent = isEditing ? "Cancelar" : "Cancelar adaptação";
     }
     resetEditorialActionButtons();
   };
@@ -22603,7 +22623,11 @@ const initQuestionBank = () => {
       <div class="qb-tags"><span>${htmlEscape(item.type)}</span><span>${htmlEscape(item.difficulty)}</span><span>${htmlEscape(item.proficiency)}</span><span>${item.estimatedTime} min</span><span>${htmlEscape(item.resource)}</span></div>
       <div class="qb-card-actions">
         <button type="button" data-qb-view="${item.id}" aria-label="Ver questao ${htmlEscape(item.id)}">Ver questao</button>
-        <button type="button" data-qb-adapt="${item.id}" ${item.publicationStatus === "PUBLICADO" && canAdaptQuestion() ? "" : "disabled"}>Adaptar questão</button>
+        ${
+          canEditOfficialQuestion()
+            ? `<button type="button" data-qb-editorial-edit="${htmlEscape(item.id)}">Editar oficial</button>`
+            : `<button type="button" data-qb-adapt="${item.id}" ${item.publicationStatus === "PUBLICADO" && canAdaptQuestion() ? "" : "disabled"}>Adaptar questão</button>`
+        }
         <button type="button" data-qb-add="${item.id}" class="${isSelected(item.id) ? "is-selected" : ""}" aria-pressed="${isSelected(item.id)}" ${item.publicationStatus !== "PUBLICADO" || isSelected(item.id) ? "disabled" : ""}>${isSelected(item.id) ? "Selecionada" : "Selecionar"}</button>
       </div>
     </article>
@@ -22659,7 +22683,7 @@ const initQuestionBank = () => {
 
   const renderEditorialPreviewActions = (item) => {
     const status = getEditorialWorkflowStatus(item);
-    const canEdit = canAuthorQuestion() || canReviewQuestion() || canPublishQuestion();
+    const canEdit = canEditOfficialQuestion();
     const canSendToReview = canAuthorQuestion() || canReviewQuestion();
     const actions = [`<button type="button" data-qb-close-editorial-preview>Voltar</button>`];
     if (status === "EM_ELABORACAO") {
@@ -22760,7 +22784,11 @@ const initQuestionBank = () => {
       <div class="panel-head">
         <h2>Visualização da questao</h2>
         <div class="qb-card-actions">
-          <button type="button" data-qb-adapt="${item.id}" ${item.publicationStatus === "PUBLICADO" && canAdaptQuestion() ? "" : "disabled"}>Adaptar questão</button>
+          ${
+            canEditOfficialQuestion()
+              ? `<button type="button" data-qb-editorial-edit="${htmlEscape(item.id)}">Editar oficial</button>`
+              : `<button type="button" data-qb-adapt="${item.id}" ${item.publicationStatus === "PUBLICADO" && canAdaptQuestion() ? "" : "disabled"}>Adaptar questão</button>`
+          }
           <button type="button" data-qb-add="${item.id}" class="${isSelected(item.id) ? "is-selected" : ""}" aria-pressed="${isSelected(item.id)}" ${item.publicationStatus !== "PUBLICADO" || isSelected(item.id) ? "disabled" : ""}>${isSelected(item.id) ? "Selecionada" : "Selecionar esta questao"}</button>
         </div>
       </div>
@@ -23268,6 +23296,8 @@ const initQuestionBank = () => {
         const item = itemById(button.dataset.qbAdapt);
         if (!item || item.publicationStatus !== "PUBLICADO") {
           setSelectionStatus("Somente questões publicadas podem ser usadas como base de adaptação.", "error");
+        } else if (canEditOfficialQuestion()) {
+          startQuestionEdit(item);
         } else {
           startQuestionAdaptation(item);
         }
