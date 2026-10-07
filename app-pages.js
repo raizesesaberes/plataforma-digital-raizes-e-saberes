@@ -10868,6 +10868,7 @@ const adminReadOnlyNav = [
   { key: "painel", label: "Painel", icon: "chart" },
   { key: "usuarios", label: "Usuários", icon: "users" },
   { key: "escolas", label: "Escolas", icon: "escola" },
+  { key: "redes", label: "Redes", icon: "site" },
   { key: "permissoes", label: "Perfis e permissões", icon: "perfil" },
   { key: "suporte", label: "Suporte / SLA", icon: "mail" },
   { key: "conteúdos", label: "Conteúdos", icon: "book" },
@@ -11228,6 +11229,8 @@ const adminOperationalState = {
   status: "idle",
   error: "",
   data: null,
+  contractOverviews: {},
+  contractLoading: {},
 };
 
 const adminAuditFilterState = {
@@ -13429,7 +13432,8 @@ const adminSchoolDetailSections = [
   ["summary", "Resumo"],
   ["structure", "Estrutura"],
   ["access", "Usuários e acessos"],
-  ["content", "Conteúdos"],
+  ["contractedContent", "Conteúdos e módulos contratados"],
+  ["content", "Exceções por escola"],
   ["implementation", "Implantação"],
   ["audit", "Auditoria"],
 ];
@@ -13501,9 +13505,11 @@ const renderAdminSchoolDetail = (summary) => {
         </div>
       </section>
     `;
+    if (section === "contractedContent") return renderAdminSchoolContractedContent(summary);
     if (section === "content") return `
       <section>
-        <h4>Conteúdos</h4>
+        <h4>Exceções por escola</h4>
+        <p class="admin-content-muted">Mecanismo legado conteúdo × escola preservado apenas para override, piloto, embargo ou bloqueio excepcional.</p>
         <div class="admin-school-metrics">
           ${adminSchoolMetric("Livros", summary.contentCounts.book || 0, "liberados")}
           ${adminSchoolMetric("Atividades", summary.contentCounts.activity || 0, "liberadas")}
@@ -14024,6 +14030,162 @@ const adminInvokeSetContentAvailability = async ({ schoolId, contentType, conten
   return Array.isArray(result) ? result[0] || {} : result || {};
 };
 
+const adminLoadSchoolContractOverview = async (schoolId, { force = false } = {}) => {
+  if (!schoolId) return null;
+  if (!force && adminOperationalState.contractOverviews?.[schoolId]) return adminOperationalState.contractOverviews[schoolId];
+  if (adminOperationalState.contractLoading?.[schoolId]) return adminOperationalState.contractLoading[schoolId];
+  await ensureAdminSupabaseConfig();
+  const client = createSupabaseRestClient();
+  const promise = client.request("rpc/admin_get_school_contract_overview", "", {
+    requireAuthenticated: true,
+    allowedRoles: ["admin"],
+    method: "POST",
+    body: JSON.stringify({ p_school_id: schoolId }),
+  }).then(normalizeRpcJson);
+  adminOperationalState.contractLoading[schoolId] = promise;
+  try {
+    const overview = await promise;
+    adminOperationalState.contractOverviews = {
+      ...(adminOperationalState.contractOverviews || {}),
+      [schoolId]: overview,
+    };
+    return overview;
+  } finally {
+    delete adminOperationalState.contractLoading[schoolId];
+  }
+};
+
+const adminInvokeSetTenantContentModule = async ({ entitlementId, moduleCode, enabled }) => {
+  await ensureAdminSupabaseConfig();
+  const client = createSupabaseRestClient();
+  const result = await client.request("rpc/admin_set_tenant_content_module", "", {
+    requireAuthenticated: true,
+    allowedRoles: ["admin"],
+    method: "POST",
+    body: JSON.stringify({
+      p_entitlement_id: entitlementId,
+      p_module_code: moduleCode,
+      p_enabled: Boolean(enabled),
+      p_metadata: {
+        source: "admin_school_contract_ui",
+        reason: "Macro V1 contracted content module toggle",
+      },
+    }),
+  });
+  return normalizeRpcJson(result);
+};
+
+const adminContractModuleTone = (module = {}) => {
+  if (module.enabled === false) return "danger";
+  const coverage = Number(module.coverage_count || 0);
+  if (coverage > 0) return "success";
+  return String(module.requirement_level || "").toUpperCase() === "OPTIONAL" ? "muted" : "warning";
+};
+
+const renderAdminContractModule = (module = {}, entitlement = {}) => {
+  const canToggle = entitlement.source !== "INHERITED_NETWORK";
+  const checked = module.enabled !== false;
+  return `
+    <article class="admin-contract-module is-${adminContractModuleTone(module)}">
+      <div>
+        <strong>${printableEscape(module.name || module.code || "Módulo")}</strong>
+        <span>${printableEscape(module.requirement_level || "CONTRATADO")} · ${printableEscape(module.scope || "ESCOLA")}</span>
+        <small>${printableEscape(module.description || "")}</small>
+      </div>
+      <div class="admin-contract-module-side">
+        <b>${Number(module.coverage_count || 0)} itens</b>
+        <label class="admin-contract-switch" aria-label="Alternar módulo contratado">
+          <input
+            type="checkbox"
+            data-admin-contract-module-toggle
+            data-entitlement-id="${printableEscape(entitlement.entitlement_id || "")}"
+            data-module-code="${printableEscape(module.code || "")}"
+            ${checked ? "checked" : ""}
+            ${canToggle ? "" : "disabled"}
+          />
+          <span>${checked ? "ON" : "OFF"}</span>
+        </label>
+      </div>
+    </article>
+  `;
+};
+
+const renderAdminSchoolContractedContent = (summary) => {
+  const overview = adminOperationalState.contractOverviews?.[summary.schoolId];
+  if (adminOperationalState.contractLoading?.[summary.schoolId] && !overview) {
+    return renderAdminPreparationView("Carregando conteúdos contratados", "Consultando produtos, módulos e health check do tenant.");
+  }
+  if (!overview) {
+    return `
+      <section class="admin-contract-overview" data-admin-contract-overview="${printableEscape(summary.schoolId)}">
+        <div class="admin-empty-note">Carregando produtos, módulos contratados e health check desta escola.</div>
+      </section>
+    `;
+  }
+  if (overview.status && overview.status !== "PASS") {
+    return `<section class="admin-contract-overview"><div class="admin-empty-note">Não foi possível carregar contratos: ${printableEscape(overview.status)}</div></section>`;
+  }
+  const entitlements = Array.isArray(overview.entitlements) ? overview.entitlements : [];
+  const health = overview.health || {};
+  return `
+    <section class="admin-contract-overview" data-admin-contract-overview="${printableEscape(summary.schoolId)}">
+      <div class="admin-section-head">
+        <div>
+          <h4>Conteúdos e módulos contratados</h4>
+          <span>Produto → Segmento/Ano → Módulo contratado → Resolver</span>
+        </div>
+        ${renderAdminUserBadge(health.status || "SEM HEALTH", health.status === "READY" ? "success" : health.status === "BLOCKED" ? "danger" : "warning")}
+      </div>
+      <div class="admin-contract-health">
+        <article><span>Tenant</span><strong>${printableEscape(overview.tenant_id || "não configurado")}</strong></article>
+        <article><span>Health</span><strong>${printableEscape(health.status || "não consultado")}</strong></article>
+        <article><span>Produtos ativos</span><strong>${entitlements.length}</strong></article>
+      </div>
+      ${entitlements.length ? entitlements.map((entitlement) => {
+        const product = entitlement.product || {};
+        const contract = entitlement.contract || {};
+        const segments = (entitlement.segments || []).map((item) => item.name).filter(Boolean).join(", ") || "Segmento aberto";
+        const grades = (entitlement.grades || []).map((item) => item.name).filter(Boolean).join(", ") || "Todos os anos autorizados";
+        const contentModules = entitlement.content_modules || [];
+        const platformModules = entitlement.platform_modules || [];
+        return `
+          <article class="admin-contract-card" data-admin-search-item>
+            <header>
+              <div>
+                <span>${printableEscape(entitlement.source_label || "ESCOLA")}</span>
+                <strong>${printableEscape(product.name || product.code || "Produto contratado")}</strong>
+                <small>${printableEscape(contract.contract_ref || "Contrato sem referência")} · ${printableEscape(product.code || "")}</small>
+              </div>
+              ${renderAdminUserBadge(entitlement.status || "ACTIVE", "success")}
+            </header>
+            <div class="admin-contract-taxonomy">
+              <article><span>Segmento</span><strong>${printableEscape(segments)}</strong></article>
+              <article><span>Ano/Série</span><strong>${printableEscape(grades)}</strong></article>
+            </div>
+            <div class="admin-contract-block">
+              <h5>Conteúdos contratados</h5>
+              <div class="admin-contract-module-list">
+                ${contentModules.length ? contentModules.map((module) => renderAdminContractModule(module, entitlement)).join("") : `<div class="admin-empty-note">Nenhum módulo de conteúdo vinculado ao produto.</div>`}
+              </div>
+            </div>
+            <div class="admin-contract-block">
+              <h5>Módulos funcionais da plataforma</h5>
+              <div class="admin-contract-chip-list">
+                ${platformModules.length ? platformModules.map((module) => `<span class="${module.enabled === false ? "is-off" : ""}">${printableEscape(module.name || module.code)} · ${printableEscape(module.requirement_level || "CONTRATADO")}</span>`).join("") : `<span>Nenhum módulo funcional vinculado.</span>`}
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("") : `<div class="admin-empty-note">Nenhum produto ativo encontrado para esta escola. O resolver deve bloquear conteúdo comercial sem direito contratado.</div>`}
+      <div class="admin-contract-exception-note">
+        <strong>Exceções por escola</strong>
+        <span>Liberações, pilotos, embargos e bloqueios item a item permanecem na aba “Exceções por escola”.</span>
+      </div>
+      <p data-admin-contract-status hidden></p>
+    </section>
+  `;
+};
+
 const renderAdminContentSchools = (availabilityRows = [], schoolsById = new Map()) => {
   const activeRows = availabilityRows.filter(adminAvailabilityIsActive);
   if (!activeRows.length) return `<span class="admin-content-muted">Nenhuma escola liberada</span>`;
@@ -14197,6 +14359,7 @@ const renderAdminContentGovernanceConsole = () => {
   const contentPlaceholderViews = {
     products: ["Produtos e Coleções", "As coleções e produtos comerciais serão conectados na Fase 1B."],
     entitlements: ["Contratos e Entitlements", "Os direitos por rede/escola serão exibidos após a homologação do motor."],
+    "network-contracts": ["Redes — Conteúdos e módulos contratados", "Estrutura macro preparada para contratos herdados por rede, sem criar rede nova nesta fase."],
     coverage: ["Cobertura do Acervo", "A cobertura por segmento, ano, componente e tipo depende da catalogação no Acervo Mestre."],
     "contract-health": ["Saúde dos Contratos", "Os estados READY / WARNING / BLOCKED serão conectados aos health checks de contrato."],
     references: ["Referências e arquivos", "A auditoria de assets e metadados será conectada ao motor de conteúdo."],
@@ -14271,6 +14434,7 @@ const renderAdminContentGovernanceConsole = () => {
       <div class="admin-content-module-grid">
         ${renderAdminContentModuleCard({ title: "Produtos e Coleções", description: "Organize quais conteúdos fazem parte de cada produto.", status: "EM IMPLANTAÇÃO", icon: "portfolio", href: adminContentUrl({ type: "products" }) })}
         ${renderAdminContentModuleCard({ title: "Contratos e Acessos", description: "Defina quais redes e escolas possuem acesso aos produtos.", status: "EM IMPLANTAÇÃO", icon: "check", href: adminContentUrl({ type: "entitlements" }) })}
+        ${renderAdminContentModuleCard({ title: "Redes contratantes", description: "Prepare direitos herdados por rede sem criar exceção item a item.", status: "PREPARADO", icon: "site", href: adminContentUrl({ type: "network-contracts" }) })}
         ${renderAdminContentModuleCard({ title: "Exceções por Escola", count: adminOperationalState.data?.contentAvailability?.length || 0, countLabel: "regras", description: "Liberações, bloqueios, pilotos e embargos especiais.", status: "OPERACIONAL", icon: "escola", href: adminContentUrl({ type: "exceptions" }) })}
       </div>
     </section>
@@ -14460,6 +14624,51 @@ const renderAdminSchoolsConsole = () => {
     </section>
   `;
 };
+
+const adminHydrateContractOverviews = (root = document) => {
+  const panels = Array.from(root.querySelectorAll?.("[data-admin-contract-overview]") || []);
+  panels.forEach((panel) => {
+    const schoolId = panel.dataset.adminContractOverview || "";
+    if (!schoolId || adminOperationalState.contractOverviews?.[schoolId]) return;
+    adminLoadSchoolContractOverview(schoolId)
+      .then(() => {
+        const content = document.querySelector("[data-admin-content]");
+        if (content && adminActiveSchoolDetailSection() === "contractedContent") {
+          content.innerHTML = renderAdminWorkspaceView("escolas");
+          adminHydrateContractOverviews(content);
+        }
+      })
+      .catch((error) => {
+        panel.innerHTML = `<div class="admin-empty-note">Não foi possível carregar contratos: ${printableEscape(error.message || "erro desconhecido")}</div>`;
+      });
+  });
+};
+
+const renderAdminNetworkContractsConsole = () => `
+  <section class="admin-board admin-contract-overview">
+    <div class="admin-section-head">
+      <div>
+        <h2>Redes — Conteúdos e módulos contratados</h2>
+        <span>Estrutura preparada para herança por rede</span>
+      </div>
+      ${renderAdminUserBadge("MACRO V1", "role")}
+    </div>
+    <div class="admin-contract-card">
+      <header>
+        <div>
+          <span>Sem criação de rede nesta fase</span>
+          <strong>Contrato de rede herdado pelas escolas</strong>
+          <small>Quando uma rede tiver entitlement ativo, as escolas vinculadas aparecerão com “HERDADO DA REDE”.</small>
+        </div>
+        ${renderAdminUserBadge("READY", "success")}
+      </header>
+      <div class="admin-contract-taxonomy">
+        <article><span>Precedência</span><strong>Bloqueio/embargo → piloto/allow → escola → rede</strong></article>
+        <article><span>Resolver</span><strong>Server-side por tenant, produto, módulo, coleção e exceções</strong></article>
+      </div>
+    </div>
+  </section>
+`;
 
 const renderAdminImplementationConsole = () => {
   if (adminOperationalState.status === "loading" || adminOperationalState.status === "idle") {
@@ -14765,6 +14974,7 @@ const renderAdminWorkspaceView = (view = "inicio") => {
     `,
     usuarios: renderAdminUsersConsole(),
     escolas: renderAdminSchoolsConsole(),
+    redes: renderAdminNetworkContractsConsole(),
     suporte: renderAdminSupportConsole(),
     professores: `<section class="admin-board admin-empty-state"><h2>Professores</h2><p>Acompanhe a rotina pedagógica e as turmas pelo ambiente do professor.</p><a href="professor.html">Abrir ambiente professor</a></section>`,
     alunos: `<section class="admin-board admin-empty-state"><h2>Alunos</h2><p>Acompanhe a experiência dos alunos vinculados ao ecossistema.</p><a href="aluno.html">Abrir ambiente aluno</a></section>`,
@@ -14843,10 +15053,12 @@ const initAdminWorkspace = () => {
     }
     workspace.querySelectorAll("[data-admin-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.adminView === activeView));
     if (content) content.innerHTML = renderAdminWorkspaceView(activeView);
+    if (activeView === "escolas" && content) adminHydrateContractOverviews(content);
     if (["painel", "usuarios", "escolas", "conteúdos", "implantação", "suporte", "permissoes", "configuracoes", "auditoria", "logs"].includes(activeView)) {
       ensureAdminReadOnlyData().then(() => {
         if (content && workspace.querySelector(`[data-admin-view="${activeView}"]`)?.classList.contains("is-active")) {
           content.innerHTML = renderAdminWorkspaceView(activeView);
+          if (activeView === "escolas") adminHydrateContractOverviews(content);
         }
       });
     }
@@ -15160,6 +15372,42 @@ const initAdminWorkspace = () => {
         buttons.forEach((item) => { item.disabled = false; });
       }
       return;
+    }
+  });
+  workspace.addEventListener("change", async (event) => {
+    const moduleToggle = event.target.closest?.("[data-admin-contract-module-toggle]");
+    if (!moduleToggle) return;
+    const panel = moduleToggle.closest("[data-admin-contract-overview]");
+    const status = panel?.querySelector("[data-admin-contract-status]");
+    const schoolId = panel?.dataset.adminContractOverview || "";
+    const previous = !moduleToggle.checked;
+    moduleToggle.disabled = true;
+    if (status) {
+      status.hidden = false;
+      status.dataset.tone = "muted";
+      status.textContent = "Atualizando módulo contratado...";
+    }
+    try {
+      const result = await adminInvokeSetTenantContentModule({
+        entitlementId: moduleToggle.dataset.entitlementId,
+        moduleCode: moduleToggle.dataset.moduleCode,
+        enabled: moduleToggle.checked,
+      });
+      await adminLoadSchoolContractOverview(schoolId, { force: true });
+      if (status) {
+        status.dataset.tone = "success";
+        status.textContent = `${result.module_code || "Módulo"} ${result.enabled ? "ativado" : "desativado"} para esta escola.`;
+      }
+      if (content) content.innerHTML = renderAdminWorkspaceView("escolas");
+      if (content) adminHydrateContractOverviews(content);
+    } catch (error) {
+      moduleToggle.checked = previous;
+      if (status) {
+        status.dataset.tone = "error";
+        status.textContent = error.message || "Não foi possível atualizar o módulo.";
+      }
+    } finally {
+      moduleToggle.disabled = false;
     }
   });
   workspace.addEventListener("submit", async (event) => {
