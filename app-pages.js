@@ -29378,11 +29378,65 @@ const questionBankDataService = (() => {
     "*,source:question_sources(*,license:question_licenses(*)),license:question_licenses(*),alternatives:question_alternatives(*,distractor:question_distractor_analyses(*)),media:question_media(*)";
   const assessmentSelect =
     "*,questions:assessment_questions(*,question:question_items(code,internal_title,estimated_minutes,publication_status,curation_status,workflow_status,workflow_version,bncc_skill,reference_matrix,curriculum_matrix)),booklets:assessment_booklets(*,questions:assessment_booklet_questions(*))";
+  const teacherResolverRoles = new Set(["professor", "teacher"]);
+  const isTeacherResolverContext = (context = {}) => Boolean(context.userId && teacherResolverRoles.has(context.role));
   const normalizeQuestionBankText = (value = "") =>
     String(value)
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase();
+  const getTeacherResolverContext = async (request, context = {}) => {
+    const teacherRows = await request(
+      "teachers",
+      `?select=id,school_id,profile_id,status,full_name&profile_id=${supabaseEq(context.userId)}&status=eq.active&limit=1`,
+      { requireAuthenticated: true, allowedRoles: allowedAssessmentRoles }
+    );
+    const teacher = Array.isArray(teacherRows) ? teacherRows[0] : null;
+    if (!teacher?.id || !teacher?.school_id) {
+      throw new Error("CONTENT_RESOLVER_TEACHER_CONTEXT_NOT_FOUND");
+    }
+    const membershipRows = await request(
+      "class_teacher_memberships",
+      `?select=id,class_id,teacher_id,role,status&teacher_id=${supabaseEq(teacher.id)}&status=eq.active`,
+      { requireAuthenticated: true, allowedRoles: allowedAssessmentRoles }
+    );
+    const classId = (membershipRows || []).find((membership) => membership.class_id)?.class_id || "";
+    return {
+      content_type: "QUESTION",
+      school_id: teacher.school_id,
+      ...(classId ? { class_id: classId } : {}),
+      limit: 100,
+    };
+  };
+  const getTeacherResolvedQuestionRows = async (request, context = {}) => {
+    const resolverContext = await getTeacherResolverContext(request, context);
+    const result = normalizeRpcJson(await request("rpc/content_resolve_for_user", "", {
+      method: "POST",
+      requireAuthenticated: true,
+      allowedRoles: allowedAssessmentRoles,
+      body: JSON.stringify({ p_context: resolverContext }),
+    }));
+    if (result?.status === "FEATURE_DISABLED") {
+      return { enabled: false, result, rows: [] };
+    }
+    if (result?.status !== "PASS") {
+      throw new Error(`CONTENT_RESOLVER_${result?.status || "FAILED"}`);
+    }
+    const questionIds = [...new Set((result.items || []).map((item) => item.question_item_id).filter(Boolean))];
+    if (!questionIds.length) {
+      return { enabled: true, result, rows: [] };
+    }
+    const rows = await request("question_items", `?id=${supabaseIn(questionIds)}&select=${questionSelect}`, {
+      requireAuthenticated: true,
+      allowedRoles: allowedAssessmentRoles,
+    });
+    const byId = new Map((rows || []).map((row) => [row.id, row]));
+    return {
+      enabled: true,
+      result,
+      rows: questionIds.map((id) => byId.get(id)).filter(Boolean),
+    };
+  };
   const pickDefaultQuestionSource = (sources = []) => {
     const validSources = sources.filter((source) => source?.id && (source.license_id || source.license?.id));
     return (
@@ -29597,12 +29651,34 @@ const questionBankDataService = (() => {
 
   const remote = {
     async listQuestions() {
-      const { request } = client();
+      const { request, getContext } = client();
+      const context = await getContext();
+      if (isTeacherResolverContext(context)) {
+        const resolved = await getTeacherResolvedQuestionRows(request, context);
+        if (resolved.enabled) {
+          return resolved.rows.map((row) => mapQuestionFromSupabase({
+            ...row,
+            metadata: {
+              ...(row.metadata || {}),
+              content_resolver: "content_resolve_for_user",
+              resolver_status: resolved.result?.status || "",
+            },
+          }));
+        }
+      }
       const rows = await request("question_items", `?select=${questionSelect}&order=last_reviewed_at.desc.nullslast&order=created_at.desc`);
       return rows.map(mapQuestionFromSupabase);
     },
     async getQuestionById(id) {
-      const { request } = client();
+      const { request, getContext } = client();
+      const context = await getContext();
+      if (isTeacherResolverContext(context)) {
+        const resolved = await getTeacherResolvedQuestionRows(request, context);
+        if (resolved.enabled) {
+          const mapped = resolved.rows.map(mapQuestionFromSupabase);
+          return mapped.find((item) => item.id === id || item.uuid === id) || null;
+        }
+      }
       const column = String(id).startsWith("RS-") ? "code" : "id";
       const rows = await request("question_items", `?${column}=eq.${encodeURIComponent(id)}&select=${questionSelect}&limit=1`);
       return rows[0] ? mapQuestionFromSupabase(rows[0]) : null;
