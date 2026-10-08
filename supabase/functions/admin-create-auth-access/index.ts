@@ -62,6 +62,32 @@ const profileRoleByTarget: Record<TargetType, string> = {
   guardian: "educacao_infantil",
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === "object" && !Array.isArray(value);
+
+const safeErrorCode = (error: unknown) => {
+  if (isRecord(error)) {
+    const code = typeof error.code === "string" ? error.code : null;
+    const name = typeof error.name === "string" ? error.name : null;
+    return code || name || "unknown_error";
+  }
+  return error instanceof Error ? error.name : "unknown_error";
+};
+
+const isSameInstitutionalTarget = (
+  user: { raw_user_meta_data?: unknown; raw_app_meta_data?: unknown },
+  targetType: TargetType,
+  targetInstitutionalId: string
+) => {
+  const userMeta = isRecord(user.raw_user_meta_data) ? user.raw_user_meta_data : {};
+  const appMeta = isRecord(user.raw_app_meta_data) ? user.raw_app_meta_data : {};
+  return (
+    userMeta.institutional_target_type === targetType &&
+    userMeta.institutional_target_id === targetInstitutionalId &&
+    appMeta.platform_role === profileRoleByTarget[targetType]
+  );
+};
+
 const audit = async (
   adminClient: ReturnType<typeof createClient>,
   event: {
@@ -76,7 +102,7 @@ const audit = async (
     reason?: string | null;
   }
 ) => {
-  await adminClient.from("admin_auth_access_events").insert({
+  const { error } = await adminClient.from("admin_auth_access_events").insert({
     admin_user_id: event.adminUserId,
     target_type: event.targetType,
     target_institutional_id: event.targetInstitutionalId,
@@ -87,6 +113,43 @@ const audit = async (
     result: event.result,
     reason: event.reason || null,
   });
+  if (error) throw error;
+};
+
+const auditBestEffort = async (
+  adminClient: ReturnType<typeof createClient>,
+  event: Parameters<typeof audit>[1]
+) => {
+  try {
+    await audit(adminClient, event);
+    return null;
+  } catch (error) {
+    return error;
+  }
+};
+
+const auditTemporaryPasswordCreated = async (
+  adminClient: ReturnType<typeof createClient>,
+  event: {
+    adminUserId: string;
+    targetInstitutionalId: string;
+    targetAuthUserId: string;
+    targetEmail: string;
+    schoolId: string;
+  }
+) => {
+  const insertResult = adminClient.from("admin_professional_password_events").insert({
+    admin_user_id: event.adminUserId,
+    target_type: "teacher",
+    target_institutional_id: event.targetInstitutionalId,
+    target_auth_user_id: event.targetAuthUserId,
+    target_email: event.targetEmail,
+    school_id: event.schoolId,
+    action: "temporary_password_created",
+    result: "created",
+  });
+  const { error } = await insertResult;
+  if (error) throw error;
 };
 
 const fail = async (
@@ -96,11 +159,7 @@ const fail = async (
   message: string,
   event: Parameters<typeof audit>[1]
 ) => {
-  try {
-    await audit(adminClient, { ...event, result: status >= 500 ? "failed" : "blocked", reason: code });
-  } catch (_error) {
-    // Audit errors should not expose internals to the browser.
-  }
+  await auditBestEffort(adminClient, { ...event, result: status >= 500 ? "failed" : "blocked", reason: code });
   return json({ ok: false, code, message }, status);
 };
 
@@ -248,9 +307,10 @@ Deno.serve(async (request) => {
     });
   }
   let duplicate: { id: string; email?: string } | undefined;
+  let duplicateByTarget: { id: string; email?: string } | undefined;
   let linkedAuthExists = false;
   const possibleLinkedIds = [target.profile_id, target.user_id].filter(Boolean);
-  for (let page = 1; page <= 10 && !duplicate; page += 1) {
+  for (let page = 1; page <= 10 && !(duplicate && duplicateByTarget); page += 1) {
     const { data: authPage, error: authListError } = await adminClient.auth.admin.listUsers({ page, perPage: 1000 });
     if (authListError) {
       return fail(adminClient, 500, "auth_duplicate_check_failed", "Nao foi possivel validar duplicidade de Auth.", {
@@ -260,7 +320,10 @@ Deno.serve(async (request) => {
         schoolId: target.school_id,
       });
     }
-    duplicate = authPage.users.find((user) => normalizeEmail(user.email || "") === email);
+    duplicate = duplicate || authPage.users.find((user) => normalizeEmail(user.email || "") === email);
+    duplicateByTarget = duplicateByTarget || authPage.users.find((user) =>
+      isSameInstitutionalTarget(user, targetType, targetInstitutionalId)
+    );
     linkedAuthExists = linkedAuthExists || authPage.users.some((user) => possibleLinkedIds.includes(user.id));
     if (authPage.users.length < 1000) break;
   }
@@ -278,6 +341,15 @@ Deno.serve(async (request) => {
       adminUserId: caller.id,
       derivedRole,
       schoolId: target.school_id,
+    });
+  }
+  if (duplicateByTarget) {
+    return fail(adminClient, 409, "orphan_auth_recovery_required", "Ja existe Auth pendente de recuperacao para este usuario institucional.", {
+      ...auditBase,
+      adminUserId: caller.id,
+      derivedRole,
+      schoolId: target.school_id,
+      targetAuthUserId: duplicateByTarget.id,
     });
   }
   if (duplicate) {
@@ -349,6 +421,7 @@ Deno.serve(async (request) => {
   const authUserId = authUser.id;
   let initialRecoverySent = false;
   let insertedPublicUser = false;
+  let successAuditWarning: string | null = null;
   const insertedGuardianStudentIds: string[] = [];
   try {
     if (reusableProfileId) {
@@ -493,27 +566,14 @@ Deno.serve(async (request) => {
       }
     }
 
-    await audit(adminClient, {
+    if (temporaryPassword) {
+      await auditTemporaryPasswordCreated(adminClient, {
         adminUserId: caller.id,
-        targetType,
         targetInstitutionalId,
         targetAuthUserId: authUserId,
         targetEmail: email,
-        derivedRole,
         schoolId: target.school_id,
-        result: "created",
-      }).catch(() => null);
-    if (temporaryPassword) {
-      await adminClient.from("admin_professional_password_events").insert({
-        admin_user_id: caller.id,
-        target_type: "teacher",
-        target_institutional_id: targetInstitutionalId,
-        target_auth_user_id: authUserId,
-        target_email: email,
-        school_id: target.school_id,
-        action: "temporary_password_created",
-        result: "created",
-      }).catch(() => null);
+      });
     } else {
       const recoveryResponse = await fetch(`${supabaseUrl}/auth/v1/recover?redirect_to=${encodeURIComponent(payload.redirectTo || "")}`, {
         method: "POST",
@@ -525,41 +585,59 @@ Deno.serve(async (request) => {
       });
       initialRecoverySent = recoveryResponse.ok;
     }
+    const successAuditError = await auditBestEffort(adminClient, {
+      adminUserId: caller.id,
+      targetType,
+      targetInstitutionalId,
+      targetAuthUserId: authUserId,
+      targetEmail: email,
+      derivedRole,
+      schoolId: target.school_id,
+      result: "created",
+    });
+    successAuditWarning = successAuditError ? safeErrorCode(successAuditError) : null;
   } catch (error) {
+    const failureCode = safeErrorCode(error);
+    const rollbackErrors: string[] = [];
     if (targetType === "teacher") {
-      await adminClient
+      const { error: teacherRollbackError } = await adminClient
         .from("teachers")
         .update({ profile_id: reusableProfileId, email: target.email || null, updated_at: new Date().toISOString() })
         .eq("id", targetInstitutionalId)
         .eq("profile_id", authUserId);
+      if (teacherRollbackError) rollbackErrors.push(`teacher:${safeErrorCode(teacherRollbackError)}`);
       if (!reusableProfileId) {
-        await adminClient
+        const { error: membershipRollbackError } = await adminClient
           .from("school_memberships")
           .delete()
           .eq("school_id", target.school_id)
           .eq("profile_id", authUserId)
           .eq("membership_role", "professor");
+        if (membershipRollbackError) rollbackErrors.push(`school_membership:${safeErrorCode(membershipRollbackError)}`);
       }
     }
     if (targetType === "student") {
-      await adminClient
+      const { error: studentRollbackError } = await adminClient
         .from("students")
         .update({ user_id: null, email: target.email || null, updated_at: new Date().toISOString() })
         .eq("id", targetInstitutionalId)
         .eq("user_id", authUserId);
+      if (studentRollbackError) rollbackErrors.push(`student:${safeErrorCode(studentRollbackError)}`);
       if (insertedPublicUser) {
-        await adminClient.from("users").delete().eq("id", authUserId);
+        const { error: publicUserRollbackError } = await adminClient.from("users").delete().eq("id", authUserId);
+        if (publicUserRollbackError) rollbackErrors.push(`public_user:${safeErrorCode(publicUserRollbackError)}`);
       }
     }
     if (targetType === "guardian") {
       if (insertedGuardianStudentIds.length) {
-        await adminClient
+        const { error: guardianLinksRollbackError } = await adminClient
           .from("student_guardians")
           .delete()
           .eq("profile_id", authUserId)
           .in("student_id", insertedGuardianStudentIds);
+        if (guardianLinksRollbackError) rollbackErrors.push(`student_guardians:${safeErrorCode(guardianLinksRollbackError)}`);
       }
-      await adminClient
+      const { error: guardianRollbackError } = await adminClient
         .from("guardians")
         .update({
           profile_id: reusableProfileId,
@@ -569,27 +647,41 @@ Deno.serve(async (request) => {
         })
         .eq("id", targetInstitutionalId)
         .eq("profile_id", authUserId);
+      if (guardianRollbackError) rollbackErrors.push(`guardian:${safeErrorCode(guardianRollbackError)}`);
     }
     if (!reusableProfileId) {
-      await adminClient.from("profiles").delete().eq("id", authUserId);
+      const { error: profileRollbackError } = await adminClient.from("profiles").delete().eq("id", authUserId);
+      if (profileRollbackError) rollbackErrors.push(`profile:${safeErrorCode(profileRollbackError)}`);
     }
-    await adminClient.auth.admin.deleteUser(authUserId).catch(() => null);
-    try {
-      await audit(adminClient, {
-        adminUserId: caller.id,
-        targetType,
-        targetInstitutionalId,
-        targetAuthUserId: authUserId,
-        targetEmail: email,
-        derivedRole,
-        schoolId: target.school_id,
-        result: "failed",
-        reason: "link_failed",
-      });
-    } catch (_auditError) {
-      // Audit errors should not expose internals to the browser.
-    }
-    return json({ ok: false, code: "link_failed", message: "Auth criado, mas o vinculo institucional nao foi concluido." }, 500);
+    const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(authUserId);
+    if (deleteAuthError) rollbackErrors.push(`auth:${safeErrorCode(deleteAuthError)}`);
+
+    const authRollbackFailed = Boolean(deleteAuthError);
+    const reason = authRollbackFailed
+      ? `link_failed_auth_rollback_failed:${failureCode}`
+      : `link_failed_auth_rollback_ok:${failureCode}`;
+    await auditBestEffort(adminClient, {
+      adminUserId: caller.id,
+      targetType,
+      targetInstitutionalId,
+      targetAuthUserId: authRollbackFailed ? authUserId : null,
+      targetEmail: email,
+      derivedRole,
+      schoolId: target.school_id,
+      result: "failed",
+      reason,
+    });
+    return json({
+      ok: false,
+      code: authRollbackFailed ? "link_failed_auth_rollback_failed" : "link_failed",
+      message: authRollbackFailed
+        ? "Auth criado, mas o vinculo institucional nao foi concluido. Recuperacao administrativa obrigatoria."
+        : "Auth criado, mas o vinculo institucional nao foi concluido.",
+      rollback: {
+        authDeleted: !authRollbackFailed,
+        requiresAdminRecovery: authRollbackFailed || rollbackErrors.length > 0,
+      },
+    }, 500);
   }
 
   return json({
@@ -603,6 +695,7 @@ Deno.serve(async (request) => {
     initialRecoverySent,
     temporaryPassword: temporaryPassword || null,
     mustChangePassword: Boolean(temporaryPassword),
+    auditWarning: successAuditWarning,
     message: initialRecoverySent
       ? "Acesso criado com sucesso. O usuario recebera instrucoes para definir a senha."
       : temporaryPassword
