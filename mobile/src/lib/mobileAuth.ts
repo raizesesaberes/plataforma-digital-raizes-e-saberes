@@ -27,6 +27,7 @@ type ProfileRow = {
 type StudentContextRow = {
   student_id?: string | null;
   student_name?: string | null;
+  segment?: string | null;
   school_id?: string | null;
   school_name?: string | null;
   class_id?: string | null;
@@ -62,10 +63,15 @@ export type AuthContext = {
   activeClassLinks?: number;
 };
 
+type PublicSupabaseConfig = {
+  url?: string;
+  anonKey?: string;
+};
+
 const runtimeEnv = (globalThis as unknown as { process?: { env?: Record<string, string | undefined> } }).process?.env ?? {};
-const SUPABASE_URL = runtimeEnv.EXPO_PUBLIC_SUPABASE_URL ?? "https://jaesjldrbjbdmzzggxzw.supabase.co";
-const SUPABASE_ANON_KEY =
-  runtimeEnv.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "sb_publishable_YzHPXWp_L-QFAQYaGz_3dQ_K07Ni9Hz";
+const globalSupabaseConfig = (globalThis as unknown as { RAIZES_SUPABASE?: PublicSupabaseConfig }).RAIZES_SUPABASE ?? {};
+const SUPABASE_URL = normalizeSupabaseUrl(runtimeEnv.EXPO_PUBLIC_SUPABASE_URL || globalSupabaseConfig.url);
+const SUPABASE_ANON_KEY = runtimeEnv.EXPO_PUBLIC_SUPABASE_ANON_KEY || globalSupabaseConfig.anonKey || "";
 const SESSION_STORAGE_KEY = "raizes:mobile:supabase-auth-session";
 
 export function hasSupabaseClientConfig() {
@@ -233,6 +239,11 @@ function resolveStudentSegment(platformRole: string, student: StudentContextRow)
     return "EDUCACAO_INFANTIL";
   }
 
+  const explicitSegment = normalizeSegment(student.segment);
+  if (explicitSegment) {
+    return explicitSegment;
+  }
+
   const probe = [student.school_year, student.age_group, student.class_name].filter(Boolean).join(" ").toLowerCase();
   if (/infantil|creche|pré|pre-escola|pre escola|maternal/.test(probe)) {
     return "EDUCACAO_INFANTIL";
@@ -390,6 +401,22 @@ function normalizeRole(role?: string | null) {
   if (["educacao_infantil", "aluno_educacao_infantil", "aluno_infantil", "infantil", "early_childhood"].includes(value)) return "educacao_infantil";
   if (value) return value;
   return "institutional";
+}
+
+function normalizeSegment(segment?: string | null): AuthContext["segment"] | null {
+  const value = (segment ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+  if (["educacao_infantil", "infantil", "early_childhood"].includes(value)) return "EDUCACAO_INFANTIL";
+  if (["ensino_fundamental", "fundamental"].includes(value)) return "ENSINO_FUNDAMENTAL";
+  if (["ensino_medio", "medio"].includes(value)) return "ENSINO_MEDIO";
+  return null;
+}
+
+function normalizeSupabaseUrl(url?: string) {
+  return (url || "").trim().replace(/\/$/, "");
 }
 
 function metadataRole(metadata?: Record<string, unknown>) {
