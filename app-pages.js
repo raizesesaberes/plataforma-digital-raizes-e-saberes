@@ -13087,6 +13087,20 @@ const adminSchoolUrl = (schoolId = "", changes = {}) => {
   return `admin.html?${params.toString()}`;
 };
 
+const adminSchoolListUrl = (changes = {}) => {
+  const params = new URLSearchParams(window.location.search || "");
+  params.set("view", "escolas");
+  params.delete("school");
+  params.delete("school_section");
+  params.delete("create");
+  Object.entries(changes).forEach(([key, value]) => {
+    const paramKey = key === "pageSize" ? "page_size" : key;
+    if (value === undefined || value === null || value === "" || value === "all" || value === false) params.delete(paramKey);
+    else params.set(paramKey, value);
+  });
+  return `admin.html?${params.toString()}`;
+};
+
 const adminSchoolMetric = (label, value, detail = "") => `
   <article class="admin-school-metric">
     <span>${printableEscape(label)}</span>
@@ -13477,7 +13491,13 @@ const renderAdminSchoolChecklist = (summary) => `
 
 const renderAdminSchoolDetail = (summary) => {
   if (!summary) {
-    return `<section class="admin-board admin-user-detail"><h3>Selecione uma escola</h3><p>Escolha uma unidade no localizador para consultar estrutura, acessos, conteúdos e implantação.</p></section>`;
+    return `
+      <section class="admin-board admin-user-detail admin-school-detail-missing">
+        <a class="admin-school-back-link" href="${adminSchoolListUrl()}">${adminInlineIcon("back", "Voltar à lista de escolas")}</a>
+        <h3>Escola não encontrada</h3>
+        <p>O link solicitado não corresponde a uma unidade carregada no Admin. Volte à lista para selecionar uma escola disponível.</p>
+      </section>
+    `;
   }
   const active = String(summary.status || "").toLowerCase() === "active";
   const section = adminActiveSchoolDetailSection();
@@ -13553,8 +13573,13 @@ const renderAdminSchoolDetail = (summary) => {
           <span>Escola selecionada</span>
           <h3>${printableEscape(summary.name)}</h3>
           <p>${printableEscape(summary.code)} · ${printableEscape([summary.municipio, summary.estado].filter(Boolean).join(" / ") || "Município não informado")} · ${printableEscape(summary.currentYear)}</p>
+          <div class="admin-school-detail-badges" aria-label="Estado da escola">
+            ${renderAdminUserBadge(adminStatusLabel(summary.status), active ? "success" : "muted")}
+            ${renderAdminUserBadge(summary.implementationStatus, summary.doneCount >= 8 ? "success" : "warning")}
+          </div>
         </div>
         <div class="admin-school-actions">
+          <a class="admin-school-back-link" href="${adminSchoolListUrl()}">${adminInlineIcon("back", "Voltar à lista")}</a>
           <a href="secretaria.html?school=${printableEscape(summary.schoolId)}">${adminInlineIcon("escola", "Abrir escola")}</a>
           <button type="button" disabled>${adminInlineIcon("edit", "Editar dados")}</button>
           <button type="button" data-admin-school-validate="${printableEscape(summary.schoolId)}">${adminInlineIcon("check", "Validar escola")}</button>
@@ -14598,8 +14623,15 @@ const renderAdminSchoolsConsole = () => {
   const summaries = buildAdminSchoolSummaries();
   const filters = adminSchoolFilters();
   const stats = adminSchoolManagementStats(summaries);
-  const filtered = filterAdminSchools(summaries, filters);
-  const selected = summaries.find((item) => item.schoolId === filters.selected) || filtered[0] || summaries[0] || null;
+  const selected = summaries.find((item) => item.schoolId === filters.selected) || null;
+  const isDetailView = Boolean(filters.selected);
+  if (isDetailView) {
+    return `
+      <section class="admin-schools-console admin-schools-console--detail">
+        ${renderAdminSchoolDetail(selected)}
+      </section>
+    `;
+  }
   return `
     <section class="admin-board admin-schools-console">
       <div class="admin-section-head admin-school-management-head">
@@ -14608,7 +14640,7 @@ const renderAdminSchoolsConsole = () => {
           <span>Central operacional para redes com muitas unidades</span>
         </div>
         <div class="admin-school-actions">
-          <a class="admin-primary-link admin-new-school-link" href="${adminSchoolUrl(selected?.schoolId || "", { create: "1" })}">${adminInlineIcon("escola")}<span>+ Nova escola</span></a>
+          <a class="admin-primary-link admin-new-school-link" href="${adminSchoolUrl("", { create: "1" })}">${adminInlineIcon("escola")}<span>+ Nova escola</span></a>
           <a href="admin.html?view=implantação">${adminInlineIcon("upload", "Importar escolas")}</a>
         </div>
       </div>
@@ -14619,8 +14651,7 @@ const renderAdminSchoolsConsole = () => {
         ${adminSchoolMetric("Inativas", stats.inactive, "sem operação")}
       </div>
       ${filters.create ? renderAdminCreateSchoolForm() : ""}
-      ${renderAdminSchoolLocator({ summaries, selectedId: selected?.schoolId || "", filters })}
-      ${renderAdminSchoolDetail(selected)}
+      ${renderAdminSchoolLocator({ summaries, selectedId: "", filters })}
     </section>
   `;
 };

@@ -14116,6 +14116,11 @@ td {
   background: transparent;
 }
 
+.admin-schools-console--detail {
+  display: grid;
+  gap: 14px;
+}
+
 .admin-school-metrics {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -14200,6 +14205,13 @@ td {
 .admin-school-actions a.admin-primary-link {
   background: #0d6b4b;
   color: #fff;
+}
+
+.admin-school-actions a.admin-school-back-link,
+.admin-school-back-link {
+  border-color: rgba(7, 61, 53, 0.16);
+  background: #fff;
+  color: #244238;
 }
 
 .admin-school-actions a.admin-new-school-link {
@@ -14459,6 +14471,12 @@ td {
 .admin-school-detail-main-head p {
   color: #526b60;
   font-weight: 800;
+}
+
+.admin-school-detail-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .admin-school-detail-nav {
