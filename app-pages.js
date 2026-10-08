@@ -23265,9 +23265,21 @@ const initQuestionBank = () => {
 
   const render = async () => {
     const items = getFilteredItems();
+    const accessState = questionBankDataService.getQuestionAccessState();
     loading.hidden = true;
     errorNode.hidden = true;
     grid.innerHTML = items.map(renderCard).join("");
+    if (!items.length) {
+      if (accessState.status === "FEATURE_DISABLED") {
+        empty.textContent = "Banco de Questões sem conteúdo contratado para esta escola no momento.";
+      } else if (accessState.status && accessState.status !== "PASS" && accessState.status !== "UNLOADED" && accessState.status !== "EDITORIAL_FULL_BANK") {
+        empty.textContent = `Não foi possível carregar questões autorizadas (${accessState.status}).`;
+      } else if (questions.length === 0 && accessState.status === "PASS") {
+        empty.textContent = "Nenhuma questão disponível para o contrato e turma atuais.";
+      } else {
+        empty.textContent = "Nenhuma questao encontrada com os filtros atuais.";
+      }
+    }
     empty.hidden = items.length > 0;
     renderMetrics(items);
     renderDashboardSummaries();
@@ -29658,6 +29670,7 @@ const questionBankDataService = (() => {
   const assessmentSelect =
     "*,questions:assessment_questions(*,question:question_items(code,internal_title,estimated_minutes,publication_status,curation_status,workflow_status,workflow_version,bncc_skill,reference_matrix,curriculum_matrix)),booklets:assessment_booklets(*,questions:assessment_booklet_questions(*))";
   const teacherResolverRoles = new Set(["professor", "teacher"]);
+  let questionAccessState = { status: "UNLOADED", total: null, detailsTotal: null, source: "" };
   const isTeacherResolverContext = (context = {}) => Boolean(context.userId && teacherResolverRoles.has(context.role));
   const normalizeQuestionBankText = (value = "") =>
     String(value)
@@ -29689,7 +29702,7 @@ const questionBankDataService = (() => {
   };
   const getTeacherResolvedQuestionRows = async (request, context = {}) => {
     const resolverContext = await getTeacherResolverContext(request, context);
-    const result = normalizeRpcJson(await request("rpc/content_resolve_for_user", "", {
+    const result = normalizeRpcJson(await request("rpc/content_resolve_question_details_for_user", "", {
       method: "POST",
       requireAuthenticated: true,
       allowedRoles: allowedAssessmentRoles,
@@ -29701,19 +29714,10 @@ const questionBankDataService = (() => {
     if (result?.status !== "PASS") {
       throw new Error(`CONTENT_RESOLVER_${result?.status || "FAILED"}`);
     }
-    const questionIds = [...new Set((result.items || []).map((item) => item.question_item_id).filter(Boolean))];
-    if (!questionIds.length) {
-      return { enabled: true, result, rows: [] };
-    }
-    const rows = await request("question_items", `?id=${supabaseIn(questionIds)}&select=${questionSelect}`, {
-      requireAuthenticated: true,
-      allowedRoles: allowedAssessmentRoles,
-    });
-    const byId = new Map((rows || []).map((row) => [row.id, row]));
     return {
       enabled: true,
       result,
-      rows: questionIds.map((id) => byId.get(id)).filter(Boolean),
+      rows: Array.isArray(result.items) ? result.items : [],
     };
   };
   const pickDefaultQuestionSource = (sources = []) => {
@@ -29934,17 +29938,22 @@ const questionBankDataService = (() => {
       const context = await getContext();
       if (isTeacherResolverContext(context)) {
         const resolved = await getTeacherResolvedQuestionRows(request, context);
-        if (resolved.enabled) {
-          return resolved.rows.map((row) => mapQuestionFromSupabase({
-            ...row,
-            metadata: {
-              ...(row.metadata || {}),
-              content_resolver: "content_resolve_for_user",
-              resolver_status: resolved.result?.status || "",
-            },
-          }));
-        }
+        questionAccessState = {
+          status: resolved.result?.status || "UNKNOWN",
+          total: Number(resolved.result?.total ?? 0),
+          detailsTotal: Number(resolved.result?.details_total ?? resolved.rows.length ?? 0),
+          source: resolved.result?.detail_source || "content_resolve_question_details_for_user",
+        };
+        return resolved.rows.map((row) => mapQuestionFromSupabase({
+          ...row,
+          metadata: {
+            ...(row.metadata || {}),
+            content_resolver: questionAccessState.source,
+            resolver_status: questionAccessState.status,
+          },
+        }));
       }
+      questionAccessState = { status: "EDITORIAL_FULL_BANK", total: null, detailsTotal: null, source: "question_items" };
       const rows = await request("question_items", `?select=${questionSelect}&order=last_reviewed_at.desc.nullslast&order=created_at.desc`);
       return rows.map(mapQuestionFromSupabase);
     },
@@ -30321,6 +30330,7 @@ const questionBankDataService = (() => {
       if (currentClient.isConfigured) return "supabase";
       return currentClient.canUseFallback ? "fallback" : "missing-config";
     },
+    getQuestionAccessState: () => questionAccessState,
     listQuestions: (...args) => active().listQuestions(...args),
     getQuestionById: (...args) => active().getQuestionById(...args),
     listAlternatives: (...args) => active().listAlternatives(...args),
