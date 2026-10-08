@@ -22,8 +22,8 @@ export const brandingAssets = {
     tablet: require("../assets/branding/rs_student_bg_tablet.png")
   },
   teacher: {
-    phone: require("../assets/branding/rs_teacher_bg_phone.png"),
-    tablet: require("../assets/branding/rs_teacher_bg_tablet.png")
+    phone: require("../assets/branding/rs_crescer_bg_phone.png"),
+    tablet: require("../assets/branding/rs_crescer_bg_tablet.png")
   }
 } as const;
 

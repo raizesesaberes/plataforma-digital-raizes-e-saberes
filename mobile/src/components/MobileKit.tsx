@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { brandedAssetFor, type BrandedEnvironment } from "../branding";
 import { colors, radii, shadow, spacing } from "../theme";
-import type { DemoProfile, IconName, ModuleItem } from "../data/fixtures";
+import type { AppProfile, IconName, ModuleItem } from "../data/fixtures";
 
 type ScreenTone = "paper" | "child" | "blue" | "teacher";
 
@@ -122,7 +122,7 @@ export function BottomNavigation({
   activeKey,
   onSelect
 }: {
-  profile: DemoProfile;
+  profile: AppProfile;
   activeKey: string;
   onSelect: (key: string) => void;
 }) {
@@ -154,7 +154,7 @@ export function BottomNavigation({
   );
 }
 
-export function HeroCard({ profile }: { profile: DemoProfile }) {
+export function HeroCard({ profile }: { profile: AppProfile }) {
   const inkColor = useToneInk();
   return (
     <View style={[styles.hero, accentBorder(profile.accent)]}>
@@ -294,7 +294,7 @@ function useToneInk() {
   return tone === "blue" ? colors.studentInk : colors.ink;
 }
 
-function accentBorder(accent: DemoProfile["accent"]) {
+function accentBorder(accent: AppProfile["accent"]) {
   const borderColor: ColorValue =
     accent === "child" ? colors.child : accent === "blue" ? colors.blue : accent === "coral" ? colors.coral : colors.brand;
   return { borderColor };

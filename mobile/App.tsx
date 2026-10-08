@@ -1,200 +1,181 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { StatusBar } from "expo-status-bar";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Animated, Easing, Image, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AppShell } from "./src/AppShell";
+import { splashAssetFor } from "./src/branding";
 import { LoginScreen } from "./src/screens/LoginScreen";
-import { colors, radii, shadow, spacing } from "./src/theme";
-import {
-  hasSupabaseClientConfig,
-  profileForAuthContext,
-  requestPasswordRecovery,
-  restoreAuthSession,
-  signInWithPassword,
-  signOut,
-  type AuthContext
-} from "./src/lib/mobileAuth";
+import { appProfiles, type AppRole } from "./src/data/fixtures";
+import type { MobileSession } from "./src/services/library";
 
-type AuthStatus = "checking" | "login" | "ready" | "institutional";
+const SPLASH_DURATION_MS = 2000;
 
-export default function App() {
-  const [status, setStatus] = useState<AuthStatus>("checking");
-  const [authContext, setAuthContext] = useState<AuthContext | null>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [authInfo, setAuthInfo] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const profile = useMemo(() => (authContext ? profileForAuthContext(authContext) : null), [authContext]);
+function SplashScreen({ onComplete }: { onComplete: () => void }) {
+  const { width, height } = useWindowDimensions();
+  const [progress, setProgress] = useState(0);
+  const spin = useRef(new Animated.Value(0)).current;
+  const splashAspectRatio = width >= 700 ? 1448 / 1086 : 948 / 1659;
+  const assetFrame = useMemo(() => getAssetFrame(width, height, splashAspectRatio), [height, splashAspectRatio, width]);
 
   useEffect(() => {
-    let mounted = true;
-
-    async function restore() {
-      if (!hasSupabaseClientConfig()) {
-        if (mounted) {
-          setAuthError("Configuração de autenticação indisponível.");
-          setStatus("login");
-        }
-        return;
+    const startedAt = Date.now();
+    const timer = setInterval(() => {
+      const nextProgress = Math.min(100, Math.round(((Date.now() - startedAt) / SPLASH_DURATION_MS) * 100));
+      setProgress(nextProgress);
+      if (nextProgress >= 100) {
+        clearInterval(timer);
+        onComplete();
       }
+    }, 40);
 
-      try {
-        const restoredContext = await restoreAuthSession();
-        if (!mounted) return;
-        applyResolvedContext(restoredContext);
-      } catch {
-        if (!mounted) return;
-        setStatus("login");
-      }
-    }
+    return () => clearInterval(timer);
+  }, [onComplete]);
 
-    restore();
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.timing(spin, {
+        toValue: 1,
+        duration: 1100,
+        easing: Easing.linear,
+        useNativeDriver: true
+      })
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [spin]);
 
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const rotation = spin.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"]
+  });
 
-  function applyResolvedContext(nextContext: AuthContext | null) {
-    setAuthContext(nextContext);
-    setAuthError(null);
-    setAuthInfo(null);
-    setStatus(nextContext ? (nextContext.route === "institutional" ? "institutional" : "ready") : "login");
-  }
+  return (
+    <View style={styles.splashScreen}>
+      <Image source={splashAssetFor(width)} resizeMode="cover" style={[styles.splashImage, assetFrame]} />
+      <View style={[styles.splashLayer, assetFrame]}>
+        <View style={styles.splashLoaderWrap}>
+          <View style={styles.splashLoaderShadow}>
+            <View style={styles.splashRing}>
+              <Animated.View style={[styles.splashOrbit, { transform: [{ rotate: rotation }] }]}>
+                <View style={styles.splashDot} />
+              </Animated.View>
+              <Text style={styles.splashPercent}>{progress}%</Text>
+            </View>
+          </View>
+          <Text style={styles.splashLoadingText}>Carregando</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
 
-  async function handleLogin(email: string, password: string) {
-    setLoading(true);
-    setAuthError(null);
-    setAuthInfo(null);
+function getAssetFrame(width: number, height: number, aspectRatio: number) {
+  const widthBasedHeight = width / aspectRatio;
+  const heightBasedWidth = height * aspectRatio;
+  const useWidth = widthBasedHeight >= height;
+  const baseWidth = useWidth ? width : heightBasedWidth;
+  const baseHeight = useWidth ? widthBasedHeight : height;
 
-    try {
-      const context = await signInWithPassword(email, password);
-      applyResolvedContext(context);
-    } catch (error) {
-      setAuthError(error instanceof Error ? error.message : "Não foi possível entrar agora.");
-      setStatus("login");
-    } finally {
-      setLoading(false);
-    }
-  }
+  return {
+    height: baseHeight,
+    left: (width - baseWidth) / 2,
+    top: (height - baseHeight) / 2,
+    width: baseWidth
+  };
+}
 
-  async function handleRecoverPassword(email: string) {
-    setLoading(true);
-    setAuthError(null);
-    setAuthInfo(null);
-
-    try {
-      await requestPasswordRecovery(email);
-      setAuthInfo("Se o e-mail estiver cadastrado, enviaremos as instruções de recuperação.");
-    } catch (error) {
-      setAuthError(error instanceof Error ? error.message : "Não foi possível enviar a recuperação agora.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleLogout() {
-    setLoading(true);
-    try {
-      await signOut();
-    } finally {
-      setAuthContext(null);
-      setAuthError(null);
-      setAuthInfo(null);
-      setStatus("login");
-      setLoading(false);
-    }
-  }
+export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
+  const [role, setRole] = useState<AppRole | null>(null);
+  const [session, setSession] = useState<MobileSession | null>(null);
+  const profile = useMemo(() => (role ? appProfiles[role] : null), [role]);
+  const authenticatedProfile = profile && session ? profile : null;
 
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      {status === "ready" && profile ? (
-        <AppShell profile={profile} onLogout={handleLogout} />
-      ) : status === "institutional" ? (
-        <InstitutionalOnlyScreen onLogout={handleLogout} />
+      {showSplash ? (
+        <SplashScreen onComplete={() => setShowSplash(false)} />
+      ) : authenticatedProfile ? (
+        <AppShell
+          profile={authenticatedProfile}
+          session={session}
+          onLogout={() => {
+            setRole(null);
+            setSession(null);
+          }}
+        />
       ) : (
         <LoginScreen
-          mode={status === "checking" ? "splash" : "login"}
-          loading={loading || status === "checking"}
-          errorMessage={authError}
-          infoMessage={authInfo}
-          onLogin={handleLogin}
-          onRecoverPassword={handleRecoverPassword}
+          onSelectRole={(nextRole, nextSession) => {
+            setRole(nextRole);
+            setSession(nextSession ?? null);
+          }}
         />
       )}
     </SafeAreaProvider>
   );
 }
 
-function InstitutionalOnlyScreen({ onLogout }: { onLogout: () => void }) {
-  return (
-    <View style={styles.institutionalScreen}>
-      <View style={styles.institutionalCard}>
-        <Text style={styles.institutionalEyebrow}>Raízes e Saberes</Text>
-        <Text style={styles.institutionalTitle}>Este perfil utiliza a Plataforma Web Raízes e Saberes.</Text>
-        <Text style={styles.institutionalBody}>
-          Acesso mobile operacional está disponível apenas para estudantes e professores nesta versão.
-        </Text>
-        <Pressable accessibilityRole="button" accessibilityLabel="Sair" onPress={onLogout} style={styles.institutionalButton}>
-          <Text style={styles.institutionalButtonText}>Sair</Text>
-        </Pressable>
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  institutionalScreen: {
-    alignItems: "center",
-    backgroundColor: colors.paper,
+  splashScreen: {
+    backgroundColor: "#f8fbef",
+    flex: 1
+  },
+  splashImage: {
+    position: "absolute"
+  },
+  splashLayer: {
+    position: "absolute"
+  },
+  splashLoaderWrap: {
     flex: 1,
-    justifyContent: "center",
-    padding: spacing.xl
-  },
-  institutionalCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: radii.lg,
-    borderWidth: 2,
-    maxWidth: 520,
-    padding: spacing.xl,
-    width: "100%",
-    ...shadow
-  },
-  institutionalEyebrow: {
-    color: colors.brand,
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 0,
-    textTransform: "uppercase"
-  },
-  institutionalTitle: {
-    color: colors.brandDark,
-    fontSize: 24,
-    fontWeight: "900",
-    letterSpacing: 0,
-    marginTop: spacing.sm
-  },
-  institutionalBody: {
-    color: colors.muted,
-    fontSize: 15,
-    fontWeight: "700",
-    lineHeight: 22,
-    marginTop: spacing.sm
-  },
-  institutionalButton: {
     alignItems: "center",
-    alignSelf: "flex-start",
-    backgroundColor: colors.brand,
-    borderRadius: radii.md,
-    justifyContent: "center",
-    marginTop: spacing.lg,
-    minHeight: 48,
-    paddingHorizontal: spacing.xl
+    justifyContent: "flex-end",
+    gap: 12,
+    paddingBottom: "12%"
   },
-  institutionalButtonText: {
-    color: colors.surface,
-    fontSize: 15,
+  splashLoaderShadow: {
+    borderRadius: 52,
+    shadowColor: "#0b5136",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.18,
+    shadowRadius: 22
+  },
+  splashRing: {
+    width: 82,
+    height: 82,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 41,
+    borderWidth: 6,
+    borderColor: "rgba(255, 174, 36, 0.26)",
+    backgroundColor: "rgba(255, 255, 255, 0.84)"
+  },
+  splashOrbit: {
+    position: "absolute",
+    width: 82,
+    height: 82,
+    alignItems: "center"
+  },
+  splashDot: {
+    width: 15,
+    height: 15,
+    marginTop: -5,
+    borderRadius: 8,
+    backgroundColor: "#f59d16",
+    borderWidth: 3,
+    borderColor: "#fff9e8"
+  },
+  splashPercent: {
+    color: "#075c3a",
+    fontSize: 19,
     fontWeight: "900"
+  },
+  splashLoadingText: {
+    color: "#0b6a42",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 0
   }
 });

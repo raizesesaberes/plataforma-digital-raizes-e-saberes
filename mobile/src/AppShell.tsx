@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Feather } from "@expo/vector-icons";
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions, type ImageSourcePropType } from "react-native";
 import {
   AppHeader,
   Badge,
@@ -13,15 +14,140 @@ import {
   SectionHeader,
   StatCard
 } from "./components/MobileKit";
-import { demoCollections, type DemoProfile, type ModuleKey } from "./data/fixtures";
+import { demoCollections, type AppProfile, type ModuleKey } from "./data/fixtures";
+import {
+  getEarlyChildhoodActivities,
+  getEarlyChildhoodActivity,
+  getEarlyChildhoodActivityAsset,
+  getEarlyChildhoodDiscoveries,
+  getEarlyChildhoodDiscovery,
+  getEarlyChildhoodDiscoveryAsset,
+  getEarlyChildhoodGame,
+  getEarlyChildhoodGameAsset,
+  getEarlyChildhoodGameManifest,
+  getEarlyChildhoodGames,
+  getCrescerCalendarEvents,
+  getCrescerFamilyMessages,
+  getCrescerNotificationCenter,
+  getCrescerStudentProfile,
+  getInstitutionalActivities,
+  getInstitutionalActivity,
+  getStudentProfile,
+  getStudentAssessmentAssignments,
+  getTeacherCalendarEntries,
+  getTeacherClassStudents,
+  getTeacherCommunicationSummaries,
+  getTeacherAssessmentAssignments,
+  getTeacherContext,
+  getTeacherDiaryEntries,
+  getTeacherDiaryPeriodSummary,
+  getTeacherHomeSummary,
+  getTeacherMobileClasses,
+  getTeacherNotificationCenter,
+  getTeacherTrackingAlerts,
+  getTeacherTrackingOverview,
+  publishTeacherCommunication,
+  saveTeacherAttendanceRecords,
+  saveTeacherCalendarEntry,
+  getLibraryBook,
+  getLibraryBooks,
+  getLibraryManifest,
+  getLibraryPageAsset,
+  getStudentAchievements,
+  getStudentXpHistory,
+  getStudentXpSummary,
+  completeEarlyChildhoodGameAttempt,
+  startEarlyChildhoodGameAttempt,
+  updateEarlyChildhoodGameAttempt,
+  saveEarlyChildhoodActivityProgress,
+  saveEarlyChildhoodDiscoveryProgress,
+  saveLibraryProgress,
+  type EarlyChildhoodActivity,
+  type EarlyChildhoodAsset,
+  type EarlyChildhoodDiscovery,
+  type EarlyChildhoodDiscoveryHotspot,
+  type EarlyChildhoodGame,
+  type EarlyChildhoodGameAttempt,
+  type EarlyChildhoodGameManifest,
+  type CrescerCalendarEvent,
+  type CrescerFamilyMessage,
+  type CrescerNotificationCenterItem,
+  type InstitutionalActivity,
+  type CrescerStudentProfile,
+  type LibraryBook,
+  type LibraryManifest,
+  type MobileSession,
+  type StudentProfile,
+  type StudentAssessmentAssignment,
+  type StudentAchievement,
+  type StudentXpHistoryItem,
+  type StudentXpSummary,
+  type TeacherCalendarEntry as RealTeacherCalendarEntry,
+  type TeacherClassStudent as RealTeacherClassStudent,
+  type TeacherCommunicationSummary as RealTeacherCommunicationSummary,
+  type TeacherDiaryEntry as RealTeacherDiaryEntry,
+  type TeacherDiaryPeriodSummary as RealTeacherDiaryPeriodSummary,
+  type TeacherAssessmentAssignment,
+  type TeacherHomeSummary,
+  type TeacherMobileClass,
+  type TeacherNotificationCenterItem,
+  type TeacherTrackingAlert as RealTeacherTrackingAlert,
+  type TeacherTrackingOverview
+} from "./services/library";
 import { colors, shadow, spacing } from "./theme";
+
+const crescerHomeIcons = {
+  achievements: require("../assets/crescer-home/icon_conquistas.png"),
+  activities: require("../assets/crescer-home/icon_atividades.png"),
+  agenda: require("../assets/crescer-home/icon_agenda.png"),
+  discoveries: require("../assets/crescer-home/icon_descobertas.png"),
+  family: require("../assets/crescer-home/icon_familia.png"),
+  games: require("../assets/crescer-home/icon_jogos.png"),
+  library: require("../assets/crescer-home/icon_biblioteca.png"),
+  mission: require("../assets/crescer-home/icon_missao.png"),
+  notifications: require("../assets/crescer-home/icon_notificacoes.png"),
+  pending: require("../assets/crescer-home/icon_pendencias.png"),
+  week: require("../assets/crescer-home/icon_semana.png")
+} as const satisfies Record<string, ImageSourcePropType>;
+
+const teacherHomeIcons = {
+  avalia: require("../assets/teacher-home/icon_communication_avalia.png"),
+  classes: require("../assets/teacher-home/icon_classes_tracking.png"),
+  communication: require("../assets/teacher-home/icon_communication_avalia.png"),
+  diary: require("../assets/teacher-home/icon_notifications_diary.png"),
+  notifications: require("../assets/teacher-home/icon_notifications_diary.png"),
+  peopleCalendar: require("../assets/teacher-home/icon_people_calendar.png"),
+  tracking: require("../assets/teacher-home/icon_classes_tracking.png")
+} as const satisfies Record<string, ImageSourcePropType>;
+
+const teacherCatalogIcons = {
+  alertBell: require("../assets/icon-catalog/professor/prof_alert_bell.png"),
+  calendarClock: require("../assets/icon-catalog/professor/prof_calendar_clock.png"),
+  careSettings: require("../assets/icon-catalog/professor/prof_care_settings.png"),
+  chatBubbles: require("../assets/icon-catalog/professor/prof_chat_bubbles.png"),
+  checklist: require("../assets/icon-catalog/professor/prof_checklist.png"),
+  checklistPencil: require("../assets/icon-catalog/professor/prof_checklist_pencil.png"),
+  graduationBooks: require("../assets/icon-catalog/professor/prof_graduation_books.png"),
+  groupChat: require("../assets/icon-catalog/professor/prof_group_chat.png"),
+  growthChart: require("../assets/icon-catalog/professor/prof_growth_chart.png"),
+  ideaBooks: require("../assets/icon-catalog/professor/prof_idea_books.png"),
+  notebookPencil: require("../assets/icon-catalog/professor/prof_notebook_pencil.png"),
+  peopleSearch: require("../assets/icon-catalog/professor/prof_people_search.png"),
+  personEdit: require("../assets/icon-catalog/professor/prof_person_edit.png"),
+  trophy: require("../assets/icon-catalog/professor/prof_trophy.png")
+} as const satisfies Record<string, ImageSourcePropType>;
+
+type TeacherSplitIcon = {
+  source: ImageSourcePropType;
+  side: "left" | "right";
+};
 
 type Route = {
   key: ModuleKey;
   title: string;
 };
 
-export function AppShell({ profile, onLogout }: { profile: DemoProfile; onLogout: () => void }) {
+export function AppShell({ profile, session, onLogout }: { profile: AppProfile; session: MobileSession | null; onLogout: () => void }) {
   const [stack, setStack] = useState<Route[]>([{ key: "home", title: "Início" }]);
   const [readNotificationTitles, setReadNotificationTitles] = useState<string[]>([]);
   const route = stack[stack.length - 1];
@@ -42,6 +168,8 @@ export function AppShell({ profile, onLogout }: { profile: DemoProfile; onLogout
       ? "Família"
       : String(key).startsWith("game:")
       ? "Jogo"
+      : String(key).startsWith("discovery:")
+        ? "Descoberta"
       : String(key).startsWith("activity:")
         ? "Atividade"
         : String(key).startsWith("book:")
@@ -69,18 +197,21 @@ export function AppShell({ profile, onLogout }: { profile: DemoProfile; onLogout
   return (
     <View style={styles.root}>
       <Screen tone={tone}>
-        <AppHeader
-          title={route.title}
-          subtitle={profile.title}
-          onBack={stack.length > 1 ? goBack : undefined}
-          onHome={route.key !== "home" ? goHome : undefined}
-          onLogout={onLogout}
-        />
+        {profile.role === "crescer" && route.key === "home" ? null : (
+          <AppHeader
+            title={route.title}
+            subtitle={profile.title}
+            onBack={stack.length > 1 ? goBack : undefined}
+            onHome={route.key !== "home" ? goHome : undefined}
+            onLogout={onLogout}
+          />
+        )}
         {route.key === "home" ? (
-          <HomeScreen profile={profile} onOpen={goTo} />
+          <HomeScreen profile={profile} session={session} onOpen={goTo} onLogout={onLogout} />
         ) : (
           <ModuleScreen
             profile={profile}
+            session={session}
             activeKey={route.key}
             onOpen={goTo}
             onBack={goBack}
@@ -95,25 +226,23 @@ export function AppShell({ profile, onLogout }: { profile: DemoProfile; onLogout
   );
 }
 
-function HomeScreen({ profile, onOpen }: { profile: DemoProfile; onOpen: (key: ModuleKey) => void }) {
+function HomeScreen({ profile, session, onOpen, onLogout }: { profile: AppProfile; session: MobileSession | null; onOpen: (key: ModuleKey) => void; onLogout: () => void }) {
+  if (profile.role === "crescer") {
+    return <CrescerHomeScreen profile={profile} session={session} onOpen={onOpen} onLogout={onLogout} />;
+  }
+
   if (profile.role === "fundamental") {
-    return <FundamentalHomeScreen profile={profile} onOpen={onOpen} />;
+    return <FundamentalHomeScreen profile={profile} session={session} onOpen={onOpen} />;
   }
 
   if (profile.role === "professor") {
-    return <TeacherHomeScreen profile={profile} onOpen={onOpen} />;
+    return <TeacherHomeScreen profile={profile} session={session} onOpen={onOpen} />;
   }
 
   return (
     <View>
       <HeroCard profile={profile} />
-      {profile.role === "crescer" ? <CrescerMissionCard /> : null}
-      <View style={styles.statRow}>
-        <StatCard label="Pendências" value="2" icon="bell" />
-        <StatCard label="Semana" value="5 dias" icon="calendar" />
-      </View>
-
-      <SectionHeader title={profile.role === "crescer" ? "Vamos brincar e aprender" : "Ações principais"} />
+      <SectionHeader title="Ações principais" />
       {profile.modules.map((item) => (
         <ModuleCard key={item.key} item={item} onPress={() => onOpen(item.key)} />
       ))}
@@ -121,121 +250,410 @@ function HomeScreen({ profile, onOpen }: { profile: DemoProfile; onOpen: (key: M
   );
 }
 
-function CrescerMissionCard() {
+function CrescerHomeScreen({ profile, session, onOpen, onLogout }: { profile: AppProfile; session: MobileSession | null; onOpen: (key: ModuleKey) => void; onLogout: () => void }) {
+  const [studentProfile, setStudentProfile] = useState<CrescerStudentProfile | null>(null);
+  const [calendarEvents, setCalendarEvents] = useState<CrescerCalendarEvent[]>([]);
+  const [notifications, setNotifications] = useState<CrescerNotificationCenterItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { width } = useWindowDimensions();
+  const tablet = width >= 700;
+
+  useEffect(() => {
+    let active = true;
+    if (!session) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    Promise.all([
+      getCrescerStudentProfile(session).catch(() => null),
+      getCrescerCalendarEvents(session).catch(() => []),
+      getCrescerNotificationCenter(session).catch(() => [])
+    ])
+      .then(([nextProfile, nextEvents, nextNotifications]) => {
+        if (!active) return;
+        setStudentProfile(nextProfile);
+        setCalendarEvents(nextEvents);
+        setNotifications(nextNotifications);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  const studentName = studentProfile?.name || profile.userName;
+  const firstName = studentName.split(" ")[0] || "aluno";
+  const initialsText = initials(studentName);
+  const pendingCount = notifications.filter((item) => item.unread).length;
+  const weekCount = countWeekDays(calendarEvents);
+  const learningCards: CrescerHomeCardSpec[] = [
+    { key: "discoveries", title: "Descobertas", body: "Explorar o mundo é incrível.", icon: "discoveries", tone: "mint" },
+    { key: "activities", title: "Atividades", body: "Criar, aprender e evoluir.", icon: "activities", tone: "sun" },
+    { key: "library", title: "Biblioteca", body: "Histórias para imaginar.", icon: "library", tone: "sky" },
+    { key: "games", title: "Jogos", body: "Brincar também é aprender.", icon: "games", tone: "lilac" }
+  ];
+  const dayCards: CrescerHomeCardSpec[] = [
+    { key: "achievements", title: "Conquistas", body: "Medalhas e progressos.", icon: "achievements", tone: "rose" },
+    { key: "agenda", title: "Agenda", body: calendarEvents.length ? `${calendarEvents.length} compromisso${calendarEvents.length === 1 ? "" : "s"}.` : "Sem compromissos agora.", icon: "agenda", tone: "sky" },
+    { key: "notifications", title: "Notificações", body: pendingCount ? `${pendingCount} aviso${pendingCount === 1 ? "" : "s"} novo${pendingCount === 1 ? "" : "s"}.` : "Nenhum aviso novo.", icon: "notifications", tone: "lilac" },
+    { key: "family", title: "Família", body: "Juntos na mesma jornada.", icon: "family", tone: "mint" }
+  ];
+
   return (
-    <View style={styles.missionCard}>
-      <View style={styles.missionIcon}>
-        <Text style={styles.missionEmoji}>★</Text>
+    <View style={styles.crescerHome}>
+      <View style={styles.crescerHomeHeader}>
+        <View style={styles.crescerBrandMark}>
+          <Feather name="book-open" size={28} color={colors.brand} />
+          <View>
+            <Text style={styles.crescerBrandTitle}>Raízes e Saberes</Text>
+            <Text style={styles.crescerBrandSubtitle}>Grandes futuros nascem aqui</Text>
+          </View>
+        </View>
+        <Pressable accessibilityRole="button" accessibilityLabel="Sair do aplicativo" onPress={onLogout} style={styles.crescerLogoutButton}>
+          <Feather name="log-out" size={18} color={colors.brand} />
+        </Pressable>
       </View>
-      <View style={styles.missionText}>
-        <Text style={styles.missionLabel}>Missão de hoje</Text>
-        <Text style={styles.missionTitle}>Descobrir uma história e ganhar uma medalha</Text>
+
+      <View style={styles.crescerWelcomeCard}>
+        <View style={styles.crescerAvatar}>
+          <Text style={styles.crescerAvatarText}>{initialsText}</Text>
+        </View>
+        <View style={styles.crescerWelcomeText}>
+          <Text style={styles.crescerWelcomeTitle}>{loading ? "Carregando..." : `Olá, ${firstName}!`}</Text>
+          <Text style={styles.crescerWelcomeBody}>Hoje tem espaços preparados para brincar, ler e descobrir.</Text>
+        </View>
+        <View style={styles.crescerEncouragement}>
+          <Feather name="feather" size={18} color={colors.child} />
+          <Text style={styles.crescerEncouragementText}>Você consegue!</Text>
+        </View>
       </View>
-      <Badge label="Nova" />
+
+      <View style={styles.crescerMissionCard}>
+        <View style={styles.crescerMissionGlow} />
+        <View style={styles.crescerMissionRibbon} />
+        <View style={styles.crescerMissionIcon}>
+          <Image source={crescerHomeIcons.mission} resizeMode="contain" style={styles.crescerMissionIconImage} />
+        </View>
+        <View style={styles.crescerMissionText}>
+          <Text style={styles.crescerMissionLabel}>Missão de hoje</Text>
+          <Text style={styles.crescerMissionTitle}>Nenhuma missão publicada para agora.</Text>
+        </View>
+        <View style={styles.crescerMissionBadge}>
+          <Text style={styles.crescerMissionBadgeText}>Em breve</Text>
+        </View>
+      </View>
+
+      <View style={styles.crescerStatsRow}>
+        <CrescerStatCard icon={crescerHomeIcons.pending} value={String(pendingCount)} label="Pendências" />
+        <CrescerStatCard icon={crescerHomeIcons.week} value={weekCount ? `${weekCount} dias` : "0 dias"} label="Semana" />
+      </View>
+
+      <CrescerSectionTitle title="Vamos brincar e aprender" />
+      <View style={[styles.crescerLearningGrid, tablet && styles.crescerLearningGridTablet]}>
+        {learningCards.map((item) => (
+          <CrescerFeatureCard key={item.key} item={item} large onPress={() => onOpen(item.key)} />
+        ))}
+      </View>
+
+      <CrescerSectionTitle title="Meu dia" />
+      <View style={[styles.crescerDayGrid, tablet && styles.crescerDayGridTablet]}>
+        {dayCards.map((item) => (
+          <CrescerFeatureCard key={item.key} item={item} onPress={() => onOpen(item.key)} />
+        ))}
+      </View>
     </View>
   );
 }
 
-function FundamentalHomeScreen({ profile, onOpen }: { profile: DemoProfile; onOpen: (key: ModuleKey) => void }) {
-  const data = demoCollections.fundamental;
+type CrescerHomeCardSpec = {
+  key: ModuleKey;
+  title: string;
+  body: string;
+  icon: "achievements" | "activities" | "agenda" | "discoveries" | "family" | "games" | "library" | "notifications";
+  tone: "lilac" | "mint" | "rose" | "sky" | "sun";
+};
+
+function CrescerStatCard({ icon, value, label }: { icon: ImageSourcePropType; value: string; label: string }) {
+  return (
+    <View style={styles.crescerStatCard}>
+      <View style={styles.crescerStatIcon}>
+        <Image source={icon} resizeMode="contain" style={styles.crescerStatIconImage} />
+      </View>
+      <View>
+        <Text style={styles.crescerStatValue}>{value}</Text>
+        <Text style={styles.crescerStatLabel}>{label}</Text>
+      </View>
+    </View>
+  );
+}
+
+function CrescerSectionTitle({ title }: { title: string }) {
+  return (
+    <View style={styles.crescerSectionTitleRow}>
+      <Text style={styles.crescerSectionTitle}>{title}</Text>
+      <View style={styles.crescerSectionStroke} />
+    </View>
+  );
+}
+
+function CrescerFeatureCard({ item, large = false, onPress }: { item: CrescerHomeCardSpec; large?: boolean; onPress: () => void }) {
+  const compact = !large;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={item.title}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.crescerFeatureCard,
+        large && styles.crescerFeatureCardLarge,
+        compact && styles.crescerFeatureCardCompact,
+        toneStyle(item.tone),
+        pressed && tonePressedStyle(item.tone),
+        pressed && styles.crescerFeatureCardPressed
+      ]}
+    >
+      {({ pressed }) => (
+        <>
+          <View style={[styles.crescerFeatureGlow, large && styles.crescerFeatureGlowLarge]} />
+          <View style={[styles.crescerFeatureIcon, large && styles.crescerFeatureIconLarge, compact && styles.crescerFeatureIconCompact, iconToneStyle(item.tone), pressed && styles.crescerFeatureIconPressed]}>
+            <Image source={crescerHomeIcons[item.icon]} resizeMode="contain" style={[styles.crescerFeatureIconImage, large && styles.crescerFeatureIconImageLarge, compact && styles.crescerFeatureIconImageCompact]} />
+          </View>
+          <View style={styles.crescerFeatureCopy}>
+            <Text numberOfLines={large ? 1 : 2} adjustsFontSizeToFit minimumFontScale={0.82} style={[styles.crescerFeatureTitle, compact && styles.crescerFeatureTitleCompact]}>
+              {item.title}
+            </Text>
+            <Text numberOfLines={2} style={[styles.crescerFeatureBody, compact && styles.crescerFeatureBodyCompact]}>{item.body}</Text>
+          </View>
+          <View style={[styles.crescerFeatureArrow, compact && styles.crescerFeatureArrowCompact]}>
+            <Feather name="chevron-right" size={22} color={featureInk(item.tone)} />
+          </View>
+        </>
+      )}
+    </Pressable>
+  );
+}
+
+function CrescerModuleHero({
+  kicker,
+  title,
+  body,
+  icon,
+  tone = "mint",
+  wideCopy = false
+}: {
+  kicker: string;
+  title: string;
+  body: string;
+  icon: keyof typeof crescerHomeIcons;
+  tone?: CrescerHomeCardSpec["tone"];
+  wideCopy?: boolean;
+}) {
+  return (
+    <View style={[styles.crescerModuleHero, toneStyle(tone)]}>
+      <View style={styles.crescerModuleHeroGlow} />
+      <View style={[styles.crescerModuleHeroCopy, wideCopy && styles.crescerModuleHeroCopyWide]}>
+        <Text style={[styles.discoveryKicker, { color: featureInk(tone) }]}>{kicker}</Text>
+        <Text style={[styles.discoveryTitle, styles.crescerModuleHeroTitle]}>{title}</Text>
+        <Text style={styles.discoveryBody}>{body}</Text>
+      </View>
+      <Image source={crescerHomeIcons[icon]} resizeMode="contain" style={[styles.crescerModuleHeroImage, wideCopy && styles.crescerModuleHeroImageCompact]} />
+    </View>
+  );
+}
+
+function toneStyle(tone: CrescerHomeCardSpec["tone"]) {
+  if (tone === "sun") return styles.crescerToneSun;
+  if (tone === "sky") return styles.crescerToneSky;
+  if (tone === "lilac") return styles.crescerToneLilac;
+  if (tone === "rose") return styles.crescerToneRose;
+  return styles.crescerToneMint;
+}
+
+function tonePressedStyle(tone: CrescerHomeCardSpec["tone"]) {
+  if (tone === "sun") return styles.crescerToneSunPressed;
+  if (tone === "sky") return styles.crescerToneSkyPressed;
+  if (tone === "lilac") return styles.crescerToneLilacPressed;
+  if (tone === "rose") return styles.crescerToneRosePressed;
+  return styles.crescerToneMintPressed;
+}
+
+function iconToneStyle(tone: CrescerHomeCardSpec["tone"]) {
+  if (tone === "sun") return styles.crescerIconToneSun;
+  if (tone === "sky") return styles.crescerIconToneSky;
+  if (tone === "lilac") return styles.crescerIconToneLilac;
+  if (tone === "rose") return styles.crescerIconToneRose;
+  return styles.crescerIconToneMint;
+}
+
+function featureInk(tone: CrescerHomeCardSpec["tone"]) {
+  if (tone === "sun") return colors.warning;
+  if (tone === "sky") return "#1673a6";
+  if (tone === "lilac") return "#6d4bb5";
+  if (tone === "rose") return "#b04463";
+  return colors.child;
+}
+
+function countWeekDays(events: CrescerCalendarEvent[]) {
+  const days = new Set(events.map((item) => item.eventDate).filter(Boolean));
+  return days.size;
+}
+
+function initials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
+
+function FundamentalHomeScreen({ profile, session, onOpen }: { profile: AppProfile; session: MobileSession | null; onOpen: (key: ModuleKey) => void }) {
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    if (!session) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    void getStudentProfile(session)
+      .then((nextProfile) => {
+        if (active) setStudentProfile(nextProfile);
+      })
+      .catch(() => {
+        if (active) setStudentProfile(null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  const initials = studentProfile?.initials || "--";
+  const title = studentProfile ? `Olá, ${studentProfile.name.split(" ")[0]}!` : "Contexto indisponível";
+  const className = studentProfile?.className || "Turma não carregada";
+  const schoolName = studentProfile?.schoolName || "Escola não carregada";
+  const realModules = profile.modules;
 
   return (
     <View>
       <View style={styles.fundamentalHero}>
         <View style={styles.fundamentalHeroTop}>
           <View style={styles.fundamentalAvatar}>
-            <Text style={styles.fundamentalAvatarText}>PH</Text>
+            <Text style={styles.fundamentalAvatarText}>{initials}</Text>
           </View>
           <View style={styles.fundamentalHeroCopy}>
             <Text style={styles.fundamentalKicker}>Aluno Fundamental</Text>
-            <Text style={styles.fundamentalHeroTitle}>{profile.homeTitle}</Text>
+            <Text style={styles.fundamentalHeroTitle}>{loading ? "Carregando seu contexto" : title}</Text>
             <Text style={styles.fundamentalHeroMeta}>
-              {profile.className} · {profile.school}
+              {className} · {schoolName}
             </Text>
           </View>
         </View>
-        <Text style={styles.fundamentalHeroIntro}>{profile.homeIntro}</Text>
+        <Text style={styles.fundamentalHeroIntro}>
+          {studentProfile
+            ? "Escolha um espaço para continuar. Os conteúdos aparecem quando sua escola publicar para sua turma."
+            : "Não foi possível carregar o contexto institucional deste acesso agora."}
+        </Text>
       </View>
 
-      <SectionHeader title="Seu dia" />
-      <View style={styles.fundamentalTodayGrid}>
-        {data.today.map((item) => (
-          <View key={`${item.type}-${item.title}`} style={styles.fundamentalTodayCard}>
-            <View style={styles.fundamentalTodayMark}>
-              <Text style={styles.fundamentalTodayMarkText}>{item.mark}</Text>
-            </View>
-            <Text style={styles.fundamentalTodayType}>{item.type}</Text>
-            <Text style={styles.fundamentalTodayTitle}>{item.title}</Text>
-            <Text style={styles.fundamentalTodayMeta}>{item.meta}</Text>
-          </View>
-        ))}
-      </View>
-
-      <SectionHeader title="Continue estudando" />
-      <Pressable accessibilityRole="button" accessibilityLabel={data.continue.title} onPress={() => onOpen("library")} style={styles.fundamentalContinueCard}>
-        <View style={styles.fundamentalContinueCopy}>
-          <Text style={styles.fundamentalCardLabel}>{data.continue.title}</Text>
-          <Text style={styles.fundamentalContinueTitle}>{data.continue.item}</Text>
-          <Text style={styles.fundamentalContinueBody}>{data.continue.description}</Text>
-          <FundamentalProgress value={data.continue.progress} />
-        </View>
-        <View style={styles.fundamentalContinueAction}>
-          <Text style={styles.fundamentalContinueActionText}>{data.continue.action}</Text>
-        </View>
-      </Pressable>
-
-      <View style={styles.fundamentalHighlightRow}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Ver avaliação disponível" onPress={() => onOpen("avalia")} style={styles.fundamentalHighlightCard}>
-          <Text style={styles.fundamentalCardLabel}>{data.avalia.title}</Text>
-          <Text style={styles.fundamentalHighlightTitle}>{data.avalia.subject}</Text>
-          <Text style={styles.fundamentalHighlightBody}>{data.avalia.deadline}</Text>
-          <Text style={styles.fundamentalLinkText}>{data.avalia.action}</Text>
-        </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Abrir notificações" onPress={() => onOpen("notifications")} style={styles.fundamentalHighlightCard}>
-          <View style={styles.fundamentalBadgeRow}>
-            <Text style={styles.fundamentalCardLabel}>{data.notifications.title}</Text>
-            <View style={styles.fundamentalUnreadBadge}>
-              <Text style={styles.fundamentalUnreadText}>{data.notifications.unread}</Text>
-            </View>
-          </View>
-          <Text style={styles.fundamentalHighlightTitle}>Avisos recentes</Text>
-          <Text style={styles.fundamentalHighlightBody}>{data.notifications.description}</Text>
-          <Text style={styles.fundamentalLinkText}>Abrir central</Text>
-        </Pressable>
-      </View>
-
-      <SectionHeader title="Atalhos" />
+      <SectionHeader title="Espaços disponíveis" />
       <View style={styles.fundamentalActionGrid}>
-        {data.quickActions.map((action) => (
-          <FundamentalQuickActionCard key={action.key} action={action} onPress={() => onOpen(action.key as ModuleKey)} />
-        ))}
-      </View>
-
-      <SectionHeader title="Atividades prioritárias" action="Ver todas" />
-      <View style={styles.fundamentalActivityList}>
-        {data.priorityActivities.map((activity) => (
-          <FundamentalActivityCard key={activity.title} activity={activity} />
-        ))}
-      </View>
-
-      <SectionHeader title="Progresso" />
-      <View style={styles.fundamentalProgressGrid}>
-        {data.progress.map((item) => (
-          <View key={item.label} style={styles.fundamentalProgressCard}>
-            <Text style={styles.fundamentalProgressValue}>{item.value}</Text>
-            <Text style={styles.fundamentalProgressLabel}>{item.label}</Text>
-          </View>
+        {realModules.map((module) => (
+          <FundamentalModuleShortcutCard key={module.key} module={module} onPress={() => onOpen(module.key)} />
         ))}
       </View>
     </View>
   );
 }
 
+function FundamentalModuleShortcutCard({ module, onPress }: { module: { key: ModuleKey; label: string; description: string }; onPress: () => void }) {
+  const icon = fundamentalModuleIcon(module.key);
+  const tone = fundamentalModuleTone(module.key);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={module.label}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.fundamentalActionCard,
+        toneStyle(tone),
+        pressed && styles.crescerFeatureCardPressed,
+        pressed && tonePressedStyle(tone)
+      ]}
+    >
+      <View style={styles.crescerFeatureGlow} />
+      <View style={styles.fundamentalActionMark}>
+        <Image source={icon} resizeMode="contain" style={styles.fundamentalActionImage} />
+      </View>
+      <Text style={styles.fundamentalActionTitle}>{module.label}</Text>
+      <Text style={styles.fundamentalActionBody}>{module.description}</Text>
+    </Pressable>
+  );
+}
+
+function fundamentalModuleIcon(key: ModuleKey) {
+  if (key === "activities") return crescerHomeIcons.activities;
+  if (key === "library") return crescerHomeIcons.library;
+  if (key === "avalia") return crescerHomeIcons.achievements;
+  if (key === "agenda") return crescerHomeIcons.agenda;
+  if (key === "notifications") return crescerHomeIcons.notifications;
+  if (key === "profile") return teacherCatalogIcons.personEdit;
+  return teacherCatalogIcons.notebookPencil;
+}
+
+function fundamentalModuleTone(key: ModuleKey): CrescerHomeCardSpec["tone"] {
+  if (key === "activities") return "sun";
+  if (key === "library") return "sky";
+  if (key === "avalia") return "rose";
+  if (key === "agenda") return "sky";
+  if (key === "notifications") return "lilac";
+  return "mint";
+}
+
+function fundamentalActivityIcon() {
+  return teacherCatalogIcons.checklistPencil;
+}
+
+function fundamentalAssessmentIcon(label?: string) {
+  const value = (label ?? "").toLowerCase();
+  if (value.includes("conclu")) return teacherCatalogIcons.trophy;
+  if (value.includes("andamento")) return teacherCatalogIcons.notebookPencil;
+  return teacherCatalogIcons.growthChart;
+}
+
+function fundamentalAgendaIcon(type: FundamentalAgendaItem["type"]) {
+  if (type === "Avaliação") return teacherCatalogIcons.growthChart;
+  if (type === "Atividade") return crescerHomeIcons.activities;
+  return crescerHomeIcons.agenda;
+}
+
+function fundamentalNotificationIcon(type: FundamentalNotification["type"]) {
+  if (type === "Avalia+") return teacherCatalogIcons.growthChart;
+  if (type === "Agenda") return crescerHomeIcons.agenda;
+  return crescerHomeIcons.notifications;
+}
+
+function fundamentalProfileStudyIcon(target: string) {
+  if (target === "activities") return crescerHomeIcons.activities;
+  if (target === "library") return crescerHomeIcons.library;
+  if (target === "avalia") return teacherCatalogIcons.growthChart;
+  if (target === "agenda") return crescerHomeIcons.agenda;
+  return teacherCatalogIcons.notebookPencil;
+}
+
 function FundamentalQuickActionCard({ action, onPress }: { action: FundamentalQuickAction; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={action.label} onPress={onPress} style={styles.fundamentalActionCard}>
       <View style={styles.fundamentalActionMark}>
-        <Text style={styles.fundamentalActionMarkText}>{action.mark}</Text>
+        <Image source={fundamentalProfileStudyIcon(action.key)} resizeMode="contain" style={styles.fundamentalActionImage} />
       </View>
       <Text style={styles.fundamentalActionTitle}>{action.label}</Text>
       <Text style={styles.fundamentalActionBody}>{action.description}</Text>
@@ -246,17 +664,41 @@ function FundamentalQuickActionCard({ action, onPress }: { action: FundamentalQu
 function FundamentalActivityCard({ activity, onPress }: { activity: FundamentalActivity; onPress?: () => void }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`Abrir atividade ${activity.title}`} onPress={onPress} style={styles.fundamentalActivityCard}>
+      <View style={styles.fundamentalActivityIcon}>
+        <Image source={fundamentalActivityIcon()} resizeMode="contain" style={styles.fundamentalActivityIconImage} />
+      </View>
       <View style={styles.fundamentalActivityCopy}>
-        <Text style={styles.fundamentalActivitySubject}>{activity.subject}</Text>
+        <Text style={styles.fundamentalActivitySubject}>{activity.schoolYear || "Atividade"}</Text>
         <Text style={styles.fundamentalActivityTitle}>{activity.title}</Text>
-        <Text style={styles.fundamentalActivityDue}>Prazo: {activity.due}</Text>
-        <FundamentalProgress value={activity.progress} />
+        <Text style={styles.fundamentalActivityDue}>{formatInstitutionalActivityDate(activity.createdAt)}</Text>
+        <FundamentalProgress value={progressFromInstitutionalActivity(activity)} />
       </View>
       <View style={styles.fundamentalStatePill}>
-        <Text style={styles.fundamentalStateText}>{activity.state}</Text>
+        <Text style={styles.fundamentalStateText}>{normalizeFundamentalProgressStatus(activity.progressStatus)}</Text>
       </View>
     </Pressable>
   );
+}
+
+function progressFromInstitutionalActivity(activity: FundamentalActivity) {
+  const state = normalizeFundamentalProgressStatus(activity.progressStatus);
+  if (state === "Concluída") return 100;
+  if (state === "Em andamento") return 50;
+  return 0;
+}
+
+function normalizeFundamentalProgressStatus(status: string | null | undefined) {
+  const normalized = typeof status === "string" ? status.toLowerCase() : "";
+  if (normalized === "completed" || normalized === "concluida" || normalized === "concluída") return "Concluída";
+  if (normalized === "in_progress" || normalized === "em_andamento" || normalized === "em andamento") return "Em andamento";
+  return "Nova";
+}
+
+function formatInstitutionalActivityDate(value: string | null) {
+  if (!value) return "Sem data publicada";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Sem data publicada";
+  return `Publicado em ${date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}`;
 }
 
 function FundamentalProgress({ value, compact = false }: { value: number; compact?: boolean }) {
@@ -292,108 +734,316 @@ type TeacherTrackingMode = "overview" | "student";
 type TeacherNotificationItem = (typeof demoCollections.teacher.modules.notifications)[number];
 type TeacherNotificationFilter = "Tudo" | TeacherNotificationItem["type"];
 
-function TeacherHomeScreen({ profile, onOpen }: { profile: DemoProfile; onOpen: (key: ModuleKey) => void }) {
-  const data = demoCollections.teacher;
+function emptyTeacherClass(): TeacherClassSummary {
+  return {
+    className: "Turma",
+    stage: "Turma",
+    schedule: "Sem horário",
+    students: "0 alunos",
+    studentCount: 0,
+    routine: "Rotina não publicada",
+    nextCommitment: "Sem compromisso publicado",
+    status: "Vazio",
+    room: "Sala",
+    studentsList: []
+  };
+}
 
+function makeTeacherClassSummary(item: TeacherMobileClass, students: RealTeacherClassStudent[]): TeacherClassSummary {
+  return {
+    className: item.name,
+    stage: item.stage,
+    schedule: item.schedule || "Turno",
+    students: `${item.studentCount} alunos`,
+    studentCount: item.studentCount,
+    routine: "Rotina real da turma",
+    nextCommitment: "Sem compromisso publicado",
+    status: item.studentCount > 0 ? "Turma ativa" : "Turma vazia",
+    room: "Sala",
+    studentsList: students.map((student) => ({
+      name: student.name,
+      state: student.status === "ativo" || student.status === "active" ? "Matrícula ativa" : "Cadastro vinculado"
+    }))
+  };
+}
+
+function mapTeacherCalendarEntry(item: RealTeacherCalendarEntry): TeacherAgendaItem {
+  const type = mapTeacherAgendaTypeFromApi(item.entryType);
+  return {
+    id: item.id,
+    title: item.title,
+    type,
+    day: teacherAgendaDayFromDate(item.entryDate),
+    date: formatTeacherDate(item.entryDate),
+    time: formatTeacherTime(item.startTime),
+    className: item.className,
+    description: item.description,
+    action: type === "Avaliação" ? "Abrir Avalia+" : type === "Aula" ? "Registrar aula" : "Ver detalhes",
+    actionTarget: type === "Avaliação" ? "avalia" : type === "Aula" ? "diary" : "detail",
+    status: item.status === "published" ? "Publicado" : "Rascunho",
+    mark: getTeacherAgendaTypeMark(type)
+  };
+}
+
+function mapTeacherCommunicationSummary(item: RealTeacherCommunicationSummary): TeacherCommunicationItem {
+  return {
+    title: item.title,
+    type: item.audienceType === "student" ? "Aluno" : "Turma",
+    audience: item.audienceLabel,
+    date: formatTeacherDate(item.communicationDate),
+    status: item.status === "published" ? "Enviado" : "Rascunho",
+    summary: `${item.deliveredCount} entregues · ${item.unreadCount} não lidos`,
+    message: item.body
+  };
+}
+
+function mapTeacherDiaryEntry(item: RealTeacherDiaryEntry, className: string): TeacherDiaryEntry {
+  return {
+    id: item.id,
+    title: item.title,
+    className,
+    date: formatTeacherDate(item.entryDate),
+    state: item.status === "closed" ? "Concluído" : "Rascunho",
+    summary: item.taughtContent || item.pedagogicalNotes || "Registro sem resumo publicado."
+  };
+}
+
+function makeTeacherDiaryCurrent(summary: RealTeacherDiaryPeriodSummary | null, content: string, record: string): TeacherDiaryCurrent {
+  return {
+    date: todayIsoDate(),
+    planned: summary && summary.publishedCount > 0 ? `${summary.publishedCount} compromisso(s) publicado(s)` : "Sem compromisso publicado para hoje",
+    content,
+    record,
+    activities: ["Sem atividade vinculada"],
+    attendance: {
+      present: summary?.attendancePresent ?? 0,
+      absent: summary?.attendanceAbsent ?? 0,
+      justified: summary?.attendanceJustified ?? 0
+    }
+  };
+}
+
+function emptyTeacherAssessment(): TeacherAvaliaAssessment {
+  return {
+    id: "empty-assessment",
+    title: "Sem avaliação publicada",
+    subject: "Avalia+",
+    description: "Quando houver avaliação para suas turmas, ela aparecerá aqui.",
+    questions: 0,
+    className: "",
+    state: "Disponível",
+    assigned: 0,
+    completed: 0,
+    average: "Em aberto",
+    success: "Sem dados publicados",
+    attention: "Sem dados publicados",
+    action: "Aguardar publicação",
+    availableFrom: "Sem data",
+    dueDate: "Sem prazo",
+    skills: [],
+    students: []
+  };
+}
+
+function mapTeacherAssessmentStatus(status: string | null): TeacherAvaliaAssessment["state"] {
+  const normalized = (status || "").toLowerCase();
+  if (normalized === "closed" || normalized === "completed" || normalized === "encerrada") return "Encerrada";
+  if (normalized === "in_progress" || normalized === "active" || normalized === "applied") return "Em andamento";
+  if (normalized === "published" || normalized === "available") return "Disponível";
+  return "Disponível";
+}
+
+function mapTeacherAssessmentAssignment(item: TeacherAssessmentAssignment): TeacherAvaliaAssessment {
+  const state = mapTeacherAssessmentStatus(item.status);
+  return {
+    id: item.id,
+    title: item.title,
+    subject: item.subject || "Avalia+",
+    description: item.description || "Avaliação publicada para acompanhamento da turma.",
+    questions: 0,
+    className: item.className,
+    state,
+    assigned: 0,
+    completed: 0,
+    average: "Em aberto",
+    success: "Sem dados publicados",
+    attention: "Sem dados publicados",
+    action: state === "Disponível" ? "Ver avaliação" : "Ver resultados",
+    availableFrom: item.availableFrom ? formatTeacherDate(item.availableFrom) : "Sem data",
+    dueDate: item.availableUntil ? formatTeacherDate(item.availableUntil) : "Sem prazo",
+    skills: [],
+    students: []
+  };
+}
+
+function mapTeacherNotificationItem(item: TeacherNotificationCenterItem): TeacherNotificationItem {
+  return {
+    id: item.id,
+    type: "Alertas",
+    title: item.title,
+    summary: item.summary,
+    context: "Central do professor",
+    date: formatTeacherDate(item.deliveredAt),
+    unread: item.unread,
+    message: item.summary || "Notificação publicada para sua rotina.",
+    action: "Abrir notificações",
+    actionTarget: "notifications",
+    mark: "!"
+  };
+}
+
+const teacherQuickActions: TeacherQuickAction[] = [
+  { label: "Enviar recado", description: "Comunicar turma ou estudante.", mark: "!", target: "communication" },
+  { label: "Registrar aula", description: "Atualizar o Diário de Classe.", mark: "D", target: "diary" },
+  { label: "Avalia+", description: "Ver avaliações e resultados.", mark: "A+", target: "avalia" },
+  { label: "Minhas turmas", description: "Ver todas as turmas.", mark: "T", target: "classes" }
+];
+
+function TeacherHomeScreen({ profile, session, onOpen }: { profile: AppProfile; session: MobileSession | null; onOpen: (key: ModuleKey) => void }) {
+  const [summary, setSummary] = useState<TeacherHomeSummary | null>(null);
+  const [classes, setClasses] = useState<TeacherMobileClass[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    if (!session) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    void Promise.all([getTeacherHomeSummary(session), getTeacherMobileClasses(session)])
+      .then(([nextSummary, nextClasses]) => {
+        if (!active) return;
+        setSummary(nextSummary);
+        setClasses(nextClasses);
+      })
+      .catch(() => {
+        if (!active) return;
+        setSummary(null);
+        setClasses([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  const firstClass = classes[0] || null;
+  const homeCards: TeacherTodayItem[] = [
+    { type: "Turmas", title: `${summary?.activeClassLinks ?? 0} turmas ativas`, meta: `${summary?.totalStudents ?? 0} alunos acompanhados`, mark: "T", target: "classes" },
+    { type: "Agenda", title: `${summary?.todaysCalendarCount ?? 0} compromisso(s) hoje`, meta: "Agenda da escola", mark: "◷", target: "agenda" },
+    { type: "Notificações", title: `${summary?.unreadNotifications ?? 0} não lidas`, meta: "Central do professor", mark: "!", target: "notifications" },
+    { type: "Diário", title: "Registros da turma", meta: "Diário de Classe", mark: "D", target: "diary" }
+  ];
   return (
     <View>
       <View style={styles.teacherHero}>
+        <View style={styles.teacherHeroGlow} />
         <View style={styles.teacherHeroTop}>
-          <View style={styles.teacherAvatar}>
-            <Text style={styles.teacherAvatarText}>H</Text>
-          </View>
           <View style={styles.teacherHeroCopy}>
-            <Text style={styles.teacherKicker}>Professor Mobile</Text>
-            <Text style={styles.teacherHeroTitle}>{profile.homeTitle}</Text>
-            <Text style={styles.teacherHeroMeta}>{profile.homeIntro}</Text>
+            <Text style={styles.teacherKicker}>Professora</Text>
+            <Text style={styles.teacherHeroTitle}>{loading ? "Carregando rotina" : `Olá, ${summary?.teacherName || "Professora"}`}</Text>
+            <Text style={styles.teacherHeroMeta}>Juntos por uma educação que floresce.</Text>
           </View>
+          <TeacherSplitIconView icon={{ source: teacherHomeIcons.peopleCalendar, side: "left" }} frameStyle={styles.teacherHeroIconFrame} imageStyle={styles.teacherHeroSplitImage} frameWidth={142} />
           <Pressable accessibilityRole="button" accessibilityLabel="Abrir notificações" onPress={() => onOpen("notifications")} style={styles.teacherBell}>
-            <Text style={styles.teacherBellText}>!</Text>
+            <TeacherSplitIconView icon={{ source: teacherHomeIcons.notifications, side: "left" }} frameStyle={styles.teacherBellIconFrame} imageStyle={styles.teacherBellSplitImage} frameWidth={38} />
+            {(summary?.unreadNotifications ?? 0) > 0 ? <Text style={styles.teacherBellBadge}>{summary?.unreadNotifications}</Text> : null}
           </Pressable>
+        </View>
+        <View style={styles.teacherQuoteBox}>
+          <Text style={styles.teacherQuoteText}>Educar também é acreditar em grandes começos.</Text>
         </View>
       </View>
 
-      <SectionHeader title="Hoje" />
+      <View style={styles.teacherSectionTop}>
+        <Text style={styles.teacherSectionTitle}>Hoje</Text>
+        <Text style={styles.teacherSectionDate}>Segunda-feira, 22 de setembro</Text>
+      </View>
       <View style={styles.teacherTodayGrid}>
-        {data.today.map((item) => (
+        {homeCards.map((item) => (
           <TeacherTodayCard key={`${item.type}-${item.title}`} item={item} onPress={() => onOpen(item.target as ModuleKey)} />
         ))}
       </View>
 
-      <SectionHeader title="Próxima turma" />
-      <Pressable accessibilityRole="button" accessibilityLabel={`Abrir turma ${data.nextClass.className}`} onPress={() => onOpen("classes")} style={styles.teacherNextClassCard}>
-        <View style={styles.teacherNextClassTop}>
-          <View>
-            <Text style={[styles.teacherCardLabel, styles.teacherCardLabelOnDark]}>{data.nextClass.time}</Text>
-            <Text style={styles.teacherNextClassTitle}>{data.nextClass.className}</Text>
-            <Text style={styles.teacherNextClassBody}>{data.nextClass.subject}</Text>
-          </View>
-          <View style={styles.teacherClassBadge}>
-            <Text style={styles.teacherClassBadgeText}>{data.nextClass.students}</Text>
-          </View>
-        </View>
-        <View style={styles.teacherNextClassFooter}>
-          <Text style={styles.teacherNextClassRoom}>{data.nextClass.room}</Text>
-          <Text style={styles.teacherLinkText}>{data.nextClass.action}</Text>
-        </View>
-      </Pressable>
-
       <SectionHeader title="Ações rápidas" />
       <View style={styles.teacherQuickGrid}>
-        {data.quickActions.map((action) => (
+        {teacherQuickActions.map((action) => (
           <TeacherQuickActionCard key={action.label} action={action} onPress={() => onOpen(action.target as ModuleKey)} />
         ))}
       </View>
 
-      <SectionHeader title="Minhas turmas" action="Ver todas" />
-      <View style={styles.teacherClassList}>
-        {data.classes.map((item) => (
-          <TeacherClassCard key={item.className} item={item} onPress={() => onOpen("classes")} />
-        ))}
+      <View style={styles.teacherSectionTop}>
+        <Text style={styles.teacherSectionTitle}>Próxima turma</Text>
+        <Text style={styles.teacherSectionAction}>Ver todas ›</Text>
       </View>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Abrir turma ${firstClass?.name || "turma"}`} onPress={() => onOpen("classes")} style={styles.teacherNextClassCard}>
+        <View style={styles.teacherNextClassCopy}>
+          <Text style={[styles.teacherCardLabel, styles.teacherCardLabelOnDark]}>{firstClass?.schedule || "Turno"}</Text>
+          <Text style={styles.teacherNextClassTitle}>{firstClass?.name || "Nenhuma turma ativa"}</Text>
+          <Text style={styles.teacherNextClassBody}>{firstClass ? "08h00 - 09h40" : "Quando houver turma vinculada, ela aparecerá aqui."}</Text>
+          <Text style={styles.teacherNextClassStudents}>{firstClass ? `${firstClass.studentCount} alunos` : ""}</Text>
+        </View>
+        <TeacherSplitIconView icon={{ source: teacherHomeIcons.peopleCalendar, side: "left" }} frameStyle={styles.teacherNextClassIconFrame} imageStyle={styles.teacherNextClassSplitImage} frameWidth={176} />
+        <View style={styles.teacherNextClassButton}>
+          <Text style={styles.teacherNextClassButtonText}>Acessar turma ›</Text>
+        </View>
+      </Pressable>
 
-      <SectionHeader title="Agenda de hoje" action="Ver agenda" />
-      <View style={styles.teacherAgendaList}>
-        {data.agenda.map((item) => (
-          <TeacherAgendaRow key={`${item.time}-${item.title}`} item={item} onPress={() => onOpen("agenda")} />
-        ))}
-      </View>
-
-      <View style={styles.teacherSummaryGrid}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Abrir comunicação" onPress={() => onOpen("communication")} style={styles.teacherSummaryCard}>
-          <Text style={styles.teacherCardLabel}>Comunicação</Text>
-          <Text style={styles.teacherSummaryTitle}>{data.communication[0].title}</Text>
-          <Text style={styles.teacherSummaryBody}>{data.communication[0].summary}</Text>
-          <Text style={styles.teacherLinkText}>Novo recado</Text>
-        </Pressable>
-
-        <Pressable accessibilityRole="button" accessibilityLabel="Abrir Avalia+" onPress={() => onOpen("avalia")} style={styles.teacherSummaryCard}>
-          <Text style={styles.teacherCardLabel}>{data.avalia.title}</Text>
-          <Text style={styles.teacherSummaryTitle}>{data.avalia.summary}</Text>
-          <Text style={styles.teacherSummaryBody}>{data.avalia.detail}</Text>
-          <Text style={styles.teacherLinkText}>{data.avalia.action}</Text>
-        </Pressable>
-      </View>
-
-      <SectionHeader title="Acompanhamento" />
+      <SectionHeader title="Resumo da semana" />
       <View style={styles.teacherTrackingGrid}>
-        {data.tracking.map((item) => (
-          <View key={item.label} style={styles.teacherTrackingCard}>
-            <Text style={styles.teacherTrackingValue}>{item.value}</Text>
-            <Text style={styles.teacherTrackingLabel}>{item.label}</Text>
-            <Text style={styles.teacherTrackingHelper}>{item.helper}</Text>
-          </View>
-        ))}
+        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.peopleSearch} value={summary?.activeClassLinks ?? 0} label="Turmas" helper="Turmas ativas" />
+        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.groupChat} value={summary?.totalStudents ?? 0} label="Alunos" helper="Vínculos ativos" />
+        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.alertBell} value={summary?.unreadNotifications ?? 0} label="Avisos" helper="Não lidos" />
+        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.calendarClock} value={summary?.todaysCalendarCount ?? 0} label="Atividades" helper="Planejadas" />
+        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.growthChart} value={summary?.unreadNotifications ?? 0} label="Avaliações" helper="Publicadas" />
       </View>
     </View>
   );
 }
 
+function TeacherWeeklyMetricCard({ icon, value, label, helper }: { icon: ImageSourcePropType; value: string | number; label: string; helper: string }) {
+  const tone = teacherWeeklyTone(label);
+
+  return (
+    <View style={[styles.teacherWeeklyCard, styles[`teacherWeeklyCard${tone}`]]}>
+      <View style={styles.teacherWeeklyGlow} />
+      <View style={styles.teacherWeeklyRelief} />
+      <View style={styles.teacherWeeklyIconFrame}>
+        <Image source={icon} resizeMode="contain" style={styles.teacherWeeklyIconImage} />
+      </View>
+      <View style={styles.teacherWeeklyCopy}>
+        <Text style={styles.teacherTrackingValue}>{value}</Text>
+        <Text style={styles.teacherTrackingLabel}>{label}</Text>
+        <Text style={styles.teacherTrackingHelper}>{helper}</Text>
+      </View>
+    </View>
+  );
+}
+
+function teacherWeeklyTone(label: string): "Classes" | "Students" | "Alerts" | "Activities" | "Assessments" {
+  if (label === "Turmas") return "Classes";
+  if (label === "Alunos") return "Students";
+  if (label === "Avisos") return "Alerts";
+  if (label === "Atividades") return "Activities";
+  return "Assessments";
+}
+
+function teacherProfileMetricTone(label: string): "Classes" | "Students" | "Activities" | "Assessments" {
+  if (label.includes("Turmas")) return "Classes";
+  if (label.includes("Compromissos")) return "Activities";
+  if (label.includes("Diário")) return "Students";
+  return "Assessments";
+}
+
 function TeacherTodayCard({ item, onPress }: { item: TeacherTodayItem; onPress: () => void }) {
+  const icon = teacherTodayIcon(item.type);
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`${item.type}: ${item.title}`} onPress={onPress} style={styles.teacherTodayCard}>
       <View style={styles.teacherTodayMark}>
-        <Text style={styles.teacherTodayMarkText}>{item.mark}</Text>
+        <TeacherSplitIconView icon={icon} frameStyle={styles.teacherTodayIconFrame} imageStyle={styles.teacherTodaySplitImage} frameWidth={76} />
       </View>
       <Text style={styles.teacherTodayType}>{item.type}</Text>
       <Text style={styles.teacherTodayTitle}>{item.title}</Text>
@@ -403,15 +1053,79 @@ function TeacherTodayCard({ item, onPress }: { item: TeacherTodayItem; onPress: 
 }
 
 function TeacherQuickActionCard({ action, onPress }: { action: TeacherQuickAction; onPress: () => void }) {
+  const icon = teacherQuickIcon(action.target);
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={action.label} onPress={onPress} style={styles.teacherQuickCard}>
       <View style={styles.teacherQuickMark}>
-        <Text style={styles.teacherQuickMarkText}>{action.mark}</Text>
+        <TeacherSplitIconView icon={icon} frameStyle={styles.teacherQuickIconFrame} imageStyle={styles.teacherQuickSplitImage} frameWidth={96} />
       </View>
       <Text style={styles.teacherQuickTitle}>{action.label}</Text>
       <Text style={styles.teacherQuickBody}>{action.description}</Text>
     </Pressable>
   );
+}
+
+function TeacherSplitIconView({
+  icon,
+  frameStyle,
+  imageStyle,
+  frameWidth
+}: {
+  icon: TeacherSplitIcon;
+  frameStyle: object;
+  imageStyle: object;
+  frameWidth: number;
+}) {
+  return (
+    <View style={frameStyle}>
+      <Image source={icon.source} resizeMode="contain" style={[imageStyle, { transform: [{ translateX: icon.side === "right" ? -frameWidth : 0 }] }]} />
+    </View>
+  );
+}
+
+function teacherTodayIcon(type: string): TeacherSplitIcon {
+  if (type === "Turmas") return { source: teacherHomeIcons.peopleCalendar, side: "left" };
+  if (type === "Agenda") return { source: teacherHomeIcons.peopleCalendar, side: "right" };
+  if (type === "Notificações") return { source: teacherHomeIcons.notifications, side: "left" };
+  return { source: teacherHomeIcons.notifications, side: "right" };
+}
+
+function teacherQuickIcon(target: ModuleKey | string): TeacherSplitIcon {
+  if (target === "communication") return { source: teacherHomeIcons.communication, side: "left" };
+  if (target === "diary") return { source: teacherHomeIcons.diary, side: "right" };
+  if (target === "avalia") return { source: teacherHomeIcons.avalia, side: "right" };
+  return { source: teacherHomeIcons.peopleCalendar, side: "left" };
+}
+
+function teacherModuleIcon(title: string): TeacherSplitIcon {
+  if (title.includes("Comunicação") || title.includes("recado")) return { source: teacherHomeIcons.communication, side: "left" };
+  if (title.includes("Diário")) return { source: teacherHomeIcons.diary, side: "right" };
+  if (title.includes("Avalia")) return { source: teacherHomeIcons.avalia, side: "right" };
+  if (title.includes("Notificações")) return { source: teacherHomeIcons.notifications, side: "left" };
+  if (title.includes("Frequência") || title.includes("turmas") || title.includes("Agenda")) return { source: teacherHomeIcons.peopleCalendar, side: "right" };
+  return { source: teacherHomeIcons.peopleCalendar, side: "left" };
+}
+
+function teacherClassActionIcon(label: string): ImageSourcePropType {
+  if (label.includes("chamada")) return teacherCatalogIcons.checklistPencil;
+  if (label.includes("recado")) return teacherCatalogIcons.groupChat;
+  if (label.includes("aula")) return teacherCatalogIcons.notebookPencil;
+  if (label.includes("Agenda")) return teacherCatalogIcons.calendarClock;
+  if (label.includes("Avalia")) return teacherCatalogIcons.growthChart;
+  return teacherCatalogIcons.peopleSearch;
+}
+
+function teacherProfileMetricIcon(label: string): ImageSourcePropType {
+  if (label.includes("Turmas")) return teacherCatalogIcons.peopleSearch;
+  if (label.includes("Compromissos")) return teacherCatalogIcons.calendarClock;
+  if (label.includes("Diário")) return teacherCatalogIcons.notebookPencil;
+  return teacherCatalogIcons.trophy;
+}
+
+function teacherProfilePreferenceIcon(title: string): ImageSourcePropType {
+  if (title.includes("Notificações")) return teacherCatalogIcons.alertBell;
+  if (title.includes("Acessibilidade")) return teacherCatalogIcons.careSettings;
+  return teacherCatalogIcons.chatBubbles;
 }
 
 function TeacherClassCard({ item, onPress }: { item: TeacherClassSummary; onPress: () => void }) {
@@ -441,45 +1155,19 @@ function TeacherAgendaRow({ item, onPress }: { item: TeacherAgendaItem; onPress:
   );
 }
 
-const discoveryAdventures = [
-  {
-    mark: "♪",
-    title: "Sons da natureza",
-    subtitle: "Escute, imagine e encontre os sons do jardim.",
-    tag: "Ouvir"
-  },
-  {
-    mark: "△",
-    title: "Formas da cidade",
-    subtitle: "Procure círculos, linhas e caminhos ao seu redor.",
-    tag: "Olhar"
-  },
-  {
-    mark: "✦",
-    title: "Pequenos cientistas",
-    subtitle: "Misture ideias e descubra o que acontece.",
-    tag: "Explorar"
-  },
-  {
-    mark: "☼",
-    title: "Cores do dia",
-    subtitle: "Escolha uma cor e conte onde ela aparece.",
-    tag: "Criar"
-  }
-];
-
-type CrescerActivity = (typeof demoCollections.activities)[number];
 type CrescerBook = (typeof demoCollections.books)[number];
-type CrescerGame = (typeof demoCollections.games)[number];
-type CrescerAchievement = (typeof demoCollections.achievements.medals)[number];
+type CrescerAchievement = StudentAchievement & {
+  mark: string;
+  message: string;
+};
 type CrescerAgendaItem = (typeof demoCollections.agenda.today)[number] | (typeof demoCollections.agenda.upcoming)[number];
 type CrescerNotification = (typeof demoCollections.childNotifications)[number];
-type CrescerProfilePreference = (typeof demoCollections.childProfile.preferences)[number];
 type FundamentalQuickAction = (typeof demoCollections.fundamental.quickActions)[number];
-type FundamentalActivity = (typeof demoCollections.fundamental.priorityActivities)[number];
+type FundamentalActivity = InstitutionalActivity;
 type FundamentalBook = (typeof demoCollections.fundamental.books)[number];
 type FundamentalBookCategory = (typeof demoCollections.fundamental.bookCategories)[number];
 type FundamentalAssessment = (typeof demoCollections.fundamental.assessments)[number];
+type FundamentalAssessmentItem = StudentAssessmentAssignment;
 type FundamentalAgendaItem = (typeof demoCollections.fundamental.agenda.items)[number];
 type FundamentalAgendaFilter = (typeof demoCollections.fundamental.agenda.filters)[number];
 type FundamentalNotification = (typeof demoCollections.fundamental.notificationItems)[number];
@@ -488,106 +1176,465 @@ type FundamentalProfileProgress = (typeof demoCollections.fundamental.profile.pr
 type FundamentalProfileStudy = (typeof demoCollections.fundamental.profile.studies)[number];
 type FundamentalProfileSetting = (typeof demoCollections.fundamental.profile.settings)[number];
 
-function DiscoveryScreen() {
+function DiscoveryScreen({ session, onOpenDiscovery }: { session: MobileSession | null; onOpenDiscovery: (discovery: EarlyChildhoodDiscovery) => void }) {
+  const [discoveries, setDiscoveries] = useState<EarlyChildhoodDiscovery[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  const loadDiscoveries = useCallback(async () => {
+    if (!session) {
+      setDiscoveries([]);
+      setLoading(false);
+      setFailed(true);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    try {
+      setDiscoveries(await getEarlyChildhoodDiscoveries(session));
+    } catch (_error) {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    void loadDiscoveries();
+  }, [loadDiscoveries]);
+
+  return (
+    <View>
+      <CrescerModuleHero kicker="Vamos descobrir" title="Descobertas" body="Escolha uma aventura para descobrir algo novo." icon="discoveries" tone="mint" />
+
+      {loading ? (
+        <View style={styles.libraryStateCard}>
+          <ActivityIndicator color={colors.child} />
+          <Text style={styles.libraryStateTitle}>Carregando descobertas</Text>
+          <Text style={styles.libraryStateBody}>Estamos preparando as experiências da sua turma.</Text>
+        </View>
+      ) : failed ? (
+        <EmptyState title="Descobertas indisponíveis" body="Tente entrar novamente em alguns instantes." />
+      ) : discoveries.length ? (
+        <>
+          <SectionHeader title="Novas aventuras" />
+          <View style={styles.discoveryGrid}>
+            {discoveries.map((item) => (
+              <DiscoveryAdventureCard key={item.id} discovery={item} onPress={() => onOpenDiscovery(item)} />
+            ))}
+          </View>
+        </>
+      ) : (
+        <EmptyState title="Nada por aqui agora" body="Quando sua turma tiver uma descoberta, ela aparece aqui." />
+      )}
+    </View>
+  );
+}
+
+function DiscoveryDetailScreen({ session, discoveryId, onOpenActivity }: { session: MobileSession | null; discoveryId: string; onOpenActivity: (activityId: string) => void }) {
+  const [discovery, setDiscovery] = useState<EarlyChildhoodDiscovery | null>(null);
+  const [sceneAsset, setSceneAsset] = useState<EarlyChildhoodAsset | null>(null);
+  const [sceneFailed, setSceneFailed] = useState(false);
+  const [selectedHotspot, setSelectedHotspot] = useState<EarlyChildhoodDiscoveryHotspot | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const loadDiscovery = useCallback(async () => {
+    if (!session) {
+      setLoading(false);
+      setFailed(true);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    setSceneFailed(false);
+    try {
+      const nextDiscovery = await getEarlyChildhoodDiscovery(session, discoveryId);
+      setDiscovery(nextDiscovery);
+      setSelectedHotspot(nextDiscovery.hotspots[0] ?? null);
+      if (nextDiscovery.sceneAssetId) {
+        try {
+          setSceneAsset(await getEarlyChildhoodDiscoveryAsset(session, nextDiscovery.id, nextDiscovery.sceneAssetId));
+        } catch (_sceneError) {
+          setSceneAsset(null);
+          setSceneFailed(true);
+        }
+      } else {
+        setSceneAsset(null);
+      }
+    } catch (_error) {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [discoveryId, session]);
+
+  useEffect(() => {
+    void loadDiscovery();
+  }, [loadDiscovery]);
+
+  const updateDiscoveryProgress = useCallback(
+    async (hotspot: EarlyChildhoodDiscoveryHotspot) => {
+      if (!session || !discovery || saving || !isDiscoveryHotspotAvailable(hotspot)) return;
+      const discoveredHotspots = Array.from(new Set([...discovery.discoveredHotspots, hotspot.legacyId]));
+      const completionActivityId = stringValue(discovery.completionRule.activity_legacy_id);
+      const shouldComplete = hotspot.targetType === "activity" && hotspot.targetLegacyId === completionActivityId;
+      setSaving(true);
+      try {
+        const progress = await saveEarlyChildhoodDiscoveryProgress(session, discovery.id, shouldComplete ? "COMPLETED" : "IN_PROGRESS", discoveredHotspots);
+        setDiscovery((current) =>
+          current
+            ? {
+                ...current,
+                progressStatus: progress.status,
+                discoveredHotspots: progress.discoveredHotspots,
+                updatedAt: progress.updatedAt
+              }
+            : current
+        );
+      } finally {
+        setSaving(false);
+      }
+    },
+    [discovery, saving, session]
+  );
+
+  const handleHotspotPress = useCallback(
+    async (hotspot: EarlyChildhoodDiscoveryHotspot) => {
+      setSelectedHotspot(hotspot);
+      if (!isDiscoveryHotspotAvailable(hotspot)) return;
+      await updateDiscoveryProgress(hotspot);
+      if (hotspot.targetType === "activity" && hotspot.targetLegacyId === "RS-EI4-V1-INT-001") {
+        onOpenActivity("02d10000-0000-4000-8000-000000000011");
+      }
+    },
+    [onOpenActivity, updateDiscoveryProgress]
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.libraryStateCard}>
+        <ActivityIndicator color={colors.child} />
+        <Text style={styles.libraryStateTitle}>Abrindo descoberta</Text>
+        <Text style={styles.libraryStateBody}>Estamos preparando a experiência para você.</Text>
+      </View>
+    );
+  }
+
+  if (failed || !discovery) {
+    return <EmptyState title="Descoberta indisponível" body="Volte e tente abrir esta experiência novamente." />;
+  }
+
   return (
     <View>
       <View style={styles.discoveryHero}>
-        <Text style={styles.discoveryKicker}>Vamos descobrir</Text>
-        <Text style={styles.discoveryTitle}>Descobertas</Text>
-        <Text style={styles.discoveryBody}>Escolha uma aventura para descobrir algo novo.</Text>
+        <Text style={styles.discoveryKicker}>{discoveryStatusLabel(discovery)}</Text>
+        <Text style={styles.discoveryTitle}>{discovery.title}</Text>
+        <Text style={styles.discoveryBody}>{discovery.description}</Text>
       </View>
 
-      <SectionHeader title="Novas aventuras" />
-      <View style={styles.discoveryGrid}>
-        {discoveryAdventures.map((item) => (
-          <DiscoveryAdventureCard key={item.title} {...item} />
+      <View style={styles.discoverySceneCard}>
+        {sceneAsset?.signedUrl ? <Image source={{ uri: sceneAsset.signedUrl }} resizeMode="cover" style={styles.discoverySceneImage} /> : null}
+        {sceneFailed ? <Text style={styles.activityAssetWarning}>Cena temporariamente indisponível. A experiência continua liberada.</Text> : null}
+        {discovery.hotspots.map((hotspot) => (
+          <DiscoveryHotspotButton key={hotspot.legacyId} hotspot={hotspot} completed={discovery.discoveredHotspots.includes(hotspot.legacyId)} onPress={() => handleHotspotPress(hotspot)} />
         ))}
+      </View>
+
+      <View style={styles.activityStepCard}>
+        <Text style={styles.activityStepTitle}>{selectedHotspot?.title || "Explore a cena"}</Text>
+        <Text style={styles.activityStepBody}>{selectedHotspot?.description || discovery.studentInstruction || "Toque nos pontos da cena para descobrir novas pistas."}</Text>
+        {selectedHotspot && !isDiscoveryHotspotAvailable(selectedHotspot) ? <Text style={styles.activityAssetWarning}>Esta mídia está sendo preparada para a turma.</Text> : null}
+        {saving ? <Text style={styles.activityAssetWarning}>Salvando descoberta...</Text> : null}
       </View>
     </View>
   );
 }
 
-function ActivitiesScreen({ onOpenActivity }: { onOpenActivity: (activity: CrescerActivity) => void }) {
-  const featured = demoCollections.activities[1] ?? demoCollections.activities[0];
-  const otherActivities = demoCollections.activities.filter((item) => item.title !== featured.title);
+function DiscoveryHotspotButton({ hotspot, completed, onPress }: { hotspot: EarlyChildhoodDiscoveryHotspot; completed: boolean; onPress: () => void }) {
+  const available = isDiscoveryHotspotAvailable(hotspot);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={hotspot.accessibilityLabel}
+      onPress={onPress}
+      style={[
+        styles.discoveryHotspot,
+        {
+          left: `${Math.max(0, Math.min(hotspot.xPercent, 90))}%`,
+          top: `${Math.max(0, Math.min(hotspot.yPercent, 90))}%`,
+          width: `${Math.max(18, Math.min(hotspot.widthPercent, 90))}%`,
+          minHeight: Math.max(44, hotspot.heightPercent * 2)
+        },
+        !available ? styles.discoveryHotspotUnavailable : null,
+        completed ? styles.discoveryHotspotCompleted : null
+      ]}
+    >
+      <Text style={styles.discoveryHotspotText}>{available ? hotspot.title : "Em preparação"}</Text>
+    </Pressable>
+  );
+}
+
+function ActivitiesScreen({ session, onOpenActivity }: { session: MobileSession | null; onOpenActivity: (activity: EarlyChildhoodActivity) => void }) {
+  const [activities, setActivities] = useState<EarlyChildhoodActivity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  const loadActivities = useCallback(async () => {
+    if (!session) {
+      setActivities([]);
+      setLoading(false);
+      setFailed(true);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    try {
+      setActivities(await getEarlyChildhoodActivities(session));
+    } catch (_error) {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    void loadActivities();
+  }, [loadActivities]);
+
+  const featured = activities.find((activity) => activity.progressStatus === "IN_PROGRESS") ?? activities[0];
+  const otherActivities = featured ? activities.filter((item) => item.id !== featured.id) : [];
 
   return (
     <View>
-      <View style={styles.activitiesHero}>
-        <Text style={styles.discoveryKicker}>Vamos brincar?</Text>
-        <Text style={styles.discoveryTitle}>Atividades</Text>
-        <Text style={styles.discoveryBody}>Escolha uma atividade e continue aprendendo brincando!</Text>
-      </View>
+      <CrescerModuleHero kicker="Vamos brincar?" title="Atividades" body="Escolha uma atividade e continue aprendendo brincando!" icon="activities" tone="sun" />
 
-      <SectionHeader title="Que tal continuar?" />
-      <FeaturedActivityCard activity={featured} onPress={() => onOpenActivity(featured)} />
+      {loading ? (
+        <View style={styles.libraryStateCard}>
+          <ActivityIndicator color={colors.child} />
+          <Text style={styles.libraryStateTitle}>Carregando atividades</Text>
+          <Text style={styles.libraryStateBody}>Estamos preparando as propostas da sua turma.</Text>
+        </View>
+      ) : failed ? (
+        <EmptyState title="Atividades indisponíveis" body="Tente entrar novamente em alguns instantes." />
+      ) : featured ? (
+        <>
+          <SectionHeader title="Que tal continuar?" />
+          <FeaturedActivityCard activity={featured} onPress={() => onOpenActivity(featured)} />
 
-      <SectionHeader title="Para você" />
-      <View style={styles.activityList}>
-        {otherActivities.map((activity) => (
-          <ActivityCard key={activity.title} activity={activity} onPress={() => onOpenActivity(activity)} />
-        ))}
-      </View>
+          <SectionHeader title="Para você" />
+          <View style={styles.activityList}>
+            {otherActivities.map((activity) => (
+              <ActivityCard key={activity.id} activity={activity} onPress={() => onOpenActivity(activity)} />
+            ))}
+          </View>
+        </>
+      ) : (
+        <EmptyState title="Nada por aqui agora" body="Quando sua turma tiver uma atividade, ela aparece aqui." />
+      )}
     </View>
   );
 }
 
-function FeaturedActivityCard({ activity, onPress }: { activity: CrescerActivity; onPress: () => void }) {
+function FeaturedActivityCard({ activity, onPress }: { activity: EarlyChildhoodActivity; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`${activity.title}. ${activity.description}`} onPress={onPress} style={styles.featuredActivity}>
       <View style={styles.featuredActivityMark}>
-        <Text style={styles.featuredActivityMarkText}>{activity.mark}</Text>
+        <Text style={styles.featuredActivityMarkText}>{activityMark(activity)}</Text>
       </View>
-      <Text style={styles.activityStatus}>{activity.status}</Text>
+      <Text style={styles.activityStatus}>{activityStatusLabel(activity)}</Text>
       <Text style={styles.featuredActivityTitle}>{activity.title}</Text>
       <Text style={styles.featuredActivityBody}>{activity.description}</Text>
-      <ProgressPill value={activity.progress} />
+      <ProgressPill value={activity.percentComplete} />
       <View style={styles.activityAction}>
-        <Text style={styles.activityActionText}>{activity.action}</Text>
+        <Text style={styles.activityActionText}>{activityActionLabel(activity)}</Text>
       </View>
     </Pressable>
   );
 }
 
-function ActivityCard({ activity, onPress }: { activity: CrescerActivity; onPress: () => void }) {
+function ActivityCard({ activity, onPress }: { activity: EarlyChildhoodActivity; onPress: () => void }) {
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`${activity.title}. ${activity.status}`} onPress={onPress} style={styles.activityCard}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`${activity.title}. ${activityStatusLabel(activity)}`} onPress={onPress} style={styles.activityCard}>
       <View style={styles.activityMark}>
-        <Text style={styles.activityMarkText}>{activity.mark}</Text>
+        <Text style={styles.activityMarkText}>{activityMark(activity)}</Text>
       </View>
       <View style={styles.activityCopy}>
-        <Text style={styles.activityStatus}>{activity.status}</Text>
+        <Text style={styles.activityStatus}>{activityStatusLabel(activity)}</Text>
         <Text style={styles.activityTitle}>{activity.title}</Text>
         <Text style={styles.activityBody}>{activity.description}</Text>
-        {activity.progress > 0 && activity.progress < 100 ? <ProgressPill value={activity.progress} compact /> : null}
-        {activity.progress === 100 ? <Text style={styles.activityDoneText}>Muito bem, atividade concluída!</Text> : null}
+        {activity.percentComplete > 0 && activity.percentComplete < 100 ? <ProgressPill value={activity.percentComplete} compact /> : null}
+        {activity.percentComplete === 100 ? <Text style={styles.activityDoneText}>Muito bem, atividade concluída!</Text> : null}
       </View>
       <Text style={styles.discoveryChevron}>›</Text>
     </Pressable>
   );
 }
 
-function ActivityDetailScreen({ activity }: { activity: CrescerActivity }) {
+function ActivityDetailScreen({ session, activityId }: { session: MobileSession | null; activityId: string }) {
+  const [activity, setActivity] = useState<EarlyChildhoodActivity | null>(null);
+  const [privateAsset, setPrivateAsset] = useState<EarlyChildhoodAsset | null>(null);
+  const [assetFailed, setAssetFailed] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [progressError, setProgressError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const loadActivity = useCallback(async () => {
+    if (!session) {
+      setLoading(false);
+      setFailed(true);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    setAssetFailed(false);
+    setProgressError("");
+    try {
+      const nextActivity = await getEarlyChildhoodActivity(session, activityId);
+      setActivity(nextActivity);
+      const assetId = nextActivity.sceneAssetId || nextActivity.coverAssetId;
+      if (assetId) {
+        try {
+          setPrivateAsset(await getEarlyChildhoodActivityAsset(session, nextActivity.id, assetId));
+        } catch (_assetError) {
+          setPrivateAsset(null);
+          setAssetFailed(true);
+        }
+      } else {
+        setPrivateAsset(null);
+      }
+    } catch (_error) {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [activityId, session]);
+
+  useEffect(() => {
+    void loadActivity();
+  }, [loadActivity]);
+
+  const updateProgress = useCallback(
+    async (complete: boolean) => {
+      if (!session || !activity || saving) return;
+      setSaving(true);
+      setProgressError("");
+      try {
+        const progress = await saveEarlyChildhoodActivityProgress(session, activity.id, complete ? "COMPLETED" : "IN_PROGRESS", complete ? 100 : Math.max(35, activity.percentComplete || 0));
+        setActivity((current) =>
+          current
+            ? {
+                ...current,
+                progressStatus: progress.status,
+                percentComplete: progress.percentComplete,
+                updatedAt: progress.updatedAt
+              }
+            : current
+        );
+        try {
+          const nextActivity = await getEarlyChildhoodActivity(session, activity.id);
+          setActivity(nextActivity);
+        } catch (_reloadError) {
+          // The progress write already succeeded; keep the optimistic state.
+        }
+      } catch (saveError) {
+        setProgressError(saveError instanceof Error ? saveError.message : "progress_save_failed");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [activity, saving, session]
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.libraryStateCard}>
+        <ActivityIndicator color={colors.child} />
+        <Text style={styles.libraryStateTitle}>Abrindo atividade</Text>
+        <Text style={styles.libraryStateBody}>Estamos preparando a proposta para você.</Text>
+      </View>
+    );
+  }
+
+  if (failed || !activity) {
+    return <EmptyState title="Atividade indisponível" body="Volte e tente abrir esta proposta novamente." />;
+  }
+
   return (
     <View>
       <View style={styles.activityDetailHero}>
         <View style={styles.activityDetailMark}>
-          <Text style={styles.activityDetailMarkText}>{activity.mark}</Text>
+          <Text style={styles.activityDetailMarkText}>{activityMark(activity)}</Text>
         </View>
-        <Text style={styles.discoveryKicker}>{activity.status}</Text>
+        <Text style={styles.discoveryKicker}>{activityStatusLabel(activity)}</Text>
         <Text style={styles.discoveryTitle}>{activity.title}</Text>
         <Text style={styles.discoveryBody}>{activity.description}</Text>
-        {activity.progress > 0 ? <ProgressPill value={activity.progress} /> : null}
+        {activity.percentComplete > 0 ? <ProgressPill value={activity.percentComplete} /> : null}
       </View>
 
       <View style={styles.activityStepCard}>
         <Text style={styles.activityStepTitle}>Preparar, apontar, brincar</Text>
-        <Text style={styles.activityStepBody}>Quando você tocar no botão, a atividade começa aqui com uma proposta simples e divertida.</Text>
+        <Text style={styles.activityStepBody}>{activity.instruction || "Quando você tocar no botão, a atividade começa aqui com uma proposta simples e divertida."}</Text>
+        {privateAsset?.signedUrl ? <Image source={{ uri: privateAsset.signedUrl }} resizeMode="cover" style={styles.activityPrivateImage} /> : null}
+        {assetFailed ? <Text style={styles.activityAssetWarning}>Imagem privada temporariamente indisponível. A atividade continua liberada.</Text> : null}
+        {progressError ? <Text style={styles.activityAssetWarning}>Não foi possível salvar o progresso agora. {progressError}</Text> : null}
       </View>
 
-      <PrimaryButton label={activity.action === "Ver" ? "Ver atividade" : activity.action} onPress={() => undefined} />
+      {activity.progressStatus === "COMPLETED" ? (
+        <PrimaryButton label={saving ? "Salvando..." : "Concluir novamente"} onPress={() => updateProgress(true)} />
+      ) : activity.progressStatus === "IN_PROGRESS" ? (
+        <PrimaryButton label={saving ? "Salvando..." : "Concluir atividade"} onPress={() => updateProgress(true)} />
+      ) : (
+        <PrimaryButton label={saving ? "Salvando..." : "Iniciar atividade"} onPress={() => updateProgress(false)} />
+      )}
     </View>
   );
+}
+
+function activityMark(activity: EarlyChildhoodActivity) {
+  if (activity.legacyId === "RS-EI4-V1-INT-001") return "✦";
+  return "✓";
+}
+
+function activityStatusLabel(activity: EarlyChildhoodActivity) {
+  if (activity.progressStatus === "COMPLETED") return "Concluída";
+  if (activity.progressStatus === "IN_PROGRESS") return "Em andamento";
+  return "Nova";
+}
+
+function discoveryStatusLabel(discovery: EarlyChildhoodDiscovery) {
+  if (discovery.progressStatus === "COMPLETED") return "Concluída";
+  if (discovery.progressStatus === "IN_PROGRESS") return "Em andamento";
+  return "Nova";
+}
+
+function discoveryActionLabel(discovery: EarlyChildhoodDiscovery) {
+  if (discovery.progressStatus === "COMPLETED") return "Rever";
+  if (discovery.progressStatus === "IN_PROGRESS") return "Continuar";
+  return "Explorar";
+}
+
+function discoveryMark(discovery: EarlyChildhoodDiscovery) {
+  if (discovery.legacyId === "RS-EI4-V1-EXP-001") return "✦";
+  return "⌕";
+}
+
+function isDiscoveryHotspotAvailable(hotspot: EarlyChildhoodDiscoveryHotspot) {
+  if (hotspot.actionType === "open_activity" && hotspot.targetType === "activity") return true;
+  if (hotspot.assetLegacyId?.startsWith("css:")) return true;
+  return false;
+}
+
+function stringValue(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function activityActionLabel(activity: EarlyChildhoodActivity) {
+  if (activity.progressStatus === "COMPLETED") return "Ver";
+  if (activity.progressStatus === "IN_PROGRESS") return "Continuar";
+  return "Iniciar";
 }
 
 function ProgressPill({ value, compact }: { value: number; compact?: boolean }) {
@@ -598,87 +1645,291 @@ function ProgressPill({ value, compact }: { value: number; compact?: boolean }) 
   );
 }
 
-function LibraryScreen({ onOpenBook }: { onOpenBook: (book: CrescerBook) => void }) {
-  const featured = demoCollections.books[0];
-  const shelf = demoCollections.books.slice(1);
+function LibraryScreen({ session, onOpenBook }: { session: MobileSession | null; onOpenBook: (book: LibraryBook) => void }) {
+  const [books, setBooks] = useState<LibraryBook[]>([]);
+  const [coverUrls, setCoverUrls] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  const loadBooks = useCallback(async () => {
+    if (!session) {
+      setLoading(false);
+      setFailed(true);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    try {
+      const nextBooks = await getLibraryBooks(session);
+      setBooks(nextBooks);
+      const missingCoverBooks = nextBooks.filter((book) => !book.coverUrl);
+      missingCoverBooks.forEach((book) => {
+        void getLibraryPageAsset(session, book.id, 1)
+          .then((asset) => setCoverUrls((current) => ({ ...current, [book.id]: asset.signedUrl })))
+          .catch(() => undefined);
+      });
+    } catch (_error) {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    void loadBooks();
+  }, [loadBooks]);
+
+  const featured = books.find((book) => book.percentComplete > 0) ?? books[0];
+  const shelf = featured ? books.filter((book) => book.id !== featured.id) : books;
 
   return (
     <View>
-      <View style={styles.libraryHero}>
-        <Text style={styles.discoveryKicker}>Estante da turma</Text>
-        <Text style={styles.discoveryTitle}>Biblioteca</Text>
-        <Text style={styles.discoveryBody}>Escolha uma história para ler e descobrir.</Text>
-      </View>
+      <CrescerModuleHero kicker="Estante da turma" title="Biblioteca" body="Escolha uma história para ler e descobrir." icon="library" tone="sky" wideCopy />
 
-      <SectionHeader title="História em destaque" />
-      <Pressable accessibilityRole="button" accessibilityLabel={`Ler ${featured.title}`} onPress={() => onOpenBook(featured)} style={styles.featuredBook}>
-        <BookCover book={featured} large />
-        <View style={styles.featuredBookCopy}>
-          <Text style={styles.bookCategory}>{featured.category}</Text>
-          <Text style={styles.featuredBookTitle}>{featured.title}</Text>
-          <Text style={styles.featuredBookBody}>{featured.description}</Text>
-          <View style={styles.bookAction}>
-            <Text style={styles.bookActionText}>Ler agora</Text>
-          </View>
+      {loading ? (
+        <View style={styles.libraryStateCard}>
+          <ActivityIndicator color={colors.child} />
+          <Text style={styles.libraryStateTitle}>Carregando histórias</Text>
+          <Text style={styles.libraryStateBody}>Estamos abrindo a estante da sua turma.</Text>
         </View>
-      </Pressable>
+      ) : failed ? (
+        <View style={styles.libraryStateCard}>
+          <EmptyState title="Não conseguimos abrir a estante" body="Tente novamente em instantes." />
+          <PrimaryButton label="Tentar novamente" onPress={loadBooks} />
+        </View>
+      ) : !featured ? (
+        <EmptyState title="Estante vazia" body="Quando sua escola liberar novas histórias, elas aparecem aqui." />
+      ) : (
+        <>
+          <SectionHeader title={featured.percentComplete > 0 ? "Continue lendo" : "História em destaque"} />
+          <Pressable accessibilityRole="button" accessibilityLabel={`Ler ${featured.title}`} onPress={() => onOpenBook(featured)} style={styles.featuredBook}>
+            <BookCover book={{ ...featured, coverUrl: featured.coverUrl || coverUrls[featured.id] }} large />
+            <View style={styles.featuredBookCopy}>
+              <Text style={styles.bookCategory}>{featured.category}</Text>
+              <Text style={styles.featuredBookTitle}>{featured.title}</Text>
+              <Text style={styles.featuredBookBody}>{featured.description}</Text>
+              {featured.percentComplete > 0 ? <ProgressPill value={featured.percentComplete} compact /> : null}
+              <View style={styles.bookAction}>
+                <Text style={styles.bookActionText}>{featured.percentComplete > 0 ? "Continuar leitura" : "Ler agora"}</Text>
+              </View>
+            </View>
+          </Pressable>
 
-      <SectionHeader title="Mais histórias" />
-      <View style={styles.bookShelf}>
-        {shelf.map((book) => (
-          <BookCard key={book.title} book={book} onPress={() => onOpenBook(book)} />
-        ))}
-      </View>
+          {shelf.length ? (
+            <>
+              <SectionHeader title="Mais histórias" />
+              <View style={styles.bookShelf}>
+                {shelf.map((book) => (
+                  <BookCard key={book.id} book={{ ...book, coverUrl: book.coverUrl || coverUrls[book.id] }} onPress={() => onOpenBook(book)} />
+                ))}
+              </View>
+            </>
+          ) : null}
+        </>
+      )}
     </View>
   );
 }
 
-function BookCard({ book, onPress }: { book: CrescerBook; onPress: () => void }) {
+function BookCard({ book, onPress }: { book: LibraryBook; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`Abrir ${book.title}`} onPress={onPress} style={styles.bookCard}>
       <BookCover book={book} />
       <Text style={styles.bookCategory}>{book.category}</Text>
       <Text style={styles.bookCardTitle}>{book.title}</Text>
+      {book.percentComplete > 0 ? <ProgressPill value={book.percentComplete} compact /> : null}
     </Pressable>
   );
 }
 
-function getBookToneStyle(tone: CrescerBook["tone"]) {
+type BookCoverModel = {
+  title: string;
+  coverUrl?: string | null;
+  tone?: CrescerBook["tone"];
+  mark?: string;
+};
+
+function getBookToneStyle(tone: BookCoverModel["tone"]) {
   if (tone === "sun") return styles.bookToneSun;
   if (tone === "sky") return styles.bookToneSky;
   if (tone === "mint") return styles.bookToneMint;
   return styles.bookToneLeaf;
 }
 
-function BookCover({ book, large }: { book: CrescerBook; large?: boolean }) {
+function BookCover({ book, large }: { book: BookCoverModel; large?: boolean }) {
+  const [coverFailed, setCoverFailed] = useState(false);
+  const mark = book.mark || book.title.slice(0, 2).toUpperCase();
+
   return (
     <View style={[styles.bookCover, large ? styles.bookCoverLarge : null, getBookToneStyle(book.tone)]}>
-      <Text style={[styles.bookCoverMark, large ? styles.bookCoverMarkLarge : null]}>{book.mark}</Text>
-      <View style={styles.bookCoverLine} />
+      {book.coverUrl && !coverFailed ? (
+        <Image source={{ uri: book.coverUrl }} resizeMode="cover" onError={() => setCoverFailed(true)} style={styles.bookCoverImage} />
+      ) : (
+        <>
+          <Text style={[styles.bookCoverMark, large ? styles.bookCoverMarkLarge : null]}>{mark}</Text>
+          <View style={styles.bookCoverLine} />
+        </>
+      )}
     </View>
   );
 }
 
-function BookViewerScreen({ book }: { book: CrescerBook }) {
+function BookViewerScreen({ session, bookId }: { session: MobileSession | null; bookId: string }) {
+  const [book, setBook] = useState<LibraryBook | null>(null);
+  const [manifest, setManifest] = useState<LibraryManifest | null>(null);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageUrls, setPageUrls] = useState<Record<number, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const pageUrlsRef = useRef<Record<number, string>>({});
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSavedPage = useRef<number | null>(null);
+  const pageRef = useRef(1);
+
+  const saveCurrentProgress = useCallback(
+    async (nextPage: number, nextManifest: LibraryManifest | null = manifest) => {
+      if (!session || !bookId || !nextManifest || lastSavedPage.current === nextPage) return;
+      const percent = Math.round((nextPage / nextManifest.pageCount) * 100);
+      lastSavedPage.current = nextPage;
+      try {
+        await saveLibraryProgress(session, bookId, nextPage, percent);
+      } catch (_error) {
+        lastSavedPage.current = null;
+      }
+    },
+    [bookId, manifest, session]
+  );
+
+  const ensurePage = useCallback(
+    async (nextPage: number, force = false) => {
+      if (!session || !bookId) return;
+      if (!force && pageUrlsRef.current[nextPage]) return;
+      setPageLoading(true);
+      try {
+        const asset = await getLibraryPageAsset(session, bookId, nextPage);
+        setPageUrls((current) => {
+          const next = { ...current, [nextPage]: asset.signedUrl };
+          pageUrlsRef.current = next;
+          return next;
+        });
+        setFailed(false);
+      } catch (_error) {
+        setFailed(true);
+      } finally {
+        setPageLoading(false);
+      }
+    },
+    [bookId, session]
+  );
+
+  const loadViewer = useCallback(async () => {
+    if (!session || !bookId) {
+      setFailed(true);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    try {
+      const [nextBook, nextManifest] = await Promise.all([getLibraryBook(session, bookId), getLibraryManifest(session, bookId)]);
+      const resumePage = Math.min(Math.max(nextBook.currentPage || nextManifest.currentPage || nextManifest.firstPage, nextManifest.firstPage), nextManifest.lastPage);
+      pageUrlsRef.current = {};
+      setPageUrls({});
+      setBook(nextBook);
+      setManifest(nextManifest);
+      setPageNumber(resumePage);
+      pageRef.current = resumePage;
+      await ensurePage(resumePage, true);
+    } catch (_error) {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [bookId, ensurePage, session]);
+
+  useEffect(() => {
+    void loadViewer();
+  }, [loadViewer]);
+
+  useEffect(() => {
+    pageRef.current = pageNumber;
+    if (!manifest || !session || !bookId) return undefined;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      void saveCurrentProgress(pageNumber, manifest);
+    }, 900);
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, [bookId, manifest, pageNumber, saveCurrentProgress, session]);
+
+  useEffect(() => {
+    if (!manifest) return;
+    void ensurePage(pageNumber);
+    if (pageNumber < manifest.lastPage) void ensurePage(pageNumber + 1);
+    if (pageNumber > manifest.firstPage) void ensurePage(pageNumber - 1);
+  }, [ensurePage, manifest, pageNumber]);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      void saveCurrentProgress(pageRef.current, manifest);
+    };
+  }, [manifest, saveCurrentProgress]);
+
+  function movePage(direction: -1 | 1) {
+    if (!manifest) return;
+    setPageNumber((current) => Math.min(Math.max(current + direction, manifest.firstPage), manifest.lastPage));
+  }
+
+  const pageUrl = pageUrls[pageNumber];
+
+  if (loading) {
+    return (
+      <View style={styles.libraryStateCard}>
+        <ActivityIndicator color={colors.child} />
+        <Text style={styles.libraryStateTitle}>Abrindo livro</Text>
+        <Text style={styles.libraryStateBody}>Estamos preparando a página para você.</Text>
+      </View>
+    );
+  }
+
+  if (failed || !book || !manifest) {
+    return (
+      <View style={styles.libraryStateCard}>
+        <EmptyState title="Não conseguimos abrir este livro" body="Volte para a estante ou tente novamente." />
+        <PrimaryButton label="Tentar novamente" onPress={loadViewer} />
+      </View>
+    );
+  }
+
   return (
     <View>
       <View style={styles.readerTop}>
-        <BookCover book={book} large />
+        <BookCover book={{ ...book, coverUrl: book.coverUrl || pageUrls[manifest.firstPage] }} large />
         <Text style={styles.discoveryKicker}>{book.category}</Text>
         <Text style={styles.readerTitle}>{book.title}</Text>
       </View>
 
       <View style={styles.readerPage}>
-        <Text style={styles.readerPageTitle}>Uma página para imaginar</Text>
-        <Text style={styles.readerPageBody}>Leia devagar, observe a cena e conte o que você descobriu nessa história.</Text>
+        {pageUrl ? (
+          <Image source={{ uri: pageUrl }} resizeMode="contain" onError={() => void ensurePage(pageNumber, true)} style={styles.readerPageImage} />
+        ) : (
+          <View style={styles.readerPageLoading}>
+            <ActivityIndicator color={colors.child} />
+            <Text style={styles.readerPageBody}>Carregando página...</Text>
+          </View>
+        )}
+        {pageLoading ? <Text style={styles.readerWarmupText}>Preparando leitura...</Text> : null}
       </View>
 
       <View style={styles.readerControls}>
-        <Pressable accessibilityRole="button" style={styles.readerControlButton}>
+        <Pressable accessibilityRole="button" disabled={pageNumber <= manifest.firstPage} onPress={() => movePage(-1)} style={[styles.readerControlButton, pageNumber <= manifest.firstPage ? styles.readerControlButtonDisabled : null]}>
           <Text style={styles.readerControlText}>Anterior</Text>
         </Pressable>
-        <Text style={styles.readerProgress}>Página 1 de 4</Text>
-        <Pressable accessibilityRole="button" style={styles.readerControlButton}>
+        <Text style={styles.readerProgress}>Página {pageNumber} de {manifest.pageCount}</Text>
+        <Pressable accessibilityRole="button" disabled={pageNumber >= manifest.lastPage} onPress={() => movePage(1)} style={[styles.readerControlButton, pageNumber >= manifest.lastPage ? styles.readerControlButtonDisabled : null]}>
           <Text style={styles.readerControlText}>Próxima</Text>
         </Pressable>
       </View>
@@ -686,118 +1937,767 @@ function BookViewerScreen({ book }: { book: CrescerBook }) {
   );
 }
 
-function GamesScreen({ onOpenGame }: { onOpenGame: (game: CrescerGame) => void }) {
-  const featured = demoCollections.games[0];
-  const games = demoCollections.games.slice(1);
+function GamesScreen({ session, onOpenGame }: { session: MobileSession | null; onOpenGame: (game: EarlyChildhoodGame) => void }) {
+  const [games, setGames] = useState<EarlyChildhoodGame[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  const loadGames = useCallback(async () => {
+    if (!session) {
+      setFailed(true);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    try {
+      setGames(await getEarlyChildhoodGames(session));
+    } catch (_error) {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    void loadGames();
+  }, [loadGames]);
+
+  const featured = games.find((game) => game.legacyId === "RS-EI-GAME-ORGANIZANDO-CESTA") ?? games[0];
+  const shelf = featured ? games.filter((game) => game.id !== featured.id) : games;
 
   return (
     <View>
-      <View style={styles.gamesHero}>
-        <Text style={styles.discoveryKicker}>Hora de jogar</Text>
-        <Text style={styles.discoveryTitle}>Jogos</Text>
-        <Text style={styles.discoveryBody}>Escolha uma brincadeira e venha se divertir!</Text>
-      </View>
+      <CrescerModuleHero kicker="Hora de jogar" title="Jogos" body="Escolha uma brincadeira e venha se divertir!" icon="games" tone="lilac" />
 
-      <SectionHeader title="Jogo em destaque" />
-      <Pressable accessibilityRole="button" accessibilityLabel={`Jogar ${featured.title}`} onPress={() => onOpenGame(featured)} style={styles.featuredGame}>
-        <View style={styles.featuredGameIllustration}>
-          <Text style={styles.featuredGameMark}>{featured.mark}</Text>
+      {loading ? (
+        <View style={styles.libraryStateCard}>
+          <ActivityIndicator color={colors.child} />
+          <Text style={styles.libraryStateTitle}>Carregando jogos</Text>
+          <Text style={styles.libraryStateBody}>Estamos abrindo as brincadeiras da sua turma.</Text>
         </View>
-        <View style={styles.featuredGameCopy}>
-          <Text style={styles.gameTag}>{featured.tag}</Text>
-          <Text style={styles.featuredGameTitle}>{featured.title}</Text>
-          <Text style={styles.featuredGameBody}>{featured.description}</Text>
-          <View style={styles.gameAction}>
-            <Text style={styles.gameActionText}>{featured.action}</Text>
-          </View>
+      ) : failed ? (
+        <View style={styles.libraryStateCard}>
+          <EmptyState title="Não conseguimos abrir os jogos" body="Tente novamente em instantes." />
+          <PrimaryButton label="Tentar novamente" onPress={loadGames} />
         </View>
-      </Pressable>
+      ) : !featured ? (
+        <EmptyState title="Jogos indisponíveis" body="Quando sua escola liberar novas brincadeiras, elas aparecem aqui." />
+      ) : (
+        <>
+          <SectionHeader title="Jogo em destaque" />
+          <Pressable accessibilityRole="button" accessibilityLabel={`Jogar ${featured.title}`} onPress={() => onOpenGame(featured)} style={styles.featuredGame}>
+            <View style={styles.featuredGameIllustration}>
+              <Text style={styles.featuredGameMark}>{gameMark(featured)}</Text>
+            </View>
+            <View style={styles.featuredGameCopy}>
+              <Text style={styles.gameTag}>{gameTag(featured)}</Text>
+              <Text style={styles.featuredGameTitle}>{featured.title}</Text>
+              <Text style={styles.featuredGameBody}>{featured.description}</Text>
+              {featured.latestAttemptStatus === "COMPLETED" ? <ProgressPill value={featured.latestScorePercent ?? 100} compact /> : null}
+              <View style={styles.gameAction}>
+                <Text style={styles.gameActionText}>{gameActionLabel(featured)}</Text>
+              </View>
+            </View>
+          </Pressable>
 
-      <SectionHeader title="Mais brincadeiras" />
-      <View style={styles.gameGrid}>
-        {games.map((game) => (
-          <GameCard key={game.title} game={game} onPress={() => onOpenGame(game)} />
-        ))}
-      </View>
+          {shelf.length ? (
+            <>
+              <SectionHeader title="Mais brincadeiras" />
+              <View style={styles.gameGrid}>
+                {shelf.map((game) => (
+                  <GameCard key={game.id} game={game} onPress={() => onOpenGame(game)} />
+                ))}
+              </View>
+            </>
+          ) : null}
+        </>
+      )}
     </View>
   );
 }
 
-function GameCard({ game, onPress }: { game: CrescerGame; onPress: () => void }) {
+function GameCard({ game, onPress }: { game: EarlyChildhoodGame; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`Jogar ${game.title}`} onPress={onPress} style={styles.gameCard}>
       <View style={styles.gameCardIllustration}>
-        <Text style={styles.gameCardMark}>{game.mark}</Text>
+        <Text style={styles.gameCardMark}>{gameMark(game)}</Text>
       </View>
-      <Text style={styles.gameTag}>{game.tag}</Text>
+      <Text style={styles.gameTag}>{gameTag(game)}</Text>
       <Text style={styles.gameCardTitle}>{game.title}</Text>
       <Text style={styles.gameCardBody}>{game.description}</Text>
-      <Text style={styles.gameCardAction}>{game.action}</Text>
+      <Text style={styles.gameCardAction}>{gameActionLabel(game)}</Text>
     </Pressable>
   );
 }
 
-function GameDetailScreen({ game }: { game: CrescerGame }) {
+const cestaAssetIds = {
+  title: "RS-EI-GAME-ORGANIZANDO-CESTA-TITLES-ORGANIZANDO-A-CESTA",
+  board: "RS-EI-GAME-ORGANIZANDO-CESTA-CUSTOM-INTERACTION-BOARD-FRUIT-TOP-BASKET-BOTTOM",
+  intro: "RS-EI-GAME-ORGANIZANDO-CESTA-CUSTOM-INTRO-BANNER",
+  apple: "RS-EI-GAME-ORGANIZANDO-CESTA-CUSTOM-ITEMS-APPLE-CLEAN",
+  banana: "RS-EI-GAME-ORGANIZANDO-CESTA-CUSTOM-ITEMS-BANANA-CLEAN",
+  grape: "RS-EI-GAME-ORGANIZANDO-CESTA-CUSTOM-ITEMS-GRAPE-CLEAN",
+  appleEmpty: "RS-EI-GAME-ORGANIZANDO-CESTA-CUSTOM-ITEMS-APPLE-BASKET-EMPTY-LABELED",
+  bananaEmpty: "RS-EI-GAME-ORGANIZANDO-CESTA-CUSTOM-ITEMS-BANANA-BASKET-EMPTY-LABELED",
+  grapeEmpty: "RS-EI-GAME-ORGANIZANDO-CESTA-CUSTOM-ITEMS-GRAPE-BASKET-EMPTY-LABELED",
+  appleFull: "RS-EI-GAME-ORGANIZANDO-CESTA-CUSTOM-ITEMS-APPLE-BASKET-FULL-LABELED",
+  bananaFull: "RS-EI-GAME-ORGANIZANDO-CESTA-CUSTOM-ITEMS-BANANA-BASKET-FULL-LABELED",
+  grapeFull: "RS-EI-GAME-ORGANIZANDO-CESTA-CUSTOM-ITEMS-GRAPE-BASKET-FULL-LABELED",
+  final: "RS-EI-GAME-ORGANIZANDO-CESTA-SCENARIOS-FINAL"
+};
+
+const cestaGroups = [
+  { id: "apple", label: "Maçã", itemAssetId: cestaAssetIds.apple, emptyAssetId: cestaAssetIds.appleEmpty, fullAssetId: cestaAssetIds.appleFull },
+  { id: "banana", label: "Banana", itemAssetId: cestaAssetIds.banana, emptyAssetId: cestaAssetIds.bananaEmpty, fullAssetId: cestaAssetIds.bananaFull },
+  { id: "grape", label: "Uva", itemAssetId: cestaAssetIds.grape, emptyAssetId: cestaAssetIds.grapeEmpty, fullAssetId: cestaAssetIds.grapeFull }
+] as const;
+
+type CestaGroupId = (typeof cestaGroups)[number]["id"];
+
+const jardimAssetIds = {
+  intro: "RS-EI-GAME-JARDIM-DESCOBERTAS-CARD",
+  board: "RS-EI-GAME-JARDIM-DESCOBERTAS-SCREENS-SCREEN-EXPLORE",
+  final: "RS-EI-GAME-JARDIM-DESCOBERTAS-SCREENS-SCREEN-FINAL",
+  folha: "RS-EI-GAME-JARDIM-DESCOBERTAS-OBJECTS-LEAF",
+  flor: "RS-EI-GAME-JARDIM-DESCOBERTAS-OBJECTS-FLOWER",
+  caracol: "RS-EI-GAME-JARDIM-DESCOBERTAS-OBJECTS-SNAIL",
+  gotinha: "RS-EI-GAME-JARDIM-DESCOBERTAS-OBJECTS-DROP",
+  passarinho: "RS-EI-GAME-JARDIM-DESCOBERTAS-OBJECTS-BIRD"
+};
+
+const jardimRounds = [
+  { id: "folha", label: "Folha", assetId: jardimAssetIds.folha },
+  { id: "flor", label: "Flor", assetId: jardimAssetIds.flor },
+  { id: "caracol", label: "Caracol", assetId: jardimAssetIds.caracol },
+  { id: "gotinha", label: "Gotinha", assetId: jardimAssetIds.gotinha }
+] as const;
+
+type JardimRoundId = (typeof jardimRounds)[number]["id"];
+
+const atelieAssetIds = {
+  intro: "RS-EI-GAME-ATELIE-BIA-CARD",
+  canvas: "RS-EI-GAME-ATELIE-BIA-SCREENS-SCREEN-CANVAS",
+  final: "RS-EI-GAME-ATELIE-BIA-SCREENS-SCREEN-FINAL",
+  reference: "RS-EI-GAME-ATELIE-BIA-GOLDEN-MASTER-JOANINHA-GOLDEN-MASTER-V2",
+  cabeca: "RS-EI-GAME-ATELIE-BIA-GOLDEN-MASTER-JOANINHA-PARTE-CABECA",
+  cabecaMask: "RS-EI-GAME-ATELIE-BIA-GOLDEN-MASTER-JOANINHA-MASK-CABECA",
+  corpoPernas: "RS-EI-GAME-ATELIE-BIA-GOLDEN-MASTER-JOANINHA-PARTE-CORPO-PERNAS",
+  corpoPernasMask: "RS-EI-GAME-ATELIE-BIA-GOLDEN-MASTER-JOANINHA-MASK-CORPO-PERNAS",
+  asas: "RS-EI-GAME-ATELIE-BIA-GOLDEN-MASTER-JOANINHA-PARTE-ASAS",
+  asasMask: "RS-EI-GAME-ATELIE-BIA-GOLDEN-MASTER-JOANINHA-MASK-ASAS",
+  pintinhas: "RS-EI-GAME-ATELIE-BIA-GOLDEN-MASTER-JOANINHA-PARTE-PINTINHAS",
+  pintinhasMask: "RS-EI-GAME-ATELIE-BIA-GOLDEN-MASTER-JOANINHA-MASK-PINTINHAS",
+  antenas: "RS-EI-GAME-ATELIE-BIA-GOLDEN-MASTER-JOANINHA-PARTE-ANTENAS",
+  antenasMask: "RS-EI-GAME-ATELIE-BIA-GOLDEN-MASTER-JOANINHA-MASK-ANTENAS"
+};
+
+const atelieSteps = [
+  { id: "cabeca", label: "Cabeça", assetId: atelieAssetIds.cabeca, maskAssetId: atelieAssetIds.cabecaMask },
+  { id: "corpo-pernas", label: "Corpo + pernas", assetId: atelieAssetIds.corpoPernas, maskAssetId: atelieAssetIds.corpoPernasMask },
+  { id: "asas", label: "Asas", assetId: atelieAssetIds.asas, maskAssetId: atelieAssetIds.asasMask },
+  { id: "pintinhas", label: "Pintinhas", assetId: atelieAssetIds.pintinhas, maskAssetId: atelieAssetIds.pintinhasMask },
+  { id: "antenas", label: "Antenas", assetId: atelieAssetIds.antenas, maskAssetId: atelieAssetIds.antenasMask }
+] as const;
+
+type AtelieStepId = (typeof atelieSteps)[number]["id"];
+
+function gameKind(game: EarlyChildhoodGame | null) {
+  if (game?.legacyId === "RS-EI-GAME-JARDIM-DESCOBERTAS") return "jardim";
+  if (game?.legacyId === "RS-EI-GAME-ATELIE-BIA") return "atelie";
+  return "cesta";
+}
+
+function gameIntroAssetId(game: EarlyChildhoodGame | null) {
+  const kind = gameKind(game);
+  if (kind === "jardim") return jardimAssetIds.intro;
+  if (kind === "atelie") return atelieAssetIds.intro;
+  return cestaAssetIds.intro;
+}
+
+function GameDetailScreen({ session, gameId }: { session: MobileSession | null; gameId: string }) {
+  const [game, setGame] = useState<EarlyChildhoodGame | null>(null);
+  const [manifest, setManifest] = useState<EarlyChildhoodGameManifest | null>(null);
+  const [assetUrls, setAssetUrls] = useState<Record<string, string>>({});
+  const [attempt, setAttempt] = useState<EarlyChildhoodGameAttempt | null>(null);
+  const [completedGroups, setCompletedGroups] = useState<CestaGroupId[]>([]);
+  const [selectedGroup, setSelectedGroup] = useState<CestaGroupId | null>(null);
+  const [completedJardimRounds, setCompletedJardimRounds] = useState<JardimRoundId[]>([]);
+  const [selectedJardimRound, setSelectedJardimRound] = useState<JardimRoundId | null>(null);
+  const [completedAtelieSteps, setCompletedAtelieSteps] = useState<AtelieStepId[]>([]);
+  const [selectedAtelieStep, setSelectedAtelieStep] = useState<AtelieStepId | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [gameLoading, setGameLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [result, setResult] = useState<EarlyChildhoodGameAttempt | null>(null);
+  const startedAtRef = useRef<number>(Date.now());
+  const assetUrlsRef = useRef<Record<string, string>>({});
+
+  const ensureAsset = useCallback(
+    async (assetId: string) => {
+      if (!session || !gameId || assetUrlsRef.current[assetId]) return;
+      try {
+        const asset = await getEarlyChildhoodGameAsset(session, gameId, assetId);
+        if (!asset.signedUrl) return;
+        setAssetUrls((current) => {
+          const next = { ...current, [assetId]: asset.signedUrl || "" };
+          assetUrlsRef.current = next;
+          return next;
+        });
+      } catch (_error) {
+        setFailed(true);
+      }
+    },
+    [gameId, session]
+  );
+
+  const loadGame = useCallback(async () => {
+    if (!session || !gameId) {
+      setFailed(true);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    try {
+      const [nextGame, nextManifest] = await Promise.all([getEarlyChildhoodGame(session, gameId), getEarlyChildhoodGameManifest(session, gameId)]);
+      setGame(nextGame);
+      setManifest(nextManifest);
+      await ensureAsset(gameIntroAssetId(nextGame));
+    } catch (_error) {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [ensureAsset, gameId, session]);
+
+  useEffect(() => {
+    void loadGame();
+  }, [loadGame]);
+
+  useEffect(() => {
+    if (!playing) return;
+    const kind = gameKind(game);
+    if (kind === "jardim") {
+      void ensureAsset(jardimAssetIds.board);
+      void ensureAsset(jardimAssetIds.passarinho);
+      const round = jardimRounds.find((item) => item.id === (selectedJardimRound || "folha")) || jardimRounds[0];
+      void ensureAsset(round.assetId);
+      if (result) void ensureAsset(jardimAssetIds.final);
+      return;
+    }
+    if (kind === "atelie") {
+      void ensureAsset(atelieAssetIds.canvas);
+      void ensureAsset(atelieAssetIds.reference);
+      const step = atelieSteps.find((item) => item.id === (selectedAtelieStep || "cabeca")) || atelieSteps[0];
+      void ensureAsset(step.assetId);
+      void ensureAsset(step.maskAssetId);
+      if (result) void ensureAsset(atelieAssetIds.final);
+      return;
+    }
+    void ensureAsset(cestaAssetIds.board);
+    void ensureAsset(cestaAssetIds.title);
+    const group = cestaGroups.find((item) => item.id === (selectedGroup || "apple")) || cestaGroups[0];
+    void ensureAsset(group.itemAssetId);
+    void ensureAsset(completedGroups.includes(group.id) ? group.fullAssetId : group.emptyAssetId);
+  }, [completedGroups, completedAtelieSteps, completedJardimRounds, ensureAsset, game, playing, result, selectedAtelieStep, selectedGroup, selectedJardimRound]);
+
+  const beginGame = useCallback(async () => {
+    if (!session || !game) return;
+    setGameLoading(true);
+    setFailed(false);
+    try {
+      const nextAttempt = await startEarlyChildhoodGameAttempt(session, game.id);
+      startedAtRef.current = Date.now();
+      setAttempt(nextAttempt);
+      setCompletedGroups([]);
+      setSelectedGroup("apple");
+      setCompletedJardimRounds([]);
+      setSelectedJardimRound("folha");
+      setCompletedAtelieSteps([]);
+      setSelectedAtelieStep("cabeca");
+      setResult(null);
+      setPlaying(true);
+      const kind = gameKind(game);
+      if (kind === "jardim") {
+        await ensureAsset(jardimAssetIds.board);
+        await ensureAsset(jardimRounds[0].assetId);
+        return;
+      }
+      if (kind === "atelie") {
+        await ensureAsset(atelieAssetIds.canvas);
+        await ensureAsset(atelieAssetIds.reference);
+        await ensureAsset(atelieSteps[0].assetId);
+        await ensureAsset(atelieSteps[0].maskAssetId);
+        return;
+      }
+      await ensureAsset(cestaAssetIds.board);
+      await ensureAsset(cestaGroups[0].itemAssetId);
+      await ensureAsset(cestaGroups[0].emptyAssetId);
+    } catch (_error) {
+      setFailed(true);
+    } finally {
+      setGameLoading(false);
+    }
+  }, [ensureAsset, game, session]);
+
+  const completeGroup = useCallback(
+    async (groupId: CestaGroupId) => {
+      if (!session || !attempt || result) return;
+      const nextGroups = completedGroups.includes(groupId) ? completedGroups : [...completedGroups, groupId];
+      setCompletedGroups(nextGroups);
+      await ensureAsset(cestaGroups.find((group) => group.id === groupId)?.fullAssetId || cestaAssetIds.appleFull);
+      try {
+        if (nextGroups.length < 3) {
+          await updateEarlyChildhoodGameAttempt(session, attempt.attemptId, "IN_PROGRESS", {
+            completed_groups: nextGroups,
+            required_groups: ["apple", "banana", "grape"],
+            minimum_completed_groups: 3
+          });
+          const nextGroup = cestaGroups.find((group) => !nextGroups.includes(group.id));
+          if (nextGroup) {
+            setSelectedGroup(nextGroup.id);
+            void ensureAsset(nextGroup.itemAssetId);
+            void ensureAsset(nextGroup.emptyAssetId);
+          }
+          return;
+        }
+
+        const durationSeconds = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000));
+        const completed = await completeEarlyChildhoodGameAttempt(
+          session,
+          attempt.attemptId,
+          {
+            completed_groups: nextGroups,
+            required_groups: ["apple", "banana", "grape"],
+            minimum_completed_groups: 3,
+            score_percent: 100,
+            duration_seconds: durationSeconds,
+            event_key: `GAME_COMPLETED:${game?.legacyId || "RS-EI-GAME-ORGANIZANDO-CESTA"}:ATTEMPT_SCOPED`
+          },
+          {
+            completed_groups: nextGroups,
+            current_screen: "final"
+          }
+        );
+        setResult(completed);
+        await ensureAsset(cestaAssetIds.final);
+      } catch (_error) {
+        setFailed(true);
+      }
+    },
+    [attempt, completedGroups, ensureAsset, game?.legacyId, result, session]
+  );
+
+  const completeJardimRound = useCallback(
+    async (roundId: JardimRoundId) => {
+      if (!session || !attempt || result) return;
+      const nextRounds = completedJardimRounds.includes(roundId) ? completedJardimRounds : [...completedJardimRounds, roundId];
+      setCompletedJardimRounds(nextRounds);
+      try {
+        if (nextRounds.length < jardimRounds.length) {
+          await updateEarlyChildhoodGameAttempt(session, attempt.attemptId, "IN_PROGRESS", {
+            completed_rounds: nextRounds,
+            required_rounds: jardimRounds.map((round) => round.id),
+            minimum_completed_rounds: jardimRounds.length
+          });
+          const nextRound = jardimRounds.find((round) => !nextRounds.includes(round.id));
+          if (nextRound) {
+            setSelectedJardimRound(nextRound.id);
+            void ensureAsset(nextRound.assetId);
+          }
+          return;
+        }
+
+        const durationSeconds = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000));
+        const completed = await completeEarlyChildhoodGameAttempt(
+          session,
+          attempt.attemptId,
+          {
+            completed_rounds: nextRounds,
+            required_rounds: jardimRounds.map((round) => round.id),
+            minimum_completed_rounds: jardimRounds.length,
+            score_percent: 100,
+            duration_seconds: durationSeconds,
+            event_key: `GAME_COMPLETED:${game?.legacyId || "RS-EI-GAME-JARDIM-DESCOBERTAS"}:ATTEMPT_SCOPED`
+          },
+          {
+            completed_rounds: nextRounds,
+            current_screen: "final"
+          }
+        );
+        setResult(completed);
+        await ensureAsset(jardimAssetIds.final);
+      } catch (_error) {
+        setFailed(true);
+      }
+    },
+    [attempt, completedJardimRounds, ensureAsset, game?.legacyId, result, session]
+  );
+
+  const completeAtelieStep = useCallback(
+    async (stepId: AtelieStepId) => {
+      if (!session || !attempt || result) return;
+      const nextSteps = completedAtelieSteps.includes(stepId) ? completedAtelieSteps : [...completedAtelieSteps, stepId];
+      setCompletedAtelieSteps(nextSteps);
+      try {
+        if (nextSteps.length < atelieSteps.length) {
+          await updateEarlyChildhoodGameAttempt(session, attempt.attemptId, "IN_PROGRESS", {
+            completed_steps: nextSteps,
+            required_steps: atelieSteps.map((step) => step.id),
+            minimum_completed_steps: atelieSteps.length
+          });
+          const nextStep = atelieSteps.find((step) => !nextSteps.includes(step.id));
+          if (nextStep) {
+            setSelectedAtelieStep(nextStep.id);
+            void ensureAsset(nextStep.assetId);
+            void ensureAsset(nextStep.maskAssetId);
+          }
+          return;
+        }
+
+        const durationSeconds = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000));
+        const completed = await completeEarlyChildhoodGameAttempt(
+          session,
+          attempt.attemptId,
+          {
+            completed_steps: nextSteps,
+            required_steps: atelieSteps.map((step) => step.id),
+            minimum_completed_steps: atelieSteps.length,
+            coverage: 1,
+            score_percent: 100,
+            duration_seconds: durationSeconds,
+            event_key: `GAME_COMPLETED:${game?.legacyId || "RS-EI-GAME-ATELIE-BIA"}:ATTEMPT_SCOPED`
+          },
+          {
+            completed_steps: nextSteps,
+            current_screen: "final"
+          }
+        );
+        setResult(completed);
+        await ensureAsset(atelieAssetIds.final);
+      } catch (_error) {
+        setFailed(true);
+      }
+    },
+    [attempt, completedAtelieSteps, ensureAsset, game?.legacyId, result, session]
+  );
+
+  const finishAndLeave = useCallback(() => {
+    setPlaying(false);
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.libraryStateCard}>
+        <ActivityIndicator color={colors.child} />
+        <Text style={styles.libraryStateTitle}>Abrindo jogo</Text>
+        <Text style={styles.libraryStateBody}>Estamos preparando a brincadeira.</Text>
+      </View>
+    );
+  }
+
+  if (failed || !game || !manifest) {
+    return (
+      <View style={styles.libraryStateCard}>
+        <EmptyState title="Não conseguimos abrir este jogo" body="Volte e tente novamente." />
+        <PrimaryButton label="Tentar novamente" onPress={loadGame} />
+      </View>
+    );
+  }
+
+  if (playing) {
+    const kind = gameKind(game);
+    if (kind === "jardim") {
+      const activeRound = jardimRounds.find((round) => round.id === selectedJardimRound) || jardimRounds[0];
+      const boardUrl = assetUrls[jardimAssetIds.board];
+      const objectUrl = assetUrls[activeRound.assetId];
+      const finalUrl = assetUrls[jardimAssetIds.final];
+
+      return (
+        <View style={styles.gameLandscapeShell}>
+          <View style={styles.gameLandscapeHeader}>
+            <Text style={styles.gameLandscapeKicker}>Jardim das Descobertas</Text>
+            <Pressable accessibilityRole="button" onPress={finishAndLeave} style={styles.gameExitButton}>
+              <Text style={styles.gameExitButtonText}>Sair</Text>
+            </Pressable>
+          </View>
+
+          {result ? (
+            <View style={styles.cestaVictoryPanel}>
+              {finalUrl ? <Image source={{ uri: finalUrl }} resizeMode="cover" style={styles.cestaVictoryImage} /> : null}
+              <Text style={styles.cestaVictoryTitle}>Descobertas completas!</Text>
+              <Text style={styles.cestaVictoryBody}>Você encontrou os elementos do jardim.</Text>
+              <Text style={styles.cestaVictoryStatus}>Resultado salvo</Text>
+              <PrimaryButton label="Voltar aos jogos" onPress={finishAndLeave} />
+            </View>
+          ) : (
+            <View style={styles.cestaPlayfield}>
+              {boardUrl ? <Image source={{ uri: boardUrl }} resizeMode="cover" style={styles.cestaBoardImage} /> : null}
+              <View style={styles.cestaTaskPanel}>
+                <Text style={styles.cestaTaskTitle}>Encontre no jardim</Text>
+                <Text style={styles.cestaTaskBody}>Toque no item pedido para seguir a descoberta.</Text>
+                <View style={styles.cestaProgressRow}>
+                  {jardimRounds.map((round) => (
+                    <View key={round.id} style={[styles.cestaProgressDot, completedJardimRounds.includes(round.id) ? styles.cestaProgressDotDone : null]} />
+                  ))}
+                </View>
+              </View>
+              <View style={styles.cestaActionRow}>
+                <Pressable accessibilityRole="button" accessibilityLabel={`Encontrar ${activeRound.label}`} onPress={() => void completeJardimRound(activeRound.id)} style={styles.cestaFruitButton}>
+                  {objectUrl ? <Image source={{ uri: objectUrl }} resizeMode="contain" style={styles.cestaFruitImage} /> : <ActivityIndicator color={colors.child} />}
+                  <Text style={styles.cestaFruitLabel}>{activeRound.label}</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
+        </View>
+      );
+    }
+
+    if (kind === "atelie") {
+      const activeStep = atelieSteps.find((step) => step.id === selectedAtelieStep) || atelieSteps[0];
+      const canvasUrl = assetUrls[atelieAssetIds.canvas];
+      const referenceUrl = assetUrls[atelieAssetIds.reference];
+      const partUrl = assetUrls[activeStep.assetId];
+      const maskUrl = assetUrls[activeStep.maskAssetId];
+      const finalUrl = assetUrls[atelieAssetIds.final];
+
+      return (
+        <View style={styles.gameLandscapeShell}>
+          <View style={styles.gameLandscapeHeader}>
+            <Text style={styles.gameLandscapeKicker}>Ateliê da Bia</Text>
+            <Pressable accessibilityRole="button" onPress={finishAndLeave} style={styles.gameExitButton}>
+              <Text style={styles.gameExitButtonText}>Sair</Text>
+            </Pressable>
+          </View>
+
+          {result ? (
+            <View style={styles.cestaVictoryPanel}>
+              {finalUrl ? <Image source={{ uri: finalUrl }} resizeMode="cover" style={styles.cestaVictoryImage} /> : null}
+              <Text style={styles.cestaVictoryTitle}>Arte concluída!</Text>
+              <Text style={styles.cestaVictoryBody}>A joaninha ganhou cor no Ateliê da Bia.</Text>
+              <Text style={styles.cestaVictoryStatus}>Resultado salvo</Text>
+              <PrimaryButton label="Voltar aos jogos" onPress={finishAndLeave} />
+            </View>
+          ) : (
+            <View style={styles.cestaPlayfield}>
+              {canvasUrl ? <Image source={{ uri: canvasUrl }} resizeMode="cover" style={styles.cestaBoardImage} /> : null}
+              <View style={styles.cestaTaskPanel}>
+                <Text style={styles.cestaTaskTitle}>Pinte a joaninha</Text>
+                <Text style={styles.cestaTaskBody}>Etapa atual: {activeStep.label}.</Text>
+                <View style={styles.cestaProgressRow}>
+                  {atelieSteps.map((step) => (
+                    <View key={step.id} style={[styles.cestaProgressDot, completedAtelieSteps.includes(step.id) ? styles.cestaProgressDotDone : null]} />
+                  ))}
+                </View>
+              </View>
+              <View style={styles.cestaActionRow}>
+                <View style={styles.cestaBasketButton}>
+                  {referenceUrl ? <Image source={{ uri: referenceUrl }} resizeMode="contain" style={styles.cestaBasketImage} /> : <ActivityIndicator color={colors.child} />}
+                </View>
+                <Pressable accessibilityRole="button" accessibilityLabel={`Concluir ${activeStep.label}`} onPress={() => void completeAtelieStep(activeStep.id)} style={styles.cestaFruitButton}>
+                  {partUrl ? <Image source={{ uri: partUrl }} resizeMode="contain" style={styles.cestaFruitImage} /> : <ActivityIndicator color={colors.child} />}
+                  {maskUrl ? <Image source={{ uri: maskUrl }} resizeMode="contain" style={styles.cestaFruitImage} /> : null}
+                  <Text style={styles.cestaFruitLabel}>{activeStep.label}</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
+        </View>
+      );
+    }
+
+    const activeGroup = cestaGroups.find((group) => group.id === selectedGroup) || cestaGroups[0];
+    const isCompleted = completedGroups.includes(activeGroup.id);
+    const boardUrl = assetUrls[cestaAssetIds.board];
+    const itemUrl = assetUrls[activeGroup.itemAssetId];
+    const basketUrl = assetUrls[isCompleted ? activeGroup.fullAssetId : activeGroup.emptyAssetId];
+    const finalUrl = assetUrls[cestaAssetIds.final];
+
+    return (
+      <View style={styles.gameLandscapeShell}>
+        <View style={styles.gameLandscapeHeader}>
+          <Text style={styles.gameLandscapeKicker}>Organizando a Cesta</Text>
+          <Pressable accessibilityRole="button" onPress={finishAndLeave} style={styles.gameExitButton}>
+            <Text style={styles.gameExitButtonText}>Sair</Text>
+          </Pressable>
+        </View>
+
+        {result ? (
+          <View style={styles.cestaVictoryPanel}>
+            {finalUrl ? <Image source={{ uri: finalUrl }} resizeMode="cover" style={styles.cestaVictoryImage} /> : null}
+            <Text style={styles.cestaVictoryTitle}>Cesta organizada!</Text>
+            <Text style={styles.cestaVictoryBody}>Você separou maçã, banana e uva.</Text>
+            <Text style={styles.cestaVictoryStatus}>Resultado salvo</Text>
+            <PrimaryButton label="Voltar aos jogos" onPress={finishAndLeave} />
+          </View>
+        ) : (
+          <View style={styles.cestaPlayfield}>
+            {boardUrl ? <Image source={{ uri: boardUrl }} resizeMode="cover" style={styles.cestaBoardImage} /> : null}
+            <View style={styles.cestaTaskPanel}>
+              <Text style={styles.cestaTaskTitle}>Leve a fruta para a cesta</Text>
+              <Text style={styles.cestaTaskBody}>Complete as três: maçã, banana e uva.</Text>
+              <View style={styles.cestaProgressRow}>
+                {cestaGroups.map((group) => (
+                  <View key={group.id} style={[styles.cestaProgressDot, completedGroups.includes(group.id) ? styles.cestaProgressDotDone : null]} />
+                ))}
+              </View>
+            </View>
+            <View style={styles.cestaActionRow}>
+              <Pressable accessibilityRole="button" accessibilityLabel={`Selecionar ${activeGroup.label}`} onPress={() => void completeGroup(activeGroup.id)} style={styles.cestaFruitButton}>
+                {itemUrl ? <Image source={{ uri: itemUrl }} resizeMode="contain" style={styles.cestaFruitImage} /> : <ActivityIndicator color={colors.child} />}
+                <Text style={styles.cestaFruitLabel}>{activeGroup.label}</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel={`Cesta de ${activeGroup.label}`} onPress={() => void completeGroup(activeGroup.id)} style={styles.cestaBasketButton}>
+                {basketUrl ? <Image source={{ uri: basketUrl }} resizeMode="contain" style={styles.cestaBasketImage} /> : <ActivityIndicator color={colors.child} />}
+              </Pressable>
+            </View>
+          </View>
+        )}
+      </View>
+    );
+  }
+
   return (
     <View>
       <View style={styles.gameStage}>
         <View style={styles.gameStageIllustration}>
-          <Text style={styles.gameStageMark}>{game.mark}</Text>
+          {assetUrls[gameIntroAssetId(game)] ? (
+            <Image source={{ uri: assetUrls[gameIntroAssetId(game)] }} resizeMode="cover" style={styles.gameStageImage} />
+          ) : (
+            <Text style={styles.gameStageMark}>{gameMark(game)}</Text>
+          )}
         </View>
-        <Text style={styles.discoveryKicker}>{game.tag}</Text>
+        <Text style={styles.discoveryKicker}>{gameTag(game)}</Text>
         <Text style={styles.gameStageTitle}>{game.title}</Text>
-        <Text style={styles.gameStageBody}>{game.description}</Text>
+        <Text style={styles.gameStageBody}>{game.studentInstruction || game.description}</Text>
+        {game.latestAttemptStatus === "COMPLETED" ? <ProgressPill value={game.latestScorePercent ?? 100} /> : null}
         <View style={styles.landscapeHint}>
           <Text style={styles.landscapeHintText}>Pronto para virar uma brincadeira em tela cheia.</Text>
         </View>
       </View>
 
-      <PrimaryButton label="Começar" onPress={() => undefined} />
+      <PrimaryButton label={gameLoading ? "Preparando..." : game.latestAttemptStatus === "COMPLETED" ? "Jogar novamente" : "Começar"} onPress={() => void beginGame()} />
     </View>
   );
 }
 
-function AchievementsScreen({ onOpenAchievement }: { onOpenAchievement: (achievement: CrescerAchievement) => void }) {
-  const achievements = demoCollections.achievements;
+function gameMark(game: EarlyChildhoodGame) {
+  if (game.legacyId === "RS-EI-GAME-ORGANIZANDO-CESTA") return "◌";
+  if (game.title.toLowerCase().includes("jardim")) return "✿";
+  return "▶";
+}
+
+function gameTag(game: EarlyChildhoodGame) {
+  if (game.legacyId === "RS-EI-GAME-ORGANIZANDO-CESTA") return "Organizar";
+  return game.gameType || "Jogo";
+}
+
+function gameActionLabel(game: EarlyChildhoodGame) {
+  if (game.latestAttemptStatus === "COMPLETED") return "Jogar novamente";
+  if (game.latestAttemptStatus === "IN_PROGRESS" || game.latestAttemptStatus === "STARTED") return "Continuar";
+  return "Jogar";
+}
+
+function AchievementsScreen({ session, onOpenAchievement }: { session: MobileSession | null; onOpenAchievement: (achievement: CrescerAchievement) => void }) {
+  const [summary, setSummary] = useState<StudentXpSummary | null>(null);
+  const [history, setHistory] = useState<StudentXpHistoryItem[]>([]);
+  const [achievements, setAchievements] = useState<CrescerAchievement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  const loadAchievements = useCallback(async () => {
+    if (!session) {
+      setLoading(false);
+      setFailed(true);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    try {
+      const [nextSummary, nextHistory, nextAchievements] = await Promise.all([
+        getStudentXpSummary(session),
+        getStudentXpHistory(session, 10),
+        getStudentAchievements(session)
+      ]);
+      setSummary(nextSummary);
+      setHistory(nextHistory);
+      setAchievements(nextAchievements.map(mapAchievementForUi));
+    } catch (_error) {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    void loadAchievements();
+  }, [loadAchievements]);
+
+  const totalXp = summary?.totalXp ?? 0;
+  const levelNumber = summary?.levelNumber ?? 1;
+  const levelFloor = summary?.levelFloorXp ?? 0;
+  const nextLevel = summary?.nextLevelXp ?? 100;
+  const levelSpan = Math.max(1, nextLevel - levelFloor);
+  const levelProgress = Math.max(0, Math.min(100, ((totalXp - levelFloor) / levelSpan) * 100));
+  const unlockedAchievements = achievements.filter((achievement) => achievement.unlocked);
 
   return (
     <View>
-      <View style={styles.achievementsHero}>
-        <Text style={styles.discoveryKicker}>Você conseguiu</Text>
-        <Text style={styles.discoveryTitle}>Conquistas</Text>
-        <Text style={styles.discoveryBody}>Veja tudo o que você já descobriu!</Text>
-      </View>
+      <CrescerModuleHero kicker="Você conseguiu" title="Conquistas" body="Veja tudo o que você já descobriu!" icon="achievements" tone="rose" />
 
+      {loading ? (
+        <View style={styles.libraryStateCard}>
+          <ActivityIndicator color={colors.child} />
+          <Text style={styles.libraryStateTitle}>Carregando conquistas</Text>
+          <Text style={styles.libraryStateBody}>Estamos buscando seu progresso.</Text>
+        </View>
+      ) : failed ? (
+        <EmptyState title="Conquistas indisponíveis" body="Tente entrar novamente em alguns instantes." />
+      ) : (
+        <>
       <View style={styles.progressCelebrationCard}>
         <View style={styles.progressAvatarRow}>
           <View style={styles.progressAvatar}>
-            <Text style={styles.progressAvatarText}>PM</Text>
+                <Image source={crescerHomeIcons.achievements} resizeMode="contain" style={styles.progressAvatarImage} />
           </View>
-          <View style={styles.progressNameBlock}>
-            <Text style={styles.progressName}>Pedro Miguel</Text>
-            <Text style={styles.progressLevel}>{achievements.level}</Text>
+              <View style={styles.progressNameBlock}>
+                <Text style={styles.progressName}>Pedro Miguel</Text>
+                <Text style={styles.progressLevel}>Nível {levelNumber}</Text>
+              </View>
+              <View style={styles.progressPoints}>
+                <Text style={styles.progressPointsText}>{totalXp} XP</Text>
+              </View>
+            </View>
+            <Text style={styles.progressCelebrationText}>{xpCelebrationText(totalXp, unlockedAchievements.length)}</Text>
+            <ProgressPill value={levelProgress} />
           </View>
-          <View style={styles.progressPoints}>
-            <Text style={styles.progressPointsText}>320 XP</Text>
-          </View>
-        </View>
-        <Text style={styles.progressCelebrationText}>{achievements.celebration}</Text>
-        <ProgressPill value={achievements.progress} />
-      </View>
 
-      <SectionHeader title="Minhas medalhas" />
-      <View style={styles.medalGrid}>
-        {achievements.medals.map((medal) => (
-          <AchievementMedalCard key={medal.title} achievement={medal} onPress={() => onOpenAchievement(medal)} />
-        ))}
-      </View>
+          <SectionHeader title="Minhas conquistas" />
+          {achievements.length ? (
+            <View style={styles.medalGrid}>
+              {achievements.map((achievement) => (
+                <AchievementMedalCard key={achievement.id} achievement={achievement} onPress={() => onOpenAchievement(achievement)} />
+              ))}
+            </View>
+          ) : (
+            <EmptyState title="Nenhuma conquista ainda" body="Quando você desbloquear uma conquista, ela aparece aqui." />
+          )}
 
-      <SectionHeader title="Minhas conquistas" />
-      <View style={styles.achievementList}>
-        {achievements.wins.map((achievement) => (
-          <AchievementListCard key={achievement.title} achievement={achievement} onPress={() => onOpenAchievement(achievement)} />
-        ))}
-      </View>
+          <SectionHeader title="Últimos XP" />
+          {history.length ? (
+            <View style={styles.achievementList}>
+              {history.map((item) => (
+                <XpHistoryCard key={item.id} item={item} />
+              ))}
+            </View>
+          ) : (
+            <EmptyState title="Sem XP por enquanto" body="Seu histórico aparece aqui quando houver recompensas." />
+          )}
+        </>
+      )}
     </View>
   );
 }
@@ -805,40 +2705,79 @@ function AchievementsScreen({ onOpenAchievement }: { onOpenAchievement: (achieve
 function AchievementMedalCard({ achievement, onPress }: { achievement: CrescerAchievement; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`${achievement.title}. ${achievement.message}`} onPress={onPress} style={styles.medalCard}>
-      <View style={[styles.medalIcon, achievement.earned ? styles.medalIconEarned : styles.medalIconWaiting]}>
+      <View style={[styles.medalIcon, achievement.unlocked ? styles.medalIconEarned : styles.medalIconWaiting]}>
         <Text style={styles.medalMark}>{achievement.mark}</Text>
       </View>
-      <Text style={styles.medalStatus}>{achievement.earned ? "Conquistada" : "Continue explorando!"}</Text>
+      <Text style={styles.medalStatus}>{achievement.unlocked ? "Conquistada" : "Continue explorando!"}</Text>
       <Text style={styles.medalTitle}>{achievement.title}</Text>
       <Text style={styles.medalMessage}>{achievement.message}</Text>
     </Pressable>
   );
 }
 
-function AchievementListCard({ achievement, onPress }: { achievement: CrescerAchievement; onPress: () => void }) {
+function XpHistoryCard({ item }: { item: StudentXpHistoryItem }) {
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`${achievement.title}. ${achievement.description}`} onPress={onPress} style={styles.achievementRow}>
+    <View style={styles.achievementRow}>
       <View style={styles.achievementRowIcon}>
-        <Text style={styles.achievementRowMark}>{achievement.mark}</Text>
+        <Text style={styles.achievementRowMark}>XP</Text>
       </View>
       <View style={styles.achievementRowCopy}>
-        <Text style={styles.medalStatus}>{achievement.earned ? "Conquistada" : "Continue explorando!"}</Text>
-        <Text style={styles.achievementRowTitle}>{achievement.title}</Text>
-        <Text style={styles.achievementRowBody}>{achievement.description}</Text>
+        <Text style={styles.medalStatus}>+{item.xpAmount} XP</Text>
+        <Text style={styles.achievementRowTitle}>{xpHistoryTitle(item)}</Text>
+        <Text style={styles.achievementRowBody}>{xpHistoryDescription(item)}</Text>
       </View>
-      <Text style={styles.discoveryChevron}>›</Text>
-    </Pressable>
+    </View>
   );
 }
 
-function AchievementDetailScreen({ achievement }: { achievement: CrescerAchievement }) {
+function AchievementDetailScreen({ session, achievementId }: { session: MobileSession | null; achievementId: string }) {
+  const [achievement, setAchievement] = useState<CrescerAchievement | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  const loadAchievement = useCallback(async () => {
+    if (!session) {
+      setLoading(false);
+      setFailed(true);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    try {
+      const achievements = await getStudentAchievements(session);
+      setAchievement(achievements.map(mapAchievementForUi).find((item) => item.id === achievementId) ?? null);
+    } catch (_error) {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [achievementId, session]);
+
+  useEffect(() => {
+    void loadAchievement();
+  }, [loadAchievement]);
+
+  if (loading) {
+    return (
+      <View style={styles.libraryStateCard}>
+        <ActivityIndicator color={colors.child} />
+        <Text style={styles.libraryStateTitle}>Carregando conquista</Text>
+        <Text style={styles.libraryStateBody}>Estamos abrindo sua conquista.</Text>
+      </View>
+    );
+  }
+
+  if (failed || !achievement) {
+    return <EmptyState title="Conquista indisponível" body="Volte e tente novamente em alguns instantes." />;
+  }
+
   return (
     <View>
       <View style={styles.achievementDetailHero}>
         <View style={styles.achievementDetailIcon}>
           <Text style={styles.achievementDetailMark}>{achievement.mark}</Text>
         </View>
-        <Text style={styles.achievementDetailStatus}>{achievement.earned ? "Conquistada" : "Continue explorando!"}</Text>
+        <Text style={styles.achievementDetailStatus}>{achievement.unlocked ? "Conquistada" : "Continue explorando!"}</Text>
         <Text style={styles.achievementDetailTitle}>{achievement.title}</Text>
         <Text style={styles.achievementDetailBody}>{achievement.description}</Text>
       </View>
@@ -853,16 +2792,42 @@ function AchievementDetailScreen({ achievement }: { achievement: CrescerAchievem
   );
 }
 
+function mapAchievementForUi(achievement: StudentAchievement): CrescerAchievement {
+  return {
+    ...achievement,
+    mark: achievement.unlocked ? "★" : "○",
+    message: achievement.unlocked ? "Você desbloqueou esta conquista." : "Continue explorando para desbloquear."
+  };
+}
+
+function xpCelebrationText(totalXp: number, unlockedCount: number) {
+  if (totalXp <= 0) return "Seu progresso começa aqui.";
+  if (unlockedCount === 1) return "Você já tem uma conquista!";
+  return `Você já somou ${totalXp} XP.`;
+}
+
+function xpHistoryTitle(item: StudentXpHistoryItem) {
+  if (item.sourceLegacyId === "RS-EI-GAME-ORGANIZANDO-CESTA") return "Organizando a Cesta";
+  if (item.sourceLegacyId) return item.sourceLegacyId;
+  if (item.sourceType === "activity") return "Atividade concluída";
+  if (item.sourceType === "discovery") return "Descoberta concluída";
+  if (item.sourceType === "game") return "Jogo concluído";
+  return "Recompensa";
+}
+
+function xpHistoryDescription(item: StudentXpHistoryItem) {
+  if (item.eventType === "GAME_COMPLETED") return "Jogo concluído.";
+  if (item.eventType === "ACTIVITY_COMPLETED") return "Atividade concluída.";
+  if (item.eventType === "DISCOVERY_COMPLETED") return "Descoberta concluída.";
+  return "Recompensa registrada.";
+}
+
 function AgendaScreen({ onOpenItem }: { onOpenItem: (item: CrescerAgendaItem) => void }) {
   const agenda = demoCollections.agenda;
 
   return (
     <View>
-      <View style={styles.agendaHero}>
-        <Text style={styles.discoveryKicker}>Esta semana</Text>
-        <Text style={styles.discoveryTitle}>Agenda</Text>
-        <Text style={styles.discoveryBody}>Veja o que está chegando nesta semana.</Text>
-      </View>
+      <CrescerModuleHero kicker="Esta semana" title="Agenda" body="Veja o que está chegando nesta semana." icon="agenda" tone="sky" />
 
       <View style={styles.weekStrip}>
         {agenda.weekDays.map((day) => (
@@ -897,7 +2862,7 @@ function AgendaItemCard({ item, onPress, featured }: { item: CrescerAgendaItem; 
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`${item.type}. ${item.title}`} onPress={onPress} style={[styles.agendaItemCard, featured ? styles.agendaItemFeatured : null]}>
       <View style={styles.agendaItemIcon}>
-        <Text style={styles.agendaItemIconText}>{getAgendaMark(item.type)}</Text>
+        <Image source={crescerHomeIcons.agenda} resizeMode="contain" style={styles.crescerListIconImage} />
       </View>
       <View style={styles.agendaItemCopy}>
         <Text style={styles.agendaType}>{item.type}</Text>
@@ -955,15 +2920,11 @@ function NotificationsScreen({
 
   return (
     <View>
-      <View style={styles.notificationsHero}>
-        <Text style={styles.discoveryKicker}>Novidades para você</Text>
-        <Text style={styles.discoveryTitle}>Notificações</Text>
-        <Text style={styles.discoveryBody}>Veja as novidades que chegaram para você.</Text>
-      </View>
+      <CrescerModuleHero kicker="Novidades para você" title="Notificações" body="Veja as novidades que chegaram para você." icon="notifications" tone="lilac" />
 
       <View style={styles.notificationSummaryCard}>
         <View style={styles.notificationSummaryIcon}>
-          <Text style={styles.notificationSummaryMark}>!</Text>
+          <Image source={crescerHomeIcons.notifications} resizeMode="contain" style={styles.crescerListIconImage} />
         </View>
         <View style={styles.notificationSummaryCopy}>
           <Text style={styles.notificationSummaryLabel}>Novidades</Text>
@@ -988,7 +2949,7 @@ function NotificationCard({ item, isRead, onPress }: { item: CrescerNotification
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`${item.type}. ${item.title}`} onPress={onPress} style={[styles.notificationCard, !isRead ? styles.notificationCardNew : null]}>
       <View style={styles.notificationIcon}>
-        <Text style={styles.notificationIconText}>{getNotificationMark(item.type)}</Text>
+        <Image source={crescerHomeIcons.notifications} resizeMode="contain" style={styles.crescerListIconImage} />
       </View>
       <View style={styles.notificationCopy}>
         <View style={styles.notificationMetaRow}>
@@ -1038,41 +2999,92 @@ function getNotificationMark(type: CrescerNotification["type"]) {
   return "!";
 }
 
-function CrescerProfileScreen({ onLogout }: { onLogout: () => void }) {
-  const childProfile = demoCollections.childProfile;
+function CrescerProfileScreen({ session, onLogout }: { session: MobileSession | null; onLogout: () => void }) {
+  const [profile, setProfile] = useState<CrescerStudentProfile | null>(null);
+  const [xpSummary, setXpSummary] = useState<StudentXpSummary | null>(null);
+  const [achievements, setAchievements] = useState<StudentAchievement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!session) {
+      setLoading(false);
+      setFailed(true);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    Promise.all([
+      getCrescerStudentProfile(session),
+      getStudentXpSummary(session).catch(() => null),
+      getStudentAchievements(session).catch(() => [])
+    ])
+      .then(([studentProfile, xp, studentAchievements]) => {
+        if (!active) return;
+        setProfile(studentProfile);
+        setXpSummary(xp);
+        setAchievements(studentAchievements);
+      })
+      .catch(() => {
+        if (active) setFailed(true);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  const unlockedAchievements = achievements.filter((item) => item.unlocked).length;
+  const progress: Array<{
+    label: string;
+    value: string;
+    icon: CrescerHomeCardSpec["icon"];
+    tone: CrescerHomeCardSpec["tone"];
+  }> = [
+    { label: "XP", value: String(xpSummary?.totalXp ?? 0), icon: "achievements", tone: "sun" },
+    { label: "Créditos", value: String(xpSummary?.creditsCount ?? 0), icon: "activities", tone: "sky" },
+    { label: "Conquistas", value: String(unlockedAchievements), icon: "achievements", tone: "rose" },
+    { label: "Nível", value: String(xpSummary?.levelNumber ?? profile?.levelNumber ?? 1), icon: "discoveries", tone: "mint" }
+  ];
 
   return (
     <View>
-      <View style={styles.profileHero}>
-        <Text style={styles.discoveryKicker}>Meu cantinho</Text>
-        <Text style={styles.discoveryTitle}>Meu perfil</Text>
-        <Text style={styles.discoveryBody}>{childProfile.message}</Text>
-      </View>
+      <CrescerModuleHero kicker="Meu cantinho" title="Meu perfil" body="Seu espaço no Raízes Crescer com os dados da sua turma." icon="achievements" tone="mint" />
 
+      {loading ? (
+        <View style={styles.libraryStateCard}>
+          <ActivityIndicator color={colors.brand} />
+          <Text style={styles.libraryStateTitle}>Carregando perfil</Text>
+          <Text style={styles.libraryStateBody}>Estamos buscando os dados do aluno.</Text>
+        </View>
+      ) : failed || !profile ? (
+        <EmptyState title="Perfil indisponível" body="Não foi possível carregar os dados do aluno agora." />
+      ) : (
+        <>
       <View style={styles.profileIdentityCard}>
         <View style={styles.profileAvatar}>
-          <Text style={styles.profileAvatarText}>{childProfile.avatar}</Text>
+          <Text style={styles.profileAvatarText}>{profile.initials}</Text>
         </View>
         <View style={styles.profileIdentityCopy}>
-          <Text style={styles.profileName}>{childProfile.name}</Text>
-          <Text style={styles.profileClass}>{childProfile.className}</Text>
-          <Text style={styles.profileSchool}>{childProfile.school}</Text>
+          <Text style={styles.profileName}>{profile.name}</Text>
+          <Text style={styles.profileClass}>{profile.className}</Text>
+          <Text style={styles.profileSchool}>{profile.schoolName}</Text>
           <View style={styles.profileLevelPill}>
-            <Text style={styles.profileLevelText}>{childProfile.level}</Text>
+            <Text style={styles.profileLevelText}>Nível {xpSummary?.levelNumber ?? profile.levelNumber ?? 1}</Text>
           </View>
         </View>
       </View>
 
-      <Pressable accessibilityRole="button" accessibilityLabel="Trocar avatar" style={styles.avatarAction}>
-        <Text style={styles.avatarActionText}>Trocar avatar</Text>
-      </Pressable>
-
       <SectionHeader title="Meu progresso" />
       <View style={styles.profileProgressGrid}>
-        {childProfile.progress.map((item) => (
-          <View key={item.label} style={styles.profileProgressCard}>
-            <View style={styles.profileProgressIcon}>
-              <Text style={styles.profileProgressMark}>{item.mark}</Text>
+        {progress.map((item) => (
+          <View key={item.label} style={[styles.profileProgressCard, toneStyle(item.tone)]}>
+            <View style={styles.profileProgressGlow} />
+            <View style={[styles.profileProgressIcon, iconToneStyle(item.tone)]}>
+              <Image source={crescerHomeIcons[item.icon]} resizeMode="contain" style={styles.profileProgressIconImage} />
             </View>
             <Text style={styles.profileProgressValue}>{item.value}</Text>
             <Text style={styles.profileProgressLabel}>{item.label}</Text>
@@ -1083,23 +3095,21 @@ function CrescerProfileScreen({ onLogout }: { onLogout: () => void }) {
       <SectionHeader title="Minha escola" />
       <View style={styles.profileSchoolCard}>
         <View style={styles.profileSchoolIcon}>
-          <Text style={styles.profileSchoolIconText}>⌂</Text>
+          <Image source={crescerHomeIcons.library} resizeMode="contain" style={styles.profileSchoolIconImage} />
         </View>
         <View style={styles.profileSchoolCopy}>
-          <Text style={styles.profileSchoolTitle}>{childProfile.school}</Text>
+          <Text style={styles.profileSchoolTitle}>{profile.schoolName}</Text>
           <Text style={styles.profileSchoolBody}>
-            {childProfile.className} · {childProfile.teacher}
+            {profile.className}{profile.schoolYear ? ` · ${profile.schoolYear}` : ""}
           </Text>
-          <Text style={styles.profileSchoolAction}>Ver minha escola</Text>
+          <Text style={styles.profileSchoolAction}>Matrícula ativa</Text>
         </View>
       </View>
 
       <SectionHeader title="Preferências" />
-      <View style={styles.profilePreferenceList}>
-        {childProfile.preferences.map((item) => (
-          <ProfilePreferenceCard key={item.title} item={item} />
-        ))}
-      </View>
+      <EmptyState title="Sem ajustes personalizados" body="Quando houver preferências registradas, elas aparecem aqui." />
+        </>
+      )}
 
       <Pressable accessibilityRole="button" accessibilityLabel="Sair" onPress={onLogout} style={styles.profileLogoutButton}>
         <Text style={styles.profileLogoutText}>Sair</Text>
@@ -1108,48 +3118,34 @@ function CrescerProfileScreen({ onLogout }: { onLogout: () => void }) {
   );
 }
 
-function ProfilePreferenceCard({ item }: { item: CrescerProfilePreference }) {
-  return (
-    <View style={styles.profilePreferenceCard}>
-      <View style={styles.profilePreferenceIcon}>
-        <Text style={styles.profilePreferenceMark}>{item.mark}</Text>
-      </View>
-      <View style={styles.profilePreferenceCopy}>
-        <Text style={styles.profilePreferenceTitle}>{item.title}</Text>
-        <Text style={styles.profilePreferenceBody}>{item.description}</Text>
-      </View>
-    </View>
-  );
-}
+function DiscoveryAdventureCard({ discovery, onPress }: { discovery: EarlyChildhoodDiscovery; onPress: () => void }) {
+  const actionLabel = discoveryActionLabel(discovery);
 
-function DiscoveryAdventureCard({
-  mark,
-  title,
-  subtitle,
-  tag
-}: {
-  mark: string;
-  title: string;
-  subtitle: string;
-  tag: string;
-}) {
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`${title}. ${subtitle}`} style={styles.discoveryCard}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`${discovery.title}. ${discovery.description}`} onPress={onPress} style={styles.discoveryCard}>
       <View style={styles.discoveryMark}>
-        <Text style={styles.discoveryMarkText}>{mark}</Text>
+        <Text style={styles.discoveryMarkText}>{discoveryMark(discovery)}</Text>
       </View>
       <View style={styles.discoveryCopy}>
-        <Text style={styles.discoveryTag}>{tag}</Text>
-        <Text style={styles.discoveryCardTitle}>{title}</Text>
-        <Text style={styles.discoveryCardBody}>{subtitle}</Text>
+        <Text style={styles.discoveryTag}>{discoveryStatusLabel(discovery)}</Text>
+        <Text style={styles.discoveryCardTitle}>{discovery.title}</Text>
+        <Text style={styles.discoveryCardBody}>{discovery.description}</Text>
+        {discovery.discoveredHotspots.length ? <Text style={styles.discoveryCardBody}>{discovery.discoveredHotspots.length} pista explorada</Text> : null}
       </View>
-      <Text style={styles.discoveryChevron}>›</Text>
+      {actionLabel === "Explorar" ? (
+        <Text style={styles.discoveryChevron}>›</Text>
+      ) : (
+        <View style={styles.discoveryActionPill}>
+          <Text style={styles.discoveryActionText}>{actionLabel}</Text>
+        </View>
+      )}
     </Pressable>
   );
 }
 
 function ModuleScreen({
   profile,
+  session,
   activeKey,
   onOpen,
   onBack,
@@ -1157,7 +3153,8 @@ function ModuleScreen({
   readNotificationTitles,
   onReadNotification
 }: {
-  profile: DemoProfile;
+  profile: AppProfile;
+  session: MobileSession | null;
   activeKey: ModuleKey;
   onOpen: (key: ModuleKey) => void;
   onBack: () => void;
@@ -1166,21 +3163,22 @@ function ModuleScreen({
   onReadNotification: (title: string) => void;
 }) {
   if (profile.role === "crescer") {
-    return <CrescerModule activeKey={activeKey} onOpen={onOpen} onBack={onBack} onLogout={onLogout} readNotificationTitles={readNotificationTitles} onReadNotification={onReadNotification} />;
+    return <CrescerModule session={session} activeKey={activeKey} onOpen={onOpen} onBack={onBack} onLogout={onLogout} readNotificationTitles={readNotificationTitles} onReadNotification={onReadNotification} />;
   }
 
   if (profile.role === "fundamental") {
-    return <FundamentalModule activeKey={activeKey} onOpen={onOpen} onBack={onBack} onLogout={onLogout} readNotificationTitles={readNotificationTitles} onReadNotification={onReadNotification} />;
+    return <FundamentalModule session={session} activeKey={activeKey} onOpen={onOpen} onBack={onBack} onLogout={onLogout} readNotificationTitles={readNotificationTitles} onReadNotification={onReadNotification} />;
   }
 
   if (profile.role === "professor") {
-    return <TeacherModule activeKey={activeKey} onOpen={onOpen} onLogout={onLogout} />;
+    return <TeacherModule session={session} activeKey={activeKey} onOpen={onOpen} onLogout={onLogout} />;
   }
 
   return <SharedModule activeKey={activeKey} audience="mobile" />;
 }
 
 function CrescerModule({
+  session,
   activeKey,
   onOpen,
   onBack,
@@ -1188,6 +3186,7 @@ function CrescerModule({
   readNotificationTitles,
   onReadNotification
 }: {
+  session: MobileSession | null;
   activeKey: ModuleKey;
   onOpen: (key: ModuleKey) => void;
   onBack: () => void;
@@ -1196,48 +3195,48 @@ function CrescerModule({
   onReadNotification: (title: string) => void;
 }) {
   if (activeKey === "discoveries") {
-    return <DiscoveryScreen />;
+    return <DiscoveryScreen session={session} onOpenDiscovery={(discovery) => onOpen(`discovery:${discovery.id}` as ModuleKey)} />;
+  }
+
+  if (String(activeKey).startsWith("discovery:")) {
+    const discoveryId = String(activeKey).replace("discovery:", "");
+    return <DiscoveryDetailScreen session={session} discoveryId={discoveryId} onOpenActivity={(activityId) => onOpen(`activity:${activityId}` as ModuleKey)} />;
   }
 
   if (activeKey === "activities") {
-    return <ActivitiesScreen onOpenActivity={(activity) => onOpen(`activity:${activity.title}` as ModuleKey)} />;
+    return <ActivitiesScreen session={session} onOpenActivity={(activity) => onOpen(`activity:${activity.id}` as ModuleKey)} />;
   }
 
   if (String(activeKey).startsWith("activity:")) {
-    const title = String(activeKey).replace("activity:", "");
-    const activity = demoCollections.activities.find((item) => item.title === title) ?? demoCollections.activities[0];
-    return <ActivityDetailScreen activity={activity} />;
+    const activityId = String(activeKey).replace("activity:", "");
+    return <ActivityDetailScreen session={session} activityId={activityId} />;
   }
 
   if (activeKey === "library") {
-    return <LibraryScreen onOpenBook={(book) => onOpen(`book:${book.title}` as ModuleKey)} />;
+    return <LibraryScreen session={session} onOpenBook={(book) => onOpen(`book:${book.id}` as ModuleKey)} />;
   }
 
   if (activeKey === "book" || String(activeKey).startsWith("book:")) {
-    const title = String(activeKey).startsWith("book:") ? String(activeKey).replace("book:", "") : demoCollections.books[0].title;
-    const book = demoCollections.books.find((item) => item.title === title) ?? demoCollections.books[0];
-    return <BookViewerScreen book={book} />;
+    const bookId = String(activeKey).startsWith("book:") ? String(activeKey).replace("book:", "") : "";
+    return <BookViewerScreen session={session} bookId={bookId} />;
   }
 
   if (activeKey === "games") {
-    return <GamesScreen onOpenGame={(game) => onOpen(`game:${game.title}` as ModuleKey)} />;
+    return <GamesScreen session={session} onOpenGame={(game) => onOpen(`game:${game.id}` as ModuleKey)} />;
   }
 
   if (String(activeKey).startsWith("game:")) {
-    const title = String(activeKey).replace("game:", "");
-    const game = demoCollections.games.find((item) => item.title === title) ?? demoCollections.games[0];
-    return <GameDetailScreen game={game} />;
+    const gameId = String(activeKey).replace("game:", "");
+    return <GameDetailScreen session={session} gameId={gameId} />;
   }
 
   if (activeKey === "achievements") {
-    return <AchievementsScreen onOpenAchievement={(achievement) => onOpen(`achievement:${achievement.title}` as ModuleKey)} />;
+    return <AchievementsScreen session={session} onOpenAchievement={(achievement) => onOpen(`achievement:${achievement.id}` as ModuleKey)} />;
   }
 
   if (String(activeKey).startsWith("achievement:")) {
-    const title = String(activeKey).replace("achievement:", "");
-    const allAchievements = [...demoCollections.achievements.medals, ...demoCollections.achievements.wins];
-    const achievement = allAchievements.find((item) => item.title === title) ?? demoCollections.achievements.medals[0];
-    return <AchievementDetailScreen achievement={achievement} />;
+    const achievementId = String(activeKey).replace("achievement:", "");
+    return <AchievementDetailScreen session={session} achievementId={achievementId} />;
   }
 
   if (activeKey === "agenda") {
@@ -1270,22 +3269,23 @@ function CrescerModule({
   }
 
   if (activeKey === "family") {
-    return <CrescerFamilyScreen onOpen={onOpen} />;
+    return <CrescerFamilyScreen session={session} onOpen={onOpen} />;
   }
 
   if (String(activeKey).startsWith("family:")) {
     const section = String(activeKey).replace("family:", "");
-    return <FamilySectionDetailScreen section={section} onBack={onBack} />;
+    return <FamilySectionDetailScreen session={session} section={section} onBack={onBack} />;
   }
 
   if (activeKey === "profile") {
-    return <CrescerProfileScreen onLogout={onLogout} />;
+    return <CrescerProfileScreen session={session} onLogout={onLogout} />;
   }
 
   return <SharedModule activeKey={activeKey} audience="infantil" />;
 }
 
 function FundamentalModule({
+  session,
   activeKey,
   onOpen,
   onBack,
@@ -1293,6 +3293,7 @@ function FundamentalModule({
   readNotificationTitles,
   onReadNotification
 }: {
+  session: MobileSession | null;
   activeKey: ModuleKey;
   onOpen: (key: ModuleKey) => void;
   onBack: () => void;
@@ -1303,49 +3304,41 @@ function FundamentalModule({
   const data = demoCollections.fundamental;
 
   if (activeKey === "activities") {
-    return <FundamentalActivitiesScreen onOpenActivity={(activity) => onOpen(`activity:${activity.title}` as ModuleKey)} />;
+    return <FundamentalActivitiesScreen session={session} onOpenActivity={(activity) => onOpen(`activity:${activity.id}` as ModuleKey)} />;
   }
 
   if (String(activeKey).startsWith("activity:")) {
-    const title = String(activeKey).replace("activity:", "");
-    const activity = data.priorityActivities.find((item) => item.title === title) ?? data.priorityActivities[0];
-    return <FundamentalActivityDetailScreen activity={activity} />;
+    const activityId = String(activeKey).replace("activity:", "");
+    return <FundamentalActivityDetailScreen session={session} activityId={activityId} />;
   }
 
   if (activeKey === "library") {
-    return <FundamentalLibraryScreen onOpenBook={(book) => onOpen(`book:${book.title}` as ModuleKey)} />;
+    return <FundamentalLibraryScreen session={session} onOpenBook={(book) => onOpen(`book:${book.id}` as ModuleKey)} />;
   }
 
   if (activeKey === "book" || String(activeKey).startsWith("book:")) {
-    const title = String(activeKey).startsWith("book:") ? String(activeKey).replace("book:", "") : data.books[0].title;
-    const book = data.books.find((item) => item.title === title) ?? data.books[0];
-    return <FundamentalBookReaderScreen book={book} />;
+    const bookId = String(activeKey).startsWith("book:") ? String(activeKey).replace("book:", "") : "";
+    return <BookViewerScreen session={session} bookId={bookId} />;
   }
 
   if (activeKey === "avalia") {
-    return <FundamentalAvaliaScreen onOpenAssessment={(assessment) => onOpen(`avalia:proof:${assessment.title}` as ModuleKey)} onOpenResult={(assessment) => onOpen(`avalia:result:${assessment.title}` as ModuleKey)} />;
+    return <FundamentalAvaliaScreen session={session} />;
   }
 
   if (String(activeKey).startsWith("avalia:proof:")) {
-    const title = String(activeKey).replace("avalia:proof:", "");
-    const assessment = data.assessments.find((item) => item.title === title) ?? data.assessments[0];
-    return <FundamentalAssessmentQuestionScreen assessment={assessment} onSubmit={() => onOpen(`avalia:submit:${assessment.title}` as ModuleKey)} />;
+    return <EmptyState title="Avaliação indisponível" body="Abra a avaliação pela lista quando ela estiver disponível." />;
   }
 
   if (String(activeKey).startsWith("avalia:submit:")) {
-    const title = String(activeKey).replace("avalia:submit:", "");
-    const assessment = data.assessments.find((item) => item.title === title) ?? data.assessments[0];
-    return <FundamentalAssessmentSubmitScreen assessment={assessment} onReview={() => onOpen(`avalia:proof:${assessment.title}` as ModuleKey)} onResult={() => onOpen(`avalia:result:${assessment.title}` as ModuleKey)} />;
+    return <EmptyState title="Envio indisponível" body="Quando houver uma avaliação publicada, o envio aparece no fluxo da própria avaliação." />;
   }
 
   if (String(activeKey).startsWith("avalia:result:")) {
-    const title = String(activeKey).replace("avalia:result:", "");
-    const assessment = data.assessments.find((item) => item.title === title) ?? data.assessments[0];
-    return <FundamentalAssessmentResultScreen assessment={assessment} onBackToAvalia={() => onOpen("avalia")} />;
+    return <EmptyState title="Resultado indisponível" body="Os resultados aparecem quando uma avaliação real for concluída." />;
   }
 
   if (activeKey === "agenda") {
-    return <FundamentalAgendaScreen onOpenItem={(item) => onOpen(`agenda:${item.title}` as ModuleKey)} onOpenModule={onOpen} />;
+    return <FundamentalAgendaScreen session={session} onOpenItem={(item) => onOpen(`agenda:${item.title}` as ModuleKey)} onOpenModule={onOpen} />;
   }
 
   if (String(activeKey).startsWith("agenda:")) {
@@ -1357,6 +3350,7 @@ function FundamentalModule({
   if (activeKey === "notifications") {
     return (
       <FundamentalNotificationsScreen
+        session={session}
         readTitles={readNotificationTitles}
         onOpenNotification={(item) => {
           onReadNotification(item.title);
@@ -1373,7 +3367,7 @@ function FundamentalModule({
   }
 
   if (activeKey === "profile") {
-    return <FundamentalProfileScreen onOpenModule={onOpen} onOpenAccessibility={() => onOpen("profile:accessibility" as ModuleKey)} onLogout={onLogout} />;
+    return <FundamentalProfileScreen session={session} onOpenModule={onOpen} onOpenAccessibility={() => onOpen("profile:accessibility" as ModuleKey)} onLogout={onLogout} />;
   }
 
   if (String(activeKey).startsWith("profile:accessibility")) {
@@ -1388,72 +3382,150 @@ function FundamentalModule({
   );
 }
 
-function CrescerFamilyScreen({ onOpen }: { onOpen: (key: ModuleKey) => void }) {
-  const family = demoCollections.familyCrescer;
-  const child = family.children.find((item) => item.selected) ?? family.children[0];
+function CrescerFamilyScreen({ session, onOpen }: { session: MobileSession | null; onOpen: (key: ModuleKey) => void }) {
+  const [profile, setProfile] = useState<CrescerStudentProfile | null>(null);
+  const [events, setEvents] = useState<CrescerCalendarEvent[]>([]);
+  const [messages, setMessages] = useState<CrescerFamilyMessage[]>([]);
+  const [notifications, setNotifications] = useState<CrescerNotificationCenterItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!session) {
+      setLoading(false);
+      setFailed(true);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    Promise.all([
+      getCrescerStudentProfile(session),
+      getCrescerCalendarEvents(session).catch(() => []),
+      getCrescerFamilyMessages(session).catch(() => []),
+      getCrescerNotificationCenter(session).catch(() => [])
+    ])
+      .then(([studentProfile, calendarEvents, familyMessages, centerItems]) => {
+        if (!active) return;
+        setProfile(studentProfile);
+        setEvents(calendarEvents);
+        setMessages(familyMessages);
+        setNotifications(centerItems);
+      })
+      .catch(() => {
+        if (active) setFailed(true);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  const attendance = [
+    {
+      label: "Frequência",
+      value: profile?.attendancePercent == null ? "--" : `${Math.round(profile.attendancePercent)}%`,
+      helper: "período atual"
+    },
+    {
+      label: "Presenças",
+      value: profile?.presentClasses == null ? "--" : String(profile.presentClasses),
+      helper: "aulas registradas"
+    },
+    {
+      label: "Total",
+      value: profile?.totalClasses == null ? "--" : String(profile.totalClasses),
+      helper: "aulas no período"
+    }
+  ];
+  const unreadMessages = messages.filter((item) => item.unread).length + notifications.filter((item) => item.unread).length;
+  const daySummary = unreadMessages > 0
+    ? `${unreadMessages} recado${unreadMessages > 1 ? "s" : ""} para acompanhar.`
+    : "Não há recados novos para acompanhar agora.";
 
   return (
     <View>
-      <View style={styles.familyCrescerHero}>
-        <Text style={styles.discoveryKicker}>Família</Text>
-        <Text style={styles.discoveryTitle}>Acompanhamento da criança</Text>
-        <Text style={styles.discoveryBody}>Resumo simples da rotina, recados e semana da turma.</Text>
-      </View>
+      <CrescerModuleHero kicker="Família" title="Acompanhamento da criança" body="Resumo simples da rotina, recados e agenda da turma." icon="family" tone="sun" />
 
+      {loading ? (
+        <View style={styles.libraryStateCard}>
+          <ActivityIndicator color={colors.brand} />
+          <Text style={styles.libraryStateTitle}>Carregando acompanhamento</Text>
+          <Text style={styles.libraryStateBody}>Estamos buscando os recados da escola.</Text>
+        </View>
+      ) : failed || !profile ? (
+        <EmptyState title="Acompanhamento indisponível" body="Não foi possível carregar os dados familiares agora." />
+      ) : (
+        <>
       <View style={styles.familyIdentityCard}>
         <View style={styles.familyAvatar}>
-          <Text style={styles.familyAvatarText}>{child.avatar}</Text>
+          <Text style={styles.familyAvatarText}>{profile.initials}</Text>
         </View>
         <View style={styles.familyIdentityCopy}>
           <Text style={styles.familyIdentityLabel}>Criança</Text>
-          <Text style={styles.familyIdentityName}>{child.name}</Text>
+          <Text style={styles.familyIdentityName}>{profile.name}</Text>
           <Text style={styles.familyIdentityMeta}>
-            {child.className} · {child.school}
+            {profile.className} · {profile.schoolName}
           </Text>
         </View>
       </View>
 
-      <SectionHeader title="Trocar criança" />
+      <SectionHeader title="Criança" />
       <View style={styles.familyChildSwitch}>
-        {family.children.map((item) => (
-          <View key={item.name} style={[styles.familyChildChip, item.selected ? styles.familyChildChipActive : null]}>
-            <Text style={[styles.familyChildChipName, item.selected ? styles.familyChildChipNameActive : null]}>{item.name}</Text>
-            <Text style={[styles.familyChildChipMeta, item.selected ? styles.familyChildChipMetaActive : null]}>{item.className}</Text>
-          </View>
-        ))}
+        <View style={[styles.familyChildChip, styles.familyChildChipActive]}>
+          <Text style={[styles.familyChildChipName, styles.familyChildChipNameActive]}>{profile.name}</Text>
+          <Text style={[styles.familyChildChipMeta, styles.familyChildChipMetaActive]}>{profile.className}</Text>
+        </View>
       </View>
 
       <View style={styles.familySummaryCard}>
-        <Text style={styles.familySectionTitle}>Resumo do dia</Text>
-        <Text style={styles.familySectionBody}>{family.daySummary}</Text>
+        <View style={styles.familySummaryIcon}>
+          <Image source={crescerHomeIcons.family} resizeMode="contain" style={styles.familySummaryIconImage} />
+        </View>
+        <View style={styles.familyTimelineCopy}>
+          <Text style={styles.familySectionTitle}>Resumo do dia</Text>
+          <Text style={styles.familySectionBody}>{daySummary}</Text>
+        </View>
       </View>
 
       <SectionHeader title="Frequência" />
       <View style={styles.familyMetricGrid}>
-        {family.attendance.map((item) => (
+        {attendance.map((item) => (
           <FamilyMetricCard key={item.label} label={item.label} value={item.value} helper={item.helper} />
         ))}
       </View>
 
       <FamilyPreviewSection title="Minha Semana" action="Ver semana" onPress={() => onOpen("family:week" as ModuleKey)}>
-        {family.week.slice(0, 3).map((item) => (
-          <FamilyTimelineCard key={`${item.day}-${item.title}`} mark={item.day} title={item.title} meta={`${item.time} · ${item.note}`} />
-        ))}
+        {events.length > 0 ? (
+          events.slice(0, 3).map((item) => (
+            <FamilyTimelineCard key={`${item.eventDate}-${item.title}`} mark={formatEventDate(item.eventDate, "short")} title={item.title} meta={`${formatClock(item.startTime)} · ${item.description || item.eventType}`} />
+          ))
+        ) : (
+          <EmptyState title="Sem agenda no período" body="A escola ainda não publicou eventos para esta janela." />
+        )}
       </FamilyPreviewSection>
 
       <FamilyPreviewSection title="Recados" action="Ver todos" onPress={() => onOpen("family:messages" as ModuleKey)}>
-        {family.messages.map((item) => (
-          <FamilyMessageCard key={item.title} title={item.title} meta={`${item.origin} · ${item.date}`} unread={item.unread} />
-        ))}
+        {messages.length > 0 ? (
+          messages.map((item) => (
+            <FamilyMessageCard key={`${item.title}-${item.date || ""}`} title={item.title} meta={`${item.origin} · ${formatFamilyDate(item.date)}`} unread={item.unread} />
+          ))
+        ) : (
+          <EmptyState title="Sem recados" body="Quando a escola enviar recados, eles aparecem aqui." />
+        )}
       </FamilyPreviewSection>
 
       <FamilyQuickGrid
         items={[
-          { title: "Agenda", body: "Eventos e lembretes da turma.", mark: "◷", target: "family:agenda" },
-          { title: "Notificações", body: "Novidades importantes do app.", mark: "!", target: "family:notifications" }
+          { title: "Agenda", body: "Eventos e lembretes da turma.", icon: "agenda", target: "family:agenda" },
+          { title: "Notificações", body: `${notifications.length} ${notifications.length === 1 ? "item" : "itens"} no centro.`, icon: "notifications", target: "family:notifications" }
         ]}
         onOpen={onOpen}
       />
+        </>
+      )}
     </View>
   );
 }
@@ -1470,8 +3542,13 @@ function FamilyPreviewSection({ title, action, onPress, children }: { title: str
 }
 
 function FamilyMetricCard({ label, value, helper }: { label: string; value: string; helper: string }) {
+  const icon = familyMetricIcon(label);
+
   return (
     <View style={styles.familyMetricCard}>
+      <View style={styles.familyMetricIcon}>
+        <Image source={icon} resizeMode="contain" style={styles.familyMetricIconImage} />
+      </View>
       <Text style={styles.familyMetricValue}>{value}</Text>
       <Text style={styles.familyMetricLabel}>{label}</Text>
       <Text style={styles.familyMetricHelper}>{helper}</Text>
@@ -1506,13 +3583,19 @@ function FamilyMessageCard({ title, meta, unread }: { title: string; meta: strin
   );
 }
 
-function FamilyQuickGrid({ items, onOpen }: { items: Array<{ title: string; body: string; mark: string; target: string }>; onOpen: (key: ModuleKey) => void }) {
+function familyMetricIcon(label: string): ImageSourcePropType {
+  if (label.includes("Frequência")) return crescerHomeIcons.week;
+  if (label.includes("Presenças")) return crescerHomeIcons.agenda;
+  return crescerHomeIcons.activities;
+}
+
+function FamilyQuickGrid({ items, onOpen }: { items: Array<{ title: string; body: string; icon: "agenda" | "notifications"; target: string }>; onOpen: (key: ModuleKey) => void }) {
   return (
     <View style={styles.familyQuickGrid}>
       {items.map((item) => (
         <Pressable key={item.title} accessibilityRole="button" accessibilityLabel={item.title} onPress={() => onOpen(item.target as ModuleKey)} style={styles.familyQuickCard}>
           <View style={styles.familyQuickMark}>
-            <Text style={styles.familyQuickMarkText}>{item.mark}</Text>
+            <Image source={crescerHomeIcons[item.icon]} resizeMode="contain" style={styles.familyQuickIconImage} />
           </View>
           <Text style={styles.familyQuickTitle}>{item.title}</Text>
           <Text style={styles.familyQuickBody}>{item.body}</Text>
@@ -1522,7 +3605,12 @@ function FamilyQuickGrid({ items, onOpen }: { items: Array<{ title: string; body
   );
 }
 
-function FamilySectionDetailScreen({ section, onBack }: { section: string; onBack: () => void }) {
+function FamilySectionDetailScreen({ session, section, onBack }: { session: MobileSession | null; section: string; onBack: () => void }) {
+  const [events, setEvents] = useState<CrescerCalendarEvent[]>([]);
+  const [messages, setMessages] = useState<CrescerFamilyMessage[]>([]);
+  const [notifications, setNotifications] = useState<CrescerNotificationCenterItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const titleMap: Record<string, string> = {
     week: "Minha Semana",
     messages: "Recados",
@@ -1531,43 +3619,111 @@ function FamilySectionDetailScreen({ section, onBack }: { section: string; onBac
   };
   const title = titleMap[section] ?? "Família";
   const intro = "Acompanhamento familiar da rotina da criança.";
-  const details =
-    section === "week"
-      ? ["Segunda a sexta organizadas por dia", "Atividades e horários principais", "Observações gerais da turma"]
-      : section === "messages"
-        ? ["Recados da escola e professora", "Leitura local demonstrativa", "Sem envio de mensagens nesta área"]
-        : section === "agenda"
-          ? ["Eventos e compromissos", "Prazos e lembretes", "Sem edição de calendário"]
-          : ["Recados, agenda e atividade", "Badge local de novidades", "Detalhe visual sem integração real"];
+
+  useEffect(() => {
+    let active = true;
+    if (!session) {
+      setLoading(false);
+      setFailed(true);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    Promise.all([
+      getCrescerCalendarEvents(session).catch(() => []),
+      getCrescerFamilyMessages(session).catch(() => []),
+      getCrescerNotificationCenter(session).catch(() => [])
+    ])
+      .then(([calendarEvents, familyMessages, centerItems]) => {
+        if (!active) return;
+        setEvents(calendarEvents);
+        setMessages(familyMessages);
+        setNotifications(centerItems);
+      })
+      .catch(() => {
+        if (active) setFailed(true);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  const detailRows =
+    section === "messages"
+      ? messages.map((item) => ({ mark: item.unread ? "Novo" : "Lido", title: item.title, meta: `${item.origin} · ${formatFamilyDate(item.date)}` }))
+      : section === "notifications"
+        ? notifications.map((item) => ({ mark: item.unread ? "Novo" : "Lido", title: item.title, meta: `${item.origin} · ${formatFamilyDate(item.deliveredAt)}` }))
+        : events.map((item) => ({ mark: formatEventDate(item.eventDate, "short"), title: item.title, meta: `${formatClock(item.startTime)} · ${item.description || item.eventType}` }));
 
   return (
     <View>
-      <View style={styles.familyCrescerHero}>
-        <Text style={styles.discoveryKicker}>Família</Text>
-        <Text style={styles.discoveryTitle}>{title}</Text>
-        <Text style={styles.discoveryBody}>{intro}</Text>
-      </View>
+      <CrescerModuleHero kicker="Família" title={title} body={intro} icon="family" tone="sun" />
       <View style={styles.familyDetailList}>
-        {details.map((item, index) => (
-          <FamilyTimelineCard key={item} mark={`${index + 1}`} title={item} meta="Visual preparado para futura integração segura" />
-        ))}
-      </View>
-      <View style={styles.familyReadOnlyNotice}>
-        <Text style={styles.familyReadOnlyTitle}>Somente acompanhamento</Text>
-        <Text style={styles.familyReadOnlyBody}>Esta área não permite alterar frequência, responder avaliações, registrar diário ou enviar recados como professor.</Text>
+        {loading ? (
+          <View style={styles.libraryStateCard}>
+            <ActivityIndicator color={colors.brand} />
+            <Text style={styles.libraryStateTitle}>Carregando itens</Text>
+            <Text style={styles.libraryStateBody}>Estamos buscando as informações da escola.</Text>
+          </View>
+        ) : failed ? (
+          <EmptyState title="Itens indisponíveis" body="Não foi possível carregar esta área agora." />
+        ) : detailRows.length > 0 ? (
+          detailRows.map((item) => (
+            <FamilyTimelineCard key={`${item.mark}-${item.title}-${item.meta}`} mark={item.mark} title={item.title} meta={item.meta} />
+          ))
+        ) : (
+          <EmptyState title="Nada por aqui" body="A escola ainda não publicou itens para esta área." />
+        )}
       </View>
       <PrimaryButton label="Voltar" onPress={onBack} />
     </View>
   );
 }
 
-function FundamentalShell({ title, intro, children }: { title: string; intro: string; children: React.ReactNode }) {
+function formatEventDate(value: string, mode: "short" | "long" = "long") {
+  const date = parseLocalDate(value);
+  if (!date) return mode === "short" ? "--" : "Data a confirmar";
+  if (mode === "short") {
+    return date.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "");
+  }
+  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+}
+
+function formatFamilyDate(value: string | null) {
+  if (!value) return "sem data";
+  const date = value.includes("T") ? new Date(value) : parseLocalDate(value);
+  if (!date || Number.isNaN(date.getTime())) return "sem data";
+  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+}
+
+function formatClock(value: string | null) {
+  if (!value) return "Horário a confirmar";
+  return value.slice(0, 5);
+}
+
+function parseLocalDate(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+}
+
+function FundamentalShell({ title, intro, icon, children }: { title: string; intro: string; icon?: ImageSourcePropType; children: React.ReactNode }) {
   return (
     <View>
-      <View style={styles.fundamentalShellHero}>
-        <Text style={styles.fundamentalKicker}>Aluno Fundamental</Text>
-        <Text style={styles.fundamentalShellTitle}>{title}</Text>
-        <Text style={styles.fundamentalShellIntro}>{intro}</Text>
+      <View style={[styles.fundamentalShellHero, icon ? styles.fundamentalShellHeroWithIcon : null]}>
+        <View style={styles.fundamentalShellHeroCopy}>
+          <Text style={styles.fundamentalKicker}>Aluno Fundamental</Text>
+          <Text style={styles.fundamentalShellTitle}>{title}</Text>
+          <Text style={styles.fundamentalShellIntro}>{intro}</Text>
+        </View>
+        {icon ? (
+          <View style={styles.fundamentalShellHeroIconFrame}>
+            <Image source={icon} resizeMode="contain" style={styles.fundamentalShellHeroIconImage} />
+          </View>
+        ) : null}
       </View>
       <SectionHeader title="Conteúdo" />
       <View style={styles.fundamentalShellList}>{children}</View>
@@ -1575,46 +3731,98 @@ function FundamentalShell({ title, intro, children }: { title: string; intro: st
   );
 }
 
-function FundamentalActivitiesScreen({ onOpenActivity }: { onOpenActivity: (activity: FundamentalActivity) => void }) {
-  const activities = demoCollections.fundamental.priorityActivities;
-  const featured = activities.find((activity) => activity.state === "Em andamento") ?? activities[0];
-  const todo = activities.filter((activity) => activity.state === "Nova" || activity.state === "Prazo próximo");
-  const inProgress = activities.filter((activity) => activity.state === "Em andamento");
-  const completed = activities.filter((activity) => activity.state === "Concluída");
+function FundamentalModuleHeader({ title, intro, icon }: { title: string; intro: string; icon: ImageSourcePropType }) {
+  return (
+    <View style={[styles.fundamentalShellHero, styles.fundamentalShellHeroWithIcon]}>
+      <View style={styles.fundamentalShellHeroCopy}>
+        <Text style={styles.fundamentalKicker}>Aluno Fundamental</Text>
+        <Text style={styles.fundamentalShellTitle}>{title}</Text>
+        <Text style={styles.fundamentalShellIntro}>{intro}</Text>
+      </View>
+      <View style={styles.fundamentalShellHeroIconFrame}>
+        <Image source={icon} resizeMode="contain" style={styles.fundamentalShellHeroIconImage} />
+      </View>
+    </View>
+  );
+}
+
+function FundamentalActivitiesScreen({ session, onOpenActivity }: { session: MobileSession | null; onOpenActivity: (activity: FundamentalActivity) => void }) {
+  const [activities, setActivities] = useState<FundamentalActivity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!session) {
+      setLoading(false);
+      setFailed(true);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    void getInstitutionalActivities(session)
+      .then((items) => {
+        if (active) setActivities(items);
+      })
+      .catch(() => {
+        if (active) setFailed(true);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  const featured = activities.find((activity) => normalizeFundamentalProgressStatus(activity.progressStatus) === "Em andamento") ?? activities[0];
+  const todo = activities.filter((activity) => normalizeFundamentalProgressStatus(activity.progressStatus) === "Nova");
+  const inProgress = activities.filter((activity) => normalizeFundamentalProgressStatus(activity.progressStatus) === "Em andamento");
+  const completed = activities.filter((activity) => normalizeFundamentalProgressStatus(activity.progressStatus) === "Concluída");
 
   return (
     <View>
-      <View style={styles.fundamentalShellHero}>
-        <Text style={styles.fundamentalKicker}>Aluno Fundamental</Text>
-        <Text style={styles.fundamentalShellTitle}>Atividades</Text>
-        <Text style={styles.fundamentalShellIntro}>Organize suas atividades e continue seus estudos.</Text>
-      </View>
+      <FundamentalModuleHeader title="Atividades" intro="Organize suas atividades e continue seus estudos." icon={fundamentalModuleIcon("activities")} />
 
-      <SectionHeader title="Para fazer agora" />
-      <Pressable accessibilityRole="button" accessibilityLabel={`Abrir atividade ${featured.title}`} onPress={() => onOpenActivity(featured)} style={styles.fundamentalFeaturedActivity}>
-        <View style={styles.fundamentalFeaturedTop}>
-          <View style={styles.fundamentalFeaturedIcon}>
-            <Text style={styles.fundamentalFeaturedIconText}>✓</Text>
-          </View>
-          <View style={styles.fundamentalFeaturedCopy}>
-            <Text style={styles.fundamentalActivitySubject}>{featured.subject}</Text>
-            <Text style={styles.fundamentalFeaturedTitle}>{featured.title}</Text>
-            <Text style={styles.fundamentalActivityDue}>Prazo: {featured.due}</Text>
-          </View>
-          <View style={styles.fundamentalStatePill}>
-            <Text style={styles.fundamentalStateText}>{featured.state}</Text>
-          </View>
+      {loading ? (
+        <View style={styles.libraryStateCard}>
+          <ActivityIndicator color={colors.brand} />
+          <Text style={styles.libraryStateTitle}>Carregando atividades</Text>
+          <Text style={styles.libraryStateBody}>Estamos buscando as publicações da sua escola.</Text>
         </View>
-        <Text style={styles.fundamentalFeaturedBody}>{featured.orientation}</Text>
-        <FundamentalProgress value={featured.progress} />
-        <View style={styles.fundamentalFeaturedAction}>
-          <Text style={styles.fundamentalFeaturedActionText}>{featured.action}</Text>
-        </View>
-      </Pressable>
+      ) : failed ? (
+        <EmptyState title="Atividades indisponíveis" body="Não foi possível carregar as atividades agora." />
+      ) : featured ? (
+        <>
+          <SectionHeader title="Para fazer agora" />
+          <Pressable accessibilityRole="button" accessibilityLabel={`Abrir atividade ${featured.title}`} onPress={() => onOpenActivity(featured)} style={styles.fundamentalFeaturedActivity}>
+            <View style={styles.fundamentalFeaturedTop}>
+              <View style={styles.fundamentalFeaturedIcon}>
+                <Image source={fundamentalActivityIcon()} resizeMode="contain" style={styles.fundamentalFeaturedIconImage} />
+              </View>
+              <View style={styles.fundamentalFeaturedCopy}>
+                <Text style={styles.fundamentalActivitySubject}>{featured.schoolYear || "Atividade"}</Text>
+                <Text style={styles.fundamentalFeaturedTitle}>{featured.title}</Text>
+                <Text style={styles.fundamentalActivityDue}>{formatInstitutionalActivityDate(featured.createdAt)}</Text>
+              </View>
+              <View style={styles.fundamentalStatePill}>
+                <Text style={styles.fundamentalStateText}>{normalizeFundamentalProgressStatus(featured.progressStatus)}</Text>
+              </View>
+            </View>
+            <Text style={styles.fundamentalFeaturedBody}>{featured.description || "Atividade publicada pela escola."}</Text>
+            <FundamentalProgress value={progressFromInstitutionalActivity(featured)} />
+            <View style={styles.fundamentalFeaturedAction}>
+              <Text style={styles.fundamentalFeaturedActionText}>Abrir atividade</Text>
+            </View>
+          </Pressable>
 
-      <FundamentalActivitySection title="Para fazer" activities={todo} onOpenActivity={onOpenActivity} />
-      <FundamentalActivitySection title="Em andamento" activities={inProgress} onOpenActivity={onOpenActivity} />
-      <FundamentalActivitySection title="Concluídas" activities={completed} onOpenActivity={onOpenActivity} />
+          <FundamentalActivitySection title="Para fazer" activities={todo} onOpenActivity={onOpenActivity} />
+          <FundamentalActivitySection title="Em andamento" activities={inProgress} onOpenActivity={onOpenActivity} />
+          <FundamentalActivitySection title="Concluídas" activities={completed} onOpenActivity={onOpenActivity} />
+        </>
+      ) : (
+        <EmptyState title="Sem atividades no momento" body="Quando sua escola publicar atividades para sua turma, elas aparecem aqui." />
+      )}
     </View>
   );
 }
@@ -1637,97 +3845,88 @@ function FundamentalActivitySection({
       <SectionHeader title={title} />
       <View style={styles.fundamentalActivityList}>
         {activities.map((activity) => (
-          <FundamentalActivityCard key={activity.title} activity={activity} onPress={() => onOpenActivity(activity)} />
+          <FundamentalActivityCard key={activity.id} activity={activity} onPress={() => onOpenActivity(activity)} />
         ))}
       </View>
     </View>
   );
 }
 
-function FundamentalActivityDetailScreen({ activity }: { activity: FundamentalActivity }) {
+function FundamentalActivityDetailScreen({ session, activityId }: { session: MobileSession | null; activityId: string }) {
+  const [activity, setActivity] = useState<FundamentalActivity | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!session || !activityId) {
+      setLoading(false);
+      setFailed(true);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    void getInstitutionalActivity(session, activityId)
+      .then((item) => {
+        if (active) setActivity(item);
+      })
+      .catch(() => {
+        if (active) setFailed(true);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [activityId, session]);
+
+  if (loading) {
+    return (
+      <View style={styles.libraryStateCard}>
+        <ActivityIndicator color={colors.brand} />
+        <Text style={styles.libraryStateTitle}>Carregando atividade</Text>
+        <Text style={styles.libraryStateBody}>Estamos abrindo a atividade publicada pela escola.</Text>
+      </View>
+    );
+  }
+
+  if (failed || !activity) {
+    return <EmptyState title="Atividade indisponível" body="Não foi possível abrir esta atividade agora." />;
+  }
+
   return (
     <View>
       <View style={styles.fundamentalShellHero}>
-        <Text style={styles.fundamentalKicker}>{activity.subject}</Text>
+        <Text style={styles.fundamentalKicker}>{activity.schoolYear || "Atividade"}</Text>
         <Text style={styles.fundamentalShellTitle}>{activity.title}</Text>
-        <Text style={styles.fundamentalShellIntro}>{activity.orientation}</Text>
+        <Text style={styles.fundamentalShellIntro}>{activity.description || "Atividade publicada pela escola."}</Text>
       </View>
       <SectionHeader title="Orientações" />
       <View style={styles.fundamentalActivityDetailCard}>
         <View style={styles.fundamentalActivityDetailRow}>
-          <Text style={styles.fundamentalDetailLabel}>Prazo</Text>
-          <Text style={styles.fundamentalDetailValue}>{activity.due}</Text>
+          <Text style={styles.fundamentalDetailLabel}>Publicação</Text>
+          <Text style={styles.fundamentalDetailValue}>{formatInstitutionalActivityDate(activity.createdAt)}</Text>
         </View>
         <View style={styles.fundamentalActivityDetailRow}>
           <Text style={styles.fundamentalDetailLabel}>Estado</Text>
-          <Text style={styles.fundamentalDetailValue}>{activity.state}</Text>
+          <Text style={styles.fundamentalDetailValue}>{normalizeFundamentalProgressStatus(activity.progressStatus)}</Text>
         </View>
         <View style={styles.fundamentalActivityDetailRow}>
           <Text style={styles.fundamentalDetailLabel}>Progresso</Text>
-          <Text style={styles.fundamentalDetailValue}>{activity.progress}%</Text>
+          <Text style={styles.fundamentalDetailValue}>{progressFromInstitutionalActivity(activity)}%</Text>
         </View>
-        <FundamentalProgress value={activity.progress} />
+        <FundamentalProgress value={progressFromInstitutionalActivity(activity)} />
         <View style={styles.fundamentalDetailAction}>
-          <Text style={styles.fundamentalDetailActionText}>{activity.action}</Text>
+          <Text style={styles.fundamentalDetailActionText}>Acompanhar atividade</Text>
         </View>
       </View>
     </View>
   );
 }
 
-function FundamentalLibraryScreen({ onOpenBook }: { onOpenBook: (book: FundamentalBook) => void }) {
-  const books = demoCollections.fundamental.books;
-  const featured = books.find((book) => book.progress > 0) ?? books[0];
-  const highlights = books.filter((book) => book.title !== featured.title);
-
-  return (
-    <View>
-      <View style={styles.fundamentalShellHero}>
-        <Text style={styles.fundamentalKicker}>Aluno Fundamental</Text>
-        <Text style={styles.fundamentalShellTitle}>Biblioteca</Text>
-        <Text style={styles.fundamentalShellIntro}>Encontre livros e continue suas leituras.</Text>
-      </View>
-
-      <View style={styles.fundamentalSearchCard}>
-        <View style={styles.fundamentalSearchIcon}>
-          <Text style={styles.fundamentalSearchIconText}>⌕</Text>
-        </View>
-        <Text style={styles.fundamentalSearchText}>Buscar na biblioteca</Text>
-      </View>
-
-      <SectionHeader title="Continue lendo" />
-      <Pressable accessibilityRole="button" accessibilityLabel={`Continuar leitura ${featured.title}`} onPress={() => onOpenBook(featured)} style={styles.fundamentalFeaturedBook}>
-        <FundamentalBookCover book={featured} size="large" />
-        <View style={styles.fundamentalFeaturedBookCopy}>
-          <Text style={styles.fundamentalBookCategory}>{featured.category}</Text>
-          <Text style={styles.fundamentalFeaturedBookTitle}>{featured.title}</Text>
-          <Text style={styles.fundamentalFeaturedBookBody}>{featured.description}</Text>
-          <View style={styles.fundamentalBookMetaRow}>
-            <Text style={styles.fundamentalBookMetaText}>{featured.page}</Text>
-            <Text style={styles.fundamentalBookMetaText}>{featured.progress}% lido</Text>
-          </View>
-          <FundamentalProgress value={featured.progress} />
-          <View style={styles.fundamentalBookAction}>
-            <Text style={styles.fundamentalBookActionText}>Continuar leitura</Text>
-          </View>
-        </View>
-      </Pressable>
-
-      <SectionHeader title="Destaques" />
-      <View style={styles.fundamentalBookGrid}>
-        {highlights.map((book) => (
-          <FundamentalBookCard key={book.title} book={book} onPress={() => onOpenBook(book)} />
-        ))}
-      </View>
-
-      <SectionHeader title="Categorias" />
-      <View style={styles.fundamentalCategoryRow}>
-        {demoCollections.fundamental.bookCategories.map((category) => (
-          <FundamentalCategoryPill key={category} category={category} />
-        ))}
-      </View>
-    </View>
-  );
+function FundamentalLibraryScreen({ session, onOpenBook }: { session: MobileSession | null; onOpenBook: (book: LibraryBook) => void }) {
+  return <LibraryScreen session={session} onOpenBook={onOpenBook} />;
 }
 
 function FundamentalBookCard({ book, onPress }: { book: FundamentalBook; onPress: () => void }) {
@@ -1803,25 +4002,42 @@ function getFundamentalBookToneStyle(tone: FundamentalBook["tone"]) {
   return styles.fundamentalBookToneBlue;
 }
 
-function FundamentalAvaliaScreen({
-  onOpenAssessment,
-  onOpenResult
-}: {
-  onOpenAssessment: (assessment: FundamentalAssessment) => void;
-  onOpenResult: (assessment: FundamentalAssessment) => void;
-}) {
-  const assessments = demoCollections.fundamental.assessments;
-  const available = assessments.filter((assessment) => assessment.state === "Disponível");
-  const inProgress = assessments.filter((assessment) => assessment.state === "Em andamento");
-  const completed = assessments.filter((assessment) => assessment.state === "Concluída");
+function FundamentalAvaliaScreen({ session }: { session: MobileSession | null }) {
+  const [assessments, setAssessments] = useState<FundamentalAssessmentItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!session) {
+      setLoading(false);
+      setFailed(true);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    void getStudentAssessmentAssignments(session)
+      .then((items) => {
+        if (active) setAssessments(items);
+      })
+      .catch(() => {
+        if (active) setFailed(true);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  const available = assessments.filter((assessment) => normalizeAssessmentState(assessment) === "Disponível");
+  const inProgress = assessments.filter((assessment) => normalizeAssessmentState(assessment) === "Em andamento");
+  const completed = assessments.filter((assessment) => normalizeAssessmentState(assessment) === "Concluída");
 
   return (
     <View>
-      <View style={styles.fundamentalShellHero}>
-        <Text style={styles.fundamentalKicker}>Aluno Fundamental</Text>
-        <Text style={styles.fundamentalShellTitle}>Avalia+</Text>
-        <Text style={styles.fundamentalShellIntro}>Acompanhe suas avaliações e resultados.</Text>
-      </View>
+      <FundamentalModuleHeader title="Avalia+" intro="Acompanhe suas avaliações e resultados." icon={fundamentalModuleIcon("avalia")} />
 
       <View style={styles.assessmentSummaryGrid}>
         <AssessmentSummaryCard label="Disponíveis" value={available.length} />
@@ -1829,9 +4045,23 @@ function FundamentalAvaliaScreen({
         <AssessmentSummaryCard label="Concluídas" value={completed.length} />
       </View>
 
-      <FundamentalAssessmentSection title="Disponíveis" assessments={available} onOpenAssessment={onOpenAssessment} onOpenResult={onOpenResult} />
-      <FundamentalAssessmentSection title="Em andamento" assessments={inProgress} onOpenAssessment={onOpenAssessment} onOpenResult={onOpenResult} />
-      <FundamentalAssessmentSection title="Concluídas" assessments={completed} onOpenAssessment={onOpenAssessment} onOpenResult={onOpenResult} />
+      {loading ? (
+        <View style={styles.libraryStateCard}>
+          <ActivityIndicator color={colors.brand} />
+          <Text style={styles.libraryStateTitle}>Carregando avaliações</Text>
+          <Text style={styles.libraryStateBody}>Estamos buscando as avaliações publicadas pela escola.</Text>
+        </View>
+      ) : failed ? (
+        <EmptyState title="Avalia+ indisponível" body="Não foi possível carregar as avaliações agora." />
+      ) : assessments.length === 0 ? (
+        <EmptyState title="Sem avaliações no momento" body="Quando sua escola publicar avaliações para sua turma, elas aparecem aqui." />
+      ) : (
+        <>
+          <FundamentalAssessmentSection title="Disponíveis" assessments={available} />
+          <FundamentalAssessmentSection title="Em andamento" assessments={inProgress} />
+          <FundamentalAssessmentSection title="Concluídas" assessments={completed} />
+        </>
+      )}
     </View>
   );
 }
@@ -1839,6 +4069,9 @@ function FundamentalAvaliaScreen({
 function AssessmentSummaryCard({ label, value }: { label: string; value: number }) {
   return (
     <View style={styles.assessmentSummaryCard}>
+      <View style={styles.assessmentSummaryIcon}>
+        <Image source={fundamentalAssessmentIcon(label)} resizeMode="contain" style={styles.assessmentSummaryIconImage} />
+      </View>
       <Text style={styles.assessmentSummaryValue}>{value}</Text>
       <Text style={styles.assessmentSummaryLabel}>{label}</Text>
     </View>
@@ -1847,14 +4080,10 @@ function AssessmentSummaryCard({ label, value }: { label: string; value: number 
 
 function FundamentalAssessmentSection({
   title,
-  assessments,
-  onOpenAssessment,
-  onOpenResult
+  assessments
 }: {
   title: string;
-  assessments: FundamentalAssessment[];
-  onOpenAssessment: (assessment: FundamentalAssessment) => void;
-  onOpenResult: (assessment: FundamentalAssessment) => void;
+  assessments: FundamentalAssessmentItem[];
 }) {
   if (assessments.length === 0) {
     return null;
@@ -1866,9 +4095,8 @@ function FundamentalAssessmentSection({
       <View style={styles.assessmentList}>
         {assessments.map((assessment) => (
           <FundamentalAssessmentCard
-            key={assessment.title}
+            key={assessment.id}
             assessment={assessment}
-            onPress={() => (assessment.state === "Concluída" ? onOpenResult(assessment) : onOpenAssessment(assessment))}
           />
         ))}
       </View>
@@ -1876,29 +4104,47 @@ function FundamentalAssessmentSection({
   );
 }
 
-function FundamentalAssessmentCard({ assessment, onPress }: { assessment: FundamentalAssessment; onPress: () => void }) {
-  const progress = Math.round((assessment.answered / assessment.questions) * 100);
+function FundamentalAssessmentCard({ assessment }: { assessment: FundamentalAssessmentItem }) {
+  const progress = assessment.questionCount > 0 ? Math.round((assessment.answeredCount / assessment.questionCount) * 100) : 0;
+  const state = normalizeAssessmentState(assessment);
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`${assessment.action} ${assessment.title}`} onPress={onPress} style={styles.assessmentCard}>
+    <View style={styles.assessmentCard}>
       <View style={styles.assessmentCardTop}>
         <View style={styles.assessmentIcon}>
-          <Text style={styles.assessmentIconText}>A+</Text>
+          <Image source={fundamentalAssessmentIcon(state)} resizeMode="contain" style={styles.assessmentIconImage} />
         </View>
         <View style={styles.assessmentCardCopy}>
-          <Text style={styles.assessmentSubject}>{assessment.subject}</Text>
+          <Text style={styles.assessmentSubject}>{assessment.component || assessment.schoolYear || "Avaliação"}</Text>
           <Text style={styles.assessmentTitle}>{assessment.title}</Text>
-          <Text style={styles.assessmentMeta}>{assessment.questions} questões · {assessment.deadline}</Text>
+          <Text style={styles.assessmentMeta}>{assessment.questionCount || 0} questões · {formatAssessmentAvailability(assessment)}</Text>
         </View>
         <View style={styles.assessmentStatePill}>
-          <Text style={styles.assessmentStateText}>{assessment.state}</Text>
+          <Text style={styles.assessmentStateText}>{state}</Text>
         </View>
       </View>
-      {assessment.state === "Em andamento" ? <FundamentalProgress value={progress} /> : null}
+      {state === "Em andamento" ? <FundamentalProgress value={progress} /> : null}
       <View style={styles.assessmentAction}>
-        <Text style={styles.assessmentActionText}>{assessment.action}</Text>
+        <Text style={styles.assessmentActionText}>{state === "Concluída" ? "Resultado disponível" : "Aguardar orientação"}</Text>
       </View>
-    </Pressable>
+    </View>
   );
+}
+
+function normalizeAssessmentState(assessment: FundamentalAssessmentItem) {
+  const status = `${assessment.attemptStatus || assessment.status}`.toLowerCase();
+  if (status === "completed" || status === "submitted" || status === "concluida" || status === "concluída") return "Concluída";
+  if (status === "in_progress" || status === "started" || status === "em_andamento" || assessment.answeredCount > 0) return "Em andamento";
+  return "Disponível";
+}
+
+function formatAssessmentAvailability(assessment: FundamentalAssessmentItem) {
+  const dateValue = assessment.availableUntil || assessment.availableFrom;
+  if (!dateValue) return "Sem prazo publicado";
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return "Sem prazo publicado";
+  return assessment.availableUntil
+    ? `até ${date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}`
+    : `desde ${date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}`;
 }
 
 function FundamentalAssessmentQuestionScreen({ assessment, onSubmit }: { assessment: FundamentalAssessment; onSubmit: () => void }) {
@@ -2060,16 +4306,47 @@ function ResultStatCard({ label, value }: { label: string; value: number }) {
 }
 
 function FundamentalAgendaScreen({
+  session,
   onOpenItem,
   onOpenModule
 }: {
+  session: MobileSession | null;
   onOpenItem: (item: FundamentalAgendaItem) => void;
   onOpenModule: (key: ModuleKey) => void;
 }) {
-  const agenda = demoCollections.fundamental.agenda;
+  const [items, setItems] = useState<FundamentalAgendaItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FundamentalAgendaFilter>("Tudo");
-  const todayItems = agenda.items.filter((item) => item.isToday);
-  const filteredItems = agenda.items.filter((item) => {
+
+  useEffect(() => {
+    let active = true;
+    if (!session) {
+      setItems([]);
+      setFailed(true);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    void getCrescerCalendarEvents(session)
+      .then((events) => {
+        if (active) setItems(events.map(mapCalendarEventToFundamentalAgenda));
+      })
+      .catch(() => {
+        if (active) setFailed(true);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  const filters: FundamentalAgendaFilter[] = ["Tudo", "Atividades", "Avaliações", "Eventos"];
+  const todayItems = items.filter((item) => item.isToday);
+  const filteredItems = items.filter((item) => {
     if (activeFilter === "Tudo") {
       return true;
     }
@@ -2087,25 +4364,15 @@ function FundamentalAgendaScreen({
 
   return (
     <View>
-      <View style={styles.fundamentalShellHero}>
-        <Text style={styles.fundamentalKicker}>Aluno Fundamental</Text>
-        <Text style={styles.fundamentalShellTitle}>Agenda</Text>
-        <Text style={styles.fundamentalShellIntro}>Acompanhe seus compromissos, atividades e avaliações.</Text>
-      </View>
-
-      <View style={styles.fundamentalWeekStrip}>
-        {agenda.weekDays.map((day) => (
-          <View key={day.short} style={[styles.fundamentalWeekDay, day.isToday && styles.fundamentalWeekDayToday]}>
-            <Text style={[styles.fundamentalWeekDayText, day.isToday && styles.fundamentalWeekDayTextToday]}>{day.short}</Text>
-            <Text style={[styles.fundamentalWeekDateText, day.isToday && styles.fundamentalWeekDayTextToday]}>{day.day}</Text>
-            <Text style={[styles.fundamentalWeekSummaryText, day.isToday && styles.fundamentalWeekDayTextToday]}>{day.summary}</Text>
-          </View>
-        ))}
-      </View>
+      <FundamentalModuleHeader title="Agenda" intro="Acompanhe seus compromissos, atividades e avaliações." icon={fundamentalModuleIcon("agenda")} />
 
       <SectionHeader title="Hoje" />
       <View style={styles.fundamentalAgendaTodayCard}>
-        {todayItems.length === 0 ? (
+        {loading ? (
+          <Text style={styles.fundamentalAgendaEmptyText}>Carregando agenda...</Text>
+        ) : failed ? (
+          <Text style={styles.fundamentalAgendaEmptyText}>Não foi possível abrir a agenda agora.</Text>
+        ) : todayItems.length === 0 ? (
           <Text style={styles.fundamentalAgendaEmptyText}>Você não tem compromissos para hoje.</Text>
         ) : (
           todayItems.map((item) => (
@@ -2120,7 +4387,7 @@ function FundamentalAgendaScreen({
 
       <SectionHeader title="Filtros" />
       <View style={styles.fundamentalAgendaFilterRow}>
-        {agenda.filters.map((filter) => {
+        {filters.map((filter) => {
           const active = filter === activeFilter;
           return (
             <Pressable
@@ -2137,25 +4404,52 @@ function FundamentalAgendaScreen({
       </View>
 
       <SectionHeader title="Próximos compromissos" />
-      <View style={styles.fundamentalAgendaList}>
-        {filteredItems.map((item) => (
+      {loading || failed || filteredItems.length === 0 ? (
+        <View style={styles.fundamentalAgendaTodayCard}>
+          <Text style={styles.fundamentalAgendaEmptyText}>{loading ? "Carregando compromissos..." : failed ? "Agenda indisponível no momento." : "Nenhum compromisso publicado para este filtro."}</Text>
+        </View>
+      ) : (
+        <View style={styles.fundamentalAgendaList}>
+          {filteredItems.map((item) => (
           <FundamentalAgendaCard
             key={`${item.type}-${item.title}`}
             item={item}
             onPress={() => onOpenItem(item)}
             onAction={() => (item.actionTarget === "avalia" ? onOpenModule("avalia") : item.actionTarget === "activities" ? onOpenModule("activities") : onOpenItem(item))}
           />
-        ))}
-      </View>
+          ))}
+        </View>
+      )}
     </View>
   );
+}
+
+function mapCalendarEventToFundamentalAgenda(event: CrescerCalendarEvent): FundamentalAgendaItem {
+  const type = event.eventType === "assessment" ? "Avaliação" : event.eventType === "activity" ? "Atividade" : "Evento";
+  const date = parseLocalDate(event.eventDate);
+  const today = new Date();
+  const isToday = date ? date.toDateString() === today.toDateString() : false;
+  return {
+    title: event.title,
+    type,
+    subject: event.actionLabel || "Escola",
+    date: date ? date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) : "Data",
+    time: formatClock(event.startTime),
+    due: isToday ? "Hoje" : "Publicado",
+    description: event.description,
+    priority: isToday,
+    isToday,
+    action: "Ver detalhes",
+    actionTarget: "details",
+    mark: type === "Avaliação" ? "A+" : type === "Atividade" ? "✓" : "◷"
+  };
 }
 
 function FundamentalAgendaCompactItem({ item, onPress }: { item: FundamentalAgendaItem; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`${item.action} ${item.title}`} onPress={onPress} style={styles.fundamentalAgendaCompactItem}>
       <View style={styles.fundamentalAgendaTypeMark}>
-        <Text style={styles.fundamentalAgendaTypeMarkText}>{item.mark}</Text>
+        <Image source={fundamentalAgendaIcon(item.type)} resizeMode="contain" style={styles.fundamentalAgendaTypeIconImage} />
       </View>
       <View style={styles.fundamentalAgendaCompactCopy}>
         <Text style={styles.fundamentalAgendaTypeText}>{item.type}</Text>
@@ -2180,7 +4474,7 @@ function FundamentalAgendaCard({
     <Pressable accessibilityRole="button" accessibilityLabel={`Abrir compromisso ${item.title}`} onPress={onPress} style={styles.fundamentalAgendaCard}>
       <View style={styles.fundamentalAgendaCardTop}>
         <View style={styles.fundamentalAgendaTypeMark}>
-          <Text style={styles.fundamentalAgendaTypeMarkText}>{item.mark}</Text>
+          <Image source={fundamentalAgendaIcon(item.type)} resizeMode="contain" style={styles.fundamentalAgendaTypeIconImage} />
         </View>
         <View style={styles.fundamentalAgendaCardCopy}>
           <View style={styles.fundamentalAgendaTypeRow}>
@@ -2216,7 +4510,7 @@ function FundamentalAgendaDetailScreen({ item, onOpenModule }: { item: Fundament
       <View style={styles.fundamentalAgendaDetailCard}>
         <View style={styles.fundamentalAgendaDetailHeader}>
           <View style={styles.fundamentalAgendaTypeMark}>
-            <Text style={styles.fundamentalAgendaTypeMarkText}>{item.mark}</Text>
+            <Image source={fundamentalAgendaIcon(item.type)} resizeMode="contain" style={styles.fundamentalAgendaTypeIconImage} />
           </View>
           <View style={styles.fundamentalAgendaCardCopy}>
             <Text style={styles.fundamentalAgendaTypeText}>{item.subject}</Text>
@@ -2246,16 +4540,47 @@ function FundamentalAgendaDetailScreen({ item, onOpenModule }: { item: Fundament
 }
 
 function FundamentalNotificationsScreen({
+  session,
   readTitles,
   onOpenNotification
 }: {
+  session: MobileSession | null;
   readTitles: string[];
   onOpenNotification: (item: FundamentalNotification) => void;
 }) {
-  const data = demoCollections.fundamental;
+  const [items, setItems] = useState<FundamentalNotification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FundamentalNotificationFilter>("Tudo");
-  const unreadCount = data.notificationItems.filter((item) => item.unread && !readTitles.includes(item.title)).length;
-  const filteredItems = data.notificationItems.filter((item) => {
+
+  useEffect(() => {
+    let active = true;
+    if (!session) {
+      setItems([]);
+      setFailed(true);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setFailed(false);
+    void getCrescerNotificationCenter(session)
+      .then((notifications) => {
+        if (active) setItems(notifications.map(mapNotificationToFundamental));
+      })
+      .catch(() => {
+        if (active) setFailed(true);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  const filters: FundamentalNotificationFilter[] = ["Tudo", "Recados", "Agenda", "Avalia+"];
+  const unreadCount = items.filter((item) => item.unread && !readTitles.includes(item.title)).length;
+  const filteredItems = items.filter((item) => {
     if (activeFilter === "Tudo") {
       return true;
     }
@@ -2273,11 +4598,7 @@ function FundamentalNotificationsScreen({
 
   return (
     <View>
-      <View style={styles.fundamentalShellHero}>
-        <Text style={styles.fundamentalKicker}>Aluno Fundamental</Text>
-        <Text style={styles.fundamentalShellTitle}>Notificações</Text>
-        <Text style={styles.fundamentalShellIntro}>Acompanhe recados, prazos e novidades importantes.</Text>
-      </View>
+      <FundamentalModuleHeader title="Notificações" intro="Acompanhe recados, prazos e novidades importantes." icon={fundamentalModuleIcon("notifications")} />
 
       <View style={styles.fundamentalNotificationSummary}>
         <View>
@@ -2286,16 +4607,15 @@ function FundamentalNotificationsScreen({
             {unreadCount > 0 ? `${unreadCount} ${unreadCount === 1 ? "nova" : "novas"}` : "Tudo em dia"}
           </Text>
         </View>
-        {unreadCount > 0 ? (
-          <View style={styles.fundamentalNotificationBadge}>
-            <Text style={styles.fundamentalNotificationBadgeText}>{unreadCount}</Text>
-          </View>
-        ) : null}
+        <View style={styles.fundamentalNotificationBadge}>
+          <Image source={crescerHomeIcons.notifications} resizeMode="contain" style={styles.fundamentalNotificationBadgeImage} />
+          {unreadCount > 0 ? <Text style={styles.fundamentalNotificationBadgeCount}>{unreadCount}</Text> : null}
+        </View>
       </View>
 
       <SectionHeader title="Filtros" />
       <View style={styles.fundamentalNotificationFilterRow}>
-        {data.notificationFilters.map((filter) => {
+        {filters.map((filter) => {
           const active = filter === activeFilter;
           return (
             <Pressable
@@ -2312,9 +4632,9 @@ function FundamentalNotificationsScreen({
       </View>
 
       <SectionHeader title="Últimas notificações" />
-      {filteredItems.length === 0 ? (
+      {loading || failed || filteredItems.length === 0 ? (
         <View style={styles.fundamentalNotificationEmptyCard}>
-          <Text style={styles.fundamentalNotificationEmptyText}>Você não tem novas notificações.</Text>
+          <Text style={styles.fundamentalNotificationEmptyText}>{loading ? "Carregando notificações..." : failed ? "Notificações indisponíveis no momento." : "Você não tem novas notificações."}</Text>
         </View>
       ) : (
         <View style={styles.fundamentalNotificationList}>
@@ -2326,6 +4646,22 @@ function FundamentalNotificationsScreen({
       )}
     </View>
   );
+}
+
+function mapNotificationToFundamental(item: CrescerNotificationCenterItem): FundamentalNotification {
+  const type = item.origin.toLowerCase().includes("agenda") ? "Agenda" : item.origin.toLowerCase().includes("avalia") ? "Avalia+" : "Recado";
+  return {
+    title: item.title,
+    summary: item.summary,
+    origin: item.origin,
+    time: item.deliveredAt ? new Date(item.deliveredAt).toLocaleDateString("pt-BR") : "Agora",
+    unread: item.unread,
+    type,
+    mark: type === "Avalia+" ? "A+" : type === "Agenda" ? "◷" : "!",
+    action: "Ler recado",
+    actionTarget: "details",
+    message: item.summary
+  };
 }
 
 function FundamentalNotificationCard({
@@ -2341,7 +4677,7 @@ function FundamentalNotificationCard({
     <Pressable accessibilityRole="button" accessibilityLabel={`Abrir notificação ${item.title}`} onPress={onPress} style={[styles.fundamentalNotificationCard, unread && styles.fundamentalNotificationCardUnread]}>
       <View style={styles.fundamentalNotificationTop}>
         <View style={styles.fundamentalNotificationMark}>
-          <Text style={styles.fundamentalNotificationMarkText}>{item.mark}</Text>
+          <Image source={fundamentalNotificationIcon(item.type)} resizeMode="contain" style={styles.fundamentalNotificationMarkImage} />
         </View>
         <View style={styles.fundamentalNotificationCopy}>
           <View style={styles.fundamentalNotificationTypeRow}>
@@ -2372,7 +4708,7 @@ function FundamentalNotificationDetailScreen({ item, onOpenModule }: { item: Fun
       <View style={styles.fundamentalNotificationDetailCard}>
         <View style={styles.fundamentalNotificationDetailHeader}>
           <View style={styles.fundamentalNotificationMark}>
-            <Text style={styles.fundamentalNotificationMarkText}>{item.mark}</Text>
+            <Image source={fundamentalNotificationIcon(item.type)} resizeMode="contain" style={styles.fundamentalNotificationMarkImage} />
           </View>
           <View style={styles.fundamentalNotificationCopy}>
             <Text style={styles.fundamentalNotificationType}>{item.origin}</Text>
@@ -2395,15 +4731,46 @@ function FundamentalNotificationDetailScreen({ item, onOpenModule }: { item: Fun
 }
 
 function FundamentalProfileScreen({
+  session,
   onOpenModule,
   onOpenAccessibility,
   onLogout
 }: {
+  session: MobileSession | null;
   onOpenModule: (key: ModuleKey) => void;
   onOpenAccessibility: () => void;
   onLogout: () => void;
 }) {
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    if (!session) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    void getStudentProfile(session)
+      .then((nextProfile) => {
+        if (active) setStudentProfile(nextProfile);
+      })
+      .catch(() => {
+        if (active) setStudentProfile(null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
   const profile = demoCollections.fundamental.profile;
+  const realName = studentProfile?.name || "Contexto indisponível";
+  const realClass = studentProfile?.className || "Turma não carregada";
+  const realSchool = studentProfile?.schoolName || "Escola não carregada";
+  const realInitials = studentProfile?.initials || "--";
 
   function handleSetting(setting: FundamentalProfileSetting) {
     if (setting.target === "notifications") {
@@ -2418,48 +4785,35 @@ function FundamentalProfileScreen({
 
   return (
     <View>
-      <View style={styles.fundamentalShellHero}>
-        <Text style={styles.fundamentalKicker}>Aluno Fundamental</Text>
-        <Text style={styles.fundamentalShellTitle}>Meu perfil</Text>
-        <Text style={styles.fundamentalShellIntro}>{profile.message}</Text>
-      </View>
+      <FundamentalModuleHeader title="Meu perfil" intro={loading ? "Carregando dados do aluno." : "Dados institucionais vinculados ao seu acesso."} icon={fundamentalModuleIcon("profile")} />
 
       <View style={styles.fundamentalProfileIdentityCard}>
         <View style={styles.fundamentalProfileIdentityTop}>
           <View style={styles.fundamentalProfileAvatar}>
-            <Text style={styles.fundamentalProfileAvatarText}>{profile.avatar}</Text>
+            <Text style={styles.fundamentalProfileAvatarText}>{realInitials}</Text>
           </View>
           <View style={styles.fundamentalProfileIdentityCopy}>
             <Text style={styles.fundamentalProfileLabel}>{profile.institutionLabel}</Text>
-            <Text style={styles.fundamentalProfileName}>{profile.name}</Text>
-            <Text style={styles.fundamentalProfileMeta}>{profile.className}</Text>
+            <Text style={styles.fundamentalProfileName}>{realName}</Text>
+            <Text style={styles.fundamentalProfileMeta}>{realClass}</Text>
           </View>
         </View>
         <View style={styles.fundamentalProfileSchoolLine}>
-          <Text style={styles.fundamentalProfileSchoolText}>{profile.school}</Text>
+          <Text style={styles.fundamentalProfileSchoolText}>{realSchool}</Text>
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel="Alterar avatar" onPress={() => undefined} style={styles.fundamentalProfileAvatarAction}>
-          <Text style={styles.fundamentalProfileAvatarActionText}>Alterar avatar</Text>
-        </Pressable>
-      </View>
-
-      <SectionHeader title="Meu progresso" />
-      <View style={styles.fundamentalProfileProgressGrid}>
-        {profile.progress.map((item) => (
-          <FundamentalProfileProgressCard key={item.label} item={item} />
-        ))}
       </View>
 
       <SectionHeader title="Minha escola" />
       <View style={styles.fundamentalProfileSchoolCard}>
-        <Text style={styles.fundamentalProfileSchoolTitle}>{profile.school}</Text>
-        <View style={styles.fundamentalProfileSchoolInfoRow}>
-          <Text style={styles.fundamentalProfileSchoolInfoLabel}>Turma</Text>
-          <Text style={styles.fundamentalProfileSchoolInfoValue}>{profile.className}</Text>
+        <View style={styles.fundamentalProfileSchoolHeader}>
+          <View style={styles.fundamentalProfileSchoolIcon}>
+            <Image source={teacherCatalogIcons.graduationBooks} resizeMode="contain" style={styles.fundamentalProfileSchoolIconImage} />
+          </View>
+          <Text style={styles.fundamentalProfileSchoolTitle}>{realSchool}</Text>
         </View>
         <View style={styles.fundamentalProfileSchoolInfoRow}>
-          <Text style={styles.fundamentalProfileSchoolInfoLabel}>Professora</Text>
-          <Text style={styles.fundamentalProfileSchoolInfoValue}>{profile.teacher}</Text>
+          <Text style={styles.fundamentalProfileSchoolInfoLabel}>Turma</Text>
+          <Text style={styles.fundamentalProfileSchoolInfoValue}>{realClass}</Text>
         </View>
       </View>
 
@@ -2488,7 +4842,7 @@ function FundamentalProfileProgressCard({ item }: { item: FundamentalProfileProg
   return (
     <View style={styles.fundamentalProfileProgressCard}>
       <View style={styles.fundamentalProfileProgressMark}>
-        <Text style={styles.fundamentalProfileProgressMarkText}>{item.mark}</Text>
+        <Image source={teacherCatalogIcons.trophy} resizeMode="contain" style={styles.fundamentalProfileProgressIconImage} />
       </View>
       <Text style={styles.fundamentalProfileProgressValue}>{item.value}</Text>
       <Text style={styles.fundamentalProfileProgressLabel}>{item.label}</Text>
@@ -2501,7 +4855,7 @@ function FundamentalProfileStudyShortcut({ study, onPress }: { study: Fundamenta
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`Abrir ${study.title}`} onPress={onPress} style={styles.fundamentalProfileShortcut}>
       <View style={styles.fundamentalProfileShortcutMark}>
-        <Text style={styles.fundamentalProfileShortcutMarkText}>{study.mark}</Text>
+        <Image source={fundamentalProfileStudyIcon(study.target)} resizeMode="contain" style={styles.fundamentalProfileShortcutIconImage} />
       </View>
       <Text style={styles.fundamentalProfileShortcutTitle}>{study.title}</Text>
       <Text style={styles.fundamentalProfileShortcutBody}>{study.description}</Text>
@@ -2554,20 +4908,33 @@ function FundamentalAccessibilityScreen() {
   );
 }
 
-function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; onOpen: (key: ModuleKey) => void; onLogout: () => void }) {
-  const data = demoCollections.teacher;
+function TeacherModule({ session, activeKey, onOpen, onLogout }: { session: MobileSession | null; activeKey: ModuleKey; onOpen: (key: ModuleKey) => void; onLogout: () => void }) {
+  const [operationalClasses, setOperationalClasses] = useState<TeacherClassSummary[]>([]);
+  const [teacherClassRows, setTeacherClassRows] = useState<TeacherMobileClass[]>([]);
+  const [teacherStudentsByClassId, setTeacherStudentsByClassId] = useState<Record<string, RealTeacherClassStudent[]>>({});
+  const [teacherContext, setTeacherContext] = useState<{ teacherName: string; schoolName: string; discipline: string | null; activeClassLinks: number } | null>(null);
+  const [teacherHomeSummary, setTeacherHomeSummary] = useState<TeacherHomeSummary | null>(null);
+  const [teacherNotifications, setTeacherNotifications] = useState<TeacherNotificationCenterItem[]>([]);
+  const [teacherAssessments, setTeacherAssessments] = useState<TeacherAvaliaAssessment[]>([]);
+  const [trackingOverview, setTrackingOverview] = useState<TeacherTrackingOverview | null>(null);
+  const [trackingAlerts, setTrackingAlerts] = useState<RealTeacherTrackingAlert[]>([]);
+  const [operationalLoading, setOperationalLoading] = useState(true);
+  const [operationalError, setOperationalError] = useState(false);
+  const [agendaEvents, setAgendaEvents] = useState<TeacherAgendaItem[]>([]);
+  const [communicationMessages, setCommunicationMessages] = useState<TeacherCommunicationItem[]>([]);
+  const [diaryRecentEntries, setDiaryRecentEntries] = useState<TeacherDiaryEntry[]>([]);
+  const [diarySummary, setDiarySummary] = useState<RealTeacherDiaryPeriodSummary | null>(null);
   const [classFilter, setClassFilter] = useState<"Todas" | "Educação Infantil" | "Fundamental">("Todas");
   const [selectedClassName, setSelectedClassName] = useState<string | null>(null);
-  const [attendanceClassName, setAttendanceClassName] = useState(data.nextClass.className);
+  const [attendanceClassName, setAttendanceClassName] = useState("");
   const [attendanceRecords, setAttendanceRecords] = useState<Record<string, AttendanceStatus>>({});
   const [attendanceSaved, setAttendanceSaved] = useState(false);
-  const [agendaEvents, setAgendaEvents] = useState<TeacherAgendaItem[]>(data.agenda);
   const [agendaMode, setAgendaMode] = useState<TeacherAgendaMode>("list");
   const [agendaSelectedDay, setAgendaSelectedDay] = useState<TeacherAgendaDay>("Hoje");
-  const [agendaSelectedEventId, setAgendaSelectedEventId] = useState<string | null>(data.agenda[0]?.id ?? null);
-  const [agendaClassName, setAgendaClassName] = useState(data.nextClass.className);
+  const [agendaSelectedEventId, setAgendaSelectedEventId] = useState<string | null>(null);
+  const [agendaClassName, setAgendaClassName] = useState("");
   const [agendaTitle, setAgendaTitle] = useState("Novo compromisso da turma");
-  const [agendaDate, setAgendaDate] = useState("13 de setembro");
+  const [agendaDate, setAgendaDate] = useState(todayIsoDate());
   const [agendaTime, setAgendaTime] = useState("09:30");
   const [agendaType, setAgendaType] = useState<TeacherAgendaType>("Aula");
   const [agendaDescription, setAgendaDescription] = useState("Organizar a rotina e registrar as orientações principais.");
@@ -2575,48 +4942,229 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
   const [communicationMode, setCommunicationMode] = useState<TeacherCommunicationMode>("inbox");
   const [communicationFilter, setCommunicationFilter] = useState<TeacherCommunicationFilter>("Todos");
   const [communicationRecipientType, setCommunicationRecipientType] = useState<TeacherCommunicationRecipientType>("Turma");
-  const [communicationClassName, setCommunicationClassName] = useState(data.nextClass.className);
-  const [communicationStudentName, setCommunicationStudentName] = useState(data.classes[2]?.studentsList[0]?.name ?? data.classes[0]?.studentsList[0]?.name ?? "");
+  const [communicationClassName, setCommunicationClassName] = useState("");
+  const [communicationStudentName, setCommunicationStudentName] = useState("");
   const [communicationTitle, setCommunicationTitle] = useState("Lembrete da turma");
   const [communicationMessage, setCommunicationMessage] = useState("Olá! Passando para lembrar o combinado da semana.");
   const [communicationSent, setCommunicationSent] = useState(false);
   const [selectedMessageTitle, setSelectedMessageTitle] = useState<string | null>(null);
   const [diaryMode, setDiaryMode] = useState<TeacherDiaryMode>("form");
-  const [diaryClassName, setDiaryClassName] = useState(data.nextClass.className);
-  const [diaryDate, setDiaryDate] = useState(data.modules.diary.current.date);
-  const [diaryContent, setDiaryContent] = useState(data.modules.diary.current.content);
-  const [diaryRecord, setDiaryRecord] = useState(data.modules.diary.current.record);
-  const [diaryActivity, setDiaryActivity] = useState(data.modules.diary.current.activities[0] ?? "");
+  const [diaryClassName, setDiaryClassName] = useState("");
+  const [diaryDate, setDiaryDate] = useState(todayIsoDate());
+  const [diaryContent, setDiaryContent] = useState("");
+  const [diaryRecord, setDiaryRecord] = useState("");
+  const [diaryActivity, setDiaryActivity] = useState("");
   const [diaryDraftSaved, setDiaryDraftSaved] = useState(false);
   const [selectedDiaryEntryId, setSelectedDiaryEntryId] = useState<string | null>(null);
   const [avaliaMode, setAvaliaMode] = useState<TeacherAvaliaMode>("list");
   const [avaliaFilter, setAvaliaFilter] = useState<TeacherAvaliaFilter>("Todas");
-  const [avaliaClassName, setAvaliaClassName] = useState(data.nextClass.className);
-  const [selectedAvaliaId, setSelectedAvaliaId] = useState(data.modules.avalia.assessments[0]?.id ?? "");
+  const [avaliaClassName, setAvaliaClassName] = useState("");
+  const [selectedAvaliaId, setSelectedAvaliaId] = useState("");
   const [avaliaAvailableFrom, setAvaliaAvailableFrom] = useState("13 de setembro");
   const [avaliaDueDate, setAvaliaDueDate] = useState("20 de setembro");
   const [avaliaPublished, setAvaliaPublished] = useState(false);
   const [selectedAvaliaStudentName, setSelectedAvaliaStudentName] = useState<string | null>(null);
-  const [trackingClassName, setTrackingClassName] = useState(data.nextClass.className);
+  const [trackingClassName, setTrackingClassName] = useState("");
   const [trackingMode, setTrackingMode] = useState<TeacherTrackingMode>("overview");
-  const [trackingStudentName, setTrackingStudentName] = useState<string | null>(data.classes[2]?.studentsList[0]?.name ?? null);
+  const [trackingStudentName, setTrackingStudentName] = useState<string | null>(null);
   const [teacherNotificationFilter, setTeacherNotificationFilter] = useState<TeacherNotificationFilter>("Tudo");
   const [teacherNotificationsRead, setTeacherNotificationsRead] = useState<Record<string, boolean>>({});
   const [selectedTeacherNotificationId, setSelectedTeacherNotificationId] = useState<string | null>(null);
-  const selectedClass = data.classes.find((item) => item.className === selectedClassName) ?? null;
-  const attendanceClass = data.classes.find((item) => item.className === attendanceClassName) ?? data.classes[0];
-  const agendaClass = data.classes.find((item) => item.className === agendaClassName) ?? data.classes[0];
+  const realClasses = operationalClasses;
+  const teacherClassRowsByName = useMemo(() => new Map(teacherClassRows.map((item) => [item.name, item])), [teacherClassRows]);
+  const defaultOperationalClass = realClasses[0] ?? emptyTeacherClass();
+  const hasOperationalClasses = realClasses.length > 0;
+  const selectedOperationalClassName = attendanceClassName || defaultOperationalClass.className;
+  const selectedAgendaClassName = agendaClassName || defaultOperationalClass.className;
+  const selectedCommunicationClassName = communicationClassName || defaultOperationalClass.className;
+  const selectedDiaryClassName = diaryClassName || defaultOperationalClass.className;
+  const realClassesByName = useMemo(() => new Map(realClasses.map((item) => [item.className, item])), [realClasses]);
+  const selectedClass = selectedClassName ? realClassesByName.get(selectedClassName) ?? null : null;
+  const attendanceClass = realClassesByName.get(selectedOperationalClassName) ?? defaultOperationalClass;
+  const agendaClass = realClassesByName.get(selectedAgendaClassName) ?? defaultOperationalClass;
   const selectedAgendaEvent = agendaEvents.find((item) => item.id === agendaSelectedEventId) ?? null;
-  const communicationClass = data.classes.find((item) => item.className === communicationClassName) ?? data.classes[0];
-  const selectedMessage = data.communication.find((item) => item.title === selectedMessageTitle) ?? null;
-  const diaryClass = data.classes.find((item) => item.className === diaryClassName) ?? data.classes[0];
-  const selectedDiaryEntry = data.modules.diary.recent.find((item) => item.id === selectedDiaryEntryId) ?? null;
-  const avaliaClass = data.classes.find((item) => item.className === avaliaClassName) ?? data.classes[0];
-  const selectedAvalia = data.modules.avalia.assessments.find((item) => item.id === selectedAvaliaId) ?? data.modules.avalia.assessments[0];
+  const communicationClass = realClassesByName.get(selectedCommunicationClassName) ?? defaultOperationalClass;
+  const selectedMessage = communicationMessages.find((item) => item.title === selectedMessageTitle) ?? null;
+  const diaryClass = realClassesByName.get(selectedDiaryClassName) ?? defaultOperationalClass;
+  const selectedDiaryEntry = diaryRecentEntries.find((item) => item.id === selectedDiaryEntryId) ?? null;
+  const diaryCurrent = makeTeacherDiaryCurrent(diarySummary, diaryContent, diaryRecord);
+  const avaliaClass = realClassesByName.get(avaliaClassName || defaultOperationalClass.className) ?? defaultOperationalClass;
+  const selectedAvalia = teacherAssessments.find((item) => item.id === selectedAvaliaId) ?? teacherAssessments[0] ?? emptyTeacherAssessment();
   const selectedAvaliaStudent = selectedAvalia?.students.find((item) => item.name === selectedAvaliaStudentName) ?? null;
-  const trackingClass = data.classes.find((item) => item.className === trackingClassName) ?? data.classes[0];
+  const trackingClass = realClassesByName.get(trackingClassName || defaultOperationalClass.className) ?? defaultOperationalClass;
   const selectedTrackingStudent = trackingClass.studentsList.find((item) => item.name === trackingStudentName) ?? trackingClass.studentsList[0] ?? null;
-  const selectedTeacherNotification = data.modules.notifications.find((item) => item.id === selectedTeacherNotificationId) ?? null;
+  const teacherNotificationItems = useMemo(() => teacherNotifications.map(mapTeacherNotificationItem), [teacherNotifications]);
+  const selectedTeacherNotification = teacherNotificationItems.find((item) => item.id === selectedTeacherNotificationId) ?? null;
+
+  useEffect(() => {
+    let active = true;
+    if (!session) {
+      setOperationalLoading(false);
+      setOperationalError(true);
+      setOperationalClasses([]);
+      setTeacherClassRows([]);
+      setTeacherStudentsByClassId({});
+      return;
+    }
+    setOperationalLoading(true);
+    setOperationalError(false);
+    void getTeacherMobileClasses(session)
+      .then(async (classes) => {
+        const studentsByClass = await Promise.all(
+          classes.map((item) =>
+            getTeacherClassStudents(session, item.id)
+              .then((students) => [item.id, students] as const)
+              .catch(() => [item.id, [] as RealTeacherClassStudent[]] as const)
+          )
+        );
+        if (!active) return;
+        const studentMap = new Map(studentsByClass);
+        const nextClasses = classes.map((item) => makeTeacherClassSummary(item, studentMap.get(item.id) || []));
+        setTeacherClassRows(classes);
+        setTeacherStudentsByClassId(Object.fromEntries(studentsByClass));
+        setOperationalClasses(nextClasses);
+        const firstClassName = nextClasses[0]?.className || "";
+        setAttendanceClassName((current) => current || firstClassName);
+        setAgendaClassName((current) => current || firstClassName);
+        setCommunicationClassName((current) => current || firstClassName);
+        setCommunicationStudentName((current) => current || nextClasses[0]?.studentsList[0]?.name || "");
+        setDiaryClassName((current) => current || firstClassName);
+        setAvaliaClassName((current) => current || firstClassName);
+        setTrackingClassName((current) => current || firstClassName);
+        setTrackingStudentName((current) => current || nextClasses[0]?.studentsList[0]?.name || null);
+      })
+      .catch(() => {
+        if (active) {
+          setOperationalClasses([]);
+          setTeacherClassRows([]);
+          setTeacherStudentsByClassId({});
+          setOperationalError(true);
+        }
+      })
+      .finally(() => {
+        if (active) setOperationalLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  useEffect(() => {
+    let active = true;
+    if (!session) {
+      setTeacherContext(null);
+      setTeacherHomeSummary(null);
+      setTeacherNotifications([]);
+      setTeacherAssessments([]);
+      return;
+    }
+    void Promise.all([
+      getTeacherContext(session),
+      getTeacherHomeSummary(session),
+      getTeacherNotificationCenter(session),
+      getTeacherAssessmentAssignments(session)
+    ])
+      .then(([context, summary, notifications, assessments]) => {
+        if (!active) return;
+        setTeacherContext({
+          teacherName: context.teacherName,
+          schoolName: context.schoolName,
+          discipline: context.discipline,
+          activeClassLinks: context.activeClassLinks
+        });
+        setTeacherHomeSummary(summary);
+        setTeacherNotifications(notifications);
+        setTeacherAssessments(assessments.map(mapTeacherAssessmentAssignment));
+        setSelectedAvaliaId((current) => current || assessments[0]?.id || "");
+      })
+      .catch(() => {
+        if (!active) return;
+        setTeacherContext(null);
+        setTeacherHomeSummary(null);
+        setTeacherNotifications([]);
+        setTeacherAssessments([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  useEffect(() => {
+    let active = true;
+    if (!session || teacherClassRows.length === 0) {
+      setAgendaEvents([]);
+      setCommunicationMessages([]);
+      return;
+    }
+    void getTeacherCalendarEntries(session, teacherClassRows)
+      .then((entries) => {
+        if (active) setAgendaEvents(entries.map(mapTeacherCalendarEntry));
+      })
+      .catch(() => {
+        if (active) setAgendaEvents([]);
+      });
+    void getTeacherCommunicationSummaries(session)
+      .then((messages) => {
+        if (active) setCommunicationMessages(messages.map(mapTeacherCommunicationSummary));
+      })
+      .catch(() => {
+        if (active) setCommunicationMessages([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session, teacherClassRows]);
+
+  useEffect(() => {
+    let active = true;
+    const classRow = teacherClassRowsByName.get(selectedDiaryClassName);
+    if (!session || !classRow) {
+      setDiaryRecentEntries([]);
+      setDiarySummary(null);
+      return;
+    }
+    void getTeacherDiaryEntries(session, classRow.id)
+      .then((entries) => {
+        if (active) setDiaryRecentEntries(entries.map((entry) => mapTeacherDiaryEntry(entry, classRow.name)));
+      })
+      .catch(() => {
+        if (active) setDiaryRecentEntries([]);
+      });
+    void getTeacherDiaryPeriodSummary(session, classRow.id)
+      .then((summary) => {
+        if (active) setDiarySummary(summary);
+      })
+      .catch(() => {
+        if (active) setDiarySummary(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session, selectedDiaryClassName, teacherClassRowsByName]);
+
+  useEffect(() => {
+    let active = true;
+    const classRow = teacherClassRowsByName.get(trackingClassName || defaultOperationalClass.className);
+    if (!session || !classRow) {
+      setTrackingOverview(null);
+      setTrackingAlerts([]);
+      return;
+    }
+    void Promise.all([getTeacherTrackingOverview(session, classRow.id), getTeacherTrackingAlerts(session, classRow.id)])
+      .then(([overview, alerts]) => {
+        if (!active) return;
+        setTrackingOverview(overview);
+        setTrackingAlerts(alerts);
+      })
+      .catch(() => {
+        if (!active) return;
+        setTrackingOverview(null);
+        setTrackingAlerts([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session, trackingClassName, teacherClassRowsByName, defaultOperationalClass.className]);
 
   if (activeKey === "classes") {
     return selectedClass ? (
@@ -2655,7 +5203,7 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
       />
     ) : (
       <TeacherClassesScreen
-        classes={data.classes}
+        classes={realClasses}
         filter={classFilter}
         onFilterChange={setClassFilter}
         onOpenClass={(item) => setSelectedClassName(item.className)}
@@ -2666,10 +5214,12 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
   if (activeKey === "attendance") {
     return (
       <TeacherAttendanceScreen
-        classes={data.classes}
+        classes={realClasses}
         selectedClass={attendanceClass}
         records={attendanceRecords}
         saved={attendanceSaved}
+        loading={operationalLoading}
+        error={operationalError}
         onClassChange={(className) => {
           setAttendanceClassName(className);
           setAttendanceSaved(false);
@@ -2683,7 +5233,21 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
           setAttendanceRecords((current) => ({ ...current, ...nextRecords }));
           setAttendanceSaved(false);
         }}
-        onSave={() => setAttendanceSaved(true)}
+        onSave={async () => {
+          const classRow = teacherClassRowsByName.get(attendanceClass.className);
+          if (!session || !classRow) return;
+          const students = teacherStudentsByClassId[classRow.id] || [];
+          await saveTeacherAttendanceRecords(
+            session,
+            classRow.id,
+            todayIsoDate(),
+            students.map((student) => ({
+              studentId: student.id,
+              status: mapAttendanceStatusToApi(attendanceRecords[student.name] ?? "Presente")
+            }))
+          );
+          setAttendanceSaved(true);
+        }}
         onEdit={() => setAttendanceSaved(false)}
       />
     );
@@ -2692,8 +5256,8 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
   if (activeKey === "communication") {
     return (
       <TeacherCommunicationScreen
-        classes={data.classes}
-        messages={data.communication}
+        classes={realClasses}
+        messages={communicationMessages}
         mode={communicationMode}
         filter={communicationFilter}
         recipientType={communicationRecipientType}
@@ -2703,6 +5267,8 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
         message={communicationMessage}
         sent={communicationSent}
         selectedMessage={selectedMessage}
+        loading={operationalLoading}
+        error={operationalError}
         onModeChange={setCommunicationMode}
         onFilterChange={setCommunicationFilter}
         onRecipientTypeChange={(type) => {
@@ -2710,7 +5276,7 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
           setCommunicationSent(false);
         }}
         onClassChange={(className) => {
-          const nextClass = data.classes.find((item) => item.className === className) ?? data.classes[0];
+          const nextClass = realClasses.find((item) => item.className === className) ?? defaultOperationalClass;
           setCommunicationClassName(nextClass.className);
           setCommunicationStudentName(nextClass.studentsList[0]?.name ?? "");
           setCommunicationSent(false);
@@ -2727,7 +5293,18 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
           setCommunicationMessage(value);
           setCommunicationSent(false);
         }}
-        onSend={() => {
+        onSend={async () => {
+          const classRow = teacherClassRowsByName.get(communicationClass.className);
+          if (!session || !classRow) return;
+          const student = teacherStudentsByClassId[classRow.id]?.find((item) => item.name === communicationStudentName);
+          await publishTeacherCommunication(session, {
+            schoolId: classRow.schoolId,
+            classId: classRow.id,
+            studentId: communicationRecipientType === "Aluno" ? student?.id ?? null : null,
+            audienceType: communicationRecipientType === "Aluno" ? "student" : "class",
+            title: communicationTitle,
+            body: communicationMessage
+          });
           setCommunicationSent(true);
           setCommunicationMode("inbox");
         }}
@@ -2742,7 +5319,7 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
   if (activeKey === "agenda") {
     return (
       <TeacherAgendaScreen
-        classes={data.classes}
+        classes={realClasses}
         events={agendaEvents}
         mode={agendaMode}
         selectedDay={agendaSelectedDay}
@@ -2754,6 +5331,8 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
         type={agendaType}
         description={agendaDescription}
         saved={agendaSaved}
+        loading={operationalLoading}
+        error={operationalError}
         onDayChange={setAgendaSelectedDay}
         onModeChange={setAgendaMode}
         onOpenEvent={(item) => {
@@ -2767,7 +5346,7 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
         onEditEvent={(item) => {
           setAgendaSelectedEventId(item.id);
           setAgendaTitle(item.title);
-          setAgendaClassName(item.className === "Coordenação" ? data.nextClass.className : item.className);
+          setAgendaClassName(item.className === "Coordenação" ? defaultOperationalClass.className : item.className);
           setAgendaDate(item.date);
           setAgendaTime(item.time);
           setAgendaType(item.type as TeacherAgendaType);
@@ -2799,29 +5378,20 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
           setAgendaDescription(value);
           setAgendaSaved(false);
         }}
-        onSave={() => {
-          const eventId = agendaMode === "edit" && selectedAgendaEvent ? selectedAgendaEvent.id : "teacher-agenda-local";
-          const nextEvent: TeacherAgendaItem = {
-            id: eventId,
+        onSave={async () => {
+          const classRow = teacherClassRowsByName.get(agendaClass.className);
+          if (!session || !classRow) return;
+          await saveTeacherCalendarEntry(session, {
+            entryId: agendaMode === "edit" && selectedAgendaEvent ? selectedAgendaEvent.id : null,
+            classId: classRow.id,
+            entryDate: normalizeTeacherDateInput(agendaDate),
+            startTime: normalizeTeacherTimeInput(agendaTime),
             title: agendaTitle,
-            type: agendaType,
-            day: agendaSelectedDay,
-            date: agendaDate,
-            time: agendaTime,
-            className: agendaClass.className,
             description: agendaDescription,
-            action: agendaType === "Avaliação" ? "Abrir Avalia+" : agendaType === "Aula" ? "Registrar aula" : "Ver detalhes",
-            actionTarget: agendaType === "Avaliação" ? "avalia" : agendaType === "Aula" ? "diary" : "detail",
-            status: agendaMode === "edit" ? "Atualizado" : "Salvo",
-            mark: getTeacherAgendaTypeMark(agendaType)
-          };
-          setAgendaEvents((current) => {
-            const withoutCurrent = current.filter((item) => item.id !== eventId);
-            return [nextEvent, ...withoutCurrent];
+            entryType: mapTeacherAgendaTypeToApi(agendaType)
           });
-          setAgendaSelectedEventId(eventId);
           setAgendaSaved(true);
-          setAgendaMode("detail");
+          setAgendaMode("list");
         }}
         onOpenModule={onOpen}
       />
@@ -2831,9 +5401,9 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
   if (activeKey === "diary") {
     return (
       <TeacherDiaryScreen
-        classes={data.classes}
-        current={data.modules.diary.current}
-        recent={data.modules.diary.recent}
+        classes={realClasses}
+        current={diaryCurrent}
+        recent={diaryRecentEntries}
         mode={diaryMode}
         selectedClass={diaryClass}
         date={diaryDate}
@@ -2842,6 +5412,9 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
         activity={diaryActivity}
         draftSaved={diaryDraftSaved}
         selectedEntry={selectedDiaryEntry}
+        loading={operationalLoading}
+        error={operationalError}
+        writeGap
         onModeChange={setDiaryMode}
         onClassChange={(className) => {
           setDiaryClassName(className);
@@ -2864,7 +5437,7 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
           setDiaryActivity(value);
           setDiaryDraftSaved(false);
         }}
-        onSaveDraft={() => setDiaryDraftSaved(true)}
+        onSaveDraft={() => setDiaryDraftSaved(false)}
         onOpenEntry={(entry) => {
           setSelectedDiaryEntryId(entry.id);
           setDiaryMode("detail");
@@ -2881,8 +5454,8 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
   if (activeKey === "avalia") {
     return (
       <TeacherAvaliaScreen
-        assessments={data.modules.avalia.assessments}
-        classes={data.classes}
+        assessments={teacherAssessments}
+        classes={realClasses}
         mode={avaliaMode}
         filter={avaliaFilter}
         selectedAssessment={selectedAvalia}
@@ -2912,7 +5485,7 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
           setAvaliaPublished(false);
         }}
         onPublish={() => {
-          setAvaliaPublished(true);
+          setAvaliaPublished(false);
           setAvaliaMode("published");
         }}
         onOpenStudent={(student) => {
@@ -2926,15 +5499,17 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
   if (activeKey === "tracking") {
     return (
       <TeacherTrackingScreen
-        classes={data.classes}
+        classes={realClasses}
         selectedClass={trackingClass}
         selectedStudent={selectedTrackingStudent}
         mode={trackingMode}
-        avaliaAssessments={data.modules.avalia.assessments}
-        diaryCurrent={data.modules.diary.current}
-        diaryRecent={data.modules.diary.recent}
+        avaliaAssessments={teacherAssessments}
+        diaryCurrent={diaryCurrent}
+        diaryRecent={diaryRecentEntries}
+        overview={trackingOverview}
+        alerts={trackingAlerts}
         onClassChange={(className) => {
-          const nextClass = data.classes.find((item) => item.className === className) ?? trackingClass;
+          const nextClass = realClassesByName.get(className) ?? trackingClass;
           setTrackingClassName(nextClass.className);
           setTrackingStudentName(nextClass.studentsList[0]?.name ?? null);
           setTrackingMode("overview");
@@ -2952,7 +5527,7 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
   if (activeKey === "notifications") {
     return (
       <TeacherNotificationsScreen
-        items={data.modules.notifications}
+        items={teacherNotificationItems}
         filter={teacherNotificationFilter}
         readState={teacherNotificationsRead}
         selectedItem={selectedTeacherNotification}
@@ -2963,7 +5538,7 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
         }}
         onBack={() => setSelectedTeacherNotificationId(null)}
         onMarkAllRead={() => {
-          const nextReadState = Object.fromEntries(data.modules.notifications.map((item) => [item.id, true]));
+          const nextReadState = Object.fromEntries(teacherNotificationItems.map((item) => [item.id, true]));
           setTeacherNotificationsRead(nextReadState);
         }}
         onAction={(target) => {
@@ -2977,10 +5552,12 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
   if (activeKey === "profile") {
     return (
       <TeacherProfileScreen
-        classes={data.classes}
-        communicationCount={data.communication.length}
-        diaryCount={data.modules.diary.recent.length}
-        avaliaCount={data.modules.avalia.assessments.length}
+        context={teacherContext}
+        summary={teacherHomeSummary}
+        classes={realClasses}
+        communicationCount={communicationMessages.length}
+        diaryCount={diaryRecentEntries.length}
+        avaliaCount={teacherAssessments.length}
         onOpen={onOpen}
         onOpenAccessibility={() => onOpen("profile:accessibility" as ModuleKey)}
         onLogout={onLogout}
@@ -2995,11 +5572,44 @@ function TeacherModule({ activeKey, onOpen, onLogout }: { activeKey: ModuleKey; 
   return <TeacherShell title="Início" intro="Escolha uma área para continuar sua rotina docente." />;
 }
 
+function TeacherModuleHero({
+  title,
+  intro,
+  kicker = "Professora",
+  icon,
+  children
+}: {
+  title: string;
+  intro: string;
+  kicker?: string;
+  icon?: TeacherSplitIcon;
+  children?: React.ReactNode;
+}) {
+  const heroIcon = icon ?? teacherModuleIcon(title);
+
+  return (
+    <View style={styles.teacherShellHero}>
+      <View style={styles.teacherShellHeroGlow} />
+      <View style={styles.teacherShellHeroTop}>
+        <View style={styles.teacherShellHeroCopy}>
+          <Text style={styles.teacherKicker}>{kicker}</Text>
+          <Text style={styles.teacherShellTitle}>{title}</Text>
+          <Text style={styles.teacherShellIntro}>{intro}</Text>
+        </View>
+        <TeacherSplitIconView icon={heroIcon} frameStyle={styles.teacherShellIconFrame} imageStyle={styles.teacherShellSplitImage} frameWidth={112} />
+      </View>
+      {children ? <View style={styles.teacherShellHeroContent}>{children}</View> : null}
+    </View>
+  );
+}
+
 function TeacherAttendanceScreen({
   classes,
   selectedClass,
   records,
   saved,
+  loading,
+  error,
   onClassChange,
   onMarkStudent,
   onMarkAllPresent,
@@ -3010,6 +5620,8 @@ function TeacherAttendanceScreen({
   selectedClass: TeacherClassSummary;
   records: Record<string, AttendanceStatus>;
   saved: boolean;
+  loading: boolean;
+  error: boolean;
   onClassChange: (className: string) => void;
   onMarkStudent: (studentName: string, status: AttendanceStatus) => void;
   onMarkAllPresent: () => void;
@@ -3031,10 +5643,7 @@ function TeacherAttendanceScreen({
 
   return (
     <View>
-      <View style={styles.teacherAttendanceHero}>
-        <Text style={styles.teacherKicker}>Professor Mobile</Text>
-        <Text style={styles.teacherShellTitle}>Frequência</Text>
-        <Text style={styles.teacherShellIntro}>Registre a chamada da turma.</Text>
+      <TeacherModuleHero title="Frequência" intro="Registre a chamada da turma." icon={{ source: teacherHomeIcons.peopleCalendar, side: "right" }}>
         <View style={styles.teacherAttendanceMetaRow}>
           <View style={styles.teacherAttendanceMetaPill}>
             <Text style={styles.teacherAttendanceMetaLabel}>Turma</Text>
@@ -3049,9 +5658,11 @@ function TeacherAttendanceScreen({
             <Text style={styles.teacherAttendanceMetaValue}>{selectedClass.students}</Text>
           </View>
         </View>
-      </View>
+      </TeacherModuleHero>
 
       <SectionHeader title="Turma" action="Selecionar" />
+      {loading ? <EmptyState title="Carregando turmas" body="Aguarde enquanto buscamos suas turmas autorizadas." /> : null}
+      {error ? <EmptyState title="Frequência indisponível" body="Não foi possível carregar suas turmas agora." /> : null}
       <View style={styles.teacherAttendanceClassRow}>
         {classes.map((item) => (
           <Pressable
@@ -3080,7 +5691,7 @@ function TeacherAttendanceScreen({
         <TeacherAttendanceSummaryCard label="Justificadas" value={summary.justified} tone="justified" />
       </View>
 
-      <Pressable accessibilityRole="button" accessibilityLabel="Marcar todos como presentes" onPress={onMarkAllPresent} style={styles.teacherMarkAllButton}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Marcar todos como presentes" onPress={onMarkAllPresent} disabled={students.length === 0} style={styles.teacherMarkAllButton}>
         <Text style={styles.teacherMarkAllText}>Marcar todos como presentes</Text>
       </Pressable>
 
@@ -3106,7 +5717,7 @@ function TeacherAttendanceScreen({
               <Text style={styles.teacherAttendanceSecondaryText}>Editar chamada</Text>
             </Pressable>
           ) : (
-            <Pressable accessibilityRole="button" accessibilityLabel="Salvar chamada" onPress={onSave} style={styles.teacherAttendanceSaveButton}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Salvar chamada" onPress={onSave} disabled={students.length === 0} style={styles.teacherAttendanceSaveButton}>
               <Text style={styles.teacherAttendanceSaveText}>Salvar chamada</Text>
             </Pressable>
           )}
@@ -3195,11 +5806,7 @@ function TeacherClassesScreen({
 
   return (
     <View>
-      <View style={styles.teacherClassesHero}>
-        <Text style={styles.teacherKicker}>Professor Mobile</Text>
-        <Text style={styles.teacherShellTitle}>Minhas turmas</Text>
-        <Text style={styles.teacherShellIntro}>Acesse suas turmas e as principais ações do dia.</Text>
-      </View>
+      <TeacherModuleHero title="Minhas turmas" intro="Acesse suas turmas e as principais ações do dia." icon={{ source: teacherHomeIcons.peopleCalendar, side: "left" }} />
 
       <View style={styles.teacherClassFilterRow}>
         {(["Todas", "Educação Infantil", "Fundamental"] as const).map((item) => (
@@ -3327,10 +5934,12 @@ function TeacherClassActionCard({
   action: { label: string; helper: string; mark: string; primary?: boolean };
   onPress: () => void;
 }) {
+  const icon = teacherClassActionIcon(action.label);
+
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={action.label} onPress={onPress} style={[styles.teacherClassActionCard, action.primary ? styles.teacherClassActionPrimary : null]}>
       <View style={[styles.teacherClassActionMark, action.primary ? styles.teacherClassActionMarkPrimary : null]}>
-        <Text style={[styles.teacherClassActionMarkText, action.primary ? styles.teacherClassActionMarkTextPrimary : null]}>{action.mark}</Text>
+        <Image source={icon} resizeMode="contain" style={styles.teacherClassActionIconImage} />
       </View>
       <Text style={[styles.teacherClassActionTitle, action.primary ? styles.teacherClassActionTitlePrimary : null]}>{action.label}</Text>
       <Text style={[styles.teacherClassActionBody, action.primary ? styles.teacherClassActionBodyPrimary : null]}>{action.helper}</Text>
@@ -3371,6 +5980,8 @@ function TeacherAgendaScreen({
   type,
   description,
   saved,
+  loading,
+  error,
   onDayChange,
   onModeChange,
   onOpenEvent,
@@ -3397,6 +6008,8 @@ function TeacherAgendaScreen({
   type: TeacherAgendaType;
   description: string;
   saved: boolean;
+  loading: boolean;
+  error: boolean;
   onDayChange: (day: TeacherAgendaDay) => void;
   onModeChange: (mode: TeacherAgendaMode) => void;
   onOpenEvent: (event: TeacherAgendaItem) => void;
@@ -3451,14 +6064,11 @@ function TeacherAgendaScreen({
 
   return (
     <View>
-      <View style={styles.teacherAgendaHero}>
-        <Text style={styles.teacherKicker}>Professor Mobile</Text>
-        <Text style={styles.teacherShellTitle}>Agenda</Text>
-        <Text style={styles.teacherShellIntro}>Organize suas aulas e compromissos da semana.</Text>
+      <TeacherModuleHero title="Agenda" intro="Organize suas aulas e compromissos da semana." icon={{ source: teacherHomeIcons.peopleCalendar, side: "right" }}>
         <Pressable accessibilityRole="button" accessibilityLabel="Novo compromisso" onPress={onNewEvent} style={styles.teacherAgendaPrimaryButton}>
           <Text style={styles.teacherAgendaPrimaryText}>Novo compromisso</Text>
         </Pressable>
-      </View>
+      </TeacherModuleHero>
 
       <SectionHeader title="Semana" action="Seg a Sex" />
       <View style={styles.teacherAgendaWeekStrip}>
@@ -3481,8 +6091,12 @@ function TeacherAgendaScreen({
       </View>
 
       <SectionHeader title={selectedDay === "Hoje" ? "Hoje" : `Compromissos de ${selectedDay}`} />
-      {visibleEvents.length === 0 ? (
-        <EmptyState title="Nenhum compromisso para este dia." body="Escolha outro dia da semana ou crie um novo compromisso local." />
+      {loading ? (
+        <EmptyState title="Carregando agenda" body="Buscando compromissos autorizados." />
+      ) : error ? (
+        <EmptyState title="Agenda indisponível" body="Não foi possível carregar os compromissos agora." />
+      ) : visibleEvents.length === 0 ? (
+        <EmptyState title="Nenhum compromisso para este dia." body="Quando houver agenda publicada, ela aparecerá aqui." />
       ) : (
         <View style={styles.teacherAgendaTodayList}>
           {visibleEvents.map((item) => (
@@ -3493,6 +6107,7 @@ function TeacherAgendaScreen({
 
       <SectionHeader title="Próximos compromissos" />
       <View style={styles.teacherAgendaUpcomingList}>
+        {!loading && !error && upcomingEvents.length === 0 ? <EmptyState title="Sem próximos compromissos" body="A agenda real está vazia para o período." /> : null}
         {upcomingEvents.map((item) => (
           <TeacherAgendaCard key={item.id} item={item} onPress={() => onOpenEvent(item)} />
         ))}
@@ -3538,11 +6153,7 @@ function TeacherAgendaForm({
 }) {
   return (
     <View>
-      <View style={styles.teacherAgendaHero}>
-        <Text style={styles.teacherKicker}>{mode === "edit" ? "Editar" : "Novo compromisso"}</Text>
-        <Text style={styles.teacherShellTitle}>Agenda</Text>
-        <Text style={styles.teacherShellIntro}>Registre uma aula, atividade, avaliação, evento ou lembrete.</Text>
-      </View>
+      <TeacherModuleHero title="Agenda" intro="Registre uma aula, atividade, avaliação, evento ou lembrete." kicker={mode === "edit" ? "Editar" : "Novo compromisso"} icon={{ source: teacherHomeIcons.peopleCalendar, side: "right" }} />
 
       <View style={styles.teacherAgendaFormCard}>
         <Text style={styles.teacherCommunicationFieldLabel}>Título</Text>
@@ -3605,7 +6216,7 @@ function TeacherAgendaForm({
         <Pressable accessibilityRole="button" accessibilityLabel="Voltar para agenda" onPress={onBack} style={styles.teacherCommunicationSecondaryButton}>
           <Text style={styles.teacherCommunicationSecondaryText}>Voltar</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Salvar compromisso" onPress={onSave} style={styles.teacherCommunicationSendButton}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Salvar compromisso" onPress={onSave} disabled={classes.length === 0} style={styles.teacherCommunicationSendButton}>
           <Text style={styles.teacherCommunicationSendText}>Salvar compromisso</Text>
         </Pressable>
       </View>
@@ -3667,7 +6278,7 @@ function TeacherAgendaDetail({
       {saved ? (
         <View style={styles.teacherCommunicationSentCard}>
           <Text style={styles.teacherCommunicationSentTitle}>Compromisso salvo</Text>
-          <Text style={styles.teacherCommunicationSentBody}>A alteração ficou registrada nesta sessão local.</Text>
+          <Text style={styles.teacherCommunicationSentBody}>A agenda foi atualizada para a turma selecionada.</Text>
         </View>
       ) : null}
 
@@ -3703,6 +6314,70 @@ function getTeacherAgendaTypeMark(type: TeacherAgendaType) {
   return "A";
 }
 
+function todayIsoDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function formatTeacherDate(value: string | null) {
+  if (!value) return "Sem data";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+}
+
+function formatTeacherTime(value: string | null) {
+  if (!value) return "Sem horário";
+  return value.slice(0, 5);
+}
+
+function teacherAgendaDayFromDate(value: string) {
+  const today = todayIsoDate();
+  if (value === today) return "Hoje";
+  const day = new Date(value).getDay();
+  if (day === 1) return "Seg";
+  if (day === 2) return "Ter";
+  if (day === 3) return "Qua";
+  if (day === 4) return "Qui";
+  if (day === 5) return "Sex";
+  return "Hoje";
+}
+
+function mapTeacherAgendaTypeFromApi(value: string | null): TeacherAgendaType {
+  if (value === "atividade" || value === "atividade_online") return "Atividade";
+  if (value === "avaliacao") return "Avaliação";
+  if (value === "evento") return "Evento";
+  if (value === "lembrete") return "Lembrete";
+  return "Aula";
+}
+
+function mapTeacherAgendaTypeToApi(value: TeacherAgendaType) {
+  if (value === "Atividade") return "atividade";
+  if (value === "Avaliação") return "avaliacao";
+  if (value === "Evento") return "evento";
+  if (value === "Lembrete") return "lembrete";
+  return "aula";
+}
+
+function normalizeTeacherDateInput(value: string) {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value.trim())) return value.trim();
+  return todayIsoDate();
+}
+
+function normalizeTeacherTimeInput(value: string) {
+  const match = value.trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function mapAttendanceStatusToApi(status: AttendanceStatus): "present" | "absent" | "justified" {
+  if (status === "Falta") return "absent";
+  if (status === "Justificada") return "justified";
+  return "present";
+}
+
 function TeacherDiaryScreen({
   classes,
   current,
@@ -3715,6 +6390,9 @@ function TeacherDiaryScreen({
   activity,
   draftSaved,
   selectedEntry,
+  loading,
+  error,
+  writeGap,
   onModeChange,
   onClassChange,
   onDateChange,
@@ -3736,6 +6414,9 @@ function TeacherDiaryScreen({
   activity: string;
   draftSaved: boolean;
   selectedEntry: TeacherDiaryEntry | null;
+  loading: boolean;
+  error: boolean;
+  writeGap: boolean;
   onModeChange: (mode: TeacherDiaryMode) => void;
   onClassChange: (className: string) => void;
   onDateChange: (value: string) => void;
@@ -3779,10 +6460,7 @@ function TeacherDiaryScreen({
 
   return (
     <View>
-      <View style={styles.teacherDiaryHero}>
-        <Text style={styles.teacherKicker}>Professor Mobile</Text>
-        <Text style={styles.teacherShellTitle}>Diário de Classe</Text>
-        <Text style={styles.teacherShellIntro}>Registre o que foi trabalhado na aula.</Text>
+      <TeacherModuleHero title="Diário de Classe" intro="Registre o que foi trabalhado na aula." icon={{ source: teacherHomeIcons.diary, side: "right" }}>
         <View style={styles.teacherDiaryMetaGrid}>
           <View style={styles.teacherDiaryMetaPill}>
             <Text style={styles.teacherDiaryMetaLabel}>Turma</Text>
@@ -3793,9 +6471,11 @@ function TeacherDiaryScreen({
             <Text style={styles.teacherDiaryMetaValue}>{date}</Text>
           </View>
         </View>
-      </View>
+      </TeacherModuleHero>
 
       <SectionHeader title="Turma" action="Selecionar" />
+      {loading ? <EmptyState title="Carregando turmas" body="Buscando suas turmas autorizadas." /> : null}
+      {error ? <EmptyState title="Diário indisponível" body="Não foi possível carregar os registros agora." /> : null}
       <View style={styles.teacherCommunicationClassRow}>
         {classes.map((item) => (
           <Pressable
@@ -3873,18 +6553,25 @@ function TeacherDiaryScreen({
           <Text style={styles.teacherCommunicationSentBody}>Você pode revisar o conteúdo antes de concluir o registro.</Text>
         </View>
       ) : null}
+      {writeGap ? (
+        <View style={styles.teacherCommunicationSentCard}>
+          <Text style={styles.teacherCommunicationSentTitle}>Edição indisponível por enquanto</Text>
+          <Text style={styles.teacherCommunicationSentBody}>Você já pode consultar os registros publicados. O salvamento será liberado em uma próxima atualização.</Text>
+        </View>
+      ) : null}
 
       <View style={styles.teacherDiaryActions}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Salvar rascunho" onPress={onSaveDraft} style={styles.teacherCommunicationSecondaryButton}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Salvar rascunho" onPress={onSaveDraft} disabled={writeGap} style={styles.teacherCommunicationSecondaryButton}>
           <Text style={styles.teacherCommunicationSecondaryText}>Salvar rascunho</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Concluir registro" onPress={() => onModeChange("confirm")} style={styles.teacherCommunicationSendButton}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Concluir registro" onPress={() => onModeChange("confirm")} disabled={writeGap} style={styles.teacherCommunicationSendButton}>
           <Text style={styles.teacherCommunicationSendText}>Concluir registro</Text>
         </Pressable>
       </View>
 
       <SectionHeader title="Registros recentes" />
       <View style={styles.teacherDiaryRecentList}>
+        {!loading && !error && recent.length === 0 ? <EmptyState title="Nenhum registro publicado" body="Quando houver diário real, os registros aparecerão aqui." /> : null}
         {recent.map((entry) => (
           <TeacherDiaryRecentCard key={entry.id} entry={entry} onPress={() => onOpenEntry(entry)} />
         ))}
@@ -4135,12 +6822,9 @@ function TeacherAvaliaScreen({
 
   return (
     <View>
-      <View style={styles.teacherAvaliaHero}>
-        <Text style={styles.teacherKicker}>Professor Mobile</Text>
-        <Text style={styles.teacherShellTitle}>Avalia+</Text>
-        <Text style={styles.teacherShellIntro}>Aplique avaliações e acompanhe os resultados das suas turmas.</Text>
+      <TeacherModuleHero title="Avalia+" intro="Aplique avaliações e acompanhe os resultados das suas turmas." icon={{ source: teacherHomeIcons.avalia, side: "right" }}>
         <Text style={styles.teacherAvaliaContext}>Turma selecionada: {selectedClass.className}</Text>
-      </View>
+      </TeacherModuleHero>
 
       <View style={styles.teacherAvaliaSummaryGrid}>
         <TeacherAvaliaSummaryCard label="Disponíveis" value={available.length} />
@@ -4149,7 +6833,7 @@ function TeacherAvaliaScreen({
         <TeacherAvaliaSummaryCard label="Concluídas" value={completed.length} />
       </View>
 
-      <SectionHeader title="Filtros" action="Local" />
+      <SectionHeader title="Filtros" />
       <View style={styles.teacherAvaliaFilterRow}>
         {(["Todas", "Disponíveis", "Aplicadas", "Concluídas"] as const).map((item) => (
           <Pressable
@@ -4173,6 +6857,7 @@ function TeacherAvaliaScreen({
             onPress={() => onOpenAssessment(assessment, assessment.state === "Disponível" ? "detail" : "results")}
           />
         ))}
+        {visibleAssessments.length === 0 ? <EmptyState title="Nenhuma avaliação publicada" body="Quando houver avaliação para suas turmas, ela aparecerá aqui." /> : null}
       </View>
     </View>
   );
@@ -4277,11 +6962,7 @@ function TeacherAvaliaApply({
 }) {
   return (
     <View>
-      <View style={styles.teacherAvaliaHero}>
-        <Text style={styles.teacherKicker}>Aplicar avaliação</Text>
-        <Text style={styles.teacherShellTitle}>{assessment.title}</Text>
-        <Text style={styles.teacherShellIntro}>Escolha a turma e o período de disponibilidade.</Text>
-      </View>
+      <TeacherModuleHero title={assessment.title} intro="Escolha a turma e o período de disponibilidade." kicker="Aplicar avaliação" icon={{ source: teacherHomeIcons.avalia, side: "right" }} />
 
       <View style={styles.teacherAvaliaDetailCard}>
         <Text style={styles.teacherCommunicationFieldLabel}>Turma</Text>
@@ -4391,7 +7072,7 @@ function TeacherAvaliaPublished({
       <View style={styles.teacherAvaliaDetailCard}>
         <Text style={styles.teacherCommunicationFieldLabel}>Resumo</Text>
         <Text style={styles.teacherAvaliaDetailText}>
-          A publicação ficou registrada apenas nesta visualização local para validar o fluxo mobile.
+          A publicação será concluída durante o fechamento autenticado da professora.
         </Text>
       </View>
 
@@ -4421,21 +7102,11 @@ function TeacherAvaliaResults({
   const assigned = assessment.assigned || selectedClass.studentCount;
   const completed = assessment.completed || 0;
   const participation = assigned > 0 ? Math.round((completed / assigned) * 100) : 0;
-  const students = assessment.students.length > 0 ? assessment.students : selectedClass.studentsList.slice(0, 3).map((student, index) => ({
-    name: student.name,
-    state: index === 0 ? "Concluída" : "Não concluída",
-    score: index === 0 ? "75%" : "0%",
-    correct: index === 0 ? 3 : 0,
-    wrong: index === 0 ? 1 : 0
-  }));
+  const students = assessment.students;
 
   return (
     <View>
-      <View style={styles.teacherAvaliaHero}>
-        <Text style={styles.teacherKicker}>Resultados</Text>
-        <Text style={styles.teacherShellTitle}>{assessment.title}</Text>
-        <Text style={styles.teacherShellIntro}>{assessment.className || selectedClass.className}</Text>
-      </View>
+      <TeacherModuleHero title={assessment.title} intro={assessment.className || selectedClass.className} kicker="Resultados" icon={{ source: teacherHomeIcons.avalia, side: "right" }} />
 
       <View style={styles.teacherAvaliaResultGrid}>
         <TeacherAvaliaResultStat label="Atribuídos" value={assigned} />
@@ -4470,6 +7141,7 @@ function TeacherAvaliaResults({
             <Text style={styles.teacherAvaliaStudentScore}>{student.score}</Text>
           </Pressable>
         ))}
+        {students.length === 0 ? <EmptyState title="Sem resultados publicados" body="Os resultados aparecerão quando houver tentativas concluídas." /> : null}
       </View>
 
       <Pressable accessibilityRole="button" accessibilityLabel="Voltar para Avalia+" onPress={onBack} style={styles.teacherCommunicationSecondaryButton}>
@@ -4656,6 +7328,8 @@ function TeacherNotificationsScreen({
 }
 
 function TeacherProfileScreen({
+  context,
+  summary,
   classes,
   communicationCount,
   diaryCount,
@@ -4664,6 +7338,8 @@ function TeacherProfileScreen({
   onOpenAccessibility,
   onLogout
 }: {
+  context: { teacherName: string; schoolName: string; discipline: string | null; activeClassLinks: number } | null;
+  summary: TeacherHomeSummary | null;
   classes: TeacherClassSummary[];
   communicationCount: number;
   diaryCount: number;
@@ -4674,6 +7350,10 @@ function TeacherProfileScreen({
 }) {
   const highlightedClasses = classes.slice(0, 3);
   const totalStudents = classes.reduce((sum, item) => sum + item.studentCount, 0);
+  const teacherName = context?.teacherName || summary?.teacherName || "Professora";
+  const schoolName = context?.schoolName || summary?.schoolName || "Escola não carregada";
+  const discipline = context?.discipline || "Docente";
+  const activeClassLinks = context?.activeClassLinks ?? summary?.activeClassLinks ?? classes.length;
 
   return (
     <TeacherShell title="Meu perfil" intro="Veja suas informações e preferências do aplicativo.">
@@ -4683,9 +7363,9 @@ function TeacherProfileScreen({
         </View>
         <View style={styles.teacherProfileIdentityCopy}>
           <Text style={styles.teacherKickerOnLight}>Professora</Text>
-          <Text style={styles.teacherProfileName}>Professora Helena</Text>
-          <Text style={styles.teacherProfileMeta}>Escola Municipal Raízes e Saberes</Text>
-          <Text style={styles.teacherProfileBody}>Docente de Educação Infantil e Ensino Fundamental · {classes.length} turmas ativas</Text>
+          <Text style={styles.teacherProfileName}>{teacherName}</Text>
+          <Text style={styles.teacherProfileMeta}>{schoolName}</Text>
+          <Text style={styles.teacherProfileBody}>{discipline} · {activeClassLinks} turmas ativas</Text>
         </View>
       </View>
 
@@ -4693,7 +7373,7 @@ function TeacherProfileScreen({
         <View style={styles.teacherProfileSectionTop}>
           <View>
             <Text style={styles.teacherProfileSectionTitle}>Minhas turmas</Text>
-            <Text style={styles.teacherProfileSectionBody}>{classes.length} turmas · {totalStudents} alunos acompanhados</Text>
+            <Text style={styles.teacherProfileSectionBody}>{activeClassLinks} turmas · {totalStudents} alunos acompanhados</Text>
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel="Ver todas as turmas" onPress={() => onOpen("classes")} style={styles.teacherProfileSmallButton}>
             <Text style={styles.teacherProfileSmallButtonText}>Ver todas</Text>
@@ -4706,27 +7386,32 @@ function TeacherProfileScreen({
               <Text style={styles.teacherProfileClassChipBody}>{item.students}</Text>
             </View>
           ))}
+          {highlightedClasses.length === 0 ? (
+            <View style={styles.teacherProfileEmptyClassState}>
+              <EmptyState title="Nenhuma turma ativa" body="Quando houver vínculo ativo, suas turmas aparecerão aqui." />
+            </View>
+          ) : null}
         </View>
       </View>
 
       <SectionHeader title="Resumo de rotina" />
       <View style={styles.teacherProfileRoutineGrid}>
-        <TeacherProfileMetric mark="T" value={classes.length} label="Turmas" />
-        <TeacherProfileMetric mark="✓" value="3" label="Chamadas recentes" />
-        <TeacherProfileMetric mark="D" value={diaryCount} label="Registros de Diário" />
-        <TeacherProfileMetric mark="A+" value={avaliaCount} label="Avaliações" />
+        <TeacherProfileMetric value={activeClassLinks} label="Turmas" />
+        <TeacherProfileMetric value={summary?.todaysCalendarCount ?? 0} label="Compromissos hoje" />
+        <TeacherProfileMetric value={diaryCount} label="Registros de Diário" />
+        <TeacherProfileMetric value={avaliaCount} label="Avaliações" />
       </View>
 
       <SectionHeader title="Preferências" />
       <View style={styles.teacherProfilePreferenceList}>
-        <TeacherProfilePreferenceCard mark="!" title="Notificações" description="Central de recados, prazos e avisos importantes." action="Abrir notificações" onPress={() => onOpen("notifications")} />
-        <TeacherProfilePreferenceCard mark="Aa" title="Acessibilidade" description="Texto, contraste e movimento para leitura confortável." action="Ajustar" onPress={onOpenAccessibility} />
-        <TeacherProfilePreferenceCard mark="♪" title="Som" description="Preferência visual para alertas do aplicativo." action="Em breve" />
+        <TeacherProfilePreferenceCard title="Notificações" description="Central de recados, prazos e avisos importantes." action="Abrir notificações" onPress={() => onOpen("notifications")} />
+        <TeacherProfilePreferenceCard title="Acessibilidade" description="Texto, contraste e movimento para leitura confortável." action="Ajustar" onPress={onOpenAccessibility} />
+        <TeacherProfilePreferenceCard title="Som" description="Preferência visual para alertas do aplicativo." action="Em breve" />
       </View>
 
       <View style={styles.teacherProfileFormationCard}>
         <View style={styles.teacherProfileFormationMark}>
-          <Text style={styles.teacherProfileFormationMarkText}>F</Text>
+          <Image source={teacherCatalogIcons.ideaBooks} resizeMode="contain" style={styles.teacherProfileFormationIconImage} />
         </View>
         <View style={styles.teacherProfileFormationCopy}>
           <Text style={styles.teacherProfileFormationTitle}>Formação</Text>
@@ -4742,11 +7427,16 @@ function TeacherProfileScreen({
   );
 }
 
-function TeacherProfileMetric({ mark, value, label }: { mark: string; value: string | number; label: string }) {
+function TeacherProfileMetric({ value, label }: { value: string | number; label: string }) {
+  const icon = teacherProfileMetricIcon(label);
+  const tone = teacherProfileMetricTone(label);
+
   return (
-    <View style={styles.teacherProfileMetricCard}>
+    <View style={[styles.teacherProfileMetricCard, styles[`teacherWeeklyCard${tone}`]]}>
+      <View style={styles.teacherWeeklyGlow} />
+      <View style={styles.teacherWeeklyRelief} />
       <View style={styles.teacherProfileMetricMark}>
-        <Text style={styles.teacherProfileMetricMarkText}>{mark}</Text>
+        <Image source={icon} resizeMode="contain" style={styles.teacherProfileMetricIconImage} />
       </View>
       <Text style={styles.teacherProfileMetricValue}>{value}</Text>
       <Text style={styles.teacherProfileMetricLabel}>{label}</Text>
@@ -4755,22 +7445,21 @@ function TeacherProfileMetric({ mark, value, label }: { mark: string; value: str
 }
 
 function TeacherProfilePreferenceCard({
-  mark,
   title,
   description,
   action,
   onPress
 }: {
-  mark: string;
   title: string;
   description: string;
   action: string;
   onPress?: () => void;
 }) {
+  const icon = teacherProfilePreferenceIcon(title);
   const content = (
     <>
       <View style={styles.teacherProfilePreferenceMark}>
-        <Text style={styles.teacherProfilePreferenceMarkText}>{mark}</Text>
+        <Image source={icon} resizeMode="contain" style={styles.teacherProfilePreferenceIconImage} />
       </View>
       <View style={styles.teacherProfilePreferenceCopy}>
         <Text style={styles.teacherProfilePreferenceTitle}>{title}</Text>
@@ -4828,6 +7517,8 @@ function TeacherTrackingScreen({
   avaliaAssessments,
   diaryCurrent,
   diaryRecent,
+  overview,
+  alerts,
   onClassChange,
   onOpenStudent,
   onBackToOverview,
@@ -4840,6 +7531,8 @@ function TeacherTrackingScreen({
   avaliaAssessments: TeacherAvaliaAssessment[];
   diaryCurrent: TeacherDiaryCurrent;
   diaryRecent: TeacherDiaryEntry[];
+  overview: TeacherTrackingOverview | null;
+  alerts: RealTeacherTrackingAlert[];
   onClassChange: (className: string) => void;
   onOpenStudent: (student: TeacherClassStudent) => void;
   onBackToOverview: () => void;
@@ -4847,12 +7540,15 @@ function TeacherTrackingScreen({
 }) {
   const classAssessments = avaliaAssessments.filter((item) => item.className === selectedClass.className);
   const recentAssessment = classAssessments[0] ?? avaliaAssessments.find((item) => item.state !== "Disponível") ?? avaliaAssessments[0];
-  const attendancePercent = selectedClass.className === "Infantil 4 A" ? "95%" : selectedClass.className === "Infantil 5 A" ? "93%" : "94%";
-  const attendanceText = selectedClass.className === "Infantil 4 A" ? "21 presentes · 1 falta" : "Resumo dos últimos registros";
+  const attendancePercent = overview ? `${Math.round(overview.attendanceRate)}%` : "Em aberto";
+  const attendanceText = overview ? "Resumo dos últimos registros" : "Sem indicador publicado";
   const participation = recentAssessment?.assigned ? `${Math.round((recentAssessment.completed / recentAssessment.assigned) * 100)}%` : "Em aberto";
   const diaryEntry = diaryRecent.find((item) => item.className === selectedClass.className) ?? diaryRecent[0];
   const skills = recentAssessment?.skills ?? avaliaAssessments[0]?.skills ?? [];
   const followStudents = selectedClass.studentsList.slice(0, 3);
+  const assessmentAverage = overview && overview.assessmentAverage > 0 ? `${Math.round(overview.assessmentAverage)}%` : recentAssessment?.average || "Em aberto";
+  const assessmentParticipation = overview && overview.assessmentParticipation > 0 ? `${Math.round(overview.assessmentParticipation)}%` : participation;
+  const diaryEntriesCount = overview?.diaryEntriesCount ?? diaryRecent.filter((item) => item.className === selectedClass.className).length;
 
   if (mode === "student" && selectedStudent) {
     const focusReason = selectedStudent.state.includes("pendente")
@@ -4894,14 +7590,11 @@ function TeacherTrackingScreen({
 
   return (
     <View>
-      <View style={styles.teacherTrackingHero}>
-        <Text style={styles.teacherKicker}>Professor Mobile</Text>
-        <Text style={styles.teacherShellTitle}>Acompanhamento</Text>
-        <Text style={styles.teacherShellIntro}>Veja como sua turma está avançando.</Text>
+      <TeacherModuleHero title="Acompanhamento" intro="Veja como sua turma está avançando." icon={{ source: teacherHomeIcons.tracking, side: "left" }}>
         <Text style={styles.teacherAvaliaContext}>Turma selecionada: {selectedClass.className}</Text>
-      </View>
+      </TeacherModuleHero>
 
-      <SectionHeader title="Turma" action="Local" />
+      <SectionHeader title="Turma" />
       <View style={styles.teacherAvaliaFilterRow}>
         {classes.map((item) => {
           const active = item.className === selectedClass.className;
@@ -4925,16 +7618,16 @@ function TeacherTrackingScreen({
         <Text style={styles.teacherTrackingBody}>{selectedClass.students} · {selectedClass.routine}</Text>
         <View style={styles.teacherTrackingMetricGrid}>
           <TeacherTrackingMetric label="Presença" value={attendancePercent} />
-          <TeacherTrackingMetric label="Avalia+" value={recentAssessment?.average || "Em aberto"} />
-          <TeacherTrackingMetric label="Participação" value={participation} />
+          <TeacherTrackingMetric label="Avalia+" value={assessmentAverage} />
+          <TeacherTrackingMetric label="Participação" value={assessmentParticipation} />
           <TeacherTrackingMetric label="Habilidades" value={`${skills.length}`} />
         </View>
       </View>
 
       <View style={styles.teacherTrackingBlockGrid}>
         <TeacherTrackingBlock title="Frequência" value={attendancePercent} body={`${attendanceText}. Tendência estável nos últimos encontros.`} action="Ver frequência" onPress={() => onOpen("attendance")} />
-        <TeacherTrackingBlock title="Avalia+" value={recentAssessment?.average || "Em aberto"} body={`${recentAssessment?.title ?? "Avaliação recente"} · participação ${participation}.`} action="Ver resultados" onPress={() => onOpen("avalia")} />
-        <TeacherTrackingBlock title="Diário de Classe" value={`${diaryRecent.filter((item) => item.className === selectedClass.className).length || 1}`} body={`Último registro: ${diaryEntry?.title ?? diaryCurrent.planned}. Estado geral em acompanhamento.`} action="Abrir Diário" onPress={() => onOpen("diary")} />
+        <TeacherTrackingBlock title="Avalia+" value={assessmentAverage} body={`${recentAssessment?.title ?? "Sem avaliação publicada"} · participação ${assessmentParticipation}.`} action="Ver resultados" onPress={() => onOpen("avalia")} />
+        <TeacherTrackingBlock title="Diário de Classe" value={`${diaryEntriesCount}`} body={`Último registro: ${diaryEntry?.title ?? diaryCurrent.planned}.`} action="Abrir Diário" onPress={() => onOpen("diary")} />
       </View>
 
       <SectionHeader title="Habilidades" />
@@ -4945,6 +7638,7 @@ function TeacherTrackingScreen({
             <Text style={styles.teacherTrackingSkillBody}>Trabalhada nas avaliações recentes · {skill.percent}</Text>
           </View>
         ))}
+        {skills.length === 0 ? <EmptyState title="Sem habilidades consolidadas" body="Quando houver resultados publicados, eles aparecerão aqui." /> : null}
       </View>
 
       <SectionHeader title="Acompanhar de perto" />
@@ -4961,13 +7655,15 @@ function TeacherTrackingScreen({
             <Text style={styles.teacherAvaliaStudentScore}>Ver</Text>
           </Pressable>
         ))}
+        {followStudents.length === 0 ? <EmptyState title="Sem alunos vinculados" body="Quando houver alunos na turma, o acompanhamento individual aparecerá aqui." /> : null}
       </View>
 
       <SectionHeader title="Alertas" />
       <View style={styles.teacherTrackingAlertList}>
-        <TeacherTrackingAlert title="Frequência abaixo do esperado" body="Observar próximos encontros antes de qualquer encaminhamento." />
-        <TeacherTrackingAlert title="Avaliação ainda não concluída" body="Acompanhar prazo e apoiar a família quando necessário." />
-        <TeacherTrackingAlert title="Poucos registros no Diário" body="Manter registro breve para preservar a continuidade pedagógica." />
+        {alerts.map((alert) => (
+          <TeacherTrackingAlert key={alert.id} title={alert.title} body={alert.body} />
+        ))}
+        {alerts.length === 0 ? <EmptyState title="Nenhum alerta no período" body="Quando houver algum ponto de atenção, ele aparecerá aqui." /> : null}
       </View>
     </View>
   );
@@ -5018,6 +7714,8 @@ function TeacherCommunicationScreen({
   message,
   sent,
   selectedMessage,
+  loading,
+  error,
   onModeChange,
   onFilterChange,
   onRecipientTypeChange,
@@ -5039,6 +7737,8 @@ function TeacherCommunicationScreen({
   message: string;
   sent: boolean;
   selectedMessage: TeacherCommunicationItem | null;
+  loading: boolean;
+  error: boolean;
   onModeChange: (mode: TeacherCommunicationMode) => void;
   onFilterChange: (filter: TeacherCommunicationFilter) => void;
   onRecipientTypeChange: (type: TeacherCommunicationRecipientType) => void;
@@ -5081,19 +7781,16 @@ function TeacherCommunicationScreen({
 
   return (
     <View>
-      <View style={styles.teacherCommunicationHero}>
-        <Text style={styles.teacherKicker}>Professor Mobile</Text>
-        <Text style={styles.teacherShellTitle}>Comunicação</Text>
-        <Text style={styles.teacherShellIntro}>Envie recados para suas turmas e alunos.</Text>
+      <TeacherModuleHero title="Comunicação" intro="Envie recados para suas turmas e alunos." icon={{ source: teacherHomeIcons.communication, side: "left" }}>
         <Pressable accessibilityRole="button" accessibilityLabel="Novo recado" onPress={() => onModeChange("compose")} style={styles.teacherCommunicationPrimaryButton}>
           <Text style={styles.teacherCommunicationPrimaryText}>Novo recado</Text>
         </Pressable>
-      </View>
+      </TeacherModuleHero>
 
       {sent ? (
         <View style={styles.teacherCommunicationSentCard}>
           <Text style={styles.teacherCommunicationSentTitle}>Recado enviado</Text>
-          <Text style={styles.teacherCommunicationSentBody}>O envio ficou registrado nesta visualização local para revisão do fluxo.</Text>
+          <Text style={styles.teacherCommunicationSentBody}>O recado foi enviado para o destino selecionado.</Text>
         </View>
       ) : null}
 
@@ -5113,6 +7810,9 @@ function TeacherCommunicationScreen({
       </View>
 
       <View style={styles.teacherCommunicationList}>
+        {loading ? <EmptyState title="Carregando recados" body="Buscando comunicações autorizadas." /> : null}
+        {error ? <EmptyState title="Comunicação indisponível" body="Não foi possível carregar os recados agora." /> : null}
+        {!loading && !error && filteredMessages.length === 0 ? <EmptyState title="Nenhum recado publicado" body="Quando houver mensagens reais, elas aparecerão aqui." /> : null}
         {filteredMessages.map((item) => (
           <TeacherCommunicationCard key={item.title} item={item} onPress={() => onOpenMessage(item)} />
         ))}
@@ -5152,11 +7852,7 @@ function TeacherCommunicationComposer({
 }) {
   return (
     <View>
-      <View style={styles.teacherCommunicationHero}>
-        <Text style={styles.teacherKicker}>Novo recado</Text>
-        <Text style={styles.teacherShellTitle}>Comunicação</Text>
-        <Text style={styles.teacherShellIntro}>Escolha o destinatário e escreva uma mensagem objetiva.</Text>
-      </View>
+      <TeacherModuleHero title="Comunicação" intro="Escolha o destinatário e escreva uma mensagem objetiva." kicker="Novo recado" icon={{ source: teacherHomeIcons.communication, side: "left" }} />
 
       <SectionHeader title="Destinatário" action={recipientType} />
       <View style={styles.teacherCommunicationTypeRow}>
@@ -5222,7 +7918,7 @@ function TeacherCommunicationComposer({
         <Pressable accessibilityRole="button" accessibilityLabel="Voltar para recados recentes" onPress={onBack} style={styles.teacherCommunicationSecondaryButton}>
           <Text style={styles.teacherCommunicationSecondaryText}>Voltar</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Enviar recado" onPress={onSend} style={styles.teacherCommunicationSendButton}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Enviar recado" onPress={onSend} disabled={classes.length === 0 || (recipientType === "Aluno" && !selectedStudentName)} style={styles.teacherCommunicationSendButton}>
           <Text style={styles.teacherCommunicationSendText}>Enviar recado</Text>
         </Pressable>
       </View>
@@ -5278,11 +7974,7 @@ function TeacherCommunicationDetail({ item, onBack }: { item: TeacherCommunicati
 function TeacherShell({ title, intro, children }: { title: string; intro: string; children?: React.ReactNode }) {
   return (
     <View>
-      <View style={styles.teacherShellHero}>
-        <Text style={styles.teacherKicker}>Professor Mobile</Text>
-        <Text style={styles.teacherShellTitle}>{title}</Text>
-        <Text style={styles.teacherShellIntro}>{intro}</Text>
-      </View>
+      <TeacherModuleHero title={title} intro={intro} />
       <View style={styles.teacherShellList}>{children}</View>
     </View>
   );
@@ -5295,7 +7987,7 @@ function TeacherModuleListCard({ item, icon }: { item: TeacherModuleListItem; ic
 function SharedModule({ activeKey, audience }: { activeKey: ModuleKey; audience: string }) {
   if (activeKey === "agenda") {
     return (
-      <ModuleLayout title="Agenda" intro={`Agenda ${audience} com semana e compromissos demonstrativos.`}>
+      <ModuleLayout title="Agenda" intro={`Agenda ${audience} com semana e compromissos.`}>
         {demoCollections.week.map((item, index) => (
           <ListCard key={item} icon="calendar" title={item} subtitle={`Dia ${index + 1} da semana`} />
         ))}
@@ -5318,7 +8010,7 @@ function SharedModule({ activeKey, audience }: { activeKey: ModuleKey; audience:
     return (
       <ModuleLayout title="Perfil" intro="Dados institucionais sem códigos internos ou informações sensíveis.">
         <ListCard icon="user" title="Identidade" subtitle="Nome, avatar e preferências" />
-        <ListCard icon="home" title="Escola e turma" subtitle="Contexto escolar demonstrativo" />
+        <ListCard icon="home" title="Escola e turma" subtitle="Contexto escolar" />
         <ListCard icon="settings" title="Configurações" subtitle="Acessibilidade, segurança e sessão" />
       </ModuleLayout>
     );
@@ -5341,9 +8033,9 @@ function GenericModule({
   return (
     <ModuleLayout title={title} intro={`Shell visual de ${title.toLowerCase()} para ${fallbackAudience}.`}>
       {labels.map((label) => (
-        <ListCard key={label} icon={moduleIcons[activeKey] ?? "circle"} title={label} subtitle="Conteúdo demonstrativo local" />
+        <ListCard key={label} icon={moduleIcons[activeKey] ?? "circle"} title={label} subtitle="Disponível quando houver dados reais publicados." />
       ))}
-      <EmptyState title="Placeholder funcional" body="Na Fase 03 este bloco será conectado ao motor real homologado na plataforma web." />
+      <EmptyState title="Nada publicado por enquanto" body="Quando houver conteúdo real para este espaço, ele aparecerá aqui." />
     </ModuleLayout>
   );
 }
@@ -5355,7 +8047,7 @@ function ModuleLayout({ title, intro, children }: { title: string; intro: string
         <Text style={styles.moduleTitle}>{title}</Text>
         <Text style={styles.moduleBody}>{intro}</Text>
       </View>
-      <SectionHeader title="Conteúdo" action="Demo" />
+      <SectionHeader title="Conteúdo" />
       {children}
     </View>
   );
@@ -5398,13 +8090,525 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.md
   },
-  fundamentalHero: {
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
+  crescerHome: {
+    gap: spacing.lg,
+    paddingBottom: spacing.xl
+  },
+  crescerHomeHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: spacing.xs
+  },
+  crescerBrandMark: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.sm,
+    flex: 1,
+    justifyContent: "center",
+    minWidth: 0
+  },
+  crescerLogoutButton: {
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.92)",
+    borderColor: "#c9e8c5",
+    borderRadius: 18,
+    borderWidth: 2,
+    height: 44,
+    justifyContent: "center",
+    marginLeft: spacing.sm,
+    width: 44,
+    ...shadow
+  },
+  crescerBrandTitle: {
+    color: colors.brand,
+    fontSize: 23,
+    fontWeight: "900",
+    letterSpacing: 0,
+    lineHeight: 27
+  },
+  crescerBrandSubtitle: {
+    color: colors.brand,
+    fontSize: 12,
+    fontWeight: "800",
+    lineHeight: 15
+  },
+  crescerWelcomeCard: {
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(201, 232, 197, 0.92)",
+    borderRadius: 24,
+    borderWidth: 2,
+    flexDirection: "row",
+    gap: spacing.md,
+    minHeight: 112,
+    padding: spacing.md,
+    ...shadow
+  },
+  crescerAvatar: {
+    alignItems: "center",
+    backgroundColor: colors.childSoft,
+    borderColor: "#b9e0b8",
+    borderRadius: 28,
+    borderWidth: 2,
+    height: 74,
+    justifyContent: "center",
+    width: 74
+  },
+  crescerAvatarText: {
+    color: colors.child,
+    fontSize: 23,
+    fontWeight: "900"
+  },
+  crescerWelcomeText: {
+    flex: 1,
+    minWidth: 0
+  },
+  crescerWelcomeTitle: {
+    color: colors.brand,
+    fontSize: 24,
+    fontWeight: "900",
+    letterSpacing: 0,
+    lineHeight: 29
+  },
+  crescerWelcomeBody: {
+    color: colors.muted,
+    fontSize: 15,
+    fontWeight: "800",
+    lineHeight: 21,
+    marginTop: spacing.xs
+  },
+  crescerEncouragement: {
+    alignItems: "center",
+    gap: 2,
+    maxWidth: 72
+  },
+  crescerEncouragementText: {
+    color: colors.child,
+    fontSize: 13,
+    fontWeight: "900",
+    lineHeight: 16,
+    textAlign: "center"
+  },
+  crescerMissionCard: {
+    alignItems: "center",
+    backgroundColor: "rgba(255, 241, 194, 0.95)",
+    borderColor: "rgba(255, 255, 255, 0.92)",
     borderRadius: 22,
     borderWidth: 2,
+    flexDirection: "row",
+    gap: spacing.md,
+    minHeight: 92,
+    overflow: "hidden",
+    padding: spacing.md,
+    position: "relative",
+    shadowColor: "#c78a10",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14
+  },
+  crescerMissionGlow: {
+    backgroundColor: "rgba(255, 255, 255, 0.42)",
+    borderRadius: 999,
+    height: 118,
+    position: "absolute",
+    right: 74,
+    top: -44,
+    width: 118
+  },
+  crescerMissionRibbon: {
+    backgroundColor: "rgba(255, 222, 121, 0.46)",
+    borderRadius: 999,
+    height: 76,
+    position: "absolute",
+    right: -22,
+    top: 8,
+    transform: [{ rotate: "-12deg" }],
+    width: 146
+  },
+  crescerMissionIcon: {
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.72)",
+    borderRadius: 28,
+    height: 62,
+    justifyContent: "center",
+    position: "relative",
+    shadowColor: "#c78a10",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    width: 62,
+    zIndex: 2
+  },
+  crescerMissionIconImage: {
+    height: 44,
+    width: 44,
+    zIndex: 3
+  },
+  crescerMissionText: {
+    flex: 1,
+    minWidth: 0
+  },
+  crescerMissionLabel: {
+    color: colors.warning,
+    fontSize: 12,
+    fontWeight: "900",
+    letterSpacing: 0,
+    textTransform: "uppercase"
+  },
+  crescerMissionTitle: {
+    color: colors.ink,
+    fontSize: 18,
+    fontWeight: "900",
+    letterSpacing: 0,
+    lineHeight: 23,
+    marginTop: spacing.xs
+  },
+  crescerMissionBadge: {
+    backgroundColor: "#f7df92",
+    borderRadius: 999,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs
+  },
+  crescerMissionBadgeText: {
+    color: colors.warning,
+    fontSize: 11,
+    fontWeight: "900",
+    textTransform: "uppercase"
+  },
+  crescerStatsRow: {
+    flexDirection: "row",
+    gap: spacing.md
+  },
+  crescerStatCard: {
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.92)",
+    borderColor: "#c9e8c5",
+    borderRadius: 20,
+    borderWidth: 2,
+    flex: 1,
+    flexDirection: "row",
+    gap: spacing.sm,
+    minHeight: 84,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm
+  },
+  crescerStatIcon: {
+    alignItems: "center",
+    backgroundColor: colors.brandSoft,
+    borderRadius: 25,
+    height: 60,
+    justifyContent: "center",
+    position: "relative",
+    width: 60,
+    zIndex: 2
+  },
+  crescerStatIconImage: {
+    height: 62,
+    width: 62,
+    zIndex: 3
+  },
+  crescerStatValue: {
+    color: colors.brand,
+    fontSize: 25,
+    fontWeight: "900",
+    lineHeight: 29
+  },
+  crescerStatLabel: {
+    color: colors.muted,
+    fontSize: 14,
+    fontWeight: "800",
+    lineHeight: 18
+  },
+  crescerSectionTitleRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.md,
+    marginTop: spacing.xs
+  },
+  crescerSectionTitle: {
+    color: colors.brand,
+    fontSize: 25,
+    fontWeight: "900",
+    letterSpacing: 0,
+    lineHeight: 30
+  },
+  crescerSectionStroke: {
+    backgroundColor: "#f2a20f",
+    borderRadius: 999,
+    height: 5,
+    width: 56
+  },
+  crescerLearningGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.md
+  },
+  crescerLearningGridTablet: {
+    gap: spacing.lg
+  },
+  crescerDayGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.md
+  },
+  crescerDayGridTablet: {
+    gap: spacing.lg
+  },
+  crescerFeatureCard: {
+    alignItems: "center",
+    borderColor: "rgba(255, 255, 255, 0.92)",
+    borderRadius: 22,
+    borderWidth: 2,
+    flexBasis: "47%",
+    flexDirection: "row",
+    flexGrow: 1,
+    gap: 8,
+    minHeight: 100,
+    overflow: "hidden",
+    paddingHorizontal: 12,
+    paddingVertical: spacing.md,
+    paddingRight: 48,
+    position: "relative",
+    ...shadow
+  },
+  crescerFeatureCardLarge: {
+    alignItems: "stretch",
+    flexDirection: "column",
+    justifyContent: "flex-end",
+    minHeight: 178,
+    paddingHorizontal: spacing.md,
+    paddingTop: 78
+  },
+  crescerFeatureCardCompact: {
+    alignItems: "stretch",
+    flexDirection: "column",
+    gap: spacing.xs,
+    justifyContent: "flex-start",
+    minHeight: 148,
+    paddingHorizontal: spacing.sm,
+    paddingRight: spacing.sm,
+    paddingTop: spacing.sm
+  },
+  crescerFeatureCardPressed: {
+    borderColor: "rgba(255, 255, 255, 1)",
+    shadowOpacity: 0.09,
+    transform: [{ translateY: 2 }, { scale: 0.985 }]
+  },
+  crescerFeatureGlow: {
+    backgroundColor: "rgba(255, 255, 255, 0.38)",
+    borderRadius: 999,
+    height: 82,
+    position: "absolute",
+    right: -28,
+    top: -28,
+    width: 82
+  },
+  crescerFeatureGlowLarge: {
+    height: 126,
+    left: -18,
+    right: undefined,
+    top: 14,
+    width: 126
+  },
+  crescerFeatureIcon: {
+    alignItems: "center",
+    backgroundColor: "transparent",
+    borderColor: "transparent",
+    borderRadius: 28,
+    borderWidth: 0,
+    height: 72,
+    justifyContent: "center",
+    position: "relative",
+    shadowColor: "#4b6a49",
+    shadowOffset: { width: 0, height: 9 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    width: 62,
+    zIndex: 2
+  },
+  crescerFeatureIconLarge: {
+    alignSelf: "center",
+    borderRadius: 46,
+    height: 116,
+    marginBottom: spacing.sm,
+    marginTop: -76,
+    transform: [{ rotate: "-6deg" }],
+    width: 154
+  },
+  crescerFeatureIconCompact: {
+    alignSelf: "center",
+    height: 66,
+    marginBottom: 0,
+    width: 74
+  },
+  crescerFeatureIconPressed: {
+    shadowOpacity: 0.08,
+    transform: [{ translateY: 2 }, { scale: 0.96 }]
+  },
+  crescerFeatureIconImage: {
+    height: 74,
+    width: 74,
+    zIndex: 3
+  },
+  crescerFeatureIconImageLarge: {
+    height: 116,
+    width: 154,
+    zIndex: 3
+  },
+  crescerFeatureIconImageCompact: {
+    height: 72,
+    width: 82
+  },
+  crescerFeatureCopy: {
+    flex: 1,
+    minWidth: 0,
+    paddingRight: 0
+  },
+  crescerFeatureTitle: {
+    color: colors.ink,
+    fontSize: 18,
+    fontWeight: "900",
+    letterSpacing: 0,
+    lineHeight: 22
+  },
+  crescerFeatureTitleCompact: {
+    textAlign: "center",
+    fontSize: 16,
+    lineHeight: 19
+  },
+  crescerFeatureBody: {
+    color: colors.studentInk,
+    fontSize: 13,
+    fontWeight: "800",
+    lineHeight: 17,
+    marginTop: 2
+  },
+  crescerFeatureBodyCompact: {
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: "center"
+  },
+  crescerFeatureArrow: {
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.72)",
+    borderRadius: 18,
+    bottom: 14,
+    height: 34,
+    justifyContent: "center",
+    position: "absolute",
+    right: 12,
+    width: 34
+  },
+  crescerFeatureArrowCompact: {
+    bottom: 8,
+    height: 28,
+    right: 8,
+    width: 28
+  },
+  crescerToneMint: {
+    backgroundColor: "rgba(227, 247, 221, 0.95)"
+  },
+  crescerToneSun: {
+    backgroundColor: "rgba(255, 241, 194, 0.95)"
+  },
+  crescerToneSky: {
+    backgroundColor: "rgba(222, 242, 255, 0.95)"
+  },
+  crescerToneLilac: {
+    backgroundColor: "rgba(238, 230, 255, 0.95)"
+  },
+  crescerToneRose: {
+    backgroundColor: "rgba(255, 231, 238, 0.95)"
+  },
+  crescerToneMintPressed: {
+    backgroundColor: "rgba(204, 241, 196, 0.98)"
+  },
+  crescerToneSunPressed: {
+    backgroundColor: "rgba(255, 229, 158, 0.98)"
+  },
+  crescerToneSkyPressed: {
+    backgroundColor: "rgba(196, 232, 255, 0.98)"
+  },
+  crescerToneLilacPressed: {
+    backgroundColor: "rgba(225, 211, 255, 0.98)"
+  },
+  crescerToneRosePressed: {
+    backgroundColor: "rgba(255, 213, 226, 0.98)"
+  },
+  crescerIconToneMint: {
+    backgroundColor: "rgba(218, 247, 212, 0.96)"
+  },
+  crescerIconToneSun: {
+    backgroundColor: "rgba(255, 234, 168, 0.96)"
+  },
+  crescerIconToneSky: {
+    backgroundColor: "rgba(208, 239, 255, 0.96)"
+  },
+  crescerIconToneLilac: {
+    backgroundColor: "rgba(229, 216, 255, 0.96)"
+  },
+  crescerIconToneRose: {
+    backgroundColor: "rgba(255, 218, 230, 0.96)"
+  },
+  crescerModuleHero: {
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 24,
+    borderWidth: 2,
+    flexDirection: "row",
+    minHeight: 184,
     marginBottom: spacing.md,
-    padding: spacing.lg
+    overflow: "hidden",
+    padding: spacing.lg,
+    position: "relative",
+    ...shadow
+  },
+  crescerModuleHeroGlow: {
+    backgroundColor: "rgba(255, 255, 255, 0.45)",
+    borderRadius: 999,
+    height: 148,
+    position: "absolute",
+    right: -30,
+    top: -34,
+    width: 148
+  },
+  crescerModuleHeroCopy: {
+    flex: 1,
+    justifyContent: "center",
+    maxWidth: "62%",
+    minWidth: 0,
+    zIndex: 2
+  },
+  crescerModuleHeroCopyWide: {
+    maxWidth: "70%"
+  },
+  crescerModuleHeroTitle: {
+    fontSize: 28,
+    lineHeight: 33,
+    marginTop: spacing.xs
+  },
+  crescerModuleHeroImage: {
+    bottom: 0,
+    height: 148,
+    position: "absolute",
+    right: -8,
+    width: 168,
+    zIndex: 1
+  },
+  crescerModuleHeroImageCompact: {
+    height: 134,
+    right: -18,
+    width: 148
+  },
+  fundamentalHero: {
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 24,
+    borderWidth: 2,
+    marginBottom: spacing.md,
+    overflow: "hidden",
+    padding: spacing.lg,
+    ...shadow
   },
   fundamentalHeroTop: {
     alignItems: "center",
@@ -5413,8 +8617,8 @@ const styles = StyleSheet.create({
   },
   fundamentalAvatar: {
     alignItems: "center",
-    backgroundColor: colors.blueSoft,
-    borderColor: "#bcd4e8",
+    backgroundColor: colors.childSoft,
+    borderColor: "#c9e8c5",
     borderRadius: 20,
     borderWidth: 2,
     height: 64,
@@ -5422,7 +8626,7 @@ const styles = StyleSheet.create({
     width: 64
   },
   fundamentalAvatarText: {
-    color: colors.blue,
+    color: colors.brand,
     fontSize: 20,
     fontWeight: "900"
   },
@@ -5430,13 +8634,13 @@ const styles = StyleSheet.create({
     flex: 1
   },
   fundamentalKicker: {
-    color: colors.blue,
+    color: colors.brand,
     fontSize: 12,
     fontWeight: "900",
     textTransform: "uppercase"
   },
   fundamentalHeroTitle: {
-    color: colors.studentInk,
+    color: colors.brand,
     fontSize: 24,
     fontWeight: "900",
     letterSpacing: 0,
@@ -5508,12 +8712,13 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs
   },
   fundamentalContinueCard: {
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 22,
     borderWidth: 2,
     gap: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   fundamentalContinueCopy: {
     gap: spacing.xs
@@ -5573,13 +8778,14 @@ const styles = StyleSheet.create({
     marginTop: spacing.md
   },
   fundamentalHighlightCard: {
-    backgroundColor: colors.blueSoft,
-    borderColor: "#bcd4e8",
+    backgroundColor: "rgba(222, 242, 255, 0.95)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     flex: 1,
     minHeight: 172,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   fundamentalBadgeRow: {
     alignItems: "center",
@@ -5627,23 +8833,29 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   fundamentalActionCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 18,
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 22,
     borderWidth: 2,
     flexBasis: "47%",
     flexGrow: 1,
-    minHeight: 150,
-    padding: spacing.md
+    minHeight: 170,
+    overflow: "hidden",
+    padding: spacing.md,
+    position: "relative",
+    ...shadow
   },
   fundamentalActionMark: {
     alignItems: "center",
-    backgroundColor: colors.blueSoft,
-    borderRadius: 15,
-    height: 46,
+    backgroundColor: "transparent",
+    borderRadius: 28,
+    height: 74,
     justifyContent: "center",
     marginBottom: spacing.sm,
-    width: 46
+    width: 86
+  },
+  fundamentalActionImage: {
+    height: 80,
+    width: 92
   },
   fundamentalActionMarkText: {
     color: colors.blue,
@@ -5651,15 +8863,16 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   fundamentalActionTitle: {
-    color: colors.studentInk,
-    fontSize: 16,
+    color: colors.ink,
+    fontSize: 18,
     fontWeight: "900",
-    letterSpacing: 0
+    letterSpacing: 0,
+    lineHeight: 22
   },
   fundamentalActionBody: {
-    color: colors.muted,
+    color: colors.studentInk,
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 17,
     marginTop: spacing.xs
   },
@@ -5668,14 +8881,28 @@ const styles = StyleSheet.create({
   },
   fundamentalActivityCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 18,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 20,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     minHeight: 112,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
+  },
+  fundamentalActivityIcon: {
+    alignItems: "center",
+    backgroundColor: colors.blueSoft,
+    borderRadius: 16,
+    height: 52,
+    justifyContent: "center",
+    overflow: "hidden",
+    width: 52
+  },
+  fundamentalActivityIconImage: {
+    height: 58,
+    width: 58
   },
   fundamentalActivityCopy: {
     flex: 1
@@ -5739,14 +8966,39 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs
   },
   fundamentalShellHero: {
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
-    borderRadius: 22,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 24,
     borderWidth: 2,
-    padding: spacing.lg
+    marginBottom: spacing.md,
+    padding: spacing.lg,
+    ...shadow
+  },
+  fundamentalShellHeroWithIcon: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.md,
+    justifyContent: "space-between",
+    minHeight: 160,
+    overflow: "hidden"
+  },
+  fundamentalShellHeroCopy: {
+    flex: 1,
+    minWidth: 0
+  },
+  fundamentalShellHeroIconFrame: {
+    alignItems: "center",
+    height: 112,
+    justifyContent: "center",
+    marginRight: -spacing.sm,
+    width: 128
+  },
+  fundamentalShellHeroIconImage: {
+    height: 124,
+    width: 140
   },
   fundamentalShellTitle: {
-    color: colors.studentInk,
+    color: colors.brand,
     fontSize: 24,
     fontWeight: "900",
     letterSpacing: 0,
@@ -5772,14 +9024,15 @@ const styles = StyleSheet.create({
   },
   familyIdentityCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: "#d8ebd0",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 22,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     marginBottom: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   familyAvatar: {
     alignItems: "center",
@@ -5856,12 +9109,29 @@ const styles = StyleSheet.create({
     color: "#ecfdf3"
   },
   familySummaryCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
+    flexDirection: "row",
+    gap: spacing.md,
     marginBottom: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
+  },
+  familySummaryIcon: {
+    alignItems: "center",
+    backgroundColor: colors.warningSoft,
+    borderRadius: 22,
+    height: 70,
+    justifyContent: "center",
+    overflow: "hidden",
+    width: 70
+  },
+  familySummaryIconImage: {
+    height: 76,
+    width: 76
   },
   familySectionTitle: {
     color: colors.studentInk,
@@ -5882,15 +9152,30 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md
   },
   familyMetricCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 18,
     borderWidth: 2,
     flexBasis: "30%",
     flexGrow: 1,
     minHeight: 112,
     minWidth: 104,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
+  },
+  familyMetricIcon: {
+    alignItems: "center",
+    backgroundColor: colors.childSoft,
+    borderRadius: 18,
+    height: 54,
+    justifyContent: "center",
+    marginBottom: spacing.sm,
+    overflow: "hidden",
+    width: 54
+  },
+  familyMetricIconImage: {
+    height: 58,
+    width: 58
   },
   familyMetricValue: {
     color: colors.studentInk,
@@ -5911,13 +9196,14 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
   familyPreviewList: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     gap: spacing.sm,
     marginBottom: spacing.md,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   familyTimelineCard: {
     alignItems: "center",
@@ -5986,28 +9272,29 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md
   },
   familyQuickCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     flexBasis: "45%",
     flexGrow: 1,
     minHeight: 132,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   familyQuickMark: {
     alignItems: "center",
     backgroundColor: colors.brandSoft,
     borderRadius: 14,
-    height: 42,
+    height: 58,
     justifyContent: "center",
     marginBottom: spacing.sm,
-    width: 42
+    overflow: "hidden",
+    width: 58
   },
-  familyQuickMarkText: {
-    color: colors.brand,
-    fontSize: 18,
-    fontWeight: "900"
+  familyQuickIconImage: {
+    height: 62,
+    width: 62
   },
   familyQuickTitle: {
     color: colors.studentInk,
@@ -6022,41 +9309,23 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs
   },
   familyDetailList: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     gap: spacing.sm,
     marginBottom: spacing.md,
-    padding: spacing.md
-  },
-  familyReadOnlyNotice: {
-    backgroundColor: colors.warningSoft,
-    borderColor: "#f1d890",
-    borderRadius: 18,
-    borderWidth: 2,
-    marginBottom: spacing.md,
-    padding: spacing.md
-  },
-  familyReadOnlyTitle: {
-    color: colors.studentInk,
-    fontSize: 15,
-    fontWeight: "900"
-  },
-  familyReadOnlyBody: {
-    color: colors.muted,
-    fontSize: 13,
-    fontWeight: "700",
-    lineHeight: 19,
-    marginTop: spacing.xs
+    padding: spacing.md,
+    ...shadow
   },
   fundamentalFeaturedActivity: {
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 22,
     borderWidth: 2,
     gap: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   fundamentalFeaturedTop: {
     alignItems: "center",
@@ -6065,11 +9334,16 @@ const styles = StyleSheet.create({
   },
   fundamentalFeaturedIcon: {
     alignItems: "center",
-    backgroundColor: colors.blueSoft,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     borderRadius: 18,
     height: 58,
     justifyContent: "center",
+    overflow: "hidden",
     width: 58
+  },
+  fundamentalFeaturedIconImage: {
+    height: 64,
+    width: 64
   },
   fundamentalFeaturedIconText: {
     color: colors.blue,
@@ -6108,12 +9382,13 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   fundamentalActivityDetailCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     gap: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   fundamentalActivityDetailRow: {
     alignItems: "center",
@@ -6426,13 +9701,28 @@ const styles = StyleSheet.create({
     marginTop: spacing.md
   },
   assessmentSummaryCard: {
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 16,
     borderWidth: 2,
     flex: 1,
-    minHeight: 90,
-    padding: spacing.md
+    minHeight: 118,
+    padding: spacing.md,
+    ...shadow
+  },
+  assessmentSummaryIcon: {
+    alignItems: "center",
+    backgroundColor: colors.blueSoft,
+    borderRadius: 14,
+    height: 42,
+    justifyContent: "center",
+    marginBottom: spacing.xs,
+    overflow: "hidden",
+    width: 42
+  },
+  assessmentSummaryIconImage: {
+    height: 46,
+    width: 46
   },
   assessmentSummaryValue: {
     color: colors.blue,
@@ -6451,13 +9741,14 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   assessmentCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     gap: spacing.md,
     minHeight: 164,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   assessmentCardTop: {
     alignItems: "center",
@@ -6470,7 +9761,12 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     height: 58,
     justifyContent: "center",
+    overflow: "hidden",
     width: 58
+  },
+  assessmentIconImage: {
+    height: 62,
+    width: 62
   },
   assessmentIconText: {
     color: colors.blue,
@@ -6849,12 +10145,13 @@ const styles = StyleSheet.create({
     textAlign: "center"
   },
   fundamentalAgendaTodayCard: {
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 22,
     borderWidth: 2,
     gap: spacing.sm,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   fundamentalAgendaEmptyText: {
     color: colors.muted,
@@ -6877,7 +10174,12 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     height: 46,
     justifyContent: "center",
+    overflow: "hidden",
     width: 46
+  },
+  fundamentalAgendaTypeIconImage: {
+    height: 50,
+    width: 50
   },
   fundamentalAgendaTypeMarkText: {
     color: colors.blue,
@@ -6946,12 +10248,13 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   fundamentalAgendaCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     gap: spacing.md,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   fundamentalAgendaCardTop: {
     alignItems: "center",
@@ -7052,14 +10355,15 @@ const styles = StyleSheet.create({
   },
   fundamentalNotificationSummary: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: spacing.md,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   fundamentalNotificationSummaryLabel: {
     color: colors.blue,
@@ -7076,11 +10380,30 @@ const styles = StyleSheet.create({
   },
   fundamentalNotificationBadge: {
     alignItems: "center",
-    backgroundColor: colors.blue,
+    backgroundColor: colors.blueSoft,
     borderRadius: 18,
     height: 48,
     justifyContent: "center",
+    overflow: "hidden",
     width: 48
+  },
+  fundamentalNotificationBadgeImage: {
+    height: 54,
+    width: 54
+  },
+  fundamentalNotificationBadgeCount: {
+    backgroundColor: colors.coral,
+    borderRadius: 999,
+    color: colors.surface,
+    fontSize: 10,
+    fontWeight: "900",
+    lineHeight: 16,
+    minWidth: 16,
+    overflow: "hidden",
+    position: "absolute",
+    right: 3,
+    textAlign: "center",
+    top: 3
   },
   fundamentalNotificationBadgeText: {
     color: colors.surface,
@@ -7115,11 +10438,12 @@ const styles = StyleSheet.create({
     color: colors.surface
   },
   fundamentalNotificationEmptyCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   fundamentalNotificationEmptyText: {
     color: colors.muted,
@@ -7131,12 +10455,13 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   fundamentalNotificationCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     gap: spacing.md,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   fundamentalNotificationCardUnread: {
     borderColor: colors.blue,
@@ -7153,7 +10478,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     height: 50,
     justifyContent: "center",
+    overflow: "hidden",
     width: 50
+  },
+  fundamentalNotificationMarkImage: {
+    height: 54,
+    width: 54
   },
   fundamentalNotificationMarkText: {
     color: colors.blue,
@@ -7214,12 +10544,13 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   fundamentalNotificationDetailCard: {
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 22,
     borderWidth: 2,
     gap: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   fundamentalNotificationDetailHeader: {
     alignItems: "center",
@@ -7270,13 +10601,14 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   fundamentalProfileIdentityCard: {
-    backgroundColor: colors.surface,
-    borderColor: "#bcd4e8",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 24,
     borderWidth: 2,
     gap: spacing.md,
     marginTop: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   fundamentalProfileIdentityTop: {
     alignItems: "center",
@@ -7368,10 +10700,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.blueSoft,
     borderRadius: 14,
-    height: 38,
+    height: 46,
     justifyContent: "center",
     marginBottom: spacing.sm,
-    width: 38
+    overflow: "hidden",
+    width: 46
+  },
+  fundamentalProfileProgressIconImage: {
+    height: 50,
+    width: 50
   },
   fundamentalProfileProgressMarkText: {
     color: colors.blue,
@@ -7400,15 +10737,35 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
   fundamentalProfileSchoolCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     gap: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
+  },
+  fundamentalProfileSchoolHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.md
+  },
+  fundamentalProfileSchoolIcon: {
+    alignItems: "center",
+    backgroundColor: colors.blueSoft,
+    borderRadius: 16,
+    height: 54,
+    justifyContent: "center",
+    overflow: "hidden",
+    width: 54
+  },
+  fundamentalProfileSchoolIconImage: {
+    height: 62,
+    width: 62
   },
   fundamentalProfileSchoolTitle: {
     color: colors.studentInk,
+    flex: 1,
     fontSize: 19,
     fontWeight: "900",
     letterSpacing: 0,
@@ -7443,23 +10800,29 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   fundamentalProfileShortcut: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 18,
     borderWidth: 2,
     flexBasis: "30%",
     flexGrow: 1,
     minHeight: 136,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   fundamentalProfileShortcutMark: {
     alignItems: "center",
-    backgroundColor: colors.blue,
+    backgroundColor: colors.blueSoft,
     borderRadius: 14,
-    height: 38,
+    height: 46,
     justifyContent: "center",
     marginBottom: spacing.sm,
-    width: 38
+    overflow: "hidden",
+    width: 46
+  },
+  fundamentalProfileShortcutIconImage: {
+    height: 50,
+    width: 50
   },
   fundamentalProfileShortcutMarkText: {
     color: colors.surface,
@@ -7480,11 +10843,12 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs
   },
   fundamentalProfileSettingsCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
-    overflow: "hidden"
+    overflow: "hidden",
+    ...shadow
   },
   fundamentalProfileSettingRow: {
     alignItems: "center",
@@ -7554,27 +10918,41 @@ const styles = StyleSheet.create({
   },
   fundamentalAccessibilityCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 18,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   teacherHero: {
-    backgroundColor: colors.surface,
-    borderColor: "#b8d7c7",
-    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.96)",
+    borderRadius: 24,
     borderWidth: 2,
     marginBottom: spacing.md,
+    minHeight: 176,
+    overflow: "hidden",
     padding: spacing.lg,
+    position: "relative",
     ...shadow
+  },
+  teacherHeroGlow: {
+    backgroundColor: "rgba(214, 244, 220, 0.72)",
+    borderRadius: 999,
+    height: 150,
+    position: "absolute",
+    right: -36,
+    top: 18,
+    width: 150
   },
   teacherHeroTop: {
     alignItems: "center",
     flexDirection: "row",
-    gap: spacing.md
+    gap: spacing.md,
+    minHeight: 132
   },
   teacherAvatar: {
     alignItems: "center",
@@ -7592,7 +10970,8 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   teacherHeroCopy: {
-    flex: 1
+    flex: 1,
+    zIndex: 2
   },
   teacherKicker: {
     color: colors.brand,
@@ -7608,32 +10987,113 @@ const styles = StyleSheet.create({
   },
   teacherHeroTitle: {
     color: colors.ink,
-    fontSize: 24,
+    fontSize: 31,
     fontWeight: "900",
     letterSpacing: 0,
-    lineHeight: 29,
+    lineHeight: 36,
     marginTop: spacing.xs
   },
   teacherHeroMeta: {
     color: colors.muted,
-    fontSize: 13,
-    fontWeight: "700",
-    lineHeight: 19,
+    fontSize: 15,
+    fontWeight: "800",
+    lineHeight: 21,
     marginTop: spacing.xs
+  },
+  teacherHeroIconFrame: {
+    height: 118,
+    marginRight: -20,
+    overflow: "hidden",
+    position: "relative",
+    width: 142,
+    zIndex: 1
+  },
+  teacherHeroSplitImage: {
+    height: 118,
+    left: 0,
+    position: "absolute",
+    top: 0,
+    width: 284
   },
   teacherBell: {
     alignItems: "center",
-    backgroundColor: colors.warningSoft,
-    borderColor: "#efd98f",
+    backgroundColor: "rgba(255,255,255,0.96)",
+    borderColor: "rgba(255,255,255,0.96)",
     borderRadius: 16,
     borderWidth: 2,
-    height: 42,
+    height: 48,
     justifyContent: "center",
+    position: "relative",
     width: 42
   },
-  teacherBellText: {
-    color: colors.warning,
-    fontSize: 18,
+  teacherBellIconFrame: {
+    height: 36,
+    overflow: "hidden",
+    position: "relative",
+    width: 38
+  },
+  teacherBellSplitImage: {
+    height: 36,
+    left: 0,
+    position: "absolute",
+    top: 0,
+    width: 76
+  },
+  teacherBellBadge: {
+    backgroundColor: colors.coral,
+    borderRadius: 999,
+    color: colors.surface,
+    fontSize: 11,
+    fontWeight: "900",
+    minWidth: 20,
+    overflow: "hidden",
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    position: "absolute",
+    right: -8,
+    textAlign: "center",
+    top: -8
+  },
+  teacherQuoteBox: {
+    alignSelf: "flex-end",
+    backgroundColor: "rgba(223, 244, 225, 0.88)",
+    borderRadius: 18,
+    marginTop: -16,
+    maxWidth: 178,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm
+  },
+  teacherQuoteText: {
+    color: colors.brandDark,
+    fontSize: 14,
+    fontWeight: "800",
+    lineHeight: 19
+  },
+  teacherSectionTop: {
+    alignItems: "flex-end",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: spacing.sm,
+    marginTop: spacing.sm
+  },
+  teacherSectionTitle: {
+    color: colors.ink,
+    fontSize: 24,
+    fontWeight: "900",
+    letterSpacing: 0,
+    lineHeight: 29
+  },
+  teacherSectionDate: {
+    color: colors.brandDark,
+    flexShrink: 1,
+    fontSize: 13,
+    fontWeight: "900",
+    lineHeight: 18,
+    textAlign: "right"
+  },
+  teacherSectionAction: {
+    color: colors.brand,
+    fontSize: 13,
     fontWeight: "900"
   },
   teacherTodayGrid: {
@@ -7643,27 +11103,38 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md
   },
   teacherTodayCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.96)",
+    borderRadius: 18,
     borderWidth: 2,
     flexBasis: "48%",
     flexGrow: 1,
-    minHeight: 136,
-    padding: spacing.md
+    minHeight: 154,
+    overflow: "hidden",
+    padding: spacing.md,
+    ...shadow
   },
   teacherTodayMark: {
     alignItems: "center",
-    backgroundColor: colors.brandSoft,
-    borderRadius: 12,
-    height: 34,
+    backgroundColor: "rgba(224, 248, 231, 0.86)",
+    borderRadius: 999,
+    height: 62,
     justifyContent: "center",
-    width: 34
+    marginBottom: spacing.sm,
+    width: 62
   },
-  teacherTodayMarkText: {
-    color: colors.brandDark,
-    fontSize: 14,
-    fontWeight: "900"
+  teacherTodayIconFrame: {
+    height: 68,
+    overflow: "hidden",
+    position: "relative",
+    width: 76
+  },
+  teacherTodaySplitImage: {
+    height: 68,
+    left: 0,
+    position: "absolute",
+    top: 0,
+    width: 152
   },
   teacherTodayType: {
     color: colors.brand,
@@ -7674,9 +11145,9 @@ const styles = StyleSheet.create({
   },
   teacherTodayTitle: {
     color: colors.ink,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "900",
-    lineHeight: 19,
+    lineHeight: 20,
     marginTop: 2
   },
   teacherTodayMeta: {
@@ -7688,15 +11159,17 @@ const styles = StyleSheet.create({
   },
   teacherNextClassCard: {
     backgroundColor: colors.brandDark,
-    borderRadius: 20,
-    marginBottom: spacing.md,
-    padding: spacing.lg
-  },
-  teacherNextClassTop: {
-    alignItems: "flex-start",
+    borderRadius: 22,
     flexDirection: "row",
-    gap: spacing.md,
-    justifyContent: "space-between"
+    minHeight: 140,
+    marginBottom: spacing.md,
+    overflow: "hidden",
+    padding: spacing.lg,
+    position: "relative"
+  },
+  teacherNextClassCopy: {
+    flex: 1,
+    zIndex: 2
   },
   teacherCardLabel: {
     color: colors.brand,
@@ -7709,43 +11182,56 @@ const styles = StyleSheet.create({
   },
   teacherNextClassTitle: {
     color: colors.surface,
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: "900",
     letterSpacing: 0,
-    lineHeight: 29,
+    lineHeight: 34,
     marginTop: spacing.xs
   },
   teacherNextClassBody: {
-    color: "#cfe4d7",
-    fontSize: 14,
+    color: "#f0fff5",
+    fontSize: 18,
     fontWeight: "700",
-    lineHeight: 20,
+    lineHeight: 24,
     marginTop: spacing.xs
   },
-  teacherClassBadge: {
-    backgroundColor: "#dff0e7",
-    borderRadius: 999,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs
+  teacherNextClassStudents: {
+    color: colors.surface,
+    fontSize: 15,
+    fontWeight: "900",
+    lineHeight: 20,
+    marginTop: 2
   },
-  teacherClassBadgeText: {
+  teacherNextClassIconFrame: {
+    bottom: -18,
+    height: 120,
+    overflow: "hidden",
+    position: "absolute",
+    right: 72,
+    width: 176
+  },
+  teacherNextClassSplitImage: {
+    height: 120,
+    left: 0,
+    position: "absolute",
+    top: 0,
+    width: 352
+  },
+  teacherNextClassButton: {
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.94)",
+    borderRadius: 999,
+    bottom: spacing.lg,
+    justifyContent: "center",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    position: "absolute",
+    right: spacing.md
+  },
+  teacherNextClassButtonText: {
     color: colors.brandDark,
     fontSize: 12,
     fontWeight: "900"
-  },
-  teacherNextClassFooter: {
-    alignItems: "center",
-    borderTopColor: "rgba(255,255,255,0.18)",
-    borderTopWidth: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: spacing.md,
-    paddingTop: spacing.md
-  },
-  teacherNextClassRoom: {
-    color: "#dff0e7",
-    fontSize: 13,
-    fontWeight: "800"
   },
   teacherLinkText: {
     color: colors.brand,
@@ -7759,41 +11245,54 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md
   },
   teacherQuickCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 16,
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.96)",
+    borderRadius: 18,
     borderWidth: 2,
     flexBasis: "48%",
     flexGrow: 1,
-    minHeight: 124,
-    padding: spacing.md
+    minHeight: 154,
+    overflow: "hidden",
+    padding: spacing.md,
+    ...shadow
   },
   teacherQuickMark: {
     alignItems: "center",
-    backgroundColor: colors.brandSoft,
-    borderRadius: 12,
-    height: 34,
+    backgroundColor: "rgba(224, 248, 231, 0.88)",
+    borderRadius: 999,
+    height: 76,
     justifyContent: "center",
-    width: 34
+    marginBottom: spacing.sm,
+    width: 76
   },
-  teacherQuickMarkText: {
-    color: colors.brandDark,
-    fontSize: 13,
-    fontWeight: "900"
+  teacherQuickIconFrame: {
+    height: 82,
+    overflow: "hidden",
+    position: "relative",
+    width: 96
+  },
+  teacherQuickSplitImage: {
+    height: 82,
+    left: 0,
+    position: "absolute",
+    top: 0,
+    width: 192
   },
   teacherQuickTitle: {
     color: colors.ink,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "900",
     lineHeight: 19,
-    marginTop: spacing.sm
+    textAlign: "center"
   },
   teacherQuickBody: {
     color: colors.muted,
     fontSize: 12,
     fontWeight: "700",
     lineHeight: 17,
-    marginTop: spacing.xs
+    marginTop: spacing.xs,
+    textAlign: "center"
   },
   teacherClassList: {
     gap: spacing.sm,
@@ -7909,6 +11408,92 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.sm
+  },
+  teacherWeeklyCard: {
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.96)",
+    borderRadius: 22,
+    borderWidth: 2,
+    flexBasis: "48%",
+    flexDirection: "row",
+    flexGrow: 1,
+    gap: spacing.sm,
+    minHeight: 118,
+    overflow: "hidden",
+    padding: spacing.md,
+    position: "relative",
+    shadowColor: "#2f5a42",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.16,
+    shadowRadius: 16
+  },
+  teacherWeeklyCardClasses: {
+    backgroundColor: "#dff4ea",
+    borderColor: "rgba(255,255,255,0.92)",
+    shadowColor: "#2f7a51"
+  },
+  teacherWeeklyCardStudents: {
+    backgroundColor: "#fff1bf",
+    borderColor: "rgba(255,255,255,0.92)",
+    shadowColor: "#c78a10"
+  },
+  teacherWeeklyCardAlerts: {
+    backgroundColor: "#ffe5c8",
+    borderColor: "rgba(255,255,255,0.94)",
+    shadowColor: "#d2691e"
+  },
+  teacherWeeklyCardActivities: {
+    backgroundColor: "#dff2ff",
+    borderColor: "rgba(255,255,255,0.94)",
+    shadowColor: "#2872a6"
+  },
+  teacherWeeklyCardAssessments: {
+    backgroundColor: "#e9ecff",
+    borderColor: "rgba(255,255,255,0.94)",
+    shadowColor: "#4859a8"
+  },
+  teacherWeeklyGlow: {
+    backgroundColor: "rgba(255, 255, 255, 0.42)",
+    borderRadius: 999,
+    height: 92,
+    position: "absolute",
+    right: -24,
+    top: -30,
+    width: 92
+  },
+  teacherWeeklyRelief: {
+    backgroundColor: "rgba(255,255,255,0.24)",
+    borderRadius: 999,
+    bottom: -38,
+    height: 82,
+    left: 32,
+    position: "absolute",
+    transform: [{ rotate: "-10deg" }],
+    width: 142
+  },
+  teacherWeeklyIconFrame: {
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.58)",
+    borderRadius: 999,
+    height: 64,
+    justifyContent: "center",
+    overflow: "hidden",
+    shadowColor: "#4b6a49",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    width: 64,
+    zIndex: 2
+  },
+  teacherWeeklyIconImage: {
+    height: 62,
+    width: 62
+  },
+  teacherWeeklyCopy: {
+    flex: 1,
+    minWidth: 0,
+    zIndex: 2
   },
   teacherTrackingDetailCard: {
     backgroundColor: colors.surface,
@@ -8123,11 +11708,12 @@ const styles = StyleSheet.create({
   teacherClassActionCard: {
     backgroundColor: colors.surface,
     borderColor: colors.line,
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 2,
     flexBasis: "48%",
     flexGrow: 1,
-    minHeight: 118,
+    minHeight: 138,
+    overflow: "hidden",
     padding: spacing.md
   },
   teacherClassActionPrimary: {
@@ -8136,14 +11722,19 @@ const styles = StyleSheet.create({
   },
   teacherClassActionMark: {
     alignItems: "center",
-    backgroundColor: "#f3f6f3",
-    borderRadius: 12,
-    height: 34,
+    backgroundColor: "rgba(231,245,235,0.92)",
+    borderRadius: 999,
+    height: 58,
     justifyContent: "center",
-    width: 34
+    overflow: "hidden",
+    width: 58
   },
   teacherClassActionMarkPrimary: {
-    backgroundColor: colors.brandDark
+    backgroundColor: "rgba(255,255,255,0.94)"
+  },
+  teacherClassActionIconImage: {
+    height: 58,
+    width: 58
   },
   teacherClassActionMarkText: {
     color: colors.ink,
@@ -9705,27 +13296,69 @@ const styles = StyleSheet.create({
     padding: spacing.md
   },
   teacherShellHero: {
-    backgroundColor: colors.surface,
-    borderColor: "#b8d7c7",
-    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.96)",
+    borderRadius: 24,
     borderWidth: 2,
     marginBottom: spacing.md,
-    padding: spacing.lg
+    minHeight: 152,
+    overflow: "hidden",
+    padding: spacing.lg,
+    position: "relative",
+    ...shadow
+  },
+  teacherShellHeroGlow: {
+    backgroundColor: "rgba(214, 244, 220, 0.72)",
+    borderRadius: 999,
+    height: 126,
+    position: "absolute",
+    right: -30,
+    top: 14,
+    width: 126
+  },
+  teacherShellHeroTop: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.md,
+    minHeight: 104
+  },
+  teacherShellHeroCopy: {
+    flex: 1,
+    zIndex: 2
+  },
+  teacherShellIconFrame: {
+    height: 102,
+    marginRight: -18,
+    overflow: "hidden",
+    position: "relative",
+    width: 112,
+    zIndex: 1
+  },
+  teacherShellSplitImage: {
+    height: 102,
+    left: 0,
+    position: "absolute",
+    top: 0,
+    width: 224
+  },
+  teacherShellHeroContent: {
+    marginTop: spacing.sm,
+    zIndex: 2
   },
   teacherShellTitle: {
     color: colors.ink,
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "900",
     letterSpacing: 0,
-    lineHeight: 29,
+    lineHeight: 31,
     marginTop: spacing.xs
   },
   teacherShellIntro: {
     color: colors.muted,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 21,
-    marginTop: spacing.sm
+    marginTop: spacing.xs
   },
   teacherShellList: {
     gap: spacing.md
@@ -10085,6 +13718,7 @@ const styles = StyleSheet.create({
     borderColor: "#b8d7c7",
     borderRadius: 22,
     borderWidth: 2,
+    overflow: "hidden",
     padding: spacing.md
   },
   teacherProfileSectionTop: {
@@ -10125,7 +13759,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.xs,
-    marginTop: spacing.md
+    marginTop: spacing.md,
+    maxWidth: "100%",
+    overflow: "hidden",
+    width: "100%"
+  },
+  teacherProfileEmptyClassState: {
+    flexBasis: "100%",
+    flexGrow: 1,
+    maxWidth: "100%",
+    minWidth: 0,
+    width: "100%"
   },
   teacherProfileClassChip: {
     backgroundColor: colors.surface,
@@ -10153,22 +13797,38 @@ const styles = StyleSheet.create({
     gap: spacing.sm
   },
   teacherProfileMetricCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 18,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.96)",
+    borderRadius: 22,
     borderWidth: 2,
     flexBasis: "47%",
     flexGrow: 1,
-    minHeight: 118,
-    padding: spacing.md
+    minHeight: 136,
+    overflow: "hidden",
+    padding: spacing.md,
+    position: "relative",
+    shadowColor: "#2f5a42",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.16,
+    shadowRadius: 16
   },
   teacherProfileMetricMark: {
     alignItems: "center",
-    backgroundColor: colors.brandSoft,
-    borderRadius: 12,
-    height: 34,
+    backgroundColor: "rgba(255,255,255,0.58)",
+    borderRadius: 999,
+    height: 54,
     justifyContent: "center",
-    width: 34
+    overflow: "hidden",
+    shadowColor: "#4b6a49",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    width: 54,
+    zIndex: 2
+  },
+  teacherProfileMetricIconImage: {
+    height: 54,
+    width: 54
   },
   teacherProfileMetricMarkText: {
     color: colors.brandDark,
@@ -10180,14 +13840,16 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "900",
     lineHeight: 26,
-    marginTop: spacing.sm
+    marginTop: spacing.sm,
+    zIndex: 2
   },
   teacherProfileMetricLabel: {
     color: colors.muted,
     fontSize: 12,
     fontWeight: "800",
     lineHeight: 17,
-    marginTop: 2
+    marginTop: 2,
+    zIndex: 2
   },
   teacherProfilePreferenceList: {
     gap: spacing.sm
@@ -10207,11 +13869,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#e7f5eb",
     borderColor: "#b8d7c7",
-    borderRadius: 15,
+    borderRadius: 999,
     borderWidth: 2,
-    height: 40,
+    height: 52,
     justifyContent: "center",
-    width: 40
+    overflow: "hidden",
+    width: 52
+  },
+  teacherProfilePreferenceIconImage: {
+    height: 52,
+    width: 52
   },
   teacherProfilePreferenceMarkText: {
     color: colors.brandDark,
@@ -10255,11 +13922,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.surface,
     borderColor: "#d7eadc",
-    borderRadius: 14,
+    borderRadius: 999,
     borderWidth: 2,
-    height: 38,
+    height: 54,
     justifyContent: "center",
-    width: 38
+    overflow: "hidden",
+    width: 54
+  },
+  teacherProfileFormationIconImage: {
+    height: 54,
+    width: 54
   },
   teacherProfileFormationMarkText: {
     color: colors.brandDark,
@@ -10402,14 +14074,15 @@ const styles = StyleSheet.create({
   },
   discoveryCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     minHeight: 116,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   discoveryMark: {
     alignItems: "center",
@@ -10458,6 +14131,63 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "500"
   },
+  discoveryActionPill: {
+    alignItems: "center",
+    backgroundColor: colors.childSoft,
+    borderColor: "#c9e8c5",
+    borderRadius: 999,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 34,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 7
+  },
+  discoveryActionText: {
+    color: colors.child,
+    fontSize: 13,
+    fontWeight: "900",
+    letterSpacing: 0
+  },
+  discoverySceneCard: {
+    backgroundColor: colors.surface,
+    borderColor: "#c9e8c5",
+    borderRadius: 22,
+    borderWidth: 2,
+    marginTop: spacing.md,
+    minHeight: 260,
+    overflow: "hidden",
+    position: "relative"
+  },
+  discoverySceneImage: {
+    height: 260,
+    width: "100%"
+  },
+  discoveryHotspot: {
+    alignItems: "center",
+    backgroundColor: colors.warningSoft,
+    borderColor: "#f1d985",
+    borderRadius: 18,
+    borderWidth: 2,
+    justifyContent: "center",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 7,
+    position: "absolute"
+  },
+  discoveryHotspotCompleted: {
+    backgroundColor: colors.childSoft,
+    borderColor: "#9bd59a"
+  },
+  discoveryHotspotUnavailable: {
+    backgroundColor: colors.surface,
+    borderColor: colors.line
+  },
+  discoveryHotspotText: {
+    color: colors.ink,
+    fontSize: 12,
+    fontWeight: "900",
+    lineHeight: 16,
+    textAlign: "center"
+  },
   activitiesHero: {
     backgroundColor: colors.childSoft,
     borderColor: "#c9e8c5",
@@ -10466,12 +14196,13 @@ const styles = StyleSheet.create({
     padding: spacing.lg
   },
   featuredActivity: {
-    backgroundColor: colors.surface,
-    borderColor: "#f1d985",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 24,
     borderWidth: 2,
     minHeight: 236,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   featuredActivityMark: {
     alignItems: "center",
@@ -10521,14 +14252,15 @@ const styles = StyleSheet.create({
   },
   activityCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     minHeight: 132,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   activityMark: {
     alignItems: "center",
@@ -10639,6 +14371,19 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     marginTop: spacing.sm
   },
+  activityPrivateImage: {
+    borderRadius: 14,
+    height: 180,
+    marginTop: spacing.md,
+    width: "100%"
+  },
+  activityAssetWarning: {
+    color: colors.warning,
+    fontSize: 12,
+    fontWeight: "800",
+    lineHeight: 17,
+    marginTop: spacing.sm
+  },
   libraryHero: {
     backgroundColor: colors.surface,
     borderColor: "#c9e8c5",
@@ -10646,15 +14391,41 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     padding: spacing.lg
   },
+  libraryStateCard: {
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 22,
+    borderWidth: 2,
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    padding: spacing.lg,
+    ...shadow
+  },
+  libraryStateTitle: {
+    color: colors.ink,
+    fontSize: 18,
+    fontWeight: "900",
+    letterSpacing: 0,
+    textAlign: "center"
+  },
+  libraryStateBody: {
+    color: colors.muted,
+    fontSize: 14,
+    fontWeight: "700",
+    lineHeight: 21,
+    textAlign: "center"
+  },
   featuredBook: {
-    backgroundColor: colors.surface,
-    borderColor: "#f1d985",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 24,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     minHeight: 194,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   featuredBookCopy: {
     flex: 1,
@@ -10696,14 +14467,15 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   bookCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     flexBasis: "47%",
     flexGrow: 1,
     minHeight: 220,
-    padding: spacing.sm
+    padding: spacing.sm,
+    ...shadow
   },
   bookCover: {
     alignItems: "center",
@@ -10747,6 +14519,10 @@ const styles = StyleSheet.create({
     left: 18,
     position: "absolute",
     right: 18
+  },
+  bookCoverImage: {
+    height: "100%",
+    width: "100%"
   },
   bookCategory: {
     alignSelf: "flex-start",
@@ -10793,7 +14569,27 @@ const styles = StyleSheet.create({
     marginVertical: spacing.md,
     minHeight: 244,
     justifyContent: "center",
-    padding: spacing.xl
+    overflow: "hidden",
+    padding: spacing.sm
+  },
+  readerPageImage: {
+    aspectRatio: 0.707,
+    alignSelf: "center",
+    minHeight: 360,
+    width: "100%"
+  },
+  readerPageLoading: {
+    alignItems: "center",
+    minHeight: 300,
+    justifyContent: "center"
+  },
+  readerWarmupText: {
+    bottom: spacing.sm,
+    color: colors.muted,
+    fontSize: 11,
+    fontWeight: "800",
+    position: "absolute",
+    right: spacing.md
   },
   readerPageTitle: {
     color: colors.ink,
@@ -10830,6 +14626,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: spacing.md
   },
+  readerControlButtonDisabled: {
+    opacity: 0.45
+  },
   readerControlText: {
     color: colors.child,
     fontSize: 13,
@@ -10850,13 +14649,14 @@ const styles = StyleSheet.create({
     padding: spacing.lg
   },
   featuredGame: {
-    backgroundColor: colors.surface,
-    borderColor: "#c9e8c5",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 24,
     borderWidth: 2,
     minHeight: 236,
     overflow: "hidden",
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   featuredGameIllustration: {
     alignItems: "center",
@@ -10922,12 +14722,13 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   gameCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 22,
     borderWidth: 2,
     minHeight: 190,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   gameCardIllustration: {
     alignItems: "center",
@@ -10983,6 +14784,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     width: 142
   },
+  gameStageImage: {
+    height: "100%",
+    width: "100%"
+  },
   gameStageMark: {
     color: colors.child,
     fontSize: 46,
@@ -11021,6 +14826,179 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     textAlign: "center"
   },
+  gameLandscapeShell: {
+    backgroundColor: "#e9f7ef",
+    borderColor: "#c9e8c5",
+    borderRadius: 24,
+    borderWidth: 2,
+    gap: spacing.sm,
+    minHeight: 520,
+    overflow: "hidden",
+    padding: spacing.sm
+  },
+  gameLandscapeHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between"
+  },
+  gameLandscapeKicker: {
+    color: colors.child,
+    fontSize: 15,
+    fontWeight: "900",
+    letterSpacing: 0
+  },
+  gameExitButton: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: colors.line,
+    borderRadius: 999,
+    borderWidth: 2,
+    minHeight: 38,
+    justifyContent: "center",
+    paddingHorizontal: spacing.md
+  },
+  gameExitButtonText: {
+    color: colors.ink,
+    fontSize: 13,
+    fontWeight: "900"
+  },
+  cestaPlayfield: {
+    backgroundColor: "#fffaf0",
+    borderColor: "#f1d985",
+    borderRadius: 22,
+    borderWidth: 2,
+    flex: 1,
+    gap: spacing.md,
+    justifyContent: "space-between",
+    minHeight: 464,
+    overflow: "hidden",
+    padding: spacing.md
+  },
+  cestaBoardImage: {
+    borderRadius: 18,
+    height: 132,
+    width: "100%"
+  },
+  cestaTaskPanel: {
+    backgroundColor: colors.surface,
+    borderColor: colors.line,
+    borderRadius: 18,
+    borderWidth: 2,
+    padding: spacing.md
+  },
+  cestaTaskTitle: {
+    color: colors.ink,
+    fontSize: 18,
+    fontWeight: "900",
+    letterSpacing: 0,
+    textAlign: "center"
+  },
+  cestaTaskBody: {
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 19,
+    marginTop: spacing.xs,
+    textAlign: "center"
+  },
+  cestaProgressRow: {
+    alignSelf: "center",
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.md
+  },
+  cestaProgressDot: {
+    backgroundColor: colors.line,
+    borderRadius: 999,
+    height: 13,
+    width: 13
+  },
+  cestaProgressDotDone: {
+    backgroundColor: colors.child
+  },
+  cestaActionRow: {
+    alignItems: "stretch",
+    flexDirection: "row",
+    gap: spacing.md
+  },
+  cestaFruitButton: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: "#c9e8c5",
+    borderRadius: 20,
+    borderWidth: 2,
+    flex: 1,
+    justifyContent: "center",
+    minHeight: 178,
+    padding: spacing.md
+  },
+  cestaBasketButton: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: "#f1d985",
+    borderRadius: 20,
+    borderWidth: 2,
+    flex: 1,
+    justifyContent: "center",
+    minHeight: 178,
+    padding: spacing.md
+  },
+  cestaFruitImage: {
+    height: 104,
+    width: "100%"
+  },
+  cestaBasketImage: {
+    height: 136,
+    width: "100%"
+  },
+  cestaFruitLabel: {
+    color: colors.child,
+    fontSize: 17,
+    fontWeight: "900",
+    letterSpacing: 0,
+    marginTop: spacing.sm
+  },
+  cestaVictoryPanel: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: "#f1d985",
+    borderRadius: 22,
+    borderWidth: 2,
+    gap: spacing.sm,
+    justifyContent: "center",
+    minHeight: 464,
+    padding: spacing.lg
+  },
+  cestaVictoryImage: {
+    borderRadius: 18,
+    height: 172,
+    width: "100%"
+  },
+  cestaVictoryTitle: {
+    color: colors.ink,
+    fontSize: 25,
+    fontWeight: "900",
+    letterSpacing: 0,
+    textAlign: "center"
+  },
+  cestaVictoryBody: {
+    color: colors.muted,
+    fontSize: 15,
+    fontWeight: "700",
+    lineHeight: 22,
+    textAlign: "center"
+  },
+  cestaVictoryStatus: {
+    alignSelf: "center",
+    backgroundColor: colors.childSoft,
+    borderRadius: 999,
+    color: colors.child,
+    fontSize: 12,
+    fontWeight: "900",
+    overflow: "hidden",
+    paddingHorizontal: spacing.md,
+    paddingVertical: 7
+  },
   achievementsHero: {
     backgroundColor: colors.childSoft,
     borderColor: "#c9e8c5",
@@ -11029,12 +15007,13 @@ const styles = StyleSheet.create({
     padding: spacing.lg
   },
   progressCelebrationCard: {
-    backgroundColor: colors.surface,
-    borderColor: "#f1d985",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 24,
     borderWidth: 2,
     marginTop: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   progressAvatarRow: {
     alignItems: "center",
@@ -11043,11 +15022,15 @@ const styles = StyleSheet.create({
   },
   progressAvatar: {
     alignItems: "center",
-    backgroundColor: colors.childSoft,
+    backgroundColor: colors.warningSoft,
     borderRadius: 24,
     height: 64,
     justifyContent: "center",
     width: 64
+  },
+  progressAvatarImage: {
+    height: 68,
+    width: 68
   },
   progressAvatarText: {
     color: colors.child,
@@ -11097,14 +15080,15 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   medalCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 22,
     borderWidth: 2,
     flexBasis: "47%",
     flexGrow: 1,
     minHeight: 208,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   medalIcon: {
     alignItems: "center",
@@ -11284,8 +15268,8 @@ const styles = StyleSheet.create({
   },
   weekDayCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 16,
     borderWidth: 2,
     flex: 1,
@@ -11332,12 +15316,13 @@ const styles = StyleSheet.create({
     textAlign: "center"
   },
   todayCard: {
-    backgroundColor: colors.warningSoft,
-    borderColor: "#f1d985",
+    backgroundColor: "rgba(255, 241, 194, 0.9)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 24,
     borderWidth: 2,
     gap: spacing.md,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   todayEmptyText: {
     color: colors.muted,
@@ -11351,14 +15336,15 @@ const styles = StyleSheet.create({
   },
   agendaItemCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     minHeight: 132,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   agendaItemFeatured: {
     borderColor: "#c9e8c5"
@@ -11490,14 +15476,15 @@ const styles = StyleSheet.create({
   },
   notificationSummaryCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: "#f1d985",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 24,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     marginTop: spacing.md,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   notificationSummaryIcon: {
     alignItems: "center",
@@ -11506,6 +15493,10 @@ const styles = StyleSheet.create({
     height: 56,
     justifyContent: "center",
     width: 56
+  },
+  crescerListIconImage: {
+    height: 62,
+    width: 62
   },
   notificationSummaryMark: {
     color: colors.warning,
@@ -11534,14 +15525,15 @@ const styles = StyleSheet.create({
   },
   notificationCard: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     minHeight: 136,
-    padding: spacing.md
+    padding: spacing.md,
+    ...shadow
   },
   notificationCardNew: {
     borderColor: "#c9e8c5",
@@ -11692,14 +15684,15 @@ const styles = StyleSheet.create({
   },
   profileIdentityCard: {
     alignItems: "center",
-    backgroundColor: colors.childSoft,
-    borderColor: "#c9e8c5",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 26,
     borderWidth: 2,
     flexDirection: "row",
     gap: spacing.md,
     marginTop: spacing.md,
-    padding: spacing.lg
+    padding: spacing.lg,
+    ...shadow
   },
   profileAvatar: {
     alignItems: "center",
@@ -11775,41 +15768,58 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   profileProgressCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.line,
-    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 22,
     borderWidth: 2,
     flexBasis: "47%",
     flexGrow: 1,
     minHeight: 156,
-    padding: spacing.md
+    overflow: "hidden",
+    padding: spacing.md,
+    position: "relative",
+    ...shadow
+  },
+  profileProgressGlow: {
+    backgroundColor: "rgba(255, 255, 255, 0.38)",
+    borderRadius: 999,
+    height: 92,
+    position: "absolute",
+    right: -28,
+    top: -28,
+    width: 92
   },
   profileProgressIcon: {
     alignItems: "center",
-    backgroundColor: colors.warningSoft,
-    borderRadius: 18,
-    height: 54,
+    borderRadius: 999,
+    height: 68,
     justifyContent: "center",
     marginBottom: spacing.sm,
-    width: 54
+    shadowColor: "#4b6a49",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    width: 68,
+    zIndex: 2
   },
-  profileProgressMark: {
-    color: colors.warning,
-    fontSize: 24,
-    fontWeight: "900"
+  profileProgressIconImage: {
+    height: 70,
+    width: 70
   },
   profileProgressValue: {
     color: colors.ink,
     fontSize: 23,
     fontWeight: "900",
-    letterSpacing: 0
+    letterSpacing: 0,
+    zIndex: 2
   },
   profileProgressLabel: {
     color: colors.muted,
     fontSize: 12,
     fontWeight: "800",
     lineHeight: 17,
-    marginTop: 3
+    marginTop: 3,
+    zIndex: 2
   },
   profileSchoolCard: {
     alignItems: "center",
@@ -11829,10 +15839,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: 64
   },
-  profileSchoolIconText: {
-    color: colors.child,
-    fontSize: 26,
-    fontWeight: "900"
+  profileSchoolIconImage: {
+    height: 72,
+    width: 72
   },
   profileSchoolCopy: {
     flex: 1
