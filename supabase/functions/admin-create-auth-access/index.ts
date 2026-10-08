@@ -62,6 +62,15 @@ const profileRoleByTarget: Record<TargetType, string> = {
   guardian: "educacao_infantil",
 };
 
+type DuplicateCheck = {
+  email_already_used?: boolean;
+  email_auth_user_id?: string | null;
+  institutional_target_already_linked?: boolean;
+  linked_auth_user_id?: string | null;
+  orphan_auth_recovery_required?: boolean;
+  institutional_target_auth_user_id?: string | null;
+};
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
@@ -72,20 +81,6 @@ const safeErrorCode = (error: unknown) => {
     return code || name || "unknown_error";
   }
   return error instanceof Error ? error.name : "unknown_error";
-};
-
-const isSameInstitutionalTarget = (
-  user: { raw_user_meta_data?: unknown; raw_app_meta_data?: unknown },
-  targetType: TargetType,
-  targetInstitutionalId: string
-) => {
-  const userMeta = isRecord(user.raw_user_meta_data) ? user.raw_user_meta_data : {};
-  const appMeta = isRecord(user.raw_app_meta_data) ? user.raw_app_meta_data : {};
-  return (
-    userMeta.institutional_target_type === targetType &&
-    userMeta.institutional_target_id === targetInstitutionalId &&
-    appMeta.platform_role === profileRoleByTarget[targetType]
-  );
 };
 
 const audit = async (
@@ -306,26 +301,21 @@ Deno.serve(async (request) => {
       schoolId: target.school_id,
     });
   }
-  let duplicate: { id: string; email?: string } | undefined;
-  let duplicateByTarget: { id: string; email?: string } | undefined;
-  let linkedAuthExists = false;
-  const possibleLinkedIds = [target.profile_id, target.user_id].filter(Boolean);
-  for (let page = 1; page <= 10 && !(duplicate && duplicateByTarget); page += 1) {
-    const { data: authPage, error: authListError } = await adminClient.auth.admin.listUsers({ page, perPage: 1000 });
-    if (authListError) {
-      return fail(adminClient, 500, "auth_duplicate_check_failed", "Nao foi possivel validar duplicidade de Auth.", {
-        ...auditBase,
-        adminUserId: caller.id,
-        derivedRole,
-        schoolId: target.school_id,
-      });
-    }
-    duplicate = duplicate || authPage.users.find((user) => normalizeEmail(user.email || "") === email);
-    duplicateByTarget = duplicateByTarget || authPage.users.find((user) =>
-      isSameInstitutionalTarget(user, targetType, targetInstitutionalId)
-    );
-    linkedAuthExists = linkedAuthExists || authPage.users.some((user) => possibleLinkedIds.includes(user.id));
-    if (authPage.users.length < 1000) break;
+  const { data: duplicateCheckData, error: duplicateCheckError } = await adminClient
+    .rpc("admin_check_auth_access_duplicate", {
+      p_target_type: targetType,
+      p_target_institutional_id: targetInstitutionalId,
+      p_email: email,
+      p_expected_role: profileRoleByTarget[targetType],
+    });
+  const duplicateCheck = (duplicateCheckData || {}) as DuplicateCheck;
+  if (duplicateCheckError || !duplicateCheckData) {
+    return fail(adminClient, 500, "auth_duplicate_check_failed", "Nao foi possivel validar duplicidade de Auth.", {
+      ...auditBase,
+      adminUserId: caller.id,
+      derivedRole,
+      schoolId: target.school_id,
+    });
   }
   if (targetType === "student" && target.user_id) {
     return fail(adminClient, 409, "auth_already_configured", "Este usuario ja possui acesso Auth configurado.", {
@@ -335,30 +325,31 @@ Deno.serve(async (request) => {
       schoolId: target.school_id,
     });
   }
-  if (linkedAuthExists || (targetType !== "student" && target.user_id)) {
-    return fail(adminClient, 409, "auth_already_configured", "Este usuario ja possui acesso Auth configurado.", {
-      ...auditBase,
-      adminUserId: caller.id,
-      derivedRole,
-      schoolId: target.school_id,
-    });
-  }
-  if (duplicateByTarget) {
+  if (duplicateCheck.orphan_auth_recovery_required) {
     return fail(adminClient, 409, "orphan_auth_recovery_required", "Ja existe Auth pendente de recuperacao para este usuario institucional.", {
       ...auditBase,
       adminUserId: caller.id,
       derivedRole,
       schoolId: target.school_id,
-      targetAuthUserId: duplicateByTarget.id,
+      targetAuthUserId: duplicateCheck.institutional_target_auth_user_id || null,
     });
   }
-  if (duplicate) {
+  if (duplicateCheck.institutional_target_already_linked || (targetType !== "student" && target.user_id)) {
+    return fail(adminClient, 409, "auth_already_configured", "Este usuario ja possui acesso Auth configurado.", {
+      ...auditBase,
+      adminUserId: caller.id,
+      derivedRole,
+      schoolId: target.school_id,
+      targetAuthUserId: duplicateCheck.linked_auth_user_id || null,
+    });
+  }
+  if (duplicateCheck.email_already_used) {
     return fail(adminClient, 409, "email_already_used", "Este e-mail ja esta utilizado por outro Auth.", {
       ...auditBase,
       adminUserId: caller.id,
       derivedRole,
       schoolId: target.school_id,
-      targetAuthUserId: duplicate.id,
+      targetAuthUserId: duplicateCheck.email_auth_user_id || null,
     });
   }
   if (targetType === "student") {
