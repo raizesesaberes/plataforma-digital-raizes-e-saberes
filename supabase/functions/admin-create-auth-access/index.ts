@@ -63,16 +63,42 @@ const profileRoleByTarget: Record<TargetType, string> = {
 };
 
 type DuplicateCheck = {
-  email_already_used?: boolean;
-  email_auth_user_id?: string | null;
-  institutional_target_already_linked?: boolean;
-  linked_auth_user_id?: string | null;
-  orphan_auth_recovery_required?: boolean;
-  institutional_target_auth_user_id?: string | null;
+  ok: true;
+  email_already_used: boolean;
+  email_auth_user_id: string | null;
+  institutional_target_already_linked: boolean;
+  linked_auth_user_id: string | null;
+  orphan_auth_recovery_required: boolean;
+  institutional_target_auth_user_id: string | null;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
+
+const isNullableUuid = (value: unknown): value is string | null =>
+  value === null || (typeof value === "string" && value.length === 36 &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value));
+
+// Validate the fields used by the provisioning guards; allow additional RPC fields.
+const isDuplicateCheck = (value: unknown): value is DuplicateCheck => {
+  if (!isRecord(value) || value.ok !== true ||
+    typeof value.email_already_used !== "boolean" ||
+    typeof value.institutional_target_already_linked !== "boolean" ||
+    typeof value.orphan_auth_recovery_required !== "boolean" ||
+    !isNullableUuid(value.email_auth_user_id) ||
+    !isNullableUuid(value.linked_auth_user_id) ||
+    !isNullableUuid(value.institutional_target_auth_user_id)) {
+    return false;
+  }
+
+  const linkedId = value.linked_auth_user_id?.toLowerCase() ?? null;
+  const targetId = value.institutional_target_auth_user_id?.toLowerCase() ?? null;
+  // A target Auth equal to the linked Auth is valid and is not an orphan.
+  // A linked Auth and a different orphan Auth may legitimately coexist.
+  return value.email_already_used === (value.email_auth_user_id !== null) &&
+    value.institutional_target_already_linked === (linkedId !== null) &&
+    value.orphan_auth_recovery_required === (targetId !== null && targetId !== linkedId);
+};
 
 const safeErrorCode = (error: unknown) => {
   if (isRecord(error)) {
@@ -301,15 +327,19 @@ Deno.serve(async (request) => {
       schoolId: target.school_id,
     });
   }
-  const { data: duplicateCheckData, error: duplicateCheckError } = await adminClient
-    .rpc("admin_check_auth_access_duplicate", {
+  let duplicateResult: { data: unknown; error: unknown };
+  try {
+    duplicateResult = await adminClient.rpc("admin_check_auth_access_duplicate", {
       p_target_type: targetType,
       p_target_institutional_id: targetInstitutionalId,
       p_email: email,
       p_expected_role: profileRoleByTarget[targetType],
     });
-  const duplicateCheck = (duplicateCheckData || {}) as DuplicateCheck;
-  if (duplicateCheckError || !duplicateCheckData) {
+  } catch {
+    duplicateResult = { data: null, error: true };
+  }
+  const { data: duplicateCheck, error: duplicateCheckError } = duplicateResult;
+  if (duplicateCheckError || !isDuplicateCheck(duplicateCheck)) {
     return fail(adminClient, 500, "auth_duplicate_check_failed", "Nao foi possivel validar duplicidade de Auth.", {
       ...auditBase,
       adminUserId: caller.id,
