@@ -29962,10 +29962,8 @@ const questionBankDataService = (() => {
       const context = await getContext();
       if (isTeacherResolverContext(context)) {
         const resolved = await getTeacherResolvedQuestionRows(request, context);
-        if (resolved.enabled) {
-          const mapped = resolved.rows.map(mapQuestionFromSupabase);
-          return mapped.find((item) => item.id === id || item.uuid === id) || null;
-        }
+        const mapped = resolved.rows.map(mapQuestionFromSupabase);
+        return mapped.find((item) => item.id === id || item.uuid === id) || null;
       }
       const column = String(id).startsWith("RS-") ? "code" : "id";
       const rows = await request("question_items", `?${column}=eq.${encodeURIComponent(id)}&select=${questionSelect}&limit=1`);
