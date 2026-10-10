@@ -40,9 +40,9 @@ Validação em 10/10/2026 (ambiente isolado):
 - pnpm run typecheck: PASS; 32/32 testes de contrato: PASS.
 - Lockfile preservado, SHA256:
   190d91b072a28840391a0185add7756d0f1726966fa5544fe5777fab1ed96169.
-- Expo export web: PASS, 414 módulos, 56 assets. O build usa o CLI local
-  diretamente e NODE_PATH apontando para node_modules/.pnpm/node_modules para
-  resolver babel-preset-expo já instalado. Não houve edição da configuração.
+- Expo export web: PASS, 414 módulos, 56 assets. A validação inicial usou
+  NODE_PATH temporário; a correção posterior declara babel-preset-expo 57.0.11
+  diretamente e permite exportar sem NODE_PATH, mantendo o CLI local.
   EXPO_NO_DOTENV=1 e EXPO_NO_TELEMETRY=1; URL/chave compiladas são sintéticas.
 - Chromium/Playwright: quatro cenários (390x844 e 834x1112 com lista mista;
   celular com lista vazia e erro RPC) com todas as chamadas de dados simuladas.
@@ -56,8 +56,13 @@ Validação em 10/10/2026 (ambiente isolado):
 Limites: sem build ou execução nativa Android/iOS, dispositivo físico,
 provisionamento real ou homologação em produção. Validação anterior ao commit;
 publicação em produção permanece fora do escopo.
-O comando padrão sem ajuste de resolução Babel continua com limitação local;
-o build aprovado usa o NODE_PATH temporário descrito acima.
+Correção de build: babel-preset-expo 57.0.11 agora é dependência direta de
+desenvolvimento. O lockfile só adiciona seu importer, reutilizando o snapshot
+existente; nenhuma versão transitiva mudou. Instalação congelada/offline e
+scripts desativados passaram. Build sem NODE_PATH usa:
+  EXPO_NO_DOTENV=1 EXPO_NO_TELEMETRY=1 CI=1 node node_modules/expo/bin/cli export --platform web
+As duas EXPO_PUBLIC_SUPABASE_* devem vir da configuração pública existente do
+projeto app-raizes-e-saberes; nunca publicar o artefato de fixtures sintéticas.
 
 Oportunidades para a próxima etapa visual (não implementadas): rótulos de leitor
 de tela combinando contagem/estado nos resumos; conferir truncamento com fonte
