@@ -1,0 +1,56 @@
+Avalia+ docente — correção de estados e regressão compartilhada
+Base: 341eddcb7b2995271f15aa5f92fb4d87cdd9d03f.
+
+A captura humana mostrou quatro zeros e a turma genérica. Ela não prova a causa
+remota. Esta mudança separa consulta vazia, carregamento e falha no frontend.
+
+- Cinco recursos independentes: turmas, atribuições, contexto, resumo e avisos.
+  Cada falha tem recuperação própria; erro auxiliar não apaga atribuições.
+- Respostas de sessões/tentativas antigas não podem publicar estado após retry,
+  logout ou desmontagem. Durante troca de sessão o dado anterior fica oculto.
+- Avalia+ recebe turmas assim que sua consulta termina. A espera por detalhes de
+  alunos permanece nos outros fluxos para preservar suas condições de loading.
+- Seleção e filtro no Avalia+ usam classId. Turmas de mesmo nome permanecem
+  distintas; o filtro não amplia o retorno autorizado pelo backend.
+- Contadores só aparecem com ambas as consultas concluídas e turma válida.
+  Representam status de atribuições, não progresso real dos estudantes.
+- A visão mostra informações da atribuição; não apresenta questões, notas,
+  participação, habilidades ou resultados fictícios. Os antigos componentes
+  locais de aplicação/resultados permanecem no arquivo, sem entrada nesta visão;
+  não foram convertidos em publicação persistente.
+- Identidade, assets, cores e StyleSheet existentes preservados. Os novos chips
+  e ações de retry têm altura mínima 44; mensagem e cartões mantêm espaçamento.
+
+Verificação (Node 24):
+  node --test mobile/tests/assessment-compatibility.test.mjs mobile/tests/teacher-resource.test.mjs
+  pnpm --dir mobile run typecheck
+
+Browser: servir um export web local (URL e chave sintéticas, sem NODE_PATH).
+Usar expo export --platform web --clear ao trocar variáveis públicas; conferir
+o host compilado antes dos testes para evitar reaproveitamento do cache Metro.
+Playwright/Chromium são ferramentas do executor, não dependências adicionadas.
+  BASE_URL=http://127.0.0.1:8780 EVIDENCE_DIR=/tmp/teacher-avalia-evidence \
+    PLAYWRIGHT_MODULE=<caminho do Playwright instalado> \
+    node mobile/tests/teacher-avalia.browser.cjs
+O runner aceita apenas localhost e intercepta chamadas de dados. Nenhum login
+real, nenhuma consulta de produção e nenhuma escrita de negócio são executados.
+BEFORE=1 permite capturar o erro auxiliar suprimido no export da base anterior.
+
+Cobertura: sucesso celular/tablet, vazio de turmas e avaliações, erro e retry de
+cada recurso independente, erro/latência de detalhes de alunos, turma tardia,
+troca de turma durante avaliações pendentes, logout com resposta antiga e
+navegação com resposta pendente. Gate: tentativas sobrepostas, erro tardio,
+cancelamento e recuperação. Os 32 contratos aluno são mantidos.
+
+Contratos ainda necessários: catálogo/aplicação persistente, quantidade de
+questões, métricas agregadas e resultados por aluno autorizados. Esta mudança
+não implementa esses contratos nem altera SQL/RLS/Auth. Home distingue falha de zero e não usa avisos como avaliações. Acompanhamento
+isola indicadores/alertas por ID e oculta dados anteriores durante troca ou erro.
+Minhas Turmas usa ID. Fluxos legados de chamada, recado, diário e agenda receberam
+regressão de navegação sem escrita; suas seleções por nome não foram redesenhadas. Também não há teste nativo iOS/Android nem diagnóstico remoto
+do caso da professora Monte Verde.
+
+Regressão adicional: Home com erro/retry; detalhes de turmas homônimas; três
+trocas sucessivas de acompanhamento, erro/retry e resposta antiga; navegação
+pelos formulários legados sem salvar. Dados de alunos indisponíveis bloqueiam
+a carga operacional em vez de representar lista vazia. Avalia+ permanece independente.

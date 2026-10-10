@@ -1,3 +1,4 @@
+import { useTeacherResource, type TeacherResource } from "./hooks/useTeacherResource";
 import { assessmentActionLabel, assessmentSection, normalizeAssessmentState } from "./services/assessments";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Feather } from "@expo/vector-icons";
@@ -712,14 +713,14 @@ function FundamentalProgress({ value, compact = false }: { value: number; compac
 
 type TeacherTodayItem = (typeof demoCollections.teacher.today)[number];
 type TeacherQuickAction = (typeof demoCollections.teacher.quickActions)[number];
-type TeacherClassSummary = (typeof demoCollections.teacher.classes)[number];
+type TeacherClassSummary = (typeof demoCollections.teacher.classes)[number] & { id?: string };
 type TeacherClassStudent = TeacherClassSummary["studentsList"][number];
 type TeacherAgendaItem = (typeof demoCollections.teacher.agenda)[number];
 type TeacherModuleListItem = (typeof demoCollections.teacher.modules.classes)[number];
 type TeacherCommunicationItem = (typeof demoCollections.teacher.communication)[number];
 type TeacherDiaryCurrent = typeof demoCollections.teacher.modules.diary.current;
 type TeacherDiaryEntry = (typeof demoCollections.teacher.modules.diary.recent)[number];
-type TeacherAvaliaAssessment = (typeof demoCollections.teacher.modules.avalia.assessments)[number];
+type TeacherAvaliaAssessment = (typeof demoCollections.teacher.modules.avalia.assessments)[number] & { classId?: string };
 type TeacherAvaliaStudent = TeacherAvaliaAssessment["students"][number];
 type AttendanceStatus = "Presente" | "Falta" | "Justificada";
 type TeacherAgendaMode = "list" | "compose" | "detail" | "edit";
@@ -752,6 +753,7 @@ function emptyTeacherClass(): TeacherClassSummary {
 
 function makeTeacherClassSummary(item: TeacherMobileClass, students: RealTeacherClassStudent[]): TeacherClassSummary {
   return {
+    id: item.id,
     className: item.name,
     stage: item.stage,
     schedule: item.schedule || "Turno",
@@ -858,6 +860,7 @@ function mapTeacherAssessmentAssignment(item: TeacherAssessmentAssignment): Teac
   const state = mapTeacherAssessmentStatus(item.status);
   return {
     id: item.id,
+    classId: item.classId,
     title: item.title,
     subject: item.subject || "Avalia+",
     description: item.description || "Avaliação publicada para acompanhamento da turma.",
@@ -901,41 +904,17 @@ const teacherQuickActions: TeacherQuickAction[] = [
 ];
 
 function TeacherHomeScreen({ profile, session, onOpen }: { profile: AppProfile; session: MobileSession | null; onOpen: (key: ModuleKey) => void }) {
-  const [summary, setSummary] = useState<TeacherHomeSummary | null>(null);
-  const [classes, setClasses] = useState<TeacherMobileClass[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let active = true;
-    if (!session) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    void Promise.all([getTeacherHomeSummary(session), getTeacherMobileClasses(session)])
-      .then(([nextSummary, nextClasses]) => {
-        if (!active) return;
-        setSummary(nextSummary);
-        setClasses(nextClasses);
-      })
-      .catch(() => {
-        if (!active) return;
-        setSummary(null);
-        setClasses([]);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [session]);
+  const summaryResource = useTeacherResource(session, getTeacherHomeSummary);
+  const classesResource = useTeacherResource(session, getTeacherMobileClasses);
+  const summary = summaryResource.data;
+  const classes = classesResource.data ?? [];
+  const loading = summaryResource.status === "loading";
 
   const firstClass = classes[0] || null;
   const homeCards: TeacherTodayItem[] = [
-    { type: "Turmas", title: `${summary?.activeClassLinks ?? 0} turmas ativas`, meta: `${summary?.totalStudents ?? 0} alunos acompanhados`, mark: "T", target: "classes" },
-    { type: "Agenda", title: `${summary?.todaysCalendarCount ?? 0} compromisso(s) hoje`, meta: "Agenda da escola", mark: "◷", target: "agenda" },
-    { type: "Notificações", title: `${summary?.unreadNotifications ?? 0} não lidas`, meta: "Central do professor", mark: "!", target: "notifications" },
+    { type: "Turmas", title: `${summary?.activeClassLinks ?? "—"} turmas ativas`, meta: `${summary?.totalStudents ?? "—"} alunos acompanhados`, mark: "T", target: "classes" },
+    { type: "Agenda", title: `${summary?.todaysCalendarCount ?? "—"} compromisso(s) hoje`, meta: "Agenda da escola", mark: "◷", target: "agenda" },
+    { type: "Notificações", title: `${summary?.unreadNotifications ?? "—"} não lidas`, meta: "Central do professor", mark: "!", target: "notifications" },
     { type: "Diário", title: "Registros da turma", meta: "Diário de Classe", mark: "D", target: "diary" }
   ];
   return (
@@ -983,7 +962,7 @@ function TeacherHomeScreen({ profile, session, onOpen }: { profile: AppProfile; 
       <Pressable accessibilityRole="button" accessibilityLabel={`Abrir turma ${firstClass?.name || "turma"}`} onPress={() => onOpen("classes")} style={styles.teacherNextClassCard}>
         <View style={styles.teacherNextClassCopy}>
           <Text style={[styles.teacherCardLabel, styles.teacherCardLabelOnDark]}>{firstClass?.schedule || "Turno"}</Text>
-          <Text style={styles.teacherNextClassTitle}>{firstClass?.name || "Nenhuma turma ativa"}</Text>
+          <Text style={styles.teacherNextClassTitle}>{firstClass?.name || (classesResource.status === "loading" ? "Carregando turmas…" : classesResource.status === "error" ? "Turmas indisponíveis" : "Nenhuma turma ativa")}</Text>
           <Text style={styles.teacherNextClassBody}>{firstClass ? "08h00 - 09h40" : "Quando houver turma vinculada, ela aparecerá aqui."}</Text>
           <Text style={styles.teacherNextClassStudents}>{firstClass ? `${firstClass.studentCount} alunos` : ""}</Text>
         </View>
@@ -993,13 +972,15 @@ function TeacherHomeScreen({ profile, session, onOpen }: { profile: AppProfile; 
         </View>
       </Pressable>
 
+      {summaryResource.status === "error" ? <TeacherResourceNotice title="Resumo inicial indisponível" body="Tente carregar novamente. Suas turmas são consultadas separadamente." onRetry={summaryResource.retry} /> : null}
+      {classesResource.status === "error" ? <TeacherResourceNotice title="Turmas indisponíveis" body="Não foi possível consultar suas turmas." onRetry={classesResource.retry} /> : null}
       <SectionHeader title="Resumo da semana" />
       <View style={styles.teacherTrackingGrid}>
-        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.peopleSearch} value={summary?.activeClassLinks ?? 0} label="Turmas" helper="Turmas ativas" />
-        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.groupChat} value={summary?.totalStudents ?? 0} label="Alunos" helper="Vínculos ativos" />
-        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.alertBell} value={summary?.unreadNotifications ?? 0} label="Avisos" helper="Não lidos" />
-        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.calendarClock} value={summary?.todaysCalendarCount ?? 0} label="Atividades" helper="Planejadas" />
-        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.growthChart} value={summary?.unreadNotifications ?? 0} label="Avaliações" helper="Publicadas" />
+        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.peopleSearch} value={summary?.activeClassLinks ?? "—"} label="Turmas" helper="Turmas ativas" />
+        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.groupChat} value={summary?.totalStudents ?? "—"} label="Alunos" helper="Vínculos ativos" />
+        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.alertBell} value={summary?.unreadNotifications ?? "—"} label="Avisos" helper="Não lidos" />
+        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.calendarClock} value={summary?.todaysCalendarCount ?? "—"} label="Atividades" helper="Planejadas" />
+        <TeacherWeeklyMetricCard icon={teacherCatalogIcons.growthChart} value="—" label="Avaliações" helper="Indicador indisponível" />
       </View>
     </View>
   );
@@ -4903,15 +4884,20 @@ function FundamentalAccessibilityScreen() {
 }
 
 function TeacherModule({ session, activeKey, onOpen, onLogout }: { session: MobileSession | null; activeKey: ModuleKey; onOpen: (key: ModuleKey) => void; onLogout: () => void }) {
+  const [operationalOwner, setOperationalOwner] = useState<{ session: MobileSession; rows: TeacherMobileClass[] } | null>(null);
   const [operationalClasses, setOperationalClasses] = useState<TeacherClassSummary[]>([]);
-  const [teacherClassRows, setTeacherClassRows] = useState<TeacherMobileClass[]>([]);
+  const classResource = useTeacherResource(session, getTeacherMobileClasses);
+  const assessmentResource = useTeacherResource(session, getTeacherAssessmentAssignments);
+  const contextResource = useTeacherResource(session, getTeacherContext);
+  const summaryResource = useTeacherResource(session, getTeacherHomeSummary);
+  const notificationResource = useTeacherResource(session, getTeacherNotificationCenter);
+  const teacherClassRows = useMemo(() => classResource.data ?? [], [classResource.data]);
   const [teacherStudentsByClassId, setTeacherStudentsByClassId] = useState<Record<string, RealTeacherClassStudent[]>>({});
-  const [teacherContext, setTeacherContext] = useState<{ teacherName: string; schoolName: string; discipline: string | null; activeClassLinks: number } | null>(null);
-  const [teacherHomeSummary, setTeacherHomeSummary] = useState<TeacherHomeSummary | null>(null);
-  const [teacherNotifications, setTeacherNotifications] = useState<TeacherNotificationCenterItem[]>([]);
-  const [teacherAssessments, setTeacherAssessments] = useState<TeacherAvaliaAssessment[]>([]);
-  const [trackingOverview, setTrackingOverview] = useState<TeacherTrackingOverview | null>(null);
-  const [trackingAlerts, setTrackingAlerts] = useState<RealTeacherTrackingAlert[]>([]);
+  const teacherContext = contextResource.data;
+  const teacherHomeSummary = summaryResource.data;
+  const teacherNotifications = useMemo(() => notificationResource.data ?? [], [notificationResource.data]);
+  const teacherAssessments = useMemo(() => (assessmentResource.data ?? []).map(mapTeacherAssessmentAssignment), [assessmentResource.data]);
+
   const [operationalLoading, setOperationalLoading] = useState(true);
   const [operationalError, setOperationalError] = useState(false);
   const [agendaEvents, setAgendaEvents] = useState<TeacherAgendaItem[]>([]);
@@ -4919,7 +4905,7 @@ function TeacherModule({ session, activeKey, onOpen, onLogout }: { session: Mobi
   const [diaryRecentEntries, setDiaryRecentEntries] = useState<TeacherDiaryEntry[]>([]);
   const [diarySummary, setDiarySummary] = useState<RealTeacherDiaryPeriodSummary | null>(null);
   const [classFilter, setClassFilter] = useState<"Todas" | "Educação Infantil" | "Fundamental">("Todas");
-  const [selectedClassName, setSelectedClassName] = useState<string | null>(null);
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [attendanceClassName, setAttendanceClassName] = useState("");
   const [attendanceRecords, setAttendanceRecords] = useState<Record<string, AttendanceStatus>>({});
   const [attendanceSaved, setAttendanceSaved] = useState(false);
@@ -4950,21 +4936,16 @@ function TeacherModule({ session, activeKey, onOpen, onLogout }: { session: Mobi
   const [diaryActivity, setDiaryActivity] = useState("");
   const [diaryDraftSaved, setDiaryDraftSaved] = useState(false);
   const [selectedDiaryEntryId, setSelectedDiaryEntryId] = useState<string | null>(null);
-  const [avaliaMode, setAvaliaMode] = useState<TeacherAvaliaMode>("list");
-  const [avaliaFilter, setAvaliaFilter] = useState<TeacherAvaliaFilter>("Todas");
-  const [avaliaClassName, setAvaliaClassName] = useState("");
-  const [selectedAvaliaId, setSelectedAvaliaId] = useState("");
-  const [avaliaAvailableFrom, setAvaliaAvailableFrom] = useState("13 de setembro");
-  const [avaliaDueDate, setAvaliaDueDate] = useState("20 de setembro");
-  const [avaliaPublished, setAvaliaPublished] = useState(false);
-  const [selectedAvaliaStudentName, setSelectedAvaliaStudentName] = useState<string | null>(null);
-  const [trackingClassName, setTrackingClassName] = useState("");
+  const [avaliaClassId, setAvaliaClassId] = useState("");
+  useEffect(() => { setAvaliaClassId(""); }, [session?.userId]);
+  const [trackingClassId, setTrackingClassId] = useState("");
   const [trackingMode, setTrackingMode] = useState<TeacherTrackingMode>("overview");
   const [trackingStudentName, setTrackingStudentName] = useState<string | null>(null);
   const [teacherNotificationFilter, setTeacherNotificationFilter] = useState<TeacherNotificationFilter>("Tudo");
   const [teacherNotificationsRead, setTeacherNotificationsRead] = useState<Record<string, boolean>>({});
   const [selectedTeacherNotificationId, setSelectedTeacherNotificationId] = useState<string | null>(null);
-  const realClasses = operationalClasses;
+  const operationalCurrent = operationalOwner?.session === session && operationalOwner?.rows === teacherClassRows;
+  const realClasses = operationalCurrent ? operationalClasses : [];
   const teacherClassRowsByName = useMemo(() => new Map(teacherClassRows.map((item) => [item.name, item])), [teacherClassRows]);
   const defaultOperationalClass = realClasses[0] ?? emptyTeacherClass();
   const hasOperationalClasses = realClasses.length > 0;
@@ -4973,7 +4954,7 @@ function TeacherModule({ session, activeKey, onOpen, onLogout }: { session: Mobi
   const selectedCommunicationClassName = communicationClassName || defaultOperationalClass.className;
   const selectedDiaryClassName = diaryClassName || defaultOperationalClass.className;
   const realClassesByName = useMemo(() => new Map(realClasses.map((item) => [item.className, item])), [realClasses]);
-  const selectedClass = selectedClassName ? realClassesByName.get(selectedClassName) ?? null : null;
+  const selectedClass = realClasses.find((item) => item.id === selectedClassId) ?? null;
   const attendanceClass = realClassesByName.get(selectedOperationalClassName) ?? defaultOperationalClass;
   const agendaClass = realClassesByName.get(selectedAgendaClassName) ?? defaultOperationalClass;
   const selectedAgendaEvent = agendaEvents.find((item) => item.id === agendaSelectedEventId) ?? null;
@@ -4982,106 +4963,50 @@ function TeacherModule({ session, activeKey, onOpen, onLogout }: { session: Mobi
   const diaryClass = realClassesByName.get(selectedDiaryClassName) ?? defaultOperationalClass;
   const selectedDiaryEntry = diaryRecentEntries.find((item) => item.id === selectedDiaryEntryId) ?? null;
   const diaryCurrent = makeTeacherDiaryCurrent(diarySummary, diaryContent, diaryRecord);
-  const avaliaClass = realClassesByName.get(avaliaClassName || defaultOperationalClass.className) ?? defaultOperationalClass;
-  const selectedAvalia = teacherAssessments.find((item) => item.id === selectedAvaliaId) ?? teacherAssessments[0] ?? emptyTeacherAssessment();
-  const selectedAvaliaStudent = selectedAvalia?.students.find((item) => item.name === selectedAvaliaStudentName) ?? null;
-  const trackingClass = realClassesByName.get(trackingClassName || defaultOperationalClass.className) ?? defaultOperationalClass;
+  const trackingClass = realClasses.find((item) => item.id === trackingClassId) ?? defaultOperationalClass;
+  const loadTrackingOverview = useCallback((current: MobileSession) => trackingClass.id ? getTeacherTrackingOverview(current, trackingClass.id) : Promise.reject(new Error("class_missing")), [trackingClass.id]);
+  const loadTrackingAlerts = useCallback((current: MobileSession) => trackingClass.id ? getTeacherTrackingAlerts(current, trackingClass.id) : Promise.reject(new Error("class_missing")), [trackingClass.id]);
+  const trackingResource = useTeacherResource(session, loadTrackingOverview);
+  const alertsResource = useTeacherResource(session, loadTrackingAlerts);
   const selectedTrackingStudent = trackingClass.studentsList.find((item) => item.name === trackingStudentName) ?? trackingClass.studentsList[0] ?? null;
   const teacherNotificationItems = useMemo(() => teacherNotifications.map(mapTeacherNotificationItem), [teacherNotifications]);
   const selectedTeacherNotification = teacherNotificationItems.find((item) => item.id === selectedTeacherNotificationId) ?? null;
 
   useEffect(() => {
     let active = true;
-    if (!session) {
-      setOperationalLoading(false);
-      setOperationalError(true);
-      setOperationalClasses([]);
-      setTeacherClassRows([]);
-      setTeacherStudentsByClassId({});
-      return;
-    }
+    setOperationalClasses([]);
+    setTeacherStudentsByClassId({});
+    setOperationalLoading(classResource.status === "loading");
+    setOperationalError(classResource.status === "error");
+    if (!session || classResource.status !== "ready") return;
+    const classes = teacherClassRows;
+    // Avalia+ uses classResource immediately. Other modules retain their detail
+    // loading gate, so attendance cannot save before student details settle.
     setOperationalLoading(true);
-    setOperationalError(false);
-    void getTeacherMobileClasses(session)
-      .then(async (classes) => {
-        const studentsByClass = await Promise.all(
-          classes.map((item) =>
-            getTeacherClassStudents(session, item.id)
-              .then((students) => [item.id, students] as const)
-              .catch(() => [item.id, [] as RealTeacherClassStudent[]] as const)
-          )
-        );
-        if (!active) return;
-        const studentMap = new Map(studentsByClass);
-        const nextClasses = classes.map((item) => makeTeacherClassSummary(item, studentMap.get(item.id) || []));
-        setTeacherClassRows(classes);
-        setTeacherStudentsByClassId(Object.fromEntries(studentsByClass));
-        setOperationalClasses(nextClasses);
-        const firstClassName = nextClasses[0]?.className || "";
-        setAttendanceClassName((current) => current || firstClassName);
-        setAgendaClassName((current) => current || firstClassName);
-        setCommunicationClassName((current) => current || firstClassName);
-        setCommunicationStudentName((current) => current || nextClasses[0]?.studentsList[0]?.name || "");
-        setDiaryClassName((current) => current || firstClassName);
-        setAvaliaClassName((current) => current || firstClassName);
-        setTrackingClassName((current) => current || firstClassName);
-        setTrackingStudentName((current) => current || nextClasses[0]?.studentsList[0]?.name || null);
-      })
-      .catch(() => {
-        if (active) {
-          setOperationalClasses([]);
-          setTeacherClassRows([]);
-          setTeacherStudentsByClassId({});
-          setOperationalError(true);
-        }
-      })
-      .finally(() => {
-        if (active) setOperationalLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [session]);
-
-  useEffect(() => {
-    let active = true;
-    if (!session) {
-      setTeacherContext(null);
-      setTeacherHomeSummary(null);
-      setTeacherNotifications([]);
-      setTeacherAssessments([]);
-      return;
-    }
-    void Promise.all([
-      getTeacherContext(session),
-      getTeacherHomeSummary(session),
-      getTeacherNotificationCenter(session),
-      getTeacherAssessmentAssignments(session)
-    ])
-      .then(([context, summary, notifications, assessments]) => {
-        if (!active) return;
-        setTeacherContext({
-          teacherName: context.teacherName,
-          schoolName: context.schoolName,
-          discipline: context.discipline,
-          activeClassLinks: context.activeClassLinks
-        });
-        setTeacherHomeSummary(summary);
-        setTeacherNotifications(notifications);
-        setTeacherAssessments(assessments.map(mapTeacherAssessmentAssignment));
-        setSelectedAvaliaId((current) => current || assessments[0]?.id || "");
-      })
-      .catch(() => {
-        if (!active) return;
-        setTeacherContext(null);
-        setTeacherHomeSummary(null);
-        setTeacherNotifications([]);
-        setTeacherAssessments([]);
-      });
-    return () => {
-      active = false;
-    };
-  }, [session]);
+    void Promise.all(classes.map((item) =>
+      getTeacherClassStudents(session, item.id)
+        .then((students) => [item.id, students] as const)
+    )).then((studentsByClass) => {
+      if (!active) return;
+      const studentMap = new Map(studentsByClass);
+      const nextClasses = classes.map((item) => makeTeacherClassSummary(item, studentMap.get(item.id) || []));
+      setTeacherStudentsByClassId(Object.fromEntries(studentsByClass));
+      setOperationalClasses(nextClasses);
+      setOperationalOwner({ session, rows: classes });
+      const firstClassName = nextClasses[0]?.className || "";
+      setAttendanceClassName((current) => current || firstClassName);
+      setAgendaClassName((current) => current || firstClassName);
+      setCommunicationClassName((current) => current || firstClassName);
+      setCommunicationStudentName((current) => current || nextClasses[0]?.studentsList[0]?.name || "");
+      setDiaryClassName((current) => current || firstClassName);
+      setTrackingClassId((current) => current || nextClasses[0]?.id || "");
+      setTrackingStudentName((current) => current || nextClasses[0]?.studentsList[0]?.name || null);
+      setOperationalLoading(false);
+    }).catch(() => {
+      if (active) { setOperationalError(true); setOperationalLoading(false); }
+    });
+    return () => { active = false; };
+  }, [session, classResource.status, teacherClassRows]);
 
   useEffect(() => {
     let active = true;
@@ -5136,35 +5061,13 @@ function TeacherModule({ session, activeKey, onOpen, onLogout }: { session: Mobi
     };
   }, [session, selectedDiaryClassName, teacherClassRowsByName]);
 
-  useEffect(() => {
-    let active = true;
-    const classRow = teacherClassRowsByName.get(trackingClassName || defaultOperationalClass.className);
-    if (!session || !classRow) {
-      setTrackingOverview(null);
-      setTrackingAlerts([]);
-      return;
-    }
-    void Promise.all([getTeacherTrackingOverview(session, classRow.id), getTeacherTrackingAlerts(session, classRow.id)])
-      .then(([overview, alerts]) => {
-        if (!active) return;
-        setTrackingOverview(overview);
-        setTrackingAlerts(alerts);
-      })
-      .catch(() => {
-        if (!active) return;
-        setTrackingOverview(null);
-        setTrackingAlerts([]);
-      });
-    return () => {
-      active = false;
-    };
-  }, [session, trackingClassName, teacherClassRowsByName, defaultOperationalClass.className]);
-
   if (activeKey === "classes") {
+    if (operationalLoading || (classResource.status !== "error" && !operationalError && !operationalCurrent)) return <TeacherResourceNotice title="Carregando turmas" body="Aguarde os detalhes das turmas." loading />;
+    if (operationalError) return <TeacherResourceNotice title="Turmas indisponíveis" body="Não foi possível consultar suas turmas." onRetry={classResource.retry} />;
     return selectedClass ? (
       <TeacherClassDetailScreen
         item={selectedClass}
-        onBack={() => setSelectedClassName(null)}
+        onBack={() => setSelectedClassId(null)}
         onOpen={(key) => {
           if (key === "communication") {
             setCommunicationClassName(selectedClass.className);
@@ -5183,12 +5086,10 @@ function TeacherModule({ session, activeKey, onOpen, onLogout }: { session: Mobi
             setDiaryDraftSaved(false);
           }
           if (key === "avalia") {
-            setAvaliaClassName(selectedClass.className);
-            setAvaliaMode("list");
-            setAvaliaPublished(false);
+            setAvaliaClassId(selectedClass.id || "");
           }
           if (key === "tracking") {
-            setTrackingClassName(selectedClass.className);
+            setTrackingClassId(selectedClass.id || "");
             setTrackingMode("overview");
             setTrackingStudentName(selectedClass.studentsList[0]?.name ?? null);
           }
@@ -5200,7 +5101,7 @@ function TeacherModule({ session, activeKey, onOpen, onLogout }: { session: Mobi
         classes={realClasses}
         filter={classFilter}
         onFilterChange={setClassFilter}
-        onOpenClass={(item) => setSelectedClassName(item.className)}
+        onOpenClass={(item) => setSelectedClassId(item.id || null)}
       />
     );
   }
@@ -5446,51 +5347,24 @@ function TeacherModule({ session, activeKey, onOpen, onLogout }: { session: Mobi
   }
 
   if (activeKey === "avalia") {
-    return (
-      <TeacherAvaliaScreen
-        assessments={teacherAssessments}
-        classes={realClasses}
-        mode={avaliaMode}
-        filter={avaliaFilter}
-        selectedAssessment={selectedAvalia}
-        selectedClass={avaliaClass}
-        availableFrom={avaliaAvailableFrom}
-        dueDate={avaliaDueDate}
-        published={avaliaPublished}
-        selectedStudent={selectedAvaliaStudent}
-        onModeChange={setAvaliaMode}
-        onFilterChange={setAvaliaFilter}
-        onOpenAssessment={(assessment, nextMode) => {
-          setSelectedAvaliaId(assessment.id);
-          setSelectedAvaliaStudentName(null);
-          setAvaliaPublished(false);
-          setAvaliaMode(nextMode);
-        }}
-        onClassChange={(className) => {
-          setAvaliaClassName(className);
-          setAvaliaPublished(false);
-        }}
-        onAvailableFromChange={(value) => {
-          setAvaliaAvailableFrom(value);
-          setAvaliaPublished(false);
-        }}
-        onDueDateChange={(value) => {
-          setAvaliaDueDate(value);
-          setAvaliaPublished(false);
-        }}
-        onPublish={() => {
-          setAvaliaPublished(false);
-          setAvaliaMode("published");
-        }}
-        onOpenStudent={(student) => {
-          setSelectedAvaliaStudentName(student.name);
-          setAvaliaMode("student");
-        }}
-      />
-    );
+    return <TeacherAvaliaScreen
+      key={session?.userId || "signed-out"}
+      classes={classResource}
+      assessments={assessmentResource}
+      selectedClassId={avaliaClassId}
+      onClassChange={setAvaliaClassId}
+      auxiliary={[
+        { label: "Dados da professora", resource: contextResource },
+        { label: "Resumo inicial", resource: summaryResource },
+        { label: "Notificações", resource: notificationResource }
+      ]}
+    />;
   }
 
   if (activeKey === "tracking") {
+    if (operationalLoading || (classResource.status !== "error" && !operationalError && !operationalCurrent)) return <TeacherResourceNotice title="Carregando acompanhamento" body="Aguarde os detalhes das turmas." loading />;
+    if (operationalError) return <TeacherResourceNotice title="Turmas indisponíveis" body="Não foi possível consultar suas turmas." onRetry={classResource.retry} />;
+    if (!trackingClass.id) return <TeacherResourceNotice title="Nenhuma turma vinculada" body="Não há turma disponível para acompanhamento." onRetry={classResource.retry} />;
     return (
       <TeacherTrackingScreen
         classes={realClasses}
@@ -5500,11 +5374,13 @@ function TeacherModule({ session, activeKey, onOpen, onLogout }: { session: Mobi
         avaliaAssessments={teacherAssessments}
         diaryCurrent={diaryCurrent}
         diaryRecent={diaryRecentEntries}
-        overview={trackingOverview}
-        alerts={trackingAlerts}
-        onClassChange={(className) => {
-          const nextClass = realClassesByName.get(className) ?? trackingClass;
-          setTrackingClassName(nextClass.className);
+        overview={trackingResource.data}
+        alerts={alertsResource.data ?? []}
+        overviewResource={trackingResource}
+        alertsResource={alertsResource}
+        onClassChange={(classId) => {
+          const nextClass = realClasses.find((item) => item.id === classId) ?? trackingClass;
+          setTrackingClassId(nextClass.id || "");
           setTrackingStudentName(nextClass.studentsList[0]?.name ?? null);
           setTrackingMode("overview");
         }}
@@ -5513,7 +5389,7 @@ function TeacherModule({ session, activeKey, onOpen, onLogout }: { session: Mobi
           setTrackingMode("student");
         }}
         onBackToOverview={() => setTrackingMode("overview")}
-        onOpen={onOpen}
+        onOpen={(key) => { if (key === "avalia") setAvaliaClassId(trackingClass.id || ""); onOpen(key); }}
       />
     );
   }
@@ -5818,7 +5694,7 @@ function TeacherClassesScreen({
 
       <View style={styles.teacherClassesList}>
         {filteredClasses.map((item) => (
-          <TeacherClassOverviewCard key={item.className} item={item} onPress={() => onOpenClass(item)} />
+          <TeacherClassOverviewCard key={item.id || item.className} item={item} onPress={() => onOpenClass(item)} />
         ))}
       </View>
     </View>
@@ -6708,153 +6584,111 @@ function TeacherDiaryDetail({ entry, onBack }: { entry: TeacherDiaryEntry; onBac
   );
 }
 
-function TeacherAvaliaScreen({
-  assessments,
-  classes,
-  mode,
-  filter,
-  selectedAssessment,
-  selectedClass,
-  availableFrom,
-  dueDate,
-  published,
-  selectedStudent,
-  onModeChange,
-  onFilterChange,
-  onOpenAssessment,
-  onClassChange,
-  onAvailableFromChange,
-  onDueDateChange,
-  onPublish,
-  onOpenStudent
-}: {
-  assessments: TeacherAvaliaAssessment[];
-  classes: TeacherClassSummary[];
-  mode: TeacherAvaliaMode;
-  filter: TeacherAvaliaFilter;
-  selectedAssessment: TeacherAvaliaAssessment;
-  selectedClass: TeacherClassSummary;
-  availableFrom: string;
-  dueDate: string;
-  published: boolean;
-  selectedStudent: TeacherAvaliaStudent | null;
-  onModeChange: (mode: TeacherAvaliaMode) => void;
-  onFilterChange: (filter: TeacherAvaliaFilter) => void;
-  onOpenAssessment: (assessment: TeacherAvaliaAssessment, mode: TeacherAvaliaMode) => void;
-  onClassChange: (className: string) => void;
-  onAvailableFromChange: (value: string) => void;
-  onDueDateChange: (value: string) => void;
-  onPublish: () => void;
-  onOpenStudent: (student: TeacherAvaliaStudent) => void;
+function TeacherResourceNotice({ title, body, loading = false, onRetry }: { title: string; body: string; loading?: boolean; onRetry?: () => void }) {
+  return <View style={styles.teacherAvaliaDetailCard} accessibilityLiveRegion="polite">
+    {loading ? <ActivityIndicator color={colors.brandDark} accessibilityLabel={title} /> : null}
+    <Text style={styles.teacherCommunicationFieldLabel}>{title}</Text>
+    <Text style={styles.teacherAvaliaDetailText}>{body}</Text>
+    {onRetry ? <Pressable accessibilityRole="button" accessibilityLabel={`Tentar novamente: ${title}`} onPress={onRetry} style={[styles.teacherCommunicationSecondaryButton, { marginTop: spacing.sm, minHeight: 44 }]}>
+      <Text style={styles.teacherCommunicationSecondaryText}>Tentar novamente</Text>
+    </Pressable> : null}
+  </View>;
+}
+
+function TeacherAvaliaScreen({ classes, assessments, selectedClassId, onClassChange, auxiliary }: {
+  classes: TeacherResource<TeacherMobileClass[]>;
+  assessments: TeacherResource<TeacherAssessmentAssignment[]>;
+  selectedClassId: string;
+  onClassChange: (id: string) => void;
+  auxiliary: { label: string; resource: TeacherResource<unknown> }[];
 }) {
-  if (mode === "detail") {
-    return <TeacherAvaliaDetail assessment={selectedAssessment} onBack={() => onModeChange("list")} onApply={() => onModeChange("apply")} />;
-  }
+  const [filter, setFilter] = useState<TeacherAvaliaFilter>("Todas");
+  const [detail, setDetail] = useState<{ classId: string; assignmentId: string } | null>(null);
+  const selectedClass = classes.data?.find((item) => item.id === selectedClassId) ?? classes.data?.[0] ?? null;
+  const classId = selectedClass?.id;
+  const rows = (assessments.data ?? []).filter((item) => item.classId === classId);
+  const selectedAssessment = assessments.status === "ready" && classes.status === "ready" && detail && detail.classId === classId
+    ? rows.find((item) => item.id === detail.assignmentId) : null;
+  const context = classes.status === "loading" ? "Carregando turmas…" : classes.status === "error" ? "Turmas indisponíveis" : selectedClass ? `Turma selecionada: ${selectedClass.name}` : "Nenhuma turma vinculada";
+  const ready = classes.status === "ready" && assessments.status === "ready" && Boolean(selectedClass);
+  const available = rows.filter((item) => mapTeacherAssessmentStatus(item.status) === "Disponível");
+  const inProgress = rows.filter((item) => mapTeacherAssessmentStatus(item.status) === "Em andamento");
+  const completed = rows.filter((item) => mapTeacherAssessmentStatus(item.status) === "Encerrada");
+  const visible = rows.filter((item) => filter === "Todas" ||
+    (filter === "Disponíveis" && mapTeacherAssessmentStatus(item.status) === "Disponível") ||
+    (filter === "Aplicadas" && mapTeacherAssessmentStatus(item.status) === "Em andamento") ||
+    (filter === "Concluídas" && mapTeacherAssessmentStatus(item.status) === "Encerrada"));
 
-  if (mode === "apply") {
-    return (
-      <TeacherAvaliaApply
-        assessment={selectedAssessment}
-        classes={classes}
-        selectedClass={selectedClass}
-        availableFrom={availableFrom}
-        dueDate={dueDate}
-        onBack={() => onModeChange("detail")}
-        onClassChange={onClassChange}
-        onAvailableFromChange={onAvailableFromChange}
-        onDueDateChange={onDueDateChange}
-        onReview={() => onModeChange("review")}
-      />
-    );
-  }
+  // Invalidated detail cannot reappear after a failed refresh or class change.
+  useEffect(() => { setDetail(null); setFilter("Todas"); }, [classId, classes.status, assessments.status]);
 
-  if (mode === "review") {
-    return (
-      <TeacherAvaliaReview
-        assessment={selectedAssessment}
-        selectedClass={selectedClass}
-        availableFrom={availableFrom}
-        dueDate={dueDate}
-        onBack={() => onModeChange("apply")}
-        onPublish={onPublish}
-      />
-    );
-  }
-
-  if (mode === "published") {
-    return (
-      <TeacherAvaliaPublished
-        assessment={selectedAssessment}
-        selectedClass={selectedClass}
-        availableFrom={availableFrom}
-        dueDate={dueDate}
-        published={published}
-        onBack={() => onModeChange("list")}
-        onResults={() => onModeChange("results")}
-      />
-    );
-  }
-
-  if (mode === "results") {
-    return <TeacherAvaliaResults assessment={selectedAssessment} selectedClass={selectedClass} onBack={() => onModeChange("list")} onOpenStudent={onOpenStudent} />;
-  }
-
-  if (mode === "student" && selectedStudent) {
-    return <TeacherAvaliaStudentResult student={selectedStudent} assessment={selectedAssessment} onBack={() => onModeChange("results")} />;
-  }
-
-  const available = assessments.filter((item) => item.state === "Disponível");
-  const applied = assessments.filter((item) => item.state === "Aplicada" || item.state === "Em andamento");
-  const inProgress = assessments.filter((item) => item.state === "Em andamento");
-  const completed = assessments.filter((item) => item.state === "Encerrada");
-  const visibleAssessments = assessments.filter((item) => {
-    if (filter === "Disponíveis") return item.state === "Disponível";
-    if (filter === "Aplicadas") return item.state === "Aplicada" || item.state === "Em andamento";
-    if (filter === "Concluídas") return item.state === "Encerrada";
-    return true;
-  });
-
-  return (
-    <View>
-      <TeacherModuleHero title="Avalia+" intro="Aplique avaliações e acompanhe os resultados das suas turmas." icon={{ source: teacherHomeIcons.avalia, side: "right" }}>
-        <Text style={styles.teacherAvaliaContext}>Turma selecionada: {selectedClass.className}</Text>
-      </TeacherModuleHero>
-
+  return <View>
+    <TeacherModuleHero title="Avalia+" intro="Consulte as avaliações atribuídas às suas turmas." icon={{ source: teacherHomeIcons.avalia, side: "right" }}>
+      <Text style={styles.teacherAvaliaContext}>{context}</Text>
+    </TeacherModuleHero>
+    {classes.status === "loading" ? <TeacherResourceNotice title="Carregando turmas" body="Aguarde a consulta das turmas vinculadas." loading /> : null}
+    {classes.status === "error" ? <TeacherResourceNotice title="Não foi possível carregar as turmas" body="As avaliações não serão associadas a uma turma até a consulta ser concluída." onRetry={classes.retry} /> : null}
+    {classes.status === "ready" && !selectedClass ? <TeacherResourceNotice title="Nenhuma turma vinculada" body="A consulta não retornou turmas disponíveis para esta conta." onRetry={classes.retry} /> : null}
+    {classes.status === "ready" && selectedClass ? <>
+      <SectionHeader title="Turmas" />
+      <View style={styles.teacherAvaliaFilterRow}>
+        {(classes.data ?? []).map((item) => <Pressable key={item.id} accessibilityRole="button"
+          accessibilityLabel={`Selecionar turma ${item.name} · ${item.stage} · ${item.schedule}`}
+          accessibilityState={{ selected: item.id === classId }}
+          onPress={() => { setDetail(null); setFilter("Todas"); onClassChange(item.id); }}
+          style={[styles.teacherAvaliaFilterChip, { minHeight: 44, justifyContent: "center" }, item.id === classId && styles.teacherAvaliaFilterChipActive]}>
+          <Text style={[styles.teacherAvaliaFilterText, item.id === classId && styles.teacherAvaliaFilterTextActive]}>{item.name} · {item.stage} · {item.schedule}</Text>
+        </Pressable>)}
+      </View>
+    </> : null}
+    {assessments.status === "loading" ? <TeacherResourceNotice title="Carregando avaliações" body="Os contadores aparecerão quando a consulta terminar." loading /> : null}
+    {assessments.status === "error" ? <TeacherResourceNotice title="Não foi possível carregar as avaliações" body="Isso não significa que não existem avaliações. Tente consultar novamente." onRetry={assessments.retry} /> : null}
+    {ready && selectedAssessment ? <>
+      <View style={styles.teacherAvaliaDetailCard}>
+        <Text style={styles.teacherAvaliaSubject}>{selectedAssessment.subject}</Text>
+        <Text style={styles.teacherAvaliaTitle}>{selectedAssessment.title}</Text>
+        <Text style={styles.teacherAvaliaDetailText}>{selectedAssessment.description || "Descrição não informada."}</Text>
+        <Text style={styles.teacherAvaliaDetailText}>Status da atribuição: {mapTeacherAssessmentStatus(selectedAssessment.status)}</Text>
+        <Text style={styles.teacherAvaliaDetailText}>Questões, habilidades e resultados ainda não estão disponíveis nesta visão.</Text>
+        <Text style={styles.teacherAvaliaDetailText}>Aplicar ou publicar avaliações não está disponível neste app.</Text>
+      </View>
+      <Pressable accessibilityRole="button" accessibilityLabel="Voltar para Avalia+" onPress={() => setDetail(null)} style={styles.teacherCommunicationSecondaryButton}>
+        <Text style={styles.teacherCommunicationSecondaryText}>Voltar</Text>
+      </Pressable>
+    </> : ready ? <>
       <View style={styles.teacherAvaliaSummaryGrid}>
         <TeacherAvaliaSummaryCard label="Disponíveis" value={available.length} />
-        <TeacherAvaliaSummaryCard label="Aplicadas" value={applied.length} />
+        <TeacherAvaliaSummaryCard label="Aplicadas" value={inProgress.length} />
         <TeacherAvaliaSummaryCard label="Em andamento" value={inProgress.length} />
-        <TeacherAvaliaSummaryCard label="Concluídas" value={completed.length} />
+        <TeacherAvaliaSummaryCard label="Encerradas" value={completed.length} />
       </View>
-
+      <Text style={[styles.teacherAvaliaDetailText, { marginBottom: spacing.md }]}>Contagens por status da atribuição. Notas, participação e resultados dos alunos ainda não estão disponíveis nesta visão.</Text>
       <SectionHeader title="Filtros" />
       <View style={styles.teacherAvaliaFilterRow}>
-        {(["Todas", "Disponíveis", "Aplicadas", "Concluídas"] as const).map((item) => (
-          <Pressable
-            key={item}
-            accessibilityRole="button"
-            accessibilityLabel={`Filtrar ${item}`}
-            onPress={() => onFilterChange(item)}
-            style={[styles.teacherAvaliaFilterChip, filter === item ? styles.teacherAvaliaFilterChipActive : null]}
-          >
-            <Text style={[styles.teacherAvaliaFilterText, filter === item ? styles.teacherAvaliaFilterTextActive : null]}>{item}</Text>
-          </Pressable>
-        ))}
+        {(["Todas", "Disponíveis", "Aplicadas", "Concluídas"] as const).map((item) => <Pressable key={item} accessibilityRole="button" accessibilityLabel={`Filtrar ${item === "Concluídas" ? "Encerradas" : item}`} accessibilityState={{ selected: filter === item }} onPress={() => setFilter(item)}
+          style={[styles.teacherAvaliaFilterChip, { minHeight: 44, justifyContent: "center" }, filter === item && styles.teacherAvaliaFilterChipActive]}>
+          <Text style={[styles.teacherAvaliaFilterText, filter === item && styles.teacherAvaliaFilterTextActive]}>{item === "Concluídas" ? "Encerradas" : item}</Text>
+        </Pressable>)}
       </View>
-
       <SectionHeader title="Avaliações" />
       <View style={styles.teacherAvaliaList}>
-        {visibleAssessments.map((assessment) => (
-          <TeacherAvaliaCard
-            key={assessment.id}
-            assessment={assessment}
-            onPress={() => onOpenAssessment(assessment, assessment.state === "Disponível" ? "detail" : "results")}
-          />
-        ))}
-        {visibleAssessments.length === 0 ? <EmptyState title="Nenhuma avaliação publicada" body="Quando houver avaliação para suas turmas, ela aparecerá aqui." /> : null}
+        {visible.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Abrir avaliação ${item.title}`} onPress={() => setDetail({ classId: item.classId, assignmentId: item.id })} style={styles.teacherAvaliaCard}>
+          <View style={styles.teacherAvaliaCardTop}>
+            <View style={styles.teacherAvaliaMark}><Text style={styles.teacherAvaliaMarkText}>A+</Text></View>
+            <View style={styles.teacherAvaliaCardCopy}>
+              <Text style={styles.teacherAvaliaSubject}>{item.subject}</Text>
+              <Text style={styles.teacherAvaliaTitle}>{item.title}</Text>
+              <Text style={styles.teacherAvaliaMeta}>{selectedClass?.name}</Text>
+            </View>
+            <View style={styles.teacherAvaliaStatePill}><Text style={styles.teacherAvaliaStateText}>{mapTeacherAssessmentStatus(item.status)}</Text></View>
+          </View>
+          <Text style={styles.teacherAvaliaActionText}>Ver informações</Text>
+        </Pressable>)}
+        {!visible.length ? <TeacherResourceNotice title={rows.length ? "Nenhuma avaliação neste filtro" : "Nenhuma avaliação para esta turma"} body={rows.length ? "Escolha outro filtro para ver as atribuições carregadas." : "A consulta foi concluída e não retornou atribuições para a turma selecionada."} onRetry={rows.length ? undefined : assessments.retry} /> : null}
       </View>
-    </View>
-  );
+    </> : null}
+    {auxiliary.filter(({ resource }) => resource.status === "error").map(({ label, resource }) => <TeacherResourceNotice key={label} title={`Falha na consulta: ${label}`} body="Esta falha não impede a consulta das avaliações carregadas." onRetry={resource.retry} />)}
+  </View>;
 }
 
 function TeacherAvaliaSummaryCard({ label, value }: { label: string; value: number }) {
@@ -7513,6 +7347,8 @@ function TeacherTrackingScreen({
   diaryRecent,
   overview,
   alerts,
+  overviewResource,
+  alertsResource,
   onClassChange,
   onOpenStudent,
   onBackToOverview,
@@ -7526,23 +7362,24 @@ function TeacherTrackingScreen({
   diaryCurrent: TeacherDiaryCurrent;
   diaryRecent: TeacherDiaryEntry[];
   overview: TeacherTrackingOverview | null;
+  overviewResource: TeacherResource<TeacherTrackingOverview>;
+  alertsResource: TeacherResource<RealTeacherTrackingAlert[]>;
   alerts: RealTeacherTrackingAlert[];
   onClassChange: (className: string) => void;
   onOpenStudent: (student: TeacherClassStudent) => void;
   onBackToOverview: () => void;
   onOpen: (key: ModuleKey) => void;
 }) {
-  const classAssessments = avaliaAssessments.filter((item) => item.className === selectedClass.className);
-  const recentAssessment = classAssessments[0] ?? avaliaAssessments.find((item) => item.state !== "Disponível") ?? avaliaAssessments[0];
+  const classAssessments = avaliaAssessments.filter((item) => item.classId === selectedClass.id);
+  const recentAssessment = classAssessments[0];
   const attendancePercent = overview ? `${Math.round(overview.attendanceRate)}%` : "Em aberto";
   const attendanceText = overview ? "Resumo dos últimos registros" : "Sem indicador publicado";
   const participation = recentAssessment?.assigned ? `${Math.round((recentAssessment.completed / recentAssessment.assigned) * 100)}%` : "Em aberto";
-  const diaryEntry = diaryRecent.find((item) => item.className === selectedClass.className) ?? diaryRecent[0];
-  const skills = recentAssessment?.skills ?? avaliaAssessments[0]?.skills ?? [];
+  const skills = recentAssessment?.skills ?? [];
   const followStudents = selectedClass.studentsList.slice(0, 3);
-  const assessmentAverage = overview && overview.assessmentAverage > 0 ? `${Math.round(overview.assessmentAverage)}%` : recentAssessment?.average || "Em aberto";
-  const assessmentParticipation = overview && overview.assessmentParticipation > 0 ? `${Math.round(overview.assessmentParticipation)}%` : participation;
-  const diaryEntriesCount = overview?.diaryEntriesCount ?? diaryRecent.filter((item) => item.className === selectedClass.className).length;
+  const assessmentAverage = overview !== null ? `${Math.round(overview.assessmentAverage)}%` : "Indisponível";
+  const assessmentParticipation = overview !== null ? `${Math.round(overview.assessmentParticipation)}%` : "Indisponível";
+  const diaryEntriesCount = overview?.diaryEntriesCount ?? "—";
 
   if (mode === "student" && selectedStudent) {
     const focusReason = selectedStudent.state.includes("pendente")
@@ -7591,13 +7428,13 @@ function TeacherTrackingScreen({
       <SectionHeader title="Turma" />
       <View style={styles.teacherAvaliaFilterRow}>
         {classes.map((item) => {
-          const active = item.className === selectedClass.className;
+          const active = item.id === selectedClass.id;
           return (
             <Pressable
-              key={item.className}
+              key={item.id || item.className}
               accessibilityRole="button"
-              accessibilityLabel={`Selecionar turma ${item.className}`}
-              onPress={() => onClassChange(item.className)}
+              accessibilityLabel={`Selecionar acompanhamento ${item.className} · ${item.schedule}`}
+              onPress={() => onClassChange(item.id || "")}
               style={[styles.teacherAvaliaFilterChip, active && styles.teacherAvaliaFilterChipActive]}
             >
               <Text style={[styles.teacherAvaliaFilterText, active && styles.teacherAvaliaFilterTextActive]}>{item.className}</Text>
@@ -7606,6 +7443,8 @@ function TeacherTrackingScreen({
         })}
       </View>
 
+      {overviewResource.status === "loading" ? <TeacherResourceNotice title="Carregando indicadores" body="Aguarde os indicadores da turma selecionada." loading /> : null}
+      {overviewResource.status === "error" ? <TeacherResourceNotice title="Indicadores indisponíveis" body="Não foi possível consultar os indicadores desta turma." onRetry={overviewResource.retry} /> : null}
       <View style={styles.teacherTrackingSummaryCard}>
         <Text style={styles.teacherCommunicationFieldLabel}>Resumo da turma</Text>
         <Text style={styles.teacherTrackingSummaryTitle}>{selectedClass.className}</Text>
@@ -7614,14 +7453,14 @@ function TeacherTrackingScreen({
           <TeacherTrackingMetric label="Presença" value={attendancePercent} />
           <TeacherTrackingMetric label="Avalia+" value={assessmentAverage} />
           <TeacherTrackingMetric label="Participação" value={assessmentParticipation} />
-          <TeacherTrackingMetric label="Habilidades" value={`${skills.length}`} />
+          <TeacherTrackingMetric label="Habilidades" value="Indisponível" />
         </View>
       </View>
 
       <View style={styles.teacherTrackingBlockGrid}>
-        <TeacherTrackingBlock title="Frequência" value={attendancePercent} body={`${attendanceText}. Tendência estável nos últimos encontros.`} action="Ver frequência" onPress={() => onOpen("attendance")} />
+        <TeacherTrackingBlock title="Frequência" value={attendancePercent} body={attendanceText} action="Ver frequência" onPress={() => onOpen("attendance")} />
         <TeacherTrackingBlock title="Avalia+" value={assessmentAverage} body={`${recentAssessment?.title ?? "Sem avaliação publicada"} · participação ${assessmentParticipation}.`} action="Ver resultados" onPress={() => onOpen("avalia")} />
-        <TeacherTrackingBlock title="Diário de Classe" value={`${diaryEntriesCount}`} body={`Último registro: ${diaryEntry?.title ?? diaryCurrent.planned}.`} action="Abrir Diário" onPress={() => onOpen("diary")} />
+        <TeacherTrackingBlock title="Diário de Classe" value={`${diaryEntriesCount}`} body="Consulte os registros no Diário de Classe." action="Abrir Diário" onPress={() => onOpen("diary")} />
       </View>
 
       <SectionHeader title="Habilidades" />
@@ -7657,7 +7496,9 @@ function TeacherTrackingScreen({
         {alerts.map((alert) => (
           <TeacherTrackingAlert key={alert.id} title={alert.title} body={alert.body} />
         ))}
-        {alerts.length === 0 ? <EmptyState title="Nenhum alerta no período" body="Quando houver algum ponto de atenção, ele aparecerá aqui." /> : null}
+        {alertsResource.status === "loading" ? <TeacherResourceNotice title="Carregando alertas" body="Aguarde os alertas da turma selecionada." loading /> : null}
+        {alertsResource.status === "error" ? <TeacherResourceNotice title="Alertas indisponíveis" body="Não foi possível consultar os alertas desta turma." onRetry={alertsResource.retry} /> : null}
+        {alertsResource.status === "ready" && alerts.length === 0 ? <EmptyState title="Nenhum alerta no período" body="Quando houver algum ponto de atenção, ele aparecerá aqui." /> : null}
       </View>
     </View>
   );
