@@ -1,3 +1,6 @@
+import { mapStudentAssessmentAssignments, type RpcAssessmentAssignmentsPayload, type StudentAssessmentAssignment } from "./assessments";
+export type { StudentAssessmentAssignment } from "./assessments";
+
 export type MobileSession = {
   accessToken: string;
   refreshToken?: string;
@@ -233,23 +236,6 @@ export type InstitutionalActivity = {
   startedAt: string | null;
   completedAt: string | null;
   createdAt: string | null;
-};
-
-export type StudentAssessmentAssignment = {
-  id: string;
-  assessmentId: string;
-  title: string;
-  description: string;
-  component: string | null;
-  schoolYear: string | null;
-  status: string;
-  availableFrom: string | null;
-  availableUntil: string | null;
-  questionCount: number;
-  attemptStatus: string | null;
-  answeredCount: number;
-  submittedAt: string | null;
-  scorePercent: number | null;
 };
 
 export type TeacherMobileClass = {
@@ -677,39 +663,6 @@ type RpcInstitutionalActivityRow = {
   started_at: string | null;
   completed_at: string | null;
   created_at: string | null;
-};
-
-type RpcAssessmentAssignment = {
-  id?: string | null;
-  assignment_id?: string | null;
-  assessment_id?: string | null;
-  status?: string | null;
-  available_from?: string | null;
-  available_until?: string | null;
-  assessment?: {
-    id?: string | null;
-    title?: string | null;
-    description?: string | null;
-    component?: string | null;
-    school_year?: string | null;
-    question_count?: number | null;
-    questions?: unknown;
-  } | null;
-};
-
-type RpcAssessmentAttempt = {
-  assignment_id?: string | null;
-  assessment_id?: string | null;
-  status?: string | null;
-  answered_count?: number | null;
-  submitted_at?: string | null;
-  score_percent?: number | null;
-  responses?: unknown;
-};
-
-type RpcAssessmentAssignmentsPayload = {
-  assignments?: RpcAssessmentAssignment[];
-  attempts?: RpcAssessmentAttempt[];
 };
 
 type RpcTeacherMobileClassRow = {
@@ -1241,9 +1194,7 @@ export async function getInstitutionalActivity(session: MobileSession, activityI
 
 export async function getStudentAssessmentAssignments(session: MobileSession): Promise<StudentAssessmentAssignment[]> {
   const payload = await rpc<RpcAssessmentAssignmentsPayload>(session, "student_list_assessment_assignments", {});
-  const assignments = Array.isArray(payload.assignments) ? payload.assignments : [];
-  const attempts = Array.isArray(payload.attempts) ? payload.attempts : [];
-  return assignments.map((assignment) => mapAssessmentAssignment(assignment, attempts));
+  return mapStudentAssessmentAssignments(payload);
 }
 
 export async function getTeacherMobileClasses(session: MobileSession): Promise<TeacherMobileClass[]> {
@@ -1706,32 +1657,6 @@ function mapInstitutionalActivityRow(row: RpcInstitutionalActivityRow): Institut
     startedAt: row.started_at,
     completedAt: row.completed_at,
     createdAt: row.created_at
-  };
-}
-
-function mapAssessmentAssignment(assignment: RpcAssessmentAssignment, attempts: RpcAssessmentAttempt[]): StudentAssessmentAssignment {
-  const assessment = assignment.assessment || {};
-  const assignmentId = assignment.id || assignment.assignment_id || "";
-  const assessmentId = assignment.assessment_id || assessment.id || "";
-  const attempt = attempts.find((item) => item.assignment_id === assignmentId || item.assessment_id === assessmentId) || null;
-  const questionCount = nullableNumber(assessment.question_count) ?? countUnknownArray(assessment.questions);
-  const answeredCount = nullableNumber(attempt?.answered_count) ?? countUnknownArray(attempt?.responses);
-
-  return {
-    id: assignmentId || assessmentId,
-    assessmentId,
-    title: assessment.title || "Avaliação",
-    description: assessment.description || "",
-    component: assessment.component ?? null,
-    schoolYear: assessment.school_year ?? null,
-    status: assignment.status || "available",
-    availableFrom: assignment.available_from ?? null,
-    availableUntil: assignment.available_until ?? null,
-    questionCount,
-    attemptStatus: attempt?.status ?? null,
-    answeredCount,
-    submittedAt: attempt?.submitted_at ?? null,
-    scorePercent: nullableNumber(attempt?.score_percent)
   };
 }
 

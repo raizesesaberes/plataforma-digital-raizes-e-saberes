@@ -1,3 +1,4 @@
+import { assessmentActionLabel, assessmentSection, normalizeAssessmentState } from "./services/assessments";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Feather } from "@expo/vector-icons";
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions, type ImageSourcePropType } from "react-native";
@@ -624,7 +625,7 @@ function fundamentalActivityIcon() {
 
 function fundamentalAssessmentIcon(label?: string) {
   const value = (label ?? "").toLowerCase();
-  if (value.includes("conclu")) return teacherCatalogIcons.trophy;
+  if (value.includes("conclu") || value.includes("encerr")) return teacherCatalogIcons.trophy;
   if (value.includes("andamento")) return teacherCatalogIcons.notebookPencil;
   return teacherCatalogIcons.growthChart;
 }
@@ -4031,9 +4032,9 @@ function FundamentalAvaliaScreen({ session }: { session: MobileSession | null })
     };
   }, [session]);
 
-  const available = assessments.filter((assessment) => normalizeAssessmentState(assessment) === "Disponível");
-  const inProgress = assessments.filter((assessment) => normalizeAssessmentState(assessment) === "Em andamento");
-  const completed = assessments.filter((assessment) => normalizeAssessmentState(assessment) === "Concluída");
+  const available = assessments.filter((assessment) => assessmentSection(assessment) === "available");
+  const inProgress = assessments.filter((assessment) => assessmentSection(assessment) === "in_progress");
+  const completed = assessments.filter((assessment) => assessmentSection(assessment) === "closed");
 
   return (
     <View>
@@ -4042,7 +4043,7 @@ function FundamentalAvaliaScreen({ session }: { session: MobileSession | null })
       <View style={styles.assessmentSummaryGrid}>
         <AssessmentSummaryCard label="Disponíveis" value={available.length} />
         <AssessmentSummaryCard label="Em andamento" value={inProgress.length} />
-        <AssessmentSummaryCard label="Concluídas" value={completed.length} />
+        <AssessmentSummaryCard label="Encerradas" value={completed.length} />
       </View>
 
       {loading ? (
@@ -4059,7 +4060,7 @@ function FundamentalAvaliaScreen({ session }: { session: MobileSession | null })
         <>
           <FundamentalAssessmentSection title="Disponíveis" assessments={available} />
           <FundamentalAssessmentSection title="Em andamento" assessments={inProgress} />
-          <FundamentalAssessmentSection title="Concluídas" assessments={completed} />
+          <FundamentalAssessmentSection title="Encerradas" assessments={completed} />
         </>
       )}
     </View>
@@ -4124,17 +4125,10 @@ function FundamentalAssessmentCard({ assessment }: { assessment: FundamentalAsse
       </View>
       {state === "Em andamento" ? <FundamentalProgress value={progress} /> : null}
       <View style={styles.assessmentAction}>
-        <Text style={styles.assessmentActionText}>{state === "Concluída" ? "Resultado disponível" : "Aguardar orientação"}</Text>
+        <Text style={styles.assessmentActionText}>{assessmentActionLabel(assessment)}</Text>
       </View>
     </View>
   );
-}
-
-function normalizeAssessmentState(assessment: FundamentalAssessmentItem) {
-  const status = `${assessment.attemptStatus || assessment.status}`.toLowerCase();
-  if (status === "completed" || status === "submitted" || status === "concluida" || status === "concluída") return "Concluída";
-  if (status === "in_progress" || status === "started" || status === "em_andamento" || assessment.answeredCount > 0) return "Em andamento";
-  return "Disponível";
 }
 
 function formatAssessmentAvailability(assessment: FundamentalAssessmentItem) {
