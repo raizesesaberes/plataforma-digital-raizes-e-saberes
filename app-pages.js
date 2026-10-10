@@ -14070,6 +14070,8 @@ const adminLoadSchoolContractOverview = async (schoolId, { force = false } = {})
   adminOperationalState.contractLoading[schoolId] = promise;
   try {
     const overview = await promise;
+    try { overview.content_catalog = await readAllContentPages((offset, limit) => adminSchoolContentRequest("admin_list_school_content_catalog", { p_school_id: schoolId, p_offset: offset, p_limit: limit })); }
+    catch (error) { overview.content_catalog = { status: "ERROR", error: error.message }; }
     adminOperationalState.contractOverviews = {
       ...(adminOperationalState.contractOverviews || {}),
       [schoolId]: overview,
@@ -14080,21 +14082,20 @@ const adminLoadSchoolContractOverview = async (schoolId, { force = false } = {})
   }
 };
 
-const adminInvokeSetTenantContentModule = async ({ entitlementId, moduleCode, enabled }) => {
+const adminInvokeSetTenantContentModule = async ({ schoolId, entitlementId, moduleCode, enabled, previousEnabled, reason }) => {
   await ensureAdminSupabaseConfig();
   const client = createSupabaseRestClient();
-  const result = await client.request("rpc/admin_set_tenant_content_module", "", {
+  const result = await client.request("rpc/admin_set_school_content_module_reviewed", "", {
     requireAuthenticated: true,
     allowedRoles: ["admin"],
     method: "POST",
     body: JSON.stringify({
+      p_school_id: schoolId,
       p_entitlement_id: entitlementId,
       p_module_code: moduleCode,
       p_enabled: Boolean(enabled),
-      p_metadata: {
-        source: "admin_school_contract_ui",
-        reason: "Macro V1 contracted content module toggle",
-      },
+      p_previous_enabled: Boolean(previousEnabled),
+      p_reason: reason,
     }),
   });
   return normalizeRpcJson(result);
@@ -14108,18 +14109,19 @@ const adminContractModuleTone = (module = {}) => {
 };
 
 const renderAdminContractModule = (module = {}, entitlement = {}) => {
-  const canToggle = entitlement.source !== "INHERITED_NETWORK";
+  const questionOnly = Array.isArray(module.content_types) && module.content_types.length === 1 && module.content_types[0] === "QUESTION";
+  const canToggle = questionOnly && entitlement.source !== "INHERITED_NETWORK";
   const checked = module.enabled !== false;
   return `
     <article class="admin-contract-module is-${adminContractModuleTone(module)}">
       <div>
         <strong>${printableEscape(module.name || module.code || "Módulo")}</strong>
         <span>${printableEscape(module.requirement_level || "CONTRATADO")} · ${printableEscape(module.scope || "ESCOLA")}</span>
-        <small>${printableEscape(module.description || "")}</small>
+        <small>${printableEscape(module.description || "")}${questionOnly ? "" : " · Somente informativo nesta etapa; integração e proteção pendentes."}</small>
       </div>
       <div class="admin-contract-module-side">
         <b>${Number(module.coverage_count || 0)} itens</b>
-        <label class="admin-contract-switch" aria-label="Alternar módulo contratado">
+        <label class="admin-contract-switch" aria-label="Revisar alteração do módulo contratado">
           <input
             type="checkbox"
             data-admin-contract-module-toggle
@@ -14133,6 +14135,199 @@ const renderAdminContractModule = (module = {}, entitlement = {}) => {
       </div>
     </article>
   `;
+};
+
+const readAllContentPages = async (requestPage) => {
+  let first = null;
+  const items = [];
+  for (let offset = 0; ;) {
+    const page = await requestPage(offset, 100);
+    if (page?.status !== "PASS" || !Array.isArray(page.items) || !Number.isInteger(page.total) || page.total < 0) throw new Error("Resposta inválida do catálogo paginado.");
+    if (!first) first = page;
+    else if (page.revision !== first.revision || page.total !== first.total) throw new Error("O catálogo mudou durante a consulta. Recarregue para revisar os dados atuais.");
+    if (page.items.length > 100 || (page.items.length === 0 && offset < page.total)) throw new Error("Consulta incompleta do catálogo.");
+    items.push(...page.items);
+    offset += page.items.length;
+    if (offset >= page.total) {
+      if (offset !== page.total) throw new Error("Contagem inconsistente do catálogo.");
+      return { ...first, items };
+    }
+  }
+};
+
+const adminSchoolContentLabels = {
+  PRIVATE_DELIVERY_AND_MAPPING_PENDING: "Sem concessão nesta etapa: proteção da entrega e mapeamento pendentes",
+  ALLOWED: "Liberado pelo contrato", BLOCKED: "Bloqueado nesta escola",
+  ELIGIBLE_NOT_GRANTED: "Elegível — ainda não liberado", EDITORIAL_PENDING: "Pendência editorial",
+  SOURCE_ID_CONFLICT: "Identificador de origem ambíguo — integração pendente",
+  DELIVERY_REVIEW_PENDING: "Proteção da entrega ainda não validada",
+  CONSUMER_NOT_INTEGRATED: "Integração de consumo pendente", EXTERNAL_BLOCK: "Bloqueio ou embargo externo",
+  GRADE_PENDING: "Ano/faixa escolar não classificado", CONTRACT_OR_AGE_INELIGIBLE: "Contrato ou faixa escolar não elegível",
+  CATALOG_MAPPING_PENDING: "Vínculo ao catálogo comercial pendente",
+};
+
+const renderAdminSchoolContentCatalog = (catalog = {}) => {
+  if (catalog.status !== "PASS") return `<div class="admin-empty-note" role="alert">Não foi possível consultar o catálogo de acessos. ${printableEscape(catalog.error || "Backend de configuração indisponível.")} Nenhuma permissão foi alterada.</div>`;
+  const items = Array.isArray(catalog.items) ? catalog.items : [];
+  const legacy = buildAdminContentCatalog().filter((local) => !items.some((item) => {
+    const type = ({ discovery: "experience", printable: "activity" })[item.resource_kind] || item.resource_kind;
+    return type === local.type && String(item.legacy_id || "") === String(local.id || "");
+  }));
+  return `<form data-school-content-form data-school-id="${printableEscape(catalog.school_id)}" data-revision="${printableEscape(catalog.revision)}">
+    <h4>Catálogo para configuração da escola</h4>
+    <p>Todos os registros editoriais e comerciais consultados aparecem abaixo. Visibilidade administrativa não concede acesso. Cada alteração afeta somente esta escola, inclusive quando o contrato pertence a uma rede.</p>
+    <p>${items.length} registros do banco consultado · ${items.filter((i) => i.state === "ALLOWED").length} com direito ativo · ${items.filter((i) => i.editorial_status === "PUBLISHED").length} publicados no catálogo comercial.</p>
+    ${catalog.feature_enabled ? "" : `<p role="status">O consumo de questões está desativado para esta escola. Salvar a configuração não ativa essa funcionalidade.</p>`}
+    ${catalog.tenant_id ? "" : `<p>Tenant ainda não preparado. Prepará-lo não cria contratos, direitos, usuários nem ativa a escola.</p><button type="button" data-school-content-prepare>Preparar configuração da escola</button>`}
+    ${(catalog.scope_options || []).length ? `<fieldset><legend>Unidades afetadas — seleção explícita</legend><p>A escola atual está incluída. Marque outras unidades somente para uma alteração conjunta da rede.</p>${catalog.scope_options.filter((target, index, all) => all.findIndex((other) => other.school_id === target.school_id) === index).map((target) => `<label><input type="checkbox" data-school-content-target value="${printableEscape(target.school_id)}" /> ${printableEscape(target.school_name)} · ${printableEscape(target.network_name)}</label>`).join("")}</fieldset>` : ""}
+    <label>Buscar no catálogo <input type="search" data-school-content-search placeholder="Título, tipo ou estado" /></label>
+    <div class="admin-table-wrap"><table><thead><tr><th>Conteúdo / origem</th><th>Ano / estado</th><th>Contrato para conceder</th><th>Acesso da escola</th></tr></thead><tbody>
+    ${items.map((item, index) => {
+      const enabled = (item.entitled === true || item.state === "ALLOWED" || item.external_allow === true) && !item.blocked && item.editorial_ready !== false;
+      const candidates = item.candidates || [];
+      const mutable = item.content_type === "QUESTION" && (enabled ? item.can_withdraw : item.can_grant);
+      return `<tr ${index >= 100 ? "hidden" : ""} data-school-content-row data-item-id="${printableEscape(item.id || "")}" data-title="${printableEscape(item.title || "Sem título")}" data-grade="${printableEscape(item.grade_name || "Não classificado")}" data-initial-enabled="${enabled}">
+        <td><strong>${printableEscape(item.title || "Sem título")}</strong><small>${printableEscape(item.content_type)} · ${printableEscape(item.source)}</small></td>
+        <td>${printableEscape(item.grade_name || "Não classificado")}<br>${printableEscape(adminSchoolContentLabels[item.state] || item.state)}${item.external_allow ? "<br>Existe exceção externa de liberação/piloto; revisão separada necessária." : ""}</td>
+        <td>${candidates.length ? `<select data-school-content-contract aria-label="Contrato para ${printableEscape(item.title || "conteúdo")}">${candidates.length > 1 ? '<option value="">Escolha o contrato</option>' : ""}${candidates.map((c) => `<option value="${printableEscape(c.contract_id + ":" + c.product_id)}">${printableEscape(c.contract_ref)} · ${printableEscape(c.product_name)} · até ${printableEscape(c.ends_at || "fim não definido")}</option>`).join("")}</select>` : "Necessário completar vínculo, classificação ou ajustar contrato"}</td>
+        <td><label><input type="checkbox" data-school-content-enabled ${enabled ? "checked" : ""} ${mutable ? "" : "disabled"} aria-label="Acesso a ${printableEscape(item.title || "conteúdo")}" /> ${mutable ? "Selecionar acesso" : "Informativo"}</label>${(catalog.scope_options || []).length ? `<select data-school-content-bulk-action data-actionable="${Boolean(item.content_type === "QUESTION" && item.id && (item.can_grant || item.can_withdraw || (item.blocked && item.question_item_id)))}" disabled aria-label="Ação nas unidades selecionadas para ${printableEscape(item.title || "conteúdo")}"><option value="">Ação na rede: manter</option><option value="grant" ${item.content_type === "QUESTION" && item.can_grant ? "" : "disabled"}>Conceder às unidades selecionadas</option><option value="withdraw" ${item.content_type === "QUESTION" && (item.can_withdraw || (item.blocked && item.question_item_id)) ? "" : "disabled"}>Retirar das unidades selecionadas</option></select>` : ""}</td>
+      </tr>`;
+    }).join("") || '<tr><td colspan="4">Nenhum registro editorial ou comercial retornado. Isto é diferente de uma falha de consulta.</td></tr>'}
+    </tbody></table></div>
+    <div><button type="button" data-school-content-page="-1" disabled>Anterior</button><span data-school-content-page-status>Página 1 · ${items.length} registros consultados</span><button type="button" data-school-content-page="1" ${items.length <= 100 ? "disabled" : ""}>Próxima</button></div>
+    <details><summary>Todos os produtos e módulos cadastrados: ${(catalog.products || []).length}</summary><ul>${(catalog.products || []).map((product) => `<li>${printableEscape(product.name)} · ${printableEscape(product.status)} · ${Number(product.catalog_count || 0)} itens vinculados · ${printableEscape((product.modules || []).join(", ") || "nenhum módulo vinculado")}</li>`).join("")}</ul><p>A presença de um produto não significa que ele foi contratado ou que seus itens estão publicados.</p></details>
+    <details><summary>Acervo carregado no navegador: ${legacy.length} registros locais, sem integração comercial confirmada</summary><p>Esses registros são informativos. Não se inferem publicação, contrato ou correspondência comercial pelo título.</p><ul>${legacy.map((i) => `<li>${printableEscape(i.title)} · ${printableEscape(i.type)} · ${printableEscape(i.segment || "faixa não informada")} — integração pendente</li>`).join("")}</ul></details>
+    <label>Motivo da alteração <textarea data-school-content-reason required minlength="5" maxlength="1000"></textarea></label>
+    <p>Concessões valem dentro da vigência do contrato selecionado e para o ano classificado. Retiradas bloqueiam o item nesta escola até nova revisão. Contratos e permissões de outras escolas não são editados.</p>
+    <button type="button" data-school-content-review>Revisar alterações</button>
+    <button type="button" data-school-content-cancel>Descartar seleção</button>
+    <div data-school-content-preview hidden></div>
+    <button type="submit" data-school-content-save hidden>Confirmar e salvar alterações revisadas</button>
+    <p role="status" data-school-content-status></p>
+  </form>`;
+};
+
+const adminApplySchoolContentPage = (form) => {
+  const query = form.querySelector("[data-school-content-search]").value.trim().toLocaleLowerCase("pt-BR");
+  const rows = Array.from(form.querySelectorAll("[data-school-content-row]"));
+  const matches = rows.filter((row) => row.textContent.toLocaleLowerCase("pt-BR").includes(query));
+  const pages = Math.max(1, Math.ceil(matches.length / 100));
+  const page = Math.min(pages - 1, Math.max(0, Number(form.dataset.page || 0)));
+  form.dataset.page = String(page);
+  rows.forEach((row) => { row.hidden = true; });
+  matches.slice(page * 100, (page + 1) * 100).forEach((row) => { row.hidden = false; });
+  form.querySelector("[data-school-content-page-status]").textContent = `Página ${page + 1} de ${pages} · ${matches.length} resultados em ${rows.length} registros consultados`;
+  form.querySelector('[data-school-content-page="-1"]').disabled = page === 0;
+  form.querySelector('[data-school-content-page="1"]').disabled = page + 1 >= pages;
+};
+
+const adminCollectSchoolContentChanges = (form) => Array.from(form.querySelectorAll("[data-school-content-row]")).flatMap((row) => {
+  const input = row.querySelector("[data-school-content-enabled]");
+  const bulkAction = form.querySelector("[data-school-content-target]:checked") ? row.querySelector("[data-school-content-bulk-action]")?.value : "";
+  const enabled = bulkAction ? bulkAction === "grant" : input?.checked;
+  if (!input || (!bulkAction && (input.disabled || enabled === (row.dataset.initialEnabled === "true")))) return [];
+  const [contractId, productId] = (row.querySelector("[data-school-content-contract]")?.value || "").split(":");
+  if (enabled && (!contractId || !productId)) throw new Error(`Escolha o contrato para ${row.dataset.title}.`);
+  return [{ content_item_id: row.dataset.itemId, enabled, ...(enabled ? { contract_id: contractId, product_id: productId } : {}) }];
+});
+
+const adminSchoolContentRequest = async (rpc, body) => {
+  await ensureAdminSupabaseConfig();
+  return normalizeRpcJson(await createSupabaseRestClient().request(`rpc/${rpc}`, "", {
+    requireAuthenticated: true, allowedRoles: ["admin"], method: "POST", body: JSON.stringify(body),
+  }));
+};
+
+const adminInvalidateSchoolContentReview = (form) => {
+  delete form.dataset.reviewed;
+  delete form.dataset.reviewedInput;
+  form.querySelector("[data-school-content-preview]").hidden = true;
+  form.querySelector("[data-school-content-save]").hidden = true;
+};
+
+// Delegated handlers survive the existing workspace render cycle.
+const adminBindSchoolContent = (workspace, refresh) => {
+  workspace.addEventListener("input", (event) => {
+    const form = event.target.closest?.("[data-school-content-form]");
+    if (!form) return;
+    if (event.target.matches("[data-school-content-search]")) {
+      form.dataset.page = "0"; adminApplySchoolContentPage(form);
+      return;
+    }
+    adminInvalidateSchoolContentReview(form);
+  });
+  workspace.addEventListener("change", (event) => {
+    const form = event.target.closest?.("[data-school-content-form]");
+    if (form) {
+      const networkSelected = Boolean(form.querySelector("[data-school-content-target]:checked"));
+      form.querySelectorAll("[data-school-content-bulk-action]").forEach((select) => { select.disabled = !networkSelected || select.dataset.actionable !== "true"; });
+      adminInvalidateSchoolContentReview(form);
+    }
+  });
+  workspace.addEventListener("click", async (event) => {
+    const form = event.target.closest?.("[data-school-content-form]");
+    if (!form) return;
+    const status = form.querySelector("[data-school-content-status]");
+    const pageButton = event.target.closest("[data-school-content-page]");
+    if (pageButton) { form.dataset.page = String(Number(form.dataset.page || 0) + Number(pageButton.dataset.schoolContentPage)); adminApplySchoolContentPage(form); return; }
+    if (event.target.closest("[data-school-content-cancel]")) {
+      form.reset(); form.dataset.page = "0"; adminApplySchoolContentPage(form); form.querySelectorAll("[data-school-content-bulk-action]").forEach((select) => { select.disabled = true; }); adminInvalidateSchoolContentReview(form); status.textContent = "Seleção descartada; nenhuma permissão foi alterada."; return;
+    }
+    if (event.target.closest("[data-school-content-review]")) {
+      try {
+        const changes = adminCollectSchoolContentChanges(form);
+        const reason = form.querySelector("[data-school-content-reason]").value.trim();
+        if (!changes.length) throw new Error("Selecione ao menos uma alteração.");
+        if (reason.length < 5) throw new Error("Informe o motivo com pelo menos cinco caracteres.");
+        const payload = { p_school_ids: [form.dataset.schoolId, ...Array.from(form.querySelectorAll("[data-school-content-target]:checked")).map((input) => input.value)], p_changes: changes, p_reason: reason };
+        const reviewButton = form.querySelector("[data-school-content-review]");
+        reviewButton.disabled = true;
+        let reviewed;
+        try { reviewed = await adminSchoolContentRequest("admin_preview_school_content_access", payload); }
+        finally { reviewButton.disabled = false; }
+        // Inputs may have changed while the read-only preview request was in flight.
+        const latest = { p_school_ids: [form.dataset.schoolId, ...Array.from(form.querySelectorAll("[data-school-content-target]:checked")).map((input) => input.value)], p_changes: adminCollectSchoolContentChanges(form), p_reason: form.querySelector("[data-school-content-reason]").value.trim() };
+        if (JSON.stringify(latest) !== JSON.stringify(payload)) throw new Error("A seleção mudou. Revise novamente.");
+        form.dataset.reviewedInput = JSON.stringify(payload);
+        form.dataset.reviewed = JSON.stringify(reviewed);
+        const preview = form.querySelector("[data-school-content-preview]");
+        preview.innerHTML = `<h5>Revisão das unidades selecionadas</h5><p>${printableEscape(reviewed.reason)}</p>${reviewed.schools.map((school) => `<article><strong>${printableEscape(school.school_name)}</strong><ul>${school.changes.map((c) => {
+          const row = school.before.find((i) => i.id === c.content_item_id);
+          const contract = (row.candidates || []).find((candidate) => candidate.contract_id === c.contract_id && candidate.product_id === c.product_id);
+          return `<li>${printableEscape(adminSchoolContentLabels[row.state] || row.state)} → ${c.enabled ? "Conceder" : "Retirar"}: ${printableEscape(row.title)} · ${printableEscape(row.grade_name || "Não classificado")} · ${c.enabled ? printableEscape(`${contract.contract_ref} · ${contract.product_name} · até ${contract.ends_at || "fim não definido"}`) : "bloqueio sem data de término, até revisão"}</li>`;
+        }).join("")}</ul></article>`).join("")}<p>Somente as unidades acima serão alteradas. O lote inteiro será revalidado no servidor ao salvar.</p>`;
+        preview.hidden = false; form.querySelector("[data-school-content-save]").hidden = false; status.textContent = "Revise a lista antes de confirmar.";
+      } catch (error) { status.textContent = error.message; }
+    }
+    const prepare = event.target.closest("[data-school-content-prepare]");
+    if (prepare) {
+      const reason = form.querySelector("[data-school-content-reason]").value.trim();
+      if (reason.length < 5) { status.textContent = "Informe o motivo da preparação."; return; }
+      if (!window.confirm("Preparar somente o tenant desta escola, sem criar direitos, ativar a escola ou alterar usuários?")) return;
+      prepare.disabled = true;
+      try { await adminSchoolContentRequest("admin_prepare_school_content", { p_school_id: form.dataset.schoolId, p_reason: reason }); await refresh(form.dataset.schoolId); }
+      catch (error) { status.textContent = error.message || "Falha ao preparar a escola."; prepare.disabled = false; }
+    }
+  });
+  workspace.addEventListener("submit", async (event) => {
+    const form = event.target.closest?.("[data-school-content-form]");
+    if (!form) return;
+    event.preventDefault();
+    const status = form.querySelector("[data-school-content-status]");
+    const button = form.querySelector("[data-school-content-save]");
+    if (!form.dataset.reviewed || button.disabled) { status.textContent = "Revise as alterações antes de salvar."; return; }
+    const payload = JSON.parse(form.dataset.reviewed);
+    const current = { p_school_ids: [form.dataset.schoolId, ...Array.from(form.querySelectorAll("[data-school-content-target]:checked")).map((input) => input.value)], p_changes: adminCollectSchoolContentChanges(form), p_reason: form.querySelector("[data-school-content-reason]").value.trim() };
+    if (JSON.stringify(current) !== form.dataset.reviewedInput) { adminInvalidateSchoolContentReview(form); status.textContent = "A seleção mudou. Revise novamente."; return; }
+    button.disabled = true;
+    try {
+      await adminSchoolContentRequest("admin_save_school_content_batch", { p_review: payload });
+      if (typeof adminOperationalState !== "undefined") payload.schools.forEach((school) => { delete adminOperationalState.contractOverviews[school.school_id]; });
+      status.textContent = "Alterações salvas. Atualizando a consulta...";
+      await refresh(form.dataset.schoolId);
+    } catch (error) { status.textContent = `${error.message || "Falha ao salvar"}. Recarregue a consulta antes de uma nova revisão.`; adminInvalidateSchoolContentReview(form); }
+    finally { button.disabled = false; }
+  });
 };
 
 const renderAdminSchoolContractedContent = (summary) => {
@@ -14202,9 +14397,10 @@ const renderAdminSchoolContractedContent = (summary) => {
           </article>
         `;
       }).join("") : `<div class="admin-empty-note">Nenhum produto ativo encontrado para esta escola. O resolver deve bloquear conteúdo comercial sem direito contratado.</div>`}
+      ${renderAdminSchoolContentCatalog(overview.content_catalog)}
       <div class="admin-contract-exception-note">
         <strong>Exceções por escola</strong>
-        <span>Liberações, pilotos, embargos e bloqueios item a item permanecem na aba “Exceções por escola”.</span>
+        <span>Exceções existentes são preservadas e informadas. Gerencie itens integrados pelo catálogo acima; a aba “Exceções por escola” permanece para itens legados ainda não integrados.</span>
       </div>
       <p data-admin-contract-status hidden></p>
     </section>
@@ -14445,7 +14641,7 @@ const renderAdminContentGovernanceConsole = () => {
     <section class="admin-board">
       <div class="admin-section-head"><h2>Acervo Mestre</h2><span>Visão por módulo</span></div>
       <div class="admin-content-module-grid">
-        ${canSeeQuestionBank ? renderAdminContentModuleCard({ title: "Banco de Questões", count: 205, countLabel: "questões", description: "Questões editoriais aprovadas, publicadas e em preparação.", status: "OPERACIONAL", icon: "clipboard", href: "banco-questoes.html?view=dashboard" }) : ""}
+        ${canSeeQuestionBank ? renderAdminContentModuleCard({ title: "Banco de Questões", count: "Consultar", countLabel: "acervo editorial", description: "O total editorial e os direitos contratados são consultados separadamente; não representam o mesmo conjunto.", status: "OPERACIONAL", icon: "clipboard", href: "banco-questoes.html?view=dashboard" }) : ""}
         ${renderAdminContentModuleCard({ title: "Livros", count: totals.book || 0, countLabel: "itens", description: "Obras e materiais da Biblioteca Viva.", status: statusFromCount(totals.book), icon: "book", href: adminContentUrl({ type: "book", page: 1 }) })}
         ${renderAdminContentModuleCard({ title: "Atividades", count: totals.activity || 0, countLabel: "itens", description: "Atividades imprimíveis, digitais e de apoio pedagógico.", status: statusFromCount(totals.activity), icon: "doc", href: adminContentUrl({ type: "activity", page: 1 }) })}
         ${renderAdminContentModuleCard({ title: "Jogos e Interações", count: totals.game || 0, countLabel: "itens", description: "Jogos, objetos interativos e experiências guiadas.", status: statusFromCount(totals.game), icon: "site", href: adminContentUrl({ type: "game", page: 1 }) })}
@@ -15405,6 +15601,10 @@ const initAdminWorkspace = () => {
       return;
     }
   });
+  adminBindSchoolContent(workspace, async (schoolId) => {
+    await adminLoadSchoolContractOverview(schoolId, { force: true });
+    if (content) content.innerHTML = renderAdminWorkspaceView("escolas");
+  });
   workspace.addEventListener("change", async (event) => {
     const moduleToggle = event.target.closest?.("[data-admin-contract-module-toggle]");
     if (!moduleToggle) return;
@@ -15412,6 +15612,14 @@ const initAdminWorkspace = () => {
     const status = panel?.querySelector("[data-admin-contract-status]");
     const schoolId = panel?.dataset.adminContractOverview || "";
     const previous = !moduleToggle.checked;
+    const moduleName = moduleToggle.closest(".admin-contract-module")?.querySelector("strong")?.textContent || moduleToggle.dataset.moduleCode;
+    const scope = moduleToggle.closest(".admin-contract-card")?.querySelector(".admin-contract-taxonomy")?.textContent.trim() || "Escopo do contrato exibido";
+    const reason = window.prompt(`Motivo para ${moduleToggle.checked ? "ativar" : "desativar"} ${moduleName} nesta escola:`)?.trim();
+    if (!reason || reason.length < 5 || !window.confirm(`${moduleName}: ${previous ? "ativo" : "desativado"} → ${moduleToggle.checked ? "ativo" : "desativado"}.
+${scope}
+A mudança afeta os itens deste módulo neste direito contratado, somente na escola aberta. Outros direitos e exceções permanecem vigentes.
+Motivo: ${reason}
+Confirmar e salvar?`)) { moduleToggle.checked = previous; return; }
     moduleToggle.disabled = true;
     if (status) {
       status.hidden = false;
@@ -15420,6 +15628,7 @@ const initAdminWorkspace = () => {
     }
     try {
       const result = await adminInvokeSetTenantContentModule({
+        schoolId, previousEnabled: previous, reason,
         entitlementId: moduleToggle.dataset.entitlementId,
         moduleCode: moduleToggle.dataset.moduleCode,
         enabled: moduleToggle.checked,
@@ -15572,7 +15781,8 @@ const initAdminWorkspace = () => {
           status.textContent = `Escola criada. Etapa atual: ${result.stage || "em_configuração"}.`;
         }
         createSchoolForm.reset();
-        if (content) content.innerHTML = renderAdminWorkspaceView("escolas");
+        if (result.school_id) window.location.href = adminSchoolUrl(result.school_id, { school_section: "contractedContent" });
+        else if (content) content.innerHTML = renderAdminWorkspaceView("escolas");
       } catch (error) {
         if (status) {
           status.dataset.tone = "error";

@@ -12,5 +12,8 @@
     { "source": "/aluno", "destination": "/aluno.html" },
     { "source": "/aluno/atividades", "destination": "/aluno-atividades.html" },
     { "source": "/aluno/atividade/:id", "destination": "/aluno-atividade.html?id=:id" }
-  ]
+  ],
+  "buildCommand": "node scripts/build-static-web.mjs",
+  "outputDirectory": "dist",
+  "installCommand": ""
 }
