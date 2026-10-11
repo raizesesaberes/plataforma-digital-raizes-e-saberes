@@ -313,7 +313,7 @@ function ReplyPanel({
     try {
       setThread(await api.thread(delivery));
     } catch (error) {
-      if (error instanceof Error && error.message.includes(":403:")) onDenied();
+      if (error instanceof Error && /:403(?::|$)/.test(error.message)) onDenied();
       throw error;
     }
   }
@@ -427,7 +427,7 @@ function NoticePanel({
     try {
       n = await api.notice(id, delivery);
     } catch (error) {
-      if (error instanceof Error && error.message.includes(":403:")) onDenied();
+      if (error instanceof Error && /:403(?::|$)/.test(error.message)) onDenied();
       throw error;
     }
     setNotice(n);

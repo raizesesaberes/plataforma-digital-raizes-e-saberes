@@ -310,7 +310,7 @@ export function journeyApi(
           } catch (error) {
             // Legacy inbox can still contain a delivery whose child link was revoked.
             // Exclude that forbidden delivery, without hiding transport/backend errors.
-            if (error instanceof Error && error.message.includes(":403:"))
+            if (error instanceof Error && /:403(?::|$)/.test(error.message))
               return null;
             throw error;
           }
