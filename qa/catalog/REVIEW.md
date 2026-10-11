@@ -14,10 +14,10 @@ Um produto novo; um módulo novo `UNIVERSIDADE_CAPACITACAO` com tipo TRAINING; s
 | Jogos | JOGOS_INTERACOES | GAME | Jogos |
 | Experiências digitais | JOGOS_INTERACOES | INTERACTION | Experiências, separadas de GAME na UI |
 | Atividades / imprimíveis | ATIVIDADES | ACTIVITY / PRINTABLE | Atividades / Imprimíveis |
-| Conteúdos gerais / avaliações | AVALIACOES_PROVAS | ASSESSMENT_TEMPLATE | Rótulo atual do formulário; limitado a modelos de avaliação |
+| Modelos de avaliação | AVALIACOES_PROVAS | ASSESSMENT_TEMPLATE | Modelos de avaliação (correção de rótulo no PR7) |
 | Capacitação | UNIVERSIDADE_CAPACITACAO (novo) | TRAINING | Universidade / capacitação, autorização separada |
 
-**Limite semântico a revisar:** não existe enum GENERAL. O rótulo atual “Conteúdos gerais / avaliações” não torna ASSESSMENT_TEMPLATE apropriado a qualquer arquivo. Materiais pedagógicos gerais podem ser classificados como ACTIVITY na futura ingestão, preservando sua identidade/subtipo nos metadados, mas não terão autorização separada de outras ACTIVITY apenas por esse subtipo. Não criamos módulo duplicado ACTIVITY/INTERACTION para aparentar isolamento que o resolver não garante. Se for exigida categoria geral independente, requer desenho separado; este pacote não a inventa.
+**Gap explícito:** não existe enum GENERAL. ASSESSMENT_TEMPLATE significa somente modelos de avaliação. O PR7 corrige o rótulo; este catálogo não promete cobertura genérica universal. Materiais pedagógicos gerais podem ser classificados como ACTIVITY na futura ingestão, preservando sua identidade/subtipo nos metadados, mas não terão autorização separada de outras ACTIVITY apenas por esse subtipo. Não criamos módulo duplicado ACTIVITY/INTERACTION para aparentar isolamento que o resolver não garante. Se for exigida categoria geral independente, requer desenho separado; este pacote não a inventa.
 
 A taxonomia existente tem 16 categorias escolares (EI2–EI5, 1º–9º anos, EM1–EM3) e uma institucional. Sete módulos oferecem nove tipos escolares ×16 =144 opções e uma TRAINING =145. Selecionar todas as categorias escolares não inclui TRAINING. A autorização institucional e sua categoria precisam de seleção explícita na futura revisão contratual.
 
