@@ -308,6 +308,19 @@ if(!process.argv.includes('--baseline')) await test('replies: exact child bindin
  assert.equal((await rpc(3,'communication_get_reply_thread',{p_delivery_id:a})).messages.length,3);
 });
 
+await test('assessment: owner deletes unassigned draft through REST cascade; assigned history cannot be deleted',async()=>{
+ const draft=await rpc(1,'avalia_plus_create_assessment_from_bank',assembly());
+ const aid=draft.assessment.id;
+ assert.equal(sql(`select count(*) from public.assessment_questions where assessment_id='${aid}'`),'1');
+ const removed=await request(1,`assessments?id=eq.${aid}`,undefined,'DELETE');
+ assert.equal(removed.status,200,JSON.stringify(removed));
+ assert.equal(sql(`select count(*) from public.assessment_questions where assessment_id='${aid}'`),'0');
+ const before=sql(`select jsonb_agg(to_jsonb(q))::text from public.assessment_questions q where assessment_id='${assessmentId}'`);
+ const denied=await request(1,`assessments?id=eq.${assessmentId}`,undefined,'DELETE');
+ assert.equal(denied.status,403,JSON.stringify(denied));
+ assert.equal(sql(`select jsonb_agg(to_jsonb(q))::text from public.assessment_questions q where assessment_id='${assessmentId}'`),before);
+ assert.equal((await rpc(1,'teacher_get_assessment_class_results',{p_assignment_id:assignment})).summary.average_percentage,100);
+});
 await test('security: two teaching years cannot replace an assigned snapshot with other-year content',async()=>{
  sql(`insert into public.classes(id,school_id,teacher_id,nome,school_year,ano_escolar) values('${id(3,3)}','${id(1)}','${id(2)}','SYNTHETIC YEAR FOUR','4_ANO','4_ANO');
  insert into public.class_teacher_memberships(class_id,teacher_id) values('${id(3,3)}','${id(2)}');

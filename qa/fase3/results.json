@@ -109,6 +109,10 @@
     {
       "name": "security: two teaching years cannot replace an assigned snapshot with other-year content",
       "status": "PASS"
+    },
+    {
+      "name": "assessment: owner deletes unassigned draft through REST cascade; assigned history cannot be deleted",
+      "status": "PASS"
     }
   ]
 }

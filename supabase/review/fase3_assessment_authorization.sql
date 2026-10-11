@@ -103,7 +103,13 @@ create function school_category_private.assessment_content_write_guard() returns
 language plpgsql security definer set search_path = '' as $$
 declare a public.assessments%rowtype; question_id uuid; resolved_school_id uuid;
 begin
-  if tg_table_name = 'assessment_questions' then
+  if tg_table_name = 'assessments' then
+    -- Check before any FK cascade can remove assignment/history rows.
+    if exists(select 1 from public.assessment_assignments where assessment_id=old.id) then
+      raise exception 'ASSESSMENT_ASSIGNED_CONTENT_IMMUTABLE' using errcode='42501';
+    end if;
+    return old;
+  elsif tg_table_name = 'assessment_questions' then
     -- Moving an item also locks its old parent, preventing concurrent publication
     -- of the source assessment while its item set is changing.
     if tg_op='UPDATE' then
@@ -113,7 +119,12 @@ begin
     select * into a from public.assessments
     where id=case when tg_op='DELETE' then old.assessment_id else new.assessment_id end
     for update;
-    if a.id is null then raise exception 'ASSESSMENT_NOT_FOUND' using errcode='42501'; end if;
+    if a.id is null then
+      -- The parent BEFORE DELETE guard already rejected assigned assessments.
+      -- In a valid FK cascade, an unassigned parent is no longer visible here.
+      if tg_op='DELETE' then return old; end if;
+      raise exception 'ASSESSMENT_NOT_FOUND' using errcode='42501';
+    end if;
     -- An assignment is a historical snapshot boundary, including archived/closed
     -- assignments. Never rewrite its item set, positions, points or snapshots.
     -- Prepare a new assessment to change content after assignment.
@@ -156,6 +167,9 @@ end $$;
 revoke all on function school_category_private.assessment_content_write_guard() from public,anon,authenticated,service_role;
 
 -- Triggers also protect alternate definer RPCs; fixing only one public RPC leaves bypasses.
+create trigger fase3_assessment_delete_guard
+before delete on public.assessments
+for each row execute function school_category_private.assessment_content_write_guard();
 create trigger fase3_assessment_question_guard
 before insert or update or delete on public.assessment_questions
 for each row execute function school_category_private.assessment_content_write_guard();
