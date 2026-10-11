@@ -1,0 +1,20 @@
+{
+  "project_id": "jaesjldrbjbdmzzggxzw",
+  "migration_version": "20261011191259",
+  "migration_name": "contract_amendments",
+  "official_filename_reported_by_mac": "20261011191259_contract_amendments.sql",
+  "reviewed_sql": "supabase/review/contract_amendments.sql",
+  "sql_sha256": "2c21616bdea5e6735907d4b3625abde8f5602e1d3594223b7be147838a2ad2b0",
+  "reviewed_head": "88882bb725e79d8996dc42b391aff025648537ff",
+  "installation_actor": "Mac operator; not reapplied by this executor",
+  "independent_readback": {
+    "ledger_count": 155,
+    "original_154_hash": "59bf4e92bf4eef7f679cd75bf8f7a8e0",
+    "expected_five_functions_body_acl_search_path": "PASS",
+    "amendment_events": 0
+  },
+  "mac_evidence_directory": "/Users/danielhenrique/Documents/rs-fase3-instalacao-controlada-20261011/aditamento-contratual",
+  "business_data_delta": "Operator reported zero; independent check confirms zero amendment events, not a reconstruction of historical full snapshot",
+  "frontend_gate": "admin.html: RAIZES_CONTRACT_AMENDMENTS_ENABLED only",
+  "contracts_mutated_by_executor": false
+}

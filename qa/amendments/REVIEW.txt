@@ -1,0 +1,43 @@
+STATUS DE PUBLICAÇÃO: backend instalado pelo Mac como 20261011191259; readback independente PASS registrado em installed-20261011191259.json. Gate de aditamento habilitado somente em admin.html para publicação coordenada autorizada. Nenhum contrato real alterado por este executor. Texto abaixo preserva a proposta/revisão anterior.
+
+ADITAMENTO CONTRATUAL — PROPOSTA DE CÓDIGO, NÃO INSTALADA
+
+Escopo mínimo implementado
+Contrato operacional vigente com tenant SCHOOL e exatamente a escola informada como alvo. CREATE/REVOKE/renovação seguem as RPCs atuais. Aditamento altera configuração final de produtos/categorias no mesmo contrato. Recusa rede, contrato substituído/cancelado/expirado, sucessor ativo agendado, configurações duplicadas/herdadas e licenças com amostras/restrição explícita de temas. Não representa aditamento de rede; isso exige revisão separada de licença compartilhada e alvos.
+
+Frontend
+Reutiliza contract-operations.js: Revisar aditamento no histórico, carregamento das categorias existentes, seleção por tipo/faixa (inclusive selecionar todas as escolares), retirada de produto desmarcando-o. Identidade, escola e datas bloqueadas. Prévia exibe categorias adicionadas/retiradas, produtos retirados e módulos antes→depois. Confirmar aditamento grava e exibe recibo. ACK incerto persiste prévia/request_id; recarga recupera mesma operação. Cancelar aditamento não grava.
+Gate novo RAIZES_CONTRACT_AMENDMENTS_ENABLED: padrão OFF, nenhuma atribuição true em runtime. Habilitar somente após instalação/revisão específica. Gates FASE3 existentes não alterados.
+
+Backend e persistência
+admin_preview_contract_amendment(jsonb) é leitura e devolve configuração normalizada, fingerprint, estado anterior e deltas.
+admin_confirm_contract_amendment(jsonb,uuid) verifica administrador, trava advisory compartilhada 81261011 e locks de tabelas; consulta recibo antes de revalidar. Mesmo ator/chave/hash retorna recibo original, inclusive após revogação. Hash diferente é rejeitado. Revalida dependências sob lock e rejeita prévia antiga.
+Na mesma transação: atualiza/cria contract_products deste contrato, entitlement e overrides; retirada revoga entitlement e inativa contract_product, sem apagar linhas. Grava CONTRACT_AMENDED com before/after, configuração e recibo. Grava operation_timezone=America/Sao_Paulo também em novos entitlements, mantendo o último dia inclusivo até 23:59:59 local. Preserva IDs existentes, vigência, predecessor, targets, tenants, escola, Auth e catálogo global. Módulos da configuração final são apresentados explicitamente na prévia. Nenhuma concessão por item.
+Não reutiliza admin_save_school_content_categories: essa operação não amplia a licença e recalcula starts_at. O aditamento preserva as datas existentes.
+
+Limite de categorias
+CREATE OR REPLACE em school_category_private.normalize_config(jsonb): única diferença funcional é limite 128→512, mantendo ACL/signature/SECURITY DEFINER/search_path. Pré-condição exige MD5 atual 8d9dac331aa69445a0b2525543c7d741; drift aborta toda instalação. Testes comparam o corpo revertendo apenas esse literal e validam ACL postgres-only. Suporta 144 regras escolares + TRAINING no editor atual, sem ampliar licença automaticamente.
+
+Impacto EXATO de permissões novas
+2 RPCs públicas SECURITY DEFINER com search_path vazio: admin_preview_contract_amendment(jsonb) e admin_confirm_contract_amendment(jsonb,uuid).
+EXECUTE concedido somente a authenticated e service_role; revogado de PUBLIC e anon. Ambas exigem school_content_assert_admin (preview via validador privado). Ser authenticated não basta. 403/não-admin e anon cobertos.
+2 auxiliares privadas SECURITY DEFINER com search_path vazio: contract_operations_private.amendment_config(jsonb), amendment_state(uuid). EXECUTE revogado de PUBLIC, anon e authenticated; permanecem acessíveis ao proprietário e chamadas pelas RPCs.
+Nenhum GRANT em tabelas/schema, nenhuma RLS/policy/trigger/resolver alterado. ACL da função normalizadora existente preservada. Demais funções existentes e relações do manifesto verificadas por snapshot.
+
+Proposta de impacto para Caminhos — NÃO EXECUTADA
+Contrato fe10b77e-042f-4333-a90b-f565e1284a6a, alvo 783faaf2-eb32-40e4-a412-000868f402d7. Configuração final pretendida: somente RS_BANCO_COMPLETO, preservar exatamente 144 regras escolares, incluir STANDARD TRAINING na faixa institucional e institutional=true. A licença passa a 17 faixas; entitlement contém 145 regras; override Universidade passa OFF→ON. Produto legado redundante deste contrato fica inactive e seu entitlement REVOKED. QUESTION no Banco Completo preservado. Datas 2026-10-11→2027-10-10, escola inactive e predecessor preservados. Antes de qualquer confirmação, gerar prévia sobre estado corrente, verificar diferenças exatas e obter a confirmação administrativa do usuário.
+
+Validação
+node qa/fase3/integration-run.mjs --amendments-only
+node tests/contracts/amendment-ui.mjs
+node tests/contracts/completion-ui.mjs
+node tests/contracts/inactive-school-overview.mjs
+Somente Postgres Docker descartável com label synthetic e RPC mock no Chromium. Nenhuma chamada mutante real.
+Cobertura: preview sem alteração; 144/145 regras e editor existente; módulo TRAINING separado OFF→ON; retirada/redução; rollback por falha intermediária; mesma chave e concorrência; chave/payload divergente; prévia stale; administrador/anon; escopo escola; autorização institucional; vigência; escola inativa; snapshot de outros contratos, entitlements, Auth/perfis/exceções; revogação e recuperação do recibo antigo sem reviver direitos; tela com cancelar, confirmar, ACK perdido e recarga.
+
+Entrega e instalação
+supabase/review/contract_amendments.sql é fonte para revisão, não migration oficial. Nenhuma versão foi inventada/registrada. Após aprovação específica, gerar arquivo pela CLI oficial, conferir hash/versionamento e preflight. Não aplicar SQL isolado para corrigir contrato real. Esta branch não foi integrada nem implantada.
+
+Regressão temporal: avalia o predicado real de active_rules com relógio substituído somente no SELECT sintético: válido às 00:00 e 02:59:59 UTC do dia seguinte ao fim, inválido às 03:00 UTC. Contraprova sem operation_timezone reproduz corte antecipado. Nenhuma função/relógio real alterado.
+
+Correções de revisão: Cancelar aditamento invalida a geração antes de renderizar, descartando prévia atrasada. Retirada faz transição pura para REVOKED, sem alterar os demais campos do entitlement, conforme trigger existente, mesmo com vínculo de produto já inactive. Produto/entitlement existente inativo, suspenso ou revogado selecionado é recusado com AMENDMENT_REACTIVATION_REQUIRES_REVIEW antes de qualquer gravação; reativação fica fora do escopo. Prévia mostra estados de todos os vínculos/entitlements antes/depois. Erro tipado é definitivo e libera revisão sem abandonar recuperação de ACK incerto.
