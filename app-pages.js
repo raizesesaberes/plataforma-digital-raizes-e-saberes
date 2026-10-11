@@ -30225,7 +30225,7 @@ const questionBankDataService = (() => {
         method: "POST",
         requireAuthenticated: true,
         allowedRoles: allowedAssessmentRoles,
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ p_payload: payload }),
       });
       return mapAssessmentFromSupabase({
         ...(result.assessment || {}),
