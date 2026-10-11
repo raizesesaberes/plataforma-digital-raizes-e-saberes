@@ -252,6 +252,62 @@ if(!process.argv.includes('--baseline'))await test('browser: persisted student r
  const {runReplyBrowser}=await import('./replies-browser.mjs');
  await runReplyBrowser({base,token,communicationId:pub.communication_id,deliveryId:delivery.delivery_id});
 });
+if(!process.argv.includes('--baseline')) await test('replies: exact child binding, both guardian models, revocation and educational status',async()=>{
+ sql(`insert into public.student_guardians(student_id,profile_id) values('${id(4)}','${id(0,6)}'),('${id(4,3)}','${id(0,6)}');`);
+ const pub=await rpc(1,'publish_communication',{...draft,p_title:'SYNTHETIC TWO CHILDREN'});
+ const a=sql(`select id from public.communication_deliveries where communication_id='${pub.communication_id}' and recipient_profile_id='${id(0,6)}' and student_id='${id(4)}'`);
+ const b=sql(`select id from public.communication_deliveries where communication_id='${pub.communication_id}' and recipient_profile_id='${id(0,6)}' and student_id='${id(4,3)}'`);
+ assert.ok(a&&b&&a!==b);
+ const read=delivery=>rpc(6,'communication_get_reply_thread',{p_delivery_id:delivery});
+ const denied=async delivery=>{
+  await mustDeny(6,'communication_get_reply_thread',{p_delivery_id:delivery});
+  await mustDeny(6,'communication_send_reply',{p_delivery_id:delivery,p_body:'SYNTHETIC FORBIDDEN',p_request_id:id(9,60)});
+ };
+ await read(a);await read(b);
+ await rpc(6,'communication_send_reply',{p_delivery_id:a,p_body:'SYNTHETIC CHILD A',p_request_id:id(9,61)});
+ sql(`update public.student_guardians set status='inactive' where student_id='${id(4)}'`);
+ await denied(a);await read(b);
+ const threads=await rpc(1,'communication_list_reply_threads',{p_communication_id:pub.communication_id});
+ assert.equal(threads.find(x=>x.delivery_id===a).student_name,'SYNTHETIC STUDENT A');
+ assert.equal(threads.find(x=>x.delivery_id===b).student_name,'SYNTHETIC PEER');
+ assert.equal(threads.find(x=>x.delivery_id===a).student_id,id(4));
+ // Switch entirely to the new institutional model: no legacy link can mask failures.
+ sql(`update public.student_guardians set status='inactive';
+ insert into public.guardians(id,school_id,profile_id,full_name,status,access_status) values('${id(6,6)}','${id(1)}','${id(0,6)}','SYNTHETIC GUARDIAN','active','active');
+ insert into public.student_guardian_links(student_id,guardian_id) values('${id(4)}','${id(6,6)}'),('${id(4,3)}','${id(6,6)}');`);
+ await read(a);await read(b);
+ await rpc(6,'communication_send_reply',{p_delivery_id:a,p_body:'SYNTHETIC NEW MODEL',p_request_id:id(9,62)});
+ // Real generator must produce new-model deliveries for both children.
+ const next=await rpc(1,'publish_communication',{...draft,p_title:'SYNTHETIC NEW MODEL DELIVERY'});
+ assert.equal(sql(`select count(*) from public.communication_deliveries where communication_id='${next.communication_id}' and recipient_profile_id='${id(0,6)}'`),'2');
+ const cases=[
+  [`update public.student_guardian_links set status='inactive' where student_id='${id(4)}'`,`update public.student_guardian_links set status='active'`],
+  [`update public.guardians set status='inactive'`,`update public.guardians set status='active'`],
+  [`update public.guardians set access_status='blocked'`,`update public.guardians set access_status='active'`],
+  [`update public.guardians set school_id='${id(1,2)}'`,`update public.guardians set school_id='${id(1)}'`],
+  [`update public.enrollments set ended_at=now()-interval '1 second' where student_id='${id(4)}'`,`update public.enrollments set ended_at=null where student_id='${id(4)}'`],
+  [`update public.enrollments set enrolled_at=now()+interval '1 day' where student_id='${id(4)}'`,`update public.enrollments set enrolled_at=now() where student_id='${id(4)}'`],
+  [`update public.students set status='inactive' where id='${id(4)}'`,`update public.students set status='active' where id='${id(4)}'`],
+  [`update public.profiles set status='inactive' where id='${id(0,6)}'`,`update public.profiles set status='active' where id='${id(0,6)}'`]
+ ];
+ for(const [revoke,restore] of cases){sql(revoke);try{await denied(a);}finally{sql(restore);}await read(a);}
+ sql(`update public.student_guardian_links set status='inactive' where student_id='${id(4)}'`);
+ await denied(a);await read(b);
+ const studentDelivery=threads.find(x=>x.recipient_name==='SYNTHETIC 2').delivery_id;
+ sql(`update public.students set status='inactive' where id='${id(4)}'`);
+ try{await mustDeny(2,'communication_get_reply_thread',{p_delivery_id:studentDelivery});await mustDeny(2,'communication_send_reply',{p_delivery_id:studentDelivery,p_body:'SYNTHETIC INACTIVE',p_request_id:id(9,63)});}finally{sql(`update public.students set status='active' where id='${id(4)}'`);}
+ sql(`update public.teachers set status='inactive' where id='${id(2)}'`);
+ try{
+  await mustDeny(1,'communication_list_reply_threads',{p_communication_id:pub.communication_id});
+  await mustDeny(1,'communication_get_reply_thread',{p_delivery_id:a});
+  await mustDeny(1,'communication_send_reply',{p_delivery_id:a,p_body:'SYNTHETIC INACTIVE TEACHER',p_request_id:id(9,64)});
+ }finally{sql(`update public.teachers set status='active' where id='${id(2)}'`);}
+ // Explicit existing management scope: not a teacher-only private conversation.
+ assert.ok((await rpc(3,'communication_list_reply_threads',{p_communication_id:pub.communication_id})).length);
+ await rpc(3,'communication_send_reply',{p_delivery_id:a,p_body:'SYNTHETIC AUTHORIZED MANAGEMENT',p_request_id:id(9,65)});
+ assert.equal((await rpc(3,'communication_get_reply_thread',{p_delivery_id:a})).messages.length,3);
+});
+
 await test('security: two teaching years cannot replace an assigned snapshot with other-year content',async()=>{
  sql(`insert into public.classes(id,school_id,teacher_id,nome,school_year,ano_escolar) values('${id(3,3)}','${id(1)}','${id(2)}','SYNTHETIC YEAR FOUR','4_ANO','4_ANO');
  insert into public.class_teacher_memberships(class_id,teacher_id) values('${id(3,3)}','${id(2)}');

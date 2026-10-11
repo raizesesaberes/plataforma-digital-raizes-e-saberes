@@ -103,6 +103,10 @@
       "status": "PASS"
     },
     {
+      "name": "replies: exact child binding, both guardian models, revocation and educational status",
+      "status": "PASS"
+    },
+    {
       "name": "security: two teaching years cannot replace an assigned snapshot with other-year content",
       "status": "PASS"
     }

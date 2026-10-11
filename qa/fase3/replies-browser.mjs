@@ -13,8 +13,12 @@ export async function runReplyBrowser({base,token,communicationId,deliveryId}) {
  const end=source.indexOf('const renderStudentInboxList =',start);
  assert.ok(start>=0 && end>start);
  const escape=x=>String(x??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
- const render=new Function('premiumIcon','printableEscape','getActiveStudentProfile','communicationDeliveryStateLabel','resolveCommunicationDeepLink',`${source.slice(start,end)};return renderStudentInboxCard;`)(()=>'',escape,()=>({className:'Synthetic class'}),()=> 'Não lido',x=>x);
+ const fixtureFlags={RAIZES_COMMUNICATION_REPLIES_ENABLED:false};
+ const render=new Function('globalThis','premiumIcon','printableEscape','getActiveStudentProfile','communicationDeliveryStateLabel','resolveCommunicationDeepLink',`${source.slice(start,end)};return renderStudentInboxCard;`)(fixtureFlags,()=>'',escape,()=>({className:'Synthetic class'}),()=> 'Não lido',x=>x);
+ assert.ok(!render({deliveryId,id:communicationId,title:'Gate closed',sourceType:''}).includes('data-communication-delivery'));
+ fixtureFlags.RAIZES_COMMUNICATION_REPLIES_ENABLED=true;
  let failNextSend=true;
+ let loseCommittedResponse=true;
  const server=createServer(async(req,res)=>{
   try{
    if(['/styles.css','/master-pack.css'].includes(req.url)){res.setHeader('Content-Type','text/css');res.end(readFileSync(req.url.slice(1)));return;}
@@ -25,12 +29,19 @@ export async function runReplyBrowser({base,token,communicationId,deliveryId}) {
     if(name==='communication_send_reply'&&failNextSend){failNextSend=false;res.writeHead(503,{'Content-Type':'application/json'}).end('{"message":"synthetic transient failure"}');return;}
     const chunks=[];for await(const chunk of req)chunks.push(chunk);
     const response=await fetch(`${base}/rpc/${name}`,{method:'POST',headers:{Authorization:req.headers.authorization,'Content-Type':'application/json'},body:Buffer.concat(chunks)});
-    res.writeHead(response.status,{'Content-Type':'application/json'}).end(await response.text());return;
+    const payload=await response.text();
+    if(name==='communication_send_reply'&&response.ok&&loseCommittedResponse){
+     loseCommittedResponse=false;
+     res.writeHead(503,{'Content-Type':'application/json'}).end('{"message":"synthetic response lost after commit"}');return;
+    }
+    res.writeHead(response.status,{'Content-Type':'application/json'}).end(payload);return;
    }
    const role=req.url==='/teacher'?1:req.url==='/other-school'?5:2;
    const button=role===1?`<button data-communication-replies="${communicationId}">Ver respostas / Responder</button>`:render({deliveryId,id:communicationId,title:'Synthetic browser notice',text:'Fictional notice',sourceType:''});
    res.setHeader('Content-Type','text/html; charset=utf-8');
    res.end(`<!doctype html><html lang="pt-BR"><title>Synthetic reply test</title><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/master-pack.css"><body class="master-app">${button}<script>
+   globalThis.RAIZES_COMMUNICATION_REPLIES_ENABLED=true;
+   async function resolveSupabaseUserContext(){return {userId:'synthetic-actor-${role}'};}
    function createSupabaseRestClient(){return {request:async(path,query,options)=>{const response=await fetch('/backend/'+path,{...options,headers:{Authorization:'Bearer ${token(role)}','Content-Type':'application/json'}});if(!response.ok)throw new Error('request failed');return response.json();}};}
    </script><script src="/communication-replies.js"></script></body></html>`);
   }catch(error){res.writeHead(500).end('Synthetic harness error');}
@@ -49,7 +60,15 @@ export async function runReplyBrowser({base,token,communicationId,deliveryId}) {
   await student.getByRole('status').filter({hasText:'Seu texto foi mantido'}).waitFor();
   assert.equal(await student.getByRole('textbox',{name:'Sua resposta'}).inputValue(),text);
   await student.getByRole('button',{name:'Enviar resposta'}).click();
+  // This request committed in PostgreSQL, but its HTTP acknowledgement was lost.
+  await student.getByRole('status').filter({hasText:'Seu texto foi mantido'}).waitFor();
+  await student.getByRole('button',{name:'Fechar',exact:true}).click();
+  await student.getByRole('button',{name:'Ver respostas / Responder'}).click();
+  assert.equal(await student.getByRole('textbox',{name:'Sua resposta'}).inputValue(),text);
+  assert.equal(await student.locator('[data-reply-messages] article').count(),1);
+  await student.getByRole('button',{name:'Enviar resposta'}).click();
   await student.getByRole('status').filter({hasText:'Resposta enviada.'}).waitFor();
+  assert.equal(await student.locator('[data-reply-messages] article').count(),1);
   await student.locator('[data-reply-messages]').getByText(text,{exact:true}).waitFor();
   assert.equal(await student.evaluate(()=>window.replyXss),undefined);
   await teacher.goto(origin+'/teacher');await teacher.getByRole('button',{name:'Ver respostas / Responder'}).click();
