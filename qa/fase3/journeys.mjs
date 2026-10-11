@@ -19,7 +19,7 @@ function token(n, includeEmail=true, subject=id(0,n)) {
   return `${data}.${createHmac('sha256',secret).update(data).digest('base64url')}`;
 }
 async function request(n,path,body,method) {
-  const res = await fetch(`${base}/${path}`,{method:method || (body ? 'POST':'GET'),headers:{Authorization:`Bearer ${token(n)}`,'Content-Type':'application/json',Prefer:'return=representation'},body:body ? JSON.stringify(body):undefined});
+  const res = await fetch(`${base}/${path}`,{signal:AbortSignal.timeout(30000),method:method || (body ? 'POST':'GET'),headers:{Authorization:`Bearer ${token(n)}`,'Content-Type':'application/json',Prefer:'return=representation'},body:body ? JSON.stringify(body):undefined});
   const raw = await res.text();
   let data; try {data=JSON.parse(raw)} catch {data=raw}
   return {status:res.status,data};
@@ -267,6 +267,12 @@ if(!process.argv.includes('--baseline')) await test('replies: exact child bindin
  await rpc(6,'communication_send_reply',{p_delivery_id:a,p_body:'SYNTHETIC CHILD A',p_request_id:id(9,61)});
  sql(`update public.student_guardians set status='inactive' where student_id='${id(4)}'`);
  await denied(a);await read(b);
+ const {inspectFamilyInbox}=await import('./notice-renderer.mjs');
+ const client={request:async(path,query,options)=>{const r=await request(6,path,JSON.parse(options.body||'{}'));if(r.status>=400)throw Object.assign(new Error('HTTP '+r.status),{status:r.status});return r.data;}};
+ const familyRows=await inspectFamilyInbox(client);
+ assert.ok(familyRows.some(x=>x.delivery_id===b));assert.ok(!familyRows.some(x=>x.delivery_id===a));
+ assert.equal(familyRows[0].unread_count,familyRows.filter(x=>!x.read_at).length);
+ for(const status of [404,503])await assert.rejects(()=>inspectFamilyInbox({request:async(...args)=>{if(args[0]==='rpc/communication_get_notice_versions')throw Object.assign(new Error('HTTP '+status),{status});return client.request(...args);}}),new RegExp('HTTP '+status));
  const threads=await rpc(1,'communication_list_reply_threads',{p_communication_id:pub.communication_id});
  assert.equal(threads.find(x=>x.delivery_id===a).student_name,'SYNTHETIC STUDENT A');
  assert.equal(threads.find(x=>x.delivery_id===b).student_name,'SYNTHETIC PEER');
@@ -369,6 +375,58 @@ await test('security: two teaching years cannot replace an assigned snapshot wit
  }
  // Previously submitted student's result remains intact.
  assert.equal((await rpc(1,'teacher_get_assessment_class_results',{p_assignment_id:assignment})).summary.average_percentage,100);
+});
+
+if(!process.argv.includes('--baseline')) await test('notice editing: revisions, immutable recipients/history, per-version reads, conflicts and authorization',async()=>{
+ const pub=await rpc(1,'publish_communication',{...draft,p_title:'SYNTHETIC VERSION ONE'});
+ const cid=pub.communication_id;
+ const d=(await rpc(2,'communication_get_inbox')).find(x=>x.communication_id===cid).delivery_id;
+ await rpc(2,'communication_mark_read',{p_delivery_id:d});
+ await rpc(2,'communication_send_reply',{p_delivery_id:d,p_body:'SYNTHETIC EXISTING REPLY',p_request_id:id(9,80)});
+ const {inspectNoticeRender}=await import('./notice-renderer.mjs');
+ const client=actor=>({request:async(path,query,options)=>rpc(actor,path.replace('rpc/',''),JSON.parse(options.body||'{}'))});
+ const rendered=async()=>inspectNoticeRender(client(2),client(1),(await rpc(2,'communication_get_inbox')).find(x=>x.communication_id===cid));
+ const beforeEdit=await rendered();assert.match(beforeEdit.studentHtml,/is-read/);assert.equal(beforeEdit.unread,0);assert.equal(beforeEdit.teacher.readCount,1);
+ const deliveries=()=>sql(`select jsonb_agg(to_jsonb(d) order by id)::text from public.communication_deliveries d where communication_id='${cid}'`);
+ const original=deliveries();
+ const payload={p_communication_id:cid,p_expected_revision:1,p_title:'SYNTHETIC VERSION TWO',p_body:'SYNTHETIC CORRECTED TEXT',p_request_id:id(9,81)};
+ assert.equal((await rpc(1,'communication_edit_notice',payload)).revision,2);
+ assert.equal((await rpc(1,'communication_edit_notice',payload)).revision,2);
+ assert.equal(deliveries(),original);
+ const get=(actor=1)=>rpc(actor,'communication_get_notice_versions',{p_communication_id:cid,p_delivery_id:actor===2?d:null});
+ const current=await get();assert.equal(current.history.length,2);assert.equal(current.history[0].title,'SYNTHETIC VERSION ONE');assert.equal(current.current_revision_read_count,0);
+ assert.equal((await get(2)).current_revision_read_at,null);
+ const afterEdit=await rendered();assert.match(afterEdit.studentHtml,/is-unread/);assert.match(afterEdit.studentHtml,/NAO LIDO · VERSÃO 2/);assert.equal(afterEdit.unread,1);assert.equal(afterEdit.teacher.readCount,0);assert.equal(afterEdit.teacher.unreadCount,pub.deliveries_created);assert.match(afterEdit.teacherHtml,/Lidas \(versão 2\): 0/);assert.ok(!afterEdit.studentHtml.includes('data-student-delivery-read'));
+
+ assert.equal((await rpc(2,'communication_get_reply_thread',{p_delivery_id:d})).messages.length,1);
+ assert.equal((await request(2,'rpc/communication_mark_revision_read',{p_delivery_id:d,p_revision:1})).status,409);
+ await rpc(2,'communication_mark_revision_read',{p_delivery_id:d,p_revision:2});
+ assert.equal((await get()).current_revision_read_count,1);
+ const afterRead=await rendered();assert.match(afterRead.studentHtml,/is-read/);assert.match(afterRead.studentHtml,/LIDO · VERSÃO 2/);assert.equal(afterRead.unread,0);assert.equal(afterRead.teacher.readCount,1);
+
+ assert.equal(sql(`select count(*) from public.communication_revision_reads where delivery_id='${d}'`),'2');
+ assert.equal(JSON.parse(deliveries()).find(x=>x.id===d).read_at,JSON.parse(original).find(x=>x.id===d).read_at);
+ const race=await Promise.all([82,83].map(n=>request(1,'rpc/communication_edit_notice',{...payload,p_expected_revision:2,p_title:'SYNTHETIC CONCURRENT '+n,p_request_id:id(9,n)})));
+ assert.deepEqual(race.map(x=>x.status).sort(),[200,409]);
+ assert.equal((await get()).revision,3);assert.equal((await get()).history.length,3);
+ for(const actor of [2,4,5,6]) await mustDeny(actor,'communication_edit_notice',{...payload,p_expected_revision:3,p_request_id:id(9,84)});
+ for(const actor of [4,5,6]) await mustDeny(actor,'communication_get_notice_versions',{p_communication_id:cid,p_delivery_id:d});
+ await mustDeny(5,'communication_mark_revision_read',{p_delivery_id:d,p_revision:3});
+ await mustDeny(1,'communication_edit_notice',{...payload,p_body:' '});
+ await mustDeny(1,'communication_edit_notice',{...payload,p_body:'DIFFERENT RETRY'});
+ for(const table of ['communication_revisions','communication_revision_reads'])assert.equal((await request(1,table+'?select=*')).status,403);
+ sql(`update public.teachers set status='inactive' where id='${id(2)}'`);
+ try{await mustDeny(1,'communication_edit_notice',payload);}finally{sql(`update public.teachers set status='active' where id='${id(2)}'`);}
+ await rpc(3,'secretaria_set_communication_status',{p_communication_id:cid,p_to_status:'archived'});
+ await mustDeny(1,'communication_edit_notice',payload);await mustDeny(2,'communication_get_notice_versions',{p_communication_id:cid,p_delivery_id:d});
+ await rpc(3,'secretaria_set_communication_status',{p_communication_id:cid,p_to_status:'published'});
+ assert.equal((await rpc(3,'communication_edit_notice',{...payload,p_expected_revision:3,p_request_id:id(9,85)})).revision,4);
+ sql(`update public.communications set expires_at=now()-interval '1 second' where id='${cid}'`);
+ await mustDeny(3,'communication_edit_notice',payload);
+ const browserPub=await rpc(1,'publish_communication',{...draft,p_title:'SYNTHETIC EDIT BROWSER'});
+ const browserDelivery=(await rpc(2,'communication_get_inbox')).find(x=>x.communication_id===browserPub.communication_id).delivery_id;
+ const {runNoticeBrowser}=await import('./notice-browser.mjs');
+ await runNoticeBrowser({base,token,communicationId:browserPub.communication_id,deliveryId:browserDelivery});
 });
 
 writeFileSync(resolve(process.argv.includes('--baseline')?'qa/fase3/results-baseline.json':'qa/fase3/results.json'),JSON.stringify({baseCommit:execFileSync('git',['merge-base','HEAD','origin/main'],{encoding:'utf8'}).trim(),scope:'Isolated PostgreSQL + PostgREST RPC/data service integration; not browser/native or production validation',results},null,2)+'\n');
