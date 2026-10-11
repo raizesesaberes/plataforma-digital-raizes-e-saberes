@@ -14063,12 +14063,38 @@ const adminInvokeSetContentAvailability = async ({ schoolId, contentType, conten
 
 const adminLoadSchoolContractOverview = async (schoolId, { force = false } = {}) => {
   if (!schoolId) return null;
+  if (adminOperationalState.contractLoading?.[schoolId]) return adminOperationalState.contractLoading[schoolId];
   if (!force && adminOperationalState.contractOverviews?.[schoolId]) return adminOperationalState.contractOverviews[schoolId];
-  let overview;
-  try { const category_catalog = await adminSchoolContentRequest("admin_get_school_content_categories", { p_school_id: schoolId }); overview = { status: "PASS", category_catalog }; }
-  catch (error) { overview = { status: "ERROR", category_catalog: { status: "ERROR", error: error.message } }; }
-  adminOperationalState.contractOverviews = { ...(adminOperationalState.contractOverviews || {}), [schoolId]: overview };
-  return overview;
+  const controller = new AbortController();
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error("A consulta demorou mais que o esperado. Tente novamente."));
+      controller.abort();
+    }, 15000);
+  });
+  const promise = (async () => {
+    let overview;
+    try {
+      const category_catalog = await Promise.race([
+        adminSchoolContentRequest("admin_get_school_content_categories", { p_school_id: schoolId }, { signal: controller.signal }),
+        timeout,
+      ]);
+      if (category_catalog.school_id !== schoolId || !["contracts", "taxonomy", "schools", "subjects"].every((key) => Array.isArray(category_catalog[key]))) {
+        throw new Error("Resposta incompleta das categorias desta escola. Tente novamente.");
+      }
+      overview = { status: "PASS", category_catalog };
+    } catch (error) {
+      overview = { status: "ERROR", category_catalog: { status: "ERROR", error: error.message } };
+    } finally {
+      clearTimeout(timer);
+      delete adminOperationalState.contractLoading[schoolId];
+    }
+    adminOperationalState.contractOverviews = { ...(adminOperationalState.contractOverviews || {}), [schoolId]: overview };
+    return overview;
+  })();
+  adminOperationalState.contractLoading[schoolId] = promise;
+  return promise;
 };
 
 const adminInvokeSetTenantContentModule = async ({ schoolId, entitlementId, moduleCode, enabled, previousEnabled, reason }) => {
@@ -14130,9 +14156,9 @@ const renderAdminContractModule = (module = {}, entitlement = {}) => {
 const categoryTypeLabels = { QUESTION: 'Questões', VIDEO: 'Vídeos', GAME: 'Jogos', INTERACTION: 'Experiências', BOOK: 'Livros', BOOK_PAGE: 'Páginas', ACTIVITY: 'Atividades', PRINTABLE: 'Imprimíveis', ASSESSMENT_TEMPLATE: 'Avaliações' };
 const categoryEscape = (value) => printableEscape(value ?? '');
 const categoryOptions = (rows, valueKey = 'id', labelKey = 'name', selected = '') => rows.map((row) => `<option value="${categoryEscape(row[valueKey])}" ${row[valueKey] === selected ? 'selected' : ''}>${categoryEscape(row[labelKey])}</option>`).join('');
-const adminSchoolContentRequest = async (rpc, body) => {
+const adminSchoolContentRequest = async (rpc, body, { signal } = {}) => {
   await ensureAdminSupabaseConfig();
-  const result = normalizeRpcJson(await createSupabaseRestClient().request(`rpc/${rpc}`, '', { method: 'POST', requireAuthenticated: true, allowedRoles: ['admin'], body: JSON.stringify(body) }));
+  const result = normalizeRpcJson(await createSupabaseRestClient().request(`rpc/${rpc}`, '', { method: 'POST', requireAuthenticated: true, allowedRoles: ['admin'], body: JSON.stringify(body), signal }));
   if (!result || result.status !== 'PASS') throw new Error(result?.status || 'Resposta indisponível. Nenhuma alteração confirmada.');
   return result;
 };
@@ -14347,8 +14373,9 @@ const initNativeQuestionCategory = (form) => {
 
 const renderAdminSchoolContractedContent = (summary) => {
  const overview=adminOperationalState.contractOverviews?.[summary.schoolId];
- if(!overview)return '<section class="admin-contract-overview"><p role="status">Carregando categorias do contrato...</p></section>';
- return `<section class="admin-contract-overview">${renderAdminSchoolContentCatalog(overview.category_catalog || {status:'ERROR',error:overview.error})}</section>`;
+ const body = !overview ? '<p role="status">Carregando categorias do contrato...</p>'
+  : renderAdminSchoolContentCatalog(overview.category_catalog || {status:'ERROR',error:overview.error});
+ return `<section class="admin-contract-overview" data-admin-contract-overview="${categoryEscape(summary.schoolId)}">${body}${overview?.status === 'ERROR' ? '<button type="button" data-admin-contract-retry>Tentar novamente</button>' : ''}</section>`;
 };
 
 const renderAdminContentSchools = (availabilityRows = [], schoolsById = new Map()) => {
@@ -14800,17 +14827,16 @@ const adminHydrateContractOverviews = (root = document) => {
   const panels = Array.from(root.querySelectorAll?.("[data-admin-contract-overview]") || []);
   panels.forEach((panel) => {
     const schoolId = panel.dataset.adminContractOverview || "";
-    if (!schoolId || adminOperationalState.contractOverviews?.[schoolId]) return;
+    if (!schoolId || adminOperationalState.contractOverviews?.[schoolId] || panel.dataset.contractHydrating) return;
+    panel.dataset.contractHydrating = "true";
+    const isCurrent = () => panel.isConnected && adminSchoolFilters().selected === schoolId && adminActiveSchoolDetailSection() === "contractedContent";
     adminLoadSchoolContractOverview(schoolId)
       .then(() => {
-        const content = document.querySelector("[data-admin-content]");
-        if (content && adminActiveSchoolDetailSection() === "contractedContent") {
-          content.innerHTML = renderAdminWorkspaceView("escolas");
-          adminHydrateContractOverviews(content);
-        }
+        if (isCurrent()) panel.outerHTML = renderAdminSchoolContractedContent({ schoolId });
       })
       .catch((error) => {
-        panel.innerHTML = `<div class="admin-empty-note">Não foi possível carregar contratos: ${printableEscape(error.message || "erro desconhecido")}</div>`;
+        adminOperationalState.contractOverviews[schoolId] = { status: "ERROR", category_catalog: { status: "ERROR", error: error.message || "Não foi possível carregar as categorias." } };
+        if (isCurrent()) panel.outerHTML = renderAdminSchoolContractedContent({ schoolId });
       });
   });
 };
@@ -15235,6 +15261,17 @@ const initAdminWorkspace = () => {
     }
   };
   workspace.addEventListener("click", async (event) => {
+    const retry = event.target.closest?.("[data-admin-contract-retry]");
+    if (retry) {
+      event.preventDefault();
+      const panel = retry.closest("[data-admin-contract-overview]");
+      const schoolId = panel?.dataset.adminContractOverview;
+      if (!schoolId || schoolId !== adminSchoolFilters().selected) return;
+      delete adminOperationalState.contractOverviews[schoolId];
+      panel.outerHTML = renderAdminSchoolContractedContent({ schoolId });
+      adminHydrateContractOverviews(content);
+      return;
+    }
     const button = event.target.closest?.("[data-admin-view]");
     const backButton = event.target.closest?.("[data-admin-back]");
     if (button) {
