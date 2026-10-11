@@ -1,0 +1,3 @@
+PASS four guard/assembly function bodies match production snapshot
+PASS institutional professor + active membership + absent legacy role => P0001 UNAUTHORIZED_ASSESSMENT_ASSEMBLY, zero assessments
+PASS historical synthetic fixtures included question_bank_role and therefore concealed the mismatch
