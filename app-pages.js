@@ -10883,6 +10883,7 @@ const adminReadOnlyNav = [
   { key: "permissoes", label: "Perfis e permissões", icon: "perfil" },
   { key: "suporte", label: "Suporte / SLA", icon: "mail" },
   { key: "conteúdos", label: "Conteúdos", icon: "book" },
+  { key: "contratos", label: "Contratos", icon: "clipboard" },
   { key: "configuracoes", label: "Configurações", icon: "settings" },
   { key: "implantação", label: "Implantação", icon: "clipboard" },
   { key: "auditoria", label: "Auditoria", icon: "check" },
@@ -15245,17 +15246,22 @@ const initAdminWorkspace = () => {
   const activate = (view, { push = false } = {}) => {
     const activeView = {
       conteudos: "conteúdos",
+      contratos: "conteúdos",
       implantacao: "implantação",
     }[view] || view;
     if (push) {
       const params = new URLSearchParams(window.location.search || "");
       if (activeView === "painel") params.delete("view");
       else params.set("view", activeView);
+      if (view === "contratos") { params.set("view", "conteudos"); params.set("type", "entitlements"); }
+      else if (activeView === "conteúdos") params.delete("type");
       const nextUrl = `${window.location.pathname}${params.toString() ? `?${params}` : ""}${window.location.hash || ""}`;
       window.history.pushState({}, "", nextUrl);
       rememberCurrentPlatformRoute();
     }
-    workspace.querySelectorAll("[data-admin-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.adminView === activeView));
+    const contractRoute = activeView === 'conteúdos' && ['entitlements', 'network-contracts'].includes(new URLSearchParams(window.location.search).get('type'));
+    const activeNav = contractRoute ? 'contratos' : activeView;
+    workspace.querySelectorAll("[data-admin-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.adminView === activeNav));
     if (content) content.innerHTML = renderAdminWorkspaceView(activeView);
     if (activeView === "escolas" && content) adminHydrateContractOverviews(content);
     const isContractOperation = activeView === 'conteúdos' && ['entitlements', 'network-contracts'].includes(new URLSearchParams(window.location.search).get('type'));
@@ -16017,6 +16023,11 @@ Confirmar e salvar?`)) { moduleToggle.checked = previous; return; }
       item.hidden = term ? !item.textContent.toLowerCase().includes(term) : false;
     });
   });
+  if (initAdminWorkspace.onPopState) window.removeEventListener('popstate', initAdminWorkspace.onPopState);
+  initAdminWorkspace.onPopState = () => {
+    if (workspace.isConnected) activate(new URLSearchParams(window.location.search || "").get("view") || "painel");
+  };
+  window.addEventListener('popstate', initAdminWorkspace.onPopState);
   activate(new URLSearchParams(window.location.search || "").get("view") || "painel");
 };
 
@@ -24213,7 +24224,9 @@ const createSupabaseRestClient = () => {
     }
     if (!response.ok) {
       const body = await response.text();
-      throw Object.assign(new Error(mapSupabaseError(response, body)), { status: response.status });
+      let rpcError = null;
+      try { rpcError = JSON.parse(body); } catch { /* Non-JSON proxy errors remain uncertain. */ }
+      throw Object.assign(new Error(mapSupabaseError(response, body)), { status: response.status, code: rpcError?.code, databaseMessage: rpcError?.message });
     }
     if (response.status === 204) return null;
     return response.json();

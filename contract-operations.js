@@ -1,8 +1,53 @@
 /* Contract administration. Uses the existing authenticated REST client. */
 (() => {
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const labels = {QUESTION:'Questões',VIDEO:'Vídeos',BOOK:'Livros',BOOK_PAGE:'Páginas',GAME:'Jogos',INTERACTION:'Experiências',ACTIVITY:'Atividades',PRINTABLE:'Imprimíveis',ASSESSMENT_TEMPLATE:'Conteúdos gerais / avaliações',TRAINING:'Universidade / capacitação'};
+  const labels = {QUESTION:'Questões',VIDEO:'Vídeos',BOOK:'Livros',BOOK_PAGE:'Páginas',GAME:'Jogos',INTERACTION:'Experiências',ACTIVITY:'Atividades',PRINTABLE:'Imprimíveis',ASSESSMENT_TEMPLATE:'Modelos de avaliação',TRAINING:'Universidade / capacitação'};
   const options = (rows, key='id', label='name') => rows.map(r=>`<option value="${esc(r[key])}">${esc(r[label])}</option>`).join('');
+  // Only server-typed validation failures after receipt lookup prove this request did not commit.
+  const rejectedConfirmations = new Set([
+    'ACTIVE_CONTRACTOR_REQUIRED',
+    'ACTIVE_PRODUCT_REQUIRED',
+    'AMBIGUOUS_PREVIOUS_CONFIGURATION_REQUIRES_EXPLICIT_REVIEW',
+    'CANONICAL_GRADE_REQUIRED',
+    'CATEGORY_RULES_REQUIRED',
+    'CONTRACTOR_REQUIRED',
+    'CONTRACTOR_TENANT_INACTIVE',
+    'CONTRACT_REFERENCE_REQUIRED',
+    'DUPLICATE_CONTRACTOR_USE_EXISTING',
+    'DUPLICATE_CONTRACT_REFERENCE',
+    'DUPLICATE_PRODUCT',
+    'DUPLICATE_SCHOOLS',
+    'DUPLICATE_SCHOOL_USE_EXISTING',
+    'EXPLICIT_DYNAMIC_ADOPTION_REQUIRED',
+    'EXPLICIT_SCHOOL_SELECTION_REQUIRED',
+    'INACTIVE_PREVIOUS_PRODUCT_REQUIRES_SEPARATE_REVIEW',
+    'INVALID_CONTRACT_CONFIG',
+    'INVALID_NEW_SCHOOL',
+    'INVALID_SCHOOLS',
+    'INVALID_SUBJECT',
+    'LEGACY_CONFIGURATION_REQUIRES_EXPLICIT_CATEGORY_SELECTION',
+    'MODULE_NOT_IN_PRODUCT',
+    'NEW_TARGET_REQUIRES_EDITED_CONFIGURATION',
+    'ONE_CONTRACTOR_REQUIRED',
+    'ONE_THEME_PER_CATEGORY',
+    'OPERATIONAL_ACTIVE_CONTRACT_REQUIRED',
+    'PRODUCTS_REQUIRED',
+    'REASON_REQUIRED',
+    'RENEWAL_ALREADY_SCHEDULED',
+    'RENEWAL_WINDOW_OVERLAPS',
+    'REVOKE_SUCCESSOR_FIRST',
+    'SCHOOL_CONTRACT_TARGET_MUST_BE_PRESERVED',
+    'SCHOOL_NOT_FOUND',
+    'SCHOOL_RULES_REQUIRE_PREVIOUS_CONFIGURATION',
+    'SCHOOL_TENANT_INACTIVE',
+    'SEPARATE_INSTITUTIONAL_AUTHORIZATION_REQUIRED',
+    'STALE_CONTRACT_REVIEW',
+    'STANDARD_RULE_REQUIRED',
+    'TEMPORARY_SAMPLE_REQUIRES_EXPLICIT_REVIEW',
+    'TWELVE_CALENDAR_MONTHS_REQUIRED',
+    'UNSUPPORTED_RULE_FIELDS',
+    'VALID_FINITE_WINDOW_REQUIRED'
+  ]);
   class ContractOperations extends HTMLElement {
     pendingKey() { return 'raizes:pending-contract:'+getPlatformSession().userId; }
     rememberPending(value) { try { if(value) sessionStorage.setItem(this.pendingKey(),JSON.stringify(value));else sessionStorage.removeItem(this.pendingKey()); } catch { /* Receipt remains on screen if browser storage is unavailable. */ } }
@@ -41,7 +86,7 @@
        <fieldset><legend>3. Produtos, módulos e categorias</legend><p>A seleção inclui itens atuais e futuros classificados. Livre/transversal continua sujeito à licença, idade, suspensão e entrega protegida. Universidade exige autorização separada.</p>
        ${c.products.length?c.products.map(p=>`<details data-product="${esc(p.id)}"><summary>${esc(p.name)}</summary><label><input type="checkbox" data-product-enabled> Contratar este produto</label><label><input type="checkbox" data-institutional> Autorizar universidade / capacitação separadamente</label><button type="button" data-select-all>Selecionar todas as categorias escolares deste produto</button><button type="button" data-clear-rules>Limpar categorias</button>
        ${p.modules.flatMap(m=>m.content_types.map(type=>`<details><summary>${esc(m.name)} — ${esc(labels[type]||type)}</summary>${c.taxonomy.filter(g=>g.institutional===(type==='TRAINING')).map(g=>`<div data-rule data-module="${esc(m.id)}" data-type="${esc(type)}" data-grade="${esc(g.grade_id)}"><label><input type="checkbox" data-rule-enabled> ${esc(g.stage_name)} — ${esc(g.grade_name)}</label><label>Tema<select data-subject aria-label="Tema de ${esc(labels[type]||type)} — ${esc(g.grade_name)}"><option value="">Todos os temas / multidisciplinar</option>${options(c.subjects)}</select></label></div>`).join('')}</details>`)).join('')}</details>`).join(''):'<p>Nenhum produto ativo. O catálogo precisa de um produto com módulos antes de contratar.</p>'}</fieldset>
-       <fieldset><legend>4. Revisão</legend><label>Motivo<textarea name="reason" required minlength="5" maxlength="500"></textarea></label><label><input type="checkbox" name="adopt_dynamic" required> Confirmo a adoção das categorias na vigência e entendo que direitos legados não ampliarão as categorias escolhidas.</label><button type="submit" ${c.products.length?'':'disabled'}>Revisar alvos, categorias e vigência</button></fieldset>
+       <fieldset><legend>4. Revisão</legend><label>Motivo<textarea name="reason" required minlength="5" maxlength="500"></textarea></label><label><input type="checkbox" name="adopt_dynamic" required> Confirmo a adoção das categorias na vigência e entendo que direitos legados não ampliarão as categorias escolhidas.</label><p>A revisão não grava o contrato. Depois de conferir, use “Confirmar e salvar contrato”.</p><button type="submit" class="is-primary" ${c.products.length?'':'disabled'}>Revisar alvos, categorias e vigência</button></fieldset>
       </form><p data-status role="status" aria-live="polite"></p><section data-review hidden class="co-review"></section>
       <h3>Histórico de contratos</h3>${c.contracts.length?`<table><thead><tr><th>Contrato</th><th>Vigência</th><th>Estado</th><th>Ação</th></tr></thead><tbody>${c.contracts.map(x=>`<tr><td>${esc(x.reference)}<small> ${esc(x.id)}</small></td><td>${esc(x.starts_at)} → ${esc(x.ends_at||'Sem término')}</td><td>${esc(this.contractState(x))}</td><td>${x.operational&&['ACTIVE','SUSPENDED'].includes(x.status)?`<button type="button" data-revoke="${esc(x.id)}">Revisar revogação</button>`:''}</td></tr>`).join('')}</tbody></table>`:'<p>Nenhum contrato cadastrado.</p>'}`;
       this.form=this.querySelector('form');
@@ -52,7 +97,7 @@
       this.querySelectorAll('[data-select-all]').forEach(b=>b.onclick=()=>{this.invalidate();const p=b.closest('[data-product]');p.querySelector('[data-product-enabled]').checked=true;p.querySelectorAll('[data-rule]').forEach(r=>{if(r.dataset.type!=='TRAINING')r.querySelector('input').checked=true;});});
       this.querySelectorAll('[data-clear-rules]').forEach(b=>b.onclick=()=>{this.invalidate();b.closest('[data-product]').querySelectorAll('[data-rule-enabled]').forEach(x=>x.checked=false);});
       this.querySelectorAll('[data-revoke]').forEach(b=>b.onclick=()=>{const reason=this.form.elements.reason.value.trim();if(reason.length<5){this.status('Preencha o motivo da revogação no campo Motivo.',true);return;}this.preview({action:'REVOKE',contract_id:b.dataset.revoke,reason});});
-      try {const pending=JSON.parse(sessionStorage.getItem(this.pendingKey())||'null');if(pending?.review&&pending?.id){this.review=pending.review;this.requestId=pending.id;this.showReview(this.review);this.status('Há uma confirmação sem recibo neste navegador. Confira a prévia e confirme novamente para recuperar a mesma operação: '+pending.id);}}catch{/* Ignore malformed local state. */}
+      try {const pending=JSON.parse(sessionStorage.getItem(this.pendingKey())||'null');if(pending?.review&&pending?.id){this.pendingConfirmation=true;this.review=pending.review;this.requestId=pending.id;this.showReview(this.review);this.status('Há uma confirmação sem recibo neste navegador. Confira a prévia e confirme novamente para recuperar a mesma operação: '+pending.id);}}catch{/* Ignore malformed local state. */}
     }
     invalidate() { this.generation=(this.generation||0)+1;this.review=null;this.querySelector('[data-review]').hidden=true; }
     status(message,error=false) { let el=this.querySelector('[data-status]');if(!el){el=document.createElement('p');el.dataset.status='';this.append(el);}el.textContent=message;el.setAttribute('role',error?'alert':'status'); }
@@ -106,16 +151,30 @@
       const added=[...nextRules].filter(([key])=>!oldRules.has(key)).map(([,r])=>r);
       host.innerHTML=`<h3>${cfg.action==='REVOKE'?'Revogar contrato':'Confirmar novo vínculo contratual'}</h3><p>Contratante: ${esc(review.contractor?.name||'Escola contratante')} ${esc(review.contractor?.code||'')}</p><p>${esc(cfg.reference||old?.contract_ref)} — ${esc(cfg.starts_at||old?.starts_at)} a ${esc(cfg.ends_at||old?.ends_at)}</p>${old?`<p>Anterior: ${esc(old.contract_ref)} — ${esc(old.starts_at)} a ${esc(old.ends_at||'sem término')}. Histórico preservado.</p>`:''}<ul>${(review.schools||[]).map(s=>`<li>${esc(s.name)} — ${esc(s.id)} (${esc(s.status)})</li>`).join('')}${(review.removed_schools||[]).map(s=>`<li>Removida na renovação: ${esc(s.name)} — ${esc(s.id)}. O contrato anterior deixa de liberar categorias na nova vigência.</li>`).join('')}${cfg.new_school?`<li>Nova escola: ${esc(cfg.new_school.name)} / ${esc(cfg.new_school.code)} — será criada inativa.</li>`:''}</ul>
       ${(cfg.products||[]).map(p=>`<h4>${esc(this.catalog.products.find(x=>x.id===p.product_id)?.name)}</h4>${p.school_rules?Object.entries(p.school_rules).map(([sid,rules])=>`<details><summary>Configuração preservada: ${esc(this.catalog.schools.find(s=>s.id===sid)?.name||sid)}</summary><p>Restrições da licença anterior mantidas. Módulos desabilitados: ${esc(Object.entries(p.school_module_overrides?.[sid]||{}).filter(([,enabled])=>!enabled).map(([id])=>this.catalog.products.find(x=>x.id===p.product_id)?.modules.find(m=>m.id===id)?.name||id).join(', ')||'nenhum override desabilitado')}</p><ul>${rules.map(r=>`<li>${esc(this.ruleLabel(r))}</li>`).join('')}</ul></details>`).join(''):`<ul>${p.rules.map(r=>`<li>${esc(this.ruleLabel(r))}</li>`).join('')}</ul>`}`).join('')}
-      ${old?`<details><summary>Mudanças de categorias: ${added.length} adicionadas e ${removed.length} retiradas</summary><ul>${added.map(r=>`<li>Adicionar: ${esc(this.ruleLabel(r))}</li>`).join('')}${removed.map(r=>`<li>Retirar: ${esc(this.ruleLabel(r))}</li>`).join('')}</ul></details>`:''}<p>${esc(review.effects.warning)}</p><p>Motivo: ${esc(cfg.reason)}</p><label><input type="checkbox" data-confirm-check> Conferi alvos, mudanças e vigência.</label><button type="button" data-confirm disabled>Confirmar ${cfg.action==='REVOKE'?'revogação':'contrato'}</button><button type="button" data-cancel>Voltar e editar</button>`;
+      ${old?`<details><summary>Mudanças de categorias: ${added.length} adicionadas e ${removed.length} retiradas</summary><ul>${added.map(r=>`<li>Adicionar: ${esc(this.ruleLabel(r))}</li>`).join('')}${removed.map(r=>`<li>Retirar: ${esc(this.ruleLabel(r))}</li>`).join('')}</ul></details>`:''}<p>${esc(review.effects.warning)}</p><p>Motivo: ${esc(cfg.reason)}</p><label><input type="checkbox" data-confirm-check> Conferi alvos, mudanças e vigência.</label><button type="button" class="is-primary" data-confirm disabled>${cfg.action==='REVOKE'?'Confirmar revogação':'Confirmar e salvar contrato'}</button><button type="button" data-cancel>Voltar e editar</button>`;
       host.querySelector('[data-confirm-check]').onchange=e=>host.querySelector('[data-confirm]').disabled=!e.target.checked;
-      host.querySelector('[data-cancel]').onclick=()=>{this.rememberPending(null);this.invalidate();};
+      host.querySelector('[data-cancel]').onclick=()=>{if(this.pendingConfirmation)return;this.invalidate();};
+      if(this.pendingConfirmation)this.lockPending();
       host.querySelector('[data-confirm]').onclick=()=>this.confirm();
     }
+    lockPending() {
+      this.form.querySelectorAll('input,select,textarea,button').forEach(x=>x.disabled=true);
+      this.querySelector('[data-cancel]').disabled=true;
+      this.querySelectorAll('[data-revoke]').forEach(x=>x.disabled=true);
+    }
+    showSuccess(receipt,id,action) {
+      const outcome=action==='REVOKE'?'Revogação confirmada':'Contrato salvo';
+      this.review=null;this.pendingConfirmation=false;
+      this.innerHTML=`<section class="co-review" role="status"><h2>${outcome}</h2><p>Operação registrada. Contrato ${esc(receipt.contract_id)}. Recibo ${esc(id)}.</p><p>A situação das escolas foi preservada.</p><button type="button" class="is-primary" data-new-contract>Criar outro contrato</button><button type="button" data-contract-list>Voltar à lista de contratos</button></section>`;
+      this.rpc('admin_get_contract_operations').then(catalog=>{this.catalog=catalog;}).catch(()=>{this.status(outcome+'. A lista não pôde ser atualizada; use Voltar à lista para tentar novamente.');});
+      this.querySelector('[data-new-contract]').onclick=()=>this.load();
+      this.querySelector('[data-contract-list]').onclick=async()=>{await this.load();this.querySelector('h3')?.scrollIntoView({block:'start'});};
+    }
     async confirm() {
-      if(!this.review||this.saving)return;this.saving=true;const review=this.review,id=this.requestId;this.rememberPending({review,id});
+      if(!this.review||this.saving)return;this.saving=true;this.pendingConfirmation=true;const review=this.review,id=this.requestId;this.rememberPending({review,id});
       const controls=[...this.querySelectorAll('input,select,textarea,button')];const states=controls.map(x=>x.disabled);controls.forEach(x=>x.disabled=true);this.status('Gravando operação '+id+'…');
-      try { const receipt=await this.rpc('admin_confirm_contract_operation',{p_review:review,p_request_id:id});if(!receipt.contract_id)throw Error('Resposta sem recibo contratual.');this.rememberPending(null);await this.load();this.status('Operação registrada. Contrato '+receipt.contract_id+'. Recibo '+id+'. A situação das escolas foi preservada.'); }
-      catch(e){controls.forEach((x,i)=>x.disabled=states[i]);if(/STALE_CONTRACT_REVIEW/.test(e.message)){this.rememberPending(null);this.invalidate();this.status('A prévia ficou desatualizada. Revise novamente os alvos e a configuração antes de confirmar.',true);}else{this.status('Não foi possível confirmar o resultado: '+e.message+'. Recibo '+id+'. Tente novamente para recuperar a mesma operação; não crie outra.',true);}}
+      try { const receipt=await this.rpc('admin_confirm_contract_operation',{p_review:review,p_request_id:id});if(!receipt.contract_id)throw Error('Resposta sem recibo contratual.');this.rememberPending(null);this.showSuccess(receipt,id,review.config.action); }
+      catch(e){controls.forEach((x,i)=>x.disabled=states[i]);if(e.status===400&&e.code==='P0001'&&rejectedConfirmations.has(e.databaseMessage)){this.pendingConfirmation=false;this.rememberPending(null);this.form.querySelectorAll('input,select,textarea,button').forEach(x=>x.disabled=false);this.setProductEditing();this.querySelectorAll('[data-revoke]').forEach(x=>x.disabled=false);this.invalidate();this.status('Confirmação rejeitada: '+e.databaseMessage+'. Os campos foram preservados. Corrija e revise novamente antes de confirmar.',true);}else{this.lockPending();this.status('Não foi possível confirmar o resultado: '+e.message+'. Recibo '+id+'. Tente novamente para recuperar a mesma operação; não crie outra.',true);}}
       finally{this.saving=false;}
     }
   }
