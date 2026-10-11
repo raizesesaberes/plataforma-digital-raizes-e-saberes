@@ -10265,7 +10265,7 @@ const renderTeacherAssessmentsView = () => {
     return renderTeacherEmptyState("NENHUMA TURMA VINCULADA.", "A aplicacao de avaliacao exige uma turma institucional ativa.");
   }
   const state = avaliaApplicationState.teacher;
-  const selectedClassId = classes[0]?.id || "";
+  const selectedClassId = "";
   const selectedStudents = getTeacherInstitutionalStudents(selectedClassId);
   const assessmentCount = state.assessments.length;
   const assignmentCount = state.assignments.length;
@@ -10316,7 +10316,7 @@ const renderTeacherAssessmentsView = () => {
         <fieldset>
           <legend>Destino</legend>
           <label><span>Público</span><select name="targetType" data-avalia-target-type><option value="class">Turma inteira</option><option value="student">Aluno específico</option></select></label>
-          <label><span>Turma</span><select name="classId" data-avalia-class-select>${classes.map((classItem) => `<option value="${htmlEscape(classItem.id)}">${printableEscape(classItem.name)}</option>`).join("")}</select></label>
+          <label><span>Turma</span><select name="classId" data-avalia-class-select><option value="">Selecione uma turma autorizada</option>${classes.map((classItem) => `<option value="${htmlEscape(classItem.id)}">${printableEscape(classItem.name)}</option>`).join("")}</select></label>
           <label data-avalia-student-wrap hidden><span>Aluno</span><select name="studentId" data-avalia-student-select>${selectedStudents.map((student) => `<option value="${htmlEscape(student.id)}">${printableEscape(student.name)}</option>`).join("")}</select></label>
         </fieldset>
         <fieldset>
@@ -20227,28 +20227,19 @@ const modules = {
             <section class="panel qb-builder" id="construtor" data-qb-panel="avaliacoes">
               <div class="panel-head"><h2>Construtor de Avaliações</h2><button type="button" data-qb-save-draft>Salvar rascunho</button></div>
               <div class="qb-builder-grid">
-                <label><span>Titulo</span><input data-qb-assessment-title value="Avaliação diagnóstica demonstrativa" /></label>
-                <label><span>Turma</span><select><option>2o Ano A</option><option>5o Ano B</option></select></label>
-                <label><span>Componente curricular</span><select data-qb-assessment-component><option>Lingua Portuguesa</option><option>Matematica</option></select></label>
-                <label><span>Ano escolar</span><select data-qb-assessment-year><option>2o ano</option><option>5o ano</option></select></label>
-                <label><span>Data de aplicação</span><input type="date" value="2026-08-05" /></label>
-                <label><span>Capa</span><select><option>Raízes e Saberes - padrao</option><option>Sem capa</option></select></label>
+                <label><span>Titulo</span><input data-qb-assessment-title placeholder="Dê um título à avaliação" /></label>
+                <p class="span-2">A turma, o período e as regras serão escolhidos em Aplicações, após salvar esta avaliação.</p>
+                <label><span>Componente curricular</span><input data-qb-assessment-component placeholder="Componente das questões selecionadas" /></label>
+                <label><span>Ano escolar</span><input data-qb-assessment-year placeholder="Ano das questões selecionadas" /></label>
+                <label><span>Data de aplicação</span><input type="date" /></label>
+                <label><span>Capa</span><select data-qb-cover><option>Raízes e Saberes - padrao</option><option>Sem capa</option></select></label>
                 <label class="span-2"><span>Orientacoes</span><textarea>Leia com atencao e marque apenas uma alternativa por questao.</textarea></label>
-                <label><span>Início digital</span><input type="datetime-local" data-qb-available-from /></label>
-                <label><span>Prazo final</span><input type="datetime-local" data-qb-due-at /></label>
-                <label><span>Tempo limite</span><input type="number" min="5" step="5" value="50" data-qb-time-limit /></label>
-                <label><span>Tentativas</span><input type="number" min="1" step="1" value="1" data-qb-max-attempts /></label>
-                <label><span>Resultado</span><select data-qb-result-mode><option value="immediate">Imediato</option><option value="score_only">Somente nota</option><option value="after_due">Apos o prazo</option><option value="manual">Liberação manual</option><option value="hidden">Oculto</option></select></label>
-                <label><span>Embaralhar</span><select data-qb-shuffle><option value="none">Não embaralhar</option><option value="questions">Questões</option><option value="all">Questões e alternativas</option></select></label>
               </div>
               <div class="qb-builder-actions">
                 <button type="button" data-qb-preview-local>Prévia rapida - nao salva</button>
                 <button type="button" data-qb-preview="student">Pre-visualizar avaliação</button>
                 <button type="button" data-qb-preview="teacher">Visualizar gabarito do professor</button>
-                <button type="button">Duplicar</button>
-                <button type="button">Gerar versoes</button>
-                <button type="button" data-qb-publish-digital>Aplicar digitalmente</button>
-                <button type="button">Preparar PDF futuro</button>
+                <button type="button" data-qb-publish-digital>Salvar e escolher turma</button>
               </div>
             </section>
             <section class="panel qb-saved" data-qb-panel="avaliacoes">
@@ -20256,9 +20247,9 @@ const modules = {
               <div data-qb-saved></div>
             </section>
             <section class="panel qb-results-bridge" data-qb-panel="resultados">
-              <div class="panel-head"><h2>Aplicações e Resultados</h2><a href="avalia.html">Abrir Avalia+</a></div>
-              <p>As aplicações por turma, resultados e relatórios continuam no motor Avalia+ existente. Esta view concentra o acesso editorial sem duplicar regras de aplicação.</p>
-              <div class="qb-dashboard-actions"><a href="avalia.html">Abrir painel Avalia+</a><a href="banco-questoes.html?view=avaliacoes">Montar avaliação</a></div>
+              <div class="panel-head"><h2>Aplicações e Resultados</h2><a href="professor.html?view=avaliacoes#resultados">Abrir Avalia+</a></div>
+              <p>As aplicações por turma, resultados e relatórios continuam no motor Avalia+ existente. Escolha uma aplicação confirmada para consultar os resultados.</p>
+              <div class="qb-dashboard-actions"><a href="professor.html?view=avaliacoes#resultados">Abrir painel Avalia+</a><a href="banco-questoes.html?view=avaliacoes">Montar avaliação</a></div>
             </section>
             <section class="panel qb-access" data-qb-panel="admin">
               <div class="panel-head"><h2>Administração</h2><a href="banco-questoes.html?view=admin">Perfis</a></div>
@@ -21752,14 +21743,20 @@ const syncTeacherAvaliaForm = (root) => {
   const studentWrap = root.querySelector("[data-avalia-student-wrap]");
   const targetType = root.querySelector("[data-avalia-target-type]");
   if (assessmentSelect) {
+    const requested=new URLSearchParams(window.location.search).get('assessment_id');
+    const selected=assessmentSelect.value || requested || '';
     assessmentSelect.innerHTML = avaliaApplicationState.teacher.assessments.length
-      ? avaliaApplicationState.teacher.assessments
+      ? '<option value="">Selecione uma avaliação salva</option>'+avaliaApplicationState.teacher.assessments
           .map((assessment) => `<option value="${htmlEscape(assessment.id)}">${printableEscape(assessment.title)} · ${assessment.items || assessment.questions?.length || 0} questoes</option>`)
           .join("")
       : `<option value="">Nenhuma avaliacao com questoes</option>`;
+    assessmentSelect.value=avaliaApplicationState.teacher.assessments.some(a=>a.id===selected)?selected:'';
+    if(requested && !avaliaApplicationState.teacher.assessments.some(a=>a.id===requested) && avaliaApplicationState.teacher.status==='ready') {
+      const status=root.querySelector('[data-avalia-teacher-status]');if(status)status.textContent='A avaliação solicitada não está disponível para este perfil. Selecione uma avaliação autorizada.';
+    }
   }
-  const selectedClassId = classSelect?.value || getTeacherInstitutionalClasses()[0]?.id || "";
-  const students = getTeacherInstitutionalStudents(selectedClassId);
+  const selectedClassId = classSelect?.value || "";
+  const students = selectedClassId ? getTeacherInstitutionalStudents(selectedClassId) : [];
   if (studentSelect) {
     studentSelect.innerHTML = students.length
       ? students.map((student) => `<option value="${htmlEscape(student.id)}">${printableEscape(student.name)}</option>`).join("")
@@ -21901,13 +21898,18 @@ const initTeacherAvaliaApplication = () => {
     const assessmentId = String(formData.get("assessmentId") || "");
     const targetType = String(formData.get("targetType") || "class");
     const shuffleMode = String(formData.get("shuffleMode") || "none");
-    if (!assessmentId || !classId) {
-      if (statusNode) statusNode.textContent = "Selecione uma avaliacao e uma turma.";
+    if (!avaliaApplicationState.teacher.assessments.some(a=>a.id===assessmentId) || !classItem) {
+      if (statusNode) statusNode.textContent = "Selecione uma avaliação e uma turma autorizadas.";
       return;
     }
+    if(targetType==='student' && !getTeacherInstitutionalStudents(classId).some(s=>s.id===String(formData.get('studentId') || ''))){if(statusNode)statusNode.textContent='Selecione um aluno da turma autorizada.';return;}
+    if(form.dataset.submitting==='true')return;
+    form.dataset.submitting='true';const submit=form.querySelector('[type=submit]');if(submit)submit.disabled=true;
+    avaliaApplicationState.teacher.message='';avaliaApplicationState.teacher.error='';
     if (statusNode) statusNode.textContent = "Publicando avaliacao...";
     try {
-      await avaliaApplicationService.createAssignment({
+      if(avaliaApplicationService.mode()!=='supabase')throw Error('A publicação exige conexão institucional. Nenhuma aplicação local será criada.');
+      const receipt=await avaliaApplicationService.createAssignment({
         assessmentId,
         targetType,
         classId,
@@ -21923,13 +21925,15 @@ const initTeacherAvaliaApplication = () => {
         shuffleQuestions: shuffleMode === "questions" || shuffleMode === "all",
         shuffleAlternatives: shuffleMode === "all",
       });
-      avaliaApplicationState.teacher.message = "Avaliacao publicada com sucesso.";
-      await loadTeacherAvaliaData({ force: true });
+      if(!receipt?.id)throw Error('O servidor não confirmou a aplicação. Consulte Aplicações antes de tentar novamente.');
+      const readback=await loadTeacherAvaliaData({ force: true });
+      if(readback.status!=='ready' || !readback.assignments.some(a=>a.id===receipt.id && a.assessment_id===assessmentId && a.class_id===classId))throw Error('Envio recebido, mas a consulta da aplicação não foi confirmada. Atualize Aplicações antes de tentar novamente.');
+      avaliaApplicationState.teacher.message = "Avaliação publicada e confirmada em Aplicações.";
       refreshTeacherAvaliaSurface();
     } catch (error) {
       avaliaApplicationState.teacher.error = error.message || "Nao foi possivel publicar a avaliacao.";
       if (statusNode) statusNode.textContent = avaliaApplicationState.teacher.error;
-    }
+    } finally {form.dataset.submitting='false';if(submit)submit.disabled=false;}
   });
 };
 
@@ -23592,8 +23596,8 @@ const initQuestionBank = () => {
     instructions: root.querySelector(".qb-builder textarea")?.value || "",
     component: root.querySelector("[data-qb-assessment-component]")?.value || "",
     school_year: root.querySelector("[data-qb-assessment-year]")?.value || "",
-    class_name: root.querySelectorAll(".qb-builder select")[0]?.value || "",
-    cover_template: root.querySelectorAll(".qb-builder select")[3]?.value || "Raízes e Saberes - padrao",
+    class_name: null,
+    cover_template: root.querySelector("[data-qb-cover]")?.value || "Raízes e Saberes - padrao",
     application_date: root.querySelector(".qb-builder input[type='date']")?.value || null,
   });
 
@@ -23663,6 +23667,10 @@ const initQuestionBank = () => {
     if (mode !== "supabase") {
       return null;
     }
+    if(!titleInput?.value.trim()){setSelectionStatus('Informe o título da avaliação antes de salvar.','error');return null;}
+    const selectedYears=[...new Set(cart.map(itemById).filter(Boolean).map(q=>q.year).filter(Boolean))];
+    const chosenYear=root.querySelector('[data-qb-assessment-year]')?.value.trim();
+    if(selectedYears.length===1 && chosenYear!==selectedYears[0]){setSelectionStatus(`O ano deve corresponder às questões selecionadas: ${selectedYears[0]}.`,'error');return null;}
     try {
       return await syncCartToAssessment();
     } catch (error) {
@@ -23737,56 +23745,14 @@ const initQuestionBank = () => {
   });
 
   const publishCurrentAssessmentDigitally = async () => {
-    syncPointInputs();
-    const items = cart.map(itemById).filter(Boolean);
-    if (!items.length) {
-      setSelectionStatus("Selecione questoes antes de aplicar digitalmente.", "error");
-      return null;
-    }
-    let savedAssessment = null;
-    if (mode === "supabase") {
-      try {
-        savedAssessment = await syncCartToAssessment();
-      } catch (error) {
-        const message = String(error.message || "");
-        if (message.includes("Sessao Supabase ausente") || message.includes("Sessao expirada") || message.includes("row-level security")) {
-          showSessionRequired("Selecao preservada. Entre novamente para salvar antes da aplicação digital oficial.");
-          return null;
-        }
-        throw error;
-      }
-    }
-    const shuffle = root.querySelector("[data-qb-shuffle]")?.value || "none";
-    const assignment = publishDigitalAssessmentDemo({
-      assessmentId: savedAssessment?.id || activeAssessmentId,
-      title: titleInput?.value?.trim() || "Avaliação digital",
-      component: root.querySelector("[data-qb-assessment-component]")?.value || "",
-      year: root.querySelector("[data-qb-assessment-year]")?.value || "",
-      className: root.querySelectorAll(".qb-builder select")[0]?.value || "2o Ano A",
-      availableFrom: root.querySelector("[data-qb-available-from]")?.value ? new Date(root.querySelector("[data-qb-available-from]").value).toISOString() : new Date().toISOString(),
-      dueAt: root.querySelector("[data-qb-due-at]")?.value ? new Date(root.querySelector("[data-qb-due-at]").value).toISOString() : new Date(Date.now() + 7 * 86400000).toISOString(),
-      timeLimitMinutes: root.querySelector("[data-qb-time-limit]")?.value || 50,
-      maxAttempts: root.querySelector("[data-qb-max-attempts]")?.value || 1,
-      resultReleaseMode: root.querySelector("[data-qb-result-mode]")?.value || "immediate",
-      shuffleQuestions: shuffle === "questions" || shuffle === "all",
-      shuffleAlternatives: shuffle === "all",
-      questions: items.map((item) => ({
-        id: item.id,
-        uuid: item.uuid,
-        statement: item.statement,
-        baseText: item.baseText,
-        alternatives: item.alternatives,
-        correctAlternative: item.correctAlternative,
-        points: Number(cartPoints[item.id] ?? 1),
-        skill: item.skill,
-        descriptor: item.descriptor,
-        component: item.component,
-        justification: item.justification,
-        intervention: item.intervention,
-      })),
-    });
-    setSelectionStatus(`Avaliação publicada para ${assignment.className}. Aluno ja pode responder em Minhas Avaliações.`, "success");
-    return assignment;
+    if(mode!=='supabase') {setSelectionStatus('Conecte-se para salvar e escolher uma turma. Nenhuma aplicação foi publicada.','error');return null;}
+    const saved=await ensureSavedForPreview();
+    if(!saved)return null;
+    const id=saved.assessment?.id || saved.id;
+    if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || ''))throw Error('O servidor não confirmou o identificador da avaliação. Nenhuma aplicação foi publicada.');
+    setSelectionStatus('Avaliação salva. Escolha a turma e revise a aplicação na próxima tela.','success');
+    window.location.assign(`professor.html?view=avaliacoes&assessment_id=${encodeURIComponent(id)}#aplicacoes`);
+    return saved;
   };
 
   const selectQuestion = (id) => {
@@ -23803,6 +23769,10 @@ const initQuestionBank = () => {
     }
     cart.push(item.id);
     cartPoints[item.id] = cartPoints[item.id] ?? 1;
+    for(const [selector,key] of [['[data-qb-assessment-year]','year'],['[data-qb-assessment-component]','component']]) {
+      const field=root.querySelector(selector), values=[...new Set(cart.map(itemById).filter(Boolean).map(q=>q[key]).filter(Boolean))];
+      if(field && !field.value && values.length===1)field.value=values[0];
+    }
     saveDraftSnapshot("question-selected");
     setSelectionStatus(`${item.id} selecionada para a avaliação.`, "success");
   };

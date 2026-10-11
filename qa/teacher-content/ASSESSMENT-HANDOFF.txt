@@ -1,0 +1,18 @@
+Correção funcional sobre PR12; commit separado do pós-criação docente.
+
+Produção ANTES deste patch: consultar turmas reais em professor.html?view=avaliacoes, sem clicar Publicar avaliação. Não usar Aplicar digitalmente no construtor Banco: esse botão legado era local. O relato histórico em FASE3-PRODUCTION-GATES.txt descreve essa produção; a proposta abaixo ainda aguarda revisão/merge/deploy.
+
+Agora proposto:
+- Banco não contém mais turma/ano/componente/título/data demonstrativos nem botões de duplicar/gerar versões/PDF sem handler. Ano e componente vêm dos itens selecionados se o campo está vazio. Ano incompatível com seleção homogênea bloqueia salvamento. Título exige preenchimento. Turma não é enviada como nome fictício: class_name=null.
+- Salvar e escolher turma salva via RPC existente e requer ID UUID confirmado pelo servidor. Navega para professor.html?view=avaliacoes&assessment_id=<id>#aplicacoes. Não cria aplicação, localStorage ou sucesso de entrega. Sem conexão Supabase, bloqueia esse percurso. Prévia rápida permanece explicitamente local/sem salvar.
+- Formulário canônico só pré-seleciona ID presente na lista autorizada; ID desconhecido fica vazio com aviso, sem fallback para primeira avaliação. Trocar destino mantém avaliação selecionada. Turma inicia vazia e exige escolha entre vínculos reais; aluno específico precisa pertencer à turma.
+- Publicar exige modo Supabase e RPC teacher_schedule_assessment_application_v2. Bloqueia clique enquanto pendente. Só anuncia sucesso após readback conter ID retornado E assessment_id E class_id correspondentes. Falha/readback inconclusivo mostra erro/instrução de consultar aplicações antes de repetir, sem falso sucesso ou fallback local. Nenhuma retentativa automática.
+- Atalho de resultados no Banco aponta para o formulário/resultados canônicos do professor, não o painel demonstrativo Avalia+.
+
+Validação:
+node tests/teacher-content/assessment-handoff.mjs: Chromium, montagem via método real createAssessmentFromBank, navegação com ID real sintético, formulário canônico/handlers/serviço de publicação reais. Somente transporte e vínculos institucionais são fixtures. Confirma turma explícita, ano5 não salva como2, sem turma não publica, falhas save/RPC/readback sem sucesso, contexto desconhecido sem fallback e modo local bloqueado. Readback usa estado de servidor sintético preservado entre páginas. Sem mutação real.
+node qa/fase3/integration-run.mjs: Docker PostgreSQL/PostgREST descartáveis, testes RPC reais de montagem→publicação→aluno→entrega→resultados e isolamento, cinco suítes de contrato e ponte operacional; logs/resultados copiados neste diretório. Esta suíte complementa navegador com mocks: não se alega browser conectado diretamente ao Docker nesta fatia.
+node tests/teacher-content/browser.mjs: regressões catálogo/perfis/autoria e pós-save também PASS.
+Sintaxe/diff/build4277 PASS. Nenhuma mudança SQL/ACL/Auth/gate ou publicação real.
+
+Limites: esta proposta ainda não habilita respostas/edição por versão web nem gates Expo; não corrige RPC de adaptação ausente. Publicação após erro de rede deve ser reconciliada consultando aplicações; não foi introduzido contrato novo de idempotência backend. Nenhuma homologação humana alegada.

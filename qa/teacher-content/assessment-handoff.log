@@ -1,0 +1,1 @@
+PASS saved bank assessment -> canonical form exact id -> explicit authorized class -> real service RPC -> readback. Wrong year/no target/save failure/RPC failure/readback failure/unknown id do not publish locally or report success. Synthetic transport only.
