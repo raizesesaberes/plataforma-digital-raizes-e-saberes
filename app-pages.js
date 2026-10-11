@@ -7360,6 +7360,7 @@ const renderTeacherFamilyMessagesView = () => {
                         <span>${printableEscape(message.className)} · ${printableEscape(message.date)} · MINHA SEMANA</span>
                         <strong>${printableEscape(message.title)}</strong>
                         <small>${printableEscape(message.text)}</small>
+                        ${message.id && message.status === "published" ? `<button type="button" data-communication-replies="${printableEscape(message.id)}">Ver respostas / Responder</button>` : ""}
                       </article>
                     `
                   )
@@ -8932,6 +8933,7 @@ const renderStudentInboxCard = (message = {}) => `
       <em>${printableEscape(communicationDeliveryStateLabel(message))}</em>
       ${message.href ? `<a href="${printableEscape(resolveCommunicationDeepLink(message.href))}">${printableEscape(message.actionLabel || "Abrir")}</a>` : ""}
       ${message.deliveryId && !message.readAt ? `<button type="button" data-student-delivery-read="${printableEscape(message.deliveryId)}">Marcar como lido</button>` : ""}
+      ${message.deliveryId && !message.sourceType ? `<button type="button" data-communication-delivery="${printableEscape(message.deliveryId)}">Ver respostas / Responder</button>` : ""}
     </aside>
   </article>
 `;
@@ -18103,6 +18105,7 @@ const renderFamilyMessageList = ({ compact = false } = {}) => {
                 <em>${printableEscape(message.deliveryId ? communicationDeliveryStateLabel(message) : message.statusLabel || "Publicado")}</em>
                 ${message.href ? `<a href="${printableEscape(resolveCommunicationDeepLink(message.href))}">${printableEscape(message.actionLabel || "Abrir")}</a>` : ""}
                 ${message.deliveryId && !message.readAt ? `<button type="button" data-family-delivery-read="${printableEscape(message.deliveryId)}">Marcar como lido</button>` : ""}
+                ${message.deliveryId && !message.sourceType ? `<button type="button" data-communication-delivery="${printableEscape(message.deliveryId)}">Ver respostas / Responder</button>` : ""}
               </aside>
             </article>
           `
