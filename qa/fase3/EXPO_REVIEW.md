@@ -65,3 +65,15 @@ Respostas têm o alcance administrativo canônico (gestão escolar/de rede/admin
 Typecheck passou. A exportação web da **App.tsx real**, com seus imports/rotas, passou após declarar o preset Babel já travado: 417 módulos e 56 assets, sem servir a aplicação nem autenticar usuários. O teste funcional usa separadamente os componentes reais no harness Expo; exportar a app completa não equivale a testar seu login/navegação completa.
 
 Checklist React aplicado: componentes separados, hooks incondicionais, estado reiniciado por identidade de sessão, chave estável por aplicação/entrega, ações bloqueadas durante gravação, status acessível e strings de usuário renderizadas como Text. Erro de atualização da conversa depois de um envio confirmado mantém a confirmação e pede atualizar; não induz reenviar uma resposta já recebida. A regressão de adaptador também distingue duas atribuições (turma/aluno) da mesma avaliação, sem copiar a nota de uma para outra.
+
+## Correções da revisão independente
+
+- Web PR4: erro HTTP403 exclui somente a entrega proibida; responsável mantém o recado do outro filho. 404/5xx permanecem erros. O cliente REST preserva status numérico e o mapper real tem regressão com dois filhos.
+- Texto aberto digitado enquanto a resposta anterior é salva permanece no rascunho; somente o snapshot exato confirmado é limpo. Teste de resposta A atrasada, digitação B, novo save e recarga.
+- Publicação exige alvo `class`, sem student_id, e disponibilidade atual. Atribuição individual não satisfaz publicação da turma; futuras/encerradas mostram aviso específico, sem falso sucesso ou alteração silenciosa de agenda. Cobertura de confirmação perdida mantida.
+- Envio de resposta compartilha promessa/chave/confirmação por pessoa+entrega entre mounts. Fechar/reabrir antes do ack de sucesso não gera duplicata; novo painel recebe a confirmação e limpa somente o mesmo texto.
+- Edição mantém chave e confirmação mesmo se atualização subsequente falhar. Repetir ou reabrir não cria outra versão do mesmo envio; sucesso de mutação é separado do erro de atualização.
+- Montagem com erro definitivo 400/403 permite corrigir/repetir; somente transporte/resultado incerto bloqueia nova montagem.
+- Atualização negada limpa conteúdo do painel e cartão em cache. Sem ambos os gates, comunicação faz zero chamadas; com somente respostas, o guard de thread autoriza a entrega antes de renderizar título/corpo; com edição, usa o guard de versões. Combinações 00/01/10/11 cobertas no serviço, sem novo acesso persistente.
+
+Login via Auth oficial local permanece bloqueado: a CLI tentou criar `/home/agent/.supabase` e retornou EROFS. Sem emulador nativo. O harness com JWTs fictícios não é declarado teste de login ou navegação integral da app shell. Gates de produção continuam off, PR permanece draft para re-revisão.
