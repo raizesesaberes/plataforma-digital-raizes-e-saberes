@@ -17,6 +17,7 @@ run((root/'supabase/baselines/20261004_pilot_schema_baseline.sql').read_text())
 run((root/'tests/contracts/admin-assert.sql').read_text())
 for f in ['20261004231721_content_architecture_phase1_question_entitlements.sql','20261007092231_content_macro_v1_modules.sql','20261011003308_school_content_dynamic_categories_v2.sql','20261011003328_school_content_global_review_v2.sql','20261011003339_school_content_native_question_categories_v2.sql','20261011003351_school_content_category_checkpoint_v2.sql','20261011003404_school_content_protected_adapters_v2.sql']:
  run((root/'supabase/migrations'/f).read_text())
+run((root/'tests/contracts/production-legacy-helpers.sql').read_text())
 run((root/'supabase/review/contract_operations.sql').read_text())
 run((root/'tests/contracts/seed.sql').read_text())
 print('Synthetic local database rebuilt; no remote connection.')

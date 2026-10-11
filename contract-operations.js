@@ -17,7 +17,7 @@
       const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
       if(c.status==='CANCELLED')return 'Revogado';
       if(c.status==='SUSPENDED')return 'Suspenso';
-      if(this.catalog.contracts.some(n=>n.renewal_of===c.id&&(n.status==='ACTIVE'||n.revoked_after_start)&&n.starts_at<=today))return 'Substituído';
+      if(c.superseded)return 'Substituído';
       if(c.starts_at>today)return 'Agendado';
       if(c.ends_at&&c.ends_at<today)return 'Encerrado';
       return c.status==='ACTIVE'?'Vigente':c.status;
@@ -43,7 +43,7 @@
        ${p.modules.flatMap(m=>m.content_types.map(type=>`<details><summary>${esc(m.name)} — ${esc(labels[type]||type)}</summary>${c.taxonomy.filter(g=>g.institutional===(type==='TRAINING')).map(g=>`<div data-rule data-module="${esc(m.id)}" data-type="${esc(type)}" data-grade="${esc(g.grade_id)}"><label><input type="checkbox" data-rule-enabled> ${esc(g.stage_name)} — ${esc(g.grade_name)}</label><label>Tema<select data-subject aria-label="Tema de ${esc(labels[type]||type)} — ${esc(g.grade_name)}"><option value="">Todos os temas / multidisciplinar</option>${options(c.subjects)}</select></label></div>`).join('')}</details>`)).join('')}</details>`).join(''):'<p>Nenhum produto ativo. O catálogo precisa de um produto com módulos antes de contratar.</p>'}</fieldset>
        <fieldset><legend>4. Revisão</legend><label>Motivo<textarea name="reason" required minlength="5" maxlength="500"></textarea></label><label><input type="checkbox" name="adopt_dynamic" required> Confirmo a adoção das categorias na vigência e entendo que direitos legados não ampliarão as categorias escolhidas.</label><button type="submit" ${c.products.length?'':'disabled'}>Revisar alvos, categorias e vigência</button></fieldset>
       </form><p data-status role="status" aria-live="polite"></p><section data-review hidden class="co-review"></section>
-      <h3>Histórico de contratos</h3>${c.contracts.length?`<table><thead><tr><th>Contrato</th><th>Vigência</th><th>Estado</th><th>Ação</th></tr></thead><tbody>${c.contracts.map(x=>`<tr><td>${esc(x.reference)}<small> ${esc(x.id)}</small></td><td>${esc(x.starts_at)} → ${esc(x.ends_at||'Sem término')}</td><td>${esc(this.contractState(x))}</td><td>${x.operational&&x.status==='ACTIVE'?`<button type="button" data-revoke="${esc(x.id)}">Revisar revogação</button>`:''}</td></tr>`).join('')}</tbody></table>`:'<p>Nenhum contrato cadastrado.</p>'}`;
+      <h3>Histórico de contratos</h3>${c.contracts.length?`<table><thead><tr><th>Contrato</th><th>Vigência</th><th>Estado</th><th>Ação</th></tr></thead><tbody>${c.contracts.map(x=>`<tr><td>${esc(x.reference)}<small> ${esc(x.id)}</small></td><td>${esc(x.starts_at)} → ${esc(x.ends_at||'Sem término')}</td><td>${esc(this.contractState(x))}</td><td>${x.operational&&['ACTIVE','SUSPENDED'].includes(x.status)?`<button type="button" data-revoke="${esc(x.id)}">Revisar revogação</button>`:''}</td></tr>`).join('')}</tbody></table>`:'<p>Nenhum contrato cadastrado.</p>'}`;
       this.form=this.querySelector('form');
       this.form.addEventListener('input',()=>this.invalidate());
       this.form.addEventListener('change',e=>this.change(e));

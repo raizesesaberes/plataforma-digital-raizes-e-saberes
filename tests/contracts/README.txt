@@ -67,3 +67,27 @@ Nenhum endpoint remoto é usado nos testes; o navegador bloqueia requisições e
 As falhas de rede são injetadas; respostas de sucesso vêm do PostgREST/SQL reais.
 
 Evidências: evidence/verification.log, evidence/review.png, evidence/confirmed.png.
+
+Correções da revisão independente (R1–R4)
+- R1: renovação automática ou editada bloqueia produto anterior inativo; não levanta
+  suspensão implicitamente. Exige retirar o produto ou revisão separada da licença.
+- R2: revogação aceita contrato suspenso e dependências inativas. O trigger permite
+  apenas a transição para REVOKED sem alteração de escopo; mudanças combinadas
+  continuam validadas. Prévia obsoleta e repetição idempotente foram verificadas.
+- R3: sucessão efetivada permanece uma barreira quando o sucessor é suspenso,
+  encerrado ou revogado. Cancelamento anterior ao início preserva o predecessor.
+- R4: escola incluída posteriormente na rede, inclusive sem tenant próprio, não
+  herda contrato substituído. Cobertura no despacho, resolver legado, RLS e abertura.
+
+Regressões adicionais após database/content/edge-cases:
+python tests/contracts/security-regressions.py
+python tests/contracts/succession-regressions.py
+O argumento --reproduce registra as falhas no SQL original do commit c4995e5;
+sem esse argumento exige as correções. Executar somente no container sintético.
+
+Paridade dos helpers usados na reconstrução:
+python tests/contracts/helper-parity.py
+admin-assert.sql e production-legacy-helpers.sql contêm corpos obtidos em leitura
+no banco atual. O teste compara pg_get_functiondef, proprietário, proconfig e ACL
+com evidence/helper-parity-expected.json. Nenhuma simulação de auth.uid ocorreu
+em produção; o helper administrativo não é alterado pelo SQL proposto.

@@ -16,10 +16,32 @@ revoke all on contract_operations_private.targets from public,anon,authenticated
 create unique index contract_operation_request_once on public.contract_entitlement_events(actor_user_id,(details->>'request_id')) where event_type='CONTRACT_OPERATION';
 create unique index contract_operation_successor_once on public.contracts((metadata->>'renewal_of')) where metadata->>'source'='contract_operations_v1' and status='ACTIVE' and metadata->>'renewal_of' is not null;
 
+-- A scheduled succession becomes a permanent barrier when its activation date arrives.
+-- Product/contract suspension must not resurrect a predecessor. Cancellation BEFORE
+-- first use is represented by the private marker, never inferred from mutable status.
+create index contract_operation_predecessor_idx on public.contracts((metadata->>'renewal_of'))
+ where metadata->>'source'='contract_operations_v1';
+create function contract_operations_private.superseded(p_contract uuid) returns boolean
+language sql stable security definer set search_path='' as $$
+ select exists(select 1 from public.contracts successor
+ join contract_operations_private.targets target on target.contract_id=successor.id
+ where successor.metadata->>'source'='contract_operations_v1'
+ and successor.metadata->>'renewal_of'=p_contract::text
+ and target.adoption_on<=(now() at time zone 'America/Sao_Paulo')::date
+ and not target.cancelled_before_use);
+$$;
+
 create function contract_operations_private.adopted(p_school uuid) returns boolean
 language sql stable security definer set search_path='' as $$
  select exists(select 1 from public.tenants where school_id=p_school and metadata->>'category_entitlements_enabled'='true')
- or exists(select 1 from contract_operations_private.targets where school_id=p_school and adoption_on<=(now() at time zone 'America/Sao_Paulo')::date and not cancelled_before_use);
+ or exists(select 1 from contract_operations_private.targets where school_id=p_school and adoption_on<=(now() at time zone 'America/Sao_Paulo')::date and not cancelled_before_use)
+ -- Network membership can be added after the original adoption snapshot. Such a
+ -- school cannot inherit a superseded license through legacy dispatch or raw RLS.
+ or exists(select 1 from public.network_school_memberships m
+ join public.tenants t on t.network_id=m.network_id and t.tenant_type='NETWORK'
+ join public.contracts c on c.tenant_id=t.id
+ where m.school_id=p_school and m.status='active' and (m.ended_at is null or m.ended_at>now())
+ and contract_operations_private.superseded(c.id));
 $$;
 create function contract_operations_private.in_scope(p_contract uuid,p_school uuid) returns boolean
 language sql stable security definer set search_path='' as $$
@@ -31,7 +53,7 @@ returns boolean language sql stable security definer set search_path='' as $$
  select exists(select 1 from public.contracts c join public.tenants t on t.id=c.tenant_id
  join public.schools s on s.id=p_school and s.status='active'
  where c.id=p_contract and c.status='ACTIVE' and c.starts_at<=case when c.metadata->>'source'='contract_operations_v1' then (now() at time zone 'America/Sao_Paulo')::date else current_date end and (c.ends_at is null or c.ends_at>=case when c.metadata->>'source'='contract_operations_v1' then (now() at time zone 'America/Sao_Paulo')::date else current_date end)
- and t.status='active' and not exists(select 1 from public.contracts successor where successor.metadata->>'renewal_of'=c.id::text and successor.metadata->>'source'='contract_operations_v1' and (successor.status='ACTIVE' or successor.metadata->>'revoked_after_start'='true') and successor.starts_at<=(now() at time zone 'America/Sao_Paulo')::date)
+ and t.status='active' and not contract_operations_private.superseded(c.id)
  and case when c.metadata->>'source'='contract_operations_v1' then contract_operations_private.in_scope(c.id,p_school)
  else (t.school_id=s.id or (t.tenant_type='NETWORK' and exists(
  select 1 from public.network_school_memberships m join public.education_networks n on n.id=m.network_id and n.status='active'
@@ -55,7 +77,7 @@ begin
  'taxonomy',(select jsonb_agg(to_jsonb(t) order by sort_order) from school_category_private.taxonomy() t),
  'subjects',(select coalesce(jsonb_agg(jsonb_build_object('id',id,'name',name) order by name),'[]') from public.content_subjects where status='active'),
  'products',(select coalesce(jsonb_agg(jsonb_build_object('id',p.id,'name',p.name,'modules',(select coalesce(jsonb_agg(jsonb_build_object('id',m.id,'name',m.name,'content_types',m.content_types) order by m.name),'[]') from public.product_content_modules pm join public.content_modules m on m.id=pm.content_module_id and m.status='active' where pm.product_id=p.id)) order by p.name),'[]') from public.products p where p.status='ACTIVE'),
- 'contracts',(select coalesce(jsonb_agg(jsonb_build_object('id',c.id,'reference',c.contract_ref,'starts_at',c.starts_at,'ends_at',c.ends_at,'status',c.status,'network_id',t.network_id,'tenant_school_id',t.school_id,'operational',c.metadata->>'source'='contract_operations_v1','renewal_of',c.metadata->>'renewal_of','revoked_after_start',c.metadata->>'revoked_after_start'='true',
+ 'contracts',(select coalesce(jsonb_agg(jsonb_build_object('id',c.id,'reference',c.contract_ref,'starts_at',c.starts_at,'ends_at',c.ends_at,'status',c.status,'network_id',t.network_id,'tenant_school_id',t.school_id,'operational',c.metadata->>'source'='contract_operations_v1','renewal_of',c.metadata->>'renewal_of','revoked_after_start',c.metadata->>'revoked_after_start'='true','superseded',contract_operations_private.superseded(c.id),
  'school_ids',coalesce((select jsonb_agg(sid order by sid) from contract_operations_private.contract_schools(c.id) sid),'[]'),
  'configurations',coalesce((select jsonb_agg(distinct jsonb_build_object('product_id',e.product_id,'rules',coalesce(e.metadata->'category_rules','[]'),'institutional',coalesce(cp.metadata->'institutional_training_authorized','false'))) from public.tenant_product_entitlements e join public.contract_products cp on cp.contract_id=e.contract_id and cp.product_id=e.product_id where e.contract_id=c.id and e.status='ACTIVE'),'[]')) order by c.created_at desc),'[]') from public.contracts c join public.tenants t on t.id=c.tenant_id));
 end $$;
@@ -70,7 +92,7 @@ begin
  if length(btrim(coalesce(cfg->>'reason',''))) not between 5 and 500 then raise exception 'REASON_REQUIRED';end if;
  if cfg->>'action'='REVOKE' then
   select * into old from public.contracts where id=(cfg->>'contract_id')::uuid;
-  if old.id is null or old.metadata->>'source' is distinct from 'contract_operations_v1' or old.status<>'ACTIVE' then raise exception 'OPERATIONAL_ACTIVE_CONTRACT_REQUIRED';end if;
+  if old.id is null or old.metadata->>'source' is distinct from 'contract_operations_v1' or old.status not in('ACTIVE','SUSPENDED') then raise exception 'OPERATIONAL_ACTIVE_CONTRACT_REQUIRED';end if;
   if exists(select 1 from public.contracts where metadata->>'renewal_of'=old.id::text and status='ACTIVE') then raise exception 'REVOKE_SUCCESSOR_FIRST';end if;
   -- Revoking an effective renewal must not revive its predecessor.
 
@@ -116,6 +138,7 @@ begin
   if old.id is null or (ns is not null and ns<>'null'::jsonb) or exists(select 1 from unnest(ids) x where x not in(select school from contract_operations_private.contract_schools(old.id) school)) then raise exception 'NEW_TARGET_REQUIRES_EDITED_CONFIGURATION';end if;
   copied:='[]';
   for pid in select distinct e.product_id from public.tenant_product_entitlements e where e.contract_id=old.id and e.status='ACTIVE' loop
+   if not exists(select 1 from public.contract_products cp where cp.contract_id=old.id and cp.product_id=pid and cp.status='active') then raise exception 'INACTIVE_PREVIOUS_PRODUCT_REQUIRES_SEPARATE_REVIEW';end if;
    school_rules:='{}';school_modules:='{}';selected_rules:=null;
    foreach sc in array ids loop
     select count(*) into n from public.tenant_product_entitlements e join public.tenants t on t.id=e.tenant_id where e.contract_id=old.id and e.product_id=pid and e.status='ACTIVE' and (t.school_id=sc or t.id=old.tenant_id);
@@ -138,6 +161,10 @@ begin
  if (select count(distinct value->>'product_id') from jsonb_array_elements(cfg->'products'))<>jsonb_array_length(cfg->'products') then raise exception 'DUPLICATE_PRODUCT';end if;
  for prod in select value from jsonb_array_elements(cfg->'products') loop
   pid:=(prod->>'product_id')::uuid;
+  -- Editing the uniform configuration is not implicit authorization to lift a
+  -- suspension/termination on a previously contracted product. Separate review required.
+  if old.id is not null and (exists(select 1 from public.contract_products cp where cp.contract_id=old.id and cp.product_id=pid) or exists(select 1 from public.tenant_product_entitlements e where e.contract_id=old.id and e.product_id=pid))
+   and not exists(select 1 from public.contract_products cp where cp.contract_id=old.id and cp.product_id=pid and cp.status='active') then raise exception 'INACTIVE_PREVIOUS_PRODUCT_REQUIRES_SEPARATE_REVIEW';end if;
   if not exists(select 1 from public.products where id=pid and status='ACTIVE') then raise exception 'ACTIVE_PRODUCT_REQUIRED';end if;
   for rule_set in select prod->'rules' union all select value from jsonb_each(coalesce(prod->'school_rules','{}')) loop
   if jsonb_typeof(rule_set) is distinct from 'array' or jsonb_array_length(rule_set) not between 1 and 512 then raise exception 'CATEGORY_RULES_REQUIRED';end if;
@@ -264,7 +291,7 @@ begin
   select school_id into sid from public.teachers where profile_id=auth.uid() and status='active' order by created_at desc nulls last,id limit 1;
   if sid is null then select school_id into sid from public.student_get_context() limit 1;end if;
  end if;
- return exists(select 1 from public.tenants where school_id=sid and contract_operations_private.adopted(school_id));
+ return contract_operations_private.adopted(sid);
 end $$;
 
 create or replace function school_category_private.active_rules(p_context jsonb)
@@ -304,10 +331,10 @@ $$;
 
 create or replace function school_category_private.has_dynamic_membership()
 returns boolean language sql stable security definer set search_path='' as $$
- select exists(select 1 from public.tenants t where t.tenant_type='SCHOOL' and contract_operations_private.adopted(t.school_id) and (
- exists(select 1 from public.teachers a where a.profile_id=auth.uid() and a.status='active' and a.school_id=t.school_id)
- or exists(select 1 from public.students a where a.user_id=auth.uid() and a.school_id=t.school_id)
- or exists(select 1 from public.student_get_context() a where a.school_id=t.school_id)));
+ select exists(select 1 from public.schools s where contract_operations_private.adopted(s.id) and (
+ exists(select 1 from public.teachers a where a.profile_id=auth.uid() and a.status='active' and a.school_id=s.id)
+ or exists(select 1 from public.students a where a.user_id=auth.uid() and a.school_id=s.id)
+ or exists(select 1 from public.student_get_context() a where a.school_id=s.id)));
 $$;
 
 create or replace function public.content_validate_entitlement()
@@ -319,6 +346,13 @@ as $$
 declare
   v_contract public.contracts%rowtype;
 begin
+  -- Monotonic, scope-preserving revocation must work when dependencies are inactive.
+  -- Do not bypass validation for inserts, reactivation or simultaneous grant changes.
+  if tg_op='UPDATE' and new.status='REVOKED'
+   and (to_jsonb(new)-array['status','updated_at','updated_by'])=(to_jsonb(old)-array['status','updated_at','updated_by']) then
+   return new;
+  end if;
+
   select *
   into v_contract
   from public.contracts
@@ -509,6 +543,7 @@ begin
       on tpcm.entitlement_id = tpe.id
      and tpcm.content_module_id = cm.id
     where tpe.status = 'ACTIVE'
+      and not contract_operations_private.superseded(tpe.contract_id)
       and tpe.metadata->>'operation_timezone' is distinct from 'America/Sao_Paulo'
       and (tpe.metadata->>'source' is distinct from 'school_content_admin_v1' or
         (valid_contract.id is not null and valid_cp.contract_id is not null and valid_product.id is not null

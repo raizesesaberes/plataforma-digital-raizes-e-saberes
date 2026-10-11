@@ -1,4 +1,6 @@
 Synthetic local database rebuilt; no remote connection.
+PASS production/local helper parity: exact pg_get_functiondef MD5, postgres owner, search_path, jit and ACL for all 3 functions
+ASSERT_ADMIN_MD5=af73e3d2a14b425509831b4fa8ef9ca9; ACL=postgres EXECUTE, service_role EXECUTE; no PUBLIC/anon/authenticated EXECUTE
 PASS ACL admin / non-admin / anon / private tables
 PASS duplicate schools / no targets / date / explicit adoption / institutional / duplicate new school
 PASS atomic contract + two schools / idempotent receipt / no network expansion / inactive school denied
@@ -12,6 +14,14 @@ PASS injected failure rolls back contractor, school, installation, tenant, contr
 PASS removed school denied at successor boundary / predecessor history retained / revoke effective successor cannot revive predecessor
 PASS 12 calendar months validated on server, leap-year anniversary and inclusive end
 PASS heterogeneous school renewal preserves exact rules, previous license restrictions and disabled module overrides
+PASS R1: automatic and edited renewal cannot reactivate an inactive prior license
+PASS R2: stale review rejected; pure revocation succeeds, replays and stays fail-closed: contract_product
+PASS R2: stale review rejected; pure revocation succeeds, replays and stays fail-closed: beneficiary_tenant
+PASS R2: stale review rejected; pure revocation succeeds, replays and stays fail-closed: contract
+PASS R3 control: cancellation before start does not supersede predecessor
+PASS R4 control: real legacy question remains authorized before successor starts
+PASS R4: late member denied by dispatcher, legacy resolver, question RLS and item opener
+PASS R3: effective succession barrier survives SUSPENDED and ENDED successor states
 PASS actual admin.html → authenticated PostgREST → atomic contract/new school → lost response → page reload → idempotent retry
 PASS calendar-month default / custom duration / explicit institutional / school change / future renewal from original configuration
 PASS catalog error / retry

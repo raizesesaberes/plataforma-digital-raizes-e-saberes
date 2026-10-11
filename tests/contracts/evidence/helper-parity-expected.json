@@ -1,0 +1,37 @@
+{
+  "project": "jaesjldrbjbdmzzggxzw",
+  "read_only": true,
+  "production_auth_context_changed": false,
+  "functions": [
+    {
+      "proname": "school_content_assert_admin",
+      "definition_md5": "af73e3d2a14b425509831b4fa8ef9ca9",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "proconfig": [
+        "search_path=\"\"",
+        "jit=off"
+      ]
+    },
+    {
+      "proname": "school_content_candidates",
+      "definition_md5": "ca5f465b2660261c470e04bb401b7f0e",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "proconfig": [
+        "search_path=\"\"",
+        "jit=off"
+      ]
+    },
+    {
+      "proname": "school_content_managed_grades",
+      "definition_md5": "dc33ee2cee239357822e43696b74f8f9",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "proconfig": [
+        "search_path=\"\"",
+        "jit=off"
+      ]
+    }
+  ]
+}
