@@ -29,7 +29,14 @@ const pendingReplies = new Map<
 const replyListeners = new Map<string, Set<(body: string) => void>>();
 const pendingEdits = new Map<
   string,
-  { title: string; body: string; revision: number; requestId: string }
+  {
+    title: string;
+    body: string;
+    revision: number;
+    requestId: string;
+    confirmed?: boolean;
+    inFlight?: Promise<unknown>;
+  }
 >();
 type Api = ReturnType<typeof journeyApi>;
 type Sent = Awaited<ReturnType<Api["teacherNotices"]>>;
@@ -85,6 +92,10 @@ function Messages({
     [delivery, setDelivery] = useState(""),
     [view, setView] = useState<"list" | "replies" | "notice">("list");
   async function reload() {
+    setInbox([]);
+    setSent([]);
+    setThreads([]);
+    setLoaded(false);
     if (teacher) setSent(await api.teacherNotices());
     else setInbox(await api.inbox());
     setLoaded(true);
@@ -281,8 +292,12 @@ function ReplyPanel({
       if (!listeners.size) replyListeners.delete(key);
     };
   }, [key]);
+  async function refreshThread() {
+    setThread(null);
+    setThread(await api.thread(delivery));
+  }
   useEffect(() => {
-    void op.run(async () => setThread(await api.thread(delivery)));
+    void op.run(refreshThread);
   }, [api, delivery]);
   return (
     <JourneyCard>
@@ -346,7 +361,7 @@ function ReplyPanel({
                 );
                 op.setMessage("Resposta confirmada no servidor.");
                 try {
-                  setThread(await api.thread(delivery));
+                  await refreshThread();
                 } catch {
                   op.setMessage(
                     "Resposta confirmada no servidor. Não foi possível atualizar a conversa; tente Atualizar conversa.",
@@ -360,9 +375,7 @@ function ReplyPanel({
       <Action
         title="Atualizar conversa"
         disabled={op.busy}
-        onPress={() =>
-          void op.run(async () => setThread(await api.thread(delivery)))
-        }
+        onPress={() => void op.run(refreshThread)}
       />
     </JourneyCard>
   );
@@ -386,9 +399,11 @@ function NoticePanel({
     [title, setTitle] = useState(""),
     [body, setBody] = useState("");
   async function load() {
+    setNotice(null);
     const n = await api.notice(id, delivery);
     setNotice(n);
-    const pending = pendingEdits.get(key);
+    const saved = pendingEdits.get(key);
+    const pending = saved?.confirmed ? undefined : saved;
     setTitle(pending?.title ?? n.title);
     setBody(pending?.body ?? n.body);
   }
@@ -477,17 +492,30 @@ function NoticePanel({
                         requestId: newRequestId(),
                       };
                     pendingEdits.set(key, draft);
-                    await api.edit(
-                      id,
-                      draft.revision,
-                      draft.title,
-                      draft.body,
-                      draft.requestId,
-                    );
-                    pendingEdits.delete(key);
-                    await load();
-                    await onChanged();
+                    if (!draft.confirmed) {
+                      draft.inFlight ||= api.edit(
+                        id,
+                        draft.revision,
+                        draft.title,
+                        draft.body,
+                        draft.requestId,
+                      );
+                      try {
+                        await draft.inFlight;
+                        draft.confirmed = true;
+                      } finally {
+                        draft.inFlight = undefined;
+                      }
+                    }
                     op.setMessage("Nova versão confirmada no servidor.");
+                    try {
+                      await load();
+                      await onChanged();
+                    } catch {
+                      op.setMessage(
+                        "Nova versão confirmada no servidor. Não foi possível atualizar os recados; tente atualizar.",
+                      );
+                    }
                   })
                 }
               />
