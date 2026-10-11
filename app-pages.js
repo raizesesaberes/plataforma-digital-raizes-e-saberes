@@ -14067,6 +14067,30 @@ const adminInvokeSetContentAvailability = async ({ schoolId, contentType, conten
   return Array.isArray(result) ? result[0] || {} : result || {};
 };
 
+// The operations RPC is admin-only and includes inactive schools. Its configurations
+// are aggregated across contract targets, so never present network-wide rules as one school's rights.
+const adminInactiveSchoolContractSummary = (catalog, schoolId) => {
+  if (catalog?.status !== 'PASS' || !['schools','contracts','products','taxonomy'].every(key => Array.isArray(catalog[key]))) throw new Error('Resposta incompleta dos contratos. Tente novamente.');
+  const school = catalog.schools.find(row => row.id === schoolId);
+  if (!school || school.status !== 'inactive') throw new Error('A situação da escola mudou ou não foi encontrada. Atualize a consulta.');
+  const contracts = catalog.contracts.filter(row => Array.isArray(row.school_ids) && row.school_ids.includes(schoolId)).map(row => ({
+    id: row.id, reference: row.reference, starts_at: row.starts_at, ends_at: row.ends_at, status: row.status, superseded: row.superseded,
+    shared: row.school_ids.length !== 1 || (row.tenant_school_id !== schoolId && row.operational !== true),
+    configurations: row.school_ids.length === 1 && (row.tenant_school_id === schoolId || row.operational === true) ? (row.configurations || []).map(config => ({
+      product_name: catalog.products.find(product => product.id === config.product_id)?.name || 'Produto fora do catálogo ativo',
+      institutional: config.institutional === true,
+      rules: (config.rules || []).map(rule => ({type: rule.content_type, grade: catalog.taxonomy.find(grade => grade.grade_id === rule.grade_id)?.grade_name || 'Faixa não identificada'})),
+    })) : [],
+  }));
+  return {status:'PASS', readonly_inactive:true, school_id:schoolId, school_name:school.name, contracts};
+};
+const renderAdminInactiveSchoolContracts = (catalog) => `<section class="admin-contract-readonly"><h3>Contratos — ${categoryEscape(catalog.school_name)}</h3>
+  <p role="status">${catalog.contracts.length ? 'Escola inativa: contrato cadastrado; acesso bloqueado até reativação.' : 'Escola inativa: nenhum contrato cadastrado para esta escola; acesso bloqueado.'}</p>
+  <p>Consulta somente leitura. Categorias cadastradas não comprovam conteúdo publicado nem acesso efetivo.</p>
+  ${catalog.contracts.length ? catalog.contracts.map(contract => `<article><h4>${categoryEscape(contract.reference)}</h4><p>${categoryEscape(contract.id)} · ${categoryEscape(contract.superseded ? 'Substituído' : contract.status)} · ${categoryEscape(contract.starts_at)} a ${categoryEscape(contract.ends_at || 'Sem término')} (fim inclusive)</p>
+    ${contract.shared ? '<p>Configuração agregada do contrato. Esta consulta não permite comprovar as categorias desta escola.</p>' : contract.configurations.map(config => `<h5>${categoryEscape(config.product_name)}</h5><p>${config.rules.length} regras cadastradas. Universidade: ${config.rules.some(rule => rule.type === 'TRAINING') ? 'categoria TRAINING cadastrada; acesso efetivo não verificado' : 'sem categoria TRAINING cadastrada'}.</p><details><summary>Tipos e faixas cadastrados</summary><ul>${config.rules.map(rule => `<li>${categoryEscape(categoryTypeLabels[rule.type] || rule.type)} — ${categoryEscape(rule.grade)}</li>`).join('')}</ul></details>`).join('')}
+  </article>`).join('') : '<p>Nenhum vínculo contratual encontrado.</p>'}</section>`;
+
 const adminLoadSchoolContractOverview = async (schoolId, { force = false } = {}) => {
   if (!schoolId) return null;
   if (adminOperationalState.contractLoading?.[schoolId]) return adminOperationalState.contractLoading[schoolId];
@@ -14083,10 +14107,14 @@ const adminLoadSchoolContractOverview = async (schoolId, { force = false } = {})
     let overview;
     try {
       const category_catalog = await Promise.race([
-        adminSchoolContentRequest("admin_get_school_content_categories", { p_school_id: schoolId }, { signal: controller.signal }),
+        adminSchoolContentRequest("admin_get_school_content_categories", { p_school_id: schoolId }, { signal: controller.signal }).catch(async error => {
+          if (error.status !== 400 || error.code !== 'P0001' || error.databaseMessage !== 'ACTIVE_SCHOOL_REQUIRED') throw error;
+          const catalog = await adminSchoolContentRequest('admin_get_contract_operations', {}, {signal:controller.signal});
+          return adminInactiveSchoolContractSummary(catalog, schoolId);
+        }),
         timeout,
       ]);
-      if (category_catalog.school_id !== schoolId || !["contracts", "taxonomy", "schools", "subjects"].every((key) => Array.isArray(category_catalog[key]))) {
+      if (category_catalog.school_id !== schoolId || (!category_catalog.readonly_inactive && !["contracts", "taxonomy", "schools", "subjects"].every((key) => Array.isArray(category_catalog[key])))) {
         throw new Error("Resposta incompleta das categorias desta escola. Tente novamente.");
       }
       overview = { status: "PASS", category_catalog };
@@ -14204,6 +14232,7 @@ const renderCategoryRoot = (catalog) => `<section class="category-root" data-cat
  <p data-root-status role="status" aria-live="polite">Busque um item para classificar ou revisar globalmente.</p><div data-root-results></div><div data-root-pagination></div><div data-root-editor></div>
  </section>`;
 const renderAdminSchoolContentCatalog = (catalog = {}) => {
+ if (catalog.status === 'PASS' && catalog.readonly_inactive === true) return renderAdminInactiveSchoolContracts(catalog);
  if (catalog.status !== 'PASS' || !Array.isArray(catalog.contracts) || !Array.isArray(catalog.taxonomy)) return `<div role="alert">Não foi possível carregar as categorias. ${categoryEscape(catalog.error || 'Tente novamente.')} Nenhuma alteração foi feita.</div>`;
  const contract = catalog.contracts[0];
  return `<div class="category-workspace"><style>
