@@ -42,7 +42,7 @@ try{
   await page.evaluate(code=>state.reject=code,rejection);await page.locator('[data-confirm-check]').check();await page.locator('[data-confirm]').click();
   await page.getByText('Confirmação rejeitada:',{exact:false}).waitFor();assert.equal(await page.locator('[name=reference]').inputValue(),'Draft preserved');assert(!(await page.locator('[name=reference]').isDisabled()));
   assert.equal(await page.evaluate(()=>sessionStorage.getItem('raizes:pending-contract:synthetic-admin')),null);
-  await page.locator('[name=reference]').fill('Corrected draft');await page.locator('[name=reference]').blur();
+  await page.locator('[name=contractor_type]').selectOption('NETWORK');await page.locator('[name=reference]').fill('Corrected draft');await page.locator('[name=reference]').blur();
   await page.evaluate(()=>{const ui=document.querySelector('contract-operations');return ui.preview(ui.config());});
   assert.notEqual(await page.evaluate(()=>document.querySelector('contract-operations').requestId),oldId);
   await page.locator('[data-confirm-check]').check();await page.locator('[data-confirm]').click();await page.getByRole('heading',{name:'Contrato salvo',exact:true}).waitFor();
