@@ -33,3 +33,15 @@ r=await run({secondError:Error('Infrastructure unavailable')});assert.equal(r.re
 r=await run({data:{...catalog,contracts:[]}});assert.equal(r.result.status,'PASS');assert.match(r.html,/nenhum contrato cadastrado/);
 for(const data of [{...catalog,schools:[]},{...catalog,schools:[{id:'a',status:'active'}]},{status:'PASS'}]){r=await run({data});assert.equal(r.result.status,'ERROR');}
 console.log('PASS inactive admin readonly overview; active route unchanged; admin-only options/403; exact school scope; shared rules omitted; empty/malformed/stale data; infrastructure errors retained. Synthetic RPC only.');
+// A read started before reactivation must not repopulate the inactive cache.
+let finishRead;
+const state={contractOverviews:{a:{readonly_inactive:true}},contractLoading:{}};
+state.contractLoading.a=new Promise(resolve=>{finishRead=()=>{state.contractOverviews.a={readonly_inactive:true};resolve();};});
+const invalidationContext=vm.createContext({adminOperationalState:state});
+vm.runInContext(part('const adminInvalidateSchoolContractOverview =','const adminLoadSchoolContractOverview ='),invalidationContext);
+const invalidated=vm.runInContext("adminInvalidateSchoolContractOverview('a')",invalidationContext);
+finishRead();await invalidated;assert.equal(state.contractOverviews.a,undefined);
+const lifecycle=part('const lifecycleSchoolButton =','adminBindSchoolContent(workspace');
+assert.match(lifecycle,/if \(result.ok\) await adminInvalidateSchoolContractOverview\(schoolId\)/);
+assert.match(lifecycle,/renderAdminWorkspaceView\("escolas"\);\s*adminHydrateContractOverviews\(content\)/);
+console.log('PASS lifecycle clears settled and in-flight contract cache, then hydrates the new school status.');

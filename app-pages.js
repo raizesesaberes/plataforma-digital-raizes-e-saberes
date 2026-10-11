@@ -14091,6 +14091,11 @@ const renderAdminInactiveSchoolContracts = (catalog) => `<section class="admin-c
     ${contract.shared ? '<p>Configuração agregada do contrato. Esta consulta não permite comprovar as categorias desta escola.</p>' : contract.configurations.map(config => `<h5>${categoryEscape(config.product_name)}</h5><p>${config.rules.length} regras cadastradas. Universidade: ${config.rules.some(rule => rule.type === 'TRAINING') ? 'categoria TRAINING cadastrada; acesso efetivo não verificado' : 'sem categoria TRAINING cadastrada'}.</p><details><summary>Tipos e faixas cadastrados</summary><ul>${config.rules.map(rule => `<li>${categoryEscape(categoryTypeLabels[rule.type] || rule.type)} — ${categoryEscape(rule.grade)}</li>`).join('')}</ul></details>`).join('')}
   </article>`).join('') : '<p>Nenhum vínculo contratual encontrado.</p>'}</section>`;
 
+const adminInvalidateSchoolContractOverview = async (schoolId) => {
+  // Let an older read settle before removing it, so it cannot restore stale status.
+  await Promise.resolve(adminOperationalState.contractLoading?.[schoolId]).catch(() => {});
+  delete adminOperationalState.contractOverviews[schoolId];
+};
 const adminLoadSchoolContractOverview = async (schoolId, { force = false } = {}) => {
   if (!schoolId) return null;
   if (adminOperationalState.contractLoading?.[schoolId]) return adminOperationalState.contractLoading[schoolId];
@@ -15597,6 +15602,7 @@ const initAdminWorkspace = () => {
       }
       try {
         const result = await adminInvokeSchoolLifecycle({ schoolId, action, confirmationCode });
+        if (result.ok) await adminInvalidateSchoolContractOverview(schoolId);
         if (status) {
           const blocked = result.status === "DELETE_BLOCKED" || result.ok === false;
           status.dataset.tone = blocked ? "error" : "success";
@@ -15611,7 +15617,10 @@ const initAdminWorkspace = () => {
         await ensureAdminReadOnlyData({ force: true });
         if (result.ok) {
           setTimeout(() => {
-            if (content) content.innerHTML = renderAdminWorkspaceView("escolas");
+            if (content) {
+              content.innerHTML = renderAdminWorkspaceView("escolas");
+              adminHydrateContractOverviews(content);
+            }
           }, 900);
         }
       } catch (error) {
