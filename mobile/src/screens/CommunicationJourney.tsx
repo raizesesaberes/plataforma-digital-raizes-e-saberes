@@ -35,7 +35,8 @@ const pendingEdits = new Map<
     revision: number;
     requestId: string;
     confirmed?: boolean;
-    inFlight?: Promise<unknown>;
+    confirmedRevision?: number;
+    inFlight?: Promise<{ revision: number }>;
   }
 >();
 type Api = ReturnType<typeof journeyApi>;
@@ -96,8 +97,26 @@ function Messages({
     setSent([]);
     setThreads([]);
     setLoaded(false);
-    if (teacher) setSent(await api.teacherNotices());
-    else setInbox(await api.inbox());
+    if (teacher) {
+      const rows = await api.teacherNotices();
+      setSent(rows);
+      if (selected && !rows.some((row) => row.id === selected.id)) {
+        setView("list");
+        setSelected(null);
+        setDelivery("");
+      }
+    } else {
+      const rows = await api.inbox();
+      setInbox(rows);
+      if (
+        selected &&
+        !rows.some((row) => row.delivery_id === selected.delivery)
+      ) {
+        setView("list");
+        setSelected(null);
+        setDelivery("");
+      }
+    }
     setLoaded(true);
   }
   useEffect(() => {
@@ -313,7 +332,8 @@ function ReplyPanel({
     try {
       setThread(await api.thread(delivery));
     } catch (error) {
-      if (error instanceof Error && /:403(?::|$)/.test(error.message)) onDenied();
+      if (error instanceof Error && /:403(?::|$)/.test(error.message))
+        onDenied();
       throw error;
     }
   }
@@ -427,7 +447,8 @@ function NoticePanel({
     try {
       n = await api.notice(id, delivery);
     } catch (error) {
-      if (error instanceof Error && /:403(?::|$)/.test(error.message)) onDenied();
+      if (error instanceof Error && /:403(?::|$)/.test(error.message))
+        onDenied();
       throw error;
     }
     setNotice(n);
@@ -512,7 +533,9 @@ function NoticePanel({
                     if (
                       !draft ||
                       draft.title !== title.trim() ||
-                      draft.body !== body.trim()
+                      draft.body !== body.trim() ||
+                      (draft.confirmed &&
+                        draft.confirmedRevision !== notice.revision)
                     )
                       draft = {
                         title: title.trim(),
@@ -530,7 +553,8 @@ function NoticePanel({
                         draft.requestId,
                       );
                       try {
-                        await draft.inFlight;
+                        const receipt = await draft.inFlight;
+                        draft.confirmedRevision = receipt.revision;
                         draft.confirmed = true;
                       } finally {
                         draft.inFlight = undefined;

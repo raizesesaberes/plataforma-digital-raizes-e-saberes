@@ -46,6 +46,7 @@ export type Published = {
   available_from: string | null;
   available_until: string | null;
   status: string;
+  application_status: string;
 };
 export type Results = {
   summary: {
@@ -129,7 +130,7 @@ export function journeyApi(
     requireGate(gates.assessments);
     return restGet<Published[]>(
       session,
-      "assessment_assignments?select=id,assessment_id,class_id,target_type,student_id,available_from,available_until,status&order=created_at.desc",
+      "assessment_assignments?select=id,assessment_id,class_id,target_type,student_id,available_from,available_until,status,application_status&order=created_at.desc",
     );
   };
   return {
@@ -182,7 +183,9 @@ export function journeyApi(
         !a.student_id &&
         a.status === "published";
       const availableNow = (a: Published) =>
-        (!a.available_from || Date.parse(a.available_from) <= Date.now()) &&
+        ["AGENDADA", "EM_ANDAMENTO"].includes(a.application_status) &&
+        Boolean(a.available_from) &&
+        Date.parse(a.available_from!) <= Date.now() &&
         (!a.available_until || Date.parse(a.available_until) > Date.now());
       const existing = (await published()).find(matchesClass);
       if (existing) {
@@ -402,13 +405,17 @@ export function journeyApi(
       body: string,
       requestId: string,
     ) =>
-      communication(gates.editing, "communication_edit_notice", {
-        p_communication_id: id,
-        p_expected_revision: revision,
-        p_title: title,
-        p_body: body,
-        p_request_id: requestId,
-      }),
+      communication<{ revision: number }>(
+        gates.editing,
+        "communication_edit_notice",
+        {
+          p_communication_id: id,
+          p_expected_revision: revision,
+          p_title: title,
+          p_body: body,
+          p_request_id: requestId,
+        },
+      ),
     read: (id: string, revision: number) =>
       communication(gates.editing, "communication_mark_revision_read", {
         p_delivery_id: id,

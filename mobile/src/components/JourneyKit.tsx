@@ -88,7 +88,7 @@ export function useOperation() {
         const text = e instanceof Error ? e.message : "";
         setError(
           text === "assignment_not_current"
-            ? "Esta turma já possui aplicação futura ou encerrada. Revise o agendamento existente antes de publicar agora."
+            ? "Esta turma já possui aplicação futura, encerrada ou cancelada. Revise o agendamento existente antes de publicar agora."
             : text.includes("403")
               ? "Acesso negado. Confira seu vínculo com a escola."
               : text.includes("404")
