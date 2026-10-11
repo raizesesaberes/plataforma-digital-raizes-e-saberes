@@ -48,3 +48,11 @@ Falha parcial em futura implantação aprovada: manter TODOS os gates off, parar
 **Runtime/ativação dos gates ainda depende de:** confirmação dos recibos/checkpoints da instalação aprovada; revisão dos SHAs web/mobile a integrar; validação dos endpoints/roles no ambiente apropriado, login real e sessão na plataforma alvo; smoke dirigido com identidades de teste autorizadas; decisão coordenada de rollout por gate. Publicar código com flags desligadas é decisão diferente de ativar funcionalidades. Não ativar gates por inferência de que o SQL passou localmente. Apps nativos e homologação humana continuam separados.
 
 A correção de fonte no servidor QA (manifesto local do export permitindo caminho `.pnpm`) não muda runtime, permissões de rede ou requisitos de Auth. Não replicar uma exceção genérica para dotfiles no servidor de produção.
+
+## Manifests intermediários e pós-instalação entregues
+
+`qa/fase3/manifests/index.json` fixa as fontes e os cinco checkpoints00–04 (antes, apósPR2, apósPR3, apósPR4, apósPR1), incluindo RLS/ACL/policies/colunas/constraints/índices/triggers de14 tabelas e46 funções finais. Usar as duas consultas readonly `package_metadata_readonly.sql` e `package_versions_readonly.sql` e o comparador offline descrito em `manifests/README.md`. Versões ausentes NÃO ficam reservadas por uma SELECT; coordenação/releitura é obrigatória. Não houve leitura/escrita do ledger remoto.
+
+No laboratório Mac, mecanismo oficial escolhido é `supabase migration new` para os arquivos e `supabase migration up --local` para cada próxima etapa aprovada pendente, com pausa para checkpoint. Confirmar versão/help instalado e apenas a próxima etapa pendente. A execução remota permanece sem autorização específica; não usar repair ou include-all para contornar divergências. CLI EROFS neste executor permanece respeitado.
+
+Gates de UI desligados NÃO bloqueiam RPCs instaladas e concedidas ao papel authenticated. A instalação já altera superfície de backend: aprovação de ACL/escopo/SQL deve ocorrer ANTES dela. Ativação do runtime, login/refresh real, smoke no ambiente alvo e validação nativa são decisões/testes separados.

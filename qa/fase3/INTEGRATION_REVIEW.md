@@ -52,3 +52,9 @@ Após a rodada conjunta, os fixes residuais PR5 `1f576ba` receberam 30 PASS em `
 | fase3_assessment_authorization.sql | `de28fdb1726d50c1fbb04b0ae96fcf148f3c391562316485911167883d179389` |
 | fase3_communication_replies.sql | `23a45eb7ae85e8fb11b8605f983b07122028e63c508a8d1e6891b13a369028be` |
 | fase3_notice_editing.sql | `9819264bd71a61d90f522040405193c211ebad9fab39880a2748b503409341c1` |
+
+## Manifests de instalação entregues
+
+`manifests/index.json` (SHA256 `9345c06ea1c8e61054878933b87fd3341c409e6c9c93c00dcf3ea67e1fc5b374`) referencia os cinco checkpoints completos, antes/intermediários/pós-PR1. Estado final:46 funções e14 tabelas, incluindo RLS/ACL/policies/colunas/constraints/índices/triggers e privilégios efetivos; schema/EXECUTE também registrados. Os quatro novos objetos de tabela têm RLS=true e nenhum privilégio direto dos três papéis de aplicação.
+
+Comparator offline e controles negativos de RLS/SELECT passaram. Consultas readonly de versões testadas com quatro cenários virtuais, mantendo a verificação do histórico149 falsa nesses cenários (nenhum histórico fabricado). O ledger remoto não foi lido/escrito nem as versões reservadas no banco. Fontes SQL e preflight d5c4 continuam iguais. Detalhes, mecanismos oficiais CLI Mac e gate separado de instalação/runtime em `manifests/README.md` e `MAC_HANDOFF.md`. Estes novos manifests precisam de revisão/aprovação específica; gates off não impedem invocação das RPCs instaladas.

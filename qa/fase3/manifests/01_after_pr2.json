@@ -1,0 +1,2519 @@
+{
+  "scope": "Synthetic expected metadata; not production attestation",
+  "stage": "01_after_pr2",
+  "metadata": {
+    "schemas": {
+      "public": {
+        "acl": "{pg_database_owner=UC/pg_database_owner,=U/pg_database_owner,postgres=U/pg_database_owner,anon=U/pg_database_owner,authenticated=U/pg_database_owner,service_role=U/pg_database_owner}",
+        "owner": "pg_database_owner",
+        "privileges": {
+          "anon": {
+            "usage": true,
+            "create": false
+          },
+          "service_role": {
+            "usage": true,
+            "create": false
+          },
+          "authenticated": {
+            "usage": true,
+            "create": false
+          }
+        }
+      },
+      "school_category_private": {
+        "acl": "{postgres=UC/postgres}",
+        "owner": "postgres",
+        "privileges": {
+          "anon": {
+            "usage": false,
+            "create": false
+          },
+          "service_role": {
+            "usage": false,
+            "create": false
+          },
+          "authenticated": {
+            "usage": false,
+            "create": false
+          }
+        }
+      }
+    },
+    "functions": {
+      "public.avalia_current_student_id()": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "97999b75dee13694e601365d99f7134a",
+        "definition_md5": "3e20a7be5b00c46e81fb47db25c5b57d",
+        "security_definer": true
+      },
+      "public.school_content_assert_admin()": {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\"",
+          "jit=off"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": false
+        },
+        "body_md5": "b0c581ba555c2cb28a27d7a1dc7b2acb",
+        "definition_md5": "af73e3d2a14b425509831b4fa8ef9ca9",
+        "security_definer": true
+      },
+      "public.content_validate_entitlement()": {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "execute": {
+          "anon": true,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "a5f0b04cd1897ce7940bd34c0af4cd10",
+        "definition_md5": "afabcab82a52caa969938ee9c9bc54a7",
+        "security_definer": true
+      },
+      "public.institutional_touch_updated_at()": {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": null,
+        "execute": {
+          "anon": true,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "9b1889f56258bf9d6554213c05019c76",
+        "definition_md5": "49f396af1bc13839428275463183c937",
+        "security_definer": false
+      },
+      "public.content_resolve_for_user(p_context jsonb)": {
+        "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\"",
+          "jit=off"
+        ],
+        "execute": {
+          "anon": true,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "a0c56d9589ed5086441b602d71a221d0",
+        "definition_md5": "92109a94682b1c507de784e34103a074",
+        "security_definer": true
+      },
+      "school_category_private.has_dynamic_membership()": {
+        "acl": "{postgres=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": false,
+          "authenticated": false
+        },
+        "body_md5": "69213bfbf536f260856b37b63bb0580a",
+        "definition_md5": "28058c0e8d51ceec501545e4084b885b",
+        "security_definer": true
+      },
+      "school_category_private.revision(p_config jsonb)": {
+        "acl": "{postgres=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": false,
+          "authenticated": false
+        },
+        "body_md5": "87087fc7b55717ff5cfb3174d683ab75",
+        "definition_md5": "e7298d70307fba6931358c8d1c11ae91",
+        "security_definer": true
+      },
+      "school_category_private.scope_tenants(p_school uuid)": {
+        "acl": "{postgres=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": false,
+          "authenticated": false
+        },
+        "body_md5": "93e998b3a3cdfdee58a081dfe57b2926",
+        "definition_md5": "4a13778202006bc08a5cf6d959f2d81a",
+        "security_definer": true
+      },
+      "public.secretaria_can_manage_school(p_school_id uuid)": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public, auth, pg_temp"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "b19131aca5ff81d0761d2ef8f427c815",
+        "definition_md5": "5b94751cc45b9377537711e5b86d8910",
+        "security_definer": true
+      },
+      "school_category_private.active_rules(p_context jsonb)": {
+        "acl": "{postgres=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\"",
+          "jit=off",
+          "plan_cache_mode=force_custom_plan"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": false,
+          "authenticated": false
+        },
+        "body_md5": "da6a2950c152ca297f61e70a7b168d34",
+        "definition_md5": "96870fab8f1b04fbea6315501dd525a5",
+        "security_definer": true
+      },
+      "school_category_private.actor_context(p_context jsonb)": {
+        "acl": "{postgres=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\"",
+          "jit=off"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": false,
+          "authenticated": false
+        },
+        "body_md5": "f6a7f42cdd1bc1c915305845da58c57c",
+        "definition_md5": "48a7d0365d86d9b51890345b6a4f0812",
+        "security_definer": true
+      },
+      "school_category_private.dynamic_school(p_context jsonb)": {
+        "acl": "{postgres=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": false,
+          "authenticated": false
+        },
+        "body_md5": "57846f6b5c8fb22d0d8d458114910624",
+        "definition_md5": "f571b9cef1c82dee28aaaa7194d5ec0c",
+        "security_definer": true
+      },
+      "school_category_private.assessment_content_write_guard()": {
+        "acl": "{postgres=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": false,
+          "authenticated": false
+        },
+        "body_md5": "ca421399a763594a7d95556d18f5e93e",
+        "definition_md5": "cafa7a1a1229665ecae82e4f9aad25f4",
+        "security_definer": true
+      },
+      "school_category_private.legacy_resolver(p_context jsonb)": {
+        "acl": "{postgres=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\"",
+          "jit=off"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": false,
+          "authenticated": false
+        },
+        "body_md5": "1a1cf070812e8d529b7c6453bbc6553c",
+        "definition_md5": "f988ae1eae4b3cf22a8adf11b504919f",
+        "security_definer": true
+      },
+      "public.communication_can_read(p_communication communications)": {
+        "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "2657d0547e189192eb36044f5cfcf88c",
+        "definition_md5": "b63f62a6cc6baa32d0f51da610e68a37",
+        "security_definer": true
+      },
+      "public.communication_delivery_is_active(p_comm communications)": {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": false
+        },
+        "body_md5": "8a3a7f4cdbc67a46240e3b22cad841f8",
+        "definition_md5": "53d55b6dc0334d90c2d568ee22bd232d",
+        "security_definer": true
+      },
+      "public.avalia_plus_create_assessment_from_bank(p_payload jsonb)": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "dd108be00647e4e653a4c1b7dda5f24e",
+        "definition_md5": "eeb72c88ec87d506ddca32d1578b3f44",
+        "security_definer": true
+      },
+      "public.content_resolve_question_details_for_user(p_context jsonb)": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "fe26d0f36ab83603ed090c6f6b9983af",
+        "definition_md5": "21c6cf36dbb17bd6e923ead1cd67a1e4",
+        "security_definer": true
+      },
+      "school_category_private.authorized_items(p_context jsonb, p_item uuid)": {
+        "acl": "{postgres=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\"",
+          "jit=off",
+          "plan_cache_mode=force_custom_plan"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": false,
+          "authenticated": false
+        },
+        "body_md5": "849f5ffcee863c786252c3a75ae2a15d",
+        "definition_md5": "4b771949a3e1294d4125f5cf49a71dce",
+        "security_definer": true
+      },
+      "school_category_private.school_contract(p_school uuid, p_contract uuid)": {
+        "acl": "{postgres=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": false,
+          "authenticated": false
+        },
+        "body_md5": "6124eacadbbf7838b0670e1ca0c6b203",
+        "definition_md5": "602c6a3fe0453560760c4f337c1a9cf4",
+        "security_definer": true
+      },
+      "public.avalia_plus_assignment_is_open(p_assignment assessment_assignments)": {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": null,
+        "execute": {
+          "anon": true,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "af294ee748d85887c91a6212ab1200b3",
+        "definition_md5": "386339c78b624a29410be9dabf08e09e",
+        "security_definer": false
+      },
+      "public.avalia_plus_replace_assessment_items(p_assessment_id uuid, p_payload jsonb)": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "c5537e9ae3e9178c62df6ab779a3b211",
+        "definition_md5": "13edd128f31a26f0cfc2348e3b7aed99",
+        "security_definer": true
+      },
+      "public.avalia_student_can_access_assignment(p_assignment_id uuid, p_student_id uuid)": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "ee3b77fa07362ea563d9fb4156812d00",
+        "definition_md5": "015310f29c60e4ddca3b5b84706ccf02",
+        "security_definer": true
+      },
+      "school_category_private.assessment_assert_question(p_school_id uuid, p_class_id uuid, p_question_id uuid)": {
+        "acl": "{postgres=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\"",
+          "jit=off"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": false,
+          "authenticated": false
+        },
+        "body_md5": "81ecb872a7fabccc1cf04ecfcccb6a0d",
+        "definition_md5": "759c4d18845458a585b7c65464122e32",
+        "security_definer": true
+      },
+      "public.communication_guardian_can_read(p_school_id uuid, p_class_id uuid, p_student_id uuid, p_audience_type text)": {
+        "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "061c6efd20010477f5cf473ad1244bda",
+        "definition_md5": "67f0861001036d47c020ecbe484dd927",
+        "security_definer": true
+      },
+      "public.communication_teacher_can_target(p_school_id uuid, p_class_id uuid, p_student_id uuid, p_audience_type text)": {
+        "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "71d4d457d2327e019bd4bc1fdafd5da4",
+        "definition_md5": "beb4ebceb4cada8575bf70d7caa90dd7",
+        "security_definer": true
+      },
+      "public.communication_current_student_can_read(p_school_id uuid, p_class_id uuid, p_student_id uuid, p_audience_type text)": {
+        "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "a223c37655eb45fecf773839c07961b7",
+        "definition_md5": "8c11338afcbf00d832e8c7d158a0d5f6",
+        "security_definer": true
+      },
+      "public.teacher_create_assessment_assignment(p_assessment_id uuid, p_target_type text, p_class_id uuid, p_student_id uuid, p_available_from timestamp with time zone, p_available_until timestamp with time zone, p_time_limit_minutes integer, p_max_attempts integer, p_status text)": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "4cfb02542717041dedf06879ae07ff32",
+        "definition_md5": "96dbe140038a3e10307947d0aa37eba5",
+        "security_definer": true
+      },
+      "public.teacher_schedule_assessment_application_v2(p_assessment_id uuid, p_target_type text, p_class_id uuid, p_student_id uuid, p_available_from timestamp with time zone, p_available_until timestamp with time zone, p_time_limit_minutes integer, p_max_attempts integer, p_cycle_name text, p_school_year text, p_booklet_id uuid, p_token_required boolean, p_shuffle_questions boolean, p_shuffle_alternatives boolean)": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "a4169395436da02526ff02a867ba1886",
+        "definition_md5": "453773333c7e5883ea4754ea1dd9f035",
+        "security_definer": true
+      }
+    },
+    "relations": {
+      "public.contracts": {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "tenant_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "contract_ref",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "starts_at",
+            "type": "date",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "ends_at",
+            "type": "date",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "status",
+            "type": "rs_contract_status",
+            "default": "'DRAFT'::rs_contract_status",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "metadata",
+            "type": "jsonb",
+            "default": "'{}'::jsonb",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "created_by",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "updated_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          }
+        ],
+        "indexes": [
+          "CREATE UNIQUE INDEX contracts_pkey ON public.contracts USING btree (id)",
+          "CREATE UNIQUE INDEX contracts_tenant_ref_unique_idx ON public.contracts USING btree (tenant_id, lower(btrim(contract_ref)))",
+          "CREATE INDEX contracts_tenant_status_idx ON public.contracts USING btree (tenant_id, status, starts_at, ends_at)"
+        ],
+        "policies": [
+          {
+            "name": "contracts_admin_all",
+            "check": "is_platform_admin()",
+            "roles": [
+              "authenticated"
+            ],
+            "using": "is_platform_admin()",
+            "command": "*",
+            "permissive": true
+          }
+        ],
+        "triggers": [
+          {
+            "name": "contracts_touch_updated_at",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER contracts_touch_updated_at BEFORE UPDATE ON public.contracts FOR EACH ROW EXECUTE FUNCTION content_touch_updated_at()"
+          }
+        ],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          }
+        },
+        "constraints": [
+          {
+            "name": "contracts_created_by_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+          },
+          {
+            "name": "contracts_dates_check",
+            "validated": true,
+            "definition": "CHECK (ends_at IS NULL OR ends_at >= starts_at)"
+          },
+          {
+            "name": "contracts_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "contracts_ref_not_blank",
+            "validated": true,
+            "definition": "CHECK (length(btrim(contract_ref)) > 0)"
+          },
+          {
+            "name": "contracts_tenant_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE RESTRICT"
+          }
+        ]
+      },
+      "public.assessments": {
+        "acl": "{postgres=arwdDxtm/postgres,authenticated=arwdxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "title",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "description",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "owner_user_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "owner_role",
+            "type": "text",
+            "default": "'professor'::text",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "class_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "class_name",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "status",
+            "type": "assessment_status",
+            "default": "'RASCUNHO'::assessment_status",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "cover_template",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "instructions",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "application_date",
+            "type": "date",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "total_points",
+            "type": "numeric(8,2)",
+            "default": "0",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "digital_application_enabled",
+            "type": "boolean",
+            "default": "false",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "pdf_generation_ready",
+            "type": "boolean",
+            "default": "false",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "answer_key_ready",
+            "type": "boolean",
+            "default": "false",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "updated_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "component",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "school_year",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "archived_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "duplicated_from_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "school_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "assessment_year",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "matrix",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "max_booklets",
+            "type": "integer",
+            "default": "1",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "skill_map",
+            "type": "jsonb",
+            "default": "'[]'::jsonb",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "item_version_policy",
+            "type": "text",
+            "default": "'SNAPSHOT_ON_INSERT'::text",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "metadata",
+            "type": "jsonb",
+            "default": "'{}'::jsonb",
+            "not_null": true
+          }
+        ],
+        "indexes": [
+          "CREATE UNIQUE INDEX assessments_pkey ON public.assessments USING btree (id)",
+          "CREATE INDEX idx_assessments_component_year ON public.assessments USING btree (component, school_year)",
+          "CREATE INDEX idx_assessments_owner_status ON public.assessments USING btree (owner_user_id, status, updated_at DESC)"
+        ],
+        "policies": [
+          {
+            "name": "assessments readable by owners and managers",
+            "check": null,
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "((owner_user_id = auth.uid()) OR has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'gestor'::text, 'gestor_da_rede'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'aplicador'::text, 'service_role'::text]))",
+            "command": "r",
+            "permissive": true
+          },
+          {
+            "name": "teachers manage own assessments",
+            "check": "((owner_user_id = auth.uid()) OR has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'gestor'::text, 'gestor_da_rede'::text, 'professor'::text, 'service_role'::text]))",
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "((owner_user_id = auth.uid()) OR has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'gestor'::text, 'gestor_da_rede'::text, 'service_role'::text]))",
+            "command": "*",
+            "permissive": true
+          }
+        ],
+        "triggers": [
+          {
+            "name": "fase3_assessment_delete_guard",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER fase3_assessment_delete_guard BEFORE DELETE ON public.assessments FOR EACH ROW EXECUTE FUNCTION school_category_private.assessment_content_write_guard()"
+          }
+        ],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": false,
+            "insert": false,
+            "select": false,
+            "update": false,
+            "trigger": false,
+            "truncate": false,
+            "references": false
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": false,
+            "references": true
+          }
+        },
+        "constraints": [
+          {
+            "name": "assessments_duplicated_from_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (duplicated_from_id) REFERENCES assessments(id) ON DELETE SET NULL"
+          },
+          {
+            "name": "assessments_item_version_policy_check",
+            "validated": true,
+            "definition": "CHECK (item_version_policy = 'SNAPSHOT_ON_INSERT'::text)"
+          },
+          {
+            "name": "assessments_max_booklets_check",
+            "validated": true,
+            "definition": "CHECK (max_booklets >= 1 AND max_booklets <= 5)"
+          },
+          {
+            "name": "assessments_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "assessments_school_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE SET NULL"
+          }
+        ]
+      },
+      "public.communications": {
+        "acl": "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres,authenticated=r/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "school_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "author_profile_id",
+            "type": "uuid",
+            "default": "auth.uid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "author_role",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "communication_type",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "audience_type",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "class_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "student_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "title",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "body",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "communication_date",
+            "type": "date",
+            "default": "CURRENT_DATE",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "expires_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "status",
+            "type": "text",
+            "default": "'draft'::text",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "updated_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "deleted_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "deleted_by",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "source_type",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "source_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "action_label",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "href",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "target_group_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "grade_label",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "staff_role",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "links",
+            "type": "jsonb",
+            "default": "'[]'::jsonb",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "media",
+            "type": "jsonb",
+            "default": "'[]'::jsonb",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "advanced_metadata",
+            "type": "jsonb",
+            "default": "'{}'::jsonb",
+            "not_null": true
+          }
+        ],
+        "indexes": [
+          "CREATE INDEX communications_author_idx ON public.communications USING btree (author_profile_id)",
+          "CREATE INDEX communications_class_date_idx ON public.communications USING btree (class_id, communication_date DESC)",
+          "CREATE UNIQUE INDEX communications_pkey ON public.communications USING btree (id)",
+          "CREATE INDEX communications_school_date_idx ON public.communications USING btree (school_id, communication_date DESC)",
+          "CREATE UNIQUE INDEX communications_source_unique_idx ON public.communications USING btree (source_type, source_id) WHERE ((source_type IS NOT NULL) AND (source_id IS NOT NULL))",
+          "CREATE INDEX communications_status_idx ON public.communications USING btree (status)",
+          "CREATE INDEX communications_student_date_idx ON public.communications USING btree (student_id, communication_date DESC)"
+        ],
+        "policies": [
+          {
+            "name": "communications_insert_authorized",
+            "check": "((author_profile_id = auth.uid()) AND (secretaria_can_manage_school(school_id) OR communication_teacher_can_target(school_id, class_id, student_id, audience_type)))",
+            "roles": [
+              "authenticated"
+            ],
+            "using": null,
+            "command": "a",
+            "permissive": true
+          },
+          {
+            "name": "communications_select_authorized",
+            "check": null,
+            "roles": [
+              "authenticated"
+            ],
+            "using": "communication_can_read(communications.*)",
+            "command": "r",
+            "permissive": true
+          },
+          {
+            "name": "communications_update_authorized",
+            "check": "((author_profile_id = auth.uid()) OR secretaria_can_manage_school(school_id))",
+            "roles": [
+              "authenticated"
+            ],
+            "using": "((author_profile_id = auth.uid()) OR secretaria_can_manage_school(school_id))",
+            "command": "w",
+            "permissive": true
+          }
+        ],
+        "triggers": [
+          {
+            "name": "communications_touch_updated_at",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER communications_touch_updated_at BEFORE UPDATE ON public.communications FOR EACH ROW EXECUTE FUNCTION institutional_touch_updated_at()"
+          }
+        ],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": false,
+            "insert": false,
+            "select": false,
+            "update": false,
+            "trigger": false,
+            "truncate": false,
+            "references": false
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false,
+            "trigger": false,
+            "truncate": false,
+            "references": false
+          }
+        },
+        "constraints": [
+          {
+            "name": "communications_audience_check",
+            "validated": true,
+            "definition": "CHECK (audience_type = ANY (ARRAY['student'::text, 'class'::text, 'school'::text, 'group'::text, 'grade'::text, 'staff'::text]))"
+          },
+          {
+            "name": "communications_audience_shape_check",
+            "validated": true,
+            "definition": "CHECK (audience_type = 'school'::text AND class_id IS NULL AND student_id IS NULL AND target_group_id IS NULL AND grade_label IS NULL AND staff_role IS NULL OR audience_type = 'class'::text AND class_id IS NOT NULL AND student_id IS NULL OR audience_type = 'student'::text AND class_id IS NOT NULL AND student_id IS NOT NULL OR audience_type = 'group'::text AND target_group_id IS NOT NULL OR audience_type = 'grade'::text AND grade_label IS NOT NULL OR audience_type = 'staff'::text AND staff_role IS NOT NULL)"
+          },
+          {
+            "name": "communications_author_profile_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (author_profile_id) REFERENCES profiles(id) ON DELETE RESTRICT"
+          },
+          {
+            "name": "communications_body_not_blank",
+            "validated": true,
+            "definition": "CHECK (length(btrim(body)) > 0)"
+          },
+          {
+            "name": "communications_class_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE RESTRICT"
+          },
+          {
+            "name": "communications_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "communications_school_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT"
+          },
+          {
+            "name": "communications_status_check",
+            "validated": true,
+            "definition": "CHECK (status = ANY (ARRAY['draft'::text, 'published'::text, 'archived'::text, 'deleted'::text]))"
+          },
+          {
+            "name": "communications_student_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "communications_target_group_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (target_group_id) REFERENCES recomposition_intervention_groups(id) ON DELETE SET NULL"
+          },
+          {
+            "name": "communications_title_not_blank",
+            "validated": true,
+            "definition": "CHECK (length(btrim(title)) > 0)"
+          },
+          {
+            "name": "communications_type_check",
+            "validated": true,
+            "definition": "CHECK (communication_type = ANY (ARRAY['message'::text, 'notice'::text, 'weekly_information'::text, 'institutional_announcement'::text]))"
+          }
+        ]
+      },
+      "public.contract_products": {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "contract_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "product_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "status",
+            "type": "text",
+            "default": "'active'::text",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "metadata",
+            "type": "jsonb",
+            "default": "'{}'::jsonb",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          }
+        ],
+        "indexes": [
+          "CREATE UNIQUE INDEX contract_products_pkey ON public.contract_products USING btree (contract_id, product_id)"
+        ],
+        "policies": [
+          {
+            "name": "contract_products_admin_all",
+            "check": "is_platform_admin()",
+            "roles": [
+              "authenticated"
+            ],
+            "using": "is_platform_admin()",
+            "command": "*",
+            "permissive": true
+          }
+        ],
+        "triggers": [],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          }
+        },
+        "constraints": [
+          {
+            "name": "contract_products_contract_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "contract_products_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (contract_id, product_id)"
+          },
+          {
+            "name": "contract_products_product_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT"
+          },
+          {
+            "name": "contract_products_status_check",
+            "validated": true,
+            "definition": "CHECK (status = ANY (ARRAY['active'::text, 'inactive'::text, 'ended'::text]))"
+          }
+        ]
+      },
+      "public.assessment_questions": {
+        "acl": "{postgres=arwdDxtm/postgres,authenticated=rxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "assessment_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "section_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "question_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "position",
+            "type": "integer",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "points",
+            "type": "numeric(8,2)",
+            "default": "1",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "version_snapshot",
+            "type": "jsonb",
+            "default": "'{}'::jsonb",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          }
+        ],
+        "indexes": [
+          "CREATE UNIQUE INDEX assessment_questions_assessment_id_position_key ON public.assessment_questions USING btree (assessment_id, \"position\")",
+          "CREATE UNIQUE INDEX assessment_questions_pkey ON public.assessment_questions USING btree (id)",
+          "CREATE INDEX idx_assessment_questions_assessment ON public.assessment_questions USING btree (assessment_id, \"position\")"
+        ],
+        "policies": [
+          {
+            "name": "assessment questions follow assessment",
+            "check": "((EXISTS ( SELECT 1\n   FROM assessments a\n  WHERE ((a.id = assessment_questions.assessment_id) AND ((a.owner_user_id = auth.uid()) OR has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'gestor'::text, 'gestor_da_rede'::text, 'service_role'::text]))))) AND (EXISTS ( SELECT 1\n   FROM question_items qi\n  WHERE ((qi.id = assessment_questions.question_id) AND (qi.publication_status = 'PUBLICADO'::question_publication_status) AND (qi.curation_status = ANY (ARRAY['APROVADO'::question_curation_status, 'PUBLICADO'::question_curation_status, 'HOMOLOGADO'::question_curation_status])) AND (qi.legal_classification <> 'ITEM_BLOQUEADO_PUBLICACAO'::question_legal_classification)))))",
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "(EXISTS ( SELECT 1\n   FROM assessments a\n  WHERE ((a.id = assessment_questions.assessment_id) AND ((a.owner_user_id = auth.uid()) OR has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'gestor'::text, 'gestor_da_rede'::text, 'service_role'::text])))))",
+            "command": "*",
+            "permissive": true
+          },
+          {
+            "name": "assessment_questions_student_assigned_select",
+            "check": null,
+            "roles": [
+              "authenticated"
+            ],
+            "using": "(EXISTS ( SELECT 1\n   FROM assessment_assignments aa\n  WHERE ((aa.assessment_id = assessment_questions.assessment_id) AND avalia_student_can_access_assignment(aa.id, avalia_current_student_id()))))",
+            "command": "r",
+            "permissive": true
+          }
+        ],
+        "triggers": [
+          {
+            "name": "fase3_assessment_question_guard",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER fase3_assessment_question_guard BEFORE INSERT OR DELETE OR UPDATE ON public.assessment_questions FOR EACH ROW EXECUTE FUNCTION school_category_private.assessment_content_write_guard()"
+          },
+          {
+            "name": "trg_avalia_plus_assessment_question_access",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER trg_avalia_plus_assessment_question_access BEFORE INSERT OR UPDATE OF question_id ON public.assessment_questions FOR EACH ROW EXECUTE FUNCTION avalia_plus_assert_question_usable_for_assessment()"
+          },
+          {
+            "name": "trg_avalia_plus_assessment_question_snapshot",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER trg_avalia_plus_assessment_question_snapshot BEFORE INSERT OR UPDATE OF question_id, version_snapshot ON public.assessment_questions FOR EACH ROW EXECUTE FUNCTION avalia_plus_fill_assessment_question_snapshot()"
+          }
+        ],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": false,
+            "insert": false,
+            "select": false,
+            "update": false,
+            "trigger": false,
+            "truncate": false,
+            "references": false
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false,
+            "trigger": true,
+            "truncate": false,
+            "references": true
+          }
+        },
+        "constraints": [
+          {
+            "name": "assessment_questions_assessment_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (assessment_id) REFERENCES assessments(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "assessment_questions_assessment_id_position_key",
+            "validated": true,
+            "definition": "UNIQUE (assessment_id, \"position\")"
+          },
+          {
+            "name": "assessment_questions_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "assessment_questions_question_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (question_id) REFERENCES question_items(id)"
+          },
+          {
+            "name": "assessment_questions_section_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (section_id) REFERENCES assessment_sections(id) ON DELETE SET NULL"
+          }
+        ]
+      },
+      "public.assessment_assignments": {
+        "acl": "{postgres=arwdDxtm/postgres,authenticated=rxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "school_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "assessment_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "assigned_by",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "target_type",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "class_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "student_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "available_from",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "available_until",
+            "type": "timestamp with time zone",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "time_limit_minutes",
+            "type": "integer",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "max_attempts",
+            "type": "integer",
+            "default": "1",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "status",
+            "type": "text",
+            "default": "'draft'::text",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "published_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "updated_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "cycle_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "booklet_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "application_status",
+            "type": "text",
+            "default": "'AGENDADA'::text",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "token_required",
+            "type": "boolean",
+            "default": "false",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "shuffle_questions",
+            "type": "boolean",
+            "default": "false",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "shuffle_alternatives",
+            "type": "boolean",
+            "default": "false",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "application_settings",
+            "type": "jsonb",
+            "default": "'{}'::jsonb",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "closed_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "not_null": false
+          }
+        ],
+        "indexes": [
+          "CREATE UNIQUE INDEX assessment_assignments_class_active_unique ON public.assessment_assignments USING btree (school_id, assessment_id, class_id) WHERE ((target_type = 'class'::text) AND (status = ANY (ARRAY['draft'::text, 'published'::text])))",
+          "CREATE INDEX assessment_assignments_class_idx ON public.assessment_assignments USING btree (class_id, status)",
+          "CREATE UNIQUE INDEX assessment_assignments_pkey ON public.assessment_assignments USING btree (id)",
+          "CREATE INDEX assessment_assignments_school_status_idx ON public.assessment_assignments USING btree (school_id, status, available_from)",
+          "CREATE UNIQUE INDEX assessment_assignments_student_active_unique ON public.assessment_assignments USING btree (school_id, assessment_id, class_id, student_id) WHERE ((target_type = 'student'::text) AND (status = ANY (ARRAY['draft'::text, 'published'::text])))",
+          "CREATE INDEX assessment_assignments_student_idx ON public.assessment_assignments USING btree (student_id, status) WHERE (student_id IS NOT NULL)",
+          "CREATE INDEX idx_assessment_assignments_cycle ON public.assessment_assignments USING btree (cycle_id, application_status, available_from)"
+        ],
+        "policies": [
+          {
+            "name": "assessment_assignments_select_institutional",
+            "check": null,
+            "roles": [
+              "authenticated"
+            ],
+            "using": "avalia_can_read_assignment(id)",
+            "command": "r",
+            "permissive": true
+          }
+        ],
+        "triggers": [
+          {
+            "name": "assessment_assignments_notification_delivery",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER assessment_assignments_notification_delivery AFTER INSERT OR UPDATE ON public.assessment_assignments FOR EACH ROW EXECUTE FUNCTION notification_assessment_assignment_trigger()"
+          },
+          {
+            "name": "assessment_assignments_touch_updated_at",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER assessment_assignments_touch_updated_at BEFORE UPDATE ON public.assessment_assignments FOR EACH ROW EXECUTE FUNCTION institutional_touch_updated_at()"
+          },
+          {
+            "name": "fase3_assessment_publication_guard",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER fase3_assessment_publication_guard BEFORE INSERT OR UPDATE OF assessment_id, school_id, class_id, status ON public.assessment_assignments FOR EACH ROW EXECUTE FUNCTION school_category_private.assessment_content_write_guard()"
+          }
+        ],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": false,
+            "insert": false,
+            "select": false,
+            "update": false,
+            "trigger": false,
+            "truncate": false,
+            "references": false
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false,
+            "trigger": true,
+            "truncate": false,
+            "references": true
+          }
+        },
+        "constraints": [
+          {
+            "name": "assessment_assignments_application_status_check",
+            "validated": true,
+            "definition": "CHECK (application_status = ANY (ARRAY['AGENDADA'::text, 'EM_ANDAMENTO'::text, 'CONCLUIDA'::text, 'INCOMPLETA'::text, 'CANCELADA'::text]))"
+          },
+          {
+            "name": "assessment_assignments_assessment_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (assessment_id) REFERENCES assessments(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "assessment_assignments_booklet_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (booklet_id) REFERENCES assessment_booklets(id) ON DELETE SET NULL"
+          },
+          {
+            "name": "assessment_assignments_class_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE RESTRICT"
+          },
+          {
+            "name": "assessment_assignments_class_school_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (class_id, school_id) REFERENCES classes(id, school_id) ON DELETE RESTRICT"
+          },
+          {
+            "name": "assessment_assignments_cycle_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (cycle_id) REFERENCES assessment_cycles(id) ON DELETE SET NULL"
+          },
+          {
+            "name": "assessment_assignments_max_attempts_check",
+            "validated": true,
+            "definition": "CHECK (max_attempts > 0)"
+          },
+          {
+            "name": "assessment_assignments_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "assessment_assignments_school_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT"
+          },
+          {
+            "name": "assessment_assignments_status_check",
+            "validated": true,
+            "definition": "CHECK (status = ANY (ARRAY['draft'::text, 'published'::text, 'closed'::text, 'archived'::text]))"
+          },
+          {
+            "name": "assessment_assignments_student_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "assessment_assignments_target_shape_check",
+            "validated": true,
+            "definition": "CHECK (target_type = 'class'::text AND student_id IS NULL OR target_type = 'student'::text AND student_id IS NOT NULL)"
+          },
+          {
+            "name": "assessment_assignments_target_type_check",
+            "validated": true,
+            "definition": "CHECK (target_type = ANY (ARRAY['class'::text, 'student'::text]))"
+          },
+          {
+            "name": "assessment_assignments_time_limit_check",
+            "validated": true,
+            "definition": "CHECK (time_limit_minutes IS NULL OR time_limit_minutes > 0)"
+          },
+          {
+            "name": "assessment_assignments_window_check",
+            "validated": true,
+            "definition": "CHECK (available_until IS NULL OR available_until > available_from)"
+          }
+        ]
+      },
+      "public.communication_deliveries": {
+        "acl": "{postgres=arwdDxtm/postgres,authenticated=rm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "communication_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "recipient_profile_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "student_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "school_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "delivered_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "read_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "notification_status",
+            "type": "text",
+            "default": "'unread'::text",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "updated_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          }
+        ],
+        "indexes": [
+          "CREATE UNIQUE INDEX communication_deliveries_pkey ON public.communication_deliveries USING btree (id)",
+          "CREATE INDEX communication_deliveries_recipient_status_idx ON public.communication_deliveries USING btree (recipient_profile_id, notification_status, delivered_at DESC)",
+          "CREATE INDEX communication_deliveries_school_idx ON public.communication_deliveries USING btree (school_id, delivered_at DESC)",
+          "CREATE INDEX communication_deliveries_student_idx ON public.communication_deliveries USING btree (student_id, delivered_at DESC)",
+          "CREATE UNIQUE INDEX communication_deliveries_unique_context_idx ON public.communication_deliveries USING btree (communication_id, recipient_profile_id, COALESCE(student_id, '00000000-0000-0000-0000-000000000000'::uuid))"
+        ],
+        "policies": [
+          {
+            "name": "communication_deliveries_select_own",
+            "check": null,
+            "roles": [
+              "authenticated"
+            ],
+            "using": "(recipient_profile_id = ( SELECT auth.uid() AS uid))",
+            "command": "r",
+            "permissive": true
+          }
+        ],
+        "triggers": [
+          {
+            "name": "communication_deliveries_touch_updated_at",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER communication_deliveries_touch_updated_at BEFORE UPDATE ON public.communication_deliveries FOR EACH ROW EXECUTE FUNCTION institutional_touch_updated_at()"
+          }
+        ],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": false,
+            "insert": false,
+            "select": false,
+            "update": false,
+            "trigger": false,
+            "truncate": false,
+            "references": false
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false,
+            "trigger": false,
+            "truncate": false,
+            "references": false
+          }
+        },
+        "constraints": [
+          {
+            "name": "communication_deliveries_communication_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (communication_id) REFERENCES communications(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "communication_deliveries_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "communication_deliveries_recipient_profile_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (recipient_profile_id) REFERENCES profiles(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "communication_deliveries_school_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "communication_deliveries_status_check",
+            "validated": true,
+            "definition": "CHECK (notification_status = ANY (ARRAY['unread'::text, 'read'::text, 'archived'::text]))"
+          },
+          {
+            "name": "communication_deliveries_student_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE"
+          }
+        ]
+      },
+      "public.contract_entitlement_events": {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "contract_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "entitlement_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "event_type",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "actor_user_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "details",
+            "type": "jsonb",
+            "default": "'{}'::jsonb",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          }
+        ],
+        "indexes": [
+          "CREATE UNIQUE INDEX category_request_once ON public.contract_entitlement_events USING btree (actor_user_id, ((details ->> 'request_id'::text))) WHERE (event_type = 'CATEGORY_RULES_SAVED'::text)",
+          "CREATE UNIQUE INDEX contract_entitlement_events_pkey ON public.contract_entitlement_events USING btree (id)"
+        ],
+        "policies": [
+          {
+            "name": "contract_entitlement_events_admin_select",
+            "check": null,
+            "roles": [
+              "authenticated"
+            ],
+            "using": "is_platform_admin()",
+            "command": "r",
+            "permissive": true
+          }
+        ],
+        "triggers": [],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          }
+        },
+        "constraints": [
+          {
+            "name": "contract_entitlement_events_actor_user_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (actor_user_id) REFERENCES auth.users(id) ON DELETE SET NULL"
+          },
+          {
+            "name": "contract_entitlement_events_contract_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE SET NULL"
+          },
+          {
+            "name": "contract_entitlement_events_entitlement_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (entitlement_id) REFERENCES tenant_product_entitlements(id) ON DELETE SET NULL"
+          },
+          {
+            "name": "contract_entitlement_events_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "contract_entitlement_events_type_not_blank",
+            "validated": true,
+            "definition": "CHECK (length(btrim(event_type)) > 0)"
+          }
+        ]
+      },
+      "public.tenant_product_entitlements": {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "contract_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "tenant_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "product_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "starts_at",
+            "type": "date",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "ends_at",
+            "type": "date",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "status",
+            "type": "rs_entitlement_status",
+            "default": "'ACTIVE'::rs_entitlement_status",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "segment_ids",
+            "type": "uuid[]",
+            "default": "'{}'::uuid[]",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "grade_ids",
+            "type": "uuid[]",
+            "default": "'{}'::uuid[]",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "subject_ids",
+            "type": "uuid[]",
+            "default": "'{}'::uuid[]",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "metadata",
+            "type": "jsonb",
+            "default": "'{}'::jsonb",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "created_by",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "updated_by",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "updated_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          }
+        ],
+        "indexes": [
+          "CREATE INDEX entitlements_contract_idx ON public.tenant_product_entitlements USING btree (contract_id)",
+          "CREATE INDEX entitlements_tenant_product_status_idx ON public.tenant_product_entitlements USING btree (tenant_id, product_id, status, starts_at, ends_at)",
+          "CREATE UNIQUE INDEX tenant_product_entitlements_pkey ON public.tenant_product_entitlements USING btree (id)"
+        ],
+        "policies": [
+          {
+            "name": "tenant_product_entitlements_admin_all",
+            "check": "is_platform_admin()",
+            "roles": [
+              "authenticated"
+            ],
+            "using": "is_platform_admin()",
+            "command": "*",
+            "permissive": true
+          }
+        ],
+        "triggers": [
+          {
+            "name": "category_checkpoint_entitlement_guard",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER category_checkpoint_entitlement_guard BEFORE INSERT OR UPDATE ON public.tenant_product_entitlements FOR EACH ROW EXECUTE FUNCTION school_category_private.guard_checkpoint_writes()"
+          },
+          {
+            "name": "tenant_product_entitlements_touch_updated_at",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER tenant_product_entitlements_touch_updated_at BEFORE UPDATE ON public.tenant_product_entitlements FOR EACH ROW EXECUTE FUNCTION content_touch_updated_at()"
+          },
+          {
+            "name": "tenant_product_entitlements_validate_scope",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER tenant_product_entitlements_validate_scope BEFORE INSERT OR UPDATE ON public.tenant_product_entitlements FOR EACH ROW EXECUTE FUNCTION content_validate_entitlement()"
+          }
+        ],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          }
+        },
+        "constraints": [
+          {
+            "name": "tenant_product_entitlements_contract_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE RESTRICT"
+          },
+          {
+            "name": "tenant_product_entitlements_created_by_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+          },
+          {
+            "name": "tenant_product_entitlements_dates_check",
+            "validated": true,
+            "definition": "CHECK (ends_at IS NULL OR ends_at >= starts_at)"
+          },
+          {
+            "name": "tenant_product_entitlements_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "tenant_product_entitlements_product_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT"
+          },
+          {
+            "name": "tenant_product_entitlements_tenant_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE RESTRICT"
+          },
+          {
+            "name": "tenant_product_entitlements_updated_by_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+          }
+        ]
+      },
+      "public.tenant_product_content_modules": {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "entitlement_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "content_module_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "enabled",
+            "type": "boolean",
+            "default": "true",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "source",
+            "type": "text",
+            "default": "'contract'::text",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "metadata",
+            "type": "jsonb",
+            "default": "'{}'::jsonb",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "updated_by",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "updated_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          }
+        ],
+        "indexes": [
+          "CREATE INDEX tenant_product_content_modules_module_idx ON public.tenant_product_content_modules USING btree (content_module_id, enabled)",
+          "CREATE UNIQUE INDEX tenant_product_content_modules_pkey ON public.tenant_product_content_modules USING btree (entitlement_id, content_module_id)"
+        ],
+        "policies": [
+          {
+            "name": "tenant_product_content_modules_admin_all",
+            "check": "is_platform_admin()",
+            "roles": [
+              "authenticated"
+            ],
+            "using": "is_platform_admin()",
+            "command": "*",
+            "permissive": true
+          }
+        ],
+        "triggers": [
+          {
+            "name": "category_checkpoint_module_guard",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER category_checkpoint_module_guard BEFORE INSERT OR DELETE OR UPDATE ON public.tenant_product_content_modules FOR EACH ROW EXECUTE FUNCTION school_category_private.guard_checkpoint_writes()"
+          },
+          {
+            "name": "tenant_product_content_modules_touch_updated_at",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER tenant_product_content_modules_touch_updated_at BEFORE UPDATE ON public.tenant_product_content_modules FOR EACH ROW EXECUTE FUNCTION content_touch_updated_at()"
+          }
+        ],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          }
+        },
+        "constraints": [
+          {
+            "name": "tenant_product_content_modules_content_module_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (content_module_id) REFERENCES content_modules(id) ON DELETE RESTRICT"
+          },
+          {
+            "name": "tenant_product_content_modules_entitlement_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (entitlement_id) REFERENCES tenant_product_entitlements(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "tenant_product_content_modules_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (entitlement_id, content_module_id)"
+          },
+          {
+            "name": "tenant_product_content_modules_source_check",
+            "validated": true,
+            "definition": "CHECK (source = ANY (ARRAY['contract'::text, 'manual'::text, 'inherited'::text, 'pilot'::text, 'embargo'::text]))"
+          },
+          {
+            "name": "tenant_product_content_modules_updated_by_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+          }
+        ]
+      }
+    }
+  }
+}

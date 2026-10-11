@@ -1,0 +1,94 @@
+{
+  "status": "REVIEW_REQUIRED_NOT_INSTALL_AUTHORIZATION",
+  "databaseReservation": false,
+  "ledgerObserved": false,
+  "query": {
+    "file": "supabase/review/package_metadata_readonly.sql",
+    "sha256": "4f285f2ce2b1bd36486c82a6285785cd4bfa090353b5e86abca7309d466b0be7"
+  },
+  "versionQuery": {
+    "file": "supabase/review/package_versions_readonly.sql",
+    "sha256": "15f7ea4a41bf36806a9a338faaa4de20cb23bacd34143ce52691f43f4a1de6f8"
+  },
+  "approvedCombinedPreflight": {
+    "file": "supabase/review/combined_preflight_20261011060000.sql",
+    "sha256": "d5c4c87c4edd30bc1713f6f254102b899be9cff5c6748414c17c26cbea34eeff"
+  },
+  "proposals": [
+    {
+      "version": "20261011060001",
+      "name": "fase3_assessment_authorization",
+      "file": "supabase/review/fase3_assessment_authorization.sql",
+      "sha256": "de28fdb1726d50c1fbb04b0ae96fcf148f3c391562316485911167883d179389"
+    },
+    {
+      "version": "20261011060002",
+      "name": "fase3_communication_replies",
+      "file": "supabase/review/fase3_communication_replies.sql",
+      "sha256": "23a45eb7ae85e8fb11b8605f983b07122028e63c508a8d1e6891b13a369028be"
+    },
+    {
+      "version": "20261011060003",
+      "name": "fase3_notice_editing",
+      "file": "supabase/review/fase3_notice_editing.sql",
+      "sha256": "9819264bd71a61d90f522040405193c211ebad9fab39880a2748b503409341c1"
+    },
+    {
+      "version": "20261011060004",
+      "name": "contract_operations",
+      "file": "supabase/review/contract_operations.sql",
+      "sha256": "938d444f542cbd3d739044271fa0e1d43c93b6e40508ba292cb946cde772f415"
+    }
+  ],
+  "stages": [
+    {
+      "stage": "00_before",
+      "expectedLedgerCount": 149,
+      "expectedAdditionalVersions": [],
+      "file": "qa/fase3/manifests/00_before.json",
+      "sha256": "207f66ee5414dc9fa0bb31d8ee675958948e7588d651a3245b4c74d6fdee6bfa"
+    },
+    {
+      "stage": "01_after_pr2",
+      "expectedLedgerCount": 150,
+      "expectedAdditionalVersions": [
+        "20261011060001"
+      ],
+      "file": "qa/fase3/manifests/01_after_pr2.json",
+      "sha256": "47ab30b82071c4acc6dc287e0d893424a227d3d13dc0411fb83d0f461fb2a720"
+    },
+    {
+      "stage": "02_after_pr3",
+      "expectedLedgerCount": 151,
+      "expectedAdditionalVersions": [
+        "20261011060001",
+        "20261011060002"
+      ],
+      "file": "qa/fase3/manifests/02_after_pr3.json",
+      "sha256": "ccf54d928e23726a310399db8fa62569d4d926a1ee88427df1b6523b038b486b"
+    },
+    {
+      "stage": "03_after_pr4",
+      "expectedLedgerCount": 152,
+      "expectedAdditionalVersions": [
+        "20261011060001",
+        "20261011060002",
+        "20261011060003"
+      ],
+      "file": "qa/fase3/manifests/03_after_pr4.json",
+      "sha256": "284a4b7f513c1c5c4ad4a73bae581477a17eb616b6e3ec1a39a1c55c46f3adf3"
+    },
+    {
+      "stage": "04_after_pr1",
+      "expectedLedgerCount": 153,
+      "expectedAdditionalVersions": [
+        "20261011060001",
+        "20261011060002",
+        "20261011060003",
+        "20261011060004"
+      ],
+      "file": "qa/fase3/manifests/04_after_pr1.json",
+      "sha256": "d1175d04e23439f5fb2223a8421b7953b9eb3e76929d78fe6cd32cc2c0214fc8"
+    }
+  ]
+}

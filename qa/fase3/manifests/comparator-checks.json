@@ -1,0 +1,40 @@
+{
+  "checks": [
+    {
+      "name": "00_before",
+      "status": "PASS",
+      "scope": "captured synthetic metadata consistency"
+    },
+    {
+      "name": "01_after_pr2",
+      "status": "PASS",
+      "scope": "captured synthetic metadata consistency"
+    },
+    {
+      "name": "02_after_pr3",
+      "status": "PASS",
+      "scope": "captured synthetic metadata consistency"
+    },
+    {
+      "name": "03_after_pr4",
+      "status": "PASS",
+      "scope": "captured synthetic metadata consistency"
+    },
+    {
+      "name": "04_after_pr1",
+      "status": "PASS",
+      "scope": "captured synthetic metadata consistency"
+    },
+    {
+      "name": "reject_rls_drift",
+      "status": "PASS",
+      "scope": "offline altered JSON, no database mutation"
+    },
+    {
+      "name": "reject_privileges_drift",
+      "status": "PASS",
+      "scope": "offline altered JSON, no database mutation"
+    }
+  ],
+  "productionAttestation": false
+}

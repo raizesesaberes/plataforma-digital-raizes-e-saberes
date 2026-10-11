@@ -18,7 +18,11 @@
     "qa/fase3/MAC_HANDOFF.md",
     "qa/fase3/COMBINED_RELEASE_PLAN.md",
     "qa/fase3/INTEGRATION_REVIEW.md",
-    "supabase/review/combined_preflight_20261011060000.sql"
+    "supabase/review/combined_preflight_20261011060000.sql",
+    "qa/fase3/manifests/index.json",
+    "qa/fase3/manifests/README.md",
+    "supabase/review/package_metadata_readonly.sql",
+    "supabase/review/package_versions_readonly.sql"
   ],
   "runtimeUnchanged": true
 }

@@ -2,12 +2,16 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import {recordStage,writeManifestIndex} from './release-manifest.mjs';
+import {checkVersionQuery} from './check-version-query.mjs';
 const root=resolve(import.meta.dirname,'../..');process.chdir(root);
 const name=`rs-fase3-${process.pid}`;
 const run=(args,input)=>execFileSync('docker',args,{input,encoding:'utf8',maxBuffer:16*1024*1024,stdio:input===undefined?['ignore','pipe','pipe']:['pipe','pipe','pipe']});
 const postgres='postgres:17@sha256:2d2b8998d31037bf721cfdf764d76ba74171b4fab3431b7f72c27c56ddbdf9e3';
 const postgrest='postgrest/postgrest:v12.2.12@sha256:5f4ce744539bbba786b4e24dbbd95bdb2a956dcf568c5374995a0ff4a68f5bd2';
 const baseline=false;
+const manifestsOnly=process.argv.includes('--manifests-only');
+const stage=nameOfStage=>{if(manifestsOnly)recordStage(nameOfStage,sql=>run(['exec','-i',name,'psql','-U','postgres','-v','ON_ERROR_STOP=1','-At'],sql));};
 const routingOnly=process.argv.includes('--routing-only');
 const contractsFirst=process.argv.includes('--contracts-first');
 const snapshot=()=>JSON.parse(run(['exec','-i',name,'psql','-U','postgres','-At'],`select jsonb_object_agg(key, value) from (select n.nspname||'.'||p.proname||'('||pg_get_function_identity_arguments(p.oid)||')' key,jsonb_build_object('body_md5',md5(p.prosrc),'definition_md5',md5(pg_get_functiondef(p.oid)),'acl',p.proacl::text,'config',p.proconfig,'owner',pg_get_userbyid(p.proowner)) value from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','school_category_private') union all select 'trigger:'||t.tgrelid::regclass::text||':'||t.tgname,jsonb_build_object('definition',pg_get_triggerdef(t.oid),'enabled',t.tgenabled) from pg_trigger t where not t.tgisinternal) s;`));
@@ -33,10 +37,12 @@ try {
   if(checked.trim().split('\n').some(line=>!line.endsWith('|t')))throw new Error('Contract function preflight mismatch: '+checked);
   console.log('PASS seven contract function preconditions (migration ledger is outside this synthetic fixture)');
   const beforeFase3=snapshot();
+  stage('00_before');
   if(contractsFirst)apply('supabase/review/contract_operations.sql');
-  if(!baseline){apply('supabase/review/fase3_assessment_authorization.sql');apply('supabase/review/fase3_communication_replies.sql');apply('supabase/review/fase3_notice_editing.sql');}
+  if(!baseline){apply('supabase/review/fase3_assessment_authorization.sql');stage('01_after_pr2');apply('supabase/review/fase3_communication_replies.sql');stage('02_after_pr3');apply('supabase/review/fase3_notice_editing.sql');stage('03_after_pr4');}
   const afterFase3=snapshot();
   if(!contractsFirst)apply('supabase/review/contract_operations.sql');
+  stage('04_after_pr1');
   const afterContracts=snapshot();
   const protectedObjects=Object.keys(afterFase3).filter(key=>JSON.stringify(afterFase3[key])!==JSON.stringify(beforeFase3[key]));
   const overwritten=protectedObjects.filter(key=>JSON.stringify(afterFase3[key])!==JSON.stringify(afterContracts[key]));
@@ -44,6 +50,7 @@ try {
   const changedDependencies=Object.keys(afterFase3).filter(key=>JSON.stringify(afterFase3[key])!==JSON.stringify(afterContracts[key])).map(key=>({key,before:afterFase3[key],after:afterContracts[key]}));
   writeFileSync('qa/fase3/integration-functions.json',JSON.stringify({protectedObjects,protectedDefinitions:Object.fromEntries(protectedObjects.map(key=>[key,afterFase3[key]])),overwritten,changedDependencies},null,2)+'\n');
   console.log('PASS contracts preserved '+protectedObjects.length+' FASE3 functions/triggers including definitions, ACLs and config');
+  if(manifestsOnly){writeManifestIndex();checkVersionQuery(sql=>run(['exec','-i',name,'psql','-U','postgres','-v','ON_ERROR_STOP=1','-At'],sql));console.log('PASS stage manifests captured; no ledger created or written');} else {
   apply('tests/contracts/seed.sql');
   for(const suite of (routingOnly?[]:['database.py','content.py','edge-cases.py','security-regressions.py','succession-regressions.py'])){
     console.log('CONTRACT SUITE '+suite);
@@ -60,5 +67,6 @@ try {
   execFileSync('python3',['tests/contracts/fase3-bridge.py'],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}});
   if(journeyError)throw journeyError;
   }
+}
 } catch(error) {console.error(error.stderr?.toString()||error.message);process.exitCode=1;}
 finally {for(const container of [`${name}-rest`,name]){try{run(['rm','-fv',container])}catch{}}}
