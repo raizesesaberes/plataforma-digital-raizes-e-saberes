@@ -100,7 +100,7 @@ export function newRequestId() {
     return (c === "x" ? r : (r & 3) | 8).toString(16);
   });
 } // Idempotency identifier, never a credential.
-function isUncertain(error: unknown) {
+export function isUncertain(error: unknown) {
   return (
     error instanceof TypeError ||
     (error instanceof Error &&

@@ -10,6 +10,7 @@ import {
   journeyGates,
   latestAttempt,
   finished,
+  isUncertain,
   type Gates,
   type StudentWork,
   type Published,
@@ -178,7 +179,7 @@ function TeacherAssessments({
                       "Avaliação salva no servidor. Selecione Publicar para enviar à turma.",
                     );
                   } catch (e) {
-                    setUncertain(true);
+                    setUncertain(isUncertain(e));
                     throw e;
                   } finally {
                     setDrafts(await api.drafts());
