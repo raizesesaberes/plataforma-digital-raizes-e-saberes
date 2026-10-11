@@ -20155,8 +20155,8 @@ const modules = {
                 <option value="time">Tempo estimado</option>
               </select>
             </div>
-            <div class="qb-state" data-qb-loading>Carregando banco demonstrativo...</div>
-            <div class="qb-state error" data-qb-error hidden>Não foi possível carregar os itens demonstrativos.</div>
+            <div class="qb-state" data-qb-loading>Carregando questões autorizadas...</div>
+            <div class="qb-state error" data-qb-error hidden>Não foi possível carregar as questões.</div>
             <div class="qb-grid" data-qb-grid></div>
             <div class="qb-state" data-qb-empty hidden>Nenhuma questao encontrada com os filtros atuais.</div>
             <section class="panel qb-detail" data-qb-detail aria-live="polite"></section>
@@ -20639,22 +20639,33 @@ const environments = {
   },
 };
 
+const getQuestionBankCapabilities = () => {
+  const role = getSupabaseQuestionBankRole();
+  return { create: allowedQuestionCreationRoles.includes(role), edit: allowedQuestionEditRoles.includes(role),
+    review: allowedQuestionReviewRoles.includes(role), publish: allowedQuestionPublishRoles.includes(role),
+    adapt: allowedQuestionAdaptationRoles.includes(role), admin: ["admin", "administrador", "administrador_nacional"].includes(role) };
+};
+const getQuestionBankNavigation = () => {
+  const caps = getQuestionBankCapabilities();
+  return environments.bancoQuestoes.nav.filter(([key]) => key === 'admin' ? caps.admin : key === 'editorial' ? caps.edit : key === 'nova' ? caps.create : true);
+};
 const renderQuestionBankAdminSidebar = (activeView = "dashboard") => {
   const session = getPlatformSession();
-  const email = session.email || "admin.banco@raizesesaberes.com";
+  const email = session.name || session.email || "Conta autenticada";
+  const caps = getQuestionBankCapabilities();
   return `
     <aside class="admin-sidebar" aria-label="Menu Banco de Questões">
-      <a class="admin-sidebar-logo" href="admin.html" aria-label="Raízes e Saberes">
+      <a class="admin-sidebar-logo" href="${categoryEscape(getRoleHome(getCurrentPlatformRole()))}" aria-label="Raízes e Saberes">
         <img src="logo-sidebar-dark.png" alt="Raízes e Saberes Ecossistema Educacional" onerror="this.hidden=true; this.nextElementSibling.hidden=false;" />
         <span class="admin-sidebar-logo-fallback" hidden><strong>Raízes e Saberes</strong><em>Ecossistema Educacional</em></span>
       </a>
       <div class="admin-id-card">
-        <span>Admin Banco / Editorial</span>
-        <strong>Raízes e Saberes</strong>
+        <span>${caps.admin ? "Administração do Banco" : caps.edit ? "Equipe editorial" : categoryEscape({professor:"Professor",gestor:"Gestor",coordenador:"Coordenador"}[getCurrentPlatformRole()] || "Conta autenticada")}</span>
+        <strong data-content-school-name>Escola: consultando vínculo...</strong>
         <small>${printableEscape(email)}</small>
       </div>
       <nav aria-label="Banco de Questões">
-        ${environments.bancoQuestoes.nav
+        ${getQuestionBankNavigation()
           .map(([key, label, href]) => `
             <button
               type="button"
@@ -20712,9 +20723,11 @@ const getQuestionBankCurrentView = () => {
   if (typeof window === "undefined") return "dashboard";
   const params = new URLSearchParams(window.location.search || "");
   const queryView = params.get("view");
-  if (questionBankViews.has(queryView)) return queryView;
+  const caps = getQuestionBankCapabilities();
+  const allowed = view => view === 'admin' ? caps.admin : view === 'editorial' ? caps.edit : view === 'nova' ? caps.create || caps.adapt || caps.edit : true;
+  if (questionBankViews.has(queryView)) return allowed(queryView) ? queryView : "banco";
   const hashView = questionBankHashView[String(window.location.hash || "").replace(/^#/, "")];
-  return hashView || "dashboard";
+  return hashView && allowed(hashView) ? hashView : "dashboard";
 };
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -22123,6 +22136,8 @@ const initQuestionBank = () => {
   const sort = root.querySelector("[data-qb-sort]");
   const loading = root.querySelector("[data-qb-loading]");
   const errorNode = root.querySelector("[data-qb-error]");
+  root.querySelector(".qb-notice")?.after(errorNode);
+  errorNode?.setAttribute("role", "alert");
   const empty = root.querySelector("[data-qb-empty]");
   const cartList = root.querySelector("[data-qb-cart-list]");
   const cartTime = root.querySelector("[data-qb-cart-time]");
@@ -22301,6 +22316,7 @@ const initQuestionBank = () => {
     selectionStatus.hidden = false;
   };
   const getQuestionBankRole = () => getSupabaseQuestionBankRole() || "anonymous";
+  const canCreateQuestion = () => allowedQuestionCreationRoles.includes(getQuestionBankRole());
   const canAuthorQuestion = () => allowedQuestionEditorialRoles.includes(getQuestionBankRole());
   const canReviewQuestion = () => allowedQuestionReviewRoles.includes(getQuestionBankRole());
   const canPublishQuestion = () => allowedQuestionPublishRoles.includes(getQuestionBankRole());
@@ -22477,7 +22493,7 @@ const initQuestionBank = () => {
       pedagogical_comment: fieldValue("justification"),
       recommended_intervention: fieldValue("recommended_intervention"),
       estimated_minutes: "3",
-      author_name: "Equipe Editorial Raízes e Saberes",
+      author_name: getPlatformSession().name || "Autor autenticado",
       metadata: {
         source: "question_bank_editorial_ui",
         created_from: "banco-questoes",
@@ -22615,7 +22631,7 @@ const initQuestionBank = () => {
       createDraftButton.textContent = isAdapting ? editorialActionLabels.adapt.idle : isEditing ? editorialActionLabels.edit.idle : editorialActionLabels.draft.idle;
     }
     if (submitReviewButton) {
-      submitReviewButton.hidden = isAdapting || (isEditing && editorialMode.source?.publicationStatus === "PUBLICADO");
+      submitReviewButton.hidden = !canAuthorQuestion() || isAdapting || (isEditing && editorialMode.source?.publicationStatus === "PUBLICADO");
     }
     if (cancelAdaptationButton) {
       cancelAdaptationButton.hidden = !isAdapting && !isEditing;
@@ -22716,6 +22732,19 @@ const initQuestionBank = () => {
   const getActiveQuestionBankView = () => getQuestionBankCurrentView();
   const syncQuestionBankView = () => {
     const activeView = getActiveQuestionBankView();
+    const caps = getQuestionBankCapabilities();
+    if (!caps.edit) {
+      const totalLabel=root.querySelector('[data-qb-total]')?.parentElement;
+      if(totalLabel){totalLabel.firstChild.textContent='Questões acessíveis';totalLabel.querySelector('span').textContent='Disponíveis para seu perfil';}
+      root.querySelectorAll('[data-qb-review],[data-qb-archived]').forEach(node=>{node.parentElement.hidden=true;});
+      const hint=root.querySelector('[data-qb-editorial-status]');
+      if(hint && !hint.dataset.tone)hint.textContent='Crie seu rascunho de questão. Revisão e publicação dependem de perfil editorial autorizado.';
+    }
+    root.querySelectorAll('.qb-dashboard-actions a').forEach(link => {
+      const view = new URL(link.href, window.location.origin).searchParams.get('view');
+      link.hidden = view === 'editorial' ? !caps.edit : view === 'admin' ? !caps.admin : view === 'nova' ? !caps.create : false;
+    });
+    if (submitReviewButton) submitReviewButton.hidden = !canAuthorQuestion() || editorialMode.type === 'adapt' || (editorialMode.type === 'edit' && editorialMode.source?.publicationStatus === 'PUBLICADO');
     root.dataset.qbActiveView = activeView;
     root.querySelectorAll("[data-qb-panel]").forEach((panel) => {
       panel.hidden = panel.dataset.qbPanel !== activeView;
@@ -22893,8 +22922,8 @@ const initQuestionBank = () => {
       }
       return;
     }
-    if (!canAuthorQuestion()) {
-      showSessionRequired("Entre com perfil editorial autorizado para criar questões.");
+    if (!canCreateQuestion()) {
+      showSessionRequired("Entre com perfil autorizado para criar questões.");
       setEditorialActionFeedback({ state: "ERROR", message: "Sua sessão expirou. Entre novamente.", tone: "error", action: submitForReview ? "review" : "draft" });
       return;
     }
@@ -23791,6 +23820,9 @@ const initQuestionBank = () => {
       assessments = [];
       populateFilterOptions();
       await render();
+      root.querySelectorAll('[data-qb-total],[data-qb-published],[data-qb-review],[data-qb-draft],[data-qb-archived]').forEach(node=>{node.textContent='—';});
+      root.querySelector('[data-qb-result-count]').textContent='Consulta indisponível';
+      empty.hidden=true;
       setError(error.message);
     }
   };
@@ -24052,6 +24084,7 @@ const supabaseSessionStorageKey = "raizes:supabase-auth-session";
 const allowedAssessmentRoles = ["admin", "administrador", "administrador_nacional", "gestor", "gestor_da_rede", "professor", "curator", "curador", "revisor", "revisor_pedagogico", "aprovador", "elaborador"];
 const allowedQuestionAdaptationRoles = ["admin", "administrador", "administrador_nacional", "gestor", "gestor_da_rede", "professor", "curator", "curador", "revisor", "revisor_pedagogico", "aprovador", "elaborador"];
 const allowedQuestionEditorialRoles = ["admin", "administrador", "administrador_nacional", "curator", "curador", "elaborador"];
+const allowedQuestionCreationRoles = [...allowedQuestionEditorialRoles, "professor"];
 const allowedQuestionReviewRoles = ["admin", "administrador", "administrador_nacional", "curator", "curador", "revisor", "revisor_pedagogico", "aprovador"];
 const allowedQuestionPublishRoles = ["admin", "administrador", "administrador_nacional", "curator", "curador", "aprovador"];
 const allowedQuestionEditRoles = [...new Set([...allowedQuestionEditorialRoles, ...allowedQuestionReviewRoles, ...allowedQuestionPublishRoles])];
@@ -30514,7 +30547,7 @@ const questionBankDataService = (() => {
     },
     async createQuestionItem(payload) {
       const { request } = client();
-      await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedQuestionEditorialRoles });
+      await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedQuestionCreationRoles });
       let itemPayload = payload;
       if (!itemPayload.source_id || !itemPayload.license_id) {
         const [sources, licenses] = await Promise.all([this.listSources(), this.listLicenses()]);
@@ -30525,7 +30558,7 @@ const questionBankDataService = (() => {
       const row = normalizeRpcJson(await request("rpc/avalia_plus_create_item", "", {
         method: "POST",
         requireAuthenticated: true,
-        allowedRoles: allowedQuestionEditorialRoles,
+        allowedRoles: allowedQuestionCreationRoles,
         body: JSON.stringify({ p_item: itemPayload }),
       }));
       if (!row.id) throw new Error("Resposta inválida do cadastro de questões. Recarregue antes de tentar novamente.");
@@ -32734,28 +32767,52 @@ const initPlatformLogout = () => {
   });
 };
 
-const renderCategoryConsumer = () => `<section class="category-consumer" data-category-consumer><header><h1>Meus conteúdos</h1><p>Categorias autorizadas para sua escola e turma.</p></header><p data-category-consumer-status role="status" aria-live="polite">Consultando categorias...</p><div data-category-consumer-modules></div><div data-category-consumer-items></div><article data-category-consumer-detail></article></section>`;
+const initContentSchoolIdentity = async (schoolId = null) => {
+  const nodes = [...document.querySelectorAll('[data-content-school-name]')];
+  if (!nodes.length) return;
+  const options = {requireAuthenticated:true, allowedRoles:['professor','aluno','educacao_infantil','gestor','coordenador','admin']};
+  try {
+    const client = createSupabaseRestClient();
+    let ids = schoolId ? [schoolId] : await client.request('rpc/current_institutional_school_ids','',{...options,method:'POST',body:'{}'});
+    ids = (Array.isArray(ids) ? ids : [ids]).map(row => typeof row === 'string' ? row : row?.school_id || row?.id).filter(Boolean);
+    if (!ids.length) throw Error('Vínculo escolar não encontrado');
+    const rows = await client.request('schools',`?select=id,nome&id=${supabaseIn(ids)}`,options);
+    if (!Array.isArray(rows) || !rows.length) throw Error('Escola indisponível');
+    nodes.forEach(node => {node.textContent=rows.map(row=>row.nome).join(' · ');});
+  } catch { nodes.forEach(node => {node.textContent='Não foi possível consultar a escola.';}); }
+};
+const renderCategoryWorkspace = () => {
+  const session=getPlatformSession(), role=getCurrentPlatformRole(), teacher=role==='professor';
+  const roleLabel={professor:'Professor',aluno:'Aluno',educacao_infantil:'Educação Infantil',gestor:'Gestor',coordenador:'Coordenador',admin:'Administrador'}[role] || 'Conta autenticada';
+  const nav=teacher ? teacherWorkspaceNav.map(([key,label,icon,href])=>`<a class="${key==='conteudos'?'is-active':''}" href="${categoryEscape(href || 'professor.html?view='+encodeURIComponent(key))}">${categoryEscape(label)}</a>`).join('') : `<a href="${categoryEscape(getRoleHome(role))}">Início</a><a class="is-active" href="conteudos-categorias.html">Meus conteúdos</a>`;
+  return `<section class="teacher-workspace content-workspace is-mounted"><aside class="tw-sidebar" aria-label="Menu de ${categoryEscape(roleLabel)}"><article class="tw-teacher-card"><img src="logo-sidebar-dark.png" alt="Raízes e Saberes"><div><span>${categoryEscape(roleLabel)}</span><strong>${categoryEscape(session.name || session.email || 'Conta autenticada')}</strong><small data-content-school-name>Escola: consultando vínculo...</small></div></article><nav>${nav}</nav><button type="button" data-platform-logout>Sair</button></aside><div class="tw-main"><header class="content-workspace-topbar"><button type="button" data-platform-back>Voltar</button><a href="${categoryEscape(getRoleHome(role))}">Início</a><button type="button" data-platform-logout>Sair</button></header><main>${renderCategoryConsumer()}</main></div></section>`;
+};
+const renderCategoryConsumer = () => `<section class="category-consumer" data-category-consumer><header><h1>Meus conteúdos</h1><p>Categorias autorizadas para sua escola e turma.</p></header><p data-category-consumer-status role="status" aria-live="polite">Consultando categorias...</p><div class="category-module-grid" data-category-consumer-modules aria-label="Categorias disponíveis"></div><div data-category-consumer-items></div><article data-category-consumer-detail></article></section>`;
 const initCategoryConsumer = () => {
  const root=document.querySelector('[data-category-consumer]');if(!root || root.dataset.bound)return;root.dataset.bound='true';
  const status=root.querySelector('[data-category-consumer-status]'),params=new URLSearchParams(window.location.search);
  const base={};['school_id','class_id'].forEach((key)=>{if(params.get(key))base[key]=params.get(key);});if(params.get('mode')==='INSTITUTIONAL')base.mode='INSTITUTIONAL';
  let active=null,offset=0,generation=0;
+ const label=m=>categoryTypeLabels[m.content_types[0]] || m.name;
+ const cards=()=>{root.querySelector('[data-category-consumer-modules]').innerHTML=root._modules.map((m,i)=>`<button class="category-module-card" type="button" data-category-consumer-module="${i}" aria-pressed="${m===active}"><strong>${categoryEscape(label(m))}</strong><span>${m.total} ${m.total===1?'conteúdo disponível':'conteúdos disponíveis'}</span></button>`).join('');};
  const request=async(rpc,payload)=>{
   const result=normalizeRpcJson(await createSupabaseRestClient().request(`rpc/${rpc}`,'',{method:'POST',requireAuthenticated:true,allowedRoles:['professor','aluno','educacao_infantil','gestor','coordenador','admin'],body:JSON.stringify(payload)}));
   if(!result || result.status!=='PASS')throw Error(result?.status==='CLASSIFICATION_REQUIRED'?'A turma precisa de uma faixa escolar canônica definida.':result?.status==='CATEGORY_NOT_CONFIGURED'?'Esta escola ainda não tem categorias configuradas.':result?.status || 'Falha ao consultar conteúdos.');return result;
  };
- const fail=(error)=>{status.setAttribute('role','alert');status.textContent=error.message || 'Não foi possível carregar os conteúdos. Tente novamente.';};
- const load=async()=>{const token=++generation;status.setAttribute('role','status');status.textContent='Consultando conteúdos autorizados...';root.querySelector('[data-category-consumer-detail]').textContent='';
+ const fail=(error)=>{document.querySelectorAll('[data-content-school-name]').forEach(node=>{if(node.textContent.includes('consultando'))node.textContent='Escola não confirmada.';});status.setAttribute('role','alert');status.textContent=error.message || 'Não foi possível carregar os conteúdos. Tente novamente.';};
+ const load=async()=>{const token=++generation;status.setAttribute('role','status');status.textContent=`Consultando ${label(active)}...`;cards();root.querySelector('[data-category-consumer-items]').textContent='';root.querySelector('[data-category-consumer-detail]').textContent='';
   try{const result=await request('content_resolve_for_user',{p_context:{...base,module_id:active.id,content_type:active.content_types[0],offset,limit:25}});if(token!==generation)return;
-   if(!Array.isArray(result.items)||!Number.isInteger(result.total))throw Error('Resposta incompleta do catálogo.');
-   const host=root.querySelector('[data-category-consumer-items]');host.innerHTML=result.items.length?`<h2>${categoryEscape(categoryTypeLabels[active.content_types[0]] || active.name)}</h2><ul>${result.items.map((item)=>`<li><strong>${categoryEscape(item.title)}</strong> ${`<button type="button" data-category-consumer-open="${categoryEscape(item.content_item_id)}">${item.content_type==='QUESTION'?'Abrir questão':'Consultar abertura protegida'}</button>`}</li>`).join('')}</ul><button type="button" data-category-consumer-page="-1" ${offset===0?'disabled':''}>Anterior</button><button type="button" data-category-consumer-page="1" ${offset+25>=result.total?'disabled':''}>Próxima</button>`:'<p>0 conteúdos — Conteúdos disponíveis em breve</p>';
-   status.textContent=result.total===0?'0 conteúdos — Conteúdos disponíveis em breve':`${result.total} conteúdos autorizados. Novas publicações desta categoria aparecem automaticamente.`;
+   if(!Array.isArray(result.items)||!Number.isInteger(result.total)||result.total<0)throw Error('Resposta incompleta do catálogo.');
+   active.total=result.total;cards();const host=root.querySelector('[data-category-consumer-items]');host.innerHTML=result.items.length?`<h2>${categoryEscape(categoryTypeLabels[active.content_types[0]] || active.name)}</h2><ul>${result.items.map((item)=>`<li><strong>${categoryEscape(item.title)}</strong> ${`<button type="button" data-category-consumer-open="${categoryEscape(item.content_item_id)}">${item.content_type==='QUESTION'?'Abrir questão':'Consultar abertura protegida'}</button>`}</li>`).join('')}</ul><button type="button" data-category-consumer-page="-1" ${offset===0?'disabled':''}>Anterior</button><button type="button" data-category-consumer-page="1" ${offset+25>=result.total?'disabled':''}>Próxima</button>`:`<div class="category-empty"><h2>${categoryEscape(label(active))}</h2><p>Nenhum conteúdo desta categoria está disponível para sua escola e turma no momento.</p><p>Escolha outra categoria para continuar.</p></div>`;
+   status.textContent=result.total===0?`${label(active)}: nenhum conteúdo disponível.`:`${label(active)}: ${result.total} ${result.total===1?'conteúdo autorizado':'conteúdos autorizados'}.`;
   }catch(error){if(token===generation){root.querySelector('[data-category-consumer-items]').textContent='';fail(error);}}
  };
- const start=async()=>{try{const result=await request('content_list_category_modules',{p_context:base});if(!Array.isArray(result.modules))throw Error('Resposta incompleta de categorias.');root._modules=result.modules;
-   root.querySelector('[data-category-consumer-modules]').innerHTML=result.modules.map((m,i)=>`<button type="button" data-category-consumer-module="${i}"><strong>${categoryEscape(m.name===categoryTypeLabels[m.content_types[0]]?m.name:m.name+' — '+(categoryTypeLabels[m.content_types[0]]||m.content_types[0]))}</strong><span>${categoryEscape(m.message)}</span></button>`).join('');
+ const start=async()=>{try{const result=await request('content_list_category_modules',{p_context:base});
+   if(!Array.isArray(result.modules)||result.modules.some(m=>!m.id||!Array.isArray(m.content_types)||!m.content_types.length||!Number.isInteger(m.total)||m.total<0))throw Error('Resposta incompleta de categorias.');
+   root._modules=result.modules;
+   if(result.school_id) initContentSchoolIdentity(result.school_id);
    status.textContent=result.modules.length?'Escolha uma categoria.':'Nenhuma categoria habilitada para sua escola e faixa escolar.';
-   if(result.modules.length){active=result.modules[0];await load();}
+   if(result.modules.length){active=result.modules.find(m=>m.total>0)||result.modules[0];cards();await load();}
   }catch(error){fail(error);}
  };
  root.addEventListener('click',async(event)=>{const button=event.target.closest('button');if(!button)return;
@@ -32822,6 +32879,12 @@ const renderAppPage = () => {
   document.title = `${activeModule.title} | Raízes e Saberes`;
   maybeRefreshContentGovernancePage(activeKey);
   rememberCurrentPlatformRoute();
+
+  if (activeKey === "catalogoCategorias") {
+    mount.innerHTML = renderCategoryWorkspace();
+    initPlatformLogout();initCategoryConsumer();initGlobalAccessibility();
+    return;
+  }
 
   if (["professor", "professorTurma", "professorAluno"].includes(activeKey)) {
     mount.innerHTML = activeModule.html;
@@ -32905,7 +32968,7 @@ const renderAppPage = () => {
         : renderContentUnavailableForSchool({ title: "Livro indisponível", type: "book", id: activeBook.id });
   }
   if (environmentKey === "bancoQuestoes") {
-    const mobileNav = environment.mobile
+    const mobileNav = getQuestionBankNavigation()
       .map(([key, label, href]) => `<a class="${key === questionBankView ? "is-active" : ""}" href="${href}">${label}</a>`)
       .join("");
 
@@ -32934,6 +32997,7 @@ const renderAppPage = () => {
 
     initPlatformLogout();
     initQuestionBankShellNavigation();
+    initContentSchoolIdentity();
     initQuestionBank();
     initDigitalResultsPanel();
     initCanonicalVideoPlayer();

@@ -1,0 +1,11 @@
+Verificação readonly 2026-10-11, main publicado2a986900. Sem habilitação.
+WEB:
+- Montar avaliação no Banco existe: carrinho/construtor e Salvar rascunho usam avalia_plus_create_assessment_from_bank (RPC instalada/authenticated). Salvar é gravação real, distinta de publicar; o teste atual deve parar antes de publicar para turma.
+- Publicação web existente usa teacher_schedule_assessment_application_v2; formulário professor.html?view=avaliacoes. RPC instalada/authenticated, sem gate frontend FASE3 de avaliação. teacher_get_assessment_class_results instalada. Triggers fase3_assessment_delete_guard (assessments), fase3_assessment_question_guard (assessment_questions), fase3_assessment_publication_guard (assessment_assignments) ativos O. Isso atesta instalação/guards, não conclusão humana do percurso.
+- Avisos/publicação/retirada/caixa de entrada/leitura simples são fluxo preexistente. communication_get_inbox, communication_mark_read e communication_list_delivery_summaries instaladas/authenticated. Não publicar para usuários reais automaticamente.
+- RAIZES_COMMUNICATION_REPLIES_ENABLED e RAIZES_NOTICE_EDITING_ENABLED ausentes nos HTMLs/main = OFF. Logo respostas, edição por versões e confirmação de leitura por versão não são passos disponíveis nessa UI publicada. Leitura simples é diferente da versão nova.
+- Só RAIZES_CONTRACT_AMENDMENTS_ENABLED=true em admin.html, publicação PR10 já concluída; não é gate da jornada professor.
+EXPO:
+- EXPO_PUBLIC_FASE3_ASSESSMENTS/REPLIES/NOTICE_EDITING dependem de string true; nenhum enable versionado. Não se atesta o ambiente de binário externo nem app nativo publicado. Não orientar jornada Expo como habilitada.
+LIMITES:
+Verificação de fonte main e catálogo PostgreSQL, sem HTTP produção (proxy anteriormente403, não contornado), sem sessão docente real ou mutações. O fato de usuário ver3questões é evidência humana do catálogo; ainda não prova entrega/resposta/resultados ou novos gates.

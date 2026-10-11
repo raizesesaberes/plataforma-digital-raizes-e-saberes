@@ -1,0 +1,22 @@
+Professor: catálogo e Banco de Questões — revisão independente antes de merge/deploy.
+Base main 2a986900e7f4a61d9b55c8bfa7d747c3f980aa6b. Branch review/teacher-content-shell. Não inclui PR11 ou SQL.
+
+Defeitos comprovados:
+- catalogoCategorias mapeado para biblioteca genérica, com identidade demonstrativa Professora Helena, switcher de perfis e atalhos legados. Categorias sem CSS; carregava primeiro módulo mesmo vazio, apesar de outra categoria com três questões.
+- Banco renderizava Admin Banco / Editorial e menu/atalhos de administração e revisão independentemente do papel. O backend mantinha guards; exposição de menu não prova permissão.
+- frontend excluía professor da criação, embora avalia_plus_can_author_items em produção já inclua professor. Edição oficial/revisão são capacidades distintas.
+
+Correção:
+- Catálogo usa composição autenticada do workspace atual, navegação do professor e identidade real da sessão. Escola consultada por id devolvido pelo contexto autorizado do servidor; outros perfis têm só links do próprio ambiente. Nenhum switcher de perfis ou identidade fictícia. Card de identidade explicitamente visível também no CSS móvel.
+- Cartões responsivos com total por categoria, seleção inicial do primeiro módulo com total positivo, resultado e empty específicos. Falhas permanecem erro, sem converter em zero; requisição antiga não substitui categoria selecionada. Abertura inline e adapters protegidos preservados.
+- Banco filtra menu desktop/mobile e atalhos conforme capacidades, restringe deep links editoriais/admin, usa identidade/role real. Criação docente alinhada ao guard já instalado, separada da edição oficial; formulário docente não carrega classificação admin e não oferece envio editorial que o cliente não suporta. Adaptação existente preservada, sem alegar funcionamento remoto. Indicadores de falha usam —, não zero.
+
+Readonly Supabase jaesjldrbjbdmzzggxzw:
+- content_list_category_modules/get_category_item: authenticated execute true, anon false. actor_context privado verifica auth.uid, profile ativo, vínculo real professor/aluno, escola/turma autorizada e escola ativa.
+- create/update encaminham para helpers privados. save_native_question exige school_content_assert_admin. legacy_create usa avalia_plus_can_author_items; helper inclui professor, admin, curator/curador e elaborador. legacy_update exige guard de item + capacidade autor/revisor/aprovador. Nenhum guard/ACL/policy/Auth alterado aqui.
+- AUSENTE em pg_proc/public: avalia_plus_adapt_question, apesar de frontend e migration histórica referirem essa RPC. Não instalar nem chamar mutante em produção; preservar affordance não equivale a homologação. Autoria docente testada somente com transporte sintético; rascunho não significa publicação nem conteúdo contratado.
+
+Testes:
+node tests/teacher-content/browser.mjs: renderizador completo e handlers reais, substituindo só transportes. Professor/aluno separados, nome/escola reais fictícios, desktop1440/mobile390, 3 vs0, erro não zero, contexto de escolaB negado, resposta tardia, abertura protegida inline, menus/deep links professor/admin/revisor. Método real de criação admite professor; update de questão oficial nega antes da RPC. Sem scripts externos/rede real nos testes.
+node --check app-pages.js; git diff --check; build estático4277. Capturas sintéticas apenas /tmp para inspeção, não publicadas.
+Sem SQL/migration, alteração de gate, mutação Horizonte, usuários/alunos/avisos/contratos, merge ou deploy. Não declara homologação humana ou paridade/native release.
