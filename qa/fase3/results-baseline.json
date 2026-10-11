@@ -1,0 +1,107 @@
+{
+  "baseCommit": "ee88cb9e80d454c64b6548f28e15f34f32fc48a2",
+  "scope": "Isolated PostgreSQL + PostgREST RPC/data service integration; not browser/native or production validation",
+  "results": [
+    {
+      "name": "communication: publish, recipient, unread, idempotent read, teacher return",
+      "status": "PASS"
+    },
+    {
+      "name": "communication: school B cannot receive/read/manage school A delivery",
+      "status": "PASS"
+    },
+    {
+      "name": "communication: direct editing is blocked by existing ACL (no edit RPC)",
+      "status": "PASS"
+    },
+    {
+      "name": "communication: archive, republish without duplicate, soft delete",
+      "status": "PASS"
+    },
+    {
+      "name": "communication: expired/draft do not deliver; individual validates school",
+      "status": "PASS"
+    },
+    {
+      "name": "assessment: reproduce ambiguous class embedding (HTTP 300 / PGRST201)",
+      "status": "PASS"
+    },
+    {
+      "name": "content: teacher discovers authorized question; school B has no entitlement",
+      "status": "PASS"
+    },
+    {
+      "name": "web: builder adapter serializes named RPC argument",
+      "status": "PASS"
+    },
+    {
+      "name": "assessment: assemble approved question and publish to teacher class",
+      "status": "PASS"
+    },
+    {
+      "name": "assessment: student receives, starts, answers, submits; teacher results",
+      "status": "PASS"
+    },
+    {
+      "name": "assessment: other school cannot list/start/respond/read results",
+      "status": "PASS"
+    },
+    {
+      "name": "SECURITY BLOCKER: school without content entitlement cannot assemble that question",
+      "status": "FAIL",
+      "error": "Unauthorized synthetic school assembled a question excluded by its content resolver (HTTP 200)"
+    },
+    {
+      "name": "security: null question, unknown question and wrong school/class are denied atomically",
+      "status": "FAIL",
+      "error": "{\"status\":200,\"data\":{\"booklets\":[{\"id\":\"0ce0894c-df92-481a-a4c7-247590c15a18\",\"code\":\"A\",\"title\":\"Caderno A\",\"position\":1,\"skill_map\":[{\"skill\":\"NAO_INFORMADA\",\"points\":1,\"questions\":1,\"descriptor\":\"NAO_INFORMADO\"}],\"created_at\":\"2026-10-11T03:39:33.660725+00:00\",\"updated_at\":\"2026-10-11T03:39:33.660725+00:00\",\"assessment_id\":\"af9174a1-d0d9-45d0-a292-e84ffcc94763\",\"question_count\":1}],\"questions\":[{\"id\":\"1e692d2c-effd-475e-ab80-10d2feb3aeac\",\"points\":1,\"position\":1,\"created_at\":\"2026-10-11T03:39:33.660725+00:00\",\"section_id\":null,\"question_id\":\"70000000-0000-0000-0000-000000000001\",\"assessment_id\":\"af9174a1-d0d9-45d0-a292-e84ffcc94763\",\"version_snapshot\":{\"media\":[],\"question\":{\"id\":\"70000000-0000-0000-0000-000000000001\",\"code\":\"FASE3-SYNTHETIC-001\",\"stage\":\"Ensino Fundamental\",\"version\":\"1.0\",\"metadata\":{},\"base_text\":null,\"component\":\"Matemática\",\"school_id\":null,\"source_id\":\"60000000-0000-0000-0000-000000000001\",\"statement\":\"Quanto é 1 + 1?\",\"adapted_at\":null,\"bncc_skill\":null,\"created_at\":\"2026-10-11T03:39:32.767633+00:00\",\"created_by\":null,\"difficulty\":null,\"license_id\":\"50000000-0000-0000-0000-000000000001\",\"provenance\":{},\"updated_at\":\"2026-10-11T03:39:33.570026+00:00\",\"updated_by\":null,\"approved_at\":null,\"author_name\":\"Synthetic author\",\"origin_type\":\"GLOBAL_RAIZES\",\"school_year\":\"5\",\"command_text\":null,\"published_at\":null,\"justification\":null,\"owner_user_id\":null,\"question_type\":\"multipla_escolha\",\"reviewer_name\":null,\"thematic_unit\":null,\"author_user_id\":null,\"correct_answer\":\"B\",\"error_feedback\":null,\"internal_title\":\"Synthetic arithmetic\",\"curation_status\":\"APROVADO\",\"ownership_scope\":\"GLOBAL_RAIZES\",\"workflow_status\":\"APROVADO\",\"approver_user_id\":null,\"knowledge_object\":null,\"last_reviewed_at\":null,\"locked_after_use\":true,\"reference_matrix\":null,\"reviewer_user_id\":null,\"success_feedback\":null,\"workflow_version\":1,\"cognitive_process\":null,\"curriculum_matrix\":null,\"curriculum_source\":\"BNCC\",\"estimated_minutes\":null,\"proficiency_level\":null,\"adaptation_version\":1,\"distractor_comment\":null,\"publication_status\":\"PUBLICADO\",\"source_question_id\":null,\"accessibility_notes\":null,\"pedagogical_comment\":null,\"adapted_from_version\":null,\"legal_classification\":\"ITEM_AUTORAL_RAIZES_SABERES_ALINHADO_SAEB\",\"recommended_intervention\":null},\"snapshot_at\":\"2026-10-11T03:39:33.660725+00:00\",\"alternatives\":[{\"id\":\"80000000-0000-0000-0000-000000000001\",\"body\":\"1\",\"label\":\"A\",\"position\":1,\"created_at\":\"2026-10-11T03:39:32.768688+00:00\",\"is_correct\":false,\"question_id\":\"70000000-0000-0000-0000-000000000001\"},{\"id\":\"80000000-0000-0000-0000-000000000002\",\"body\":\"2\",\"label\":\"B\",\"position\":2,\"created_at\":\"2026-10-11T03:39:32.768688+00:00\",\"is_correct\":true,\"question_id\":\"70000000-0000-0000-0000-000000000001\"}],\"version_number\":1}}],\"skill_map\":[{\"skill\":\"NAO_INFORMADA\",\"points\":1,\"questions\":1,\"descriptor\":\"NAO_INFORMADO\"}],\"assessment\":{\"id\":\"af9174a1-d0d9-45d0-a292-e84ffcc94763\",\"title\":\"SYNTHETIC SECURITY CASE\",\"matrix\":null,\"status\":\"RASCUNHO\",\"class_id\":\"30000000-0000-0000-0000-000000000002\",\"metadata\":{},\"component\":null,\"school_id\":\"10000000-0000-0000-0000-000000000002\",\"skill_map\":[{\"skill\":\"NAO_INFORMADA\",\"points\":1,\"questions\":1,\"descriptor\":\"NAO_INFORMADO\"}],\"class_name\":null,\"created_at\":\"2026-10-11T03:39:33.660725+00:00\",\"owner_role\":\"professor\",\"updated_at\":\"2026-10-11T03:39:33.660725+00:00\",\"archived_at\":null,\"description\":null,\"school_year\":null,\"instructions\":null,\"max_booklets\":1,\"total_points\":1,\"owner_user_id\":\"00000000-0000-0000-0000-000000000001\",\"cover_template\":null,\"assessment_year\":null,\"answer_key_ready\":false,\"application_date\":null,\"duplicated_from_id\":null,\"item_version_policy\":\"SNAPSHOT_ON_INSERT\",\"pdf_generation_ready\":false,\"digital_application_enabled\":false}}}"
+    },
+    {
+      "name": "security: expired/suspended license blocks assembly, replacement and publication",
+      "status": "FAIL",
+      "error": "{\"status\":200,\"data\":{\"booklets\":[{\"id\":\"4db0dfbb-4bd9-478a-9aa9-8260692fb8f3\",\"code\":\"A\",\"title\":\"Caderno A\",\"position\":1,\"skill_map\":[{\"skill\":\"NAO_INFORMADA\",\"points\":1,\"questions\":1,\"descriptor\":\"NAO_INFORMADO\"}],\"created_at\":\"2026-10-11T03:39:33.741411+00:00\",\"updated_at\":\"2026-10-11T03:39:33.741411+00:00\",\"assessment_id\":\"2eb722ec-f12e-4cc6-93c2-c6ff377b3fbc\",\"question_count\":1}],\"questions\":[{\"id\":\"de28295d-0d6b-48b9-a15a-0e4e5461d93e\",\"points\":1,\"position\":1,\"created_at\":\"2026-10-11T03:39:33.741411+00:00\",\"section_id\":null,\"question_id\":\"70000000-0000-0000-0000-000000000001\",\"assessment_id\":\"2eb722ec-f12e-4cc6-93c2-c6ff377b3fbc\",\"version_snapshot\":{\"media\":[],\"question\":{\"id\":\"70000000-0000-0000-0000-000000000001\",\"code\":\"FASE3-SYNTHETIC-001\",\"stage\":\"Ensino Fundamental\",\"version\":\"1.0\",\"metadata\":{},\"base_text\":null,\"component\":\"Matemática\",\"school_id\":null,\"source_id\":\"60000000-0000-0000-0000-000000000001\",\"statement\":\"Quanto é 1 + 1?\",\"adapted_at\":null,\"bncc_skill\":null,\"created_at\":\"2026-10-11T03:39:32.767633+00:00\",\"created_by\":null,\"difficulty\":null,\"license_id\":\"50000000-0000-0000-0000-000000000001\",\"provenance\":{},\"updated_at\":\"2026-10-11T03:39:33.660725+00:00\",\"updated_by\":null,\"approved_at\":null,\"author_name\":\"Synthetic author\",\"origin_type\":\"GLOBAL_RAIZES\",\"school_year\":\"5\",\"command_text\":null,\"published_at\":null,\"justification\":null,\"owner_user_id\":null,\"question_type\":\"multipla_escolha\",\"reviewer_name\":null,\"thematic_unit\":null,\"author_user_id\":null,\"correct_answer\":\"B\",\"error_feedback\":null,\"internal_title\":\"Synthetic arithmetic\",\"curation_status\":\"APROVADO\",\"ownership_scope\":\"GLOBAL_RAIZES\",\"workflow_status\":\"APROVADO\",\"approver_user_id\":null,\"knowledge_object\":null,\"last_reviewed_at\":null,\"locked_after_use\":true,\"reference_matrix\":null,\"reviewer_user_id\":null,\"success_feedback\":null,\"workflow_version\":1,\"cognitive_process\":null,\"curriculum_matrix\":null,\"curriculum_source\":\"BNCC\",\"estimated_minutes\":null,\"proficiency_level\":null,\"adaptation_version\":1,\"distractor_comment\":null,\"publication_status\":\"PUBLICADO\",\"source_question_id\":null,\"accessibility_notes\":null,\"pedagogical_comment\":null,\"adapted_from_version\":null,\"legal_classification\":\"ITEM_AUTORAL_RAIZES_SABERES_ALINHADO_SAEB\",\"recommended_intervention\":null},\"snapshot_at\":\"2026-10-11T03:39:33.741411+00:00\",\"alternatives\":[{\"id\":\"80000000-0000-0000-0000-000000000001\",\"body\":\"1\",\"label\":\"A\",\"position\":1,\"created_at\":\"2026-10-11T03:39:32.768688+00:00\",\"is_correct\":false,\"question_id\":\"70000000-0000-0000-0000-000000000001\"},{\"id\":\"80000000-0000-0000-0000-000000000002\",\"body\":\"2\",\"label\":\"B\",\"position\":2,\"created_at\":\"2026-10-11T03:39:32.768688+00:00\",\"is_correct\":true,\"question_id\":\"70000000-0000-0000-0000-000000000001\"}],\"version_number\":1}}],\"skill_map\":[{\"skill\":\"NAO_INFORMADA\",\"points\":1,\"questions\":1,\"descriptor\":\"NAO_INFORMADO\"}],\"assessment\":{\"id\":\"2eb722ec-f12e-4cc6-93c2-c6ff377b3fbc\",\"title\":\"SYNTHETIC SECURITY CASE\",\"matrix\":null,\"status\":\"RASCUNHO\",\"class_id\":\"30000000-0000-0000-0000-000000000001\",\"metadata\":{},\"component\":null,\"school_id\":\"10000000-0000-0000-0000-000000000001\",\"skill_map\":[{\"skill\":\"NAO_INFORMADA\",\"points\":1,\"questions\":1,\"descriptor\":\"NAO_INFORMADO\"}],\"class_name\":null,\"created_at\":\"2026-10-11T03:39:33.741411+00:00\",\"owner_role\":\"professor\",\"updated_at\":\"2026-10-11T03:39:33.741411+00:00\",\"archived_at\":null,\"description\":null,\"school_year\":null,\"instructions\":null,\"max_booklets\":1,\"total_points\":1,\"owner_user_id\":\"00000000-0000-0000-0000-000000000001\",\"cover_template\":null,\"assessment_year\":null,\"answer_key_ready\":false,\"application_date\":null,\"duplicated_from_id\":null,\"item_version_policy\":\"SNAPSHOT_ON_INSERT\",\"pdf_generation_ready\":false,\"digital_application_enabled\":false}}}"
+    },
+    {
+      "name": "security: non-approved item cannot be assembled or published",
+      "status": "FAIL",
+      "error": "{\"status\":200,\"data\":{\"cycle\":null,\"token\":null,\"assignment\":{\"id\":\"1a443d57-48d8-43bf-972b-6f152e3fe39a\",\"status\":\"published\",\"class_id\":\"30000000-0000-0000-0000-000000000001\",\"cycle_id\":null,\"closed_at\":null,\"school_id\":\"10000000-0000-0000-0000-000000000001\",\"booklet_id\":null,\"created_at\":\"2026-10-11T03:39:33.506109+00:00\",\"student_id\":null,\"updated_at\":\"2026-10-11T03:39:33.903037+00:00\",\"assigned_by\":\"00000000-0000-0000-0000-000000000001\",\"target_type\":\"class\",\"max_attempts\":1,\"published_at\":\"2026-10-11T03:39:33.506109+00:00\",\"assessment_id\":\"3927c6a9-b77b-4efe-b913-a728e9dcc08d\",\"available_from\":\"2026-10-11T03:39:33.903037+00:00\",\"token_required\":false,\"available_until\":null,\"shuffle_questions\":false,\"application_status\":\"EM_ANDAMENTO\",\"time_limit_minutes\":null,\"application_settings\":{\"phase\":\"AVALIA_PLUS_2_FASE_2\"},\"shuffle_alternatives\":false}}}"
+    },
+    {
+      "name": "security: positive entitlement grant permits B; revocation denies again",
+      "status": "FAIL",
+      "error": "{\"status\":200,\"data\":{\"booklets\":[{\"id\":\"ca924a07-29ac-49ac-bc78-cfee9dd83115\",\"code\":\"A\",\"title\":\"Caderno A\",\"position\":1,\"skill_map\":[{\"skill\":\"NAO_INFORMADA\",\"points\":1,\"questions\":1,\"descriptor\":\"NAO_INFORMADO\"}],\"created_at\":\"2026-10-11T03:39:34.156106+00:00\",\"updated_at\":\"2026-10-11T03:39:34.156106+00:00\",\"assessment_id\":\"c426c4c6-a0e3-4826-bc39-197818e8183c\",\"question_count\":1}],\"questions\":[{\"id\":\"2564d436-56e6-4214-a140-4f439234188e\",\"points\":1,\"position\":1,\"created_at\":\"2026-10-11T03:39:34.156106+00:00\",\"section_id\":null,\"question_id\":\"70000000-0000-0000-0000-000000000001\",\"assessment_id\":\"c426c4c6-a0e3-4826-bc39-197818e8183c\",\"version_snapshot\":{\"media\":[],\"question\":{\"id\":\"70000000-0000-0000-0000-000000000001\",\"code\":\"FASE3-SYNTHETIC-001\",\"stage\":\"Ensino Fundamental\",\"version\":\"1.0\",\"metadata\":{},\"base_text\":null,\"component\":\"Matemática\",\"school_id\":null,\"source_id\":\"60000000-0000-0000-0000-000000000001\",\"statement\":\"Quanto é 1 + 1?\",\"adapted_at\":null,\"bncc_skill\":null,\"created_at\":\"2026-10-11T03:39:32.767633+00:00\",\"created_by\":null,\"difficulty\":null,\"license_id\":\"50000000-0000-0000-0000-000000000001\",\"provenance\":{},\"updated_at\":\"2026-10-11T03:39:34.072181+00:00\",\"updated_by\":null,\"approved_at\":null,\"author_name\":\"Synthetic author\",\"origin_type\":\"GLOBAL_RAIZES\",\"school_year\":\"5\",\"command_text\":null,\"published_at\":null,\"justification\":null,\"owner_user_id\":null,\"question_type\":\"multipla_escolha\",\"reviewer_name\":null,\"thematic_unit\":null,\"author_user_id\":null,\"correct_answer\":\"B\",\"error_feedback\":null,\"internal_title\":\"Synthetic arithmetic\",\"curation_status\":\"APROVADO\",\"ownership_scope\":\"GLOBAL_RAIZES\",\"workflow_status\":\"APROVADO\",\"approver_user_id\":null,\"knowledge_object\":null,\"last_reviewed_at\":null,\"locked_after_use\":true,\"reference_matrix\":null,\"reviewer_user_id\":null,\"success_feedback\":null,\"workflow_version\":1,\"cognitive_process\":null,\"curriculum_matrix\":null,\"curriculum_source\":\"BNCC\",\"estimated_minutes\":null,\"proficiency_level\":null,\"adaptation_version\":1,\"distractor_comment\":null,\"publication_status\":\"PUBLICADO\",\"source_question_id\":null,\"accessibility_notes\":null,\"pedagogical_comment\":null,\"adapted_from_version\":null,\"legal_classification\":\"ITEM_AUTORAL_RAIZES_SABERES_ALINHADO_SAEB\",\"recommended_intervention\":null},\"snapshot_at\":\"2026-10-11T03:39:34.156106+00:00\",\"alternatives\":[{\"id\":\"80000000-0000-0000-0000-000000000001\",\"body\":\"1\",\"label\":\"A\",\"position\":1,\"created_at\":\"2026-10-11T03:39:32.768688+00:00\",\"is_correct\":false,\"question_id\":\"70000000-0000-0000-0000-000000000001\"},{\"id\":\"80000000-0000-0000-0000-000000000002\",\"body\":\"2\",\"label\":\"B\",\"position\":2,\"created_at\":\"2026-10-11T03:39:32.768688+00:00\",\"is_correct\":true,\"question_id\":\"70000000-0000-0000-0000-000000000001\"}],\"version_number\":1}}],\"skill_map\":[{\"skill\":\"NAO_INFORMADA\",\"points\":1,\"questions\":1,\"descriptor\":\"NAO_INFORMADO\"}],\"assessment\":{\"id\":\"c426c4c6-a0e3-4826-bc39-197818e8183c\",\"title\":\"SYNTHETIC SECURITY CASE\",\"matrix\":null,\"status\":\"RASCUNHO\",\"class_id\":\"30000000-0000-0000-0000-000000000002\",\"metadata\":{},\"component\":null,\"school_id\":\"10000000-0000-0000-0000-000000000002\",\"skill_map\":[{\"skill\":\"NAO_INFORMADA\",\"points\":1,\"questions\":1,\"descriptor\":\"NAO_INFORMADO\"}],\"class_name\":null,\"created_at\":\"2026-10-11T03:39:34.156106+00:00\",\"owner_role\":\"professor\",\"updated_at\":\"2026-10-11T03:39:34.156106+00:00\",\"archived_at\":null,\"description\":null,\"school_year\":null,\"instructions\":null,\"max_booklets\":1,\"total_points\":1,\"owner_user_id\":\"00000000-0000-0000-0000-000000000004\",\"cover_template\":null,\"assessment_year\":null,\"answer_key_ready\":false,\"application_date\":null,\"duplicated_from_id\":null,\"item_version_policy\":\"SNAPSHOT_ON_INSERT\",\"pdf_generation_ready\":false,\"digital_application_enabled\":false}}}"
+    },
+    {
+      "name": "mobile: teacher assignment query resolves real PostgREST relationships",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile: teacher communication publish/summary use same canonical delivery",
+      "status": "PASS"
+    },
+    {
+      "name": "SECURITY BLOCKER: missing email must not resolve another student",
+      "status": "FAIL",
+      "error": "Missing-email JWT resolved wrong synthetic student: 40000000-0000-0000-0000-000000000001\n+ actual - expected\n\n+ '40000000-0000-0000-0000-000000000001'\n- '40000000-0000-0000-0000-000000000002'\n                                      ^\n"
+    },
+    {
+      "name": "security: missing/empty email cannot read, start or act as another student",
+      "status": "FAIL",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ '40000000-0000-0000-0000-000000000001'\n- '40000000-0000-0000-0000-000000000002'\n                                      ^\n"
+    },
+    {
+      "name": "security: empty email, mismatched email and null subject do not bypass identity",
+      "status": "FAIL",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ '40000000-0000-0000-0000-000000000001'\n- '40000000-0000-0000-0000-000000000002'\n                                      ^\n"
+    },
+    {
+      "name": "security: ambiguous active user binding fails closed, never falls back to email",
+      "status": "FAIL",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ '40000000-0000-0000-0000-000000000002'\n- null\n"
+    },
+    {
+      "name": "security: public ACLs preserved and new helpers have no app EXECUTE grants",
+      "status": "PASS"
+    }
+  ]
+}

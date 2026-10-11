@@ -1,0 +1,188 @@
+[
+  {
+    "proname": "avalia_plus_fill_assessment_question_snapshot",
+    "args": "",
+    "definition": "CREATE OR REPLACE FUNCTION public.avalia_plus_fill_assessment_question_snapshot()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nbegin\n  if new.version_snapshot is null or new.version_snapshot = '{}'::jsonb then\n    new.version_snapshot := public.avalia_plus_question_snapshot(new.question_id);\n  end if;\n  update public.question_items\n  set locked_after_use = true\n  where id = new.question_id;\n  return new;\nend;\n$function$\n",
+    "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+    "owner": "postgres",
+    "proconfig": [
+      "search_path=public"
+    ],
+    "prosecdef": true,
+    "body_md5": "046ef6fa80198d5d794f5e6c11882cc0"
+  },
+  {
+    "proname": "avalia_plus_question_snapshot",
+    "args": "p_question_id uuid",
+    "definition": "CREATE OR REPLACE FUNCTION public.avalia_plus_question_snapshot(p_question_id uuid)\n RETURNS jsonb\n LANGUAGE sql\n STABLE\n SET search_path TO 'public'\nAS $function$\n  select jsonb_build_object(\n    'question', to_jsonb(qi),\n    'alternatives', coalesce((\n      select jsonb_agg(to_jsonb(qa) order by qa.position)\n      from public.question_alternatives qa\n      where qa.question_id = qi.id\n    ), '[]'::jsonb),\n    'media', coalesce((\n      select jsonb_agg(to_jsonb(qm) order by qm.created_at)\n      from public.question_media qm\n      where qm.question_id = qi.id\n    ), '[]'::jsonb),\n    'version_number', qi.workflow_version,\n    'snapshot_at', now()\n  )\n  from public.question_items qi\n  where qi.id = p_question_id;\n$function$\n",
+    "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+    "owner": "postgres",
+    "proconfig": [
+      "search_path=public"
+    ],
+    "prosecdef": false,
+    "body_md5": "780a44d702cc93a1a06e9cb3e6345fe0"
+  },
+  {
+    "proname": "avalia_plus_record_item_version",
+    "args": "p_question_id uuid, p_reason text",
+    "definition": "CREATE OR REPLACE FUNCTION public.avalia_plus_record_item_version(p_question_id uuid, p_reason text DEFAULT NULL::text)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n  v_item public.question_items%rowtype;\n  v_version_id uuid;\nbegin\n  select * into v_item from public.question_items where id = p_question_id;\n  if not found then\n    raise exception 'QUESTION_NOT_FOUND';\n  end if;\n\n  insert into public.question_item_versions (\n    question_id,\n    version_number,\n    version_label,\n    workflow_status,\n    publication_status,\n    curation_status,\n    snapshot,\n    created_by,\n    reason\n  )\n  values (\n    p_question_id,\n    v_item.workflow_version,\n    v_item.version,\n    v_item.workflow_status,\n    v_item.publication_status,\n    v_item.curation_status,\n    public.avalia_plus_question_snapshot(p_question_id),\n    auth.uid(),\n    p_reason\n  )\n  on conflict (question_id, version_number) do update\n  set\n    snapshot = excluded.snapshot,\n    reason = coalesce(excluded.reason, public.question_item_versions.reason)\n  returning id into v_version_id;\n\n  return v_version_id;\nend;\n$function$\n",
+    "acl": "{postgres=X/postgres,service_role=X/postgres}",
+    "owner": "postgres",
+    "proconfig": [
+      "search_path=public"
+    ],
+    "prosecdef": true,
+    "body_md5": "0dc3de0ea0d9d7daa4d528ab4dc901a7"
+  },
+  {
+    "proname": "current_platform_role",
+    "args": "",
+    "definition": "CREATE OR REPLACE FUNCTION public.current_platform_role()\n RETURNS text\n LANGUAGE sql\n STABLE\nAS $function$\n  select lower(\n    coalesce(\n      auth.jwt() -> 'app_metadata' ->> 'platform_role',\n      auth.jwt() -> 'app_metadata' ->> 'app_role',\n      auth.jwt() -> 'app_metadata' ->> 'role',\n      case when auth.role() = 'service_role' then 'service_role' else '' end\n    )\n  );\n$function$\n",
+    "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+    "owner": "postgres",
+    "proconfig": null,
+    "prosecdef": false,
+    "body_md5": "7311ac2ad0beac905b5f07588ce0c376"
+  },
+  {
+    "proname": "has_question_bank_role",
+    "args": "required_roles text[]",
+    "definition": "CREATE OR REPLACE FUNCTION public.has_question_bank_role(required_roles text[])\n RETURNS boolean\n LANGUAGE sql\n STABLE\nAS $function$\n  select public.current_question_bank_role() = any(required_roles)\n    or (\n      public.current_question_bank_role() in ('admin','administrador','administrador_nacional')\n      and 'administrador_nacional' = any(required_roles)\n    )\n    or (\n      public.current_question_bank_role() in ('curator','curador','revisor','revisor_pedagogico')\n      and (\n        'curator' = any(required_roles)\n        or 'curador' = any(required_roles)\n        or 'revisor' = any(required_roles)\n        or 'revisor_pedagogico' = any(required_roles)\n      )\n    )\n    or (\n      public.current_question_bank_role() in ('viewer','visualizador','aplicador')\n      and (\n        'viewer' = any(required_roles)\n        or 'visualizador' = any(required_roles)\n        or 'aplicador' = any(required_roles)\n      )\n    );\n$function$\n",
+    "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+    "owner": "postgres",
+    "proconfig": null,
+    "prosecdef": false,
+    "body_md5": "4d7dd8436492fd34b8877fd7ba9f1bf8"
+  },
+  {
+    "proname": "is_platform_admin",
+    "args": "",
+    "definition": "CREATE OR REPLACE FUNCTION public.is_platform_admin()\n RETURNS boolean\n LANGUAGE sql\n STABLE\nAS $function$\n  select public.current_platform_role() = any(array[\n    'admin',\n    'admin_ti',\n    'administrador',\n    'administrador_nacional',\n    'ti',\n    'service_role'\n  ]);\n$function$\n",
+    "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+    "owner": "postgres",
+    "proconfig": null,
+    "prosecdef": false,
+    "body_md5": "aea7c630144e2e96d8d7ce492fb139e7"
+  },
+  {
+    "proname": "question_bank_access_editor",
+    "args": "",
+    "definition": "CREATE OR REPLACE FUNCTION public.question_bank_access_editor()\n RETURNS boolean\n LANGUAGE sql\n STABLE\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\nAS $function$\n  select public.is_platform_admin() or public.has_question_bank_role(array[\n    'admin','administrador_nacional','gestor','gestor_da_rede',\n    'curator','curador','revisor','revisor_pedagogico','service_role'\n  ]);\n$function$\n",
+    "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+    "owner": "postgres",
+    "proconfig": [
+      "search_path=pg_catalog, public, pg_temp"
+    ],
+    "prosecdef": false,
+    "body_md5": "1fa4432101cba2bb4f5b09628c80b719"
+  },
+  {
+    "proname": "question_bank_assert_assessment_item_access",
+    "args": "",
+    "definition": "CREATE OR REPLACE FUNCTION public.question_bank_assert_assessment_item_access()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_school_id uuid;\n  v_question public.question_items%rowtype;\nbegin\n  if public.question_bank_access_editor() then return new; end if;\n  if tg_table_name = 'assessment_questions' then\n    select school_id into v_school_id from public.assessments where id = new.assessment_id;\n  else\n    select a.school_id into v_school_id from public.assessment_booklets b\n      join public.assessments a on a.id = b.assessment_id where b.id = new.booklet_id;\n  end if;\n  if v_school_id is not null and not exists (\n    select 1 from public.teachers t where t.profile_id = auth.uid()\n      and t.status = 'active' and t.school_id = v_school_id\n  ) then\n    raise exception 'QUESTION_ACCESS_DENIED' using errcode = '42501';\n  end if;\n  select * into v_question from public.question_items where id = new.question_id;\n  if not coalesce(v_question.publication_status = 'PUBLICADO'\n    and v_question.workflow_status = 'APROVADO'\n    and v_question.legal_classification <> 'ITEM_BLOQUEADO_PUBLICACAO'\n    and (public.question_bank_owns_authored_item(v_question)\n      or new.question_id = any(public.question_bank_authorized_teacher_ids(v_school_id))),false) then\n    raise exception 'QUESTION_ACCESS_DENIED' using errcode = '42501';\n  end if;\n  return new;\nend;\n$function$\n",
+    "acl": "{postgres=X/postgres,service_role=X/postgres}",
+    "owner": "postgres",
+    "proconfig": [
+      "search_path=pg_catalog, public, pg_temp"
+    ],
+    "prosecdef": true,
+    "body_md5": "5385a06d50c0bf9f1424fc0c7b8fdfb6"
+  },
+  {
+    "proname": "question_bank_assert_item_editable",
+    "args": "p_question_id uuid",
+    "definition": "CREATE OR REPLACE FUNCTION public.question_bank_assert_item_editable(p_question_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\nAS $function$\nbegin\n  if not coalesce(public.question_bank_access_editor()\n    or public.has_question_bank_role(array['elaborador','aprovador']) or exists (\n    select 1 from public.question_items qi where qi.id = p_question_id\n      and public.question_bank_owns_authored_item(qi)),false) then\n    raise exception 'QUESTION_EDIT_ACCESS_DENIED' using errcode = '42501';\n  end if;\nend;\n$function$\n",
+    "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+    "owner": "postgres",
+    "proconfig": [
+      "search_path=pg_catalog, public, pg_temp"
+    ],
+    "prosecdef": true,
+    "body_md5": "ae01b062a550193215e07eb9709daa6b"
+  },
+  {
+    "proname": "question_bank_authorized_teacher_ids",
+    "args": "p_school_id uuid",
+    "definition": "CREATE OR REPLACE FUNCTION public.question_bank_authorized_teacher_ids(p_school_id uuid DEFAULT NULL::uuid)\n RETURNS uuid[]\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_school_id uuid;\n  v_result jsonb;\n  v_offset integer;\n  v_ids uuid[] := array[]::uuid[];\n  v_page uuid[];\nbegin\n  if auth.uid() is null then return v_ids; end if;\n  for v_school_id in\n    select distinct t.school_id from public.teachers t\n    where t.profile_id = auth.uid() and t.status = 'active'\n      and (p_school_id is null or t.school_id = p_school_id)\n  loop\n    v_offset := 0;\n    loop\n      v_result := public.content_resolve_for_user(jsonb_build_object(\n        'content_type','QUESTION','school_id',v_school_id,'limit',100,'offset',v_offset));\n      exit when v_result->>'status' is distinct from 'PASS';\n      select coalesce(array_agg((e->>'question_item_id')::uuid),array[]::uuid[])\n        into v_page from jsonb_array_elements(v_result->'items') e;\n      v_ids := v_ids || v_page;\n      v_offset := v_offset + 100;\n      exit when cardinality(v_page) = 0 or v_offset >= (v_result->>'total')::integer;\n    end loop;\n  end loop;\n  return v_ids;\nend;\n$function$\n",
+    "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+    "owner": "postgres",
+    "proconfig": [
+      "search_path=pg_catalog, public, pg_temp"
+    ],
+    "prosecdef": true,
+    "body_md5": "e46e42edce4ab7c5ff16780e12e06deb"
+  },
+  {
+    "proname": "question_bank_can_read_item",
+    "args": "q question_items",
+    "definition": "CREATE OR REPLACE FUNCTION public.question_bank_can_read_item(q question_items)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\nAS $function$\n  select coalesce(public.question_bank_access_editor()\n    or public.question_bank_owns_authored_item(q)\n    or (q.publication_status = 'PUBLICADO'\n      and q.legal_classification <> 'ITEM_BLOQUEADO_PUBLICACAO'\n      and q.id = any(public.question_bank_authorized_teacher_ids())),false);\n$function$\n",
+    "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+    "owner": "postgres",
+    "proconfig": [
+      "search_path=pg_catalog, public, pg_temp"
+    ],
+    "prosecdef": true,
+    "body_md5": "5a1db01956bfda939f551dee5b5be557"
+  },
+  {
+    "proname": "question_bank_owns_authored_item",
+    "args": "q question_items",
+    "definition": "CREATE OR REPLACE FUNCTION public.question_bank_owns_authored_item(q question_items)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\nAS $function$\n  select auth.uid() is not null\n    and (q.author_user_id = auth.uid() or q.created_by = auth.uid()\n      or to_jsonb(q)->>'owner_user_id' = auth.uid()::text)\n    and exists (select 1 from public.teachers t\n      where t.profile_id = auth.uid() and t.status = 'active'\n        and (q.school_id is null or t.school_id = q.school_id));\n$function$\n",
+    "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+    "owner": "postgres",
+    "proconfig": [
+      "search_path=pg_catalog, public, pg_temp"
+    ],
+    "prosecdef": true,
+    "body_md5": "4df21a9eb109a5ee8d2766b88a8da184"
+  },
+  {
+    "proname": "student_list_assessment_assignments",
+    "args": "",
+    "definition": "CREATE OR REPLACE FUNCTION public.student_list_assessment_assignments()\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_student_id uuid;\n  v_payload jsonb;\nbegin\n  if auth.uid() is null then raise exception 'Usuario autenticado obrigatorio.' using errcode = '42501'; end if;\n  select public.avalia_current_student_id() into v_student_id;\n  if v_student_id is null then raise exception 'Aluno institucional ativo nao encontrado.' using errcode = '42501'; end if;\n  select jsonb_build_object(\n    'assignments', coalesce((\n      select jsonb_agg(row_payload order by available_from desc)\n      from (\n        select aa.available_from,\n          jsonb_build_object(\n            'id', aa.id,\n            'school_id', aa.school_id,\n            'assessment_id', aa.assessment_id,\n            'target_type', aa.target_type,\n            'class_id', aa.class_id,\n            'student_id', aa.student_id,\n            'available_from', aa.available_from,\n            'available_until', aa.available_until,\n            'time_limit_minutes', aa.time_limit_minutes,\n            'max_attempts', aa.max_attempts,\n            'status', aa.status,\n            'application_status', aa.application_status,\n            'token_required', aa.token_required,\n            'shuffle_questions', aa.shuffle_questions,\n            'shuffle_alternatives', aa.shuffle_alternatives,\n            'assessment', jsonb_build_object(\n              'id', a.id,\n              'title', a.title,\n              'description', a.description,\n              'component', a.component,\n              'school_year', a.school_year,\n              'instructions', a.instructions,\n              'total_points', a.total_points,\n              'status', a.status,\n              'questions', coalesce(q.questions, '[]'::jsonb)\n            )\n          ) as row_payload\n        from public.assessment_assignments aa\n        join public.assessments a on a.id = aa.assessment_id\n        left join lateral (\n          select at.* from public.assessment_attempts at\n          where at.assignment_id = aa.id and at.student_id = v_student_id\n          order by at.started_at desc limit 1\n        ) at on true\n        left join lateral (\n          select jsonb_agg(\n            jsonb_build_object(\n              'id', aq.id,\n              'question_id', aq.question_id,\n              'position', aq.position,\n              'points', aq.points,\n              'question', jsonb_build_object(\n                'id', qi.id,\n                'code', qi.code,\n                'internal_title', qi.internal_title,\n                'statement', qi.statement,\n                'base_text', qi.base_text,\n                'bncc_skill', qi.bncc_skill,\n                'question_type', qi.question_type,\n                'alternatives', coalesce(alt.alternatives, '[]'::jsonb)\n              )\n            )\n            order by case when at.question_order is not null and aq.question_id = any(at.question_order) then array_position(at.question_order, aq.question_id) else aq.position end\n          ) as questions\n          from public.assessment_questions aq\n          join public.question_items qi on qi.id = aq.question_id\n          left join lateral (\n            select jsonb_agg(\n              jsonb_build_object('id', qa.id, 'label', qa.label, 'body', qa.body, 'position', qa.position)\n              order by case\n                when at.alternative_order ? qi.id::text then (\n                  select ordinality\n                  from jsonb_array_elements_text(at.alternative_order -> qi.id::text) with ordinality alt_order(id, ordinality)\n                  where alt_order.id::uuid = qa.id limit 1\n                )\n                else qa.position\n              end\n            ) as alternatives\n            from public.question_alternatives qa\n            where qa.question_id = qi.id\n          ) alt on true\n          where aq.assessment_id = a.id\n            and (aa.booklet_id is null or exists (select 1 from public.assessment_booklet_questions abq where abq.booklet_id = aa.booklet_id and abq.assessment_question_id = aq.id))\n        ) q on true\n        where public.avalia_student_can_access_assignment(aa.id, v_student_id)\n      ) assignments_scope\n    ), '[]'::jsonb),\n    'attempts', coalesce((\n      select jsonb_agg(to_jsonb(at) || jsonb_build_object('progress', public.avalia_plus_build_progress(at.id), 'responses', coalesce((select jsonb_agg(to_jsonb(ar) order by ar.answered_at asc) from public.assessment_responses ar where ar.attempt_id = at.id), '[]'::jsonb)) order by at.started_at desc)\n      from public.assessment_attempts at where at.student_id = v_student_id\n    ), '[]'::jsonb)\n  ) into v_payload;\n  return v_payload;\nend;\n$function$\n",
+    "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+    "owner": "postgres",
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ],
+    "prosecdef": true,
+    "body_md5": "122212b41d116af253de7ff5867986a4"
+  },
+  {
+    "proname": "avalia_plus_replace_question_alternatives",
+    "args": "p_question_id uuid, p_alternatives jsonb",
+    "definition": "CREATE OR REPLACE FUNCTION public.avalia_plus_replace_question_alternatives(p_question_id uuid, p_alternatives jsonb)\n RETURNS SETOF question_alternatives\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'auth', 'pg_temp'\nAS $function$\ndeclare\n  v_item public.question_items%rowtype;\n  v_alternative jsonb;\n  v_position integer := 0;\nbegin\n  perform public.question_bank_assert_item_editable(p_question_id);\n  if not (\n    public.avalia_plus_can_author_items()\n    or public.avalia_plus_can_review_items()\n    or public.avalia_plus_can_approve_items()\n  ) then\n    raise exception 'UNAUTHORIZED_ITEM_EDIT';\n  end if;\n\n  select *\n  into v_item\n  from public.question_items\n  where id = p_question_id\n  for update;\n\n  if not found then\n    raise exception 'QUESTION_NOT_FOUND';\n  end if;\n\n  perform public.avalia_plus_assert_objective_alternatives_payload(v_item.question_type, p_alternatives);\n\n  delete from public.question_alternatives\n  where question_id = p_question_id;\n\n  for v_alternative in select * from jsonb_array_elements(coalesce(p_alternatives, '[]'::jsonb))\n  loop\n    v_position := v_position + 1;\n    insert into public.question_alternatives (question_id, label, body, is_correct, position)\n    values (\n      p_question_id,\n      coalesce(nullif(v_alternative->>'label', ''), chr(64 + v_position)),\n      v_alternative->>'body',\n      coalesce((v_alternative->>'is_correct')::boolean, false),\n      v_position\n    );\n  end loop;\n\n  perform public.avalia_plus_assert_objective_alternatives(p_question_id);\n\n  return query\n  select *\n  from public.question_alternatives\n  where question_id = p_question_id\n  order by position;\nend;\n$function$\n",
+    "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+    "owner": "postgres",
+    "proconfig": [
+      "search_path=public, auth, pg_temp"
+    ],
+    "prosecdef": true,
+    "body_md5": "551b00d995c74924c24e98a71dc52973"
+  },
+  {
+    "proname": "avalia_plus_set_item_workflow",
+    "args": "p_question_id uuid, p_status text, p_comment text",
+    "definition": "CREATE OR REPLACE FUNCTION public.avalia_plus_set_item_workflow(p_question_id uuid, p_status text, p_comment text DEFAULT NULL::text)\n RETURNS question_items\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare q public.question_items%rowtype;ci public.content_items%rowtype;target public.rs_content_editorial_status;paused boolean;\nbegin\n if not pg_try_advisory_xact_lock(81261013) then raise exception 'NATIVE_CATEGORY_WRITE_BUSY';end if;\n select c.* into ci from public.content_question_items a join public.content_items c on c.id=a.content_item_id where a.question_item_id=p_question_id and c.metadata->>'classification_source'='canonical_category_v1';\n if ci.id is not null then perform school_category_private.assert_writes_open();end if;\n q:=school_category_private.legacy_avalia_plus_set_item_workflow(p_question_id,p_status,p_comment);\n if ci.id is not null then\n  select * into ci from public.content_items where id=ci.id for update;\n  select event_type='ROOT_CONTENT_SUSPENDED' into paused from public.content_editorial_events where content_item_id=ci.id and event_type in('ROOT_CONTENT_SUSPENDED','ROOT_CONTENT_REPUBLISHED') order by created_at desc,id desc limit 1;\n  target:=case when p_status='APROVADO' and not coalesce(paused,false) then 'PUBLISHED'::public.rs_content_editorial_status when ci.editorial_status='DRAFT' and p_status='EM_ELABORACAO' then 'DRAFT'::public.rs_content_editorial_status else 'IN_REVIEW'::public.rs_content_editorial_status end;\n  update public.content_items set editorial_status=target,published_at=case when target='PUBLISHED' then now() else published_at end,updated_by=auth.uid() where id=ci.id;\n  insert into public.content_editorial_events(content_item_id,event_type,from_status,to_status,actor_user_id,details) values(ci.id,'NATIVE_QUESTION_EDITORIAL_SYNC',ci.editorial_status,target,auth.uid(),jsonb_build_object('question_id',q.id,'native_status',p_status,'reason',p_comment,'global_pause_preserved',coalesce(paused,false),'version',ci.version));\n end if;\n return q;\nend $function$\n",
+    "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+    "owner": "postgres",
+    "proconfig": [
+      "search_path=\"\""
+    ],
+    "prosecdef": true,
+    "body_md5": "d8cf915ff3d16e1e1d162370a7e46cb1"
+  },
+  {
+    "proname": "avalia_plus_update_question_item",
+    "args": "p_question_id uuid, p_item jsonb, p_alternatives jsonb",
+    "definition": "CREATE OR REPLACE FUNCTION public.avalia_plus_update_question_item(p_question_id uuid, p_item jsonb DEFAULT '{}'::jsonb, p_alternatives jsonb DEFAULT NULL::jsonb)\n RETURNS question_items\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n if p_item ? 'canonical_category' or public.is_platform_admin() or exists(select 1 from public.content_question_items a join public.content_items c on c.id=a.content_item_id where a.question_item_id=p_question_id and c.owner_scope='GLOBAL_RAIZES') then\n  return school_category_private.save_native_question(p_question_id,p_item,p_alternatives);\n end if;\n return school_category_private.legacy_avalia_plus_update_question_item(p_question_id,p_item,p_alternatives);\nend $function$\n",
+    "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+    "owner": "postgres",
+    "proconfig": [
+      "search_path=\"\""
+    ],
+    "prosecdef": true,
+    "body_md5": "837c4b3caf963ed1f4a04ff568e252bc"
+  }
+]

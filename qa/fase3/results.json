@@ -1,0 +1,130 @@
+{
+  "baseCommit": "ee88cb9e80d454c64b6548f28e15f34f32fc48a2",
+  "scope": "Isolated PostgreSQL/PostgREST plus real web and Expo components in Chromium; no native, production or human validation",
+  "results": [
+    {
+      "name": "communication: publish, recipient, unread, idempotent read, teacher return",
+      "status": "PASS"
+    },
+    {
+      "name": "communication: school B cannot receive/read/manage school A delivery",
+      "status": "PASS"
+    },
+    {
+      "name": "communication: direct editing is blocked by existing ACL (no edit RPC)",
+      "status": "PASS"
+    },
+    {
+      "name": "communication: archive, republish without duplicate, soft delete",
+      "status": "PASS"
+    },
+    {
+      "name": "communication: expired/draft do not deliver; individual validates school",
+      "status": "PASS"
+    },
+    {
+      "name": "assessment: reproduce ambiguous class embedding (HTTP 300 / PGRST201)",
+      "status": "PASS"
+    },
+    {
+      "name": "content: teacher discovers authorized question; school B has no entitlement",
+      "status": "PASS"
+    },
+    {
+      "name": "web: builder adapter serializes named RPC argument",
+      "status": "PASS"
+    },
+    {
+      "name": "assessment: assemble approved question and publish to teacher class",
+      "status": "PASS"
+    },
+    {
+      "name": "assessment: student receives, starts, answers, submits; teacher results",
+      "status": "PASS"
+    },
+    {
+      "name": "existing boundaries: raw answers/history stay private while student RPC remains usable",
+      "status": "PASS"
+    },
+    {
+      "name": "assessment: other school cannot list/start/respond/read results",
+      "status": "PASS"
+    },
+    {
+      "name": "SECURITY BLOCKER: school without content entitlement cannot assemble that question",
+      "status": "PASS"
+    },
+    {
+      "name": "security: null question, unknown question and wrong school/class are denied atomically",
+      "status": "PASS"
+    },
+    {
+      "name": "security: expired/suspended license blocks assembly, replacement and publication",
+      "status": "PASS"
+    },
+    {
+      "name": "security: non-approved item cannot be assembled or published",
+      "status": "PASS"
+    },
+    {
+      "name": "security: positive entitlement grant permits B; revocation denies again",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile: teacher assignment query resolves real PostgREST relationships",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile: teacher communication publish/summary use same canonical delivery",
+      "status": "PASS"
+    },
+    {
+      "name": "SECURITY BLOCKER: missing email must not resolve another student",
+      "status": "PASS"
+    },
+    {
+      "name": "security: missing/empty email cannot read, start or act as another student",
+      "status": "PASS"
+    },
+    {
+      "name": "security: empty email, mismatched email and null subject do not bypass identity",
+      "status": "PASS"
+    },
+    {
+      "name": "security: ambiguous active user binding fails closed, never falls back to email",
+      "status": "PASS"
+    },
+    {
+      "name": "security: public ACLs preserved and new helpers have no app EXECUTE grants",
+      "status": "PASS"
+    },
+    {
+      "name": "replies: recipient replies, teacher sees and answers, recipient receives persisted return",
+      "status": "PASS"
+    },
+    {
+      "name": "browser: persisted student reply, retry, teacher return, reload and school isolation",
+      "status": "PASS"
+    },
+    {
+      "name": "replies: exact child binding, both guardian models, revocation and educational status",
+      "status": "PASS"
+    },
+    {
+      "name": "assessment: owner deletes unassigned draft through REST cascade; assigned history cannot be deleted",
+      "status": "PASS"
+    },
+    {
+      "name": "security: two teaching years cannot replace an assigned snapshot with other-year content",
+      "status": "PASS"
+    },
+    {
+      "name": "notice editing: revisions, immutable recipients/history, per-version reads, conflicts and authorization",
+      "status": "PASS"
+    },
+    {
+      "name": "Expo services: real assessments, lost acknowledgements, role isolation and disabled gates",
+      "status": "PASS"
+    }
+  ]
+}

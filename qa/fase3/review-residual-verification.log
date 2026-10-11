@@ -1,0 +1,58 @@
+Load qa/fase3/bootstrap.sql
+Load supabase/baselines/20261004_pilot_schema_baseline.sql
+Load supabase/migrations/20261004231721_content_architecture_phase1_question_entitlements.sql
+Load supabase/migrations/202610060001_question_bank_teacher_adaptations.sql
+Load supabase/migrations/20261006200104_question_bank_alternative_integrity.sql
+Load supabase/migrations/20261006205047_question_bank_atomic_official_edit.sql
+Load supabase/migrations/20261007092231_content_macro_v1_modules.sql
+Load supabase/migrations/20261008003945_authorized_question_details_for_teacher.sql
+Load supabase/migrations/20261008234450_admin_auth_access_duplicate_check.sql
+Load supabase/migrations/20261008234606_admin_auth_access_duplicate_check_orphan_priority.sql
+Load supabase/migrations/20261011003308_school_content_dynamic_categories_v2.sql
+Load supabase/migrations/20261011003328_school_content_global_review_v2.sql
+Load supabase/migrations/20261011003339_school_content_native_question_categories_v2.sql
+Load supabase/migrations/20261011003351_school_content_category_checkpoint_v2.sql
+Load supabase/migrations/20261011003404_school_content_protected_adapters_v2.sql
+Load qa/fase3/observed-start-attempt.sql
+Load qa/fase3/seed.sql
+Load supabase/review/fase3_assessment_authorization.sql
+Load supabase/review/fase3_communication_replies.sql
+Load supabase/review/fase3_notice_editing.sql
+PASS communication: publish, recipient, unread, idempotent read, teacher return
+PASS communication: school B cannot receive/read/manage school A delivery
+PASS communication: direct editing is blocked by existing ACL (no edit RPC)
+PASS communication: archive, republish without duplicate, soft delete
+PASS communication: expired/draft do not deliver; individual validates school
+PASS assessment: reproduce ambiguous class embedding (HTTP 300 / PGRST201)
+PASS content: teacher discovers authorized question; school B has no entitlement
+PASS web: builder adapter serializes named RPC argument
+PASS assessment: assemble approved question and publish to teacher class
+PASS assessment: student receives, starts, answers, submits; teacher results
+PASS assessment: other school cannot list/start/respond/read results
+PASS SECURITY BLOCKER: school without content entitlement cannot assemble that question
+PASS security: null question, unknown question and wrong school/class are denied atomically
+PASS security: expired/suspended license blocks assembly, replacement and publication
+PASS security: non-approved item cannot be assembled or published
+PASS security: positive entitlement grant permits B; revocation denies again
+(node:178458) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///workspace/plataforma-digital-raizes-e-saberes/mobile/src/services/library.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /workspace/plataforma-digital-raizes-e-saberes/mobile/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS mobile: teacher assignment query resolves real PostgREST relationships
+PASS mobile: teacher communication publish/summary use same canonical delivery
+PASS SECURITY BLOCKER: missing email must not resolve another student
+PASS security: missing/empty email cannot read, start or act as another student
+PASS security: empty email, mismatched email and null subject do not bypass identity
+PASS security: ambiguous active user binding fails closed, never falls back to email
+PASS security: public ACLs preserved and new helpers have no app EXECUTE grants
+PASS replies: recipient replies, teacher sees and answers, recipient receives persisted return
+PASS browser: persisted student reply, retry, teacher return, reload and school isolation
+PASS replies: exact child binding, both guardian models, revocation and educational status
+PASS assessment: owner deletes unassigned draft through REST cascade; assigned history cannot be deleted
+ERROR:  ASSESSMENT_ASSIGNED_CONTENT_IMMUTABLE
+CONTEXT:  PL/pgSQL function school_category_private.assessment_content_write_guard() line 31 at RAISE
+ERROR:  ASSESSMENT_ASSIGNED_CONTENT_IMMUTABLE
+CONTEXT:  PL/pgSQL function school_category_private.assessment_content_write_guard() line 31 at RAISE
+PASS security: two teaching years cannot replace an assigned snapshot with other-year content
+PASS notice editing: revisions, immutable recipients/history, per-version reads, conflicts and authorization
+PASS Expo services: real assessments, lost acknowledgements, role isolation and disabled gates

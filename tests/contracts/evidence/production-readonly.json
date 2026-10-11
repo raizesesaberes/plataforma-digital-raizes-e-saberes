@@ -1,0 +1,109 @@
+{
+  "project": "jaesjldrbjbdmzzggxzw",
+  "consultation_date_utc": "2026-10-11",
+  "access_mode": "SELECT only via Supabase connector",
+  "production_mutations": 0,
+  "targets_explicitly_confirmed_by_user": true,
+  "requested_term_calendar_months": 12,
+  "requested_start": "activation date, not yet defined",
+  "batch": {
+    "id": "0fb7786a-aa8c-44cd-a1a0-a831c0ca0ef2",
+    "status": "confirmed",
+    "confirmed_at": "2026-09-29T01:33:57.553655Z",
+    "source_format": "XLSX",
+    "import_type": "auto",
+    "evidence": "preview_report.school_reports.school_id and matching admin_school_deployment_events; not schools.created_at"
+  },
+  "schools": [
+    {
+      "name": "Escola Municipal Caminhos do Saber",
+      "id": "783faaf2-eb32-40e4-a412-000868f402d7",
+      "code": "EMCS-002",
+      "import_event_id": "8246a15f-0818-428a-97ec-43eeb0ef61de",
+      "import_action": "school_import_confirmed",
+      "imported_at": "2026-09-29T01:33:57.553655Z",
+      "school_status": "inactive",
+      "installation_stage": "pronta_para_validacao",
+      "validation_status": "pending",
+      "deployment_mode": "production",
+      "activated_at": null,
+      "existing_contract_id": "d65866ee-7174-4839-8a6f-fa4846d24628"
+    },
+    {
+      "name": "Escola Municipal Horizonte",
+      "id": "b0a57810-342b-4c83-b8dd-453f3e1688b0",
+      "code": "EMH-001",
+      "import_event_id": "fcab707a-f16c-450e-819f-d8c1b4dd3e22",
+      "import_action": "school_import_confirmed",
+      "imported_at": "2026-09-29T01:33:57.553655Z",
+      "school_status": "inactive",
+      "installation_stage": "pronta_para_validacao",
+      "validation_status": "pending",
+      "deployment_mode": "production",
+      "activated_at": null,
+      "existing_contract_id": null
+    },
+    {
+      "name": "Escola Municipal Monte Verde",
+      "id": "e292e7af-7b05-446a-a046-067e36a94fac",
+      "code": "EMMV-003",
+      "import_event_id": "89228877-edec-4769-bd41-afae5da8df87",
+      "import_action": "school_import_confirmed",
+      "imported_at": "2026-09-29T01:33:57.553655Z",
+      "school_status": "inactive",
+      "installation_stage": "pronta_para_validacao",
+      "validation_status": "pending",
+      "deployment_mode": "production",
+      "activated_at": null,
+      "existing_contract_id": "f98297fa-90ff-471f-8e58-8afb8b85f731"
+    },
+    {
+      "name": "Escola Municipal Nova Geração",
+      "id": "f3cd78af-10c2-467b-af8c-0d9a63581cf1",
+      "code": "EMNG-005",
+      "import_event_id": "980db5bd-395f-4ab6-9b2d-6d00960cda12",
+      "import_action": "school_import_confirmed",
+      "imported_at": "2026-09-29T01:33:57.553655Z",
+      "school_status": "inactive",
+      "installation_stage": "pronta_para_validacao",
+      "validation_status": "pending",
+      "deployment_mode": "production",
+      "activated_at": null,
+      "existing_contract_id": "f98297fa-90ff-471f-8e58-8afb8b85f731"
+    },
+    {
+      "name": "Escola Municipal Professora Ana Lúcia",
+      "id": "2ba85db0-3c9f-4377-8384-4b8837738248",
+      "code": "EMPAL-004",
+      "import_event_id": "4ecd3305-8be6-4d40-b8c3-aa3f23616b07",
+      "import_action": "school_import_confirmed",
+      "imported_at": "2026-09-29T01:33:57.553655Z",
+      "school_status": "inactive",
+      "installation_stage": "pronta_para_validacao",
+      "validation_status": "passed",
+      "deployment_mode": "production",
+      "activated_at": null,
+      "existing_contract_id": "f98297fa-90ff-471f-8e58-8afb8b85f731"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "d65866ee-7174-4839-8a6f-fa4846d24628",
+      "reference": "HOMOLOGAÇÃO — CAMINHOS DO SABER",
+      "starts_at": "2026-10-07",
+      "ends_at": null,
+      "status": "ACTIVE",
+      "tenant_type": "SCHOOL"
+    },
+    {
+      "id": "f98297fa-90ff-471f-8e58-8afb8b85f731",
+      "reference": "HOMOLOGACAO-T3-REDE-PILOT-ISOLAMENTO-BQ",
+      "starts_at": "2026-10-08",
+      "ends_at": null,
+      "status": "ACTIVE",
+      "tenant_type": "NETWORK"
+    }
+  ],
+  "activation_observation": "All seven checked structural existence predicates were true for each target (classes, teachers, links, students, enrollments, guardians, family links); only booleans returned. No full validation or activation RPC called because validation also mutates state/audit. Inactive school remains denied regardless of ACTIVE contract. Installing contracts does not activate schools.",
+  "display_difference": "Backend installation current_stage was pronta_para_validacao for all five; user UI reported four Dados Parciais. Do not infer a failed check or reactivate from this difference."
+}

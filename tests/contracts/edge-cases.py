@@ -1,0 +1,37 @@
+from zoneinfo import ZoneInfo
+from database import *
+cat=rpc('admin_get_contract_operations',[]);g=next(t for t in cat['taxonomy'] if t['grade_code']=='1_ANO')['grade_id'];today=datetime.datetime.now(ZoneInfo('America/Sao_Paulo')).date();date=lambda n:(today+datetime.timedelta(days=n)).isoformat()
+def config(ref,schools):return {'action':'CREATE','reference':ref,'starts_at':date(0),'ends_at':date(30),'new_network':{'name':ref,'code':ref.replace(' ','_').upper()},'school_ids':schools,'reason':'Cenário sintético isolado','adopt_dynamic':True,'products':[{'product_id':P,'institutional':False,'rules':[{'module_id':M,'content_type':'VIDEO','grade_id':g,'subject_id':None,'kind':'STANDARD'}]}]}
+# Deliberate failure after school creation and the first entitlement: entire transaction rolls back.
+cfg=config('SYN rollback',[A,B]);cfg['new_school']={'name':'Escola rollback sintética','code':'SYN_ROLLBACK_NEW','year':'2026'}
+review=rpc('admin_preview_contract_operation',[cfg]);count=sql('select count(*) from public.contracts',role='postgres')
+sql(f"create function public.synthetic_failure() returns trigger language plpgsql as $$begin if exists(select 1 from public.tenants where id=new.tenant_id and school_id='{B}') then raise exception 'SYNTHETIC_INJECTED_FAILURE';end if;return new;end$$;create trigger synthetic_failure before insert on public.tenant_product_entitlements for each row execute function public.synthetic_failure();",role='postgres')
+rpc('admin_confirm_contract_operation',[review,str(uuid.uuid4())],error='SYNTHETIC_INJECTED_FAILURE')
+assert_eq(sql('select count(*) from public.contracts',role='postgres'),count);assert_eq(sql("select count(*) from public.schools where codigo_inep='SYN_ROLLBACK_NEW'",role='postgres'),'0');assert_eq(sql("select count(*) from public.education_networks where code='SYN_ROLLBACK'",role='postgres'),'0')
+sql('drop trigger synthetic_failure on public.tenant_product_entitlements;drop function public.synthetic_failure()',role='postgres')
+print('PASS injected failure rolls back contractor, school, installation, tenant, contract, entitlements and audit together')
+D='20000000-0000-4000-8000-000000000004';net=str(uuid.uuid4());tenant=str(uuid.uuid4());legacy=str(uuid.uuid4())
+sql(f"insert into public.schools(id,nome,codigo_inep,status) values('{D}','Escola removida sintética','SYN_REMOVED','active');insert into public.tenants(tenant_type,school_id) values('SCHOOL','{D}');insert into public.education_networks(id,name,code) values('{net}','Rede legado sintética','SYN_LEGACY');insert into public.tenants(id,tenant_type,network_id) values('{tenant}','NETWORK','{net}');insert into public.network_school_memberships(network_id,school_id) values('{net}','{C}'),('{net}','{D}');insert into public.contracts(id,tenant_id,contract_ref,starts_at,status) values('{legacy}','{tenant}','SYN Legacy renewal','{date(-10)}','ACTIVE');",role='postgres')
+renew=config('SYN replaced legacy',[C]);renew.update(renewal_id=legacy,new_network=None,starts_at=date(5),ends_at=date(35))
+review=rpc('admin_preview_contract_operation',[renew]);assert_eq([x['id'] for x in review['removed_schools']],[D]);cid=rpc('admin_confirm_contract_operation',[review,str(uuid.uuid4())])['contract_id']
+assert_eq(sql(f"select contract_operations_private.adopted('{D}')",role='postgres'),'f');assert_eq(sql(f"select school_category_private.school_contract('{D}','{legacy}')",role='postgres'),'t')
+# Simulate arrival of the scheduled date in synthetic fixtures, never production.
+sql(f"update public.contracts set starts_at='{date(0)}' where id='{cid}';update contract_operations_private.targets set adoption_on='{date(0)}' where contract_id='{cid}';update public.tenant_product_entitlements set starts_at='{date(0)}' where contract_id='{cid}';",role='postgres')
+assert_eq(sql(f"select contract_operations_private.adopted('{D}')",role='postgres'),'t');assert_eq(sql(f"select school_category_private.school_contract('{D}','{legacy}')",role='postgres'),'f');assert_eq(sql(f"select school_category_private.school_contract('{D}','{cid}')",role='postgres'),'f')
+assert_eq(sql(f"select status from public.contracts where id='{legacy}'",role='postgres'),'ACTIVE')
+rev=rpc('admin_preview_contract_operation',[{'action':'REVOKE','contract_id':cid,'reason':'Revogar renovação já vigente'}]);rpc('admin_confirm_contract_operation',[rev,str(uuid.uuid4())]);assert_eq(sql(f"select school_category_private.school_contract('{D}','{legacy}')",role='postgres'),'f')
+print('PASS removed school denied at successor boundary / predecessor history retained / revoke effective successor cannot revive predecessor')
+# Calendar-month contract validated server-side; includes end date convention.
+cfg=config('SYN calendar',[A]);start=datetime.date(2028,2,29);cfg.update(starts_at=start.isoformat(),ends_at='2029-02-27',term_months=12);rpc('admin_preview_contract_operation',[cfg]);cfg['ends_at']='2029-02-28';rpc('admin_preview_contract_operation',[cfg],error='TWELVE_CALENDAR_MONTHS_REQUIRED')
+print('PASS 12 calendar months validated on server, leap-year anniversary and inclusive end')
+
+# Heterogeneous category configurations are copied per school, including disabled modules.
+cfg=config('SYN heterogeneous',[A,B]);oldid=rpc('admin_confirm_contract_operation',[rpc('admin_preview_contract_operation',[cfg]),str(uuid.uuid4())])['contract_id']
+sql(f"update public.tenant_product_entitlements e set metadata=jsonb_set(e.metadata,'{{category_rules,0,content_type}}','\"BOOK\"') from public.tenants t where t.id=e.tenant_id and t.school_id='{B}' and e.contract_id='{oldid}';update public.tenant_product_content_modules m set enabled=false from public.tenant_product_entitlements e,public.tenants t where m.entitlement_id=e.id and e.tenant_id=t.id and t.school_id='{B}' and e.contract_id='{oldid}';update public.contract_products set metadata=metadata||'{{\"authorized_subject_ids\":[]}}'::jsonb where contract_id='{oldid}';",role='postgres')
+renew=copy.deepcopy(cfg);renew.update(reference='SYN heterogeneous renewal',renewal_id=oldid,new_network=None,reuse_previous=True,starts_at=date(31),ends_at=date(61))
+review=rpc('admin_preview_contract_operation',[renew]);assert_eq(review['config']['products'][0]['school_rules'][A][0]['content_type'],'VIDEO');assert_eq(review['config']['products'][0]['school_rules'][B][0]['content_type'],'BOOK')
+newid=rpc('admin_confirm_contract_operation',[review,str(uuid.uuid4())])['contract_id']
+assert_eq(sql(f"select cp.metadata=(select metadata from public.contract_products where contract_id='{oldid}' and product_id=cp.product_id) from public.contract_products cp where cp.contract_id='{newid}'",role='postgres'),'t')
+assert_eq(sql(f"select m.enabled from public.tenant_product_content_modules m join public.tenant_product_entitlements e on e.id=m.entitlement_id join public.tenants t on t.id=e.tenant_id where e.contract_id='{newid}' and t.school_id='{B}'",role='postgres'),'f')
+assert_eq(sql(f"select count(*) from public.tenant_product_entitlements e join public.tenants t on t.id=e.tenant_id where e.contract_id='{newid}' and e.metadata->'category_rules'<>(select oe.metadata->'category_rules' from public.tenant_product_entitlements oe where oe.contract_id='{oldid}' and oe.tenant_id=e.tenant_id and oe.product_id=e.product_id)",role='postgres'),'0')
+print('PASS heterogeneous school renewal preserves exact rules, previous license restrictions and disabled module overrides')

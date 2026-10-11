@@ -4970,8 +4970,9 @@ const mapTeacherClassMessage = (row = {}, summary = null) => {
     status: row.status || "published",
     authorRole: row.author_role || "professor",
     deliveredCount: Number(summary?.delivered_count || 0),
-    readCount: Number(summary?.read_count || 0),
-    unreadCount: Number(summary?.unread_count || 0),
+    revision: Number(summary?.content_revision || 1),
+    readCount: summary?.version_unavailable ? null : Number(summary?.read_count || 0),
+    unreadCount: summary?.version_unavailable ? null : Number(summary?.unread_count || 0),
   };
 };
 
@@ -7360,6 +7361,8 @@ const renderTeacherFamilyMessagesView = () => {
                         <span>${printableEscape(message.className)} · ${printableEscape(message.date)} · MINHA SEMANA</span>
                         <strong>${printableEscape(message.title)}</strong>
                         <small>${printableEscape(message.text)}</small>
+                        ${globalThis.RAIZES_NOTICE_EDITING_ENABLED === true && message.id && message.status === "published" ? `<button type="button" data-notice-versions="${printableEscape(message.id)}">Editar / Ver versões</button>` : ""}
+                        ${globalThis.RAIZES_COMMUNICATION_REPLIES_ENABLED === true && message.id && message.status === "published" ? `<button type="button" data-communication-replies="${printableEscape(message.id)}">Ver respostas / Responder</button>` : ""}
                       </article>
                     `
                   )
@@ -7736,7 +7739,7 @@ const renderTeacherClassMessageCard = (message) => {
         <span>${printableEscape(destination)} · ${printableEscape(statusLabel)} · ${printableEscape(message.date)}</span>
         <strong>${printableEscape(message.title)}</strong>
         <p>${printableEscape(message.text)}</p>
-        <small>Origem: Professora · Entregues: ${message.deliveredCount || 0} · Lidas: ${message.readCount || 0} · Não lidas: ${message.unreadCount || 0}</small>
+        <small>Origem: Professora · Entregues: ${message.deliveredCount || 0} · Lidas${message.revision > 1 ? ` (versão ${message.revision})` : ""}: ${message.readCount ?? "Indisponível"} · Não lidas: ${message.unreadCount ?? "Indisponível"}</small>
       </div>
       <div class="tw-message-actions">
         <button type="button" data-teacher-message-view="${printableEscape(message.id)}">Visualizar</button>
@@ -8931,7 +8934,9 @@ const renderStudentInboxCard = (message = {}) => `
       <small>${printableEscape(message.date || "")}</small>
       <em>${printableEscape(communicationDeliveryStateLabel(message))}</em>
       ${message.href ? `<a href="${printableEscape(resolveCommunicationDeepLink(message.href))}">${printableEscape(message.actionLabel || "Abrir")}</a>` : ""}
-      ${message.deliveryId && !message.readAt ? `<button type="button" data-student-delivery-read="${printableEscape(message.deliveryId)}">Marcar como lido</button>` : ""}
+      ${message.deliveryId && !message.readAt && !(message.revision > 1) ? `<button type="button" data-student-delivery-read="${printableEscape(message.deliveryId)}">Marcar como lido</button>` : ""}
+      ${globalThis.RAIZES_NOTICE_EDITING_ENABLED === true && message.deliveryId && !message.sourceType ? `<button type="button" data-notice-versions="${printableEscape(message.id)}" data-notice-delivery="${printableEscape(message.deliveryId)}">Ver versão / Confirmar leitura</button>` : ""}
+      ${globalThis.RAIZES_COMMUNICATION_REPLIES_ENABLED === true && message.deliveryId && !message.sourceType ? `<button type="button" data-communication-delivery="${printableEscape(message.deliveryId)}">Ver respostas / Responder</button>` : ""}
     </aside>
   </article>
 `;
@@ -14532,6 +14537,7 @@ const renderAdminSchoolExceptionsManager = ({ catalog, availabilityByContent, sc
 };
 
 const renderAdminContentGovernanceConsole = () => {
+  if (['entitlements', 'network-contracts'].includes(new URLSearchParams(window.location.search).get('type'))) return '<section class="admin-board"><contract-operations></contract-operations></section>';
   if (adminOperationalState.status === "loading" || adminOperationalState.status === "idle") {
     return `<section class="admin-board admin-loading-state"><h2>Carregando conteúdos</h2><p>Consultando catalogos e disponibilidade por escola.</p></section>`;
   }
@@ -14626,8 +14632,8 @@ const renderAdminContentGovernanceConsole = () => {
       <div class="admin-section-head"><h2>Distribuição e Acesso</h2><span>Produtos, acessos e exceções</span></div>
       <div class="admin-content-module-grid">
         ${renderAdminContentModuleCard({ title: "Produtos e Coleções", description: "Organize quais conteúdos fazem parte de cada produto.", status: "EM IMPLANTAÇÃO", icon: "portfolio", href: adminContentUrl({ type: "products" }) })}
-        ${renderAdminContentModuleCard({ title: "Contratos e Acessos", description: "Defina quais redes e escolas possuem acesso aos produtos.", status: "EM IMPLANTAÇÃO", icon: "check", href: adminContentUrl({ type: "entitlements" }) })}
-        ${renderAdminContentModuleCard({ title: "Redes contratantes", description: "Prepare direitos herdados por rede sem criar exceção item a item.", status: "PREPARADO", icon: "site", href: adminContentUrl({ type: "network-contracts" }) })}
+        ${renderAdminContentModuleCard({ title: "Contratos e Acessos", description: "Cadastre, renove e revise os acessos por categoria.", status: "GERENCIAR", icon: "check", href: adminContentUrl({ type: "entitlements" }) })}
+        ${renderAdminContentModuleCard({ title: "Redes contratantes", description: "Cadastre contratantes e vincule escolas aos contratos.", status: "GERENCIAR", icon: "site", href: adminContentUrl({ type: "network-contracts" }) })}
         ${renderAdminContentModuleCard({ title: "Exceções por Escola", count: adminOperationalState.data?.contentAvailability?.length || 0, countLabel: "regras", description: "Liberações, bloqueios, pilotos e embargos especiais.", status: "OPERACIONAL", icon: "escola", href: adminContentUrl({ type: "exceptions" }) })}
       </div>
     </section>
@@ -15252,7 +15258,8 @@ const initAdminWorkspace = () => {
     workspace.querySelectorAll("[data-admin-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.adminView === activeView));
     if (content) content.innerHTML = renderAdminWorkspaceView(activeView);
     if (activeView === "escolas" && content) adminHydrateContractOverviews(content);
-    if (["painel", "usuarios", "escolas", "conteúdos", "implantação", "suporte", "permissoes", "configuracoes", "auditoria", "logs"].includes(activeView)) {
+    const isContractOperation = activeView === 'conteúdos' && ['entitlements', 'network-contracts'].includes(new URLSearchParams(window.location.search).get('type'));
+    if (!isContractOperation && ["painel", "usuarios", "escolas", "conteúdos", "implantação", "suporte", "permissoes", "configuracoes", "auditoria", "logs"].includes(activeView)) {
       ensureAdminReadOnlyData().then(() => {
         if (content && workspace.querySelector(`[data-admin-view="${activeView}"]`)?.classList.contains("is-active")) {
           content.innerHTML = renderAdminWorkspaceView(activeView);
@@ -18102,7 +18109,9 @@ const renderFamilyMessageList = ({ compact = false } = {}) => {
                 <small>${printableEscape(message.date || "")}</small>
                 <em>${printableEscape(message.deliveryId ? communicationDeliveryStateLabel(message) : message.statusLabel || "Publicado")}</em>
                 ${message.href ? `<a href="${printableEscape(resolveCommunicationDeepLink(message.href))}">${printableEscape(message.actionLabel || "Abrir")}</a>` : ""}
-                ${message.deliveryId && !message.readAt ? `<button type="button" data-family-delivery-read="${printableEscape(message.deliveryId)}">Marcar como lido</button>` : ""}
+                ${message.deliveryId && !message.readAt && !(message.revision > 1) ? `<button type="button" data-family-delivery-read="${printableEscape(message.deliveryId)}">Marcar como lido</button>` : ""}
+                ${globalThis.RAIZES_NOTICE_EDITING_ENABLED === true && message.deliveryId && !message.sourceType ? `<button type="button" data-notice-versions="${printableEscape(message.id)}" data-notice-delivery="${printableEscape(message.deliveryId)}">Ver versão / Confirmar leitura</button>` : ""}
+      ${globalThis.RAIZES_COMMUNICATION_REPLIES_ENABLED === true && message.deliveryId && !message.sourceType ? `<button type="button" data-communication-delivery="${printableEscape(message.deliveryId)}">Ver respostas / Responder</button>` : ""}
               </aside>
             </article>
           `
@@ -24204,7 +24213,7 @@ const createSupabaseRestClient = () => {
     }
     if (!response.ok) {
       const body = await response.text();
-      throw new Error(mapSupabaseError(response, body));
+      throw Object.assign(new Error(mapSupabaseError(response, body)), { status: response.status });
     }
     if (response.status === 204) return null;
     return response.json();
@@ -25963,7 +25972,7 @@ const communicationDisplayDate = (value) => {
   if (Number.isNaN(date.getTime())) return String(value);
   return date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 };
-const communicationDeliveryStateLabel = (message = {}) => (message.readAt ? "LIDO" : "NAO LIDO");
+const communicationDeliveryStateLabel = (message = {}) => `${message.readAt ? "LIDO" : "NAO LIDO"}${message.revision > 1 ? ` · VERSÃO ${message.revision}` : ""}`;
 const communicationUnreadCount = (messages = []) => {
   const reported = messages.find((message) => Number.isFinite(Number(message.unreadCount)))?.unreadCount;
   return Number.isFinite(Number(reported)) ? Number(reported) : messages.filter((message) => !message.readAt).length;
@@ -25981,6 +25990,7 @@ const mapCommunicationInboxItem = (row = {}, fallback = {}) => ({
   authorName: row.author_name || fallback.authorName || "Equipe escolar",
   className: row.class_name || fallback.className || "",
   childName: row.child_name || fallback.childName || "",
+  revision: Number(row.content_revision || 1),
   readAt: row.read_at || "",
   notificationStatus: row.notification_status || (row.read_at ? "read" : "unread"),
   unreadCount: Number(row.unread_count || 0),
@@ -26002,19 +26012,36 @@ const resolveCommunicationDeepLink = (href = "") => {
   if (target === "avaliacoes") return "aluno.html?view=avaliacoes";
   return target;
 };
-const callCommunicationInbox = async (client, { studentId = "", readFilter = "all", periodDays = 90, limit = 50 } = {}, allowedRoles = []) =>
-  client.request("rpc/communication_get_inbox", "", {
+const enrichCommunicationVersions = async (client, rows = [], allowedRoles = []) => {
+  if (globalThis.RAIZES_NOTICE_EDITING_ENABLED !== true) return rows;
+  const enriched = await Promise.all(rows.map(async (row) => {
+    if (row.source_type) return row;
+    let version;
+    try { version = await client.request("rpc/communication_get_notice_versions", "", {
+      method: "POST", requireAuthenticated: true, allowedRoles,
+      body: JSON.stringify({ p_communication_id: row.communication_id, p_delivery_id: row.delivery_id }),
+    }); } catch (error) {
+      if (error.status === 403) return null;
+      throw error;
+    }
+    const readAt = version.revision > 1 ? version.current_revision_read_at : row.read_at;
+    return { ...row, title: version.title, body: version.body, content_revision: version.revision,
+      read_at: readAt, notification_status: readAt ? "read" : "unread" };
+  })).then(items => items.filter(Boolean));
+  const unread = enriched.filter(row => !row.read_at).length;
+  return enriched.map(row => ({ ...row, unread_count: unread }));
+};
+const callCommunicationInbox = async (client, { studentId = "", readFilter = "all", periodDays = 90, limit = 50 } = {}, allowedRoles = []) => {
+  const versioned = globalThis.RAIZES_NOTICE_EDITING_ENABLED === true;
+  const rows = await client.request("rpc/communication_get_inbox", "", {
     method: "POST",
-    body: JSON.stringify({
-      p_student_id: studentId || null,
-      p_read_filter: readFilter,
-      p_period_days: periodDays,
-      p_limit: limit,
-      p_offset: 0,
-    }),
-    requireAuthenticated: true,
-    allowedRoles,
+    body: JSON.stringify({ p_student_id: studentId || null, p_read_filter: versioned ? "all" : readFilter,
+      p_period_days: periodDays, p_limit: limit, p_offset: 0 }),
+    requireAuthenticated: true, allowedRoles,
   });
+  const enriched = await enrichCommunicationVersions(client, rows || [], allowedRoles);
+  return versioned && readFilter !== "all" ? enriched.filter(row => readFilter === "read" ? Boolean(row.read_at) : !row.read_at) : enriched;
+};
 const markCommunicationDeliveryRead = async (deliveryId = "", allowedRoles = []) => {
   if (!deliveryId) return null;
   const client = createSupabaseRestClient();
@@ -26031,8 +26058,19 @@ const communicationDeliverySummariesById = async (client, allowedRoles = []) => 
     body: "{}",
     requireAuthenticated: true,
     allowedRoles,
-  }).catch(() => []);
-  return new Map((rows || []).map((row) => [row.communication_id, row]));
+  });
+  const enriched = globalThis.RAIZES_NOTICE_EDITING_ENABLED === true ? await Promise.all((rows || []).map(async row => {
+    try {
+      const version = await client.request("rpc/communication_get_notice_versions", "", {
+        method: "POST", requireAuthenticated: true, allowedRoles,
+        body: JSON.stringify({ p_communication_id: row.communication_id }),
+      });
+      return version.revision > 1 ? { ...row, content_revision: version.revision,
+        read_count: version.current_revision_read_count,
+        unread_count: Math.max(0, row.delivered_count - version.current_revision_read_count) } : row;
+    } catch { return { ...row, read_count: null, unread_count: null, version_unavailable: true }; }
+  })) : rows;
+  return new Map((enriched || []).map((row) => [row.communication_id, row]));
 };
 const secretariaStudentDocumentTypes = (student, index = buildSecretariaIndex()) => {
   const schoolTypes = index.documentTypesBySchool[student?.school_id] || [];
@@ -30225,7 +30263,7 @@ const questionBankDataService = (() => {
         method: "POST",
         requireAuthenticated: true,
         allowedRoles: allowedAssessmentRoles,
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ p_payload: payload }),
       });
       return mapAssessmentFromSupabase({
         ...(result.assessment || {}),

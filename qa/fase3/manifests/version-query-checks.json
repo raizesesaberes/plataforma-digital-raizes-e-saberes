@@ -1,0 +1,22 @@
+{
+  "scope": "Virtual VALUES only; no real migration ledger created, read or written",
+  "checks": [
+    {
+      "name": "absent",
+      "status": "PASS"
+    },
+    {
+      "name": "approved-prefix",
+      "status": "PASS"
+    },
+    {
+      "name": "conflicting-name",
+      "status": "PASS"
+    },
+    {
+      "name": "gap",
+      "status": "PASS"
+    }
+  ],
+  "original149NeverFaked": true
+}

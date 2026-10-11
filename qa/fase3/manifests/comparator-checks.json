@@ -1,0 +1,50 @@
+{
+  "checks": [
+    {
+      "name": "00_before",
+      "status": "PASS",
+      "scope": "captured synthetic metadata consistency"
+    },
+    {
+      "name": "01_after_pr2",
+      "status": "PASS",
+      "scope": "captured synthetic metadata consistency"
+    },
+    {
+      "name": "02_after_pr3",
+      "status": "PASS",
+      "scope": "captured synthetic metadata consistency"
+    },
+    {
+      "name": "03_after_pr4",
+      "status": "PASS",
+      "scope": "captured synthetic metadata consistency"
+    },
+    {
+      "name": "04_after_pr1",
+      "status": "PASS",
+      "scope": "captured synthetic metadata consistency"
+    },
+    {
+      "name": "production_stage0",
+      "status": "PASS",
+      "scope": "exact readonly captured catalog; 43 functions / 19 relations"
+    },
+    {
+      "name": "reject_rls_drift",
+      "status": "PASS",
+      "scope": "offline modified JSON only"
+    },
+    {
+      "name": "reject_privileges_drift",
+      "status": "PASS",
+      "scope": "offline modified JSON only"
+    },
+    {
+      "name": "reject_restrictive_policy_drift",
+      "status": "PASS",
+      "scope": "offline modified JSON only"
+    }
+  ],
+  "productionWrites": false
+}

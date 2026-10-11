@@ -1,0 +1,9 @@
+2026-10-11 — release artifacts only; no production mutation
+Readonly production preflight: all 7 function body/owner/ACL/proconfig comparisons true.
+Ledger: count=149; latest=20261011003404; version:name MD5=ef9f6ce1ab21510845023cceb4228bae.
+New objects absent=true; no operational contracts/receipts/entitlements=true.
+PASS new rollback refuses database containing synthetic operational contracts
+PASS new rollback on unused schema restores all 7 exact production bodies/ACLs and removes new objects
+PASS rollback with added owner/ACL drift guard on empty local clone
+No existing database/content/browser suite repeated. Only new rollback artifact exercised.
+CLI: command -v supabase returned no installed executable.

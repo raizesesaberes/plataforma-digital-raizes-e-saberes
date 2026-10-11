@@ -703,7 +703,7 @@ type RpcAssessmentAttempt = {
   status?: string | null;
   answered_count?: number | null;
   submitted_at?: string | null;
-  score_percent?: number | null;
+  score_percentage?: number | null;
   responses?: unknown;
 };
 
@@ -1471,7 +1471,7 @@ export async function getTeacherAssessmentAssignments(session: MobileSession): P
   const rows = await restGet<RestTeacherAssessmentAssignmentRow[]>(
     session,
     [
-      "assessment_assignments?select=id,class_id,status,available_from,available_until,assessments(title,description,component,school_year),classes(nome)",
+      "assessment_assignments?select=id,class_id,status,available_from,available_until,assessments(title,description,component,school_year),classes!assessment_assignments_class_id_fkey(nome)",
       "order=available_from.desc.nullslast"
     ].join("&")
   );
@@ -1629,7 +1629,7 @@ export async function getCrescerNotificationCenter(session: MobileSession): Prom
   }));
 }
 
-async function rpc<T>(session: MobileSession, name: string, body: Record<string, unknown>): Promise<T> {
+export async function rpc<T>(session: MobileSession, name: string, body: Record<string, unknown>): Promise<T> {
   const config = requireSupabaseConfig();
   const response = await fetch(`${config.url}/rest/v1/rpc/${name}`, {
     method: "POST",
@@ -1643,7 +1643,7 @@ async function rpc<T>(session: MobileSession, name: string, body: Record<string,
   return (await response.json()) as T;
 }
 
-async function restGet<T>(session: MobileSession, path: string): Promise<T> {
+export async function restGet<T>(session: MobileSession, path: string): Promise<T> {
   const config = requireSupabaseConfig();
   const response = await fetch(`${config.url}/rest/v1/${path}`, {
     method: "GET",
@@ -1713,7 +1713,7 @@ function mapAssessmentAssignment(assignment: RpcAssessmentAssignment, attempts: 
   const assessment = assignment.assessment || {};
   const assignmentId = assignment.id || assignment.assignment_id || "";
   const assessmentId = assignment.assessment_id || assessment.id || "";
-  const attempt = attempts.find((item) => item.assignment_id === assignmentId || item.assessment_id === assessmentId) || null;
+  const attempt = attempts.find((item) => item.assignment_id === assignmentId) || null;
   const questionCount = nullableNumber(assessment.question_count) ?? countUnknownArray(assessment.questions);
   const answeredCount = nullableNumber(attempt?.answered_count) ?? countUnknownArray(attempt?.responses);
 
@@ -1731,7 +1731,7 @@ function mapAssessmentAssignment(assignment: RpcAssessmentAssignment, attempts: 
     attemptStatus: attempt?.status ?? null,
     answeredCount,
     submittedAt: attempt?.submitted_at ?? null,
-    scorePercent: nullableNumber(attempt?.score_percent)
+    scorePercent: nullableNumber(attempt?.score_percentage)
   };
 }
 

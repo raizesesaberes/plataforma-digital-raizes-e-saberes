@@ -1,0 +1,125 @@
+PUBLICAÇÃO CONTROLADA — ARTEFATOS PARA REVISÃO, NÃO AUTORIZAÇÃO
+
+Projeto: jaesjldrbjbdmzzggxzw
+Implementação: d4eec99c17545f32526b9f5ee57cfa7f49b22de6
+Base: ee88cb9e80d454c64b6548f28e15f34f32fc48a2
+SQL: supabase/review/contract_operations.sql
+SHA256: 938d444f542cbd3d739044271fa0e1d43c93b6e40508ba292cb946cde772f415
+Versão proposta/reservada para revisão: 20261011040000_contract_operations_v1.
+A versão deve estar livre no preflight. Não aplicar o diretório inteiro de migrations.
+O SQL acima permanece byte a byte inalterado. Arquivos nesta pasta não são publicados
+pelo build estático nem executados automaticamente.
+
+INVENTÁRIO EXATO
+1 schema novo: contract_operations_private.
+1 tabela nova: contract_operations_private.targets, PK(contract_id, school_id),
+  FKs para contracts e schools; RLS ENABLED, sem policies, sem FORCE RLS.
+4 índices explícitos novos: targets_school_id_adoption_on_idx;
+  public.contract_operation_request_once (único);
+  public.contract_operation_successor_once (único);
+  public.contract_operation_predecessor_idx. Mais o índice implícito da PK.
+3 RPCs públicas novas, todas SECURITY DEFINER:
+  public.admin_get_contract_operations()
+  public.admin_preview_contract_operation(jsonb)
+  public.admin_confirm_contract_operation(jsonb,uuid)
+6 helpers novos SECURITY DEFINER no schema privado:
+  superseded(uuid), adopted(uuid), in_scope(uuid,uuid), contract_schools(uuid),
+  validate(jsonb), revision(jsonb).
+7 funções existentes substituídas (CREATE OR REPLACE, preservando owner e ACL):
+  school_category_private.school_contract(uuid,uuid)
+  school_category_private.dynamic_school(jsonb)
+  school_category_private.active_rules(jsonb)
+  school_category_private.has_dynamic_membership()
+  school_category_private.scope_tenants(uuid)
+  school_category_private.legacy_resolver(jsonb)
+  public.content_validate_entitlement() — função do trigger existente.
+Nenhum trigger/policy novo; nenhuma policy existente alterada; nenhuma tabela
+existente redefinida, além dos três índices adicionados em duas tabelas públicas.
+
+ACL E IMPACTO
+Aplicar com proprietário postgres, igual às funções atuais. O schema/tabela/helpers
+privados revogam ALL de PUBLIC, anon, authenticated e service_role. O proprietário
+continua com privilégios e executa os acessos das funções definer; RLS não é FORCE.
+As três RPCs revogam ALL desses mesmos roles e concedem somente EXECUTE a authenticated.
+Cada caminho exige perfil administrativo ativo por school_content_assert_admin().
+Não há grant a anon/service_role nem acesso direto à tabela privada.
+As seis funções privadas substituídas têm ACL atual somente postgres EXECUTE.
+O trigger público mantém a ACL preexistente: PUBLIC/postgres/anon/authenticated/
+service_role EXECUTE; retorna trigger e não é uma RPC comum invocável diretamente.
+Não se propõe alteração dessa ACL preexistente neste pacote.
+Zero INSERT/UPDATE/DELETE de dados de negócio durante instalação. Zero contratos,
+entitlements, ativações, pessoas, filiações ou liberações automáticas. São três
+novas permissões de executar RPC para authenticated, condicionadas ao admin ativo,
+e NÃO três liberações de conteúdo. Após instalação, somente confirmação administrativa
+com prévia válida pode gravar contratante/tenant/contrato/produtos/entitlements/módulos,
+alvos e auditoria; nova escola reutiliza admin_create_school (inativa, implantação teste).
+Não alterar Auth, senhas, importação, flags ou o helper administrativo.
+
+PREFLIGHT (LEITURA, IMEDIATAMENTE ANTES DE QUALQUER APPLY)
+1. Usar checkout isolado do SHA aprovado, independentemente de main. Conferir SHA256
+   do SQL e escopo do PR. Nunca incorporar alterações posteriores silenciosamente.
+2. Executar contract_operations_preflight.sql e exigir TODOS os resultados true.
+   Se o conector só retorna o último SELECT, executar cada instrução separadamente.
+   Ledger observado 2026-10-11: 149; último 20261011003404;
+   MD5 de versão:nome ordenados: ef9f6ce1ab21510845023cceb4228bae.
+   Os sete corpos/owners/ACLs/proconfig foram conferidos com produção em leitura;
+   captura completa em contract_operations_before.json. Qualquer divergência exige
+   atualizar comparação/rollback e submeter novamente, sem repair nem sobrescrita.
+3. Verificar também dependências school_content_assert_admin, admin_create_school,
+   helpers de categorias/protected adapters e checkpoint atual; usar os hashes de
+   helper-parity-expected.json para os helpers já capturados. Não executar RPCs
+   mutáveis para checar presença. Nenhum auth.uid falso, set claims ou service JWT.
+4. Conferir a versão proposta livre e pendências de migrations. CLI autenticada deve
+   fornecer migration list e db push --dry-run apontando EXATAMENTE uma nova versão,
+   sem outras pendências. Se houver diferenças históricas, parar; nunca repair.
+5. Guardar backup verificável e captura de corpos/ACL/ledger para rollback; escolher
+   janela sem administradores confirmando contratos. Lock timeout curto e plano de
+   observabilidade devem estar definidos. O SQL transacional falha integralmente.
+
+ORDEM BACKEND -> FRONTEND, SEM DEPENDER DE MAIN
+1. Só após autorização específica do hash/versão: criar arquivo versionado com os
+   mesmos bytes do rascunho, em checkout de release isolado; conferir hash novamente.
+2. Aplicar somente essa versão pelo mecanismo de migrations autenticado e aprovado,
+   preservando a versão no ledger. O conector de apply_migration é uma alternativa
+   apenas se a versão final registrada e o arquivo correspondente forem revisados
+   previamente e puderem coincidir; não usar execute_sql para DDL fora do ledger.
+3. Após commit, checar owner/ACL/RLS/índices/corpos e única entrada nova no ledger;
+   verificar contagens de contratos/entitlements/alvos ainda iguais a zero operacional.
+   Aguardar/acionar recarga documentada de schema cache PostgREST se necessária.
+   Leitura administrativa somente com sessão real do operador autorizado. Nenhuma
+   confirmação de contrato nem escola real faz parte do teste de publicação.
+4. Backend validado: construir preview do frontend a partir do SHA aprovado, testar
+   abertura/catálogo/retry com a sessão real e somente então promover o artefato
+   verificado. Pode usar deploy da branch/SHA; não pressupõe main já modificado.
+   Produção HTTP proxy403 não deve ser contornado: validar por conectores e operador
+   no navegador autorizado. Falha de acesso é lacuna, nunca sucesso presumido.
+5. Uso real das cinco escolas é etapa separada: revisar alvos e vigência no formulário
+   e obter a confirmação necessária. Deploy não ativa escolas nem concede conteúdo.
+
+ROLLBACK COERENTE
+Falha antes do COMMIT: transação aborta; verificar ausência de versão/objetos novos.
+Falha só no frontend: retirar/promover o frontend anterior; manter backend compatível
+até decisão, sem apagar contratos. Se necessário, pausar novas confirmações via
+REVOKE EXECUTE da RPC de confirmação para authenticated, como intervenção específica
+aprovada e auditada; depois restaurar o grant somente em correção revisada.
+Antes de qualquer uso operacional: contract_operations_rollback_unused.sql é o
+artefato compensatório revisável. Usa advisory lock e locks, recusa contratos/recibos/
+entitlements/alvos operacionais, recusa drift nos sete corpos novos, restaura os sete
+corpos originais capturados e remove explicitamente os objetos novos, sem CASCADE.
+Aplicar como NOVA migration compensatória autorizada; manter ledger da ida e volta.
+Depois de qualquer uso: NÃO executar esse rollback, não apagar alvos, não restaurar
+resolver antigo, não remover adoção/sucessão. Isso poderia reviver direitos legados.
+Pausar confirmações e frontend; preservar auditoria/recibos/histórico e barreiras;
+preparar forward fix ou compensação contratual revisada conforme dados existentes.
+O rollback guardado recusa automaticamente esse cenário.
+
+DISPONIBILIDADE E EVIDÊNCIA
+command -v supabase não encontra CLI instalada neste executor. Tentativas anteriores
+de instalação não concluíram; não existe sessão CLI autenticada comprovada. Conector
+readonly funciona. Para aplicar com versionamento exato, é necessário disponibilizar
+CLI autenticada em ambiente autorizado (não enviar tokens na conversa), acesso DB e
+permissão de migrations, ou mecanismo equivalente com versão/SQL exatos comprovados.
+Isso não bloqueia revisão: SQL, hash, inventário, preflight e rollback estão prontos.
+Não se executou auth.uid falso nem repair em produção. Nenhuma suite existente foi
+repetida nesta preparação. O novo rollback foi verificado separadamente em clone
+LOCAL de schema sem dados e contra a recusa de base sintética com operações.

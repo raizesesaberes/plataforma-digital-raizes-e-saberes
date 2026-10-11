@@ -1,0 +1,67 @@
+import {chromium} from 'playwright';
+import {createHmac} from 'node:crypto';
+import {mkdir} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
+const enc=x=>Buffer.from(JSON.stringify(x)).toString('base64url');
+const raw=enc({alg:'HS256',typ:'JWT'})+'.'+enc({sub:'10000000-0000-4000-8000-000000000001',role:'authenticated',app_metadata:{platform_role:'admin'},exp:Math.floor(Date.now()/1000)+3600});
+const token=raw+'.'+createHmac('sha256','synthetic-local-jwt-signing-key-at-least-32-characters').update(raw).digest('base64url');
+const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
+const page=await browser.newPage({viewport:{width:1440,height:1000}});
+page.on('pageerror',e=>console.log('PAGE_ERROR',e.message));
+await page.addInitScript(t=>{localStorage.setItem('raizes:supabase-auth-session',JSON.stringify({access_token:t,expires_at:Math.floor(Date.now()/1000)+3600}));},token);
+await page.route('**/*',async route=>{const url=route.request().url();if(!url.startsWith('http://127.0.0.1:8774/'))return route.abort();return route.continue();});
+await page.goto('http://127.0.0.1:8774/admin.html?view=conteudos&type=entitlements');
+await page.locator('contract-operations form').waitFor();
+const ui=page.locator('contract-operations');
+const check=(v,m)=>{if(!v)throw Error(m);};
+await ui.locator('[name=starts_at]').fill('2028-02-29');await ui.locator('[name=starts_at]').dispatchEvent('change');
+check(await ui.locator('[name=ends_at]').inputValue()==='2029-02-27','12 calendar months leap anniversary');
+await ui.locator('[name=duration]').selectOption('custom');check(await ui.locator('[name=ends_at]').isEditable(),'custom dates editable');
+await ui.locator('[name=duration]').selectOption('12');
+const now=new Date();const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
+await ui.locator('[name=starts_at]').fill(today);await ui.locator('[name=starts_at]').dispatchEvent('change');
+await ui.locator('[name=network_name]').fill('Contratante navegador sintético');await ui.locator('[name=network_code]').fill('SYN_BROWSER');
+await ui.locator('[name=reference]').fill('Contrato navegador sintético');
+await ui.locator('[name=school_ids][value="20000000-0000-4000-8000-000000000001"]').check();
+await ui.locator('[name=school_ids][value="20000000-0000-4000-8000-000000000002"]').check();
+await ui.locator('[name=create_school]').check();await ui.locator('[name=school_name]').fill('Escola navegador sintética');await ui.locator('[name=school_code]').fill('SYN_BROWSER_NEW');await ui.locator('[name=school_year]').fill('2026');
+await ui.locator('[data-product] > summary').click();await ui.locator('[data-select-all]').click();
+check(await ui.locator('[data-rule][data-type=TRAINING] input:checked').count()===0,'institutional remains separate');
+await ui.locator('[name=reason]').fill('Teste completo pelo navegador');await ui.locator('[name=adopt_dynamic]').check();
+await ui.locator('button[type=submit]').click();await ui.locator('[data-review]:not([hidden])').waitFor();
+check((await ui.locator('[data-review]').innerText()).includes('Escola navegador sintética'),'new school visible in preview');
+await mkdir('tests/contracts/evidence',{recursive:true});await page.screenshot({path:'tests/contracts/evidence/review.png',fullPage:true});
+// A school change invalidates the old review and cannot confirm previous targets.
+await ui.locator('[name=school_ids][value="20000000-0000-4000-8000-000000000002"]').uncheck();check(await ui.locator('[data-review]').isHidden(),'school change invalidates review');
+await ui.locator('button[type=submit]').click();await ui.locator('[data-review]:not([hidden])').waitFor();
+await ui.locator('[data-confirm-check]').check();
+// Deliver the mutation to actual PostgREST, then lose the response. Retry must replay.
+let lost=false;
+await page.route('**/rpc/admin_confirm_contract_operation',async route=>{if(!lost){lost=true;await route.fetch();await route.abort('failed');}else await route.continue();});
+await ui.locator('[data-confirm]').click();await ui.locator('[data-status][role=alert]').waitFor();
+check((await ui.locator('[data-status]').innerText()).includes('Tente novamente'),'retry instruction after lost response');
+await page.reload();await ui.locator('[data-review]:not([hidden])').waitFor();await ui.locator('[data-confirm-check]').check();
+await ui.locator('[data-confirm]').click();await ui.locator('[data-status]').filter({hasText:'Operação registrada'}).waitFor();
+console.log('PASS actual admin.html → authenticated PostgREST → atomic contract/new school → lost response → page reload → idempotent retry');
+await page.screenshot({path:'tests/contracts/evidence/confirmed.png',fullPage:true});
+const newId=await ui.locator('[name=renewal_id] option').filter({hasText:'Contrato navegador sintético'}).getAttribute('value');
+await ui.locator('[name=renewal_id]').selectOption(newId);check(await ui.locator('[data-rule-enabled]:checked').count()>100,'renewal reuses rules');
+check(await ui.locator('[name=school_ids]:checked').count()===2,'renewal reuses school IDs including newly created school');
+await ui.locator('[name=reason]').fill('Renovação futura navegador');await ui.locator('[name=adopt_dynamic]').check();await ui.locator('button[type=submit]').click();await ui.locator('[data-review]:not([hidden])').waitFor();await ui.locator('[data-confirm-check]').check();await ui.locator('[data-confirm]').click();await ui.locator('[data-status]').filter({hasText:'Operação registrada'}).waitFor();
+console.log('PASS calendar-month default / custom duration / explicit institutional / school change / future renewal from original configuration');
+// Exercise real loading/error/retry without faking a successful backend.
+let fail=true;await page.route('**/rpc/admin_get_contract_operations',route=>fail?route.abort('failed'):route.continue());
+await page.reload();await ui.locator('[data-retry]').waitFor();fail=false;await ui.locator('[data-retry]').click();await ui.locator('form').waitFor();console.log('PASS catalog error / retry');
+// Revoke the scheduled renewal through the same real interface.
+await ui.locator('[name=reason]').fill('Cancelar renovação pelo navegador');
+const row=ui.locator('tr').filter({hasText:'Contrato navegador sintético — renovação'});
+await row.locator('[data-revoke]').click();await ui.locator('[data-review]:not([hidden])').waitFor();
+check((await ui.locator('[data-review]').innerText()).includes('Escola navegador sintética'),'revocation shows target schools');
+await ui.locator('[data-confirm-check]').check();await ui.locator('[data-confirm]').click();await ui.locator('[data-status]').filter({hasText:'Operação registrada'}).waitFor();
+console.log('PASS UI revocation with explicit target review');
+// Empty products is a real DB state, not a successful mocked RPC response.
+execFileSync('docker',['exec','rs-contract-db','psql','-U','postgres','-c',"update public.products set status='SUSPENDED' where code='SYN_PRODUCT'"]);
+await page.reload();await ui.getByText('Nenhum produto ativo.',{exact:false}).waitFor();check(await ui.locator('button[type=submit]').isDisabled(),'empty product catalog blocks confirm');
+execFileSync('docker',['exec','rs-contract-db','psql','-U','postgres','-c',"update public.products set status='ACTIVE' where code='SYN_PRODUCT'"]);
+console.log('PASS actual empty product catalog');
+await browser.close();

@@ -1,0 +1,68 @@
+{
+  "baseCommit": "ee88cb9e80d454c64b6548f28e15f34f32fc48a2",
+  "scope": "Isolated PostgreSQL + PostgREST RPC/data service integration; not browser/native or production validation",
+  "results": [
+    {
+      "name": "communication: publish, recipient, unread, idempotent read, teacher return",
+      "status": "PASS"
+    },
+    {
+      "name": "communication: school B cannot receive/read/manage school A delivery",
+      "status": "PASS"
+    },
+    {
+      "name": "communication: direct editing is blocked by existing ACL (no edit RPC)",
+      "status": "PASS"
+    },
+    {
+      "name": "communication: archive, republish without duplicate, soft delete",
+      "status": "PASS"
+    },
+    {
+      "name": "communication: expired/draft do not deliver; individual validates school",
+      "status": "PASS"
+    },
+    {
+      "name": "assessment: reproduce ambiguous class embedding (HTTP 300 / PGRST201)",
+      "status": "PASS"
+    },
+    {
+      "name": "content: teacher discovers authorized question; school B has no entitlement",
+      "status": "PASS"
+    },
+    {
+      "name": "web: builder adapter serializes named RPC argument",
+      "status": "PASS"
+    },
+    {
+      "name": "assessment: assemble approved question and publish to teacher class",
+      "status": "PASS"
+    },
+    {
+      "name": "assessment: student receives, starts, answers, submits; teacher results",
+      "status": "PASS"
+    },
+    {
+      "name": "assessment: other school cannot list/start/respond/read results",
+      "status": "PASS"
+    },
+    {
+      "name": "SECURITY BLOCKER: school without content entitlement cannot assemble that question",
+      "status": "FAIL",
+      "error": "Unauthorized synthetic school assembled a question excluded by its content resolver (HTTP 200)"
+    },
+    {
+      "name": "mobile: teacher assignment query resolves real PostgREST relationships",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile: teacher communication publish/summary use same canonical delivery",
+      "status": "PASS"
+    },
+    {
+      "name": "SECURITY BLOCKER: missing email must not resolve another student",
+      "status": "FAIL",
+      "error": "Missing-email JWT resolved wrong synthetic student: 40000000-0000-0000-0000-000000000001\n+ actual - expected\n\n+ '40000000-0000-0000-0000-000000000001'\n- '40000000-0000-0000-0000-000000000002'\n                                      ^\n"
+    }
+  ]
+}
