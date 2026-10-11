@@ -26,6 +26,6 @@ O preflight de pacote deve ser artefato separado, com hash aprovado, e falhar an
 
 ## Mínimo executável de QA
 
-Em branch composta dos cinco PRs, com dependências Expo instaladas e Chromium/Playwright/Docker: `node qa/fase3/build-expo-preview.mjs`, depois `node qa/fase3/integration-run.mjs`. O runner usa banco descartável etiquetado; executa database/content/edge-cases/security-regressions/succession-regressions de contratos, FASE3 web/Expo e a ponte operacional preview/confirm→avaliação→revogação. Não aceita URL remota. O ledger149 não existe nesse banco e não é simulado como homologado.
+Em branch composta dos cinco PRs (PR draft #6 de integração), com dependências Expo instaladas e Chromium/Playwright/Docker: `node qa/fase3/build-expo-preview.mjs`, depois `node qa/fase3/integration-run.mjs`. O runner usa banco descartável etiquetado; executa database/content/edge-cases/security-regressions/succession-regressions de contratos, FASE3 web/Expo e a ponte operacional preview/confirm→avaliação→revogação. Não aceita URL remota. O ledger149 não existe nesse banco e não é simulado como homologado.
 
 Login oficial local: tentativa da CLI via npm bloqueada por EROFS ao criar /home/agent/.supabase. Só Postgres/PostgREST oficiais estão instalados; Auth local não iniciado. Navegação nos componentes via harness sintético não equivale a login completo ou publicação nativa. Não alterar HOME nem reutilizar credenciais/sessões de produção para contornar esse limite.

@@ -1,6 +1,6 @@
 # Integração local dos cinco PRs — evidência final
 
-Worktree `/workspace/fase3-integration`; branch `review/fase3-integration-check` somente local, sem push/main/deploy.
+Worktree `/workspace/fase3-integration`; branch `review/fase3-integration-check`, publicada no PR draft #6 (base PR5), sem main/deploy.
 
 | Entrada | SHA |
 |---|---|
@@ -8,11 +8,11 @@ Worktree `/workspace/fase3-integration`; branch `review/fase3-integration-check`
 | PR2 autorização | `3af739a55ba913b9f7e3794ff20da725cf9e496f` |
 | PR3 respostas | `f11ee276917e5a791b9153a4cbe2946349769493` |
 | PR4 edição/inbox | `43acefe670e44e97b0130796a1097c6e5e05fbb4` |
-| PR5 Expo/revisões | `cdf9f903cfff3f6f5bb0d6929e5893be69d44b66` |
+| PR5 Expo/revisões | `1f576babe4919c7b44545b9cec67249fe2067593` |
 
 Composição sem conflitos textuais em app-pages.js. Build estático: 4277 arquivos, diretórios SQL/QA fora de dist. Typecheck e bundle Expo QA passaram. Nenhuma alteração SQL das quatro propostas foi necessária.
 
-## Resultado no MESMO banco sintético, PR2 → PR3 → PR4 → PR1
+## Resultado da rodada conjunta no MESMO banco sintético, PR2 → PR3 → PR4 → PR1
 
 - `database.py`, `content.py`, `edge-cases.py`, `security-regressions.py` e `succession-regressions.py`: PASS, inclusive regressões R1–R4 (licença inativa, revogação, barreira de sucessão e escola tardia).
 - FASE3: **30 PASS / 0 FAIL**, incluindo web e componentes Expo em Chromium e correções da revisão independente.
@@ -40,7 +40,9 @@ Gates continuam off: `RAIZES_COMMUNICATION_REPLIES_ENABLED`, `RAIZES_NOTICE_EDIT
 
 Reproduzir com Docker + Chromium/Playwright + dependências do mobile: `node qa/fase3/build-expo-preview.mjs` e `node qa/fase3/integration-run.mjs`. Nenhuma URL remota é aceita. Script não substitui procedimento de instalação aprovado.
 
-Login/navegação integral web/app continuam NÃO EXECUTADOS: tentativa da CLI oficial local falhou EROFS ao criar `/home/agent/.supabase`; Auth local não iniciado. Harness navega componentes reais com sessões fictícias, sem equivaler a autenticação completa. Nativos/homologação humana permanecem pendentes.
+Login BEM-SUCEDIDO via Auth local continua NÃO EXECUTADO: CLI falhou EROFS em `/home/agent/.supabase`; nenhum contorno/instalação adicional. Verificação incremental de roteamento em `routing-results.json`: sete checks PASS nas entradas reais App.tsx/login.html (falha explícita de Auth local), AppShell real professor/aluno → Avalia+ → recados → perfil/logout, páginas web professor e aluno → recados → reload/logout. Sessão de teste fornecida somente pelo harness QA/Playwright storageState. Não equivale a autenticação completa. Três pageErrors de rede ficaram registrados com hosts externos bloqueados; causa específica não isolada, não se afirma zero erro de navegador. Nativos/homologação humana pendentes. `MAC_HANDOFF.md` contém sequência oficial local, limites do bootstrap Auth, hashes/versões/preflight/recuperação.
+
+Após a rodada conjunta, os fixes residuais PR5 `1f576ba` receberam 30 PASS em `review-residual-verification.log` (application_status, revisão-base da edição, remoção do painel pela lista). Os sete checks de roteamento foram executados sobre essa composição. Suítes estáveis de contratos não foram repetidas: os quatro SQLs e hashes de dependências permanecem idênticos. Houve conflito apenas na imagem QA `expo-browser.png` ao propagar a revisão, resolvido mantendo a evidência mais recente do PR5; nenhum conflito de runtime.
 
 ## SHA256 dos artefatos testados
 
