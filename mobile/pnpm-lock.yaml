@@ -33,6 +33,9 @@ importers:
         specifier: ~0.21.2
         version: 0.21.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
     devDependencies:
+      babel-preset-expo:
+        specifier: 57.0.11
+        version: 57.0.11(@babel/core@7.29.7)(@babel/runtime@7.29.7)(expo@57.0.22)(react-refresh@0.14.2)
       '@types/react':
         specifier: ~19.2.4
         version: 19.2.18

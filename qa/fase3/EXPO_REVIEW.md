@@ -1,0 +1,83 @@
+# Expo — avaliações reais, resultados e comunicação
+
+Branch `review/fase3-expo-real-journeys`, dependente de PR4 (que inclui PR2/3). Sem código de contratos neste diff. Integração com PR1 existe somente na worktree/branch local descrita em `INTEGRATION_REVIEW.md`.
+
+## Implementado
+
+- Rota Avalia+ docente: consulta turmas vinculadas e catálogo autorizado da turma, seleciona questões, monta avaliação persistida, lista avaliações próprias salvas, publica para a turma e consulta resultados reais por aplicação/aluno. Retira o caminho que apenas mudava estado local ao publicar. Não fabrica zeros de resultado enquanto a consulta está pendente/falha.
+- Aluno: abre aplicação autorizada, informa token quando exigido, inicia ou retoma tentativa, salva alternativa/texto, recarrega respostas persistidas, entrega e vê nota retornada pelo servidor ou “aguardando correção”. Não confunde tentativas de aplicações diferentes da mesma avaliação. Corrige `score_percentage` e estado graded no adaptador anterior.
+- Perda de confirmação de publicar/iniciar/salvar/entregar: consulta o estado persistido antes de confirmar sucesso. Não repete mutação automaticamente. Recuperação só para falha de transporte/5xx, nunca mascara 403/validação como sucesso. Montagem sem confirmação bloqueia nova montagem até o usuário conferir/selecionar uma avaliação salva.
+- Recados de aluno/responsável e conversas do docente: lista real, destinatário e filho identificados, respostas/retorno persistidos, texto pendente + chave por usuário/entrega mantidos em memória ao fechar/reabrir. Edição/versões/readtracking usam os RPCs do PR4. Não há nova SQL nesta branch.
+- Cards do novo módulo usam recibo da versão atual. Entregas legadas cujo vínculo com aquele filho foi revogado são excluídas após 403 individual; 404/5xx continuam como erro, não lista vazia. Resumos antigos ainda presentes na home/compositor ficam explicitamente rotulados **históricos**, sem alegar leitura da versão atual.
+- Rotas existentes de Auth, login, senhas, importações, perfil e App.tsx preservadas. Usa Expo/React Native e tokens de cor/raio/espaçamento existentes, sem nova stack de UI. O preset Babel do Expo 57.0.11, já transitivo e travado no lockfile, foi declarado diretamente em devDependencies para corrigir a exportação com pnpm; nenhuma versão existente foi trocada.
+
+## Gates de rollout
+
+Todos desligados por ausência ou valor diferente de `true`:
+
+- `EXPO_PUBLIC_FASE3_ASSESSMENTS`: requer PR2 revisado/aplicado e compatibilidade de backend validada.
+- `EXPO_PUBLIC_FASE3_REPLIES`: requer PR3 revisado/aplicado.
+- `EXPO_PUBLIC_FASE3_NOTICE_EDITING`: requer PR4 revisado/aplicado.
+
+Gate bloqueia ações antes da requisição. Backend ausente com gate ligado produz erro explícito. Nenhum gate foi ativado em build de produção; o host QA passa gates por props e sessões **sintéticas**, sem mudar Auth da aplicação.
+
+## Matriz de evidências
+
+| Jornada/condição | Estado | Evidência |
+|---|---|---|
+| Catálogo da turma → montagem → publicação → aluno → resposta → entrega → resultados | PASS sintético | Adaptador real e componentes Expo/React Native Web contra PostgREST/Postgres real |
+| Publicação, início, resposta e entrega com HTTP503 após commit | PASS | Reconciliação API com IDs/contagens/nota; publicação e entrega também no navegador |
+| Reabrir/recarregar conserva respostas/resultado | PASS | Navegador Expo; resposta selecionada reaparece antes da entrega |
+| Recado → resposta aluno → professor → retorno | PASS | Navegador Expo, inclusive perda do ack e reabertura sem duplicata |
+| Edição → versão 2 → leitura dessa versão | PASS | Navegador Expo; sem botão de edição para destinatário |
+| Responsável com filho revogado e outro vínculo válido | PASS | Sessão família no Expo abre entrega válida e responde; SQL PR3 testa ambos modelos/revogações |
+| Outra escola inicia/lê resultado de aplicação alheia | NEGADO | API real com JWT de outro aluno/docente; UI não oferece aplicação alheia |
+| Gate desligado | PASS | Nenhuma chamada de avaliação, nenhuma ação de início |
+| Gate ligado/backend404 | PASS | “Serviço indisponível”; não mostra “sem avaliações” como se a consulta tivesse funcionado |
+| Integração dos cinco PRs | PASS local na ordem documentada | Suítes contratos R1–R4 + 30 casos FASE3 + ponte contrato operacional→avaliação→revogação; evidência final na worktree `/workspace/fase3-integration`, branch local `review/fase3-integration-check` |
+| Login completo, todas as telas da app shell e homologação visual humana | NÃO EXECUTADO | Harness usa os componentes reais com entrada QA separada |
+| iOS/Android nativos, push/store/deploy | NÃO EXECUTADO | Nenhum emulador/APK/IPA/publicação |
+
+Suite agregada: **30 PASS / 0 FAIL**. A última entrada inclui testes de serviço e a sequência de navegador Expo. `expo-browser.png` mostra o componente real na viewport de 390px, não uma homologação visual completa.
+
+## Reprodução segura
+
+```sh
+# Dependências já existentes no lockfile mobile; cache em diretório gravável.
+cd mobile
+XDG_DATA_HOME=/tmp/fase3-pnpm-data XDG_CACHE_HOME=/tmp/fase3-pnpm-cache pnpm install --store-dir /tmp/fase3-pnpm-store --frozen-lockfile
+cd ..
+mobile/node_modules/.bin/tsc --noEmit -p mobile/tsconfig.json
+node qa/fase3/build-expo-preview.mjs
+node qa/fase3/run.mjs
+```
+
+Build QA em `/tmp/rs-fase3-expo-dist`, entrada `qa/fase3/ExpoHarness.tsx`; gateway escuta apenas `127.0.0.1:58137` e aponta exclusivamente para o Docker sintético. O runner exige Playwright e Chromium instalado; não faz skip silencioso. Ao terminar remove containers. `integration-run.mjs` requer checkout composto com os SQLs do PR1; não roda numa branch que não os contém.
+
+## Limites que permanecem
+
+Esta fatia valida o caso textual de múltipla escolha; resposta aberta tem formulário/RPC mas correção humana, mídia, matemática rica e acessibilidade nativa ainda precisam de casos próprios. Catálogo limitado à primeira página de 100 questões. Publicação usa turma e disponibilidade imediata; configurações avançadas, paginação, nova tentativa/reaplicação por UI e autoria de atividades fora do Avalia+ permanecem pendentes. Métricas de outros módulos antigos não foram homologadas por esta entrega. Não anunciar conclusão integral da FASE3.
+
+Respostas têm o alcance administrativo canônico (gestão escolar/de rede/admin) explicitado na interface; aprovação desse alcance e dos SQLs permanece separada. Rascunhos incertos são memória local, não persistem após reiniciar a app. Nenhum dado ou usuário real foi consultado/alterado, nenhuma mensagem externa enviada, nenhum merge em main/deploy/instalação SQL ocorreu.
+
+## Build e revisão de componentes
+
+Typecheck passou. A exportação web da **App.tsx real**, com seus imports/rotas, passou após declarar o preset Babel já travado: 417 módulos e 56 assets, sem servir a aplicação nem autenticar usuários. O teste funcional usa separadamente os componentes reais no harness Expo; exportar a app completa não equivale a testar seu login/navegação completa.
+
+Checklist React aplicado: componentes separados, hooks incondicionais, estado reiniciado por identidade de sessão, chave estável por aplicação/entrega, ações bloqueadas durante gravação, status acessível e strings de usuário renderizadas como Text. Erro de atualização da conversa depois de um envio confirmado mantém a confirmação e pede atualizar; não induz reenviar uma resposta já recebida. A regressão de adaptador também distingue duas atribuições (turma/aluno) da mesma avaliação, sem copiar a nota de uma para outra.
+
+## Correções da revisão independente
+
+- Web PR4: erro HTTP403 exclui somente a entrega proibida; responsável mantém o recado do outro filho. 404/5xx permanecem erros. O cliente REST preserva status numérico e o mapper real tem regressão com dois filhos.
+- Texto aberto digitado enquanto a resposta anterior é salva permanece no rascunho; somente o snapshot exato confirmado é limpo. Teste de resposta A atrasada, digitação B, novo save e recarga.
+- Publicação exige alvo `class`, sem student_id, e disponibilidade atual. Atribuição individual não satisfaz publicação da turma; futuras/encerradas mostram aviso específico, sem falso sucesso ou alteração silenciosa de agenda. Cobertura de confirmação perdida mantida.
+- Envio de resposta compartilha promessa/chave/confirmação por pessoa+entrega entre mounts. Fechar/reabrir antes do ack de sucesso não gera duplicata; novo painel recebe a confirmação e limpa somente o mesmo texto.
+- Edição mantém chave e confirmação mesmo se atualização subsequente falhar. Repetir ou reabrir não cria outra versão do mesmo envio; sucesso de mutação é separado do erro de atualização.
+- Montagem com erro definitivo 400/403 permite corrigir/repetir; somente transporte/resultado incerto bloqueia nova montagem.
+- Atualização negada limpa conteúdo do painel e cartão em cache. Sem ambos os gates, comunicação faz zero chamadas; com somente respostas, o guard de thread autoriza a entrega antes de renderizar título/corpo; com edição, usa o guard de versões. Combinações 00/01/10/11 cobertas no serviço, sem novo acesso persistente.
+
+Login via Auth oficial local permanece bloqueado: a CLI tentou criar `/home/agent/.supabase` e retornou EROFS. Sem emulador nativo. O harness com JWTs fictícios não é declarado teste de login ou navegação integral da app shell. Gates de produção continuam off, PR permanece draft para re-revisão.
+
+A integração final preservou 15 funções/triggers FASE3 após PR1. O preflight combinado e a proposta de ledger152/153 estão somente na branch local de integração, sem execução; o preflight standalone de contratos continua exigindo149. Nenhuma aprovação de rollout é inferida desses testes.
+
+Revisão residual: reconciliação exige `application_status` AGENDADA/EM_ANDAMENTO e janela aberta, conforme `avalia_plus_assignment_is_open`; CANCELADA/CONCLUIDA recebem aviso, sem falso sucesso. Recibo de edição confirmada fica ligado à revisão resultante: atualização por outro editor permite nova operação legítima restaurando o mesmo texto. Atualização bem-sucedida da lista que perde a entrega selecionada fecha o painel; erro transitório não é interpretado como revogação. Os três casos têm regressões de serviço/navegador; suite permanece 30 PASS. Sem nova SQL.

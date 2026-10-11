@@ -1,6 +1,6 @@
 {
   "baseCommit": "ee88cb9e80d454c64b6548f28e15f34f32fc48a2",
-  "scope": "Isolated PostgreSQL + PostgREST RPC/data service integration; not browser/native or production validation",
+  "scope": "Isolated PostgreSQL/PostgREST plus real web and Expo components in Chromium; no native, production or human validation",
   "results": [
     {
       "name": "communication: publish, recipient, unread, idempotent read, teacher return",
@@ -116,6 +116,10 @@
     },
     {
       "name": "notice editing: revisions, immutable recipients/history, per-version reads, conflicts and authorization",
+      "status": "PASS"
+    },
+    {
+      "name": "Expo services: real assessments, lost acknowledgements, role isolation and disabled gates",
       "status": "PASS"
     }
   ]

@@ -122,11 +122,11 @@ await test('security: null question, unknown question and wrong school/class are
 });
 await test('security: expired/suspended license blocks assembly, replacement and publication',async()=>{
  const cases=[
-  ["update public.contracts set ends_at=current_date-1", "update public.contracts set ends_at=null"],
-  ["update public.contracts set status='SUSPENDED'", "update public.contracts set status='ACTIVE'"],
-  ["update public.tenant_product_entitlements set status='SUSPENDED'", "update public.tenant_product_entitlements set status='ACTIVE'"],
-  ["update public.tenant_product_entitlements set ends_at=current_date-1", "update public.tenant_product_entitlements set ends_at=null"],
-  ["update public.question_licenses set publication_allowed=false", "update public.question_licenses set publication_allowed=true"]
+  ["update public.contracts set ends_at=current_date-1 where contract_ref='FASE3_SYNTHETIC'", "update public.contracts set ends_at=null where contract_ref='FASE3_SYNTHETIC'"],
+  ["update public.contracts set status='SUSPENDED' where contract_ref='FASE3_SYNTHETIC'", "update public.contracts set status='ACTIVE' where contract_ref='FASE3_SYNTHETIC'"],
+  ["update public.tenant_product_entitlements set status='SUSPENDED' where contract_id in (select id from public.contracts where contract_ref='FASE3_SYNTHETIC')", "update public.tenant_product_entitlements set status='ACTIVE' where contract_id in (select id from public.contracts where contract_ref='FASE3_SYNTHETIC')"],
+  ["update public.tenant_product_entitlements set ends_at=current_date-1 where contract_id in (select id from public.contracts where contract_ref='FASE3_SYNTHETIC')", "update public.tenant_product_entitlements set ends_at=null where contract_id in (select id from public.contracts where contract_ref='FASE3_SYNTHETIC')"],
+  ["update public.question_licenses set publication_allowed=false where id='50000000-0000-0000-0000-000000000001'", "update public.question_licenses set publication_allowed=true where id='50000000-0000-0000-0000-000000000001'"]
  ];
  for(const [suspend,restore] of cases){sql(suspend);try{
   await mustDeny(1,'avalia_plus_create_assessment_from_bank',assembly());
@@ -136,18 +136,18 @@ await test('security: expired/suspended license blocks assembly, replacement and
  }finally{sql(restore)}}
 });
 await test('security: non-approved item cannot be assembled or published',async()=>{
- sql("update public.question_items set workflow_status='EM_REVISAO'");
+ sql("update public.question_items set workflow_status='EM_REVISAO' where id='70000000-0000-0000-0000-000000000001'");
  try{
   await mustDeny(1,'avalia_plus_create_assessment_from_bank',assembly());
   await mustDeny(1,'teacher_schedule_assessment_application_v2',{p_assessment_id:assessmentId,p_target_type:'class',p_class_id:id(3)});
- }finally{sql("update public.question_items set workflow_status='APROVADO'")}
+ }finally{sql("update public.question_items set workflow_status='APROVADO' where id='70000000-0000-0000-0000-000000000001'")}
 });
 await test('security: positive entitlement grant permits B; revocation denies again',async()=>{
  sql(`do $$ declare tenant uuid; product uuid; contract uuid; begin
  select id into tenant from public.tenants where school_id='${id(1,2)}';select id into product from public.products where code='FASE3_SYNTHETIC';
  insert into public.contracts(tenant_id,contract_ref,starts_at,status) values(tenant,'SYNTHETIC_B',current_date-1,'ACTIVE') returning id into contract;
- insert into public.contract_products(contract_id,product_id,metadata) select contract,product,cp.metadata from public.contract_products cp limit 1;
- insert into public.tenant_product_entitlements(contract_id,tenant_id,product_id,starts_at,grade_ids,metadata) select contract,tenant,product,current_date-1,e.grade_ids,e.metadata from public.tenant_product_entitlements e limit 1;
+ insert into public.contract_products(contract_id,product_id,metadata) select contract,product,cp.metadata from public.contract_products cp where cp.contract_id=(select id from public.contracts where contract_ref='FASE3_SYNTHETIC');
+ insert into public.tenant_product_entitlements(contract_id,tenant_id,product_id,starts_at,grade_ids,metadata) select contract,tenant,product,current_date-1,e.grade_ids,e.metadata from public.tenant_product_entitlements e where e.contract_id=(select id from public.contracts where contract_ref='FASE3_SYNTHETIC');
  end $$;`);
  try{
   const granted=await rpc(4,'avalia_plus_create_assessment_from_bank',assembly(id(1,2),id(3,2)));assert.ok(granted.assessment.id);
@@ -340,7 +340,7 @@ await test('security: two teaching years cannot replace an assigned snapshot wit
  insert into public.content_items(content_type,segment_id,grade_id,title,editorial_status,published_at) values('QUESTION',seg,g,'Synthetic year four','PUBLISHED',now()) returning id into ci;
  insert into public.content_question_items(content_item_id,question_item_id) values(ci,'${id(7,2)}');end $$;`);
  const resolved=await rpc(1,'content_resolve_question_details_for_user',{p_context:{school_id:id(1),class_id:id(3),content_type:'QUESTION'}});
- assert.ok(!resolved.items.some(x=>x.question_item_id===id(7,2)));
+ assert.deepEqual(resolved.items.map(x=>x.id),[id(7)]);
  const draft=await rpc(1,'avalia_plus_create_assessment_from_bank',assembly(id(1),null));
  const aid=draft.assessment.id;
  assert.equal(sql(`select class_id is null from public.assessments where id='${aid}'`),'t');
@@ -429,5 +429,63 @@ if(!process.argv.includes('--baseline')) await test('notice editing: revisions, 
  await runNoticeBrowser({base,token,communicationId:browserPub.communication_id,deliveryId:browserDelivery});
 });
 
-writeFileSync(resolve(process.argv.includes('--baseline')?'qa/fase3/results-baseline.json':'qa/fase3/results.json'),JSON.stringify({baseCommit:execFileSync('git',['merge-base','HEAD','origin/main'],{encoding:'utf8'}).trim(),scope:'Isolated PostgreSQL + PostgREST RPC/data service integration; not browser/native or production validation',results},null,2)+'\n');
+if(!process.argv.includes('--baseline')) await test('Expo services: real assessments, lost acknowledgements, role isolation and disabled gates',async()=>{
+ const realFetch=globalThis.fetch;const lose=new Set(['teacher_schedule_assessment_application_v2','student_start_assessment_attempt_v2','student_save_assessment_response_v2','student_submit_assessment_attempt_v2']);let calls=0;
+ globalThis.fetch=async(url,options)=>{
+  calls++;assert.ok(String(url).startsWith(base));const target=String(url).replace('/rest/v1/','/');const response=await realFetch(target,options);const name=target.split('/rpc/')[1];
+  if(response.ok&&lose.has(name)&&!(name==='teacher_schedule_assessment_application_v2'&&JSON.parse(options.body).p_target_type==='student')){lose.delete(name);await response.text();return new Response('{}',{status:503});}return response;
+ };
+ try{
+  const {journeyApi}=await import('../../mobile/src/services/journeys.ts');const gates={assessments:true,replies:true,editing:true};
+  const api=n=>journeyApi({userId:id(0,n),accessToken:token(n)},gates),teacher=api(1),student=api(2);
+  const off=journeyApi({userId:id(0,1),accessToken:token(1)},{assessments:false,replies:false,editing:false});const before=calls;
+  assert.throws(()=>off.work(),/feature_disabled/);assert.throws(()=>off.thread(id(9)),/feature_disabled/);assert.throws(()=>off.notice(id(9),null),/feature_disabled/);assert.equal(calls,before);
+  const catalog=await teacher.questions(id(1),id(3));assert.ok(catalog.items.some(q=>q.question_item_id===id(7)));
+  const draft=await teacher.assemble(id(1),id(3),'SYNTHETIC EXPO API',[id(7)]);
+  const individual=await rpc(1,'teacher_schedule_assessment_application_v2',{p_assessment_id:draft.assessment.id,p_target_type:'student',p_class_id:id(3),p_student_id:id(4)});
+  const published=await teacher.publish(draft.assessment.id,id(3));assert.notEqual(published.id,individual.assignment.id);assert.equal(published.target_type,'class');assert.equal((await teacher.publish(draft.assessment.id,id(3))).id,published.id);
+  assert.equal(sql(`select count(*) from public.assessment_assignments where assessment_id='${draft.assessment.id}' and target_type='class'`),'1');
+  const started=await student.start(published.id,'');assert.equal((await student.start(published.id,'')).id,started.id);
+  await student.save((await student.work()).attempts.find(a=>a.id===started.id),id(7),id(8,2),null);
+  const awaitedAttempt=(await student.work()).attempts.find(a=>a.id===started.id);
+  const beforeDeny=globalThis.fetch;
+  globalThis.fetch=async(url,options)=>String(url).includes('/rpc/student_save_assessment_response_v2')?new Response('{"message":"synthetic authorization rejection"}',{status:403}):beforeDeny(url,options);
+  try{await assert.rejects(()=>student.save((awaitedAttempt),id(7),id(8,2),null),/403/);}finally{globalThis.fetch=beforeDeny;}
+  await student.submit(started.id);assert.equal((await student.work()).attempts.find(a=>a.id===started.id).score_percentage,100);
+  const repeat=await rpc(1,'teacher_schedule_assessment_application_v2',{p_assessment_id:draft.assessment.id,p_target_type:'student',p_class_id:id(3),p_student_id:id(4)});
+  assert.notEqual(repeat.assignment.id,published.id);
+  const mapped=await mobile.getStudentAssessmentAssignments({userId:id(0,2),accessToken:token(2)});
+  assert.equal(mapped.find(x=>x.id===published.id).scorePercent,100);
+  assert.equal(mapped.find(x=>x.id===repeat.assignment.id).attemptStatus,null);
+  assert.equal(mapped.find(x=>x.id===repeat.assignment.id).scorePercent,null);
+  assert.equal((await teacher.results(published.id)).summary.completed_students,1);assert.equal(lose.size,0);
+  await assert.rejects(()=>api(5).start(published.id,''),/403/);await assert.rejects(()=>api(4).results(published.id),/403/);
+  for(const [title,from,until,status] of [['SYNTHETIC FUTURE',"now()+interval '1 day'",'null','AGENDADA'],['SYNTHETIC EXPIRED',"now()-interval '2 days'","now()-interval '1 day'",'AGENDADA'],['SYNTHETIC CANCELLED','now()','null','CANCELADA'],['SYNTHETIC COMPLETED','now()','null','CONCLUIDA']]) {
+    const d=await teacher.assemble(id(1),id(3),title,[id(7)]);const a=await teacher.publish(d.assessment.id,id(3));
+    sql(`update public.assessment_assignments set available_from=${from},available_until=${until},application_status='${status}' where id='${a.id}'`);
+    const oldFetch=globalThis.fetch;let writes=0;globalThis.fetch=async(u,o)=>{if(String(u).includes('teacher_schedule_assessment_application_v2'))writes++;return oldFetch(u,o);};
+    try{await assert.rejects(()=>teacher.publish(d.assessment.id,id(3)),/assignment_not_current/);assert.equal(writes,0);}finally{globalThis.fetch=oldFetch;}
+  }
+  sql(`insert into public.question_items(id,code,internal_title,component,stage,school_year,question_type,statement,source_id,author_name,license_id,legal_classification,curation_status,publication_status,workflow_status) select '${id(7,44)}','FASE3-OPEN-44','Synthetic open answer',component,stage,school_year,'DISCURSIVA','Explique sua resposta.',source_id,author_name,license_id,legal_classification,curation_status,publication_status,workflow_status from public.question_items where id='${id(7)}';
+  insert into public.content_items(id,content_type,segment_id,grade_id,title,editorial_status,published_at) select '${id(9,144)}',content_type,segment_id,grade_id,'Synthetic open answer','PUBLISHED',now() from public.content_items where id=(select content_item_id from public.content_question_items where question_item_id='${id(7)}');
+  insert into public.content_question_items(content_item_id,question_item_id) values('${id(9,144)}','${id(7,44)}');`);
+  const openDraft=await teacher.assemble(id(1),id(3),'SYNTHETIC OPEN SAVE',[id(7,44)]);await teacher.publish(openDraft.assessment.id,id(3));
+  const publishedNotice=await rpc(1,'publish_communication',{...draftNoticeForExpo(),p_title:'SYNTHETIC EXPO NOTICE'});
+  for(const combo of [{replies:true,editing:false},{replies:false,editing:true},{replies:true,editing:true}]) {
+    const family=journeyApi({userId:id(0,6),accessToken:token(6)},{assessments:false,...combo});
+    const rows=await family.inbox();assert.ok(rows.length>0);
+    const deniedIds=sql(`select id from public.communication_deliveries where recipient_profile_id='${id(0,6)}' and student_id='${id(4)}'`).split('\n');
+    assert.ok(rows.every(row=>!deniedIds.includes(row.delivery_id)));
+  }
+  const beforeOff=calls;await assert.rejects(()=>off.inbox(),/feature_disabled/);assert.equal(calls,beforeOff);
+  const inbox=await student.inbox();assert.ok(inbox.find(x=>x.communication_id===publishedNotice.communication_id));
+  const {runExpoBrowser}=await import('./expo-browser.mjs');
+  // Browser has its own local gateway; do not intercept its already isolated HTTP.
+  globalThis.fetch=realFetch;
+  await runExpoBrowser({base,token,id,communicationId:publishedNotice.communication_id});
+ }finally{globalThis.fetch=realFetch;}
+});
+function draftNoticeForExpo(){return {p_school_id:id(1),p_communication_type:'notice',p_audience_type:'class',p_title:'SYNTHETIC',p_body:'SYNTHETIC EXPO BODY',p_class_id:id(3)};}
+
+writeFileSync(resolve(process.argv.includes('--baseline')?'qa/fase3/results-baseline.json':'qa/fase3/results.json'),JSON.stringify({baseCommit:execFileSync('git',['merge-base','HEAD','origin/main'],{encoding:'utf8'}).trim(),scope:'Isolated PostgreSQL/PostgREST plus real web and Expo components in Chromium; no native, production or human validation',results},null,2)+'\n');
 if(results.some(x=>x.status==='FAIL')) process.exitCode=1;
