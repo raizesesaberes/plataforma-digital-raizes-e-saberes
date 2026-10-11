@@ -72,10 +72,21 @@ try {
   console.log('PASS contracts preserved '+protectedObjects.length+' FASE3 functions/triggers including definitions, ACLs and config');
   if(manifestsOnly){writeManifestIndex();checkVersionQuery(sql=>run(['exec','-i',name,'psql','-U','postgres','-v','ON_ERROR_STOP=1','-At'],sql));console.log('PASS stage manifests captured; no ledger created or written');} else {
   apply('tests/contracts/seed.sql');
-  for(const suite of (routingOnly?[]:['database.py','content.py','edge-cases.py','security-regressions.py','succession-regressions.py'])){
+  if(process.argv.includes('--amendments-only')) {
+    const beforeAmendment=catalog();apply('supabase/review/contract_amendments.sql');const afterAmendment=catalog();
+    assert.deepEqual(afterAmendment.relations,beforeAmendment.relations,'Amendment changed table ACL/RLS/policies/triggers');
+    for(const [key,value] of Object.entries(beforeAmendment.functions)){
+      if(key.startsWith('school_category_private.normalize_config(')){
+        assert.deepEqual(afterAmendment.functions[key].acl,value.acl,'Existing validator ACL changed');
+      } else assert.deepEqual(afterAmendment.functions[key],value,'Existing function changed: '+key);
+    }
+    console.log('PASS amendment preserves all existing functions except rule-count validator; table ACL/RLS/policies/triggers unchanged');
+    execFileSync('python3',['tests/contracts/amendments.py'],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}}); }
+  for(const suite of (routingOnly||process.argv.includes('--amendments-only')?[]:['database.py','content.py','edge-cases.py','security-regressions.py','succession-regressions.py'])){
     console.log('CONTRACT SUITE '+suite);
     execFileSync('python3',['tests/contracts/'+suite],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}});
   }
+  if(!process.argv.includes('--amendments-only')) {
   run(['run','-d','--name',`${name}-rest`,'--label','rs.fase3=synthetic','--network',`container:${name}`,'-e','PGRST_DB_URI=postgres://authenticator:synthetic-local-only@127.0.0.1:5432/postgres','-e','PGRST_DB_SCHEMAS=public','-e','PGRST_DB_ANON_ROLE=anon','-e','PGRST_JWT_SECRET=fase3-synthetic-jwt-secret-never-production-123456',postgrest]);
   const info=JSON.parse(run(['inspect',name]))[0];const host=Object.values(info.NetworkSettings.Networks)[0].IPAddress;
   ready=false;
@@ -86,6 +97,7 @@ try {
   try { execFileSync(process.execPath,['qa/fase3/journeys.mjs',name,...(baseline?['--baseline']:[])],{stdio:'inherit'}); } catch(error) { journeyError=error; }
   execFileSync('python3',['tests/contracts/fase3-bridge.py'],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}});
   if(journeyError)throw journeyError;
+  }
   }
 }
 } catch(error) {console.error(error.stderr?.toString()||error.message);process.exitCode=1;}
