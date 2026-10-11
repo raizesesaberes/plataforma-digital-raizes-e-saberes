@@ -460,9 +460,9 @@ if(!process.argv.includes('--baseline')) await test('Expo services: real assessm
   assert.equal(mapped.find(x=>x.id===repeat.assignment.id).scorePercent,null);
   assert.equal((await teacher.results(published.id)).summary.completed_students,1);assert.equal(lose.size,0);
   await assert.rejects(()=>api(5).start(published.id,''),/403/);await assert.rejects(()=>api(4).results(published.id),/403/);
-  for(const [title,from,until] of [['SYNTHETIC FUTURE',"now()+interval '1 day'",'null'],['SYNTHETIC EXPIRED',"now()-interval '2 days'","now()-interval '1 day'"]]) {
+  for(const [title,from,until,status] of [['SYNTHETIC FUTURE',"now()+interval '1 day'",'null','AGENDADA'],['SYNTHETIC EXPIRED',"now()-interval '2 days'","now()-interval '1 day'",'AGENDADA'],['SYNTHETIC CANCELLED','now()','null','CANCELADA'],['SYNTHETIC COMPLETED','now()','null','CONCLUIDA']]) {
     const d=await teacher.assemble(id(1),id(3),title,[id(7)]);const a=await teacher.publish(d.assessment.id,id(3));
-    sql(`update public.assessment_assignments set available_from=${from},available_until=${until} where id='${a.id}'`);
+    sql(`update public.assessment_assignments set available_from=${from},available_until=${until},application_status='${status}' where id='${a.id}'`);
     const oldFetch=globalThis.fetch;let writes=0;globalThis.fetch=async(u,o)=>{if(String(u).includes('teacher_schedule_assessment_application_v2'))writes++;return oldFetch(u,o);};
     try{await assert.rejects(()=>teacher.publish(d.assessment.id,id(3)),/assignment_not_current/);assert.equal(writes,0);}finally{globalThis.fetch=oldFetch;}
   }
