@@ -101,6 +101,10 @@
     {
       "name": "browser: persisted student reply, retry, teacher return, reload and school isolation",
       "status": "PASS"
+    },
+    {
+      "name": "security: two teaching years cannot replace an assigned snapshot with other-year content",
+      "status": "PASS"
     }
   ]
 }

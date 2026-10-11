@@ -252,5 +252,55 @@ if(!process.argv.includes('--baseline'))await test('browser: persisted student r
  const {runReplyBrowser}=await import('./replies-browser.mjs');
  await runReplyBrowser({base,token,communicationId:pub.communication_id,deliveryId:delivery.delivery_id});
 });
+await test('security: two teaching years cannot replace an assigned snapshot with other-year content',async()=>{
+ sql(`insert into public.classes(id,school_id,teacher_id,nome,school_year,ano_escolar) values('${id(3,3)}','${id(1)}','${id(2)}','SYNTHETIC YEAR FOUR','4_ANO','4_ANO');
+ insert into public.class_teacher_memberships(class_id,teacher_id) values('${id(3,3)}','${id(2)}');
+ insert into public.question_items(id,code,internal_title,component,stage,school_year,question_type,statement,correct_answer,source_id,author_name,license_id,legal_classification,curation_status,publication_status,workflow_status)
+ select '${id(7,2)}','FASE3-SYNTHETIC-002','Synthetic year four',component,stage,'4',question_type,'Synthetic other-year question',correct_answer,source_id,author_name,license_id,legal_classification,curation_status,publication_status,workflow_status from public.question_items where id='${id(7)}';
+ do $$ declare g uuid; seg uuid; m uuid; ci uuid; begin
+ select id,segment_id into strict g,seg from public.content_grades where code='4_ANO';
+ select id into m from public.content_modules where code='FASE3_SYNTHETIC';
+ update public.contract_products set metadata=jsonb_set(metadata,'{authorized_grade_ids}',(metadata->'authorized_grade_ids')||to_jsonb(g));
+ update public.tenant_product_entitlements set grade_ids=array_append(grade_ids,g),metadata=jsonb_set(metadata,'{category_rules}',(metadata->'category_rules')||jsonb_build_array(jsonb_build_object('module_id',m,'content_type','QUESTION','grade_id',g,'kind','STANDARD'))) where tenant_id=(select id from public.tenants where school_id='${id(1)}');
+ insert into public.content_items(content_type,segment_id,grade_id,title,editorial_status,published_at) values('QUESTION',seg,g,'Synthetic year four','PUBLISHED',now()) returning id into ci;
+ insert into public.content_question_items(content_item_id,question_item_id) values(ci,'${id(7,2)}');end $$;`);
+ const resolved=await rpc(1,'content_resolve_question_details_for_user',{p_context:{school_id:id(1),class_id:id(3),content_type:'QUESTION'}});
+ assert.ok(!resolved.items.some(x=>x.question_item_id===id(7,2)));
+ const draft=await rpc(1,'avalia_plus_create_assessment_from_bank',assembly(id(1),null));
+ const aid=draft.assessment.id;
+ assert.equal(sql(`select class_id is null from public.assessments where id='${aid}'`),'t');
+ const replace={p_assessment_id:aid,p_payload:{questions:[{question_id:id(7,2),points:1}]}};
+ // Both years are authorized to this teacher at school scope before assignment.
+ await rpc(1,'avalia_plus_replace_assessment_items',replace);
+ await rpc(1,'avalia_plus_replace_assessment_items',{...replace,p_payload:{questions:[{question_id:id(7),points:1}]}});
+ const pub=await rpc(1,'teacher_schedule_assessment_application_v2',{p_assessment_id:aid,p_target_type:'class',p_class_id:id(3)});
+ const snapshot=()=>sql(`select jsonb_agg(to_jsonb(q) order by id)::text from public.assessment_questions q where assessment_id='${aid}'`);
+ const original=snapshot();
+ const denial=await mustDeny(1,'avalia_plus_replace_assessment_items',replace);
+ assert.match(denial.data.message,/ASSESSMENT_ASSIGNED_CONTENT_IMMUTABLE/);
+ assert.equal(snapshot(),original);
+ // Even changing only points, deleting, or moving an assigned row must fail.
+ for(const mutation of [`update public.assessment_questions set points=2 where assessment_id='${aid}'`,`delete from public.assessment_questions where assessment_id='${aid}'`]){
+  assert.throws(()=>sql(mutation),/ASSESSMENT_ASSIGNED_CONTENT_IMMUTABLE/);
+ }
+ sql(`update public.assessment_assignments set status='closed' where id='${pub.assignment.id}'`);
+ await mustDeny(1,'avalia_plus_replace_assessment_items',replace);
+ assert.equal(snapshot(),original);
+ // Race publication against replacement on separate HTTP connections. Exactly
+ // one may succeed; a published assignment must still contain year-five items.
+ for(let n=0;n<4;n++){
+  const candidate=await rpc(1,'avalia_plus_create_assessment_from_bank',assembly(id(1),null));
+  const candidateId=candidate.assessment.id;
+  const [publication,replacement]=await Promise.all([
+   request(1,'rpc/teacher_schedule_assessment_application_v2',{p_assessment_id:candidateId,p_target_type:'class',p_class_id:id(3)}),
+   request(1,'rpc/avalia_plus_replace_assessment_items',{...replace,p_assessment_id:candidateId})
+  ]);
+  assert.ok((publication.status<300 && replacement.status===403)||(replacement.status<300 && publication.status===403),JSON.stringify({publication,replacement}));
+  assert.equal(sql(`select count(*) from public.assessment_assignments aa join public.assessment_questions aq on aq.assessment_id=aa.assessment_id where aa.assessment_id='${candidateId}' and aq.question_id='${id(7,2)}'`),'0');
+ }
+ // Previously submitted student's result remains intact.
+ assert.equal((await rpc(1,'teacher_get_assessment_class_results',{p_assignment_id:assignment})).summary.average_percentage,100);
+});
+
 writeFileSync(resolve(process.argv.includes('--baseline')?'qa/fase3/results-baseline.json':'qa/fase3/results.json'),JSON.stringify({baseCommit:execFileSync('git',['merge-base','HEAD','origin/main'],{encoding:'utf8'}).trim(),scope:'Isolated PostgreSQL + PostgREST RPC/data service integration; not browser/native or production validation',results},null,2)+'\n');
 if(results.some(x=>x.status==='FAIL')) process.exitCode=1;
