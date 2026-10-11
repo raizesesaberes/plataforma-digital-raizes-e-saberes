@@ -152,6 +152,15 @@ Deno.serve(async (request) => {
     return json({ ok: false, code: "invalid_session", message: "Sessao invalida." }, 401);
   }
 
+  // Additional category/global-editorial gate. Legacy authorization below remains mandatory.
+  const { data: categoryAllowed, error: categoryError } = await userClient.rpc("content_category_legacy_resource_allowed", {
+    p_kind: "library_book",
+    p_resource_id: bookId,
+  });
+  if (categoryError || categoryAllowed !== true) {
+    return json({ ok: false, code: "category_access_blocked", message: "Conteúdo indisponível para esta escola, faixa ou revisão editorial." }, 403);
+  }
+
   if (assetKind === "manifest" || assetKind === "page" || assetKind === "thumb") {
     const authorizedPages = await getAuthorizedPages(userClient, adminClient, bookId);
     if (!authorizedPages.ok) {

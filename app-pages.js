@@ -34,6 +34,7 @@ const platformRoleHome = {
 const platformNavigationStateKey = "raizes:platform-navigation-stack";
 const platformLegacyPages = new Set(["plataforma", "plataforma.html"]);
 const routeAccessRules = {
+  catalogoCategorias: ["professor", "aluno", "educacao_infantil", "gestor", "coordenador", "admin"],
   admin: ["admin"],
   escolaColetiva: ["secretaria", "professor", "aluno", "educacao_infantil", "gestor", "coordenador", "admin"],
   educacaoInfantil: ["educacao_infantil"],
@@ -61,6 +62,7 @@ const routeAccessRules = {
   gestor: ["gestor", "coordenador", "secretaria", "secretaria_municipal", "admin"],
 };
 const protectedRouteKeyByPage = {
+  "conteudos-categorias.html": "catalogoCategorias",
   "professor.html": "professor",
   "professor-turma.html": "professorTurma",
   "professor-aluno.html": "professorAluno",
@@ -99,8 +101,8 @@ const protectedRouteKeyByPage = {
   "colorir-descobrir": "colorirDescobrir",
   suporte: "suporte",
 };
-const studentAllowedRouteKeys = new Set(["aluno", "alunoAtividades", "alunoAtividade", "atividades", "missao", "arvore", "biblioteca", "jogos", "perfil", "viewer", "motorAtividade", "escolaColetiva", "suporte"]);
-const earlyChildhoodAllowedRouteKeys = new Set(["familia", "educacaoInfantil", "jogos", "biblioteca", "viewer", "colorirDescobrir", "escolaColetiva", "suporte"]);
+const studentAllowedRouteKeys = new Set(["catalogoCategorias","aluno", "alunoAtividades", "alunoAtividade", "atividades", "missao", "arvore", "biblioteca", "jogos", "perfil", "viewer", "motorAtividade", "escolaColetiva", "suporte"]);
+const earlyChildhoodAllowedRouteKeys = new Set(["catalogoCategorias","familia", "educacaoInfantil", "jogos", "biblioteca", "viewer", "colorirDescobrir", "escolaColetiva", "suporte"]);
 const schoolAllowedRouteKeys = new Set(["escolaColetiva", "jogos", "biblioteca", "viewer", "colorirDescobrir", "suporte"]);
 const decodePlatformJwtPayload = (token) => {
   try {
@@ -493,6 +495,7 @@ const ecosystemModules = [
   ["jogos.html", "Jogos"],
   ["perfil.html", "Perfil"],
   ["biblioteca.html", "Biblioteca"],
+  ["conteudos-categorias.html", "Meus conteúdos"],
   ["universidade.html", "Universidade"],
   ["book-viewer.html", "Book Viewer"],
   ["professor.html", "Professor"],
@@ -3596,6 +3599,7 @@ const renderStudentProfilePage = () => {
         </section>
 
         <section class="student-real-profile-actions" aria-label="Acessos do aluno">
+          <a href="conteudos-categorias.html">${premiumIcon("biblioteca")}<span>Meus conteúdos</span></a>
           <a href="aluno-atividades.html">${premiumIcon("atividades")}<span>Atividades</span></a>
           <a href="biblioteca.html?from=aluno">${premiumIcon("biblioteca")}<span>Biblioteca</span></a>
           <a href="jogos.html">${premiumIcon("jogos")}<span>Jogos</span></a>
@@ -3826,6 +3830,7 @@ const teacherWorkspaceNav = [
   ["avaliacoes", "Avalia+", "avalia"],
   ["relatorios", "Relatórios", "doc"],
   ["biblioteca", "Biblioteca", "book"],
+  ["conteudos", "Meus conteúdos", "book", "conteudos-categorias.html"],
   ["acompanhamento", "Acompanhamento", "chart"],
   ["formação", "Formação", "cap"],
 ];
@@ -8340,6 +8345,7 @@ const studentPremiumNav = [
   ["missao.html", "Missão do Dia", "star"],
   ["arvore.html", "Minha Árvore", "tree"],
   ["biblioteca.html", "Biblioteca", "book"],
+  ["conteudos-categorias.html", "Meus conteúdos", "book"],
   ["jogos.html", "Jogar e Descobrir", "game"],
   ["perfil.html", "Perfil", "user"],
   ["familia.html", "Família", "family"],
@@ -14058,28 +14064,11 @@ const adminInvokeSetContentAvailability = async ({ schoolId, contentType, conten
 const adminLoadSchoolContractOverview = async (schoolId, { force = false } = {}) => {
   if (!schoolId) return null;
   if (!force && adminOperationalState.contractOverviews?.[schoolId]) return adminOperationalState.contractOverviews[schoolId];
-  if (adminOperationalState.contractLoading?.[schoolId]) return adminOperationalState.contractLoading[schoolId];
-  await ensureAdminSupabaseConfig();
-  const client = createSupabaseRestClient();
-  const promise = client.request("rpc/admin_get_school_contract_overview", "", {
-    requireAuthenticated: true,
-    allowedRoles: ["admin"],
-    method: "POST",
-    body: JSON.stringify({ p_school_id: schoolId }),
-  }).then(normalizeRpcJson);
-  adminOperationalState.contractLoading[schoolId] = promise;
-  try {
-    const overview = await promise;
-    try { overview.content_catalog = await readAllContentPages((offset, limit) => adminSchoolContentRequest("admin_list_school_content_catalog", { p_school_id: schoolId, p_offset: offset, p_limit: limit })); }
-    catch (error) { overview.content_catalog = { status: "ERROR", error: error.message }; }
-    adminOperationalState.contractOverviews = {
-      ...(adminOperationalState.contractOverviews || {}),
-      [schoolId]: overview,
-    };
-    return overview;
-  } finally {
-    delete adminOperationalState.contractLoading[schoolId];
-  }
+  let overview;
+  try { const category_catalog = await adminSchoolContentRequest("admin_get_school_content_categories", { p_school_id: schoolId }); overview = { status: "PASS", category_catalog }; }
+  catch (error) { overview = { status: "ERROR", category_catalog: { status: "ERROR", error: error.message } }; }
+  adminOperationalState.contractOverviews = { ...(adminOperationalState.contractOverviews || {}), [schoolId]: overview };
+  return overview;
 };
 
 const adminInvokeSetTenantContentModule = async ({ schoolId, entitlementId, moduleCode, enabled, previousEnabled, reason }) => {
@@ -14137,274 +14126,229 @@ const renderAdminContractModule = (module = {}, entitlement = {}) => {
   `;
 };
 
-const readAllContentPages = async (requestPage) => {
-  let first = null;
-  const items = [];
-  for (let offset = 0; ;) {
-    const page = await requestPage(offset, 100);
-    if (page?.status !== "PASS" || !Array.isArray(page.items) || !Number.isInteger(page.total) || page.total < 0) throw new Error("Resposta inválida do catálogo paginado.");
-    if (!first) first = page;
-    else if (page.revision !== first.revision || page.total !== first.total) throw new Error("O catálogo mudou durante a consulta. Recarregue para revisar os dados atuais.");
-    if (page.items.length > 100 || (page.items.length === 0 && offset < page.total)) throw new Error("Consulta incompleta do catálogo.");
-    items.push(...page.items);
-    offset += page.items.length;
-    if (offset >= page.total) {
-      if (offset !== page.total) throw new Error("Contagem inconsistente do catálogo.");
-      return { ...first, items };
-    }
-  }
-};
-
-const adminSchoolContentLabels = {
-  PRIVATE_DELIVERY_AND_MAPPING_PENDING: "Sem concessão nesta etapa: proteção da entrega e mapeamento pendentes",
-  ALLOWED: "Liberado pelo contrato", BLOCKED: "Bloqueado nesta escola",
-  ELIGIBLE_NOT_GRANTED: "Elegível — ainda não liberado", EDITORIAL_PENDING: "Pendência editorial",
-  SOURCE_ID_CONFLICT: "Identificador de origem ambíguo — integração pendente",
-  DELIVERY_REVIEW_PENDING: "Proteção da entrega ainda não validada",
-  CONSUMER_NOT_INTEGRATED: "Integração de consumo pendente", EXTERNAL_BLOCK: "Bloqueio ou embargo externo",
-  GRADE_PENDING: "Ano/faixa escolar não classificado", CONTRACT_OR_AGE_INELIGIBLE: "Contrato ou faixa escolar não elegível",
-  CATALOG_MAPPING_PENDING: "Vínculo ao catálogo comercial pendente",
-};
-
-const renderAdminSchoolContentCatalog = (catalog = {}) => {
-  if (catalog.status !== "PASS") return `<div class="admin-empty-note" role="alert">Não foi possível consultar o catálogo de acessos. ${printableEscape(catalog.error || "Backend de configuração indisponível.")} Nenhuma permissão foi alterada.</div>`;
-  const items = Array.isArray(catalog.items) ? catalog.items : [];
-  const legacy = buildAdminContentCatalog().filter((local) => !items.some((item) => {
-    const type = ({ discovery: "experience", printable: "activity" })[item.resource_kind] || item.resource_kind;
-    return type === local.type && String(item.legacy_id || "") === String(local.id || "");
-  }));
-  return `<form data-school-content-form data-school-id="${printableEscape(catalog.school_id)}" data-revision="${printableEscape(catalog.revision)}">
-    <h4>Catálogo para configuração da escola</h4>
-    <p>Todos os registros editoriais e comerciais consultados aparecem abaixo. Visibilidade administrativa não concede acesso. Cada alteração afeta somente esta escola, inclusive quando o contrato pertence a uma rede.</p>
-    <p>${items.length} registros do banco consultado · ${items.filter((i) => i.state === "ALLOWED").length} com direito ativo · ${items.filter((i) => i.editorial_status === "PUBLISHED").length} publicados no catálogo comercial.</p>
-    ${catalog.feature_enabled ? "" : `<p role="status">O consumo de questões está desativado para esta escola. Salvar a configuração não ativa essa funcionalidade.</p>`}
-    ${catalog.tenant_id ? "" : `<p>Tenant ainda não preparado. Prepará-lo não cria contratos, direitos, usuários nem ativa a escola.</p><button type="button" data-school-content-prepare>Preparar configuração da escola</button>`}
-    ${(catalog.scope_options || []).length ? `<fieldset><legend>Unidades afetadas — seleção explícita</legend><p>A escola atual está incluída. Marque outras unidades somente para uma alteração conjunta da rede.</p>${catalog.scope_options.filter((target, index, all) => all.findIndex((other) => other.school_id === target.school_id) === index).map((target) => `<label><input type="checkbox" data-school-content-target value="${printableEscape(target.school_id)}" /> ${printableEscape(target.school_name)} · ${printableEscape(target.network_name)}</label>`).join("")}</fieldset>` : ""}
-    <label>Buscar no catálogo <input type="search" data-school-content-search placeholder="Título, tipo ou estado" /></label>
-    <div class="admin-table-wrap"><table><thead><tr><th>Conteúdo / origem</th><th>Ano / estado</th><th>Contrato para conceder</th><th>Acesso da escola</th></tr></thead><tbody>
-    ${items.map((item, index) => {
-      const enabled = (item.entitled === true || item.state === "ALLOWED" || item.external_allow === true) && !item.blocked && item.editorial_ready !== false;
-      const candidates = item.candidates || [];
-      const mutable = item.content_type === "QUESTION" && (enabled ? item.can_withdraw : item.can_grant);
-      return `<tr ${index >= 100 ? "hidden" : ""} data-school-content-row data-item-id="${printableEscape(item.id || "")}" data-title="${printableEscape(item.title || "Sem título")}" data-grade="${printableEscape(item.grade_name || "Não classificado")}" data-initial-enabled="${enabled}">
-        <td><strong>${printableEscape(item.title || "Sem título")}</strong><small>${printableEscape(item.content_type)} · ${printableEscape(item.source)}</small></td>
-        <td>${printableEscape(item.grade_name || "Não classificado")}<br>${printableEscape(adminSchoolContentLabels[item.state] || item.state)}${item.external_allow ? "<br>Existe exceção externa de liberação/piloto; revisão separada necessária." : ""}</td>
-        <td>${candidates.length ? `<select data-school-content-contract aria-label="Contrato para ${printableEscape(item.title || "conteúdo")}">${candidates.length > 1 ? '<option value="">Escolha o contrato</option>' : ""}${candidates.map((c) => `<option value="${printableEscape(c.contract_id + ":" + c.product_id)}">${printableEscape(c.contract_ref)} · ${printableEscape(c.product_name)} · até ${printableEscape(c.ends_at || "fim não definido")}</option>`).join("")}</select>` : "Necessário completar vínculo, classificação ou ajustar contrato"}</td>
-        <td><label><input type="checkbox" data-school-content-enabled ${enabled ? "checked" : ""} ${mutable ? "" : "disabled"} aria-label="Acesso a ${printableEscape(item.title || "conteúdo")}" /> ${mutable ? "Selecionar acesso" : "Informativo"}</label>${(catalog.scope_options || []).length ? `<select data-school-content-bulk-action data-actionable="${Boolean(item.content_type === "QUESTION" && item.id && (item.can_grant || item.can_withdraw || (item.blocked && item.question_item_id)))}" disabled aria-label="Ação nas unidades selecionadas para ${printableEscape(item.title || "conteúdo")}"><option value="">Ação na rede: manter</option><option value="grant" ${item.content_type === "QUESTION" && item.can_grant ? "" : "disabled"}>Conceder às unidades selecionadas</option><option value="withdraw" ${item.content_type === "QUESTION" && (item.can_withdraw || (item.blocked && item.question_item_id)) ? "" : "disabled"}>Retirar das unidades selecionadas</option></select>` : ""}</td>
-      </tr>`;
-    }).join("") || '<tr><td colspan="4">Nenhum registro editorial ou comercial retornado. Isto é diferente de uma falha de consulta.</td></tr>'}
-    </tbody></table></div>
-    <div><button type="button" data-school-content-page="-1" disabled>Anterior</button><span data-school-content-page-status>Página 1 · ${items.length} registros consultados</span><button type="button" data-school-content-page="1" ${items.length <= 100 ? "disabled" : ""}>Próxima</button></div>
-    <details><summary>Todos os produtos e módulos cadastrados: ${(catalog.products || []).length}</summary><ul>${(catalog.products || []).map((product) => `<li>${printableEscape(product.name)} · ${printableEscape(product.status)} · ${Number(product.catalog_count || 0)} itens vinculados · ${printableEscape((product.modules || []).join(", ") || "nenhum módulo vinculado")}</li>`).join("")}</ul><p>A presença de um produto não significa que ele foi contratado ou que seus itens estão publicados.</p></details>
-    <details><summary>Acervo carregado no navegador: ${legacy.length} registros locais, sem integração comercial confirmada</summary><p>Esses registros são informativos. Não se inferem publicação, contrato ou correspondência comercial pelo título.</p><ul>${legacy.map((i) => `<li>${printableEscape(i.title)} · ${printableEscape(i.type)} · ${printableEscape(i.segment || "faixa não informada")} — integração pendente</li>`).join("")}</ul></details>
-    <label>Motivo da alteração <textarea data-school-content-reason required minlength="5" maxlength="1000"></textarea></label>
-    <p>Concessões valem dentro da vigência do contrato selecionado e para o ano classificado. Retiradas bloqueiam o item nesta escola até nova revisão. Contratos e permissões de outras escolas não são editados.</p>
-    <button type="button" data-school-content-review>Revisar alterações</button>
-    <button type="button" data-school-content-cancel>Descartar seleção</button>
-    <div data-school-content-preview hidden></div>
-    <button type="submit" data-school-content-save hidden>Confirmar e salvar alterações revisadas</button>
-    <p role="status" data-school-content-status></p>
-  </form>`;
-};
-
-const adminApplySchoolContentPage = (form) => {
-  const query = form.querySelector("[data-school-content-search]").value.trim().toLocaleLowerCase("pt-BR");
-  const rows = Array.from(form.querySelectorAll("[data-school-content-row]"));
-  const matches = rows.filter((row) => row.textContent.toLocaleLowerCase("pt-BR").includes(query));
-  const pages = Math.max(1, Math.ceil(matches.length / 100));
-  const page = Math.min(pages - 1, Math.max(0, Number(form.dataset.page || 0)));
-  form.dataset.page = String(page);
-  rows.forEach((row) => { row.hidden = true; });
-  matches.slice(page * 100, (page + 1) * 100).forEach((row) => { row.hidden = false; });
-  form.querySelector("[data-school-content-page-status]").textContent = `Página ${page + 1} de ${pages} · ${matches.length} resultados em ${rows.length} registros consultados`;
-  form.querySelector('[data-school-content-page="-1"]').disabled = page === 0;
-  form.querySelector('[data-school-content-page="1"]').disabled = page + 1 >= pages;
-};
-
-const adminCollectSchoolContentChanges = (form) => Array.from(form.querySelectorAll("[data-school-content-row]")).flatMap((row) => {
-  const input = row.querySelector("[data-school-content-enabled]");
-  const bulkAction = form.querySelector("[data-school-content-target]:checked") ? row.querySelector("[data-school-content-bulk-action]")?.value : "";
-  const enabled = bulkAction ? bulkAction === "grant" : input?.checked;
-  if (!input || (!bulkAction && (input.disabled || enabled === (row.dataset.initialEnabled === "true")))) return [];
-  const [contractId, productId] = (row.querySelector("[data-school-content-contract]")?.value || "").split(":");
-  if (enabled && (!contractId || !productId)) throw new Error(`Escolha o contrato para ${row.dataset.title}.`);
-  return [{ content_item_id: row.dataset.itemId, enabled, ...(enabled ? { contract_id: contractId, product_id: productId } : {}) }];
-});
-
+// One taxonomy shared by contract configuration, root classification and consumer listing.
+const categoryTypeLabels = { QUESTION: 'Questões', VIDEO: 'Vídeos', GAME: 'Jogos', INTERACTION: 'Experiências', BOOK: 'Livros', BOOK_PAGE: 'Páginas', ACTIVITY: 'Atividades', PRINTABLE: 'Imprimíveis', ASSESSMENT_TEMPLATE: 'Avaliações' };
+const categoryEscape = (value) => printableEscape(value ?? '');
+const categoryOptions = (rows, valueKey = 'id', labelKey = 'name', selected = '') => rows.map((row) => `<option value="${categoryEscape(row[valueKey])}" ${row[valueKey] === selected ? 'selected' : ''}>${categoryEscape(row[labelKey])}</option>`).join('');
 const adminSchoolContentRequest = async (rpc, body) => {
   await ensureAdminSupabaseConfig();
-  return normalizeRpcJson(await createSupabaseRestClient().request(`rpc/${rpc}`, "", {
-    requireAuthenticated: true, allowedRoles: ["admin"], method: "POST", body: JSON.stringify(body),
-  }));
+  const result = normalizeRpcJson(await createSupabaseRestClient().request(`rpc/${rpc}`, '', { method: 'POST', requireAuthenticated: true, allowedRoles: ['admin'], body: JSON.stringify(body) }));
+  if (!result || result.status !== 'PASS') throw new Error(result?.status || 'Resposta indisponível. Nenhuma alteração confirmada.');
+  return result;
 };
-
-const adminInvalidateSchoolContentReview = (form) => {
-  delete form.dataset.reviewed;
-  delete form.dataset.reviewedInput;
-  form.querySelector("[data-school-content-preview]").hidden = true;
-  form.querySelector("[data-school-content-save]").hidden = true;
+const categoryModuleChoices = (contract) => contract.modules.flatMap((m)=>m.content_types.map((type)=>({...m,content_type:type,choice_id:m.id+'|'+type,name:m.content_types.length>1?m.name+' — '+(categoryTypeLabels[type]||type):m.name})));
+const categoryContract = (form) => JSON.parse(form.dataset.categoryCatalog).contracts[Number(form.querySelector('[data-category-contract]').value)] || null;
+const categorySubjectOptions = (catalog, contract, selected) => `<option value="" ${!selected ? 'selected' : ''} ${Array.isArray(contract.authorized_subject_ids) ? 'disabled' : ''}>Todos os temas / multidisciplinar</option>${categoryOptions(catalog.subjects.filter((s) => !Array.isArray(contract.authorized_subject_ids) || contract.authorized_subject_ids.includes(s.id)), 'id', 'name', selected)}`;
+const categoryRuleTree = (catalog, contract) => {
+  if (!contract) return '<p>Nenhum contrato ativo elegível. Nenhuma categoria pode ser concedida.</p>';
+  const rules = contract.rules || [];
+  return categoryModuleChoices(contract).map((module) => `<fieldset class="category-module"><legend>${categoryEscape(module.name)}</legend>
+    <label><input type="checkbox" data-category-module-toggle="${categoryEscape(module.choice_id)}"> Selecionar faixas autorizadas deste módulo</label>
+    <p>Todos os conteúdos publicados nesta categoria, atuais e futuros.</p>
+    ${[...new Set(catalog.taxonomy.map((g) => g.stage))].map((stage) => {
+      const grades = catalog.taxonomy.filter((g) => g.stage === stage);
+      return `<details open><summary>${categoryEscape(grades[0].stage_name)}</summary>${grades.map((g) => {
+        const allowed = contract.authorized_grade_ids.includes(g.grade_id) && (!g.institutional || contract.institutional_training_authorized === true);
+        const rule = rules.find((r) => r.kind === 'STANDARD' && r.module_id === module.id && r.content_type === module.content_type && r.grade_id === g.grade_id);
+        return `<div class="category-grade"><label><input type="checkbox" data-category-grade data-module-id="${categoryEscape(module.id)}" data-content-type="${categoryEscape(module.content_type)}" value="${categoryEscape(g.grade_id)}" ${rule ? 'checked' : ''} ${allowed ? '' : 'disabled'}> ${categoryEscape(g.grade_name)}</label>
+        ${allowed ? `<select data-category-subject aria-label="Tema opcional de ${categoryEscape(module.name)} — ${categoryEscape(g.grade_name)}" ${rule ? '' : 'disabled'}>${categorySubjectOptions(catalog, contract, rule?.subject_id)}</select>` : `<small>${g.institutional ? 'Exige autorização institucional separada' : 'Fora das faixas autorizadas no contrato'}</small>`}</div>`;
+      }).join('')}</details>`;
+    }).join('')}</fieldset>`).join('');
 };
+const categorySampleRow = (catalog, contract, rule = {}) => `<fieldset data-category-sample><legend>Amostra temporária</legend>
+  <label>Módulo<select data-sample="module_id">${categoryOptions(categoryModuleChoices(contract), 'choice_id', 'name', rule.module_id+'|'+rule.content_type)}</select></label>
+  <label>Conteúdos de<select data-sample="grade_id">${categoryOptions(catalog.taxonomy.filter((g) => contract.authorized_sample_grade_ids.includes(g.grade_id) && !g.institutional), 'grade_id', 'grade_name', rule.grade_id)}</select></label>
+  <label>Para alunos/turmas de<select data-sample="audience_grade_id">${categoryOptions(catalog.taxonomy.filter((g) => contract.authorized_grade_ids.includes(g.grade_id) && !g.institutional), 'grade_id', 'grade_name', rule.audience_grade_id)}</select></label>
+  <label>Tema<select data-sample="subject_id">${categorySubjectOptions(catalog, contract, rule.subject_id)}</select></label>
+  <label>Início (UTC)<input type="datetime-local" data-sample="starts_at" value="${categoryEscape(rule.starts_at?.slice(0, 16) || new Date().toISOString().slice(0, 16))}" required></label>
+  <label>Fim obrigatório (UTC)<input type="datetime-local" data-sample="ends_at" value="${categoryEscape(rule.ends_at?.slice(0, 16) || '')}" required></label>
+  <button type="button" data-category-remove-sample>Remover amostra</button></fieldset>`;
+const renderCategoryRoot = (catalog) => `<section class="category-root" data-category-root data-taxonomy="${categoryEscape(JSON.stringify(catalog))}">
+ <h3>2. Banco Raízes — cadastro e exceções globais</h3><p>Classifique uma vez no cadastro. Suspender um item o retira do catálogo de todas as escolas, sem alterar contratos. Arquivos com links públicos exigem entrega protegida; a suspensão do catálogo não apaga links já conhecidos.</p>
+ <form data-root-search><label>Tipo<select name="content_type"><option value="">Todos os tipos</option>${Object.entries(categoryTypeLabels).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></label>
+ <label>Faixa<select name="grade_id"><option value="">Todas as faixas</option>${categoryOptions(catalog.taxonomy,'grade_id','grade_name')}</select></label>
+ <label>Tema<select name="subject_id"><option value="">Todos os temas</option>${categoryOptions(catalog.subjects)}</select></label>
+ <label>Buscar conteúdo<input name="query" type="search" maxlength="200" placeholder="Título do conteúdo"></label><button type="submit">Buscar no banco Raízes</button><button type="button" data-root-new>Novo cadastro</button></form>
+ <p data-root-status role="status" aria-live="polite">Busque um item para classificar ou revisar globalmente.</p><div data-root-results></div><div data-root-pagination></div><div data-root-editor></div>
+ </section>`;
+const renderAdminSchoolContentCatalog = (catalog = {}) => {
+ if (catalog.status !== 'PASS' || !Array.isArray(catalog.contracts) || !Array.isArray(catalog.taxonomy)) return `<div role="alert">Não foi possível carregar as categorias. ${categoryEscape(catalog.error || 'Tente novamente.')} Nenhuma alteração foi feita.</div>`;
+ const contract = catalog.contracts[0];
+ return `<div class="category-workspace"><style>
+ .category-workspace{display:grid;gap:24px;color:#173b30}.category-workspace fieldset{border:1px solid #d2e2da;border-radius:12px;padding:16px;margin:12px 0}.category-workspace legend{font-weight:700}.category-workspace label{display:inline-flex;align-items:center;gap:8px;margin:6px}.category-workspace select,.category-workspace input:not([type=checkbox]),.category-workspace textarea{border:1px solid #b9cfc4;border-radius:7px;padding:9px;max-width:100%}.category-workspace button{border:1px solid #14603c;border-radius:8px;padding:10px 14px;background:#14603c;color:white;margin:5px;cursor:pointer}.category-workspace button:disabled{opacity:.45;cursor:not-allowed}.category-workspace details{padding:8px}.category-grade{display:flex;flex-wrap:wrap;gap:12px;align-items:center}.category-grade label{min-width:190px}.category-workspace small{color:#50615a}.category-workspace [role=alert]{color:#962e24}.category-workspace [data-category-review],.category-root{background:#f5f9f6;border-radius:12px;padding:16px}.category-workspace table{width:100%;text-align:left;border-collapse:collapse}.category-workspace td,.category-workspace th{padding:8px;border-bottom:1px solid #d2e2da}.category-workspace textarea{display:block;width:min(100%,650px)}
+ </style><section><h3>1. Categorias do contrato — ${categoryEscape(catalog.school_name)}</h3>
+ <p>Selecione módulo, etapa/ano e, se necessário, tema. A regra inclui automaticamente conteúdos atuais e futuros publicados nessa classificação. A quantidade do acervo não limita a configuração.</p>
+ <form data-category-config data-category-catalog="${categoryEscape(JSON.stringify(catalog))}" data-school-id="${categoryEscape(catalog.school_id)}">
+ <label>Contrato / produto<select data-category-contract ${contract ? '' : 'disabled'}>${catalog.contracts.map((c,i)=>`<option value="${i}">${categoryEscape(c.contract_ref)} — ${categoryEscape(c.product_name)}</option>`).join('')}</select></label>
+ <fieldset><legend>Escolas que receberão esta configuração</legend><label><input type="checkbox" checked disabled> ${categoryEscape(catalog.school_name)}</label>${catalog.schools.map((s)=>`<label><input type="checkbox" data-category-school value="${categoryEscape(s.id)}"> ${categoryEscape(s.name)}</label>`).join('')}<p>Escolas adicionais precisam ser escolhidas explicitamente e pertencer ao contrato selecionado.</p></fieldset>
+ <label><input type="checkbox" data-category-adopt ${catalog.dynamic_enabled ? 'checked' : ''}> Confirmo o uso de categorias nas escolas escolhidas. Registros antigos permanecem no histórico; bloqueios continuam valendo.</label>
+ <div data-category-tree>${categoryRuleTree(catalog,contract)}</div>
+ <div data-category-samples>${contract ? contract.rules.filter((r)=>r.kind==='SAMPLE').map((r)=>categorySampleRow(catalog,contract,r)).join('') : ''}</div>
+ <button type="button" data-category-add-sample ${contract?.authorized_sample_grade_ids?.length ? '' : 'disabled'}>Adicionar amostra autorizada pelo contrato</button>
+ <label>Motivo<textarea data-category-reason minlength="5" maxlength="500" required></textarea></label>
+ <button type="button" data-category-preview ${contract ? '' : 'disabled'}>Revisar alterações</button><button type="button" data-category-save disabled>Confirmar configuração</button>
+ <p data-category-status role="status" aria-live="polite"></p><div data-category-review hidden></div><details><summary>Auditoria recente desta escola</summary><ul>${(catalog.audit||[]).map(e=>`<li>${categoryEscape(e.created_at)} · ${categoryEscape(e.reason||e.event_type)}</li>`).join('')}</ul></details>
+ </form></section>${renderCategoryRoot(catalog)}<section data-checkpoint-operations><h3>Operação deste checkpoint</h3><p>Pausar gravações preserva dados, auditoria e restrições de leitura.</p><button type="button" data-checkpoint-read>Consultar fingerprint e uso</button><p data-checkpoint-status role="status"></p><div data-checkpoint-controls></div></section></div>`;
+};
+const collectCategoryConfig = (form) => {
+ const c=categoryContract(form);if(!c)throw Error('Selecione um contrato ativo.');
+ const rules=Array.from(form.querySelectorAll('[data-category-grade]:checked')).map((input)=>({module_id:input.dataset.moduleId,content_type:input.dataset.contentType,grade_id:input.value,subject_id:input.closest('.category-grade').querySelector('[data-category-subject]').value || null,kind:'STANDARD'}));
+ form.querySelectorAll('[data-category-sample]').forEach((row)=>{
+  const r={kind:'SAMPLE'};row.querySelectorAll('[data-sample]').forEach((input)=>r[input.dataset.sample]=input.value || null);
+  [r.module_id,r.content_type]=String(r.module_id||'').split('|');if(!r.starts_at || !r.ends_at)throw Error('Informe início e fim da amostra.');r.starts_at=new Date(r.starts_at+'Z').toISOString();r.ends_at=new Date(r.ends_at+'Z').toISOString();rules.push(r);
+ });
+ return {school_ids:[form.dataset.schoolId,...Array.from(form.querySelectorAll('[data-category-school]:checked')).map((e)=>e.value)],contract_id:c.contract_id,product_id:c.product_id,rules,reason:form.querySelector('[data-category-reason]').value.trim(),adopt_dynamic:form.querySelector('[data-category-adopt]').checked};
+};
+const invalidateCategoryReview = (form) => {
+ form._categoryGeneration=(form._categoryGeneration||0)+1;delete form._categoryReview;delete form._categoryRequest;
+ form.querySelector('[data-category-save]').disabled=true;form.querySelector('[data-category-review]').hidden=true;
+};
+const renderCategoryReview = (review) => `<h4>Confira antes de confirmar</h4><p><strong>${categoryEscape(review.contract.reference)} — ${categoryEscape(review.product.name)}</strong></p>
+ <p>Escolas: ${review.schools.map((s)=>categoryEscape(s.name)).join(', ')}. Vigência contratual: ${categoryEscape(review.contract.starts_at)} a ${categoryEscape(review.contract.ends_at || 'sem data final')}.</p>
+ ${review.rules.length ? `<ul>${review.rules.map((r)=>`<li>${categoryEscape(categoryTypeLabels[r.content_type] || r.module_name)} → ${categoryEscape(r.stage_name)} → ${categoryEscape(r.grade_name)} → ${categoryEscape(r.subject_name)}${r.kind==='SAMPLE' ? ` · Amostra para ${categoryEscape(r.audience_grade_name)}, ${categoryEscape(r.starts_at)} até ${categoryEscape(r.ends_at)}` : ' · Atuais e futuros'}</li>`).join('')}</ul>` : '<p><strong>Retirar todas as categorias deste contrato/produto nas escolas escolhidas.</strong></p>'}
+ <p>${categoryEscape(review.effects.legacy_policy)}</p><p>Conteúdos individuais não serão duplicados nem receberão concessões por item.</p>`;
+const renderRootEditor = (catalog,item=null) => `<form data-root-classification data-item-id="${categoryEscape(item?.id || '')}" data-revision="${categoryEscape(item?.revision || '')}"><h4>${item ? categoryEscape(item.title) : 'Novo cadastro no banco Raízes'}</h4>
+ <p>Classificação única, reutilizada por todas as escolas. Salvar uma alteração em conteúdo publicado o coloca em revisão.</p>
+ <label>Título<input data-root-field="title" value="${categoryEscape(item?.title || '')}" ${item ? 'readonly' : 'required'} maxlength="300"></label>
+ <label>Tipo<select data-root-field="content_type" ${item ? 'disabled' : ''}>${Object.entries(categoryTypeLabels).filter(([k])=>item || k!=='QUESTION').map(([k,v])=>`<option value="${k}" ${item?.content_type===k?'selected':''}>${v}</option>`).join('')}</select></label>${item ? '' : '<small>Questões usam o cadastro editorial existente; aqui você também pode classificar as questões já cadastradas.</small>'}
+ <label>Abrangência<select data-root-field="category_mode"><option value="GRADE" ${!item || item.category_mode==='GRADE'?'selected':''}>Etapa/ano específico</option><option value="TRANSVERSAL" ${item?.category_mode==='TRANSVERSAL'?'selected':''}>Transversal — faixas explícitas</option><option value="INSTITUTIONAL" ${item?.category_mode==='INSTITUTIONAL'?'selected':''}>Universidade/capacitação institucional</option></select></label>
+ <label>Etapa / ano<select data-root-field="grade_id"><option value="">Selecione</option>${categoryOptions(catalog.taxonomy,'grade_id','grade_name',item?.grade_id)}</select></label>
+ <fieldset data-root-transversal><legend>Faixas para conteúdo transversal</legend>${catalog.taxonomy.filter((g)=>!g.institutional).map((g)=>`<label><input type="checkbox" data-root-cross value="${categoryEscape(g.grade_id)}" ${item?.category_grade_ids?.includes(g.grade_id)?'checked':''}> ${categoryEscape(g.grade_name)}</label>`).join('')}<p>“Livre” não dispensa módulo contratado, faixa autorizada nem publicação.</p></fieldset>
+ <label>Tema<select data-root-field="subject_id"><option value="">Sem tema único</option>${categoryOptions(catalog.subjects,'id','name',item?.subject_id)}</select></label><label><input type="checkbox" data-root-field="multidisciplinary" ${item?.multidisciplinary?'checked':''}> Multidisciplinar</label>
+ ${!item || item.content_type!=='QUESTION' ? `<fieldset><legend>Adaptador protegido existente (opcional)</legend><label>Tipo<select data-root-field="delivery_kind"><option value="">Sem adaptador protegido</option>${categoryOptions([{id:'library_book',name:'Leitor de livro privado'},{id:'game',name:'Jogo do app'},{id:'activity',name:'Atividade do app'},{id:'discovery',name:'Descoberta do app'}],'id','name',item?.delivery_kind)}</select></label><label>ID canônico do recurso<input data-root-field="delivery_resource_id" value="${categoryEscape(item?.delivery_resource_id||'')}" placeholder="UUID existente"></label><p>Vincula o recurso existente; não recebe URLs públicas nem cria um novo motor.</p></fieldset>` : ''}
+ <label>Motivo<textarea data-root-reason required minlength="5" maxlength="500"></textarea></label><button type="submit">Revisar cadastro e categoria</button><div data-root-classification-review hidden></div><button type="button" data-root-classification-confirm hidden>Confirmar cadastro e categoria</button>
+ ${item ? `<p>Estado: ${categoryEscape(item.editorial_status)}. O item mantém sua identificação.</p><label><input type="checkbox" data-root-review-completed> Concluí a revisão editorial para publicação</label><button type="button" data-root-action="SUSPEND" ${item.editorial_status==='PUBLISHED'?'':'disabled'}>Preparar suspensão global</button><button type="button" data-root-action="${item.published_at?'REPUBLISH':'PUBLISH'}" ${['DRAFT','IN_REVIEW','APPROVED'].includes(item.editorial_status)?'':'disabled'}>Preparar ${item.published_at?'republicação':'publicação'}</button><div data-root-review hidden></div><button type="button" data-root-confirm hidden>Confirmar ação global</button>` : ''}${item ? `<details><summary>Auditoria editorial recente</summary><ul>${(catalog.history||[]).map(e=>`<li>${categoryEscape(e.created_at)} · ${categoryEscape(e.event_type)} · ${categoryEscape(e.reason||'')}</li>`).join('')}</ul></details>`:''}</form>`;
+const adminBindSchoolContent = (workspace,refresh) => {
+ if(!workspace || workspace.dataset.categoriesBound)return;workspace.dataset.categoriesBound='true';
+ const showError=(node,error)=>{node.textContent=error.message || 'Falha na consulta. Tente novamente.';node.setAttribute('role','alert');};
+ const rootCatalog=(root)=>JSON.parse(root.dataset.taxonomy);
+ const loadRoot=async(root,id)=>{const token=(root._editorGeneration||0)+1;root._editorGeneration=token;const result=await adminSchoolContentRequest('admin_get_content_category',{p_content_item_id:id});if(token!==root._editorGeneration)return;root.querySelector('[data-root-editor]').innerHTML=renderRootEditor({...rootCatalog(root),history:result.history},result.item);};
+ const searchRoot=async(root,filter,offset=0)=>{
+  const token=(root._searchGeneration||0)+1;root._searchGeneration=token;const status=root.querySelector('[data-root-status]');status.setAttribute('role','status');status.textContent='Consultando banco Raízes...';
+  try{const r=await adminSchoolContentRequest('admin_search_root_content',{p_filter:filter,p_offset:offset,p_limit:25});if(token!==root._searchGeneration)return;
+   if(!Array.isArray(r.items)||!Number.isInteger(r.total))throw Error('Resposta de busca inválida.');root._search={filter,offset,total:r.total};
+   root.querySelector('[data-root-results]').innerHTML=r.items.length?`<table><thead><tr><th>Conteúdo</th><th>Tipo</th><th>Publicação</th><th>Ação</th></tr></thead><tbody>${r.items.map(i=>`<tr><td>${categoryEscape(i.title)}</td><td>${categoryEscape(categoryTypeLabels[i.content_type]||i.content_type)}</td><td>${categoryEscape(i.editorial_status)}</td><td><button type="button" data-root-edit="${categoryEscape(i.id)}">Classificar / revisar</button></td></tr>`).join('')}</tbody></table>`:'<p>0 conteúdos — Conteúdos disponíveis em breve</p>';
+   root.querySelector('[data-root-pagination]').innerHTML=`<button type="button" data-root-page="-1" ${offset===0?'disabled':''}>Anterior</button><button type="button" data-root-page="1" ${offset+25>=r.total?'disabled':''}>Próxima</button>`;status.textContent=`${r.total} conteúdos encontrados · página ${Math.floor(offset/25)+1}`;
+  }catch(error){if(token===root._searchGeneration){root.querySelector('[data-root-results]').textContent='';root.querySelector('[data-root-pagination]').textContent='';showError(status,error);}}
+ };
+ const collectRootDocument=editor=>{const doc={};editor.querySelectorAll('[data-root-field]').forEach(i=>doc[i.dataset.rootField]=i.type==='checkbox'?i.checked:(i.value||null));doc.category_grade_ids=Array.from(editor.querySelectorAll('[data-root-cross]:checked')).map(i=>i.value);if(doc.category_mode==='TRANSVERSAL')doc.grade_id=null;else doc.category_grade_ids=[];return doc;};
 
-// Delegated handlers survive the existing workspace render cycle.
-const adminBindSchoolContent = (workspace, refresh) => {
-  workspace.addEventListener("input", (event) => {
-    const form = event.target.closest?.("[data-school-content-form]");
-    if (!form) return;
-    if (event.target.matches("[data-school-content-search]")) {
-      form.dataset.page = "0"; adminApplySchoolContentPage(form);
-      return;
-    }
-    adminInvalidateSchoolContentReview(form);
-  });
-  workspace.addEventListener("change", (event) => {
-    const form = event.target.closest?.("[data-school-content-form]");
-    if (form) {
-      const networkSelected = Boolean(form.querySelector("[data-school-content-target]:checked"));
-      form.querySelectorAll("[data-school-content-bulk-action]").forEach((select) => { select.disabled = !networkSelected || select.dataset.actionable !== "true"; });
-      adminInvalidateSchoolContentReview(form);
-    }
-  });
-  workspace.addEventListener("click", async (event) => {
-    const form = event.target.closest?.("[data-school-content-form]");
-    if (!form) return;
-    const status = form.querySelector("[data-school-content-status]");
-    const pageButton = event.target.closest("[data-school-content-page]");
-    if (pageButton) { form.dataset.page = String(Number(form.dataset.page || 0) + Number(pageButton.dataset.schoolContentPage)); adminApplySchoolContentPage(form); return; }
-    if (event.target.closest("[data-school-content-cancel]")) {
-      form.reset(); form.dataset.page = "0"; adminApplySchoolContentPage(form); form.querySelectorAll("[data-school-content-bulk-action]").forEach((select) => { select.disabled = true; }); adminInvalidateSchoolContentReview(form); status.textContent = "Seleção descartada; nenhuma permissão foi alterada."; return;
-    }
-    if (event.target.closest("[data-school-content-review]")) {
-      try {
-        const changes = adminCollectSchoolContentChanges(form);
-        const reason = form.querySelector("[data-school-content-reason]").value.trim();
-        if (!changes.length) throw new Error("Selecione ao menos uma alteração.");
-        if (reason.length < 5) throw new Error("Informe o motivo com pelo menos cinco caracteres.");
-        const payload = { p_school_ids: [form.dataset.schoolId, ...Array.from(form.querySelectorAll("[data-school-content-target]:checked")).map((input) => input.value)], p_changes: changes, p_reason: reason };
-        const reviewButton = form.querySelector("[data-school-content-review]");
-        reviewButton.disabled = true;
-        let reviewed;
-        try { reviewed = await adminSchoolContentRequest("admin_preview_school_content_access", payload); }
-        finally { reviewButton.disabled = false; }
-        // Inputs may have changed while the read-only preview request was in flight.
-        const latest = { p_school_ids: [form.dataset.schoolId, ...Array.from(form.querySelectorAll("[data-school-content-target]:checked")).map((input) => input.value)], p_changes: adminCollectSchoolContentChanges(form), p_reason: form.querySelector("[data-school-content-reason]").value.trim() };
-        if (JSON.stringify(latest) !== JSON.stringify(payload)) throw new Error("A seleção mudou. Revise novamente.");
-        form.dataset.reviewedInput = JSON.stringify(payload);
-        form.dataset.reviewed = JSON.stringify(reviewed);
-        const preview = form.querySelector("[data-school-content-preview]");
-        preview.innerHTML = `<h5>Revisão das unidades selecionadas</h5><p>${printableEscape(reviewed.reason)}</p>${reviewed.schools.map((school) => `<article><strong>${printableEscape(school.school_name)}</strong><ul>${school.changes.map((c) => {
-          const row = school.before.find((i) => i.id === c.content_item_id);
-          const contract = (row.candidates || []).find((candidate) => candidate.contract_id === c.contract_id && candidate.product_id === c.product_id);
-          return `<li>${printableEscape(adminSchoolContentLabels[row.state] || row.state)} → ${c.enabled ? "Conceder" : "Retirar"}: ${printableEscape(row.title)} · ${printableEscape(row.grade_name || "Não classificado")} · ${c.enabled ? printableEscape(`${contract.contract_ref} · ${contract.product_name} · até ${contract.ends_at || "fim não definido"}`) : "bloqueio sem data de término, até revisão"}</li>`;
-        }).join("")}</ul></article>`).join("")}<p>Somente as unidades acima serão alteradas. O lote inteiro será revalidado no servidor ao salvar.</p>`;
-        preview.hidden = false; form.querySelector("[data-school-content-save]").hidden = false; status.textContent = "Revise a lista antes de confirmar.";
-      } catch (error) { status.textContent = error.message; }
-    }
-    const prepare = event.target.closest("[data-school-content-prepare]");
-    if (prepare) {
-      const reason = form.querySelector("[data-school-content-reason]").value.trim();
-      if (reason.length < 5) { status.textContent = "Informe o motivo da preparação."; return; }
-      if (!window.confirm("Preparar somente o tenant desta escola, sem criar direitos, ativar a escola ou alterar usuários?")) return;
-      prepare.disabled = true;
-      try { await adminSchoolContentRequest("admin_prepare_school_content", { p_school_id: form.dataset.schoolId, p_reason: reason }); await refresh(form.dataset.schoolId); }
-      catch (error) { status.textContent = error.message || "Falha ao preparar a escola."; prepare.disabled = false; }
-    }
-  });
-  workspace.addEventListener("submit", async (event) => {
-    const form = event.target.closest?.("[data-school-content-form]");
-    if (!form) return;
-    event.preventDefault();
-    const status = form.querySelector("[data-school-content-status]");
-    const button = form.querySelector("[data-school-content-save]");
-    if (!form.dataset.reviewed || button.disabled) { status.textContent = "Revise as alterações antes de salvar."; return; }
-    const payload = JSON.parse(form.dataset.reviewed);
-    const current = { p_school_ids: [form.dataset.schoolId, ...Array.from(form.querySelectorAll("[data-school-content-target]:checked")).map((input) => input.value)], p_changes: adminCollectSchoolContentChanges(form), p_reason: form.querySelector("[data-school-content-reason]").value.trim() };
-    if (JSON.stringify(current) !== form.dataset.reviewedInput) { adminInvalidateSchoolContentReview(form); status.textContent = "A seleção mudou. Revise novamente."; return; }
-    button.disabled = true;
-    try {
-      await adminSchoolContentRequest("admin_save_school_content_batch", { p_review: payload });
-      if (typeof adminOperationalState !== "undefined") payload.schools.forEach((school) => { delete adminOperationalState.contractOverviews[school.school_id]; });
-      status.textContent = "Alterações salvas. Atualizando a consulta...";
-      await refresh(form.dataset.schoolId);
-    } catch (error) { status.textContent = `${error.message || "Falha ao salvar"}. Recarregue a consulta antes de uma nova revisão.`; adminInvalidateSchoolContentReview(form); }
-    finally { button.disabled = false; }
-  });
+ workspace.addEventListener('input',(event)=>{
+  const form=event.target.closest('[data-category-config]');if(form)invalidateCategoryReview(form);
+  const editor=event.target.closest('[data-root-classification]');if(editor){delete editor._review;delete editor._classificationReview;editor.querySelectorAll('[data-root-confirm],[data-root-classification-confirm],[data-root-classification-review]').forEach(n=>n.hidden=true);}
+  const op=event.target.closest('[data-checkpoint-operations]');if(op){delete op._review;op.querySelector('[data-checkpoint-confirm]')?.setAttribute('hidden','');}
+  const search=event.target.closest('[data-root-search]');if(search){const root=search.closest('[data-category-root]');root._searchGeneration=(root._searchGeneration||0)+1;root.querySelector('[data-root-status]').textContent='Filtros alterados. Faça uma nova busca.';root.querySelector('[data-root-results]').textContent='';root.querySelector('[data-root-pagination]').textContent='';delete root._search;}
+ });
+ workspace.addEventListener('change',(event)=>{
+  const form=event.target.closest('[data-category-config]');if(!form)return;invalidateCategoryReview(form);
+  const catalog=JSON.parse(form.dataset.categoryCatalog),contract=categoryContract(form);
+  if(event.target.matches('[data-category-contract]')){form.querySelector('[data-category-tree]').innerHTML=categoryRuleTree(catalog,contract);form.querySelector('[data-category-samples]').innerHTML=contract.rules.filter((r)=>r.kind==='SAMPLE').map((r)=>categorySampleRow(catalog,contract,r)).join('');form.querySelector('[data-category-add-sample]').disabled=!contract.authorized_sample_grade_ids.length;}
+  if(event.target.matches('[data-category-module-toggle]'))form.querySelectorAll('[data-category-grade]').forEach((i)=>{if((i.dataset.moduleId+'|'+i.dataset.contentType)===event.target.dataset.categoryModuleToggle && !i.disabled){i.checked=event.target.checked;i.closest('.category-grade').querySelector('select').disabled=!i.checked;}});
+  if(event.target.matches('[data-category-grade]'))event.target.closest('.category-grade').querySelector('select').disabled=!event.target.checked;
+ });
+ workspace.addEventListener('click',async(event)=>{
+  const button=event.target.closest('button');if(!button)return;
+  const form=button.closest('[data-category-config]');
+  if(form){const status=form.querySelector('[data-category-status]');try{
+   if(button.matches('[data-category-add-sample]')){invalidateCategoryReview(form);form.querySelector('[data-category-samples]').insertAdjacentHTML('beforeend',categorySampleRow(JSON.parse(form.dataset.categoryCatalog),categoryContract(form)));return;}
+   if(button.matches('[data-category-remove-sample]')){button.closest('[data-category-sample]').remove();invalidateCategoryReview(form);return;}
+   if(button.matches('[data-category-preview]')){
+    const config=collectCategoryConfig(form);if(config.reason.length<5)throw Error('Informe um motivo com ao menos 5 caracteres.');invalidateCategoryReview(form);const generation=form._categoryGeneration;button.disabled=true;status.textContent='Consultando contrato e escopo...';
+    const review=await adminSchoolContentRequest('admin_preview_school_content_categories',{p_config:config});
+    if(generation!==form._categoryGeneration || JSON.stringify(config)!==JSON.stringify(collectCategoryConfig(form))){status.textContent='A seleção mudou. Revise novamente.';return;}
+    if(!review.revision || !Array.isArray(review.rules) || !Array.isArray(review.schools) || !review.config)throw Error('Revisão incompleta. Nenhuma alteração feita.');
+    form._categoryReview={review,input:JSON.stringify(config)};form._categoryRequest=crypto.randomUUID();const panel=form.querySelector('[data-category-review]');panel.innerHTML=renderCategoryReview(review);panel.hidden=false;form.querySelector('[data-category-save]').disabled=false;status.textContent='Revisão pronta. Confira escolas, faixas e vigências.';
+   }
+   if(button.matches('[data-category-save]')){
+    const saved=form._categoryReview;if(!saved || saved.input!==JSON.stringify(collectCategoryConfig(form)))throw Error('A seleção mudou. Revise novamente.');button.disabled=true;status.textContent='Salvando configuração...';
+    await adminSchoolContentRequest('admin_save_school_content_categories',{p_review:saved.review,p_request_id:form._categoryRequest});status.textContent='Configuração salva. Novos conteúdos classificados herdarão o acesso automaticamente.';await refresh(form.dataset.schoolId);
+   }
+  }catch(error){showError(status,error);}finally{if(button.isConnected)button.disabled=button.matches('[data-category-save]')&&!form._categoryReview;}return;}
+  const op=button.closest('[data-checkpoint-operations]');
+  if(op){const status=op.querySelector('[data-checkpoint-status]');try{
+   if(button.matches('[data-checkpoint-read]')){op._checkpoint=await adminSchoolContentRequest('admin_get_category_checkpoint',{});const r=op._checkpoint;status.textContent=`${r.checkpoint} · ${r.phase} · fingerprint ${r.fingerprint} · uso ${r.use_count}`;op.querySelector('[data-checkpoint-controls]').innerHTML=r.writes_paused?'<p>Gravações pausadas. Leitura permanece protegida. Retomada requer um plano específico revisado.</p>':'<label>Motivo<textarea data-checkpoint-reason minlength="5" maxlength="500"></textarea></label><button type="button" data-checkpoint-preview>Revisar pausa</button><p data-checkpoint-review></p><button type="button" data-checkpoint-confirm hidden>Confirmar pausa das gravações</button>';return;}
+   if(button.matches('[data-checkpoint-preview]')){const reason=op.querySelector('[data-checkpoint-reason]').value.trim();if(reason.length<5)throw Error('Informe o motivo da pausa.');const r=op._checkpoint;op._review={p_fingerprint:r.fingerprint,p_phase:r.use_count===0?'RETIRED_BEFORE_USE':'PAUSED_AFTER_USE',p_reason:reason,p_request_id:crypto.randomUUID()};op.querySelector('[data-checkpoint-review]').textContent=`${op._review.p_phase}: pausar novas gravações sem apagar dados, alterar contratos ou reativar direitos legados. ${reason}`;op.querySelector('[data-checkpoint-confirm]').hidden=false;}
+   if(button.matches('[data-checkpoint-confirm]')){if(!op._review)throw Error('Revise a pausa novamente.');button.disabled=true;const r=await adminSchoolContentRequest('admin_pause_category_checkpoint',op._review);status.textContent=`${r.phase}: gravações pausadas; leituras preservadas.`;op.querySelector('[data-checkpoint-controls]').textContent='Pausa concluída. Dados e auditoria preservados.';workspace.querySelectorAll('[data-category-save],[data-category-preview],[data-root-classification-confirm],[data-root-confirm]').forEach(b=>b.disabled=true);}
+  }catch(e){showError(status,e);}finally{if(button.isConnected)button.disabled=false;}return;}
+  const root=button.closest('[data-category-root]');if(!root)return;const status=root.querySelector('[data-root-status]');try{
+   if(button.matches('[data-root-page]')){if(root._search)await searchRoot(root,root._search.filter,Math.max(0,root._search.offset+25*Number(button.dataset.rootPage)));return;}
+   if(button.matches('[data-root-new]')){root.querySelector('[data-root-editor]').innerHTML=renderRootEditor(rootCatalog(root));status.textContent='Novo cadastro começa como rascunho.';return;}
+   if(button.matches('[data-root-edit]')){button.disabled=true;await loadRoot(root,button.dataset.rootEdit);return;}
+   const editor=button.closest('[data-root-classification]');if(!editor)return;
+   if(button.matches('[data-root-action]')){
+    const action=button.dataset.rootAction;const reason=editor.querySelector('[data-root-reason]').value.trim();const completed=editor.querySelector('[data-root-review-completed]').checked;
+    if(reason.length<5)throw Error('Informe o motivo desta ação global.');if(action!=='SUSPEND'&&!completed)throw Error('Confirme a conclusão da revisão editorial.');
+    editor._review={p_content_item_id:editor.dataset.itemId,p_revision:editor.dataset.revision,p_action:action,p_reason:reason,p_request_id:crypto.randomUUID(),p_review_completed:completed};
+    const panel=editor.querySelector('[data-root-review]');panel.innerHTML=`<strong>${action==='SUSPEND'?'Suspender':action==='PUBLISH'?'Publicar':'Republicar'} este item para todas as escolas?</strong><p>Contratos e categorias não serão alterados. ${action!=='SUSPEND'?'Somente direitos já válidos voltam a receber este conteúdo.':'O item sai das listagens e aberturas controladas durante a revisão.'}</p><p>${categoryEscape(reason)}</p><p>Arquivos com URLs públicas ainda exigem proteção de entrega.</p>`;panel.hidden=false;editor.querySelector('[data-root-confirm]').hidden=false;
+   }
+   if(button.matches('[data-root-classification-confirm]')){
+    const saved=editor._classificationReview;if(!saved || JSON.stringify(collectRootDocument(editor))!==JSON.stringify(saved.p_document) || editor.querySelector('[data-root-reason]').value.trim()!==saved.p_reason)throw Error('A classificação mudou. Revise novamente.');
+    button.disabled=true;const r=await adminSchoolContentRequest('admin_save_content_category',saved);await loadRoot(root,r.content_item_id);status.textContent='Cadastro classificado. Revise e publique para disponibilizar às categorias contratadas.';
+   }
+   if(button.matches('[data-root-confirm]')){if(!editor._review)throw Error('Prepare a ação novamente.');button.disabled=true;await adminSchoolContentRequest('admin_set_root_content_state',editor._review);await loadRoot(root,editor.dataset.itemId);status.textContent='Estado global atualizado. Nenhum contrato escolar foi alterado.';}
+  }catch(error){showError(status,error);}finally{if(button.isConnected)button.disabled=false;}
+ });
+ workspace.addEventListener('submit',async(event)=>{
+  const search=event.target.closest('[data-root-search]'),editor=event.target.closest('[data-root-classification]');if(!search&&!editor)return;event.preventDefault();const root=event.target.closest('[data-category-root]'),status=root.querySelector('[data-root-status]');const submit=event.submitter;if(submit)submit.disabled=true;
+  try{if(search){await searchRoot(root,Object.fromEntries(Array.from(new FormData(search)).filter(([,v])=>v)),0);
+  }else{
+   const doc=collectRootDocument(editor),reason=editor.querySelector('[data-root-reason]').value.trim();if(reason.length<5)throw Error('Informe o motivo.');
+   editor._classificationReview={p_content_item_id:editor.dataset.itemId||null,p_revision:editor.dataset.revision||null,p_document:doc,p_reason:reason,p_request_id:crypto.randomUUID()};
+   const catalog=rootCatalog(root);const ids=doc.category_mode==='TRANSVERSAL'?doc.category_grade_ids:[doc.grade_id];const panel=editor.querySelector('[data-root-classification-review]');panel.innerHTML=`<strong>${categoryEscape(doc.title)}</strong><p>${categoryEscape(ids.map(id=>catalog.taxonomy.find(g=>g.grade_id===id)?.grade_name||'Faixa não selecionada').join(', '))}</p><p>${categoryEscape(reason)}</p><p>Confirme para gravar a classificação e retornar o item à revisão. A publicação exige revisão editorial explícita.</p>`;panel.hidden=false;editor.querySelector('[data-root-classification-confirm]').hidden=false;
+  }}catch(error){showError(status,error);}finally{if(submit?.isConnected)submit.disabled=false;}
+ });
+};
+// Used by the actual native question form; classification is stored only in content_items.
+const initNativeQuestionCategory = (form) => {
+ if(!form)return null;
+ const host=form.querySelector('[data-native-category]');if(!host)return null;
+ let catalog=null,questionId=null,revision=null,requestId=null,review=null,generation=0,enabled=false;
+ const documentValue=()=>{
+  if(!catalog)throw Error('A classificação canônica ainda não foi carregada.');
+  const doc={};host.querySelectorAll('[data-native-field]').forEach(i=>doc[i.dataset.nativeField]=i.type==='checkbox'?i.checked:(i.value||null));
+  doc.category_grade_ids=Array.from(host.querySelectorAll('[data-native-cross]:checked')).map(i=>i.value);
+  if(doc.category_mode==='TRANSVERSAL')doc.grade_id=null;
+  else doc.category_grade_ids=[];
+  const grade=catalog.taxonomy.find(g=>g.grade_id===doc.grade_id);
+  if(doc.category_mode!=='TRANSVERSAL' && (!grade || grade.institutional!==(doc.category_mode==='INSTITUTIONAL')))throw Error('Escolha uma faixa compatível com a abrangência.');
+  if(doc.category_mode==='TRANSVERSAL'&&!doc.category_grade_ids.length)throw Error('Selecione as faixas explícitas do conteúdo transversal.');
+  if(doc.multidisciplinary && doc.subject_id)throw Error('Conteúdo multidisciplinar não usa um tema único.');
+  return doc;
+ };
+ const invalidate=()=>{review=null;requestId=null;host.querySelector('[data-native-summary]')?.setAttribute('hidden','');};
+ form.addEventListener('input',invalidate);form.addEventListener('change',invalidate);
+ host.addEventListener('click',event=>{if(!event.target.closest('[data-native-preview]'))return;
+  const status=host.querySelector('[data-native-status]');try{
+   const doc=documentValue(),reason=host.querySelector('[data-native-reason]').value.trim();if(reason.length<5)throw Error('Informe o motivo da classificação.');
+   review=JSON.stringify({doc,reason});requestId=crypto.randomUUID();const panel=host.querySelector('[data-native-summary]');
+   const names=(doc.category_mode==='TRANSVERSAL'?doc.category_grade_ids:[doc.grade_id]).map(id=>catalog.taxonomy.find(g=>g.grade_id===id)?.grade_name).join(', ');
+   panel.innerHTML=`<strong>Revisão: ${categoryEscape(names)}</strong><p>${categoryEscape(doc.subject_id?catalog.subjects.find(s=>s.id===doc.subject_id)?.name:'Sem tema único / multidisciplinar')}</p><p>${categoryEscape(reason)}</p><p>Salvar mantém a questão em revisão. Após aprovação, escolas com contrato e categoria válidos recebem o conteúdo automaticamente. Nenhuma concessão por item será criada.</p>`;panel.hidden=false;status.textContent='Classificação revisada. Confirme em Salvar rascunho ou Salvar e enviar para revisão.';
+  }catch(e){status.textContent=e.message;status.setAttribute('role','alert');}
+ });
+ const load=async(id=null,active=true)=>{
+  enabled=active && normalizePlatformRole(getSupabaseUserContext().role)==='admin';host.hidden=!enabled;
+  form.querySelectorAll('[data-qb-editorial="stage"],[data-qb-editorial="school_year"]').forEach(i=>{i.closest('label').hidden=enabled;});
+  const token=++generation;questionId=id;catalog=null;revision=null;invalidate();if(!enabled)return;
+  host.innerHTML='<p role="status">Carregando classificação canônica...</p>';
+  try{const r=await adminSchoolContentRequest('admin_get_question_category',{p_question_id:id});if(token!==generation)return;catalog=r;revision=r.question_revision;const item=r.item;
+   // Reuse the taxonomy and exact field structure used in the root editor.
+   const template=document.createElement('div');template.innerHTML=renderRootEditor(r,item);
+   const editor=template.querySelector('form');editor.querySelectorAll('[data-root-field="title"],[data-root-field="content_type"],[data-root-field="delivery_kind"],[data-root-field="delivery_resource_id"]').forEach(i=>i.closest('label').remove());
+   const fields=Array.from(editor.children).filter(n=>n.querySelector?.('[data-root-field],[data-root-cross]') || n.matches('[data-root-transversal]')).map(n=>n.outerHTML).join('').replaceAll('data-root-field','data-native-field').replaceAll('data-root-cross','data-native-cross');
+   host.innerHTML=`<h3>Classificação canônica</h3><p>${item?'IDs e histórico serão preservados.':'Selecione a classificação; textos antigos e prefixos não serão convertidos automaticamente.'}</p>${fields}<label>Motivo<textarea data-native-reason minlength="5" maxlength="500"></textarea></label><button type="button" data-native-preview>Revisar classificação</button><p data-native-status role="status"></p><div data-native-summary hidden></div>`;
+  }catch(e){if(token===generation)host.innerHTML=`<p role="alert">${categoryEscape(e.message)} Não é possível salvar sem carregar a classificação.</p>`;}
+ };
+ return {load,collect:()=>{
+  if(!enabled)return {};
+  const doc=documentValue(),reason=host.querySelector('[data-native-reason]').value.trim();if(!review || review!==JSON.stringify({doc,reason}))throw Error('Revise a classificação canônica antes de confirmar.');
+  return {canonical_category:doc,category_reason:reason,category_request_id:requestId,question_revision:revision,category_revision:catalog.item?.revision||null};
+ },isEnabled:()=>enabled};
 };
 
 const renderAdminSchoolContractedContent = (summary) => {
-  const overview = adminOperationalState.contractOverviews?.[summary.schoolId];
-  if (adminOperationalState.contractLoading?.[summary.schoolId] && !overview) {
-    return renderAdminPreparationView("Carregando conteúdos contratados", "Consultando produtos, módulos e health check do tenant.");
-  }
-  if (!overview) {
-    return `
-      <section class="admin-contract-overview" data-admin-contract-overview="${printableEscape(summary.schoolId)}">
-        <div class="admin-empty-note">Carregando produtos, módulos contratados e health check desta escola.</div>
-      </section>
-    `;
-  }
-  if (overview.status && overview.status !== "PASS") {
-    return `<section class="admin-contract-overview"><div class="admin-empty-note">Não foi possível carregar contratos: ${printableEscape(overview.status)}</div></section>`;
-  }
-  const entitlements = Array.isArray(overview.entitlements) ? overview.entitlements : [];
-  const health = overview.health || {};
-  return `
-    <section class="admin-contract-overview" data-admin-contract-overview="${printableEscape(summary.schoolId)}">
-      <div class="admin-section-head">
-        <div>
-          <h4>Conteúdos e módulos contratados</h4>
-          <span>Produto → Segmento/Ano → Módulo contratado → Resolver</span>
-        </div>
-        ${renderAdminUserBadge(health.status || "SEM HEALTH", health.status === "READY" ? "success" : health.status === "BLOCKED" ? "danger" : "warning")}
-      </div>
-      <div class="admin-contract-health">
-        <article><span>Tenant</span><strong>${printableEscape(overview.tenant_id || "não configurado")}</strong></article>
-        <article><span>Health</span><strong>${printableEscape(health.status || "não consultado")}</strong></article>
-        <article><span>Produtos ativos</span><strong>${entitlements.length}</strong></article>
-      </div>
-      ${entitlements.length ? entitlements.map((entitlement) => {
-        const product = entitlement.product || {};
-        const contract = entitlement.contract || {};
-        const segments = (entitlement.segments || []).map((item) => item.name).filter(Boolean).join(", ") || "Segmento aberto";
-        const grades = (entitlement.grades || []).map((item) => item.name).filter(Boolean).join(", ") || "Todos os anos autorizados";
-        const contentModules = entitlement.content_modules || [];
-        const platformModules = entitlement.platform_modules || [];
-        return `
-          <article class="admin-contract-card" data-admin-search-item>
-            <header>
-              <div>
-                <span>${printableEscape(entitlement.source_label || "ESCOLA")}</span>
-                <strong>${printableEscape(product.name || product.code || "Produto contratado")}</strong>
-                <small>${printableEscape(contract.contract_ref || "Contrato sem referência")} · ${printableEscape(product.code || "")}</small>
-              </div>
-              ${renderAdminUserBadge(entitlement.status || "ACTIVE", "success")}
-            </header>
-            <div class="admin-contract-taxonomy">
-              <article><span>Segmento</span><strong>${printableEscape(segments)}</strong></article>
-              <article><span>Ano/Série</span><strong>${printableEscape(grades)}</strong></article>
-            </div>
-            <div class="admin-contract-block">
-              <h5>Conteúdos contratados</h5>
-              <div class="admin-contract-module-list">
-                ${contentModules.length ? contentModules.map((module) => renderAdminContractModule(module, entitlement)).join("") : `<div class="admin-empty-note">Nenhum módulo de conteúdo vinculado ao produto.</div>`}
-              </div>
-            </div>
-            <div class="admin-contract-block">
-              <h5>Módulos funcionais da plataforma</h5>
-              <div class="admin-contract-chip-list">
-                ${platformModules.length ? platformModules.map((module) => `<span class="${module.enabled === false ? "is-off" : ""}">${printableEscape(module.name || module.code)} · ${printableEscape(module.requirement_level || "CONTRATADO")}</span>`).join("") : `<span>Nenhum módulo funcional vinculado.</span>`}
-              </div>
-            </div>
-          </article>
-        `;
-      }).join("") : `<div class="admin-empty-note">Nenhum produto ativo encontrado para esta escola. O resolver deve bloquear conteúdo comercial sem direito contratado.</div>`}
-      ${renderAdminSchoolContentCatalog(overview.content_catalog)}
-      <div class="admin-contract-exception-note">
-        <strong>Exceções por escola</strong>
-        <span>Exceções existentes são preservadas e informadas. Gerencie itens integrados pelo catálogo acima; a aba “Exceções por escola” permanece para itens legados ainda não integrados.</span>
-      </div>
-      <p data-admin-contract-status hidden></p>
-    </section>
-  `;
+ const overview=adminOperationalState.contractOverviews?.[summary.schoolId];
+ if(!overview)return '<section class="admin-contract-overview"><p role="status">Carregando categorias do contrato...</p></section>';
+ return `<section class="admin-contract-overview">${renderAdminSchoolContentCatalog(overview.category_catalog || {status:'ERROR',error:overview.error})}</section>`;
 };
 
 const renderAdminContentSchools = (availabilityRows = [], schoolsById = new Map()) => {
@@ -19378,6 +19322,7 @@ const renderGamesModule = () => {
 };
 
 const modules = {
+  catalogoCategorias: {title:"Meus conteúdos", subtitle:"Conteúdos por categoria", html:""},
   plataforma: {
     title: "Home do Ecossistema",
     subtitle: "Central de Comando Raízes e Saberes",
@@ -20142,6 +20087,7 @@ const modules = {
                 </section>
                 <section class="qb-form-block">
                   <h3>Classificação pedagógica</h3>
+                  <section data-native-category hidden></section>
                   <div class="question-form-grid question-form-grid--classification">
                     <label class="question-form-field"><span>Segmento</span><select data-qb-editorial="stage"><option>Ensino Fundamental - Anos Iniciais</option><option>Ensino Fundamental - Anos Finais</option><option>Educação Infantil</option></select></label>
                     <label class="question-form-field"><span>Ano</span><select data-qb-editorial="school_year"><option>5o ano</option><option>2o ano</option><option>1o ano</option><option>3o ano</option><option>4o ano</option></select></label>
@@ -20637,6 +20583,7 @@ const renderQuestionBankAdminSidebar = (activeView = "dashboard") => {
 };
 
 const moduleEnvironment = {
+  catalogoCategorias: "biblioteca",
   plataforma: "plataforma",
   admin: "admin",
   escolaColetiva: "escola",
@@ -22100,6 +22047,7 @@ const initQuestionBank = () => {
   const titleInput = root.querySelector("[data-qb-assessment-title]");
   const builderFields = [...root.querySelectorAll(".qb-builder input, .qb-builder select, .qb-builder textarea")];
   const editorialForm = root.querySelector("[data-qb-editorial-form]");
+  const nativeCategory = initNativeQuestionCategory(editorialForm);
   const editorialStatus = root.querySelector("[data-qb-editorial-status]");
   const reviewQueue = root.querySelector("[data-qb-review-queue]");
   const scopeTabs = [...root.querySelectorAll("[data-qb-scope]")];
@@ -22460,10 +22408,14 @@ const initQuestionBank = () => {
       };
     }
     const missing = [];
+    if (editorialMode.type !== "adapt" && nativeCategory?.isEnabled()) {
+      try { Object.assign(payload, nativeCategory.collect()); }
+      catch(error) { missing.push(error.message); }
+    }
     if (!payload.internal_title) missing.push("Título interno");
     if (!payload.component) missing.push("Componente curricular");
-    if (!payload.stage) missing.push("Segmento");
-    if (!payload.school_year) missing.push("Ano");
+    if (!payload.canonical_category && !payload.stage) missing.push("Segmento");
+    if (!payload.canonical_category && !payload.school_year) missing.push("Ano");
     if (!payload.question_type) missing.push("Tipo de questão");
     if (!payload.statement) missing.push("Enunciado");
     if (alternatives.length < 2) missing.push("ao menos duas alternativas");
@@ -22546,6 +22498,7 @@ const initQuestionBank = () => {
   };
   const setEditorialMode = (nextMode = { type: "create", source: null }) => {
     editorialMode = nextMode;
+    nativeCategory?.load(nextMode.type === "edit" ? (nextMode.source?.uuid || nextMode.source?.raw?.id) : null, nextMode.type !== "adapt");
     const isAdapting = editorialMode.type === "adapt" && editorialMode.source;
     const isEditing = editorialMode.type === "edit" && editorialMode.source;
     const authoringHead = root.querySelector("#nova-questao .panel-head");
@@ -22832,6 +22785,7 @@ const initQuestionBank = () => {
           await questionBankDataService.setQuestionWorkflow(source.uuid || source.raw?.id, "EM_REVISAO", "Enviado para revisão após edição pela interface editorial.");
         }
         await refresh();
+        await nativeCategory?.load(source.uuid || source.raw?.id);
         selectedId = payload.code || source.id;
         const message = submitForReview ? `✓ Questão ${selectedId} salva e enviada para revisão.` : `✓ Questão ${selectedId} atualizada como rascunho.`;
         setEditorialStatus(message, "success");
@@ -22915,6 +22869,7 @@ const initQuestionBank = () => {
       }
     }
     await refresh();
+    setEditorialMode({type:"edit",source:created});
     const successMessage = submitForReview
       ? `✓ Questão ${created.id} salva e enviada para revisão com sucesso.`
       : `✓ Rascunho ${created.id} salvo com sucesso.`;
@@ -23990,6 +23945,7 @@ const initQuestionBank = () => {
 
   restoreDraftSnapshot();
   installEditorialTextareaAutoGrow();
+  nativeCategory?.load();
   syncQuestionBankView();
   window.addEventListener("popstate", syncQuestionBankView);
   installSupabaseSessionListener();
@@ -30448,12 +30404,13 @@ const questionBankDataService = (() => {
         const license = pickDefaultQuestionLicense(licenses, source);
         itemPayload = buildQuestionProvenancePayload(itemPayload, source, license);
       }
-      const row = await request("rpc/avalia_plus_create_item", "", {
+      const row = normalizeRpcJson(await request("rpc/avalia_plus_create_item", "", {
         method: "POST",
         requireAuthenticated: true,
         allowedRoles: allowedQuestionEditorialRoles,
         body: JSON.stringify({ p_item: itemPayload }),
-      });
+      }));
+      if (!row.id) throw new Error("Resposta inválida do cadastro de questões. Recarregue antes de tentar novamente.");
       const alternatives = await this.listAlternatives(row.id);
       return mapQuestionFromSupabase({ ...row, alternatives, media: [] });
     },
@@ -30478,7 +30435,7 @@ const questionBankDataService = (() => {
     async updateQuestionItem(questionId, payload, alternatives = null) {
       const { request } = client();
       await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedQuestionEditRoles });
-      const row = await request("rpc/avalia_plus_update_question_item", "", {
+      const row = normalizeRpcJson(await request("rpc/avalia_plus_update_question_item", "", {
         method: "POST",
         requireAuthenticated: true,
         allowedRoles: allowedQuestionEditRoles,
@@ -30487,7 +30444,8 @@ const questionBankDataService = (() => {
           p_item: payload,
           p_alternatives: alternatives,
         }),
-      });
+      }));
+      if (!row.id) throw new Error("Resposta inválida do cadastro de questões. Recarregue antes de tentar novamente.");
       const nextAlternatives = await this.listAlternatives(row.id);
       return row ? mapQuestionFromSupabase({ ...row, alternatives: nextAlternatives, media: [] }) : null;
     },
@@ -30507,7 +30465,7 @@ const questionBankDataService = (() => {
     async setQuestionWorkflow(questionId, status, comment = "") {
       const { request } = client();
       await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedQuestionEditRoles });
-      const row = await request("rpc/avalia_plus_set_item_workflow", "", {
+      const row = normalizeRpcJson(await request("rpc/avalia_plus_set_item_workflow", "", {
         method: "POST",
         requireAuthenticated: true,
         allowedRoles: allowedQuestionEditRoles,
@@ -30516,7 +30474,8 @@ const questionBankDataService = (() => {
           p_status: status,
           p_comment: comment,
         }),
-      });
+      }));
+      if (!row.id) throw new Error("Resposta inválida do cadastro de questões. Recarregue antes de tentar novamente.");
       return mapQuestionFromSupabase({ ...row, alternatives: [], media: [] });
     },
   };
@@ -32657,6 +32616,49 @@ const initPlatformLogout = () => {
   });
 };
 
+const renderCategoryConsumer = () => `<section class="category-consumer" data-category-consumer><header><h1>Meus conteúdos</h1><p>Categorias autorizadas para sua escola e turma.</p></header><p data-category-consumer-status role="status" aria-live="polite">Consultando categorias...</p><div data-category-consumer-modules></div><div data-category-consumer-items></div><article data-category-consumer-detail></article></section>`;
+const initCategoryConsumer = () => {
+ const root=document.querySelector('[data-category-consumer]');if(!root || root.dataset.bound)return;root.dataset.bound='true';
+ const status=root.querySelector('[data-category-consumer-status]'),params=new URLSearchParams(window.location.search);
+ const base={};['school_id','class_id'].forEach((key)=>{if(params.get(key))base[key]=params.get(key);});if(params.get('mode')==='INSTITUTIONAL')base.mode='INSTITUTIONAL';
+ let active=null,offset=0,generation=0;
+ const request=async(rpc,payload)=>{
+  const result=normalizeRpcJson(await createSupabaseRestClient().request(`rpc/${rpc}`,'',{method:'POST',requireAuthenticated:true,allowedRoles:['professor','aluno','educacao_infantil','gestor','coordenador','admin'],body:JSON.stringify(payload)}));
+  if(!result || result.status!=='PASS')throw Error(result?.status==='CLASSIFICATION_REQUIRED'?'A turma precisa de uma faixa escolar canônica definida.':result?.status==='CATEGORY_NOT_CONFIGURED'?'Esta escola ainda não tem categorias configuradas.':result?.status || 'Falha ao consultar conteúdos.');return result;
+ };
+ const fail=(error)=>{status.setAttribute('role','alert');status.textContent=error.message || 'Não foi possível carregar os conteúdos. Tente novamente.';};
+ const load=async()=>{const token=++generation;status.setAttribute('role','status');status.textContent='Consultando conteúdos autorizados...';root.querySelector('[data-category-consumer-detail]').textContent='';
+  try{const result=await request('content_resolve_for_user',{p_context:{...base,module_id:active.id,content_type:active.content_types[0],offset,limit:25}});if(token!==generation)return;
+   if(!Array.isArray(result.items)||!Number.isInteger(result.total))throw Error('Resposta incompleta do catálogo.');
+   const host=root.querySelector('[data-category-consumer-items]');host.innerHTML=result.items.length?`<h2>${categoryEscape(categoryTypeLabels[active.content_types[0]] || active.name)}</h2><ul>${result.items.map((item)=>`<li><strong>${categoryEscape(item.title)}</strong> ${`<button type="button" data-category-consumer-open="${categoryEscape(item.content_item_id)}">${item.content_type==='QUESTION'?'Abrir questão':'Consultar abertura protegida'}</button>`}</li>`).join('')}</ul><button type="button" data-category-consumer-page="-1" ${offset===0?'disabled':''}>Anterior</button><button type="button" data-category-consumer-page="1" ${offset+25>=result.total?'disabled':''}>Próxima</button>`:'<p>0 conteúdos — Conteúdos disponíveis em breve</p>';
+   status.textContent=result.total===0?'0 conteúdos — Conteúdos disponíveis em breve':`${result.total} conteúdos autorizados. Novas publicações desta categoria aparecem automaticamente.`;
+  }catch(error){if(token===generation){root.querySelector('[data-category-consumer-items]').textContent='';fail(error);}}
+ };
+ const start=async()=>{try{const result=await request('content_list_category_modules',{p_context:base});if(!Array.isArray(result.modules))throw Error('Resposta incompleta de categorias.');root._modules=result.modules;
+   root.querySelector('[data-category-consumer-modules]').innerHTML=result.modules.map((m,i)=>`<button type="button" data-category-consumer-module="${i}"><strong>${categoryEscape(m.name===categoryTypeLabels[m.content_types[0]]?m.name:m.name+' — '+(categoryTypeLabels[m.content_types[0]]||m.content_types[0]))}</strong><span>${categoryEscape(m.message)}</span></button>`).join('');
+   status.textContent=result.modules.length?'Escolha uma categoria.':'Nenhuma categoria habilitada para sua escola e faixa escolar.';
+   if(result.modules.length){active=result.modules[0];await load();}
+  }catch(error){fail(error);}
+ };
+ root.addEventListener('click',async(event)=>{const button=event.target.closest('button');if(!button)return;
+  if(button.matches('[data-category-consumer-module]')){active=root._modules[Number(button.dataset.categoryConsumerModule)];offset=0;await load();}
+  if(button.matches('[data-category-consumer-page]')){offset=Math.max(0,offset+25*Number(button.dataset.categoryConsumerPage));await load();}
+  if(button.matches('[data-category-consumer-open]')){button.disabled=true;const token=generation;const detail=root.querySelector('[data-category-consumer-detail]');try{
+   const r=await request('content_get_category_item',{p_content_item_id:button.dataset.categoryConsumerOpen,p_context:{...base,module_id:active.id,content_type:active.content_types[0]}});if(token!==generation)return;
+   if(r.delivery_status==='INLINE_QUESTION'&&r.question){detail.innerHTML=`<h2>${categoryEscape(r.item.title)}</h2><p>${categoryEscape(r.question.base_text||'')}</p><p>${categoryEscape(r.question.statement)}</p><p>${categoryEscape(r.question.command_text||'')}</p><ol>${(r.question.alternatives||[]).map(a=>`<li>${categoryEscape(a.label)}. ${categoryEscape(a.body)}</li>`).join('')}</ol>`;return;}
+   if(r.delivery_status!=='EXISTING_PROTECTED_ADAPTER'){detail.textContent='Abertura protegida em preparação. Este catálogo não disponibiliza arquivos públicos.';return;}
+   if(r.adapter?.kind!=='library_book'){detail.textContent='Este recurso usa o motor protegido já existente no aplicativo. A abertura neste ambiente web ainda não está integrada.';return;}
+   const config=getSupabaseConfig(),session=getSupabaseUserContext();
+   const response=await fetch(`${config.url.replace(/\/$/,'')}/functions/v1/student-library-read-access`,{method:'POST',headers:{'Content-Type':'application/json',apikey:config.anonKey,Authorization:`Bearer ${session.token}`},body:JSON.stringify({bookId:r.adapter.resource_id,assetKind:'pdf'})});
+   const asset=await response.json();if(token!==generation)return;if(!response.ok||!asset.ok)throw Error(asset.message||'O leitor protegido não autorizou este recurso.');
+   const url=new URL(asset.asset?.signedUrl||'');if(url.origin!==new URL(config.url).origin || !['https:','http:'].includes(url.protocol) || asset.asset?.mimeType!=='application/pdf')throw Error('Este recurso requer o leitor de páginas já disponível no aplicativo.');
+   detail.innerHTML=`<h2>${categoryEscape(r.item.title)}</h2><a href="${categoryEscape(url.href)}" target="_blank" rel="noopener noreferrer">Abrir leitura temporária protegida</a><p>O link expira em ${categoryEscape(asset.asset.expiresIn)} segundos.</p>`;
+  }catch(error){if(token===generation){detail.textContent='';fail(error);}}finally{button.disabled=false;}}
+
+ });
+ start();
+};
+
 const renderAppPage = () => {
   const mount = document.querySelector("[data-app-page]");
   if (!mount) {
@@ -32665,6 +32667,7 @@ const renderAppPage = () => {
 
   const activeKey = mount.dataset.appPage || "biblioteca";
   const activeModule = modules[activeKey] || modules.biblioteca;
+  if (activeKey === "catalogoCategorias") activeModule.html = renderCategoryConsumer();
   const currentRole = getCurrentPlatformRole();
   if (currentRole === "aluno" && !studentAllowedRouteKeys.has(activeKey)) {
     showPlatformRedirectState("Seu perfil de aluno será direcionado para o ambiente correto.");
@@ -32905,6 +32908,7 @@ const renderAppPage = () => {
   });
 
   initPlatformLogout();
+  initCategoryConsumer();
   initSchoolCollectiveDashboard();
   initOfficialSchoolDashboard();
   initMunicipalNetworkDashboard();
