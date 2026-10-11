@@ -1,3 +1,6 @@
+import { AssessmentJourney } from "./screens/AssessmentJourney";
+import { CommunicationJourney } from "./screens/CommunicationJourney";
+import { Action as JourneyAction } from "./components/JourneyKit";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Feather } from "@expo/vector-icons";
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions, type ImageSourcePropType } from "react-native";
@@ -792,7 +795,7 @@ function mapTeacherCommunicationSummary(item: RealTeacherCommunicationSummary): 
     audience: item.audienceLabel,
     date: formatTeacherDate(item.communicationDate),
     status: item.status === "published" ? "Enviado" : "Rascunho",
-    summary: `${item.deliveredCount} entregues · ${item.unreadCount} não lidos`,
+    summary: `${item.deliveredCount} entregues · ${item.unreadCount} sem leitura histórica`,
     message: item.body
   };
 }
@@ -3274,6 +3277,7 @@ function CrescerModule({
 
   if (String(activeKey).startsWith("family:")) {
     const section = String(activeKey).replace("family:", "");
+    if (section === "messages") return <CommunicationJourney session={session} />;
     return <FamilySectionDetailScreen session={session} section={section} onBack={onBack} />;
   }
 
@@ -3322,7 +3326,7 @@ function FundamentalModule({
   }
 
   if (activeKey === "avalia") {
-    return <FundamentalAvaliaScreen session={session} />;
+    return <AssessmentJourney session={session} />;
   }
 
   if (String(activeKey).startsWith("avalia:proof:")) {
@@ -3347,8 +3351,11 @@ function FundamentalModule({
     return <FundamentalAgendaDetailScreen item={item} onOpenModule={onOpen} />;
   }
 
+  if (activeKey === "communication") return <CommunicationJourney session={session} />;
+
   if (activeKey === "notifications") {
     return (
+      <View><JourneyAction title="Recados e respostas" onPress={() => onOpen("communication")} />
       <FundamentalNotificationsScreen
         session={session}
         readTitles={readNotificationTitles}
@@ -3356,7 +3363,7 @@ function FundamentalModule({
           onReadNotification(item.title);
           onOpen(`notification:${item.title}` as ModuleKey);
         }}
-      />
+      /></View>
     );
   }
 
@@ -3402,7 +3409,7 @@ function CrescerFamilyScreen({ session, onOpen }: { session: MobileSession | nul
     Promise.all([
       getCrescerStudentProfile(session),
       getCrescerCalendarEvents(session).catch(() => []),
-      getCrescerFamilyMessages(session).catch(() => []),
+      getCrescerFamilyMessages(session),
       getCrescerNotificationCenter(session).catch(() => [])
     ])
       .then(([studentProfile, calendarEvents, familyMessages, centerItems]) => {
@@ -3578,7 +3585,7 @@ function FamilyMessageCard({ title, meta, unread }: { title: string; meta: strin
         <Text style={styles.familyTimelineTitle}>{title}</Text>
         <Text style={styles.familyTimelineMeta}>{meta}</Text>
       </View>
-      {unread ? <Text style={styles.familyUnreadText}>Novo</Text> : <Text style={styles.familyReadText}>Lido</Text>}
+      {unread ? <Text style={styles.familyUnreadText}>Sem leitura histórica</Text> : <Text style={styles.familyReadText}>Leitura histórica</Text>}
     </View>
   );
 }
@@ -3631,7 +3638,7 @@ function FamilySectionDetailScreen({ session, section, onBack }: { session: Mobi
     setFailed(false);
     Promise.all([
       getCrescerCalendarEvents(session).catch(() => []),
-      getCrescerFamilyMessages(session).catch(() => []),
+      getCrescerFamilyMessages(session),
       getCrescerNotificationCenter(session).catch(() => [])
     ])
       .then(([calendarEvents, familyMessages, centerItems]) => {
@@ -4132,7 +4139,7 @@ function FundamentalAssessmentCard({ assessment }: { assessment: FundamentalAsse
 
 function normalizeAssessmentState(assessment: FundamentalAssessmentItem) {
   const status = `${assessment.attemptStatus || assessment.status}`.toLowerCase();
-  if (status === "completed" || status === "submitted" || status === "concluida" || status === "concluída") return "Concluída";
+  if (status === "graded" || status === "completed" || status === "submitted" || status === "concluida" || status === "concluída") return "Concluída";
   if (status === "in_progress" || status === "started" || status === "em_andamento" || assessment.answeredCount > 0) return "Em andamento";
   return "Disponível";
 }
@@ -5255,6 +5262,7 @@ function TeacherModule({ session, activeKey, onOpen, onLogout }: { session: Mobi
 
   if (activeKey === "communication") {
     return (
+      <View><CommunicationJourney session={session} teacher />
       <TeacherCommunicationScreen
         classes={realClasses}
         messages={communicationMessages}
@@ -5312,7 +5320,7 @@ function TeacherModule({ session, activeKey, onOpen, onLogout }: { session: Mobi
           setSelectedMessageTitle(item.title);
           setCommunicationMode("detail");
         }}
-      />
+      /></View>
     );
   }
 
@@ -5452,48 +5460,7 @@ function TeacherModule({ session, activeKey, onOpen, onLogout }: { session: Mobi
   }
 
   if (activeKey === "avalia") {
-    return (
-      <TeacherAvaliaScreen
-        assessments={teacherAssessments}
-        classes={realClasses}
-        mode={avaliaMode}
-        filter={avaliaFilter}
-        selectedAssessment={selectedAvalia}
-        selectedClass={avaliaClass}
-        availableFrom={avaliaAvailableFrom}
-        dueDate={avaliaDueDate}
-        published={avaliaPublished}
-        selectedStudent={selectedAvaliaStudent}
-        onModeChange={setAvaliaMode}
-        onFilterChange={setAvaliaFilter}
-        onOpenAssessment={(assessment, nextMode) => {
-          setSelectedAvaliaId(assessment.id);
-          setSelectedAvaliaStudentName(null);
-          setAvaliaPublished(false);
-          setAvaliaMode(nextMode);
-        }}
-        onClassChange={(className) => {
-          setAvaliaClassName(className);
-          setAvaliaPublished(false);
-        }}
-        onAvailableFromChange={(value) => {
-          setAvaliaAvailableFrom(value);
-          setAvaliaPublished(false);
-        }}
-        onDueDateChange={(value) => {
-          setAvaliaDueDate(value);
-          setAvaliaPublished(false);
-        }}
-        onPublish={() => {
-          setAvaliaPublished(false);
-          setAvaliaMode("published");
-        }}
-        onOpenStudent={(student) => {
-          setSelectedAvaliaStudentName(student.name);
-          setAvaliaMode("student");
-        }}
-      />
-    );
+    return <AssessmentJourney session={session} teacher />;
   }
 
   if (activeKey === "tracking") {
