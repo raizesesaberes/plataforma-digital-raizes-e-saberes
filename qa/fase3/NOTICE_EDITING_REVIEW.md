@@ -32,3 +32,11 @@ O RPC não aceita alterações de destinatários, turma, escola, tipo, data/venc
 Expo continua pendente: não afirmar paridade web/app, publicação de app nativo ou conclusão integral da FASE3. Nenhuma mensagem externa, dado de aluno real, deploy ou alteração de main.
 
 Verificações adicionais: `node --check` nos scripts alterados, `git diff --check`; build estático com **4276 arquivos**, QA/SQL fora do dist. Conflito usa `PT409` explícito: o código genérico de serialização provocava repetição no PostgREST, comprovada pela regressão que antes não concluía e agora recebe HTTP409. Novas funções usam JIT desativado e chamadas sintéticas têm limite de 30 segundos para não mascarar travamentos.
+
+## Correção incremental de estado nas listas
+
+Com o gate ativo, o carregamento da caixa busca a versão autorizada antes de mapear/renderizar: a partir da versão 2, `readAt` e o estado LIDO/NÃO LIDO refletem o recibo dessa versão. O contador deriva dos avisos efetivamente carregados na lista (limites existentes de 50/60), sem reaproveitar o total legado do RPC. Filtros por leitura são aplicados após essa reconciliação. Falha ao consultar versões mostra erro, não uma lista falsamente lida. Os atalhos de leitura legada não aparecem para versões editadas; confirmação é feita no modal versionado.
+
+Sumários docentes usam o contador da versão atual. Se a versão não estiver acessível (por exemplo, aviso retirado), mostram Indisponível, sem fabricar zero nem apresentar leitura histórica como atual. Ao fechar o modal após salvar/confirmar, a página recarrega dados do servidor. O SQL não mudou.
+
+Regressão adicional usa os **renderers e mappers reais**: ler versão 1 → editar → cartão NÃO LIDO/versão 2 e contador pendente → confirmar versão 2 → LIDO; o sumário docente acompanha 1 → 0 → 1. Ver `notice-renderer.mjs`.

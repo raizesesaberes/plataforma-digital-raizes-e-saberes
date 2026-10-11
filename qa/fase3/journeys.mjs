@@ -377,6 +377,10 @@ if(!process.argv.includes('--baseline')) await test('notice editing: revisions, 
  const d=(await rpc(2,'communication_get_inbox')).find(x=>x.communication_id===cid).delivery_id;
  await rpc(2,'communication_mark_read',{p_delivery_id:d});
  await rpc(2,'communication_send_reply',{p_delivery_id:d,p_body:'SYNTHETIC EXISTING REPLY',p_request_id:id(9,80)});
+ const {inspectNoticeRender}=await import('./notice-renderer.mjs');
+ const client=actor=>({request:async(path,query,options)=>rpc(actor,path.replace('rpc/',''),JSON.parse(options.body||'{}'))});
+ const rendered=async()=>inspectNoticeRender(client(2),client(1),(await rpc(2,'communication_get_inbox')).find(x=>x.communication_id===cid));
+ const beforeEdit=await rendered();assert.match(beforeEdit.studentHtml,/is-read/);assert.equal(beforeEdit.unread,0);assert.equal(beforeEdit.teacher.readCount,1);
  const deliveries=()=>sql(`select jsonb_agg(to_jsonb(d) order by id)::text from public.communication_deliveries d where communication_id='${cid}'`);
  const original=deliveries();
  const payload={p_communication_id:cid,p_expected_revision:1,p_title:'SYNTHETIC VERSION TWO',p_body:'SYNTHETIC CORRECTED TEXT',p_request_id:id(9,81)};
@@ -386,10 +390,14 @@ if(!process.argv.includes('--baseline')) await test('notice editing: revisions, 
  const get=(actor=1)=>rpc(actor,'communication_get_notice_versions',{p_communication_id:cid,p_delivery_id:actor===2?d:null});
  const current=await get();assert.equal(current.history.length,2);assert.equal(current.history[0].title,'SYNTHETIC VERSION ONE');assert.equal(current.current_revision_read_count,0);
  assert.equal((await get(2)).current_revision_read_at,null);
+ const afterEdit=await rendered();assert.match(afterEdit.studentHtml,/is-unread/);assert.match(afterEdit.studentHtml,/NAO LIDO · VERSÃO 2/);assert.equal(afterEdit.unread,1);assert.equal(afterEdit.teacher.readCount,0);assert.equal(afterEdit.teacher.unreadCount,pub.deliveries_created);assert.match(afterEdit.teacherHtml,/Lidas \(versão 2\): 0/);assert.ok(!afterEdit.studentHtml.includes('data-student-delivery-read'));
+
  assert.equal((await rpc(2,'communication_get_reply_thread',{p_delivery_id:d})).messages.length,1);
  assert.equal((await request(2,'rpc/communication_mark_revision_read',{p_delivery_id:d,p_revision:1})).status,409);
  await rpc(2,'communication_mark_revision_read',{p_delivery_id:d,p_revision:2});
  assert.equal((await get()).current_revision_read_count,1);
+ const afterRead=await rendered();assert.match(afterRead.studentHtml,/is-read/);assert.match(afterRead.studentHtml,/LIDO · VERSÃO 2/);assert.equal(afterRead.unread,0);assert.equal(afterRead.teacher.readCount,1);
+
  assert.equal(sql(`select count(*) from public.communication_revision_reads where delivery_id='${d}'`),'2');
  assert.equal(JSON.parse(deliveries()).find(x=>x.id===d).read_at,JSON.parse(original).find(x=>x.id===d).read_at);
  const race=await Promise.all([82,83].map(n=>request(1,'rpc/communication_edit_notice',{...payload,p_expected_revision:2,p_title:'SYNTHETIC CONCURRENT '+n,p_request_id:id(9,n)})));

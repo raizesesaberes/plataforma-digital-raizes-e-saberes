@@ -22,9 +22,10 @@
     const close = node('button', 'Fechar', { type: 'button' });
     const content = node('section', 'Carregando versão…', { 'aria-live': 'polite' });
     let busy = false;
+    let refreshOnClose = false;
     close.onclick = () => dialog.close();
     dialog.addEventListener('cancel', e => { if (busy) e.preventDefault(); });
-    dialog.addEventListener('close', () => { dialog.remove(); opener.disabled = false; opener.focus(); });
+    dialog.addEventListener('close', () => { dialog.remove(); opener.disabled = false; opener.focus(); if (refreshOnClose) window.location.reload(); });
     dialog.append(close, content); document.body.append(dialog); dialog.showModal();
     const load = async () => {
       const data = await rpc('communication_get_notice_versions', { p_communication_id: id, p_delivery_id: deliveryId });
@@ -42,6 +43,7 @@
           busy = true; close.disabled = true; read.disabled = true;
           try {
             await rpc('communication_mark_revision_read', { p_delivery_id: deliveryId, p_revision: data.revision });
+            refreshOnClose = true;
             read.textContent = 'Esta versão já foi lida'; status.textContent = 'Leitura confirmada no servidor.';
           } catch { read.disabled = false; status.textContent = 'Não foi possível confirmar. A versão pode ter mudado; reabra o comunicado.'; }
           finally { busy = false; close.disabled = false; }
@@ -72,8 +74,8 @@
           let saved = false;
           try {
             const receipt = await rpc('communication_edit_notice', payload);
-            pending.delete(key); saved = true;
-            status.textContent = `Versão ${receipt.revision} salva no servidor. Reabra para consultar; recarregue a lista para atualizar os cartões.`;
+            pending.delete(key); saved = true; refreshOnClose = true;
+            status.textContent = `Versão ${receipt.revision} salva no servidor. Ao fechar, a lista será atualizada pelo servidor.`;
           } catch { status.textContent = 'Não foi possível salvar. Texto mantido. Se outra versão foi salva, carregue a versão atual antes de editar novamente.'; }
           finally { busy = false; close.disabled = false; save.disabled = saved; reload.disabled = false; title.readOnly = saved; body.readOnly = saved; }
         };
