@@ -6,7 +6,8 @@ const part=(a,b)=>source.slice(source.indexOf(a),source.indexOf(b,source.indexOf
 const code=part('const adminInactiveSchoolContractSummary =','const adminInvokeSetTenantContentModule =')+part('const adminSchoolContentRequest =','const categoryModuleChoices =')+part('const renderAdminSchoolContentCatalog =','const collectCategoryConfig =');
 const inactive=()=>Object.assign(Error('ACTIVE_SCHOOL_REQUIRED'),{status:400,code:'P0001',databaseMessage:'ACTIVE_SCHOOL_REQUIRED'});
 const catalog={status:'PASS',schools:[{id:'a',name:'School A',status:'inactive'},{id:'b',name:'School B',status:'inactive'}],products:[{id:'p',name:'Banco Completo'}],taxonomy:[{grade_id:'g',grade_name:'Infantil 2'}],contracts:[
- {id:'c-a',reference:'Own contract',school_ids:['a'],starts_at:'2026-10-11',ends_at:'2027-10-10',status:'ACTIVE',configurations:[{product_id:'p',institutional:true,rules:[{content_type:'QUESTION',grade_id:'g'}]}]},
+ {id:'c-a',tenant_school_id:'a',reference:'Own contract',school_ids:['a'],starts_at:'2026-10-11',ends_at:'2027-10-10',status:'ACTIVE',configurations:[{product_id:'p',institutional:true,rules:[{content_type:'QUESTION',grade_id:'g'}]}]},
+ {id:'legacy-network',reference:'Legacy network contract',school_ids:['a'],network_id:'network',tenant_school_id:null,operational:false,configurations:[{product_id:'p',rules:[{content_type:'FORMER_MEMBER_RULE',grade_id:'g'}]}]},
  {id:'c-b',reference:'Other school contract',school_ids:['b'],configurations:[]},
  {id:'shared',reference:'Shared contract',school_ids:['a','b'],configurations:[{product_id:'p',rules:[{content_type:'SECRET_OTHER_SCHOOL_RULE',grade_id:'g'}]}]}
 ]};
@@ -22,7 +23,7 @@ async function run({firstError=inactive(),data=catalog,secondError=null,active=f
  const html=active?'':vm.runInContext('renderAdminSchoolContentCatalog(result.category_catalog)',ctx);
  return {result,html,calls};
 }
-let r=await run();assert.equal(r.result.status,'PASS');assert.match(r.html,/Escola inativa: contrato cadastrado/);assert.match(r.html,/Own contract/);assert.match(r.html,/sem categoria TRAINING/);assert(!/Other school contract|SECRET_OTHER_SCHOOL_RULE|<form|<button|<input/.test(r.html));assert.equal(r.calls.length,2);
+let r=await run();assert.equal(r.result.status,'PASS');assert.match(r.html,/Escola inativa: contrato cadastrado/);assert.match(r.html,/Own contract/);assert.match(r.html,/sem categoria TRAINING/);assert(!/Other school contract|SECRET_OTHER_SCHOOL_RULE|FORMER_MEMBER_RULE|<form|<button|<input/.test(r.html));assert.equal(r.calls.length,2);assert.match(r.html,/Legacy network contract/);assert.match(r.html,/não permite comprovar as categorias/);
 r=await run({active:true});assert.equal(r.result.status,'PASS');assert.equal(r.calls.length,1);assert.equal(r.result.category_catalog.readonly_inactive,undefined);
 for(const error of [Object.assign(Error('Forbidden'),{status:403}),Object.assign(Error('ACTIVE_SCHOOL_REQUIRED'),{status:503,code:'P0001',databaseMessage:'ACTIVE_SCHOOL_REQUIRED'}),Error('Network unavailable'),Error('ACTIVE_SCHOOL_REQUIRED')]){
  r=await run({firstError:error});assert.equal(r.result.status,'ERROR');assert.equal(r.calls.length,1);assert.match(r.html,/role="alert"/);

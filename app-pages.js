@@ -14075,8 +14075,8 @@ const adminInactiveSchoolContractSummary = (catalog, schoolId) => {
   if (!school || school.status !== 'inactive') throw new Error('A situação da escola mudou ou não foi encontrada. Atualize a consulta.');
   const contracts = catalog.contracts.filter(row => Array.isArray(row.school_ids) && row.school_ids.includes(schoolId)).map(row => ({
     id: row.id, reference: row.reference, starts_at: row.starts_at, ends_at: row.ends_at, status: row.status, superseded: row.superseded,
-    shared: row.school_ids.length !== 1,
-    configurations: row.school_ids.length === 1 ? (row.configurations || []).map(config => ({
+    shared: row.school_ids.length !== 1 || (row.tenant_school_id !== schoolId && row.operational !== true),
+    configurations: row.school_ids.length === 1 && (row.tenant_school_id === schoolId || row.operational === true) ? (row.configurations || []).map(config => ({
       product_name: catalog.products.find(product => product.id === config.product_id)?.name || 'Produto fora do catálogo ativo',
       institutional: config.institutional === true,
       rules: (config.rules || []).map(rule => ({type: rule.content_type, grade: catalog.taxonomy.find(grade => grade.grade_id === rule.grade_id)?.grade_name || 'Faixa não identificada'})),
@@ -14088,7 +14088,7 @@ const renderAdminInactiveSchoolContracts = (catalog) => `<section class="admin-c
   <p role="status">${catalog.contracts.length ? 'Escola inativa: contrato cadastrado; acesso bloqueado até reativação.' : 'Escola inativa: nenhum contrato cadastrado para esta escola; acesso bloqueado.'}</p>
   <p>Consulta somente leitura. Categorias cadastradas não comprovam conteúdo publicado nem acesso efetivo.</p>
   ${catalog.contracts.length ? catalog.contracts.map(contract => `<article><h4>${categoryEscape(contract.reference)}</h4><p>${categoryEscape(contract.id)} · ${categoryEscape(contract.superseded ? 'Substituído' : contract.status)} · ${categoryEscape(contract.starts_at)} a ${categoryEscape(contract.ends_at || 'Sem término')} (fim inclusive)</p>
-    ${contract.shared ? '<p>Contrato compartilhado. Esta consulta não detalha categorias por escola.</p>' : contract.configurations.map(config => `<h5>${categoryEscape(config.product_name)}</h5><p>${config.rules.length} regras cadastradas. Universidade: ${config.rules.some(rule => rule.type === 'TRAINING') ? 'categoria TRAINING cadastrada; acesso efetivo não verificado' : 'sem categoria TRAINING cadastrada'}.</p><details><summary>Tipos e faixas cadastrados</summary><ul>${config.rules.map(rule => `<li>${categoryEscape(categoryTypeLabels[rule.type] || rule.type)} — ${categoryEscape(rule.grade)}</li>`).join('')}</ul></details>`).join('')}
+    ${contract.shared ? '<p>Configuração agregada do contrato. Esta consulta não permite comprovar as categorias desta escola.</p>' : contract.configurations.map(config => `<h5>${categoryEscape(config.product_name)}</h5><p>${config.rules.length} regras cadastradas. Universidade: ${config.rules.some(rule => rule.type === 'TRAINING') ? 'categoria TRAINING cadastrada; acesso efetivo não verificado' : 'sem categoria TRAINING cadastrada'}.</p><details><summary>Tipos e faixas cadastrados</summary><ul>${config.rules.map(rule => `<li>${categoryEscape(categoryTypeLabels[rule.type] || rule.type)} — ${categoryEscape(rule.grade)}</li>`).join('')}</ul></details>`).join('')}
   </article>`).join('') : '<p>Nenhum vínculo contratual encontrado.</p>'}</section>`;
 
 const adminLoadSchoolContractOverview = async (schoolId, { force = false } = {}) => {
