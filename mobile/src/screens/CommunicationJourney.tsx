@@ -248,6 +248,14 @@ function Messages({
           api={api}
           actor={session.userId}
           delivery={delivery}
+          onDenied={() => {
+            setInbox((rows) =>
+              rows.filter((row) => row.delivery_id !== delivery),
+            );
+            setThreads((rows) =>
+              rows.filter((row) => row.delivery_id !== delivery),
+            );
+          }}
         />
       ) : null}
       {view === "notice" && selected ? (
@@ -258,6 +266,12 @@ function Messages({
           id={selected.id}
           delivery={selected.delivery}
           onChanged={reload}
+          onDenied={() => {
+            setInbox((rows) =>
+              rows.filter((row) => row.delivery_id !== selected.delivery),
+            );
+            setSent((rows) => rows.filter((row) => row.id !== selected.id));
+          }}
         />
       ) : null}
     </View>
@@ -267,10 +281,12 @@ function ReplyPanel({
   api,
   actor,
   delivery,
+  onDenied,
 }: {
   api: Api;
   actor: string;
   delivery: string;
+  onDenied: () => void;
 }) {
   const op = useOperation(),
     key = `${actor}:${delivery}`;
@@ -294,7 +310,12 @@ function ReplyPanel({
   }, [key]);
   async function refreshThread() {
     setThread(null);
-    setThread(await api.thread(delivery));
+    try {
+      setThread(await api.thread(delivery));
+    } catch (error) {
+      if (error instanceof Error && error.message.includes(":403:")) onDenied();
+      throw error;
+    }
   }
   useEffect(() => {
     void op.run(refreshThread);
@@ -386,12 +407,14 @@ function NoticePanel({
   id,
   delivery,
   onChanged,
+  onDenied,
 }: {
   api: Api;
   actor: string;
   id: string;
   delivery: string | null;
   onChanged: () => Promise<void>;
+  onDenied: () => void;
 }) {
   const op = useOperation(),
     key = `${actor}:${id}`;
@@ -400,7 +423,13 @@ function NoticePanel({
     [body, setBody] = useState("");
   async function load() {
     setNotice(null);
-    const n = await api.notice(id, delivery);
+    let n: Notice;
+    try {
+      n = await api.notice(id, delivery);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes(":403:")) onDenied();
+      throw error;
+    }
     setNotice(n);
     const saved = pendingEdits.get(key);
     const pending = saved?.confirmed ? undefined : saved;
