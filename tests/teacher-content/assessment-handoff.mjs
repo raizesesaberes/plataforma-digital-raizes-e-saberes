@@ -6,7 +6,7 @@ const {chromium}=createRequire(import.meta.url)('playwright');
 let source=readFileSync('app-pages.js','utf8');
 // Exercise the complete shipped renderer and handlers with synthetic transport only.
 source=source.replace('const createSupabaseRestClient =','const unusedRealClient =').replace('const questionBankDataService =','const unusedRealBankService =').replace(/renderAppPage\(\);\s*$/,'');
-source+=`\nconst createSupabaseRestClient=()=>({isConfigured:true,request:window.syntheticRequest});const questionBankDataService={...window.syntheticBank,createAssessmentFromBank:payload=>unusedRealBankService.createAssessmentFromBank(payload),replaceAssessmentItems:(...args)=>unusedRealBankService.replaceAssessmentItems(...args)};
+source+=`\nconst createSupabaseRestClient=()=>({isConfigured:true,request:window.syntheticRequest});const questionBankDataService={...window.syntheticBank,createAssessmentFromBank:(...args)=>unusedRealBankService.createAssessmentFromBank(...args),replaceAssessmentItems:(...args)=>unusedRealBankService.replaceAssessmentItems(...args)};
 window.mapSyntheticQuestion=mapQuestionFromSupabase;
 if(location.pathname.includes('professor.html')){
  teacherInstitutionalState.status='ready';teacherInstitutionalState.classes=[{id:'22222222-2222-4222-8222-222222222222',name:'Turma sintética 5º ano',schoolId:'school-a'}];teacherInstitutionalState.studentsByClass={};
@@ -24,20 +24,21 @@ const base='http://127.0.0.1:'+server.address().port;
 async function setup(role='professor',size={width:1440,height:1000}){
  const page=await browser.newPage({viewport:size});await page.route('https://**/*',route=>route.abort());page.setDefaultTimeout(10000);const errors=[];page.on('pageerror',e=>(errors.push(e.message),console.error('BROWSER',e.stack)));
  await page.addInitScript(({role})=>{
-  const token='x.'+btoa(JSON.stringify({sub:'synthetic-user',exp:9999999999,app_metadata:{platform_role:role==='revisor'?'professor':role,question_bank_role:role},user_metadata:{full_name:'Docente Sintético'}}))+'.x';
+  const token='x.'+btoa(JSON.stringify({sub:sessionStorage.getItem('test-active-user')||'synthetic-user',exp:9999999999,app_metadata:{platform_role:role==='revisor'?'professor':role,question_bank_role:role},user_metadata:{full_name:'Docente Sintético'}}))+'.x';
   localStorage.setItem('raizes:supabase-auth-session',JSON.stringify({access_token:token}));localStorage.setItem('raizes:supabase-access-token',token);
   window.RAIZES_SUPABASE={url:'https://synthetic.invalid',anonKey:'synthetic',enabled:true};
   window.failWrite=false;window.failReadback=false;window.failSave=false;
   const load=()=>JSON.parse(sessionStorage.getItem('synthetic-server')||'{"assessments":[],"assignments":[],"calls":[]}');
   window.syntheticRequest=async(path,query,options)=>{
-   const state=load();state.calls.push({path,query,options});sessionStorage.setItem('synthetic-server',JSON.stringify(state));
+   const actor=JSON.parse(atob(localStorage.getItem('raizes:supabase-access-token').split('.')[1])).sub;const state=load();state.calls.push({path,query,options,actor});sessionStorage.setItem('synthetic-server',JSON.stringify(state));
    if(!options.requireAuthenticated)throw Error('Missing auth');
    if(path==='rpc/current_institutional_school_ids')return ['school-a'];if(path==='schools')return [{id:'school-a',nome:'Escola sintética'}];
    if(path==='rpc/avalia_plus_create_assessment_from_bank'){
     if(window.failSave)throw Object.assign(Error('Falha ao salvar'),{status:400,code:'P0001'});
     sessionStorage.setItem('synthetic-create-count',String(Number(sessionStorage.getItem('synthetic-create-count')||0)+1));
+    window.lastSaveSignal=options.signal;
     if(window.slowSave)await new Promise(resolve=>window.releaseSave=resolve);const payload=JSON.parse(options.body).p_payload;
-    const exam={id:'11111111-1111-4111-8111-111111111111',title:payload.title,component:payload.component,school_year:payload.school_year,status:'RASCUNHO',questions:payload.questions};
+    const exam={owner_user_id:actor,id:'11111111-1111-4111-8111-111111111111',title:payload.title,component:payload.component,school_year:payload.school_year,status:'RASCUNHO',questions:payload.questions};
     state.assessments=[exam];sessionStorage.setItem('synthetic-server',JSON.stringify(state));if(window.loseSaveAck)throw Error('Network response lost after commit');return {assessment:exam,questions:payload.questions,booklets:[]};
    }
    if(path==='rpc/avalia_plus_replace_assessment_items')return {assessment:state.assessments[0],questions:state.assessments[0].questions,booklets:[]};
@@ -58,7 +59,45 @@ async function prepareBuilder(page){
  await page.evaluate(()=>{history.pushState(null,'','/bank?view=avaliacoes');dispatchEvent(new PopStateEvent('popstate'));});
  await page.locator('[data-qb-assessment-title]').fill('Montagem concorrente');
 }
+async function switchUser(page,emit=true){
+ await page.evaluate(emit=>{
+  sessionStorage.setItem('test-active-user','synthetic-user-b');
+  const old=JSON.parse(localStorage.getItem('raizes:supabase-auth-session'));const payload=JSON.parse(atob(old.access_token.split('.')[1]));payload.sub='synthetic-user-b';const token='x.'+btoa(JSON.stringify(payload))+'.x';
+  localStorage.setItem('raizes:supabase-auth-session',JSON.stringify({...old,access_token:token}));localStorage.setItem('raizes:supabase-access-token',token);
+  if(emit)dispatchEvent(new StorageEvent('storage',{key:'raizes:supabase-auth-session'}));
+ },emit);
+}
 try{
+ // B's pending marker must never be bypassed by an A-mounted page, even without a storage event.
+ const changed=await setup();await prepareBuilder(changed.page);
+ await changed.page.evaluate(()=>{sessionStorage.setItem('raizes:assessment-save-pending:synthetic-user','pending-A');sessionStorage.setItem('raizes:assessment-save-pending:synthetic-user-b','pending-B');});
+ await switchUser(changed.page,false);await changed.page.locator('[data-qb-publish-digital]').click();await changed.page.getByRole('heading',{name:'Conta alterada'}).waitFor();
+ assert.equal(await changed.page.evaluate(()=>sessionStorage.getItem('synthetic-create-count')),null);
+ assert.deepEqual(await changed.page.evaluate(()=>[sessionStorage.getItem('raizes:assessment-save-pending:synthetic-user'),sessionStorage.getItem('raizes:assessment-save-pending:synthetic-user-b')]),['pending-A','pending-B']);
+ // The actual HTTP client refuses an A-pinned request while authenticated as B, before fetch.
+ const rejected=await changed.page.evaluate(async()=>{let fetched=false;const old=window.fetch;window.fetch=async()=>{fetched=true;throw Error('Must not fetch');};try{await unusedRealClient().request('rpc/avalia_plus_create_assessment_from_bank','',{method:'POST',requireAuthenticated:true,expectedUserId:'synthetic-user'});return false;}catch(e){return e.code==='ASSESSMENT_ACTOR_CHANGED'&&!fetched;}finally{window.fetch=old;}});assert(rejected);
+ await changed.page.reload({waitUntil:'domcontentloaded'});assert.equal(await changed.page.locator('[data-qb-assessment-title]').inputValue(),'');assert.equal(await changed.page.evaluate(()=>sessionStorage.getItem('raizes:assessment-save-pending:synthetic-user-b')),'pending-B');assert.deepEqual(changed.errors,[]);await changed.page.close();
+ // Real HTTP client rejects stale responses after both fetch and JSON-body awaits.
+ for(const phase of ['fetch','json']){
+  const transport=await setup();await prepareBuilder(transport.page);
+  await transport.page.evaluate(phase=>{
+   const original=window.fetch;
+   window.fetch=async()=>{
+    if(phase==='fetch')await new Promise(resolve=>window.releaseTransport=resolve);
+    return {ok:true,status:200,json:async()=>{if(phase==='json')await new Promise(resolve=>window.releaseTransport=resolve);return {id:'11111111-1111-4111-8111-111111111111'};}};
+   };
+   window.actorRequest=unusedRealClient().request('rpc/avalia_plus_create_assessment_from_bank','',{method:'POST',requireAuthenticated:true,expectedUserId:'synthetic-user'}).then(()=> 'UNSAFE',e=>e.code).finally(()=>window.fetch=original);
+  },phase);
+  await transport.page.waitForFunction(()=>!!window.releaseTransport);await switchUser(transport.page,false);
+  assert.equal(await transport.page.evaluate(async()=>{window.releaseTransport();return await window.actorRequest;}),'ASSESSMENT_ACTOR_CHANGED');
+  assert.deepEqual(transport.errors,[]);await transport.page.close();
+ }
+ // In-flight A commit arrives after switch to B: abort/discard, preserve BOTH markers, never redirect.
+ const inflight=await setup();await prepareBuilder(inflight.page);await inflight.page.evaluate(()=>{window.slowSave=true;sessionStorage.setItem('raizes:assessment-save-pending:synthetic-user-b','pending-B');});
+ await inflight.page.locator('[data-qb-publish-digital]').click();await inflight.page.waitForFunction(()=>!!window.releaseSave);await switchUser(inflight.page);await inflight.page.getByRole('heading',{name:'Conta alterada'}).waitFor();
+ assert(await inflight.page.evaluate(()=>window.lastSaveSignal.aborted));await inflight.page.evaluate(()=>window.releaseSave());await inflight.page.waitForFunction(()=>JSON.parse(sessionStorage.getItem('synthetic-server')).assessments.length===1);
+ assert(inflight.page.url().includes('/bank'));assert.equal(await inflight.page.evaluate(()=>Number(sessionStorage.getItem('synthetic-create-count'))),1);
+ const retained=await inflight.page.evaluate(()=>({a:sessionStorage.getItem('raizes:assessment-save-pending:synthetic-user'),b:sessionStorage.getItem('raizes:assessment-save-pending:synthetic-user-b'),calls:JSON.parse(sessionStorage.getItem('synthetic-server')).calls.filter(c=>c.path==='rpc/avalia_plus_create_assessment_from_bank')}));assert(retained.a);assert.equal(retained.b,'pending-B');assert.equal(retained.calls[0].actor,'synthetic-user');assert.equal(retained.calls[0].options.expectedUserId,'synthetic-user');assert.deepEqual(inflight.errors,[]);await inflight.page.close();
  // Slow CREATE is shared across save/generate/handoff, even synthetic clicks bypassing disabled controls.
  const concurrent=await setup();await prepareBuilder(concurrent.page);let redirects=0;concurrent.page.on('framenavigated',frame=>{if(frame===concurrent.page.mainFrame()&&frame.url().includes('professor.html'))redirects++;});
  await concurrent.page.evaluate(()=>{window.slowSave=true;for(const selector of ['[data-qb-save-draft]','[data-qb-generate]','[data-qb-publish-digital]','[data-qb-publish-digital]'])document.querySelector(selector).dispatchEvent(new MouseEvent('click',{bubbles:true}));});
@@ -95,5 +134,5 @@ try{
  // Unknown URL id is not silently replaced by the first assessment.
  await page.goto(base+'/professor.html?view=avaliacoes&assessment_id=unknown',{waitUntil:'domcontentloaded'});await page.getByText('A avaliação solicitada não está disponível para este perfil. Selecione uma avaliação autorizada.',{exact:true}).waitFor();assert.equal(await page.locator('[data-avalia-assessment-select]').inputValue(),'');
  await page.goto(base+'/bank?view=avaliacoes&local=1',{waitUntil:'domcontentloaded'});await page.locator('[data-qb-publish-digital]').click();await page.getByText('Conecte-se para salvar e escolher uma turma. Nenhuma aplicação foi publicada.',{exact:true}).waitFor();assert(page.url().includes('/bank'));
- await page.close();console.log('PASS saved bank assessment -> canonical form exact id -> explicit authorized class -> real service RPC -> readback. Wrong year/no target/save failure/RPC failure/readback failure/unknown id do not publish locally or report success. Shared slow-save mutex and single redirect, cross-button clicks, definitive failure recovery, lost ACK retry/reload blocked. Synthetic transport only.');
+ await page.close();console.log('PASS saved bank assessment -> canonical form exact id -> explicit authorized class -> real service RPC -> readback. Wrong year/no target/save failure/RPC failure/readback failure/unknown id do not publish locally or report success. Shared slow-save mutex and single redirect, cross-button clicks, definitive failure recovery, lost ACK retry/reload blocked. Account switching before send and during RPC aborts stale journey, preserves both pending markers, isolates drafts and blocks stale redirect. Synthetic transport only.');
 }finally{await browser.close();server.close();}

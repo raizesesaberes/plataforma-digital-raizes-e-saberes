@@ -22169,12 +22169,23 @@ const initQuestionBank = () => {
   let cart = [];
   let cartPoints = {};
   let mode = questionBankDataService.mode();
+  const assessmentActorId=getSupabaseUserContext().userId;
+  const assessmentActorAbort=new AbortController();
+  let assessmentActorInvalid=false;
+  const assessmentActorCurrent=()=>!assessmentActorInvalid && getSupabaseUserContext().userId===assessmentActorId;
+  const requireAssessmentActor=()=>{
+    if(assessmentActorCurrent())return;
+    assessmentActorInvalid=true;assessmentActorAbort.abort();
+    activeAssessmentId=null;cart=[];cartPoints={};questions=[];assessments=[];selectedId=null;
+    root.innerHTML='<section role="alert"><h2>Conta alterada</h2><p>Esta jornada foi encerrada. Recarregue a página para continuar com a conta atual. Confirmações pendentes de salvamento foram preservadas.</p><a href="banco-questoes.html">Reabrir Banco de Questões</a></section>';
+    throw Object.assign(Error('Conta alterada. Reabra o Banco para continuar.'),{code:'ASSESSMENT_ACTOR_CHANGED'});
+  };
   let scopeFilter = localStorage.getItem("raizes:question-bank-scope") || "all";
   let editorialMode = { type: "create", source: null };
   let editorialActionState = "IDLE";
   let partialReviewQuestionId = "";
-  const cartStorageKey = "raizes:question-bank-cart";
-  const draftStorageKey = "raizes:question-bank-draft";
+  const cartStorageKey = `raizes:question-bank-cart:${assessmentActorId || "anonymous"}`;
+  const draftStorageKey = `raizes:question-bank-draft:${assessmentActorId || "anonymous"}`;
   let didAttemptLoginResume = false;
   try {
     const savedDraft = JSON.parse(localStorage.getItem(draftStorageKey) || "null");
@@ -22254,6 +22265,7 @@ const initQuestionBank = () => {
     });
   };
   const saveDraftSnapshot = (reason = "autosave") => {
+    requireAssessmentActor();
     syncPointInputs();
     localStorage.setItem(
       draftStorageKey,
@@ -23060,13 +23072,15 @@ const initQuestionBank = () => {
   const installSupabaseSessionListener = () => {
     if (mode !== "supabase") return;
     const refreshIfNeeded = () => {
+      try{requireAssessmentActor();}catch{return;}
       const session = getStoredSupabaseSession();
       if (session && isStoredSessionExpired(session, 180)) {
-        refreshStoredSupabaseSession().catch(() => {});
+        refreshStoredSupabaseSession().then(()=>requireAssessmentActor()).catch(() => {});
       }
     };
     window.addEventListener("storage", (event) => {
-      if (event.key === supabaseSessionStorageKey) {
+      if (event.key === supabaseSessionStorageKey || event.key === 'raizes:supabase-access-token' || event.key === null) {
+        try{requireAssessmentActor();}catch{return;}
         refresh().catch(() => {});
       }
     });
@@ -23603,6 +23617,7 @@ const initQuestionBank = () => {
   });
 
   const syncCartToAssessment = async () => {
+    requireAssessmentActor();
     if (!cart.length) return null;
     syncPointInputs();
     if (!activeAssessmentId) {
@@ -23625,7 +23640,8 @@ const initQuestionBank = () => {
             })),
           },
         ],
-      });
+      },{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal});
+      requireAssessmentActor();
       activeAssessmentId = assessment.id;
       return assessment;
     }
@@ -23648,14 +23664,15 @@ const initQuestionBank = () => {
           })),
         },
       ],
-    });
+    },{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal});
   };
 
   let assessmentSavePromise=null, assessmentHandoffPromise=null, assessmentHandoffComplete=false;
-  const assessmentSaveKey=`raizes:assessment-save-pending:${getSupabaseUserContext().userId || 'anonymous'}`;
+  const assessmentSaveKey=`raizes:assessment-save-pending:${assessmentActorId || 'anonymous'}`;
   const uncertainSaveMessage='A confirmação do salvamento está pendente. Consulte Avaliações salvas e abra a avaliação confirmada antes de continuar. Não repita a criação.';
   const saveControls='.qb-builder input,.qb-builder select,.qb-builder textarea,[data-qb-points],[data-qb-save-draft],[data-qb-preview],[data-qb-publish-digital],[data-qb-generate],.qb-cart button,[data-qb-add],[data-qb-clear-cart],[data-qb-open-assessment]';
   const saveAssessmentOnce = () => {
+    requireAssessmentActor();
     if(assessmentSavePromise)return assessmentSavePromise;
     if(sessionStorage.getItem(assessmentSaveKey))return Promise.reject(Error(uncertainSaveMessage));
     const controls=[...root.querySelectorAll(saveControls)].map(node=>({node,disabled:node.disabled}));
@@ -23665,19 +23682,22 @@ const initQuestionBank = () => {
       sessionStorage.setItem(assessmentSaveKey,JSON.stringify({assessmentId:activeAssessmentId,startedAt:new Date().toISOString()}));
       try {
         const saved=await syncCartToAssessment();
+        requireAssessmentActor();
         const id=saved?.assessment?.id || saved?.id;
         if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || ''))throw Error('Resposta de salvamento sem identificador confirmado.');
         activeAssessmentId=id;saveDraftSnapshot('assessment-saved');sessionStorage.removeItem(assessmentSaveKey);return saved;
       }catch(error){
+        requireAssessmentActor();
         const definitive=error.status>=400 && error.status<500 && /^(?:PGRST[0-9]{3}|[A-Z0-9]{5})$/.test(error.code || '');
         const localAuth=/^(Sessao Supabase ausente|Sessao expirada|Seu perfil nao tem permissao)/.test(error.message || '');
         if(definitive || localAuth){sessionStorage.removeItem(assessmentSaveKey);throw error;}
         throw Error(uncertainSaveMessage);
       }
-    })().finally(()=>{assessmentSavePromise=null;controls.forEach(({node,disabled})=>{node.disabled=disabled;});});
+    })().finally(()=>{assessmentSavePromise=null;if(assessmentActorCurrent())controls.forEach(({node,disabled})=>{node.disabled=disabled;});});
     return assessmentSavePromise;
   };
   const ensureSavedForPreview = async () => {
+    requireAssessmentActor();
     if(assessmentSavePromise)return assessmentSavePromise;
     if (!cart.length) {
       setSelectionStatus("Selecione questoes antes de salvar ou pre-visualizar.", "error");
@@ -23764,16 +23784,18 @@ const initQuestionBank = () => {
   });
 
   const publishCurrentAssessmentDigitally = () => {
+    requireAssessmentActor();
     if(assessmentHandoffComplete)return Promise.resolve(null);
     if(assessmentHandoffPromise)return assessmentHandoffPromise;
     assessmentHandoffPromise=(async()=>{
     if(mode!=='supabase') {setSelectionStatus('Conecte-se para salvar e escolher uma turma. Nenhuma aplicação foi publicada.','error');return null;}
     const saved=await ensureSavedForPreview();
+    requireAssessmentActor();
     if(!saved)return null;
     const id=saved.assessment?.id || saved.id;
     if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || ''))throw Error('O servidor não confirmou o identificador da avaliação. Nenhuma aplicação foi publicada.');
     setSelectionStatus('Avaliação salva. Escolha a turma e revise a aplicação na próxima tela.','success');
-    assessmentHandoffComplete=true;
+    requireAssessmentActor();assessmentHandoffComplete=true;
     window.location.assign(`professor.html?view=avaliacoes&assessment_id=${encodeURIComponent(id)}#aplicacoes`);
     return saved;
     })().finally(()=>{assessmentHandoffPromise=null;});
@@ -23803,21 +23825,23 @@ const initQuestionBank = () => {
   };
 
   const refresh = async () => {
+    requireAssessmentActor();
     loading.hidden = false;
     errorNode.hidden = true;
     mode = questionBankDataService.mode();
     try {
-      questions = await questionBankDataService.listQuestions();
-      assessments = await questionBankDataService.listAssessments();
+      questions = await questionBankDataService.listQuestions();requireAssessmentActor();
+      assessments = await questionBankDataService.listAssessments();requireAssessmentActor();
       selectedId = selectedId || questions[0]?.id;
       cart = activeAssessmentId
         ? (await questionBankDataService.getAssessmentById(activeAssessmentId))?.questions?.map((entry) => entry.question?.code || entry.question_id) || cart
         : cart.filter((id) => itemById(id));
-      populateFilterOptions();
+      requireAssessmentActor();populateFilterOptions();
       root.querySelector(".qb-notice span").textContent = localDevNotice();
       await render();
       await attemptLoginResume();
     } catch (error) {
+      if(!assessmentActorCurrent()){try{requireAssessmentActor();}catch{}return;}
       questions = mode === "fallback" ? await questionBankDataService.listQuestions() : [];
       assessments = [];
       populateFilterOptions();
@@ -23855,6 +23879,7 @@ const initQuestionBank = () => {
   };
 
   root.addEventListener("click", async (event) => {
+    try{requireAssessmentActor();}catch{return;}
     const button = event.target.closest("button");
     if (!button) {
       return;
@@ -24000,7 +24025,9 @@ const initQuestionBank = () => {
         await moveQuestionWorkflow(button.dataset.qbWorkflowArchive, "ARQUIVADO");
       }
       if (button.dataset.qbOpenAssessment) {
-        const assessment = await questionBankDataService.getAssessmentById(button.dataset.qbOpenAssessment);
+        requireAssessmentActor();
+        const assessment = await questionBankDataService.getAssessmentById(button.dataset.qbOpenAssessment,{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal});
+        requireAssessmentActor();
         if(!assessment?.id || assessment.id!==button.dataset.qbOpenAssessment)throw Error('Avaliação não confirmada pelo servidor.');
         activeAssessmentId = assessment.id;
         sessionStorage.removeItem(assessmentSaveKey);
@@ -24033,10 +24060,12 @@ const initQuestionBank = () => {
 
   [search, usedFilter, sort, ...filters].forEach((control) => {
     control.addEventListener("input", () => {
+      try{requireAssessmentActor();}catch{return;}
       saveDraftSnapshot("filters-changed");
       render();
     });
     control.addEventListener("change", () => {
+      try{requireAssessmentActor();}catch{return;}
       saveDraftSnapshot("filters-changed");
       render();
     });
@@ -24044,6 +24073,7 @@ const initQuestionBank = () => {
 
   scopeTabs.forEach((button) => {
     button.addEventListener("click", () => {
+      try{requireAssessmentActor();}catch{return;}
       scopeFilter = button.dataset.qbScope || "all";
       localStorage.setItem("raizes:question-bank-scope", scopeFilter);
       render();
@@ -24052,15 +24082,17 @@ const initQuestionBank = () => {
 
   builderFields.forEach((control) => {
     control.addEventListener("change", () => {
+      try{requireAssessmentActor();}catch{return;}
       saveDraftSnapshot("builder-changed");
       if (activeAssessmentId) {
         ensureSavedForPreview().catch((error) => setError(error.message));
       }
     });
-    control.addEventListener("input", () => saveDraftSnapshot("builder-changed"));
+    control.addEventListener("input", () => {try{requireAssessmentActor();}catch{return;}saveDraftSnapshot("builder-changed");});
   });
 
   cartList.addEventListener("input", (event) => {
+    try{requireAssessmentActor();}catch{return;}
     if (event.target.matches("[data-qb-points]")) {
       cartPoints[event.target.dataset.qbPoints] = Number(event.target.value || 1);
       saveDraftSnapshot("points-changed");
@@ -24265,10 +24297,15 @@ const createSupabaseRestClient = () => {
     if (!isConfigured) {
       throw new Error("Supabase não configurado. Crie supabase-config.js com URL e anon key pública.");
     }
+    const assertRequestActor=(resolved)=>{
+      if(options.expectedUserId!==undefined && (getSupabaseUserContext().userId!==options.expectedUserId || (resolved && resolved.userId!==options.expectedUserId)))throw Object.assign(Error('Conta alterada durante a operação.'),{code:'ASSESSMENT_ACTOR_CHANGED'});
+    };
+    assertRequestActor();
     const requestContext = await resolveSupabaseUserContext({
       requireAuthenticated: options.requireAuthenticated === true,
       allowedRoles: options.allowedRoles || [],
     });
+    assertRequestActor(requestContext);
     const authHeaders =
       requestContext.token && !String(requestContext.token).startsWith("sb_")
         ? { Authorization: `Bearer ${requestContext.token}` }
@@ -24283,6 +24320,7 @@ const createSupabaseRestClient = () => {
         ...(options.headers || {}),
       },
     });
+    assertRequestActor(requestContext);
     if (response.status === 401 && options.retryOnAuth !== false) {
       const refreshed = await refreshStoredSupabaseSession();
       if (refreshed?.access_token) {
@@ -24291,12 +24329,15 @@ const createSupabaseRestClient = () => {
     }
     if (!response.ok) {
       const body = await response.text();
+      assertRequestActor(requestContext);
       let rpcError = null;
       try { rpcError = JSON.parse(body); } catch { /* Non-JSON proxy errors remain uncertain. */ }
       throw Object.assign(new Error(mapSupabaseError(response, body)), { status: response.status, code: rpcError?.code, databaseMessage: rpcError?.message });
     }
     if (response.status === 204) return null;
-    return response.json();
+    const result=await response.json();
+    assertRequestActor(requestContext);
+    return result;
   };
 
   const getContext = (options) => resolveSupabaseUserContext(options);
@@ -30315,9 +30356,9 @@ const questionBankDataService = (() => {
         throw error;
       }
     },
-    async getAssessmentById(id) {
+    async getAssessmentById(id, actorOptions={}) {
       const { request } = client();
-      const rows = await request("assessments", `?id=eq.${encodeURIComponent(id)}&select=${assessmentSelect}&limit=1`);
+      const rows = await request("assessments", `?id=eq.${encodeURIComponent(id)}&select=${assessmentSelect}&limit=1`,{requireAuthenticated:true,allowedRoles:allowedAssessmentRoles,expectedUserId:actorOptions.expectedUserId,signal:actorOptions.signal});
       return rows[0] ? mapAssessmentFromSupabase(rows[0]) : null;
     },
     async createAssessment(payload) {
@@ -30336,10 +30377,11 @@ const questionBankDataService = (() => {
       });
       return mapAssessmentFromSupabase(row);
     },
-    async createAssessmentFromBank(payload) {
+    async createAssessmentFromBank(payload, actorOptions={}) {
       const { request } = client();
       await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedAssessmentRoles });
       const result = await request("rpc/avalia_plus_create_assessment_from_bank", "", {
+        expectedUserId:actorOptions.expectedUserId,signal:actorOptions.signal,
         method: "POST",
         requireAuthenticated: true,
         allowedRoles: allowedAssessmentRoles,
@@ -30352,10 +30394,11 @@ const questionBankDataService = (() => {
         skill_map: result.skill_map || [],
       });
     },
-    async replaceAssessmentItems(assessmentId, payload) {
+    async replaceAssessmentItems(assessmentId, payload, actorOptions={}) {
       const { request } = client();
       await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedAssessmentRoles });
       const result = await request("rpc/avalia_plus_replace_assessment_items", "", {
+        expectedUserId:actorOptions.expectedUserId,signal:actorOptions.signal,
         method: "POST",
         requireAuthenticated: true,
         allowedRoles: allowedAssessmentRoles,
