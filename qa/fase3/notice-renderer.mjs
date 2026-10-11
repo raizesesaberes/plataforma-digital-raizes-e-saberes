@@ -15,3 +15,8 @@ export async function inspectNoticeRender(client,teacherClient,row){
  const renderTeacher=new Function('communicationStatusLabel','printableEscape',`${segment('const renderTeacherClassMessageCard =','const renderTeacherClassMessagesPanel =')};return renderTeacherClassMessageCard;`)(x=>x,escape);
  return {studentHtml:renderStudent(mapped[0]),unread:count(mapped),teacherHtml:renderTeacher(teacher),teacher};
 }
+
+export async function inspectFamilyInbox(client) {
+ const call=new Function('globalThis',`${segment('const enrichCommunicationVersions =','const markCommunicationDeliveryRead =')};return callCommunicationInbox;`)({RAIZES_NOTICE_EDITING_ENABLED:true});
+ return call(client,{},['familia']);
+}

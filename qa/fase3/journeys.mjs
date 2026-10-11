@@ -267,6 +267,12 @@ if(!process.argv.includes('--baseline')) await test('replies: exact child bindin
  await rpc(6,'communication_send_reply',{p_delivery_id:a,p_body:'SYNTHETIC CHILD A',p_request_id:id(9,61)});
  sql(`update public.student_guardians set status='inactive' where student_id='${id(4)}'`);
  await denied(a);await read(b);
+ const {inspectFamilyInbox}=await import('./notice-renderer.mjs');
+ const client={request:async(path,query,options)=>{const r=await request(6,path,JSON.parse(options.body||'{}'));if(r.status>=400)throw Object.assign(new Error('HTTP '+r.status),{status:r.status});return r.data;}};
+ const familyRows=await inspectFamilyInbox(client);
+ assert.ok(familyRows.some(x=>x.delivery_id===b));assert.ok(!familyRows.some(x=>x.delivery_id===a));
+ assert.equal(familyRows[0].unread_count,familyRows.filter(x=>!x.read_at).length);
+ for(const status of [404,503])await assert.rejects(()=>inspectFamilyInbox({request:async(...args)=>{if(args[0]==='rpc/communication_get_notice_versions')throw Object.assign(new Error('HTTP '+status),{status});return client.request(...args);}}),new RegExp('HTTP '+status));
  const threads=await rpc(1,'communication_list_reply_threads',{p_communication_id:pub.communication_id});
  assert.equal(threads.find(x=>x.delivery_id===a).student_name,'SYNTHETIC STUDENT A');
  assert.equal(threads.find(x=>x.delivery_id===b).student_name,'SYNTHETIC PEER');
