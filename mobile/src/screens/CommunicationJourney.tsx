@@ -17,7 +17,16 @@ import {
   useOperation,
   journeyStyles as s,
 } from "../components/JourneyKit";
-const pendingReplies = new Map<string, { body: string; requestId: string }>();
+const pendingReplies = new Map<
+  string,
+  {
+    body: string;
+    requestId: string;
+    inFlight?: Promise<unknown>;
+    confirmed?: boolean;
+  }
+>();
+const replyListeners = new Map<string, Set<(body: string) => void>>();
 const pendingEdits = new Map<
   string,
   { title: string; body: string; revision: number; requestId: string }
@@ -33,6 +42,12 @@ export function CommunicationJourney({
   teacher?: boolean;
   gates?: Gates;
 }) {
+  if (!gates.replies && !gates.editing)
+    return (
+      <JourneyCard>
+        <Text style={s.text}>Recados aguardando liberação do backend.</Text>
+      </JourneyCard>
+    );
   if (!session)
     return (
       <JourneyCard>
@@ -249,7 +264,23 @@ function ReplyPanel({
   const op = useOperation(),
     key = `${actor}:${delivery}`;
   const [thread, setThread] = useState<Thread | null>(null),
-    [text, setText] = useState(() => pendingReplies.get(key)?.body || "");
+    [text, setText] = useState(() =>
+      pendingReplies.get(key)?.confirmed
+        ? ""
+        : pendingReplies.get(key)?.body || "",
+    );
+  useEffect(() => {
+    const listener = (body: string) =>
+      setText((current) => (current.trim() === body ? "" : current));
+    const listeners =
+      replyListeners.get(key) || new Set<(body: string) => void>();
+    listeners.add(listener);
+    replyListeners.set(key, listeners);
+    return () => {
+      listeners.delete(listener);
+      if (!listeners.size) replyListeners.delete(key);
+    };
+  }, [key]);
   useEffect(() => {
     void op.run(async () => setThread(await api.thread(delivery)));
   }, [api, delivery]);
@@ -280,7 +311,11 @@ function ReplyPanel({
             value={text}
             editable={!op.busy}
             maxLength={1000}
-            onChangeText={setText}
+            onChangeText={(value) => {
+              if (pendingReplies.get(key)?.confirmed)
+                pendingReplies.delete(key);
+              setText(value);
+            }}
           />
           <Action
             title="Enviar resposta"
@@ -291,9 +326,24 @@ function ReplyPanel({
                 if (!draft || draft.body !== text.trim())
                   draft = { body: text.trim(), requestId: newRequestId() };
                 pendingReplies.set(key, draft);
-                await api.reply(delivery, draft.body, draft.requestId);
-                pendingReplies.delete(key);
-                setText("");
+                if (!draft.confirmed) {
+                  draft.inFlight ||= api.reply(
+                    delivery,
+                    draft.body,
+                    draft.requestId,
+                  );
+                  try {
+                    await draft.inFlight;
+                    draft.confirmed = true;
+                  } finally {
+                    draft.inFlight = undefined;
+                  }
+                }
+                for (const listener of replyListeners.get(key) || [])
+                  listener(draft.body);
+                setText((current) =>
+                  current.trim() === draft.body ? "" : current,
+                );
                 op.setMessage("Resposta confirmada no servidor.");
                 try {
                   setThread(await api.thread(delivery));

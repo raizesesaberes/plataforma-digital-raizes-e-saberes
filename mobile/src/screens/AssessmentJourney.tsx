@@ -427,17 +427,18 @@ function StudentAssessments({
                           }
                           onPress={() =>
                             void op.run(async () => {
+                              const savedDraft =
+                                drafts[q.question_id] ??
+                                response?.response_text ??
+                                "";
                               await api.save(
                                 attempt,
                                 q.question_id,
                                 null,
-                                (
-                                  drafts[q.question_id] ??
-                                  response?.response_text ??
-                                  ""
-                                ).trim(),
+                                savedDraft.trim(),
                               );
                               setDrafts((d) => {
+                                if (d[q.question_id] !== savedDraft) return d;
                                 const next = { ...d };
                                 delete next[q.question_id];
                                 return next;
