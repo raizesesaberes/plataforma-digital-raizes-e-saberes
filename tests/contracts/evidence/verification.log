@@ -1,0 +1,19 @@
+Synthetic local database rebuilt; no remote connection.
+PASS ACL admin / non-admin / anon / private tables
+PASS duplicate schools / no targets / date / explicit adoption / institutional / duplicate new school
+PASS atomic contract + two schools / idempotent receipt / no network expansion / inactive school denied
+PASS future renewal preserves current contract byte-for-byte / duplicate renewal rejected
+PASS stale review / canonical new school / future adoption does not alter legacy today
+PASS revocation is immediate and cannot resurrect legacy grants
+ALL DATABASE TESTS PASSED
+PASS actual resolver: zero / newly published content / future editorial date / grade / transversal / school switch / protected delivery / raw RLS
+PASS suspension / inherited network BLOCK / revocation through actual resolver
+PASS injected failure rolls back contractor, school, installation, tenant, contract, entitlements and audit together
+PASS removed school denied at successor boundary / predecessor history retained / revoke effective successor cannot revive predecessor
+PASS 12 calendar months validated on server, leap-year anniversary and inclusive end
+PASS heterogeneous school renewal preserves exact rules, previous license restrictions and disabled module overrides
+PASS actual admin.html → authenticated PostgREST → atomic contract/new school → lost response → page reload → idempotent retry
+PASS calendar-month default / custom duration / explicit institutional / school change / future renewal from original configuration
+PASS catalog error / retry
+PASS UI revocation with explicit target review
+PASS actual empty product catalog

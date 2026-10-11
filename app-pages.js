@@ -14532,6 +14532,7 @@ const renderAdminSchoolExceptionsManager = ({ catalog, availabilityByContent, sc
 };
 
 const renderAdminContentGovernanceConsole = () => {
+  if (['entitlements', 'network-contracts'].includes(new URLSearchParams(window.location.search).get('type'))) return '<section class="admin-board"><contract-operations></contract-operations></section>';
   if (adminOperationalState.status === "loading" || adminOperationalState.status === "idle") {
     return `<section class="admin-board admin-loading-state"><h2>Carregando conteúdos</h2><p>Consultando catalogos e disponibilidade por escola.</p></section>`;
   }
@@ -14626,8 +14627,8 @@ const renderAdminContentGovernanceConsole = () => {
       <div class="admin-section-head"><h2>Distribuição e Acesso</h2><span>Produtos, acessos e exceções</span></div>
       <div class="admin-content-module-grid">
         ${renderAdminContentModuleCard({ title: "Produtos e Coleções", description: "Organize quais conteúdos fazem parte de cada produto.", status: "EM IMPLANTAÇÃO", icon: "portfolio", href: adminContentUrl({ type: "products" }) })}
-        ${renderAdminContentModuleCard({ title: "Contratos e Acessos", description: "Defina quais redes e escolas possuem acesso aos produtos.", status: "EM IMPLANTAÇÃO", icon: "check", href: adminContentUrl({ type: "entitlements" }) })}
-        ${renderAdminContentModuleCard({ title: "Redes contratantes", description: "Prepare direitos herdados por rede sem criar exceção item a item.", status: "PREPARADO", icon: "site", href: adminContentUrl({ type: "network-contracts" }) })}
+        ${renderAdminContentModuleCard({ title: "Contratos e Acessos", description: "Cadastre, renove e revise os acessos por categoria.", status: "GERENCIAR", icon: "check", href: adminContentUrl({ type: "entitlements" }) })}
+        ${renderAdminContentModuleCard({ title: "Redes contratantes", description: "Cadastre contratantes e vincule escolas aos contratos.", status: "GERENCIAR", icon: "site", href: adminContentUrl({ type: "network-contracts" }) })}
         ${renderAdminContentModuleCard({ title: "Exceções por Escola", count: adminOperationalState.data?.contentAvailability?.length || 0, countLabel: "regras", description: "Liberações, bloqueios, pilotos e embargos especiais.", status: "OPERACIONAL", icon: "escola", href: adminContentUrl({ type: "exceptions" }) })}
       </div>
     </section>
@@ -15252,7 +15253,8 @@ const initAdminWorkspace = () => {
     workspace.querySelectorAll("[data-admin-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.adminView === activeView));
     if (content) content.innerHTML = renderAdminWorkspaceView(activeView);
     if (activeView === "escolas" && content) adminHydrateContractOverviews(content);
-    if (["painel", "usuarios", "escolas", "conteúdos", "implantação", "suporte", "permissoes", "configuracoes", "auditoria", "logs"].includes(activeView)) {
+    const isContractOperation = activeView === 'conteúdos' && ['entitlements', 'network-contracts'].includes(new URLSearchParams(window.location.search).get('type'));
+    if (!isContractOperation && ["painel", "usuarios", "escolas", "conteúdos", "implantação", "suporte", "permissoes", "configuracoes", "auditoria", "logs"].includes(activeView)) {
       ensureAdminReadOnlyData().then(() => {
         if (content && workspace.querySelector(`[data-admin-view="${activeView}"]`)?.classList.contains("is-active")) {
           content.innerHTML = renderAdminWorkspaceView(activeView);

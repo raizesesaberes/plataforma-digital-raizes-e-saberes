@@ -1,0 +1,6 @@
+insert into auth.users(id) values('10000000-0000-4000-8000-000000000001'),('10000000-0000-4000-8000-000000000002');
+insert into public.profiles(id,display_name,platform_role,status) values('10000000-0000-4000-8000-000000000001','Administrador sintético','admin','active'),('10000000-0000-4000-8000-000000000002','Usuário sintético','user','active');
+insert into public.schools(id,nome,codigo_inep,status) values('20000000-0000-4000-8000-000000000001','Escola Sintética A','SYN_A','active'),('20000000-0000-4000-8000-000000000002','Escola Sintética B','SYN_B','inactive'),('20000000-0000-4000-8000-000000000003','Escola Sintética C','SYN_C','active');
+insert into public.products(id,code,name,status) values('30000000-0000-4000-8000-000000000001','SYN_PRODUCT','Produto sintético completo','ACTIVE');
+insert into public.content_modules(id,code,name,content_types) values('40000000-0000-4000-8000-000000000001','SYN_ALL','Módulos sintéticos',array['QUESTION','VIDEO','BOOK','GAME','INTERACTION','ACTIVITY','ASSESSMENT_TEMPLATE','TRAINING']::public.rs_content_type[]);
+insert into public.product_content_modules(product_id,content_module_id) values('30000000-0000-4000-8000-000000000001','40000000-0000-4000-8000-000000000001');
