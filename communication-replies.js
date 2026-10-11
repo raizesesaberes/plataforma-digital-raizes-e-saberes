@@ -1,5 +1,10 @@
 /* Persisted communication replies. Requires the reviewed reply RPCs. */
 (() => {
+  // Explicit rollout gate. Enable only after backend review/application approval.
+  if (globalThis.RAIZES_COMMUNICATION_REPLIES_ENABLED !== true) return;
+  // Retain uncertain submissions across modal close/reopen, scoped to the actor.
+  // Memory only: no message content is persisted in browser storage.
+  const pendingRequests = new Map();
   const element = (tag, text, attributes = {}) => {
     const node = document.createElement(tag);
     if (text !== undefined) node.textContent = text;
@@ -27,7 +32,11 @@
       content.textContent = 'Carregando conversa…';
       const thread = await request('communication_get_reply_thread', { p_delivery_id: deliveryId });
       if (!dialog.isConnected) return;
-      content.replaceChildren(element('h2', thread.title), element('p', thread.body));
+      const actor = await resolveSupabaseUserContext({ requireAuthenticated: true });
+      if (!dialog.isConnected) return;
+      const pendingKey = `${actor.userId}:${deliveryId}`;
+      content.replaceChildren(element('h2', thread.title), element('p', thread.body),
+        element('p', 'Respostas visíveis ao destinatário, ao autor autorizado e à gestão escolar, de rede ou administradores com permissão.'));
       const messages = element('div', undefined, { 'data-reply-messages': '' });
       const renderMessages = rows => {
         messages.replaceChildren();
@@ -47,18 +56,23 @@
       const status = element('p', '', { role: 'status' });
       form.append(label, send, status);
       content.append(messages, form);
-      let requestId = crypto.randomUUID();
-      let pendingBody = null;
+      const retained = pendingRequests.get(pendingKey);
+      let requestId = retained?.requestId || crypto.randomUUID();
+      let pendingBody = retained?.body ?? null;
+      input.value = pendingBody || '';
       let sending = false;
+      dialog.addEventListener('cancel', event => { if (sending) event.preventDefault(); });
       form.addEventListener('submit', async submitEvent => {
         submitEvent.preventDefault();
         if (sending || !input.value.trim()) return;
         // A retry of the same text reuses the request id after an uncertain response.
         if (pendingBody !== null && pendingBody !== input.value.trim()) requestId = crypto.randomUUID();
         pendingBody = input.value.trim();
-        sending = true; send.disabled = true; input.readOnly = true; status.textContent = 'Enviando…';
+        pendingRequests.set(pendingKey, { requestId, body: pendingBody });
+        sending = true; close.disabled = true; send.disabled = true; input.readOnly = true; status.textContent = 'Enviando…';
         try {
           await request('communication_send_reply', { p_delivery_id: deliveryId, p_body: pendingBody, p_request_id: requestId });
+          pendingRequests.delete(pendingKey);
           if (!dialog.isConnected) return;
           input.value = ''; pendingBody = null; requestId = crypto.randomUUID();
           status.textContent = 'Resposta enviada.';
@@ -67,7 +81,7 @@
             if (dialog.isConnected) renderMessages(refreshed.messages);
           } catch { status.textContent = 'Resposta enviada. Reabra a conversa para atualizar as mensagens.'; }
         } catch { if (dialog.isConnected) status.textContent = 'Não foi possível enviar. Seu texto foi mantido; tente novamente.'; }
-        finally { sending = false; send.disabled = false; input.readOnly = false; }
+        finally { sending = false; close.disabled = false; send.disabled = false; input.readOnly = false; }
       });
     };
     try {
@@ -78,7 +92,7 @@
         content.replaceChildren(element('h2', 'Conversas por destinatário'));
         if (!threads.length) content.append(element('p', 'Nenhum destinatário disponível.'));
         for (const thread of threads) {
-          const button = element('button', `${thread.recipient_name || 'Destinatário'} · ${thread.reply_count} resposta(s)`, { type: 'button' });
+          const button = element('button', `${thread.recipient_name || 'Destinatário'}${thread.student_name ? ` · Aluno: ${thread.student_name}` : ''} · ${thread.reply_count} resposta(s)`, { type: 'button' });
           button.addEventListener('click', () => openThread(thread.delivery_id).catch(() => { content.textContent = 'Não foi possível abrir esta conversa.'; }));
           content.append(button);
         }
