@@ -126,7 +126,7 @@ await test('security: expired/suspended license blocks assembly, replacement and
   ["update public.contracts set status='SUSPENDED' where contract_ref='FASE3_SYNTHETIC'", "update public.contracts set status='ACTIVE' where contract_ref='FASE3_SYNTHETIC'"],
   ["update public.tenant_product_entitlements set status='SUSPENDED' where contract_id in (select id from public.contracts where contract_ref='FASE3_SYNTHETIC')", "update public.tenant_product_entitlements set status='ACTIVE' where contract_id in (select id from public.contracts where contract_ref='FASE3_SYNTHETIC')"],
   ["update public.tenant_product_entitlements set ends_at=current_date-1 where contract_id in (select id from public.contracts where contract_ref='FASE3_SYNTHETIC')", "update public.tenant_product_entitlements set ends_at=null where contract_id in (select id from public.contracts where contract_ref='FASE3_SYNTHETIC')"],
-  ["update public.question_licenses set publication_allowed=false", "update public.question_licenses set publication_allowed=true"]
+  ["update public.question_licenses set publication_allowed=false where id='50000000-0000-0000-0000-000000000001'", "update public.question_licenses set publication_allowed=true where id='50000000-0000-0000-0000-000000000001'"]
  ];
  for(const [suspend,restore] of cases){sql(suspend);try{
   await mustDeny(1,'avalia_plus_create_assessment_from_bank',assembly());
@@ -136,18 +136,18 @@ await test('security: expired/suspended license blocks assembly, replacement and
  }finally{sql(restore)}}
 });
 await test('security: non-approved item cannot be assembled or published',async()=>{
- sql("update public.question_items set workflow_status='EM_REVISAO'");
+ sql("update public.question_items set workflow_status='EM_REVISAO' where id='70000000-0000-0000-0000-000000000001'");
  try{
   await mustDeny(1,'avalia_plus_create_assessment_from_bank',assembly());
   await mustDeny(1,'teacher_schedule_assessment_application_v2',{p_assessment_id:assessmentId,p_target_type:'class',p_class_id:id(3)});
- }finally{sql("update public.question_items set workflow_status='APROVADO'")}
+ }finally{sql("update public.question_items set workflow_status='APROVADO' where id='70000000-0000-0000-0000-000000000001'")}
 });
 await test('security: positive entitlement grant permits B; revocation denies again',async()=>{
  sql(`do $$ declare tenant uuid; product uuid; contract uuid; begin
  select id into tenant from public.tenants where school_id='${id(1,2)}';select id into product from public.products where code='FASE3_SYNTHETIC';
  insert into public.contracts(tenant_id,contract_ref,starts_at,status) values(tenant,'SYNTHETIC_B',current_date-1,'ACTIVE') returning id into contract;
- insert into public.contract_products(contract_id,product_id,metadata) select contract,product,cp.metadata from public.contract_products cp limit 1;
- insert into public.tenant_product_entitlements(contract_id,tenant_id,product_id,starts_at,grade_ids,metadata) select contract,tenant,product,current_date-1,e.grade_ids,e.metadata from public.tenant_product_entitlements e limit 1;
+ insert into public.contract_products(contract_id,product_id,metadata) select contract,product,cp.metadata from public.contract_products cp where cp.contract_id=(select id from public.contracts where contract_ref='FASE3_SYNTHETIC');
+ insert into public.tenant_product_entitlements(contract_id,tenant_id,product_id,starts_at,grade_ids,metadata) select contract,tenant,product,current_date-1,e.grade_ids,e.metadata from public.tenant_product_entitlements e where e.contract_id=(select id from public.contracts where contract_ref='FASE3_SYNTHETIC');
  end $$;`);
  try{
   const granted=await rpc(4,'avalia_plus_create_assessment_from_bank',assembly(id(1,2),id(3,2)));assert.ok(granted.assessment.id);
