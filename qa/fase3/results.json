@@ -93,6 +93,14 @@
     {
       "name": "security: public ACLs preserved and new helpers have no app EXECUTE grants",
       "status": "PASS"
+    },
+    {
+      "name": "replies: recipient replies, teacher sees and answers, recipient receives persisted return",
+      "status": "PASS"
+    },
+    {
+      "name": "browser: persisted student reply, retry, teacher return, reload and school isolation",
+      "status": "PASS"
     }
   ]
 }

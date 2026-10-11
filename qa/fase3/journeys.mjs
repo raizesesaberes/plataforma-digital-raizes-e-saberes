@@ -12,7 +12,7 @@ assert.match(host, /^172\./);
 const base = `http://${host}:3000`;
 const secret = 'fase3-synthetic-jwt-secret-never-production-123456';
 const id = (kind, n=1) => `${kind}0000000-0000-0000-0000-${String(n).padStart(12,'0')}`;
-const roles = {1:'professor',2:'aluno',3:'secretaria',4:'professor',5:'aluno',6:'familia'};
+const roles = {1:'professor',2:'aluno',3:'secretaria',4:'professor',5:'aluno',6:'familia',7:'aluno'};
 function token(n, includeEmail=true, subject=id(0,n)) {
   const b64 = x => Buffer.from(JSON.stringify(x)).toString('base64url');
   const data = `${b64({alg:'HS256',typ:'JWT'})}.${b64({sub:subject,...(includeEmail===true?{email:`synthetic-${n}@example.invalid`}:typeof includeEmail==='string'?{email:includeEmail}:{}),role:'authenticated',app_metadata:{platform_role:roles[n],question_bank_role:roles[n]},exp:Math.floor(Date.now()/1000)+3600})}`;
@@ -208,6 +208,49 @@ await test('security: public ACLs preserved and new helpers have no app EXECUTE 
   const actual=sql(`select proacl::text from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and proname='${name}'`);
   assert.equal(actual,'{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}');
  }
+});
+if(!process.argv.includes('--baseline')){
+ await test('replies: recipient replies, teacher sees and answers, recipient receives persisted return',async()=>{
+  sql(`insert into auth.users(id) values('${id(0,7)}');
+   insert into public.profiles(id,display_name,platform_role) values('${id(0,7)}','SYNTHETIC 7','aluno');
+   insert into public.users(id,nome,perfil) values('${id(0,7)}','SYNTHETIC 7','aluno');
+   insert into public.students(id,user_id,school_id,class_id,nome,status) values('${id(4,3)}','${id(0,7)}','${id(1)}','${id(3)}','SYNTHETIC PEER','active');
+   insert into public.enrollments(student_id,school_id,class_id,school_year) values('${id(4,3)}','${id(1)}','${id(3)}','2026');`);
+  const pub=await rpc(1,'publish_communication',{...draft,p_title:'SYNTHETIC REPLY FLOW'});
+  const inbox=await rpc(2,'communication_get_inbox');const thread=inbox.find(x=>x.communication_id===pub.communication_id);assert.ok(thread);
+  const body={p_delivery_id:thread.delivery_id,p_body:'SYNTHETIC student response',p_request_id:id(9)};
+  const saved=await rpc(2,'communication_send_reply',body);assert.equal((await rpc(2,'communication_send_reply',body)).reply_id,saved.reply_id);
+  const summary=await rpc(1,'communication_list_reply_threads',{p_communication_id:pub.communication_id});assert.equal(summary[0].reply_count,1);
+  assert.equal((await rpc(1,'communication_get_reply_thread',{p_delivery_id:thread.delivery_id})).messages[0].body,body.p_body);
+  await rpc(1,'communication_send_reply',{p_delivery_id:thread.delivery_id,p_body:'SYNTHETIC teacher return',p_request_id:id(9,2)});
+  assert.equal((await rpc(2,'communication_get_reply_thread',{p_delivery_id:thread.delivery_id})).messages.length,2);
+  for(const actor of [4,5,6,7]){
+   await mustDeny(actor,'communication_get_reply_thread',{p_delivery_id:thread.delivery_id});
+   await mustDeny(actor,'communication_send_reply',{...body,p_request_id:id(9,3)});
+   await mustDeny(actor,'communication_list_reply_threads',{p_communication_id:pub.communication_id});
+  }
+  await mustDeny(2,'communication_list_reply_threads',{p_communication_id:pub.communication_id});
+  sql(`update public.enrollments set status='ended',ended_at=now() where student_id='${id(4)}'`);
+  try{await mustDeny(2,'communication_get_reply_thread',{p_delivery_id:thread.delivery_id});}finally{sql(`update public.enrollments set status='active',ended_at=null where student_id='${id(4)}'`);}
+  assert.equal((await request(2,'communication_replies?select=id')).status,403);
+  await mustDeny(2,'communication_send_reply',{...body,p_body:'Different text with reused key'});
+  await mustDeny(2,'communication_send_reply',{...body,p_body:'   '});
+  await mustDeny(2,'communication_send_reply',{...body,p_request_id:null});
+  await mustDeny(2,'communication_get_reply_thread',{p_delivery_id:null});
+  await rpc(3,'secretaria_set_communication_status',{p_communication_id:pub.communication_id,p_to_status:'archived'});
+  await mustDeny(2,'communication_send_reply',{...body,p_request_id:id(9,4)});
+  await mustDeny(1,'communication_get_reply_thread',{p_delivery_id:thread.delivery_id});
+  await rpc(3,'secretaria_set_communication_status',{p_communication_id:pub.communication_id,p_to_status:'published'});
+  assert.equal((await rpc(2,'communication_get_reply_thread',{p_delivery_id:thread.delivery_id})).messages.length,2);
+  sql(`update public.communications set expires_at=now()-interval '1 second' where id='${pub.communication_id}'`);
+  await mustDeny(2,'communication_send_reply',{...body,p_request_id:id(9,5)});
+ });
+}
+if(!process.argv.includes('--baseline'))await test('browser: persisted student reply, retry, teacher return, reload and school isolation',async()=>{
+ const pub=await rpc(1,'publish_communication',{...draft,p_title:'SYNTHETIC BROWSER FLOW'});
+ const delivery=(await rpc(2,'communication_get_inbox')).find(x=>x.communication_id===pub.communication_id);
+ const {runReplyBrowser}=await import('./replies-browser.mjs');
+ await runReplyBrowser({base,token,communicationId:pub.communication_id,deliveryId:delivery.delivery_id});
 });
 writeFileSync(resolve(process.argv.includes('--baseline')?'qa/fase3/results-baseline.json':'qa/fase3/results.json'),JSON.stringify({baseCommit:execFileSync('git',['merge-base','HEAD','origin/main'],{encoding:'utf8'}).trim(),scope:'Isolated PostgreSQL + PostgREST RPC/data service integration; not browser/native or production validation',results},null,2)+'\n');
 if(results.some(x=>x.status==='FAIL')) process.exitCode=1;
