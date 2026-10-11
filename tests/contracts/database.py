@@ -11,8 +11,10 @@ USER='10000000-0000-4000-8000-000000000002'
 A='20000000-0000-4000-8000-000000000001'; B='20000000-0000-4000-8000-000000000002'; C='20000000-0000-4000-8000-000000000003'
 P='30000000-0000-4000-8000-000000000001'; M='40000000-0000-4000-8000-000000000001'
 def literal(v): return "'"+str(v).replace("'","''")+"'"
-def sql(query, actor=ADMIN, role='authenticated', error=None):
+def sql(query, actor=ADMIN, role='authenticated', error=None, question_bank_role=None):
     claims=json.dumps({'sub':actor,'role':'authenticated','app_metadata':{'platform_role':'admin' if actor==ADMIN else 'professor'}})
+    if question_bank_role:
+        payload=json.loads(claims);payload['app_metadata']['question_bank_role']=question_bank_role;claims=json.dumps(payload)
     cmd=f"set request.jwt.claim.sub={literal(actor)};set request.jwt.claims={literal(claims)};set role {role};\n"+query
     p=subprocess.run(['docker','exec','-i',CONTAINER,'psql','-XAtq','-U','postgres','-v','ON_ERROR_STOP=1'],input=cmd,text=True,capture_output=True)
     if error:

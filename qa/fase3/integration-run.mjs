@@ -53,7 +53,9 @@ try {
   ready=false;
   for(let i=0;i<100;i++){try{const res=await fetch(`http://${host}:3000/`);if(res.ok){ready=true;break}}catch{} await new Promise(r=>setTimeout(r,200));}
   if(!ready)throw new Error('Local PostgREST did not start');
-  execFileSync(process.execPath,['qa/fase3/journeys.mjs',name,...(baseline?['--baseline']:[])],{stdio:'inherit'});
+  let journeyError;
+  try { execFileSync(process.execPath,['qa/fase3/journeys.mjs',name,...(baseline?['--baseline']:[])],{stdio:'inherit'}); } catch(error) { journeyError=error; }
   execFileSync('python3',['tests/contracts/fase3-bridge.py'],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}});
+  if(journeyError)throw journeyError;
 } catch(error) {console.error(error.stderr?.toString()||error.message);process.exitCode=1;}
 finally {for(const container of [`${name}-rest`,name]){try{run(['rm','-fv',container])}catch{}}}
