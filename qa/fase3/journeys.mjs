@@ -334,7 +334,7 @@ await test('security: two teaching years cannot replace an assigned snapshot wit
  insert into public.content_items(content_type,segment_id,grade_id,title,editorial_status,published_at) values('QUESTION',seg,g,'Synthetic year four','PUBLISHED',now()) returning id into ci;
  insert into public.content_question_items(content_item_id,question_item_id) values(ci,'${id(7,2)}');end $$;`);
  const resolved=await rpc(1,'content_resolve_question_details_for_user',{p_context:{school_id:id(1),class_id:id(3),content_type:'QUESTION'}});
- assert.ok(!resolved.items.some(x=>x.question_item_id===id(7,2)));
+ assert.deepEqual(resolved.items.map(x=>x.id),[id(7)]);
  const draft=await rpc(1,'avalia_plus_create_assessment_from_bank',assembly(id(1),null));
  const aid=draft.assessment.id;
  assert.equal(sql(`select class_id is null from public.assessments where id='${aid}'`),'t');
@@ -423,5 +423,45 @@ if(!process.argv.includes('--baseline')) await test('notice editing: revisions, 
  await runNoticeBrowser({base,token,communicationId:browserPub.communication_id,deliveryId:browserDelivery});
 });
 
-writeFileSync(resolve(process.argv.includes('--baseline')?'qa/fase3/results-baseline.json':'qa/fase3/results.json'),JSON.stringify({baseCommit:execFileSync('git',['merge-base','HEAD','origin/main'],{encoding:'utf8'}).trim(),scope:'Isolated PostgreSQL + PostgREST RPC/data service integration; not browser/native or production validation',results},null,2)+'\n');
+if(!process.argv.includes('--baseline')) await test('Expo services: real assessments, lost acknowledgements, role isolation and disabled gates',async()=>{
+ const realFetch=globalThis.fetch;const lose=new Set(['teacher_schedule_assessment_application_v2','student_start_assessment_attempt_v2','student_save_assessment_response_v2','student_submit_assessment_attempt_v2']);let calls=0;
+ globalThis.fetch=async(url,options)=>{
+  calls++;assert.ok(String(url).startsWith(base));const target=String(url).replace('/rest/v1/','/');const response=await realFetch(target,options);const name=target.split('/rpc/')[1];
+  if(response.ok&&lose.has(name)){lose.delete(name);await response.text();return new Response('{}',{status:503});}return response;
+ };
+ try{
+  const {journeyApi}=await import('../../mobile/src/services/journeys.ts');const gates={assessments:true,replies:true,editing:true};
+  const api=n=>journeyApi({userId:id(0,n),accessToken:token(n)},gates),teacher=api(1),student=api(2);
+  const off=journeyApi({userId:id(0,1),accessToken:token(1)},{assessments:false,replies:false,editing:false});const before=calls;
+  assert.throws(()=>off.work(),/feature_disabled/);assert.throws(()=>off.thread(id(9)),/feature_disabled/);assert.throws(()=>off.notice(id(9),null),/feature_disabled/);assert.equal(calls,before);
+  const catalog=await teacher.questions(id(1),id(3));assert.ok(catalog.items.some(q=>q.question_item_id===id(7)));
+  const draft=await teacher.assemble(id(1),id(3),'SYNTHETIC EXPO API',[id(7)]);
+  const published=await teacher.publish(draft.assessment.id,id(3));assert.equal((await teacher.publish(draft.assessment.id,id(3))).id,published.id);
+  assert.equal(sql(`select count(*) from public.assessment_assignments where assessment_id='${draft.assessment.id}'`),'1');
+  const started=await student.start(published.id,'');assert.equal((await student.start(published.id,'')).id,started.id);
+  await student.save((await student.work()).attempts.find(a=>a.id===started.id),id(7),id(8,2),null);
+  const awaitedAttempt=(await student.work()).attempts.find(a=>a.id===started.id);
+  const beforeDeny=globalThis.fetch;
+  globalThis.fetch=async(url,options)=>String(url).includes('/rpc/student_save_assessment_response_v2')?new Response('{"message":"synthetic authorization rejection"}',{status:403}):beforeDeny(url,options);
+  try{await assert.rejects(()=>student.save((awaitedAttempt),id(7),id(8,2),null),/403/);}finally{globalThis.fetch=beforeDeny;}
+  await student.submit(started.id);assert.equal((await student.work()).attempts.find(a=>a.id===started.id).score_percentage,100);
+  const repeat=await rpc(1,'teacher_schedule_assessment_application_v2',{p_assessment_id:draft.assessment.id,p_target_type:'student',p_class_id:id(3),p_student_id:id(4)});
+  assert.notEqual(repeat.assignment.id,published.id);
+  const mapped=await mobile.getStudentAssessmentAssignments({userId:id(0,2),accessToken:token(2)});
+  assert.equal(mapped.find(x=>x.id===published.id).scorePercent,100);
+  assert.equal(mapped.find(x=>x.id===repeat.assignment.id).attemptStatus,null);
+  assert.equal(mapped.find(x=>x.id===repeat.assignment.id).scorePercent,null);
+  assert.equal((await teacher.results(published.id)).summary.completed_students,1);assert.equal(lose.size,0);
+  await assert.rejects(()=>api(5).start(published.id,''),/403/);await assert.rejects(()=>api(4).results(published.id),/403/);
+  const publishedNotice=await rpc(1,'publish_communication',{...draftNoticeForExpo(),p_title:'SYNTHETIC EXPO NOTICE'});
+  const inbox=await student.inbox();assert.ok(inbox.find(x=>x.communication_id===publishedNotice.communication_id));
+  const {runExpoBrowser}=await import('./expo-browser.mjs');
+  // Browser has its own local gateway; do not intercept its already isolated HTTP.
+  globalThis.fetch=realFetch;
+  await runExpoBrowser({base,token,id,communicationId:publishedNotice.communication_id});
+ }finally{globalThis.fetch=realFetch;}
+});
+function draftNoticeForExpo(){return {p_school_id:id(1),p_communication_type:'notice',p_audience_type:'class',p_title:'SYNTHETIC',p_body:'SYNTHETIC EXPO BODY',p_class_id:id(3)};}
+
+writeFileSync(resolve(process.argv.includes('--baseline')?'qa/fase3/results-baseline.json':'qa/fase3/results.json'),JSON.stringify({baseCommit:execFileSync('git',['merge-base','HEAD','origin/main'],{encoding:'utf8'}).trim(),scope:'Isolated PostgreSQL/PostgREST plus real web and Expo components in Chromium; no native, production or human validation',results},null,2)+'\n');
 if(results.some(x=>x.status==='FAIL')) process.exitCode=1;
