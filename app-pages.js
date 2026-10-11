@@ -24213,7 +24213,7 @@ const createSupabaseRestClient = () => {
     }
     if (!response.ok) {
       const body = await response.text();
-      throw new Error(mapSupabaseError(response, body));
+      throw Object.assign(new Error(mapSupabaseError(response, body)), { status: response.status });
     }
     if (response.status === 204) return null;
     return response.json();
@@ -26016,14 +26016,18 @@ const enrichCommunicationVersions = async (client, rows = [], allowedRoles = [])
   if (globalThis.RAIZES_NOTICE_EDITING_ENABLED !== true) return rows;
   const enriched = await Promise.all(rows.map(async (row) => {
     if (row.source_type) return row;
-    const version = await client.request("rpc/communication_get_notice_versions", "", {
+    let version;
+    try { version = await client.request("rpc/communication_get_notice_versions", "", {
       method: "POST", requireAuthenticated: true, allowedRoles,
       body: JSON.stringify({ p_communication_id: row.communication_id, p_delivery_id: row.delivery_id }),
-    });
+    }); } catch (error) {
+      if (error.status === 403) return null;
+      throw error;
+    }
     const readAt = version.revision > 1 ? version.current_revision_read_at : row.read_at;
     return { ...row, title: version.title, body: version.body, content_revision: version.revision,
       read_at: readAt, notification_status: readAt ? "read" : "unread" };
-  }));
+  })).then(items => items.filter(Boolean));
   const unread = enriched.filter(row => !row.read_at).length;
   return enriched.map(row => ({ ...row, unread_count: unread }));
 };

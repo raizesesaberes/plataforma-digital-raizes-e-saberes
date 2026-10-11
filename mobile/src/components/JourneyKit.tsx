@@ -87,13 +87,15 @@ export function useOperation() {
       if (mounted.current) {
         const text = e instanceof Error ? e.message : "";
         setError(
-          text.includes("403")
-            ? "Acesso negado. Confira seu vínculo com a escola."
-            : text.includes("404")
-              ? "Serviço indisponível neste ambiente."
-              : text.includes("409")
-                ? "A versão mudou. Atualize antes de tentar novamente."
-                : "Não foi possível confirmar a operação. Atualize para conferir o que foi salvo.",
+          text === "assignment_not_current"
+            ? "Esta turma já possui aplicação futura ou encerrada. Revise o agendamento existente antes de publicar agora."
+            : text.includes("403")
+              ? "Acesso negado. Confira seu vínculo com a escola."
+              : text.includes("404")
+                ? "Serviço indisponível neste ambiente."
+                : text.includes("409")
+                  ? "A versão mudou. Atualize antes de tentar novamente."
+                  : "Não foi possível confirmar a operação. Atualize para conferir o que foi salvo.",
         );
       }
     } finally {

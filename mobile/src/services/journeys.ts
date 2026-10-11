@@ -41,6 +41,10 @@ export type Published = {
   id: string;
   assessment_id: string;
   class_id: string;
+  target_type: string;
+  student_id: string | null;
+  available_from: string | null;
+  available_until: string | null;
   status: string;
 };
 export type Results = {
@@ -125,7 +129,7 @@ export function journeyApi(
     requireGate(gates.assessments);
     return restGet<Published[]>(
       session,
-      "assessment_assignments?select=id,assessment_id,class_id,status&order=created_at.desc",
+      "assessment_assignments?select=id,assessment_id,class_id,target_type,student_id,available_from,available_until,status&order=created_at.desc",
     );
   };
   return {
@@ -171,13 +175,20 @@ export function journeyApi(
         },
       ),
     publish: async (id: string, classId: string) => {
-      const existing = (await published()).find(
-        (a) =>
-          a.assessment_id === id &&
-          a.class_id === classId &&
-          a.status === "published",
-      );
-      if (existing) return existing;
+      const matchesClass = (a: Published) =>
+        a.assessment_id === id &&
+        a.class_id === classId &&
+        a.target_type === "class" &&
+        !a.student_id &&
+        a.status === "published";
+      const availableNow = (a: Published) =>
+        (!a.available_from || Date.parse(a.available_from) <= Date.now()) &&
+        (!a.available_until || Date.parse(a.available_until) > Date.now());
+      const existing = (await published()).find(matchesClass);
+      if (existing) {
+        if (!availableNow(existing)) throw new Error("assignment_not_current");
+        return existing;
+      }
       try {
         return (
           await assessment<{ assignment: Published }>(
@@ -192,10 +203,7 @@ export function journeyApi(
       } catch (error) {
         if (!isUncertain(error)) throw error;
         const found = (await published()).find(
-          (a) =>
-            a.assessment_id === id &&
-            a.class_id === classId &&
-            a.status === "published",
+          (a) => matchesClass(a) && availableNow(a),
         );
         if (found) return found;
         throw error;
@@ -267,12 +275,20 @@ export function journeyApi(
       }
     },
     inbox: async () => {
+      requireGate(gates.replies || gates.editing);
       const rows = await rpc<Inbox[]>(session, "communication_get_inbox", {});
-      if (!gates.editing) return rows;
       const checked = await Promise.all(
         rows.map(async (row): Promise<Inbox | null> => {
           if (row.source_type) return row;
           try {
+            if (!gates.editing) {
+              const thread = await rpc<Thread>(
+                session,
+                "communication_get_reply_thread",
+                { p_delivery_id: row.delivery_id },
+              );
+              return { ...row, title: thread.title, body: thread.body };
+            }
             const version = await rpc<Notice>(
               session,
               "communication_get_notice_versions",
@@ -303,6 +319,7 @@ export function journeyApi(
       return checked.filter((row): row is Inbox => row !== null);
     },
     teacherNotices: async () => {
+      requireGate(gates.replies || gates.editing);
       const summaries = await rpc<
         {
           communication_id: string;
