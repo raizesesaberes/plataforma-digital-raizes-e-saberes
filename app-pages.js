@@ -23582,6 +23582,7 @@ const initQuestionBank = () => {
     renderReviewQueue();
     syncQuestionBankView();
     focusQuestionBankHashTarget();
+    if(sessionStorage.getItem(assessmentSaveKey) && !assessmentSavePromise)setError(uncertainSaveMessage);
   };
 
   const setError = (message) => {
@@ -23600,15 +23601,6 @@ const initQuestionBank = () => {
     cover_template: root.querySelector("[data-qb-cover]")?.value || "Raízes e Saberes - padrao",
     application_date: root.querySelector(".qb-builder input[type='date']")?.value || null,
   });
-
-  const ensureAssessment = async () => {
-    if (activeAssessmentId) {
-      return questionBankDataService.updateAssessment(activeAssessmentId, assessmentPayloadFromBuilder());
-    }
-    const assessment = await questionBankDataService.createAssessment(assessmentPayloadFromBuilder());
-    activeAssessmentId = assessment.id;
-    return assessment;
-  };
 
   const syncCartToAssessment = async () => {
     if (!cart.length) return null;
@@ -23659,7 +23651,34 @@ const initQuestionBank = () => {
     });
   };
 
+  let assessmentSavePromise=null, assessmentHandoffPromise=null, assessmentHandoffComplete=false;
+  const assessmentSaveKey=`raizes:assessment-save-pending:${getSupabaseUserContext().userId || 'anonymous'}`;
+  const uncertainSaveMessage='A confirmação do salvamento está pendente. Consulte Avaliações salvas e abra a avaliação confirmada antes de continuar. Não repita a criação.';
+  const saveControls='.qb-builder input,.qb-builder select,.qb-builder textarea,[data-qb-points],[data-qb-save-draft],[data-qb-preview],[data-qb-publish-digital],[data-qb-generate],.qb-cart button,[data-qb-add],[data-qb-clear-cart],[data-qb-open-assessment]';
+  const saveAssessmentOnce = () => {
+    if(assessmentSavePromise)return assessmentSavePromise;
+    if(sessionStorage.getItem(assessmentSaveKey))return Promise.reject(Error(uncertainSaveMessage));
+    const controls=[...root.querySelectorAll(saveControls)].map(node=>({node,disabled:node.disabled}));
+    controls.forEach(({node})=>{node.disabled=true;});
+    assessmentSavePromise=(async()=>{
+      // Persist before sending: reload after a lost response must not resend CREATE.
+      sessionStorage.setItem(assessmentSaveKey,JSON.stringify({assessmentId:activeAssessmentId,startedAt:new Date().toISOString()}));
+      try {
+        const saved=await syncCartToAssessment();
+        const id=saved?.assessment?.id || saved?.id;
+        if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || ''))throw Error('Resposta de salvamento sem identificador confirmado.');
+        activeAssessmentId=id;saveDraftSnapshot('assessment-saved');sessionStorage.removeItem(assessmentSaveKey);return saved;
+      }catch(error){
+        const definitive=error.status>=400 && error.status<500 && /^(?:PGRST[0-9]{3}|[A-Z0-9]{5})$/.test(error.code || '');
+        const localAuth=/^(Sessao Supabase ausente|Sessao expirada|Seu perfil nao tem permissao)/.test(error.message || '');
+        if(definitive || localAuth){sessionStorage.removeItem(assessmentSaveKey);throw error;}
+        throw Error(uncertainSaveMessage);
+      }
+    })().finally(()=>{assessmentSavePromise=null;controls.forEach(({node,disabled})=>{node.disabled=disabled;});});
+    return assessmentSavePromise;
+  };
   const ensureSavedForPreview = async () => {
+    if(assessmentSavePromise)return assessmentSavePromise;
     if (!cart.length) {
       setSelectionStatus("Selecione questoes antes de salvar ou pre-visualizar.", "error");
       return null;
@@ -23672,7 +23691,7 @@ const initQuestionBank = () => {
     const chosenYear=root.querySelector('[data-qb-assessment-year]')?.value.trim();
     if(selectedYears.length===1 && chosenYear!==selectedYears[0]){setSelectionStatus(`O ano deve corresponder às questões selecionadas: ${selectedYears[0]}.`,'error');return null;}
     try {
-      return await syncCartToAssessment();
+      return await saveAssessmentOnce();
     } catch (error) {
       const message = String(error.message || "");
       if (message.includes("Sessao Supabase ausente") || message.includes("Sessao expirada") || message.includes("row-level security")) {
@@ -23744,15 +23763,21 @@ const initQuestionBank = () => {
     }
   });
 
-  const publishCurrentAssessmentDigitally = async () => {
+  const publishCurrentAssessmentDigitally = () => {
+    if(assessmentHandoffComplete)return Promise.resolve(null);
+    if(assessmentHandoffPromise)return assessmentHandoffPromise;
+    assessmentHandoffPromise=(async()=>{
     if(mode!=='supabase') {setSelectionStatus('Conecte-se para salvar e escolher uma turma. Nenhuma aplicação foi publicada.','error');return null;}
     const saved=await ensureSavedForPreview();
     if(!saved)return null;
     const id=saved.assessment?.id || saved.id;
     if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || ''))throw Error('O servidor não confirmou o identificador da avaliação. Nenhuma aplicação foi publicada.');
     setSelectionStatus('Avaliação salva. Escolha a turma e revise a aplicação na próxima tela.','success');
+    assessmentHandoffComplete=true;
     window.location.assign(`professor.html?view=avaliacoes&assessment_id=${encodeURIComponent(id)}#aplicacoes`);
     return saved;
+    })().finally(()=>{assessmentHandoffPromise=null;});
+    return assessmentHandoffPromise;
   };
 
   const selectQuestion = (id) => {
@@ -23976,7 +24001,9 @@ const initQuestionBank = () => {
       }
       if (button.dataset.qbOpenAssessment) {
         const assessment = await questionBankDataService.getAssessmentById(button.dataset.qbOpenAssessment);
+        if(!assessment?.id || assessment.id!==button.dataset.qbOpenAssessment)throw Error('Avaliação não confirmada pelo servidor.');
         activeAssessmentId = assessment.id;
+        sessionStorage.removeItem(assessmentSaveKey);
         titleInput.value = assessment.title;
         root.querySelector(".qb-builder textarea").value = assessment.instructions || assessment.description || "";
         root.querySelector(".qb-builder input[type='date']").value = assessment.date === "Sem data" ? "" : assessment.date;
@@ -24027,7 +24054,7 @@ const initQuestionBank = () => {
     control.addEventListener("change", () => {
       saveDraftSnapshot("builder-changed");
       if (activeAssessmentId) {
-        ensureAssessment().catch((error) => setError(error.message));
+        ensureSavedForPreview().catch((error) => setError(error.message));
       }
     });
     control.addEventListener("input", () => saveDraftSnapshot("builder-changed"));
