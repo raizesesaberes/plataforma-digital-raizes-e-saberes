@@ -40,3 +40,11 @@ Preflight inicial: histórico original149 exato, funções/ACL/GUC/proprietário
 Falha no laboratório: interromper somente os containers/projeto identificados como laboratório; consultar `supabase stop --help` antes de remover volumes. Preservar logs sem segredos e reconstruir a fixture descartável. Não tocar em containers de outro trabalho.
 
 Falha parcial em futura implantação aprovada: manter TODOS os gates off, parar antes do próximo artefato, registrar quais transações/versões realmente concluíram e revalidar o estado por leitura. Não repetir SQL à força, apagar recibos/histórico, simular ledger, remover guards ou executar rollback destrutivo. Definir recuperação/reparo forward específico revisado a partir do estado observado. Os ensaios sintéticos não validam backup/restauração de produção.
+
+## Autorizações separadas: instalação e runtime
+
+**Instalação SQL ainda depende de:** revisão independente específica das quatro propostas, ACLs/policies/triggers e alcance administrativo; aprovação do preflight combinado e reserva dos pares versão/nome; leitura do estado real confirmando ledger/dependências/objetos esperados; plano coordenado de recuperação e responsável pela execução. Hashes fixados não substituem a leitura do estado. Nenhum override, ledger repair ou alteração Auth está incluído.
+
+**Runtime/ativação dos gates ainda depende de:** confirmação dos recibos/checkpoints da instalação aprovada; revisão dos SHAs web/mobile a integrar; validação dos endpoints/roles no ambiente apropriado, login real e sessão na plataforma alvo; smoke dirigido com identidades de teste autorizadas; decisão coordenada de rollout por gate. Publicar código com flags desligadas é decisão diferente de ativar funcionalidades. Não ativar gates por inferência de que o SQL passou localmente. Apps nativos e homologação humana continuam separados.
+
+A correção de fonte no servidor QA (manifesto local do export permitindo caminho `.pnpm`) não muda runtime, permissões de rede ou requisitos de Auth. Não replicar uma exceção genérica para dotfiles no servidor de produção.

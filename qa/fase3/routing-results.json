@@ -7,13 +7,10 @@
     "PASS real login.html submits to unavailable local Auth, reports failure, never grants session",
     "PASS real web entry professor.html?view=avaliacoes loads synthetic teacher scope",
     "PASS real web entry professor.html?view=mensagens loads synthetic teacher scope",
-    "PASS real aluno.html: assessments -> Recados link -> reload -> logout clears stored synthetic session"
+    "PASS real aluno.html: assessments -> Recados link -> reload -> logout clears stored synthetic session",
+    "PASS three local Feather font loads return 200 and no unhandled pageErrors; external hosts remain blocked"
   ],
-  "pageErrors": [
-    "A network error occurred.",
-    "A network error occurred.",
-    "A network error occurred."
-  ],
+  "pageErrors": [],
   "authRequests": 3,
   "requests": [
     "/rest/v1/rpc/teacher_get_home_summary",
@@ -117,5 +114,253 @@
     "/rest/v1/student_medals",
     "/rest/v1/rpc/student_get_personal_schedule"
   ],
-  "externalFonts": "External font/CDN requests deliberately blocked; network pageErrors retained, not reported as zero"
+  "networkFailures": [
+    {
+      "page": "http://127.0.0.1:58139/login.html",
+      "url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap",
+      "type": "stylesheet",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "page": "http://127.0.0.1:58139/professor.html?view=avaliacoes",
+      "url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap",
+      "type": "stylesheet",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "page": "http://127.0.0.1:58139/professor.html?view=mensagens",
+      "url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap",
+      "type": "stylesheet",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "page": "http://127.0.0.1:58139/login.html?logout=1",
+      "url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap",
+      "type": "stylesheet",
+      "error": "net::ERR_FAILED"
+    }
+  ],
+  "badResponses": [
+    {
+      "page": "http://127.0.0.1:58138/",
+      "url": "http://127.0.0.1:58138/auth/v1/token?grant_type=password",
+      "type": "fetch",
+      "status": 503
+    },
+    {
+      "page": "http://127.0.0.1:58139/login.html",
+      "url": "http://127.0.0.1:58139/auth/v1/token?grant_type=password",
+      "type": "fetch",
+      "status": 503
+    },
+    {
+      "page": "http://127.0.0.1:58139/aluno.html?view=avaliacoes",
+      "url": "http://127.0.0.1:58139/rest/v1/student_medals?select=id,student_id,medal_id,data_conquista&student_id=eq.40000000-0000-0000-0000-000000000001&order=data_conquista.desc&limit=50",
+      "type": "fetch",
+      "status": 403
+    },
+    {
+      "page": "http://127.0.0.1:58139/aluno.html?view=avaliacoes",
+      "url": "http://127.0.0.1:58139/rest/v1/xp_records?select=id,origem,pontos,created_at&student_id=eq.40000000-0000-0000-0000-000000000001&order=created_at.desc&limit=50",
+      "type": "fetch",
+      "status": 403
+    },
+    {
+      "page": "http://127.0.0.1:58139/aluno.html?view=recados",
+      "url": "http://127.0.0.1:58139/rest/v1/xp_records?select=id,origem,pontos,created_at&student_id=eq.40000000-0000-0000-0000-000000000001&order=created_at.desc&limit=50",
+      "type": "fetch",
+      "status": 403
+    },
+    {
+      "page": "http://127.0.0.1:58139/aluno.html?view=recados",
+      "url": "http://127.0.0.1:58139/rest/v1/student_medals?select=id,student_id,medal_id,data_conquista&student_id=eq.40000000-0000-0000-0000-000000000001&order=data_conquista.desc&limit=50",
+      "type": "fetch",
+      "status": 403
+    },
+    {
+      "page": "http://127.0.0.1:58139/aluno.html?view=recados",
+      "url": "http://127.0.0.1:58139/rest/v1/xp_records?select=id,origem,pontos,created_at&student_id=eq.40000000-0000-0000-0000-000000000001&order=created_at.desc&limit=50",
+      "type": "fetch",
+      "status": 403
+    },
+    {
+      "page": "http://127.0.0.1:58139/aluno.html?view=recados",
+      "url": "http://127.0.0.1:58139/rest/v1/student_medals?select=id,student_id,medal_id,data_conquista&student_id=eq.40000000-0000-0000-0000-000000000001&order=data_conquista.desc&limit=50",
+      "type": "fetch",
+      "status": 403
+    },
+    {
+      "page": "http://127.0.0.1:58139/aluno.html?view=recados",
+      "url": "http://127.0.0.1:58139/auth/v1/logout",
+      "type": "fetch",
+      "status": 503
+    }
+  ],
+  "consoleErrors": [
+    {
+      "page": "http://127.0.0.1:58138/",
+      "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+      "location": {
+        "url": "http://127.0.0.1:58138/auth/v1/token?grant_type=password",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "page": "http://127.0.0.1:58139/login.html",
+      "message": "Failed to load resource: net::ERR_FAILED",
+      "location": {
+        "url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "page": "http://127.0.0.1:58139/login.html",
+      "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+      "location": {
+        "url": "http://127.0.0.1:58139/auth/v1/token?grant_type=password",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "page": "http://127.0.0.1:58139/professor.html?view=avaliacoes",
+      "message": "Failed to load resource: net::ERR_FAILED",
+      "location": {
+        "url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "page": "http://127.0.0.1:58139/professor.html?view=mensagens",
+      "message": "Failed to load resource: net::ERR_FAILED",
+      "location": {
+        "url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "page": "http://127.0.0.1:58139/aluno.html?view=avaliacoes",
+      "message": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+      "location": {
+        "url": "http://127.0.0.1:58139/rest/v1/student_medals?select=id,student_id,medal_id,data_conquista&student_id=eq.40000000-0000-0000-0000-000000000001&order=data_conquista.desc&limit=50",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "page": "http://127.0.0.1:58139/aluno.html?view=avaliacoes",
+      "message": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+      "location": {
+        "url": "http://127.0.0.1:58139/rest/v1/xp_records?select=id,origem,pontos,created_at&student_id=eq.40000000-0000-0000-0000-000000000001&order=created_at.desc&limit=50",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "page": "http://127.0.0.1:58139/aluno.html?view=recados",
+      "message": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+      "location": {
+        "url": "http://127.0.0.1:58139/rest/v1/xp_records?select=id,origem,pontos,created_at&student_id=eq.40000000-0000-0000-0000-000000000001&order=created_at.desc&limit=50",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "page": "http://127.0.0.1:58139/aluno.html?view=recados",
+      "message": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+      "location": {
+        "url": "http://127.0.0.1:58139/rest/v1/student_medals?select=id,student_id,medal_id,data_conquista&student_id=eq.40000000-0000-0000-0000-000000000001&order=data_conquista.desc&limit=50",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "page": "http://127.0.0.1:58139/aluno.html?view=recados",
+      "message": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+      "location": {
+        "url": "http://127.0.0.1:58139/rest/v1/xp_records?select=id,origem,pontos,created_at&student_id=eq.40000000-0000-0000-0000-000000000001&order=created_at.desc&limit=50",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "page": "http://127.0.0.1:58139/aluno.html?view=recados",
+      "message": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+      "location": {
+        "url": "http://127.0.0.1:58139/rest/v1/student_medals?select=id,student_id,medal_id,data_conquista&student_id=eq.40000000-0000-0000-0000-000000000001&order=data_conquista.desc&limit=50",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "page": "http://127.0.0.1:58139/aluno.html?view=recados",
+      "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+      "location": {
+        "url": "http://127.0.0.1:58139/auth/v1/logout",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "page": "http://127.0.0.1:58139/login.html?logout=1",
+      "message": "Failed to load resource: net::ERR_FAILED",
+      "location": {
+        "url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    }
+  ],
+  "fontResponses": [
+    {
+      "page": "http://127.0.0.1:58138/",
+      "url": "http://127.0.0.1:58138/assets/__workspace/plataforma-digital-raizes-e-saberes/mobile/node_modules/.pnpm/@expo+vector-icons@15.1.1_expo-font@57.0.4_expo@57.0.22_react-native@0.86.3_@babel+core_14f4cf039d480bac8998a5b6a290c46f/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ca4b48e04dc1ce10bfbddb262c8b835f.ttf",
+      "status": 200
+    },
+    {
+      "page": "http://127.0.0.1:58138/?mode=shell&actor=1",
+      "url": "http://127.0.0.1:58138/assets/__workspace/plataforma-digital-raizes-e-saberes/mobile/node_modules/.pnpm/@expo+vector-icons@15.1.1_expo-font@57.0.4_expo@57.0.22_react-native@0.86.3_@babel+core_14f4cf039d480bac8998a5b6a290c46f/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ca4b48e04dc1ce10bfbddb262c8b835f.ttf",
+      "status": 200
+    },
+    {
+      "page": "http://127.0.0.1:58138/?mode=shell&actor=2",
+      "url": "http://127.0.0.1:58138/assets/__workspace/plataforma-digital-raizes-e-saberes/mobile/node_modules/.pnpm/@expo+vector-icons@15.1.1_expo-font@57.0.4_expo@57.0.22_react-native@0.86.3_@babel+core_14f4cf039d480bac8998a5b6a290c46f/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ca4b48e04dc1ce10bfbddb262c8b835f.ttf",
+      "status": 200
+    }
+  ],
+  "fixtureAcl": {
+    "xp_records_select": false,
+    "student_medals_select": false
+  },
+  "externalFonts": "Google Fonts stylesheet requests remain deliberately blocked; not the cause of the three original Expo pageErrors"
 }
