@@ -104,6 +104,11 @@ language plpgsql security definer set search_path = '' as $$
 declare a public.assessments%rowtype; question_id uuid; resolved_school_id uuid;
 begin
   if tg_table_name = 'assessment_questions' then
+    -- Moving an item also locks its old parent, preventing concurrent publication
+    -- of the source assessment while its item set is changing.
+    if tg_op='UPDATE' then
+      perform 1 from public.assessments where id in (old.assessment_id,new.assessment_id) order by id for update;
+    end if;
     -- Serialize item mutations and publication on the same parent row.
     select * into a from public.assessments
     where id=case when tg_op='DELETE' then old.assessment_id else new.assessment_id end
