@@ -42,6 +42,17 @@ for clock,expected in [(f'{end_day}T23:59:59+00','t'),(f'{following}T00:00:00+00
   broken=query.replace("e.metadata->>'operation_timezone'", "null::text")
   assert sql(broken,role='postgres')=='f'
 print('PASS actual resolver window: new product remains valid through 23:59:59 Sao Paulo on final day, expires at 03:00 UTC; missing timezone reproduces early cutoff')
+# Suspended/revoked entitlements cannot be revived by keeping their product selected.
+for status in ['SUSPENDED','REVOKED']:
+ sql(f"update public.tenant_product_entitlements set status='{status}' where contract_id='{cid}' and product_id='{other}'",role='postgres')
+ rpc('admin_preview_contract_amendment',[both],error='AMENDMENT_REACTIVATION_REQUIRES_REVIEW')
+ rpc('admin_confirm_contract_amendment',[r,str(uuid.uuid4())],error='AMENDMENT_REACTIVATION_REQUIRES_REVIEW')
+ sql(f"update public.tenant_product_entitlements set status='ACTIVE' where contract_id='{cid}' and product_id='{other}'",role='postgres')
+# Inactive product with an ACTIVE entitlement: refuse reactivation but still allow withdrawal.
+sql(f"update public.contract_products set status='inactive' where contract_id='{cid}' and product_id='{other}'",role='postgres')
+rpc('admin_preview_contract_amendment',[both],error='AMENDMENT_REACTIVATION_REQUIRES_REVIEW')
+# A preview prepared before the state change must also reject definitively at confirmation.
+rpc('admin_confirm_contract_amendment',[r,str(uuid.uuid4())],error='AMENDMENT_REACTIVATION_REQUIRES_REVIEW')
 expanded=copy.deepcopy(base);expanded['products'][0]['institutional']=True;expanded['products'][0]['rules'].append(dict(module_id=MT,content_type='TRAINING',grade_id=gi,subject_id=None,kind='STANDARD'))
 r=rpc('admin_preview_contract_amendment',[expanded]);assert len(r['added_rules'])==1 and len(r['removed_rules'])==1 and r['removed_products']==[other]
 key=str(uuid.uuid4());before=snapshot()
@@ -52,7 +63,9 @@ sql('drop trigger synthetic_amend_failure on public.contract_entitlement_events;
 receipt=rpc('admin_confirm_contract_amendment',[r,key]);assert rpc('admin_confirm_contract_amendment',[r,key])==receipt
 assert sql(f"select jsonb_array_length(metadata->'category_rules') from public.tenant_product_entitlements where contract_id='{cid}' and product_id='{P}'",role='postgres')=='145'
 assert sql(f"select status from public.contract_products where contract_id='{cid}' and product_id='{other}'",role='postgres')=='inactive'
-assert sql(f"select status from public.tenant_product_entitlements where contract_id='{cid}' and product_id='{other}'",role='postgres')=='SUSPENDED'
+assert sql(f"select status from public.tenant_product_entitlements where contract_id='{cid}' and product_id='{other}'",role='postgres')=='REVOKED'
+assert any(p['product_id']==other and p['before_product']=='inactive' and p['before_entitlement']=='ACTIVE' and p['after_entitlement']=='REVOKED' for p in r['product_state_changes'])
+rpc('admin_preview_contract_amendment',[both],error='AMENDMENT_REACTIVATION_REQUIRES_REVIEW')
 assert sql(f"select status from public.schools where id='{B}'",role='postgres')=='inactive'
 assert sql(f"select to_jsonb(c) from public.contracts c where id='{cid}'",role='postgres')==contract
 assert any(m['module_id']==MT and m['before']==False and m['after']==True for m in r['module_changes'])
@@ -82,4 +95,4 @@ rev=rpc('admin_preview_contract_operation',[dict(action='REVOKE',contract_id=cid
 assert rpc('admin_confirm_contract_amendment',[r,key])['contract_id']==cid
 assert sql(f"select status from public.contracts where id='{cid}'",role='postgres')=='CANCELLED'
 assert untouched()==unchanged
-print('PASS amendment 144/145 rules; add/remove product; dates and inactive status; rollback; replay; concurrency; stale review; admin ACL/school scope; institutional boundary; existing category limit; revocation and old receipt recovery')
+print('PASS amendment inactive-product withdrawal; rejected inactive/suspended/revoked reactivation; 144/145 rules; add/remove product; dates and inactive status; rollback; replay; concurrency; stale review; admin ACL/school scope; institutional boundary; existing category limit; revocation and old receipt recovery')

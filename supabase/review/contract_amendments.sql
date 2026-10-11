@@ -25,6 +25,7 @@ begin
  if (select count(distinct x->>'product_id') from jsonb_array_elements(cfg->'products') x)<>jsonb_array_length(cfg->'products') then raise exception 'DUPLICATE_PRODUCT';end if;
  for prod in select value from jsonb_array_elements(cfg->'products') loop
   if exists(select 1 from jsonb_object_keys(prod) k where k not in('product_id','institutional','rules')) or jsonb_typeof(prod->'institutional') is distinct from 'boolean' then raise exception 'INVALID_AMENDMENT_PRODUCT';end if;
+  if exists(select 1 from public.contract_products cp where cp.contract_id=c.id and cp.product_id=(prod->>'product_id')::uuid and cp.status<>'active') or exists(select 1 from public.tenant_product_entitlements e where e.contract_id=c.id and e.product_id=(prod->>'product_id')::uuid and (e.status<>'ACTIVE' or not exists(select 1 from public.contract_products cp where cp.contract_id=c.id and cp.product_id=e.product_id and cp.status='active'))) then raise exception 'AMENDMENT_REACTIVATION_REQUIRES_REVIEW';end if;
   if not exists(select 1 from public.products where id=(prod->>'product_id')::uuid and status='ACTIVE') then raise exception 'ACTIVE_PRODUCT_REQUIRED';end if;
   if jsonb_typeof(prod->'rules') is distinct from 'array' or jsonb_array_length(prod->'rules') not between 1 and 512 then raise exception 'CATEGORY_RULES_REQUIRED';end if;
   for rule in select value from jsonb_array_elements(prod->'rules') loop
@@ -60,10 +61,11 @@ begin
  select coalesce(jsonb_agg(jsonb_build_object('product_id',e->>'product_id','rule',r)),'[]') into previous_rules from jsonb_array_elements(prior->'entitlements') e cross join lateral jsonb_array_elements(e->'metadata'->'category_rules') r where e->>'status'='ACTIVE';
  select coalesce(jsonb_agg(jsonb_build_object('product_id',p->>'product_id','rule',r)),'[]') into next_rules from jsonb_array_elements(cfg->'products') p cross join lateral jsonb_array_elements(p->'rules') r;
  return jsonb_build_object('status','PASS','config',cfg,'revision',md5(contract_operations_private.revision(cfg)||prior::text),'before',prior,
+ 'product_state_changes',(select coalesce(jsonb_agg(jsonb_build_object('product_id',ids.id,'before_product',cp.status,'before_entitlement',e.status,'after_product',case when selected.id is not null then 'active' else 'inactive' end,'after_entitlement',case when selected.id is not null then 'ACTIVE' else 'REVOKED' end)),'[]') from (select (p->>'product_id')::uuid id from jsonb_array_elements(prior->'products') p union select (p->>'product_id')::uuid from jsonb_array_elements(cfg->'products') p) ids left join public.contract_products cp on cp.contract_id=(cfg->>'contract_id')::uuid and cp.product_id=ids.id left join public.tenant_product_entitlements e on e.contract_id=cp.contract_id and e.product_id=ids.id left join (select (p->>'product_id')::uuid id from jsonb_array_elements(cfg->'products') p) selected on selected.id=ids.id),
  'module_changes',(select coalesce(jsonb_agg(jsonb_build_object('product_id',p->>'product_id','module_id',m.id,'name',m.name,'before',tm.enabled,'after',exists(select 1 from jsonb_array_elements(p->'rules') r where (r->>'module_id')::uuid=m.id))),'[]') from jsonb_array_elements(cfg->'products') p join public.product_content_modules pm on pm.product_id=(p->>'product_id')::uuid join public.content_modules m on m.id=pm.content_module_id left join public.tenant_product_entitlements e on e.contract_id=(cfg->>'contract_id')::uuid and e.product_id=pm.product_id left join public.tenant_product_content_modules tm on tm.entitlement_id=e.id and tm.content_module_id=m.id),
  'added_rules',(select coalesce(jsonb_agg(value),'[]') from (select value from jsonb_array_elements(next_rules) except select value from jsonb_array_elements(previous_rules)) q),
  'removed_rules',(select coalesce(jsonb_agg(value),'[]') from (select value from jsonb_array_elements(previous_rules) except select value from jsonb_array_elements(next_rules)) q),
- 'removed_products',(select coalesce(jsonb_agg(p->>'product_id'),'[]') from jsonb_array_elements(prior->'products') p where p->>'status'='active' and not exists(select 1 from jsonb_array_elements(cfg->'products') n where n->>'product_id'=p->>'product_id')),
+ 'removed_products',(select coalesce(jsonb_agg(p->>'product_id'),'[]') from jsonb_array_elements(prior->'products') p where (p->>'status'='active' or exists(select 1 from jsonb_array_elements(prior->'entitlements') e where e->>'product_id'=p->>'product_id' and e->>'status'<>'REVOKED')) and not exists(select 1 from jsonb_array_elements(cfg->'products') n where n->>'product_id'=p->>'product_id')),
  'effects',jsonb_build_object('dates_preserved',true,'school_activation',false,'per_item_grants',0,'warning','Aditamento do mesmo contrato. Vigência, escola e histórico preservados. Revise ampliações e retiradas.'));
 end $$;
 
@@ -83,7 +85,7 @@ begin
  if review->>'revision'<>p_review->>'revision' then raise exception 'STALE_CONTRACT_REVIEW';end if;
  cfg:=review->'config';prior:=review->'before';select * into c from public.contracts where id=(cfg->>'contract_id')::uuid;
  -- Retire only this contract's products/entitlements, preserving their historical rows.
- update public.tenant_product_entitlements set status='SUSPENDED' where contract_id=c.id and status<>'SUSPENDED' and not exists(select 1 from jsonb_array_elements(cfg->'products') p where (p->>'product_id')::uuid=product_id);
+ update public.tenant_product_entitlements set status='REVOKED' where contract_id=c.id and status<>'REVOKED' and not exists(select 1 from jsonb_array_elements(cfg->'products') p where (p->>'product_id')::uuid=product_id);
  update public.contract_products set status='inactive' where contract_id=c.id and not exists(select 1 from jsonb_array_elements(cfg->'products') p where (p->>'product_id')::uuid=product_id);
  for prod in select value from jsonb_array_elements(cfg->'products') loop
   select jsonb_agg(distinct r->>'grade_id') into grades from jsonb_array_elements(prod->'rules') r;
