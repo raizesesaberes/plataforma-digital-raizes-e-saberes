@@ -1,3 +1,5 @@
+STATUS DE PUBLICAÇÃO: backend instalado pelo Mac como 20261011191259; readback independente PASS registrado em installed-20261011191259.json. Gate de aditamento habilitado somente em admin.html para publicação coordenada autorizada. Nenhum contrato real alterado por este executor. Texto abaixo preserva a proposta/revisão anterior.
+
 ADITAMENTO CONTRATUAL — PROPOSTA DE CÓDIGO, NÃO INSTALADA
 
 Escopo mínimo implementado

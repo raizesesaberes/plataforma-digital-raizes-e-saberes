@@ -1,10 +1,12 @@
 import {createRequire} from 'node:module';import {readFileSync} from 'node:fs';import {createServer} from 'node:http';import assert from 'node:assert/strict';
 const {chromium}=createRequire(import.meta.url)('playwright');const source=readFileSync('contract-operations.js','utf8');
+const adminHtml=readFileSync('admin.html','utf8');const gate=adminHtml.match(/<script>(globalThis\.RAIZES_CONTRACT_AMENDMENTS_ENABLED = true;)<\/script>/)?.[1];assert(gate,'Shipped admin gate missing');assert(adminHtml.indexOf(gate)<adminHtml.indexOf('src="contract-operations.js'));assert.equal((adminHtml.match(/RAIZES_\w+_ENABLED\s*=\s*true/g)||[]).length,1);
 const server=createServer((req,res)=>{res.setHeader('Content-Type','text/html');res.end('<contract-operations></contract-operations>');});await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
 try{
  const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript({content:gate});
  await page.addInitScript(()=>{
-  window.RAIZES_CONTRACT_AMENDMENTS_ENABLED=true;window.getPlatformSession=()=>({userId:'synthetic'});
+  window.getPlatformSession=()=>({userId:'synthetic'});
   const rule={module_id:'m',content_type:'QUESTION',grade_id:'g',subject_id:null,kind:'STANDARD'};
   const old={id:'c',reference:'Existing school contract',operational:true,school_ids:['s'],tenant_school_id:'s',status:'ACTIVE',starts_at:'2026-10-11',ends_at:'2027-10-10',configurations:[{product_id:'p',rules:[rule],institutional:false},{product_id:'legacy',rules:[rule],institutional:false}]};
   const catalog={schools:[{id:'s',name:'Synthetic school',status:'inactive'}],networks:[],contracts:[old],subjects:[],taxonomy:[{grade_id:'g',grade_name:'Infantil 2',institutional:false},{grade_id:'gi',grade_name:'Universidade',institutional:true}],products:[{id:'p',name:'Banco Completo',modules:[{id:'m',name:'Questions',content_types:['QUESTION']},{id:'mt',name:'Universidade',content_types:['TRAINING']}]},{id:'legacy',name:'Legacy',modules:[{id:'m',name:'Questions',content_types:['QUESTION']}]}]};
