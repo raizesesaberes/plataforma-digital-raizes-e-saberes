@@ -9,6 +9,7 @@ const postgres='postgres:17@sha256:2d2b8998d31037bf721cfdf764d76ba74171b4fab3431
 const postgrest='postgrest/postgrest:v12.2.12@sha256:5f4ce744539bbba786b4e24dbbd95bdb2a956dcf568c5374995a0ff4a68f5bd2';
 const baseline=false;
 const contractsFirst=process.argv.includes('--contracts-first');
+const snapshot=()=>JSON.parse(run(['exec','-i',name,'psql','-U','postgres','-At'],`select jsonb_object_agg(key, value) from (select n.nspname||'.'||p.proname||'('||pg_get_function_identity_arguments(p.oid)||')' key,jsonb_build_object('body_md5',md5(p.prosrc),'definition_md5',md5(pg_get_functiondef(p.oid)),'acl',p.proacl::text,'config',p.proconfig,'owner',pg_get_userbyid(p.proowner)) value from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','school_category_private') union all select 'trigger:'||t.tgrelid::regclass::text||':'||t.tgname,jsonb_build_object('definition',pg_get_triggerdef(t.oid),'enabled',t.tgenabled) from pg_trigger t where not t.tgisinternal) s;`));
 const apply=file=>{console.log(`Load ${file}`);run(['exec','-i',name,'psql','-U','postgres','-v','ON_ERROR_STOP=1'],readFileSync(file));};
 try {
   run(['run','-d','--name',name,'--label','rs.fase3=synthetic','-e','POSTGRES_PASSWORD=synthetic-local-only',postgres]);
@@ -18,6 +19,7 @@ try {
   apply('qa/fase3/bootstrap.sql');apply('supabase/baselines/20261004_pilot_schema_baseline.sql');
   for(const file of readdirSync('supabase/migrations').filter(x=>x.startsWith('202610')&&x.endsWith('.sql')).sort())apply(`supabase/migrations/${file}`);
   apply('qa/fase3/observed-start-attempt.sql');
+  apply('tests/contracts/admin-assert.sql');apply('tests/contracts/production-legacy-helpers.sql');
   apply('qa/fase3/seed.sql');
   const expected=[...JSON.parse(readFileSync('qa/fase3/production-parity.json')).functions,...JSON.parse(readFileSync('qa/fase3/reply-production-parity.json')).functions];
   const names=expected.map(x=>"'"+x.proname+"'").join(',');
@@ -29,14 +31,29 @@ try {
   const checked=run(['exec','-i',name,'psql','-U','postgres','-v','ON_ERROR_STOP=1','-At'],contractPreflight);
   if(checked.trim().split('\n').some(line=>!line.endsWith('|t')))throw new Error('Contract function preflight mismatch: '+checked);
   console.log('PASS seven contract function preconditions (migration ledger is outside this synthetic fixture)');
+  const beforeFase3=snapshot();
   if(contractsFirst)apply('supabase/review/contract_operations.sql');
   if(!baseline){apply('supabase/review/fase3_assessment_authorization.sql');apply('supabase/review/fase3_communication_replies.sql');apply('supabase/review/fase3_notice_editing.sql');}
+  const afterFase3=snapshot();
   if(!contractsFirst)apply('supabase/review/contract_operations.sql');
+  const afterContracts=snapshot();
+  const protectedObjects=Object.keys(afterFase3).filter(key=>JSON.stringify(afterFase3[key])!==JSON.stringify(beforeFase3[key]));
+  const overwritten=protectedObjects.filter(key=>JSON.stringify(afterFase3[key])!==JSON.stringify(afterContracts[key]));
+  if(overwritten.length)throw new Error('Contract overwrote FASE3 protection: '+overwritten.join(','));
+  const changedDependencies=Object.keys(afterFase3).filter(key=>JSON.stringify(afterFase3[key])!==JSON.stringify(afterContracts[key])).map(key=>({key,before:afterFase3[key],after:afterContracts[key]}));
+  writeFileSync('qa/fase3/integration-functions.json',JSON.stringify({protectedObjects,protectedDefinitions:Object.fromEntries(protectedObjects.map(key=>[key,afterFase3[key]])),overwritten,changedDependencies},null,2)+'\n');
+  console.log('PASS contracts preserved '+protectedObjects.length+' FASE3 functions/triggers including definitions, ACLs and config');
+  apply('tests/contracts/seed.sql');
+  for(const suite of ['database.py','content.py','edge-cases.py','security-regressions.py','succession-regressions.py']){
+    console.log('CONTRACT SUITE '+suite);
+    execFileSync('python3',['tests/contracts/'+suite],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}});
+  }
   run(['run','-d','--name',`${name}-rest`,'--label','rs.fase3=synthetic','--network',`container:${name}`,'-e','PGRST_DB_URI=postgres://authenticator:synthetic-local-only@127.0.0.1:5432/postgres','-e','PGRST_DB_SCHEMAS=public','-e','PGRST_DB_ANON_ROLE=anon','-e','PGRST_JWT_SECRET=fase3-synthetic-jwt-secret-never-production-123456',postgrest]);
   const info=JSON.parse(run(['inspect',name]))[0];const host=Object.values(info.NetworkSettings.Networks)[0].IPAddress;
   ready=false;
   for(let i=0;i<100;i++){try{const res=await fetch(`http://${host}:3000/`);if(res.ok){ready=true;break}}catch{} await new Promise(r=>setTimeout(r,200));}
   if(!ready)throw new Error('Local PostgREST did not start');
   execFileSync(process.execPath,['qa/fase3/journeys.mjs',name,...(baseline?['--baseline']:[])],{stdio:'inherit'});
+  execFileSync('python3',['tests/contracts/fase3-bridge.py'],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}});
 } catch(error) {console.error(error.stderr?.toString()||error.message);process.exitCode=1;}
 finally {for(const container of [`${name}-rest`,name]){try{run(['rm','-fv',container])}catch{}}}

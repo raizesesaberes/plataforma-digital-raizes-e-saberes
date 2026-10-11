@@ -1,6 +1,11 @@
 from zoneinfo import ZoneInfo
 """Executable integration tests: canonical schema + real local Postgres functions."""
-import json, subprocess, uuid, datetime, copy
+import json, subprocess, uuid, datetime, copy, os
+CONTAINER=os.environ.get("RS_CONTRACT_TEST_CONTAINER", "rs-contract-db")
+if CONTAINER != "rs-contract-db":
+    assert CONTAINER.startswith("rs-fase3-"), "Only disposable integration containers accepted"
+    label=subprocess.check_output(["docker","inspect","--format",'{{index .Config.Labels "rs.fase3"}}',CONTAINER],text=True).strip()
+    assert label == "synthetic", "Synthetic Docker label required"
 ADMIN='10000000-0000-4000-8000-000000000001'
 USER='10000000-0000-4000-8000-000000000002'
 A='20000000-0000-4000-8000-000000000001'; B='20000000-0000-4000-8000-000000000002'; C='20000000-0000-4000-8000-000000000003'
@@ -9,7 +14,7 @@ def literal(v): return "'"+str(v).replace("'","''")+"'"
 def sql(query, actor=ADMIN, role='authenticated', error=None):
     claims=json.dumps({'sub':actor,'role':'authenticated','app_metadata':{'platform_role':'admin' if actor==ADMIN else 'professor'}})
     cmd=f"set request.jwt.claim.sub={literal(actor)};set request.jwt.claims={literal(claims)};set role {role};\n"+query
-    p=subprocess.run(['docker','exec','-i','rs-contract-db','psql','-XAtq','-U','postgres','-v','ON_ERROR_STOP=1'],input=cmd,text=True,capture_output=True)
+    p=subprocess.run(['docker','exec','-i',CONTAINER,'psql','-XAtq','-U','postgres','-v','ON_ERROR_STOP=1'],input=cmd,text=True,capture_output=True)
     if error:
         assert p.returncode and error in p.stderr,(error,p.stdout,p.stderr);return
     assert not p.returncode,p.stderr
