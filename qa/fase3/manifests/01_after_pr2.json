@@ -41,6 +41,32 @@
       }
     },
     "functions": {
+      "public.is_platform_admin()": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": null,
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "aea7c630144e2e96d8d7ce492fb139e7",
+        "definition_md5": "a611cf16b32cb9d444808e8989caf3a6",
+        "security_definer": false
+      },
+      "public.current_platform_role()": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": null,
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "7311ac2ad0beac905b5f07588ce0c376",
+        "definition_md5": "026d7c9944b12402345ac7d98d963ed6",
+        "security_definer": false
+      },
       "public.avalia_current_student_id()": {
         "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
         "owner": "postgres",
@@ -55,6 +81,21 @@
         "body_md5": "97999b75dee13694e601365d99f7134a",
         "definition_md5": "3e20a7be5b00c46e81fb47db25c5b57d",
         "security_definer": true
+      },
+      "public.question_bank_access_editor()": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=pg_catalog, public, pg_temp"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "1fa4432101cba2bb4f5b09628c80b719",
+        "definition_md5": "c5c6713a1090fcded9e3c63dbc8db717",
+        "security_definer": false
       },
       "public.school_content_assert_admin()": {
         "acl": "{postgres=X/postgres,service_role=X/postgres}",
@@ -100,6 +141,21 @@
         "definition_md5": "49f396af1bc13839428275463183c937",
         "security_definer": false
       },
+      "public.student_list_assessment_assignments()": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "122212b41d116af253de7ff5867986a4",
+        "definition_md5": "84d88652853627005cc436ea39e87b04",
+        "security_definer": true
+      },
       "public.content_resolve_for_user(p_context jsonb)": {
         "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
         "owner": "postgres",
@@ -144,6 +200,49 @@
         },
         "body_md5": "87087fc7b55717ff5cfb3174d683ab75",
         "definition_md5": "e7298d70307fba6931358c8d1c11ae91",
+        "security_definer": true
+      },
+      "public.has_question_bank_role(required_roles text[])": {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": null,
+        "execute": {
+          "anon": true,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "4d7dd8436492fd34b8877fd7ba9f1bf8",
+        "definition_md5": "760e23a9175b8f2b3b57e73c32b59e09",
+        "security_definer": false
+      },
+      "public.question_bank_assert_assessment_item_access()": {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=pg_catalog, public, pg_temp"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": false
+        },
+        "body_md5": "5385a06d50c0bf9f1424fc0c7b8fdfb6",
+        "definition_md5": "89f2281a8febae141478b5bd7c2f221b",
+        "security_definer": true
+      },
+      "public.question_bank_can_read_item(q question_items)": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=pg_catalog, public, pg_temp"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "5a1db01956bfda939f551dee5b5be557",
+        "definition_md5": "d53840a1ff2ab60b41f71c3e37025f23",
         "security_definer": true
       },
       "school_category_private.scope_tenants(p_school uuid)": {
@@ -193,6 +292,21 @@
         "definition_md5": "96870fab8f1b04fbea6315501dd525a5",
         "security_definer": true
       },
+      "public.avalia_plus_fill_assessment_question_snapshot()": {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "execute": {
+          "anon": true,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "046ef6fa80198d5d794f5e6c11882cc0",
+        "definition_md5": "ef9b402c46fb6a822937682a8c6c314b",
+        "security_definer": true
+      },
       "school_category_private.actor_context(p_context jsonb)": {
         "acl": "{postgres=X/postgres}",
         "owner": "postgres",
@@ -223,6 +337,21 @@
         "body_md5": "57846f6b5c8fb22d0d8d458114910624",
         "definition_md5": "f571b9cef1c82dee28aaaa7194d5ec0c",
         "security_definer": true
+      },
+      "public.avalia_plus_question_snapshot(p_question_id uuid)": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "780a44d702cc93a1a06e9cb3e6345fe0",
+        "definition_md5": "8e17242e889977030690a6cdbfd4f807",
+        "security_definer": false
       },
       "school_category_private.assessment_content_write_guard()": {
         "acl": "{postgres=X/postgres}",
@@ -255,6 +384,21 @@
         "definition_md5": "f988ae1eae4b3cf22a8adf11b504919f",
         "security_definer": true
       },
+      "public.question_bank_owns_authored_item(q question_items)": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=pg_catalog, public, pg_temp"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "4df21a9eb109a5ee8d2766b88a8da184",
+        "definition_md5": "ada47bf6590025902413966df6e713bb",
+        "security_definer": true
+      },
       "public.communication_can_read(p_communication communications)": {
         "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
         "owner": "postgres",
@@ -268,6 +412,36 @@
         },
         "body_md5": "2657d0547e189192eb36044f5cfcf88c",
         "definition_md5": "b63f62a6cc6baa32d0f51da610e68a37",
+        "security_definer": true
+      },
+      "public.question_bank_assert_item_editable(p_question_id uuid)": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=pg_catalog, public, pg_temp"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "ae01b062a550193215e07eb9709daa6b",
+        "definition_md5": "aeb79f4cc7b39babb03eb93cbb4dc1b3",
+        "security_definer": true
+      },
+      "public.question_bank_authorized_teacher_ids(p_school_id uuid)": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=pg_catalog, public, pg_temp"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "e46e42edce4ab7c5ff16780e12e06deb",
+        "definition_md5": "5367856a0e9d40ff77545929fb7986a7",
         "security_definer": true
       },
       "public.communication_delivery_is_active(p_comm communications)": {
@@ -347,6 +521,21 @@
         "definition_md5": "602c6a3fe0453560760c4f337c1a9cf4",
         "security_definer": true
       },
+      "public.avalia_plus_record_item_version(p_question_id uuid, p_reason text)": {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": false
+        },
+        "body_md5": "0dc3de0ea0d9d7daa4d528ab4dc901a7",
+        "definition_md5": "f18bf7a8eaf506fcffdbc218b9df7015",
+        "security_definer": true
+      },
       "public.avalia_plus_assignment_is_open(p_assignment assessment_assignments)": {
         "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
         "owner": "postgres",
@@ -388,6 +577,51 @@
         },
         "body_md5": "ee3b77fa07362ea563d9fb4156812d00",
         "definition_md5": "015310f29c60e4ddca3b5b84706ccf02",
+        "security_definer": true
+      },
+      "public.avalia_plus_set_item_workflow(p_question_id uuid, p_status text, p_comment text)": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "d8cf915ff3d16e1e1d162370a7e46cb1",
+        "definition_md5": "68a63186db06747f9d395783d557b8c5",
+        "security_definer": true
+      },
+      "public.avalia_plus_replace_question_alternatives(p_question_id uuid, p_alternatives jsonb)": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=public, auth, pg_temp"
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "551b00d995c74924c24e98a71dc52973",
+        "definition_md5": "0cf2a51f4fcf11ba3dc941d8929c0e7c",
+        "security_definer": true
+      },
+      "public.avalia_plus_update_question_item(p_question_id uuid, p_item jsonb, p_alternatives jsonb)": {
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "execute": {
+          "anon": false,
+          "service_role": true,
+          "authenticated": true
+        },
+        "body_md5": "837c4b3caf963ed1f4a04ff568e252bc",
+        "definition_md5": "f673c8aec52764e8d903b6ab3d39fb6e",
         "security_definer": true
       },
       "school_category_private.assessment_assert_question(p_school_id uuid, p_class_id uuid, p_question_id uuid)": {
@@ -1271,6 +1505,682 @@
           }
         ]
       },
+      "public.question_items": {
+        "acl": "{postgres=arwdDxtm/postgres,authenticated=rxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "code",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "internal_title",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "component",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "stage",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "school_year",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "thematic_unit",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "knowledge_object",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "bncc_skill",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "reference_matrix",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "proficiency_level",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "difficulty",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "cognitive_process",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "question_type",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "statement",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "base_text",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "correct_answer",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "justification",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "success_feedback",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "error_feedback",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "recommended_intervention",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "estimated_minutes",
+            "type": "integer",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "accessibility_notes",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "source_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "author_name",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "license_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "legal_classification",
+            "type": "question_legal_classification",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "curation_status",
+            "type": "question_curation_status",
+            "default": "'RASCUNHO'::question_curation_status",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "publication_status",
+            "type": "question_publication_status",
+            "default": "'NAO_PUBLICADO'::question_publication_status",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "version",
+            "type": "text",
+            "default": "'1.0'::text",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "reviewer_user_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "reviewer_name",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "created_by",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "updated_by",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "last_reviewed_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "updated_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "published_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "school_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "curriculum_matrix",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "curriculum_source",
+            "type": "text",
+            "default": "'BNCC'::text",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "command_text",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "pedagogical_comment",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "distractor_comment",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "author_user_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "approver_user_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "approved_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "workflow_status",
+            "type": "text",
+            "default": "'EM_ELABORACAO'::text",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "workflow_version",
+            "type": "integer",
+            "default": "1",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "locked_after_use",
+            "type": "boolean",
+            "default": "false",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "metadata",
+            "type": "jsonb",
+            "default": "'{}'::jsonb",
+            "not_null": true
+          }
+        ],
+        "indexes": [
+          "CREATE INDEX idx_question_items_curation ON public.question_items USING btree (curation_status, publication_status, legal_classification)",
+          "CREATE INDEX idx_question_items_curriculum_v2 ON public.question_items USING btree (school_year, component, curriculum_source, curriculum_matrix, difficulty, workflow_status)",
+          "CREATE INDEX idx_question_items_lookup ON public.question_items USING btree (component, school_year, bncc_skill, difficulty, question_type)",
+          "CREATE INDEX idx_question_items_skill_v2 ON public.question_items USING btree (bncc_skill, reference_matrix, thematic_unit, knowledge_object)",
+          "CREATE INDEX idx_question_items_source ON public.question_items USING btree (source_id)",
+          "CREATE UNIQUE INDEX question_items_code_key ON public.question_items USING btree (code)",
+          "CREATE UNIQUE INDEX question_items_pkey ON public.question_items USING btree (id)"
+        ],
+        "policies": [
+          {
+            "name": "category_question_read_gate",
+            "check": null,
+            "roles": [
+              "anon",
+              "authenticated"
+            ],
+            "using": "content_category_can_read_question(id)",
+            "command": "r",
+            "permissive": false
+          },
+          {
+            "name": "published questions readable by educators",
+            "check": null,
+            "roles": [
+              "authenticated"
+            ],
+            "using": "(is_platform_admin() OR has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'gestor'::text, 'gestor_da_rede'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'professor'::text, 'aplicador'::text, 'visualizador'::text, 'viewer'::text, 'service_role'::text]))",
+            "command": "r",
+            "permissive": true
+          },
+          {
+            "name": "question_access_boundary",
+            "check": null,
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "(question_bank_access_editor() OR question_bank_owns_authored_item(question_items.*) OR ((publication_status = 'PUBLICADO'::question_publication_status) AND (legal_classification <> 'ITEM_BLOQUEADO_PUBLICACAO'::question_legal_classification) AND (id = ANY (( SELECT question_bank_authorized_teacher_ids() AS question_bank_authorized_teacher_ids)::uuid[]))))",
+            "command": "r",
+            "permissive": false
+          },
+          {
+            "name": "questions inserted by curators and reviewers",
+            "check": "has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'professor'::text, 'service_role'::text])",
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": null,
+            "command": "a",
+            "permissive": true
+          },
+          {
+            "name": "questions managed before publication",
+            "check": "has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'service_role'::text])",
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'service_role'::text])",
+            "command": "w",
+            "permissive": true
+          }
+        ],
+        "triggers": [
+          {
+            "name": "category_checkpoint_question_guard",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER category_checkpoint_question_guard BEFORE UPDATE ON public.question_items FOR EACH ROW EXECUTE FUNCTION school_category_private.guard_checkpoint_writes()"
+          },
+          {
+            "name": "trg_avalia_plus_touch_item_version",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER trg_avalia_plus_touch_item_version BEFORE UPDATE ON public.question_items FOR EACH ROW EXECUTE FUNCTION avalia_plus_touch_item_version()"
+          }
+        ],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": false,
+            "insert": false,
+            "select": false,
+            "update": false,
+            "trigger": false,
+            "truncate": false,
+            "references": false
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false,
+            "trigger": true,
+            "truncate": false,
+            "references": true
+          }
+        },
+        "constraints": [
+          {
+            "name": "question_items_check",
+            "validated": true,
+            "definition": "CHECK (publication_status <> 'PUBLICADO'::question_publication_status OR (curation_status = ANY (ARRAY['APROVADO'::question_curation_status, 'PUBLICADO'::question_curation_status, 'HOMOLOGADO'::question_curation_status])))"
+          },
+          {
+            "name": "question_items_check1",
+            "validated": true,
+            "definition": "CHECK (legal_classification <> 'ITEM_BLOQUEADO_PUBLICACAO'::question_legal_classification OR publication_status <> 'PUBLICADO'::question_publication_status)"
+          },
+          {
+            "name": "question_items_code_key",
+            "validated": true,
+            "definition": "UNIQUE (code)"
+          },
+          {
+            "name": "question_items_curriculum_source_check",
+            "validated": true,
+            "definition": "CHECK (curriculum_source = ANY (ARRAY['BNCC'::text, 'SAEB'::text, 'CURRICULO_PROPRIO'::text, 'BNCC_SAEB'::text, 'OUTRO'::text]))"
+          },
+          {
+            "name": "question_items_estimated_minutes_check",
+            "validated": true,
+            "definition": "CHECK (estimated_minutes IS NULL OR estimated_minutes > 0)"
+          },
+          {
+            "name": "question_items_license_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (license_id) REFERENCES question_licenses(id)"
+          },
+          {
+            "name": "question_items_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "question_items_school_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE SET NULL"
+          },
+          {
+            "name": "question_items_source_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (source_id) REFERENCES question_sources(id)"
+          },
+          {
+            "name": "question_items_workflow_status_check",
+            "validated": true,
+            "definition": "CHECK (workflow_status = ANY (ARRAY['EM_ELABORACAO'::text, 'EM_REVISAO'::text, 'APROVADO'::text, 'ARQUIVADO'::text]))"
+          },
+          {
+            "name": "question_items_workflow_version_check",
+            "validated": true,
+            "definition": "CHECK (workflow_version > 0)"
+          }
+        ]
+      },
+      "public.question_media": {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "question_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "media_type",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "url",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "alt_text",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "transcript",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "license_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          }
+        ],
+        "indexes": [
+          "CREATE UNIQUE INDEX question_media_pkey ON public.question_media USING btree (id)"
+        ],
+        "policies": [
+          {
+            "name": "question media managed by curators",
+            "check": "has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'service_role'::text])",
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'service_role'::text])",
+            "command": "*",
+            "permissive": true
+          },
+          {
+            "name": "question media readable with question",
+            "check": null,
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "(EXISTS ( SELECT 1\n   FROM question_items qi\n  WHERE (qi.id = question_media.question_id)))",
+            "command": "r",
+            "permissive": true
+          },
+          {
+            "name": "question_media_access_boundary",
+            "check": null,
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "(EXISTS ( SELECT 1\n   FROM question_items qi\n  WHERE (qi.id = question_media.question_id)))",
+            "command": "r",
+            "permissive": false
+          }
+        ],
+        "triggers": [],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          }
+        },
+        "constraints": [
+          {
+            "name": "question_media_license_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (license_id) REFERENCES question_licenses(id)"
+          },
+          {
+            "name": "question_media_media_type_check",
+            "validated": true,
+            "definition": "CHECK (media_type = ANY (ARRAY['imagem'::text, 'audio'::text, 'video'::text, 'grafico'::text, 'tabela'::text, 'interativo'::text, 'arquivo'::text]))"
+          },
+          {
+            "name": "question_media_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "question_media_question_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (question_id) REFERENCES question_items(id) ON DELETE CASCADE"
+          }
+        ]
+      },
       "public.contract_products": {
         "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
         "rls": true,
@@ -1381,6 +2291,152 @@
           }
         ]
       },
+      "public.assessment_booklets": {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=rxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "assessment_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "code",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "title",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "position",
+            "type": "integer",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "question_count",
+            "type": "integer",
+            "default": "0",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "skill_map",
+            "type": "jsonb",
+            "default": "'[]'::jsonb",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "updated_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          }
+        ],
+        "indexes": [
+          "CREATE UNIQUE INDEX assessment_booklets_assessment_id_code_key ON public.assessment_booklets USING btree (assessment_id, code)",
+          "CREATE UNIQUE INDEX assessment_booklets_assessment_id_position_key ON public.assessment_booklets USING btree (assessment_id, \"position\")",
+          "CREATE UNIQUE INDEX assessment_booklets_pkey ON public.assessment_booklets USING btree (id)",
+          "CREATE INDEX idx_assessment_booklets_assessment ON public.assessment_booklets USING btree (assessment_id, \"position\")"
+        ],
+        "policies": [
+          {
+            "name": "assessment booklets follow assessment read",
+            "check": null,
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "(EXISTS ( SELECT 1\n   FROM assessments a\n  WHERE ((a.id = assessment_booklets.assessment_id) AND ((a.owner_user_id = auth.uid()) OR has_question_bank_role(ARRAY['admin'::text, 'administrador'::text, 'administrador_nacional'::text, 'gestor'::text, 'gestor_da_rede'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'professor'::text, 'aplicador'::text, 'visualizador'::text, 'service_role'::text])))))",
+            "command": "r",
+            "permissive": true
+          }
+        ],
+        "triggers": [],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false,
+            "trigger": true,
+            "truncate": false,
+            "references": true
+          }
+        },
+        "constraints": [
+          {
+            "name": "assessment_booklets_assessment_id_code_key",
+            "validated": true,
+            "definition": "UNIQUE (assessment_id, code)"
+          },
+          {
+            "name": "assessment_booklets_assessment_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (assessment_id) REFERENCES assessments(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "assessment_booklets_assessment_id_position_key",
+            "validated": true,
+            "definition": "UNIQUE (assessment_id, \"position\")"
+          },
+          {
+            "name": "assessment_booklets_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "assessment_booklets_position_check",
+            "validated": true,
+            "definition": "CHECK (\"position\" >= 1 AND \"position\" <= 5)"
+          }
+        ]
+      },
       "public.assessment_questions": {
         "acl": "{postgres=arwdDxtm/postgres,authenticated=rxtm/postgres,service_role=arwdDxtm/postgres}",
         "rls": true,
@@ -1460,14 +2516,14 @@
             "permissive": true
           },
           {
-            "name": "assessment_questions_student_assigned_select",
+            "name": "assessment_raw_snapshot_staff_boundary",
             "check": null,
             "roles": [
-              "authenticated"
+              "PUBLIC"
             ],
-            "using": "(EXISTS ( SELECT 1\n   FROM assessment_assignments aa\n  WHERE ((aa.assessment_id = assessment_questions.assessment_id) AND avalia_student_can_access_assignment(aa.id, avalia_current_student_id()))))",
+            "using": "((is_platform_admin() OR (current_platform_role() = ANY (ARRAY['professor'::text, 'teacher'::text])) OR has_question_bank_role(ARRAY['admin'::text, 'administrador'::text, 'administrador_nacional'::text, 'gestor'::text, 'gestor_da_rede'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'professor'::text, 'aplicador'::text, 'visualizador'::text, 'viewer'::text, 'elaborador'::text, 'aprovador'::text, 'service_role'::text])) AND (EXISTS ( SELECT 1\n   FROM assessments a\n  WHERE (a.id = assessment_questions.assessment_id))))",
             "command": "r",
-            "permissive": true
+            "permissive": false
           }
         ],
         "triggers": [
@@ -1477,14 +2533,14 @@
             "definition": "CREATE TRIGGER fase3_assessment_question_guard BEFORE INSERT OR DELETE OR UPDATE ON public.assessment_questions FOR EACH ROW EXECUTE FUNCTION school_category_private.assessment_content_write_guard()"
           },
           {
-            "name": "trg_avalia_plus_assessment_question_access",
-            "enabled": "O",
-            "definition": "CREATE TRIGGER trg_avalia_plus_assessment_question_access BEFORE INSERT OR UPDATE OF question_id ON public.assessment_questions FOR EACH ROW EXECUTE FUNCTION avalia_plus_assert_question_usable_for_assessment()"
-          },
-          {
             "name": "trg_avalia_plus_assessment_question_snapshot",
             "enabled": "O",
             "definition": "CREATE TRIGGER trg_avalia_plus_assessment_question_snapshot BEFORE INSERT OR UPDATE OF question_id, version_snapshot ON public.assessment_questions FOR EACH ROW EXECUTE FUNCTION avalia_plus_fill_assessment_question_snapshot()"
+          },
+          {
+            "name": "trg_question_access_boundary",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER trg_question_access_boundary BEFORE INSERT OR UPDATE OF question_id ON public.assessment_questions FOR EACH ROW EXECUTE FUNCTION question_bank_assert_assessment_item_access()"
           }
         ],
         "force_rls": false,
@@ -1542,6 +2598,158 @@
             "name": "assessment_questions_section_id_fkey",
             "validated": true,
             "definition": "FOREIGN KEY (section_id) REFERENCES assessment_sections(id) ON DELETE SET NULL"
+          }
+        ]
+      },
+      "public.question_alternatives": {
+        "acl": "{postgres=arwdDxtm/postgres,authenticated=rxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "question_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "label",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "body",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "is_correct",
+            "type": "boolean",
+            "default": "false",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "position",
+            "type": "integer",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          }
+        ],
+        "indexes": [
+          "CREATE UNIQUE INDEX question_alternatives_pkey ON public.question_alternatives USING btree (id)",
+          "CREATE UNIQUE INDEX question_alternatives_question_id_label_key ON public.question_alternatives USING btree (question_id, label)",
+          "CREATE UNIQUE INDEX question_alternatives_question_id_position_key ON public.question_alternatives USING btree (question_id, \"position\")"
+        ],
+        "policies": [
+          {
+            "name": "question children managed by curators",
+            "check": "has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'service_role'::text])",
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'service_role'::text])",
+            "command": "*",
+            "permissive": true
+          },
+          {
+            "name": "question children readable with question",
+            "check": null,
+            "roles": [
+              "authenticated"
+            ],
+            "using": "(is_platform_admin() OR has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'gestor'::text, 'gestor_da_rede'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'professor'::text, 'aplicador'::text, 'visualizador'::text, 'viewer'::text, 'service_role'::text]))",
+            "command": "r",
+            "permissive": true
+          },
+          {
+            "name": "question_alternative_access_boundary",
+            "check": null,
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "(EXISTS ( SELECT 1\n   FROM question_items qi\n  WHERE (qi.id = question_alternatives.question_id)))",
+            "command": "r",
+            "permissive": false
+          }
+        ],
+        "triggers": [
+          {
+            "name": "category_checkpoint_alternative_guard",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER category_checkpoint_alternative_guard BEFORE INSERT OR DELETE OR UPDATE ON public.question_alternatives FOR EACH ROW EXECUTE FUNCTION school_category_private.guard_checkpoint_writes()"
+          }
+        ],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": false,
+            "insert": false,
+            "select": false,
+            "update": false,
+            "trigger": false,
+            "truncate": false,
+            "references": false
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false,
+            "trigger": true,
+            "truncate": false,
+            "references": true
+          }
+        },
+        "constraints": [
+          {
+            "name": "question_alternatives_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "question_alternatives_question_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (question_id) REFERENCES question_items(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "question_alternatives_question_id_label_key",
+            "validated": true,
+            "definition": "UNIQUE (question_id, label)"
+          },
+          {
+            "name": "question_alternatives_question_id_position_key",
+            "validated": true,
+            "definition": "UNIQUE (question_id, \"position\")"
           }
         ]
       },
@@ -1858,6 +3066,165 @@
           }
         ]
       },
+      "public.question_item_versions": {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=rxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "question_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "version_number",
+            "type": "integer",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "version_label",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "workflow_status",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "publication_status",
+            "type": "question_publication_status",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "curation_status",
+            "type": "question_curation_status",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "snapshot",
+            "type": "jsonb",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "created_by",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "reason",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          }
+        ],
+        "indexes": [
+          "CREATE INDEX idx_question_item_versions_question ON public.question_item_versions USING btree (question_id, version_number DESC)",
+          "CREATE UNIQUE INDEX question_item_versions_pkey ON public.question_item_versions USING btree (id)",
+          "CREATE UNIQUE INDEX question_item_versions_question_id_version_number_key ON public.question_item_versions USING btree (question_id, version_number)"
+        ],
+        "policies": [
+          {
+            "name": "question item versions readable by assessment staff",
+            "check": null,
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "has_question_bank_role(ARRAY['admin'::text, 'administrador'::text, 'administrador_nacional'::text, 'gestor'::text, 'gestor_da_rede'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'professor'::text, 'aplicador'::text, 'visualizador'::text, 'service_role'::text])",
+            "command": "r",
+            "permissive": true
+          },
+          {
+            "name": "question_version_access_boundary",
+            "check": null,
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "(question_bank_access_editor() OR (EXISTS ( SELECT 1\n   FROM question_items qi\n  WHERE ((qi.id = question_item_versions.question_id) AND question_bank_owns_authored_item(qi.*)))))",
+            "command": "r",
+            "permissive": false
+          }
+        ],
+        "triggers": [],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false,
+            "trigger": true,
+            "truncate": false,
+            "references": true
+          }
+        },
+        "constraints": [
+          {
+            "name": "question_item_versions_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "question_item_versions_question_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (question_id) REFERENCES question_items(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "question_item_versions_question_id_version_number_key",
+            "validated": true,
+            "definition": "UNIQUE (question_id, version_number)"
+          }
+        ]
+      },
       "public.communication_deliveries": {
         "acl": "{postgres=arwdDxtm/postgres,authenticated=rm/postgres,service_role=arwdDxtm/postgres}",
         "rls": true,
@@ -2020,6 +3387,301 @@
             "name": "communication_deliveries_student_id_fkey",
             "validated": true,
             "definition": "FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE"
+          }
+        ]
+      },
+      "public.question_workflow_events": {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=rxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "question_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "from_status",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "to_status",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "actor_user_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "actor_role",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "comment",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "snapshot",
+            "type": "jsonb",
+            "default": "'{}'::jsonb",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          }
+        ],
+        "indexes": [
+          "CREATE INDEX idx_question_workflow_events_question ON public.question_workflow_events USING btree (question_id, created_at DESC)",
+          "CREATE UNIQUE INDEX question_workflow_events_pkey ON public.question_workflow_events USING btree (id)"
+        ],
+        "policies": [
+          {
+            "name": "question workflow events readable by assessment staff",
+            "check": null,
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "has_question_bank_role(ARRAY['admin'::text, 'administrador'::text, 'administrador_nacional'::text, 'gestor'::text, 'gestor_da_rede'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'professor'::text, 'aplicador'::text, 'visualizador'::text, 'service_role'::text])",
+            "command": "r",
+            "permissive": true
+          },
+          {
+            "name": "question_workflow_access_boundary",
+            "check": null,
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "(question_bank_access_editor() OR (EXISTS ( SELECT 1\n   FROM question_items qi\n  WHERE ((qi.id = question_workflow_events.question_id) AND question_bank_owns_authored_item(qi.*)))))",
+            "command": "r",
+            "permissive": false
+          }
+        ],
+        "triggers": [],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false,
+            "trigger": true,
+            "truncate": false,
+            "references": true
+          }
+        },
+        "constraints": [
+          {
+            "name": "question_workflow_events_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "question_workflow_events_question_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (question_id) REFERENCES question_items(id) ON DELETE CASCADE"
+          }
+        ]
+      },
+      "public.question_curation_history": {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "question_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "actor_user_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "actor_role",
+            "type": "text",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "previous_status",
+            "type": "question_curation_status",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "new_status",
+            "type": "question_curation_status",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "legal_classification",
+            "type": "question_legal_classification",
+            "default": null,
+            "not_null": false
+          },
+          {
+            "acl": null,
+            "name": "comment",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "snapshot",
+            "type": "jsonb",
+            "default": "'{}'::jsonb",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          }
+        ],
+        "indexes": [
+          "CREATE INDEX idx_question_history_question ON public.question_curation_history USING btree (question_id, created_at DESC)",
+          "CREATE UNIQUE INDEX question_curation_history_pkey ON public.question_curation_history USING btree (id)"
+        ],
+        "policies": [
+          {
+            "name": "question history managed by curators",
+            "check": "has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'service_role'::text])",
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": null,
+            "command": "a",
+            "permissive": true
+          },
+          {
+            "name": "question history readable by staff",
+            "check": null,
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'gestor'::text, 'gestor_da_rede'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'professor'::text, 'service_role'::text])",
+            "command": "r",
+            "permissive": true
+          },
+          {
+            "name": "question_history_access_boundary",
+            "check": null,
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "(question_bank_access_editor() OR (EXISTS ( SELECT 1\n   FROM question_items qi\n  WHERE ((qi.id = question_curation_history.question_id) AND question_bank_owns_authored_item(qi.*)))))",
+            "command": "r",
+            "permissive": false
+          }
+        ],
+        "triggers": [],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          }
+        },
+        "constraints": [
+          {
+            "name": "question_curation_history_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "question_curation_history_question_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (question_id) REFERENCES question_items(id) ON DELETE CASCADE"
           }
         ]
       },
@@ -2363,6 +4025,272 @@
             "name": "tenant_product_entitlements_updated_by_fkey",
             "validated": true,
             "definition": "FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+          }
+        ]
+      },
+      "public.assessment_booklet_questions": {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=rxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "booklet_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "assessment_question_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "question_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "position",
+            "type": "integer",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "version_snapshot",
+            "type": "jsonb",
+            "default": "'{}'::jsonb",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          }
+        ],
+        "indexes": [
+          "CREATE UNIQUE INDEX assessment_booklet_questions_booklet_id_position_key ON public.assessment_booklet_questions USING btree (booklet_id, \"position\")",
+          "CREATE UNIQUE INDEX assessment_booklet_questions_booklet_id_question_id_key ON public.assessment_booklet_questions USING btree (booklet_id, question_id)",
+          "CREATE UNIQUE INDEX assessment_booklet_questions_pkey ON public.assessment_booklet_questions USING btree (id)",
+          "CREATE INDEX idx_assessment_booklet_questions_booklet ON public.assessment_booklet_questions USING btree (booklet_id, \"position\")"
+        ],
+        "policies": [
+          {
+            "name": "assessment booklet questions follow assessment read",
+            "check": null,
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "(EXISTS ( SELECT 1\n   FROM (assessment_booklets ab\n     JOIN assessments a ON ((a.id = ab.assessment_id)))\n  WHERE ((ab.id = assessment_booklet_questions.booklet_id) AND ((a.owner_user_id = auth.uid()) OR has_question_bank_role(ARRAY['admin'::text, 'administrador'::text, 'administrador_nacional'::text, 'gestor'::text, 'gestor_da_rede'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'professor'::text, 'aplicador'::text, 'visualizador'::text, 'service_role'::text])))))",
+            "command": "r",
+            "permissive": true
+          },
+          {
+            "name": "assessment_booklet_raw_snapshot_staff_boundary",
+            "check": null,
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "((is_platform_admin() OR (current_platform_role() = ANY (ARRAY['professor'::text, 'teacher'::text])) OR has_question_bank_role(ARRAY['admin'::text, 'administrador'::text, 'administrador_nacional'::text, 'gestor'::text, 'gestor_da_rede'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'professor'::text, 'aplicador'::text, 'visualizador'::text, 'viewer'::text, 'elaborador'::text, 'aprovador'::text, 'service_role'::text])) AND (EXISTS ( SELECT 1\n   FROM (assessment_booklets b\n     JOIN assessments a ON ((a.id = b.assessment_id)))\n  WHERE (b.id = assessment_booklet_questions.booklet_id))))",
+            "command": "r",
+            "permissive": false
+          }
+        ],
+        "triggers": [
+          {
+            "name": "trg_question_access_boundary",
+            "enabled": "O",
+            "definition": "CREATE TRIGGER trg_question_access_boundary BEFORE INSERT OR UPDATE OF question_id ON public.assessment_booklet_questions FOR EACH ROW EXECUTE FUNCTION question_bank_assert_assessment_item_access()"
+          }
+        ],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false,
+            "trigger": true,
+            "truncate": false,
+            "references": true
+          }
+        },
+        "constraints": [
+          {
+            "name": "assessment_booklet_questions_assessment_question_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (assessment_question_id) REFERENCES assessment_questions(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "assessment_booklet_questions_booklet_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (booklet_id) REFERENCES assessment_booklets(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "assessment_booklet_questions_booklet_id_position_key",
+            "validated": true,
+            "definition": "UNIQUE (booklet_id, \"position\")"
+          },
+          {
+            "name": "assessment_booklet_questions_booklet_id_question_id_key",
+            "validated": true,
+            "definition": "UNIQUE (booklet_id, question_id)"
+          },
+          {
+            "name": "assessment_booklet_questions_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "assessment_booklet_questions_question_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (question_id) REFERENCES question_items(id)"
+          }
+        ]
+      },
+      "public.question_distractor_analyses": {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "alternative_id",
+            "type": "uuid",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "analysis",
+            "type": "text",
+            "default": null,
+            "not_null": true
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "not_null": true
+          }
+        ],
+        "indexes": [
+          "CREATE UNIQUE INDEX question_distractor_analyses_pkey ON public.question_distractor_analyses USING btree (id)"
+        ],
+        "policies": [
+          {
+            "name": "question distractors managed by curators",
+            "check": "has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'service_role'::text])",
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "has_question_bank_role(ARRAY['admin'::text, 'administrador_nacional'::text, 'curator'::text, 'curador'::text, 'revisor'::text, 'revisor_pedagogico'::text, 'service_role'::text])",
+            "command": "*",
+            "permissive": true
+          },
+          {
+            "name": "question distractors readable with question",
+            "check": null,
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "(EXISTS ( SELECT 1\n   FROM (question_alternatives qa\n     JOIN question_items qi ON ((qi.id = qa.question_id)))\n  WHERE (qa.id = question_distractor_analyses.alternative_id)))",
+            "command": "r",
+            "permissive": true
+          },
+          {
+            "name": "question_distractor_access_boundary",
+            "check": null,
+            "roles": [
+              "PUBLIC"
+            ],
+            "using": "(EXISTS ( SELECT 1\n   FROM question_alternatives qa\n  WHERE (qa.id = question_distractor_analyses.alternative_id)))",
+            "command": "r",
+            "permissive": false
+          }
+        ],
+        "triggers": [],
+        "force_rls": false,
+        "privileges": {
+          "anon": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          },
+          "authenticated": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true,
+            "trigger": true,
+            "truncate": true,
+            "references": true
+          }
+        },
+        "constraints": [
+          {
+            "name": "question_distractor_analyses_alternative_id_fkey",
+            "validated": true,
+            "definition": "FOREIGN KEY (alternative_id) REFERENCES question_alternatives(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "question_distractor_analyses_pkey",
+            "validated": true,
+            "definition": "PRIMARY KEY (id)"
           }
         ]
       },

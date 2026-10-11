@@ -2,7 +2,8 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import {recordStage,writeManifestIndex} from './release-manifest.mjs';
+import {recordStage,writeManifestIndex,manifestQuery} from './release-manifest.mjs';
+import assert from 'node:assert/strict';
 import {checkVersionQuery} from './check-version-query.mjs';
 const root=resolve(import.meta.dirname,'../..');process.chdir(root);
 const name=`rs-fase3-${process.pid}`;
@@ -24,6 +25,9 @@ try {
   apply('qa/fase3/bootstrap.sql');apply('supabase/baselines/20261004_pilot_schema_baseline.sql');
   for(const file of readdirSync('supabase/migrations').filter(x=>x.startsWith('202610')&&x.endsWith('.sql')).sort())apply(`supabase/migrations/${file}`);
   apply('qa/fase3/observed-start-attempt.sql');
+  apply('qa/fase3/observed-boundary-fixture.sql');
+  apply('qa/fase3/observed-20261009195512.sql');
+  apply('qa/fase3/observed-boundary-alignment.sql');
   apply('tests/contracts/admin-assert.sql');apply('tests/contracts/production-legacy-helpers.sql');
   apply('qa/fase3/seed.sql');
   const expected=[...JSON.parse(readFileSync('qa/fase3/production-parity.json')).functions,...JSON.parse(readFileSync('qa/fase3/reply-production-parity.json')).functions];
@@ -37,6 +41,10 @@ try {
   if(checked.trim().split('\n').some(line=>!line.endsWith('|t')))throw new Error('Contract function preflight mismatch: '+checked);
   console.log('PASS seven contract function preconditions (migration ledger is outside this synthetic fixture)');
   const beforeFase3=snapshot();
+  const observed=JSON.parse(readFileSync('qa/fase3/boundary-production-stage0.json'));
+  const catalog=()=>JSON.parse(run(['exec','-i',name,'psql','-U','postgres','-v','ON_ERROR_STOP=1','-At'],manifestQuery));
+  assert.deepEqual(catalog(),observed,'Synthetic initial catalog differs from captured production boundaries');
+  console.log('PASS exact production stage0 parity, including existing question/snapshot boundaries');
   stage('00_before');
   if(contractsFirst)apply('supabase/review/contract_operations.sql');
   if(!baseline){apply('supabase/review/fase3_assessment_authorization.sql');stage('01_after_pr2');apply('supabase/review/fase3_communication_replies.sql');stage('02_after_pr3');apply('supabase/review/fase3_notice_editing.sql');stage('03_after_pr4');}
@@ -44,6 +52,18 @@ try {
   if(!contractsFirst)apply('supabase/review/contract_operations.sql');
   stage('04_after_pr1');
   const afterContracts=snapshot();
+  const finalCatalog=catalog();
+  const boundaryNames=new Set(JSON.parse(readFileSync('qa/fase3/boundary-production-functions.json')).map(x=>x.proname));
+  for(const [key,value] of Object.entries(observed.functions)){
+    if(boundaryNames.has(key.split('.')[1].split('(')[0]))assert.deepEqual(finalCatalog.functions[key],value,'Existing boundary function changed: '+key);
+  }
+  for(const name of ['question_items','question_alternatives','question_media','question_distractor_analyses','question_item_versions','question_workflow_events','question_curation_history','assessment_booklets','assessment_booklet_questions']){
+    assert.deepEqual(finalCatalog.relations['public.'+name],observed.relations['public.'+name],'Existing protected relation changed: '+name);
+  }
+  const aq=observed.relations['public.assessment_questions'];
+  assert.deepEqual(finalCatalog.relations['public.assessment_questions'].policies,aq.policies);
+  for(const trigger of aq.triggers)assert.deepEqual(finalCatalog.relations['public.assessment_questions'].triggers.find(t=>t.name===trigger.name),trigger);
+  console.log('PASS existing boundary functions/ACLs, restrictive policies and enabled triggers preserved after all four proposals');
   const protectedObjects=Object.keys(afterFase3).filter(key=>JSON.stringify(afterFase3[key])!==JSON.stringify(beforeFase3[key]));
   const overwritten=protectedObjects.filter(key=>JSON.stringify(afterFase3[key])!==JSON.stringify(afterContracts[key]));
   if(overwritten.length)throw new Error('Contract overwrote FASE3 protection: '+overwritten.join(','));

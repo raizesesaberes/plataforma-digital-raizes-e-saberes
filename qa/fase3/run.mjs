@@ -17,6 +17,9 @@ try {
   apply('qa/fase3/bootstrap.sql');apply('supabase/baselines/20261004_pilot_schema_baseline.sql');
   for(const file of readdirSync('supabase/migrations').filter(x=>x.startsWith('202610')&&x.endsWith('.sql')).sort())apply(`supabase/migrations/${file}`);
   apply('qa/fase3/observed-start-attempt.sql');
+  apply('qa/fase3/observed-boundary-fixture.sql');
+  apply('qa/fase3/observed-20261009195512.sql');
+  apply('qa/fase3/observed-boundary-alignment.sql');
   apply('qa/fase3/seed.sql');
   const expected=[...JSON.parse(readFileSync('qa/fase3/production-parity.json')).functions,...JSON.parse(readFileSync('qa/fase3/reply-production-parity.json')).functions];
   const names=expected.map(x=>"'"+x.proname+"'").join(',');

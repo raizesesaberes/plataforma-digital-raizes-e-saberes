@@ -4,7 +4,7 @@
   "ledgerObserved": false,
   "query": {
     "file": "supabase/review/package_metadata_readonly.sql",
-    "sha256": "4f285f2ce2b1bd36486c82a6285785cd4bfa090353b5e86abca7309d466b0be7"
+    "sha256": "4bc1e4ff2447607fcb5b5eaef0f7bf0e644258a1f8b999751483a30060b8ea43"
   },
   "versionQuery": {
     "file": "supabase/review/package_versions_readonly.sql",
@@ -46,7 +46,7 @@
       "expectedLedgerCount": 149,
       "expectedAdditionalVersions": [],
       "file": "qa/fase3/manifests/00_before.json",
-      "sha256": "207f66ee5414dc9fa0bb31d8ee675958948e7588d651a3245b4c74d6fdee6bfa"
+      "sha256": "13181137ef0b2aa3418f97dbd11e1abb32ac484d217d104d9c67e20ebe577823"
     },
     {
       "stage": "01_after_pr2",
@@ -55,7 +55,7 @@
         "20261011060001"
       ],
       "file": "qa/fase3/manifests/01_after_pr2.json",
-      "sha256": "47ab30b82071c4acc6dc287e0d893424a227d3d13dc0411fb83d0f461fb2a720"
+      "sha256": "eb311af2bbc92032c375b25779d8886bbb9c8974372cf8cb2b056f52d8c90569"
     },
     {
       "stage": "02_after_pr3",
@@ -65,7 +65,7 @@
         "20261011060002"
       ],
       "file": "qa/fase3/manifests/02_after_pr3.json",
-      "sha256": "ccf54d928e23726a310399db8fa62569d4d926a1ee88427df1b6523b038b486b"
+      "sha256": "66ffb00bd290f5b9d54768e55304efd1d7df80da9724cc01484f7b29238d9ff4"
     },
     {
       "stage": "03_after_pr4",
@@ -76,7 +76,7 @@
         "20261011060003"
       ],
       "file": "qa/fase3/manifests/03_after_pr4.json",
-      "sha256": "284a4b7f513c1c5c4ad4a73bae581477a17eb616b6e3ec1a39a1c55c46f3adf3"
+      "sha256": "8121813b135b3ef9bff0e48beedd8515cb1dac174854437478c3236941bd96d0"
     },
     {
       "stage": "04_after_pr1",
@@ -88,7 +88,7 @@
         "20261011060004"
       ],
       "file": "qa/fase3/manifests/04_after_pr1.json",
-      "sha256": "d1175d04e23439f5fb2223a8421b7953b9eb3e76929d78fe6cd32cc2c0214fc8"
+      "sha256": "ab01a6330ce3e7366b5f08d75000233dd7705192dc25b40429aad3132dd14d40"
     }
   ]
 }

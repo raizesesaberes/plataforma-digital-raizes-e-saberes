@@ -1,3 +1,5 @@
+> Atualização de compatibilidade: a autorização específica de instalação foi recebida. O fixture corrigido passou na integração com as barreiras atuais de produção ativas; ver [BOUNDARY_COMPATIBILITY.md](BOUNDARY_COMPATIBILITY.md) e `boundary-integration-verification.log`. SQLs aprovados inalterados. Os novos checkpoints exigem revisão e releitura antes de instalar. CLI oficial com versões exatas indisponível neste executor; handoff Mac permanece. Gates continuam OFF. As menções históricas abaixo a autorização pendente não anulam esta atualização.
+
 # Pacote combinado — proposta para revisão, NÃO executar
 
 Nenhum ledger remoto foi modificado. Os SQLs em review não são migrations prontas. O preflight atual de contratos continua intacto: exige 149 entradas, máximo 20261011003404 e MD5 ef9f6ce1ab21510845023cceb4228bae sobre version:name. Registrar PR2/3/4 antes de executar esse preflight fará o guard rejeitar o estado, mesmo que os corpos sejam compatíveis.

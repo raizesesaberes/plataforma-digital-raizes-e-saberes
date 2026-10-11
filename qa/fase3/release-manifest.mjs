@@ -7,10 +7,11 @@ export const proposals=[
  ['20261011060003','fase3_notice_editing'],
  ['20261011060004','contract_operations'],
 ];
-const relations=['assessments','assessment_questions','assessment_assignments','communications','communication_deliveries','communication_replies','communication_revisions','communication_revision_reads','contracts','contract_products','contract_entitlement_events','tenant_product_entitlements','tenant_product_content_modules'].map(x=>'public.'+x).concat('contract_operations_private.targets');
+const relations=['assessments','assessment_questions','assessment_assignments','communications','communication_deliveries','communication_replies','communication_revisions','communication_revision_reads','contracts','contract_products','contract_entitlement_events','tenant_product_entitlements','tenant_product_content_modules','assessment_booklets','assessment_booklet_questions','question_items','question_alternatives','question_media','question_distractor_analyses','question_item_versions','question_workflow_events','question_curation_history'].map(x=>'public.'+x).concat('contract_operations_private.targets');
 const names=new Set();
 for(const [,name] of proposals){const sql=readFileSync(`supabase/review/${name}.sql`,'utf8');for(const m of sql.matchAll(/create\s+(?:or\s+replace\s+)?function\s+([\w.]+)/gi))names.add(m[1].split('.').at(-1));for(const m of sql.matchAll(/"proname":"([\w]+)"/g))names.add(m[1]);}
 for(const name of ['institutional_touch_updated_at','school_content_assert_admin','avalia_plus_assignment_is_open'])names.add(name);
+for(const row of JSON.parse(readFileSync('qa/fase3/boundary-production-functions.json')))names.add(row.proname);
 const quote=x=>"'"+x.replaceAll("'","''")+"'";
 export const manifestQuery=`WITH
 roles(role) AS (VALUES ('anon'),('authenticated'),('service_role')),

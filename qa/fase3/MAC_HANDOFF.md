@@ -1,3 +1,5 @@
+> Atualização de compatibilidade: a autorização específica de instalação foi recebida. O fixture corrigido passou na integração com as barreiras atuais de produção ativas; ver [BOUNDARY_COMPATIBILITY.md](BOUNDARY_COMPATIBILITY.md) e `boundary-integration-verification.log`. SQLs aprovados inalterados. Os novos checkpoints exigem revisão e releitura antes de instalar. CLI oficial com versões exatas indisponível neste executor; handoff Mac permanece. Gates continuam OFF. As menções históricas abaixo a autorização pendente não anulam esta atualização.
+
 # Handoff Mac — Auth local, navegação e pacote combinado
 
 Estado: PR6 draft de integração, sem deploy. Gates de produção desligados. Não usar sessões, senhas, chaves ou dados reais. Não contornar o EROFS deste executor, alterar HOME, reparar ledger ou instalar bypass.

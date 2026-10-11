@@ -26,15 +26,25 @@
       "scope": "captured synthetic metadata consistency"
     },
     {
+      "name": "production_stage0",
+      "status": "PASS",
+      "scope": "exact readonly captured catalog; 43 functions / 19 relations"
+    },
+    {
       "name": "reject_rls_drift",
       "status": "PASS",
-      "scope": "offline altered JSON, no database mutation"
+      "scope": "offline modified JSON only"
     },
     {
       "name": "reject_privileges_drift",
       "status": "PASS",
-      "scope": "offline altered JSON, no database mutation"
+      "scope": "offline modified JSON only"
+    },
+    {
+      "name": "reject_restrictive_policy_drift",
+      "status": "PASS",
+      "scope": "offline modified JSON only"
     }
   ],
-  "productionAttestation": false
+  "productionWrites": false
 }

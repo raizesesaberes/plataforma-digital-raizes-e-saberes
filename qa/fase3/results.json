@@ -43,6 +43,10 @@
       "status": "PASS"
     },
     {
+      "name": "existing boundaries: raw answers/history stay private while student RPC remains usable",
+      "status": "PASS"
+    },
+    {
       "name": "assessment: other school cannot list/start/respond/read results",
       "status": "PASS"
     },

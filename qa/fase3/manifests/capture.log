@@ -14,19 +14,24 @@ Load supabase/migrations/20261011003339_school_content_native_question_categorie
 Load supabase/migrations/20261011003351_school_content_category_checkpoint_v2.sql
 Load supabase/migrations/20261011003404_school_content_protected_adapters_v2.sql
 Load qa/fase3/observed-start-attempt.sql
+Load qa/fase3/observed-boundary-fixture.sql
+Load qa/fase3/observed-20261009195512.sql
+Load qa/fase3/observed-boundary-alignment.sql
 Load tests/contracts/admin-assert.sql
 Load tests/contracts/production-legacy-helpers.sql
 Load qa/fase3/seed.sql
 PASS seven contract function preconditions (migration ledger is outside this synthetic fixture)
-MANIFEST 00_before: 27 functions; 10 tables
+PASS exact production stage0 parity, including existing question/snapshot boundaries
+MANIFEST 00_before: 43 functions; 19 tables
 Load supabase/review/fase3_assessment_authorization.sql
-MANIFEST 01_after_pr2: 29 functions; 10 tables
+MANIFEST 01_after_pr2: 45 functions; 19 tables
 Load supabase/review/fase3_communication_replies.sql
-MANIFEST 02_after_pr3: 33 functions; 11 tables
+MANIFEST 02_after_pr3: 49 functions; 20 tables
 Load supabase/review/fase3_notice_editing.sql
-MANIFEST 03_after_pr4: 37 functions; 13 tables
+MANIFEST 03_after_pr4: 53 functions; 22 tables
 Load supabase/review/contract_operations.sql
-MANIFEST 04_after_pr1: 46 functions; 14 tables
+MANIFEST 04_after_pr1: 62 functions; 23 tables
+PASS existing boundary functions/ACLs, restrictive policies and enabled triggers preserved after all four proposals
 PASS contracts preserved 15 FASE3 functions/triggers including definitions, ACLs and config
 PASS version SELECTs: absent, approved prefix, conflicting name and gap; no ledger writes
 PASS stage manifests captured; no ledger created or written

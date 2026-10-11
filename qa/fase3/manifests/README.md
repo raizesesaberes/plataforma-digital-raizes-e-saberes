@@ -1,14 +1,14 @@
 # Checkpoints de metadados do pacote — revisão, NÃO autorização
 
-`index.json` fixa SHA256 de cada fonte SQL, consulta readonly e snapshot. Cinco manifests completos e independentes, limitados às dependências/funções e14 relações relevantes à proposta (não ao banco inteiro):
+`index.json` fixa SHA256 de cada fonte SQL, consulta readonly e snapshot. Cinco manifests completos e independentes, limitados às dependências/funções e23 relações relevantes à proposta (não ao banco inteiro):
 
 | Checkpoint | Momento | Funções / tabelas | Ledger exigido separadamente |
 |---|---|---|---|
-| 00_before | Antes PR2 | 27 / 10 | Original149, quatro versões ausentes |
-| 01_after_pr2 | Após PR2 / antes PR3 | 29 / 10 | Original149 +60001 =150 |
-| 02_after_pr3 | Após PR3 / antes PR4 | 33 / 11 | Original149 +60001/2 =151 |
-| 03_after_pr4 | Após PR4 / antes PR1 | 37 / 13 | Original149 +60001/2/3 =152 |
-| 04_after_pr1 | Pós-instalação | 46 / 14 | Original149 +60001/2/3/4 =153 |
+| 00_before | Antes PR2 | 43 / 19 | Original149, quatro versões ausentes |
+| 01_after_pr2 | Após PR2 / antes PR3 | 45 / 19 | Original149 +60001 =150 |
+| 02_after_pr3 | Após PR3 / antes PR4 | 49 / 20 | Original149 +60001/2 =151 |
+| 03_after_pr4 | Após PR4 / antes PR1 | 53 / 22 | Original149 +60001/2/3 =152 |
+| 04_after_pr1 | Pós-instalação | 62 / 23 | Original149 +60001/2/3/4 =153 |
 
 São metadados obtidos no Postgres17 sintético, sem dados pessoais ou ledger fabricado. O checkpoint inicial precisa ser confrontado por leitura com o ambiente alvo: não atesta o estado atual de produção. Divergência exige revisão específica, nunca atualização automática dos hashes para fazê-la passar.
 
@@ -44,3 +44,5 @@ No Mac, usar CLI oficial já prevista no handoff: conferir `supabase --version` 
 Se a CLI gerar timestamps diferentes dos propostos, reservar/revisar os NOVOS pares e regenerar/aprovar o pacote de hashes/preflight ANTES de instalar. Não renomear furtivamente, inserir ledger à mão ou usar repair. A variante ligada ao projeto remoto só pode ser escolhida pelo operador após autorização ESPECÍFICA; este checkpoint não fornece essa autorização. As consultas readonly podem ser executadas pelo cliente PostgreSQL oficial com conexão somente leitura; se a CLI instalada expuser uma consulta SQL, confirmar seus argumentos via help. Não instalar alternativas nem contornar EROFS neste executor.
 
 **SQL instalado já torna RPCs invocáveis conforme ACL, mesmo com gates UI OFF.** Revisão de autorização de backend e escopo administrativo precede instalação. Liberação do runtime/gates é decisão separada, com login/refresh real, smoke por papel, versão de cliente e rollout coordenado. Auth/refresh oficiais, nativos e homologação humana continuam pendências de ambiente/humanas.
+
+Atualização de compatibilidade: ver `../BOUNDARY_COMPATIBILITY.md`. A captura inicial ampliada coincide com a leitura de produção; os estados01–04 continuam expectativas sintéticas, não atestação de instalação.

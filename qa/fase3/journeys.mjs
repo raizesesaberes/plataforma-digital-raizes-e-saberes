@@ -99,6 +99,27 @@ await test('assessment: student receives, starts, answers, submits; teacher resu
   const results=await rpc(1,'teacher_get_assessment_class_results',{p_assignment_id:assignment});
   assert.equal(results.summary.completed_students,1,JSON.stringify(results));assert.equal(results.summary.average_percentage,100);
 });
+await test('existing boundaries: raw answers/history stay private while student RPC remains usable',async()=>{
+  const raw=await request(2,`assessment_questions?assessment_id=eq.${assessmentId}&select=*`);
+  assert.equal(raw.status,200);assert.deepEqual(raw.data,[]);
+  assert.deepEqual((await request(4,`assessment_questions?assessment_id=eq.${assessmentId}&select=*`)).data,[]);
+  const staff=await request(1,`assessment_questions?assessment_id=eq.${assessmentId}&select=*`);
+  assert.equal(staff.status,200);assert.equal(staff.data.length,1);
+  const original=sql(`select version_snapshot::text from public.assessment_questions where assessment_id='${assessmentId}'`);
+  sql(`insert into public.question_item_versions(question_id,version_number,version_label,workflow_status,publication_status,curation_status,snapshot) values('${id(7)}',999,'SYNTHETIC HISTORICAL DRAFT','EM_ELABORACAO','NAO_PUBLICADO','RASCUNHO','{"statement":"SYNTHETIC PRIVATE HISTORY","correct_answer":"B"}');`);
+  for(const actor of [1,2,4,5]){
+    const history=await request(actor,`question_item_versions?question_id=eq.${id(7)}&version_number=eq.999`);
+    assert.equal(history.status,200);assert.deepEqual(history.data,[]);
+  }
+  const inbox=await rpc(2,'student_list_assessment_assignments');
+  const entry=inbox.assignments.find(x=>x.id===assignment);
+  assert.ok(entry);assert.equal(entry.assessment.questions.length,1);
+  const payload=JSON.stringify(entry.assessment.questions);
+  assert.doesNotMatch(payload,/correct_answer|is_correct|version_snapshot|SYNTHETIC PRIVATE HISTORY/);
+  assert.equal(sql(`select version_snapshot::text from public.assessment_questions where assessment_id='${assessmentId}'`),original);
+  const denied=await request(2,'rpc/avalia_plus_record_item_version',{p_question_id:id(7),p_reason:'SYNTHETIC DENIED'});
+  assert.ok(denied.status>=400);
+});
 await test('assessment: other school cannot list/start/respond/read results',async()=>{
   assert.ok(assignment);assert.ok(attempt);
   assert.equal((await rpc(5,'student_list_assessment_assignments')).assignments.length,0);
