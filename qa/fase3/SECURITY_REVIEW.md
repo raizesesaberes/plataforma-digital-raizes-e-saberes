@@ -17,7 +17,7 @@ SQL somente local: `supabase/review/fase3_assessment_authorization.sql`. Não ap
 
 ```sh
 node qa/fase3/run.mjs --baseline # 14 PASS, 9 FAIL: bugs reproduzidos
-node qa/fase3/run.mjs            # 24 PASS, 0 FAIL: correção local e regressão pós-revisão
+node qa/fase3/run.mjs            # 25 PASS, 0 FAIL: correção local e regressões pós-revisão
 ```
 
 `results-baseline.json` e `results.json` registram os casos. Incluem:
@@ -42,3 +42,7 @@ O guard anterior validava substituições no contexto agregado de anos do profes
 Publicação e escrita de itens bloqueiam a mesma linha de `assessments`, serializando a disputa. Regressão HTTP sintética: professor com duas turmas/anos, ambas categorias autorizadas na escola; troca de itens funciona antes da atribuição e é negada depois; snapshot original e resultado já entregue permanecem iguais. Quatro disputas concorrentes de publicação/substituição exigem exatamente uma operação bem-sucedida, sem publicação de conteúdo do ano errado.
 
 Limite deliberado: `teacher_authorize_assessment_reapplication` altera máximo de tentativas/application_status e não passa pelo guard de publicação. Esta proposta preserva avaliações atribuídas; **não implementa autorização contínua de catálogo nas reaplicações ou no acesso do aluno**. A revisão e decisão de produto sobre essa semântica permanecem necessárias. A prova de paridade cobre as funções enumeradas, não todo o esquema/ACL/RLS/triggers.
+
+### Compatibilidade da exclusão de rascunho
+
+A revisão incremental reproduziu `DELETE /assessments?id=eq.<draft>` pelo proprietário com HTTP403 `ASSESSMENT_NOT_FOUND`: na cascata FK o pai já não estava visível ao guard dos itens. Corrigido com guard BEFORE DELETE no pai que rejeita avaliações atribuídas **antes** de qualquer cascata, permitindo depois a remoção de itens de um rascunho cujo pai foi excluído. Teste real via REST: rascunho com questão retorna HTTP200 e remove a questão; avaliação atribuída retorna HTTP403 e mantém questão, atribuição e resultado entregue. Não foi removida proteção de mutações diretas dos itens atribuídos.
