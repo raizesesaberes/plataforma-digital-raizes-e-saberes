@@ -1,7 +1,7 @@
 # FASE3 — primeira fatia sintética, 2026-10-11
 
 Base: `ee88cb9e80d454c64b6548f28e15f34f32fc48a2`. Branch: `review/fase3-synthetic-journeys`.
-Não integrar nem publicar automaticamente: há dois bloqueios de autorização reproduzidos.
+Revisão de segurança: os dois bloqueios foram corrigidos localmente em SQL separado, ainda não aplicado em produção. Ver `SECURITY_REVIEW.md`.
 
 ## Executar
 
@@ -11,9 +11,9 @@ node qa/fase3/run.mjs
 
 Requer Node 24 (importa TypeScript nativamente) e Docker Linux. Usa imagens oficiais fixadas por digest, cria containers temporários sem portas publicadas e os remove ao terminar. Não recebe URL, token ou credencial de produção. Os tokens, usuários, escolas e conteúdo são fictícios. O schema `auth` é uma simulação local de claims; não testa o serviço Auth. `question_bank_role=professor` é uma pré-condição explícita das identidades fictícias, além de `platform_role=professor`. O perfil somente com `platform_role` não autorizou montagem no primeiro ensaio; não foram alteradas credenciais/claims reais.
 
-Saída atual: **13 PASS, 2 FAIL**. O processo retorna código 1 intencionalmente enquanto as asserções de isolamento falharem. `results.json` é o resultado atual; `before.json` preserva o ensaio anterior à correção web/alinhamento do baseline. Testes positivos de bloqueio de edição e reprodução de PGRST201 não significam que esses recursos funcionem: validam o comportamento observado.
+Saída atual com SQL de revisão: **23 PASS, 0 FAIL**. Sem a correção (`--baseline`): **14 PASS, 9 FAIL**, incluindo os dois bloqueios originais. O processo retorna código 1 quando alguma asserção falha. `results.json` é o resultado atual; `before.json` preserva o ensaio anterior à correção web/alinhamento do baseline. Testes positivos de bloqueio de edição e reprodução de PGRST201 não significam que esses recursos funcionem: validam o comportamento observado.
 
-Todos os testes mutantes usam PostgreSQL/PostgREST locais. A web usa o método real `createAssessmentFromBank` extraído de `app-pages.js`; o mobile importa o serviço real `library.ts`. Não são testes de cliques em navegador nem de binários iOS/Android. Não houve homologação humana, envio a usuários reais, alterações Auth, importação homologada, mudanças de policies/ACL, push em main ou deploy.
+Todos os testes mutantes usam PostgreSQL/PostgREST locais. A web usa o método real `createAssessmentFromBank` extraído de `app-pages.js`; o mobile importa o serviço real `library.ts`. Não são testes de cliques em navegador nem de binários iOS/Android. Não houve homologação humana, envio a usuários reais, alterações Auth, importação homologada, mudanças de policies ou grants de acesso da aplicação, push em main ou deploy. As novas funções privadas têm EXECUTE revogado; o SQL permanece somente em revisão.
 
 ## Correções pequenas e verificadas
 
@@ -29,8 +29,8 @@ O diff de runtime soma uma linha modificada em cada arquivo. Não foram incorpor
 | Professor encontra questão autorizada | Validado na API sintética | Escola A recebe 1 questão pelo resolver; escola B sem entitlement recebe 0. |
 | Montar → publicar turma → aluno recebe/inicia/responde/entrega → professor resultados | Validado na API sintética | 1 aluno, 1 questão objetiva, 100% após entrega; adaptador web real testado. Não valida todas as telas nem tipos de atividade. |
 | Isolamento de avaliação com JWT de e-mail não vazio | Validado no cenário sintético | Escola B não lista/inicia/responde nem lê resultados da escola A. |
-| Montagem respeita entitlement | **Defeito / bloqueio** | Professor B consegue montar a questão da escola A por ID via RPC mesmo quando o resolver retorna zero itens. |
-| Identificação de aluno sem e-mail no JWT | **Defeito / bloqueio** | Aluno B é resolvido como aluno A por igualdade de strings vazias. |
+| Montagem respeita entitlement | **Corrigido localmente; revisão pendente** | Professor B consegue montar a questão da escola A por ID via RPC mesmo quando o resolver retorna zero itens. |
+| Identificação de aluno sem e-mail no JWT | **Corrigido localmente; revisão pendente** | Aluno B é resolvido como aluno A por igualdade de strings vazias. |
 | Aviso → destinatário → leitura → retorno ao professor | Validado na API sintética | Entrega apenas a A, leitura idempotente, contagem lido/não lido e bloqueio de leitura por B. |
 | Retirada/republicação/exclusão lógica | Validado na API sintética | Caixa de entrada esvazia; republicação preserva ID sem duplicar entrega; exclusão remove da caixa. |
 | Rascunho/vencido | Validado no cenário sintético | Não geram entrega. Não se executou teste de passagem de relógio. |
@@ -43,11 +43,11 @@ O diff de runtime soma uma linha modificada em cada arquivo. Não foram incorpor
 
 ## Bloqueios para revisão específica
 
-**B1 — identificação por e-mail vazio.** `avalia_current_student_id` e `avalia_student_can_access_assignment` usam `coalesce(email,'') = coalesce(jwt.email,'')`. Uma claim ausente coincide com registros sem e-mail. O teste negativo usa as mesmas identidades fictícias dos testes positivos e remove apenas a claim de e-mail. A definição em produção contém a mesma lógica. Não houve exploração com alunos reais. Próxima correção deve priorizar vínculo `user_id=auth.uid()` e revisar a necessidade de fallback legado, exigir e-mail não vazio caso mantido e testar colisões. Não foi alterada identificação/Auth nesta frente, conforme a restrição recebida.
+**B1 — identificação por e-mail vazio.** `avalia_current_student_id` e `avalia_student_can_access_assignment` usam `coalesce(email,'') = coalesce(jwt.email,'')`. Uma claim ausente coincide com registros sem e-mail. O teste negativo usa as mesmas identidades fictícias dos testes positivos e remove apenas a claim de e-mail. A definição em produção contém a mesma lógica. Não houve exploração com alunos reais. Próxima correção deve priorizar vínculo `user_id=auth.uid()` e revisar a necessidade de fallback legado, exigir e-mail não vazio caso mantido e testar colisões. Após autorização adicional, a função de identificação passou a exigir vínculo único com auth.uid(), sem fallback por e-mail. Nenhum usuário, claim ou configuração Auth foi modificado.
 
-**B2 — montagem contorna o resolver.** `avalia_plus_create_assessment_from_bank` verifica papel e aprovação/publicação da questão, mas não o entitlement da escola. O teste B tem zero conteúdo autorizado e a mesma questão é aceita por ID (HTTP 200). Revisar montagem, substituição de itens e aplicação em conjunto para evitar um caminho alternativo; autorização deve ser server-side, não apenas no catálogo. Não adicionamos grants, policies ou novas rotas privilegiadas. Exige revisão específica antes de produção.
+**B2 — montagem contorna o resolver.** `avalia_plus_create_assessment_from_bank` verifica papel e aprovação/publicação da questão, mas não o entitlement da escola. O teste B tem zero conteúdo autorizado e a mesma questão é aceita por ID (HTTP 200). Revisar montagem, substituição de itens e aplicação em conjunto para evitar um caminho alternativo; autorização deve ser server-side, não apenas no catálogo. A correção acrescenta guards privados para montagem/substituição e publicação, sem novos grants ou policies. Exige revisão específica antes de produção.
 
-Os dois testes permanecem vermelhos para impedir que a FASE3 seja declarada verde com esses defeitos.
+Os testes agora passam com o SQL de revisão e falham sem ele. Isso não significa que a correção esteja em produção nem que as lacunas funcionais da FASE3 tenham sido concluídas.
 
 ## Divergência de baseline e consultas readonly
 

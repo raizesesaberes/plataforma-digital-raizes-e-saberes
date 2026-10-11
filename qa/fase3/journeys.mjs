@@ -13,9 +13,9 @@ const base = `http://${host}:3000`;
 const secret = 'fase3-synthetic-jwt-secret-never-production-123456';
 const id = (kind, n=1) => `${kind}0000000-0000-0000-0000-${String(n).padStart(12,'0')}`;
 const roles = {1:'professor',2:'aluno',3:'secretaria',4:'professor',5:'aluno',6:'familia'};
-function token(n, includeEmail=true) {
+function token(n, includeEmail=true, subject=id(0,n)) {
   const b64 = x => Buffer.from(JSON.stringify(x)).toString('base64url');
-  const data = `${b64({alg:'HS256',typ:'JWT'})}.${b64({sub:id(0,n),...(includeEmail?{email:`synthetic-${n}@example.invalid`}:{}),role:'authenticated',app_metadata:{platform_role:roles[n],question_bank_role:roles[n]},exp:Math.floor(Date.now()/1000)+3600})}`;
+  const data = `${b64({alg:'HS256',typ:'JWT'})}.${b64({sub:subject,...(includeEmail===true?{email:`synthetic-${n}@example.invalid`}:typeof includeEmail==='string'?{email:includeEmail}:{}),role:'authenticated',app_metadata:{platform_role:roles[n],question_bank_role:roles[n]},exp:Math.floor(Date.now()/1000)+3600})}`;
   return `${data}.${createHmac('sha256',secret).update(data).digest('base64url')}`;
 }
 async function request(n,path,body,method) {
@@ -81,10 +81,10 @@ const webAdapter=new Function('client','resolveSupabaseUserContext','allowedAsse
 await test('web: builder adapter serializes named RPC argument',async()=>{
   const assessment=await webAdapter.createAssessmentFromBank({title:'SYNTHETIC WEB ASSEMBLY',questions:[{question_id:id(7),points:1}]});assert.ok(assessment.id);
 });
-let assignment,attempt;
+let assignment,attempt,assessmentId;
 await test('assessment: assemble approved question and publish to teacher class',async()=>{
   const assembled=await rpc(1,'avalia_plus_create_assessment_from_bank',{p_payload:{title:'SYNTHETIC ASSESSMENT',school_id:id(1),class_id:id(3),component:'Matemática',school_year:'5',questions:[{question_id:id(7),points:1}]}});
-  const assessmentId=assembled.assessment?.id || assembled.id;
+  assessmentId=assembled.assessment?.id || assembled.id;
   assert.ok(assessmentId,JSON.stringify(assembled));
   const published=await rpc(1,'teacher_schedule_assessment_application_v2',{p_assessment_id:assessmentId,p_target_type:'class',p_class_id:id(3)});
   assignment=published.assignment.id;
@@ -110,6 +110,52 @@ await test('SECURITY BLOCKER: school without content entitlement cannot assemble
  const denied=await request(4,'rpc/avalia_plus_create_assessment_from_bank',{p_payload:{title:'SYNTHETIC UNAUTHORIZED QUESTION',school_id:id(1,2),class_id:id(3,2),questions:[{question_id:id(7),points:1}]}});
  assert.ok(denied.status>=400,'Unauthorized synthetic school assembled a question excluded by its content resolver (HTTP '+denied.status+')');
 });
+const assembly=(school=id(1),classId=id(3),question=id(7))=>({p_payload:{title:'SYNTHETIC SECURITY CASE',school_id:school,class_id:classId,questions:[{question_id:question,points:1}]}});
+async function mustDeny(n,name,body){const r=await request(n,'rpc/'+name,body);assert.ok(r.status>=400 && r.status<500,JSON.stringify(r));return r;}
+await test('security: null question, unknown question and wrong school/class are denied atomically',async()=>{
+ const count=()=>sql('select count(*) from public.assessments;');const before=count();
+ await mustDeny(1,'avalia_plus_create_assessment_from_bank',assembly(id(1),id(3),null));
+ await mustDeny(1,'avalia_plus_create_assessment_from_bank',assembly(id(1),id(3),id(7,99)));
+ await mustDeny(1,'avalia_plus_create_assessment_from_bank',assembly(id(1,2),id(3,2)));
+ await mustDeny(1,'avalia_plus_create_assessment_from_bank',assembly(id(1),id(3,2)));
+ assert.equal(count(),before);
+});
+await test('security: expired/suspended license blocks assembly, replacement and publication',async()=>{
+ const cases=[
+  ["update public.contracts set ends_at=current_date-1", "update public.contracts set ends_at=null"],
+  ["update public.contracts set status='SUSPENDED'", "update public.contracts set status='ACTIVE'"],
+  ["update public.tenant_product_entitlements set status='SUSPENDED'", "update public.tenant_product_entitlements set status='ACTIVE'"],
+  ["update public.tenant_product_entitlements set ends_at=current_date-1", "update public.tenant_product_entitlements set ends_at=null"],
+  ["update public.question_licenses set publication_allowed=false", "update public.question_licenses set publication_allowed=true"]
+ ];
+ for(const [suspend,restore] of cases){sql(suspend);try{
+  await mustDeny(1,'avalia_plus_create_assessment_from_bank',assembly());
+  await mustDeny(1,'avalia_plus_replace_assessment_items',{p_assessment_id:assessmentId,p_payload:{questions:[{question_id:id(7),points:1}]}});
+  await mustDeny(1,'teacher_schedule_assessment_application_v2',{p_assessment_id:assessmentId,p_target_type:'class',p_class_id:id(3)});
+  assert.equal(sql(`select count(*) from public.assessment_questions where assessment_id='${assessmentId}'`),'1');
+ }finally{sql(restore)}}
+});
+await test('security: non-approved item cannot be assembled or published',async()=>{
+ sql("update public.question_items set workflow_status='EM_REVISAO'");
+ try{
+  await mustDeny(1,'avalia_plus_create_assessment_from_bank',assembly());
+  await mustDeny(1,'teacher_schedule_assessment_application_v2',{p_assessment_id:assessmentId,p_target_type:'class',p_class_id:id(3)});
+ }finally{sql("update public.question_items set workflow_status='APROVADO'")}
+});
+await test('security: positive entitlement grant permits B; revocation denies again',async()=>{
+ sql(`do $$ declare tenant uuid; product uuid; contract uuid; begin
+ select id into tenant from public.tenants where school_id='${id(1,2)}';select id into product from public.products where code='FASE3_SYNTHETIC';
+ insert into public.contracts(tenant_id,contract_ref,starts_at,status) values(tenant,'SYNTHETIC_B',current_date-1,'ACTIVE') returning id into contract;
+ insert into public.contract_products(contract_id,product_id,metadata) select contract,product,cp.metadata from public.contract_products cp limit 1;
+ insert into public.tenant_product_entitlements(contract_id,tenant_id,product_id,starts_at,grade_ids,metadata) select contract,tenant,product,current_date-1,e.grade_ids,e.metadata from public.tenant_product_entitlements e limit 1;
+ end $$;`);
+ try{
+  const granted=await rpc(4,'avalia_plus_create_assessment_from_bank',assembly(id(1,2),id(3,2)));assert.ok(granted.assessment.id);
+  await mustDeny(4,'teacher_schedule_assessment_application_v2',{p_assessment_id:assessmentId,p_target_type:'class',p_class_id:id(3,2)});
+  sql("update public.contracts set status='SUSPENDED' where contract_ref='SYNTHETIC_B'");
+  await mustDeny(4,'avalia_plus_create_assessment_from_bank',assembly(id(1,2),id(3,2)));
+ }finally{sql("update public.contracts set status='SUSPENDED' where contract_ref='SYNTHETIC_B'")}
+});
 // Import the actual mobile data service. Only rewrite the local Supabase gateway prefix.
 process.env.EXPO_PUBLIC_SUPABASE_URL=base;
 process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY='synthetic-publishable-key';
@@ -130,5 +176,38 @@ await test('SECURITY BLOCKER: missing email must not resolve another student',as
  const response=await nativeFetch(`${base}/rpc/avalia_current_student_id`,{method:'POST',headers:{Authorization:`Bearer ${token(5,false)}`,'Content-Type':'application/json'},body:'{}'});
  const selected=await response.json();assert.equal(selected,id(4,2),'Missing-email JWT resolved wrong synthetic student: '+selected);
 });
-writeFileSync(resolve('qa/fase3/results.json'),JSON.stringify({baseCommit:execFileSync('git',['merge-base','HEAD','origin/main'],{encoding:'utf8'}).trim(),scope:'Isolated PostgreSQL + PostgREST RPC/data service integration; not browser/native or production validation',results},null,2)+'\n');
+await test('security: missing/empty email cannot read, start or act as another student',async()=>{
+ const call=async(n,name,body={})=>{const res=await nativeFetch(`${base}/rpc/${name}`,{method:'POST',headers:{Authorization:`Bearer ${token(n,false)}`,'Content-Type':'application/json'},body:JSON.stringify(body)});return {status:res.status,data:await res.json()}};
+ assert.equal((await call(5,'avalia_current_student_id')).data,id(4,2));
+ assert.equal((await call(2,'avalia_current_student_id')).data,id(4));
+ assert.equal((await call(6,'avalia_current_student_id')).data,null);
+ assert.equal((await call(5,'student_list_assessment_assignments')).data.assignments.length,0);
+ assert.equal((await call(5,'student_start_assessment_attempt_v2',{p_assignment_id:assignment})).status,403);
+ assert.equal((await call(5,'avalia_student_can_access_assignment',{p_assignment_id:assignment,p_student_id:id(4)})).data,false);
+ assert.equal(await rpc(2,'avalia_student_can_access_assignment',{p_assignment_id:null,p_student_id:id(4)}),false);
+ assert.equal(await rpc(2,'avalia_student_can_access_assignment',{p_assignment_id:assignment,p_student_id:null}),false);
+});
+await test('security: empty email, mismatched email and null subject do not bypass identity',async()=>{
+ for(const email of ['', 'synthetic-2@example.invalid']){
+  const res=await nativeFetch(`${base}/rpc/avalia_current_student_id`,{method:'POST',headers:{Authorization:`Bearer ${token(5,email)}`,'Content-Type':'application/json'},body:'{}'});
+  assert.equal(await res.json(),id(4,2));
+ }
+ const res=await nativeFetch(`${base}/rpc/avalia_current_student_id`,{method:'POST',headers:{Authorization:`Bearer ${token(5,false,null)}`,'Content-Type':'application/json'},body:'{}'});
+ assert.equal(await res.json(),null);
+});
+await test('security: ambiguous active user binding fails closed, never falls back to email',async()=>{
+ sql(`update public.students set user_id='${id(0,2)}' where id='${id(4,2)}'`);
+ try{
+  assert.equal(await rpc(2,'avalia_current_student_id'),null);
+  assert.equal(await rpc(2,'avalia_student_can_access_assignment',{p_assignment_id:assignment,p_student_id:id(4)}),false);
+ }finally{sql(`update public.students set user_id='${id(0,5)}' where id='${id(4,2)}'`)}
+});
+await test('security: public ACLs preserved and new helpers have no app EXECUTE grants',async()=>{
+ assert.equal(sql("select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='school_category_private' and p.proname like 'assessment_%' and (has_function_privilege('authenticated',p.oid,'EXECUTE') or has_function_privilege('anon',p.oid,'EXECUTE') or has_function_privilege('service_role',p.oid,'EXECUTE'));"),'0');
+ for(const name of ['avalia_current_student_id','avalia_student_can_access_assignment']){
+  const actual=sql(`select proacl::text from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and proname='${name}'`);
+  assert.equal(actual,'{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}');
+ }
+});
+writeFileSync(resolve(process.argv.includes('--baseline')?'qa/fase3/results-baseline.json':'qa/fase3/results.json'),JSON.stringify({baseCommit:execFileSync('git',['merge-base','HEAD','origin/main'],{encoding:'utf8'}).trim(),scope:'Isolated PostgreSQL + PostgREST RPC/data service integration; not browser/native or production validation',results},null,2)+'\n');
 if(results.some(x=>x.status==='FAIL')) process.exitCode=1;

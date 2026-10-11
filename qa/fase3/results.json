@@ -48,8 +48,23 @@
     },
     {
       "name": "SECURITY BLOCKER: school without content entitlement cannot assemble that question",
-      "status": "FAIL",
-      "error": "Unauthorized synthetic school assembled a question excluded by its content resolver (HTTP 200)"
+      "status": "PASS"
+    },
+    {
+      "name": "security: null question, unknown question and wrong school/class are denied atomically",
+      "status": "PASS"
+    },
+    {
+      "name": "security: expired/suspended license blocks assembly, replacement and publication",
+      "status": "PASS"
+    },
+    {
+      "name": "security: non-approved item cannot be assembled or published",
+      "status": "PASS"
+    },
+    {
+      "name": "security: positive entitlement grant permits B; revocation denies again",
+      "status": "PASS"
     },
     {
       "name": "mobile: teacher assignment query resolves real PostgREST relationships",
@@ -61,8 +76,23 @@
     },
     {
       "name": "SECURITY BLOCKER: missing email must not resolve another student",
-      "status": "FAIL",
-      "error": "Missing-email JWT resolved wrong synthetic student: 40000000-0000-0000-0000-000000000001\n+ actual - expected\n\n+ '40000000-0000-0000-0000-000000000001'\n- '40000000-0000-0000-0000-000000000002'\n                                      ^\n"
+      "status": "PASS"
+    },
+    {
+      "name": "security: missing/empty email cannot read, start or act as another student",
+      "status": "PASS"
+    },
+    {
+      "name": "security: empty email, mismatched email and null subject do not bypass identity",
+      "status": "PASS"
+    },
+    {
+      "name": "security: ambiguous active user binding fails closed, never falls back to email",
+      "status": "PASS"
+    },
+    {
+      "name": "security: public ACLs preserved and new helpers have no app EXECUTE grants",
+      "status": "PASS"
     }
   ]
 }
