@@ -24224,7 +24224,9 @@ const createSupabaseRestClient = () => {
     }
     if (!response.ok) {
       const body = await response.text();
-      throw Object.assign(new Error(mapSupabaseError(response, body)), { status: response.status });
+      let rpcError = null;
+      try { rpcError = JSON.parse(body); } catch { /* Non-JSON proxy errors remain uncertain. */ }
+      throw Object.assign(new Error(mapSupabaseError(response, body)), { status: response.status, code: rpcError?.code, databaseMessage: rpcError?.message });
     }
     if (response.status === 204) return null;
     return response.json();

@@ -3,6 +3,51 @@
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const labels = {QUESTION:'Questões',VIDEO:'Vídeos',BOOK:'Livros',BOOK_PAGE:'Páginas',GAME:'Jogos',INTERACTION:'Experiências',ACTIVITY:'Atividades',PRINTABLE:'Imprimíveis',ASSESSMENT_TEMPLATE:'Modelos de avaliação',TRAINING:'Universidade / capacitação'};
   const options = (rows, key='id', label='name') => rows.map(r=>`<option value="${esc(r[key])}">${esc(r[label])}</option>`).join('');
+  // Only server-typed validation failures after receipt lookup prove this request did not commit.
+  const rejectedConfirmations = new Set([
+    'ACTIVE_CONTRACTOR_REQUIRED',
+    'ACTIVE_PRODUCT_REQUIRED',
+    'AMBIGUOUS_PREVIOUS_CONFIGURATION_REQUIRES_EXPLICIT_REVIEW',
+    'CANONICAL_GRADE_REQUIRED',
+    'CATEGORY_RULES_REQUIRED',
+    'CONTRACTOR_REQUIRED',
+    'CONTRACTOR_TENANT_INACTIVE',
+    'CONTRACT_REFERENCE_REQUIRED',
+    'DUPLICATE_CONTRACTOR_USE_EXISTING',
+    'DUPLICATE_CONTRACT_REFERENCE',
+    'DUPLICATE_PRODUCT',
+    'DUPLICATE_SCHOOLS',
+    'DUPLICATE_SCHOOL_USE_EXISTING',
+    'EXPLICIT_DYNAMIC_ADOPTION_REQUIRED',
+    'EXPLICIT_SCHOOL_SELECTION_REQUIRED',
+    'INACTIVE_PREVIOUS_PRODUCT_REQUIRES_SEPARATE_REVIEW',
+    'INVALID_CONTRACT_CONFIG',
+    'INVALID_NEW_SCHOOL',
+    'INVALID_SCHOOLS',
+    'INVALID_SUBJECT',
+    'LEGACY_CONFIGURATION_REQUIRES_EXPLICIT_CATEGORY_SELECTION',
+    'MODULE_NOT_IN_PRODUCT',
+    'NEW_TARGET_REQUIRES_EDITED_CONFIGURATION',
+    'ONE_CONTRACTOR_REQUIRED',
+    'ONE_THEME_PER_CATEGORY',
+    'OPERATIONAL_ACTIVE_CONTRACT_REQUIRED',
+    'PRODUCTS_REQUIRED',
+    'REASON_REQUIRED',
+    'RENEWAL_ALREADY_SCHEDULED',
+    'RENEWAL_WINDOW_OVERLAPS',
+    'REVOKE_SUCCESSOR_FIRST',
+    'SCHOOL_CONTRACT_TARGET_MUST_BE_PRESERVED',
+    'SCHOOL_NOT_FOUND',
+    'SCHOOL_RULES_REQUIRE_PREVIOUS_CONFIGURATION',
+    'SCHOOL_TENANT_INACTIVE',
+    'SEPARATE_INSTITUTIONAL_AUTHORIZATION_REQUIRED',
+    'STALE_CONTRACT_REVIEW',
+    'STANDARD_RULE_REQUIRED',
+    'TEMPORARY_SAMPLE_REQUIRES_EXPLICIT_REVIEW',
+    'TWELVE_CALENDAR_MONTHS_REQUIRED',
+    'UNSUPPORTED_RULE_FIELDS',
+    'VALID_FINITE_WINDOW_REQUIRED'
+  ]);
   class ContractOperations extends HTMLElement {
     pendingKey() { return 'raizes:pending-contract:'+getPlatformSession().userId; }
     rememberPending(value) { try { if(value) sessionStorage.setItem(this.pendingKey(),JSON.stringify(value));else sessionStorage.removeItem(this.pendingKey()); } catch { /* Receipt remains on screen if browser storage is unavailable. */ } }
@@ -117,18 +162,19 @@
       this.querySelector('[data-cancel]').disabled=true;
       this.querySelectorAll('[data-revoke]').forEach(x=>x.disabled=true);
     }
-    showSuccess(receipt,id) {
+    showSuccess(receipt,id,action) {
+      const outcome=action==='REVOKE'?'Revogação confirmada':'Contrato salvo';
       this.review=null;this.pendingConfirmation=false;
-      this.innerHTML=`<section class="co-review" role="status"><h2>Contrato ${receipt.action==='REVOKE'?'revogado':'salvo'}</h2><p>Operação registrada. Contrato ${esc(receipt.contract_id)}. Recibo ${esc(id)}.</p><p>A situação das escolas foi preservada.</p><button type="button" class="is-primary" data-new-contract>Criar outro contrato</button><button type="button" data-contract-list>Voltar à lista de contratos</button></section>`;
-      this.rpc('admin_get_contract_operations').then(catalog=>{this.catalog=catalog;}).catch(()=>{this.status('Contrato salvo. A lista não pôde ser atualizada; use Voltar à lista para tentar novamente.');});
+      this.innerHTML=`<section class="co-review" role="status"><h2>${outcome}</h2><p>Operação registrada. Contrato ${esc(receipt.contract_id)}. Recibo ${esc(id)}.</p><p>A situação das escolas foi preservada.</p><button type="button" class="is-primary" data-new-contract>Criar outro contrato</button><button type="button" data-contract-list>Voltar à lista de contratos</button></section>`;
+      this.rpc('admin_get_contract_operations').then(catalog=>{this.catalog=catalog;}).catch(()=>{this.status(outcome+'. A lista não pôde ser atualizada; use Voltar à lista para tentar novamente.');});
       this.querySelector('[data-new-contract]').onclick=()=>this.load();
       this.querySelector('[data-contract-list]').onclick=async()=>{await this.load();this.querySelector('h3')?.scrollIntoView({block:'start'});};
     }
     async confirm() {
       if(!this.review||this.saving)return;this.saving=true;this.pendingConfirmation=true;const review=this.review,id=this.requestId;this.rememberPending({review,id});
       const controls=[...this.querySelectorAll('input,select,textarea,button')];const states=controls.map(x=>x.disabled);controls.forEach(x=>x.disabled=true);this.status('Gravando operação '+id+'…');
-      try { const receipt=await this.rpc('admin_confirm_contract_operation',{p_review:review,p_request_id:id});if(!receipt.contract_id)throw Error('Resposta sem recibo contratual.');this.rememberPending(null);this.showSuccess(receipt,id); }
-      catch(e){controls.forEach((x,i)=>x.disabled=states[i]);if(/STALE_CONTRACT_REVIEW/.test(e.message)){this.pendingConfirmation=false;this.rememberPending(null);this.form.querySelectorAll('input,select,textarea,button').forEach(x=>x.disabled=false);this.setProductEditing();this.invalidate();this.status('A prévia ficou desatualizada. Revise novamente os alvos e a configuração antes de confirmar.',true);}else{this.lockPending();this.status('Não foi possível confirmar o resultado: '+e.message+'. Recibo '+id+'. Tente novamente para recuperar a mesma operação; não crie outra.',true);}}
+      try { const receipt=await this.rpc('admin_confirm_contract_operation',{p_review:review,p_request_id:id});if(!receipt.contract_id)throw Error('Resposta sem recibo contratual.');this.rememberPending(null);this.showSuccess(receipt,id,review.config.action); }
+      catch(e){controls.forEach((x,i)=>x.disabled=states[i]);if(e.status===400&&e.code==='P0001'&&rejectedConfirmations.has(e.databaseMessage)){this.pendingConfirmation=false;this.rememberPending(null);this.form.querySelectorAll('input,select,textarea,button').forEach(x=>x.disabled=false);this.setProductEditing();this.querySelectorAll('[data-revoke]').forEach(x=>x.disabled=false);this.invalidate();this.status('Confirmação rejeitada: '+e.databaseMessage+'. Os campos foram preservados. Corrija e revise novamente antes de confirmar.',true);}else{this.lockPending();this.status('Não foi possível confirmar o resultado: '+e.message+'. Recibo '+id+'. Tente novamente para recuperar a mesma operação; não crie outra.',true);}}
       finally{this.saving=false;}
     }
   }
