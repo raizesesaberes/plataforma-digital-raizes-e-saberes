@@ -1,0 +1,78 @@
+{
+  "observedAt": "2026-10-11",
+  "source": "readonly pg_proc metadata; no user data",
+  "functions": [
+    {
+      "proname": "communication_can_read",
+      "args": "p_communication communications",
+      "body_md5": "2657d0547e189192eb36044f5cfcf88c",
+      "security_definer": true,
+      "proconfig": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "authenticated_execute": true,
+      "anon_execute": false
+    },
+    {
+      "proname": "communication_current_student_can_read",
+      "args": "p_school_id uuid, p_class_id uuid, p_student_id uuid, p_audience_type text",
+      "body_md5": "a223c37655eb45fecf773839c07961b7",
+      "security_definer": true,
+      "proconfig": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "authenticated_execute": true,
+      "anon_execute": false
+    },
+    {
+      "proname": "communication_delivery_is_active",
+      "args": "p_comm communications",
+      "body_md5": "8a3a7f4cdbc67a46240e3b22cad841f8",
+      "security_definer": true,
+      "proconfig": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "proname": "communication_guardian_can_read",
+      "args": "p_school_id uuid, p_class_id uuid, p_student_id uuid, p_audience_type text",
+      "body_md5": "061c6efd20010477f5cf473ad1244bda",
+      "security_definer": true,
+      "proconfig": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "authenticated_execute": true,
+      "anon_execute": false
+    },
+    {
+      "proname": "communication_teacher_can_target",
+      "args": "p_school_id uuid, p_class_id uuid, p_student_id uuid, p_audience_type text",
+      "body_md5": "71d4d457d2327e019bd4bc1fdafd5da4",
+      "security_definer": true,
+      "proconfig": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "authenticated_execute": true,
+      "anon_execute": false
+    },
+    {
+      "proname": "secretaria_can_manage_school",
+      "args": "p_school_id uuid",
+      "body_md5": "b19131aca5ff81d0761d2ef8f427c815",
+      "security_definer": true,
+      "proconfig": [
+        "search_path=public, auth, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "authenticated_execute": true,
+      "anon_execute": false
+    }
+  ]
+}

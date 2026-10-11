@@ -95,11 +95,23 @@
       "status": "PASS"
     },
     {
-      "name": "assessment: owner deletes unassigned draft through REST cascade; assigned history cannot be deleted",
+      "name": "replies: recipient replies, teacher sees and answers, recipient receives persisted return",
+      "status": "PASS"
+    },
+    {
+      "name": "browser: persisted student reply, retry, teacher return, reload and school isolation",
+      "status": "PASS"
+    },
+    {
+      "name": "replies: exact child binding, both guardian models, revocation and educational status",
       "status": "PASS"
     },
     {
       "name": "security: two teaching years cannot replace an assigned snapshot with other-year content",
+      "status": "PASS"
+    },
+    {
+      "name": "assessment: owner deletes unassigned draft through REST cascade; assigned history cannot be deleted",
       "status": "PASS"
     }
   ]

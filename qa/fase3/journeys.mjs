@@ -12,7 +12,7 @@ assert.match(host, /^172\./);
 const base = `http://${host}:3000`;
 const secret = 'fase3-synthetic-jwt-secret-never-production-123456';
 const id = (kind, n=1) => `${kind}0000000-0000-0000-0000-${String(n).padStart(12,'0')}`;
-const roles = {1:'professor',2:'aluno',3:'secretaria',4:'professor',5:'aluno',6:'familia'};
+const roles = {1:'professor',2:'aluno',3:'secretaria',4:'professor',5:'aluno',6:'familia',7:'aluno'};
 function token(n, includeEmail=true, subject=id(0,n)) {
   const b64 = x => Buffer.from(JSON.stringify(x)).toString('base64url');
   const data = `${b64({alg:'HS256',typ:'JWT'})}.${b64({sub:subject,...(includeEmail===true?{email:`synthetic-${n}@example.invalid`}:typeof includeEmail==='string'?{email:includeEmail}:{}),role:'authenticated',app_metadata:{platform_role:roles[n],question_bank_role:roles[n]},exp:Math.floor(Date.now()/1000)+3600})}`;
@@ -209,6 +209,105 @@ await test('security: public ACLs preserved and new helpers have no app EXECUTE 
   assert.equal(actual,'{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}');
  }
 });
+if(!process.argv.includes('--baseline')){
+ await test('replies: recipient replies, teacher sees and answers, recipient receives persisted return',async()=>{
+  sql(`insert into auth.users(id) values('${id(0,7)}');
+   insert into public.profiles(id,display_name,platform_role) values('${id(0,7)}','SYNTHETIC 7','aluno');
+   insert into public.users(id,nome,perfil) values('${id(0,7)}','SYNTHETIC 7','aluno');
+   insert into public.students(id,user_id,school_id,class_id,nome,status) values('${id(4,3)}','${id(0,7)}','${id(1)}','${id(3)}','SYNTHETIC PEER','active');
+   insert into public.enrollments(student_id,school_id,class_id,school_year) values('${id(4,3)}','${id(1)}','${id(3)}','2026');`);
+  const pub=await rpc(1,'publish_communication',{...draft,p_title:'SYNTHETIC REPLY FLOW'});
+  const inbox=await rpc(2,'communication_get_inbox');const thread=inbox.find(x=>x.communication_id===pub.communication_id);assert.ok(thread);
+  const body={p_delivery_id:thread.delivery_id,p_body:'SYNTHETIC student response',p_request_id:id(9)};
+  const saved=await rpc(2,'communication_send_reply',body);assert.equal((await rpc(2,'communication_send_reply',body)).reply_id,saved.reply_id);
+  const summary=await rpc(1,'communication_list_reply_threads',{p_communication_id:pub.communication_id});assert.equal(summary[0].reply_count,1);
+  assert.equal((await rpc(1,'communication_get_reply_thread',{p_delivery_id:thread.delivery_id})).messages[0].body,body.p_body);
+  await rpc(1,'communication_send_reply',{p_delivery_id:thread.delivery_id,p_body:'SYNTHETIC teacher return',p_request_id:id(9,2)});
+  assert.equal((await rpc(2,'communication_get_reply_thread',{p_delivery_id:thread.delivery_id})).messages.length,2);
+  for(const actor of [4,5,6,7]){
+   await mustDeny(actor,'communication_get_reply_thread',{p_delivery_id:thread.delivery_id});
+   await mustDeny(actor,'communication_send_reply',{...body,p_request_id:id(9,3)});
+   await mustDeny(actor,'communication_list_reply_threads',{p_communication_id:pub.communication_id});
+  }
+  await mustDeny(2,'communication_list_reply_threads',{p_communication_id:pub.communication_id});
+  sql(`update public.enrollments set status='ended',ended_at=now() where student_id='${id(4)}'`);
+  try{await mustDeny(2,'communication_get_reply_thread',{p_delivery_id:thread.delivery_id});}finally{sql(`update public.enrollments set status='active',ended_at=null where student_id='${id(4)}'`);}
+  assert.equal((await request(2,'communication_replies?select=id')).status,403);
+  await mustDeny(2,'communication_send_reply',{...body,p_body:'Different text with reused key'});
+  await mustDeny(2,'communication_send_reply',{...body,p_body:'   '});
+  await mustDeny(2,'communication_send_reply',{...body,p_request_id:null});
+  await mustDeny(2,'communication_get_reply_thread',{p_delivery_id:null});
+  await rpc(3,'secretaria_set_communication_status',{p_communication_id:pub.communication_id,p_to_status:'archived'});
+  await mustDeny(2,'communication_send_reply',{...body,p_request_id:id(9,4)});
+  await mustDeny(1,'communication_get_reply_thread',{p_delivery_id:thread.delivery_id});
+  await rpc(3,'secretaria_set_communication_status',{p_communication_id:pub.communication_id,p_to_status:'published'});
+  assert.equal((await rpc(2,'communication_get_reply_thread',{p_delivery_id:thread.delivery_id})).messages.length,2);
+  sql(`update public.communications set expires_at=now()-interval '1 second' where id='${pub.communication_id}'`);
+  await mustDeny(2,'communication_send_reply',{...body,p_request_id:id(9,5)});
+ });
+}
+if(!process.argv.includes('--baseline'))await test('browser: persisted student reply, retry, teacher return, reload and school isolation',async()=>{
+ const pub=await rpc(1,'publish_communication',{...draft,p_title:'SYNTHETIC BROWSER FLOW'});
+ const delivery=(await rpc(2,'communication_get_inbox')).find(x=>x.communication_id===pub.communication_id);
+ const {runReplyBrowser}=await import('./replies-browser.mjs');
+ await runReplyBrowser({base,token,communicationId:pub.communication_id,deliveryId:delivery.delivery_id});
+});
+if(!process.argv.includes('--baseline')) await test('replies: exact child binding, both guardian models, revocation and educational status',async()=>{
+ sql(`insert into public.student_guardians(student_id,profile_id) values('${id(4)}','${id(0,6)}'),('${id(4,3)}','${id(0,6)}');`);
+ const pub=await rpc(1,'publish_communication',{...draft,p_title:'SYNTHETIC TWO CHILDREN'});
+ const a=sql(`select id from public.communication_deliveries where communication_id='${pub.communication_id}' and recipient_profile_id='${id(0,6)}' and student_id='${id(4)}'`);
+ const b=sql(`select id from public.communication_deliveries where communication_id='${pub.communication_id}' and recipient_profile_id='${id(0,6)}' and student_id='${id(4,3)}'`);
+ assert.ok(a&&b&&a!==b);
+ const read=delivery=>rpc(6,'communication_get_reply_thread',{p_delivery_id:delivery});
+ const denied=async delivery=>{
+  await mustDeny(6,'communication_get_reply_thread',{p_delivery_id:delivery});
+  await mustDeny(6,'communication_send_reply',{p_delivery_id:delivery,p_body:'SYNTHETIC FORBIDDEN',p_request_id:id(9,60)});
+ };
+ await read(a);await read(b);
+ await rpc(6,'communication_send_reply',{p_delivery_id:a,p_body:'SYNTHETIC CHILD A',p_request_id:id(9,61)});
+ sql(`update public.student_guardians set status='inactive' where student_id='${id(4)}'`);
+ await denied(a);await read(b);
+ const threads=await rpc(1,'communication_list_reply_threads',{p_communication_id:pub.communication_id});
+ assert.equal(threads.find(x=>x.delivery_id===a).student_name,'SYNTHETIC STUDENT A');
+ assert.equal(threads.find(x=>x.delivery_id===b).student_name,'SYNTHETIC PEER');
+ assert.equal(threads.find(x=>x.delivery_id===a).student_id,id(4));
+ // Switch entirely to the new institutional model: no legacy link can mask failures.
+ sql(`update public.student_guardians set status='inactive';
+ insert into public.guardians(id,school_id,profile_id,full_name,status,access_status) values('${id(6,6)}','${id(1)}','${id(0,6)}','SYNTHETIC GUARDIAN','active','active');
+ insert into public.student_guardian_links(student_id,guardian_id) values('${id(4)}','${id(6,6)}'),('${id(4,3)}','${id(6,6)}');`);
+ await read(a);await read(b);
+ await rpc(6,'communication_send_reply',{p_delivery_id:a,p_body:'SYNTHETIC NEW MODEL',p_request_id:id(9,62)});
+ // Real generator must produce new-model deliveries for both children.
+ const next=await rpc(1,'publish_communication',{...draft,p_title:'SYNTHETIC NEW MODEL DELIVERY'});
+ assert.equal(sql(`select count(*) from public.communication_deliveries where communication_id='${next.communication_id}' and recipient_profile_id='${id(0,6)}'`),'2');
+ const cases=[
+  [`update public.student_guardian_links set status='inactive' where student_id='${id(4)}'`,`update public.student_guardian_links set status='active'`],
+  [`update public.guardians set status='inactive'`,`update public.guardians set status='active'`],
+  [`update public.guardians set access_status='blocked'`,`update public.guardians set access_status='active'`],
+  [`update public.guardians set school_id='${id(1,2)}'`,`update public.guardians set school_id='${id(1)}'`],
+  [`update public.enrollments set ended_at=now()-interval '1 second' where student_id='${id(4)}'`,`update public.enrollments set ended_at=null where student_id='${id(4)}'`],
+  [`update public.enrollments set enrolled_at=now()+interval '1 day' where student_id='${id(4)}'`,`update public.enrollments set enrolled_at=now() where student_id='${id(4)}'`],
+  [`update public.students set status='inactive' where id='${id(4)}'`,`update public.students set status='active' where id='${id(4)}'`],
+  [`update public.profiles set status='inactive' where id='${id(0,6)}'`,`update public.profiles set status='active' where id='${id(0,6)}'`]
+ ];
+ for(const [revoke,restore] of cases){sql(revoke);try{await denied(a);}finally{sql(restore);}await read(a);}
+ sql(`update public.student_guardian_links set status='inactive' where student_id='${id(4)}'`);
+ await denied(a);await read(b);
+ const studentDelivery=threads.find(x=>x.recipient_name==='SYNTHETIC 2').delivery_id;
+ sql(`update public.students set status='inactive' where id='${id(4)}'`);
+ try{await mustDeny(2,'communication_get_reply_thread',{p_delivery_id:studentDelivery});await mustDeny(2,'communication_send_reply',{p_delivery_id:studentDelivery,p_body:'SYNTHETIC INACTIVE',p_request_id:id(9,63)});}finally{sql(`update public.students set status='active' where id='${id(4)}'`);}
+ sql(`update public.teachers set status='inactive' where id='${id(2)}'`);
+ try{
+  await mustDeny(1,'communication_list_reply_threads',{p_communication_id:pub.communication_id});
+  await mustDeny(1,'communication_get_reply_thread',{p_delivery_id:a});
+  await mustDeny(1,'communication_send_reply',{p_delivery_id:a,p_body:'SYNTHETIC INACTIVE TEACHER',p_request_id:id(9,64)});
+ }finally{sql(`update public.teachers set status='active' where id='${id(2)}'`);}
+ // Explicit existing management scope: not a teacher-only private conversation.
+ assert.ok((await rpc(3,'communication_list_reply_threads',{p_communication_id:pub.communication_id})).length);
+ await rpc(3,'communication_send_reply',{p_delivery_id:a,p_body:'SYNTHETIC AUTHORIZED MANAGEMENT',p_request_id:id(9,65)});
+ assert.equal((await rpc(3,'communication_get_reply_thread',{p_delivery_id:a})).messages.length,3);
+});
+
 await test('assessment: owner deletes unassigned draft through REST cascade; assigned history cannot be deleted',async()=>{
  const draft=await rpc(1,'avalia_plus_create_assessment_from_bank',assembly());
  const aid=draft.assessment.id;

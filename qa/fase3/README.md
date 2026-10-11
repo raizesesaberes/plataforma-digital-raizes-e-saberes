@@ -11,7 +11,7 @@ node qa/fase3/run.mjs
 
 Requer Node 24 (importa TypeScript nativamente) e Docker Linux. Usa imagens oficiais fixadas por digest, cria containers temporários sem portas publicadas e os remove ao terminar. Não recebe URL, token ou credencial de produção. Os tokens, usuários, escolas e conteúdo são fictícios. O schema `auth` é uma simulação local de claims; não testa o serviço Auth. `question_bank_role=professor` é uma pré-condição explícita das identidades fictícias, além de `platform_role=professor`. O perfil somente com `platform_role` não autorizou montagem no primeiro ensaio; não foram alteradas credenciais/claims reais.
 
-Saída atual com SQL de revisão: **23 PASS, 0 FAIL**. Sem a correção (`--baseline`): **14 PASS, 9 FAIL**, incluindo os dois bloqueios originais. O processo retorna código 1 quando alguma asserção falha. `results.json` é o resultado atual; `before.json` preserva o ensaio anterior à correção web/alinhamento do baseline. Testes positivos de bloqueio de edição e reprodução de PGRST201 não significam que esses recursos funcionem: validam o comportamento observado.
+Na branch de segurança: **23 PASS, 0 FAIL**. Nesta branch derivada de respostas: **25 PASS, 0 FAIL**; ver `REPLIES_REVIEW.md`. Sem a correção (`--baseline`): **14 PASS, 9 FAIL**, incluindo os dois bloqueios originais. O processo retorna código 1 quando alguma asserção falha. `results.json` é o resultado atual; `before.json` preserva o ensaio anterior à correção web/alinhamento do baseline. Testes positivos de bloqueio de edição e reprodução de PGRST201 não significam que esses recursos funcionem: validam o comportamento observado.
 
 Todos os testes mutantes usam PostgreSQL/PostgREST locais. A web usa o método real `createAssessmentFromBank` extraído de `app-pages.js`; o mobile importa o serviço real `library.ts`. Não são testes de cliques em navegador nem de binários iOS/Android. Não houve homologação humana, envio a usuários reais, alterações Auth, importação homologada, mudanças de policies ou grants de acesso da aplicação, push em main ou deploy. As novas funções privadas têm EXECUTE revogado; o SQL permanece somente em revisão.
 
@@ -35,7 +35,7 @@ O diff de runtime soma uma linha modificada em cada arquivo. Não foram incorpor
 | Retirada/republicação/exclusão lógica | Validado na API sintética | Caixa de entrada esvazia; republicação preserva ID sem duplicar entrega; exclusão remove da caixa. |
 | Rascunho/vencido | Validado no cenário sintético | Não geram entrega. Não se executou teste de passagem de relógio. |
 | Edição do texto | Ausente/bloqueado no fluxo inspecionado | PATCH retorna 403 (ACL); não foi localizada RPC de edição. Link web “Visualizar/Editar” somente filtra por título. Não ampliar UPDATE como atalho. |
-| Resposta a comunicado / conversa | Ausente nas rotas inspecionadas | Não foi localizado fluxo de resposta; leitura não é resposta. Não confundir moderação/suporte com comunicação aluno/professor. |
+| Resposta a comunicado / conversa | Implementado localmente na branch derivada; revisão pendente | Novo schema/RPCs e componente web testados. Não publicado nem portado para Expo. Ver REPLIES_REVIEW.md. |
 | Mobile: consultas Avalia+ e envio/contagem de recados | Validado no serviço | Métodos reais exercitados contra PostgREST. |
 | Mobile: professor publica avaliação e vê resultados | Ausente/incompleto | `onPublish` altera estado local; mapper fixa questions/assigned/completed=0 e students=[]. Nenhuma conclusão de paridade. |
 | Mobile: aluno responde/entrega | Ausente no fluxo real inspecionado | Lista mostra “Aguardar orientação”; serviço não possui métodos de start/save/submit. Telas com estado local não comprovam persistência. |
@@ -61,4 +61,4 @@ Foram consultados apenas metadados: colunas, assinatura, definição/hash de fun
 
 Função de início observada em produção: `4f11c798067d92f253b929fea32f6004`. UPDATE de communications para authenticated: false. Isso confirma definições, não homologação de runtime de produção. O changelog Supabase não pôde ser lido (403 no executor); não houve contorno do proxy.
 
-Validações adicionais: `node --check app-pages.js`, `git diff --check`, build estático com **4274 arquivos**. SQL/testes/relatórios ficam fora de `dist`. Não foi executado typecheck completo do Expo (mudança mobile é somente string de consulta).
+Validações adicionais: `node --check app-pages.js`, `git diff --check`, build estático com **4275 arquivos** nesta branch (4274 no pacote de segurança). SQL/testes/relatórios ficam fora de `dist`. Não foi executado typecheck completo do Expo (mudança mobile é somente string de consulta).
