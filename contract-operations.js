@@ -1,7 +1,7 @@
 /* Contract administration. Uses the existing authenticated REST client. */
 (() => {
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const labels = {QUESTION:'Questões',VIDEO:'Vídeos',BOOK:'Livros',BOOK_PAGE:'Páginas',GAME:'Jogos',INTERACTION:'Experiências',ACTIVITY:'Atividades',PRINTABLE:'Imprimíveis',ASSESSMENT_TEMPLATE:'Conteúdos gerais / avaliações',TRAINING:'Universidade / capacitação'};
+  const labels = {QUESTION:'Questões',VIDEO:'Vídeos',BOOK:'Livros',BOOK_PAGE:'Páginas',GAME:'Jogos',INTERACTION:'Experiências',ACTIVITY:'Atividades',PRINTABLE:'Imprimíveis',ASSESSMENT_TEMPLATE:'Modelos de avaliação',TRAINING:'Universidade / capacitação'};
   const options = (rows, key='id', label='name') => rows.map(r=>`<option value="${esc(r[key])}">${esc(r[label])}</option>`).join('');
   class ContractOperations extends HTMLElement {
     pendingKey() { return 'raizes:pending-contract:'+getPlatformSession().userId; }
