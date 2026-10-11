@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "matchedFunctions": 18,
+  "checks": "body_md5, signature, security_definer, search_path, exact ACL and execute privileges"
+}

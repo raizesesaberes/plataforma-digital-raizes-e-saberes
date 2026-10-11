@@ -1471,7 +1471,7 @@ export async function getTeacherAssessmentAssignments(session: MobileSession): P
   const rows = await restGet<RestTeacherAssessmentAssignmentRow[]>(
     session,
     [
-      "assessment_assignments?select=id,class_id,status,available_from,available_until,assessments(title,description,component,school_year),classes(nome)",
+      "assessment_assignments?select=id,class_id,status,available_from,available_until,assessments(title,description,component,school_year),classes!assessment_assignments_class_id_fkey(nome)",
       "order=available_from.desc.nullslast"
     ].join("&")
   );
