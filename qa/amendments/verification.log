@@ -31,4 +31,5 @@ PASS contracts preserved 15 FASE3 functions/triggers including definitions, ACLs
 Load tests/contracts/seed.sql
 Load supabase/review/contract_amendments.sql
 PASS amendment preserves all existing functions except rule-count validator; table ACL/RLS/policies/triggers unchanged
+PASS actual resolver window: new product remains valid through 23:59:59 Sao Paulo on final day, expires at 03:00 UTC; missing timezone reproduces early cutoff
 PASS amendment 144/145 rules; add/remove product; dates and inactive status; rollback; replay; concurrency; stale review; admin ACL/school scope; institutional boundary; existing category limit; revocation and old receipt recovery

@@ -26,6 +26,22 @@ assert sql(f"select to_jsonb(c) from public.contracts c where id='{cid}'",role='
 # Add institution and remove redundant product in the same transaction.
 sql(f"insert into public.products(id,code,name,status) values('{other}','SYN_REDUNDANT','Redundant','ACTIVE');insert into public.product_content_modules(product_id,content_module_id) values('{other}','{M}')",role='postgres')
 both=copy.deepcopy(base);both['products'].append(dict(product_id=other,institutional=False,rules=[rules[0]]));r=rpc('admin_preview_contract_amendment',[both]);rpc('admin_confirm_contract_amendment',[r,str(uuid.uuid4())])
+# Probe the actual installed resolver's entitlement window predicate at the final local day.
+# Clock substitution is confined to this disposable SELECT; no function or production clock changes.
+import re
+body=sql("select prosrc from pg_proc where oid='school_category_private.active_rules(jsonb)'::regprocedure",role='postgres')
+window=re.search(r"e\.starts_at<=case.*? and e\.metadata->>'source'='school_content_category_v1'",body,re.S).group(0)
+end_day=today+datetime.timedelta(days=364);following=end_day+datetime.timedelta(days=1)
+assert sql(f"select metadata->>'operation_timezone' from public.tenant_product_entitlements where contract_id='{cid}' and product_id='{other}'",role='postgres')=='America/Sao_Paulo'
+for clock,expected in [(f'{end_day}T23:59:59+00','t'),(f'{following}T00:00:00+00','t'),(f'{following}T02:59:59+00','t'),(f'{following}T03:00:00+00','f')]:
+ predicate=window.replace('now()',literal(clock)+'::timestamptz').replace('current_date',"("+literal(clock)+"::timestamptz at time zone 'UTC')::date")
+ query=f"select ({predicate}) from public.tenant_product_entitlements e where contract_id='{cid}' and product_id='{other}'"
+ assert sql(query,role='postgres')==expected
+ # Counterfactual missing metadata must reproduce the original three-hour early cutoff.
+ if 'T00:00:00' in clock:
+  broken=query.replace("e.metadata->>'operation_timezone'", "null::text")
+  assert sql(broken,role='postgres')=='f'
+print('PASS actual resolver window: new product remains valid through 23:59:59 Sao Paulo on final day, expires at 03:00 UTC; missing timezone reproduces early cutoff')
 expanded=copy.deepcopy(base);expanded['products'][0]['institutional']=True;expanded['products'][0]['rules'].append(dict(module_id=MT,content_type='TRAINING',grade_id=gi,subject_id=None,kind='STANDARD'))
 r=rpc('admin_preview_contract_amendment',[expanded]);assert len(r['added_rules'])==1 and len(r['removed_rules'])==1 and r['removed_products']==[other]
 key=str(uuid.uuid4());before=snapshot()

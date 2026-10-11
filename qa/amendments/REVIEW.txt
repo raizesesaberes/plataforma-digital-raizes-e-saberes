@@ -10,7 +10,7 @@ Gate novo RAIZES_CONTRACT_AMENDMENTS_ENABLED: padrão OFF, nenhuma atribuição 
 Backend e persistência
 admin_preview_contract_amendment(jsonb) é leitura e devolve configuração normalizada, fingerprint, estado anterior e deltas.
 admin_confirm_contract_amendment(jsonb,uuid) verifica administrador, trava advisory compartilhada 81261011 e locks de tabelas; consulta recibo antes de revalidar. Mesmo ator/chave/hash retorna recibo original, inclusive após revogação. Hash diferente é rejeitado. Revalida dependências sob lock e rejeita prévia antiga.
-Na mesma transação: atualiza/cria contract_products deste contrato, entitlement e overrides; retirada suspende entitlement e inativa contract_product, sem apagar linhas. Grava CONTRACT_AMENDED com before/after, configuração e recibo. Preserva IDs existentes, vigência, predecessor, targets, tenants, escola, Auth e catálogo global. Módulos da configuração final são apresentados explicitamente na prévia. Nenhuma concessão por item.
+Na mesma transação: atualiza/cria contract_products deste contrato, entitlement e overrides; retirada suspende entitlement e inativa contract_product, sem apagar linhas. Grava CONTRACT_AMENDED com before/after, configuração e recibo. Grava operation_timezone=America/Sao_Paulo também em novos entitlements, mantendo o último dia inclusivo até 23:59:59 local. Preserva IDs existentes, vigência, predecessor, targets, tenants, escola, Auth e catálogo global. Módulos da configuração final são apresentados explicitamente na prévia. Nenhuma concessão por item.
 Não reutiliza admin_save_school_content_categories: essa operação não amplia a licença e recalcula starts_at. O aditamento preserva as datas existentes.
 
 Limite de categorias
@@ -35,3 +35,5 @@ Cobertura: preview sem alteração; 144/145 regras e editor existente; módulo T
 
 Entrega e instalação
 supabase/review/contract_amendments.sql é fonte para revisão, não migration oficial. Nenhuma versão foi inventada/registrada. Após aprovação específica, gerar arquivo pela CLI oficial, conferir hash/versionamento e preflight. Não aplicar SQL isolado para corrigir contrato real. Esta branch não foi integrada nem implantada.
+
+Regressão temporal: avalia o predicado real de active_rules com relógio substituído somente no SELECT sintético: válido às 00:00 e 02:59:59 UTC do dia seguinte ao fim, inválido às 03:00 UTC. Contraprova sem operation_timezone reproduz corte antecipado. Nenhuma função/relógio real alterado.

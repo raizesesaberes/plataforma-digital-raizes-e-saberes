@@ -93,7 +93,7 @@ begin
   e:=public.admin_create_or_update_tenant_product_entitlement(e.id,c.id,c.tenant_id,(prod->>'product_id')::uuid,coalesce(e.starts_at,c.starts_at),case when e.id is null then c.ends_at else e.ends_at end,'ACTIVE',
    array(select distinct t.segment_id from jsonb_array_elements(prod->'rules') r join school_category_private.taxonomy() t on t.grade_id=(r->>'grade_id')::uuid),
    array(select value::uuid from jsonb_array_elements_text(grades)),coalesce(e.subject_ids,'{}'),
-   coalesce(e.metadata,'{}')||jsonb_build_object('source','school_content_category_v1','schema_version',1,'category_rules',prod->'rules','reason',cfg->>'reason'));
+   coalesce(e.metadata,'{}')||jsonb_build_object('source','school_content_category_v1','schema_version',1,'category_rules',prod->'rules','operation_timezone','America/Sao_Paulo','reason',cfg->>'reason'));
   insert into public.tenant_product_content_modules(entitlement_id,content_module_id,enabled,source,metadata,updated_by)
   select e.id,pm.content_module_id,exists(select 1 from jsonb_array_elements(prod->'rules') r where (r->>'module_id')::uuid=pm.content_module_id),'manual','{"source":"contract_amendment_v1"}',actor from public.product_content_modules pm where pm.product_id=e.product_id
   on conflict(entitlement_id,content_module_id) do update set enabled=excluded.enabled,updated_by=actor,metadata=public.tenant_product_content_modules.metadata||excluded.metadata;
