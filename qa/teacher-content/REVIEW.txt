@@ -20,3 +20,6 @@ Testes:
 node tests/teacher-content/browser.mjs: renderizador completo e handlers reais, substituindo só transportes. Professor/aluno separados, nome/escola reais fictícios, desktop1440/mobile390, 3 vs0, erro não zero, contexto de escolaB negado, resposta tardia, abertura protegida inline, menus/deep links professor/admin/revisor. Método real de criação admite professor; update de questão oficial nega antes da RPC. Sem scripts externos/rede real nos testes.
 node --check app-pages.js; git diff --check; build estático4277. Capturas sintéticas apenas /tmp para inspeção, não publicadas.
 Sem SQL/migration, alteração de gate, mutação Horizonte, usuários/alunos/avisos/contratos, merge ou deploy. Não declara homologação humana ou paridade/native release.
+
+Revisão posterior — pós-criação docente:
+Após salvar rascunho, professor vai para estado de confirmação, formulário oculto, ID salvo e limitação de edição explícita. Não entra em Editar questão oficial. Repetir handler de salvar nesse estado não grava novamente; Criar outra questão é ação explícita que limpa formulário. Envio editorial oculto também na prévia e bloqueado no handler sem criar primeiro. Teste Chromium usa handler real: salvar→confirmar→clique repetido (uma gravação)→criar outra sem gravação automática. Nenhuma permissão/RPC ampliada.

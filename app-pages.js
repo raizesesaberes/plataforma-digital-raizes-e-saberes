@@ -22601,6 +22601,11 @@ const initQuestionBank = () => {
   };
   const setEditorialMode = (nextMode = { type: "create", source: null }) => {
     editorialMode = nextMode;
+    const isSaved=nextMode.type==='saved';
+    if(editorialForm)editorialForm.hidden=isSaved;
+    let receipt=root.querySelector('[data-qb-authorial-receipt]');
+    if(!receipt && editorialForm){receipt=document.createElement('div');receipt.dataset.qbAuthorialReceipt='';editorialForm.after(receipt);}
+    if(receipt){receipt.hidden=!isSaved;receipt.innerHTML=isSaved?`<p>Rascunho ${htmlEscape(nextMode.source?.id)} salvo. A edição deste rascunho não está disponível para seu perfil nesta tela.</p><button type="button" data-qb-new-authorial>Criar outra questão</button><a href="banco-questoes.html?view=banco">Voltar ao Banco</a>`:'';}
     nativeCategory?.load(nextMode.type === "edit" ? (nextMode.source?.uuid || nextMode.source?.raw?.id) : null, nextMode.type !== "adapt");
     const isAdapting = editorialMode.type === "adapt" && editorialMode.source;
     const isEditing = editorialMode.type === "edit" && editorialMode.source;
@@ -22609,7 +22614,7 @@ const initQuestionBank = () => {
       const title = authoringHead.querySelector("h2");
       const subtitle = authoringHead.querySelector("span");
       if (title) {
-        title.textContent = isEditing ? "Editar questão oficial" : isAdapting ? "Adaptar questão" : "Nova questão";
+        title.textContent = isSaved ? "Questão salva" : isEditing ? "Editar questão oficial" : isAdapting ? "Adaptar questão" : "Nova questão";
       }
       if (subtitle) {
         subtitle.textContent = isEditing
@@ -22825,6 +22830,8 @@ const initQuestionBank = () => {
     `;
   };
   const createEditorialQuestion = async ({ submitForReview = false } = {}) => {
+    if(editorialMode.type==='saved')return;
+    if(submitForReview && !canAuthorQuestion()){setEditorialStatus('Seu perfil pode salvar rascunhos; o envio editorial não está disponível nesta tela.','info');return;}
     if (editorialActionState === "LOADING") {
       return;
     }
@@ -22985,7 +22992,7 @@ const initQuestionBank = () => {
       }
     }
     await refresh();
-    setEditorialMode({type:"edit",source:created});
+    setEditorialMode({type:canEditOfficialQuestion()?"edit":"saved",source:created});
     const successMessage = submitForReview
       ? `✓ Questão ${created.id} salva e enviada para revisão com sucesso.`
       : `✓ Rascunho ${created.id} salvo com sucesso.`;
@@ -23262,7 +23269,7 @@ const initQuestionBank = () => {
   const renderEditorialFormPreviewActions = () => `
     <button type="button" data-qb-close-editorial-preview>Voltar e editar</button>
     <button type="button" data-qb-create-draft>Salvar rascunho</button>
-    <button type="button" data-qb-submit-review>Salvar e enviar para revisão</button>
+    ${canAuthorQuestion()?'<button type="button" data-qb-submit-review>Salvar e enviar para revisão</button>':''}
   `;
 
   const openEditorialFormPreview = () => {
@@ -23964,6 +23971,7 @@ const initQuestionBank = () => {
       if (button.hasAttribute("data-qb-publish-digital")) {
         await publishCurrentAssessmentDigitally();
       }
+      if(button.hasAttribute('data-qb-new-authorial')){clearEditorialForm();setEditorialMode();setEditorialStatus('Nova questão: preencha o formulário antes de salvar.','info');}
       if (button.hasAttribute("data-qb-create-draft")) {
         if (editorialPreviewPanel) editorialPreviewPanel.hidden = true;
         await createEditorialQuestion({ submitForReview: false });

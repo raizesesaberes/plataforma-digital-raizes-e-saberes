@@ -72,6 +72,15 @@ try{
    assert(!/Admin Banco \/ Editorial/.test(await page.locator('.admin-sidebar').innerText()));
   }else if(role==='admin'){assert.equal(await page.locator('[data-question-bank-shell-href*="view=admin"]').count(),1);}
   if(role==='professor'){await page.goto(base+'/bank?view=dashboard',{waitUntil:'domcontentloaded'});await page.locator('[data-qb-total]').waitFor();assert.equal(await page.locator('.qb-dashboard-actions a[href*=editorial]').first().isVisible(),false);await page.goto(base+'/bank?view=nova',{waitUntil:'domcontentloaded'});await page.locator('[data-qb-create-draft]').first().waitFor();assert.equal(await page.locator('[data-qb-submit-review]').first().isVisible(),false);assert.equal(await page.locator('[data-native-category]').isVisible(),false);
+   await page.evaluate(()=>{
+    window.authorWrites=0;window.syntheticBank.createQuestionItem=async()=>{window.authorWrites++;return {id:'SYN-DRAFT',uuid:'55555555-5555-4555-8555-555555555555',publicationStatus:'NAO_PUBLICADO'};};
+    document.querySelectorAll('[data-qb-editorial]').forEach(el=>{if(el.tagName==='SELECT')el.value=[...el.options].find(o=>o.value)?.value || '';else el.value='Valor sintético';});
+    document.querySelectorAll('[data-qb-alternative]').forEach((el,i)=>el.value='Alternativa '+i);
+   });
+   await page.locator('[data-qb-create-draft]').first().click();await page.locator('[data-qb-authorial-receipt]').waitFor();
+   assert.equal(await page.evaluate(()=>window.authorWrites),1);assert.equal(await page.locator('[data-qb-editorial-form]').isVisible(),false);
+   await page.locator('[data-qb-create-draft]').first().dispatchEvent('click');assert.equal(await page.evaluate(()=>window.authorWrites),1);
+   await page.locator('[data-qb-new-authorial]').click();assert(await page.locator('[data-qb-editorial-form]').isVisible());assert.equal(await page.evaluate(()=>window.authorWrites),1);
    const created=await page.evaluate(async()=>{
     const original=window.syntheticRequest;window.syntheticRequest=async(path,query,options)=>{
      window.calls.push({path,options});if(path==='rpc/avalia_plus_create_item')return {id:'synthetic-new',code:'SYN-NEW',internal_title:'Rascunho sintético',publication_status:'NAO_PUBLICADO',curation_status:'RASCUNHO'};
