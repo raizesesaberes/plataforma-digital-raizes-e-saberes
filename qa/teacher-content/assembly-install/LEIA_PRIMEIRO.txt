@@ -1,0 +1,30 @@
+PACOTE MAC — REVIEW ONLY — NÃO INSTALADO
+Projeto: jaesjldrbjbdmzzggxzw. Revisão específica e aprovação do SQL exato são pré-requisitos.
+Não repetir o teste manual do professor antes da instalação aprovada e readback.
+
+Escopo: duas funções existentes, create_assessment_from_bank e replace_assessment_items.
+Sem Auth/claims, resolvedor global, tabela, policy, ACL, contrato, vínculo, gate ou frontend.
+Não mesclar PR11. Não criar/enviar avaliações reais como teste de instalação.
+
+1. Verifique integridade no Terminal: shasum -a 256 -c PACKAGE_SHA256SUMS.
+2. Abra o SQL Editor no projeto correto. Execute 01-preflight.sql, somente leitura.
+   all_preconditions_ok deve ser true. Qualquer false exige interromper e revisar o novo catálogo.
+3. Execute 02-snapshot.sql, somente leitura. Exporte e guarde integralmente as duas definições,
+   ACLs, owner e config. Não use respostas truncadas como backup.
+4. SOMENTE após aprovação específica, execute assessment_institutional_assembly.sql integralmente.
+   O arquivo possui BEGIN/COMMIT e trava interna contra drift de funções/triggers.
+   Se falhar, execute ROLLBACK na mesma sessão se necessário; não avance ou edite o guard.
+5. Execute 03-readback.sql, somente leitura: all_postconditions_ok deve ser true.
+   Verifica hashes novos, todas as outras funções/ACLs/triggers e ledger inalterados.
+6. Só depois do readback e liberação coordenada, professor pode retomar sua avaliação existente
+   na tela. Nenhuma publicação para turma deve ocorrer automaticamente.
+
+Este pacote usa SQL Editor e não inventa versão de migration nem altera o ledger.
+Se a revisão escolher CLI migration, gerar versão oficial com CLI disponível, registrar esse
+artefato e adaptar somente a expectativa explícita do ledger antes de instalar. Não usar db push
+que inclua migrations pendentes de outros trabalhos. Não colar credenciais em chat.
+
+Recuperação: erro antes do COMMIT é atômico. Após COMMIT, parar novas tentativas; avaliar snapshot
+preservado e dependências antes de qualquer reversão autorizada. Reverter somente os corpos das
+duas funções do snapshot em transação, sem apagar avaliações e sem alterar ACL/owner/config.
+Não se inclui rollback automático que possa sobrescrever trabalho posterior.
