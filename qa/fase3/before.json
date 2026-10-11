@@ -1,0 +1,53 @@
+{
+  "baseCommit": "ee88cb9e80d454c64b6548f28e15f34f32fc48a2",
+  "scope": "Isolated PostgreSQL + PostgREST RPC/data service integration; not browser/native or production validation",
+  "results": [
+    {
+      "name": "communication: publish, recipient, unread, idempotent read, teacher return",
+      "status": "PASS"
+    },
+    {
+      "name": "communication: school B cannot receive/read/manage school A delivery",
+      "status": "PASS"
+    },
+    {
+      "name": "communication: direct editing is blocked by existing ACL (no edit RPC)",
+      "status": "PASS"
+    },
+    {
+      "name": "communication: archive, republish without duplicate, soft delete",
+      "status": "PASS"
+    },
+    {
+      "name": "communication: expired/draft do not deliver; individual validates school",
+      "status": "PASS"
+    },
+    {
+      "name": "assessment: reproduce ambiguous class embedding (HTTP 300 / PGRST201)",
+      "status": "PASS"
+    },
+    {
+      "name": "web: builder adapter serializes named RPC argument",
+      "status": "FAIL",
+      "error": "{\"status\":404,\"data\":{\"code\":\"42883\",\"details\":null,\"hint\":\"No function matches the given name and argument types. You might need to add explicit type casts.\",\"message\":\"function public.avalia_plus_create_assessment_from_bank() does not exist\"}}"
+    },
+    {
+      "name": "assessment: assemble approved question and publish to teacher class",
+      "status": "PASS"
+    },
+    {
+      "name": "assessment: student receives, starts, answers, submits; teacher results",
+      "status": "FAIL",
+      "error": "student_start_assessment_attempt_v2: {\"status\":400,\"data\":{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column \\\"time_limit_minutes\\\" of relation \\\"assessment_attempts\\\" does not exist\"}}"
+    },
+    {
+      "name": "assessment: other school cannot list/start/respond/read results",
+      "status": "FAIL",
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(attempt)\n"
+    },
+    {
+      "name": "mobile: teacher assignment query resolves real PostgREST relationships",
+      "status": "PASS"
+    }
+  ]
+}
