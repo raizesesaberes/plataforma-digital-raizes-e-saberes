@@ -93,6 +93,10 @@
     {
       "name": "security: public ACLs preserved and new helpers have no app EXECUTE grants",
       "status": "PASS"
+    },
+    {
+      "name": "security: two teaching years cannot replace an assigned snapshot with other-year content",
+      "status": "PASS"
     }
   ]
 }

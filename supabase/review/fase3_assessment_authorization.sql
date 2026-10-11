@@ -2,23 +2,24 @@
 -- No Auth users/claims, passwords, data imports, public grants or RLS policies changed.
 begin;
 
--- Refuse to overwrite a different deployed revision or changed execute privileges.
-do $$
-declare expected record; actual record;
+-- Pin observed dependencies before installing reviewed SQL. This is not a full
+-- schema attestation; table/trigger/RLS and operational review remain required.
+do $preflight$
+declare expected jsonb; actual jsonb;
 begin
- for expected in select * from (values
-  ('avalia_current_student_id','99d05b069c9e0fd4ea608d40643cf1a3'),
-  ('avalia_student_can_access_assignment','32295b90fb740ac5399c40cbfd71e33a')
- ) v(name,body_md5) loop
-  select md5(p.prosrc) body_md5,p.proacl::text acl into actual
+ for expected in select value from jsonb_array_elements($observed$[{"proname":"avalia_current_student_id","args":"","body_md5":"99d05b069c9e0fd4ea608d40643cf1a3","security_definer":true,"proconfig":["search_path=public, pg_temp"],"acl":"{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}","authenticated_execute":true,"anon_execute":false},{"proname":"avalia_plus_create_assessment_from_bank","args":"p_payload jsonb","body_md5":"dd108be00647e4e653a4c1b7dda5f24e","security_definer":true,"proconfig":["search_path=public"],"acl":"{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}","authenticated_execute":true,"anon_execute":false},{"proname":"avalia_plus_replace_assessment_items","args":"p_assessment_id uuid, p_payload jsonb","body_md5":"c5537e9ae3e9178c62df6ab779a3b211","security_definer":true,"proconfig":["search_path=public"],"acl":"{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}","authenticated_execute":true,"anon_execute":false},{"proname":"avalia_student_can_access_assignment","args":"p_assignment_id uuid, p_student_id uuid","body_md5":"32295b90fb740ac5399c40cbfd71e33a","security_definer":true,"proconfig":["search_path=public, pg_temp"],"acl":"{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}","authenticated_execute":true,"anon_execute":false},{"proname":"content_resolve_for_user","args":"p_context jsonb","body_md5":"a0c56d9589ed5086441b602d71a221d0","security_definer":true,"proconfig":["search_path=\"\"","jit=off"],"acl":"{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}","authenticated_execute":true,"anon_execute":true},{"proname":"content_resolve_question_details_for_user","args":"p_context jsonb","body_md5":"fe26d0f36ab83603ed090c6f6b9983af","security_definer":true,"proconfig":["search_path=public"],"acl":"{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}","authenticated_execute":true,"anon_execute":false},{"proname":"teacher_create_assessment_assignment","args":"p_assessment_id uuid, p_target_type text, p_class_id uuid, p_student_id uuid, p_available_from timestamp with time zone, p_available_until timestamp with time zone, p_time_limit_minutes integer, p_max_attempts integer, p_status text","body_md5":"4cfb02542717041dedf06879ae07ff32","security_definer":true,"proconfig":["search_path=public, pg_temp"],"acl":"{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}","authenticated_execute":true,"anon_execute":false},{"proname":"teacher_schedule_assessment_application_v2","args":"p_assessment_id uuid, p_target_type text, p_class_id uuid, p_student_id uuid, p_available_from timestamp with time zone, p_available_until timestamp with time zone, p_time_limit_minutes integer, p_max_attempts integer, p_cycle_name text, p_school_year text, p_booklet_id uuid, p_token_required boolean, p_shuffle_questions boolean, p_shuffle_alternatives boolean","body_md5":"a4169395436da02526ff02a867ba1886","security_definer":true,"proconfig":["search_path=public, pg_temp"],"acl":"{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}","authenticated_execute":true,"anon_execute":false},{"proname":"active_rules","args":"p_context jsonb","body_md5":"da6a2950c152ca297f61e70a7b168d34","security_definer":true,"proconfig":["search_path=\"\"","jit=off","plan_cache_mode=force_custom_plan"],"acl":"{postgres=X/postgres}","authenticated_execute":false,"anon_execute":false},{"proname":"actor_context","args":"p_context jsonb","body_md5":"f6a7f42cdd1bc1c915305845da58c57c","security_definer":true,"proconfig":["search_path=\"\"","jit=off"],"acl":"{postgres=X/postgres}","authenticated_execute":false,"anon_execute":false},{"proname":"authorized_items","args":"p_context jsonb, p_item uuid","body_md5":"849f5ffcee863c786252c3a75ae2a15d","security_definer":true,"proconfig":["search_path=\"\"","jit=off","plan_cache_mode=force_custom_plan"],"acl":"{postgres=X/postgres}","authenticated_execute":false,"anon_execute":false},{"proname":"school_contract","args":"p_school uuid, p_contract uuid","body_md5":"6124eacadbbf7838b0670e1ca0c6b203","security_definer":true,"proconfig":["search_path=\"\""],"acl":"{postgres=X/postgres}","authenticated_execute":false,"anon_execute":false}]$observed$::jsonb) loop
+  select jsonb_build_object('proname',p.proname,'args',pg_get_function_identity_arguments(p.oid),
+   'body_md5',md5(p.prosrc),'security_definer',p.prosecdef,'proconfig',p.proconfig,'acl',p.proacl::text,
+   'authenticated_execute',has_function_privilege('authenticated',p.oid,'EXECUTE'),
+   'anon_execute',has_function_privilege('anon',p.oid,'EXECUTE')) into actual
   from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-  where n.nspname='public' and p.proname=expected.name;
-  if actual.body_md5 is distinct from expected.body_md5 or
-    actual.acl is distinct from '{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}' then
-   raise exception 'FASE3_REVIEW_BASE_CHANGED: %',expected.name;
+  where n.nspname in ('public','school_category_private') and p.proname=expected->>'proname'
+   and pg_get_function_identity_arguments(p.oid)=expected->>'args';
+  if actual is distinct from expected then
+   raise exception 'FASE3_REVIEW_BASE_CHANGED: %',expected->>'proname';
   end if;
  end loop;
-end $$;
+end $preflight$;
 
 -- A signed subject must identify exactly one active student. Email is not identity.
 create or replace function public.avalia_current_student_id() returns uuid
@@ -103,8 +104,19 @@ language plpgsql security definer set search_path = '' as $$
 declare a public.assessments%rowtype; question_id uuid; resolved_school_id uuid;
 begin
   if tg_table_name = 'assessment_questions' then
-    select * into a from public.assessments where id=new.assessment_id;
+    -- Serialize item mutations and publication on the same parent row.
+    select * into a from public.assessments
+    where id=case when tg_op='DELETE' then old.assessment_id else new.assessment_id end
+    for update;
     if a.id is null then raise exception 'ASSESSMENT_NOT_FOUND' using errcode='42501'; end if;
+    -- An assignment is a historical snapshot boundary, including archived/closed
+    -- assignments. Never rewrite its item set, positions, points or snapshots.
+    -- Prepare a new assessment to change content after assignment.
+    if exists(select 1 from public.assessment_assignments where assessment_id=a.id)
+       or (tg_op='UPDATE' and exists(select 1 from public.assessment_assignments where assessment_id=old.assessment_id)) then
+      raise exception 'ASSESSMENT_ASSIGNED_CONTENT_IMMUTABLE' using errcode='42501';
+    end if;
+    if tg_op='DELETE' then return old; end if;
     -- Preserve existing global editorial assembly for trusted non-teacher roles.
     -- School publication always passes through the second branch below.
     if public.has_question_bank_role(array['admin','administrador','administrador_nacional','curator','curador','elaborador','service_role'])
@@ -121,7 +133,7 @@ begin
     if new.school_id is null or new.class_id is null or new.assessment_id is null then
       raise exception 'ASSESSMENT_TARGET_REQUIRED' using errcode='42501';
     end if;
-    select * into a from public.assessments where id=new.assessment_id;
+    select * into a from public.assessments where id=new.assessment_id for update;
     if a.id is null or (a.school_id is not null and a.school_id <> new.school_id) then
       raise exception 'ASSESSMENT_SCHOOL_MISMATCH' using errcode='42501';
     end if;
@@ -140,7 +152,7 @@ revoke all on function school_category_private.assessment_content_write_guard() 
 
 -- Triggers also protect alternate definer RPCs; fixing only one public RPC leaves bypasses.
 create trigger fase3_assessment_question_guard
-before insert or update of assessment_id,question_id on public.assessment_questions
+before insert or update or delete on public.assessment_questions
 for each row execute function school_category_private.assessment_content_write_guard();
 create trigger fase3_assessment_publication_guard
 before insert or update of assessment_id,school_id,class_id,status on public.assessment_assignments
