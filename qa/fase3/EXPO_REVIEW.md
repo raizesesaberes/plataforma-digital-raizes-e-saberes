@@ -34,7 +34,7 @@ Gate bloqueia ações antes da requisição. Backend ausente com gate ligado pro
 | Outra escola inicia/lê resultado de aplicação alheia | NEGADO | API real com JWT de outro aluno/docente; UI não oferece aplicação alheia |
 | Gate desligado | PASS | Nenhuma chamada de avaliação, nenhuma ação de início |
 | Gate ligado/backend404 | PASS | “Serviço indisponível”; não mostra “sem avaliações” como se a consulta tivesse funcionado |
-| Integração PR1+PR2/3/4 | PASS local na ordem documentada | 29 testes; ordem inversa bloqueada pelo preflight, sem modificar hashes |
+| Integração dos cinco PRs | PASS local na ordem documentada | Suítes contratos R1–R4 + 30 casos FASE3 + ponte contrato operacional→avaliação→revogação; evidência final na worktree `/workspace/fase3-integration`, branch local `review/fase3-integration-check` |
 | Login completo, todas as telas da app shell e homologação visual humana | NÃO EXECUTADO | Harness usa os componentes reais com entrada QA separada |
 | iOS/Android nativos, push/store/deploy | NÃO EXECUTADO | Nenhum emulador/APK/IPA/publicação |
 
@@ -77,3 +77,5 @@ Checklist React aplicado: componentes separados, hooks incondicionais, estado re
 - Atualização negada limpa conteúdo do painel e cartão em cache. Sem ambos os gates, comunicação faz zero chamadas; com somente respostas, o guard de thread autoriza a entrega antes de renderizar título/corpo; com edição, usa o guard de versões. Combinações 00/01/10/11 cobertas no serviço, sem novo acesso persistente.
 
 Login via Auth oficial local permanece bloqueado: a CLI tentou criar `/home/agent/.supabase` e retornou EROFS. Sem emulador nativo. O harness com JWTs fictícios não é declarado teste de login ou navegação integral da app shell. Gates de produção continuam off, PR permanece draft para re-revisão.
+
+A integração final preservou 15 funções/triggers FASE3 após PR1. O preflight combinado e a proposta de ledger152/153 estão somente na branch local de integração, sem execução; o preflight standalone de contratos continua exigindo149. Nenhuma aprovação de rollout é inferida desses testes.
