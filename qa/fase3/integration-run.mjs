@@ -13,6 +13,7 @@ const postgrest='postgrest/postgrest:v12.2.12@sha256:5f4ce744539bbba786b4e24dbbd
 const baseline=false;
 const manifestsOnly=process.argv.includes('--manifests-only');
 const stage=nameOfStage=>{if(manifestsOnly)recordStage(nameOfStage,sql=>run(['exec','-i',name,'psql','-U','postgres','-v','ON_ERROR_STOP=1','-At'],sql));};
+const autosaveOnly=process.argv.includes('--autosave-only');
 const routingOnly=process.argv.includes('--routing-only');
 const contractsFirst=process.argv.includes('--contracts-first');
 const snapshot=()=>JSON.parse(run(['exec','-i',name,'psql','-U','postgres','-At'],`select jsonb_object_agg(key, value) from (select n.nspname||'.'||p.proname||'('||pg_get_function_identity_arguments(p.oid)||')' key,jsonb_build_object('body_md5',md5(p.prosrc),'definition_md5',md5(pg_get_functiondef(p.oid)),'acl',p.proacl::text,'config',p.proconfig,'owner',pg_get_userbyid(p.proowner)) value from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','school_category_private') union all select 'trigger:'||t.tgrelid::regclass::text||':'||t.tgname,jsonb_build_object('definition',pg_get_triggerdef(t.oid),'enabled',t.tgenabled) from pg_trigger t where not t.tgisinternal) s;`));
@@ -90,7 +91,7 @@ try {
     }
     console.log('PASS amendment preserves all existing functions except rule-count validator; table ACL/RLS/policies/triggers unchanged');
     execFileSync('python3',['tests/contracts/amendments.py'],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}}); }
-  for(const suite of (routingOnly||process.argv.includes('--amendments-only')?[]:['database.py','content.py','edge-cases.py','security-regressions.py','succession-regressions.py'])){
+  for(const suite of (autosaveOnly||routingOnly||process.argv.includes('--amendments-only')?[]:['database.py','content.py','edge-cases.py','security-regressions.py','succession-regressions.py'])){
     console.log('CONTRACT SUITE '+suite);
     execFileSync('python3',['tests/contracts/'+suite],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}});
   }
@@ -100,7 +101,7 @@ try {
   ready=false;
   for(let i=0;i<100;i++){try{const res=await fetch(`http://${host}:3000/`);if(res.ok){ready=true;break}}catch{} await new Promise(r=>setTimeout(r,200));}
   if(!ready)throw new Error('Local PostgREST did not start');
-  if(routingOnly){execFileSync(process.execPath,['qa/fase3/routing-browser.mjs',name],{stdio:'inherit'});} else {
+  if(autosaveOnly){execFileSync(process.execPath,['tests/student-autosave/browser-database.mjs',name],{stdio:'inherit'});} else if(routingOnly){execFileSync(process.execPath,['qa/fase3/routing-browser.mjs',name],{stdio:'inherit'});} else {
   let journeyError;
   try { execFileSync(process.execPath,['qa/fase3/journeys.mjs',name,...(baseline?['--baseline']:[])],{stdio:'inherit'}); } catch(error) { journeyError=error; }
   execFileSync('python3',['tests/contracts/fase3-bridge.py'],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}});

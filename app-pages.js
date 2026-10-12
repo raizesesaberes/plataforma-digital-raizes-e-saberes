@@ -9377,9 +9377,11 @@ const avaliaApplicationService = (() => {
       }));
       return result?.attempt || result;
     },
-    async saveResponse({ attemptId, questionId, alternativeId, responseText, autosaveSequence = 1 }) {
+    async saveResponse({ attemptId, questionId, alternativeId, responseText, autosaveSequence = 1, expectedUserId }) {
       const { request } = client();
+      if (!Number.isInteger(autosaveSequence) || autosaveSequence < 1 || autosaveSequence > 2147483647) throw Error("Sequência de salvamento inválida. Reabra a tentativa existente.");
       const result = normalizeRpcJson(await request("rpc/student_save_assessment_response_v2", "", {
+        expectedUserId,
         method: "POST",
         requireAuthenticated: true,
         allowedRoles: ["aluno", "admin"],
@@ -10540,7 +10542,7 @@ const renderStudentAssessmentsView = () => {
   return `
     <section class="student-card" data-avalia-student-app>
       <div class="student-card-head"><h2>Avaliações</h2><span data-avalia-student-count>${assignments.length} publicadas</span></div>
-      <div class="qb-selection-status" data-avalia-student-status aria-live="polite">${printableEscape(state.message || state.error || "")}</div>
+      <div class="qb-selection-status" data-avalia-student-status aria-live="polite">${studentAvaliaSaveState.failed ? studentAvaliaSaveFailureMessage(state.error) : printableEscape(state.message || state.error || "")}</div>
       <div class="student-premium-card-grid">
         ${renderStudentAssessmentGroup("Disponiveis", available)}
         ${renderStudentAssessmentGroup("Em andamento", inProgress)}
@@ -10573,6 +10575,64 @@ const renderStudentAssessmentCard = (assignment) => {
   `;
 };
 
+const studentAvaliaSaveState = { pending: false, submitting: false, failed: null, sequences: new Map() };
+const studentAvaliaSaveFailureMessage = (error) => `${printableEscape(error || 'Falha ao salvar resposta.')} Sua resposta ainda não foi confirmada. Não recarregue nem entregue. <button type="button" data-avalia-retry-save>Conferir e tentar salvar</button>`;
+const studentAvaliaRemainingLabel = (attempt) => {
+  const deadline = Date.parse(attempt?.deadline_at || "");
+  const value = Number.isFinite(deadline) ? Math.max(0, Math.ceil((deadline - Date.now()) / 1000)) : null;
+  return value == null ? "Sem cronômetro" : `${Math.floor(value / 60)}min ${value % 60}s`;
+};
+const nextStudentAutosaveSequence = (attempt, actor) => {
+  const key = `${actor}:${attempt.id}`;
+  const persisted = (attempt.responses || []).map(r => Number(r.autosave_sequence || 0));
+  const current = Math.max(0, studentAvaliaSaveState.sequences.get(key) || 0, ...persisted);
+  if (!Number.isSafeInteger(current) || current >= 2147483647) throw Error("Limite de sequência atingido. Não reinicie a avaliação; solicite suporte.");
+  studentAvaliaSaveState.sequences.set(key, current + 1);
+  return current + 1;
+};
+const saveStudentAvaliaAnswer = async (root, attempt, answer, retry = false) => {
+  if (studentAvaliaSaveState.pending || studentAvaliaSaveState.submitting) return;
+  if (studentAvaliaSaveState.failed && !retry) return;
+  const actor = getSupabaseUserContext().userId;
+  const pending = retry ? studentAvaliaSaveState.failed : { actor, attemptId: attempt.id, answer };
+  if (!pending || pending.actor !== actor || pending.attemptId !== attempt.id) {
+    const status=root.querySelector('[data-avalia-student-status]');if(status)status.textContent='Conta ou tentativa alterada. Reabra a tentativa existente.';
+    return;
+  }
+  const checkActor = () => { if (getSupabaseUserContext().userId !== actor) throw Error("Conta alterada durante o salvamento."); };
+  const controls = [...root.querySelectorAll('.digital-attempt-stage button,.digital-attempt-stage input,.digital-attempt-stage textarea')].map(node=>({node,disabled:node.disabled}));
+  const status = root.querySelector('[data-avalia-student-status]');
+  studentAvaliaSaveState.pending = true;
+  controls.forEach(({node})=>node.disabled=true);
+  if(status)status.textContent='Salvando resposta...';
+  try {
+    let response;
+    if(retry){
+      const readback=await avaliaApplicationService.listStudentAssignments();checkActor();
+      const stored=readback.attempts?.find(a=>a.id===attempt.id);
+      const saved=stored?.responses?.find(r=>r.question_id===pending.answer.questionId);
+      if(saved && (saved.selected_alternative_id || null)===(pending.answer.alternativeId || null) && (saved.response_text || '')===(pending.answer.responseText || '')) response=saved;
+      if(stored)Object.assign(attempt,stored,{responses:stored.responses || []});
+    }
+    if(!response){
+      const autosaveSequence=nextStudentAutosaveSequence(attempt,actor);checkActor();
+      response=await avaliaApplicationService.saveResponse({attemptId:attempt.id,...pending.answer,autosaveSequence,expectedUserId:actor});checkActor();
+    }
+    if(!response || response.attempt_id!==attempt.id || response.question_id!==pending.answer.questionId)throw Error('Confirmação de resposta inválida.');
+    attempt.responses=[...(attempt.responses || []).filter(r=>r.question_id!==response.question_id),response];
+    studentAvaliaSaveState.failed=null;
+    avaliaApplicationState.student.error='';avaliaApplicationState.student.message='Resposta salva e confirmada.';
+    refreshStudentAvaliaSurface();
+  } catch(error) {
+    studentAvaliaSaveState.failed=pending;
+    avaliaApplicationState.student.error=error.message || 'Falha ao salvar resposta.';
+    if(status)status.innerHTML=studentAvaliaSaveFailureMessage(avaliaApplicationState.student.error);
+  } finally {
+    studentAvaliaSaveState.pending=false;
+    if(!studentAvaliaSaveState.failed)controls.forEach(({node,disabled})=>node.disabled=disabled);
+  }
+};
+
 const renderStudentAssessmentAttemptStage = () => {
   const assignment = getAvaliaActiveAssignment();
   const attempt = getAvaliaActiveAttempt();
@@ -10585,12 +10645,11 @@ const renderStudentAssessmentAttemptStage = () => {
   const response = getAvaliaResponseForQuestion(attempt, question.id);
   const isClosed = String(attempt.status || "").toLowerCase() !== "in_progress";
   const answeredCount = questions.filter((entry) => getAvaliaResponseForQuestion(attempt, getAvaliaQuestion(entry).id)).length;
-  const remainingSeconds = attempt.remaining_seconds ?? attempt.progress?.remaining_seconds;
-  const remainingLabel = remainingSeconds == null ? "Sem cronometro" : `${Math.floor(Number(remainingSeconds) / 60)}min ${Number(remainingSeconds) % 60}s`;
+  const remainingLabel = studentAvaliaRemainingLabel(attempt);
   return `
     <section class="digital-attempt-stage">
       <div class="digital-attempt-head">
-        <div><strong>${printableEscape(assignment.assessment?.title || "Avaliacao")}</strong><span>${avaliaApplicationState.student.activeQuestionIndex + 1}/${questions.length} · ${answeredCount} respondidas · ${printableEscape(remainingLabel)}</span></div>
+        <div><strong>${printableEscape(assignment.assessment?.title || "Avaliacao")}</strong><span>${avaliaApplicationState.student.activeQuestionIndex + 1}/${questions.length} · ${answeredCount} respondidas · <span data-avalia-countdown>${printableEscape(remainingLabel)}</span></span></div>
         <button type="button" data-avalia-stage-close>Fechar</button>
       </div>
       ${isClosed ? `
@@ -21997,7 +22056,16 @@ const loadStudentAvaliaData = async ({ force = false } = {}) => {
 
 const initStudentAvaliaApplication = () => {
   const root = document.querySelector("[data-avalia-student-app]");
+  clearInterval(initStudentAvaliaApplication.timer);
   if (!root) return;
+  initStudentAvaliaApplication.timer=setInterval(()=>{
+    if(!root.isConnected){clearInterval(initStudentAvaliaApplication.timer);return;}
+    const clock=root.querySelector('[data-avalia-countdown]');if(clock)clock.textContent=studentAvaliaRemainingLabel(getAvaliaActiveAttempt());
+  },1000);
+  if(!initStudentAvaliaApplication.unloadBound){
+    window.addEventListener('beforeunload',event=>{if(studentAvaliaSaveState.pending || studentAvaliaSaveState.failed){event.preventDefault();event.returnValue='';}});
+    initStudentAvaliaApplication.unloadBound=true;
+  }
 
   if (avaliaApplicationState.student.status === "idle") {
     loadStudentAvaliaData().then(refreshStudentAvaliaSurface);
@@ -22006,10 +22074,16 @@ const initStudentAvaliaApplication = () => {
 
   if (root.dataset.avaliaStudentBound === "true") return;
   root.dataset.avaliaStudentBound = "true";
+  if(studentAvaliaSaveState.pending || studentAvaliaSaveState.failed)root.querySelectorAll('.digital-attempt-stage button,.digital-attempt-stage input,.digital-attempt-stage textarea').forEach(node=>node.disabled=true);
 
   root.addEventListener("click", async (event) => {
     const button = event.target.closest("button");
     if (!button) return;
+    if(studentAvaliaSaveState.pending || studentAvaliaSaveState.submitting)return;
+    if(button.hasAttribute('data-avalia-retry-save')){
+      const attempt=getAvaliaActiveAttempt();if(attempt)await saveStudentAvaliaAnswer(root,attempt,null,true);return;
+    }
+    if(studentAvaliaSaveState.failed)return;
     const statusNode = root.querySelector("[data-avalia-student-status]");
 
     if (button.dataset.avaliaStudentOpen) {
@@ -22069,6 +22143,8 @@ const initStudentAvaliaApplication = () => {
       const unanswered = questions.filter((entry) => !getAvaliaResponseForQuestion(attempt, getAvaliaQuestion(entry).id)).length;
       if (!window.confirm(`Deseja entregar a avaliacao? ${unanswered} questao${unanswered === 1 ? "" : "es"} sem resposta.`)) return;
       if (statusNode) statusNode.textContent = "Entregando avaliacao...";
+      studentAvaliaSaveState.submitting=true;
+      button.disabled=true;
       try {
         const result = await avaliaApplicationService.submitAttempt(attempt.id);
         avaliaApplicationState.student.message = `Avaliacao entregue. Resultado ${result.score_percentage ?? 0}%.`;
@@ -22077,32 +22153,14 @@ const initStudentAvaliaApplication = () => {
       } catch (error) {
         avaliaApplicationState.student.error = error.message || "Nao foi possivel entregar a avaliacao.";
         if (statusNode) statusNode.textContent = avaliaApplicationState.student.error;
-      }
+      } finally {studentAvaliaSaveState.submitting=false;button.disabled=false;}
     }
     if (button.hasAttribute("data-avalia-save-text")) {
       const questionEntry = questions[avaliaApplicationState.student.activeQuestionIndex];
       const question = getAvaliaQuestion(questionEntry);
       const textarea = root.querySelector("[data-avalia-text-answer]");
       if (!question?.id || attempt.status !== "in_progress") return;
-      if (statusNode) statusNode.textContent = "Salvando resposta...";
-      try {
-        const response = await avaliaApplicationService.saveResponse({
-          attemptId: attempt.id,
-          questionId: question.id,
-          responseText: textarea?.value || "",
-          autosaveSequence: Date.now(),
-        });
-        const localAttempt = getAvaliaActiveAttempt();
-        localAttempt.responses = [
-          ...(localAttempt.responses || []).filter((item) => item.question_id !== response.question_id),
-          response,
-        ];
-        avaliaApplicationState.student.message = "Resposta discursiva salva.";
-        refreshStudentAvaliaSurface();
-      } catch (error) {
-        avaliaApplicationState.student.error = error.message || "Nao foi possivel salvar a resposta.";
-        if (statusNode) statusNode.textContent = avaliaApplicationState.student.error;
-      }
+      await saveStudentAvaliaAnswer(root,attempt,{questionId:question.id,responseText:textarea?.value || ''});
       return;
     }
   });
@@ -22116,25 +22174,7 @@ const initStudentAvaliaApplication = () => {
     const question = getAvaliaQuestion(questionEntry);
     const statusNode = root.querySelector("[data-avalia-student-status]");
     if (!assignment || !attempt || !question?.id || attempt.status !== "in_progress") return;
-    if (statusNode) statusNode.textContent = "Salvando resposta...";
-    try {
-      const response = await avaliaApplicationService.saveResponse({
-        attemptId: attempt.id,
-        questionId: question.id,
-        alternativeId: input.value,
-        autosaveSequence: Date.now(),
-      });
-      const localAttempt = getAvaliaActiveAttempt();
-      localAttempt.responses = [
-        ...(localAttempt.responses || []).filter((item) => item.question_id !== response.question_id),
-        response,
-      ];
-      avaliaApplicationState.student.message = "Resposta salva.";
-      refreshStudentAvaliaSurface();
-    } catch (error) {
-      avaliaApplicationState.student.error = error.message || "Nao foi possivel salvar a resposta.";
-      if (statusNode) statusNode.textContent = avaliaApplicationState.student.error;
-    }
+    await saveStudentAvaliaAnswer(root,attempt,{questionId:question.id,alternativeId:input.value});
   });
 };
 

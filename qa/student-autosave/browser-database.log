@@ -1,0 +1,35 @@
+Load qa/fase3/bootstrap.sql
+Load supabase/baselines/20261004_pilot_schema_baseline.sql
+Load supabase/migrations/20261004231721_content_architecture_phase1_question_entitlements.sql
+Load supabase/migrations/202610060001_question_bank_teacher_adaptations.sql
+Load supabase/migrations/20261006200104_question_bank_alternative_integrity.sql
+Load supabase/migrations/20261006205047_question_bank_atomic_official_edit.sql
+Load supabase/migrations/20261007092231_content_macro_v1_modules.sql
+Load supabase/migrations/20261008003945_authorized_question_details_for_teacher.sql
+Load supabase/migrations/20261008234450_admin_auth_access_duplicate_check.sql
+Load supabase/migrations/20261008234606_admin_auth_access_duplicate_check_orphan_priority.sql
+Load supabase/migrations/20261011003308_school_content_dynamic_categories_v2.sql
+Load supabase/migrations/20261011003328_school_content_global_review_v2.sql
+Load supabase/migrations/20261011003339_school_content_native_question_categories_v2.sql
+Load supabase/migrations/20261011003351_school_content_category_checkpoint_v2.sql
+Load supabase/migrations/20261011003404_school_content_protected_adapters_v2.sql
+Load qa/fase3/observed-start-attempt.sql
+Load qa/fase3/observed-boundary-fixture.sql
+Load qa/fase3/observed-20261009195512.sql
+Load qa/fase3/observed-boundary-alignment.sql
+Load tests/contracts/admin-assert.sql
+Load tests/contracts/production-legacy-helpers.sql
+Load qa/fase3/seed.sql
+PASS seven contract function preconditions (migration ledger is outside this synthetic fixture)
+PASS exact production stage0 parity, including existing question/snapshot boundaries
+Load supabase/review/fase3_assessment_authorization.sql
+Load supabase/review/fase3_communication_replies.sql
+Load supabase/review/fase3_notice_editing.sql
+Load supabase/review/contract_operations.sql
+PASS existing boundary functions/ACLs, restrictive policies and enabled triggers preserved after all four proposals
+PASS contracts preserved 15 FASE3 functions/triggers including definitions, ACLs and config
+Load tests/contracts/seed.sql
+PASS four RPC bodies match read-only production snapshot
+PASS old Date.now overflow reproduced; countdown advances against persisted deadline
+PASS pending-save concurrency guard; lost ACK reconciled by read without duplicate save
+PASS real browser → PostgREST → PostgreSQL: save/navigate/reload/resume same attempt/save/submit → teacher result50%; text handler and int32 service limits; no extra attempt

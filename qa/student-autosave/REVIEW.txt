@@ -1,0 +1,53 @@
+Autosave aluno — correção proposta, não publicada
+
+Causa comprovada: dois handlers web (objetiva e discursiva) passavam Date.now() como
+autosaveSequence. RPC student_save_assessment_response_v2 recebe p_autosave_sequence integer;
+assessment_responses.autosave_sequence também integer. Timestampms atual ~1.79e12 excede
+2147483647 e falha com400/22003 antes de INSERT. O relógio exibido vinha de remaining_seconds
+congelado no início/último save, sem atualização periódica.
+
+Leitura mínima real em 2026-10-12T00:54:50Z: uma tentativa in_progress/EM_ANDAMENTO,
+started_at00:50:17.46929Z, deadline_at01:40:17.46929Z, zero respostas persistidas,
+last_autosaved_at/submitted_at nulos. Não extraímos alternativas, conteúdo ou identidade do aluno.
+O prazo corre no servidor, mesmo que a tela mostre50min. Não prorrogamos/resetamos/entregamos.
+
+Correção: sequência monotônica pequena por ator/tentativa, iniciada no maior autosave_sequence
+persistido +1. Sem timestamp como contador. Serviço valida inteiro positivo <=2147483647;
+limite esgotado bloqueia em vez de truncar/reiniciar. Mesmo helper para objetiva/discursiva.
+Uma gravação em voo bloqueia controles/navegação/entrega. Resposta confirmada atualiza o objeto
+da tentativa capturada, nunca a tentativa atualmente selecionada por acidente. UID pinado na
+requisição e revalidado após await. Confirmação precisa pertencer à tentativa/questão esperadas.
+
+Falha mantém payload em memória, alerta de beforeunload e trava até Conferir e tentar salvar.
+Esse botão consulta a tentativa existente primeiro: ACK perdido com resposta já persistida é
+reconciliado sem novo save. Se ainda não foi persistida, reenvia mesma escolha com sequência
+válida. Sem retry automático, sem criar outra tentativa. Payload não é gravado em storage.
+Recarregar à força pode perder uma escolha não confirmada; a interface avisa para não fazê-lo.
+Salvar confirmado -> recarregar -> retomar usa dados do servidor e mantém o ID original.
+Entregar tem trava em voo adicional. Nenhum envio automático por cronômetro.
+
+Cronômetro: diferença entre deadline_at e Date.now(), limitada a zero e atualizada a cada segundo,
+sem recriar a UI/roubar foco. O servidor continua autoridade de prazo; relógio do aparelho incorreto
+pode afetar a indicação visual, nunca prolongar prazo no banco. Sem deadline exibe semcronômetro.
+Cache key aluno.html atualizado.
+
+Validação: node qa/fase3/integration-run.mjs --autosave-only.
+Browser Chromium real com app-pages.js/cliente/serviço/handlers completos → proxy HTTP local →
+PostgREST oficial → PostgreSQL17 descartável; nenhuma chamada de produção. Identidades/catálogo
+sintéticos. As quatro funções RPC têm hashes iguais ao snapshot readonly real. Reproduz22003
+com Date.now atual, comprova zero gravações nessa falha, relógio avança, objetiva+discursiva,
+singleflight, bloqueio de navegar/entregar durante save, ACK perdido depois de commit reconciliado
+sem save adicional, recarrega/retoma mesmo ID/mesma tentativa, sequência cresce apósreload,
+limite2147483647/timestamp inválido bloqueados antes do envio, entrega e resultado docente50%.
+A apresentação discursiva é fixture sintética sem alternativas no renderer, salva pela RPC real.
+Regressões assessment-handoff e student-access também PASS. Sintaxe/diff/build4277 PASS.
+
+Limite preservado do backend: autosave_v2 usa greatest para contador, mas não rejeita updates
+obsoletos vindos de outra aba/dispositivo. Esta fatia serializa a página atual; não alega CAS ou
+idempotência distribuída. Rejeitar escrita obsoleta no servidor seria revisão SQL específica.
+
+Entrega/retomada real depende de revisão e publicação web antes do prazo. Se deadline expirar,
+parar e solicitar decisão do professor; não burlar/resetar/prorrogar ou criar tentativa extra.
+Até publicação o frontend antigo continua falhando: não orientar novo teste agora.
+Somente app-pages.js e cachekey aluno mudam runtime; testes/diagnóstico fora dist.
+Sem SQL/migration/policy/Edge/Auth/credenciais/contratos/PR11. Sem homologação humana alegada.
