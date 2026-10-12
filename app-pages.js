@@ -24126,7 +24126,7 @@ const initQuestionBank = () => {
       if (button.hasAttribute('data-qb-new-assessment')) {
         if (assessmentSavePromise || assessmentSwitchBusy) throw Error('Aguarde a operação atual terminar antes de iniciar outra avaliação.');
         if (sessionStorage.getItem(assessmentSaveKey)) throw Error(uncertainSaveMessage);
-        if (!activeAssessmentProtected && (cart.length || titleInput.value.trim()) &&
+        if (!activeAssessmentProtected &&
             !window.confirm('Iniciar outra avaliação? O rascunho local atual será substituído. Avaliações já salvas serão preservadas.')) return;
         activeAssessmentId = null; activeAssessmentProtected = false; cart = []; cartPoints = {};
         assessmentHandoffComplete = false;

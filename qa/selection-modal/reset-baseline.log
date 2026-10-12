@@ -1,0 +1,18 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: .qb-builder textarea must prompt without title/cart
+
+0 !== 1
+
+    at file:///workspace/question-selection-modal/tests/teacher-content/new-assessment-reset.mjs:85:11 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 0,
+  expected: 1,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.19.0

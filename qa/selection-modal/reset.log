@@ -1,0 +1,2 @@
+PASS 1440px: instructions/date/year/component/cover individually prompt without title/cart; cancel preserves all DOM fields + localStorage + sessionStorage; combined cancel preserves; accepted reset is local only.
+PASS 390px: instructions/date/year/component/cover individually prompt without title/cart; cancel preserves all DOM fields + localStorage + sessionStorage; combined cancel preserves; accepted reset is local only.
