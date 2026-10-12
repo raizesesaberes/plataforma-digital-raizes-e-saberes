@@ -1,0 +1,22 @@
+Resultados: ajuste visual proposto, sem produção. Base main6f958de (PR15), sem PR16.
+Cartões com alinhamento inicial, ações padronizadas compactas, detalhe fora da grade
+usando largura completa; cabeçalho distingue turma/aluno e datas. Desktop2colunas e
+mobile1coluna, indicadores4/2colunas, nomes longos quebram sem overflow.
+Uma aplicação selecionada por vez. Rótulos conhecidos traduzidos. Não iniciado/em
+andamento sem nota exibem Sem resultado, sem converter nulo em0. Nota0 registrada
+continua0; entrega sem respostas explicitada sem inferir causa técnica nem recalcular.
+Média/mínimo/máximo sem concluintes ficam—; questão sem respostas não mostra erro0%.
+Erro de carregamento e erro da análise pedagógica distintos de ausência de dados;
+amostra insuficiente traduzida. SQL/Auth/permissões/notas/dados preservados.
+
+Leitura mínima readonly: aplicação individual published,12out11:36UTC→19out11:36UTC,
+0tentativas/0entregues; aplicação coletiva original1tentativa/1entregue. Nenhuma escrita.
+Não criamos aplicação/notificação nem iniciamos tentativa. Usuário pode acessar a nova
+aplicação individual já publicada; não retomar/reabrir a tentativa coletiva encerrada.
+
+Teste Chromium renderers reais/transporte sintético em1440x1000 e390x1000: duas
+aplicações, detalheexpandido,10alunos, nomeslongos, zero legítimo e zero sem respostas,
+nãoiniciado, emandamento, ausência/loading/erro/amostrainsuficiente. Geometria assert:
+semoverflow, botões<80px, cartões<450px, detalhe desktop>1.8x largura cartão.
+Screenshots desktop.png/mobile.png sintéticos inspecionados. Regressão handoff,
+sintaxe/diff/build4277 PASS. Não é homologação humana ou execução real do aluno.

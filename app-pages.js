@@ -10352,7 +10352,7 @@ const renderTeacherAssessmentsView = () => {
 const renderTeacherAssessmentAssignmentsList = (assignments = []) => {
   if (!assignments.length) return `<div class="qb-state">Nenhuma avaliacao publicada por este professor ainda.</div>`;
   return `
-    <div class="tw-card-grid">
+    <div class="avalia-applications-grid">
       ${assignments.map((assignment) => {
         const attempts = assignment.attempts || assignment.assessment_attempts || [];
         const started = attempts.length;
@@ -10361,20 +10361,21 @@ const renderTeacherAssessmentAssignmentsList = (assignments = []) => {
           ? teacherInstitutionalState.studentsById?.[assignment.student_id]?.name || "Aluno especifico"
           : getTeacherInstitutionalClasses().find((classItem) => classItem.id === assignment.class_id)?.name || "Turma";
         return `
-          <article class="tw-metric-card">
-            <span>${printableEscape(avaliaStatusLabel(assignment.application_status || assignment.status))}</span>
+          <article class="avalia-application-card">
+            <span>${printableEscape(avaliaIntelligenceStatusLabel(assignment.application_status || assignment.status))}</span>
             <strong>${printableEscape(assignment.assessment?.title || assignment.title || "Avaliacao")}</strong>
-            <small>${printableEscape(targetLabel)} · ${avaliaDateTimeLabel(assignment.available_from)} ate ${avaliaDateTimeLabel(assignment.available_until)}</small>
+            <small>${assignment.target_type === "student" ? "Aluno" : "Turma"}: ${printableEscape(targetLabel)} · ${avaliaDateTimeLabel(assignment.available_from)} ate ${avaliaDateTimeLabel(assignment.available_until)}</small>
             <small>${started} iniciadas · ${completed} concluidas · ${assignment.token_required ? "token ativo" : "sem token"}${assignment.shuffle_questions ? " · anti-cola" : ""}</small>
-            <button type="button" class="qb-secondary-action" data-avalia-teacher-results="${htmlEscape(assignment.id)}">Resultados</button>
+            <div class="avalia-application-actions"><button type="button" class="qb-secondary-action" data-avalia-teacher-results="${htmlEscape(assignment.id)}">Resultados</button>
             <button type="button" class="qb-secondary-action" data-avalia-print-export="${htmlEscape(assignment.id)}" data-avalia-export-type="ANSWER_SHEET">Folha de respostas</button>
-            <button type="button" class="qb-secondary-action" data-avalia-print-export="${htmlEscape(assignment.id)}" data-avalia-export-type="ATTENDANCE_LIST">Lista de presenca</button>
+            <button type="button" class="qb-secondary-action" data-avalia-print-export="${htmlEscape(assignment.id)}" data-avalia-export-type="ATTENDANCE_LIST">Lista de presença</button></div>
             ${renderTeacherOfflineImportPanel(assignment)}
-            ${renderTeacherAssessmentResult(assignment.id)}
+
           </article>
         `;
       }).join("")}
     </div>
+    <div class="avalia-results-detail">${assignments.filter(a=>!avaliaApplicationState.teacher.activeResultId || a.id===avaliaApplicationState.teacher.activeResultId).map(a=>renderTeacherAssessmentResult(a.id)).join('')}</div>
   `;
 };
 
@@ -10401,11 +10402,19 @@ const renderTeacherOfflineImportPanel = (assignment) => {
   `;
 };
 
-const avaliaIntelligenceStatusLabel = (status = "") => String(status || "").replaceAll("_", " ").toLowerCase() || "sem status";
+const avaliaIntelligenceStatusLabel = (status = "") => ({PUBLISHED:'Publicada',DRAFT:'Rascunho',AGENDADA:'Agendada',ENCERRADA:'Encerrada',NOT_STARTED:'Não iniciado',IN_PROGRESS:'Em andamento',EM_ANDAMENTO:'Em andamento',SUBMITTED:'Entregue',GRADED:'Corrigida',COMPLETED:'Concluída',CONCLUIDA:'Concluída',ABAIXO_DO_BASICO:'Abaixo do básico',BASICO:'Básico',ADEQUADO:'Adequado',AVANCADO:'Avançado',INSUFFICIENT_SAMPLE:'Amostra insuficiente',NO_RESPONSES:'Sem respostas',NO_DATA:'Sem dados',CRITICAL:'Crítica',DEVELOPING:'Em desenvolvimento',CONSOLIDATED:'Consolidada',SUFFICIENT_SAMPLE:'Amostra suficiente'}[String(status).toUpperCase().replaceAll(' ','_')] || String(status || '').replaceAll('_',' ').toLocaleLowerCase('pt-BR') || 'Sem informação');
+const avaliaResultValue = (value) => value == null ? '—' : avaliaPercentLabel(value);
+const renderTeacherStudentResult = (student) => {
+  const status=String(student.status || '').toUpperCase();
+  const complete=['SUBMITTED','GRADED','COMPLETED','CONCLUIDA','ENTREGUE'].includes(status);
+  const noAnswers=Number(student.correct_count || 0)+Number(student.incorrect_count || 0)===0 && (Number(student.unanswered_count)>0 || student.answered_count===0);
+  const detail=!complete ? `${avaliaIntelligenceStatusLabel(status)} · Sem resultado` : `${avaliaIntelligenceStatusLabel(status)} · ${student.score_percentage == null ? 'Nota indisponível' : avaliaResultValue(student.score_percentage)+' registrado'} · ${noAnswers ? 'Entregue sem respostas' : `${Number(student.correct_count || 0)} acertos · ${Number(student.incorrect_count || 0)} erros`} · ${Number(student.unanswered_count || 0)} sem resposta`;
+  return `<li><strong>${printableEscape(student.student_name || 'Aluno')}</strong><span>${printableEscape(detail)}</span></li>`;
+};
 const avaliaIntelligenceRows = (rows = [], emptyText = "Sem dados consolidados no período.") => `
   <ul class="clean-list">
     ${(rows || []).slice(0, 8).map((row) => {
-      const title = row.level_code || row.skill || row.bncc_skill || row.title || row.class_name || row.school_name || "Indicador";
+      const title = (row.level_code ? avaliaIntelligenceStatusLabel(row.level_code) : "") || row.skill || row.bncc_skill || row.title || row.class_name || row.school_name || "Indicador";
       const detail = [
         row.label,
         row.learning_status ? avaliaIntelligenceStatusLabel(row.learning_status) : "",
@@ -10438,7 +10447,7 @@ const renderAvaliaPedagogicalIntelligencePanel = (intelligence = {}, { title = "
       <div class="panel-head"><h2>${secretariaInlineIcon("chart", title)}</h2><span>Avalia+ 2.0</span></div>
       <div class="metric-row">
         <article>Resultados<strong>${analyticsNumberLabel(summary.results)}</strong><span>${analyticsNumberLabel(summary.students)} aluno(s)</span></article>
-        <article>Média<strong>${avaliaPercentLabel(summary.average_percentage)}</strong><span>escala 0-100</span></article>
+        <article>Média<strong>${Number(summary.results || 0)>0 ? avaliaResultValue(summary.average_percentage) : "—"}</strong><span>escala 0-100</span></article>
         <article>Habilidades críticas<strong>${analyticsNumberLabel(criticalSkills.length)}</strong><span>abaixo do limiar</span></article>
         <article>Alfa de Cronbach<strong>${reliability.cronbach_alpha == null ? "n/a" : Number(reliability.cronbach_alpha).toLocaleString("pt-BR", { maximumFractionDigits: 3 })}</strong><span>${printableEscape(avaliaIntelligenceStatusLabel(reliability.status))}</span></article>
       </div>
@@ -10455,8 +10464,11 @@ const renderAvaliaPedagogicalIntelligencePanel = (intelligence = {}, { title = "
 
 const renderTeacherAssessmentResult = (assignmentId) => {
   const state = avaliaApplicationState.teacher;
-  if (state.resultStatus === assignmentId) return `<div class="qb-state">Carregando resultados da turma...</div>`;
-  if (state.resultError && state.resultError.assignmentId === assignmentId) return `<div class="qb-error">${printableEscape(state.resultError.message)}</div>`;
+  const assignment=state.assignments.find(a=>a.id===assignmentId) || {};
+  const target=assignment.target_type==='student' ? `Aluno: ${teacherInstitutionalState.studentsById?.[assignment.student_id]?.name || 'Aluno específico'}` : `Turma: ${getTeacherInstitutionalClasses().find(c=>c.id===assignment.class_id)?.name || 'Turma'}`;
+  const heading=`<header class="avalia-result-heading"><h3>Resultados · ${printableEscape(target)}</h3><p>${printableEscape(assignment.assessment?.title || assignment.title || 'Avaliação')} · Aplicação de ${avaliaDateTimeLabel(assignment.available_from)} até ${avaliaDateTimeLabel(assignment.available_until)}</p></header>`;
+  if (state.resultStatus === assignmentId) return `<section class="avalia-result-report">${heading}<p role="status">Carregando resultados...</p></section>`;
+  if (state.resultError && state.resultError.assignmentId === assignmentId) return `<section class="avalia-result-report">${heading}<div class="qb-error" role="alert">Erro ao carregar resultados. ${printableEscape(state.resultError.message)} Tente novamente em Resultados.</div></section>`;
   const result = state.results?.[assignmentId];
   if (!result) return "";
   const summary = result.summary || {};
@@ -10465,26 +10477,26 @@ const renderTeacherAssessmentResult = (assignmentId) => {
   const skills = result.skills || [];
   const intelligence = result.intelligence || {};
   return `
-    <div class="digital-result-card">
-      <strong>Resultado da turma</strong>
-      <span>${Number(summary.completed_students || 0)} entregues de ${Number(summary.assigned_students || 0)} alunos · média ${avaliaPercentLabel(summary.average_percentage)}</span>
+    <section class="avalia-result-report">
+      ${heading}
+      <span>${Number(summary.completed_students || 0)} entregues de ${Number(summary.assigned_students || 0)} alunos · ${Number(summary.completed_students || 0)>0 ? `média ${avaliaResultValue(summary.average_percentage)}` : "Sem resultados concluídos"}</span>
       <div class="metric-row">
         <article>Participação<strong>${avaliaPercentLabel(summary.participation_percentage)}</strong><span>${Number(summary.started_students || 0)} iniciadas</span></article>
-        <article>Acertos médios<strong>${Number(summary.average_correct || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}</strong><span>por aluno</span></article>
-        <article>Maior resultado<strong>${avaliaPercentLabel(summary.highest_percentage)}</strong><span>consulta docente</span></article>
-        <article>Menor resultado<strong>${avaliaPercentLabel(summary.lowest_percentage)}</strong><span>sem ranking público</span></article>
+        <article>Acertos médios<strong>${Number(summary.completed_students || 0)>0 && summary.average_correct != null ? Number(summary.average_correct).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) : "—"}</strong><span>por aluno</span></article>
+        <article>Maior resultado<strong>${Number(summary.completed_students || 0)>0 ? avaliaResultValue(summary.highest_percentage) : "—"}</strong><span>consulta docente</span></article>
+        <article>Menor resultado<strong>${Number(summary.completed_students || 0)>0 ? avaliaResultValue(summary.lowest_percentage) : "—"}</strong><span>sem ranking público</span></article>
       </div>
       <ul class="clean-list">
-        ${students.map((student) => `<li><strong>${printableEscape(student.student_name || "Aluno")}</strong><span>${printableEscape(avaliaStatusLabel(student.status))} · ${avaliaPercentLabel(student.score_percentage)} · ${Number(student.correct_count || 0)} acertos · ${Number(student.incorrect_count || 0)} erros · ${Number(student.unanswered_count || 0)} sem resposta</span></li>`).join("") || "<li>Nenhum resultado individual concluído ainda.</li>"}
+        ${students.map(renderTeacherStudentResult).join("") || "<li>Nenhum resultado individual concluído ainda.</li>"}
       </ul>
       <div class="digital-skill-report">
-        ${skills.map((skill) => `<span>${printableEscape(skill.bncc_skill || "Habilidade nao informada")} · ${avaliaPercentLabel(skill.performance_percentage)}</span>`).join("") || "<span>Habilidades aguardam respostas.</span>"}
+        ${skills.map((skill) => `<span>${printableEscape(skill.bncc_skill || "Habilidade nao informada")} · ${Number(summary.completed_students || 0)>0 ? avaliaResultValue(skill.performance_percentage) : "Sem resultado"}</span>`).join("") || "<span>Habilidades aguardam respostas.</span>"}
       </div>
       <ul class="clean-list">
-        ${questions.map((question) => `<li><strong>${printableEscape(question.title || "Questao")}</strong><span>${printableEscape(question.bncc_skill || "Sem habilidade")} · erro ${avaliaPercentLabel(question.error_rate)} · ${Number(question.responses || 0)} respostas</span></li>`).join("") || "<li>Nenhuma questão consolidada.</li>"}
+        ${questions.map((question) => `<li><strong>${printableEscape(question.title || "Questao")}</strong><span>${printableEscape(question.bncc_skill || "Sem habilidade")} · ${Number(question.responses || 0)>0 ? `erro ${avaliaResultValue(question.error_rate)} · ${Number(question.responses)} respostas` : "Sem respostas"}</span></li>`).join("") || "<li>Nenhuma questão consolidada.</li>"}
       </ul>
-      ${renderAvaliaPedagogicalIntelligencePanel(intelligence, { title: "Inteligência da aplicação", compact: true })}
-    </div>
+      ${intelligence._loadError ? `<p role="alert">Não foi possível carregar a análise pedagógica. Os resultados acima continuam disponíveis.</p>` : renderAvaliaPedagogicalIntelligencePanel(intelligence, { title: "Inteligência da aplicação", compact: true })}
+    </section>
   `;
 };
 
@@ -21966,13 +21978,14 @@ const initTeacherAvaliaApplication = () => {
     const assignmentId = resultButton.dataset.avaliaTeacherResults || "";
     if (!assignmentId) return;
     const statusNode = root.querySelector("[data-avalia-teacher-status]");
+    avaliaApplicationState.teacher.activeResultId = assignmentId;
     avaliaApplicationState.teacher.resultStatus = assignmentId;
     avaliaApplicationState.teacher.resultError = "";
     refreshTeacherAvaliaSurface();
     try {
       const [result, intelligence] = await Promise.all([
         avaliaApplicationService.getTeacherClassResults(assignmentId),
-        avaliaApplicationService.getPedagogicalIntelligence(assignmentId).catch(() => ({})),
+        avaliaApplicationService.getPedagogicalIntelligence(assignmentId).catch(() => ({_loadError:true})),
       ]);
       avaliaApplicationState.teacher.results[assignmentId] = { ...(result || {}), intelligence };
       avaliaApplicationState.teacher.resultStatus = "";
