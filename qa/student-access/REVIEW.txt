@@ -48,3 +48,10 @@ Revisão específica antes de publicar: gerador altera novas credenciais (impact
 nenhum relaxamento de autenticação. Após aprovação, publicar Edge com verify_jwt=true e web;
 só então operador pode gerar/resetar individualmente. Não gerar automaticamente os10acessos
 nem tocar avaliação/turma real. PR11 permanece fora.
+
+Delta P2 — coerência do alvo: adminStudentAccessTarget exige exatamente um registro de aluno
+com id e school_id; a rota usa os dois valores desse mesmo registro. user.schoolId consolidado
+não participa da escolha. technicalId quando source=student e Auth ID quando presente devem
+conferir. Registro ausente/sem escola/ambíguo/incoerente mostra aviso sem link de ação, modal
+genérico ou recuperação email. Testes Chromium ampliados: escola consolidada antiga diverge
+da escola atual do aluno; todos os casos incompletos negados sem fallback. Gerador/Edge inalterados.

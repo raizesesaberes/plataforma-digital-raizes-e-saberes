@@ -12366,8 +12366,20 @@ const adminCreateAccessTargetType = (user = {}) => {
   return "";
 };
 
-const adminStudentAccessId = (user = {}) => user.students?.[0]?.id || (user.source === "student" ? user.technicalId : "");
-const adminStudentAccessUrl = (user = {}) => `secretaria.html?view=acessosAlunos&school=${encodeURIComponent(user.schoolId || user.students?.[0]?.school_id || "")}&student=${encodeURIComponent(adminStudentAccessId(user))}`;
+const adminIsStudentAccessUser = (user = {}) => user.source === "student" || user.role === "aluno" || Boolean(user.students?.length);
+const adminStudentAccessTarget = (user = {}) => {
+  const records = user.students || [];
+  if (records.length !== 1) return null;
+  const student = records[0];
+  if (!student?.id || !student.school_id) return null;
+  if (user.source === "student" && user.technicalId && user.technicalId !== student.id) return null;
+  if (user.authUserId && student.user_id && user.authUserId !== student.user_id) return null;
+  return { studentId: student.id, schoolId: student.school_id };
+};
+const adminStudentAccessUrl = (user = {}) => {
+  const target = adminStudentAccessTarget(user);
+  return target ? `secretaria.html?view=acessosAlunos&school=${encodeURIComponent(target.schoolId)}&student=${encodeURIComponent(target.studentId)}` : "";
+};
 
 const adminDerivedAccessRole = (targetType = "") =>
   ({
@@ -12713,7 +12725,7 @@ const adminPrintProfessionalAccessReceipt = (receipt) => {
 };
 
 const renderAdminCreateAccessDialog = (user) => {
-  if (adminStudentAccessId(user)) return "";
+  if (adminIsStudentAccessUser(user)) return "";
   const targetType = adminCreateAccessTargetType(user);
   const derivedRole = adminDerivedAccessRole(targetType);
   const targetInstitutionalId = adminCreateAccessTargetInstitutionalId(user);
@@ -12990,8 +13002,8 @@ const renderAdminUserDetail = (user) => {
       </section>
       <section class="admin-user-safe-actions">
         ${
-          adminStudentAccessId(user)
-            ? `<a class="is-primary" href="${printableEscape(adminStudentAccessUrl(user))}" data-admin-student-access>Login e senha do aluno</a><p>Acesso institucional sem e-mail. Gere ou redefina a senha em Acessos dos Alunos.</p>`
+          adminIsStudentAccessUser(user)
+            ? (adminStudentAccessUrl(user) ? `<a class="is-primary" href="${printableEscape(adminStudentAccessUrl(user))}" data-admin-student-access>Login e senha do aluno</a><p>Acesso institucional sem e-mail. Gere ou redefina a senha em Acessos dos Alunos.</p>` : `<p role="status">Vínculo de aluno incompleto ou ambíguo. Confira o registro do aluno e sua escola antes de configurar o acesso.</p>`)
             : user.authConfigured
             ? `
               <button type="button" class="is-primary" data-admin-password-recovery="${printableEscape(user.id)}">${adminInlineIcon("mail", "Enviar recuperação de senha")}</button>
