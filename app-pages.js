@@ -12366,6 +12366,27 @@ const adminCreateAccessTargetType = (user = {}) => {
   return "";
 };
 
+const adminHasMixedAccessIdentity = (user = {}) => {
+  const student = user.source === "student" || user.role === "aluno" || Boolean(user.students?.length);
+  const professional = Boolean(user.teachers?.length || user.guardians?.length) || ["teacher", "guardian"].includes(user.source) || (Boolean(user.role) && user.role !== "aluno");
+  return student && professional;
+};
+const adminIsStudentAccessUser = (user = {}) => !adminHasMixedAccessIdentity(user) && (user.source === "student" || user.role === "aluno" || Boolean(user.students?.length));
+const adminStudentAccessTarget = (user = {}) => {
+  if (!adminIsStudentAccessUser(user)) return null;
+  const records = user.students || [];
+  if (records.length !== 1) return null;
+  const student = records[0];
+  if (!student?.id || !student.school_id) return null;
+  if (user.source === "student" && user.technicalId && user.technicalId !== student.id) return null;
+  if (user.authUserId && student.user_id && user.authUserId !== student.user_id) return null;
+  return { studentId: student.id, schoolId: student.school_id };
+};
+const adminStudentAccessUrl = (user = {}) => {
+  const target = adminStudentAccessTarget(user);
+  return target ? `secretaria.html?view=acessosAlunos&school=${encodeURIComponent(target.schoolId)}&student=${encodeURIComponent(target.studentId)}` : "";
+};
+
 const adminDerivedAccessRole = (targetType = "") =>
   ({
     teacher: "professor",
@@ -12398,6 +12419,7 @@ const adminCreateAccessDefaultEmail = (user = {}) => {
 const adminCreateAccessRedirectUrl = () => new URL("redefinir-senha.html", window.location.href).toString();
 
 const adminInvokeCreateAuthAccess = async ({ targetType, targetInstitutionalId, email, expectedRole, schoolId }) => {
+  if (targetType === "student") throw new Error("Use Acessos dos Alunos para gerar login e senha institucionais.");
   await ensureAdminSupabaseConfig();
   const config = getSupabaseConfig();
   const baseUrl = config.url?.replace(/\/$/, "");
@@ -12709,6 +12731,7 @@ const adminPrintProfessionalAccessReceipt = (receipt) => {
 };
 
 const renderAdminCreateAccessDialog = (user) => {
+  if (adminHasMixedAccessIdentity(user) || adminIsStudentAccessUser(user)) return "";
   const targetType = adminCreateAccessTargetType(user);
   const derivedRole = adminDerivedAccessRole(targetType);
   const targetInstitutionalId = adminCreateAccessTargetInstitutionalId(user);
@@ -12985,7 +13008,11 @@ const renderAdminUserDetail = (user) => {
       </section>
       <section class="admin-user-safe-actions">
         ${
-          user.authConfigured
+          adminHasMixedAccessIdentity(user)
+            ? `<p role="status">Esta identidade possui vínculos de aluno e profissional. Selecione um vínculo institucional inequívoco antes de configurar ou redefinir o acesso.</p>`
+            : adminIsStudentAccessUser(user)
+            ? (adminStudentAccessUrl(user) ? `<a class="is-primary" href="${printableEscape(adminStudentAccessUrl(user))}" data-admin-student-access>Login e senha do aluno</a><p>Acesso institucional sem e-mail. Gere ou redefina a senha em Acessos dos Alunos.</p>` : `<p role="status">Vínculo de aluno incompleto ou ambíguo. Confira o registro do aluno e sua escola antes de configurar o acesso.</p>`)
+            : user.authConfigured
             ? `
               <button type="button" class="is-primary" data-admin-password-recovery="${printableEscape(user.id)}">${adminInlineIcon("mail", "Enviar recuperação de senha")}</button>
               ${
@@ -28007,6 +28034,7 @@ const renderStudentCredentialResultPanel = (index = buildSecretariaIndex()) => {
 const renderSecretariaStudentAccessCenterView = (index) => {
   const params = getSecretariaParams();
   const school = getSecretariaPrimarySchool();
+  const selectedStudentId = params.get("student") || "";
   const selectedClassId = params.get("class") || "";
   const selectedStatus = params.get("status") || "";
   const query = String(params.get("q") || "").trim().toLowerCase();
@@ -28032,7 +28060,7 @@ const renderSecretariaStudentAccessCenterView = (index) => {
       || (selectedStatus === "sem_acesso" ? !row.credential : row.statusKey === selectedStatus);
     const haystack = `${normalizeStudentName(row.student)} ${normalizeClassName(row.classItem)} ${row.credential?.login || ""}`.toLowerCase();
     const matchesQuery = !query || haystack.includes(query);
-    return matchesClass && matchesStatus && matchesQuery;
+    return (!selectedStudentId || row.student.id === selectedStudentId) && matchesClass && matchesStatus && matchesQuery;
   });
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -28050,6 +28078,7 @@ const renderSecretariaStudentAccessCenterView = (index) => {
         </div>
       </section>
       ${renderStudentCredentialResultPanel(index)}
+      ${selectedStudentId ? `<p>Aluno selecionado em Usuários. <a href="secretaria.html?view=acessosAlunos">Ver todos os alunos autorizados</a></p><p data-secretaria-student-access-message></p>` : `
       <section class="panel span-2 secretaria-form-panel">
         <div class="panel-head"><h2>Emissão em lote</h2><span>Credenciais institucionais</span></div>
         <div class="secretaria-form-grid">
@@ -28062,10 +28091,12 @@ const renderSecretariaStudentAccessCenterView = (index) => {
           <p class="secretaria-form-hint is-wide" data-secretaria-student-access-message>Operações em lote são idempotentes: alunos com acesso ativo não recebem nova senha sem reset explícito.</p>
         </div>
       </section>
+      `}
       <section class="panel span-2 secretaria-list-panel">
         <div class="panel-head"><h2>Alunos e credenciais</h2><span>${filteredRows.length} registro${filteredRows.length === 1 ? "" : "s"}</span></div>
         <form class="analytics-grid secretaria-grid" method="get" action="secretaria.html">
           <input type="hidden" name="view" value="acessosAlunos" />
+          ${selectedStudentId ? `<input type="hidden" name="student" value="${htmlEscape(selectedStudentId)}" /><input type="hidden" name="school" value="${htmlEscape(school.id || "")}" />` : ""}
           <label><span>Turma</span><select name="class"><option value="">Todas</option>${activeClasses.map((classItem) => `<option value="${htmlEscape(classItem.id)}" ${classItem.id === selectedClassId ? "selected" : ""}>${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
           <label><span>Status</span><select name="status"><option value="">Todos</option><option value="sem_acesso" ${selectedStatus === "sem_acesso" ? "selected" : ""}>Sem acesso</option><option value="active" ${selectedStatus === "active" ? "selected" : ""}>Ativo</option><option value="blocked" ${selectedStatus === "blocked" ? "selected" : ""}>Bloqueado</option><option value="pending_auth" ${selectedStatus === "pending_auth" ? "selected" : ""}>Pendente Auth</option></select></label>
           <label class="is-wide"><span>Busca</span><input name="q" value="${htmlEscape(params.get("q") || "")}" placeholder="Aluno, turma ou login" /></label>
