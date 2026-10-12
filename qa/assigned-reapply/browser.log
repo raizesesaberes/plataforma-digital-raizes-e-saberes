@@ -1,0 +1,1 @@
+PASS applied draft is labeled/protected on open and reload; title/save disabled and synthetic save blocked; both Reaplicar paths navigate original ID without create/replace/publish writes; explicit duplicate opens new editable ID, original unchanged; actual remote mapper/FK query includes assignments. Synthetic transport only.

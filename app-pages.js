@@ -20325,6 +20325,7 @@ const modules = {
             </section>
             <section class="panel qb-builder" id="construtor" data-qb-panel="avaliacoes">
               <div class="panel-head"><h2>Construtor de Avaliações</h2><button type="button" data-qb-save-draft>Salvar rascunho</button></div>
+              <p data-qb-assessment-protection role="status" hidden></p>
               <div class="qb-builder-grid">
                 <label><span>Titulo</span><input data-qb-assessment-title placeholder="Dê um título à avaliação" /></label>
                 <p class="span-2">A turma, o período e as regras serão escolhidos em Aplicações, após salvar esta avaliação.</p>
@@ -22257,6 +22258,7 @@ const initQuestionBank = () => {
   let assessments = [];
   let selectedId = null;
   let activeAssessmentId = null;
+  let activeAssessmentProtected = false;
   let cart = [];
   let cartPoints = {};
   let mode = questionBankDataService.mode();
@@ -23648,10 +23650,21 @@ const initQuestionBank = () => {
     }, 0);
   };
 
+  const protectedAssessmentMessage = 'Esta avaliação já foi aplicada. O conteúdo original está protegido. Use Reaplicar para escolher o destinatário e o período, ou Duplicar para editar uma nova avaliação.';
+  const protectedEditControls = '.qb-builder input,.qb-builder select,.qb-builder textarea,[data-qb-save-draft],[data-qb-points],.qb-cart button,[data-qb-add],[data-qb-clear-cart]';
+  const renderAssessmentProtection = () => {
+    const notice=root.querySelector('[data-qb-assessment-protection]');
+    if(notice){notice.hidden=!activeAssessmentProtected;notice.textContent=protectedAssessmentMessage;}
+    root.querySelectorAll(protectedEditControls).forEach(node=>{
+      if(activeAssessmentProtected){if(!node.hasAttribute('data-qb-protected-disabled'))node.dataset.qbProtectedDisabled=String(node.disabled);node.disabled=true;}
+      else if(node.hasAttribute('data-qb-protected-disabled')){node.disabled=node.dataset.qbProtectedDisabled==='true';delete node.dataset.qbProtectedDisabled;}
+    });
+    const publish=root.querySelector('[data-qb-publish-digital]');if(publish)publish.textContent=activeAssessmentProtected?'Reaplicar':'Salvar e escolher turma';
+  };
   const renderSaved = () => {
     saved.innerHTML = assessments.length
       ? assessments
-          .map((assessment) => `<article><strong>${htmlEscape(assessment.title)}</strong><span>${htmlEscape(assessment.status)} &middot; ${assessment.items} itens &middot; ${htmlEscape(assessment.className)} &middot; ${htmlEscape(assessment.date)}</span><button type="button" data-qb-open-assessment="${assessment.id}">Abrir</button><button type="button" data-qb-duplicate-assessment="${assessment.id}">Duplicar</button><button type="button" data-qb-archive-assessment="${assessment.id}">Arquivar</button></article>`)
+          .map((assessment) => `<article><strong>${htmlEscape(assessment.title)}</strong><span>${htmlEscape(assessment.isAssigned ? 'Já aplicada · conteúdo protegido' : assessment.status)} &middot; ${assessment.items} itens &middot; ${htmlEscape(assessment.isAssigned ? 'Destinatários e períodos em Aplicações' : assessment.className)} &middot; ${htmlEscape(assessment.isAssigned ? '' : assessment.date)}</span><button type="button" data-qb-open-assessment="${assessment.id}">Abrir</button>${assessment.isAssigned ? `<button type="button" data-qb-reapply-assessment="${assessment.id}">Reaplicar</button>` : ""}<button type="button" data-qb-duplicate-assessment="${assessment.id}">Duplicar</button><button type="button" data-qb-archive-assessment="${assessment.id}">Arquivar</button></article>`)
           .join("")
       : `<div class="qb-state">Nenhuma avaliação salva encontrada.</div>`;
   };
@@ -23683,6 +23696,7 @@ const initQuestionBank = () => {
     await renderDetail();
     renderCart();
     renderSaved();
+    renderAssessmentProtection();
     renderAccess();
     renderReviewQueue();
     syncQuestionBankView();
@@ -23709,6 +23723,7 @@ const initQuestionBank = () => {
 
   const syncCartToAssessment = async () => {
     requireAssessmentActor();
+    if(activeAssessmentProtected)throw Object.assign(Error(protectedAssessmentMessage),{status:400,code:'42501'});
     if (!cart.length) return null;
     syncPointInputs();
     if (!activeAssessmentId) {
@@ -23790,6 +23805,7 @@ const initQuestionBank = () => {
   const ensureSavedForPreview = async () => {
     requireAssessmentActor();
     if(assessmentSavePromise)return assessmentSavePromise;
+    if(activeAssessmentProtected)return {id:activeAssessmentId};
     if (!cart.length) {
       setSelectionStatus("Selecione questoes antes de salvar ou pre-visualizar.", "error");
       return null;
@@ -23880,7 +23896,7 @@ const initQuestionBank = () => {
     if(assessmentHandoffPromise)return assessmentHandoffPromise;
     assessmentHandoffPromise=(async()=>{
     if(mode!=='supabase') {setSelectionStatus('Conecte-se para salvar e escolher uma turma. Nenhuma aplicação foi publicada.','error');return null;}
-    const saved=await ensureSavedForPreview();
+    const saved=activeAssessmentProtected ? {id:activeAssessmentId} : await ensureSavedForPreview();
     requireAssessmentActor();
     if(!saved)return null;
     const id=saved.assessment?.id || saved.id;
@@ -23924,9 +23940,11 @@ const initQuestionBank = () => {
       questions = await questionBankDataService.listQuestions();requireAssessmentActor();
       assessments = await questionBankDataService.listAssessments();requireAssessmentActor();
       selectedId = selectedId || questions[0]?.id;
-      cart = activeAssessmentId
-        ? (await questionBankDataService.getAssessmentById(activeAssessmentId))?.questions?.map((entry) => entry.question?.code || entry.question_id) || cart
-        : cart.filter((id) => itemById(id));
+      if(activeAssessmentId){
+        const loaded=await questionBankDataService.getAssessmentById(activeAssessmentId,{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal});requireAssessmentActor();
+        activeAssessmentProtected=Boolean(loaded?.isAssigned);
+        cart=loaded?.questions?.map(entry=>entry.question?.code || entry.question_id) || cart;
+      }else cart=cart.filter(id=>itemById(id));
       requireAssessmentActor();populateFilterOptions();
       root.querySelector(".qb-notice span").textContent = localDevNotice();
       await render();
@@ -23976,6 +23994,14 @@ const initQuestionBank = () => {
       return;
     }
     try {
+      requireAssessmentActor();
+      if(button.dataset.qbReapplyAssessment){
+        const id=button.dataset.qbReapplyAssessment;
+        const confirmed=await questionBankDataService.getAssessmentById(id,{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal});requireAssessmentActor();
+        if(!confirmed?.id || confirmed.id!==id)throw Error('Avaliação não confirmada pelo servidor.');
+        window.location.assign(`professor.html?view=avaliacoes&assessment_id=${encodeURIComponent(id)}#aplicacoes`);return;
+      }
+      if(activeAssessmentProtected && button.matches('[data-qb-save-draft],[data-qb-add],[data-qb-remove],[data-qb-up],[data-qb-down],[data-qb-clear-cart]')){setError(protectedAssessmentMessage);return;}
       if (button.dataset.qbView) {
         selectedId = button.dataset.qbView;
         await openQuestionPreview(button.dataset.qbView);
@@ -24121,6 +24147,7 @@ const initQuestionBank = () => {
         requireAssessmentActor();
         if(!assessment?.id || assessment.id!==button.dataset.qbOpenAssessment)throw Error('Avaliação não confirmada pelo servidor.');
         activeAssessmentId = assessment.id;
+        activeAssessmentProtected=Boolean(assessment.isAssigned);
         sessionStorage.removeItem(assessmentSaveKey);
         titleInput.value = assessment.title;
         root.querySelector(".qb-builder textarea").value = assessment.instructions || assessment.description || "";
@@ -24136,8 +24163,11 @@ const initQuestionBank = () => {
         saveDraftSnapshot("assessment-opened");
       }
       if (button.dataset.qbDuplicateAssessment) {
-        await questionBankDataService.duplicateAssessment(button.dataset.qbDuplicateAssessment);
-        assessments = await questionBankDataService.listAssessments();
+        if(!window.confirm('Criar uma cópia com novo identificador para editar, preservando a avaliação original e suas aplicações?'))return;
+        const copy=await questionBankDataService.duplicateAssessment(button.dataset.qbDuplicateAssessment);requireAssessmentActor();
+        if(!copy?.id || copy.id===button.dataset.qbDuplicateAssessment)throw Error('A cópia não recebeu um novo identificador.');
+        assessments = await questionBankDataService.listAssessments();requireAssessmentActor();
+        await render();root.querySelector(`[data-qb-open-assessment="${copy.id}"]`)?.click();return;
       }
       if (button.dataset.qbArchiveAssessment) {
         await questionBankDataService.archiveAssessment(button.dataset.qbArchiveAssessment);
@@ -24174,6 +24204,7 @@ const initQuestionBank = () => {
   builderFields.forEach((control) => {
     control.addEventListener("change", () => {
       try{requireAssessmentActor();}catch{return;}
+      if(activeAssessmentProtected){setError(protectedAssessmentMessage);return;}
       saveDraftSnapshot("builder-changed");
       if (activeAssessmentId) {
         ensureSavedForPreview().catch((error) => setError(error.message));
@@ -30106,6 +30137,7 @@ const mapAssessmentFromSupabase = (row) => ({
   id: row.id,
   title: row.title,
   status: row.status,
+  isAssigned: Array.isArray(row.assignments) && row.assignments.length > 0,
   items: row.questions?.length || row.question_count || 0,
   className: row.class_name || "Sem turma",
   date: row.application_date || "Sem data",
@@ -30126,7 +30158,7 @@ const questionBankDataService = (() => {
   const questionSelect =
     "*,source:question_sources(*,license:question_licenses(*)),license:question_licenses(*),alternatives:question_alternatives(*,distractor:question_distractor_analyses(*)),media:question_media(*)";
   const assessmentSelect =
-    "*,questions:assessment_questions(*,question:question_items(code,internal_title,estimated_minutes,publication_status,curation_status,workflow_status,workflow_version,bncc_skill,reference_matrix,curriculum_matrix)),booklets:assessment_booklets(*,questions:assessment_booklet_questions(*))";
+    "*,assignments:assessment_assignments!assessment_assignments_assessment_id_fkey(id),questions:assessment_questions(*,question:question_items(code,internal_title,estimated_minutes,publication_status,curation_status,workflow_status,workflow_version,bncc_skill,reference_matrix,curriculum_matrix)),booklets:assessment_booklets(*,questions:assessment_booklet_questions(*))";
   const teacherResolverRoles = new Set(["professor", "teacher"]);
   let questionAccessState = { status: "UNLOADED", total: null, detailsTotal: null, source: "" };
   const isTeacherResolverContext = (context = {}) => Boolean(context.userId && teacherResolverRoles.has(context.role));

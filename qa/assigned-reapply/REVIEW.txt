@@ -1,0 +1,30 @@
+Avaliação já aplicada: proposta frontend, sem publicação em produção.
+Base main6f958decf27c1c2ccd33a755e93b194681f8c8f5 (PR15).
+
+Causa: assessments.status/class_name não representam as aplicações. Lista exibia
+RASCUNHO/Sem turma apesar de assessment_assignments existente. Abrir carregava
+conteúdo editável; onchange/salvar/publicar disparavam replace no mesmo ID, negado
+corretamente pelo guard SQL ASSESSMENT_ASSIGNED_CONTENT_IMMUTABLE.
+
+Correção: select de assessments inclui somente id das aplicações autorizadas pelo
+RLS via FK explícita assessment_assignments_assessment_id_fkey (confirmada baseline).
+Mapper deriva isAssigned independentemente do status-base. Lista passa a exibir
+Já aplicada/conteúdo protegido e orienta consultar destinos/períodos em Aplicações.
+Ao abrir/retomar, campos, pontos e controles de edição ficam desabilitados; handlers
+também impedem alteração mesmo com evento sintético. Prévia usa ID existente semreplace.
+Reaplicar na lista ou construtor navega para professor.html?view=avaliacoes&assessment_id=ID#aplicacoes,
+sem criar/alterar/publicar aplicação. Seleção do destinatário continua no fluxo canônico.
+Duplicar usa ação já existente, exige confirmação explícita e ID diferente; abre cópia
+editável. Não muda a implementação remota de duplicação, nem promete atomicidade dela.
+
+Validação Chromium com renderer/handlers completos e transporte sintético: avaliação
+RASCUNHO aplicada é protegida ao abrir e reload; save sintético bloqueado; ambos atalhos
+preservam ID sem create/replace/publish; duplicação abre novoID editável e original intacta;
+mapper remoto/queryreal exercitados com resposta sintética. Não é homologação real nem
+validação PostgREST/RLS nova. assessment-handoff regressão PASS; sintaxe/diff/build PASS.
+
+Escopo runtime app-pages.js/banco-questoes.html(cachekey). Nenhum SQL/guard/ACL/Auth
+alterado; nenhuma tentativa/nota/resposta/prazo/publicação real alterada. PR11 fora.
+Backend continua autoridade se aplicação ficar invisível por RLS ou ocorrer após leitura.
+Usuário já pode continuar pelo atalho canônico usando original e alvo aluno individual;
+essa correção de orientação não é pré-requisito para reaplicar. Não efetivar reaplicação.
