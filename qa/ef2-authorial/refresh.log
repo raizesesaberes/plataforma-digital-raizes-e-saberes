@@ -1,0 +1,6 @@
+PASS actual helper+refresh+render: stale rejection cannot erase newer bank/DOM
+PASS stale assessments response cannot overwrite staged questions
+PASS guarded real renderDetail discards stale history and render continuation
+PASS identity switch discards old refresh without DOM writes; actor invalidation UI remains separate
+PASS in-flight save is preserved; synthetic DOM, no browser/human homologation
+PASS integrated PR16 preserves edit revision and assessment-switch mutex guards

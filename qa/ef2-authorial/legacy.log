@@ -1,0 +1,54 @@
+LOAD qa/fase3/bootstrap.sql
+LOAD supabase/baselines/20261004_pilot_schema_baseline.sql
+LOAD supabase/migrations/20261004231721_content_architecture_phase1_question_entitlements.sql
+LOAD supabase/migrations/202610060001_question_bank_teacher_adaptations.sql
+LOAD supabase/migrations/20261006200104_question_bank_alternative_integrity.sql
+LOAD supabase/migrations/20261006205047_question_bank_atomic_official_edit.sql
+LOAD supabase/migrations/20261007092231_content_macro_v1_modules.sql
+LOAD supabase/migrations/20261008003945_authorized_question_details_for_teacher.sql
+LOAD supabase/migrations/20261008234450_admin_auth_access_duplicate_check.sql
+LOAD supabase/migrations/20261008234606_admin_auth_access_duplicate_check_orphan_priority.sql
+LOAD supabase/migrations/20261011003308_school_content_dynamic_categories_v2.sql
+LOAD supabase/migrations/20261011003328_school_content_global_review_v2.sql
+LOAD supabase/migrations/20261011003339_school_content_native_question_categories_v2.sql
+LOAD supabase/migrations/20261011003351_school_content_category_checkpoint_v2.sql
+LOAD supabase/migrations/20261011003404_school_content_protected_adapters_v2.sql
+LOAD qa/fase3/observed-start-attempt.sql
+LOAD qa/fase3/observed-boundary-fixture.sql
+LOAD qa/fase3/observed-20261009195512.sql
+LOAD qa/fase3/observed-boundary-alignment.sql
+LOAD tests/contracts/admin-assert.sql
+LOAD tests/contracts/production-legacy-helpers.sql
+LOAD qa/fase3/seed.sql
+LOAD supabase/review/fase3_assessment_authorization.sql
+LOAD supabase/review/contract_operations.sql
+LOAD supabase/review/assessment_institutional_assembly.sql
+PASS legacy teacher EF5-only, product EF2+EF5, explicit class5 returns EF5 only
+CONFIRMED DEFECT legacy school-only context returns EF2+EF5 despite teacher EF5-only
+PASS unlinked explicit class2 denied
+PASS both memberships explicit class2/class5 filtered; union exactly EF2+EF5 with pagination
+PASS ended membership class2 denied
+OBSERVED explicit class5 with school_year=2026, ano_escolar=5_ANO question count=2
+CONFIRMED DEFECT legacy unresolved school_year alias leaves grade NULL; explicit class still returns EF2+EF5
+PASS student response unchanged immediately after patch under same fixture
+PASS patch preserves exact ACL/owner/config/security/signature
+PASS patched school_year2026+ano_escolar5_ANO resolves EF5 only
+PASS SQL NULL context verified union; JSON null context rejected without recursion
+PASS school-only draft context unions only verified taught EF5
+PASS patched ended membership denied
+PASS contradictory EF2/EF5 aliases denied
+PASS zero canonical aliases denied
+PASS age_group canonical fallback resolves uniquely
+PASS three aliases same canonical grade count as one
+PASS EF5 teacher cannot use EF2-only entitlement despite both product items
+PASS patched implicit and explicit multiple classes paginated union EF2+EF5
+PASS union duplicate content deduplicated across two EF5 classes
+PASS actual builder CREATE and REPLACE without class_id, verified EF5 union
+PASS untaught EF2 CREATE/REPLACE denied and REPLACE fully rolled back
+PASS publication authorized EF5; other-school class and linked wrong-grade EF2 denied without assignments
+PASS assigned assessment remains immutable
+PASS107 unique union items, internal class pagination beyond100, outward pages100+7, duplicate-grade class dedup
+PASS unsupported non-QUESTION and student branch responses unchanged
+PASS reapply rejects changed before-body
+AFTER BODY MD5 22ffa2f36c5192ac7574c9f9f3131ea3
+LIMIT isolated actual schema/RPC, no browser/session lifecycle or production writes; legacy licensing unchanged.

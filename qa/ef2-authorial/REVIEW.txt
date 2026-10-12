@@ -1,0 +1,15 @@
+EF2 autoral — release privada sobre3f1e426
+
+Efeitos exatos do lote: cria1licença,1fonte,202content_items GLOBAL_RAIZES/QUESTION/EF2(101LP+101MAT),202bindings,202eventos de conciliação e1recibo. Atualiza apenas source_id,license_id,curation_status de202questões; o trigger existente atualiza updated_at. Não modifica legal_classification (jáautoralnas202),author_name,enunciados,alternativas,mídias,workflow,versões,históricoanterior,IDs,contratosoulicençademo. Nenhum grant poritem/escola. A disponibilidade global continua subordinada ao contrato/categoria,contexto e bloqueios.
+
+Decisão editorial proposta para aprovação específica: HOMOLOGADO→APROVADO somenteIDsmanifestados,quejáestavamworkflowAPROVADO/PUBLICADO e cuja ativaçãofoipedidapelotitular. Estado original preservado em cadaeventobefore; evidência textual originalreferenciada. Não prova revisão pedagógica humana nova. Nenhum resolver passa a aceitar genericamente HOMOLOGADO. O operador não é representado por UUID inventado: session_user e referência de conversa constam nos eventos.
+
+Licença restrita ao manifesto, distribuição na plataforma e avaliações das escolas contratantes; não autoriza adaptação nem reutilização arbitrária da licença em futurositens. Atribuição preservada. Fonte/license demo compartilhadas permanecem idênticas. Os2seedsdemonstrativos estãoexplicitamenteincluídosna confirmação das202; permanecemmesmoID/texto/código.
+
+Prevenção futura: o cadastro editorial canônico já instalado exige canonical_category para autorroot, salvaquestion+bindingatomicamente,idempotência porrequest_id e revisão explícita antes de publicação. Teste novo demonstra criação semclassificação negada,rascunho não listado,publicação aprovada adota categoriaexistente automaticamente. Não habilita importadorlegado por inferência de textos/prefixos.
+
+Isolamento/verificação: Docker Postgres17, schema/RLS/RPCs reais do repo mais fixtures de funções instaladas; identidades/textos são sintéticos. Os202IDs e códigos são do manifesto; revisions/taxonomy IDs são substituídos EXCLUSIVAMENTE na cópia de teste para a fixture sintética, sem bypass no SQL entregável. Teste cobre duplicatas,colisão,replay,rollback,EF5,contratosemEF2,detalhes202,CREATE/REPLACE,publicação correta/anoerrado,BLOCK/EMBARGO,licençarevogada,aluno0raw,criaçãofuturacanônica. Contrato/contexto não são stubs nesse teste. Testes de browser usam transporte sintético separado; não são navegador→PostgREST integrado ou homologação humana.
+
+Integração: merge direto64fddbf conflita em app-pages.js/banco-questoes.html; foi aplicado patchalternativocompatívelPR16 e cachekey novo apenas no JSdobanco. SQLteacher64fddbf e licença4e380191 copiadossemalteração; testes executados novamente na release final. Não alterar outros executores/main. Não enviado commit remoto nem deploy.
+
+Limite operacional: locks breves em tabelasdecatálogo/alternativas/mídias/eventos para impedir edição concorrente durante lote;lock_timeout5s,statement_timeout90s,abortaseocupado. Readonly deprodução confirmou ledger157 e snapshot202antes do pacote; nenhuma mutação deprodução.
