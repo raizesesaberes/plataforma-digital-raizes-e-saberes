@@ -26207,3 +26207,35 @@ html[data-a11y-reduced-motion="true"] *::after {
 [data-avalia-student-app] .digital-attempt-head > div { display:grid; gap:5px; min-width:0; }
 [data-avalia-student-app] .digital-attempt-head button { min-height:36px; padding:8px 12px; border:1px solid #cfddd4; border-radius:9px; background:#fff; color:#24553b; font:inherit; }
 [data-avalia-student-app] .digital-attempt-stage > .digital-result-card { display:grid; gap:8px; }
+
+/* Question inspection stays above the list; native dialog supplies modal focus containment. */
+[data-qb-detail][hidden], .qb-selection-context[hidden] { display: none !important; }
+.qb-question-dialog {
+  width: min(960px, calc(100vw - 32px));
+  max-width: 960px;
+  max-height: calc(100dvh - 32px);
+  box-sizing: border-box;
+  margin: auto;
+  padding: 20px;
+  border: 1px solid var(--rs-line);
+  border-radius: 16px;
+  color: var(--rs-ink);
+  background: #fff;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.qb-question-dialog::backdrop { background: rgb(15 23 42 / 58%); }
+.qb-question-dialog > .panel-head { position: sticky; top: -20px; z-index: 1; background: #fff; padding: 12px 0; }
+.qb-question-dialog .qb-proof-page { width: auto; max-width: 100%; box-sizing: border-box; }
+.qb-question-dialog img { max-width: 100%; height: auto; }
+.qb-question-dialog button, .qb-selection-context button { min-height: 44px; padding: 8px 14px; border: 1px solid var(--rs-line); border-radius: 8px; background: #fff; color: var(--rs-ink); font-weight: 700; }
+.qb-question-dialog button:focus-visible, .qb-selection-context button:focus-visible { outline: 3px solid #155eef; outline-offset: 3px; }
+.qb-selection-context { padding: 14px; border: 1px solid var(--rs-line); border-radius: 12px; background: #f5f8fc; }
+.qb-selection-context p { margin: 0 0 10px; }
+@media (max-width: 600px) {
+  .qb-question-dialog { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); padding: 12px; }
+  .qb-question-dialog > .panel-head { top: -12px; align-items: center; }
+  .qb-question-dialog h2 { font-size: 1.1rem; }
+  .qb-question-dialog .qb-detail-grid, .qb-question-dialog .qb-detail-meta { grid-template-columns: minmax(0, 1fr); }
+  .qb-question-dialog [data-qb-question-dialog-body] { overflow-wrap: anywhere; }
+}

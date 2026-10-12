@@ -20296,9 +20296,17 @@ const modules = {
             </div>
             <div class="qb-state" data-qb-loading>Carregando questões autorizadas...</div>
             <div class="qb-state error" data-qb-error hidden>Não foi possível carregar as questões.</div>
+            <div class="qb-selection-context" data-qb-selection-context hidden>
+              <p role="status">Você está consultando uma avaliação já aplicada. Para selecionar questões em outra prova, inicie uma nova avaliação. A original será preservada.</p>
+              <button type="button" data-qb-new-assessment>Iniciar nova avaliação</button>
+            </div>
             <div class="qb-grid" data-qb-grid></div>
             <div class="qb-state" data-qb-empty hidden>Nenhuma questao encontrada com os filtros atuais.</div>
-            <section class="panel qb-detail" data-qb-detail aria-live="polite"></section>
+            <section class="panel qb-detail" data-qb-detail aria-live="polite" hidden></section>
+            <dialog class="qb-question-dialog" data-qb-question-dialog aria-labelledby="qb-question-dialog-title">
+              <div class="panel-head"><h2 id="qb-question-dialog-title">Visualização da questão</h2><button type="button" data-qb-close-question-dialog autofocus aria-label="Fechar visualização da questão">Fechar</button></div>
+              <div data-qb-question-dialog-body aria-live="polite"></div>
+            </dialog>
             <section class="panel qb-authoring-entry" id="nova-questao" data-qb-panel="nova">
               <div class="panel-head"><h2>Nova questão</h2><span>Workflow editorial</span></div>
               <div class="qb-adaptation-context" data-qb-adaptation-context hidden></div>
@@ -20364,7 +20372,7 @@ const modules = {
               <div class="qb-review-queue" data-qb-review-queue></div>
             </section>
             <section class="panel qb-builder" id="construtor" data-qb-panel="avaliacoes">
-              <div class="panel-head"><h2>Construtor de Avaliações</h2><button type="button" data-qb-save-draft>Salvar rascunho</button></div>
+              <div class="panel-head"><h2>Construtor de Avaliações</h2><div class="qb-card-actions"><button type="button" data-qb-new-assessment>Nova avaliação</button><button type="button" data-qb-save-draft>Salvar rascunho</button></div></div>
               <p data-qb-assessment-protection role="status" hidden></p>
               <div class="qb-builder-grid">
                 <label><span>Titulo</span><input data-qb-assessment-title placeholder="Dê um título à avaliação" /></label>
@@ -22270,6 +22278,42 @@ const initQuestionBank = () => {
 
   const grid = root.querySelector("[data-qb-grid]");
   const detail = root.querySelector("[data-qb-detail]");
+  const questionDialog = root.querySelector('[data-qb-question-dialog]');
+  const questionDialogBody = questionDialog.querySelector('[data-qb-question-dialog-body]');
+  let questionPreviewGeneration = 0, questionPreviewId = null, questionPreviewOpener = null;
+  let questionPreviewScroll = null, questionPreviewOverflow = '';
+  const closeQuestionPreview = () => {
+    questionPreviewGeneration++;
+    questionPreviewId = null;
+    if (questionDialog.open) questionDialog.close();
+    restoreQuestionPreviewFocus();
+  };
+  questionDialog.addEventListener('cancel', event => { event.preventDefault(); closeQuestionPreview(); });
+  questionDialog.addEventListener('keydown', event => {
+    if (event.key !== 'Tab') return;
+    const focusable = [...questionDialog.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex="0"]')].filter(node => node.getClientRects().length);
+    const first = focusable[0], last = focusable[focusable.length - 1];
+    if (!first) return;
+    if (event.shiftKey && (document.activeElement === first || !questionDialog.contains(document.activeElement))) {
+      event.preventDefault(); last.focus({ preventScroll: true });
+    } else if (!event.shiftKey && (document.activeElement === last || !questionDialog.contains(document.activeElement))) {
+      event.preventDefault(); first.focus({ preventScroll: true });
+    }
+  });
+  const restoreQuestionPreviewFocus = () => {
+    if (questionDialog.open || !questionPreviewScroll) return;
+    questionPreviewGeneration++;
+    questionPreviewId = null;
+    document.body.style.overflow = questionPreviewOverflow;
+    const opener = questionPreviewOpener;
+    const scroll = questionPreviewScroll;
+    questionPreviewOpener = null; questionPreviewScroll = null;
+    if (assessmentActorCurrent()) {
+      if (opener?.isConnected) opener.focus({ preventScroll: true });
+      if (scroll) window.scrollTo({ left: scroll.x, top: scroll.y, behavior: 'instant' });
+    }
+  };
+  questionDialog.addEventListener('close', restoreQuestionPreviewFocus);
   const search = root.querySelector("[data-qb-search]");
   const filters = [...root.querySelectorAll("[data-qb-filter]")];
   const usedFilter = root.querySelector("[data-qb-used]");
@@ -22313,6 +22357,7 @@ const initQuestionBank = () => {
   const assessmentActorCurrent=()=>!assessmentActorInvalid && getSupabaseUserContext().userId===assessmentActorId;
   const requireAssessmentActor=()=>{
     if(assessmentActorCurrent())return;
+    closeQuestionPreview();
     assessmentActorInvalid=true;assessmentActorAbort.abort();
     activeAssessmentId=null;cart=[];cartPoints={};questions=[];assessments=[];selectedId=null;
     root.innerHTML='<section role="alert"><h2>Conta alterada</h2><p>Esta jornada foi encerrada. Recarregue a página para continuar com a conta atual. Confirmações pendentes de salvamento foram preservadas.</p><a href="banco-questoes.html">Reabrir Banco de Questões</a></section>';
@@ -23459,36 +23504,39 @@ const initQuestionBank = () => {
     }, 0);
   };
 
-  const openQuestionPreview = async (questionId) => {
+  const openQuestionPreview = async (questionId, opener = document.activeElement) => {
+    requireAssessmentActor();
     const item = itemById(questionId);
-    if (!item || !editorialPreviewPanel) return;
-    selectedId = item.id;
-    let history = [];
-    try {
-      history = await questionBankDataService.getCurationHistory(item.uuid || item.id);
-    } catch (error) {
-      history = [];
+    const generation = ++questionPreviewGeneration;
+    if (!item) { closeQuestionPreview(); return; }
+    questionPreviewId = item.id;
+    if (!questionDialog.open) {
+      questionPreviewOpener = opener;
+      questionPreviewScroll = { x: window.scrollX, y: window.scrollY };
+      questionPreviewOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      questionDialog.showModal();
+      questionDialog.querySelector('[data-qb-close-question-dialog]').focus({ preventScroll: true });
     }
-    editorialPreviewPanel.hidden = false;
-    editorialPreviewPanel.innerHTML = `
-      <div class="panel-head">
-        <div>
-          <h2>Visualização da questão</h2>
-          <span>${htmlEscape(item.id)} · ${htmlEscape(formatEditorialStatus(getEditorialWorkflowStatus(item), item.publicationStatus))}</span>
-        </div>
-        <div class="qb-editorial-preview-actions">${renderEditorialPreviewActions(item)}</div>
-      </div>
-      <div class="qb-preview-sheet qb-editorial-preview-sheet">
-        <div class="qb-readonly-note">Visualização somente leitura. Nenhuma alteração de conteúdo ou status ocorre ao abrir esta prévia.</div>
-        ${renderQuestionProof(item, { showAnswerKey: canAuthorQuestion() || canReviewQuestion() || canPublishQuestion() })}
-        ${renderQuestionMetadata(item, history)}
-      </div>
-    `;
-    editorialPreviewPanel.setAttribute("tabindex", "-1");
-    window.setTimeout(() => {
-      editorialPreviewPanel.focus({ preventScroll: true });
-      editorialPreviewPanel.scrollIntoView({ block: "center", behavior: "smooth" });
-    }, 0);
+    const current = () => generation === questionPreviewGeneration && questionDialog.open &&
+      questionPreviewId === item.id && assessmentActorCurrent() && itemById(item.id) === item;
+    const content = history => `${renderQuestionProof(item, { showAnswerKey: true })}${renderQuestionMetadata(item, history)}`;
+    if (questionDialogBody.contains(document.activeElement)) {
+      questionDialog.querySelector('[data-qb-close-question-dialog]').focus({ preventScroll: true });
+    }
+    questionDialogBody.setAttribute('aria-busy', 'true');
+    questionDialogBody.innerHTML = `<p role="status">Carregando histórico da questão...</p>${content([])}`;
+    try {
+      const history = await questionBankDataService.getCurationHistory(item.uuid || item.id);
+      if (!current()) return;
+      questionDialogBody.innerHTML = content(history || []);
+    } catch (error) {
+      if (!current()) return;
+      questionDialogBody.innerHTML = `<p role="alert">Não foi possível carregar o histórico. A questão autorizada continua disponível.</p><button type="button" data-qb-retry-question-dialog>Tentar carregar histórico novamente</button>${content([])}`;
+    } finally {
+      if (current()) questionDialogBody.setAttribute('aria-busy', 'false');
+      if (!assessmentActorCurrent()) closeQuestionPreview();
+    }
   };
 
   const renderDetail = async (current = assessmentActorCurrent) => {
@@ -23720,6 +23768,10 @@ const initQuestionBank = () => {
       if(activeAssessmentProtected){if(!node.hasAttribute('data-qb-protected-disabled'))node.dataset.qbProtectedDisabled=String(node.disabled);node.disabled=true;}
       else if(node.hasAttribute('data-qb-protected-disabled')){node.disabled=node.dataset.qbProtectedDisabled==='true';delete node.dataset.qbProtectedDisabled;}
     });
+    root.querySelector('[data-qb-selection-context]').hidden = !activeAssessmentProtected;
+    root.querySelectorAll('[data-qb-new-assessment]').forEach(node => {
+      node.disabled = Boolean(assessmentSavePromise || assessmentSwitchBusy || sessionStorage.getItem(assessmentSaveKey));
+    });
     const publish=root.querySelector('[data-qb-publish-digital]');if(publish)publish.textContent=activeAssessmentProtected?'Reaplicar':'Salvar e escolher turma';
   };
   const renderSaved = () => {
@@ -23840,7 +23892,7 @@ const initQuestionBank = () => {
   let assessmentSavePromise=null, assessmentHandoffPromise=null, assessmentHandoffComplete=false;
   const assessmentSaveKey=`raizes:assessment-save-pending:${assessmentActorId || 'anonymous'}`;
   const uncertainSaveMessage='A confirmação do salvamento está pendente. Consulte Avaliações salvas e abra a avaliação confirmada antes de continuar. Não repita a criação.';
-  const saveControls='.qb-builder input,.qb-builder select,.qb-builder textarea,[data-qb-points],[data-qb-save-draft],[data-qb-preview],[data-qb-publish-digital],[data-qb-generate],.qb-cart button,[data-qb-add],[data-qb-clear-cart],[data-qb-open-assessment],[data-qb-duplicate-assessment],[data-qb-reapply-assessment],[data-qb-archive-assessment]';
+  const saveControls='.qb-builder input,.qb-builder select,.qb-builder textarea,[data-qb-points],[data-qb-save-draft],[data-qb-preview],[data-qb-publish-digital],[data-qb-generate],.qb-cart button,[data-qb-add],[data-qb-clear-cart],[data-qb-open-assessment],[data-qb-duplicate-assessment],[data-qb-reapply-assessment],[data-qb-archive-assessment],[data-qb-new-assessment]';
   const saveAssessmentOnce = () => {
     requireAssessmentActor();
     if(assessmentSavePromise)return assessmentSavePromise;
@@ -24016,6 +24068,7 @@ const initQuestionBank = () => {
       const loaded=assessmentId ? await questionBankDataService.getAssessmentById(assessmentId,{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal}) : null;
       if(!current())return;
       if(assessmentId && (!loaded?.id || loaded.id!==assessmentId))throw Error('Avaliação não confirmada pelo servidor.');
+      if (questionDialog.open) closeQuestionPreview();
       questions=loadedQuestions;assessments=loadedAssessments;
       selectedId=selectedId || questions[0]?.id;
       // Applied content must be official. Unassigned drafts keep legitimate local edits.
@@ -24063,10 +24116,27 @@ const initQuestionBank = () => {
     if (!button) {
       return;
     }
+    if (button.hasAttribute('data-qb-close-question-dialog')) { closeQuestionPreview(); return; }
+    if (button.hasAttribute('data-qb-retry-question-dialog')) { await openQuestionPreview(questionPreviewId, questionPreviewOpener); return; }
+    if (button.dataset.qbView) { await openQuestionPreview(button.dataset.qbView, button); return; }
     let ownsSwitch=false;
     let switchControls=[];
     try {
       requireAssessmentActor();
+      if (button.hasAttribute('data-qb-new-assessment')) {
+        if (assessmentSavePromise || assessmentSwitchBusy) throw Error('Aguarde a operação atual terminar antes de iniciar outra avaliação.');
+        if (sessionStorage.getItem(assessmentSaveKey)) throw Error(uncertainSaveMessage);
+        if (!activeAssessmentProtected &&
+            !window.confirm('Iniciar outra avaliação? O rascunho local atual será substituído. Avaliações já salvas serão preservadas.')) return;
+        activeAssessmentId = null; activeAssessmentProtected = false; cart = []; cartPoints = {};
+        assessmentHandoffComplete = false;
+        root.querySelectorAll('.qb-builder input,.qb-builder textarea').forEach(node => { node.value = ''; });
+        root.querySelector('[data-qb-cover]').selectedIndex = 0;
+        previewPanel.hidden = true;
+        saveDraftSnapshot('new-assessment', { syncPoints: false });
+        setSelectionStatus('Nova avaliação iniciada. Selecione as questões autorizadas para montar a prova.', 'success');
+        await render(); return;
+      }
       if(button.matches('[data-qb-open-assessment],[data-qb-duplicate-assessment],[data-qb-reapply-assessment],[data-qb-archive-assessment]')){
         if(assessmentSavePromise || assessmentSwitchBusy)throw Error('Aguarde a operação atual terminar antes de abrir ou duplicar.');
         const marker=JSON.parse(sessionStorage.getItem(assessmentSaveKey) || 'null');
@@ -24081,10 +24151,6 @@ const initQuestionBank = () => {
         window.location.assign(`professor.html?view=avaliacoes&assessment_id=${encodeURIComponent(id)}#aplicacoes`);return;
       }
       if(activeAssessmentProtected && button.matches('[data-qb-save-draft],[data-qb-add],[data-qb-remove],[data-qb-up],[data-qb-down],[data-qb-clear-cart]')){setError(protectedAssessmentMessage);return;}
-      if (button.dataset.qbView) {
-        selectedId = button.dataset.qbView;
-        await openQuestionPreview(button.dataset.qbView);
-      }
       if (button.dataset.qbAdd) {
         button.textContent = "Selecionando";
         selectQuestion(button.dataset.qbAdd);
