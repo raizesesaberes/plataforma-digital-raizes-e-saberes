@@ -1,0 +1,25 @@
+REVISÃO PRIVADA — SELEÇÃO DE QUESTÕES E MODAL
+Base publicada:1a9df86152a604a760498122f7bc0ab121d0a42f(PR18). Sem push/merge/deploy ou SQL novo.
+
+Causa reproduzida
+A seleção não depende de papel editorial: Professor institucional pode montar avaliação com itens retornados pelo resolver autorizado. Nos dados sintéticos, Professor sem question_bank_role seleciona EF2 e EF5 normalmente em nova montagem.
+Ao restaurar activeAssessmentId de avaliação já aplicada, refresh hidrata o registro oficial e ativa activeAssessmentProtected. renderAssessmentProtection desabilita todos data-qb-add, corretamente protegendo a original. Porém a explicação fica no painel Avaliações, oculto em ?view=banco; não existia ação para iniciar uma montagem independente. Reproduzido: botão Selecionar cinza, Adaptar habilitado, questão publicada e não selecionada, sem explicação visível. baseline.log registra o comportamento anterior.
+Isso é uma causa concreta e compatível com o relato, não confirmação do localStorage privado da professora de Horizonte. Não houve acesso à sessão real. Se o caso real não tiver avaliação aplicada restaurada, permanece necessário identificar o estado local; esta entrega não afirma uma causa que não pôde observar.
+
+Correção de seleção
+Explicação e ação Iniciar nova avaliação aparecem no Banco quando a montagem atual está protegida; o construtor também oferece Nova avaliação. A ação inicia rascunho local sem ID, limpa carrinho/pontos/campos e preserva avaliação original, aplicações e servidor. Não cria avaliação até Salvar rascunho. Rascunho local editável exige confirmação antes de substituição. Operação em andamento ou ACK pendente impede reset, inclusive evento disparado artificialmente; guards PR16 permanecem ativos. A seleção de itens não publicados/selecionados e a proteção da original continuam sem desbloqueio genérico.
+
+Modal
+Ver questão usa dialog nativo sobreposto, título acessível, botão Fechar, Escape, contenção explícita de Tab/Shift+Tab, retorno de foco e scroll. A lista não é rerenderizada ao abrir/fechar. O antigo detalhe inline fica oculto. Usa o conteúdo completo já retornado pelo resolver autorizado; histórico carrega separadamente com aria-busy, erro não fatal e tentativa novamente. Respostas obsoletas são descartadas por geração, item e conta. Fechamento seguido de reabertura na mesma tarefa não deixa evento close atrasado apagar a nova prévia; troca de conta e atualização do catálogo fecham a prévia antiga. Não altera SQL, grants, classes, avaliações ou respostas reais.
+
+Validação
+selection-modal.mjs: Chromium1440x1000 e390x844, perfil Professor SEM papel editorial,205 itens sintéticos(202EF2+3EF5),seleção dos dois anos,remoção,carrinho,original aplicada imutável,iniciar outra prova,CREATE de novo ID,gravação em andamento,ACK incerto,modal/foco/rolagem/carregamento/erro/retry/troca rápida/conta. Transporte sintético com serviço real de montagem; não é sessão real nem app nativo.
+assigned-reapply.mjs,assessment-handoff.mjs,question-bank-scope.mjs,question-bank-refresh.mjs:PASS. O fixture do teste extraído de refresh recebeu apenas o novo nó de diálogo.
+qa/ef2-authorial/test.py:PASS em PostgreSQL isolado com schema/RLS/RPCs reais;202detalhes/CREATE/REPLACE/publicação autorizada;EF5,outra escola,contrato e aluno raw0 preservados. Nenhum teste mutante em produção.
+Build4277; nenhuma pasta SQL/qa/tests/backups/node_modules ou arquivo.sql/.bundle/.zip/.patch no dist. node--check e git diff--check passam.
+Limitação conhecida:tests/teacher-content/browser.mjs falha em métrica após erro de carga(espera—,recebe0). Reproduzida também no app-pages.js da árvore publicada(base PR18); não causada por este diff. Logs roles.log e roles-baseline.log registram os dois resultados. Não declarar suíte geral integralmente verde.
+
+Referência visual
+Librarylibfile_c79753a154488191b0f99a69fd09cd1a:prepare_materialize no executor e helper atual tentados; download failed na primeira tentativa e na única repetição. Nenhum PNG original ficou disponível/legível; pixels do print original não foram inspecionados. As capturas sintéticas1440/390 foram inspecionadas localmente e não estão incluídas como entregáveis na Library.
+
+Arquivos runtime:app-pages.js,master-pack.css,banco-questoes.html(cachekeys). Testes e evidências em tests/teacher-content/selection-modal.mjs e qa/selection-modal. Sem redesenho de outras telas. Aceite humano e eventual publicação dependem da próxima revisão coordenada.

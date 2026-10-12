@@ -1,0 +1,19 @@
+Bank role professor
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+'0' !== '—'
+
+    at file:///workspace/question-selection-modal/qa/selection-modal/roles-baseline.mjs:94:178 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '0',
+  expected: '—',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.19.0
