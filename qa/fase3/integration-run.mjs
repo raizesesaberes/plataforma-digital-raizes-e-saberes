@@ -13,6 +13,7 @@ const postgrest='postgrest/postgrest:v12.2.12@sha256:5f4ce744539bbba786b4e24dbbd
 const baseline=false;
 const manifestsOnly=process.argv.includes('--manifests-only');
 const stage=nameOfStage=>{if(manifestsOnly)recordStage(nameOfStage,sql=>run(['exec','-i',name,'psql','-U','postgres','-v','ON_ERROR_STOP=1','-At'],sql));};
+const autosaveOnly=process.argv.includes('--autosave-only');
 const routingOnly=process.argv.includes('--routing-only');
 const contractsFirst=process.argv.includes('--contracts-first');
 const snapshot=()=>JSON.parse(run(['exec','-i',name,'psql','-U','postgres','-At'],`select jsonb_object_agg(key, value) from (select n.nspname||'.'||p.proname||'('||pg_get_function_identity_arguments(p.oid)||')' key,jsonb_build_object('body_md5',md5(p.prosrc),'definition_md5',md5(pg_get_functiondef(p.oid)),'acl',p.proacl::text,'config',p.proconfig,'owner',pg_get_userbyid(p.proowner)) value from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','school_category_private') union all select 'trigger:'||t.tgrelid::regclass::text||':'||t.tgname,jsonb_build_object('definition',pg_get_triggerdef(t.oid),'enabled',t.tgenabled) from pg_trigger t where not t.tgisinternal) s;`));
@@ -72,7 +73,16 @@ try {
   console.log('PASS contracts preserved '+protectedObjects.length+' FASE3 functions/triggers including definitions, ACLs and config');
   if(manifestsOnly){writeManifestIndex();checkVersionQuery(sql=>run(['exec','-i',name,'psql','-U','postgres','-v','ON_ERROR_STOP=1','-At'],sql));console.log('PASS stage manifests captured; no ledger created or written');} else {
   apply('tests/contracts/seed.sql');
-  if((process.argv.includes('--amendments-only')||process.argv.includes('--individual-only'))) {
+  if(process.argv.includes('--assembly-only')) {
+    const beforeAssembly=catalog();apply('supabase/review/assessment_institutional_assembly.sql');const afterAssembly=catalog();
+    assert.deepEqual(afterAssembly.relations,beforeAssembly.relations);
+    for(const [key,value] of Object.entries(beforeAssembly.functions)){
+      if(key.startsWith('public.avalia_plus_create_assessment_from_bank(')||key.startsWith('public.avalia_plus_replace_assessment_items(')){assert.deepEqual(afterAssembly.functions[key].acl,value.acl);}else assert.deepEqual(afterAssembly.functions[key],value,key);
+    }
+    execFileSync('python3',['tests/contracts/assembly-institutional.py'],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}});
+  } else {
+  if(process.argv.includes('--amendments-only')||process.argv.includes('--individual-only')) {
+
     const beforeAmendment=catalog();apply('supabase/review/contract_amendments.sql');const afterAmendment=catalog();
     assert.deepEqual(afterAmendment.relations,beforeAmendment.relations,'Amendment changed table ACL/RLS/policies/triggers');
     for(const [key,value] of Object.entries(beforeAmendment.functions)){
@@ -93,7 +103,8 @@ try {
       console.log('PASS individual creation: only three reviewed function bodies changed; existing ACLs/config/relations/resolvers unchanged');
     }
     execFileSync('python3',[process.argv.includes('--individual-only')?'tests/contracts/individual-school.py':'tests/contracts/amendments.py'],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}}); }
-  for(const suite of (routingOnly||process.argv.includes('--amendments-only')?[]:['database.py','content.py','edge-cases.py','security-regressions.py','succession-regressions.py'])){
+  for(const suite of (autosaveOnly||routingOnly||process.argv.includes('--amendments-only')||process.argv.includes('--individual-only')?[]:['database.py','content.py','edge-cases.py','security-regressions.py','succession-regressions.py'])){
+
     console.log('CONTRACT SUITE '+suite);
     execFileSync('python3',['tests/contracts/'+suite],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}});
   }
@@ -103,13 +114,14 @@ try {
   ready=false;
   for(let i=0;i<100;i++){try{const res=await fetch(`http://${host}:3000/`);if(res.ok){ready=true;break}}catch{} await new Promise(r=>setTimeout(r,200));}
   if(!ready)throw new Error('Local PostgREST did not start');
-  if(routingOnly){execFileSync(process.execPath,['qa/fase3/routing-browser.mjs',name],{stdio:'inherit'});} else {
+  if(autosaveOnly){execFileSync(process.execPath,['tests/student-autosave/browser-database.mjs',name],{stdio:'inherit'});} else if(routingOnly){execFileSync(process.execPath,['qa/fase3/routing-browser.mjs',name],{stdio:'inherit'});} else {
   let journeyError;
   try { execFileSync(process.execPath,['qa/fase3/journeys.mjs',name,...(baseline?['--baseline']:[])],{stdio:'inherit'}); } catch(error) { journeyError=error; }
   execFileSync('python3',['tests/contracts/fase3-bridge.py'],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}});
   if(journeyError)throw journeyError;
   }
   }
+}
 }
 } catch(error) {console.error(error.stderr?.toString()||error.message);process.exitCode=1;}
 finally {for(const container of [`${name}-rest`,name]){try{run(['rm','-fv',container])}catch{}}}

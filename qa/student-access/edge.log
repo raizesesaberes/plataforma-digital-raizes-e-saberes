@@ -1,0 +1,4 @@
+(node:320868) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS actual Edge handlers with synthetic Supabase: no-email provisioning, idempotent reentry, reset, admin/school authorization and denial, inactive profile, case-sensitive existing password, rate-limit/block/error propagation. No live Auth calls.
+PASS all 81 dictionary words meet existing >=10 password/reset contract; six unbiased crypto-random digits preserve and increase combination space 100-fold.

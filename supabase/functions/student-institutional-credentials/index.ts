@@ -53,8 +53,10 @@ const randomInt = (max: number) => {
 };
 
 const generatePassword = () => {
-  const word = friendlyPasswordWords[randomInt(friendlyPasswordWords.length)];
-  const digits = String(randomInt(10000)).padStart(4, "0");
+  const word = friendlyPasswordWords[randomInt(friendlyPasswordWords.length)].toLowerCase();
+  // Six digits keep even the shortest lowercase word at >=10 characters,
+  // accepted by the existing DB contract without weakening its legacy validation.
+  const digits = String(randomInt(1000000)).padStart(6, "0");
   return `${word}-${digits}`;
 };
 

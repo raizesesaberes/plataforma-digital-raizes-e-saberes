@@ -9377,9 +9377,11 @@ const avaliaApplicationService = (() => {
       }));
       return result?.attempt || result;
     },
-    async saveResponse({ attemptId, questionId, alternativeId, responseText, autosaveSequence = 1 }) {
+    async saveResponse({ attemptId, questionId, alternativeId, responseText, autosaveSequence = 1, expectedUserId }) {
       const { request } = client();
+      if (!Number.isInteger(autosaveSequence) || autosaveSequence < 1 || autosaveSequence > 2147483647) throw Error("Sequência de salvamento inválida. Reabra a tentativa existente.");
       const result = normalizeRpcJson(await request("rpc/student_save_assessment_response_v2", "", {
+        expectedUserId,
         method: "POST",
         requireAuthenticated: true,
         allowedRoles: ["aluno", "admin"],
@@ -10265,7 +10267,7 @@ const renderTeacherAssessmentsView = () => {
     return renderTeacherEmptyState("NENHUMA TURMA VINCULADA.", "A aplicacao de avaliacao exige uma turma institucional ativa.");
   }
   const state = avaliaApplicationState.teacher;
-  const selectedClassId = classes[0]?.id || "";
+  const selectedClassId = "";
   const selectedStudents = getTeacherInstitutionalStudents(selectedClassId);
   const assessmentCount = state.assessments.length;
   const assignmentCount = state.assignments.length;
@@ -10316,7 +10318,7 @@ const renderTeacherAssessmentsView = () => {
         <fieldset>
           <legend>Destino</legend>
           <label><span>Público</span><select name="targetType" data-avalia-target-type><option value="class">Turma inteira</option><option value="student">Aluno específico</option></select></label>
-          <label><span>Turma</span><select name="classId" data-avalia-class-select>${classes.map((classItem) => `<option value="${htmlEscape(classItem.id)}">${printableEscape(classItem.name)}</option>`).join("")}</select></label>
+          <label><span>Turma</span><select name="classId" data-avalia-class-select><option value="">Selecione uma turma autorizada</option>${classes.map((classItem) => `<option value="${htmlEscape(classItem.id)}">${printableEscape(classItem.name)}</option>`).join("")}</select></label>
           <label data-avalia-student-wrap hidden><span>Aluno</span><select name="studentId" data-avalia-student-select>${selectedStudents.map((student) => `<option value="${htmlEscape(student.id)}">${printableEscape(student.name)}</option>`).join("")}</select></label>
         </fieldset>
         <fieldset>
@@ -10540,7 +10542,7 @@ const renderStudentAssessmentsView = () => {
   return `
     <section class="student-card" data-avalia-student-app>
       <div class="student-card-head"><h2>Avaliações</h2><span data-avalia-student-count>${assignments.length} publicadas</span></div>
-      <div class="qb-selection-status" data-avalia-student-status aria-live="polite">${printableEscape(state.message || state.error || "")}</div>
+      <div class="qb-selection-status" data-avalia-student-status aria-live="polite">${getStudentAvaliaSaveFailure() ? studentAvaliaSaveFailureMessage(getStudentAvaliaSaveFailure().error || state.error) : printableEscape(state.message || state.error || "")}</div>
       <div class="student-premium-card-grid">
         ${renderStudentAssessmentGroup("Disponiveis", available)}
         ${renderStudentAssessmentGroup("Em andamento", inProgress)}
@@ -10573,6 +10575,77 @@ const renderStudentAssessmentCard = (assignment) => {
   `;
 };
 
+const studentAvaliaSaveState = { pending: false, submitting: false, failed: null, sequences: new Map() };
+const getStudentAvaliaSaveFailure = () => {
+  const failed = studentAvaliaSaveState.failed;
+  return failed?.actor === getSupabaseUserContext().userId && failed?.attemptId === getAvaliaActiveAttempt()?.id ? failed : null;
+};
+const studentAvaliaSaveFailureMessage = (error) => `${printableEscape(error || 'Falha ao salvar resposta.')} ${getStudentAvaliaSaveFailure()?.definitive ? 'A resposta não foi salva. Você pode navegar ou fechar; nenhuma entrega será feita automaticamente.' : 'Sua resposta ainda não foi confirmada. Não recarregue nem entregue.'} <button type="button" data-avalia-retry-save>${getStudentAvaliaSaveFailure()?.definitive ? 'Conferir respostas salvas' : 'Conferir e tentar salvar'}</button>`;
+const studentAvaliaSaveExpired = (attempt) => Number.isFinite(Date.parse(attempt?.deadline_at)) && Date.parse(attempt.deadline_at) <= Date.now();
+const studentAvaliaDefinitiveSaveError = (error) => error.status >= 400 && error.status < 500 && ![408,429].includes(error.status) && /^(22|23|42|P0|PGRST)/.test(error.code || '');
+const studentAvaliaRemainingLabel = (attempt) => {
+  const deadline = Date.parse(attempt?.deadline_at || "");
+  const value = Number.isFinite(deadline) ? Math.max(0, Math.ceil((deadline - Date.now()) / 1000)) : null;
+  return value == null ? "Sem cronômetro" : `${Math.floor(value / 60)}min ${value % 60}s`;
+};
+const nextStudentAutosaveSequence = (attempt, actor) => {
+  const key = `${actor}:${attempt.id}`;
+  const persisted = (attempt.responses || []).map(r => Number(r.autosave_sequence || 0));
+  const current = Math.max(0, studentAvaliaSaveState.sequences.get(key) || 0, ...persisted);
+  if (!Number.isSafeInteger(current) || current >= 2147483647) throw Error("Limite de sequência atingido. Não reinicie a avaliação; solicite suporte.");
+  studentAvaliaSaveState.sequences.set(key, current + 1);
+  return current + 1;
+};
+const saveStudentAvaliaAnswer = async (root, attempt, answer, retry = false) => {
+  if (studentAvaliaSaveState.pending || studentAvaliaSaveState.submitting) return;
+  if (getStudentAvaliaSaveFailure() && !retry) return;
+  const actor = getSupabaseUserContext().userId;
+  const pending = retry ? getStudentAvaliaSaveFailure() : { actor, attemptId: attempt.id, answer };
+  if (!pending || pending.actor !== actor || pending.attemptId !== attempt.id) {
+    const status=root.querySelector('[data-avalia-student-status]');if(status)status.textContent='Conta ou tentativa alterada. Reabra a tentativa existente.';
+    return;
+  }
+  const checkActor = () => { if (getSupabaseUserContext().userId !== actor) throw Error("Conta alterada durante o salvamento."); };
+  const controls = [...root.querySelectorAll('.digital-attempt-stage button,.digital-attempt-stage input,.digital-attempt-stage textarea')].map(node=>({node,disabled:node.disabled}));
+  const status = root.querySelector('[data-avalia-student-status]');
+  studentAvaliaSaveState.actor = actor;
+  studentAvaliaSaveState.pending = true;
+  controls.forEach(({node})=>node.disabled=true);
+  if(status)status.textContent='Salvando resposta...';
+  let writeStarted = false;
+  try {
+    let response;
+    if(retry){
+      const readback=await avaliaApplicationService.listStudentAssignments();checkActor();
+      const stored=readback.attempts?.find(a=>a.id===attempt.id);
+      const saved=stored?.responses?.find(r=>r.question_id===pending.answer.questionId);
+      if(saved && (saved.selected_alternative_id || null)===(pending.answer.alternativeId || null) && (saved.response_text || '')===(pending.answer.responseText || '')) response=saved;
+      if(stored)Object.assign(attempt,stored,{responses:stored.responses || []});
+      if(!stored || stored.status !== 'in_progress' || studentAvaliaSaveExpired(stored)) pending.definitive = true;
+    }
+    if(!response){
+      if(pending.definitive || studentAvaliaSaveExpired(attempt) || attempt.status !== 'in_progress'){pending.definitive=true;throw Error('Salvamento encerrado ou recusado. A resposta não foi salva.');}
+      const autosaveSequence=nextStudentAutosaveSequence(attempt,actor);checkActor();
+      writeStarted = true;
+      response=await avaliaApplicationService.saveResponse({attemptId:attempt.id,...pending.answer,autosaveSequence,expectedUserId:actor});checkActor();
+    }
+    if(!response || response.attempt_id!==attempt.id || response.question_id!==pending.answer.questionId)throw Error('Confirmação de resposta inválida.');
+    attempt.responses=[...(attempt.responses || []).filter(r=>r.question_id!==response.question_id),response];
+    studentAvaliaSaveState.failed=null;
+    if(getAvaliaActiveAttempt()?.id===attempt.id){avaliaApplicationState.student.error='';avaliaApplicationState.student.message='Resposta salva e confirmada.';}
+  } catch(error) {
+    pending.definitive = pending.definitive || studentAvaliaDefinitiveSaveError(error) || studentAvaliaSaveExpired(attempt) || (!retry && !writeStarted);
+    studentAvaliaSaveState.failed=pending;
+    pending.error=error.message || 'Falha ao salvar resposta.';
+    if(getSupabaseUserContext().userId !== actor)return;
+    if(getAvaliaActiveAttempt()?.id===attempt.id)avaliaApplicationState.student.error=pending.error;
+  } finally {
+    studentAvaliaSaveState.pending=false;
+    if(!getStudentAvaliaSaveFailure())controls.forEach(({node,disabled})=>node.disabled=disabled);
+    if(getSupabaseUserContext().userId === actor)refreshStudentAvaliaSurface();
+  }
+};
+
 const renderStudentAssessmentAttemptStage = () => {
   const assignment = getAvaliaActiveAssignment();
   const attempt = getAvaliaActiveAttempt();
@@ -10585,12 +10658,11 @@ const renderStudentAssessmentAttemptStage = () => {
   const response = getAvaliaResponseForQuestion(attempt, question.id);
   const isClosed = String(attempt.status || "").toLowerCase() !== "in_progress";
   const answeredCount = questions.filter((entry) => getAvaliaResponseForQuestion(attempt, getAvaliaQuestion(entry).id)).length;
-  const remainingSeconds = attempt.remaining_seconds ?? attempt.progress?.remaining_seconds;
-  const remainingLabel = remainingSeconds == null ? "Sem cronometro" : `${Math.floor(Number(remainingSeconds) / 60)}min ${Number(remainingSeconds) % 60}s`;
+  const remainingLabel = studentAvaliaRemainingLabel(attempt);
   return `
     <section class="digital-attempt-stage">
       <div class="digital-attempt-head">
-        <div><strong>${printableEscape(assignment.assessment?.title || "Avaliacao")}</strong><span>${avaliaApplicationState.student.activeQuestionIndex + 1}/${questions.length} · ${answeredCount} respondidas · ${printableEscape(remainingLabel)}</span></div>
+        <div><strong>${printableEscape(assignment.assessment?.title || "Avaliacao")}</strong><span>${avaliaApplicationState.student.activeQuestionIndex + 1}/${questions.length} · ${answeredCount} respondidas · <span data-avalia-countdown>${printableEscape(remainingLabel)}</span></span></div>
         <button type="button" data-avalia-stage-close>Fechar</button>
       </div>
       ${isClosed ? `
@@ -12366,6 +12438,27 @@ const adminCreateAccessTargetType = (user = {}) => {
   return "";
 };
 
+const adminHasMixedAccessIdentity = (user = {}) => {
+  const student = user.source === "student" || user.role === "aluno" || Boolean(user.students?.length);
+  const professional = Boolean(user.teachers?.length || user.guardians?.length) || ["teacher", "guardian"].includes(user.source) || (Boolean(user.role) && user.role !== "aluno");
+  return student && professional;
+};
+const adminIsStudentAccessUser = (user = {}) => !adminHasMixedAccessIdentity(user) && (user.source === "student" || user.role === "aluno" || Boolean(user.students?.length));
+const adminStudentAccessTarget = (user = {}) => {
+  if (!adminIsStudentAccessUser(user)) return null;
+  const records = user.students || [];
+  if (records.length !== 1) return null;
+  const student = records[0];
+  if (!student?.id || !student.school_id) return null;
+  if (user.source === "student" && user.technicalId && user.technicalId !== student.id) return null;
+  if (user.authUserId && student.user_id && user.authUserId !== student.user_id) return null;
+  return { studentId: student.id, schoolId: student.school_id };
+};
+const adminStudentAccessUrl = (user = {}) => {
+  const target = adminStudentAccessTarget(user);
+  return target ? `secretaria.html?view=acessosAlunos&school=${encodeURIComponent(target.schoolId)}&student=${encodeURIComponent(target.studentId)}` : "";
+};
+
 const adminDerivedAccessRole = (targetType = "") =>
   ({
     teacher: "professor",
@@ -12398,6 +12491,7 @@ const adminCreateAccessDefaultEmail = (user = {}) => {
 const adminCreateAccessRedirectUrl = () => new URL("redefinir-senha.html", window.location.href).toString();
 
 const adminInvokeCreateAuthAccess = async ({ targetType, targetInstitutionalId, email, expectedRole, schoolId }) => {
+  if (targetType === "student") throw new Error("Use Acessos dos Alunos para gerar login e senha institucionais.");
   await ensureAdminSupabaseConfig();
   const config = getSupabaseConfig();
   const baseUrl = config.url?.replace(/\/$/, "");
@@ -12709,6 +12803,7 @@ const adminPrintProfessionalAccessReceipt = (receipt) => {
 };
 
 const renderAdminCreateAccessDialog = (user) => {
+  if (adminHasMixedAccessIdentity(user) || adminIsStudentAccessUser(user)) return "";
   const targetType = adminCreateAccessTargetType(user);
   const derivedRole = adminDerivedAccessRole(targetType);
   const targetInstitutionalId = adminCreateAccessTargetInstitutionalId(user);
@@ -12985,7 +13080,11 @@ const renderAdminUserDetail = (user) => {
       </section>
       <section class="admin-user-safe-actions">
         ${
-          user.authConfigured
+          adminHasMixedAccessIdentity(user)
+            ? `<p role="status">Esta identidade possui vínculos de aluno e profissional. Selecione um vínculo institucional inequívoco antes de configurar ou redefinir o acesso.</p>`
+            : adminIsStudentAccessUser(user)
+            ? (adminStudentAccessUrl(user) ? `<a class="is-primary" href="${printableEscape(adminStudentAccessUrl(user))}" data-admin-student-access>Login e senha do aluno</a><p>Acesso institucional sem e-mail. Gere ou redefina a senha em Acessos dos Alunos.</p>` : `<p role="status">Vínculo de aluno incompleto ou ambíguo. Confira o registro do aluno e sua escola antes de configurar o acesso.</p>`)
+            : user.authConfigured
             ? `
               <button type="button" class="is-primary" data-admin-password-recovery="${printableEscape(user.id)}">${adminInlineIcon("mail", "Enviar recuperação de senha")}</button>
               ${
@@ -20164,8 +20263,8 @@ const modules = {
                 <option value="time">Tempo estimado</option>
               </select>
             </div>
-            <div class="qb-state" data-qb-loading>Carregando banco demonstrativo...</div>
-            <div class="qb-state error" data-qb-error hidden>Não foi possível carregar os itens demonstrativos.</div>
+            <div class="qb-state" data-qb-loading>Carregando questões autorizadas...</div>
+            <div class="qb-state error" data-qb-error hidden>Não foi possível carregar as questões.</div>
             <div class="qb-grid" data-qb-grid></div>
             <div class="qb-state" data-qb-empty hidden>Nenhuma questao encontrada com os filtros atuais.</div>
             <section class="panel qb-detail" data-qb-detail aria-live="polite"></section>
@@ -20236,28 +20335,19 @@ const modules = {
             <section class="panel qb-builder" id="construtor" data-qb-panel="avaliacoes">
               <div class="panel-head"><h2>Construtor de Avaliações</h2><button type="button" data-qb-save-draft>Salvar rascunho</button></div>
               <div class="qb-builder-grid">
-                <label><span>Titulo</span><input data-qb-assessment-title value="Avaliação diagnóstica demonstrativa" /></label>
-                <label><span>Turma</span><select><option>2o Ano A</option><option>5o Ano B</option></select></label>
-                <label><span>Componente curricular</span><select data-qb-assessment-component><option>Lingua Portuguesa</option><option>Matematica</option></select></label>
-                <label><span>Ano escolar</span><select data-qb-assessment-year><option>2o ano</option><option>5o ano</option></select></label>
-                <label><span>Data de aplicação</span><input type="date" value="2026-08-05" /></label>
-                <label><span>Capa</span><select><option>Raízes e Saberes - padrao</option><option>Sem capa</option></select></label>
+                <label><span>Titulo</span><input data-qb-assessment-title placeholder="Dê um título à avaliação" /></label>
+                <p class="span-2">A turma, o período e as regras serão escolhidos em Aplicações, após salvar esta avaliação.</p>
+                <label><span>Componente curricular</span><input data-qb-assessment-component placeholder="Componente das questões selecionadas" /></label>
+                <label><span>Ano escolar</span><input data-qb-assessment-year placeholder="Ano das questões selecionadas" /></label>
+                <label><span>Data de aplicação</span><input type="date" /></label>
+                <label><span>Capa</span><select data-qb-cover><option>Raízes e Saberes - padrao</option><option>Sem capa</option></select></label>
                 <label class="span-2"><span>Orientacoes</span><textarea>Leia com atencao e marque apenas uma alternativa por questao.</textarea></label>
-                <label><span>Início digital</span><input type="datetime-local" data-qb-available-from /></label>
-                <label><span>Prazo final</span><input type="datetime-local" data-qb-due-at /></label>
-                <label><span>Tempo limite</span><input type="number" min="5" step="5" value="50" data-qb-time-limit /></label>
-                <label><span>Tentativas</span><input type="number" min="1" step="1" value="1" data-qb-max-attempts /></label>
-                <label><span>Resultado</span><select data-qb-result-mode><option value="immediate">Imediato</option><option value="score_only">Somente nota</option><option value="after_due">Apos o prazo</option><option value="manual">Liberação manual</option><option value="hidden">Oculto</option></select></label>
-                <label><span>Embaralhar</span><select data-qb-shuffle><option value="none">Não embaralhar</option><option value="questions">Questões</option><option value="all">Questões e alternativas</option></select></label>
               </div>
               <div class="qb-builder-actions">
                 <button type="button" data-qb-preview-local>Prévia rapida - nao salva</button>
                 <button type="button" data-qb-preview="student">Pre-visualizar avaliação</button>
                 <button type="button" data-qb-preview="teacher">Visualizar gabarito do professor</button>
-                <button type="button">Duplicar</button>
-                <button type="button">Gerar versoes</button>
-                <button type="button" data-qb-publish-digital>Aplicar digitalmente</button>
-                <button type="button">Preparar PDF futuro</button>
+                <button type="button" data-qb-publish-digital>Salvar e escolher turma</button>
               </div>
             </section>
             <section class="panel qb-saved" data-qb-panel="avaliacoes">
@@ -20265,9 +20355,9 @@ const modules = {
               <div data-qb-saved></div>
             </section>
             <section class="panel qb-results-bridge" data-qb-panel="resultados">
-              <div class="panel-head"><h2>Aplicações e Resultados</h2><a href="avalia.html">Abrir Avalia+</a></div>
-              <p>As aplicações por turma, resultados e relatórios continuam no motor Avalia+ existente. Esta view concentra o acesso editorial sem duplicar regras de aplicação.</p>
-              <div class="qb-dashboard-actions"><a href="avalia.html">Abrir painel Avalia+</a><a href="banco-questoes.html?view=avaliacoes">Montar avaliação</a></div>
+              <div class="panel-head"><h2>Aplicações e Resultados</h2><a href="professor.html?view=avaliacoes#resultados">Abrir Avalia+</a></div>
+              <p>As aplicações por turma, resultados e relatórios continuam no motor Avalia+ existente. Escolha uma aplicação confirmada para consultar os resultados.</p>
+              <div class="qb-dashboard-actions"><a href="professor.html?view=avaliacoes#resultados">Abrir painel Avalia+</a><a href="banco-questoes.html?view=avaliacoes">Montar avaliação</a></div>
             </section>
             <section class="panel qb-access" data-qb-panel="admin">
               <div class="panel-head"><h2>Administração</h2><a href="banco-questoes.html?view=admin">Perfis</a></div>
@@ -20648,22 +20738,33 @@ const environments = {
   },
 };
 
+const getQuestionBankCapabilities = () => {
+  const role = getSupabaseQuestionBankRole();
+  return { create: allowedQuestionCreationRoles.includes(role), edit: allowedQuestionEditRoles.includes(role),
+    review: allowedQuestionReviewRoles.includes(role), publish: allowedQuestionPublishRoles.includes(role),
+    adapt: allowedQuestionAdaptationRoles.includes(role), admin: ["admin", "administrador", "administrador_nacional"].includes(role) };
+};
+const getQuestionBankNavigation = () => {
+  const caps = getQuestionBankCapabilities();
+  return environments.bancoQuestoes.nav.filter(([key]) => key === 'admin' ? caps.admin : key === 'editorial' ? caps.edit : key === 'nova' ? caps.create : true);
+};
 const renderQuestionBankAdminSidebar = (activeView = "dashboard") => {
   const session = getPlatformSession();
-  const email = session.email || "admin.banco@raizesesaberes.com";
+  const email = session.name || session.email || "Conta autenticada";
+  const caps = getQuestionBankCapabilities();
   return `
     <aside class="admin-sidebar" aria-label="Menu Banco de Questões">
-      <a class="admin-sidebar-logo" href="admin.html" aria-label="Raízes e Saberes">
+      <a class="admin-sidebar-logo" href="${categoryEscape(getRoleHome(getCurrentPlatformRole()))}" aria-label="Raízes e Saberes">
         <img src="logo-sidebar-dark.png" alt="Raízes e Saberes Ecossistema Educacional" onerror="this.hidden=true; this.nextElementSibling.hidden=false;" />
         <span class="admin-sidebar-logo-fallback" hidden><strong>Raízes e Saberes</strong><em>Ecossistema Educacional</em></span>
       </a>
       <div class="admin-id-card">
-        <span>Admin Banco / Editorial</span>
-        <strong>Raízes e Saberes</strong>
+        <span>${caps.admin ? "Administração do Banco" : caps.edit ? "Equipe editorial" : categoryEscape({professor:"Professor",gestor:"Gestor",coordenador:"Coordenador"}[getCurrentPlatformRole()] || "Conta autenticada")}</span>
+        <strong data-content-school-name>Escola: consultando vínculo...</strong>
         <small>${printableEscape(email)}</small>
       </div>
       <nav aria-label="Banco de Questões">
-        ${environments.bancoQuestoes.nav
+        ${getQuestionBankNavigation()
           .map(([key, label, href]) => `
             <button
               type="button"
@@ -20721,9 +20822,11 @@ const getQuestionBankCurrentView = () => {
   if (typeof window === "undefined") return "dashboard";
   const params = new URLSearchParams(window.location.search || "");
   const queryView = params.get("view");
-  if (questionBankViews.has(queryView)) return queryView;
+  const caps = getQuestionBankCapabilities();
+  const allowed = view => view === 'admin' ? caps.admin : view === 'editorial' ? caps.edit : view === 'nova' ? caps.create || caps.adapt || caps.edit : true;
+  if (questionBankViews.has(queryView)) return allowed(queryView) ? queryView : "banco";
   const hashView = questionBankHashView[String(window.location.hash || "").replace(/^#/, "")];
-  return hashView || "dashboard";
+  return hashView && allowed(hashView) ? hashView : "dashboard";
 };
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -21748,14 +21851,20 @@ const syncTeacherAvaliaForm = (root) => {
   const studentWrap = root.querySelector("[data-avalia-student-wrap]");
   const targetType = root.querySelector("[data-avalia-target-type]");
   if (assessmentSelect) {
+    const requested=new URLSearchParams(window.location.search).get('assessment_id');
+    const selected=assessmentSelect.value || requested || '';
     assessmentSelect.innerHTML = avaliaApplicationState.teacher.assessments.length
-      ? avaliaApplicationState.teacher.assessments
+      ? '<option value="">Selecione uma avaliação salva</option>'+avaliaApplicationState.teacher.assessments
           .map((assessment) => `<option value="${htmlEscape(assessment.id)}">${printableEscape(assessment.title)} · ${assessment.items || assessment.questions?.length || 0} questoes</option>`)
           .join("")
       : `<option value="">Nenhuma avaliacao com questoes</option>`;
+    assessmentSelect.value=avaliaApplicationState.teacher.assessments.some(a=>a.id===selected)?selected:'';
+    if(requested && !avaliaApplicationState.teacher.assessments.some(a=>a.id===requested) && avaliaApplicationState.teacher.status==='ready') {
+      const status=root.querySelector('[data-avalia-teacher-status]');if(status)status.textContent='A avaliação solicitada não está disponível para este perfil. Selecione uma avaliação autorizada.';
+    }
   }
-  const selectedClassId = classSelect?.value || getTeacherInstitutionalClasses()[0]?.id || "";
-  const students = getTeacherInstitutionalStudents(selectedClassId);
+  const selectedClassId = classSelect?.value || "";
+  const students = selectedClassId ? getTeacherInstitutionalStudents(selectedClassId) : [];
   if (studentSelect) {
     studentSelect.innerHTML = students.length
       ? students.map((student) => `<option value="${htmlEscape(student.id)}">${printableEscape(student.name)}</option>`).join("")
@@ -21897,13 +22006,18 @@ const initTeacherAvaliaApplication = () => {
     const assessmentId = String(formData.get("assessmentId") || "");
     const targetType = String(formData.get("targetType") || "class");
     const shuffleMode = String(formData.get("shuffleMode") || "none");
-    if (!assessmentId || !classId) {
-      if (statusNode) statusNode.textContent = "Selecione uma avaliacao e uma turma.";
+    if (!avaliaApplicationState.teacher.assessments.some(a=>a.id===assessmentId) || !classItem) {
+      if (statusNode) statusNode.textContent = "Selecione uma avaliação e uma turma autorizadas.";
       return;
     }
+    if(targetType==='student' && !getTeacherInstitutionalStudents(classId).some(s=>s.id===String(formData.get('studentId') || ''))){if(statusNode)statusNode.textContent='Selecione um aluno da turma autorizada.';return;}
+    if(form.dataset.submitting==='true')return;
+    form.dataset.submitting='true';const submit=form.querySelector('[type=submit]');if(submit)submit.disabled=true;
+    avaliaApplicationState.teacher.message='';avaliaApplicationState.teacher.error='';
     if (statusNode) statusNode.textContent = "Publicando avaliacao...";
     try {
-      await avaliaApplicationService.createAssignment({
+      if(avaliaApplicationService.mode()!=='supabase')throw Error('A publicação exige conexão institucional. Nenhuma aplicação local será criada.');
+      const receipt=await avaliaApplicationService.createAssignment({
         assessmentId,
         targetType,
         classId,
@@ -21919,13 +22033,15 @@ const initTeacherAvaliaApplication = () => {
         shuffleQuestions: shuffleMode === "questions" || shuffleMode === "all",
         shuffleAlternatives: shuffleMode === "all",
       });
-      avaliaApplicationState.teacher.message = "Avaliacao publicada com sucesso.";
-      await loadTeacherAvaliaData({ force: true });
+      if(!receipt?.id)throw Error('O servidor não confirmou a aplicação. Consulte Aplicações antes de tentar novamente.');
+      const readback=await loadTeacherAvaliaData({ force: true });
+      if(readback.status!=='ready' || !readback.assignments.some(a=>a.id===receipt.id && a.assessment_id===assessmentId && a.class_id===classId))throw Error('Envio recebido, mas a consulta da aplicação não foi confirmada. Atualize Aplicações antes de tentar novamente.');
+      avaliaApplicationState.teacher.message = "Avaliação publicada e confirmada em Aplicações.";
       refreshTeacherAvaliaSurface();
     } catch (error) {
       avaliaApplicationState.teacher.error = error.message || "Nao foi possivel publicar a avaliacao.";
       if (statusNode) statusNode.textContent = avaliaApplicationState.teacher.error;
-    }
+    } finally {form.dataset.submitting='false';if(submit)submit.disabled=false;}
   });
 };
 
@@ -21962,7 +22078,16 @@ const loadStudentAvaliaData = async ({ force = false } = {}) => {
 
 const initStudentAvaliaApplication = () => {
   const root = document.querySelector("[data-avalia-student-app]");
+  clearInterval(initStudentAvaliaApplication.timer);
   if (!root) return;
+  initStudentAvaliaApplication.timer=setInterval(()=>{
+    if(!root.isConnected){clearInterval(initStudentAvaliaApplication.timer);return;}
+    const clock=root.querySelector('[data-avalia-countdown]');if(clock)clock.textContent=studentAvaliaRemainingLabel(getAvaliaActiveAttempt());
+  },1000);
+  if(!initStudentAvaliaApplication.unloadBound){
+    window.addEventListener('beforeunload',event=>{if(studentAvaliaSaveState.pending || getStudentAvaliaSaveFailure()){event.preventDefault();event.returnValue='';}});
+    initStudentAvaliaApplication.unloadBound=true;
+  }
 
   if (avaliaApplicationState.student.status === "idle") {
     loadStudentAvaliaData().then(refreshStudentAvaliaSurface);
@@ -21971,10 +22096,18 @@ const initStudentAvaliaApplication = () => {
 
   if (root.dataset.avaliaStudentBound === "true") return;
   root.dataset.avaliaStudentBound = "true";
+  if((studentAvaliaSaveState.pending && studentAvaliaSaveState.actor===getSupabaseUserContext().userId) || studentAvaliaSaveState.submitting || getStudentAvaliaSaveFailure())root.querySelectorAll('.digital-attempt-stage button,.digital-attempt-stage input,.digital-attempt-stage textarea').forEach(node=>node.disabled=true);
+  if(!studentAvaliaSaveState.pending && getStudentAvaliaSaveFailure())root.querySelectorAll('[data-avalia-stage-close]').forEach(node=>node.disabled=false);
+  if(!studentAvaliaSaveState.pending && getStudentAvaliaSaveFailure()?.definitive)root.querySelectorAll('[data-avalia-stage-close],[data-avalia-prev],[data-avalia-next]').forEach(node=>node.disabled=false);
 
   root.addEventListener("click", async (event) => {
     const button = event.target.closest("button");
     if (!button) return;
+    if(studentAvaliaSaveState.pending || studentAvaliaSaveState.submitting)return;
+    if(button.hasAttribute('data-avalia-retry-save')){
+      const attempt=getAvaliaActiveAttempt();if(attempt)await saveStudentAvaliaAnswer(root,attempt,null,true);return;
+    }
+    if(getStudentAvaliaSaveFailure() && !button.matches('[data-avalia-stage-close]') && !(getStudentAvaliaSaveFailure().definitive && button.matches('[data-avalia-prev],[data-avalia-next]')))return;
     const statusNode = root.querySelector("[data-avalia-student-status]");
 
     if (button.dataset.avaliaStudentOpen) {
@@ -22015,6 +22148,11 @@ const initStudentAvaliaApplication = () => {
     const questions = getAvaliaAssignmentQuestions(assignment);
 
     if (button.hasAttribute("data-avalia-stage-close")) {
+      if(getStudentAvaliaSaveFailure()){
+        if(!window.confirm('A resposta não está confirmada e pode não estar salva. Fechar descartando a recuperação pendente, sem reenviar nem entregar a avaliação?'))return;
+        studentAvaliaSaveState.failed=null;
+        avaliaApplicationState.student.message='Avaliação fechada sem entrega. Confira no servidor as respostas salvas ao retomar.';
+      }
       avaliaApplicationState.student.activeAssignmentId = "";
       avaliaApplicationState.student.activeAttemptId = "";
       refreshStudentAvaliaSurface();
@@ -22034,40 +22172,28 @@ const initStudentAvaliaApplication = () => {
       const unanswered = questions.filter((entry) => !getAvaliaResponseForQuestion(attempt, getAvaliaQuestion(entry).id)).length;
       if (!window.confirm(`Deseja entregar a avaliacao? ${unanswered} questao${unanswered === 1 ? "" : "es"} sem resposta.`)) return;
       if (statusNode) statusNode.textContent = "Entregando avaliacao...";
+      const submitControls = [...root.querySelectorAll('.digital-attempt-stage button,.digital-attempt-stage input,.digital-attempt-stage textarea')].map(node=>({node,disabled:node.disabled}));
+      studentAvaliaSaveState.submitting=true;
+      submitControls.forEach(({node})=>node.disabled=true);
       try {
         const result = await avaliaApplicationService.submitAttempt(attempt.id);
         avaliaApplicationState.student.message = `Avaliacao entregue. Resultado ${result.score_percentage ?? 0}%.`;
         await loadStudentAvaliaData({ force: true });
         refreshStudentAvaliaSurface();
       } catch (error) {
-        avaliaApplicationState.student.error = error.message || "Nao foi possivel entregar a avaliacao.";
-        if (statusNode) statusNode.textContent = avaliaApplicationState.student.error;
-      }
+        // Read only: a failed HTTP acknowledgment may follow a committed submission.
+        await loadStudentAvaliaData({ force: true });
+        const confirmed = getAvaliaActiveAttempt();
+        avaliaApplicationState.student.message = confirmed && ['submitted','graded'].includes(confirmed.status) ? 'Entrega confirmada pelo servidor.' : '';
+        avaliaApplicationState.student.error = avaliaApplicationState.student.message ? '' : (error.message || "Nao foi possivel confirmar a entrega. Confira o estado antes de tentar novamente.");
+      } finally {studentAvaliaSaveState.submitting=false;submitControls.forEach(({node,disabled})=>node.disabled=disabled);refreshStudentAvaliaSurface();}
     }
     if (button.hasAttribute("data-avalia-save-text")) {
       const questionEntry = questions[avaliaApplicationState.student.activeQuestionIndex];
       const question = getAvaliaQuestion(questionEntry);
       const textarea = root.querySelector("[data-avalia-text-answer]");
       if (!question?.id || attempt.status !== "in_progress") return;
-      if (statusNode) statusNode.textContent = "Salvando resposta...";
-      try {
-        const response = await avaliaApplicationService.saveResponse({
-          attemptId: attempt.id,
-          questionId: question.id,
-          responseText: textarea?.value || "",
-          autosaveSequence: Date.now(),
-        });
-        const localAttempt = getAvaliaActiveAttempt();
-        localAttempt.responses = [
-          ...(localAttempt.responses || []).filter((item) => item.question_id !== response.question_id),
-          response,
-        ];
-        avaliaApplicationState.student.message = "Resposta discursiva salva.";
-        refreshStudentAvaliaSurface();
-      } catch (error) {
-        avaliaApplicationState.student.error = error.message || "Nao foi possivel salvar a resposta.";
-        if (statusNode) statusNode.textContent = avaliaApplicationState.student.error;
-      }
+      await saveStudentAvaliaAnswer(root,attempt,{questionId:question.id,responseText:textarea?.value || ''});
       return;
     }
   });
@@ -22081,25 +22207,7 @@ const initStudentAvaliaApplication = () => {
     const question = getAvaliaQuestion(questionEntry);
     const statusNode = root.querySelector("[data-avalia-student-status]");
     if (!assignment || !attempt || !question?.id || attempt.status !== "in_progress") return;
-    if (statusNode) statusNode.textContent = "Salvando resposta...";
-    try {
-      const response = await avaliaApplicationService.saveResponse({
-        attemptId: attempt.id,
-        questionId: question.id,
-        alternativeId: input.value,
-        autosaveSequence: Date.now(),
-      });
-      const localAttempt = getAvaliaActiveAttempt();
-      localAttempt.responses = [
-        ...(localAttempt.responses || []).filter((item) => item.question_id !== response.question_id),
-        response,
-      ];
-      avaliaApplicationState.student.message = "Resposta salva.";
-      refreshStudentAvaliaSurface();
-    } catch (error) {
-      avaliaApplicationState.student.error = error.message || "Nao foi possivel salvar a resposta.";
-      if (statusNode) statusNode.textContent = avaliaApplicationState.student.error;
-    }
+    await saveStudentAvaliaAnswer(root,attempt,{questionId:question.id,alternativeId:input.value});
   });
 };
 
@@ -22132,6 +22240,8 @@ const initQuestionBank = () => {
   const sort = root.querySelector("[data-qb-sort]");
   const loading = root.querySelector("[data-qb-loading]");
   const errorNode = root.querySelector("[data-qb-error]");
+  root.querySelector(".qb-notice")?.after(errorNode);
+  errorNode?.setAttribute("role", "alert");
   const empty = root.querySelector("[data-qb-empty]");
   const cartList = root.querySelector("[data-qb-cart-list]");
   const cartTime = root.querySelector("[data-qb-cart-time]");
@@ -22159,12 +22269,23 @@ const initQuestionBank = () => {
   let cart = [];
   let cartPoints = {};
   let mode = questionBankDataService.mode();
+  const assessmentActorId=getSupabaseUserContext().userId;
+  const assessmentActorAbort=new AbortController();
+  let assessmentActorInvalid=false;
+  const assessmentActorCurrent=()=>!assessmentActorInvalid && getSupabaseUserContext().userId===assessmentActorId;
+  const requireAssessmentActor=()=>{
+    if(assessmentActorCurrent())return;
+    assessmentActorInvalid=true;assessmentActorAbort.abort();
+    activeAssessmentId=null;cart=[];cartPoints={};questions=[];assessments=[];selectedId=null;
+    root.innerHTML='<section role="alert"><h2>Conta alterada</h2><p>Esta jornada foi encerrada. Recarregue a página para continuar com a conta atual. Confirmações pendentes de salvamento foram preservadas.</p><a href="banco-questoes.html">Reabrir Banco de Questões</a></section>';
+    throw Object.assign(Error('Conta alterada. Reabra o Banco para continuar.'),{code:'ASSESSMENT_ACTOR_CHANGED'});
+  };
   let scopeFilter = localStorage.getItem("raizes:question-bank-scope") || "all";
   let editorialMode = { type: "create", source: null };
   let editorialActionState = "IDLE";
   let partialReviewQuestionId = "";
-  const cartStorageKey = "raizes:question-bank-cart";
-  const draftStorageKey = "raizes:question-bank-draft";
+  const cartStorageKey = `raizes:question-bank-cart:${assessmentActorId || "anonymous"}`;
+  const draftStorageKey = `raizes:question-bank-draft:${assessmentActorId || "anonymous"}`;
   let didAttemptLoginResume = false;
   try {
     const savedDraft = JSON.parse(localStorage.getItem(draftStorageKey) || "null");
@@ -22244,6 +22365,7 @@ const initQuestionBank = () => {
     });
   };
   const saveDraftSnapshot = (reason = "autosave") => {
+    requireAssessmentActor();
     syncPointInputs();
     localStorage.setItem(
       draftStorageKey,
@@ -22310,6 +22432,7 @@ const initQuestionBank = () => {
     selectionStatus.hidden = false;
   };
   const getQuestionBankRole = () => getSupabaseQuestionBankRole() || "anonymous";
+  const canCreateQuestion = () => allowedQuestionCreationRoles.includes(getQuestionBankRole());
   const canAuthorQuestion = () => allowedQuestionEditorialRoles.includes(getQuestionBankRole());
   const canReviewQuestion = () => allowedQuestionReviewRoles.includes(getQuestionBankRole());
   const canPublishQuestion = () => allowedQuestionPublishRoles.includes(getQuestionBankRole());
@@ -22486,7 +22609,7 @@ const initQuestionBank = () => {
       pedagogical_comment: fieldValue("justification"),
       recommended_intervention: fieldValue("recommended_intervention"),
       estimated_minutes: "3",
-      author_name: "Equipe Editorial Raízes e Saberes",
+      author_name: getPlatformSession().name || "Autor autenticado",
       metadata: {
         source: "question_bank_editorial_ui",
         created_from: "banco-questoes",
@@ -22594,6 +22717,11 @@ const initQuestionBank = () => {
   };
   const setEditorialMode = (nextMode = { type: "create", source: null }) => {
     editorialMode = nextMode;
+    const isSaved=nextMode.type==='saved';
+    if(editorialForm)editorialForm.hidden=isSaved;
+    let receipt=root.querySelector('[data-qb-authorial-receipt]');
+    if(!receipt && editorialForm){receipt=document.createElement('div');receipt.dataset.qbAuthorialReceipt='';editorialForm.after(receipt);}
+    if(receipt){receipt.hidden=!isSaved;receipt.innerHTML=isSaved?`<p>Rascunho ${htmlEscape(nextMode.source?.id)} salvo. A edição deste rascunho não está disponível para seu perfil nesta tela.</p><button type="button" data-qb-new-authorial>Criar outra questão</button><a href="banco-questoes.html?view=banco">Voltar ao Banco</a>`:'';}
     nativeCategory?.load(nextMode.type === "edit" ? (nextMode.source?.uuid || nextMode.source?.raw?.id) : null, nextMode.type !== "adapt");
     const isAdapting = editorialMode.type === "adapt" && editorialMode.source;
     const isEditing = editorialMode.type === "edit" && editorialMode.source;
@@ -22602,7 +22730,7 @@ const initQuestionBank = () => {
       const title = authoringHead.querySelector("h2");
       const subtitle = authoringHead.querySelector("span");
       if (title) {
-        title.textContent = isEditing ? "Editar questão oficial" : isAdapting ? "Adaptar questão" : "Nova questão";
+        title.textContent = isSaved ? "Questão salva" : isEditing ? "Editar questão oficial" : isAdapting ? "Adaptar questão" : "Nova questão";
       }
       if (subtitle) {
         subtitle.textContent = isEditing
@@ -22624,7 +22752,7 @@ const initQuestionBank = () => {
       createDraftButton.textContent = isAdapting ? editorialActionLabels.adapt.idle : isEditing ? editorialActionLabels.edit.idle : editorialActionLabels.draft.idle;
     }
     if (submitReviewButton) {
-      submitReviewButton.hidden = isAdapting || (isEditing && editorialMode.source?.publicationStatus === "PUBLICADO");
+      submitReviewButton.hidden = !canAuthorQuestion() || isAdapting || (isEditing && editorialMode.source?.publicationStatus === "PUBLICADO");
     }
     if (cancelAdaptationButton) {
       cancelAdaptationButton.hidden = !isAdapting && !isEditing;
@@ -22725,6 +22853,19 @@ const initQuestionBank = () => {
   const getActiveQuestionBankView = () => getQuestionBankCurrentView();
   const syncQuestionBankView = () => {
     const activeView = getActiveQuestionBankView();
+    const caps = getQuestionBankCapabilities();
+    if (!caps.edit) {
+      const totalLabel=root.querySelector('[data-qb-total]')?.parentElement;
+      if(totalLabel){totalLabel.firstChild.textContent='Questões acessíveis';totalLabel.querySelector('span').textContent='Disponíveis para seu perfil';}
+      root.querySelectorAll('[data-qb-review],[data-qb-archived]').forEach(node=>{node.parentElement.hidden=true;});
+      const hint=root.querySelector('[data-qb-editorial-status]');
+      if(hint && !hint.dataset.tone)hint.textContent='Crie seu rascunho de questão. Revisão e publicação dependem de perfil editorial autorizado.';
+    }
+    root.querySelectorAll('.qb-dashboard-actions a').forEach(link => {
+      const view = new URL(link.href, window.location.origin).searchParams.get('view');
+      link.hidden = view === 'editorial' ? !caps.edit : view === 'admin' ? !caps.admin : view === 'nova' ? !caps.create : false;
+    });
+    if (submitReviewButton) submitReviewButton.hidden = !canAuthorQuestion() || editorialMode.type === 'adapt' || (editorialMode.type === 'edit' && editorialMode.source?.publicationStatus === 'PUBLICADO');
     root.dataset.qbActiveView = activeView;
     root.querySelectorAll("[data-qb-panel]").forEach((panel) => {
       panel.hidden = panel.dataset.qbPanel !== activeView;
@@ -22805,6 +22946,8 @@ const initQuestionBank = () => {
     `;
   };
   const createEditorialQuestion = async ({ submitForReview = false } = {}) => {
+    if(editorialMode.type==='saved')return;
+    if(submitForReview && !canAuthorQuestion()){setEditorialStatus('Seu perfil pode salvar rascunhos; o envio editorial não está disponível nesta tela.','info');return;}
     if (editorialActionState === "LOADING") {
       return;
     }
@@ -22902,8 +23045,8 @@ const initQuestionBank = () => {
       }
       return;
     }
-    if (!canAuthorQuestion()) {
-      showSessionRequired("Entre com perfil editorial autorizado para criar questões.");
+    if (!canCreateQuestion()) {
+      showSessionRequired("Entre com perfil autorizado para criar questões.");
       setEditorialActionFeedback({ state: "ERROR", message: "Sua sessão expirou. Entre novamente.", tone: "error", action: submitForReview ? "review" : "draft" });
       return;
     }
@@ -22965,7 +23108,7 @@ const initQuestionBank = () => {
       }
     }
     await refresh();
-    setEditorialMode({type:"edit",source:created});
+    setEditorialMode({type:canEditOfficialQuestion()?"edit":"saved",source:created});
     const successMessage = submitForReview
       ? `✓ Questão ${created.id} salva e enviada para revisão com sucesso.`
       : `✓ Rascunho ${created.id} salvo com sucesso.`;
@@ -23029,13 +23172,15 @@ const initQuestionBank = () => {
   const installSupabaseSessionListener = () => {
     if (mode !== "supabase") return;
     const refreshIfNeeded = () => {
+      try{requireAssessmentActor();}catch{return;}
       const session = getStoredSupabaseSession();
       if (session && isStoredSessionExpired(session, 180)) {
-        refreshStoredSupabaseSession().catch(() => {});
+        refreshStoredSupabaseSession().then(()=>requireAssessmentActor()).catch(() => {});
       }
     };
     window.addEventListener("storage", (event) => {
-      if (event.key === supabaseSessionStorageKey) {
+      if (event.key === supabaseSessionStorageKey || event.key === 'raizes:supabase-access-token' || event.key === null) {
+        try{requireAssessmentActor();}catch{return;}
         refresh().catch(() => {});
       }
     });
@@ -23242,7 +23387,7 @@ const initQuestionBank = () => {
   const renderEditorialFormPreviewActions = () => `
     <button type="button" data-qb-close-editorial-preview>Voltar e editar</button>
     <button type="button" data-qb-create-draft>Salvar rascunho</button>
-    <button type="button" data-qb-submit-review>Salvar e enviar para revisão</button>
+    ${canAuthorQuestion()?'<button type="button" data-qb-submit-review>Salvar e enviar para revisão</button>':''}
   `;
 
   const openEditorialFormPreview = () => {
@@ -23551,6 +23696,7 @@ const initQuestionBank = () => {
     renderReviewQueue();
     syncQuestionBankView();
     focusQuestionBankHashTarget();
+    if(sessionStorage.getItem(assessmentSaveKey) && !assessmentSavePromise)setError(uncertainSaveMessage);
   };
 
   const setError = (message) => {
@@ -23565,21 +23711,13 @@ const initQuestionBank = () => {
     instructions: root.querySelector(".qb-builder textarea")?.value || "",
     component: root.querySelector("[data-qb-assessment-component]")?.value || "",
     school_year: root.querySelector("[data-qb-assessment-year]")?.value || "",
-    class_name: root.querySelectorAll(".qb-builder select")[0]?.value || "",
-    cover_template: root.querySelectorAll(".qb-builder select")[3]?.value || "Raízes e Saberes - padrao",
+    class_name: null,
+    cover_template: root.querySelector("[data-qb-cover]")?.value || "Raízes e Saberes - padrao",
     application_date: root.querySelector(".qb-builder input[type='date']")?.value || null,
   });
 
-  const ensureAssessment = async () => {
-    if (activeAssessmentId) {
-      return questionBankDataService.updateAssessment(activeAssessmentId, assessmentPayloadFromBuilder());
-    }
-    const assessment = await questionBankDataService.createAssessment(assessmentPayloadFromBuilder());
-    activeAssessmentId = assessment.id;
-    return assessment;
-  };
-
   const syncCartToAssessment = async () => {
+    requireAssessmentActor();
     if (!cart.length) return null;
     syncPointInputs();
     if (!activeAssessmentId) {
@@ -23602,7 +23740,8 @@ const initQuestionBank = () => {
             })),
           },
         ],
-      });
+      },{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal});
+      requireAssessmentActor();
       activeAssessmentId = assessment.id;
       return assessment;
     }
@@ -23625,10 +23764,41 @@ const initQuestionBank = () => {
           })),
         },
       ],
-    });
+    },{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal});
   };
 
+  let assessmentSavePromise=null, assessmentHandoffPromise=null, assessmentHandoffComplete=false;
+  const assessmentSaveKey=`raizes:assessment-save-pending:${assessmentActorId || 'anonymous'}`;
+  const uncertainSaveMessage='A confirmação do salvamento está pendente. Consulte Avaliações salvas e abra a avaliação confirmada antes de continuar. Não repita a criação.';
+  const saveControls='.qb-builder input,.qb-builder select,.qb-builder textarea,[data-qb-points],[data-qb-save-draft],[data-qb-preview],[data-qb-publish-digital],[data-qb-generate],.qb-cart button,[data-qb-add],[data-qb-clear-cart],[data-qb-open-assessment]';
+  const saveAssessmentOnce = () => {
+    requireAssessmentActor();
+    if(assessmentSavePromise)return assessmentSavePromise;
+    if(sessionStorage.getItem(assessmentSaveKey))return Promise.reject(Error(uncertainSaveMessage));
+    const controls=[...root.querySelectorAll(saveControls)].map(node=>({node,disabled:node.disabled}));
+    controls.forEach(({node})=>{node.disabled=true;});
+    assessmentSavePromise=(async()=>{
+      // Persist before sending: reload after a lost response must not resend CREATE.
+      sessionStorage.setItem(assessmentSaveKey,JSON.stringify({assessmentId:activeAssessmentId,startedAt:new Date().toISOString()}));
+      try {
+        const saved=await syncCartToAssessment();
+        requireAssessmentActor();
+        const id=saved?.assessment?.id || saved?.id;
+        if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || ''))throw Error('Resposta de salvamento sem identificador confirmado.');
+        activeAssessmentId=id;saveDraftSnapshot('assessment-saved');sessionStorage.removeItem(assessmentSaveKey);return saved;
+      }catch(error){
+        requireAssessmentActor();
+        const definitive=error.status>=400 && error.status<500 && /^(?:PGRST[0-9]{3}|[A-Z0-9]{5})$/.test(error.code || '');
+        const localAuth=/^(Sessao Supabase ausente|Sessao expirada|Seu perfil nao tem permissao)/.test(error.message || '');
+        if(definitive || localAuth){sessionStorage.removeItem(assessmentSaveKey);throw error;}
+        throw Error(uncertainSaveMessage);
+      }
+    })().finally(()=>{assessmentSavePromise=null;if(assessmentActorCurrent())controls.forEach(({node,disabled})=>{node.disabled=disabled;});});
+    return assessmentSavePromise;
+  };
   const ensureSavedForPreview = async () => {
+    requireAssessmentActor();
+    if(assessmentSavePromise)return assessmentSavePromise;
     if (!cart.length) {
       setSelectionStatus("Selecione questoes antes de salvar ou pre-visualizar.", "error");
       return null;
@@ -23636,8 +23806,12 @@ const initQuestionBank = () => {
     if (mode !== "supabase") {
       return null;
     }
+    if(!titleInput?.value.trim()){setSelectionStatus('Informe o título da avaliação antes de salvar.','error');return null;}
+    const selectedYears=[...new Set(cart.map(itemById).filter(Boolean).map(q=>q.year).filter(Boolean))];
+    const chosenYear=root.querySelector('[data-qb-assessment-year]')?.value.trim();
+    if(selectedYears.length===1 && chosenYear!==selectedYears[0]){setSelectionStatus(`O ano deve corresponder às questões selecionadas: ${selectedYears[0]}.`,'error');return null;}
     try {
-      return await syncCartToAssessment();
+      return await saveAssessmentOnce();
     } catch (error) {
       const message = String(error.message || "");
       if (message.includes("Sessao Supabase ausente") || message.includes("Sessao expirada") || message.includes("row-level security")) {
@@ -23709,57 +23883,23 @@ const initQuestionBank = () => {
     }
   });
 
-  const publishCurrentAssessmentDigitally = async () => {
-    syncPointInputs();
-    const items = cart.map(itemById).filter(Boolean);
-    if (!items.length) {
-      setSelectionStatus("Selecione questoes antes de aplicar digitalmente.", "error");
-      return null;
-    }
-    let savedAssessment = null;
-    if (mode === "supabase") {
-      try {
-        savedAssessment = await syncCartToAssessment();
-      } catch (error) {
-        const message = String(error.message || "");
-        if (message.includes("Sessao Supabase ausente") || message.includes("Sessao expirada") || message.includes("row-level security")) {
-          showSessionRequired("Selecao preservada. Entre novamente para salvar antes da aplicação digital oficial.");
-          return null;
-        }
-        throw error;
-      }
-    }
-    const shuffle = root.querySelector("[data-qb-shuffle]")?.value || "none";
-    const assignment = publishDigitalAssessmentDemo({
-      assessmentId: savedAssessment?.id || activeAssessmentId,
-      title: titleInput?.value?.trim() || "Avaliação digital",
-      component: root.querySelector("[data-qb-assessment-component]")?.value || "",
-      year: root.querySelector("[data-qb-assessment-year]")?.value || "",
-      className: root.querySelectorAll(".qb-builder select")[0]?.value || "2o Ano A",
-      availableFrom: root.querySelector("[data-qb-available-from]")?.value ? new Date(root.querySelector("[data-qb-available-from]").value).toISOString() : new Date().toISOString(),
-      dueAt: root.querySelector("[data-qb-due-at]")?.value ? new Date(root.querySelector("[data-qb-due-at]").value).toISOString() : new Date(Date.now() + 7 * 86400000).toISOString(),
-      timeLimitMinutes: root.querySelector("[data-qb-time-limit]")?.value || 50,
-      maxAttempts: root.querySelector("[data-qb-max-attempts]")?.value || 1,
-      resultReleaseMode: root.querySelector("[data-qb-result-mode]")?.value || "immediate",
-      shuffleQuestions: shuffle === "questions" || shuffle === "all",
-      shuffleAlternatives: shuffle === "all",
-      questions: items.map((item) => ({
-        id: item.id,
-        uuid: item.uuid,
-        statement: item.statement,
-        baseText: item.baseText,
-        alternatives: item.alternatives,
-        correctAlternative: item.correctAlternative,
-        points: Number(cartPoints[item.id] ?? 1),
-        skill: item.skill,
-        descriptor: item.descriptor,
-        component: item.component,
-        justification: item.justification,
-        intervention: item.intervention,
-      })),
-    });
-    setSelectionStatus(`Avaliação publicada para ${assignment.className}. Aluno ja pode responder em Minhas Avaliações.`, "success");
-    return assignment;
+  const publishCurrentAssessmentDigitally = () => {
+    requireAssessmentActor();
+    if(assessmentHandoffComplete)return Promise.resolve(null);
+    if(assessmentHandoffPromise)return assessmentHandoffPromise;
+    assessmentHandoffPromise=(async()=>{
+    if(mode!=='supabase') {setSelectionStatus('Conecte-se para salvar e escolher uma turma. Nenhuma aplicação foi publicada.','error');return null;}
+    const saved=await ensureSavedForPreview();
+    requireAssessmentActor();
+    if(!saved)return null;
+    const id=saved.assessment?.id || saved.id;
+    if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || ''))throw Error('O servidor não confirmou o identificador da avaliação. Nenhuma aplicação foi publicada.');
+    setSelectionStatus('Avaliação salva. Escolha a turma e revise a aplicação na próxima tela.','success');
+    requireAssessmentActor();assessmentHandoffComplete=true;
+    window.location.assign(`professor.html?view=avaliacoes&assessment_id=${encodeURIComponent(id)}#aplicacoes`);
+    return saved;
+    })().finally(()=>{assessmentHandoffPromise=null;});
+    return assessmentHandoffPromise;
   };
 
   const selectQuestion = (id) => {
@@ -23776,30 +23916,39 @@ const initQuestionBank = () => {
     }
     cart.push(item.id);
     cartPoints[item.id] = cartPoints[item.id] ?? 1;
+    for(const [selector,key] of [['[data-qb-assessment-year]','year'],['[data-qb-assessment-component]','component']]) {
+      const field=root.querySelector(selector), values=[...new Set(cart.map(itemById).filter(Boolean).map(q=>q[key]).filter(Boolean))];
+      if(field && !field.value && values.length===1)field.value=values[0];
+    }
     saveDraftSnapshot("question-selected");
     setSelectionStatus(`${item.id} selecionada para a avaliação.`, "success");
   };
 
   const refresh = async () => {
+    requireAssessmentActor();
     loading.hidden = false;
     errorNode.hidden = true;
     mode = questionBankDataService.mode();
     try {
-      questions = await questionBankDataService.listQuestions();
-      assessments = await questionBankDataService.listAssessments();
+      questions = await questionBankDataService.listQuestions();requireAssessmentActor();
+      assessments = await questionBankDataService.listAssessments();requireAssessmentActor();
       selectedId = selectedId || questions[0]?.id;
       cart = activeAssessmentId
         ? (await questionBankDataService.getAssessmentById(activeAssessmentId))?.questions?.map((entry) => entry.question?.code || entry.question_id) || cart
         : cart.filter((id) => itemById(id));
-      populateFilterOptions();
+      requireAssessmentActor();populateFilterOptions();
       root.querySelector(".qb-notice span").textContent = localDevNotice();
       await render();
       await attemptLoginResume();
     } catch (error) {
+      if(!assessmentActorCurrent()){try{requireAssessmentActor();}catch{}return;}
       questions = mode === "fallback" ? await questionBankDataService.listQuestions() : [];
       assessments = [];
       populateFilterOptions();
       await render();
+      root.querySelectorAll('[data-qb-total],[data-qb-published],[data-qb-review],[data-qb-draft],[data-qb-archived]').forEach(node=>{node.textContent='—';});
+      root.querySelector('[data-qb-result-count]').textContent='Consulta indisponível';
+      empty.hidden=true;
       setError(error.message);
     }
   };
@@ -23830,6 +23979,7 @@ const initQuestionBank = () => {
   };
 
   root.addEventListener("click", async (event) => {
+    try{requireAssessmentActor();}catch{return;}
     const button = event.target.closest("button");
     if (!button) {
       return;
@@ -23941,6 +24091,7 @@ const initQuestionBank = () => {
       if (button.hasAttribute("data-qb-publish-digital")) {
         await publishCurrentAssessmentDigitally();
       }
+      if(button.hasAttribute('data-qb-new-authorial')){clearEditorialForm();setEditorialMode();setEditorialStatus('Nova questão: preencha o formulário antes de salvar.','info');}
       if (button.hasAttribute("data-qb-create-draft")) {
         if (editorialPreviewPanel) editorialPreviewPanel.hidden = true;
         await createEditorialQuestion({ submitForReview: false });
@@ -23974,8 +24125,12 @@ const initQuestionBank = () => {
         await moveQuestionWorkflow(button.dataset.qbWorkflowArchive, "ARQUIVADO");
       }
       if (button.dataset.qbOpenAssessment) {
-        const assessment = await questionBankDataService.getAssessmentById(button.dataset.qbOpenAssessment);
+        requireAssessmentActor();
+        const assessment = await questionBankDataService.getAssessmentById(button.dataset.qbOpenAssessment,{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal});
+        requireAssessmentActor();
+        if(!assessment?.id || assessment.id!==button.dataset.qbOpenAssessment)throw Error('Avaliação não confirmada pelo servidor.');
         activeAssessmentId = assessment.id;
+        sessionStorage.removeItem(assessmentSaveKey);
         titleInput.value = assessment.title;
         root.querySelector(".qb-builder textarea").value = assessment.instructions || assessment.description || "";
         root.querySelector(".qb-builder input[type='date']").value = assessment.date === "Sem data" ? "" : assessment.date;
@@ -24005,10 +24160,12 @@ const initQuestionBank = () => {
 
   [search, usedFilter, sort, ...filters].forEach((control) => {
     control.addEventListener("input", () => {
+      try{requireAssessmentActor();}catch{return;}
       saveDraftSnapshot("filters-changed");
       render();
     });
     control.addEventListener("change", () => {
+      try{requireAssessmentActor();}catch{return;}
       saveDraftSnapshot("filters-changed");
       render();
     });
@@ -24016,6 +24173,7 @@ const initQuestionBank = () => {
 
   scopeTabs.forEach((button) => {
     button.addEventListener("click", () => {
+      try{requireAssessmentActor();}catch{return;}
       scopeFilter = button.dataset.qbScope || "all";
       localStorage.setItem("raizes:question-bank-scope", scopeFilter);
       render();
@@ -24024,15 +24182,17 @@ const initQuestionBank = () => {
 
   builderFields.forEach((control) => {
     control.addEventListener("change", () => {
+      try{requireAssessmentActor();}catch{return;}
       saveDraftSnapshot("builder-changed");
       if (activeAssessmentId) {
-        ensureAssessment().catch((error) => setError(error.message));
+        ensureSavedForPreview().catch((error) => setError(error.message));
       }
     });
-    control.addEventListener("input", () => saveDraftSnapshot("builder-changed"));
+    control.addEventListener("input", () => {try{requireAssessmentActor();}catch{return;}saveDraftSnapshot("builder-changed");});
   });
 
   cartList.addEventListener("input", (event) => {
+    try{requireAssessmentActor();}catch{return;}
     if (event.target.matches("[data-qb-points]")) {
       cartPoints[event.target.dataset.qbPoints] = Number(event.target.value || 1);
       saveDraftSnapshot("points-changed");
@@ -24061,6 +24221,7 @@ const supabaseSessionStorageKey = "raizes:supabase-auth-session";
 const allowedAssessmentRoles = ["admin", "administrador", "administrador_nacional", "gestor", "gestor_da_rede", "professor", "curator", "curador", "revisor", "revisor_pedagogico", "aprovador", "elaborador"];
 const allowedQuestionAdaptationRoles = ["admin", "administrador", "administrador_nacional", "gestor", "gestor_da_rede", "professor", "curator", "curador", "revisor", "revisor_pedagogico", "aprovador", "elaborador"];
 const allowedQuestionEditorialRoles = ["admin", "administrador", "administrador_nacional", "curator", "curador", "elaborador"];
+const allowedQuestionCreationRoles = [...allowedQuestionEditorialRoles, "professor"];
 const allowedQuestionReviewRoles = ["admin", "administrador", "administrador_nacional", "curator", "curador", "revisor", "revisor_pedagogico", "aprovador"];
 const allowedQuestionPublishRoles = ["admin", "administrador", "administrador_nacional", "curator", "curador", "aprovador"];
 const allowedQuestionEditRoles = [...new Set([...allowedQuestionEditorialRoles, ...allowedQuestionReviewRoles, ...allowedQuestionPublishRoles])];
@@ -24236,10 +24397,15 @@ const createSupabaseRestClient = () => {
     if (!isConfigured) {
       throw new Error("Supabase não configurado. Crie supabase-config.js com URL e anon key pública.");
     }
+    const assertRequestActor=(resolved)=>{
+      if(options.expectedUserId!==undefined && (getSupabaseUserContext().userId!==options.expectedUserId || (resolved && resolved.userId!==options.expectedUserId)))throw Object.assign(Error('Conta alterada durante a operação.'),{code:'ASSESSMENT_ACTOR_CHANGED'});
+    };
+    assertRequestActor();
     const requestContext = await resolveSupabaseUserContext({
       requireAuthenticated: options.requireAuthenticated === true,
       allowedRoles: options.allowedRoles || [],
     });
+    assertRequestActor(requestContext);
     const authHeaders =
       requestContext.token && !String(requestContext.token).startsWith("sb_")
         ? { Authorization: `Bearer ${requestContext.token}` }
@@ -24254,6 +24420,7 @@ const createSupabaseRestClient = () => {
         ...(options.headers || {}),
       },
     });
+    assertRequestActor(requestContext);
     if (response.status === 401 && options.retryOnAuth !== false) {
       const refreshed = await refreshStoredSupabaseSession();
       if (refreshed?.access_token) {
@@ -24262,12 +24429,15 @@ const createSupabaseRestClient = () => {
     }
     if (!response.ok) {
       const body = await response.text();
+      assertRequestActor(requestContext);
       let rpcError = null;
       try { rpcError = JSON.parse(body); } catch { /* Non-JSON proxy errors remain uncertain. */ }
       throw Object.assign(new Error(mapSupabaseError(response, body)), { status: response.status, code: rpcError?.code, databaseMessage: rpcError?.message });
     }
     if (response.status === 204) return null;
-    return response.json();
+    const result=await response.json();
+    assertRequestActor(requestContext);
+    return result;
   };
 
   const getContext = (options) => resolveSupabaseUserContext(options);
@@ -27937,6 +28107,7 @@ const renderStudentCredentialResultPanel = (index = buildSecretariaIndex()) => {
 const renderSecretariaStudentAccessCenterView = (index) => {
   const params = getSecretariaParams();
   const school = getSecretariaPrimarySchool();
+  const selectedStudentId = params.get("student") || "";
   const selectedClassId = params.get("class") || "";
   const selectedStatus = params.get("status") || "";
   const query = String(params.get("q") || "").trim().toLowerCase();
@@ -27962,7 +28133,7 @@ const renderSecretariaStudentAccessCenterView = (index) => {
       || (selectedStatus === "sem_acesso" ? !row.credential : row.statusKey === selectedStatus);
     const haystack = `${normalizeStudentName(row.student)} ${normalizeClassName(row.classItem)} ${row.credential?.login || ""}`.toLowerCase();
     const matchesQuery = !query || haystack.includes(query);
-    return matchesClass && matchesStatus && matchesQuery;
+    return (!selectedStudentId || row.student.id === selectedStudentId) && matchesClass && matchesStatus && matchesQuery;
   });
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -27980,6 +28151,7 @@ const renderSecretariaStudentAccessCenterView = (index) => {
         </div>
       </section>
       ${renderStudentCredentialResultPanel(index)}
+      ${selectedStudentId ? `<p>Aluno selecionado em Usuários. <a href="secretaria.html?view=acessosAlunos">Ver todos os alunos autorizados</a></p><p data-secretaria-student-access-message></p>` : `
       <section class="panel span-2 secretaria-form-panel">
         <div class="panel-head"><h2>Emissão em lote</h2><span>Credenciais institucionais</span></div>
         <div class="secretaria-form-grid">
@@ -27992,10 +28164,12 @@ const renderSecretariaStudentAccessCenterView = (index) => {
           <p class="secretaria-form-hint is-wide" data-secretaria-student-access-message>Operações em lote são idempotentes: alunos com acesso ativo não recebem nova senha sem reset explícito.</p>
         </div>
       </section>
+      `}
       <section class="panel span-2 secretaria-list-panel">
         <div class="panel-head"><h2>Alunos e credenciais</h2><span>${filteredRows.length} registro${filteredRows.length === 1 ? "" : "s"}</span></div>
         <form class="analytics-grid secretaria-grid" method="get" action="secretaria.html">
           <input type="hidden" name="view" value="acessosAlunos" />
+          ${selectedStudentId ? `<input type="hidden" name="student" value="${htmlEscape(selectedStudentId)}" /><input type="hidden" name="school" value="${htmlEscape(school.id || "")}" />` : ""}
           <label><span>Turma</span><select name="class"><option value="">Todas</option>${activeClasses.map((classItem) => `<option value="${htmlEscape(classItem.id)}" ${classItem.id === selectedClassId ? "selected" : ""}>${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
           <label><span>Status</span><select name="status"><option value="">Todos</option><option value="sem_acesso" ${selectedStatus === "sem_acesso" ? "selected" : ""}>Sem acesso</option><option value="active" ${selectedStatus === "active" ? "selected" : ""}>Ativo</option><option value="blocked" ${selectedStatus === "blocked" ? "selected" : ""}>Bloqueado</option><option value="pending_auth" ${selectedStatus === "pending_auth" ? "selected" : ""}>Pendente Auth</option></select></label>
           <label class="is-wide"><span>Busca</span><input name="q" value="${htmlEscape(params.get("q") || "")}" placeholder="Aluno, turma ou login" /></label>
@@ -30286,9 +30460,9 @@ const questionBankDataService = (() => {
         throw error;
       }
     },
-    async getAssessmentById(id) {
+    async getAssessmentById(id, actorOptions={}) {
       const { request } = client();
-      const rows = await request("assessments", `?id=eq.${encodeURIComponent(id)}&select=${assessmentSelect}&limit=1`);
+      const rows = await request("assessments", `?id=eq.${encodeURIComponent(id)}&select=${assessmentSelect}&limit=1`,{requireAuthenticated:true,allowedRoles:allowedAssessmentRoles,expectedUserId:actorOptions.expectedUserId,signal:actorOptions.signal});
       return rows[0] ? mapAssessmentFromSupabase(rows[0]) : null;
     },
     async createAssessment(payload) {
@@ -30307,10 +30481,11 @@ const questionBankDataService = (() => {
       });
       return mapAssessmentFromSupabase(row);
     },
-    async createAssessmentFromBank(payload) {
+    async createAssessmentFromBank(payload, actorOptions={}) {
       const { request } = client();
       await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedAssessmentRoles });
       const result = await request("rpc/avalia_plus_create_assessment_from_bank", "", {
+        expectedUserId:actorOptions.expectedUserId,signal:actorOptions.signal,
         method: "POST",
         requireAuthenticated: true,
         allowedRoles: allowedAssessmentRoles,
@@ -30323,10 +30498,11 @@ const questionBankDataService = (() => {
         skill_map: result.skill_map || [],
       });
     },
-    async replaceAssessmentItems(assessmentId, payload) {
+    async replaceAssessmentItems(assessmentId, payload, actorOptions={}) {
       const { request } = client();
       await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedAssessmentRoles });
       const result = await request("rpc/avalia_plus_replace_assessment_items", "", {
+        expectedUserId:actorOptions.expectedUserId,signal:actorOptions.signal,
         method: "POST",
         requireAuthenticated: true,
         allowedRoles: allowedAssessmentRoles,
@@ -30523,7 +30699,7 @@ const questionBankDataService = (() => {
     },
     async createQuestionItem(payload) {
       const { request } = client();
-      await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedQuestionEditorialRoles });
+      await resolveSupabaseUserContext({ requireAuthenticated: true, allowedRoles: allowedQuestionCreationRoles });
       let itemPayload = payload;
       if (!itemPayload.source_id || !itemPayload.license_id) {
         const [sources, licenses] = await Promise.all([this.listSources(), this.listLicenses()]);
@@ -30534,7 +30710,7 @@ const questionBankDataService = (() => {
       const row = normalizeRpcJson(await request("rpc/avalia_plus_create_item", "", {
         method: "POST",
         requireAuthenticated: true,
-        allowedRoles: allowedQuestionEditorialRoles,
+        allowedRoles: allowedQuestionCreationRoles,
         body: JSON.stringify({ p_item: itemPayload }),
       }));
       if (!row.id) throw new Error("Resposta inválida do cadastro de questões. Recarregue antes de tentar novamente.");
@@ -32743,28 +32919,52 @@ const initPlatformLogout = () => {
   });
 };
 
-const renderCategoryConsumer = () => `<section class="category-consumer" data-category-consumer><header><h1>Meus conteúdos</h1><p>Categorias autorizadas para sua escola e turma.</p></header><p data-category-consumer-status role="status" aria-live="polite">Consultando categorias...</p><div data-category-consumer-modules></div><div data-category-consumer-items></div><article data-category-consumer-detail></article></section>`;
+const initContentSchoolIdentity = async (schoolId = null) => {
+  const nodes = [...document.querySelectorAll('[data-content-school-name]')];
+  if (!nodes.length) return;
+  const options = {requireAuthenticated:true, allowedRoles:['professor','aluno','educacao_infantil','gestor','coordenador','admin']};
+  try {
+    const client = createSupabaseRestClient();
+    let ids = schoolId ? [schoolId] : await client.request('rpc/current_institutional_school_ids','',{...options,method:'POST',body:'{}'});
+    ids = (Array.isArray(ids) ? ids : [ids]).map(row => typeof row === 'string' ? row : row?.school_id || row?.id).filter(Boolean);
+    if (!ids.length) throw Error('Vínculo escolar não encontrado');
+    const rows = await client.request('schools',`?select=id,nome&id=${supabaseIn(ids)}`,options);
+    if (!Array.isArray(rows) || !rows.length) throw Error('Escola indisponível');
+    nodes.forEach(node => {node.textContent=rows.map(row=>row.nome).join(' · ');});
+  } catch { nodes.forEach(node => {node.textContent='Não foi possível consultar a escola.';}); }
+};
+const renderCategoryWorkspace = () => {
+  const session=getPlatformSession(), role=getCurrentPlatformRole(), teacher=role==='professor';
+  const roleLabel={professor:'Professor',aluno:'Aluno',educacao_infantil:'Educação Infantil',gestor:'Gestor',coordenador:'Coordenador',admin:'Administrador'}[role] || 'Conta autenticada';
+  const nav=teacher ? teacherWorkspaceNav.map(([key,label,icon,href])=>`<a class="${key==='conteudos'?'is-active':''}" href="${categoryEscape(href || 'professor.html?view='+encodeURIComponent(key))}">${categoryEscape(label)}</a>`).join('') : `<a href="${categoryEscape(getRoleHome(role))}">Início</a><a class="is-active" href="conteudos-categorias.html">Meus conteúdos</a>`;
+  return `<section class="teacher-workspace content-workspace is-mounted"><aside class="tw-sidebar" aria-label="Menu de ${categoryEscape(roleLabel)}"><article class="tw-teacher-card"><img src="logo-sidebar-dark.png" alt="Raízes e Saberes"><div><span>${categoryEscape(roleLabel)}</span><strong>${categoryEscape(session.name || session.email || 'Conta autenticada')}</strong><small data-content-school-name>Escola: consultando vínculo...</small></div></article><nav>${nav}</nav><button type="button" data-platform-logout>Sair</button></aside><div class="tw-main"><header class="content-workspace-topbar"><button type="button" data-platform-back>Voltar</button><a href="${categoryEscape(getRoleHome(role))}">Início</a><button type="button" data-platform-logout>Sair</button></header><main>${renderCategoryConsumer()}</main></div></section>`;
+};
+const renderCategoryConsumer = () => `<section class="category-consumer" data-category-consumer><header><h1>Meus conteúdos</h1><p>Categorias autorizadas para sua escola e turma.</p></header><p data-category-consumer-status role="status" aria-live="polite">Consultando categorias...</p><div class="category-module-grid" data-category-consumer-modules aria-label="Categorias disponíveis"></div><div data-category-consumer-items></div><article data-category-consumer-detail></article></section>`;
 const initCategoryConsumer = () => {
  const root=document.querySelector('[data-category-consumer]');if(!root || root.dataset.bound)return;root.dataset.bound='true';
  const status=root.querySelector('[data-category-consumer-status]'),params=new URLSearchParams(window.location.search);
  const base={};['school_id','class_id'].forEach((key)=>{if(params.get(key))base[key]=params.get(key);});if(params.get('mode')==='INSTITUTIONAL')base.mode='INSTITUTIONAL';
  let active=null,offset=0,generation=0;
+ const label=m=>categoryTypeLabels[m.content_types[0]] || m.name;
+ const cards=()=>{root.querySelector('[data-category-consumer-modules]').innerHTML=root._modules.map((m,i)=>`<button class="category-module-card" type="button" data-category-consumer-module="${i}" aria-pressed="${m===active}"><strong>${categoryEscape(label(m))}</strong><span>${m.total} ${m.total===1?'conteúdo disponível':'conteúdos disponíveis'}</span></button>`).join('');};
  const request=async(rpc,payload)=>{
   const result=normalizeRpcJson(await createSupabaseRestClient().request(`rpc/${rpc}`,'',{method:'POST',requireAuthenticated:true,allowedRoles:['professor','aluno','educacao_infantil','gestor','coordenador','admin'],body:JSON.stringify(payload)}));
   if(!result || result.status!=='PASS')throw Error(result?.status==='CLASSIFICATION_REQUIRED'?'A turma precisa de uma faixa escolar canônica definida.':result?.status==='CATEGORY_NOT_CONFIGURED'?'Esta escola ainda não tem categorias configuradas.':result?.status || 'Falha ao consultar conteúdos.');return result;
  };
- const fail=(error)=>{status.setAttribute('role','alert');status.textContent=error.message || 'Não foi possível carregar os conteúdos. Tente novamente.';};
- const load=async()=>{const token=++generation;status.setAttribute('role','status');status.textContent='Consultando conteúdos autorizados...';root.querySelector('[data-category-consumer-detail]').textContent='';
+ const fail=(error)=>{document.querySelectorAll('[data-content-school-name]').forEach(node=>{if(node.textContent.includes('consultando'))node.textContent='Escola não confirmada.';});status.setAttribute('role','alert');status.textContent=error.message || 'Não foi possível carregar os conteúdos. Tente novamente.';};
+ const load=async()=>{const token=++generation;status.setAttribute('role','status');status.textContent=`Consultando ${label(active)}...`;cards();root.querySelector('[data-category-consumer-items]').textContent='';root.querySelector('[data-category-consumer-detail]').textContent='';
   try{const result=await request('content_resolve_for_user',{p_context:{...base,module_id:active.id,content_type:active.content_types[0],offset,limit:25}});if(token!==generation)return;
-   if(!Array.isArray(result.items)||!Number.isInteger(result.total))throw Error('Resposta incompleta do catálogo.');
-   const host=root.querySelector('[data-category-consumer-items]');host.innerHTML=result.items.length?`<h2>${categoryEscape(categoryTypeLabels[active.content_types[0]] || active.name)}</h2><ul>${result.items.map((item)=>`<li><strong>${categoryEscape(item.title)}</strong> ${`<button type="button" data-category-consumer-open="${categoryEscape(item.content_item_id)}">${item.content_type==='QUESTION'?'Abrir questão':'Consultar abertura protegida'}</button>`}</li>`).join('')}</ul><button type="button" data-category-consumer-page="-1" ${offset===0?'disabled':''}>Anterior</button><button type="button" data-category-consumer-page="1" ${offset+25>=result.total?'disabled':''}>Próxima</button>`:'<p>0 conteúdos — Conteúdos disponíveis em breve</p>';
-   status.textContent=result.total===0?'0 conteúdos — Conteúdos disponíveis em breve':`${result.total} conteúdos autorizados. Novas publicações desta categoria aparecem automaticamente.`;
+   if(!Array.isArray(result.items)||!Number.isInteger(result.total)||result.total<0)throw Error('Resposta incompleta do catálogo.');
+   active.total=result.total;cards();const host=root.querySelector('[data-category-consumer-items]');host.innerHTML=result.items.length?`<h2>${categoryEscape(categoryTypeLabels[active.content_types[0]] || active.name)}</h2><ul>${result.items.map((item)=>`<li><strong>${categoryEscape(item.title)}</strong> ${`<button type="button" data-category-consumer-open="${categoryEscape(item.content_item_id)}">${item.content_type==='QUESTION'?'Abrir questão':'Consultar abertura protegida'}</button>`}</li>`).join('')}</ul><button type="button" data-category-consumer-page="-1" ${offset===0?'disabled':''}>Anterior</button><button type="button" data-category-consumer-page="1" ${offset+25>=result.total?'disabled':''}>Próxima</button>`:`<div class="category-empty"><h2>${categoryEscape(label(active))}</h2><p>Nenhum conteúdo desta categoria está disponível para sua escola e turma no momento.</p><p>Escolha outra categoria para continuar.</p></div>`;
+   status.textContent=result.total===0?`${label(active)}: nenhum conteúdo disponível.`:`${label(active)}: ${result.total} ${result.total===1?'conteúdo autorizado':'conteúdos autorizados'}.`;
   }catch(error){if(token===generation){root.querySelector('[data-category-consumer-items]').textContent='';fail(error);}}
  };
- const start=async()=>{try{const result=await request('content_list_category_modules',{p_context:base});if(!Array.isArray(result.modules))throw Error('Resposta incompleta de categorias.');root._modules=result.modules;
-   root.querySelector('[data-category-consumer-modules]').innerHTML=result.modules.map((m,i)=>`<button type="button" data-category-consumer-module="${i}"><strong>${categoryEscape(m.name===categoryTypeLabels[m.content_types[0]]?m.name:m.name+' — '+(categoryTypeLabels[m.content_types[0]]||m.content_types[0]))}</strong><span>${categoryEscape(m.message)}</span></button>`).join('');
+ const start=async()=>{try{const result=await request('content_list_category_modules',{p_context:base});
+   if(!Array.isArray(result.modules)||result.modules.some(m=>!m.id||!Array.isArray(m.content_types)||!m.content_types.length||!Number.isInteger(m.total)||m.total<0))throw Error('Resposta incompleta de categorias.');
+   root._modules=result.modules;
+   if(result.school_id) initContentSchoolIdentity(result.school_id);
    status.textContent=result.modules.length?'Escolha uma categoria.':'Nenhuma categoria habilitada para sua escola e faixa escolar.';
-   if(result.modules.length){active=result.modules[0];await load();}
+   if(result.modules.length){active=result.modules.find(m=>m.total>0)||result.modules[0];cards();await load();}
   }catch(error){fail(error);}
  };
  root.addEventListener('click',async(event)=>{const button=event.target.closest('button');if(!button)return;
@@ -32831,6 +33031,12 @@ const renderAppPage = () => {
   document.title = `${activeModule.title} | Raízes e Saberes`;
   maybeRefreshContentGovernancePage(activeKey);
   rememberCurrentPlatformRoute();
+
+  if (activeKey === "catalogoCategorias") {
+    mount.innerHTML = renderCategoryWorkspace();
+    initPlatformLogout();initCategoryConsumer();initGlobalAccessibility();
+    return;
+  }
 
   if (["professor", "professorTurma", "professorAluno"].includes(activeKey)) {
     mount.innerHTML = activeModule.html;
@@ -32914,7 +33120,7 @@ const renderAppPage = () => {
         : renderContentUnavailableForSchool({ title: "Livro indisponível", type: "book", id: activeBook.id });
   }
   if (environmentKey === "bancoQuestoes") {
-    const mobileNav = environment.mobile
+    const mobileNav = getQuestionBankNavigation()
       .map(([key, label, href]) => `<a class="${key === questionBankView ? "is-active" : ""}" href="${href}">${label}</a>`)
       .join("");
 
@@ -32943,6 +33149,7 @@ const renderAppPage = () => {
 
     initPlatformLogout();
     initQuestionBankShellNavigation();
+    initContentSchoolIdentity();
     initQuestionBank();
     initDigitalResultsPanel();
     initCanonicalVideoPlayer();
