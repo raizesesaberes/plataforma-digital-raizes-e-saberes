@@ -55,3 +55,10 @@ não participa da escolha. technicalId quando source=student e Auth ID quando pr
 conferir. Registro ausente/sem escola/ambíguo/incoerente mostra aviso sem link de ação, modal
 genérico ou recuperação email. Testes Chromium ampliados: escola consolidada antiga diverge
 da escola atual do aluno; todos os casos incompletos negados sem fallback. Gerador/Edge inalterados.
+
+Delta final — identidades mistas: combinações de aluno e profissional são classificadas como
+ambíguas antes de resolver alvo/rota/modal. Mostram explicação e nenhuma ação automática de
+criação/reset/recuperação. adminStudentAccessTarget também rejeita ambiguidade diretamente.
+Professor puro conserva criação email e recuperação/reset profissional; aluno puro conserva
+login institucional. Chromium cobre professor+student e aluno+teacher, ambos configurados,
+além dos fluxos puros. Sem alteração no gerador/Edge já revisados.

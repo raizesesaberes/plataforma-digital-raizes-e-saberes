@@ -12366,8 +12366,14 @@ const adminCreateAccessTargetType = (user = {}) => {
   return "";
 };
 
-const adminIsStudentAccessUser = (user = {}) => user.source === "student" || user.role === "aluno" || Boolean(user.students?.length);
+const adminHasMixedAccessIdentity = (user = {}) => {
+  const student = user.source === "student" || user.role === "aluno" || Boolean(user.students?.length);
+  const professional = Boolean(user.teachers?.length || user.guardians?.length) || ["teacher", "guardian"].includes(user.source) || (Boolean(user.role) && user.role !== "aluno");
+  return student && professional;
+};
+const adminIsStudentAccessUser = (user = {}) => !adminHasMixedAccessIdentity(user) && (user.source === "student" || user.role === "aluno" || Boolean(user.students?.length));
 const adminStudentAccessTarget = (user = {}) => {
+  if (!adminIsStudentAccessUser(user)) return null;
   const records = user.students || [];
   if (records.length !== 1) return null;
   const student = records[0];
@@ -12725,7 +12731,7 @@ const adminPrintProfessionalAccessReceipt = (receipt) => {
 };
 
 const renderAdminCreateAccessDialog = (user) => {
-  if (adminIsStudentAccessUser(user)) return "";
+  if (adminHasMixedAccessIdentity(user) || adminIsStudentAccessUser(user)) return "";
   const targetType = adminCreateAccessTargetType(user);
   const derivedRole = adminDerivedAccessRole(targetType);
   const targetInstitutionalId = adminCreateAccessTargetInstitutionalId(user);
@@ -13002,7 +13008,9 @@ const renderAdminUserDetail = (user) => {
       </section>
       <section class="admin-user-safe-actions">
         ${
-          adminIsStudentAccessUser(user)
+          adminHasMixedAccessIdentity(user)
+            ? `<p role="status">Esta identidade possui vínculos de aluno e profissional. Selecione um vínculo institucional inequívoco antes de configurar ou redefinir o acesso.</p>`
+            : adminIsStudentAccessUser(user)
             ? (adminStudentAccessUrl(user) ? `<a class="is-primary" href="${printableEscape(adminStudentAccessUrl(user))}" data-admin-student-access>Login e senha do aluno</a><p>Acesso institucional sem e-mail. Gere ou redefina a senha em Acessos dos Alunos.</p>` : `<p role="status">Vínculo de aluno incompleto ou ambíguo. Confira o registro do aluno e sua escola antes de configurar o acesso.</p>`)
             : user.authConfigured
             ? `
