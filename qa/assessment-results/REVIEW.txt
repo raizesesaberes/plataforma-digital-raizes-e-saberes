@@ -1,0 +1,61 @@
+Resultados: ajuste visual proposto, sem produção. Base main6f958de (PR15), sem PR16.
+Cartões com alinhamento inicial, ações padronizadas compactas, detalhe fora da grade
+usando largura completa; cabeçalho distingue turma/aluno e datas. Desktop2colunas e
+mobile1coluna, indicadores4/2colunas, nomes longos quebram sem overflow.
+Uma aplicação selecionada por vez. Rótulos conhecidos traduzidos. Não iniciado/em
+andamento sem nota exibem Sem resultado, sem converter nulo em0. Nota0 registrada
+continua0; entrega sem respostas explicitada sem inferir causa técnica nem recalcular.
+Média/mínimo/máximo sem concluintes ficam—; questão sem respostas não mostra erro0%.
+Erro de carregamento e erro da análise pedagógica distintos de ausência de dados;
+amostra insuficiente traduzida. SQL/Auth/permissões/notas/dados preservados.
+
+Leitura mínima readonly: aplicação individual published,12out11:36UTC→19out11:36UTC,
+0tentativas/0entregues; aplicação coletiva original1tentativa/1entregue. Nenhuma escrita.
+Não criamos aplicação/notificação nem iniciamos tentativa. Usuário pode acessar a nova
+aplicação individual já publicada; não retomar/reabrir a tentativa coletiva encerrada.
+
+Teste Chromium renderers reais/transporte sintético em1440x1000 e390x1000: duas
+aplicações, detalheexpandido,10alunos, nomeslongos, zero legítimo e zero sem respostas,
+nãoiniciado, emandamento, ausência/loading/erro/amostrainsuficiente. Geometria assert:
+semoverflow, botões<80px, cartões<450px, detalhe desktop>1.8x largura cartão.
+Screenshots desktop.png/mobile.png sintéticos inspecionados. Regressão handoff,
+sintaxe/diff/build4277 PASS. Não é homologação humana ou execução real do aluno.
+
+Escopo ampliado autorizado: Recado da professora no aluno e estado final da avaliação.
+Sidebar usa uma coluna: texto largura completa, metadados em linhas, ações abaixo,
+sem marcar leitura automaticamente. Concluída mostra Encerrada em vez de countdown;
+intervalo é encerrado, Entregar/Salvar removidos, revisão anterior/próxima/fechar mantida.
+Handler também recusa submit de tentativa encerrada. Não inventa duração.
+
+Agenda: readonly confirmou TimeZoneUTC e calendar_list_family_events projeta
+available_from/available_until::date/::time para assessment_available/deadline.
+UI antes mostrava essa hora UTC literalmente; Avalia+ formata timestamptz localmente.
+Mapper agora converte apenas esses dois tipos de evento UTC para fuso do navegador,
+inclusive virada de data. Horários locais de outros eventos permanecem idênticos.
+Sem timestamp alterado. A seleção de intervalo semanal da RPC permanece como antes;
+esta fatia não muda o filtro SQL por dataUTC nas bordas de semana.
+
+Readonly posterior à nova entrega: aplicação individual graded100.00%,2respostas
+persistidas,2acertos,0erros,0nãorespondidas, submitted_at2026-10-12T11:48:53.239746Z.
+assessment_results também100%,answered_count2 e matrícula incluída na seleção docente.
+Original coletiva graded0%,0respostas,0acertos,0erros,2nãorespondidas, entrega01:08:33Z.
+Fontes/tabelas e predicado da RPC docente conferidos sem assumir identidade docente
+nem chamar RPC com impersonação. Não é homologação visual autenticada do professor.
+
+Teste student-inbox-review: sidebar300px em desktop1440/mobile390, texto longo,
+semoverflow/metadados sobrepostos, ação leitura explícita. Concluída100%→revisar questão2
+→fechar→reabrir mantém mesmo objeto/tentativa sem qualquer fetch. Contagem estável,
+sem botão submit. Agenda SãoPaulo08:36 e virada11out21:07; calendário local e browserUTC
+não são deslocados. Screenshots student-desktop.png/student-mobile.png sintéticos.
+Integração browser→PostgREST→Postgresisolado autosave/ACK/entrega/resultado PASS;
+layout docente/regressão/sintaxe/diff/build4277 PASS. Nada publicado em produção.
+
+Revisão semântica: Entregue sem respostas exige answered_count confirmado igual a0.
+Acertos/erros objetivos iguais a0 nunca inferem ausência de resposta discursiva.
+answered_count positivo mostra quantidade respondida; contagens ausentes ficam
+explicitamente não informadas, sem preenchimento artificial por zero. SUBMITTED com
+resposta positiva e nota ausente mostra Aguardando correção; grading_status pendente
+explícito também é distinguido. Nota zero registrada continua exibida sem reclassificação.
+Teste PASS: discursiva parcial1respondida/1branco/0acertos/0erros, parcial corrigida,
+objetiva incorreta nota0, nenhuma resposta confirmada, contagens ausentes, contagens
+objetivas isoladas e grading_status pendente. Desktop/mobile/sintaxe/diff/build PASS.

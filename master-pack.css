@@ -26162,3 +26162,48 @@ html[data-a11y-reduced-motion="true"] *::after {
 .content-workspace .tw-teacher-card { flex-direction:column; }
 .content-workspace .tw-teacher-card div { display:block; }
 @media(min-width:761px) { .content-workspace { grid-template-columns:232px minmax(0,1fr); } }
+
+/* Teacher assessment applications: compact cards and a full-width result report. */
+.avalia-applications-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:16px; }
+.avalia-application-card { display:flex; flex-direction:column; gap:10px; min-width:0; padding:18px; border:1px solid var(--rs-line,#dce5df); border-radius:14px; background:#fff; overflow-wrap:anywhere; }
+.avalia-application-card > strong { font-size:1.12rem; line-height:1.4; }
+.avalia-application-card > span, .avalia-application-card > small { color:var(--rs-muted,#526259); line-height:1.5; }
+.avalia-application-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.avalia-application-actions .qb-secondary-action { flex:0 1 auto; min-height:40px; height:auto; padding:9px 13px; border:1px solid #cfddd4; border-radius:9px; background:#f5f9f6; color:#24553b; font:inherit; font-size:.84rem; font-weight:700; cursor:pointer; }
+.avalia-application-actions .qb-secondary-action:first-child { background:#24553b; color:#fff; border-color:#24553b; }
+.avalia-application-actions button:hover { filter:brightness(.96); }
+.avalia-application-actions button:focus-visible { outline:3px solid #b38a38; outline-offset:2px; }
+.avalia-application-card details { margin-top:2px; font-size:.85rem; }
+.avalia-results-detail { min-width:0; margin-top:20px; }
+.avalia-result-report { min-width:0; padding:22px; border:1px solid var(--rs-line,#dce5df); border-radius:14px; background:#fff; overflow-wrap:anywhere; }
+.avalia-result-heading { margin-bottom:16px; }
+.avalia-result-heading h3 { margin:0 0 6px; color:#24553b; font-size:1.15rem; }
+.avalia-result-heading p { margin:0; color:var(--rs-muted,#526259); line-height:1.6; }
+.avalia-result-report .metric-row { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:18px 0; }
+.avalia-result-report .metric-row article { min-width:0; padding:14px; }
+.avalia-result-report .clean-list { display:grid; gap:0; padding:0; list-style:none; }
+.avalia-result-report .clean-list li { display:grid; grid-template-columns:minmax(140px,1fr) minmax(0,2fr); gap:12px; padding:12px 0; border-bottom:1px solid #e8eee9; line-height:1.5; }
+.avalia-result-report .clean-list span { color:#526259; }
+@media(max-width:760px) {
+ .avalia-applications-grid { grid-template-columns:minmax(0,1fr); }
+ .avalia-result-report { padding:14px; }
+ .avalia-result-report .metric-row { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+ .avalia-result-report .clean-list li { grid-template-columns:minmax(0,1fr); gap:4px; }
+ .avalia-application-actions .qb-secondary-action { flex:1 1 120px; }
+}
+
+/* Student inbox also lives in a narrow sidebar: never divide its text into columns. */
+.student-inbox-card.family-message-card { display:flex; flex-direction:column; align-items:stretch; gap:10px; min-width:0; }
+.student-inbox-card .family-message-icon { width:32px; height:32px; border-radius:9px; }
+.student-inbox-card > div:nth-child(2) { width:100%; min-width:0; gap:8px; }
+.student-inbox-card strong,.student-inbox-card p,.student-inbox-card span,.student-inbox-card dd { overflow-wrap:anywhere; white-space:normal; line-height:1.5; }
+.student-inbox-card dl { display:grid; grid-template-columns:minmax(0,1fr); gap:6px; }
+.student-inbox-card dl div { display:grid; grid-template-columns:minmax(0,1fr); gap:2px; }
+.student-inbox-card.family-message-card aside { display:flex; flex-wrap:wrap; justify-content:flex-start; align-items:center; gap:8px; min-width:0; width:100%; }
+.student-inbox-card aside small { flex:1 0 100%; }
+.student-inbox-card aside em { flex:0 0 auto; }
+.student-inbox-card aside a,.student-inbox-card aside button { flex:1 1 120px; min-height:38px; padding:8px 10px; border:1px solid #cfddd4; border-radius:9px; background:#fff; color:#24553b; font-size:.78rem; text-align:center; text-decoration:none; line-height:1.4; }
+.digital-attempt-actions.is-review { grid-template-columns:repeat(2,minmax(0,1fr)); }
+[data-avalia-student-app] .digital-attempt-head > div { display:grid; gap:5px; min-width:0; }
+[data-avalia-student-app] .digital-attempt-head button { min-height:36px; padding:8px 12px; border:1px solid #cfddd4; border-radius:9px; background:#fff; color:#24553b; font:inherit; }
+[data-avalia-student-app] .digital-attempt-stage > .digital-result-card { display:grid; gap:8px; }
