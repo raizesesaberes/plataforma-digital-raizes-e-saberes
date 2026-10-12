@@ -22259,6 +22259,7 @@ const initQuestionBank = () => {
   let selectedId = null;
   let activeAssessmentId = null;
   let activeAssessmentProtected = false;
+  let assessmentRevision = 0, assessmentRefreshGeneration = 0;
   let cart = [];
   let cartPoints = {};
   let mode = questionBankDataService.mode();
@@ -22360,6 +22361,7 @@ const initQuestionBank = () => {
   const saveDraftSnapshot = (reason = "autosave", { syncPoints = true } = {}) => {
     requireAssessmentActor();
     if(syncPoints)syncPointInputs();
+    assessmentRevision++;
     localStorage.setItem(
       draftStorageKey,
       JSON.stringify({
@@ -23796,6 +23798,7 @@ const initQuestionBank = () => {
     if(assessmentSavePromise)return assessmentSavePromise;
     if(assessmentSwitchBusy)return Promise.reject(Error('Aguarde a abertura ou duplicação terminar.'));
     if(sessionStorage.getItem(assessmentSaveKey))return Promise.reject(Error(uncertainSaveMessage));
+    assessmentRevision++;
     const controls=[...root.querySelectorAll(saveControls)].map(node=>({node,disabled:node.disabled}));
     controls.forEach(({node})=>{node.disabled=true;});
     assessmentSavePromise=(async()=>{
@@ -23949,32 +23952,33 @@ const initQuestionBank = () => {
 
   const refresh = async () => {
     requireAssessmentActor();
+    // Session renewal is a read refresh, never permission to overwrite a builder operation.
+    if(assessmentSavePromise || assessmentSwitchBusy)return;
+    const revision=assessmentRevision, generation=++assessmentRefreshGeneration, assessmentId=activeAssessmentId, pendingMarker=sessionStorage.getItem(assessmentSaveKey);
+    const current=()=>assessmentActorCurrent() && revision===assessmentRevision && generation===assessmentRefreshGeneration && assessmentId===activeAssessmentId && !assessmentSavePromise && !assessmentSwitchBusy && sessionStorage.getItem(assessmentSaveKey)===pendingMarker;
     loading.hidden = false;
     errorNode.hidden = true;
     mode = questionBankDataService.mode();
     try {
-      questions = await questionBankDataService.listQuestions();requireAssessmentActor();
-      assessments = await questionBankDataService.listAssessments();requireAssessmentActor();
-      selectedId = selectedId || questions[0]?.id;
-      if(activeAssessmentId){
-        const loaded=await questionBankDataService.getAssessmentById(activeAssessmentId,{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal});requireAssessmentActor();
-        if(!loaded?.id || loaded.id!==activeAssessmentId)throw Error('Avaliação não confirmada pelo servidor.');
-        hydrateConfirmedAssessment(loaded);
-      }else cart=cart.filter(id=>itemById(id));
-      requireAssessmentActor();populateFilterOptions();
-      root.querySelector(".qb-notice span").textContent = localDevNotice();
-      await render();
-      await attemptLoginResume();
-    } catch (error) {
+      const loadedQuestions=await questionBankDataService.listQuestions();requireAssessmentActor();if(!current())return;
+      const loadedAssessments=await questionBankDataService.listAssessments();requireAssessmentActor();if(!current())return;
+      const loaded=assessmentId ? await questionBankDataService.getAssessmentById(assessmentId,{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal}) : null;
+      requireAssessmentActor();if(!current())return;
+      if(assessmentId && (!loaded?.id || loaded.id!==assessmentId))throw Error('Avaliação não confirmada pelo servidor.');
+      questions=loadedQuestions;assessments=loadedAssessments;
+      selectedId=selectedId || questions[0]?.id;
+      // Applied content must be official. Unassigned drafts keep legitimate local edits.
+      if(loaded?.isAssigned && !pendingMarker)hydrateConfirmedAssessment(loaded);
+      else if(loaded)activeAssessmentProtected=false;
+      else cart=cart.filter(id=>itemById(id));
+      populateFilterOptions();root.querySelector('.qb-notice span').textContent=localDevNotice();
+      await render();await attemptLoginResume();
+    } catch(error) {
       if(!assessmentActorCurrent()){try{requireAssessmentActor();}catch{}return;}
-      questions = mode === "fallback" ? await questionBankDataService.listQuestions() : [];
-      assessments = [];
-      populateFilterOptions();
-      await render();
-      root.querySelectorAll('[data-qb-total],[data-qb-published],[data-qb-review],[data-qb-draft],[data-qb-archived]').forEach(node=>{node.textContent='—';});
-      root.querySelector('[data-qb-result-count]').textContent='Consulta indisponível';
-      empty.hidden=true;
-      setError(error.message);
+      if(!current())return;
+      setError(error.message || 'Não foi possível atualizar a consulta. Sua edição foi preservada.');
+    } finally {
+      if(assessmentActorCurrent() && generation===assessmentRefreshGeneration)loading.hidden=true;
     }
   };
 
@@ -24017,7 +24021,7 @@ const initQuestionBank = () => {
         if(assessmentSavePromise || assessmentSwitchBusy)throw Error('Aguarde a operação atual terminar antes de abrir ou duplicar.');
         const marker=JSON.parse(sessionStorage.getItem(assessmentSaveKey) || 'null');
         if(marker && (!button.dataset.qbOpenAssessment || marker.kind==='duplicate' || (marker.assessmentId && marker.assessmentId!==button.dataset.qbOpenAssessment)))throw Error(uncertainSaveMessage);
-        assessmentSwitchBusy=true;ownsSwitch=true;
+        assessmentRevision++;assessmentSwitchBusy=true;ownsSwitch=true;
         switchControls=[...root.querySelectorAll(saveControls)].map(node=>({node,disabled:node.disabled}));switchControls.forEach(({node})=>node.disabled=true);
       }else if(assessmentSwitchBusy){throw Error('Aguarde a abertura ou duplicação terminar.');}
       if(button.dataset.qbReapplyAssessment){

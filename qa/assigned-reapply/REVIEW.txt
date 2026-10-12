@@ -45,3 +45,15 @@ ACK perdido mantém bloqueio e marcador; duplicação lenta bloqueia outro cliqu
 rascunho local recusado com título/instruções/data/ano/componente/pontos divergentes é
 substituído ao reload e não aparece na prévia oficial. Regressão handoff/sintaxe/diff/build PASS.
 Sem novas alterações SQL, permissões ou dados reais; sem merge/deploy de produção.
+
+Revisão refresh/sessão: refresh não inicia durante save/abertura/duplicação. Leituras
+usam variáveis locais e só são aplicadas se geração, revisão do editor, ator, ID e
+marcador pendente continuam iguais após cada await. Save/troca/edição invalidam leitura
+anterior. Resposta/erro obsoleto não sobrescrevem estado atual. Renovação de sessão
+não hidrata rascunho não aplicado: edição local legítima é preservada inclusive no reload.
+Conteúdo aplicado continua exigindo hidratação oficial; abrir explicitamente um ID
+carrega o servidor. Lista pode ser consultada com ACK incerto sem apagar marcador.
+Testes PASS: token renewal durante save lento não dispara leitura concorrente nem
+substitui Nova edição/pontos2; save seguinte envia os mesmos valores. Refresh iniciado
+antes da edição e finalizado depois não troca Edição posterior/pontos4; reload de
+rascunho não aplicado conserva esses valores. Demais proteções anteriores/regressão PASS.
