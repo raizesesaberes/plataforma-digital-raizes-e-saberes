@@ -1,0 +1,31 @@
+CONTRATO INDIVIDUAL — PROPOSTA NÃO INSTALADA / NÃO PUBLICADA
+
+Problema comprovado
+CREATE hoje resolve contratante apenas por education_networks/tenant NETWORK, mesmo com uma escola. O aditamento publicado requer tenant SCHOOL. Ter uma única escola não transforma uma rede em escola individual. Não inferir o contratante de Horizonte nem associá-la a rede PILOT.
+
+Solução
+Interface exige selecionar Tipo de contratante: Escola individual ou Rede / prefeitura. SCHOOL exige exatamente uma escola existente OU uma nova escola pelo fluxo já existente. O payload SCHOOL envia network_id e new_network nulos, mesmo que haja rascunho anterior de rede. A prévia identifica a escola contratante.
+Backend aceita contractor_type explícito, cria/reutiliza tenant SCHOOL da escola selecionada e usa esse mesmo tenant para o contrato e entitlement. Nova escola permanece inativa e usa admin_create_school existente, dentro da mesma transação. Nenhuma education_network ou network_school_membership é criada para SCHOOL. Repetição recupera recibo e não duplica escola/tenant/contrato.
+NETWORK explícito mantém comportamento atual, inclusive com um alvo único. Clientes antigos sem contractor_type mantêm NETWORK por compatibilidade; não são reinterpretados como SCHOOL. Renovação preserva tenant/contratante e rejeita troca explícita de tipo. Sem conversão de contratos ou redes existentes.
+
+Correções das imagens
+Trocar de renovação para Criar contrato limpa referência/datas/contexto de renovação e exige nova escolha de tipo. Antes da RPC, produto marcado sem categorias gera mensagem com o nome do produto e instrução para selecionar categorias ou desmarcar Contratar este produto; não limpa seleções nem grava. Reutilização de configuração anterior continua validada no servidor, sem bloquear renovações heterogêneas por representação incompleta no formulário.
+
+Impacto técnico
+supabase/review/individual_school_contracts.sql substitui SOMENTE três corpos por CREATE OR REPLACE:
+- contract_operations_private.validate(jsonb)
+- public.admin_preview_contract_operation(jsonb)
+- public.admin_confirm_contract_operation(jsonb,uuid)
+Pré-condições MD5 capturadas readonly do banco instalado; drift aborta. Não cria RPC/tabela/coluna/role, não amplia EXECUTE, preserva ACL/owner/SECURITY DEFINER/search_path. Nenhuma alteração em Auth, triggers, RLS, resolvers, aditamento, catálogo ou ledger por este executor. Diferenças isoladas em function-changes.diff.
+Fonte SQL de revisão apenas; nenhuma migration oficial gerada. Backend deve ser revisado/instalado antes de publicar a interface que oferece SCHOOL. Não alterar migrations históricas nem reaplicar contract_operations.sql inteiro.
+
+Validação
+node qa/fase3/integration-run.mjs --individual-only
+node tests/contracts/individual-school-ui.mjs
+node tests/contracts/amendment-ui.mjs
+node tests/contracts/completion-ui.mjs
+Banco descartável: escola existente inativa→contrato SCHOOL→aditamento; nova escola inativa→contrato SCHOOL→aditamento; nenhuma rede/membership/Auth criada nesses percursos; replay e concorrência sem duplicatas; alvo múltiplo e rede conflitante rejeitados; ACL admin/anon; renovação/histórico preservados; NETWORK explícito e legado continuam NETWORK. Comparação de metadata confirma somente três corpos alterados e ACLs/configs/relações/resolvers preservados. Suítes anteriores de contratos executadas para regressão.
+Chromium com RPC sintético: tipo explícito, payload sem rede residual, validação de alvo único, criação→recibo→aditamento no mesmo contrato; reset do texto/datas de renovação; mensagem por produto vazio preserva rascunho sem RPC.
+
+Situação real
+Nenhuma criação, alteração, confirmação, ativação ou associação executada para Horizonte ou qualquer escola real. A identidade do contratante de Horizonte continua decisão explícita do usuário. Proposta aguarda revisão e autorização de instalação/publicação.

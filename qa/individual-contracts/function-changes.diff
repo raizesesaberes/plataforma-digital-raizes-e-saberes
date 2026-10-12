@@ -1,0 +1,58 @@
+--- installed-functions
++++ proposed-functions
+@@ -4,7 +4,7 @@
+  st date; en date; nw jsonb; ns jsonb; ids uuid[]; pid uuid; owner_tenant uuid; n integer; rule_set jsonb; copied jsonb; school_rules jsonb; selected_rules jsonb; source_entitlement uuid; school_modules jsonb;
+ begin
+  perform public.school_content_assert_admin();
+- if jsonb_typeof(cfg) is distinct from 'object' or octet_length(cfg::text)>262144 or exists(select 1 from jsonb_object_keys(cfg) k where k not in('action','contract_id','renewal_id','network_id','new_network','reference','starts_at','ends_at','school_ids','new_school','products','reason','adopt_dynamic','term_months','reuse_previous')) then raise exception 'INVALID_CONTRACT_CONFIG';end if;
++ if jsonb_typeof(cfg) is distinct from 'object' or octet_length(cfg::text)>262144 or exists(select 1 from jsonb_object_keys(cfg) k where k not in('action','contract_id','renewal_id','network_id','new_network','reference','starts_at','ends_at','school_ids','new_school','products','reason','adopt_dynamic','term_months','reuse_previous','contractor_type')) then raise exception 'INVALID_CONTRACT_CONFIG';end if;
+  if length(btrim(coalesce(cfg->>'reason',''))) not between 5 and 500 then raise exception 'REASON_REQUIRED';end if;
+  if cfg->>'action'='REVOKE' then
+   select * into old from public.contracts where id=(cfg->>'contract_id')::uuid;
+@@ -38,6 +38,11 @@
+   if exists(select 1 from public.contracts where metadata->>'renewal_of'=old.id::text and status='ACTIVE') then raise exception 'RENEWAL_ALREADY_SCHEDULED';end if;
+   if (select tenant_type from public.tenants where id=old.tenant_id)='SCHOOL' and (cardinality(ids)<>1 or ns is not null and ns<>'null'::jsonb or ids[1]<>(select school_id from public.tenants where id=old.tenant_id)) then raise exception 'SCHOOL_CONTRACT_TARGET_MUST_BE_PRESERVED';end if;
+  else
++  if cfg ? 'contractor_type' and coalesce(cfg->>'contractor_type','') not in ('SCHOOL','NETWORK') then raise exception 'EXPLICIT_CONTRACTOR_TYPE_REQUIRED';end if;
++  if cfg->>'contractor_type'='SCHOOL' then
++   if (cardinality(ids)+case when ns is not null and ns<>'null'::jsonb then 1 else 0 end)<>1 then raise exception 'SINGLE_SCHOOL_CONTRACT_REQUIRED';end if;
++   if nullif(cfg->>'network_id','') is not null or (cfg->'new_network' is not null and cfg->'new_network'<>'null'::jsonb) then raise exception 'SCHOOL_CONTRACT_HAS_NO_NETWORK';end if;
++  else
+   nw:=cfg->'new_network';
+   if nullif(cfg->>'network_id','') is not null then
+    if nw is not null and nw<>'null'::jsonb then raise exception 'ONE_CONTRACTOR_REQUIRED';end if;
+@@ -46,8 +51,13 @@
+    if jsonb_typeof(nw) is distinct from 'object' or length(btrim(coalesce(nw->>'name','')))<3 or length(btrim(coalesce(nw->>'code','')))<2 then raise exception 'CONTRACTOR_REQUIRED';end if;
+    if exists(select 1 from public.education_networks where lower(btrim(code))=lower(btrim(nw->>'code')) or lower(btrim(name))=lower(btrim(nw->>'name'))) then raise exception 'DUPLICATE_CONTRACTOR_USE_EXISTING';end if;
+   end if;
+- end if;
+- if old.id is not null then owner_tenant:=old.tenant_id;else select id into owner_tenant from public.tenants where network_id=nullif(cfg->>'network_id','')::uuid;end if;
++  end if;
++ end if;
++ if old.id is not null then
++  owner_tenant:=old.tenant_id;
++  if cfg ? 'contractor_type' and cfg->>'contractor_type' is distinct from (select tenant_type::text from public.tenants where id=owner_tenant) then raise exception 'RENEWAL_CONTRACTOR_MUST_BE_PRESERVED';end if;
++ elsif cfg->>'contractor_type'='SCHOOL' then select id into owner_tenant from public.tenants where tenant_type='SCHOOL' and school_id=ids[1];
++ else select id into owner_tenant from public.tenants where network_id=nullif(cfg->>'network_id','')::uuid;end if;
+  if owner_tenant is not null and not exists(select 1 from public.tenants where id=owner_tenant and status='active') then raise exception 'CONTRACTOR_TENANT_INACTIVE';end if;
+  if exists(select 1 from public.contracts where tenant_id=owner_tenant and lower(btrim(contract_ref))=lower(btrim(cfg->>'reference'))) then raise exception 'DUPLICATE_CONTRACT_REFERENCE';end if;
+  if cfg->'reuse_previous'='true'::jsonb then
+@@ -107,7 +117,7 @@
+  select to_jsonb(c) into prior from public.contracts c where id=coalesce(nullif(cfg->>'renewal_id',''),nullif(cfg->>'contract_id',''))::uuid;
+  return jsonb_build_object('status','PASS','config',cfg,'revision',contract_operations_private.revision(cfg),'previous_contract',prior,
+  'removed_schools',(select coalesce(jsonb_agg(jsonb_build_object('id',s.id,'name',s.nome)),'[]') from contract_operations_private.contract_schools(nullif(cfg->>'renewal_id','')::uuid) sid join public.schools s on s.id=sid where not (coalesce(cfg->'school_ids','[]') ? s.id::text)),
+- 'contractor',case when cfg->'new_network' is not null and cfg->'new_network'<>'null'::jsonb then cfg->'new_network' else (select jsonb_build_object('id',n.id,'name',n.name,'code',n.code) from public.education_networks n where n.id=coalesce(nullif(cfg->>'network_id','')::uuid,(select network_id from public.tenants where id=(prior->>'tenant_id')::uuid))) end,
++ 'contractor',case when cfg->>'contractor_type'='SCHOOL' then coalesce(nullif(cfg->'new_school','null'::jsonb),(select jsonb_build_object('name',s.nome,'code',s.codigo_inep) from public.schools s where s.id=(cfg->'school_ids'->>0)::uuid)) when cfg->'new_network' is not null and cfg->'new_network'<>'null'::jsonb then cfg->'new_network' else (select jsonb_build_object('id',n.id,'name',n.name,'code',n.code) from public.education_networks n where n.id=coalesce(nullif(cfg->>'network_id','')::uuid,(select network_id from public.tenants where id=(prior->>'tenant_id')::uuid))) end,
+  'schools',(select coalesce(jsonb_agg(jsonb_build_object('id',id,'name',nome,'status',status) order by nome),'[]') from public.schools where id in(select value::uuid from jsonb_array_elements_text(coalesce(cfg->'school_ids','[]')) union select sid from contract_operations_private.contract_schools(nullif(cfg->>'contract_id','')::uuid) sid)),
+  'effects',jsonb_build_object('current_and_future_classified_content',true,'per_item_grants',0,'school_activation',false,'network_membership_changes',0,'legacy_history_preserved',true,
+  'warning','A adoção de categorias começa na vigência. Direitos legados deixam de ampliar o acesso; BLOCK/EMBARGO, idade, suspensão e entrega protegida continuam obrigatórios. Escolas inativas continuam sem acesso.'));
+@@ -144,6 +154,9 @@
+   end if;
+   if nullif(cfg->>'renewal_id','') is not null then
+    select * into previous from public.contracts where id=(cfg->>'renewal_id')::uuid;tid:=previous.tenant_id;
++  elsif cfg->>'contractor_type'='SCHOOL' then
++   select id into tid from public.tenants where tenant_type='SCHOOL' and school_id=ids[1];
++   if tid is null then insert into public.tenants(tenant_type,school_id) values('SCHOOL',ids[1]) returning id into tid;end if;
+   else
+    nid:=nullif(cfg->>'network_id','')::uuid;
+    if nid is null then

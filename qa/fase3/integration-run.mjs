@@ -81,7 +81,8 @@ try {
     }
     execFileSync('python3',['tests/contracts/assembly-institutional.py'],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}});
   } else {
-  if(process.argv.includes('--amendments-only')) {
+  if(process.argv.includes('--amendments-only')||process.argv.includes('--individual-only')) {
+
     const beforeAmendment=catalog();apply('supabase/review/contract_amendments.sql');const afterAmendment=catalog();
     assert.deepEqual(afterAmendment.relations,beforeAmendment.relations,'Amendment changed table ACL/RLS/policies/triggers');
     for(const [key,value] of Object.entries(beforeAmendment.functions)){
@@ -90,12 +91,24 @@ try {
       } else assert.deepEqual(afterAmendment.functions[key],value,'Existing function changed: '+key);
     }
     console.log('PASS amendment preserves all existing functions except rule-count validator; table ACL/RLS/policies/triggers unchanged');
-    execFileSync('python3',['tests/contracts/amendments.py'],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}}); }
-  for(const suite of (autosaveOnly||routingOnly||process.argv.includes('--amendments-only')?[]:['database.py','content.py','edge-cases.py','security-regressions.py','succession-regressions.py'])){
+    if(process.argv.includes('--individual-only')){
+      const beforeIndividual=catalog();apply('supabase/review/individual_school_contracts.sql');const afterIndividual=catalog();
+      assert.deepEqual(afterIndividual.relations,beforeIndividual.relations);assert.deepEqual(afterIndividual.schemas,beforeIndividual.schemas);
+      assert.deepEqual(Object.keys(afterIndividual.functions),Object.keys(beforeIndividual.functions));
+      for(const [key,value] of Object.entries(beforeIndividual.functions)){
+        if(['contract_operations_private.validate(','public.admin_preview_contract_operation(','public.admin_confirm_contract_operation('].some(name=>key.startsWith(name))){
+          const clean=v=>Object.fromEntries(Object.entries(v).filter(([k])=>!['body_md5','definition_md5'].includes(k)));assert.deepEqual(clean(afterIndividual.functions[key]),clean(value));
+        }else assert.deepEqual(afterIndividual.functions[key],value);
+      }
+      console.log('PASS individual creation: only three reviewed function bodies changed; existing ACLs/config/relations/resolvers unchanged');
+    }
+    execFileSync('python3',[process.argv.includes('--individual-only')?'tests/contracts/individual-school.py':'tests/contracts/amendments.py'],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}}); }
+  for(const suite of (autosaveOnly||routingOnly||process.argv.includes('--amendments-only')||process.argv.includes('--individual-only')?[]:['database.py','content.py','edge-cases.py','security-regressions.py','succession-regressions.py'])){
+
     console.log('CONTRACT SUITE '+suite);
     execFileSync('python3',['tests/contracts/'+suite],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}});
   }
-  if(!process.argv.includes('--amendments-only')) {
+  if(!(process.argv.includes('--amendments-only')||process.argv.includes('--individual-only'))) {
   run(['run','-d','--name',`${name}-rest`,'--label','rs.fase3=synthetic','--network',`container:${name}`,'-e','PGRST_DB_URI=postgres://authenticator:synthetic-local-only@127.0.0.1:5432/postgres','-e','PGRST_DB_SCHEMAS=public','-e','PGRST_DB_ANON_ROLE=anon','-e','PGRST_JWT_SECRET=fase3-synthetic-jwt-secret-never-production-123456',postgrest]);
   const info=JSON.parse(run(['inspect',name]))[0];const host=Object.values(info.NetworkSettings.Networks)[0].IPAddress;
   ready=false;

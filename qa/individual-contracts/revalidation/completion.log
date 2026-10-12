@@ -1,0 +1,1 @@
+PASS real Chromium DOM: cancel preserves draft; delayed ACK; receipt success; new contract; lost ACK locks draft; same-key retry without duplicate; return to list; typed rejection/edit/new preview/confirm and reload; revocation receipt without action and lost-ACK reload recovery. Synthetic RPC only.
