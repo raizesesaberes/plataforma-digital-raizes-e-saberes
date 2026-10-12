@@ -10542,7 +10542,7 @@ const renderStudentAssessmentsView = () => {
   return `
     <section class="student-card" data-avalia-student-app>
       <div class="student-card-head"><h2>Avaliações</h2><span data-avalia-student-count>${assignments.length} publicadas</span></div>
-      <div class="qb-selection-status" data-avalia-student-status aria-live="polite">${studentAvaliaSaveState.failed ? studentAvaliaSaveFailureMessage(state.error) : printableEscape(state.message || state.error || "")}</div>
+      <div class="qb-selection-status" data-avalia-student-status aria-live="polite">${getStudentAvaliaSaveFailure() ? studentAvaliaSaveFailureMessage(getStudentAvaliaSaveFailure().error || state.error) : printableEscape(state.message || state.error || "")}</div>
       <div class="student-premium-card-grid">
         ${renderStudentAssessmentGroup("Disponiveis", available)}
         ${renderStudentAssessmentGroup("Em andamento", inProgress)}
@@ -10576,7 +10576,11 @@ const renderStudentAssessmentCard = (assignment) => {
 };
 
 const studentAvaliaSaveState = { pending: false, submitting: false, failed: null, sequences: new Map() };
-const studentAvaliaSaveFailureMessage = (error) => `${printableEscape(error || 'Falha ao salvar resposta.')} ${studentAvaliaSaveState.failed?.definitive ? 'A resposta não foi salva. Você pode navegar ou fechar; nenhuma entrega será feita automaticamente.' : 'Sua resposta ainda não foi confirmada. Não recarregue nem entregue.'} <button type="button" data-avalia-retry-save>${studentAvaliaSaveState.failed?.definitive ? 'Conferir respostas salvas' : 'Conferir e tentar salvar'}</button>`;
+const getStudentAvaliaSaveFailure = () => {
+  const failed = studentAvaliaSaveState.failed;
+  return failed?.actor === getSupabaseUserContext().userId && failed?.attemptId === getAvaliaActiveAttempt()?.id ? failed : null;
+};
+const studentAvaliaSaveFailureMessage = (error) => `${printableEscape(error || 'Falha ao salvar resposta.')} ${getStudentAvaliaSaveFailure()?.definitive ? 'A resposta não foi salva. Você pode navegar ou fechar; nenhuma entrega será feita automaticamente.' : 'Sua resposta ainda não foi confirmada. Não recarregue nem entregue.'} <button type="button" data-avalia-retry-save>${getStudentAvaliaSaveFailure()?.definitive ? 'Conferir respostas salvas' : 'Conferir e tentar salvar'}</button>`;
 const studentAvaliaSaveExpired = (attempt) => Number.isFinite(Date.parse(attempt?.deadline_at)) && Date.parse(attempt.deadline_at) <= Date.now();
 const studentAvaliaDefinitiveSaveError = (error) => error.status >= 400 && error.status < 500 && ![408,429].includes(error.status) && /^(22|23|42|P0|PGRST)/.test(error.code || '');
 const studentAvaliaRemainingLabel = (attempt) => {
@@ -10594,9 +10598,9 @@ const nextStudentAutosaveSequence = (attempt, actor) => {
 };
 const saveStudentAvaliaAnswer = async (root, attempt, answer, retry = false) => {
   if (studentAvaliaSaveState.pending || studentAvaliaSaveState.submitting) return;
-  if (studentAvaliaSaveState.failed && !retry) return;
+  if (getStudentAvaliaSaveFailure() && !retry) return;
   const actor = getSupabaseUserContext().userId;
-  const pending = retry ? studentAvaliaSaveState.failed : { actor, attemptId: attempt.id, answer };
+  const pending = retry ? getStudentAvaliaSaveFailure() : { actor, attemptId: attempt.id, answer };
   if (!pending || pending.actor !== actor || pending.attemptId !== attempt.id) {
     const status=root.querySelector('[data-avalia-student-status]');if(status)status.textContent='Conta ou tentativa alterada. Reabra a tentativa existente.';
     return;
@@ -10604,6 +10608,7 @@ const saveStudentAvaliaAnswer = async (root, attempt, answer, retry = false) => 
   const checkActor = () => { if (getSupabaseUserContext().userId !== actor) throw Error("Conta alterada durante o salvamento."); };
   const controls = [...root.querySelectorAll('.digital-attempt-stage button,.digital-attempt-stage input,.digital-attempt-stage textarea')].map(node=>({node,disabled:node.disabled}));
   const status = root.querySelector('[data-avalia-student-status]');
+  studentAvaliaSaveState.actor = actor;
   studentAvaliaSaveState.pending = true;
   controls.forEach(({node})=>node.disabled=true);
   if(status)status.textContent='Salvando resposta...';
@@ -10627,17 +10632,17 @@ const saveStudentAvaliaAnswer = async (root, attempt, answer, retry = false) => 
     if(!response || response.attempt_id!==attempt.id || response.question_id!==pending.answer.questionId)throw Error('Confirmação de resposta inválida.');
     attempt.responses=[...(attempt.responses || []).filter(r=>r.question_id!==response.question_id),response];
     studentAvaliaSaveState.failed=null;
-    avaliaApplicationState.student.error='';avaliaApplicationState.student.message='Resposta salva e confirmada.';
-    refreshStudentAvaliaSurface();
+    if(getAvaliaActiveAttempt()?.id===attempt.id){avaliaApplicationState.student.error='';avaliaApplicationState.student.message='Resposta salva e confirmada.';}
   } catch(error) {
     pending.definitive = pending.definitive || studentAvaliaDefinitiveSaveError(error) || studentAvaliaSaveExpired(attempt) || (!retry && !writeStarted);
     studentAvaliaSaveState.failed=pending;
-    avaliaApplicationState.student.error=error.message || 'Falha ao salvar resposta.';
-    if(status)status.innerHTML=studentAvaliaSaveFailureMessage(avaliaApplicationState.student.error);
+    pending.error=error.message || 'Falha ao salvar resposta.';
+    if(getSupabaseUserContext().userId !== actor)return;
+    if(getAvaliaActiveAttempt()?.id===attempt.id)avaliaApplicationState.student.error=pending.error;
   } finally {
     studentAvaliaSaveState.pending=false;
-    if(!studentAvaliaSaveState.failed)controls.forEach(({node,disabled})=>node.disabled=disabled);
-    else if(studentAvaliaSaveState.failed.definitive)root.querySelectorAll('[data-avalia-stage-close],[data-avalia-prev],[data-avalia-next]').forEach(node=>node.disabled=false);
+    if(!getStudentAvaliaSaveFailure())controls.forEach(({node,disabled})=>node.disabled=disabled);
+    if(getSupabaseUserContext().userId === actor)refreshStudentAvaliaSurface();
   }
 };
 
@@ -22071,7 +22076,7 @@ const initStudentAvaliaApplication = () => {
     const clock=root.querySelector('[data-avalia-countdown]');if(clock)clock.textContent=studentAvaliaRemainingLabel(getAvaliaActiveAttempt());
   },1000);
   if(!initStudentAvaliaApplication.unloadBound){
-    window.addEventListener('beforeunload',event=>{if(studentAvaliaSaveState.pending || studentAvaliaSaveState.failed){event.preventDefault();event.returnValue='';}});
+    window.addEventListener('beforeunload',event=>{if(studentAvaliaSaveState.pending || getStudentAvaliaSaveFailure()){event.preventDefault();event.returnValue='';}});
     initStudentAvaliaApplication.unloadBound=true;
   }
 
@@ -22082,8 +22087,9 @@ const initStudentAvaliaApplication = () => {
 
   if (root.dataset.avaliaStudentBound === "true") return;
   root.dataset.avaliaStudentBound = "true";
-  if(studentAvaliaSaveState.pending || studentAvaliaSaveState.submitting || studentAvaliaSaveState.failed)root.querySelectorAll('.digital-attempt-stage button,.digital-attempt-stage input,.digital-attempt-stage textarea').forEach(node=>node.disabled=true);
-  if(!studentAvaliaSaveState.pending && studentAvaliaSaveState.failed?.definitive)root.querySelectorAll('[data-avalia-stage-close],[data-avalia-prev],[data-avalia-next]').forEach(node=>node.disabled=false);
+  if((studentAvaliaSaveState.pending && studentAvaliaSaveState.actor===getSupabaseUserContext().userId) || studentAvaliaSaveState.submitting || getStudentAvaliaSaveFailure())root.querySelectorAll('.digital-attempt-stage button,.digital-attempt-stage input,.digital-attempt-stage textarea').forEach(node=>node.disabled=true);
+  if(!studentAvaliaSaveState.pending && getStudentAvaliaSaveFailure())root.querySelectorAll('[data-avalia-stage-close]').forEach(node=>node.disabled=false);
+  if(!studentAvaliaSaveState.pending && getStudentAvaliaSaveFailure()?.definitive)root.querySelectorAll('[data-avalia-stage-close],[data-avalia-prev],[data-avalia-next]').forEach(node=>node.disabled=false);
 
   root.addEventListener("click", async (event) => {
     const button = event.target.closest("button");
@@ -22092,7 +22098,7 @@ const initStudentAvaliaApplication = () => {
     if(button.hasAttribute('data-avalia-retry-save')){
       const attempt=getAvaliaActiveAttempt();if(attempt)await saveStudentAvaliaAnswer(root,attempt,null,true);return;
     }
-    if(studentAvaliaSaveState.failed && !(studentAvaliaSaveState.failed.definitive && button.matches('[data-avalia-stage-close],[data-avalia-prev],[data-avalia-next]')))return;
+    if(getStudentAvaliaSaveFailure() && !button.matches('[data-avalia-stage-close]') && !(getStudentAvaliaSaveFailure().definitive && button.matches('[data-avalia-prev],[data-avalia-next]')))return;
     const statusNode = root.querySelector("[data-avalia-student-status]");
 
     if (button.dataset.avaliaStudentOpen) {
@@ -22133,10 +22139,10 @@ const initStudentAvaliaApplication = () => {
     const questions = getAvaliaAssignmentQuestions(assignment);
 
     if (button.hasAttribute("data-avalia-stage-close")) {
-      if(studentAvaliaSaveState.failed){
-        if(!window.confirm('A resposta não foi salva. Fechar sem reenviar nem entregar a avaliação?'))return;
+      if(getStudentAvaliaSaveFailure()){
+        if(!window.confirm('A resposta não está confirmada e pode não estar salva. Fechar descartando a recuperação pendente, sem reenviar nem entregar a avaliação?'))return;
         studentAvaliaSaveState.failed=null;
-        avaliaApplicationState.student.message='Avaliação fechada sem entrega. A resposta recusada não foi salva.';
+        avaliaApplicationState.student.message='Avaliação fechada sem entrega. Confira no servidor as respostas salvas ao retomar.';
       }
       avaliaApplicationState.student.activeAssignmentId = "";
       avaliaApplicationState.student.activeAttemptId = "";
@@ -22166,9 +22172,12 @@ const initStudentAvaliaApplication = () => {
         await loadStudentAvaliaData({ force: true });
         refreshStudentAvaliaSurface();
       } catch (error) {
-        avaliaApplicationState.student.error = error.message || "Nao foi possivel entregar a avaliacao.";
-        if (statusNode) statusNode.textContent = avaliaApplicationState.student.error;
-      } finally {studentAvaliaSaveState.submitting=false;submitControls.forEach(({node,disabled})=>node.disabled=disabled);}
+        // Read only: a failed HTTP acknowledgment may follow a committed submission.
+        await loadStudentAvaliaData({ force: true });
+        const confirmed = getAvaliaActiveAttempt();
+        avaliaApplicationState.student.message = confirmed && ['submitted','graded'].includes(confirmed.status) ? 'Entrega confirmada pelo servidor.' : '';
+        avaliaApplicationState.student.error = avaliaApplicationState.student.message ? '' : (error.message || "Nao foi possivel confirmar a entrega. Confira o estado antes de tentar novamente.");
+      } finally {studentAvaliaSaveState.submitting=false;submitControls.forEach(({node,disabled})=>node.disabled=disabled);refreshStudentAvaliaSurface();}
     }
     if (button.hasAttribute("data-avalia-save-text")) {
       const questionEntry = questions[avaliaApplicationState.student.activeQuestionIndex];

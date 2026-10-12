@@ -58,3 +58,25 @@ navegar e fechar ficam disponíveis com aviso explícito, sem entrega automátic
 Vencimento durante save reproduzido na RPC real do banco descartável. Timeout504
 após commit continua reconciliando sem escrita duplicada. Entrega lenta bloqueia todos
 os controles de resposta; falha restaura controles e preserva seleção confirmada.
+
+Revisão DOM/escopo: conclusão do save renderiza a superfície atualmente conectada,
+após limpar pending, sem injetar recuperação em root removido. Falha/payload em
+memória ficam vinculados ao UID e tentativa; outra conta não recebe aviso/resposta
+da anterior. Testados rerender durante sucesso, recusa e ACK incerto; trocaUID
+em voo; falha não aparece em outra tentativa. Fechar com confirmação explícita é
+possível também no ACK incerto; isso descarta recuperação pendente, sem entregar.
+Entregar continua bloqueado em recusa/ACK incerto, inclusive clique disparado por script.
+Falha HTTP de entrega faz readback: teste504 após commit confirma conclusão, sem
+segunda entrega automática. Falha antes do commit preserva respostas confirmadas.
+
+Atualização real readonly: tentativa original graded, submitted_at2026-10-12T01:08:33.830517Z,
+score_percentage0.00, zero respostas persistidas, max_attempts1. Isso substitui o estado
+em andamento da consulta anterior. Não modificar nota/tentativa/prazo/respostas.
+Caminho operacional existente: publicar nova aplicação target_type=student, mesma
+avaliação/turma, somente student_id do aluno de homologação, max_attempts1 e nova
+janela. teacher_schedule_assessment_application_v2 chama teacher_create_assessment_assignment;
+esta separa alvo student de class, valida matrícula e reutiliza eventual aplicação
+individual publicada já existente. Antes de executar, verificar ausência dessa aplicação
+individual para não atualizá-la por engano. A publicação também gera notificação ao
+aluno alvo: requer aprovação específica incluindo essa notificação. Não executado.
+Não aumentar limite da aplicação de turma (afetaria outros alunos), não resetar a original.
