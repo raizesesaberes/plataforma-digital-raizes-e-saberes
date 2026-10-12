@@ -10596,6 +10596,7 @@ const studentAvaliaSaveFailureMessage = (error) => `${printableEscape(error || '
 const studentAvaliaSaveExpired = (attempt) => Number.isFinite(Date.parse(attempt?.deadline_at)) && Date.parse(attempt.deadline_at) <= Date.now();
 const studentAvaliaDefinitiveSaveError = (error) => error.status >= 400 && error.status < 500 && ![408,429].includes(error.status) && /^(22|23|42|P0|PGRST)/.test(error.code || '');
 const studentAvaliaRemainingLabel = (attempt) => {
+  if(attempt && String(attempt.status).toLowerCase()!=='in_progress')return 'Encerrada';
   const deadline = Date.parse(attempt?.deadline_at || "");
   const value = Number.isFinite(deadline) ? Math.max(0, Math.ceil((deadline - Date.now()) / 1000)) : null;
   return value == null ? "Sem cronômetro" : `${Math.floor(value / 60)}min ${value % 60}s`;
@@ -10698,14 +10699,14 @@ const renderStudentAssessmentAttemptStage = () => {
               <span><b>Resposta</b></span>
               <textarea data-avalia-text-answer rows="5" ${isClosed ? "disabled" : ""}>${printableEscape(response?.response_text || "")}</textarea>
             </label>
-            <button type="button" class="qb-secondary-action" data-avalia-save-text ${isClosed ? "disabled" : ""}>Salvar resposta</button>
+            ${isClosed ? "" : `<button type="button" class="qb-secondary-action" data-avalia-save-text>Salvar resposta</button>`}
           `}
         </div>
       </article>
-      <div class="digital-attempt-actions">
+      <div class="digital-attempt-actions ${isClosed ? "is-review" : ""}">
         <button type="button" data-avalia-prev ${avaliaApplicationState.student.activeQuestionIndex === 0 ? "disabled" : ""}>Anterior</button>
         <button type="button" data-avalia-next ${avaliaApplicationState.student.activeQuestionIndex >= questions.length - 1 ? "disabled" : ""}>Proxima</button>
-        <button type="button" data-avalia-submit ${isClosed ? "disabled" : ""}>Entregar avaliacao</button>
+        ${isClosed ? "" : `<button type="button" data-avalia-submit>Entregar avaliacao</button>`}
       </div>
     </section>
   `;
@@ -17666,6 +17667,17 @@ const mapFamilyCalendarEntry = (entry = {}) => ({
   created_at: entry.created_at || "",
 });
 
+// calendar_list_family_events projects assessment timestamptz as UTC date/time.
+// Calendar entries authored as local wall-clock time must not be shifted.
+const assessmentCalendarLocalFields = (event) => {
+  if(!['assessment_available','assessment_deadline'].includes(event.source_type))return {};
+  const day=event.event_date || event.entry_date || '', time=event.start_time || '';
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(day) || !/^\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(time))return {};
+  const value=new Date(`${day}T${time}Z`);if(Number.isNaN(value.getTime()))return {};
+  const pad=n=>String(n).padStart(2,'0');
+  return {entry_date:`${value.getFullYear()}-${pad(value.getMonth()+1)}-${pad(value.getDate())}`,start_time:`${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}`};
+};
+
 const mapUnifiedCalendarEvent = (event = {}) => ({
   id: event.source_id || event.id || "",
   source_type: event.source_type || "class_calendar",
@@ -17685,6 +17697,7 @@ const mapUnifiedCalendarEvent = (event = {}) => ({
   action_label: event.action_label || "",
   href: event.href || "",
   created_at: event.created_at || "",
+  ...assessmentCalendarLocalFields(event),
 });
 
 const loadFamilyUnifiedCalendarEvents = async (client, studentId, weekStartIso = familyWeekStartIso()) => {
@@ -22086,7 +22099,9 @@ const initStudentAvaliaApplication = () => {
   if (!root) return;
   initStudentAvaliaApplication.timer=setInterval(()=>{
     if(!root.isConnected){clearInterval(initStudentAvaliaApplication.timer);return;}
-    const clock=root.querySelector('[data-avalia-countdown]');if(clock)clock.textContent=studentAvaliaRemainingLabel(getAvaliaActiveAttempt());
+    const attempt=getAvaliaActiveAttempt();
+    const clock=root.querySelector('[data-avalia-countdown]');if(clock)clock.textContent=studentAvaliaRemainingLabel(attempt);
+    if(attempt && attempt.status!=='in_progress')clearInterval(initStudentAvaliaApplication.timer);
   },1000);
   if(!initStudentAvaliaApplication.unloadBound){
     window.addEventListener('beforeunload',event=>{if(studentAvaliaSaveState.pending || getStudentAvaliaSaveFailure()){event.preventDefault();event.returnValue='';}});
@@ -22173,6 +22188,7 @@ const initStudentAvaliaApplication = () => {
       return;
     }
     if (button.hasAttribute("data-avalia-submit")) {
+      if(attempt.status!=="in_progress")return;
       const unanswered = questions.filter((entry) => !getAvaliaResponseForQuestion(attempt, getAvaliaQuestion(entry).id)).length;
       if (!window.confirm(`Deseja entregar a avaliacao? ${unanswered} questao${unanswered === 1 ? "" : "es"} sem resposta.`)) return;
       if (statusNode) statusNode.textContent = "Entregando avaliacao...";

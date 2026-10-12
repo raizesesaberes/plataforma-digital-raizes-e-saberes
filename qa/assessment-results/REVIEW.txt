@@ -20,3 +20,32 @@ nãoiniciado, emandamento, ausência/loading/erro/amostrainsuficiente. Geometria
 semoverflow, botões<80px, cartões<450px, detalhe desktop>1.8x largura cartão.
 Screenshots desktop.png/mobile.png sintéticos inspecionados. Regressão handoff,
 sintaxe/diff/build4277 PASS. Não é homologação humana ou execução real do aluno.
+
+Escopo ampliado autorizado: Recado da professora no aluno e estado final da avaliação.
+Sidebar usa uma coluna: texto largura completa, metadados em linhas, ações abaixo,
+sem marcar leitura automaticamente. Concluída mostra Encerrada em vez de countdown;
+intervalo é encerrado, Entregar/Salvar removidos, revisão anterior/próxima/fechar mantida.
+Handler também recusa submit de tentativa encerrada. Não inventa duração.
+
+Agenda: readonly confirmou TimeZoneUTC e calendar_list_family_events projeta
+available_from/available_until::date/::time para assessment_available/deadline.
+UI antes mostrava essa hora UTC literalmente; Avalia+ formata timestamptz localmente.
+Mapper agora converte apenas esses dois tipos de evento UTC para fuso do navegador,
+inclusive virada de data. Horários locais de outros eventos permanecem idênticos.
+Sem timestamp alterado. A seleção de intervalo semanal da RPC permanece como antes;
+esta fatia não muda o filtro SQL por dataUTC nas bordas de semana.
+
+Readonly posterior à nova entrega: aplicação individual graded100.00%,2respostas
+persistidas,2acertos,0erros,0nãorespondidas, submitted_at2026-10-12T11:48:53.239746Z.
+assessment_results também100%,answered_count2 e matrícula incluída na seleção docente.
+Original coletiva graded0%,0respostas,0acertos,0erros,2nãorespondidas, entrega01:08:33Z.
+Fontes/tabelas e predicado da RPC docente conferidos sem assumir identidade docente
+nem chamar RPC com impersonação. Não é homologação visual autenticada do professor.
+
+Teste student-inbox-review: sidebar300px em desktop1440/mobile390, texto longo,
+semoverflow/metadados sobrepostos, ação leitura explícita. Concluída100%→revisar questão2
+→fechar→reabrir mantém mesmo objeto/tentativa sem qualquer fetch. Contagem estável,
+sem botão submit. Agenda SãoPaulo08:36 e virada11out21:07; calendário local e browserUTC
+não são deslocados. Screenshots student-desktop.png/student-mobile.png sintéticos.
+Integração browser→PostgREST→Postgresisolado autosave/ACK/entrega/resultado PASS;
+layout docente/regressão/sintaxe/diff/build4277 PASS. Nada publicado em produção.
