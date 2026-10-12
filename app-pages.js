@@ -23491,7 +23491,8 @@ const initQuestionBank = () => {
     }, 0);
   };
 
-  const renderDetail = async () => {
+  const renderDetail = async (current = assessmentActorCurrent) => {
+    if (!current()) return;
     const item = itemById(selectedId) || questions[0];
     if (!item) {
       detail.innerHTML = `<div class="qb-state">Selecione uma questao para ver os detalhes.</div>`;
@@ -23503,6 +23504,7 @@ const initQuestionBank = () => {
     } catch (error) {
       history = [];
     }
+    if (!current()) return;
     detail.innerHTML = `
       <div class="panel-head">
         <h2>Visualização da questao</h2>
@@ -23732,7 +23734,8 @@ const initQuestionBank = () => {
     access.innerHTML = questionAccessRules.map(([role, rule]) => `<article><strong>${role}</strong><span>${rule}</span></article>`).join("");
   };
 
-  const render = async () => {
+  const render = async (current = assessmentActorCurrent) => {
+    if (!current()) return;
     const items = getFilteredItems();
     const accessState = questionBankDataService.getQuestionAccessState();
     loading.hidden = true;
@@ -23752,7 +23755,8 @@ const initQuestionBank = () => {
     empty.hidden = items.length > 0;
     renderMetrics(items);
     renderDashboardSummaries();
-    await renderDetail();
+    await renderDetail(current);
+    if (!current()) return;
     renderCart();
     renderSaved();
     renderAssessmentProtection();
@@ -24000,31 +24004,31 @@ const initQuestionBank = () => {
     requireAssessmentActor();
     // Session renewal is a read refresh, never permission to overwrite a builder operation.
     if(assessmentSavePromise || assessmentSwitchBusy)return;
-    const revision=assessmentRevision, generation=++assessmentRefreshGeneration, assessmentId=activeAssessmentId, pendingMarker=sessionStorage.getItem(assessmentSaveKey);
+    let revision=assessmentRevision;
+    const generation=++assessmentRefreshGeneration, assessmentId=activeAssessmentId, pendingMarker=sessionStorage.getItem(assessmentSaveKey);
     const current=()=>assessmentActorCurrent() && revision===assessmentRevision && generation===assessmentRefreshGeneration && assessmentId===activeAssessmentId && !assessmentSavePromise && !assessmentSwitchBusy && sessionStorage.getItem(assessmentSaveKey)===pendingMarker;
     loading.hidden = false;
     errorNode.hidden = true;
     mode = questionBankDataService.mode();
     try {
-      const loadedQuestions=await questionBankDataService.listQuestions();requireAssessmentActor();if(!current())return;
-      const loadedAssessments=await questionBankDataService.listAssessments();requireAssessmentActor();if(!current())return;
+      const loadedQuestions=await questionBankDataService.listQuestions();if(!current())return;
+      const loadedAssessments=await questionBankDataService.listAssessments();if(!current())return;
       const loaded=assessmentId ? await questionBankDataService.getAssessmentById(assessmentId,{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal}) : null;
-      requireAssessmentActor();if(!current())return;
+      if(!current())return;
       if(assessmentId && (!loaded?.id || loaded.id!==assessmentId))throw Error('Avaliação não confirmada pelo servidor.');
       questions=loadedQuestions;assessments=loadedAssessments;
       selectedId=selectedId || questions[0]?.id;
       // Applied content must be official. Unassigned drafts keep legitimate local edits.
-      if(loaded?.isAssigned && !pendingMarker)hydrateConfirmedAssessment(loaded);
+      if(loaded?.isAssigned && !pendingMarker){hydrateConfirmedAssessment(loaded);revision=assessmentRevision;}
       else if(loaded)activeAssessmentProtected=Boolean(loaded.isAssigned);
       else cart=cart.filter(id=>itemById(id));
       populateFilterOptions();root.querySelector('.qb-notice span').textContent=localDevNotice();
-      await render();await attemptLoginResume();
+      await render(current);if(!current())return;await attemptLoginResume();
     } catch(error) {
-      if(!assessmentActorCurrent()){try{requireAssessmentActor();}catch{}return;}
-      if(!current())return;
+      if(!current() || /CONTENT_RESOLVER_(STALE_LOAD|ACCOUNT_CHANGED)/.test(error.message || ''))return;
       setError(error.message || 'Não foi possível atualizar a consulta. Sua edição foi preservada.');
     } finally {
-      if(assessmentActorCurrent() && generation===assessmentRefreshGeneration)loading.hidden=true;
+      if(current())loading.hidden=true;
     }
   };
 
@@ -30248,38 +30252,50 @@ const questionBankDataService = (() => {
     if (!teacher?.id || !teacher?.school_id) {
       throw new Error("CONTENT_RESOLVER_TEACHER_CONTEXT_NOT_FOUND");
     }
-    const membershipRows = await request(
-      "class_teacher_memberships",
-      `?select=id,class_id,teacher_id,role,status&teacher_id=${supabaseEq(teacher.id)}&status=eq.active`,
-      { requireAuthenticated: true, allowedRoles: allowedAssessmentRoles }
-    );
-    const classId = (membershipRows || []).find((membership) => membership.class_id)?.class_id || "";
-    return {
-      content_type: "QUESTION",
-      school_id: teacher.school_id,
-      ...(classId ? { class_id: classId } : {}),
-      limit: 100,
-    };
+    const memberships = await request("class_teacher_memberships",
+      `?select=class_id,status,ended_at&teacher_id=${supabaseEq(teacher.id)}&status=eq.active`,
+      { requireAuthenticated: true, allowedRoles: allowedAssessmentRoles });
+    const classIds = [...new Set((Array.isArray(memberships) ? memberships : [])
+      .filter(row => row.status === "active" && (!row.ended_at || Date.parse(row.ended_at) > Date.now()))
+      .map(row => row.class_id).filter(Boolean))];
+    return { content_type: "QUESTION", school_id: teacher.school_id, limit: 100, classIds };
   };
+  let teacherQuestionLoadGeneration = 0;
   const getTeacherResolvedQuestionRows = async (request, context = {}) => {
-    const resolverContext = await getTeacherResolverContext(request, context);
-    const result = normalizeRpcJson(await request("rpc/content_resolve_question_details_for_user", "", {
-      method: "POST",
-      requireAuthenticated: true,
-      allowedRoles: allowedAssessmentRoles,
-      body: JSON.stringify({ p_context: resolverContext }),
-    }));
-    if (result?.status === "FEATURE_DISABLED") {
-      return { enabled: false, result, rows: [] };
-    }
-    if (result?.status !== "PASS") {
-      throw new Error(`CONTENT_RESOLVER_${result?.status || "FAILED"}`);
-    }
-    return {
-      enabled: true,
-      result,
-      rows: Array.isArray(result.items) ? result.items : [],
+    const generation = ++teacherQuestionLoadGeneration;
+    const assertCurrent = () => {
+      if (!context.userId || getSupabaseUserContext().userId !== context.userId) throw new Error("CONTENT_RESOLVER_ACCOUNT_CHANGED");
+      if (generation !== teacherQuestionLoadGeneration) throw new Error("CONTENT_RESOLVER_STALE_LOAD");
     };
+    const checkedRequest = async (resource, query, options) => {
+      assertCurrent();
+      const value = await request(resource, query, { ...options, expectedUserId: context.userId });
+      assertCurrent();
+      return value;
+    };
+    const { classIds, ...resolverContext } = await getTeacherResolverContext(checkedRequest, context);
+    const rows = new Map();
+    let result = { status: "PASS", total: 0, details_total: 0 };
+    // Keep explicit class scope for BOTH legacy and dynamic resolvers. Legacy
+    // treats a missing class as an unrestricted grade; never issue that request.
+    for (const classId of classIds) {
+      let offset = 0;
+      do {
+        result = normalizeRpcJson(await checkedRequest("rpc/content_resolve_question_details_for_user", "", {
+          method: "POST", requireAuthenticated: true, allowedRoles: allowedAssessmentRoles,
+          body: JSON.stringify({ p_context: { ...resolverContext, class_id: classId, offset } }),
+        }));
+        if (result?.status === "FEATURE_DISABLED") return { enabled: false, result, rows: [] };
+        if (result?.status !== "PASS") throw new Error(`CONTENT_RESOLVER_${result?.status || "FAILED"}`);
+        const total = Number(result.total);
+        if (!Number.isSafeInteger(total) || total < 0) throw new Error("CONTENT_RESOLVER_INVALID_TOTAL");
+        for (const row of (Array.isArray(result.items) ? result.items : [])) if (row?.id) rows.set(row.id, row);
+        offset += resolverContext.limit;
+        if (offset >= total) break;
+      } while (true);
+    }
+    assertCurrent();
+    return { enabled: true, result: { ...result, total: rows.size, details_total: rows.size }, rows: [...rows.values()] };
   };
   const pickDefaultQuestionSource = (sources = []) => {
     const validSources = sources.filter((source) => source?.id && (source.license_id || source.license?.id));
