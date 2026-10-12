@@ -1,0 +1,15 @@
+{
+  "project": "jaesjldrbjbdmzzggxzw",
+  "date": "2026-10-12",
+  "base_main": "3f1e4262969d2d7c7322110c177a3d9a5182b108",
+  "ledger": {
+    "count": 157,
+    "latest": "20261012173004",
+    "digest": "b0566e64fedca9a16267505415c15050"
+  },
+  "manifest_expected": 202,
+  "manifest_matches": 202,
+  "legal_classification_autoral_count": 202,
+  "production_writes": 0,
+  "production_human_acceptance": "pending"
+}

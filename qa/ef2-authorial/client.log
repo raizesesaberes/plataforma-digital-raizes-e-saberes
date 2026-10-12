@@ -1,0 +1,4 @@
+PASS legacy teacher EF5 cannot receive contracted EF2 without EF2 class; explicit class on every RPC
+PASS multi-class/multi-year union205; pages100/100/2; duplicate membership/year dedup; ended/inactive excluded
+PASS concurrent newer load supersedes old result
+PASS session switch during response aborts; no subsequent pages; denied class/page failures fail closed. Synthetic transport only.

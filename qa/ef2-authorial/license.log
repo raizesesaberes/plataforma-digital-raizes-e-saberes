@@ -1,0 +1,44 @@
+PASS exact production authorized_items body MD5 849f5ffcee863c786252c3a75ae2a15d
+PASS 202 mapped HOMOLOGADO remain denied (confirmed defect/compatibility decision): 0
+PASS 202 synthetic APROVADO visible under pre-existing EF2 rule; no per-item grants: 202
+PASS new future EF2 item visible without changing existing category rules: 203
+PASS EF5 outside contracted EF2 rule denied: 202
+PASS draft denied: 201
+PASS withdrawn denied: 200
+PASS BLOCK and EMBARGO prevail: 198
+PASS baseline reproduces license denial defect: 198
+PASS unchanged ACL, owner, config, security and signature
+PASS patched revocation false denies all: 0
+PASS both question and source licenses true restore eligible items: 198
+PASS question license revoked: 0
+PASS question license revoked restored: 198
+PASS source license revoked: 0
+PASS source license revoked restored: 198
+PASS question license missing: 0
+PASS question license missing restored: 198
+PASS question source missing: 0
+PASS question source missing restored: 198
+PASS question source nonexistent: 0
+PASS question source nonexistent restored: 198
+PASS source license missing: 0
+PASS source license missing restored: 198
+PASS source license nonexistent: 0
+PASS source license nonexistent restored: 198
+PASS question license nonexistent: 0
+PASS question license nonexistent restored: 198
+PASS null permission fail closed: 0
+PASS null permission fail closed restored: 198
+PASS HOMOLOGADO remains denied: 0
+PASS HOMOLOGADO remains denied restored: 198
+PASS BLOCK/EMBARGO previously excluded exactly2: 200
+PASS draft/withdrawn remained excluded until fixture restored: 202
+PASS EF5 previously excluded; future EF2 auto visible without grants: 203
+PASS non-question path unchanged: 204
+PASS license revocation affects QUESTION only; VIDEO remains unchanged: 1
+AFTER BODY MD5 a06373e13d20bc63655b416bcaa8b863
+BEGIN
+ERROR:  QUESTION_LICENSE_RESOLVER_PRECONDITION_FAILED
+CONTEXT:  PL/pgSQL function inline_code_block line 10 at RAISE
+
+PASS repeat apply rejected by before-body guard
+LIMIT: actual private resolver with stubbed actor/rules; student/raw-bank RLS, real context and SCHOOL/NETWORK contract branches NOT exercised.
