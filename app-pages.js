@@ -10407,8 +10407,14 @@ const avaliaResultValue = (value) => value == null ? '—' : avaliaPercentLabel(
 const renderTeacherStudentResult = (student) => {
   const status=String(student.status || '').toUpperCase();
   const complete=['SUBMITTED','GRADED','COMPLETED','CONCLUIDA','ENTREGUE'].includes(status);
-  const noAnswers=Number(student.correct_count || 0)+Number(student.incorrect_count || 0)===0 && (Number(student.unanswered_count)>0 || student.answered_count===0);
-  const detail=!complete ? `${avaliaIntelligenceStatusLabel(status)} · Sem resultado` : `${avaliaIntelligenceStatusLabel(status)} · ${student.score_percentage == null ? 'Nota indisponível' : avaliaResultValue(student.score_percentage)+' registrado'} · ${noAnswers ? 'Entregue sem respostas' : `${Number(student.correct_count || 0)} acertos · ${Number(student.incorrect_count || 0)} erros`} · ${Number(student.unanswered_count || 0)} sem resposta`;
+  const count=(value)=>value!==null && value!==undefined && value!=='' && Number.isInteger(Number(value)) && Number(value)>=0 ? Number(value) : null;
+  const answered=count(student.answered_count), correct=count(student.correct_count), incorrect=count(student.incorrect_count), unanswered=count(student.unanswered_count);
+  const noAnswers=answered===0;
+  const pendingCorrection=['PENDING','PENDING_REVIEW','PENDING_GRADING','AWAITING_GRADING'].includes(String(student.grading_status || '').toUpperCase()) || (status==='SUBMITTED' && student.score_percentage==null && answered>0);
+  const responseDetail=noAnswers ? 'Entregue sem respostas' : answered===null ? 'Quantidade de respostas não informada' : `${answered} respondida${answered===1?'':'s'}`;
+  const correctionDetail=correct===null || incorrect===null ? 'Contagem de acertos e erros não informada' : `${correct} acertos · ${incorrect} erros`;
+  const scoreDetail=student.score_percentage==null ? (pendingCorrection ? 'Aguardando correção' : 'Nota indisponível') : `${avaliaResultValue(student.score_percentage)} registrado${pendingCorrection ? ' · Correção pendente' : ''}`;
+  const detail=!complete ? `${avaliaIntelligenceStatusLabel(status)} · Sem resultado` : `${avaliaIntelligenceStatusLabel(status)} · ${scoreDetail} · ${responseDetail}${noAnswers ? '' : ' · '+correctionDetail} · ${unanswered===null ? 'Quantidade em branco não informada' : `${unanswered} sem resposta`}`;
   return `<li><strong>${printableEscape(student.student_name || 'Aluno')}</strong><span>${printableEscape(detail)}</span></li>`;
 };
 const avaliaIntelligenceRows = (rows = [], emptyText = "Sem dados consolidados no período.") => `
