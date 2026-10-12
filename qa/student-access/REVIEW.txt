@@ -1,0 +1,50 @@
+Acesso institucional de alunos — proposta, não publicada
+
+Origem: Admin Usuários usa adminCreateAccessTargetType(student) e renderAdminCreateAccessDialog
+com email required, invocando admin-create-auth-access. O fluxo homologado separado já existe
+em secretaria.html?view=acessosAlunos e Edge student-institutional-credentials, com login próprio,
+gerar/resetar/bloquear/desbloquear, comprovante temporário e impressão.
+
+Correção web: aluno configurado ou não abre Acessos dos Alunos com school e student explícitos.
+O seletor de escola continua limitado às escolas autorizadas. O filtro individual usa apenas
+alunos carregados pelas RPCs existentes/RLS; ID externo não cria linha nem concede acesso.
+Entrada individual não oferece ações em lote. Filtro GET preserva escola/aluno. Aluno sai do
+modal genérico/email recovery; helper genérico também recusa targetType student. Demais perfis
+mantêm modal email. Novos cache keys admin/secretaria. Login mobile: autocapitalize none,
+autocorrect off, spellcheck false em identificador/senha. Senhas digitadas NÃO são normalizadas.
+
+Correção Edge: apenas generatePassword de student-institutional-credentials: palavra em
+minúsculas + hífen + SEIS dígitos criptográficos. 81 palavras mantidas, rejection sampling via
+crypto.getRandomValues mantido; combinações 810.000 -> 81.000.000. Capitalização fixa nunca
+acrescentava entropia. Menor comprimento passa de8 para10 caracteres, sem diminuir comprimento.
+Leitura real readonly confirmou: finalize aceita >=10 OU padrão maiúsculo de4 dígitos; reset
+exige >=10. Lowercase+4 falharia para palavras curtas; seis evita migration e também o risco
+preexistente de reset com senha curta. Não modificar senhas antigas/case-sensitive.
+
+Impacto: requer publicação de UMA Edge Function (verify_jwt=true preservado) e web. A função
+usa operações Auth administrativas já existentes somente quando operador autorizado pede gerar
+ou resetar; nenhum Auth realizado nesta implementação. Conta técnica/email interno já faz parte
+do backend homologado; operador/aluno não precisam informar email nem inventá-lo. Nenhuma mudança
+SQL/migration/ACL/claims/importação/hash/unique-login/rate-limit/autorizações. Os mecanismos de
+unicidade/bcrypt10/limite de tentativas permanecem no banco, sem alteração. Nenhuma senha real
+foi lida/exibida/resetada; testes usam identidades sintéticas e transporte Supabase mock.
+
+Produção readonly: Edge student-institutional-credentials ACTIVE v3 verify_jwt=true, código igual
+à base após normalizar newline final. Finalize prosrc MD5 9317f62973e9eb560cfede2e51dccfe0;
+reset prosrc MD5 82ef598409c977885f4a3a72a27e8f48. Não instalamos nova versão.
+
+PASS node tests/student-access/browser.mjs: renderers reais no Chromium390, rota escola+aluno,
+sememail para aluno, email professor preservado, bloqueio helper genérico, provision/reset apenas
+do alvo, alvo fora da lista sem ações, comprovante temporário e botão imprimir presentes,
+autocapitalização/correção desligadas. Transporte/mock não é homologação humana.
+PASS node tests/student-access/edge.mjs: handlers Edge reais após remoção de tipos no Node24,
+Supabase/Auth fake. Gerar sememail, reentrada idempotente sem revelar senha, reset/loginconstante,
+admin/escola permitidos, perfilinativo/professor/escola nãoautorizada negados, senhaexistente
+preservada literalmente no login, erro/bloqueio/rate-limit propagados. Todas81palavras >=10.
+Não se alega testar criptografia/concorrência/unicidade SQL novamente: banco não modificado.
+Sintaxe/diff/build4277 PASS. Pacote operacional/testes/SQL continuam fora do dist.
+
+Revisão específica antes de publicar: gerador altera novas credenciais (impacto segurança),
+nenhum relaxamento de autenticação. Após aprovação, publicar Edge com verify_jwt=true e web;
+só então operador pode gerar/resetar individualmente. Não gerar automaticamente os10acessos
+nem tocar avaliação/turma real. PR11 permanece fora.
