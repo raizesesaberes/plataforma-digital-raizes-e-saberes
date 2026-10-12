@@ -32,4 +32,6 @@ Load tests/contracts/seed.sql
 PASS four RPC bodies match read-only production snapshot
 PASS old Date.now overflow reproduced; countdown advances against persisted deadline
 PASS pending-save concurrency guard; lost ACK reconciled by read without duplicate save
+PASS definitive42501/22023 and real expiry during save: read-only recovery, navigation/close, no retry write or automatic submission
+PASS slow failed submit disables all answer controls, preserves confirmed selection, restores controls without discarded edits
 PASS real browser → PostgREST → PostgreSQL: save/navigate/reload/resume same attempt/save/submit → teacher result50%; text handler and int32 service limits; no extra attempt

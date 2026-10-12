@@ -51,3 +51,10 @@ parar e solicitar decisão do professor; não burlar/resetar/prorrogar ou criar 
 Até publicação o frontend antigo continua falhando: não orientar novo teste agora.
 Somente app-pages.js e cachekey aluno mudam runtime; testes/diagnóstico fora dist.
 Sem SQL/migration/policy/Edge/Auth/credenciais/contratos/PR11. Sem homologação humana alegada.
+
+Revisão P2: recusas definitivas SQL42501/22xxx/23xxx/PGRST em4xx (exceto408/429)
+se distinguem de ACK incerto. Conferência após recusa/vencimento é somente leitura;
+navegar e fechar ficam disponíveis com aviso explícito, sem entrega automática.
+Vencimento durante save reproduzido na RPC real do banco descartável. Timeout504
+após commit continua reconciliando sem escrita duplicada. Entrega lenta bloqueia todos
+os controles de resposta; falha restaura controles e preserva seleção confirmada.

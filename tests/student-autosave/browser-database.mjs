@@ -10,11 +10,13 @@ const rpc=async(n,name,body)=>{const r=await fetch(api+'/rpc/'+name,{method:'POS
 sql(`insert into question_items select (jsonb_populate_record(null::question_items,to_jsonb(q)||jsonb_build_object('id','${id(7,2)}','code','SYN-Q2'))).* from question_items q where id='${id(7)}';insert into question_alternatives(id,question_id,label,body,is_correct,position) values('${id(8,3)}','${id(7,2)}','A','Synthetic correct',true,1),('${id(8,4)}','${id(7,2)}','B','Synthetic wrong',false,2);insert into content_items select (jsonb_populate_record(null::content_items,to_jsonb(c)||jsonb_build_object('id','${id(9)}','title','SYN Q2'))).* from content_items c join content_question_items m on m.content_item_id=c.id where m.question_item_id='${id(7)}';insert into content_question_items(content_item_id,question_item_id) values('${id(9)}','${id(7,2)}');`);
 const a=(await rpc(1,'avalia_plus_create_assessment_from_bank',{p_payload:{title:'SYN AUTOSAVE',questions:[{question_id:id(7),points:1},{question_id:id(7,2),points:1}]}})).assessment;
 const assignment=(await rpc(1,'teacher_schedule_assessment_application_v2',{p_assessment_id:a.id,p_target_type:'class',p_class_id:id(3),p_time_limit_minutes:50})).assignment;
-let loseAck=false,hold=false,release,saveCalls=[],startCalls=0;
+let loseAck=false,hold=false,release,saveCalls=[],startCalls=0, rejectSave=null, holdSubmit=false, releaseSubmit, rejectSubmit=false;
 let source=readFileSync('app-pages.js','utf8').replace(/renderAppPage\(\);\s*$/,'');source+=`\nstudentInstitutionalState.status='ready';loadStudentAvaliaData({force:true}).then(()=>{document.querySelector('#app').innerHTML=renderStudentAssessmentsView();initStudentAvaliaApplication();});`;
 const server=createServer(async(req,res)=>{try{
  if(req.url.startsWith('/rest/v1/')){let raw='';for await(const c of req)raw+=c;const path=req.url.replace('/rest/v1','');if(path.includes('student_start_assessment_attempt_v2'))startCalls++;if(path.includes('student_save_assessment_response_v2')){saveCalls.push(JSON.parse(raw));if(hold)await new Promise(r=>release=r);}
- const upstream=await fetch(api+path,{method:req.method,headers:{Authorization:req.headers.authorization,'Content-Type':'application/json'},body:raw||undefined});const body=await upstream.text();if(loseAck&&path.includes('student_save_assessment_response_v2')){loseAck=false;res.writeHead(502);return res.end('Synthetic lost ACK after commit');}res.writeHead(upstream.status,{'Content-Type':'application/json'});return res.end(body);}
+ if(path.includes('student_submit_assessment_attempt_v2') && holdSubmit){await new Promise(r=>releaseSubmit=r);if(rejectSubmit){res.writeHead(503);return res.end('Synthetic submit unavailable');}}
+ if(path.includes('student_save_assessment_response_v2') && rejectSave){res.writeHead(400,{'Content-Type':'application/json'});return res.end(JSON.stringify(rejectSave));}
+ const upstream=await fetch(api+path,{method:req.method,headers:{Authorization:req.headers.authorization,'Content-Type':'application/json'},body:raw||undefined});const body=await upstream.text();if(loseAck&&path.includes('student_save_assessment_response_v2')){loseAck=false;res.writeHead(504);return res.end('Synthetic timeout after commit');}res.writeHead(upstream.status,{'Content-Type':'application/json'});return res.end(body);}
  res.setHeader('Content-Type',req.url==='/app.js'?'text/javascript; charset=utf-8':'text/html; charset=utf-8');res.end(req.url==='/app.js'?source:'<html><body><div id="app"></div><script src="/app.js"></script></body></html>');
 }catch(e){res.writeHead(500);res.end(e.message);}});await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
 const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});
@@ -33,5 +35,30 @@ await page.locator('[data-avalia-text-answer]').fill('Synthetic written answer')
 await page.reload();await page.locator('[data-avalia-student-open]').click();await page.locator(`[value="${id(8)}"]`).check();await page.getByText('Resposta salva e confirmada.',{exact:true}).waitFor();assert.equal(saveCalls.at(-1).p_autosave_sequence,5);
 const callsBeforeInvalid=saveCalls.length;assert(await page.evaluate(async()=>{try{await avaliaApplicationService.saveResponse({attemptId:getAvaliaActiveAttempt().id,questionId:'synthetic',autosaveSequence:Date.now()});return false;}catch{return true;}}));assert.equal(saveCalls.length,callsBeforeInvalid);
 const range=await page.evaluate(()=>{try{nextStudentAutosaveSequence({id:'limit',responses:[{autosave_sequence:2147483647}]},'synthetic');return false;}catch{return true;}});assert(range);assert(saveCalls.every(c=>Number.isInteger(c.p_autosave_sequence)&&c.p_autosave_sequence<=2147483647));
+// Definitive database refusals: check is read-only, navigation/close are available.
+for(const code of ['42501','22023']){
+ rejectSave={code,message:'Synthetic definitive refusal'};
+ await page.locator(`[value="${id(8,2)}"]`).check();await page.getByRole('button',{name:'Conferir respostas salvas',exact:true}).waitFor();
+ assert(!(await page.locator('[data-avalia-stage-close]').isDisabled()));assert(!(await page.locator('[data-avalia-next]').isDisabled()));
+ const count=saveCalls.length;await page.locator('[data-avalia-retry-save]').click();await page.waitForFunction(()=>!studentAvaliaSaveState.pending);assert.equal(saveCalls.length,count);
+ await page.locator('[data-avalia-next]').click();await page.locator('[data-avalia-prev]').click();await page.locator('[data-avalia-stage-close]').click();rejectSave=null;
+ await page.locator('[data-avalia-student-open]').click();assert(await page.locator(`[value="${id(8)}"]`).isChecked());
+}
+// Expiry while a save is in flight: real RPC refuses; retries never issue another write.
+const originalDeadline=sql(`select deadline_at from assessment_attempts where id='${attempt}'`);
+hold=true;await page.locator(`[value="${id(8,2)}"]`).check();await page.waitForFunction(()=>studentAvaliaSaveState.pending);
+sql(`update assessment_attempts set deadline_at=now()-interval '1 second' where id='${attempt}'`);hold=false;release();
+await page.getByRole('button',{name:'Conferir respostas salvas',exact:true}).waitFor();const expiryCalls=saveCalls.length;
+await page.locator('[data-avalia-retry-save]').click();await page.waitForFunction(()=>!studentAvaliaSaveState.pending);assert.equal(saveCalls.length,expiryCalls);
+assert.equal(sql(`select status from assessment_attempts where id='${attempt}'`),'in_progress');assert.equal(sql(`select selected_alternative_id from assessment_responses where attempt_id='${attempt}' and question_id='${id(7)}'`),id(8));
+await page.locator('[data-avalia-stage-close]').click();
+// Restore only this disposable fixture to exercise submission in the same run.
+sql(`update assessment_attempts set deadline_at='${originalDeadline}' where id='${attempt}'`);await page.reload();await page.locator('[data-avalia-student-open]').click();
+console.log('PASS definitive42501/22023 and real expiry during save: read-only recovery, navigation/close, no retry write or automatic submission');
+holdSubmit=true;rejectSubmit=true;await page.locator('[data-avalia-submit]').click();await page.waitForFunction(()=>studentAvaliaSaveState.submitting);
+assert(await page.locator(`[value="${id(8,2)}"]`).isDisabled());assert(await page.locator('[data-avalia-next]').isDisabled());
+const saveCount=saveCalls.length;await page.locator(`[value="${id(8,2)}"]`).evaluate(node=>node.click());assert(await page.locator(`[value="${id(8)}"]`).isChecked());assert.equal(saveCalls.length,saveCount);
+releaseSubmit();await page.waitForFunction(()=>!studentAvaliaSaveState.submitting);assert(!(await page.locator(`[value="${id(8,2)}"]`).isDisabled()));assert(await page.locator(`[value="${id(8)}"]`).isChecked());
+holdSubmit=false;rejectSubmit=false;console.log('PASS slow failed submit disables all answer controls, preserves confirmed selection, restores controls without discarded edits');
 await page.locator('[data-avalia-submit]').click();await page.getByText('Avaliacao concluida',{exact:true}).waitFor();const result=await rpc(1,'teacher_get_assessment_class_results',{p_assignment_id:assignment.id});assert.equal(result.summary.completed_students,1);assert.equal(Number(result.summary.average_percentage),50);assert.equal(sql(`select count(*) from assessment_attempts where assignment_id='${assignment.id}'`),'1');assert.deepEqual(errors,[]);console.log('PASS real browser → PostgREST → PostgreSQL: save/navigate/reload/resume same attempt/save/submit → teacher result50%; text handler and int32 service limits; no extra attempt');
 }finally{await browser.close();server.close();}
