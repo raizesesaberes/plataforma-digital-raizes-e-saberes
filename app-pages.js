@@ -22357,9 +22357,9 @@ const initQuestionBank = () => {
       cartPoints[input.dataset.qbPoints] = Number(input.value || 1);
     });
   };
-  const saveDraftSnapshot = (reason = "autosave") => {
+  const saveDraftSnapshot = (reason = "autosave", { syncPoints = true } = {}) => {
     requireAssessmentActor();
-    syncPointInputs();
+    if(syncPoints)syncPointInputs();
     localStorage.setItem(
       draftStorageKey,
       JSON.stringify({
@@ -23650,6 +23650,19 @@ const initQuestionBank = () => {
     }, 0);
   };
 
+  const hydrateConfirmedAssessment = (assessment) => {
+    if(!assessment?.id || !Array.isArray(assessment.questions))throw Error('Avaliação não confirmada pelo servidor.');
+    activeAssessmentId=assessment.id;activeAssessmentProtected=Boolean(assessment.isAssigned);
+    titleInput.value=assessment.title || '';
+    root.querySelector('.qb-builder textarea').value=assessment.instructions || assessment.description || '';
+    root.querySelector('.qb-builder input[type="date"]').value=assessment.date==='Sem data'?'':(assessment.date || '');
+    root.querySelector('[data-qb-assessment-component]').value=assessment.component || '';
+    root.querySelector('[data-qb-assessment-year]').value=assessment.year || '';
+    root.querySelector('[data-qb-cover]').value=assessment.raw?.cover_template || 'Raízes e Saberes - padrao';
+    cart=assessment.questions.map(entry=>entry.question?.code || entry.question_id).filter(Boolean);
+    cartPoints=Object.fromEntries(assessment.questions.map(entry=>[entry.question?.code || entry.question_id,entry.points ?? 1]).filter(([id])=>Boolean(id)));
+    saveDraftSnapshot('assessment-confirmed',{syncPoints:false});
+  };
   const protectedAssessmentMessage = 'Esta avaliação já foi aplicada. O conteúdo original está protegido. Use Reaplicar para escolher o destinatário e o período, ou Duplicar para editar uma nova avaliação.';
   const protectedEditControls = '.qb-builder input,.qb-builder select,.qb-builder textarea,[data-qb-save-draft],[data-qb-points],.qb-cart button,[data-qb-add],[data-qb-clear-cart]';
   const renderAssessmentProtection = () => {
@@ -23773,13 +23786,15 @@ const initQuestionBank = () => {
     },{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal});
   };
 
+  let assessmentSwitchBusy=false;
   let assessmentSavePromise=null, assessmentHandoffPromise=null, assessmentHandoffComplete=false;
   const assessmentSaveKey=`raizes:assessment-save-pending:${assessmentActorId || 'anonymous'}`;
   const uncertainSaveMessage='A confirmação do salvamento está pendente. Consulte Avaliações salvas e abra a avaliação confirmada antes de continuar. Não repita a criação.';
-  const saveControls='.qb-builder input,.qb-builder select,.qb-builder textarea,[data-qb-points],[data-qb-save-draft],[data-qb-preview],[data-qb-publish-digital],[data-qb-generate],.qb-cart button,[data-qb-add],[data-qb-clear-cart],[data-qb-open-assessment]';
+  const saveControls='.qb-builder input,.qb-builder select,.qb-builder textarea,[data-qb-points],[data-qb-save-draft],[data-qb-preview],[data-qb-publish-digital],[data-qb-generate],.qb-cart button,[data-qb-add],[data-qb-clear-cart],[data-qb-open-assessment],[data-qb-duplicate-assessment],[data-qb-reapply-assessment],[data-qb-archive-assessment]';
   const saveAssessmentOnce = () => {
     requireAssessmentActor();
     if(assessmentSavePromise)return assessmentSavePromise;
+    if(assessmentSwitchBusy)return Promise.reject(Error('Aguarde a abertura ou duplicação terminar.'));
     if(sessionStorage.getItem(assessmentSaveKey))return Promise.reject(Error(uncertainSaveMessage));
     const controls=[...root.querySelectorAll(saveControls)].map(node=>({node,disabled:node.disabled}));
     controls.forEach(({node})=>{node.disabled=true;});
@@ -23804,6 +23819,7 @@ const initQuestionBank = () => {
   };
   const ensureSavedForPreview = async () => {
     requireAssessmentActor();
+    if(assessmentSwitchBusy)throw Error('Aguarde a abertura ou duplicação terminar.');
     if(assessmentSavePromise)return assessmentSavePromise;
     if(activeAssessmentProtected)return {id:activeAssessmentId};
     if (!cart.length) {
@@ -23942,8 +23958,8 @@ const initQuestionBank = () => {
       selectedId = selectedId || questions[0]?.id;
       if(activeAssessmentId){
         const loaded=await questionBankDataService.getAssessmentById(activeAssessmentId,{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal});requireAssessmentActor();
-        activeAssessmentProtected=Boolean(loaded?.isAssigned);
-        cart=loaded?.questions?.map(entry=>entry.question?.code || entry.question_id) || cart;
+        if(!loaded?.id || loaded.id!==activeAssessmentId)throw Error('Avaliação não confirmada pelo servidor.');
+        hydrateConfirmedAssessment(loaded);
       }else cart=cart.filter(id=>itemById(id));
       requireAssessmentActor();populateFilterOptions();
       root.querySelector(".qb-notice span").textContent = localDevNotice();
@@ -23993,8 +24009,17 @@ const initQuestionBank = () => {
     if (!button) {
       return;
     }
+    let ownsSwitch=false;
+    let switchControls=[];
     try {
       requireAssessmentActor();
+      if(button.matches('[data-qb-open-assessment],[data-qb-duplicate-assessment],[data-qb-reapply-assessment],[data-qb-archive-assessment]')){
+        if(assessmentSavePromise || assessmentSwitchBusy)throw Error('Aguarde a operação atual terminar antes de abrir ou duplicar.');
+        const marker=JSON.parse(sessionStorage.getItem(assessmentSaveKey) || 'null');
+        if(marker && (!button.dataset.qbOpenAssessment || marker.kind==='duplicate' || (marker.assessmentId && marker.assessmentId!==button.dataset.qbOpenAssessment)))throw Error(uncertainSaveMessage);
+        assessmentSwitchBusy=true;ownsSwitch=true;
+        switchControls=[...root.querySelectorAll(saveControls)].map(node=>({node,disabled:node.disabled}));switchControls.forEach(({node})=>node.disabled=true);
+      }else if(assessmentSwitchBusy){throw Error('Aguarde a abertura ou duplicação terminar.');}
       if(button.dataset.qbReapplyAssessment){
         const id=button.dataset.qbReapplyAssessment;
         const confirmed=await questionBankDataService.getAssessmentById(id,{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal});requireAssessmentActor();
@@ -24146,28 +24171,21 @@ const initQuestionBank = () => {
         const assessment = await questionBankDataService.getAssessmentById(button.dataset.qbOpenAssessment,{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal});
         requireAssessmentActor();
         if(!assessment?.id || assessment.id!==button.dataset.qbOpenAssessment)throw Error('Avaliação não confirmada pelo servidor.');
-        activeAssessmentId = assessment.id;
-        activeAssessmentProtected=Boolean(assessment.isAssigned);
+        switchControls.forEach(({node,disabled})=>node.disabled=disabled);switchControls=[];
+        hydrateConfirmedAssessment(assessment);
         sessionStorage.removeItem(assessmentSaveKey);
-        titleInput.value = assessment.title;
-        root.querySelector(".qb-builder textarea").value = assessment.instructions || assessment.description || "";
-        root.querySelector(".qb-builder input[type='date']").value = assessment.date === "Sem data" ? "" : assessment.date;
-        root.querySelector("[data-qb-assessment-component]").value = assessment.component || root.querySelector("[data-qb-assessment-component]").value;
-        root.querySelector("[data-qb-assessment-year]").value = assessment.year || root.querySelector("[data-qb-assessment-year]").value;
-        cart = assessment.questions.map((entry) => entry.question?.code || entry.question_id).filter(Boolean);
-        cartPoints = Object.fromEntries(
-          assessment.questions
-            .map((entry) => [entry.question?.code || entry.question_id, entry.points || 1])
-            .filter(([id]) => Boolean(id))
-        );
-        saveDraftSnapshot("assessment-opened");
       }
       if (button.dataset.qbDuplicateAssessment) {
         if(!window.confirm('Criar uma cópia com novo identificador para editar, preservando a avaliação original e suas aplicações?'))return;
+        sessionStorage.setItem(assessmentSaveKey,JSON.stringify({kind:'duplicate',assessmentId:button.dataset.qbDuplicateAssessment,startedAt:new Date().toISOString()}));
         const copy=await questionBankDataService.duplicateAssessment(button.dataset.qbDuplicateAssessment);requireAssessmentActor();
         if(!copy?.id || copy.id===button.dataset.qbDuplicateAssessment)throw Error('A cópia não recebeu um novo identificador.');
+        sessionStorage.setItem(assessmentSaveKey,JSON.stringify({kind:'duplicate-confirmed',assessmentId:copy.id,startedAt:new Date().toISOString()}));
+        const confirmed=await questionBankDataService.getAssessmentById(copy.id,{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal});requireAssessmentActor();
+        if(confirmed?.id!==copy.id)throw Error('A cópia não foi confirmada pelo servidor.');
+        switchControls.forEach(({node,disabled})=>node.disabled=disabled);switchControls=[];
+        hydrateConfirmedAssessment(confirmed);sessionStorage.removeItem(assessmentSaveKey);
         assessments = await questionBankDataService.listAssessments();requireAssessmentActor();
-        await render();root.querySelector(`[data-qb-open-assessment="${copy.id}"]`)?.click();return;
       }
       if (button.dataset.qbArchiveAssessment) {
         await questionBankDataService.archiveAssessment(button.dataset.qbArchiveAssessment);
@@ -24176,6 +24194,8 @@ const initQuestionBank = () => {
       await render();
     } catch (error) {
       setError(error.message);
+    } finally {
+      if(ownsSwitch){assessmentSwitchBusy=false;if(assessmentActorCurrent()){switchControls.forEach(({node,disabled})=>node.disabled=disabled);renderAssessmentProtection();}}
     }
   });
 
@@ -24204,6 +24224,7 @@ const initQuestionBank = () => {
   builderFields.forEach((control) => {
     control.addEventListener("change", () => {
       try{requireAssessmentActor();}catch{return;}
+      if(assessmentSwitchBusy)return;
       if(activeAssessmentProtected){setError(protectedAssessmentMessage);return;}
       saveDraftSnapshot("builder-changed");
       if (activeAssessmentId) {
