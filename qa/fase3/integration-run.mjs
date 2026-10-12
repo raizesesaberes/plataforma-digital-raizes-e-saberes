@@ -72,6 +72,14 @@ try {
   console.log('PASS contracts preserved '+protectedObjects.length+' FASE3 functions/triggers including definitions, ACLs and config');
   if(manifestsOnly){writeManifestIndex();checkVersionQuery(sql=>run(['exec','-i',name,'psql','-U','postgres','-v','ON_ERROR_STOP=1','-At'],sql));console.log('PASS stage manifests captured; no ledger created or written');} else {
   apply('tests/contracts/seed.sql');
+  if(process.argv.includes('--assembly-only')) {
+    const beforeAssembly=catalog();apply('supabase/review/assessment_institutional_assembly.sql');const afterAssembly=catalog();
+    assert.deepEqual(afterAssembly.relations,beforeAssembly.relations);
+    for(const [key,value] of Object.entries(beforeAssembly.functions)){
+      if(key.startsWith('public.avalia_plus_create_assessment_from_bank(')||key.startsWith('public.avalia_plus_replace_assessment_items(')){assert.deepEqual(afterAssembly.functions[key].acl,value.acl);}else assert.deepEqual(afterAssembly.functions[key],value,key);
+    }
+    execFileSync('python3',['tests/contracts/assembly-institutional.py'],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}});
+  } else {
   if(process.argv.includes('--amendments-only')) {
     const beforeAmendment=catalog();apply('supabase/review/contract_amendments.sql');const afterAmendment=catalog();
     assert.deepEqual(afterAmendment.relations,beforeAmendment.relations,'Amendment changed table ACL/RLS/policies/triggers');
@@ -99,6 +107,7 @@ try {
   if(journeyError)throw journeyError;
   }
   }
+}
 }
 } catch(error) {console.error(error.stderr?.toString()||error.message);process.exitCode=1;}
 finally {for(const container of [`${name}-rest`,name]){try{run(['rm','-fv',container])}catch{}}}

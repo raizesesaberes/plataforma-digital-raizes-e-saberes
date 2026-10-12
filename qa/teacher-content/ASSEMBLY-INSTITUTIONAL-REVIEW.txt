@@ -1,0 +1,45 @@
+Correção proposta — não instalada
+Problema: professor institucional ativo sem claim legado é recusado antes da montagem.
+
+Escopo SQL: somente public.avalia_plus_create_assessment_from_bank(jsonb) e
+public.avalia_plus_replace_assessment_items(uuid,jsonb). CREATE reconhece contexto docente
+por perfil/professor/vínculo canônico ativo, obtém escola servidor e persiste owner_role=professor.
+REPLACE mantém owner/admin check, mas revalida contexto institucional atual antes de modificar
+rascunho: impede seguir salvando depois de perder vínculo, perfil ou atividade da escola.
+Ambas recusam professor identificado apenas por claim sem perfil/vínculo verificado.
+Perfil existente inativo não entra no caminho legado. Autores globais legitimamente autorizados
+mantêm seu caminho, sem alteração no resolvedor de papéis. Nenhuma criação/alteração de Auth.
+
+Diferenças intencionais: docentes precisam de perfil professor ativo, teacher ativo e contexto
+com ano resolvido por vínculo ativo. Um docente com claim antigo mas sem esses vínculos não
+é considerado legado legitimamente autorizado. Administrador global autorizado sem identidade
+docente mantém montagem global; se também possuir identidade docente, aplica-se a validação
+institucional estrita, consistente com o trigger de conteúdo existente.
+
+Preservados: assinatura, SECURITY DEFINER já existente, owner postgres, search_path, ACLs,
+licença, categoria/contrato, escola/turma, ownership e imutabilidade após aplicação.
+Trava transacional interna verifica oito funções e três triggers contra catálogo revisado.
+Preflight externo verifica também ledger155/latest20261011191259. Produção readonly: PASS.
+Não altera tabelas, policies, grants, resolvedor global ou teacher_schedule_application.
+Não depende de frontend novo; PR12 já envia o payload correto.
+
+Testes:
+- node tests/teacher-content/assembly-role-diagnostic.mjs reproduz falha original (fixture antiga).
+- node qa/fase3/integration-run.mjs --assembly-only carrega banco integral sintético com contrato/
+categoria/triggers, aplica proposta e testa payload PR12 de duas questões, owner/escola
+persistidos, salvar posterior e publicação sintética sem claims legados.
+- Negativas create/replace: perfil divergente/inativo, teacher inativo, vínculo inativo,
+escola inativa, escola/turma alheias, conteúdo/categoria sem direito, licença revogada.
+Licença ausente é rejeitada por NOT NULL/FK preexistentes. Falhas deixam zero novas avaliações
+e preservam o rascunho anterior (rollback de replace inclui remoção/reinserção de itens).
+- Professor com claim legado e vínculos válidos, administrador global autorizado, ownership,
+e imutabilidade após publicação permanecem cobertos. Catálogo de outras funções, tabelas,
+ACL/RLS/triggers comparado antes/depois pelo runner. Novos hashes conferidos no Postgres.
+- Não é homologação humana nem browser ligado diretamente ao banco; são testes de RPC SQL reais
+no banco sintético, complementares aos testes Chromium da PR12. Nada enviado em produção.
+
+Instalação: pacote Mac em /workspace/assessment-institutional-install-package e ZIP correspondente.
+Scripts versionados em qa/teacher-content/assembly-install. Snapshot exportável de definições
+reais antes da aplicação, preflight/readback somente leitura, instruções de recuperação.
+Requer revisão e aprovação específica do SQL/hash; não mesclar/aplicar por autorização genérica.
+Não pedir ao professor para repetir o fluxo até readback da instalação aprovada.
