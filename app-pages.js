@@ -23823,6 +23823,7 @@ const initQuestionBank = () => {
   const ensureSavedForPreview = async () => {
     requireAssessmentActor();
     if(assessmentSwitchBusy)throw Error('Aguarde a abertura ou duplicação terminar.');
+    if(!assessmentSavePromise && sessionStorage.getItem(assessmentSaveKey))throw Error(uncertainSaveMessage);
     if(assessmentSavePromise)return assessmentSavePromise;
     if(activeAssessmentProtected)return {id:activeAssessmentId};
     if (!cart.length) {
@@ -23911,6 +23912,7 @@ const initQuestionBank = () => {
 
   const publishCurrentAssessmentDigitally = () => {
     requireAssessmentActor();
+    if(!assessmentSavePromise && sessionStorage.getItem(assessmentSaveKey))throw Error(uncertainSaveMessage);
     if(assessmentHandoffComplete)return Promise.resolve(null);
     if(assessmentHandoffPromise)return assessmentHandoffPromise;
     assessmentHandoffPromise=(async()=>{
@@ -23969,7 +23971,7 @@ const initQuestionBank = () => {
       selectedId=selectedId || questions[0]?.id;
       // Applied content must be official. Unassigned drafts keep legitimate local edits.
       if(loaded?.isAssigned && !pendingMarker)hydrateConfirmedAssessment(loaded);
-      else if(loaded)activeAssessmentProtected=false;
+      else if(loaded)activeAssessmentProtected=Boolean(loaded.isAssigned);
       else cart=cart.filter(id=>itemById(id));
       populateFilterOptions();root.querySelector('.qb-notice span').textContent=localDevNotice();
       await render();await attemptLoginResume();
