@@ -1,0 +1,59 @@
+Avaliação já aplicada: proposta frontend, sem publicação em produção.
+Base main6f958decf27c1c2ccd33a755e93b194681f8c8f5 (PR15).
+
+Causa: assessments.status/class_name não representam as aplicações. Lista exibia
+RASCUNHO/Sem turma apesar de assessment_assignments existente. Abrir carregava
+conteúdo editável; onchange/salvar/publicar disparavam replace no mesmo ID, negado
+corretamente pelo guard SQL ASSESSMENT_ASSIGNED_CONTENT_IMMUTABLE.
+
+Correção: select de assessments inclui somente id das aplicações autorizadas pelo
+RLS via FK explícita assessment_assignments_assessment_id_fkey (confirmada baseline).
+Mapper deriva isAssigned independentemente do status-base. Lista passa a exibir
+Já aplicada/conteúdo protegido e orienta consultar destinos/períodos em Aplicações.
+Ao abrir/retomar, campos, pontos e controles de edição ficam desabilitados; handlers
+também impedem alteração mesmo com evento sintético. Prévia usa ID existente semreplace.
+Reaplicar na lista ou construtor navega para professor.html?view=avaliacoes&assessment_id=ID#aplicacoes,
+sem criar/alterar/publicar aplicação. Seleção do destinatário continua no fluxo canônico.
+Duplicar usa ação já existente, exige confirmação explícita e ID diferente; abre cópia
+editável. Não muda a implementação remota de duplicação, nem promete atomicidade dela.
+
+Validação Chromium com renderer/handlers completos e transporte sintético: avaliação
+RASCUNHO aplicada é protegida ao abrir e reload; save sintético bloqueado; ambos atalhos
+preservam ID sem create/replace/publish; duplicação abre novoID editável e original intacta;
+mapper remoto/queryreal exercitados com resposta sintética. Não é homologação real nem
+validação PostgREST/RLS nova. assessment-handoff regressão PASS; sintaxe/diff/build PASS.
+
+Escopo runtime app-pages.js/banco-questoes.html(cachekey). Nenhum SQL/guard/ACL/Auth
+alterado; nenhuma tentativa/nota/resposta/prazo/publicação real alterada. PR11 fora.
+Backend continua autoridade se aplicação ficar invisível por RLS ou ocorrer após leitura.
+Usuário já pode continuar pelo atalho canônico usando original e alvo aluno individual;
+essa correção de orientação não é pré-requisito para reaplicar. Não efetivar reaplicação.
+
+Revisão P2: Duplicar/abrir/reaplicar/arquivar agora compartilham exclusão com salvar.
+A operação de duplicação inclui leitura confirmada e hidratação da cópia no mesmo
+bloqueio, sem clique automático desacoplado. Save em voo bloqueia troca/duplicação,
+inclusive eventos programáticos. Marcador de ACK incerto bloqueia duplicação e abertura
+de outro ID; abrir o mesmo ID confirmado permite reconciliação. Duplicação escreve
+marcador antes de iniciar: ACK perdido sem novo ID conhecido não permite outra criação.
+Quando ID da cópia é confirmado, marcador aponta para ele; falha posterior pode ser
+reconciliada abrindo esse ID. Não promete idempotência/atomicidade remota de duplicação.
+
+Hidratação única no abrir/reload/cópia: título, instruções, data, componente, ano, capa,
+questões e pontos vêm do servidor. Snapshot confirmado não relê inputs antigos de pontos.
+Testes ampliados PASS: save lento A + Duplicar/abrir B preserva marcador/ID/campos de A;
+ACK perdido mantém bloqueio e marcador; duplicação lenta bloqueia outro clique e save;
+rascunho local recusado com título/instruções/data/ano/componente/pontos divergentes é
+substituído ao reload e não aparece na prévia oficial. Regressão handoff/sintaxe/diff/build PASS.
+Sem novas alterações SQL, permissões ou dados reais; sem merge/deploy de produção.
+
+Revisão refresh/sessão: refresh não inicia durante save/abertura/duplicação. Leituras
+usam variáveis locais e só são aplicadas se geração, revisão do editor, ator, ID e
+marcador pendente continuam iguais após cada await. Save/troca/edição invalidam leitura
+anterior. Resposta/erro obsoleto não sobrescrevem estado atual. Renovação de sessão
+não hidrata rascunho não aplicado: edição local legítima é preservada inclusive no reload.
+Conteúdo aplicado continua exigindo hidratação oficial; abrir explicitamente um ID
+carrega o servidor. Lista pode ser consultada com ACK incerto sem apagar marcador.
+Testes PASS: token renewal durante save lento não dispara leitura concorrente nem
+substitui Nova edição/pontos2; save seguinte envia os mesmos valores. Refresh iniciado
+antes da edição e finalizado depois não troca Edição posterior/pontos4; reload de
+rascunho não aplicado conserva esses valores. Demais proteções anteriores/regressão PASS.
