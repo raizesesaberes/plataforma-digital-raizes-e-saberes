@@ -1,0 +1,103 @@
+{
+  "ledger": {
+    "count": 161,
+    "latest": "20261013144109"
+  },
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "active_rules",
+      "config": [
+        "search_path=\"\"",
+        "jit=off",
+        "plan_cache_mode=force_custom_plan"
+      ],
+      "body_md5": "37f799295155539cd966e60b6e1fc93a",
+      "signature": "school_category_private.active_rules(jsonb)",
+      "anon_execute": false,
+      "definition_md5": "2846700831f21129dfd8ddedce259390",
+      "security_definer": true,
+      "authenticated_execute": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "active_rules_for_context",
+      "config": [
+        "search_path=\"\"",
+        "jit=off",
+        "plan_cache_mode=force_custom_plan"
+      ],
+      "body_md5": "d88c533681baeb3d9146eb663d71b122",
+      "signature": "school_category_private.active_rules_for_context(jsonb,jsonb)",
+      "anon_execute": false,
+      "definition_md5": "5c584ac719e03ced56b877ea8ce41d98",
+      "security_definer": true,
+      "authenticated_execute": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "actor_context",
+      "config": [
+        "search_path=\"\"",
+        "jit=off"
+      ],
+      "body_md5": "f6a7f42cdd1bc1c915305845da58c57c",
+      "signature": "school_category_private.actor_context(jsonb)",
+      "anon_execute": false,
+      "definition_md5": "48a7d0365d86d9b51890345b6a4f0812",
+      "security_definer": true,
+      "authenticated_execute": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "authorized_items",
+      "config": [
+        "search_path=\"\"",
+        "jit=off",
+        "plan_cache_mode=force_custom_plan"
+      ],
+      "body_md5": "140a048bf446b793c26a47af7ca7bf0b",
+      "signature": "school_category_private.authorized_items(jsonb,uuid)",
+      "anon_execute": false,
+      "definition_md5": "9e5596d0dd3dcf9235a851966c99bdf5",
+      "security_definer": true,
+      "authenticated_execute": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "authorized_items_for_context",
+      "config": [
+        "search_path=\"\"",
+        "jit=off",
+        "plan_cache_mode=force_custom_plan"
+      ],
+      "body_md5": "0e58450d23027aec4168918e040ba77b",
+      "signature": "school_category_private.authorized_items_for_context(jsonb,jsonb,uuid,uuid)",
+      "anon_execute": false,
+      "definition_md5": "a1c4cb3579e13fbee391324593a3eed0",
+      "security_definer": true,
+      "authenticated_execute": false
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "name": "school_inspect_available_content",
+      "config": [
+        "search_path=\"\"",
+        "jit=off",
+        "statement_timeout=15s"
+      ],
+      "body_md5": "86db3dd37e2abb62388289e795fb0ef2",
+      "signature": "school_inspect_available_content(uuid,jsonb,integer,integer)",
+      "anon_execute": false,
+      "definition_md5": "a1241bc1933614e687d5d2bce4625e75",
+      "security_definer": true,
+      "authenticated_execute": true
+    }
+  ],
+  "migration": [
+    {
+      "name": "school_content_inspection",
+      "version": "20261013144109"
+    }
+  ]
+}

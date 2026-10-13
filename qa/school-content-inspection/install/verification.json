@@ -1,0 +1,13 @@
+{
+  "project": "jaesjldrbjbdmzzggxzw",
+  "approvedHead": "fc3dd82267fc2bf9d5e76a26d510e47c8f8664d8",
+  "sqlSha256": "0b0c7731096d35fd8254d932db49c1298e0b6151b1b4060f6a420a97e827d46f",
+  "ledgerBefore": 160,
+  "ledgerAfter": 161,
+  "allFiveFunctionBodiesMatchReviewedSQL": true,
+  "actorContextUnchanged": true,
+  "aclVerified": true,
+  "productionRowsQueried": false,
+  "priorMigrationsReapplied": false,
+  "rollbackDeployment": "dpl_CQopDzgu7iMCKoNzBfZ1ujge3TbD"
+}
