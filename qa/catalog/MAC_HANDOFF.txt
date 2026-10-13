@@ -1,0 +1,19 @@
+CATÁLOGO SOMENTE — pacote de revisão, não executar antes da revisão específica.
+
+Projeto: jaesjldrbjbdmzzggxzw. Produto RS_BANCO_COMPLETO separado; zero grants/contratos/ativação/importação. Usar checkout isolado a partir do projeto Mac /Users/danielhenrique/Documents/plataforma digital raizes e saberes. Guardar evidências permanentes em /Users/danielhenrique/Documents/rs-fase3-instalacao-controlada-20261011/catalogo-banco-completo, sem credenciais.
+
+Fonte: supabase/review/banco_completo_catalog.sql
+SHA256: f7bf41529cec9e7963af2009355ecf950f79f9dfc41aec3dfc2ddff6145f20aa
+Nome migration: banco_completo_catalog
+Versão documental candidata: 20261011060005. NÃO foi gerada por CLI, NÃO reservada e NÃO oficializada. Não renomear migration para fazê-la coincidir. A CLI oficial migration new deve gerar a versão efetiva; registrar/revisar o par versão/hash antes de aplicar. Se diferente, atualizar a proposta/documentação, sem alterar SQL ou ledger à mão.
+
+Leitura remota atual:153 entradas, máximo20261011060004, MD5 e7acfa1deb410b75358b8705c099ec0b; candidata60005 ausente. Reconsultar imediatamente antes da execução. Ausência não reserva versão.
+
+1. Ler REVIEW.md e SHA256SUMS. Conferir supabase --version e comandos --help; autenticar localmente por fluxo oficial sem credenciais no chat. Confirmar projeto/ambiente.
+2. Executar banco_completo_catalog_preflight.sql READ ONLY. Registrar ledger, produto legado, associações, contagens de direitos e triggers. Somente geração/aplicação da nova migration, nenhuma outra pendente.
+3. supabase migration new banco_completo_catalog em diretório de release isolado. Copiar a fonte intacta ao arquivo gerado; conferir SHA256 e revisar a versão oficial efetiva. Aplicar somente após revisão/autorizações, por mecanismo oficial confirmado no help. Nenhum repair, include-all, override ou ledger manual.
+4. Readback: ledger154 com somente nova versão/nome; produto novo exato/ACTIVE;7 associações, um TRAINING; zero contract_products e tenant_product_entitlements para novo produto. Produto legado/associações/direitos anteriores devem permanecer exatos. Preflight pode ser repetido para leitura. Guardar recibo, hashes e delta auditável sem dados pessoais.
+5. Se erro/drift: parar e registrar estado. Não repetir à força, apagar migration, remover produto/módulo já adotado ou deletar direitos. SQL transacional; eventual recuperação forward precisa revisão baseada no estado real. Replay idempotente só antes de uso do novo produto.
+6. Não salvar a revisão parcial de questões. Mudança de catálogo invalida sua fingerprint. Usuário deve guardar/capturar rascunho antes de recarregar e revisar o Banco Completo integralmente. Nenhum contrato real faz parte desta execução. PR7 UX permanece em draft para publicação coordenada; gates FASE3 OFF.
+
+Experiências usa INTERACTION, distinto de GAME. Modelos de avaliação usa ASSESSMENT_TEMPLATE. Materiais genéricos sem tipo adequado permanecem gap editorial, não cobertura universal. Conteúdo real/importação é etapa separada.

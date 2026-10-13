@@ -71,7 +71,9 @@ try {
   const changedDependencies=Object.keys(afterFase3).filter(key=>JSON.stringify(afterFase3[key])!==JSON.stringify(afterContracts[key])).map(key=>({key,before:afterFase3[key],after:afterContracts[key]}));
   writeFileSync('qa/fase3/integration-functions.json',JSON.stringify({protectedObjects,protectedDefinitions:Object.fromEntries(protectedObjects.map(key=>[key,afterFase3[key]])),overwritten,changedDependencies},null,2)+'\n');
   console.log('PASS contracts preserved '+protectedObjects.length+' FASE3 functions/triggers including definitions, ACLs and config');
-  if(manifestsOnly){writeManifestIndex();checkVersionQuery(sql=>run(['exec','-i',name,'psql','-U','postgres','-v','ON_ERROR_STOP=1','-At'],sql));console.log('PASS stage manifests captured; no ledger created or written');} else {
+  if(process.argv.includes('--catalog-only')){
+    execFileSync('python3',['tests/contracts/catalog-only.py'],{stdio:'inherit',env:{...process.env,RS_CONTRACT_TEST_CONTAINER:name}});
+  } else if(manifestsOnly){writeManifestIndex();checkVersionQuery(sql=>run(['exec','-i',name,'psql','-U','postgres','-v','ON_ERROR_STOP=1','-At'],sql));console.log('PASS stage manifests captured; no ledger created or written');} else {
   apply('tests/contracts/seed.sql');
   if(process.argv.includes('--assembly-only')) {
     const beforeAssembly=catalog();apply('supabase/review/assessment_institutional_assembly.sql');const afterAssembly=catalog();
