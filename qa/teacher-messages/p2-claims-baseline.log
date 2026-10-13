@@ -1,0 +1,51 @@
+LOAD qa/fase3/bootstrap.sql
+LOAD supabase/baselines/20261004_pilot_schema_baseline.sql
+LOAD supabase/migrations/20261004231721_content_architecture_phase1_question_entitlements.sql
+LOAD supabase/migrations/202610060001_question_bank_teacher_adaptations.sql
+LOAD supabase/migrations/20261006200104_question_bank_alternative_integrity.sql
+LOAD supabase/migrations/20261006205047_question_bank_atomic_official_edit.sql
+LOAD supabase/migrations/20261007092231_content_macro_v1_modules.sql
+LOAD supabase/migrations/20261008003945_authorized_question_details_for_teacher.sql
+LOAD supabase/migrations/20261008234450_admin_auth_access_duplicate_check.sql
+LOAD supabase/migrations/20261008234606_admin_auth_access_duplicate_check_orphan_priority.sql
+LOAD supabase/migrations/20261011003308_school_content_dynamic_categories_v2.sql
+LOAD supabase/migrations/20261011003328_school_content_global_review_v2.sql
+LOAD supabase/migrations/20261011003339_school_content_native_question_categories_v2.sql
+LOAD supabase/migrations/20261011003351_school_content_category_checkpoint_v2.sql
+LOAD supabase/migrations/20261011003404_school_content_protected_adapters_v2.sql
+LOAD qa/fase3/observed-start-attempt.sql
+LOAD qa/fase3/observed-boundary-fixture.sql
+LOAD qa/fase3/observed-20261009195512.sql
+LOAD qa/fase3/observed-boundary-alignment.sql
+LOAD tests/contracts/admin-assert.sql
+LOAD tests/contracts/production-legacy-helpers.sql
+LOAD qa/fase3/seed.sql
+LOAD supabase/review/fase3_assessment_authorization.sql
+LOAD supabase/review/contract_operations.sql
+LOAD supabase/review/assessment_institutional_assembly.sql
+LOAD supabase/review/teacher_legacy_grade_scope.sql
+LOAD supabase/review/content_question_license.sql
+LOAD supabase/review/fase3_communication_replies.sql
+LOAD supabase/review/fase3_notice_editing.sql
+LOAD supabase/review/teacher_message_audiences.sql
+Traceback (most recent call last):
+  File "/workspace/teacher-messages/tests/teacher-content/teacher-messages-db.py", line 71, in <module>
+    key=str(uuid.uuid4());r=newpublish(scope,key=key);cid=r['communication_id'];scoped[scope]=cid
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/teacher-messages/tests/teacher-content/teacher-messages-db.py", line 60, in newpublish
+    return json.loads(call('select teacher_publish_message('+lit(key)+','+lit(json.dumps(payload))+'::jsonb)',n,claims))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/teacher-messages/tests/teacher-content/teacher-messages-db.py", line 45, in call
+    return sql('set request.jwt.claims='+lit(json.dumps(jwt))+';set role authenticated;'+q)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/teacher-messages/tests/teacher-content/teacher-messages-db.py", line 9, in sql
+    def sql(q):return run('exec','-i',NAME,'psql','-XAtq','-U','postgres','-v','ON_ERROR_STOP=1',input=q)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/teacher-messages/tests/teacher-content/teacher-messages-db.py", line 7, in run
+    if p.returncode:raise RuntimeError(p.stderr+'\n'+p.stdout)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: ERROR:  Usuario sem permissao para publicar este comunicado.
+CONTEXT:  PL/pgSQL function publish_communication(uuid,text,text,text,text,uuid,uuid,text,date,timestamp with time zone) line 47 at RAISE
+PL/pgSQL function public.teacher_publish_message(uuid,jsonb) line 23 at assignment
+
+

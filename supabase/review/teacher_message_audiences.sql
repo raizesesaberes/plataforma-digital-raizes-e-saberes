@@ -4,6 +4,14 @@
 begin;
 do $guard$ declare x record; begin
  for x in select * from (values
+ ('secretaria_list_communications','866c42fc656a58fcb8c706919301e9e2'),
+ ('secretaria_list_communication_events','d9a7b6e69441a3bf0c874a86b20a547e'),
+ ('communication_list_delivery_summaries','4220cdf7820990e5aaa470d32589a73e'),
+ ('secretaria_set_communication_status','34523ff829f03c7c265a02a8816727d4'),
+ ('secretaria_delete_communication','24f8f8f52fe77dbeacb60c1a1683c001'),
+ ('communication_review_report','cec574f5eb23a7c362cad6b59262f59c'),
+ ('communication_edit_allowed','ecc5e64343a71238b6b62889c0baf34c'),
+ ('communication_list_reply_threads','2a9e394bbffc7cabf2dac69c29cd5daf'),
  ('communication_generate_deliveries','676afecbec9d61ccc315ae442383b1ef'),
  ('communication_can_read','2657d0547e189192eb36044f5cfcf88c'),
  ('communication_user_can_access_advanced','d6a3fa33a2e452b2826e37a9c026722c'),
@@ -11,16 +19,15 @@ do $guard$ declare x record; begin
  ('notification_get_center','27ec9933a2fbc4431d6e859811c81662'),
  ('communication_mark_read','a396b7cb0e7b51bd02652aed151404eb'),
  ('communication_report_delivery','819caabf646a34492cbff8bcfa0d452f'),
- ('publish_communication','8366d7878bec0a67894de87bc0a7a2cd'),
  ('communication_teacher_can_target','71d4d457d2327e019bd4bc1fdafd5da4'),
  ('communication_reply_allowed','8750e1eecfaa1099a807c43022338a53')) v(name,hash) loop
  if (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in('public','school_category_private') and p.proname=x.name and md5(p.prosrc)=x.hash and p.prosecdef)<>1 then raise exception 'MESSAGE_BASE_CHANGED: %',x.name; end if;
  end loop;
  if exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
    where n.nspname in('public','school_category_private')
-    and p.proname in('communication_generate_deliveries','communication_can_read','communication_user_can_access_advanced','communication_get_inbox','notification_get_center','communication_mark_read','communication_report_delivery','publish_communication','communication_teacher_can_target','communication_reply_allowed')
+    and p.proname in('secretaria_list_communications','secretaria_list_communication_events','communication_list_delivery_summaries','secretaria_set_communication_status','secretaria_delete_communication','communication_review_report','communication_edit_allowed','communication_list_reply_threads','communication_generate_deliveries','communication_can_read','communication_user_can_access_advanced','communication_get_inbox','notification_get_center','communication_mark_read','communication_report_delivery','communication_teacher_can_target','communication_reply_allowed')
     and (pg_get_userbyid(p.proowner)<>'postgres' or has_function_privilege('anon',p.oid,'EXECUTE')
-      or has_function_privilege('authenticated',p.oid,'EXECUTE')<>(p.proname not in('communication_generate_deliveries','communication_reply_allowed'))))
+      or has_function_privilege('authenticated',p.oid,'EXECUTE')<>(p.proname not in('communication_generate_deliveries','communication_reply_allowed','communication_edit_allowed'))))
  then raise exception 'MESSAGE_FUNCTION_ACL_REVIEW_REQUIRED';end if;
  if has_table_privilege('authenticated','public.communications','INSERT,UPDATE,DELETE') or has_table_privilege('anon','public.communications','SELECT') then raise exception 'MESSAGE_ACL_REVIEW_REQUIRED'; end if;
  if exists(select 1 from pg_trigger where tgrelid='public.communications'::regclass and not tgisinternal and (tgname<>'communications_touch_updated_at' or tgfoid<>'public.institutional_touch_updated_at()'::regprocedure)) then raise exception 'MESSAGE_TRIGGER_REVIEW_REQUIRED'; end if;
@@ -603,12 +610,19 @@ begin
  select * into strict saved from school_category_private.teacher_message_requests where author_id=actor and request_id=p_request_id for update;
  if saved.payload is distinct from p_payload then raise exception 'MESSAGE_REQUEST_CONFLICT' using errcode='22023';end if;
  if saved.result is not null then return saved.result;end if;
- response:=public.publish_communication(sc,'message',case when destination='class' then 'class' else 'student' end,p_payload->>'title',p_payload->>'body',cl,st,'draft',current_date,null);
- update public.communications set recipient_scope=case when destination='class' then 'legacy' else destination end,status='published'
- where id=(response->>'communication_id')::uuid returning * into c;
+ -- Authorization above uses the active institutional profile, teacher and class link.
+ -- Do not call legacy publish_communication: its JWT role requirement rejects valid
+ -- institutional teachers without app_metadata claims. Do not rewrite JWT/Auth metadata.
+ insert into public.communications(school_id,author_profile_id,author_role,communication_type,
+  audience_type,class_id,student_id,title,body,communication_date,expires_at,status,recipient_scope)
+ values(sc,actor,'professor','message',case when destination='class' then 'class' else 'student' end,
+  cl,st,btrim(p_payload->>'title'),btrim(p_payload->>'body'),current_date,null,'published',
+  case when destination='class' then 'legacy' else destination end) returning * into c;
+ insert into public.communication_events(communication_id,event_type,from_status,to_status,performed_by)
+ values(c.id,'created',null,'published',actor);
  deliveries:=public.communication_generate_deliveries(c.id);
  if deliveries=0 then raise exception 'MESSAGE_NO_ELIGIBLE_RECIPIENTS' using errcode='22023';end if;
- insert into public.communication_events(communication_id,event_type,from_status,to_status,performed_by) values(c.id,'published','draft','published',actor);
+ insert into public.communication_events(communication_id,event_type,from_status,to_status,performed_by) values(c.id,'published',null,'published',actor);
  response:=jsonb_build_object('communication_id',c.id,'status','published','recipient_scope',destination,'deliveries_created',deliveries,'request_id',p_request_id);
  update school_category_private.teacher_message_requests set result=response where author_id=actor and request_id=p_request_id;
  return response;
@@ -630,4 +644,261 @@ begin
 end $$;
 revoke all on function public.teacher_publish_message(uuid,jsonb),public.teacher_get_message_request(uuid) from public,anon,authenticated,service_role;
 grant execute on function public.teacher_publish_message(uuid,jsonb),public.teacher_get_message_request(uuid) to authenticated;
+
+-- Current profile/school/link checks on all scoped management readers and mutations.
+CREATE OR REPLACE FUNCTION "public"."secretaria_list_communications"() RETURNS SETOF "public"."communications"
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+  select c.*
+  from public.communications c
+  where public.secretaria_can_manage_school(c.school_id)
+    and (c.recipient_scope='legacy' or school_category_private.message_scope_access(c))
+  order by c.communication_date desc, c.created_at desc;
+$$;
+
+CREATE OR REPLACE FUNCTION "public"."secretaria_list_communication_events"() RETURNS SETOF "public"."communication_events"
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+  select ce.*
+  from public.communication_events ce
+  join public.communications c on c.id = ce.communication_id
+  where public.secretaria_can_manage_school(c.school_id)
+    and (c.recipient_scope='legacy' or school_category_private.message_scope_access(c))
+  order by ce.created_at desc;
+$$;
+
+CREATE OR REPLACE FUNCTION "public"."communication_list_delivery_summaries"() RETURNS TABLE("communication_id" "uuid", "delivered_count" integer, "read_count" integer, "unread_count" integer)
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+  select
+    c.id as communication_id,
+    count(d.id)::integer as delivered_count,
+    count(d.id) filter (where d.read_at is not null)::integer as read_count,
+    count(d.id) filter (where d.read_at is null)::integer as unread_count
+  from public.communications c
+  left join public.communication_deliveries d on d.communication_id = c.id
+  where (c.recipient_scope='legacy' or school_category_private.message_scope_access(c)) and (public.secretaria_can_manage_school(c.school_id)
+    or (
+      c.author_profile_id = (select auth.uid())
+      and public.communication_teacher_can_target(c.school_id, c.class_id, c.student_id, c.audience_type)
+    )
+  ) group by c.id;
+$$;
+
+CREATE OR REPLACE FUNCTION "public"."secretaria_set_communication_status"("p_communication_id" "uuid", "p_to_status" "text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+declare
+  v_author uuid := auth.uid();
+  v_to_status text := lower(nullif(trim(p_to_status), ''));
+  v_comm public.communications%rowtype;
+  v_from_status text;
+  v_event_type text;
+  v_deliveries integer := 0;
+begin
+  if v_author is null then
+    raise exception 'Usuario autenticado obrigatorio.' using errcode = '42501';
+  end if;
+
+  if v_to_status not in ('published', 'archived') then
+    raise exception 'Status de comunicacao invalido.' using errcode = '22023';
+  end if;
+
+  select * into v_comm from public.communications where id = p_communication_id for update;
+
+  if v_comm.id is null then
+    raise exception 'Comunicado nao encontrado.' using errcode = '22023';
+  end if;
+
+  if v_comm.recipient_scope<>'legacy' and not school_category_private.message_scope_access(v_comm) then raise exception 'MESSAGE_CONTEXT_FORBIDDEN' using errcode='42501';end if;
+
+  if v_comm.status = 'deleted' then
+    raise exception 'Comunicado excluido nao pode ser republicado.' using errcode = '42501';
+  end if;
+
+  if not (
+    public.secretaria_can_manage_school(v_comm.school_id)
+    or (
+      v_comm.author_profile_id = v_author
+      and public.communication_teacher_can_target(v_comm.school_id, v_comm.class_id, v_comm.student_id, v_comm.audience_type)
+    )
+  ) then
+    raise exception 'Usuario sem permissao para alterar este comunicado.' using errcode = '42501';
+  end if;
+
+  if v_comm.status = v_to_status then
+    if v_to_status = 'published' then
+      v_deliveries := public.communication_generate_deliveries(v_comm.id);
+    end if;
+    return jsonb_build_object('communication_id', v_comm.id, 'from_status', v_comm.status, 'to_status', v_to_status, 'changed', false, 'deliveries_created', v_deliveries);
+  end if;
+
+  if v_comm.status = 'published' and v_to_status <> 'archived' then
+    raise exception 'Comunicado publicado permite somente retirada da publicacao.' using errcode = '22023';
+  end if;
+
+  if v_comm.status in ('draft', 'archived') and v_to_status <> 'published' then
+    raise exception 'Rascunho ou comunicado retirado permite somente publicacao.' using errcode = '22023';
+  end if;
+
+  v_from_status := v_comm.status;
+
+  update public.communications
+  set status = v_to_status, deleted_at = null, deleted_by = null
+  where id = v_comm.id
+  returning * into v_comm;
+
+  v_event_type := case when v_to_status = 'published' then 'published' when v_to_status = 'archived' then 'archived' else 'edited' end;
+  insert into public.communication_events (communication_id, event_type, from_status, to_status, performed_by)
+  values (v_comm.id, v_event_type, v_from_status, v_to_status, v_author);
+
+  if v_to_status = 'published' then
+    v_deliveries := public.communication_generate_deliveries(v_comm.id);
+  end if;
+
+  return jsonb_build_object('communication_id', v_comm.id, 'from_status', v_from_status, 'to_status', v_to_status, 'changed', true, 'deliveries_created', v_deliveries);
+end;
+$$;
+
+CREATE OR REPLACE FUNCTION "public"."secretaria_delete_communication"("p_communication_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+declare
+  v_author uuid := auth.uid();
+  v_comm public.communications%rowtype;
+  v_from_status text;
+begin
+  if v_author is null then
+    raise exception 'Usuario autenticado obrigatorio.' using errcode = '42501';
+  end if;
+
+  select * into v_comm
+  from public.communications
+  where id = p_communication_id
+  for update;
+
+  if v_comm.id is null then
+    raise exception 'Comunicado nao encontrado.' using errcode = '22023';
+  end if;
+
+  if v_comm.recipient_scope<>'legacy' and not school_category_private.message_scope_access(v_comm) then raise exception 'MESSAGE_CONTEXT_FORBIDDEN' using errcode='42501';end if;
+
+  if v_comm.status = 'deleted' then
+    return jsonb_build_object(
+      'communication_id', v_comm.id,
+      'deleted', true,
+      'changed', false
+    );
+  end if;
+
+  if not (
+    public.secretaria_can_manage_school(v_comm.school_id)
+    or (
+      v_comm.author_profile_id = v_author
+      and public.communication_teacher_can_target(v_comm.school_id, v_comm.class_id, v_comm.student_id, v_comm.audience_type)
+    )
+  ) then
+    raise exception 'Usuario sem permissao para excluir este comunicado.' using errcode = '42501';
+  end if;
+
+  v_from_status := v_comm.status;
+
+  update public.communications
+  set status = 'deleted',
+      deleted_at = now(),
+      deleted_by = v_author
+  where id = v_comm.id
+  returning * into v_comm;
+
+  insert into public.communication_events (communication_id, event_type, from_status, to_status, performed_by)
+  values (v_comm.id, 'deleted', v_from_status, 'deleted', v_author);
+
+  return jsonb_build_object(
+    'communication_id', v_comm.id,
+    'deleted', true,
+    'changed', true
+  );
+end;
+$$;
+
+CREATE OR REPLACE FUNCTION "public"."communication_review_report"("p_report_id" "uuid", "p_status" "text", "p_resolution_notes" "text" DEFAULT NULL::"text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth', 'pg_temp'
+    AS $$
+declare
+  v_report public.communication_moderation_reports%rowtype;
+begin
+  select * into v_report
+  from public.communication_moderation_reports
+  where id = p_report_id
+  for update;
+
+  if v_report.id is null then
+    raise exception 'Denuncia nao encontrada';
+  end if;
+
+  if not exists(select 1 from public.communications c where c.id=v_report.communication_id and (c.recipient_scope='legacy' or school_category_private.message_scope_access(c))) then raise exception 'MESSAGE_CONTEXT_FORBIDDEN' using errcode='42501';end if;
+
+  if not public.secretaria_can_manage_school(v_report.school_id) then
+    raise exception 'Acesso negado para moderacao';
+  end if;
+
+  update public.communication_moderation_reports
+     set status = p_status,
+         reviewed_by = auth.uid(),
+         reviewed_at = case when p_status = 'RESOLVIDO' then now() else reviewed_at end,
+         resolution_notes = p_resolution_notes
+   where id = p_report_id
+   returning * into v_report;
+
+  return jsonb_build_object('report', to_jsonb(v_report));
+end;
+$$;
+
+create or replace function school_category_private.communication_edit_allowed(p_id uuid) returns boolean
+language sql stable security definer set search_path='' set jit='off' as $$
+ select exists(select 1 from public.communications c join public.profiles p on p.id=auth.uid() and p.status='active'
+ where (c.recipient_scope='legacy' or school_category_private.message_scope_access(c)) and c.id=p_id and c.source_type is null and public.communication_delivery_is_active(c) and (
+ public.secretaria_can_manage_school(c.school_id) or (
+ c.author_profile_id=auth.uid() and exists(select 1 from public.teachers t where t.profile_id=auth.uid() and t.school_id=c.school_id and t.status='active')
+ and public.communication_teacher_can_target(c.school_id,c.class_id,c.student_id,c.audience_type))));
+$$;
+
+create or replace function public.communication_list_reply_threads(p_communication_id uuid) returns jsonb
+language plpgsql stable security definer set search_path='' as $$
+declare c public.communications%rowtype; payload jsonb;
+begin
+ select * into c from public.communications where id=p_communication_id;
+ if (c.recipient_scope<>'legacy' and not school_category_private.message_scope_access(c)) or auth.uid() is null or c.id is null or not public.communication_delivery_is_active(c)
+  or not exists(select 1 from public.profiles where id=auth.uid() and status='active')
+  or not ((c.author_profile_id=auth.uid() and exists(select 1 from public.teachers t where t.profile_id=auth.uid() and t.school_id=c.school_id and t.status='active') and public.communication_teacher_can_target(c.school_id,c.class_id,c.student_id,c.audience_type))
+   or public.secretaria_can_manage_school(c.school_id)) then
+  raise exception 'COMMUNICATION_THREADS_FORBIDDEN' using errcode='42501';
+ end if;
+ select coalesce(jsonb_agg(jsonb_build_object('delivery_id',d.id,'recipient_name',p.display_name,'student_id',d.student_id,
+  'student_name',(select s.nome from public.students s where s.id=d.student_id),
+  'reply_count',(select count(*) from public.communication_replies r where r.delivery_id=d.id)) order by p.display_name,d.id),'[]'::jsonb)
+ into payload from public.communication_deliveries d join public.profiles p on p.id=d.recipient_profile_id
+ where d.communication_id=c.id and school_category_private.communication_reply_allowed(d.id);
+ return payload;
+end $$;
+
+-- Report descriptions may quote message text. Preserve the historical reporter/manager
+-- rule, while applying current scope to new individual communications.
+create function public.communication_scope_allows_current_actor(p_id uuid) returns boolean
+language sql stable security definer set search_path='' as $$
+ select auth.uid() is not null and exists(select 1 from public.communications c where c.id=p_id
+  and (c.recipient_scope='legacy' or school_category_private.message_scope_access(c)));
+$$;
+revoke all on function public.communication_scope_allows_current_actor(uuid) from public,anon,authenticated,service_role;
+grant execute on function public.communication_scope_allows_current_actor(uuid) to authenticated;
+alter policy communication_reports_select_authorized on public.communication_moderation_reports
+ using ((reporter_profile_id=auth.uid() or public.secretaria_can_manage_school(school_id))
+  and public.communication_scope_allows_current_actor(communication_id));
+
 commit;

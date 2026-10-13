@@ -29,5 +29,7 @@ LOAD supabase/review/fase3_communication_replies.sql
 LOAD supabase/review/fase3_notice_editing.sql
 LOAD supabase/review/teacher_message_audiences.sql
 PASS explicit student/family/both: delivery, raw RLS, inbox, notification center, author, multiple active guardians, inactive/blocked guardian, same-class and school isolation, receipt ownership, legacy reply/version readers.
+PASS institutional professor without JWT role claims publishes; stored nonteacher role and invalid membership denied; no Auth metadata workaround.
+PASS management scoped readers/mutations: inactive profile, inactive school, revoked membership deny lists, versions, threads, receipt summaries, quoted reports, edits/status/delete; historical legacy listing semantics preserved.
 PASS durable request identity: replay, conflict, concurrent retries, no-recipient atomic rollback, inactive links, archive/expiry; private table/direct writes denied. This is deduplication by persistent key, not a general exactly-once claim.
 PASS PostgreSQL existing publish_communication and RLS: individual delivers only target student + active linked guardian; other same-class student/family and other-school family cannot receive/read; forged school/student and expired teacher membership denied; inactive guardian gets no new delivery. New audience SQL applied only in this disposable container; never production.

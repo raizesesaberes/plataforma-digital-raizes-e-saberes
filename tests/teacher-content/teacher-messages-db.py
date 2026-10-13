@@ -38,9 +38,11 @@ try:
  insert into enrollments(student_id,class_id,school_id,school_year) values('40000000-0000-0000-0000-000000000003','30000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','2026');
  insert into student_guardians(student_id,profile_id) values('40000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000006'),('40000000-0000-0000-0000-000000000003','00000000-0000-0000-0000-000000000007'),('40000000-0000-0000-0000-000000000002','00000000-0000-0000-0000-000000000008');
  """)
- def call(q,n):
+ def call(q,n,claims=True):
   role={1:'professor',2:'aluno',3:'secretaria',4:'professor',5:'aluno',9:'aluno'}.get(n,'familia')
-  return sql('set request.jwt.claims='+lit(json.dumps({'sub':uid(n),'role':'authenticated','app_metadata':{'platform_role':role}}))+';set role authenticated;'+q)
+  jwt={'sub':uid(n),'role':'authenticated'}
+  if claims:jwt['app_metadata']={'platform_role':role}
+  return sql('set request.jwt.claims='+lit(json.dumps(jwt))+';set role authenticated;'+q)
  def publish(sid=student,audience='student',n=1):return json.loads(call('select publish_communication('+','.join([lit(school),lit('message'),lit(audience),lit('Synthetic private message'),lit('Synthetic private body'),lit(classid),lit(sid) if sid else 'null'])+')',n))
  r=publish();comm=r['communication_id'];assert r['deliveries_created']==2,r
  def inbox(n):return json.loads(call("select coalesce(jsonb_agg(t),'[]') from communication_get_inbox() t",n))
@@ -52,10 +54,10 @@ try:
  import uuid,concurrent.futures
  sql("insert into auth.users(id) values("+lit(uid(10))+"),("+lit(uid(11))+");insert into profiles(id,platform_role,display_name) values("+lit(uid(10))+",'familia','Second active guardian'),("+lit(uid(11))+",'familia','Blocked guardian');")
  sql("insert into guardians(id,school_id,profile_id,full_name,status,access_status) values('90000000-0000-0000-0000-000000000010',"+lit(school)+","+lit(uid(10))+",'Second active guardian','active','active'),('90000000-0000-0000-0000-000000000011',"+lit(school)+","+lit(uid(11))+",'Blocked guardian','active','blocked');insert into student_guardian_links(guardian_id,student_id) values('90000000-0000-0000-0000-000000000010',"+lit(student)+"),('90000000-0000-0000-0000-000000000011',"+lit(student)+");")
- def newpublish(scope='student_family',sid=student,n=1,key=None,body='Synthetic scoped body',sc=school,cl=classid):
+ def newpublish(scope='student_family',sid=student,n=1,key=None,body='Synthetic scoped body',sc=school,cl=classid,claims=False):
   payload={'schoolId':sc,'classId':cl,'studentId':sid,'recipientScope':scope,'title':'Synthetic '+scope,'body':body}
   key=key or str(uuid.uuid4())
-  return json.loads(call('select teacher_publish_message('+lit(key)+','+lit(json.dumps(payload))+'::jsonb)',n))
+  return json.loads(call('select teacher_publish_message('+lit(key)+','+lit(json.dumps(payload))+'::jsonb)',n,claims))
  def denied(q,n):
   try:call(q,n)
   except RuntimeError:return
@@ -97,6 +99,15 @@ try:
   summaries=json.loads(call("select jsonb_agg(t) from communication_list_delivery_summaries() t where communication_id="+lit(cid),1));assert summaries[0]['read_count']==len(wanted)
   assert sql('select communication_generate_deliveries('+lit(cid)+')')=='0'
  print('PASS explicit student/family/both: delivery, raw RLS, inbox, notification center, author, multiple active guardians, inactive/blocked guardian, same-class and school isolation, receipt ownership, legacy reply/version readers.',flush=True)
+ # Valid institutional professor works without app_metadata/role claims; actual stored role controls permission.
+ cid=newpublish(scope='student',claims=False)['communication_id']
+ assert sql("select author_profile_id::text||':'||author_role from communications where id="+lit(cid))==uid(1)+':professor'
+ sql("update profiles set platform_role='aluno' where id="+lit(uid(1)))
+ for claims in [False,True]:
+  try:newpublish(claims=claims);raise AssertionError('improper stored role accepted')
+  except RuntimeError as e:assert 'MESSAGE_TEACHER_FORBIDDEN' in str(e)
+ sql("update profiles set platform_role='professor' where id="+lit(uid(1)))
+ print('PASS institutional professor without JWT role claims publishes; stored nonteacher role and invalid membership denied; no Auth metadata workaround.',flush=True)
  # Author checks, foreign contexts, direct mutation and private request table ACL.
  for n in [2,4,6]:
   try:newpublish(n=n);raise AssertionError('forged author')
@@ -131,6 +142,26 @@ try:
  assert not readable(cid,6) and cid not in inbox_ids(6) and cid not in inbox_ids(6,True)
  denied('select communication_mark_read('+lit(did)+')',6);denied('select communication_get_reply_thread('+lit(did)+')',6)
  sql("update student_guardians set status='active' where profile_id="+lit(uid(6)))
+ # Scoped management readers must not bypass current profile/school/membership.
+ cid=scoped['family'];did=sql('select id from communication_deliveries where communication_id='+lit(cid)+' and recipient_profile_id='+lit(uid(6)))
+ report=json.loads(call('select communication_report_delivery('+lit(did)+",'outro','Synthetic report quoting private content')",6))
+ reportid=sql('select id from communication_moderation_reports where delivery_id='+lit(did))
+ def management_lists():
+  for query in ['select count(*) from secretaria_list_communications() where id=', 'select count(*) from secretaria_list_communication_events() where communication_id=', 'select count(*) from communication_list_delivery_summaries() where communication_id=']:
+   assert call(query+lit(cid),3)=='0',query
+  assert call('select count(*) from communication_moderation_reports where id='+lit(reportid),3)=='0'
+  for query in ['select communication_get_notice_versions('+lit(cid)+')','select communication_list_reply_threads('+lit(cid)+')','select communication_edit_notice('+lit(cid)+",1,'changed','changed',"+lit(str(uuid.uuid4()))+')','select secretaria_set_communication_status('+lit(cid)+",'archived')",'select secretaria_delete_communication('+lit(cid)+')','select communication_review_report('+lit(reportid)+",'EM_ANALISE')"]:denied(query,3)
+  assert not readable(cid,3)
+ assert call('select count(*) from secretaria_list_communications() where id='+lit(cid),3)=='1'
+ assert json.loads(call('select communication_get_notice_versions('+lit(cid)+')',3))['body']=='Synthetic scoped body'
+ for change,restore in [("update profiles set status='inactive' where id="+lit(uid(3)),"update profiles set status='active' where id="+lit(uid(3))), ("update schools set status='inactive' where id="+lit(school),"update schools set status='active' where id="+lit(school)), ("update school_memberships set status='inactive' where profile_id="+lit(uid(3)),"update school_memberships set status='active' where profile_id="+lit(uid(3)))]:
+  sql(change);management_lists();sql(restore)
+ assert call('select count(*) from secretaria_list_communications() where id='+lit(cid),3)=='1'
+ # Retain old legacy listing semantics, while scoped rows are hidden for inactive profiles.
+ sql("update profiles set status='inactive' where id="+lit(uid(3)))
+ assert call('select count(*) from secretaria_list_communications() where id='+lit(comm),3)=='1'
+ sql("update profiles set status='active' where id="+lit(uid(3)))
+ print('PASS management scoped readers/mutations: inactive profile, inactive school, revoked membership deny lists, versions, threads, receipt summaries, quoted reports, edits/status/delete; historical legacy listing semantics preserved.',flush=True)
  # Audience cannot be widened, even by an old lifecycle path with owner privileges.
  try:sql("update communications set recipient_scope='student_family' where id="+lit(scoped['family']));raise AssertionError('audience widened')
  except RuntimeError as e:assert 'MESSAGE_AUDIENCE_IMMUTABLE' in str(e)
