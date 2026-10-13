@@ -1,0 +1,30 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
++ []
+- [
+-   'class_calendar',
+-   'school_calendar',
+-   'assessment_available',
+-   'assessment_deadline'
+- ]
+
+    at file:///workspace/teacher-messages/tests/teacher-content/teacher-message-week.mjs:26:74 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: [],
+  expected: [
+    'class_calendar',
+    'school_calendar',
+    'assessment_available',
+    'assessment_deadline'
+  ],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.19.0

@@ -1,0 +1,4 @@
+PASS actual initTeacherWorkspace/sidebar: /professor.html → Messages, current authorized class preserved, browser back/forward restored.
+PASS actual initTeacherWorkspace/sidebar: /professor-turma.html?id=class-a → Messages, current authorized class preserved, browser back/forward restored.
+PASS actual initTeacherWorkspace/sidebar: /professor-aluno.html?id=student-a → Messages, current authorized class preserved, browser back/forward restored.
+PASS unknown class is not silently substituted or carried into Messages.

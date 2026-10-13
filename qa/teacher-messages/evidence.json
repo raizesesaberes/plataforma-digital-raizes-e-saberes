@@ -1,0 +1,51 @@
+{
+  "base": "aa1fd64caada0fe6704d2bb4e9c65575409252b3",
+  "branch": "review/teacher-messages",
+  "scope": "Dedicated teacher Messages menu, retained home/class shortcuts, class-scoped received/sent lists, explicit student-only/family-only/student-and-family destinations, durable per-author request recovery.",
+  "validated": [
+    "Playwright 1440 and390: all three explicit audiences, exact preview and request scope, stale student/class rejection, definitive refusal, double click, confirmation lost after commit resolved by lookup, loss before commit retried with same key/payload, uncertain retry refusal retains original key, account switch and delayed responses",
+    "PostgreSQL17 isolated repository schema + reviewed reply/edit prerequisites: positive/negative delivery, communications RLS, attachment guard, inbox, notification center, mark_read, notice versions/reply thread/revision receipts for every audience; teacher author and school manager; peers and other schools denied",
+    "Multiple active guardians, modern blocked guardian, no-family student, revoked links, inactive school, expired teacher membership, immutable audience, zero-recipient atomic rollback",
+    "Persistent request key: equal replay, different-payload rejection, same-key concurrent calls produce one communication; lookup isolated by author; anon RPC and private helper/table ACL denied",
+    "Syntax, whitespace and static runtime4279; operational SQL/tests/backups outside dist"
+  ],
+  "limits": [
+    "No private Mensagens SQL applied to production; no push/deploy or real sends for this branch",
+    "Deduplication applies to persistent (author,request_id) keys and exact payload. Different keys are independent; no general exactly-once guarantee",
+    "Pending payload persists in sessionStorage until confirmed; if local storage is lost, automatic recovery key may be lost. Legacy pending markers without keys require manual reconciliation",
+    "Private server request ledger retains payload/result without TTL; deleting ledger rows would undermine retry deduplication and requires separate retention design",
+    "Family-only means all active linked guardians; no individual guardian picker. Family-only with none is refused; combined with none can still deliver to eligible student",
+    "Teacher Received is selected-class communication list, not private teacher-to-teacher messaging or teacher read receipts",
+    "Browser transport synthetic and DB tested separately; no full browser/PostgREST integrated run, native app execution, human homologation, or native publication",
+    "Reference print pixels unavailable; synthetic mobile screenshot inspected",
+    "Rebased onto published PR20 aa1fd64; both CSS blocks preserved. Auth and native applications unchanged; Mensagens remains private and needs specific SQL/ACL review."
+  ],
+  "remaining": "Specific SQL/ACL review and coordinated integration; full FASE3 not declared complete.",
+  "backend": {
+    "reviewFile": "supabase/review/teacher_message_audiences.sql",
+    "appliedToProduction": false,
+    "schema": [
+      "communications.recipient_scope default legacy with individual-message shape constraint",
+      "private teacher_message_requests table, RLS enabled, no direct grants, author/request primary key",
+      "immutable recipient context trigger; existing delivery SELECT policy rechecks communication authorization",
+      "Moderation reports SELECT policy retains legacy reporter/manager rule and checks current scope for new messages"
+    ],
+    "rpcs": [
+      "teacher_publish_message(uuid,jsonb)",
+      "teacher_get_message_request(uuid)",
+      "communication_scope_allows_current_actor(uuid): authenticated boolean predicate for moderation-report RLS; no body/recipient data"
+    ],
+    "acl": "New RPCs only authenticated; new private helper functions and request table not granted to PUBLIC/anon/authenticated/service_role. Existing public reader ACLs preserved.",
+    "legacy": "Historical publications retain combined/legacy meaning. All supported readers enforce explicit scope for new scoped messages; school wall and weekly board exclude individual messages.",
+    "installation": "Requires specific SQL/ACL review before production. Apply SQL first, then frontend; no fallback to old combined RPC. Reply/edit prerequisites present but gates remain unchanged.",
+    "reviewSqlSha256": "0b8ad9e7c74e938816556e5d9aedc773a21a69f8fb4992b51fd77f9a71d2a2c7",
+    "commit": "041efce"
+  },
+  "reviewCorrections": {
+    "jwt": "Reproduced legacy publish_communication refusing institutional teacher without JWT claims. New RPC creates communication/events directly only after effective DB profile/teacher/class checks, author_role fixed to validated professor. All newpublish matrix defaults to no JWT role claims; improper stored role (with and without professor JWT claim), foreign/expired links denied. Auth metadata untouched.",
+    "week": "Reproduced real mapper -> student/family selectors returning empty arrays. Weekly calendar filter now recognizes actual calendar origins, preserves individual assessments, excludes communication rows for every recipient scope. Real mapper/selectors tested at1440/390; grouped family entries covered.",
+    "navigation": "Actual initTeacherWorkspace and sidebar tested on professor.html, professor-turma.html, professor-aluno.html, including back/forward. Subpages navigate to main Messages carrying only authorized current class; no arbitrary fallback.",
+    "management": "Current-scope gate added to secretaria list/events, delivery summaries, reply-thread listings, edit permission/version paths, status/delete, moderation-report review and report SELECT RLS. Inactive secretary profile, inactive school and revoked school membership tested across these paths; legacy semantics retained.",
+    "integration": "Rebased 3 prior private commits onto aa1fd64. CSS conflict resolved preserving PR20 and Mensagens. PR20 browser suite PASS1440/390. Runtime4279 excludes operational files; school SQL/admin/secretaria/module files unchanged from PR20."
+  }
+}

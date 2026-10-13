@@ -3826,6 +3826,7 @@ const renderStudentPresentationDashboard = () => `
 const teacherWorkspaceNav = [
   ["inicio", "Início", "home"],
   ["turmas", "Minhas Turmas", "users"],
+  ["mensagens", "Mensagens", "mensagens"],
   ["planejamentos", "Planejamento", "calendar"],
   ["atividades", "Atividades Imprimíveis", "doc"],
   ["avaliacoes", "Avalia+", "avalia"],
@@ -5216,7 +5217,7 @@ const getTeacherClassWeekDates = () => getFamilyWeekDates(teacherClassMessagesSt
 
 const getTeacherClassMessagesForDate = (specificDate = "") =>
   (teacherClassMessagesState.messages || [])
-    .filter((entry) => entry.entry_date === specificDate && entry.status === "published")
+    .filter((entry) => entry.audienceType === "class" && entry.entry_date === specificDate && entry.status === "published")
     .sort((a, b) => {
       const aTime = a.start_time || "99:99:99";
       const bTime = b.start_time || "99:99:99";
@@ -7302,76 +7303,33 @@ const renderTeacherFormationView = () => `
   </section>
 `;
 
+const initTeacherMessages = () => {
+ const root=document.querySelector('[data-teacher-messages]');if(!root)return;
+ window.TeacherMessages?.mount(root,{
+  actor:()=>getSupabaseUserContext().userId,classes:getTeacherInstitutionalClasses,students:getTeacherInstitutionalStudents,
+  initialClass:()=>new URLSearchParams(location.search).get('message_class_id') || '',
+  lookup:async(requestId,options)=>normalizeRpcJson(await createSupabaseRestClient().request('rpc/teacher_get_message_request','',{method:'POST',requireAuthenticated:true,allowedRoles:teacherAllowedRoles,...options,body:JSON.stringify({p_request_id:requestId})})),
+  list:async(classId,options)=>{
+   if(!getTeacherInstitutionalClasses().some(c=>c.id===classId))throw Error('Turma não autorizada.');
+   const client=createSupabaseRestClient();const rows=[];
+   for(let offset=0;;offset+=100){
+    const page=await client.request('communications',`?select=id,school_id,class_id,student_id,title,body,audience_type,recipient_scope,author_profile_id,author_role,status,expires_at&class_id=${supabaseEq(classId)}&status=neq.deleted&order=created_at.desc,id&limit=100&offset=${offset}`,{requireAuthenticated:true,allowedRoles:teacherAllowedRoles,...options});
+    if(!Array.isArray(page))throw Error('Resposta incompleta.');rows.push(...page);if(page.length<100)break;
+   }
+   return rows;
+  },
+  send:async(item,options)=>{
+   // Revalidate against the current institutional scope, not an old dropdown selection.
+   const c=getTeacherInstitutionalClasses().find(c=>c.id===item.classId&&c.schoolId===item.schoolId);
+   if(!c||(item.audienceType==='student'&&!getTeacherInstitutionalStudents(c.id).some(s=>s.id===item.studentId)))throw Object.assign(Error('Destinatário fora da turma autorizada.'),{status:403,code:'42501'});
+   return normalizeRpcJson(await createSupabaseRestClient().request('rpc/teacher_publish_message','',{method:'POST',requireAuthenticated:true,allowedRoles:teacherAllowedRoles,...options,body:JSON.stringify({p_request_id:options.requestId,p_payload:{schoolId:c.schoolId,classId:c.id,studentId:item.studentId,recipientScope:item.recipientScope,title:item.title,body:item.body}})}));
+  },
+ });
+};
 const renderTeacherFamilyMessagesView = () => {
-  if (teacherInstitutionalState.status !== "ready") {
-    return `<section class="tw-board">${renderTeacherInstitutionalStatus("CARREGANDO VINCULOS INSTITUCIONAIS.")}</section>`;
-  }
-  const classes = getTeacherInstitutionalClasses();
-  const messages = teacherClassMessagesState.messages || [];
-  return `
-    <section class="tw-board tw-messages-shell">
-      <div class="tw-section-head">
-        <div>
-          <span>Mensagens</span>
-          <h2>Recados para a turma</h2>
-        </div>
-        <button type="button" data-teacher-view="inicio">Voltar</button>
-      </div>
-      <form class="tw-planning-form" data-teacher-family-message-form>
-        <label>
-          <span>Turma</span>
-          <select name="classId" required>
-            ${
-              classes.length
-                ? classes.map((classItem) => `<option value="${printableEscape(classItem.id)}" ${classItem.id === teacherClassMessagesState.classId ? "selected" : ""}>${printableEscape(classItem.name)} · ${printableEscape(classItem.schoolName || "Escola")}</option>`).join("")
-                : `<option value="">Nenhuma turma autorizada</option>`
-            }
-          </select>
-        </label>
-        <label>
-          <span>Data na semana</span>
-          <input name="entryDate" type="date" required value="${printableEscape(teacherClassMessagesState.weekStartIso || getTeacherPlanningWeekStart())}" />
-        </label>
-        <label>
-          <span>Titulo do recado</span>
-          <input name="title" required maxlength="90" placeholder="Ex.: Recado para a turma" />
-        </label>
-        <label class="tw-planning-form-note">
-          <span>Mensagem</span>
-          <textarea name="message" rows="4" required maxlength="700" placeholder="Escreva o comunicado que aparecera na Minha Semana."></textarea>
-        </label>
-        <div class="tw-planning-form-actions">
-          <button type="submit" ${classes.length ? "" : "disabled"}>PUBLICAR NA MINHA SEMANA</button>
-        </div>
-      </form>
-      ${renderTeacherClassWeeklyBoard()}
-      <div class="tw-section-head">
-        <h2>Comunicados publicados</h2>
-        <span>${teacherClassMessagesState.status === "ready" ? `${messages.length} registro${messages.length === 1 ? "" : "s"}` : "Carregando"}</span>
-      </div>
-      ${
-        teacherClassMessagesState.status === "loading"
-          ? renderTeacherInstitutionalStatus("CARREGANDO RECADOS.")
-          : teacherClassMessagesState.status === "error"
-            ? renderTeacherEmptyState("NAO FOI POSSIVEL CARREGAR OS RECADOS.", teacherClassMessagesState.error)
-            : messages.length
-              ? `<div class="tw-planning-list">${messages
-                  .map(
-                    (message) => `
-                      <article class="tw-planning-proposal" data-teacher-search-item>
-                        <span>${printableEscape(message.className)} · ${printableEscape(message.date)} · MINHA SEMANA</span>
-                        <strong>${printableEscape(message.title)}</strong>
-                        <small>${printableEscape(message.text)}</small>
-                        ${globalThis.RAIZES_NOTICE_EDITING_ENABLED === true && message.id && message.status === "published" ? `<button type="button" data-notice-versions="${printableEscape(message.id)}">Editar / Ver versões</button>` : ""}
-                        ${globalThis.RAIZES_COMMUNICATION_REPLIES_ENABLED === true && message.id && message.status === "published" ? `<button type="button" data-communication-replies="${printableEscape(message.id)}">Ver respostas / Responder</button>` : ""}
-                      </article>
-                    `
-                  )
-                  .join("")}</div>`
-              : renderTeacherEmptyState("NENHUM RECADO PUBLICADO AINDA.", "Os comunicados enviados para a turma aparecerao na Minha Semana.")
-      }
-    </section>
-  `;
+ if(teacherInstitutionalState.status!=='ready')return `<section class="tw-board">${renderTeacherInstitutionalStatus("CARREGANDO VINCULOS INSTITUCIONAIS.")}</section>`;
+ queueMicrotask(initTeacherMessages);
+ return window.TeacherMessages?.render() || '<p>Mensagens indisponíveis. Atualize a página.</p>';
 };
 
 const renderUniversalActivityMotorPage = () => {
@@ -7751,61 +7709,7 @@ const renderTeacherClassMessageCard = (message) => {
   `;
 };
 
-const renderTeacherClassMessagesPanel = (classItem, students = []) => {
-  const messages = (teacherClassMessagesState.messages || []).filter((message) => message.classId === classItem.id);
-  return `
-    <section class="tw-board tw-class-messages-shell">
-      <div class="tw-planning-heading">
-        <div>
-          <span>Recados</span>
-          <h2>Recados - ${printableEscape(classItem.name)}</h2>
-          <p>Comunicação pedagógica para toda a turma ou para aluno/familia da propria turma.</p>
-        </div>
-      </div>
-      <form class="tw-planning-form tw-message-form" data-teacher-family-message-form>
-        <input type="hidden" name="classId" value="${printableEscape(classItem.id)}" />
-        <label>
-          <span>Destino</span>
-          <select name="audienceType" data-teacher-message-audience required>
-            <option value="class">Toda a turma</option>
-            <option value="student">Aluno / Família</option>
-          </select>
-        </label>
-        <label data-teacher-message-student-wrap hidden>
-          <span>Aluno</span>
-          <select name="studentId">
-            <option value="">Selecione</option>
-            ${students.map((student) => `<option value="${printableEscape(student.id)}">${printableEscape(student.name)}</option>`).join("")}
-          </select>
-        </label>
-        <label>
-          <span>Titulo</span>
-          <input name="title" required maxlength="90" placeholder="Ex.: TESTE RECADO TURMA FASE 03" />
-        </label>
-        <label class="tw-planning-form-note">
-          <span>Mensagem</span>
-          <textarea name="message" rows="4" required maxlength="900" placeholder="Escreva o recado pedagógico."></textarea>
-        </label>
-        <div class="tw-planning-form-actions">
-          <button type="submit">PUBLICAR RECADO</button>
-        </div>
-      </form>
-      <div class="tw-section-head">
-        <h2>Recados publicados</h2>
-        <span>${teacherClassMessagesState.status === "ready" ? `${messages.length} registro${messages.length === 1 ? "" : "s"}` : "Carregando"}</span>
-      </div>
-      ${
-        teacherClassMessagesState.status === "loading"
-          ? renderTeacherInstitutionalStatus("CARREGANDO RECADOS.")
-          : teacherClassMessagesState.status === "error"
-            ? renderTeacherEmptyState("NAO FOI POSSIVEL CARREGAR OS RECADOS.", teacherClassMessagesState.error)
-            : messages.length
-              ? `<div class="tw-message-list">${messages.map(renderTeacherClassMessageCard).join("")}</div>`
-              : renderTeacherEmptyState("NENHUM RECADO PUBLICADO AINDA.", "Publique para toda a turma ou para um aluno/familia desta turma.")
-      }
-    </section>
-  `;
-};
+const renderTeacherClassMessagesPanel = (classItem) => `<section class="tw-board"><h2>Mensagens — ${printableEscape(classItem.name)}</h2><p>Escolha toda a turma, somente o aluno, somente a família ou aluno e família na área Mensagens.</p><a href="professor.html?view=mensagens&message_class_id=${encodeURIComponent(classItem.id)}">Abrir Mensagens desta turma</a></section>`;
 
 const renderTeacherRecommendationCard = (recommendation) => {
   const destination =
@@ -8503,9 +8407,15 @@ const renderStudentHomeSearchResults = (query = "") => {
   `;
 };
 
+// Week entries come from the calendar RPCs, not the communication inbox.
+// Individual assessments are legitimate calendar events and must remain visible.
+const isInstitutionalWeekCalendarEntry = (entry) =>
+  ["class_calendar", "school_calendar", "assessment_available", "assessment_deadline"]
+    .includes(entry.source_type || (entry.communication_type ? "communication" : "class_calendar"));
+
 const getStudentInstitutionalEntriesForDate = (specificDate = "") =>
   (studentInstitutionalState.entries || [])
-    .filter((entry) => entry.entry_date === specificDate && entry.status === "published")
+    .filter((entry) => isInstitutionalWeekCalendarEntry(entry) && entry.entry_date === specificDate && entry.status === "published")
     .sort((a, b) => {
       const aTime = a.start_time || "99:99:99";
       const bTime = b.start_time || "99:99:99";
@@ -17234,7 +17144,7 @@ const loadOfficialSchoolData = async ({ force = false } = {}) => {
       const communications = await requestOfficialSchoolRows(
         client,
         "communications",
-        `?select=id,school_id,title,body,communication_type,audience_type,class_id,student_id,status,communication_date,created_at&school_id=${supabaseEq(school.id)}&status=eq.published&order=created_at.desc&limit=8`
+        `?select=id,school_id,title,body,communication_type,audience_type,class_id,student_id,status,communication_date,created_at&school_id=${supabaseEq(school.id)}&audience_type=neq.student&status=eq.published&order=created_at.desc&limit=8`
       );
       const recommendations = await requestOfficialSchoolRows(
         client,
@@ -17627,7 +17537,7 @@ const getFamilyInstitutionalEntriesByDay = (weekStartIso = familyInstitutionalSt
   const weekDates = getFamilyWeekDates(weekStartIso);
   return familyWeekDays.reduce((grouped, [dayKey]) => {
     grouped[dayKey] = (familyInstitutionalState.entries || [])
-      .filter((entry) => entry.entry_date === weekDates[dayKey] && entry.status === "published")
+      .filter((entry) => isInstitutionalWeekCalendarEntry(entry) && entry.entry_date === weekDates[dayKey] && entry.status === "published")
       .sort((a, b) => {
         const aTime = a.start_time || "99:99:99";
         const bTime = b.start_time || "99:99:99";
@@ -17710,7 +17620,7 @@ const assessmentCalendarLocalFields = (event) => {
 
 const mapUnifiedCalendarEvent = (event = {}) => ({
   id: event.source_id || event.id || "",
-  source_type: event.source_type || "class_calendar",
+  source_type: event.source_type || (event.communication_type ? "communication" : "class_calendar"),
   source_id: event.source_id || event.id || "",
   class_id: event.class_id || "",
   school_id: event.school_id || "",
@@ -17966,7 +17876,7 @@ const loadFamilyTeacherRecommendations = async (client, selectedChild = null) =>
 
 const getFamilyEntriesForDate = (specificDate = "") =>
   (familyInstitutionalState.entries || [])
-    .filter((entry) => entry.entry_date === specificDate && entry.status === "published")
+    .filter((entry) => isInstitutionalWeekCalendarEntry(entry) && entry.entry_date === specificDate && entry.status === "published")
     .sort((a, b) => {
       const aTime = a.start_time || "99:99:99";
       const bTime = b.start_time || "99:99:99";
@@ -31378,15 +31288,27 @@ const initTeacherWorkspace = () => {
   };
 
   const openView = (view, { updateUrl = true } = {}) => {
-    if (!content) return;
     const normalizedView = getValidTeacherView(view);
+    if (!content) {
+      if (!updateUrl) return;
+      const params = new URLSearchParams({ view: normalizedView });
+      if (normalizedView === "mensagens") {
+        const page = document.querySelector("[data-app-page]")?.dataset.appPage;
+        const id = getPrintableParams().get("id") || "";
+        const classId = page === "professorTurma" ? id
+          : page === "professorAluno" ? teacherInstitutionalState.studentsById?.[id]?.classId : "";
+        if (getTeacherInstitutionalClasses().some(item => item.id === classId)) params.set("message_class_id", classId);
+      }
+      window.location.assign(`/professor.html?${params.toString()}`);
+      return;
+    }
     activeTeacherView = normalizedView;
     if (updateUrl) {
       const params = new URLSearchParams(window.location.search);
       if (normalizedView === "inicio") params.delete("view");
       else params.set("view", normalizedView);
       const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`;
-      window.history.replaceState({}, "", nextUrl);
+      if (nextUrl !== `${window.location.pathname}${window.location.search}`) window.history.pushState({}, "", nextUrl);
     }
     if (normalizedView === "inicio") {
       content.hidden = true;
@@ -31408,13 +31330,6 @@ const initTeacherWorkspace = () => {
       ensureTeacherPlanningWeek().then(() => {
         if (activeTeacherView === "planejamentos" && content && document.body.contains(workspace)) {
           content.innerHTML = renderTeacherWorkspaceView("planejamentos");
-        }
-      });
-    }
-    if (normalizedView === "mensagens") {
-      ensureTeacherClassMessages().then(() => {
-        if (activeTeacherView === "mensagens" && content && document.body.contains(workspace)) {
-          content.innerHTML = renderTeacherWorkspaceView("mensagens");
         }
       });
     }
@@ -31951,6 +31866,11 @@ const initTeacherWorkspace = () => {
     });
   });
 
+  if (initTeacherWorkspace.onPopState) window.removeEventListener("popstate", initTeacherWorkspace.onPopState);
+  initTeacherWorkspace.onPopState = () => {
+    if (content && document.body.contains(workspace)) openView(new URLSearchParams(window.location.search).get("view"), { updateUrl: false });
+  };
+  window.addEventListener("popstate", initTeacherWorkspace.onPopState);
   if (activeTeacherView !== "inicio") {
     openView(activeTeacherView, { updateUrl: false });
   }

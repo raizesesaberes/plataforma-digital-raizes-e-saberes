@@ -1,0 +1,14 @@
+{
+  "project": "jaesjldrbjbdmzzggxzw",
+  "approvedHead": "a2dac925d7d8dc8c0dd73cdaf0f9cea3fae3cae2",
+  "sqlSha256": "0b8ad9e7c74e938816556e5d9aedc773a21a69f8fb4992b51fd77f9a71d2a2c7",
+  "migration": "20261013153259_teacher_message_audiences",
+  "ledgerBefore": 161,
+  "ledgerAfter": 162,
+  "verifiedFunctionBodies": 22,
+  "existingFunctionACLAndConfigPreserved": true,
+  "privateTableRLSAndNoDirectGrants": true,
+  "pr20Preserved": true,
+  "realMessagesSent": 0,
+  "rollbackDeployment": "dpl_DLGr2F6a4vUvXDqEvmjiVRKVS5iL"
+}
