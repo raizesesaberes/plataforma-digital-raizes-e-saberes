@@ -1,21 +1,42 @@
 {
   "base": "ccaab50c4d386bfbe7682954a471971b8bad6440",
   "branch": "review/teacher-messages",
-  "scope": "Dedicated teacher Messages menu, retained home shortcut, unified class/individual composer, received/sent class-scoped lists and precise confirmation.",
+  "scope": "Dedicated teacher Messages menu, retained home/class shortcuts, class-scoped received/sent lists, explicit student-only/family-only/student-and-family destinations, durable per-author request recovery.",
   "validated": [
-    "Playwright component + synthetic transport: desktop 1440 and mobile 390, preview, class switch, forged recipient, definitive refusal/retry, double click, lost acknowledgement across remount, delayed responses, account switch",
-    "PostgreSQL 17 isolated repository schema/RLS/functions: target student + active guardians only, same-class/other-school isolation, invalid student/teacher/family requests, expired teacher link and inactive guardian",
-    "JS syntax and git diff whitespace",
-    "Static runtime: 4278 files, no operational directories"
+    "Playwright 1440 and390: all three explicit audiences, exact preview and request scope, stale student/class rejection, definitive refusal, double click, confirmation lost after commit resolved by lookup, loss before commit retried with same key/payload, uncertain retry refusal retains original key, account switch and delayed responses",
+    "PostgreSQL17 isolated repository schema + reviewed reply/edit prerequisites: positive/negative delivery, communications RLS, attachment guard, inbox, notification center, mark_read, notice versions/reply thread/revision receipts for every audience; teacher author and school manager; peers and other schools denied",
+    "Multiple active guardians, modern blocked guardian, no-family student, revoked links, inactive school, expired teacher membership, immutable audience, zero-recipient atomic rollback",
+    "Persistent request key: equal replay, different-payload rejection, same-key concurrent calls produce one communication; lookup isolated by author; anon RPC and private helper/table ACL denied",
+    "Syntax, whitespace and static runtime4278; operational SQL/tests/backups outside dist"
   ],
   "limits": [
-    "No real user messages, production writes, deployment, push, or new SQL/policy/ACL",
-    "Individual destination combines student and active guardians; family-only/student-only delivery absent",
-    "Teacher Received shows authorized communications for selected class; no teacher read receipt or private teacher-to-teacher thread",
-    "Lost acknowledgement blocks further sending in the tab session; automatic reconciliation/idempotent backend retry absent",
-    "Component browser tests use synthetic transport; database tests separately exercise existing real functions/RLS, not full browser-to-live-PostgREST end-to-end",
-    "Replies/editing gates unchanged; native apps not modified or published",
-    "Reference print pixels unavailable: Library transfer failed; synthetic 390px screenshot visually inspected"
+    "No private Mensagens SQL applied to production; no push/deploy or real sends for this branch",
+    "Deduplication applies to persistent (author,request_id) keys and exact payload. Different keys are independent; no general exactly-once guarantee",
+    "Pending payload persists in sessionStorage until confirmed; if local storage is lost, automatic recovery key may be lost. Legacy pending markers without keys require manual reconciliation",
+    "Private server request ledger retains payload/result without TTL; deleting ledger rows would undermine retry deduplication and requires separate retention design",
+    "Family-only means all active linked guardians; no individual guardian picker. Family-only with none is refused; combined with none can still deliver to eligible student",
+    "Teacher Received is selected-class communication list, not private teacher-to-teacher messaging or teacher read receipts",
+    "Browser transport synthetic and DB tested separately; no full browser/PostgREST integrated run, native app execution, human homologation, or native publication",
+    "Reference print pixels unavailable; synthetic mobile screenshot inspected",
+    "Integration base remains ccaab50; published Conteúdos PR20 aa1fd64 and private title-feedback branch not included; integrate onto current main in coordinated review"
   ],
-  "remaining": "Private review/integration; full FASE3 not declared complete."
+  "remaining": "Specific SQL/ACL review and coordinated integration; full FASE3 not declared complete.",
+  "backend": {
+    "reviewFile": "supabase/review/teacher_message_audiences.sql",
+    "appliedToProduction": false,
+    "schema": [
+      "communications.recipient_scope default legacy with individual-message shape constraint",
+      "private teacher_message_requests table, RLS enabled, no direct grants, author/request primary key",
+      "immutable recipient context trigger; existing delivery SELECT policy rechecks communication authorization"
+    ],
+    "rpcs": [
+      "teacher_publish_message(uuid,jsonb)",
+      "teacher_get_message_request(uuid)"
+    ],
+    "acl": "New RPCs only authenticated; new private helper functions and request table not granted to PUBLIC/anon/authenticated/service_role. Existing public reader ACLs preserved.",
+    "legacy": "Historical publications retain combined/legacy meaning. All supported readers enforce explicit scope for new scoped messages; school wall and weekly board exclude individual messages.",
+    "installation": "Requires specific SQL/ACL review before production. Apply SQL first, then frontend; no fallback to old combined RPC. Reply/edit prerequisites present but gates remain unchanged.",
+    "reviewSqlSha256": "b5801b790e5b20db2d8c2b70798094b0626a99f3c46f864e0fe67c623b056333",
+    "commit": "03a44fe0a8874d5bb44b41a27552e18c172f7bb1"
+  }
 }

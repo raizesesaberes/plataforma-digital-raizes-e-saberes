@@ -7308,11 +7308,12 @@ const initTeacherMessages = () => {
  window.TeacherMessages?.mount(root,{
   actor:()=>getSupabaseUserContext().userId,classes:getTeacherInstitutionalClasses,students:getTeacherInstitutionalStudents,
   initialClass:()=>new URLSearchParams(location.search).get('message_class_id') || '',
+  lookup:async(requestId,options)=>normalizeRpcJson(await createSupabaseRestClient().request('rpc/teacher_get_message_request','',{method:'POST',requireAuthenticated:true,allowedRoles:teacherAllowedRoles,...options,body:JSON.stringify({p_request_id:requestId})})),
   list:async(classId,options)=>{
    if(!getTeacherInstitutionalClasses().some(c=>c.id===classId))throw Error('Turma não autorizada.');
    const client=createSupabaseRestClient();const rows=[];
    for(let offset=0;;offset+=100){
-    const page=await client.request('communications',`?select=id,school_id,class_id,student_id,title,body,audience_type,author_profile_id,author_role,status,expires_at&class_id=${supabaseEq(classId)}&status=neq.deleted&order=created_at.desc,id&limit=100&offset=${offset}`,{requireAuthenticated:true,allowedRoles:teacherAllowedRoles,...options});
+    const page=await client.request('communications',`?select=id,school_id,class_id,student_id,title,body,audience_type,recipient_scope,author_profile_id,author_role,status,expires_at&class_id=${supabaseEq(classId)}&status=neq.deleted&order=created_at.desc,id&limit=100&offset=${offset}`,{requireAuthenticated:true,allowedRoles:teacherAllowedRoles,...options});
     if(!Array.isArray(page))throw Error('Resposta incompleta.');rows.push(...page);if(page.length<100)break;
    }
    return rows;
@@ -7321,7 +7322,7 @@ const initTeacherMessages = () => {
    // Revalidate against the current institutional scope, not an old dropdown selection.
    const c=getTeacherInstitutionalClasses().find(c=>c.id===item.classId&&c.schoolId===item.schoolId);
    if(!c||(item.audienceType==='student'&&!getTeacherInstitutionalStudents(c.id).some(s=>s.id===item.studentId)))throw Object.assign(Error('Destinatário fora da turma autorizada.'),{status:403,code:'42501'});
-   return normalizeRpcJson(await createSupabaseRestClient().request('rpc/publish_communication','',{method:'POST',requireAuthenticated:true,allowedRoles:teacherAllowedRoles,...options,body:JSON.stringify({p_school_id:c.schoolId,p_communication_type:'message',p_audience_type:item.audienceType,p_class_id:c.id,p_student_id:item.studentId,p_title:item.title,p_body:item.body,p_status:'published',p_communication_date:attendanceDefaultDate(),p_expires_at:null})}));
+   return normalizeRpcJson(await createSupabaseRestClient().request('rpc/teacher_publish_message','',{method:'POST',requireAuthenticated:true,allowedRoles:teacherAllowedRoles,...options,body:JSON.stringify({p_request_id:options.requestId,p_payload:{schoolId:c.schoolId,classId:c.id,studentId:item.studentId,recipientScope:item.recipientScope,title:item.title,body:item.body}})}));
   },
  });
 };
@@ -17137,7 +17138,7 @@ const loadOfficialSchoolData = async ({ force = false } = {}) => {
       const communications = await requestOfficialSchoolRows(
         client,
         "communications",
-        `?select=id,school_id,title,body,communication_type,audience_type,class_id,student_id,status,communication_date,created_at&school_id=${supabaseEq(school.id)}&status=eq.published&order=created_at.desc&limit=8`
+        `?select=id,school_id,title,body,communication_type,audience_type,class_id,student_id,status,communication_date,created_at&school_id=${supabaseEq(school.id)}&audience_type=neq.student&status=eq.published&order=created_at.desc&limit=8`
       );
       const recommendations = await requestOfficialSchoolRows(
         client,
