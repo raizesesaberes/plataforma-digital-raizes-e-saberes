@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import {createServer} from 'node:http';
 import assert from 'node:assert/strict';
 const {chromium}=createRequire(import.meta.url)('playwright');
-const source=readFileSync('app-pages.js','utf8').replace(/renderAppPage\(\);\s*$/,'');
+const source=readFileSync('app-pages.js','utf8').replace(/renderAppPage\(\);\s*$/,'').replace('const createSupabaseRestClient =','const unusedYearRestClient =')+'\nconst createSupabaseRestClient=()=>({request:(...args)=>window.syntheticYearRequest(...args)});';
 const server=createServer((req,res)=>{
  res.setHeader('Content-Type','text/javascript; charset=utf-8');const path=req.url.split('?')[0];if(['/styles.css','/master-pack.css','/school-content-inspection.js'].includes(path)){if(path.endsWith('.css'))res.setHeader('Content-Type','text/css; charset=utf-8');return res.end(readFileSync('.'+path));}
  if(path==='/app.js')return res.end(source);
@@ -35,14 +35,22 @@ try{
  await page.evaluate(()=>{replyMode='legacy';mountTest(true);});await page.getByText(/autorização legada/).waitFor();assert.equal(await page.locator('[data-inspection-summary] article strong').count(),0);
  // Render the real Secretaria initial screen with fictional academic context only.
  await page.evaluate(()=>{
-  secretariaInstitutionalState.status='ready';secretariaInstitutionalState.selectedSchoolId='school-a';secretariaInstitutionalState.schools=[{id:'school-a',nome:'Escola sintética A',status:'active'}];secretariaInstitutionalState.authorizedSchools=secretariaInstitutionalState.schools;secretariaInstitutionalState.academicYears=[{school_id:'school-a',school_year:'2027'}];secretariaInstitutionalState.classes=[{school_id:'school-a',school_year:'5_ANO',status:'active',id:'synthetic-class'}];
+  secretariaInstitutionalState.status='ready';secretariaInstitutionalState.selectedSchoolId='school-a';secretariaInstitutionalState.schools=[{id:'school-a',nome:'Escola sintética A',status:'active'}];secretariaInstitutionalState.authorizedSchools=secretariaInstitutionalState.schools;secretariaInstitutionalState.academicYears=[{school_id:'school-a',school_year:'2027',status:'active',start_date:'2020-01-01',end_date:'2099-12-31'}];secretariaInstitutionalState.classes=[{school_id:'school-a',school_year:'5_ANO',status:'active',id:'synthetic-class'}];
   document.querySelector('#test-root').innerHTML=renderSecretariaDashboard();replyMode='ok';activeSchool='school-a';SchoolContentInspection.mount(document.querySelector('[data-school-content-inspection]'),{request,currentSchool:()=>activeSchool,actor:()=>testActor});
  });
  await page.getByText('205',{exact:true}).waitFor();await page.getByText('Escola atual · Ano letivo 2027',{exact:true}).waitFor();assert.equal(await page.locator('.secretaria-dashboard-context').count(),0);
  assert.equal(await page.locator('.secretaria-dashboard-metrics').count(),2);assert.equal(await page.locator('[data-inspection-compact]').count(),1);
  await page.screenshot({path:'/tmp/school-content-'+width+'.png',fullPage:true});
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),'No page horizontal overflow');
- assert.equal(await page.evaluate(()=>{secretariaInstitutionalState.academicYears=[];secretariaInstitutionalState.enrollments=[];return getSecretariaCurrentSchoolYear();}),'Não informado');
+ assert.equal(await page.evaluate(()=>{secretariaInstitutionalState.academicYears=[];secretariaInstitutionalState.enrollments=[];return getSecretariaCurrentSchoolYear();}),'');
+ assert.equal(await page.evaluate(()=>{secretariaInstitutionalState.academicYears=[{school_id:'school-a',school_year:'2025',status:'closed',start_date:'2025-01-01',end_date:'2025-12-31'}];secretariaInstitutionalState.classes=[{school_id:'school-a',school_year:'2026'}];return getSecretariaCurrentSchoolYear();}),'2026');
+ assert.equal(await page.evaluate(()=>{secretariaInstitutionalState.academicYears.push({school_id:'school-a',school_year:'2040',status:'active',start_date:'2040-01-01',end_date:'2040-12-31'});return getSecretariaCurrentSchoolYear();}),'2026');
+ assert.equal(await page.evaluate(()=>{history.replaceState(null,'','/secretaria?year=2025');return getSecretariaCurrentSchoolYear();}),'2025');
+ await page.evaluate(()=>{secretariaInstitutionalState.academicYears=[];secretariaInstitutionalState.classes=[];history.replaceState(null,'','/secretaria?view=novaTurma');document.querySelector('#test-root').innerHTML=renderSecretariaDashboard();window.yearRequests=[];window.syntheticYearRequest=async(...args)=>{yearRequests.push(args);throw Error('Synthetic stop before mutation');};initSecretariaInstitutional();});
+ assert.equal(await page.locator('[name=school_year]').inputValue(),'');
+ assert.equal(await page.locator('[name=school_year]').evaluate(n=>n.checkValidity()),false);
+ for(const value of ['', 'Não informado', '5_ANO']){await page.locator('[name=school_year]').fill(value);await page.locator('[data-secretaria-class-form]').dispatchEvent('submit');assert.equal(await page.evaluate(()=>yearRequests.length),0);}
+ await page.locator('[name=nome]').fill('Synthetic class');await page.locator('[name=school_year]').fill('2028');assert(await page.locator('[name=school_year]').evaluate(n=>n.checkValidity()));await page.locator('[data-secretaria-class-form]').dispatchEvent('submit');await page.waitForFunction(()=>yearRequests.length===1);assert.equal(await page.evaluate(()=>JSON.parse(yearRequests[0][2].body).p_school_year),'2028');
  assert.deepEqual(errors,[]);console.log('PASS '+width+'px: real Secretaria initial renderer/year/cards, administrator/secretary UI, pagination205/25, zero vs unknown, failure/missing RPC, wrong school, delayed school/account switch.');await page.close();
  }
 }finally{await browser.close();await new Promise(r=>server.close(r));}

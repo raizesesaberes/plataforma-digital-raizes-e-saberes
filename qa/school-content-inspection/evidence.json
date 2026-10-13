@@ -48,5 +48,10 @@
     "Nonquestion canonical publication counts do not verify protected opening; no second entitlement rule or asset release.",
     "No live human acceptance of this feature; communication human test remains pending; no native app publication.",
     "Browser transport synthetic; database tests use real PostgreSQL functions, not a combined browser/PostgREST end-to-end run."
-  ]
+  ],
+  "reviewCorrections": {
+    "transversal": "P2 reproduced on prior SQL (EF2 204 instead of203; EF5 5 instead of4). Optional private rule_grade intersects canonical rule before authorization; individual wrapper leaves it null. Fixed per-grade count/list and deduplicated207 verified.",
+    "schoolYear": "Editable helper returns empty without context. Display alone uses Não informado. Explicit scoped year selection preserved; current academic date interval preferred; otherwise active operational current-calendar-year or single unambiguous year; never largest historical/future record. Nova Turma requires regex4digit in HTML and submit; invalid empty/text send no RPC; 2028 serialized as p_school_year.",
+    "remoteQueries": "No cancelled metadata query repeated."
+  }
 }

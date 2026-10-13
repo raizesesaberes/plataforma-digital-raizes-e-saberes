@@ -1,0 +1,33 @@
+LOAD qa/fase3/bootstrap.sql
+LOAD supabase/baselines/20261004_pilot_schema_baseline.sql
+LOAD supabase/migrations/20261004231721_content_architecture_phase1_question_entitlements.sql
+LOAD supabase/migrations/202610060001_question_bank_teacher_adaptations.sql
+LOAD supabase/migrations/20261006200104_question_bank_alternative_integrity.sql
+LOAD supabase/migrations/20261006205047_question_bank_atomic_official_edit.sql
+LOAD supabase/migrations/20261007092231_content_macro_v1_modules.sql
+LOAD supabase/migrations/20261008003945_authorized_question_details_for_teacher.sql
+LOAD supabase/migrations/20261008234450_admin_auth_access_duplicate_check.sql
+LOAD supabase/migrations/20261008234606_admin_auth_access_duplicate_check_orphan_priority.sql
+LOAD supabase/migrations/20261011003308_school_content_dynamic_categories_v2.sql
+LOAD supabase/migrations/20261011003328_school_content_global_review_v2.sql
+LOAD supabase/migrations/20261011003339_school_content_native_question_categories_v2.sql
+LOAD supabase/migrations/20261011003351_school_content_category_checkpoint_v2.sql
+LOAD supabase/migrations/20261011003404_school_content_protected_adapters_v2.sql
+LOAD qa/fase3/observed-start-attempt.sql
+LOAD qa/fase3/observed-boundary-fixture.sql
+LOAD qa/fase3/observed-20261009195512.sql
+LOAD qa/fase3/observed-boundary-alignment.sql
+LOAD tests/contracts/admin-assert.sql
+LOAD tests/contracts/production-legacy-helpers.sql
+LOAD qa/fase3/seed.sql
+LOAD supabase/review/fase3_assessment_authorization.sql
+LOAD supabase/review/contract_operations.sql
+LOAD supabase/review/assessment_institutional_assembly.sql
+LOAD supabase/review/teacher_legacy_grade_scope.sql
+LOAD supabase/review/content_question_license.sql
+LOAD /tmp/school-inspection-before-p2.sql
+Traceback (most recent call last):
+  File "/workspace/school-content-availability/tests/teacher-content/school-inspection-db.py", line 83, in <module>
+    counts={c['grade_id']:c['total'] for c in a['categories']};assert counts[g2]==203 and counts[g5]==4,counts
+                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'74ad5734-d6bd-4f8c-b544-f39f43db6ccc': 204, '76741a79-3f61-465d-a092-88628c571984': 5}

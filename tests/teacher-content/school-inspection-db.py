@@ -1,5 +1,5 @@
 """Real repository schema/RLS/functions; only auth claims and identities are synthetic."""
-import pathlib,subprocess,time,json,os,hashlib
+import pathlib,subprocess,time,json,os,hashlib,sys
 ROOT=pathlib.Path(__file__).resolve().parents[2]
 NAME='rs-school-inspection-'+str(os.getpid())
 def run(*args,input=None):
@@ -39,7 +39,7 @@ try:
  update tenant_product_entitlements set grade_ids=(select array_agg(id) from content_grades where code in('2_ANO','5_ANO')),metadata=jsonb_set(metadata,'{category_rules}',(metadata->'category_rules')||jsonb_build_array(jsonb_build_object('module_id',metadata->'category_rules'->0->>'module_id','content_type','QUESTION','grade_id',(select id from content_grades where code='2_ANO'),'kind','STANDARD')));
  """)
  before=actor("select content_resolve_for_user('{\"school_id\":\""+school+"\",\"content_type\":\"QUESTION\"}')",TEACHER)
- apply(pathlib.Path('supabase/review/school_content_inspection.sql'))
+ apply(pathlib.Path(sys.argv[1] if len(sys.argv)>1 else 'supabase/review/school_content_inspection.sql'))
  assert actor("select content_resolve_for_user('{\"school_id\":\""+school+"\",\"content_type\":\"QUESTION\"}')",TEACHER)==before
  def inspect(sid=school,who=secretary,filters={},offset=0):
   claims=json.dumps({'sub':who,'role':'authenticated','app_metadata':{'platform_role':'admin' if who==admin else 'secretaria'}})
@@ -66,6 +66,28 @@ try:
  assert 'statement' not in json.dumps(a) and 'correct_answer' not in json.dumps(a)
  try:actor("select * from school_category_private.authorized_items_for_context('{}','{}')",TEACHER);raise AssertionError('private helper callable')
  except RuntimeError as e:assert 'permission denied' in str(e)
+ # P2: transversal ownership of grade labels must not replace grade + subject authorization.
+ sql("""update contracts set starts_at=current_date-1,ends_at=null;
+ insert into content_subjects(id,code,name) values(md5('inspect-math')::uuid,'INSPECT_MATH','Synthetic Math'),(md5('inspect-language')::uuid,'INSPECT_LANGUAGE','Synthetic Language');
+ update content_items set subject_id=case when grade_id=(select id from content_grades where code='2_ANO') then md5('inspect-math')::uuid else md5('inspect-language')::uuid end;
+ update tenant_product_entitlements e set metadata=jsonb_set(metadata,'{category_rules}',(select jsonb_agg(r||jsonb_build_object('subject_id',case when r->>'grade_id'=(select id::text from content_grades where code='2_ANO') then md5('inspect-math')::uuid else md5('inspect-language')::uuid end)) from jsonb_array_elements(e.metadata->'category_rules') r));
+ insert into question_items(id,code,internal_title,component,stage,school_year,question_type,statement,correct_answer,source_id,author_name,license_id,legal_classification,curation_status,publication_status,workflow_status)
+ select md5('transversal-'||n)::uuid,'TRANSVERSAL-'||n,'Synthetic transversal '||n,component,stage,school_year,question_type,statement,correct_answer,source_id,author_name,license_id,legal_classification,curation_status,publication_status,workflow_status from question_items cross join generate_series(1,2)n where code='FASE3-SYNTHETIC-001';
+ insert into content_items(id,content_type,segment_id,grade_id,subject_id,title,editorial_status,published_at,metadata)
+ select md5('transversal-'||n)::uuid,'QUESTION',segment_id,null,md5(case when n=1 then 'inspect-language' else 'inspect-math' end)::uuid,'Synthetic transversal '||n,'PUBLISHED',now(),jsonb_build_object('category_mode','TRANSVERSAL','category_grade_ids',(select jsonb_agg(id) from content_grades where code in('2_ANO','5_ANO')))
+ from content_items cross join generate_series(1,2)n where id=(select content_item_id from content_question_items where question_item_id='70000000-0000-0000-0000-000000000001');
+ insert into content_question_items(content_item_id,question_item_id) select md5('transversal-'||n)::uuid,md5('transversal-'||n)::uuid from generate_series(1,2)n;
+ """)
+ g5=sql("select id from content_grades where code='5_ANO'")
+ a=inspect();assert a['total']==207
+ counts={c['grade_id']:c['total'] for c in a['categories']};assert counts[g2]==203 and counts[g5]==4,counts
+ for gid,expected,forbidden in [(g2,203,'Synthetic transversal 1'),(g5,4,'Synthetic transversal 2')]:
+  assert inspect(filters={'grade_id':gid})['total']==expected
+  rows=inspect(filters={'grade_id':gid,'query':'Synthetic transversal'})['items'];assert len(rows)==1 and all(x['title']!=forbidden for x in rows),rows
+ sql("update tenant_product_entitlements e set metadata=jsonb_set(metadata,'{category_rules}',(metadata->'category_rules')||jsonb_build_array((select r||jsonb_build_object('subject_id',md5('inspect-math')::uuid) from jsonb_array_elements(e.metadata->'category_rules') r where r->>'grade_id'="+lit(g5)+")))")
+ a=inspect();assert a['total']==207 and a['type_totals']['QUESTION']==207
+ assert inspect(filters={'grade_id':g5})['total']==5
+ print('PASS P2: transversal EF2+EF5 Language authorized only via EF5 excluded from EF2 Math; inverse excluded from EF5; per-grade counts/list agree; overlapping authorized rules remain deduplicated207.',flush=True)
  print('PASS real PostgreSQL: admin/secretary, role+school isolation, 202 EF2 + 3 EF5, total vs 25-item pages, search zero, inactive/legacy/no-contract, expiry/BLOCK/license revocation, unchanged teacher resolver, private helpers inaccessible.',flush=True)
 finally:
  run('rm','-fv',NAME)

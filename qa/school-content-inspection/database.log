@@ -26,4 +26,5 @@ LOAD supabase/review/assessment_institutional_assembly.sql
 LOAD supabase/review/teacher_legacy_grade_scope.sql
 LOAD supabase/review/content_question_license.sql
 LOAD supabase/review/school_content_inspection.sql
+PASS P2: transversal EF2+EF5 Language authorized only via EF5 excluded from EF2 Math; inverse excluded from EF5; per-grade counts/list agree; overlapping authorized rules remain deduplicated207.
 PASS real PostgreSQL: admin/secretary, role+school isolation, 202 EF2 + 3 EF5, total vs 25-item pages, search zero, inactive/legacy/no-contract, expiry/BLOCK/license revocation, unchanged teacher resolver, private helpers inaccessible.

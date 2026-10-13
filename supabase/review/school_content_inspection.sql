@@ -56,7 +56,7 @@ CREATE OR REPLACE FUNCTION school_category_private.active_rules(p_context jsonb)
 AS $function$
  select * from school_category_private.active_rules_for_context(p_context,school_category_private.actor_context(p_context));
 $function$;
-CREATE OR REPLACE FUNCTION school_category_private.authorized_items_for_context(p_context jsonb, p_actor_context jsonb, p_item uuid DEFAULT NULL::uuid)
+CREATE OR REPLACE FUNCTION school_category_private.authorized_items_for_context(p_context jsonb, p_actor_context jsonb, p_item uuid DEFAULT NULL::uuid, p_rule_grade uuid DEFAULT NULL::uuid)
  RETURNS TABLE(content_item_id uuid, question_item_id uuid, title text, content_type rs_content_type, grade_id uuid, subject_id uuid, published_at timestamp with time zone)
  LANGUAGE sql
  STABLE SECURITY DEFINER
@@ -68,7 +68,7 @@ AS $function$
  context as materialized(select (c->>'school_id')::uuid school_id,(c->>'institutional')::boolean institutional,
  array(select value::uuid from jsonb_array_elements_text(c->'grade_ids')) grade_ids from ctx),
  scope as materialized(select school_category_private.scope_tenants(x.school_id) id from context x),
- rules as materialized (select * from school_category_private.active_rules_for_context(p_context,p_actor_context) where nullif(p_context->>'module_id','') is null or module_id=(p_context->>'module_id')::uuid ), blocked as materialized (
+ rules as materialized (select * from school_category_private.active_rules_for_context(p_context,p_actor_context) where (nullif(p_context->>'module_id','') is null or module_id=(p_context->>'module_id')::uuid) and (p_rule_grade is null or rule_grade=p_rule_grade) ), blocked as materialized (
   select b.content_item_id from public.content_access_exceptions b cross join context x
   where b.action in('BLOCK','EMBARGO') and (b.school_id=x.school_id or b.tenant_id in(select id from scope))
   and (b.starts_at is null or b.starts_at<=now()) and (b.ends_at is null or b.ends_at>=now())
@@ -115,7 +115,7 @@ CREATE OR REPLACE FUNCTION school_category_private.authorized_items(p_context js
 AS $function$
  select * from school_category_private.authorized_items_for_context(p_context,school_category_private.actor_context(p_context),p_item);
 $function$;
-revoke all on function school_category_private.active_rules_for_context(jsonb,jsonb),school_category_private.authorized_items_for_context(jsonb,jsonb,uuid) from public,anon,authenticated,service_role;
+revoke all on function school_category_private.active_rules_for_context(jsonb,jsonb),school_category_private.authorized_items_for_context(jsonb,jsonb,uuid,uuid) from public,anon,authenticated,service_role;
 
 -- Only metadata is returned; no question text, answer key, signed asset or user identity.
 create function public.school_inspect_available_content(p_school_id uuid,p_filter jsonb default '{}',p_limit integer default 25,p_offset integer default 0)
@@ -147,7 +147,7 @@ begin
  ), keys as (select * from configured union select module_id,unnest(content_types)::text,rule_grade from rules),
  counted as (
   select k.*,m.name module_name,tx.grade_name,exists(select 1 from rules r where r.module_id=k.module_id and r.rule_grade=k.grade_id and k.content_type=any(r.content_types::text[])) effective,
-   (select count(distinct a.content_item_id) from contexts x cross join lateral school_category_private.authorized_items_for_context(jsonb_build_object('module_id',k.module_id,'content_type',k.content_type),x.ctx) a join public.content_items ci on ci.id=a.content_item_id
+   (select count(distinct a.content_item_id) from contexts x cross join lateral school_category_private.authorized_items_for_context(jsonb_build_object('module_id',k.module_id,'content_type',k.content_type),x.ctx,null,k.grade_id) a join public.content_items ci on ci.id=a.content_item_id
     where ci.owner_scope<>'TEACHER' and (a.grade_id=k.grade_id or (ci.metadata->>'category_mode'='TRANSVERSAL' and ci.metadata->'category_grade_ids' ? k.grade_id::text))) total
   from keys k join public.content_modules m on m.id=k.module_id join school_category_private.taxonomy() tx on tx.grade_id=k.grade_id
  ) select coalesce(jsonb_agg(jsonb_build_object('module_id',module_id,'module_name',module_name,'content_type',content_type,'grade_id',grade_id,'grade_name',grade_name,'configured',true,'effective',effective,'total',case when effective then total else 0 end,'state',case when not effective then 'RESTRICTED' when total=0 then 'AWAITING_PUBLICATION' else 'AVAILABLE' end) order by content_type,grade_name,module_id),'[]') into categories from counted;
@@ -155,9 +155,12 @@ begin
  allowed as materialized(
   select distinct a.* from contexts x cross join lateral school_category_private.authorized_items_for_context('{}',x.ctx) a
   join public.content_items ci on ci.id=a.content_item_id where ci.owner_scope<>'TEACHER'
+ ), grade_allowed as materialized(
+  select distinct a.* from contexts x cross join lateral school_category_private.authorized_items_for_context('{}',x.ctx,null,grade) a
+  join public.content_items ci on ci.id=a.content_item_id where ci.owner_scope<>'TEACHER'
  ), matched as materialized(
-  select a.*,ci.metadata from allowed a join public.content_items ci on ci.id=a.content_item_id
-  where (typ is null or a.content_type::text=typ) and (grade is null or a.grade_id=grade or (ci.metadata->>'category_mode'='TRANSVERSAL' and ci.metadata->'category_grade_ids' ? grade::text))
+  select a.*,ci.metadata from grade_allowed a join public.content_items ci on ci.id=a.content_item_id
+  where (typ is null or a.content_type::text=typ)
   and (needle='' or a.title ilike '%'||needle||'%')
  ), page as (select * from matched order by title,content_item_id limit p_limit offset p_offset)
  select jsonb_build_object('status','PASS','school_id',school.id,'school_name',school.nome,'contracts',contracts,'categories',categories,

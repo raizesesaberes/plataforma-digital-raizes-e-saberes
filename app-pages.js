@@ -25357,11 +25357,20 @@ const getSecretariaPrimarySchool = () =>
 
 const getSecretariaCurrentSchoolYear = (school = getSecretariaPrimarySchool()) => {
   const schoolId = school?.id || secretariaInstitutionalState.selectedSchoolId || "";
-  const validYears = rows => rows.filter(item => item.school_id === schoolId)
-    .map(item => String(item.school_year || "").trim()).filter(year => /^(19|20|21)\d{2}$/.test(year)).sort();
-  const academic = validYears(secretariaInstitutionalState.academicYears || []);
-  const fallback = validYears([...(secretariaInstitutionalState.classes || []), ...(secretariaInstitutionalState.enrollments || [])]);
-  return academic[academic.length - 1] || fallback[fallback.length - 1] || "Não informado";
+  const scoped = rows => rows.filter(item => item.school_id === schoolId && /^(19|20|21)\d{2}$/.test(String(item.school_year || "").trim()));
+  const academic = scoped(secretariaInstitutionalState.academicYears || []);
+  const operational = scoped([...(secretariaInstitutionalState.classes || []), ...(secretariaInstitutionalState.enrollments || [])]);
+  const selected = getSecretariaParams().get('year') || '';
+  if ([...academic, ...operational].some(item => String(item.school_year) === selected)) return selected;
+  // Prefer an explicitly current academic interval, never simply the largest registered year.
+  const today = secretariaTodayIso();
+  const current = [...new Set(academic.filter(item => item.status === 'active' && item.start_date <= today && item.end_date >= today).map(item => String(item.school_year)))];
+  if (current.length === 1) return current[0];
+  if (current.length > 1) return '';
+  const years = [...new Set(operational.filter(item => isSecretariaActiveStatus(item.status) && (!item.ended_at || item.ended_at > new Date().toISOString())).map(item => String(item.school_year)))];
+  const calendarYear = today.slice(0, 4);
+  if (years.includes(calendarYear)) return calendarYear;
+  return years.length === 1 ? years[0] : '';
 };
 
 const ensureSecretariaAvaliaResults = async ({ force = false, schoolId = "" } = {}) => {
@@ -27050,7 +27059,7 @@ const renderSecretariaGlobalHeader = (index = buildSecretariaIndex()) => {
       <div class="secretaria-context-chip">
         ${secretariaInlineIcon("escola")}
         <div>
-          <small>Escola atual · Ano letivo ${htmlEscape(getSecretariaCurrentSchoolYear(school))}</small>
+          <small>Escola atual · Ano letivo ${htmlEscape(getSecretariaCurrentSchoolYear(school) || "Não informado")}</small>
           <select class="secretaria-context-select" data-secretaria-school-selector aria-label="Selecionar escola atual da Secretaria">
             ${authorizedSchools.map((item) => `<option value="${htmlEscape(item.id)}" ${item.id === school.id ? "selected" : ""}>${htmlEscape(normalizeSchoolName(item))}</option>`).join("")}
           </select>
@@ -27643,7 +27652,7 @@ const renderSecretariaNewClassView = (index) => {
             <input type="hidden" name="school_id" value="${htmlEscape(selectedSchool.id || "")}" />
           </div>
           <label><span>Nome da turma</span><input name="nome" required autocomplete="off" placeholder="Ex.: 5º Ano A — Vistoria" /></label>
-          <label><span>Ano letivo</span><input name="school_year" required value="${htmlEscape(selectedSchoolYear)}" inputmode="numeric" /></label>
+          <label><span>Ano letivo</span><input name="school_year" required value="${htmlEscape(selectedSchoolYear)}" inputmode="numeric" pattern="(19|20|21)[0-9]{2}" minlength="4" maxlength="4" /></label>
           <label><span>Status</span><select name="status" required><option value="active">Ativo</option><option value="inactive">Inativo</option></select></label>
           <label><span>Faixa/etapa</span><select name="age_group"><option value="">Selecionar etapa</option>${secretariaClassStageOptions.map((option) => `<option value="${htmlEscape(option)}">${htmlEscape(option)}</option>`).join("")}</select></label>
           <label><span>Turno</span><select name="turno"><option value="">Selecionar turno</option>${secretariaClassShiftOptions.map((option) => `<option value="${htmlEscape(option)}">${htmlEscape(option)}</option>`).join("")}</select></label>
@@ -29619,6 +29628,11 @@ const initSecretariaInstitutional = () => {
       }
       const nome = String(formData.get("nome") || "").trim();
       const schoolYear = String(formData.get("school_year") || "").trim();
+      if (!/^(19|20|21)\d{2}$/.test(schoolYear)) {
+        if (message) message.textContent = "Informe um ano letivo válido com quatro dígitos.";
+        classForm.querySelector('[name="school_year"]')?.focus();
+        return;
+      }
       const duplicate = findSecretariaDuplicateClass({ nome, schoolId, schoolYear });
       if (duplicate) {
         if (message) message.textContent = `Turma semelhante ja existe: ${normalizeClassName(duplicate)} / ${secretariaSchoolYear({}, duplicate)}.`;
