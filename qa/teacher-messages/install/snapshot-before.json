@@ -1,0 +1,293 @@
+{
+  "ledger": {
+    "count": 161,
+    "latest": "20261013144109"
+  },
+  "policies": [
+    {
+      "name": "communication_deliveries_select_own",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "communication_deliveries",
+      "using": "(recipient_profile_id = ( SELECT auth.uid() AS uid))",
+      "command": "SELECT"
+    },
+    {
+      "name": "communication_reports_select_authorized",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "table": "communication_moderation_reports",
+      "using": "((reporter_profile_id = auth.uid()) OR secretaria_can_manage_school(school_id))",
+      "command": "SELECT"
+    }
+  ],
+  "triggers": [
+    "CREATE TRIGGER communications_touch_updated_at BEFORE UPDATE ON public.communications FOR EACH ROW EXECUTE FUNCTION institutional_touch_updated_at()"
+  ],
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "communication_can_read",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "2657d0547e189192eb36044f5cfcf88c",
+      "signature": "communication_can_read(communications)",
+      "definition": "CREATE OR REPLACE FUNCTION public.communication_can_read(p_communication communications)\n RETURNS boolean\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  select\n    case\n      when p_communication.status = 'deleted' then public.secretaria_can_manage_school(p_communication.school_id)\n      else\n        p_communication.author_profile_id = auth.uid()\n        or public.secretaria_can_manage_school(p_communication.school_id)\n        or (\n          p_communication.status = 'published'\n          and (p_communication.expires_at is null or p_communication.expires_at > now())\n          and (\n            public.communication_teacher_can_target(p_communication.school_id, p_communication.class_id, p_communication.student_id, p_communication.audience_type)\n            or public.communication_current_student_can_read(p_communication.school_id, p_communication.class_id, p_communication.student_id, p_communication.audience_type)\n            or public.communication_guardian_can_read(p_communication.school_id, p_communication.class_id, p_communication.student_id, p_communication.audience_type)\n          )\n        )\n    end;\n$function$\n",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "communication_edit_allowed",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\"",
+        "jit=off"
+      ],
+      "schema": "school_category_private",
+      "body_md5": "ecc5e64343a71238b6b62889c0baf34c",
+      "signature": "school_category_private.communication_edit_allowed(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION school_category_private.communication_edit_allowed(p_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\n SET jit TO 'off'\nAS $function$\n select exists(select 1 from public.communications c join public.profiles p on p.id=auth.uid() and p.status='active'\n where c.id=p_id and c.source_type is null and public.communication_delivery_is_active(c) and (\n public.secretaria_can_manage_school(c.school_id) or (\n c.author_profile_id=auth.uid() and exists(select 1 from public.teachers t where t.profile_id=auth.uid() and t.school_id=c.school_id and t.status='active')\n and public.communication_teacher_can_target(c.school_id,c.class_id,c.student_id,c.audience_type))));\n$function$\n",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": false
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "name": "communication_generate_deliveries",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "676afecbec9d61ccc315ae442383b1ef",
+      "signature": "communication_generate_deliveries(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.communication_generate_deliveries(p_communication_id uuid)\n RETURNS integer\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_comm public.communications%rowtype;\n  v_inserted integer := 0;\nbegin\n  select * into v_comm from public.communications where id = p_communication_id;\n  if v_comm.id is null or not public.communication_delivery_is_active(v_comm) then\n    return 0;\n  end if;\n\n  with eligible as (\n    select distinct g.profile_id as recipient_profile_id, e.student_id, e.school_id\n    from public.enrollments e\n    join public.student_guardian_links sgl on sgl.student_id = e.student_id\n    join public.guardians g on g.id = sgl.guardian_id\n    join public.profiles p on p.id = g.profile_id\n    where g.profile_id is not null and g.status = 'active' and sgl.status = 'active'\n      and e.status = 'active' and e.ended_at is null and e.school_id = v_comm.school_id\n      and (\n        v_comm.audience_type = 'school'\n        or (v_comm.audience_type = 'class' and e.class_id = v_comm.class_id)\n        or (v_comm.audience_type = 'student' and e.student_id = v_comm.student_id)\n        or (v_comm.audience_type = 'grade' and exists (select 1 from public.classes c where c.id = e.class_id and c.ano_escolar = v_comm.grade_label))\n        or (v_comm.audience_type = 'group' and exists (select 1 from public.recomposition_intervention_group_students gs where gs.group_id = v_comm.target_group_id and gs.student_id = e.student_id and gs.status = 'active'))\n      )\n    union\n    select distinct sg.profile_id, e.student_id, e.school_id\n    from public.enrollments e\n    join public.student_guardians sg on sg.student_id = e.student_id\n    join public.profiles p on p.id = sg.profile_id\n    where sg.status = 'active' and e.status = 'active' and e.ended_at is null and e.school_id = v_comm.school_id\n      and (\n        v_comm.audience_type = 'school'\n        or (v_comm.audience_type = 'class' and e.class_id = v_comm.class_id)\n        or (v_comm.audience_type = 'student' and e.student_id = v_comm.student_id)\n        or (v_comm.audience_type = 'grade' and exists (select 1 from public.classes c where c.id = e.class_id and c.ano_escolar = v_comm.grade_label))\n        or (v_comm.audience_type = 'group' and exists (select 1 from public.recomposition_intervention_group_students gs where gs.group_id = v_comm.target_group_id and gs.student_id = e.student_id and gs.status = 'active'))\n      )\n    union\n    select distinct s.user_id, e.student_id, e.school_id\n    from public.enrollments e\n    join public.students s on s.id = e.student_id\n    join public.profiles p on p.id = s.user_id and p.platform_role = 'aluno'\n    where s.user_id is not null and e.status = 'active' and e.ended_at is null and e.school_id = v_comm.school_id\n      and (\n        v_comm.audience_type = 'school'\n        or (v_comm.audience_type = 'class' and e.class_id = v_comm.class_id)\n        or (v_comm.audience_type = 'student' and e.student_id = v_comm.student_id)\n        or (v_comm.audience_type = 'grade' and exists (select 1 from public.classes c where c.id = e.class_id and c.ano_escolar = v_comm.grade_label))\n        or (v_comm.audience_type = 'group' and exists (select 1 from public.recomposition_intervention_group_students gs where gs.group_id = v_comm.target_group_id and gs.student_id = e.student_id and gs.status = 'active'))\n      )\n    union\n    select distinct sm.profile_id, null::uuid, sm.school_id\n    from public.school_memberships sm\n    join public.profiles p on p.id = sm.profile_id\n    where v_comm.audience_type = 'staff'\n      and sm.school_id = v_comm.school_id\n      and sm.status = 'active'\n      and sm.membership_role = v_comm.staff_role\n      and sm.started_at <= now()\n      and (sm.ended_at is null or sm.ended_at > now())\n  )\n  insert into public.communication_deliveries (\n    communication_id, recipient_profile_id, student_id, school_id, delivered_at, notification_status\n  )\n  select v_comm.id, eligible.recipient_profile_id, eligible.student_id, eligible.school_id, now(), 'unread'\n  from eligible\n  where eligible.recipient_profile_id is not null\n  on conflict (communication_id, recipient_profile_id, (coalesce(student_id, '00000000-0000-0000-0000-000000000000'::uuid)))\n  do nothing;\n\n  get diagnostics v_inserted = row_count;\n  return v_inserted;\nend;\n$function$\n",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": false
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "communication_get_inbox",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "d253a2b5b1d717af3453c88e605a1e19",
+      "signature": "communication_get_inbox(uuid,text,integer,integer,integer)",
+      "definition": "CREATE OR REPLACE FUNCTION public.communication_get_inbox(p_student_id uuid DEFAULT NULL::uuid, p_read_filter text DEFAULT 'all'::text, p_period_days integer DEFAULT 90, p_limit integer DEFAULT 50, p_offset integer DEFAULT 0)\n RETURNS TABLE(delivery_id uuid, communication_id uuid, school_id uuid, student_id uuid, title text, body text, communication_type text, audience_type text, author_profile_id uuid, author_role text, author_name text, communication_date date, created_at timestamp with time zone, delivered_at timestamp with time zone, read_at timestamp with time zone, notification_status text, child_name text, class_name text, context_label text, unread_count integer, action_label text, href text, source_type text, source_id uuid)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_profile_id uuid := auth.uid();\n  v_role text := lower(coalesce(auth.jwt() -> 'app_metadata' ->> 'platform_role', auth.jwt() -> 'app_metadata' ->> 'role', ''));\n  v_filter text := lower(coalesce(nullif(trim(p_read_filter), ''), 'all'));\n  v_limit integer := greatest(1, least(coalesce(p_limit, 50), 100));\n  v_offset integer := greatest(0, coalesce(p_offset, 0));\n  v_days integer := greatest(1, least(coalesce(p_period_days, 90), 365));\nbegin\n  if v_profile_id is null then\n    raise exception 'Usuario autenticado obrigatorio.' using errcode = '42501';\n  end if;\n\n  if v_filter not in ('all', 'read', 'unread') then\n    raise exception 'Filtro de leitura invalido.' using errcode = '22023';\n  end if;\n\n  if p_student_id is not null and v_role = 'educacao_infantil' and not exists (\n    select 1\n    from public.guardians g\n    join public.student_guardian_links sgl on sgl.guardian_id = g.id\n    where g.profile_id = v_profile_id\n      and g.status = 'active'\n      and sgl.status = 'active'\n      and sgl.student_id = p_student_id\n  ) and not exists (\n    select 1\n    from public.student_guardians sg\n    where sg.profile_id = v_profile_id\n      and sg.status = 'active'\n      and sg.student_id = p_student_id\n  ) then\n    raise exception 'Crianca fora do vinculo familiar.' using errcode = '42501';\n  end if;\n\n  return query\n  with scoped as (\n    select\n      d.*,\n      c.title,\n      c.body,\n      c.communication_type,\n      c.audience_type,\n      c.author_profile_id,\n      c.author_role,\n      c.communication_date,\n      c.created_at as communication_created_at,\n      c.action_label,\n      c.href,\n      c.source_type,\n      c.source_id,\n      s.nome as child_name,\n      cl.nome as class_name,\n      p.display_name as author_display_name,\n      count(*) filter (where d.read_at is null) over ()::integer as total_unread\n    from public.communication_deliveries d\n    join public.communications c on c.id = d.communication_id\n    left join public.students s on s.id = d.student_id\n    left join public.enrollments e on e.student_id = d.student_id\n      and e.school_id = d.school_id\n      and e.status = 'active'\n      and e.ended_at is null\n    left join public.classes cl on cl.id = e.class_id\n    left join public.profiles p on p.id = c.author_profile_id\n    where d.recipient_profile_id = v_profile_id\n      and public.communication_delivery_is_active(c)\n      and d.delivered_at >= now() - make_interval(days => v_days)\n      and (p_student_id is null or d.student_id = p_student_id)\n      and (v_filter = 'all' or (v_filter = 'read' and d.read_at is not null) or (v_filter = 'unread' and d.read_at is null))\n  )\n  select\n    scoped.id,\n    scoped.communication_id,\n    scoped.school_id,\n    scoped.student_id,\n    scoped.title::text,\n    scoped.body::text,\n    scoped.communication_type::text,\n    scoped.audience_type::text,\n    scoped.author_profile_id,\n    scoped.author_role::text,\n    coalesce(scoped.author_display_name, scoped.author_role, 'Equipe escolar')::text,\n    scoped.communication_date,\n    scoped.communication_created_at,\n    scoped.delivered_at,\n    scoped.read_at,\n    (case when scoped.read_at is null then 'unread' else 'read' end)::text,\n    scoped.child_name::text,\n    scoped.class_name::text,\n    (case\n      when scoped.audience_type = 'student' then coalesce('Individual: ' || scoped.child_name, 'Individual')\n      when scoped.audience_type = 'class' then coalesce('Turma: ' || scoped.class_name, 'Turma')\n      else 'Comunicado da escola'\n    end)::text,\n    scoped.total_unread,\n    scoped.action_label::text,\n    scoped.href::text,\n    scoped.source_type::text,\n    scoped.source_id\n  from scoped\n  order by scoped.delivered_at desc, scoped.communication_created_at desc\n  limit v_limit offset v_offset;\nend;\n$function$\n",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "communication_list_delivery_summaries",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "4220cdf7820990e5aaa470d32589a73e",
+      "signature": "communication_list_delivery_summaries()",
+      "definition": "CREATE OR REPLACE FUNCTION public.communication_list_delivery_summaries()\n RETURNS TABLE(communication_id uuid, delivered_count integer, read_count integer, unread_count integer)\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  select\n    c.id as communication_id,\n    count(d.id)::integer as delivered_count,\n    count(d.id) filter (where d.read_at is not null)::integer as read_count,\n    count(d.id) filter (where d.read_at is null)::integer as unread_count\n  from public.communications c\n  left join public.communication_deliveries d on d.communication_id = c.id\n  where public.secretaria_can_manage_school(c.school_id)\n    or (\n      c.author_profile_id = (select auth.uid())\n      and public.communication_teacher_can_target(c.school_id, c.class_id, c.student_id, c.audience_type)\n    )\n  group by c.id;\n$function$\n",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "name": "communication_list_reply_threads",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "public",
+      "body_md5": "2a9e394bbffc7cabf2dac69c29cd5daf",
+      "signature": "communication_list_reply_threads(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.communication_list_reply_threads(p_communication_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare c public.communications%rowtype; payload jsonb;\nbegin\n select * into c from public.communications where id=p_communication_id;\n if auth.uid() is null or c.id is null or not public.communication_delivery_is_active(c)\n  or not exists(select 1 from public.profiles where id=auth.uid() and status='active')\n  or not ((c.author_profile_id=auth.uid() and exists(select 1 from public.teachers t where t.profile_id=auth.uid() and t.school_id=c.school_id and t.status='active') and public.communication_teacher_can_target(c.school_id,c.class_id,c.student_id,c.audience_type))\n   or public.secretaria_can_manage_school(c.school_id)) then\n  raise exception 'COMMUNICATION_THREADS_FORBIDDEN' using errcode='42501';\n end if;\n select coalesce(jsonb_agg(jsonb_build_object('delivery_id',d.id,'recipient_name',p.display_name,'student_id',d.student_id,\n  'student_name',(select s.nome from public.students s where s.id=d.student_id),\n  'reply_count',(select count(*) from public.communication_replies r where r.delivery_id=d.id)) order by p.display_name,d.id),'[]'::jsonb)\n into payload from public.communication_deliveries d join public.profiles p on p.id=d.recipient_profile_id\n where d.communication_id=c.id and school_category_private.communication_reply_allowed(d.id);\n return payload;\nend $function$\n",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "communication_mark_read",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "a396b7cb0e7b51bd02652aed151404eb",
+      "signature": "communication_mark_read(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.communication_mark_read(p_delivery_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_profile_id uuid := auth.uid();\n  v_delivery public.communication_deliveries%rowtype;\n  v_changed boolean := false;\nbegin\n  if v_profile_id is null then\n    raise exception 'Usuario autenticado obrigatorio.' using errcode = '42501';\n  end if;\n\n  select * into v_delivery\n  from public.communication_deliveries\n  where id = p_delivery_id\n    and recipient_profile_id = v_profile_id\n  for update;\n\n  if v_delivery.id is null then\n    raise exception 'Entrega nao encontrada para este usuario.' using errcode = '42501';\n  end if;\n\n  if v_delivery.read_at is null then\n    update public.communication_deliveries\n    set read_at = now(),\n        notification_status = 'read'\n    where id = v_delivery.id\n    returning * into v_delivery;\n    v_changed := true;\n  end if;\n\n  return jsonb_build_object(\n    'delivery_id', v_delivery.id,\n    'communication_id', v_delivery.communication_id,\n    'read_at', v_delivery.read_at,\n    'changed', v_changed\n  );\nend;\n$function$\n",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "communication_reply_allowed",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "school_category_private",
+      "body_md5": "8750e1eecfaa1099a807c43022338a53",
+      "signature": "school_category_private.communication_reply_allowed(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION school_category_private.communication_reply_allowed(p_delivery_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n select auth.uid() is not null and exists(\n  select 1 from public.communication_deliveries d\n  join public.communications c on c.id=d.communication_id and c.school_id=d.school_id\n  join public.profiles p on p.id=auth.uid() and p.status='active'\n  where d.id=p_delivery_id and public.communication_delivery_is_active(c)\n  and c.communication_type in('message','notice','weekly_information','institutional_announcement')\n  and c.source_type is null\n  and (\n   (d.recipient_profile_id=auth.uid() and (\n    (d.student_id is not null and exists(\n     select 1 from public.students s\n     join public.enrollments e on e.student_id=s.id and e.school_id=c.school_id\n     where s.id=d.student_id and s.school_id=d.school_id and s.status='active'\n      and e.status='active' and e.enrolled_at<=now() and (e.ended_at is null or e.ended_at>now())\n      and (\n       c.audience_type='school'\n       or (c.audience_type='class' and e.class_id=c.class_id)\n       or (c.audience_type='student' and s.id=c.student_id and (c.class_id is null or e.class_id=c.class_id))\n       or (c.audience_type='grade' and exists(select 1 from public.classes cl where cl.id=e.class_id and cl.ano_escolar=c.grade_label))\n       or (c.audience_type='group' and exists(select 1 from public.recomposition_intervention_group_students gs where gs.group_id=c.target_group_id and gs.student_id=s.id and gs.status='active'))\n      )\n      and (\n       s.user_id=auth.uid()\n       or exists(select 1 from public.student_guardians sg where sg.student_id=s.id and sg.profile_id=auth.uid() and sg.status='active')\n       or exists(select 1 from public.student_guardian_links sg join public.guardians g on g.id=sg.guardian_id\n        where sg.student_id=s.id and sg.status='active' and g.profile_id=auth.uid()\n         and g.school_id=d.school_id and g.status='active' and g.access_status='active')\n      )\n    ))\n    or (d.student_id is null and c.audience_type='staff' and exists(\n     select 1 from public.school_memberships sm where sm.profile_id=auth.uid() and sm.school_id=c.school_id\n      and sm.membership_role=c.staff_role and sm.status='active' and sm.started_at<=now()\n      and (sm.ended_at is null or sm.ended_at>now())\n      and (c.staff_role<>'professor' or exists(select 1 from public.teachers t where t.profile_id=auth.uid() and t.school_id=c.school_id and t.status='active'))\n    ))\n   ))\n   or (c.author_profile_id=auth.uid() and exists(select 1 from public.teachers t where t.profile_id=auth.uid() and t.school_id=c.school_id and t.status='active') and public.communication_teacher_can_target(c.school_id,c.class_id,c.student_id,c.audience_type))\n   or public.secretaria_can_manage_school(c.school_id)\n  )\n );\n$function$\n",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": false
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "name": "communication_report_delivery",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, auth, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "819caabf646a34492cbff8bcfa0d452f",
+      "signature": "communication_report_delivery(uuid,text,text)",
+      "definition": "CREATE OR REPLACE FUNCTION public.communication_report_delivery(p_delivery_id uuid, p_reason text, p_description text DEFAULT NULL::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'auth', 'pg_temp'\nAS $function$\ndeclare\n  v_delivery public.communication_deliveries%rowtype;\n  v_report public.communication_moderation_reports%rowtype;\nbegin\n  select * into v_delivery\n  from public.communication_deliveries\n  where id = p_delivery_id;\n\n  if v_delivery.id is null or v_delivery.recipient_profile_id <> auth.uid() then\n    raise exception 'Entrega nao encontrada ou nao autorizada';\n  end if;\n\n  insert into public.communication_moderation_reports (\n    communication_id, delivery_id, school_id, reporter_profile_id, reason, description\n  )\n  values (v_delivery.communication_id, v_delivery.id, v_delivery.school_id, auth.uid(), p_reason, p_description)\n  returning * into v_report;\n\n  insert into public.communication_events (communication_id, event_type, from_status, to_status, performed_by)\n  values (v_delivery.communication_id, 'reported', null, 'REPORTADO', auth.uid());\n\n  return jsonb_build_object('report', to_jsonb(v_report));\nend;\n$function$\n",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "name": "communication_review_report",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, auth, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "cec574f5eb23a7c362cad6b59262f59c",
+      "signature": "communication_review_report(uuid,text,text)",
+      "definition": "CREATE OR REPLACE FUNCTION public.communication_review_report(p_report_id uuid, p_status text, p_resolution_notes text DEFAULT NULL::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'auth', 'pg_temp'\nAS $function$\ndeclare\n  v_report public.communication_moderation_reports%rowtype;\nbegin\n  select * into v_report\n  from public.communication_moderation_reports\n  where id = p_report_id\n  for update;\n\n  if v_report.id is null then\n    raise exception 'Denuncia nao encontrada';\n  end if;\n\n  if not public.secretaria_can_manage_school(v_report.school_id) then\n    raise exception 'Acesso negado para moderacao';\n  end if;\n\n  update public.communication_moderation_reports\n     set status = p_status,\n         reviewed_by = auth.uid(),\n         reviewed_at = case when p_status = 'RESOLVIDO' then now() else reviewed_at end,\n         resolution_notes = p_resolution_notes\n   where id = p_report_id\n   returning * into v_report;\n\n  return jsonb_build_object('report', to_jsonb(v_report));\nend;\n$function$\n",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "communication_teacher_can_target",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "71d4d457d2327e019bd4bc1fdafd5da4",
+      "signature": "communication_teacher_can_target(uuid,uuid,uuid,text)",
+      "definition": "CREATE OR REPLACE FUNCTION public.communication_teacher_can_target(p_school_id uuid, p_class_id uuid, p_student_id uuid, p_audience_type text)\n RETURNS boolean\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  select exists (\n    select 1\n    from public.class_teacher_memberships ctm\n    join public.teachers t on t.id = ctm.teacher_id\n    join public.classes c on c.id = ctm.class_id\n    where t.profile_id = auth.uid()\n      and ctm.status = 'active'\n      and ctm.started_at <= now()\n      and (ctm.ended_at is null or ctm.ended_at > now())\n      and c.status = 'active'\n      and c.school_id = p_school_id\n      and c.id = p_class_id\n      and p_audience_type in ('class', 'student')\n      and (\n        p_audience_type = 'class'\n        or exists (\n          select 1\n          from public.enrollments e\n          where e.student_id = p_student_id\n            and e.class_id = p_class_id\n            and e.school_id = p_school_id\n            and e.status = 'active'\n            and e.ended_at is null\n        )\n      )\n  );\n$function$\n",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "name": "communication_user_can_access_advanced",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "d6a3fa33a2e452b2826e37a9c026722c",
+      "signature": "communication_user_can_access_advanced(communications)",
+      "definition": "CREATE OR REPLACE FUNCTION public.communication_user_can_access_advanced(p_communication communications)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  select\n    public.communication_can_read(p_communication)\n    or exists (\n      select 1\n      from public.communication_deliveries d\n      where d.communication_id = p_communication.id\n        and d.recipient_profile_id = auth.uid()\n    )\n    or (\n      p_communication.audience_type = 'staff'\n      and exists (\n        select 1\n        from public.school_memberships sm\n        where sm.school_id = p_communication.school_id\n          and sm.profile_id = auth.uid()\n          and sm.status = 'active'\n          and sm.membership_role = p_communication.staff_role\n          and sm.started_at <= now()\n          and (sm.ended_at is null or sm.ended_at > now())\n      )\n    );\n$function$\n",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "notification_get_center",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "27ec9933a2fbc4431d6e859811c81662",
+      "signature": "notification_get_center(uuid,text,integer,integer,integer)",
+      "definition": "CREATE OR REPLACE FUNCTION public.notification_get_center(p_student_id uuid DEFAULT NULL::uuid, p_read_filter text DEFAULT 'all'::text, p_period_days integer DEFAULT 90, p_limit integer DEFAULT 50, p_offset integer DEFAULT 0)\n RETURNS TABLE(item_type text, delivery_id uuid, source_type text, source_id uuid, school_id uuid, student_id uuid, title text, summary text, origin_label text, priority text, deep_link text, delivered_at timestamp with time zone, read_at timestamp with time zone, notification_status text, child_name text, class_name text, unread_count integer)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_profile_id uuid := auth.uid();\n  v_role text := lower(coalesce(auth.jwt() -> 'app_metadata' ->> 'platform_role', auth.jwt() -> 'app_metadata' ->> 'role', ''));\n  v_filter text := lower(coalesce(nullif(trim(p_read_filter), ''), 'all'));\n  v_limit integer := greatest(1, least(coalesce(p_limit, 50), 100));\n  v_offset integer := greatest(0, coalesce(p_offset, 0));\n  v_days integer := greatest(1, least(coalesce(p_period_days, 90), 365));\nbegin\n  if v_profile_id is null then\n    raise exception 'Usuario autenticado obrigatorio.' using errcode = '42501';\n  end if;\n\n  if v_filter not in ('all', 'read', 'unread') then\n    raise exception 'Filtro de leitura invalido.' using errcode = '22023';\n  end if;\n\n  if p_student_id is not null and v_role = 'educacao_infantil' and not public.calendar_family_can_access_student(p_student_id) then\n    raise exception 'Crianca fora do vinculo familiar.' using errcode = '42501';\n  end if;\n\n  return query\n  with center_items as (\n    select\n      'communication'::text as item_type,\n      cd.id as delivery_id,\n      'communication'::text as source_type,\n      c.id as source_id,\n      cd.school_id,\n      cd.student_id,\n      c.title::text,\n      c.body::text as summary,\n      'Recados'::text as origin_label,\n      'normal'::text as priority,\n      'familia.html?view=recados'::text as deep_link,\n      cd.delivered_at,\n      cd.read_at,\n      (case when cd.read_at is null then 'unread' else 'read' end)::text as notification_status,\n      s.nome::text as child_name,\n      cl.nome::text as class_name\n    from public.communication_deliveries cd\n    join public.communications c on c.id = cd.communication_id\n    left join public.students s on s.id = cd.student_id\n    left join public.enrollments e on e.student_id = cd.student_id\n      and e.school_id = cd.school_id\n      and e.status = 'active'\n      and e.ended_at is null\n    left join public.classes cl on cl.id = e.class_id\n    where cd.recipient_profile_id = v_profile_id\n      and public.communication_delivery_is_active(c)\n      and cd.delivered_at >= now() - make_interval(days => v_days)\n      and (p_student_id is null or cd.student_id = p_student_id)\n\n    union all\n\n    select\n      'notification'::text,\n      nd.id,\n      ne.source_type,\n      ne.source_id,\n      nd.school_id,\n      nd.student_id,\n      ne.title::text,\n      ne.summary::text,\n      case\n        when ne.source_type = 'calendar' then 'Agenda'\n        when ne.source_type = 'assessment' then 'Avalia+'\n        when ne.source_type = 'analytics_alert' then 'Analytics'\n        else 'Notificacao'\n      end::text,\n      ne.priority::text,\n      ne.deep_link::text,\n      nd.delivered_at,\n      nd.read_at,\n      (case when nd.read_at is null then 'unread' else 'read' end)::text,\n      s.nome::text,\n      cl.nome::text\n    from public.notification_deliveries nd\n    join public.notification_events ne on ne.id = nd.notification_event_id\n    left join public.students s on s.id = nd.student_id\n    left join public.enrollments e on e.student_id = nd.student_id\n      and e.school_id = nd.school_id\n      and e.status = 'active'\n      and e.ended_at is null\n    left join public.classes cl on cl.id = e.class_id\n    where nd.recipient_profile_id = v_profile_id\n      and nd.delivered_at >= now() - make_interval(days => v_days)\n      and (p_student_id is null or nd.student_id = p_student_id)\n  ),\n  filtered as (\n    select *\n    from center_items\n    where v_filter = 'all'\n       or (v_filter = 'read' and center_items.read_at is not null)\n       or (v_filter = 'unread' and center_items.read_at is null)\n  ),\n  counted as (\n    select\n      filtered.*,\n      count(*) filter (where filtered.read_at is null) over ()::integer as total_unread\n    from filtered\n  )\n  select\n    counted.item_type,\n    counted.delivery_id,\n    counted.source_type,\n    counted.source_id,\n    counted.school_id,\n    counted.student_id,\n    counted.title,\n    counted.summary,\n    counted.origin_label,\n    counted.priority,\n    counted.deep_link,\n    counted.delivered_at,\n    counted.read_at,\n    counted.notification_status,\n    counted.child_name,\n    counted.class_name,\n    counted.total_unread\n  from counted\n  order by counted.delivered_at desc, counted.source_id\n  limit v_limit offset v_offset;\nend;\n$function$\n",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "secretaria_delete_communication",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "24f8f8f52fe77dbeacb60c1a1683c001",
+      "signature": "secretaria_delete_communication(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.secretaria_delete_communication(p_communication_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_author uuid := auth.uid();\n  v_comm public.communications%rowtype;\n  v_from_status text;\nbegin\n  if v_author is null then\n    raise exception 'Usuario autenticado obrigatorio.' using errcode = '42501';\n  end if;\n\n  select * into v_comm\n  from public.communications\n  where id = p_communication_id\n  for update;\n\n  if v_comm.id is null then\n    raise exception 'Comunicado nao encontrado.' using errcode = '22023';\n  end if;\n\n  if v_comm.status = 'deleted' then\n    return jsonb_build_object(\n      'communication_id', v_comm.id,\n      'deleted', true,\n      'changed', false\n    );\n  end if;\n\n  if not (\n    public.secretaria_can_manage_school(v_comm.school_id)\n    or (\n      v_comm.author_profile_id = v_author\n      and public.communication_teacher_can_target(v_comm.school_id, v_comm.class_id, v_comm.student_id, v_comm.audience_type)\n    )\n  ) then\n    raise exception 'Usuario sem permissao para excluir este comunicado.' using errcode = '42501';\n  end if;\n\n  v_from_status := v_comm.status;\n\n  update public.communications\n  set status = 'deleted',\n      deleted_at = now(),\n      deleted_by = v_author\n  where id = v_comm.id\n  returning * into v_comm;\n\n  insert into public.communication_events (communication_id, event_type, from_status, to_status, performed_by)\n  values (v_comm.id, 'deleted', v_from_status, 'deleted', v_author);\n\n  return jsonb_build_object(\n    'communication_id', v_comm.id,\n    'deleted', true,\n    'changed', true\n  );\nend;\n$function$\n",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "secretaria_list_communication_events",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "d9a7b6e69441a3bf0c874a86b20a547e",
+      "signature": "secretaria_list_communication_events()",
+      "definition": "CREATE OR REPLACE FUNCTION public.secretaria_list_communication_events()\n RETURNS SETOF communication_events\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  select ce.*\n  from public.communication_events ce\n  join public.communications c on c.id = ce.communication_id\n  where public.secretaria_can_manage_school(c.school_id)\n  order by ce.created_at desc;\n$function$\n",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "secretaria_list_communications",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "866c42fc656a58fcb8c706919301e9e2",
+      "signature": "secretaria_list_communications()",
+      "definition": "CREATE OR REPLACE FUNCTION public.secretaria_list_communications()\n RETURNS SETOF communications\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  select c.*\n  from public.communications c\n  where public.secretaria_can_manage_school(c.school_id)\n  order by c.communication_date desc, c.created_at desc;\n$function$\n",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "secretaria_set_communication_status",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "34523ff829f03c7c265a02a8816727d4",
+      "signature": "secretaria_set_communication_status(uuid,text)",
+      "definition": "CREATE OR REPLACE FUNCTION public.secretaria_set_communication_status(p_communication_id uuid, p_to_status text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_author uuid := auth.uid();\n  v_to_status text := lower(nullif(trim(p_to_status), ''));\n  v_comm public.communications%rowtype;\n  v_from_status text;\n  v_event_type text;\n  v_deliveries integer := 0;\nbegin\n  if v_author is null then\n    raise exception 'Usuario autenticado obrigatorio.' using errcode = '42501';\n  end if;\n\n  if v_to_status not in ('published', 'archived') then\n    raise exception 'Status de comunicacao invalido.' using errcode = '22023';\n  end if;\n\n  select * into v_comm from public.communications where id = p_communication_id for update;\n\n  if v_comm.id is null then\n    raise exception 'Comunicado nao encontrado.' using errcode = '22023';\n  end if;\n\n  if v_comm.status = 'deleted' then\n    raise exception 'Comunicado excluido nao pode ser republicado.' using errcode = '42501';\n  end if;\n\n  if not (\n    public.secretaria_can_manage_school(v_comm.school_id)\n    or (\n      v_comm.author_profile_id = v_author\n      and public.communication_teacher_can_target(v_comm.school_id, v_comm.class_id, v_comm.student_id, v_comm.audience_type)\n    )\n  ) then\n    raise exception 'Usuario sem permissao para alterar este comunicado.' using errcode = '42501';\n  end if;\n\n  if v_comm.status = v_to_status then\n    if v_to_status = 'published' then\n      v_deliveries := public.communication_generate_deliveries(v_comm.id);\n    end if;\n    return jsonb_build_object('communication_id', v_comm.id, 'from_status', v_comm.status, 'to_status', v_to_status, 'changed', false, 'deliveries_created', v_deliveries);\n  end if;\n\n  if v_comm.status = 'published' and v_to_status <> 'archived' then\n    raise exception 'Comunicado publicado permite somente retirada da publicacao.' using errcode = '22023';\n  end if;\n\n  if v_comm.status in ('draft', 'archived') and v_to_status <> 'published' then\n    raise exception 'Rascunho ou comunicado retirado permite somente publicacao.' using errcode = '22023';\n  end if;\n\n  v_from_status := v_comm.status;\n\n  update public.communications\n  set status = v_to_status, deleted_at = null, deleted_by = null\n  where id = v_comm.id\n  returning * into v_comm;\n\n  v_event_type := case when v_to_status = 'published' then 'published' when v_to_status = 'archived' then 'archived' else 'edited' end;\n  insert into public.communication_events (communication_id, event_type, from_status, to_status, performed_by)\n  values (v_comm.id, v_event_type, v_from_status, v_to_status, v_author);\n\n  if v_to_status = 'published' then\n    v_deliveries := public.communication_generate_deliveries(v_comm.id);\n  end if;\n\n  return jsonb_build_object('communication_id', v_comm.id, 'from_status', v_from_status, 'to_status', v_to_status, 'changed', true, 'deliveries_created', v_deliveries);\nend;\n$function$\n",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    }
+  ],
+  "table_acl": {
+    "anon_read": false,
+    "authenticated_write": false
+  }
+}

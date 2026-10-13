@@ -1,0 +1,356 @@
+{
+  "ledger": {
+    "count": 162,
+    "latest": "20261013153259"
+  },
+  "policies": [
+    {
+      "name": "communication_deliveries_select_own",
+      "table": "communication_deliveries",
+      "using": "((recipient_profile_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM communications c\n  WHERE (c.id = communication_deliveries.communication_id))))"
+    },
+    {
+      "name": "communication_reports_select_authorized",
+      "table": "communication_moderation_reports",
+      "using": "(((reporter_profile_id = auth.uid()) OR secretaria_can_manage_school(school_id)) AND communication_scope_allows_current_actor(communication_id))"
+    }
+  ],
+  "triggers": [
+    "CREATE TRIGGER communications_touch_updated_at BEFORE UPDATE ON public.communications FOR EACH ROW EXECUTE FUNCTION institutional_touch_updated_at()",
+    "CREATE TRIGGER messages_preserve_audience BEFORE UPDATE ON public.communications FOR EACH ROW EXECUTE FUNCTION school_category_private.message_preserve_audience()"
+  ],
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "communication_can_read",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "23f6416b2c49324a43610606d371bf8f",
+      "signature": "communication_can_read(communications)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "name": "communication_generate_deliveries",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "9a009cb09009ececa6365bfa34940c9f",
+      "signature": "communication_generate_deliveries(uuid)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": false
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "communication_get_inbox",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "63ad14bf948c3d570ed425ca82191ffe",
+      "signature": "communication_get_inbox(uuid,text,integer,integer,integer)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "communication_list_delivery_summaries",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "b560664842222d0fa8418f49d578a26a",
+      "signature": "communication_list_delivery_summaries()",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "name": "communication_list_reply_threads",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "public",
+      "body_md5": "43867bf0faa0d1deab32bb1ab0e352e6",
+      "signature": "communication_list_reply_threads(uuid)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "communication_mark_read",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "0527fef4281fdc5338829f7282dc38e0",
+      "signature": "communication_mark_read(uuid)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "name": "communication_report_delivery",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, auth, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "e73fd5b50b04fade5693939c39707e7c",
+      "signature": "communication_report_delivery(uuid,text,text)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "name": "communication_review_report",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, auth, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "e9f8a81a8f73efd524433cf13b6a3a18",
+      "signature": "communication_review_report(uuid,text,text)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "name": "communication_scope_allows_current_actor",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "public",
+      "body_md5": "1b2b150460306edd926d2edd57346a98",
+      "signature": "communication_scope_allows_current_actor(uuid)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "name": "communication_user_can_access_advanced",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "ebad94cd1e318bad76f780946848ff8f",
+      "signature": "communication_user_can_access_advanced(communications)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "notification_get_center",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "a6d4af0c71af87addbb0b6482939fa6e",
+      "signature": "notification_get_center(uuid,text,integer,integer,integer)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "secretaria_delete_communication",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "dfebcbccc96aed972c0b655f4337462f",
+      "signature": "secretaria_delete_communication(uuid)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "secretaria_list_communication_events",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "335635954a686f542c5f0fe6bb223f6a",
+      "signature": "secretaria_list_communication_events()",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "secretaria_list_communications",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "0ed33a5bd07088e0770081e3aac684a0",
+      "signature": "secretaria_list_communications()",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "name": "secretaria_set_communication_status",
+      "owner": "postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "schema": "public",
+      "body_md5": "d315ddc4f040a16e43f504648ab5f5f3",
+      "signature": "secretaria_set_communication_status(uuid,text)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "name": "teacher_get_message_request",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "public",
+      "body_md5": "01e2c12419d43542dff5e32bd23a28bd",
+      "signature": "teacher_get_message_request(uuid)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "name": "teacher_publish_message",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "public",
+      "body_md5": "7cd291a843396835befba847d8614737",
+      "signature": "teacher_publish_message(uuid,jsonb)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "communication_edit_allowed",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\"",
+        "jit=off"
+      ],
+      "schema": "school_category_private",
+      "body_md5": "956f228955ba3c1e85cf0233f8a96a0a",
+      "signature": "school_category_private.communication_edit_allowed(uuid)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "communication_reply_allowed",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "school_category_private",
+      "body_md5": "cef95efed881e6687fd9f416a19ac509",
+      "signature": "school_category_private.communication_reply_allowed(uuid)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "message_preserve_audience",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "school_category_private",
+      "body_md5": "65aaa57e30701473abfb3b91ab4a3c22",
+      "signature": "school_category_private.message_preserve_audience()",
+      "anon_execute": false,
+      "security_definer": false,
+      "authenticated_execute": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "message_recipient_matches",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "school_category_private",
+      "body_md5": "48e713dd0957d7b976854ca7bdda0f5c",
+      "signature": "school_category_private.message_recipient_matches(communications,uuid)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "name": "message_scope_access",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "school_category_private",
+      "body_md5": "2a4bcc19f6ce08f0c9aed94fe6da3622",
+      "signature": "school_category_private.message_scope_access(communications)",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": false
+    }
+  ],
+  "migration": [
+    {
+      "name": "teacher_message_audiences",
+      "version": "20261013153259"
+    }
+  ],
+  "request_table": {
+    "acl": "{postgres=arwdDxtm/postgres}",
+    "rls": true,
+    "anon_access": false,
+    "service_access": false,
+    "authenticated_access": false
+  },
+  "pr20_actor_hash": "48a7d0365d86d9b51890345b6a4f0812",
+  "scope_constraints": [
+    "CHECK ((recipient_scope = ANY (ARRAY['legacy'::text, 'student'::text, 'family'::text, 'student_family'::text])))",
+    "CHECK (((recipient_scope = 'legacy'::text) OR ((audience_type = 'student'::text) AND (student_id IS NOT NULL) AND (class_id IS NOT NULL) AND (communication_type = 'message'::text) AND (source_type IS NULL))))"
+  ],
+  "request_constraints": [
+    "FOREIGN KEY (author_id) REFERENCES profiles(id)",
+    "PRIMARY KEY (author_id, request_id)"
+  ],
+  "pr20_inspection_hash": "a1241bc1933614e687d5d2bce4625e75"
+}
