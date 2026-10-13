@@ -7709,7 +7709,7 @@ const renderTeacherClassMessageCard = (message) => {
   `;
 };
 
-const renderTeacherClassMessagesPanel = (classItem) => `<section class="tw-board"><h2>Mensagens — ${printableEscape(classItem.name)}</h2><p>Envie para a turma ou para um aluno e seus responsáveis vinculados na área Mensagens.</p><a href="professor.html?view=mensagens&message_class_id=${encodeURIComponent(classItem.id)}">Abrir Mensagens desta turma</a></section>`;
+const renderTeacherClassMessagesPanel = (classItem) => `<section class="tw-board"><h2>Mensagens — ${printableEscape(classItem.name)}</h2><p>Escolha toda a turma, somente o aluno, somente a família ou aluno e família na área Mensagens.</p><a href="professor.html?view=mensagens&message_class_id=${encodeURIComponent(classItem.id)}">Abrir Mensagens desta turma</a></section>`;
 
 const renderTeacherRecommendationCard = (recommendation) => {
   const destination =
@@ -8407,9 +8407,15 @@ const renderStudentHomeSearchResults = (query = "") => {
   `;
 };
 
+// Week entries come from the calendar RPCs, not the communication inbox.
+// Individual assessments are legitimate calendar events and must remain visible.
+const isInstitutionalWeekCalendarEntry = (entry) =>
+  ["class_calendar", "school_calendar", "assessment_available", "assessment_deadline"]
+    .includes(entry.source_type || (entry.communication_type ? "communication" : "class_calendar"));
+
 const getStudentInstitutionalEntriesForDate = (specificDate = "") =>
   (studentInstitutionalState.entries || [])
-    .filter((entry) => entry.audienceType === "class" && entry.entry_date === specificDate && entry.status === "published")
+    .filter((entry) => isInstitutionalWeekCalendarEntry(entry) && entry.entry_date === specificDate && entry.status === "published")
     .sort((a, b) => {
       const aTime = a.start_time || "99:99:99";
       const bTime = b.start_time || "99:99:99";
@@ -17531,7 +17537,7 @@ const getFamilyInstitutionalEntriesByDay = (weekStartIso = familyInstitutionalSt
   const weekDates = getFamilyWeekDates(weekStartIso);
   return familyWeekDays.reduce((grouped, [dayKey]) => {
     grouped[dayKey] = (familyInstitutionalState.entries || [])
-      .filter((entry) => entry.entry_date === weekDates[dayKey] && entry.status === "published")
+      .filter((entry) => isInstitutionalWeekCalendarEntry(entry) && entry.entry_date === weekDates[dayKey] && entry.status === "published")
       .sort((a, b) => {
         const aTime = a.start_time || "99:99:99";
         const bTime = b.start_time || "99:99:99";
@@ -17614,7 +17620,7 @@ const assessmentCalendarLocalFields = (event) => {
 
 const mapUnifiedCalendarEvent = (event = {}) => ({
   id: event.source_id || event.id || "",
-  source_type: event.source_type || "class_calendar",
+  source_type: event.source_type || (event.communication_type ? "communication" : "class_calendar"),
   source_id: event.source_id || event.id || "",
   class_id: event.class_id || "",
   school_id: event.school_id || "",
@@ -17870,7 +17876,7 @@ const loadFamilyTeacherRecommendations = async (client, selectedChild = null) =>
 
 const getFamilyEntriesForDate = (specificDate = "") =>
   (familyInstitutionalState.entries || [])
-    .filter((entry) => entry.audienceType === "class" && entry.entry_date === specificDate && entry.status === "published")
+    .filter((entry) => isInstitutionalWeekCalendarEntry(entry) && entry.entry_date === specificDate && entry.status === "published")
     .sort((a, b) => {
       const aTime = a.start_time || "99:99:99";
       const bTime = b.start_time || "99:99:99";
@@ -31282,15 +31288,27 @@ const initTeacherWorkspace = () => {
   };
 
   const openView = (view, { updateUrl = true } = {}) => {
-    if (!content) return;
     const normalizedView = getValidTeacherView(view);
+    if (!content) {
+      if (!updateUrl) return;
+      const params = new URLSearchParams({ view: normalizedView });
+      if (normalizedView === "mensagens") {
+        const page = document.querySelector("[data-app-page]")?.dataset.appPage;
+        const id = getPrintableParams().get("id") || "";
+        const classId = page === "professorTurma" ? id
+          : page === "professorAluno" ? teacherInstitutionalState.studentsById?.[id]?.classId : "";
+        if (getTeacherInstitutionalClasses().some(item => item.id === classId)) params.set("message_class_id", classId);
+      }
+      window.location.assign(`/professor.html?${params.toString()}`);
+      return;
+    }
     activeTeacherView = normalizedView;
     if (updateUrl) {
       const params = new URLSearchParams(window.location.search);
       if (normalizedView === "inicio") params.delete("view");
       else params.set("view", normalizedView);
       const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`;
-      window.history.replaceState({}, "", nextUrl);
+      if (nextUrl !== `${window.location.pathname}${window.location.search}`) window.history.pushState({}, "", nextUrl);
     }
     if (normalizedView === "inicio") {
       content.hidden = true;
@@ -31848,6 +31866,11 @@ const initTeacherWorkspace = () => {
     });
   });
 
+  if (initTeacherWorkspace.onPopState) window.removeEventListener("popstate", initTeacherWorkspace.onPopState);
+  initTeacherWorkspace.onPopState = () => {
+    if (content && document.body.contains(workspace)) openView(new URLSearchParams(window.location.search).get("view"), { updateUrl: false });
+  };
+  window.addEventListener("popstate", initTeacherWorkspace.onPopState);
   if (activeTeacherView !== "inicio") {
     openView(activeTeacherView, { updateUrl: false });
   }
