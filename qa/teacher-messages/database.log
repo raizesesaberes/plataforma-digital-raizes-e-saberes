@@ -25,4 +25,9 @@ LOAD supabase/review/contract_operations.sql
 LOAD supabase/review/assessment_institutional_assembly.sql
 LOAD supabase/review/teacher_legacy_grade_scope.sql
 LOAD supabase/review/content_question_license.sql
-PASS PostgreSQL existing publish_communication and RLS: individual delivers only target student + active linked guardian; other same-class student/family and other-school family cannot receive/read; forged school/student and expired teacher membership denied; inactive guardian gets no new delivery. No new backend SQL required or applied.
+LOAD supabase/review/fase3_communication_replies.sql
+LOAD supabase/review/fase3_notice_editing.sql
+LOAD supabase/review/teacher_message_audiences.sql
+PASS explicit student/family/both: delivery, raw RLS, inbox, notification center, author, multiple active guardians, inactive/blocked guardian, same-class and school isolation, receipt ownership, legacy reply/version readers.
+PASS durable request identity: replay, conflict, concurrent retries, no-recipient atomic rollback, inactive links, archive/expiry; private table/direct writes denied. This is deduplication by persistent key, not a general exactly-once claim.
+PASS PostgreSQL existing publish_communication and RLS: individual delivers only target student + active linked guardian; other same-class student/family and other-school family cannot receive/read; forged school/student and expired teacher membership denied; inactive guardian gets no new delivery. New audience SQL applied only in this disposable container; never production.

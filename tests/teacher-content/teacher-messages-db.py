@@ -25,6 +25,9 @@ try:
  apply(pathlib.Path('supabase/review/assessment_institutional_assembly.sql'))
  apply(pathlib.Path('supabase/review/teacher_legacy_grade_scope.sql'))
  apply(pathlib.Path('supabase/review/content_question_license.sql'))
+ apply(pathlib.Path('supabase/review/fase3_communication_replies.sql'))
+ apply(pathlib.Path('supabase/review/fase3_notice_editing.sql'))
+ apply(pathlib.Path('supabase/review/teacher_message_audiences.sql'))
  def lit(x):return "'"+str(x).replace("'","''")+"'"
  def uid(n):return '00000000-0000-0000-0000-'+str(n).zfill(12)
  school='10000000-0000-0000-0000-000000000001';classid='30000000-0000-0000-0000-000000000001';student='40000000-0000-0000-0000-000000000001';otherstudent='40000000-0000-0000-0000-000000000003'
@@ -45,6 +48,100 @@ try:
  for n in [5,7,8,9]:assert inbox(n)==[],(n,inbox(n))
  assert call('select count(*) from communications where id='+lit(comm),6)=='1'
  for n in [5,7,8,9]:assert call('select count(*) from communications where id='+lit(comm),n)=='0'
+ # New explicit audience matrix; every identity/content is fictional.
+ import uuid,concurrent.futures
+ sql("insert into auth.users(id) values("+lit(uid(10))+"),("+lit(uid(11))+");insert into profiles(id,platform_role,display_name) values("+lit(uid(10))+",'familia','Second active guardian'),("+lit(uid(11))+",'familia','Blocked guardian');")
+ sql("insert into guardians(id,school_id,profile_id,full_name,status,access_status) values('90000000-0000-0000-0000-000000000010',"+lit(school)+","+lit(uid(10))+",'Second active guardian','active','active'),('90000000-0000-0000-0000-000000000011',"+lit(school)+","+lit(uid(11))+",'Blocked guardian','active','blocked');insert into student_guardian_links(guardian_id,student_id) values('90000000-0000-0000-0000-000000000010',"+lit(student)+"),('90000000-0000-0000-0000-000000000011',"+lit(student)+");")
+ def newpublish(scope='student_family',sid=student,n=1,key=None,body='Synthetic scoped body',sc=school,cl=classid):
+  payload={'schoolId':sc,'classId':cl,'studentId':sid,'recipientScope':scope,'title':'Synthetic '+scope,'body':body}
+  key=key or str(uuid.uuid4())
+  return json.loads(call('select teacher_publish_message('+lit(key)+','+lit(json.dumps(payload))+'::jsonb)',n))
+ def denied(q,n):
+  try:call(q,n)
+  except RuntimeError:return
+  raise AssertionError(('unexpected authorization',n,q))
+ def readable(cid,n):return call('select count(*) from communications where id='+lit(cid),n)=='1'
+ def inbox_ids(n,center=False):
+  data=json.loads(call("select coalesce(jsonb_agg(t),'[]') from "+('notification_get_center' if center else 'communication_get_inbox')+'() t',n))
+  return [x.get('communication_id',x.get('source_id')) for x in data]
+ scoped={}
+ for scope,wanted in [('student',{2}),('family',{6,10}),('student_family',{2,6,10})]:
+  key=str(uuid.uuid4());r=newpublish(scope,key=key);cid=r['communication_id'];scoped[scope]=cid
+  assert r['deliveries_created']==len(wanted),r
+  assert newpublish(scope,key=key)==r,'retry changed result'
+  assert json.loads(call('select teacher_get_message_request('+lit(key)+')',1))['result']==r
+  assert json.loads(call('select teacher_get_message_request('+lit(key)+')',4))=={'found':False}
+  denied('select teacher_publish_message('+lit(key)+','+lit(json.dumps({'schoolId':school,'classId':classid,'studentId':student,'recipientScope':scope,'title':'changed','body':'different'}))+'::jsonb)',1)
+  assert readable(cid,1) and readable(cid,3)
+  delivery=json.loads(sql("select jsonb_agg(jsonb_build_object('id',id,'who',recipient_profile_id)) from communication_deliveries where communication_id="+lit(cid)))
+  for n in [2,4,5,6,7,8,9,10,11]:
+   expected=n in wanted
+   assert readable(cid,n)==expected,(scope,n,'raw')
+   row=sql('select to_jsonb(c) from communications c where id='+lit(cid))
+   assert (call('select communication_user_can_access_advanced(jsonb_populate_record(null::communications,'+lit(row)+'::jsonb))',n)=='t')==expected,(scope,n,'attachment guard')
+   assert (cid in inbox_ids(n))==expected,(scope,n,'inbox')
+   assert (cid in inbox_ids(n,True))==expected,(scope,n,'center')
+   if expected:
+    did=next(d['id'] for d in delivery if d['who']==uid(n))
+    read=json.loads(call('select communication_mark_read('+lit(did)+')',n));assert read['read_at'] and read['changed']
+    assert not json.loads(call('select communication_mark_read('+lit(did)+')',n))['changed']
+    assert json.loads(call('select communication_get_notice_versions('+lit(cid)+','+lit(did)+')',n))['body']=='Synthetic scoped body'
+    assert json.loads(call('select communication_get_reply_thread('+lit(did)+')',n))['body']=='Synthetic scoped body'
+    call('select communication_mark_revision_read('+lit(did)+',1)',n)
+   else:
+    did=delivery[0]['id']
+    denied('select communication_mark_read('+lit(did)+')',n)
+    denied('select communication_get_notice_versions('+lit(cid)+','+lit(did)+')',n)
+    denied('select communication_get_reply_thread('+lit(did)+')',n)
+    denied('select communication_mark_revision_read('+lit(did)+',1)',n)
+  summaries=json.loads(call("select jsonb_agg(t) from communication_list_delivery_summaries() t where communication_id="+lit(cid),1));assert summaries[0]['read_count']==len(wanted)
+  assert sql('select communication_generate_deliveries('+lit(cid)+')')=='0'
+ print('PASS explicit student/family/both: delivery, raw RLS, inbox, notification center, author, multiple active guardians, inactive/blocked guardian, same-class and school isolation, receipt ownership, legacy reply/version readers.',flush=True)
+ # Author checks, foreign contexts, direct mutation and private request table ACL.
+ for n in [2,4,6]:
+  try:newpublish(n=n);raise AssertionError('forged author')
+  except RuntimeError:pass
+ for options in [dict(sid='40000000-0000-0000-0000-000000000002'),dict(sc='10000000-0000-0000-0000-000000000002')]:
+  try:newpublish(**options);raise AssertionError('foreign context')
+  except RuntimeError:pass
+ denied('select * from school_category_private.teacher_message_requests',1)
+ assert sql("select has_function_privilege('anon','public.teacher_publish_message(uuid,jsonb)','EXECUTE') or has_function_privilege('anon','public.teacher_get_message_request(uuid)','EXECUTE') or has_function_privilege('authenticated','school_category_private.message_scope_access(communications)','EXECUTE')")=='f'
+ denied("update communications set recipient_scope='student' where id="+lit(scoped['family']),1)
+ # A family-only request with no active guardian must roll back completely.
+ sql("update student_guardians set status='inactive' where profile_id="+lit(uid(7)))
+ oldcount=sql('select count(*) from communications')
+ try:newpublish(scope='family',sid=otherstudent);raise AssertionError('empty family delivery')
+ except RuntimeError as e:assert 'MESSAGE_NO_ELIGIBLE_RECIPIENTS' in str(e)
+ assert sql('select count(*) from communications')==oldcount
+ assert newpublish(scope='student',sid=otherstudent)['deliveries_created']==1
+ assert newpublish(scope='student_family',sid=otherstudent)['deliveries_created']==1
+ # Concurrent equal request keys produce one communication/result.
+ key=str(uuid.uuid4());oldcount=int(sql('select count(*) from communications'))
+ with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool: replies=list(pool.map(lambda _:newpublish(key=key),range(2)))
+ assert replies[0]==replies[1] and int(sql('select count(*) from communications'))==oldcount+1
+ # Withdrawal/expiry must hide scoped messages even with retained delivery rows.
+ for column,value in [('status',"'archived'"),('expires_at',"now()-interval '1 minute'")]:
+  cid=scoped['family'];sql('update communications set '+column+'='+value+' where id='+lit(cid))
+  for n in [6,10]:
+   assert not readable(cid,n) and cid not in inbox_ids(n) and cid not in inbox_ids(n,True)
+  sql("update communications set status='published',expires_at=null where id="+lit(cid))
+ # Revoked family link loses content and receipt rights for already delivered messages.
+ cid=scoped['family'];did=sql('select id from communication_deliveries where communication_id='+lit(cid)+' and recipient_profile_id='+lit(uid(6)))
+ sql("update student_guardians set status='inactive' where profile_id="+lit(uid(6)))
+ assert not readable(cid,6) and cid not in inbox_ids(6) and cid not in inbox_ids(6,True)
+ denied('select communication_mark_read('+lit(did)+')',6);denied('select communication_get_reply_thread('+lit(did)+')',6)
+ sql("update student_guardians set status='active' where profile_id="+lit(uid(6)))
+ # Audience cannot be widened, even by an old lifecycle path with owner privileges.
+ try:sql("update communications set recipient_scope='student_family' where id="+lit(scoped['family']));raise AssertionError('audience widened')
+ except RuntimeError as e:assert 'MESSAGE_AUDIENCE_IMMUTABLE' in str(e)
+ # Inactive school is not a current authorized context.
+ sql("update schools set status='inactive' where id="+lit(school))
+ assert not readable(scoped['family'],6)
+ try:newpublish();raise AssertionError('inactive school')
+ except RuntimeError as e:assert 'MESSAGE_TEACHER_FORBIDDEN' in str(e)
+ sql("update schools set status='active' where id="+lit(school))
+ print('PASS durable request identity: replay, conflict, concurrent retries, no-recipient atomic rollback, inactive links, archive/expiry; private table/direct writes denied. This is deduplication by persistent key, not a general exactly-once claim.',flush=True)
+ sql("update guardians set status='inactive' where profile_id in("+lit(uid(10))+','+lit(uid(11))+')')
  before=sql('select count(*) from communications')
  for sid,n in [('40000000-0000-0000-0000-000000000002',1),(student,4),(student,7)]:
   try:publish(sid,n=n);raise AssertionError('forbidden send')
@@ -55,6 +152,8 @@ try:
  sql("update class_teacher_memberships set started_at=now()-interval '2 days', ended_at=now()-interval '1 day' where class_id="+lit(classid))
  try:publish();raise AssertionError('expired teacher link')
  except RuntimeError as e:assert 'permissao' in str(e)
- print('PASS PostgreSQL existing publish_communication and RLS: individual delivers only target student + active linked guardian; other same-class student/family and other-school family cannot receive/read; forged school/student and expired teacher membership denied; inactive guardian gets no new delivery. No new backend SQL required or applied.',flush=True)
+ try:newpublish();raise AssertionError('expired teacher explicit audience')
+ except RuntimeError as e:assert 'MESSAGE_TEACHER_FORBIDDEN' in str(e)
+ print('PASS PostgreSQL existing publish_communication and RLS: individual delivers only target student + active linked guardian; other same-class student/family and other-school family cannot receive/read; forged school/student and expired teacher membership denied; inactive guardian gets no new delivery. New audience SQL applied only in this disposable container; never production.',flush=True)
 finally:
  run('rm','-fv',NAME)
