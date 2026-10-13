@@ -1,0 +1,21 @@
+{
+  "base": "ccaab50c4d386bfbe7682954a471971b8bad6440",
+  "branch": "review/teacher-messages",
+  "scope": "Dedicated teacher Messages menu, retained home shortcut, unified class/individual composer, received/sent class-scoped lists and precise confirmation.",
+  "validated": [
+    "Playwright component + synthetic transport: desktop 1440 and mobile 390, preview, class switch, forged recipient, definitive refusal/retry, double click, lost acknowledgement across remount, delayed responses, account switch",
+    "PostgreSQL 17 isolated repository schema/RLS/functions: target student + active guardians only, same-class/other-school isolation, invalid student/teacher/family requests, expired teacher link and inactive guardian",
+    "JS syntax and git diff whitespace",
+    "Static runtime: 4278 files, no operational directories"
+  ],
+  "limits": [
+    "No real user messages, production writes, deployment, push, or new SQL/policy/ACL",
+    "Individual destination combines student and active guardians; family-only/student-only delivery absent",
+    "Teacher Received shows authorized communications for selected class; no teacher read receipt or private teacher-to-teacher thread",
+    "Lost acknowledgement blocks further sending in the tab session; automatic reconciliation/idempotent backend retry absent",
+    "Component browser tests use synthetic transport; database tests separately exercise existing real functions/RLS, not full browser-to-live-PostgREST end-to-end",
+    "Replies/editing gates unchanged; native apps not modified or published",
+    "Reference print pixels unavailable: Library transfer failed; synthetic 390px screenshot visually inspected"
+  ],
+  "remaining": "Private review/integration; full FASE3 not declared complete."
+}

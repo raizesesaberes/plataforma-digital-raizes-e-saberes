@@ -1,0 +1,3 @@
+PASS 1440px: precise combined recipient preview, no send before confirm, stale student/class rejected, received/sent, definitive retry, double click, lost ACK remount block, delayed class/account change, mobile.
+PASS 390px: precise combined recipient preview, no send before confirm, stale student/class rejected, received/sent, definitive retry, double click, lost ACK remount block, delayed class/account change, mobile.
+PASS menu, home shortcut and class link share Messages; individual excluded from teacher weekly board; no reply/edit gates activated.
