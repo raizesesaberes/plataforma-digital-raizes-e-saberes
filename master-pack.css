@@ -26239,3 +26239,15 @@ html[data-a11y-reduced-motion="true"] *::after {
   .qb-question-dialog .qb-detail-grid, .qb-question-dialog .qb-detail-meta { grid-template-columns: minmax(0, 1fr); }
   .qb-question-dialog [data-qb-question-dialog-body] { overflow-wrap: anywhere; }
 }
+
+/* Institutional catalogue: preserve the Secretaria metric layout. */
+[data-school-content-inspection] { min-width: 0; }
+[data-school-content-inspection] [hidden] { display: none !important; }
+[data-school-content-inspection] .school-content-metric small { grid-column: 2; color: var(--rs-muted); font-size: .75rem; overflow-wrap: anywhere; }
+[data-school-content-inspection] .panel-head { flex-wrap: wrap; gap: 12px; }
+[data-school-content-inspection] .panel-head a { white-space: normal; text-align: center; }
+[data-school-content-inspection] [data-inspection-retry] { margin: 8px 0 16px; padding: 8px 14px; border: 1px solid var(--rs-line); border-radius: 8px; background: white; color: var(--rs-ink); }
+[data-school-content-inspection] form { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+[data-school-content-inspection] form label { display: grid; gap: 6px; min-width: 0; }
+[data-school-content-inspection] table { width: 100%; text-align: left; border-collapse: collapse; }
+[data-school-content-inspection] th, [data-school-content-inspection] td { padding: 12px; border-bottom: 1px solid var(--rs-line); }

@@ -1,0 +1,52 @@
+{
+  "base": "ccaab50c4d386bfbe7682954a471971b8bad6440",
+  "branch": "review/school-content-availability",
+  "scope": {
+    "runtime": [
+      "admin.html",
+      "secretaria.html",
+      "app-pages.js",
+      "master-pack.css",
+      "school-content-inspection.js"
+    ],
+    "sql": "supabase/review/school_content_inspection.sql",
+    "productionApplied": false,
+    "pushed": false,
+    "deployed": false,
+    "titleFeedbackBranchIncluded": false
+  },
+  "integration": [
+    "Review new institutional metadata RPC and helper refactor; guarded against canonical definition drift.",
+    "Install SQL only after specific review/approval; existing student/teacher entrypoints keep original actor_context and identical business predicates.",
+    "Publish frontend only through coordinated integration; missing RPC is diagnosed without false zeros."
+  ],
+  "authorization": {
+    "allowedProfiles": [
+      "admin",
+      "secretaria",
+      "gestor",
+      "coordenador"
+    ],
+    "schoolScope": "secretaria_can_manage_school; admin explicit institutional role; active profile required",
+    "sharedEngine": "active_rules and authorized_items delegate to private helpers extracted from exact current definitions; actor_context unchanged",
+    "excluded": "Teacher-owned personal items; question body/answer keys/asset URLs; no data writes",
+    "canonicalDefinitionMD5": {
+      "active_rules": "87a23950871b720542e63c3e9c4b2871",
+      "authorized_items": "5b5296af33547a9e6644084680b40502"
+    }
+  },
+  "validation": {
+    "database": "PASS disposable PostgreSQL17, actual repository schema + reviewed installed fixtures, synthetic identities/content only; admin and authorized secretary, forbidden roles/school, EF2 202 + EF5 3, 25-item pagination, true zero, inactive/legacy/no-contract, expiry, BLOCK and license revocation; teacher resolver before/after unchanged; helpers inaccessible",
+    "browser": "PASS Playwright/Chromium1440 and390; real Secretaria initial renderer with fictional 2027 context, cards, page vs total, errors/missing endpoint, mismatched school, delayed responses after school/account changes, zero/unknown; no horizontal page overflow",
+    "runtimeFiles": 4278,
+    "syntaxDiff": "PASS"
+  },
+  "limitations": [
+    "Library reference images could not be downloaded; their pixels were not inspected. Synthetic desktop/mobile screenshots inspected internally only.",
+    "New metadata authorization grant and private helper extraction require specific review before production.",
+    "Legacy school authorization has no inspection adapter: total null, diagnostic. Modules outside canonical categories remain not measured.",
+    "Nonquestion canonical publication counts do not verify protected opening; no second entitlement rule or asset release.",
+    "No live human acceptance of this feature; communication human test remains pending; no native app publication.",
+    "Browser transport synthetic; database tests use real PostgreSQL functions, not a combined browser/PostgREST end-to-end run."
+  ]
+}

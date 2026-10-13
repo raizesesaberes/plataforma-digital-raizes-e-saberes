@@ -524,6 +524,7 @@ const secretariaOfficialModules = [
   ["relatorios", "Relatórios", "secretaria.html?view=relatorios"],
   ["documentos", "Documentos", "secretaria.html?view=documentos"],
   ["comunicados", "Comunicados", "secretaria.html?view=comunicados"],
+  ["conteudosDisponiveis", "Conteúdos disponíveis", "secretaria.html?view=conteudosDisponiveis"],
 ];
 
 const questionLegalClassifications = [
@@ -13577,6 +13578,7 @@ const adminSchoolDetailSections = [
   ["structure", "Estrutura"],
   ["access", "Usuários e acessos"],
   ["contractedContent", "Conteúdos e módulos contratados"],
+  ["availableContent", "Conteúdos disponíveis"],
   ["content", "Exceções por escola"],
   ["implementation", "Implantação"],
   ["audit", "Auditoria"],
@@ -13655,6 +13657,7 @@ const renderAdminSchoolDetail = (summary) => {
         </div>
       </section>
     `;
+    if (section === "availableContent") return renderSchoolContentInspection(summary.schoolId, summary.name);
     if (section === "contractedContent") return renderAdminSchoolContractedContent(summary);
     if (section === "content") return `
       <section>
@@ -14530,6 +14533,17 @@ const initNativeQuestionCategory = (form) => {
  },isEnabled:()=>enabled};
 };
 
+const renderSchoolContentInspection = (schoolId, name) => window.SchoolContentInspection?.render(schoolId, name) || '<p role="alert">Consulta de conteúdos indisponível. Atualize a página.</p>';
+const hydrateSchoolContentInspection = (root, currentSchool) => {
+  root.querySelectorAll('[data-school-content-inspection]').forEach(panel => window.SchoolContentInspection?.mount(panel, {
+    currentSchool,
+    actor: () => getSupabaseUserContext().userId,
+    request: async (payload, options) => normalizeRpcJson(await createSupabaseRestClient().request('rpc/school_inspect_available_content','',{
+      method:'POST',requireAuthenticated:true,allowedRoles:['admin','secretaria','gestor','coordenador'],...options,body:JSON.stringify(payload)
+    })),
+  }));
+};
+
 const renderAdminSchoolContractedContent = (summary) => {
  const overview=adminOperationalState.contractOverviews?.[summary.schoolId];
  const body = !overview ? '<p role="status">Carregando categorias do contrato...</p>'
@@ -14984,6 +14998,7 @@ const renderAdminSchoolsConsole = () => {
 };
 
 const adminHydrateContractOverviews = (root = document) => {
+  hydrateSchoolContentInspection(root, () => adminSchoolFilters().selected);
   const panels = Array.from(root.querySelectorAll?.("[data-admin-contract-overview]") || []);
   panels.forEach((panel) => {
     const schoolId = panel.dataset.adminContractOverview || "";
@@ -25169,8 +25184,8 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
 };
 
 const secretariaAllowedRoles = ["secretaria", "admin", "gestor", "coordenador"];
-const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "calendario", "avalia", "analytics", "relatorios", "comunicados", "acessosAlunos", "acesso"];
-const secretariaOfficialViews = ["painel", "alunos", "matriculas", "acessosAlunos", "responsaveis", "turmas", "professores", "frequencia", "calendario", "avalia", "analytics", "relatorios", "documentos", "comunicados", "acesso"];
+const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "calendario", "avalia", "analytics", "relatorios", "comunicados", "conteudosDisponiveis", "acessosAlunos", "acesso"];
+const secretariaOfficialViews = ["painel", "alunos", "matriculas", "acessosAlunos", "responsaveis", "turmas", "professores", "frequencia", "calendario", "avalia", "analytics", "relatorios", "documentos", "comunicados", "conteudosDisponiveis", "acesso"];
 const secretariaActiveStatuses = new Set(["active", "ativo"]);
 const secretariaSchoolContextStorageKey = "raizes.secretaria.selectedSchoolId";
 
@@ -25342,18 +25357,11 @@ const getSecretariaPrimarySchool = () =>
 
 const getSecretariaCurrentSchoolYear = (school = getSecretariaPrimarySchool()) => {
   const schoolId = school?.id || secretariaInstitutionalState.selectedSchoolId || "";
-  const years = [
-    ...(secretariaInstitutionalState.academicYears || [])
-      .filter((item) => !schoolId || item.school_id === schoolId)
-      .map((item) => item.school_year),
-    ...(secretariaInstitutionalState.classes || [])
-      .filter((item) => !schoolId || item.school_id === schoolId)
-      .map((item) => item.school_year),
-    ...(secretariaInstitutionalState.enrollments || [])
-      .filter((item) => !schoolId || item.school_id === schoolId)
-      .map((item) => item.school_year),
-  ].filter(Boolean).sort();
-  return years[years.length - 1] || "2026";
+  const validYears = rows => rows.filter(item => item.school_id === schoolId)
+    .map(item => String(item.school_year || "").trim()).filter(year => /^(19|20|21)\d{2}$/.test(year)).sort();
+  const academic = validYears(secretariaInstitutionalState.academicYears || []);
+  const fallback = validYears([...(secretariaInstitutionalState.classes || []), ...(secretariaInstitutionalState.enrollments || [])]);
+  return academic[academic.length - 1] || fallback[fallback.length - 1] || "Não informado";
 };
 
 const ensureSecretariaAvaliaResults = async ({ force = false, schoolId = "" } = {}) => {
@@ -27016,6 +27024,7 @@ const renderSecretariaNav = (currentView) => {
     analytics: "Analytics",
     relatorios: "Relatórios",
     comunicados: "Comunicados",
+    conteudosDisponiveis: "Conteúdos disponíveis",
     acessosAlunos: "Acessos dos Alunos",
     acesso: "Entrada/Saída",
   };
@@ -27041,7 +27050,7 @@ const renderSecretariaGlobalHeader = (index = buildSecretariaIndex()) => {
       <div class="secretaria-context-chip">
         ${secretariaInlineIcon("escola")}
         <div>
-          <small>Escola atual</small>
+          <small>Escola atual · Ano letivo ${htmlEscape(getSecretariaCurrentSchoolYear(school))}</small>
           <select class="secretaria-context-select" data-secretaria-school-selector aria-label="Selecionar escola atual da Secretaria">
             ${authorizedSchools.map((item) => `<option value="${htmlEscape(item.id)}" ${item.id === school.id ? "selected" : ""}>${htmlEscape(normalizeSchoolName(item))}</option>`).join("")}
           </select>
@@ -27081,7 +27090,6 @@ const renderSecretariaDashboardPanel = (index) => {
   const recentActivities = secretariaRecentActivities(index);
   const visibleActivities = recentActivities.slice(0, 5);
   const school = getSecretariaPrimarySchool() || activeSchools[0] || secretariaInstitutionalState.schools[0] || {};
-  const schoolYear = getSecretariaCurrentSchoolYear(school);
   const alerts = [
     { label: "Documentos pendentes", detail: "Itens que precisam de revisão ou assinatura", count: pendingDocuments.length, href: secretariaLink("documentos", { q: "pendente" }), icon: "doc", tone: "red" },
     { label: "Alunos sem responsavel", detail: "Alunos ativos ainda sem responsavel vinculado", count: studentsWithoutGuardian.length, href: secretariaLink("alunos", { q: "sem responsavel" }), icon: "family", tone: "orange" },
@@ -27098,15 +27106,10 @@ const renderSecretariaDashboardPanel = (index) => {
   ];
   return `
     <div class="secretaria-dashboard-grid">
-      <section class="panel secretaria-identification secretaria-dashboard-context">
-        <div>
-          <span>Ano letivo</span>
-          <strong>${htmlEscape(schoolYear)}</strong>
-        </div>
-      </section>
       <div class="secretaria-metric-row secretaria-dashboard-metrics" aria-label="Indicadores principais da Secretaria">
         ${metrics.map((metric) => `<article>${secretariaInlineIcon(metric.icon)}<span>${htmlEscape(metric.label)}</span><strong>${metric.value}</strong></article>`).join("")}
       </div>
+      ${window.SchoolContentInspection?.renderCards(school.id, normalizeSchoolName(school), secretariaLink("conteudosDisponiveis"), secretariaInlineIcon("book")) || '<p>Consulta de conteúdos indisponível.</p>'}
       <div class="secretaria-panel-grid secretaria-dashboard-operation">
         <section class="panel secretaria-attention-panel">
           <div class="panel-head"><h2>${secretariaInlineIcon("bell", "Atenção necessaria")}</h2></div>
@@ -29087,6 +29090,7 @@ const renderSecretariaReadyView = () => {
     analytics: () => renderSecretariaAnalyticsView(index),
     relatorios: () => renderSecretariaReportsView(index),
     comunicados: () => renderSecretariaCommunicationsView(index),
+    conteudosDisponiveis: () => renderSchoolContentInspection(getSecretariaPrimarySchool().id, normalizeSchoolName(getSecretariaPrimarySchool())),
     acessosAlunos: () => renderSecretariaStudentAccessCenterView(index),
     acesso: () => renderSecretariaSchoolAccessView(index),
   }[view]();
@@ -29108,6 +29112,7 @@ const renderSecretariaDashboard = () => `
 const initSecretariaInstitutional = () => {
   const area = document.querySelector("[data-secretaria-v1]");
   if (!area) return;
+  hydrateSchoolContentInspection(area, () => getSecretariaPrimarySchool().id);
   const schoolSelector = area.querySelector("[data-secretaria-school-selector]");
   if (schoolSelector) {
     schoolSelector.addEventListener("change", () => {
