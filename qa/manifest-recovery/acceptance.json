@@ -1,0 +1,50 @@
+{
+  "base_commit": "f60944b570e3d045b75e9a09ec274737f9687a1b",
+  "recovery_method": "Verified RS static-input-manifest plus approved ENEM JS and eight-file complement; no incremental bundles or cumulative patches.",
+  "user_acceptance": {
+    "statement": "perfeito homologado todas as correcoes",
+    "evidence_id": "Sentinel_0594f63355888191815e1b25fdf272fd",
+    "attribution": "User-declared acceptance; not an agent-executed authenticated browser test."
+  },
+  "runtime_files": 4276,
+  "reproducible_build": {
+    "build_exit_code": 0,
+    "file_count": 4276,
+    "all_output_hashes_equal_to_served_candidate": true,
+    "served_dist_modified": false,
+    "method": "Rebuild in isolated temporary directory using identical source bytes; compare every output SHA256 against approved runtime manifest and existing served dist."
+  },
+  "unit_tests": [
+    {
+      "command": "node qa/manifest-recovery/counters.test.mjs",
+      "exit_code": 0
+    },
+    {
+      "command": "node qa/manifest-recovery/exam-metadata.test.mjs",
+      "exit_code": 0
+    },
+    {
+      "command": "node qa/manifest-recovery/filter-options.test.mjs",
+      "exit_code": 0
+    }
+  ],
+  "runtime_manifest_sha256": "6fec7e1f8444e3eeb000dc48621a40922a09095f96ff07c742303451348fa265",
+  "app_pages_sha256": "df97d941099efa84a9bce01966e96e3f5ec0a44b155ca3248cd86ac765f65d68",
+  "build_script_sha256": "8c0c1d4d37068356a43736bbcea2811db512767c593661be1050b50b3d335a6d",
+  "packaging_change": "Explicit 4276-file allowlist with per-file SHA256 checks before output replacement; seven historical extra PDFs retained but not packaged; pilot loader/API not packaged.",
+  "limitations": [
+    "Production commit f6ce6f293634599d6f6454d2fc45f0196b80483b is absent from fetched GitHub history; no ancestry equivalence claimed.",
+    "Complement declares source manifest hash 9aaf300603a90f81713af61633a82814f6ed1df6446dcd5e73ed2b98521e073e; received RS manifest is da5901c1063cced8d35f06805c60c91b7e4f213deda9dbaaf53357a913d44ee3. All eight file hashes agree individually; global discrepancy unresolved.",
+    "Agent did not execute authenticated browser or production-data tests. No login code changes made."
+  ],
+  "secret_scan": {
+    "scope": "Changed and newly added files only",
+    "method": "Heuristic patterns for private keys, GitHub tokens, Supabase secret keys and AWS access keys",
+    "findings": 0,
+    "not_a_complete_historical_audit": true
+  },
+  "whitespace_check": {
+    "exit_code": 2,
+    "warnings": "Original CRLF in verified vendor vfs_fonts.js; retained byte-for-byte to preserve approved SHA256."
+  }
+}

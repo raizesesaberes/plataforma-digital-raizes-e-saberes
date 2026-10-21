@@ -1,36 +1,35 @@
-// Publish the static runtime, never the repository root or operational artifacts.
-import { cpSync, lstatSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
-import { extname, join, resolve } from 'node:path';
+// Package only the verified recovery manifest; preserve other repository files.
+import { createHash } from 'node:crypto';
+import { cpSync, lstatSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const output = join(root, 'dist');
-const rootExtensions = new Set(['.html', '.css', '.js', '.png', '.jpg', '.jpeg', '.svg', '.ico', '.webp']);
-const assetExtensions = new Set(['.html', '.css', '.js', '.mjs', '.json', '.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.otf', '.mp3', '.mp4', '.ogg', '.wav', '.pdf']);
-const excludedRoot = new Set(['supabase-config.example.js', 'secretaria-v1-validation.html', 'secretaria-v1-validation-2.html']);
-let copied = 0;
-
+const manifest = JSON.parse(readFileSync(join(root, 'scripts/static-runtime-manifest.json'), 'utf8'));
+if (!Array.isArray(manifest) || manifest.length !== 4276) throw new Error('Expected 4276 approved runtime files');
+const seen = new Set();
+// Validate the complete source set before replacing any previous build.
+for (const entry of manifest) {
+  const name = entry.file;
+  if (typeof name !== 'string' || isAbsolute(name) || name.includes('\\') ||
+      name.split('/').some(part => !part || part === '.' || part === '..' || part.startsWith('.')) ||
+      seen.has(name.toLowerCase())) throw new Error(`Invalid or duplicate runtime path: ${name}`);
+  if (!/^[a-f0-9]{64}$/.test(entry.sha256)) throw new Error(`Invalid digest: ${name}`);
+  seen.add(name.toLowerCase());
+  let current = root;
+  for (const part of name.split('/')) {
+    current = join(current, part);
+    if (lstatSync(current).isSymbolicLink()) throw new Error(`Symlink not allowed: ${name}`);
+  }
+  if (!lstatSync(current).isFile()) throw new Error(`Non-regular runtime file: ${name}`);
+  const hash = createHash('sha256').update(readFileSync(current)).digest('hex');
+  if (hash !== entry.sha256) throw new Error(`Runtime source hash mismatch: ${name}`);
+}
 rmSync(output, { recursive: true, force: true });
 mkdirSync(output, { recursive: true });
-function copyFile(relative) {
-  const source = join(root, relative);
-  if (!lstatSync(source).isFile()) throw new Error(`Non-regular runtime file: ${relative}`);
-  const destination = join(output, relative);
-  mkdirSync(resolve(destination, '..'), { recursive: true });
-  cpSync(source, destination);
-  copied += 1;
+for (const { file } of manifest) {
+  const destination = join(output, file);
+  mkdirSync(dirname(destination), { recursive: true });
+  cpSync(join(root, file), destination);
 }
-function copyAssets(relative) {
-  for (const entry of readdirSync(join(root, relative), { withFileTypes: true })) {
-    if (entry.name.startsWith('.')) continue;
-    const child = join(relative, entry.name);
-    if (entry.isSymbolicLink()) throw new Error(`Symlink not allowed in runtime assets: ${child}`);
-    if (entry.isDirectory()) copyAssets(child);
-    else if (entry.isFile() && assetExtensions.has(extname(entry.name).toLowerCase())) copyFile(child);
-  }
-}
-for (const entry of readdirSync(root, { withFileTypes: true })) {
-  if (entry.isFile() && !entry.name.startsWith('.') && !/\.(example|test|spec)\./.test(entry.name) && rootExtensions.has(extname(entry.name).toLowerCase()) && !excludedRoot.has(entry.name)) copyFile(entry.name);
-}
-copyAssets('assets');
-copyFile('data/atividades-imprimiveis/catalog.json');
-console.log(`Static runtime prepared: ${copied} files in dist; operational directories excluded.`);
+console.log(`Static runtime prepared: ${manifest.length} verified files in dist; unlisted files excluded.`);

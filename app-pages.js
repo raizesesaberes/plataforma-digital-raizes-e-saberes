@@ -3826,6 +3826,8 @@ const renderStudentPresentationDashboard = () => `
 const teacherWorkspaceNav = [
   ["inicio", "Início", "home"],
   ["turmas", "Minhas Turmas", "users"],
+  ["frequencia", "Frequência", "calendar"],
+  ["diario", "Diário de Classe", "doc"],
   ["mensagens", "Mensagens", "mensagens"],
   ["planejamentos", "Planejamento", "calendar"],
   ["atividades", "Atividades Imprimíveis", "doc"],
@@ -3947,6 +3949,8 @@ const teacherAttendanceState = {
   key: "",
   records: [],
   result: null,
+  revision: 0,
+  saving: false,
 };
 
 const teacherDiaryState = {
@@ -3956,6 +3960,8 @@ const teacherDiaryState = {
   promise: null,
   key: "",
   entries: [],
+  revision: 0,
+  saving: false,
 };
 
 const teacherStudentNotesState = {
@@ -4167,7 +4173,7 @@ const studentPersonalScheduleDays = [
 let studentPersonalScheduleEditing = false;
 let studentPersonalScheduleDraft = null;
 
-const getTeacherInstitutionalClasses = () => teacherInstitutionalState.classes || [];
+const getTeacherInstitutionalClasses = () => (teacherInstitutionalState.classes || []).filter(item => !getPrintableParams().get("school") || item.schoolId === getPrintableParams().get("school"));
 const getTeacherInstitutionalStudents = (classId = "") => {
   if (classId) return teacherInstitutionalState.studentsByClass?.[classId] || [];
   return Object.values(teacherInstitutionalState.studentsById || {}).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
@@ -4181,8 +4187,18 @@ const getTeacherDisplayName = () => {
   if (["professor", "teacher"].includes(session.role) && session.name && !session.name.includes("@")) return session.name;
   return "Professor";
 };
-const getTeacherClassHref = (classItem) => `professor-turma.html?id=${encodeURIComponent(classItem.id)}`;
-const getTeacherStudentHref = (student) => `professor-aluno.html?id=${encodeURIComponent(student.id)}`;
+const getTeacherClassHref = (classItem) => `professor-turma.html?id=${encodeURIComponent(classItem.id)}${classItem.schoolId || getTeacherSelectedSchoolId() ? `&school=${encodeURIComponent(classItem.schoolId || getTeacherSelectedSchoolId())}` : ""}`;
+const getTeacherStudentHref = (student) => {
+  const schoolId = student.schoolId || getTeacherSelectedSchoolId();
+  return `professor-aluno.html?id=${encodeURIComponent(student.id)}${student.classId ? `&class=${encodeURIComponent(student.classId)}` : ""}${schoolId ? `&school=${encodeURIComponent(schoolId)}` : ""}`;
+};
+const getTeacherWorkspaceHref = (view = "inicio") => {
+  const params = new URLSearchParams();
+  if (view !== "inicio") params.set("view", view);
+  const schoolId = getTeacherSelectedSchoolId();
+  if (schoolId) params.set("school", schoolId);
+  return `professor.html${params.size ? `?${params.toString()}` : ""}`;
+};
 const getTeacherPlanningClasses = () => getTeacherInstitutionalClasses();
 const getTeacherClassTab = () => getPrintableParams().get("tab") || "alunos";
 const getTeacherAttendanceDate = () => getPrintableParams().get("date") || toTeacherIsoDate(new Date());
@@ -4193,59 +4209,104 @@ const teacherAttendanceStatusOptions = [
   ["justified", "Falta justificada"],
 ];
 
-const getTeacherAttendanceKey = (classId, date) => `${classId || ""}:${date || ""}`;
+const isTeacherClassPage = () => document.querySelector("[data-app-page]")?.dataset.appPage === "professorTurma";
+const getTeacherAttendanceActor = () => {
+  const session = getPlatformSession();
+  return `${session.userId || ""}:${session.role || ""}`;
+};
+const getTeacherAttendanceKey = (classId, date) => `${getTeacherAttendanceActor()}:${classId || ""}:${date || ""}`;
+const teacherAttendanceContextAllowed = (classId) => Boolean(
+  getPlatformSession().userId && teacherInstitutionalState.status === "ready" &&
+  teacherInstitutionalState.profile?.id === getPlatformSession().userId &&
+  getTeacherInstitutionalClasses().some(item => item.id === classId)
+);
 
 const getTeacherAttendanceRecordByStudent = (studentId) =>
   (teacherAttendanceState.records || []).find((record) => record.student_id === studentId) || null;
 
-const ensureTeacherAttendanceDay = async ({ force = false, classId = "", date = "" } = {}) => {
-  const key = getTeacherAttendanceKey(classId, date);
-  if (!classId || !date) return teacherAttendanceState;
+const getTeacherAttendanceClassId = () => getPrintableParams().get("id") || getTeacherInstitutionalClasses()[0]?.id || "";
+const getTeacherAttendanceRoute = () => `${window.location.pathname}:${getPrintableParams().get("school") || ""}:${getTeacherAttendanceClassId()}:${getTeacherAttendanceDate()}`;
+const teacherAttendanceCanEdit = (classId, date) => teacherAttendanceContextAllowed(classId) && teacherAttendanceState.status === "ready" && teacherAttendanceState.key === getTeacherAttendanceKey(classId, date) && !teacherAttendanceState.saving;
+const syncTeacherAttendanceControls = () => document.querySelectorAll('[data-teacher-attendance-form]').forEach(form => {
+  const editable = teacherAttendanceCanEdit(form.dataset.classId, form.querySelector('[name=attendanceDate]')?.value);
+  form.querySelectorAll('input,button').forEach(node => { node.disabled = node.hasAttribute('data-attendance-reload') ? Boolean(teacherAttendanceState.saving || teacherAttendanceState.status === 'loading') : !editable; });
+});
+const ensureTeacherAttendanceDay = async ({ force = false, classId = "", date = "", operation = null } = {}) => {
+  const key = getTeacherAttendanceKey(classId, date), actorId = getPlatformSession().userId;
+  if (!classId || !date || !teacherAttendanceContextAllowed(classId) || (teacherAttendanceState.saving && operation !== teacherAttendanceState.operation)) return teacherAttendanceState;
   if (!force && teacherAttendanceState.status === "ready" && teacherAttendanceState.key === key) return teacherAttendanceState;
   if (!force && teacherAttendanceState.promise && teacherAttendanceState.key === key) return teacherAttendanceState.promise;
-  teacherAttendanceState.status = "loading";
-  teacherAttendanceState.error = "";
-  teacherAttendanceState.message = "";
-  teacherAttendanceState.key = key;
+  const revision = ++teacherAttendanceState.revision;
+  const current = () => revision === teacherAttendanceState.revision && key === getTeacherAttendanceKey(classId, date) && teacherAttendanceContextAllowed(classId);
+  Object.assign(teacherAttendanceState, { status: "loading", error: "", message: "", key, records: [] });
+  syncTeacherAttendanceControls();
   teacherAttendanceState.promise = (async () => {
     try {
-      const client = createSupabaseRestClient();
-      const rows = await client.request(
-        "attendance_records",
+      const rows = await createSupabaseRestClient().request("attendance_records",
         `?select=id,school_id,class_id,student_id,enrollment_id,attendance_date,status,notes,recorded_by,updated_by,updated_at&class_id=${supabaseEq(classId)}&attendance_date=${supabaseEq(date)}&order=student_id.asc`,
-        { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
-      );
-      teacherAttendanceState.records = Array.isArray(rows) ? rows : [];
+        { requireAuthenticated: true, allowedRoles: teacherAllowedRoles, expectedUserId: actorId });
+      if (!current()) return teacherAttendanceState;
+      if (!Array.isArray(rows) || rows.some(row => row.class_id !== classId || row.attendance_date !== date || !["present", "absent", "justified"].includes(row.status))) throw new Error("Resposta de frequência incompatível com a turma/data.");
+      const changedAfterSave = teacherAttendanceState.confirmedKey === key && teacherAttendanceState.confirmedRecords?.some(sent => !rows.some(row => row.student_id === sent.student_id && row.status === sent.status && (row.notes || "") === (sent.notes || "")));
+      if (changedAfterSave) teacherAttendanceState.message = "Gravação confirmada. A consulta trouxe valores diferentes dos enviados; confira os registros atuais antes de editar.";
+      teacherAttendanceState.records = rows;
       teacherAttendanceState.status = "ready";
+      if (teacherAttendanceState.confirmedKey === key) teacherAttendanceState.confirmedRecords = null;
     } catch (error) {
-      teacherAttendanceState.records = [];
-      teacherAttendanceState.error = error.message || "Não foi possível carregar a frequência.";
-      teacherAttendanceState.status = "error";
+      if (current()) Object.assign(teacherAttendanceState, { records: [], error: error.message || "Não foi possível carregar a frequência.", status: "error" });
+    } finally {
+      if (current()) {
+        teacherAttendanceState.promise = null;
+        if (teacherAttendanceState.confirmedKey === key) teacherAttendanceState.message = teacherAttendanceState.status === "ready" ? (teacherAttendanceState.message || "Gravação confirmada e conferida.") : "Gravação confirmada. Conferência indisponível. Use Consultar novamente; não refaça o lançamento.";
+        syncTeacherAttendanceControls();
+      }
     }
     return teacherAttendanceState;
   })();
   return teacherAttendanceState.promise;
 };
-
+const collectTeacherAttendanceChanges = (data, students) => students.map(student => {
+  const status = String(data.get(`attendance_${student.id}`) || "");
+  const notes = String(data.get(`notes_${student.id}`) || "").trim() || null;
+  if (!["present", "absent", "justified"].includes(status)) throw new Error("Marque explicitamente a frequência de todos os alunos antes de salvar.");
+  return { student_id: student.id, status, notes };
+});
 const saveTeacherAttendanceDay = async ({ classId = "", date = "", records = [] } = {}) => {
-  const client = createSupabaseRestClient();
-  const result = await client.request("rpc/teacher_set_attendance_records", "", {
-    method: "POST",
-    requireAuthenticated: true,
-    allowedRoles: teacherAllowedRoles,
-    body: JSON.stringify({
-      p_class_id: classId,
-      p_attendance_date: date,
-      p_records: records,
-    }),
-  });
-  teacherAttendanceState.result = result;
-  teacherAttendanceState.message = "Frequência salva com sucesso.";
-  return result;
+  const key = getTeacherAttendanceKey(classId, date), route = getTeacherAttendanceRoute(), actorId = getPlatformSession().userId;
+  if (!teacherAttendanceCanEdit(classId, date)) throw new Error("Recarregue a frequência da turma antes de salvar.");
+  const allowed = new Set(getTeacherInstitutionalStudents(classId).map(student => student.id));
+  if (!records.length || records.length !== allowed.size || new Set(records.map(row => row.student_id)).size !== records.length || records.some(row => !allowed.has(row.student_id) || !["present", "absent", "justified"].includes(row.status))) throw new Error("Marque explicitamente a frequência de todos os alunos antes de salvar.");
+  const payload = records.map(row => ({ ...row, expected_updated_at: getTeacherAttendanceRecordByStudent(row.student_id)?.updated_at || null }));
+  const operation = {};
+  ++teacherAttendanceState.revision;
+  Object.assign(teacherAttendanceState, { operation, saving: true, promise: null, confirmedKey: null, confirmedRecords: null, message: "", result: null });
+  const current = () => teacherAttendanceState.operation === operation && key === getTeacherAttendanceKey(classId, date) && route === getTeacherAttendanceRoute() && teacherAttendanceContextAllowed(classId);
+  syncTeacherAttendanceControls();
+  try {
+    const result = await createSupabaseRestClient().request("rpc/teacher_set_attendance_records", "", {
+      method: "POST", requireAuthenticated: true, allowedRoles: teacherAllowedRoles, expectedUserId: actorId,
+      body: JSON.stringify({ p_class_id: classId, p_attendance_date: date, p_records: payload }),
+    });
+    if (!current()) throw new Error("Sessão ou turma alterada; consulte novamente a frequência.");
+    Object.assign(teacherAttendanceState, { result, confirmedKey: key, confirmedRecords: records.map(row => ({...row})) });
+    await ensureTeacherAttendanceDay({ force: true, classId, date, operation });
+    if (!current()) throw new Error("Sessão ou turma alterada; consulte novamente a frequência.");
+    return result;
+  } catch (error) {
+    if (current() && teacherAttendanceState.confirmedKey !== key) Object.assign(teacherAttendanceState, { status: "error", error: "Não foi possível confirmar a gravação. Consulte os registros antes de tentar novamente.", message: "" });
+    throw error;
+  } finally {
+    if (teacherAttendanceState.operation === operation) {
+      teacherAttendanceState.saving = false;
+      teacherAttendanceState.operation = null;
+      if (teacherAttendanceState.key === key && route !== getTeacherAttendanceRoute()) Object.assign(teacherAttendanceState, { status: "idle", key: "", records: [], promise: null });
+      syncTeacherAttendanceControls();
+    }
+  }
 };
 
 const getTeacherDiaryDate = () => getPrintableParams().get("diaryDate") || getTeacherAttendanceDate();
-const getTeacherDiaryKey = (classId, date) => `${classId || ""}:${date || ""}`;
+const getTeacherDiaryKey = (classId, date) => `${getTeacherAttendanceActor()}:${classId || ""}:${date || ""}`;
 
 const mapTeacherDiaryRow = (row = {}) => ({
   id: row.id || "",
@@ -4277,90 +4338,119 @@ const ensureTeacherDiaryEntries = async ({ force = false, classId = "", date = "
   const key = getTeacherDiaryKey(selectedClassId, selectedDate);
   if (!selectedClassId || !selectedDate) return teacherDiaryState;
   if (!force && teacherDiaryState.status === "ready" && teacherDiaryState.key === key) return teacherDiaryState;
-  if (!force && teacherDiaryState.promise && teacherDiaryState.key === key) return teacherDiaryState.promise;
-  teacherDiaryState.status = "loading";
-  teacherDiaryState.error = "";
-  teacherDiaryState.key = key;
+  if (teacherDiaryState.promise && teacherDiaryState.key === key) return teacherDiaryState.promise;
+  const revision = ++teacherDiaryState.revision;
+  const current = () => revision === teacherDiaryState.revision && key === getTeacherDiaryKey(selectedClassId, selectedDate) && teacherAttendanceContextAllowed(selectedClassId);
+  Object.assign(teacherDiaryState, { status: "loading", error: "", message: "", key, entries: [] });
   teacherDiaryState.promise = (async () => {
     try {
       await ensureTeacherInstitutionalData();
-      if (teacherInstitutionalState.status !== "ready") {
-        throw new Error(teacherInstitutionalState.error || "Dados institucionais indisponiveis.");
-      }
-      const client = createSupabaseRestClient();
-      const rows = await client.request("rpc/teacher_list_class_diary_entries", "", {
+      if (!teacherAttendanceContextAllowed(selectedClassId)) throw new Error("Recarregue a sessão e a turma autorizada.");
+      const rows = await createSupabaseRestClient().request("rpc/teacher_list_class_diary_entries", "", {
         method: "POST",
-        body: JSON.stringify({
-          p_class_id: selectedClassId,
-          p_from: null,
-          p_to: null,
-        }),
+        body: JSON.stringify({ p_class_id: selectedClassId, p_from: null, p_to: null }),
         requireAuthenticated: true,
         allowedRoles: teacherAllowedRoles,
       });
-      teacherDiaryState.entries = (Array.isArray(rows) ? rows : []).map(mapTeacherDiaryRow);
+      if (!current()) return teacherDiaryState;
+      if (!Array.isArray(rows) || rows.some(row => row.class_id !== selectedClassId)) throw new Error("Resposta de diário incompatível com a turma.");
+      teacherDiaryState.entries = rows.map(mapTeacherDiaryRow);
       teacherDiaryState.status = "ready";
-      return teacherDiaryState;
     } catch (error) {
-      teacherDiaryState.entries = [];
-      teacherDiaryState.error = error.message || "Não foi possível carregar o Diário de Classe.";
-      teacherDiaryState.status = "error";
-      return teacherDiaryState;
+      if (revision === teacherDiaryState.revision) Object.assign(teacherDiaryState, { entries: [], error: error.message || "Não foi possível carregar o Diário de Classe.", status: "error" });
     } finally {
-      teacherDiaryState.promise = null;
+      if (revision === teacherDiaryState.revision) teacherDiaryState.promise = null;
     }
+    return teacherDiaryState;
   })();
   return teacherDiaryState.promise;
 };
 
 const getTeacherDiaryEntryForDate = (classId = "", date = getTeacherDiaryDate()) =>
-  (teacherDiaryState.entries || []).find((entry) => entry.classId === classId && entry.entryDate === date) || null;
+  teacherDiaryState.status === "ready" && teacherDiaryState.key === getTeacherDiaryKey(classId, date)
+    ? (teacherDiaryState.entries || []).find((entry) => entry.classId === classId && entry.entryDate === date) || null : null;
 
 const saveTeacherDiaryEntry = async (formData) => {
-  await ensureTeacherInstitutionalData();
   const classId = String(formData.get("classId") || "");
+  const date = String(formData.get("entryDate") || getTeacherDiaryDate());
+  const key = getTeacherDiaryKey(classId, date);
+  if (teacherDiaryState.saving || teacherDiaryState.status !== "ready" || teacherDiaryState.key !== key || !teacherAttendanceContextAllowed(classId)) throw new Error("Recarregue o diário da turma antes de salvar.");
+  if (formData.get("diaryContextKey") !== key) throw new Error("Formulário de outra sessão ou data. Recarregue o diário.");
   const classItem = getTeacherInstitutionalClasses().find((item) => item.id === classId);
-  if (!classItem?.id) throw new Error("Turma fora do vinculo autorizado do professor.");
-  const teacherId = classItem.teacherId || teacherInstitutionalState.teacherByClass?.[classItem.id] || teacherInstitutionalState.profile?.teacherId || "";
+  const entry = getTeacherDiaryEntryForDate(classId, date);
+  if (entry?.status === "closed") throw new Error("Diário fechado não pode ser editado.");
   const activityType = String(formData.get("activityType") || "").trim();
   const activityId = String(formData.get("activityId") || "").trim();
-  const activityLinks = activityType && activityId ? [{ activity_type: activityType, activity_id: activityId }] : [];
-  const client = createSupabaseRestClient();
-  const result = await client.request("rpc/teacher_upsert_class_diary_entry", "", {
-    method: "POST",
-    body: JSON.stringify({
-      p_entry_id: String(formData.get("entryId") || "") || null,
-      p_school_id: classItem.schoolId,
-      p_class_id: classItem.id,
-      p_teacher_id: teacherId,
-      p_entry_date: String(formData.get("entryDate") || getTeacherDiaryDate()),
-      p_title: String(formData.get("title") || "Diário de Classe").trim(),
-      p_taught_content: String(formData.get("taughtContent") || "").trim(),
-      p_pedagogical_notes: String(formData.get("pedagogicalNotes") || "").trim(),
-      p_plan_id: String(formData.get("planId") || "") || null,
-      p_calendar_entry_id: String(formData.get("calendarEntryId") || "") || null,
-      p_activity_links: activityLinks,
-    }),
-    requireAuthenticated: true,
-    allowedRoles: teacherAllowedRoles,
-  });
-  teacherDiaryState.message = "Diário salvo como rascunho.";
-  await ensureTeacherDiaryEntries({ force: true, classId: classItem.id, date: String(formData.get("entryDate") || getTeacherDiaryDate()) });
-  return Array.isArray(result) ? result[0] || {} : result || {};
+  if (Boolean(activityType) !== Boolean(activityId)) throw new Error("Informe o tipo e o código da atividade.");
+  // Existing links cannot be replaced by this single-activity form.
+  if (entry?.activityLinkCount && activityType) throw new Error("Este diário já possui atividades vinculadas. Preserve os vínculos existentes.");
+  const activityLinks = activityType ? [{ activity_type: activityType, activity_id: activityId }] : null;
+  let operationRevision = teacherDiaryState.revision;
+  teacherDiaryState.saving = true;
+  teacherDiaryState.message = "";
+  try {
+    const result = await createSupabaseRestClient().request("rpc/teacher_upsert_class_diary_entry", "", {
+      method: "POST",
+      headers: { "If-Match": `"${String(formData.get("entryId") || "")}|${String(formData.get("expectedUpdatedAt") || "")}"` },
+      body: JSON.stringify({
+        p_entry_id: entry?.id || null,
+        p_school_id: classItem.schoolId,
+        p_class_id: classId,
+        p_entry_date: date,
+        p_title: String(formData.get("title") || "Diário de Classe").trim(),
+        p_taught_content: String(formData.get("taughtContent") || "").trim(),
+        p_pedagogical_notes: String(formData.get("pedagogicalNotes") || "").trim(),
+        p_plan_id: String(formData.get("planId") || "") || null,
+        p_calendar_entry_id: String(formData.get("calendarEntryId") || "") || null,
+        p_activity_links: activityLinks,
+      }),
+      requireAuthenticated: true,
+      allowedRoles: teacherAllowedRoles,
+    });
+    if (key !== getTeacherDiaryKey(classId, date) || teacherDiaryState.key !== key || teacherDiaryState.revision !== operationRevision || !teacherAttendanceContextAllowed(classId)) throw new Error("A sessão mudou. Recarregue antes de conferir o registro.");
+    const readback = ensureTeacherDiaryEntries({ force: true, classId, date });
+    operationRevision = teacherDiaryState.revision;
+    await readback;
+    if (teacherDiaryState.status !== "ready" || teacherDiaryState.key !== key || teacherDiaryState.revision !== operationRevision || !normalizeRpcJson(result).diary_entry_id || getTeacherDiaryEntryForDate(classId, date)?.id !== normalizeRpcJson(result).diary_entry_id || getTeacherDiaryEntryForDate(classId, date)?.status !== "draft") throw new Error("Não foi possível conferir o diário salvo. Recarregue antes de tentar novamente.");
+    teacherDiaryState.message = "Diário salvo como rascunho e relido.";
+    return Array.isArray(result) ? result[0] || {} : result || {};
+  } catch (error) {
+    if (teacherDiaryState.key === key && teacherDiaryState.revision === operationRevision) Object.assign(teacherDiaryState, { status: "error", message: "", error: "Não foi possível confirmar a gravação. Recarregue para conferir antes de tentar novamente. " + error.message });
+    throw error;
+  } finally {
+    teacherDiaryState.saving = false;
+  }
 };
 
 const closeTeacherDiaryEntry = async (entryId = "") => {
-  if (!entryId) throw new Error("Diário de Classe não encontrado para fechamento.");
-  const client = createSupabaseRestClient();
-  const result = await client.request("rpc/teacher_close_class_diary_entry", "", {
-    method: "POST",
-    body: JSON.stringify({ p_entry_id: entryId }),
-    requireAuthenticated: true,
-    allowedRoles: teacherAllowedRoles,
-  });
-  teacherDiaryState.message = "Diário fechado com sucesso.";
-  await ensureTeacherDiaryEntries({ force: true, classId: getPrintableParams().get("id") || "", date: getTeacherDiaryDate() });
-  return Array.isArray(result) ? result[0] || {} : result || {};
+  const classId = getPrintableParams().get("id") || "";
+  const date = getTeacherDiaryDate();
+  const key = getTeacherDiaryKey(classId, date);
+  const entry = getTeacherDiaryEntryForDate(classId, date);
+  if (!entryId || entry?.id !== entryId || teacherDiaryState.saving || !teacherAttendanceContextAllowed(classId)) throw new Error("Recarregue o diário autorizado antes de fechar.");
+  let operationRevision = teacherDiaryState.revision;
+  teacherDiaryState.saving = true;
+  teacherDiaryState.message = "";
+  try {
+    const result = await createSupabaseRestClient().request("rpc/teacher_close_class_diary_entry", "", {
+      method: "POST",
+      body: JSON.stringify({ p_entry_id: entryId }),
+      requireAuthenticated: true,
+      allowedRoles: teacherAllowedRoles,
+    });
+    if (key !== getTeacherDiaryKey(classId, date) || teacherDiaryState.key !== key || teacherDiaryState.revision !== operationRevision || !teacherAttendanceContextAllowed(classId)) throw new Error("A sessão mudou. Recarregue o diário.");
+    const readback = ensureTeacherDiaryEntries({ force: true, classId, date });
+    operationRevision = teacherDiaryState.revision;
+    await readback;
+    if (teacherDiaryState.status !== "ready" || teacherDiaryState.key !== key || teacherDiaryState.revision !== operationRevision || getTeacherDiaryEntryForDate(classId, date)?.status !== "closed") throw new Error("Não foi possível conferir o fechamento. Recarregue o diário.");
+    teacherDiaryState.message = "Diário fechado e relido com sucesso.";
+    return Array.isArray(result) ? result[0] || {} : result || {};
+  } catch (error) {
+    if (teacherDiaryState.key === key && teacherDiaryState.revision === operationRevision) Object.assign(teacherDiaryState, { status: "error", message: "", error: "Não foi possível confirmar o fechamento. Recarregue antes de tentar novamente. " + error.message });
+    throw error;
+  } finally {
+    teacherDiaryState.saving = false;
+  }
 };
 
 const normalizeRpcJson = (result) => (Array.isArray(result) ? result[0] || {} : result || {});
@@ -4382,13 +4472,18 @@ const getTeacherDiaryPeriodRange = () => {
 
 const getDiaryPeriodKey = (classId = "", from = "", to = "") => `${classId || ""}:${from || ""}:${to || ""}`;
 
+const getTeacherDiaryPeriodKey = (classId, from, to) => `${getTeacherAttendanceActor()}:${getDiaryPeriodKey(classId, from, to)}`;
+
 const ensureTeacherDiaryPeriodSummary = async ({ force = false, classId = "", from = "", to = "" } = {}) => {
   const selectedClassId = classId || getPrintableParams().get("id") || getTeacherInstitutionalClasses()[0]?.id || "";
   const range = { ...getTeacherDiaryPeriodRange(), from: from || getTeacherDiaryPeriodRange().from, to: to || getTeacherDiaryPeriodRange().to };
-  const key = getDiaryPeriodKey(selectedClassId, range.from, range.to);
-  if (!selectedClassId || !range.from || !range.to) return teacherDiaryPeriodState;
+  const key = getTeacherDiaryPeriodKey(selectedClassId, range.from, range.to);
+  if (!selectedClassId || !range.from || !range.to || !teacherAttendanceContextAllowed(selectedClassId)) return teacherDiaryPeriodState;
   if (!force && teacherDiaryPeriodState.status === "ready" && teacherDiaryPeriodState.key === key) return teacherDiaryPeriodState;
-  if (!force && teacherDiaryPeriodState.promise && teacherDiaryPeriodState.key === key) return teacherDiaryPeriodState.promise;
+  if (teacherDiaryPeriodState.promise && teacherDiaryPeriodState.key === key) return teacherDiaryPeriodState.promise;
+  const revision = teacherDiaryPeriodState.revision = (teacherDiaryPeriodState.revision || 0) + 1;
+  const current = () => revision === teacherDiaryPeriodState.revision && key === getTeacherDiaryPeriodKey(selectedClassId, range.from, range.to) && teacherAttendanceContextAllowed(selectedClassId);
+  teacherDiaryPeriodState.summary = null;
   teacherDiaryPeriodState.status = "loading";
   teacherDiaryPeriodState.error = "";
   teacherDiaryPeriodState.key = key;
@@ -4405,16 +4500,18 @@ const ensureTeacherDiaryPeriodSummary = async ({ force = false, classId = "", fr
         requireAuthenticated: true,
         allowedRoles: teacherAllowedRoles,
       });
+      if (!current()) return teacherDiaryPeriodState;
       const summary = normalizeRpcJson(result);
       if (summary.error) throw new Error(summary.error);
       teacherDiaryPeriodState.summary = summary;
       teacherDiaryPeriodState.status = "ready";
     } catch (error) {
+      if (!current()) return teacherDiaryPeriodState;
       teacherDiaryPeriodState.summary = null;
       teacherDiaryPeriodState.error = error.message || "Não foi possível consolidar o período.";
       teacherDiaryPeriodState.status = "error";
     } finally {
-      teacherDiaryPeriodState.promise = null;
+      if (revision === teacherDiaryPeriodState.revision) teacherDiaryPeriodState.promise = null;
     }
     return teacherDiaryPeriodState;
   })();
@@ -4437,15 +4534,18 @@ const mapTeacherStudentNoteRow = (row = {}) => ({
   updatedAt: row.updated_at || "",
 });
 
-const getTeacherStudentNotesKey = (classId = "", studentId = "") => `${classId || ""}:${studentId || ""}`;
+const getTeacherStudentNotesKey = (classId = "", studentId = "") => `${getTeacherAttendanceActor()}:${classId || ""}:${studentId || ""}`;
 
 const ensureTeacherStudentNotes = async ({ force = false, classId = "", studentId = "" } = {}) => {
   const selectedClassId = classId || getPrintableParams().get("class") || "";
   const selectedStudentId = studentId || getPrintableParams().get("id") || "";
   const key = getTeacherStudentNotesKey(selectedClassId, selectedStudentId);
-  if (!selectedClassId || !selectedStudentId) return teacherStudentNotesState;
+  if (!selectedClassId || !selectedStudentId || !teacherAttendanceContextAllowed(selectedClassId) || !getTeacherInstitutionalStudents(selectedClassId).some(student => student.id === selectedStudentId)) return teacherStudentNotesState;
   if (!force && teacherStudentNotesState.status === "ready" && teacherStudentNotesState.key === key) return teacherStudentNotesState;
-  if (!force && teacherStudentNotesState.promise && teacherStudentNotesState.key === key) return teacherStudentNotesState.promise;
+  if (teacherStudentNotesState.promise && teacherStudentNotesState.key === key) return teacherStudentNotesState.promise;
+  const revision = teacherStudentNotesState.revision = (teacherStudentNotesState.revision || 0) + 1;
+  const current = () => revision === teacherStudentNotesState.revision && key === getTeacherStudentNotesKey(selectedClassId, selectedStudentId) && teacherAttendanceContextAllowed(selectedClassId);
+  teacherStudentNotesState.notes = [];
   teacherStudentNotesState.status = "loading";
   teacherStudentNotesState.error = "";
   teacherStudentNotesState.key = key;
@@ -4463,14 +4563,17 @@ const ensureTeacherStudentNotes = async ({ force = false, classId = "", studentI
         requireAuthenticated: true,
         allowedRoles: teacherAllowedRoles,
       });
-      teacherStudentNotesState.notes = (Array.isArray(rows) ? rows : []).map(mapTeacherStudentNoteRow);
+      if (!current()) return teacherStudentNotesState;
+      if (!Array.isArray(rows) || rows.some(row => row.class_id !== selectedClassId || row.student_id !== selectedStudentId)) throw new Error("Observações incompatíveis com o aluno/turma.");
+      teacherStudentNotesState.notes = rows.map(mapTeacherStudentNoteRow);
       teacherStudentNotesState.status = "ready";
     } catch (error) {
+      if (!current()) return teacherStudentNotesState;
       teacherStudentNotesState.notes = [];
       teacherStudentNotesState.error = error.message || "Não foi possível carregar observações individuais.";
       teacherStudentNotesState.status = "error";
     } finally {
-      teacherStudentNotesState.promise = null;
+      if (revision === teacherStudentNotesState.revision) teacherStudentNotesState.promise = null;
     }
     return teacherStudentNotesState;
   })();
@@ -4484,6 +4587,11 @@ const saveTeacherStudentNote = async (formData) => {
   const classItem = getTeacherInstitutionalClasses().find((item) => item.id === classId);
   const student = getTeacherInstitutionalStudents(classId).find((item) => item.id === studentId);
   if (!classItem?.id || !student?.id) throw new Error("Aluno fora das turmas autorizadas do professor.");
+  const key = getTeacherStudentNotesKey(classId, studentId);
+  let operationRevision = teacherStudentNotesState.revision;
+  if (teacherStudentNotesState.saving || teacherStudentNotesState.status !== "ready" || teacherStudentNotesState.key !== key || formData.get("noteContextKey") !== key || !teacherAttendanceContextAllowed(classId)) throw new Error("Recarregue as observações antes de salvar.");
+  teacherStudentNotesState.saving = true;
+  try {
   const teacherId = classItem.teacherId || teacherInstitutionalState.teacherByClass?.[classItem.id] || teacherInstitutionalState.profile?.teacherId || "";
   const client = createSupabaseRestClient();
   const result = await client.request("rpc/teacher_upsert_class_diary_student_note", "", {
@@ -4501,9 +4609,17 @@ const saveTeacherStudentNote = async (formData) => {
     requireAuthenticated: true,
     allowedRoles: teacherAllowedRoles,
   });
-  teacherStudentNotesState.message = "Observação individual salva com sucesso.";
-  await ensureTeacherStudentNotes({ force: true, classId: classItem.id, studentId: student.id });
+  if (teacherStudentNotesState.revision !== operationRevision || teacherStudentNotesState.key !== key || key !== getTeacherStudentNotesKey(classId, studentId) || !teacherAttendanceContextAllowed(classId)) throw new Error("A sessão ou aluno mudou. Recarregue para conferir a observação.");
+  const readback = ensureTeacherStudentNotes({ force: true, classId: classItem.id, studentId: student.id });
+  operationRevision = teacherStudentNotesState.revision;
+  await readback;
+  if (teacherStudentNotesState.status !== "ready" || teacherStudentNotesState.key !== key || teacherStudentNotesState.revision !== operationRevision || key !== getTeacherStudentNotesKey(classId, studentId) || !teacherStudentNotesState.notes.some(note => note.id === normalizeRpcJson(result).student_note_id)) throw new Error("Não foi possível conferir a observação salva.");
+  teacherStudentNotesState.message = "Observação individual salva e relida.";
   return normalizeRpcJson(result);
+  } catch (error) {
+    if (teacherStudentNotesState.key === key && teacherStudentNotesState.revision === operationRevision && key === getTeacherStudentNotesKey(classId, studentId)) Object.assign(teacherStudentNotesState, { status: "error", message: "", error: "Recarregue para conferir antes de tentar novamente. " + error.message });
+    throw error;
+  } finally { teacherStudentNotesState.saving = false; }
 };
 
 const teacherWorkspaceTasks = [
@@ -4576,7 +4692,7 @@ const renderTeacherTopbar = () => `
     <label><span>Pesquisar</span><input type="search" data-teacher-search placeholder="Buscar conteúdos, alunos, turmas..." /></label>
     <div class="tw-top-actions teacher-global-actions" aria-label="Ações globais do Professor">
       <button type="button" data-platform-back>${teacherInlineIcon("progresso", "VOLTAR")}</button>
-      <button type="button" data-teacher-open-url="professor.html">${teacherInlineIcon("home", "INICIO")}</button>
+      <button type="button" data-teacher-open-url="professor.html${getTeacherSelectedSchoolId() ? `?school=${encodeURIComponent(getTeacherSelectedSchoolId())}` : ""}">${teacherInlineIcon("home", "INICIO")}</button>
       <button type="button" data-teacher-open-url="escola.html">${teacherInlineIcon("escola", "MINHA ESCOLA")}</button>
       <button type="button" data-platform-logout>${teacherInlineIcon("sair", "SAIR")}</button>
     </div>
@@ -5657,6 +5773,7 @@ const renderClassCard = (classItem) => `
       <div><dt>Status</dt><dd>${printableEscape(classItem.status || "Ativa")}</dd></div>
     </dl>
     <a class="tw-primary-link" href="${getTeacherClassHref(classItem)}">ABRIR TURMA</a>
+    <a class="tw-primary-link" href="${getTeacherClassHref(classItem)}&tab=frequencia">FREQUÊNCIA</a>
   </article>
 `;
 
@@ -7111,7 +7228,7 @@ const renderTeacherTrackingView = () => {
           <div class="tw-tracking-list">${allRecommendations.length ? allRecommendations.map(renderTeacherTrackingRecommendation).join("") : `<p class="ua-empty">NENHUMA RECOMENDACAO PUBLICADA PARA ESTE CONTEXTO.</p>`}</div>
         </section>
         <section class="tw-board tw-tracking-section">
-          <div class="tw-section-head"><h2>Recados pedagógicos</h2><button type="button" data-teacher-open-url="${selectedClass ? `${getTeacherClassHref(selectedClass)}?tab=recados` : "professor.html?view=turmas"}">Abrir recados</button></div>
+          <div class="tw-section-head"><h2>Recados pedagógicos</h2><button type="button" data-teacher-open-url="${selectedClass ? `${getTeacherClassHref(selectedClass)}&tab=recados` : getTeacherWorkspaceHref("turmas")}">Abrir recados</button></div>
           <div class="tw-tracking-list">${allMessages.length ? allMessages.slice(0, 6).map(renderTeacherTrackingMessage).join("") : `<p class="ua-empty">NENHUM RECADO PEDAGOGICO PUBLICADO PARA ESTE CONTEXTO.</p>`}</div>
         </section>
         <section class="tw-board tw-tracking-section">
@@ -7485,6 +7602,33 @@ const renderTeacherHomeClassFeature = () => {
   `;
 };
 
+const getTeacherSelectedSchoolId = () => {
+  const requested = getPrintableParams().get("school") || teacherInstitutionalState.profile?.schoolId || "";
+  return (teacherInstitutionalState.schools || []).some(school => school.id === requested && school.status === "active") || getTeacherInstitutionalClasses().some(item => item.schoolId === requested)
+    ? requested : "";
+};
+
+const renderTeacherSchoolSelector = () => {
+  const schools = teacherInstitutionalState.schools || [];
+  const selected = getTeacherSelectedSchoolId();
+  return `<label class="tw-planning-toolbar"><span>Escola</span><select data-teacher-school-selector aria-label="Selecionar escola do professor"><option value="">Selecione uma escola</option>${schools.filter(school => school.status === "active").map(school => `<option value="${printableEscape(school.id)}" ${school.id === selected ? "selected" : ""}>${printableEscape(normalizeSchoolName(school))}</option>`).join("")}</select></label>`;
+};
+
+const renderTeacherAttendanceDiaryShortcuts = () => {
+  const schoolId = getTeacherSelectedSchoolId();
+  return `<section class="teacher-premium-section" data-teacher-register-shortcuts><h2>Registros da turma</h2>${renderTeacherSchoolSelector()}${schoolId ? `<div class="teacher-metric-grid">${[
+    { title: "Frequência", text: "Presenças e faltas", icon: "calendar", tone: "green", view: "frequencia" },
+    { title: "Diário de Classe", text: "Registros pedagógicos", icon: "book", tone: "blue", view: "diario" },
+  ].map(renderTeacherMetricCard).join("")}</div>` : `<p role="status">Selecione uma escola autorizada para acessar Frequência e Diário de Classe.</p>`}</section>`;
+};
+
+const renderTeacherRegisterClasses = (view) => {
+  const schoolId = getTeacherSelectedSchoolId();
+  const classes = schoolId ? getTeacherInstitutionalClasses().filter(item => item.schoolId === schoolId) : [];
+  const title = view === "diario" ? "Diário de Classe" : "Frequência";
+  return `<section class="tw-board" data-teacher-register-classes><h2>${title}</h2>${renderTeacherSchoolSelector()}${!schoolId ? `<p role="status">Selecione uma escola autorizada para acessar os registros.</p>` : `<p>Escolha uma turma da escola selecionada.</p><ul class="clean-list">${classes.map(item => `<li><a href="${getTeacherClassHref(item)}&tab=${view}">${printableEscape(item.name)}</a></li>`).join("") || "<li>Nenhuma turma autorizada nesta escola.</li>"}</ul>`}</section>`;
+};
+
 const renderTeacherPremiumHome = () => `
   <section class="teacher-premium-layout" data-teacher-home>
     <main class="teacher-premium-main">
@@ -7496,6 +7640,7 @@ const renderTeacherPremiumHome = () => `
         </div>
       </section>
 
+      ${renderTeacherAttendanceDiaryShortcuts()}
       ${renderTeacherHomeClassFeature()}
 
       <section class="teacher-premium-section">
@@ -7789,10 +7934,11 @@ const renderTeacherAttendancePanel = (classItem, students = []) => {
   const date = getTeacherAttendanceDate();
   const isLoading = teacherAttendanceState.status === "loading" && teacherAttendanceState.key === getTeacherAttendanceKey(classItem?.id, date);
   const isError = teacherAttendanceState.status === "error" && teacherAttendanceState.key === getTeacherAttendanceKey(classItem?.id, date);
-  const rows = students
+  const ready = teacherAttendanceContextAllowed(classItem?.id) && teacherAttendanceState.status === "ready" && teacherAttendanceState.key === getTeacherAttendanceKey(classItem?.id, date) && !teacherAttendanceState.saving;
+  const rows = (ready ? students : [])
     .map((student) => {
       const record = getTeacherAttendanceRecordByStudent(student.id);
-      const currentStatus = record?.status || "present";
+      const currentStatus = record?.status || "";
       const notes = record?.notes || "";
       return `
         <article class="tw-attendance-row" data-student-id="${printableEscape(student.id)}">
@@ -7801,12 +7947,12 @@ const renderTeacherAttendancePanel = (classItem, students = []) => {
             <small>${printableEscape(student.enrollmentStatus || "Matrícula ativa")}</small>
           </div>
           <fieldset>
-            <legend>Status de ${printableEscape(student.name)}</legend>
+            <legend>Status de ${printableEscape(student.name)}${record ? "" : " — sem registro"}</legend>
             ${teacherAttendanceStatusOptions
               .map(
                 ([value, label]) => `
                   <label class="tw-attendance-choice ${currentStatus === value ? "is-selected" : ""}">
-                    <input type="radio" name="attendance_${printableEscape(student.id)}" value="${value}" ${currentStatus === value ? "checked" : ""} />
+                    <input type="radio" name="attendance_${printableEscape(student.id)}" value="${value}" required ${currentStatus === value ? "checked" : ""} />
                     <span>${label}</span>
                   </label>
                 `
@@ -7825,24 +7971,25 @@ const renderTeacherAttendancePanel = (classItem, students = []) => {
     <section class="tw-board tw-attendance-board">
       <div class="tw-section-head">
         <div>
-          <h2>Frequência - ${printableEscape(classItem?.name || "Turma")}</h2>
+          <h2>Frequência - ${printableEscape(classItem?.name || "Turma")}</h2>${schoolPrintButton("teacher-attendance", classItem?.id)}
           <span>${students.length} alunos ativos</span>
         </div>
       </div>
-      <form class="tw-attendance-form" data-teacher-attendance-form data-class-id="${printableEscape(classItem?.id || "")}">
+      <form class="tw-attendance-form" data-teacher-attendance-form data-class-id="${printableEscape(classItem?.id || "")}" data-attendance-key="${printableEscape(getTeacherAttendanceKey(classItem?.id, date))}">
         <div class="tw-attendance-toolbar">
           <label>
             <span>Data da chamada</span>
             <input type="date" name="attendanceDate" value="${printableEscape(date)}" data-teacher-attendance-date />
           </label>
-          <button type="button" data-attendance-mark-all>MARCAR TODOS COMO PRESENTES</button>
+          <button type="button" data-attendance-mark-all ${ready ? "" : "disabled"}>MARCAR TODOS COMO PRESENTES</button>
+          <button type="button" data-attendance-reload ${teacherAttendanceState.saving || teacherAttendanceState.status === "loading" ? "disabled" : ""}>Consultar novamente</button>
         </div>
         ${isLoading ? renderTeacherInstitutionalStatus("CARREGANDO FREQUENCIA DO DIA.") : ""}
         ${isError ? renderTeacherInstitutionalStatus(`ERRO AO CARREGAR FREQUENCIA: ${teacherAttendanceState.error}`) : ""}
         ${students.length ? `<div class="tw-attendance-list">${rows}</div>` : renderTeacherEmptyState("NENHUM ALUNO ATIVO NESTA TURMA.")}
         <div class="tw-attendance-footer">
-          <p data-attendance-feedback>${printableEscape(teacherAttendanceState.message || "A frequência usa somente alunos ativos desta turma.")}</p>
-          <button type="submit" ${students.length ? "" : "disabled"}>SALVAR FREQUENCIA</button>
+          <p data-attendance-feedback>${printableEscape((teacherAttendanceState.key === getTeacherAttendanceKey(classItem?.id, date) ? teacherAttendanceState.message : "") || "Marque explicitamente a situação de todos os alunos. Sem registro não significa presença.")}</p>
+          <button type="submit" ${ready && students.length ? "" : "disabled"}>SALVAR FREQUÊNCIA</button>
         </div>
       </form>
     </section>
@@ -7891,7 +8038,7 @@ const renderDiaryPeriodMetrics = (summary = {}) => {
 
 const renderTeacherDiaryPeriodSummary = (classItem) => {
   const range = getTeacherDiaryPeriodRange();
-  const key = getDiaryPeriodKey(classItem?.id || "", range.from, range.to);
+  const key = getTeacherDiaryPeriodKey(classItem?.id || "", range.from, range.to);
   const isCurrent = teacherDiaryPeriodState.key === key;
   const summary = isCurrent ? teacherDiaryPeriodState.summary : null;
   const status = isCurrent ? teacherDiaryPeriodState.status : "idle";
@@ -7978,7 +8125,7 @@ const renderTeacherDiaryPanel = (classItem, students = []) => {
     .filter((plan) => plan.classId === classItem.id && plan.planDate === date && plan.status !== "archived")
     .sort((a, b) => String(a.startTime || "99:99").localeCompare(String(b.startTime || "99:99")));
   const calendarEntries = classPlans.map((plan) => plan.publication).filter((publication) => publication?.id);
-  const closed = entry?.status === "closed";
+  const closed = entry?.status === "closed" || teacherDiaryState.saving || teacherDiaryState.status !== "ready" || teacherDiaryState.key !== getTeacherDiaryKey(classItem.id, date) || !teacherAttendanceContextAllowed(classItem.id);
   const loading = teacherDiaryState.status === "loading" || teacherPlanningState.status === "loading" || teacherAttendanceState.status === "loading";
   const error = teacherDiaryState.status === "error" ? teacherDiaryState.error : "";
   return `
@@ -7986,7 +8133,7 @@ const renderTeacherDiaryPanel = (classItem, students = []) => {
       <div class="tw-planning-heading">
         <div>
           <span>Diário de Classe</span>
-          <h2>Registro oficial - ${printableEscape(classItem.name)}</h2>
+          <h2>Registro oficial - ${printableEscape(classItem.name)}</h2>${schoolPrintButton("teacher-diary", classItem.id)}<button type="button" data-rs-print="teacher-diary-period" data-print-class="${printableEscape(classItem.id)}">Imprimir período selecionado</button>
           <p>Consolida frequência, planejamento e registro pedagógico da aula realizada.</p>
         </div>
         <div class="tw-planning-toolbar">
@@ -8001,6 +8148,8 @@ const renderTeacherDiaryPanel = (classItem, students = []) => {
       ${teacherDiaryState.message ? `<p class="tw-operation-feedback">${printableEscape(teacherDiaryState.message)}</p>` : ""}
       ${renderTeacherDiarySummary(entry, classItem, date)}
       <form class="tw-planning-form tw-diary-form" data-teacher-diary-form>
+        <input type="hidden" name="diaryContextKey" value="${printableEscape(getTeacherDiaryKey(classItem.id, date))}" />
+        <input type="hidden" name="expectedUpdatedAt" value="${printableEscape(entry?.updatedAt || "")}" />
         <input type="hidden" name="entryId" value="${printableEscape(entry?.id || "")}" />
         <input type="hidden" name="classId" value="${printableEscape(classItem.id)}" />
         <input type="hidden" name="entryDate" value="${printableEscape(date)}" />
@@ -8012,6 +8161,7 @@ const renderTeacherDiaryPanel = (classItem, students = []) => {
           <span>Planejamento relacionado</span>
           <select name="planId" ${closed ? "disabled" : ""}>
             <option value="">Sem vínculo direto</option>
+            ${entry?.planId && !classPlans.some(plan => plan.id === entry.planId) ? `<option value="${printableEscape(entry.planId)}" selected>Preservar planejamento vinculado</option>` : ""}
             ${classPlans.map((plan) => `<option value="${printableEscape(plan.id)}" ${plan.id === entry?.planId ? "selected" : ""}>${printableEscape(plan.title)}</option>`).join("")}
           </select>
         </label>
@@ -8019,13 +8169,14 @@ const renderTeacherDiaryPanel = (classItem, students = []) => {
           <span>Agenda publicada</span>
           <select name="calendarEntryId" ${closed ? "disabled" : ""}>
             <option value="">Sem publicação vinculada</option>
+            ${entry?.calendarEntryId && !calendarEntries.some(item => item.id === entry.calendarEntryId) ? `<option value="${printableEscape(entry.calendarEntryId)}" selected>Preservar agenda vinculada</option>` : ""}
             ${calendarEntries.map((publication) => `<option value="${printableEscape(publication.id)}" ${publication.id === entry?.calendarEntryId ? "selected" : ""}>${printableEscape(publication.title || publication.entry_date)}</option>`).join("")}
           </select>
         </label>
         <label>
           <span>Atividade vinculada</span>
           <select name="activityType" ${closed ? "disabled" : ""}>
-            <option value="">Sem atividade nesta V1</option>
+            <option value="">Preservar atividades existentes</option>
             <option value="printable_activity">Atividade imprimível</option>
             <option value="activity">Atividade digital</option>
             <option value="book">Livro</option>
@@ -8049,7 +8200,7 @@ const renderTeacherDiaryPanel = (classItem, students = []) => {
         </label>
         <div class="tw-planning-form-actions">
           <button type="submit" ${closed ? "disabled" : ""}>SALVAR RASCUNHO</button>
-          <button type="button" data-teacher-diary-close="${printableEscape(entry?.id || "")}" ${entry?.id && !closed ? "" : "disabled"}>FECHAR REGISTRO</button>
+          <button type="button" data-teacher-diary-close="${printableEscape(entry?.id || "")}" ${entry?.id && !closed ? "" : "disabled"}>FINALIZAR REGISTRO</button>
           <span>${printableEscape(entry ? teacherDiaryStatusLabel(entry.status) : "Novo rascunho")} · ${students.length} alunos vinculados · ${entry?.activityLinkCount || 0} atividade${Number(entry?.activityLinkCount || 0) === 1 ? "" : "s"}</span>
         </div>
       </form>
@@ -8103,7 +8254,7 @@ const renderTeacherClassPage = () => `
         })();
         return `
       ${renderTeacherBreadcrumb([
-        { label: "Minhas Turmas", href: "professor.html?view=turmas" },
+        { label: "Minhas Turmas", href: getTeacherWorkspaceHref("turmas") },
         { label: isReady ? classItem.name : "Turma" },
       ])}
       <section class="tw-hero">
@@ -8113,7 +8264,7 @@ const renderTeacherClassPage = () => `
           <p>${isReady ? `${printableEscape(classItem.schoolName)} · ${printableEscape(classItem.shift || "Turno nao informado")} · ${students.length} alunos vinculados.` : "Carregando turma autorizada."}</p>
         </div>
         <div class="tw-hero-actions">
-          <a href="professor.html?view=turmas">VOLTAR PARA MINHAS TURMAS</a>
+          <a href="${getTeacherWorkspaceHref("turmas")}">VOLTAR PARA MINHAS TURMAS</a>
           ${isReady ? `<a href="atividades.html?target=class&class=${encodeURIComponent(classItem.id)}">ESCOLHER ATIVIDADE</a>` : ""}
         </div>
       </section>
@@ -8128,13 +8279,15 @@ const renderTeacherClassPage = () => `
 `;
 
 const renderTeacherStudentNotesPanel = (student, classItem) => {
-  const notes = (teacherStudentNotesState.notes || []).filter((note) => note.studentId === student.id && note.classId === student.classId);
-  const diaryEntries = (teacherDiaryState.entries || []).filter((entry) => entry.classId === student.classId && entry.status !== "deleted");
+  const current = teacherStudentNotesState.status === "ready" && teacherStudentNotesState.key === getTeacherStudentNotesKey(student.classId, student.id) && teacherAttendanceContextAllowed(student.classId);
+  const notes = current ? (teacherStudentNotesState.notes || []).filter((note) => note.studentId === student.id && note.classId === student.classId) : [];
+  const diaryEntries = teacherDiaryState.status === "ready" && teacherDiaryState.key === getTeacherDiaryKey(student.classId, getTeacherDiaryDate()) ? (teacherDiaryState.entries || []).filter((entry) => entry.classId === student.classId && entry.status !== "deleted") : [];
   const date = toTeacherIsoDate(new Date());
   return `
     <article class="tw-board">
       <div class="tw-section-head"><h2>Observações pedagógicas</h2><span>${teacherStudentNotesState.status === "ready" ? `${notes.length} registro${notes.length === 1 ? "" : "s"}` : "Carregando"}</span></div>
       <form class="tw-planning-form" data-teacher-student-note-form>
+        <input type="hidden" name="noteContextKey" value="${printableEscape(getTeacherStudentNotesKey(student.classId, student.id))}" />
         <input type="hidden" name="noteId" value="" />
         <input type="hidden" name="classId" value="${printableEscape(student.classId)}" />
         <input type="hidden" name="studentId" value="${printableEscape(student.id)}" />
@@ -8154,7 +8307,7 @@ const renderTeacherStudentNotesPanel = (student, classItem) => {
           <textarea name="noteText" rows="4" maxlength="1800" required placeholder="Registre uma observação pedagógica individual, sem nota ou boletim."></textarea>
         </label>
         <div class="tw-planning-form-actions">
-          <button type="submit">SALVAR OBSERVAÇÃO</button>
+          <button type="submit" ${!current || teacherStudentNotesState.saving ? "disabled" : ""}>SALVAR OBSERVAÇÃO</button>
           <span>${printableEscape(teacherStudentNotesState.message || "Visível apenas para Professor, Secretaria/Gestão e Admin nesta V1.")}</span>
         </div>
       </form>
@@ -8194,8 +8347,8 @@ const renderTeacherStudentPage = () => {
       <div class="tw-main">
         ${renderTeacherTopbar()}
         ${renderTeacherBreadcrumb([
-          { label: "Minhas Turmas", href: "professor.html?view=turmas" },
-          { label: isReady ? student.className : "Turma", href: isReady ? getTeacherClassHref({ id: student.classId }) : "professor.html?view=turmas" },
+          { label: "Minhas Turmas", href: getTeacherWorkspaceHref("turmas") },
+          { label: isReady ? student.className : "Turma", href: isReady ? getTeacherClassHref({ id: student.classId }) : getTeacherWorkspaceHref("turmas") },
           { label: isReady ? student.name : "Aluno" },
         ])}
         <section class="tw-hero">
@@ -8205,7 +8358,7 @@ const renderTeacherStudentPage = () => {
             <p>Ficha individual para acompanhar atividades, producoes e registros quando houver dados publicados.</p>
           </div>
           <div class="tw-hero-actions">
-            ${isReady ? `<a href="${getTeacherClassHref({ id: student.classId })}">VOLTAR PARA TURMA</a>` : `<a href="professor.html?view=turmas">VOLTAR PARA MINHAS TURMAS</a>`}
+            ${isReady ? `<a href="${getTeacherClassHref({ id: student.classId })}">VOLTAR PARA TURMA</a>` : `<a href="${getTeacherWorkspaceHref("turmas")}">VOLTAR PARA MINHAS TURMAS</a>`}
             ${isReady ? `<a href="atividades.html?target=student&student=${encodeURIComponent(student.id)}&class=${encodeURIComponent(student.classId)}">INDICAR ATIVIDADE</a>` : ""}
           </div>
         </section>
@@ -10437,7 +10590,7 @@ const renderTeacherReportsView = () => {
       </section>
       <section class="panel span-2">
         <form class="tw-form-grid" method="get" action="professor.html">
-          <input type="hidden" name="view" value="relatorios" />
+          <input type="hidden" name="view" value="relatorios" />${["attendance", "diary"].includes(params.type) ? `<input type="hidden" name="school" value="${htmlEscape(getTeacherSelectedSchoolId())}" />` : ""}
           <label><span>Relatório</span><select name="report">${allowedReports.map((id) => {
             const item = getOfficialReport(id);
             return `<option value="${htmlEscape(id)}" ${id === params.type ? "selected" : ""}>${htmlEscape(item.title)}</option>`;
@@ -10653,6 +10806,8 @@ const renderTeacherWorkspaceView = (view) => {
     ...activities.slice(0, 3).map((activity) => ({ kind: "Ativ", title: activity.title, detail: activity.type, view: "experiências" })),
   ];
   const viewMap = {
+    frequencia: renderTeacherRegisterClasses("frequencia"),
+    diario: renderTeacherRegisterClasses("diario"),
     inicio: `
       <section class="tw-overview-grid">
         <div class="tw-column">
@@ -20158,9 +20313,22 @@ const modules = {
           <strong>Regra de publicação</strong>
           <span>Nenhum conteúdo externo e publicado automaticamente. Materiais sem licenca aberta ficam bloqueados ou servem apenas como referencia pedagógica para itens novos e autorais.</span>
         </div>
+        <section class="panel" aria-label="Contagem do acervo no escopo atual" data-qb-count-summary>
+          <p data-qb-count-scope>Carregando o acervo autorizado.</p>
+          <div class="metric-row" aria-label="Quantidades de questões">
+            <article>${premiumIcon("biblioteca")} Total real<strong data-qb-real-total>0</strong><span>Questões distintas no escopo</span></article>
+            <article>${premiumIcon("livro")} RS EDUCACIONAL<strong data-qb-origin-total="authoral">0</strong><span>Itens autorais distintos</span></article>
+            <article>${premiumIcon("atividades")} ENEM<strong data-qb-origin-total="enem">0</strong><span>Origem oficial verificada</span></article>
+            <article>${premiumIcon("atividades")} SAEB<strong data-qb-origin-total="saeb">0</strong><span>Origem oficial verificada</span></article>
+            <article>${premiumIcon("biblioteca")} Filtradas<strong data-qb-filtered-total>0</strong><span>Questões distintas no filtro atual</span><span data-qb-synthetic-breakdown hidden> (<span data-qb-filtered-real>0</span> reais · <span data-qb-filtered-synthetic>0</span> sintéticas)</span></article>
+            <article>${premiumIcon("check")} Selecionadas<strong data-qb-selected-total>0</strong><span>Independentemente dos filtros</span><span data-qb-synthetic-breakdown hidden> (<span data-qb-selected-real>0</span> reais · <span data-qb-selected-synthetic>0</span> sintéticas)</span></article>
+          </div>
+          <p>Outras / origem a conferir: <strong data-qb-origin-total="other">0</strong> questões distintas.</p>
+          <p data-qb-synthetic-summary hidden>Sintéticas de teste: <strong data-qb-synthetic-total>0</strong> distintas, fora do total real. No piloto, correspondem à turma selecionada.</p>
+        </section>
         <section class="qb-view-panel qb-dashboard-view" data-qb-panel="dashboard" aria-label="Visão geral do Banco de Questões">
           <div class="metric-row qb-metrics">
-          <article>Total de questões<strong data-qb-total>0</strong><span>Banco editorial ativo</span></article>
+          <article>Questões reais no escopo<strong data-qb-total>0</strong><span>Itens distintos do catálogo carregado</span></article>
           <article>Publicados<strong data-qb-published>0</strong><span>Com curadoria concluida</span></article>
           <article>Em revisão<strong data-qb-review>0</strong><span>Sem publicação automatica</span></article>
           <article>Rascunhos<strong data-qb-draft>0</strong><span>Em elaboração</span></article>
@@ -20185,7 +20353,9 @@ const modules = {
               <div class="qb-filter-grid">
             <label><span>Buscar</span><input type="search" data-qb-search placeholder="Codigo, habilidade, enunciado..." /></label>
             <label><span>Etapa</span><select data-qb-filter="stage"><option value="">Todas</option></select></label>
-            <label><span>Ano</span><select data-qb-filter="year"><option value="">Todos</option></select></label>
+            <label><span>Ano escolar</span><select data-qb-filter="year"><option value="">Todos</option></select></label>
+            <label data-qb-enem-field hidden><span>Ano da prova</span><select data-qb-filter="examYear" aria-describedby="qb-exam-year-help"><option value="">Todos</option></select><small id="qb-exam-year-help" data-qb-exam-year-help></small></label>
+            <label data-qb-enem-field hidden><span>Idioma da questão</span><select data-qb-filter="language" aria-describedby="qb-language-help"><option value="">Todos</option></select><small id="qb-language-help">Usa o idioma informado nos metadados. Idioma ausente não é considerado Português.</small></label>
             <label><span>Componente curricular</span><select data-qb-filter="component"><option value="">Todos</option></select></label>
             <label><span>Habilidade BNCC</span><select data-qb-filter="skill"><option value="">Todas</option></select></label>
             <label><span>Matriz ou descritor</span><select data-qb-filter="descriptor"><option value="">Todos</option></select></label>
@@ -20198,17 +20368,19 @@ const modules = {
             <label><span>Origem</span><select data-qb-filter="originType"><option value="">Todas</option></select></label>
             <label><span>Status de revisão</span><select data-qb-filter="curationStatus"><option value="">Todos</option></select></label>
             <label><span>Acessibilidade</span><select data-qb-filter="accessibility"><option value="">Todas</option></select></label>
+            <label data-qb-enem-field hidden><span>Tema ENEM</span><select data-qb-filter="theme"><option value="">Todos</option></select></label>
             <label><span>Uso</span><select data-qb-used><option value="">Todas</option><option value="used">Ja utilizadas</option><option value="unused">Ineditas para a turma</option></select></label>
               </div>
             </details>
           </aside>
           <main class="qb-results">
             <div class="qb-toolbar">
-              <div><strong data-qb-result-count>0 itens</strong><span>Filtros combinaveis e resposta local rapida.</span></div>
+              <div><strong data-qb-result-count>0 questões distintas</strong><span data-qb-result-breakdown>Carregando.</span></div>
               <div class="qb-scope-tabs" aria-label="Escopo das questões">
-                <button type="button" class="is-active" data-qb-scope="all">Todas</button>
-                <button type="button" data-qb-scope="official">Oficiais Raízes e Saberes</button>
-                <button type="button" data-qb-scope="mine">Minhas questões</button>
+                <button type="button" class="is-active" data-qb-origin="all">TODAS</button>
+                <button type="button" data-qb-origin="authoral">RS EDUCACIONAL</button>
+                <button type="button" data-qb-origin="enem">ENEM</button>
+                <button type="button" data-qb-origin="saeb">SAEB</button>
               </div>
               <select data-qb-sort aria-label="Ordenar questoes">
                 <option value="recent">Última revisão</option>
@@ -21859,6 +22031,7 @@ const initTeacherAvaliaApplication = () => {
   root.addEventListener("click", async (event) => {
     const exportButton = event.target.closest("[data-avalia-print-export]");
     if (exportButton) {
+      const printContext = schoolPrintContext();
       const assignmentId = exportButton.dataset.avaliaPrintExport || "";
       const exportType = exportButton.dataset.avaliaExportType || "ANSWER_SHEET";
       const assignment = avaliaApplicationState.teacher.assignments.find((item) => item.id === assignmentId);
@@ -21874,6 +22047,7 @@ const initTeacherAvaliaApplication = () => {
           exportType,
           format: "PDF",
         });
+        await printAssessmentPayload(result?.payload, {schoolId: assignment.school_id, classId: assignment.class_id, assessmentId: assignment.assessment_id, type: exportType}, printContext);
         const fileName = result?.export?.file_name || (exportType === "ATTENDANCE_LIST" ? "lista-presenca.pdf" : "folha-respostas.pdf");
         avaliaApplicationState.teacher.printExports[assignmentId] = { message: `${fileName} pronto para impressao/exportacao.` };
         refreshTeacherAvaliaSurface();
@@ -22195,6 +22369,189 @@ const initQuestionBankShellNavigation = () => {
   });
 };
 
+const renderInstitutionalQuestionProof = (item, { showAnswerKey = false, scopeLabel = "" } = {}) => {
+    const optionLabel = index => String.fromCharCode(65 + index);
+    const correctText = item.alternatives?.[item.correctAlternative] || "";
+    const command = item.commandText && item.commandText !== item.statement ? item.commandText : "";
+    return `
+      <div class="qb-proof-page">
+        <div class="qb-proof-header">
+          <strong>${htmlEscape(item.id)}</strong>
+          <span>${htmlEscape(scopeLabel)} &middot; ${htmlEscape(item.component)} &middot; ${htmlEscape(item.year)} &middot; ${item.estimatedTime} min</span>
+        </div>
+        ${item.baseText ? `<blockquote>${htmlEscape(item.baseText)}</blockquote>` : ""}
+        <h3>${htmlEscape(item.statement)}</h3>
+        ${command ? `<p class="qb-question-command">${htmlEscape(command)}</p>` : ""}
+        <ol class="qb-alternatives">
+          ${item.alternatives.map((alternative, index) => `<li class="${showAnswerKey && index === item.correctAlternative ? "is-correct" : ""}"><b>${optionLabel(index)}</b> ${htmlEscape(alternative)}</li>`).join("")}
+        </ol>
+        ${
+          showAnswerKey
+            ? `<div class="qb-answer-key"><strong>Gabarito:</strong> ${optionLabel(item.correctAlternative)} — ${htmlEscape(correctText)}</div>`
+            : ""
+        }
+      </div>
+    `;
+  };
+
+
+// Counts describe the loaded, authorized catalog; they never grant access or infer an official corpus.
+const questionBankIsSynthetic = (item, demoMode = false) => Boolean(demoMode || item.demoOnly || item.pilotSource?.demoOnly || item.raw?.demoOnly || item.legalClassification === "SYNTHETIC_TEST_ONLY");
+const questionBankCountKey = (item, demoMode = false) => {
+  const synthetic = questionBankIsSynthetic(item, demoMode);
+  const identity = synthetic
+    ? item.pilotSource?.selectionKey || item.pilotSource?.id || item.uuid || item.id
+    : item.uuid || item.raw?.id || item.id;
+  return identity ? `${synthetic ? 'synthetic' : 'real'}:${identity}` : null;
+};
+const questionBankDistinctItems = (items, demoMode = false) => {
+  const unique = new Map();
+  for (const item of items) {
+    if (!item) continue;
+    const key = questionBankCountKey(item, demoMode);
+    if (key && !unique.has(key)) unique.set(key, item);
+  }
+  return [...unique.values()];
+};
+const questionBankCountOrigin = item => {
+  const classification = String(item.legalClassification || '').replaceAll(' ', '_');
+  if (classification.startsWith('ITEM_AUTORAL_')) return 'authoral';
+  // No verified real ENEM/SAEB import contract is installed in this client yet.
+  // Names, curricular alignment and demo ENEM metadata are not provenance verification.
+  return 'other';
+};
+const questionBankCountSummary = (catalog, filtered, selected, demoMode = false) => {
+  const split = rows => {
+    const distinct = questionBankDistinctItems(rows, demoMode);
+    const real = distinct.filter(item => !questionBankIsSynthetic(item, demoMode));
+    const origins = {authoral: 0, enem: 0, saeb: 0, other: 0};
+    real.forEach(item => origins[questionBankCountOrigin(item)]++);
+    return {total: distinct.length, real: real.length, synthetic: distinct.length - real.length, origins};
+  };
+  return {catalog: split(catalog), filtered: split(filtered), selected: split(selected)};
+};
+
+const renderQuestionBankPreview = (context, kind = "student", options = {}) => {
+  const optionLabel = index => String.fromCharCode(65 + index);
+  const shortText = (value, limit) => {const text=String(value || "").replace(/\s+/g," ").trim();return text.length>limit?`${text.slice(0,limit-1)}...`:text;};
+  const {root,cart,itemById,previewPanel,cartPoints,titleInput,activeAssessmentId} = context;
+
+    const items = cart.map(itemById).filter(Boolean);
+    if (!previewPanel || !items.length) {
+      if (previewPanel) previewPanel.hidden = true;
+      return;
+    }
+    const isTeacher = kind === "teacher";
+    const isAnswerSheet = kind === "answers";
+    const isLocalPreview = options.local === true;
+    const totalTime = items.reduce((sum, item) => sum + item.estimatedTime, 0);
+    const totalPoints = items.reduce((sum, item) => sum + Number(cartPoints[item.id] ?? 1), 0);
+    const assessmentTitle = titleInput?.value || "Avaliação";
+    const component = root.querySelector("[data-qb-assessment-component]")?.value || "";
+    const year = root.querySelector("[data-qb-assessment-year]")?.value || "";
+    const className = getTeacherInstitutionalClasses().find(item => item.id === getPrintableParams().get("class"))?.name || "__________________";
+    const printTeacherName = ["professor", "teacher"].includes(getPlatformSession().role) ? getPlatformSession().name || "__________________" : "__________________";
+    const applicationDate = root.querySelector(".qb-builder input[type='date']")?.value || "";
+    const versionCode = activeAssessmentId ? String(activeAssessmentId).slice(0, 8) : `LOCAL-${Date.now().toString().slice(-6)}`;
+    if (previewPanel.parentElement !== document.body) {
+      document.body.append(previewPanel);
+    }
+    previewPanel.hidden = false;
+    previewPanel.innerHTML = `
+      <div class="panel-head">
+        <h2>${isLocalPreview ? "Prévia rapida - nao salva" : isTeacher ? "Gabarito do professor" : isAnswerSheet ? "Folha de respostas" : "Prévia da avaliação"}</h2>
+        ${
+          isLocalPreview
+            ? ""
+            : `<button type="button" data-qb-print="${isTeacher ? "teacher" : isAnswerSheet ? "answers" : "student"}">${isTeacher ? "Gerar PDF do gabarito" : isAnswerSheet ? "Gerar folha de respostas" : "Gerar PDF do aluno"}</button>
+               <button type="button" data-qb-docx="${isTeacher ? "teacher" : isAnswerSheet ? "answers" : "student"}">${isTeacher ? "Gerar DOCX do gabarito" : isAnswerSheet ? "Gerar DOCX da folha" : "Gerar DOCX do aluno"}</button>
+               ${isTeacher ? `<button type="button" data-qb-print="answers">Gerar folha de respostas</button>` : ""}`
+        }
+        <button type="button" data-qb-close-preview>Fechar</button>
+      </div>
+      <div class="qb-preview-sheet" data-qb-print-area="${isTeacher ? "teacher" : isAnswerSheet ? "answers" : "student"}">
+        ${isLocalPreview ? `<div class="qb-local-preview-warning">Esta e uma previa local. Entre para salvar, gerar PDF e acessar o gabarito oficial.</div>` : ""}
+        <header class="qb-preview-cover">
+          <strong>${isTeacher ? "GABARITO DO PROFESSOR" : isAnswerSheet ? "FOLHA DE RESPOSTAS" : "CADERNO DO ALUNO"}</strong>
+          <span>RAIZES E SABERES EDUCACIONAL</span>
+          <small>${isTeacher ? "AVALIA+ - GABARITO E ORIENTACOES DE CORRECAO" : isAnswerSheet ? "AVALIA+ - REGISTRO DE RESPOSTAS" : "AVALIA+ - AVALIACAO DA APRENDIZAGEM"}</small>
+        </header>
+        ${
+          isTeacher
+            ? `<div class="qb-preview-meta">
+                <span><b>AVALIACAO:</b> ${htmlEscape(assessmentTitle)}</span>
+                <span><b>COMPONENTE:</b> ${htmlEscape(component)}</span>
+                <span><b>ANO/TURMA:</b> ${htmlEscape(`${year} ${className}`.trim())}</span>
+                <span><b>PROFESSOR(A):</b> ${htmlEscape(printTeacherName)}</span>
+                <span><b>DATA DE APLICACAO:</b> ${htmlEscape(applicationDate || "____/____/______")}</span>
+                <span><b>TOTAL DE QUESTOES:</b> ${items.length}</span>
+                <span><b>VALOR TOTAL:</b> ${totalPoints}</span>
+                <span><b>CODIGO DA AVALIACAO:</b> ${htmlEscape(activeAssessmentId || "Aguardando salvamento")}</span>
+                <span><b>VERSAO:</b> ${htmlEscape(versionCode)}</span>
+                <span><b>USO DO PROFESSOR</b></span>
+              </div>
+              <table class="qb-answer-summary">
+                <thead><tr><th>Questão</th><th>Resposta</th><th>Valor</th><th>Habilidade</th><th>Descritor</th></tr></thead>
+                <tbody>${items
+                  .map((item, index) => `<tr><td>${index + 1}</td><td>${optionLabel(item.correctAlternative)}</td><td>${htmlEscape(cartPoints[item.id] ?? 1)}</td><td>${htmlEscape(item.skill)}</td><td>${htmlEscape(shortText(item.descriptor, 80))}</td></tr>`)
+                  .join("")}</tbody>
+              </table>`
+            : `<div class="qb-preview-meta">
+                <span><b>ESCOLA:</b> ________________________________________________</span>
+                <span><b>ESTUDANTE:</b> _____________________________________________</span>
+                <span><b>TURMA:</b> ${htmlEscape(className)}</span>
+                <span><b>TURNO:</b> __________________</span>
+                <span><b>PROFESSOR(A):</b> ${htmlEscape(printTeacherName)}</span>
+                <span><b>COMPONENTE CURRICULAR:</b> ${htmlEscape(component)}</span>
+                <span><b>ANO:</b> ${htmlEscape(year)}</span>
+                <span><b>DATA:</b> ${htmlEscape(applicationDate || "____/____/______")}</span>
+                <span><b>AVALIACAO:</b> ${htmlEscape(assessmentTitle)}</span>
+                <span><b>VALOR:</b> ${totalPoints}</span>
+                <span><b>NOTA:</b> __________________</span>
+              </div>`
+        }
+        ${
+          isAnswerSheet
+            ? `<table class="qb-answer-sheet"><tbody>${items
+                .map(
+                  (item, index) =>
+                    `<tr><td>${index + 1}</td><td>${item.alternatives.map((_, optionIndex) => `${optionLabel(optionIndex)} ( )`).join(" · ")}</td><td>Valor ${htmlEscape(cartPoints[item.id] ?? 1)}</td></tr>`
+                )
+                .join("")}</tbody></table>`
+            : ""
+        }
+        <p>${htmlEscape(root.querySelector(".qb-builder textarea")?.value || "Leia com atencao e marque apenas uma alternativa por questao.")}</p>
+        ${isAnswerSheet ? "" : items
+          .map(
+            (item, index) => `
+              <article>
+                <h3>${index + 1}. ${htmlEscape(item.statement)}</h3>
+                ${item.baseText ? `<blockquote>${htmlEscape(item.baseText)}</blockquote>` : ""}
+                <ol class="qb-alternatives">
+                  ${item.alternatives
+                    .map((alternative, optionIndex) => `<li class="${isTeacher && optionIndex === item.correctAlternative ? "is-correct" : ""}"><b>${optionLabel(optionIndex)}</b> ${htmlEscape(alternative)}</li>`)
+                    .join("")}
+                </ol>
+                ${
+                  isTeacher
+                    ? `<p><strong>Gabarito:</strong> ${optionLabel(item.correctAlternative)} &middot; ${htmlEscape(item.justification)}<br><strong>Habilidade:</strong> ${htmlEscape(item.skill)}<br><strong>Descritor:</strong> ${htmlEscape(item.descriptor)}<br><strong>Distratores:</strong> ${htmlEscape(item.distractors.join(" "))}<br><strong>Orientação de correcao:</strong> ${htmlEscape(item.intervention || "Retomar a habilidade indicada com atividade de recomposicao.")}</p>`
+                    : `<p>${item.estimatedTime} min &middot; ${htmlEscape(item.component)} &middot; ${htmlEscape(item.skill)} &middot; Valor ${htmlEscape(cartPoints[item.id] ?? 1)}</p>`
+                }
+                <footer>Pagina simulada ${index + 1} de ${items.length} &middot; Versão ${htmlEscape(versionCode)}</footer>
+              </article>
+            `
+          )
+          .join("")}
+        <footer class="qb-preview-footer">RAIZES E SABERES EDUCACIONAL &middot; ${items.length} questoes &middot; ${totalTime} min &middot; Versão ${htmlEscape(versionCode)}</footer>
+      </div>
+    `;
+    previewPanel.setAttribute("tabindex", "-1");
+    window.setTimeout(() => {
+      previewPanel.focus({ preventScroll: true });
+      previewPanel.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 0);
+  };
+
 const initQuestionBank = () => {
   const root = document.querySelector("[data-question-bank]");
   if (!root) {
@@ -22275,6 +22632,11 @@ const initQuestionBank = () => {
   let assessmentRevision = 0, assessmentRefreshGeneration = 0;
   let cart = [];
   let cartPoints = {};
+  let pilotSession = null, pilotRestore = null;
+  const pilotItems = new Map(), pilotCatalog = new Map();
+  let originFilter="all";
+  const bankItems=()=>[...questions,...pilotCatalog.values()];
+  const pilotMessage = "Seleção sintética temporária: prévia e impressão de teste disponíveis. Salvar e aplicar a alunos não está disponível.";
   let mode = questionBankDataService.mode();
   const assessmentActorId=getSupabaseUserContext().userId;
   const assessmentActorAbort=new AbortController();
@@ -22288,7 +22650,7 @@ const initQuestionBank = () => {
     root.innerHTML='<section role="alert"><h2>Conta alterada</h2><p>Esta jornada foi encerrada. Recarregue a página para continuar com a conta atual. Confirmações pendentes de salvamento foram preservadas.</p><a href="banco-questoes.html">Reabrir Banco de Questões</a></section>';
     throw Object.assign(Error('Conta alterada. Reabra o Banco para continuar.'),{code:'ASSESSMENT_ACTOR_CHANGED'});
   };
-  let scopeFilter = localStorage.getItem("raizes:question-bank-scope") || "all";
+  let scopeFilter = "all";
   let editorialMode = { type: "create", source: null };
   let editorialActionState = "IDLE";
   let partialReviewQuestionId = "";
@@ -22319,13 +22681,20 @@ const initQuestionBank = () => {
           return "Modo demonstração: leitura conectada ao Supabase real, mas salvamento exige login do professor.";
         })();
 
+  const syncExamFilterVisibility = () => {
+    const visible = ['all', 'enem'].includes(originFilter);
+    root.querySelectorAll('[data-qb-enem-field]').forEach(label => {
+      label.hidden = !visible;
+      if (!visible) label.querySelector('select').value = '';
+    });
+  };
   const populateFilterOptions = () => {
     filters.forEach((select) => {
       const key = select.dataset.qbFilter;
       const current = select.value;
       select.querySelectorAll("option:not(:first-child)").forEach((option) => option.remove());
-      [...new Set(questions.map((item) => item[key]).filter(Boolean))]
-        .sort()
+      const values = [...new Set(bankItems().map(item => item[key]).filter(Boolean).map(String))].sort();
+      values
         .forEach((value) => {
           const option = document.createElement("option");
           option.value = value;
@@ -22337,9 +22706,15 @@ const initQuestionBank = () => {
       select.value = [...select.options].some((option) => option.value === nextValue) ? nextValue : "";
       delete select.dataset.pendingValue;
     });
+    const years = root.querySelector('[data-qb-filter="examYear"]');
+    const help = root.querySelector('[data-qb-exam-year-help]');
+    if (help) help.textContent = years.options.length > 1
+      ? 'Anos informados nos metadados do acervo carregado; distinto de ano escolar.'
+      : 'Nenhum ano da prova informado nos metadados do acervo carregado.';
+    syncExamFilterVisibility();
   };
 
-  const itemById = (id) => questions.find((item) => item.id === id || item.uuid === id);
+  const itemById = (id) => pilotItems.get(id) || pilotCatalog.get(id) || questions.find((item) => item.id === id || item.uuid === id);
   const shortText = (value, limit = 150) => {
     const text = String(value || "").replace(/\s+/g, " ").trim();
     return text.length > limit ? `${text.slice(0, limit - 1)}...` : text;
@@ -22376,6 +22751,7 @@ const initQuestionBank = () => {
     requireAssessmentActor();
     if(syncPoints)syncPointInputs();
     assessmentRevision++;
+    if (pilotSession) { previewPanel.hidden = true; return; }
     localStorage.setItem(
       draftStorageKey,
       JSON.stringify({
@@ -22865,7 +23241,7 @@ const initQuestionBank = () => {
     const caps = getQuestionBankCapabilities();
     if (!caps.edit) {
       const totalLabel=root.querySelector('[data-qb-total]')?.parentElement;
-      if(totalLabel){totalLabel.firstChild.textContent='Questões acessíveis';totalLabel.querySelector('span').textContent='Disponíveis para seu perfil';}
+      if(totalLabel){totalLabel.firstChild.textContent='Questões reais acessíveis';totalLabel.querySelector('span').textContent='Distintas nas turmas autorizadas do perfil';}
       root.querySelectorAll('[data-qb-review],[data-qb-archived]').forEach(node=>{node.parentElement.hidden=true;});
       const hint=root.querySelector('[data-qb-editorial-status]');
       if(hint && !hint.dataset.tone)hint.textContent='Crie seu rascunho de questão. Revisão e publicação dependem de perfil editorial autorizado.';
@@ -22888,9 +23264,14 @@ const initQuestionBank = () => {
       const params = new URLSearchParams(href.split("?")[1] || "");
       link.classList.toggle("is-active", params.get("view") === activeView || (!params.get("view") && activeView === "dashboard"));
     });
+    root.querySelectorAll('[data-qb-origin]').forEach(button=>{button.classList.toggle('is-active',button.dataset.qbOrigin===originFilter);button.setAttribute('aria-pressed',String(button.dataset.qbOrigin===originFilter));});
     scopeTabs.forEach((button) => {
       button.classList.toggle("is-active", button.dataset.qbScope === scopeFilter);
     });
+  };
+  const scrollQuestionBankToTop = () => {
+    // The document scrolls; .app-main is not a separate scroll container.
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   };
   const goToQuestionBankView = (view) => {
     if (!questionBankViews.has(view)) return;
@@ -22899,11 +23280,13 @@ const initQuestionBank = () => {
     params.delete("qbResume");
     window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}`);
     syncQuestionBankView();
+    scrollQuestionBankToTop();
   };
   const focusQuestionBankHashTarget = () => {
     const hash = String(window.location.hash || "").replace(/^#/, "");
     if (hash && questionBankHashView[hash]) {
       goToQuestionBankView(questionBankHashView[hash]);
+      if (questionBankHashView[hash] === "avaliacoes") return;
     }
     if (!hash) return;
     const target = document.getElementById(hash);
@@ -23223,8 +23606,11 @@ const initQuestionBank = () => {
   const getFilteredItems = () => {
     const filterValues = Object.fromEntries(filters.map((select) => [select.dataset.qbFilter, select.value]));
     const usedValue = usedFilter.value;
-    const items = questions.filter((item) => {
-      const fieldMatches = Object.entries(filterValues).every(([key, value]) => !value || item[key] === value);
+    const items = bankItems().filter((item) => {
+      // Alignment with SAEB does not make an authoral item an official SAEB item.
+      const origin=item.pilotSource?.demoOnly?'enem':questionBankCountOrigin(item);
+      if(originFilter!=='all' && originFilter!==origin)return false;
+      const fieldMatches = Object.entries(filterValues).every(([key, value]) => !value || String(item[key]??'') === value);
       const useMatches = !usedValue || (usedValue === "used" ? item.usedCount > 0 : item.usedCount === 0);
       const scopeMatches =
         scopeFilter === "mine"
@@ -23250,20 +23636,33 @@ const initQuestionBank = () => {
       if (sort.value === "time") {
         return a.estimatedTime - b.estimatedTime;
       }
-      return b.reviewedAt.localeCompare(a.reviewedAt);
+      return String(b.reviewedAt||'').localeCompare(String(a.reviewedAt||''));
     });
   };
 
   const renderMetrics = (items) => {
-    root.querySelector("[data-qb-total]").textContent = questions.length;
-    root.querySelector("[data-qb-published]").textContent = questions.filter((item) => item.publicationStatus === "PUBLICADO").length;
-    root.querySelector("[data-qb-review]").textContent = questions.filter((item) => getEditorialWorkflowStatus(item) === "EM_REVISAO").length;
-    root.querySelector("[data-qb-draft]").textContent = questions.filter((item) => getEditorialWorkflowStatus(item) === "EM_ELABORACAO").length;
-    root.querySelector("[data-qb-archived]").textContent = questions.filter((item) => getEditorialWorkflowStatus(item) === "ARQUIVADO").length;
-    root.querySelectorAll("[data-qb-cart-count]").forEach((node) => {
-      node.textContent = cart.length;
-    });
-    root.querySelector("[data-qb-result-count]").textContent = `${items.length} ${items.length === 1 ? "item" : "itens"}`;
+    const demoMode = mode !== "supabase";
+    const counts = questionBankCountSummary(bankItems(), items, cart.map(itemById).filter(Boolean), demoMode);
+    const showSynthetic = demoMode || Boolean(window.RSEnemInstitutional) || counts.catalog.synthetic > 0 || counts.selected.synthetic > 0;
+    root.querySelectorAll('[data-qb-synthetic-summary],[data-qb-synthetic-breakdown]').forEach(node => { node.hidden = !showSynthetic; });
+    const realItems = questionBankDistinctItems(bankItems(), demoMode).filter(item => !questionBankIsSynthetic(item, demoMode));
+    const put = (selector, value) => root.querySelectorAll(selector).forEach(node => { node.textContent = value; });
+    put('[data-qb-total],[data-qb-real-total]', counts.catalog.real);
+    put('[data-qb-synthetic-total]', counts.catalog.synthetic);
+    for (const [origin, total] of Object.entries(counts.catalog.origins)) put(`[data-qb-origin-total="${origin}"]`, total);
+    for (const part of ['filtered', 'selected']) for (const kind of ['total', 'real', 'synthetic']) put(`[data-qb-${part}-${kind}]`, counts[part][kind]);
+    put('[data-qb-count-scope]', demoMode
+      ? 'Acervo demonstrativo local; nenhum total real certificado.'
+      : questionBankDataService.getQuestionAccessState().status === 'EDITORIAL_FULL_BANK'
+        ? 'Acervo retornado ao perfil editorial. Completude global ainda não certificada.'
+        : 'Acervo real das turmas autorizadas do perfil.' + (showSynthetic ? ' Escolher uma turma no piloto altera apenas o catálogo sintético.' : ''));
+    put('[data-qb-published]', realItems.filter(item => item.publicationStatus === "PUBLICADO").length);
+    put('[data-qb-review]', realItems.filter(item => getEditorialWorkflowStatus(item) === "EM_REVISAO").length);
+    put('[data-qb-draft]', realItems.filter(item => getEditorialWorkflowStatus(item) === "EM_ELABORACAO").length);
+    put('[data-qb-archived]', realItems.filter(item => getEditorialWorkflowStatus(item) === "ARQUIVADO").length);
+    put('[data-qb-cart-count]', counts.selected.total);
+    put('[data-qb-result-count]', `${counts.filtered.total} ${counts.filtered.total === 1 ? 'questão distinta' : 'questões distintas'}`);
+    put('[data-qb-result-breakdown]', showSynthetic ? `${counts.filtered.real} reais · ${counts.filtered.synthetic} sintéticas · ${items.length} ocorrências exibidas` : `${items.length} ocorrências exibidas`);
   };
   const renderSummaryList = (selector, entries) => {
     const node = root.querySelector(selector);
@@ -23307,7 +23706,7 @@ const initQuestionBank = () => {
     <article class="qb-card ${item.id === selectedId ? "is-focused" : ""} ${isSelected(item.id) ? "is-selected" : ""}" data-qb-card="${htmlEscape(item.id)}">
       <div class="qb-card-top">
         <span>${htmlEscape(item.id)}</span>
-        <mark>${htmlEscape(getQuestionScopeKind(item))}</mark>
+        <mark>${htmlEscape(item.pilotSource?.demoOnly?"ENEM · SINTÉTICA":(questionBankCountOrigin(item)==="authoral" || getQuestionScopeKind(item)==="AUTORAL" ? "RS EDUCACIONAL" : getQuestionScopeKind(item)))}</mark>
       </div>
       <h3>${htmlEscape(shortText(item.statement || item.title, 110))}</h3>
       <p>${htmlEscape(item.component)} &middot; ${htmlEscape(item.year)} &middot; ${htmlEscape(item.skill)}</p>
@@ -23317,38 +23716,17 @@ const initQuestionBank = () => {
       <div class="qb-card-actions">
         <button type="button" data-qb-view="${item.id}" aria-label="Ver questao ${htmlEscape(item.id)}">Ver questao</button>
         ${
-          canEditOfficialQuestion()
+          item.pilotSource?.demoOnly ? '' : canEditOfficialQuestion()
             ? `<button type="button" data-qb-editorial-edit="${htmlEscape(item.id)}">Editar oficial</button>`
             : `<button type="button" data-qb-adapt="${item.id}" ${item.publicationStatus === "PUBLICADO" && canAdaptQuestion() ? "" : "disabled"}>Adaptar questão</button>`
         }
         <button type="button" data-qb-add="${item.id}" class="${isSelected(item.id) ? "is-selected" : ""}" aria-pressed="${isSelected(item.id)}" ${item.publicationStatus !== "PUBLICADO" || isSelected(item.id) ? "disabled" : ""}>${isSelected(item.id) ? "Selecionada" : "Selecionar"}</button>
+        ${item.pilotSource?.demoOnly&&isSelected(item.id)?`<button type="button" data-qb-remove="${item.id}" aria-label="Desfazer seleção de ${htmlEscape(item.id)}">Desfazer seleção</button>`:''}
       </div>
     </article>
   `;
 
-  const renderQuestionProof = (item, { showAnswerKey = false } = {}) => {
-    const correctText = item.alternatives?.[item.correctAlternative] || "";
-    const command = item.commandText && item.commandText !== item.statement ? item.commandText : "";
-    return `
-      <div class="qb-proof-page">
-        <div class="qb-proof-header">
-          <strong>${htmlEscape(item.id)}</strong>
-          <span>${htmlEscape(getQuestionScopeKind(item))} &middot; ${htmlEscape(item.component)} &middot; ${htmlEscape(item.year)} &middot; ${item.estimatedTime} min</span>
-        </div>
-        ${item.baseText ? `<blockquote>${htmlEscape(item.baseText)}</blockquote>` : ""}
-        <h3>${htmlEscape(item.statement)}</h3>
-        ${command ? `<p class="qb-question-command">${htmlEscape(command)}</p>` : ""}
-        <ol class="qb-alternatives">
-          ${item.alternatives.map((alternative, index) => `<li class="${showAnswerKey && index === item.correctAlternative ? "is-correct" : ""}"><b>${optionLabel(index)}</b> ${htmlEscape(alternative)}</li>`).join("")}
-        </ol>
-        ${
-          showAnswerKey
-            ? `<div class="qb-answer-key"><strong>Gabarito:</strong> ${optionLabel(item.correctAlternative)} — ${htmlEscape(correctText)}</div>`
-            : ""
-        }
-      </div>
-    `;
-  };
+  const renderQuestionProof = (item, options = {}) => renderInstitutionalQuestionProof(item, { ...options, scopeLabel: getQuestionScopeKind(item) });
 
   const renderQuestionMetadata = (item, history = []) => `
     <div class="qb-detail-grid">
@@ -23432,6 +23810,7 @@ const initQuestionBank = () => {
   const openQuestionPreview = async (questionId, opener = document.activeElement) => {
     requireAssessmentActor();
     const item = itemById(questionId);
+    if (pilotSession && (pilotItems.has(questionId)||pilotCatalog.has(questionId))) { pilotSession.view(questionId); return; }
     const generation = ++questionPreviewGeneration;
     if (!item) { closeQuestionPreview(); return; }
     questionPreviewId = item.id;
@@ -23467,6 +23846,7 @@ const initQuestionBank = () => {
   const renderDetail = async (current = assessmentActorCurrent) => {
     if (!current()) return;
     const item = itemById(selectedId) || questions[0];
+    if(item?.pilotSource?.demoOnly){detail.replaceChildren();detail.hidden=true;return;}
     if (!item) {
       detail.innerHTML = `<div class="qb-state">Selecione uma questao para ver os detalhes.</div>`;
       return;
@@ -23493,13 +23873,13 @@ const initQuestionBank = () => {
       ${renderQuestionProof(item, { showAnswerKey: true })}
       ${renderQuestionMetadata(item, history)}
     `;
-    if (mode === "supabase" && item.uuid) {
+    if (!pilotSession && mode === "supabase" && item.uuid) {
       questionBankDataService.registerUsage(item.uuid, null, "visualizada").catch(() => {});
     }
   };
 
   const saveOrder = async () => {
-    if (!activeAssessmentId) return;
+    if (pilotSession || !activeAssessmentId) return;
     try {
       await questionBankDataService.reorderQuestions(
         activeAssessmentId,
@@ -23526,7 +23906,7 @@ const initQuestionBank = () => {
 
   const renderCart = () => {
     const items = cart.map(itemById).filter(Boolean);
-    localStorage.setItem(cartStorageKey, JSON.stringify(items.map((item) => item.id)));
+    if (!pilotSession) localStorage.setItem(cartStorageKey, JSON.stringify(items.map((item) => item.id)));
     cartList.innerHTML = items.length
       ? items
           .map(
@@ -23549,126 +23929,27 @@ const initQuestionBank = () => {
           )
           .join("")
       : `<div class="qb-state">Selecione questoes publicadas para montar uma avaliação.</div>`;
+    root.dispatchEvent(new Event("qb-selection-changed"));
     cartTime.textContent = `${items.reduce((sum, item) => sum + item.estimatedTime, 0)} min`;
-    root.querySelectorAll("[data-qb-cart-count]").forEach((node) => {
-      node.textContent = cart.length;
-    });
+    renderMetrics(getFilteredItems());
   };
 
   const renderPreview = (kind = "student", options = {}) => {
-    const items = cart.map(itemById).filter(Boolean);
-    if (!previewPanel || !items.length) {
-      if (previewPanel) previewPanel.hidden = true;
-      return;
+    const title = pilotSession ? {value: `${titleInput.value || 'Avaliação'} — TESTE SINTÉTICO / NÃO APLICAR A ALUNOS`} : titleInput;
+    renderQuestionBankPreview({root,cart,itemById,previewPanel,cartPoints,titleInput:title,activeAssessmentId}, kind, options);
+    if (pilotSession) {
+      pilotSession.decorate(previewPanel, kind);
+      previewPanel.querySelectorAll('[data-qb-docx]').forEach(button => {button.disabled=true;button.title=pilotMessage;});
     }
-    const isTeacher = kind === "teacher";
-    const isAnswerSheet = kind === "answers";
-    const isLocalPreview = options.local === true;
-    const totalTime = items.reduce((sum, item) => sum + item.estimatedTime, 0);
-    const totalPoints = items.reduce((sum, item) => sum + Number(cartPoints[item.id] ?? 1), 0);
-    const assessmentTitle = titleInput?.value || "Avaliação";
-    const component = root.querySelector("[data-qb-assessment-component]")?.value || "";
-    const year = root.querySelector("[data-qb-assessment-year]")?.value || "";
-    const className = root.querySelectorAll(".qb-builder select")[0]?.value || "";
-    const applicationDate = root.querySelector(".qb-builder input[type='date']")?.value || "";
-    const versionCode = activeAssessmentId ? String(activeAssessmentId).slice(0, 8) : `LOCAL-${Date.now().toString().slice(-6)}`;
-    if (previewPanel.parentElement !== document.body) {
-      document.body.append(previewPanel);
-    }
-    previewPanel.hidden = false;
-    previewPanel.innerHTML = `
-      <div class="panel-head">
-        <h2>${isLocalPreview ? "Prévia rapida - nao salva" : isTeacher ? "Gabarito do professor" : isAnswerSheet ? "Folha de respostas" : "Prévia da avaliação"}</h2>
-        ${
-          isLocalPreview
-            ? ""
-            : `<button type="button" data-qb-print="${isTeacher ? "teacher" : isAnswerSheet ? "answers" : "student"}">${isTeacher ? "Gerar PDF do gabarito" : isAnswerSheet ? "Gerar folha de respostas" : "Gerar PDF do aluno"}</button>
-               <button type="button" data-qb-docx="${isTeacher ? "teacher" : isAnswerSheet ? "answers" : "student"}">${isTeacher ? "Gerar DOCX do gabarito" : isAnswerSheet ? "Gerar DOCX da folha" : "Gerar DOCX do aluno"}</button>
-               ${isTeacher ? `<button type="button" data-qb-print="answers">Gerar folha de respostas</button>` : ""}`
-        }
-        <button type="button" data-qb-close-preview>Fechar</button>
-      </div>
-      <div class="qb-preview-sheet" data-qb-print-area="${isTeacher ? "teacher" : isAnswerSheet ? "answers" : "student"}">
-        ${isLocalPreview ? `<div class="qb-local-preview-warning">Esta e uma previa local. Entre para salvar, gerar PDF e acessar o gabarito oficial.</div>` : ""}
-        <header class="qb-preview-cover">
-          <strong>${isTeacher ? "GABARITO DO PROFESSOR" : isAnswerSheet ? "FOLHA DE RESPOSTAS" : "CADERNO DO ALUNO"}</strong>
-          <span>RAIZES E SABERES EDUCACIONAL</span>
-          <small>${isTeacher ? "AVALIA+ - GABARITO E ORIENTACOES DE CORRECAO" : isAnswerSheet ? "AVALIA+ - REGISTRO DE RESPOSTAS" : "AVALIA+ - AVALIACAO DA APRENDIZAGEM"}</small>
-        </header>
-        ${
-          isTeacher
-            ? `<div class="qb-preview-meta">
-                <span><b>AVALIACAO:</b> ${htmlEscape(assessmentTitle)}</span>
-                <span><b>COMPONENTE:</b> ${htmlEscape(component)}</span>
-                <span><b>ANO/TURMA:</b> ${htmlEscape(`${year} ${className}`.trim())}</span>
-                <span><b>PROFESSOR(A):</b> ${htmlEscape(pilotProfiles.teacher.displayName)}</span>
-                <span><b>DATA DE APLICACAO:</b> ${htmlEscape(applicationDate || "____/____/______")}</span>
-                <span><b>TOTAL DE QUESTOES:</b> ${items.length}</span>
-                <span><b>VALOR TOTAL:</b> ${totalPoints}</span>
-                <span><b>CODIGO DA AVALIACAO:</b> ${htmlEscape(activeAssessmentId || "Aguardando salvamento")}</span>
-                <span><b>VERSAO:</b> ${htmlEscape(versionCode)}</span>
-                <span><b>USO DO PROFESSOR</b></span>
-              </div>
-              <table class="qb-answer-summary">
-                <thead><tr><th>Questão</th><th>Resposta</th><th>Valor</th><th>Habilidade</th><th>Descritor</th></tr></thead>
-                <tbody>${items
-                  .map((item, index) => `<tr><td>${index + 1}</td><td>${optionLabel(item.correctAlternative)}</td><td>${htmlEscape(cartPoints[item.id] ?? 1)}</td><td>${htmlEscape(item.skill)}</td><td>${htmlEscape(shortText(item.descriptor, 80))}</td></tr>`)
-                  .join("")}</tbody>
-              </table>`
-            : `<div class="qb-preview-meta">
-                <span><b>ESCOLA:</b> ________________________________________________</span>
-                <span><b>ESTUDANTE:</b> _____________________________________________</span>
-                <span><b>TURMA:</b> ${htmlEscape(className)}</span>
-                <span><b>TURNO:</b> __________________</span>
-                <span><b>PROFESSOR(A):</b> ${htmlEscape(pilotProfiles.teacher.displayName)}</span>
-                <span><b>COMPONENTE CURRICULAR:</b> ${htmlEscape(component)}</span>
-                <span><b>ANO:</b> ${htmlEscape(year)}</span>
-                <span><b>DATA:</b> ${htmlEscape(applicationDate || "____/____/______")}</span>
-                <span><b>AVALIACAO:</b> ${htmlEscape(assessmentTitle)}</span>
-                <span><b>VALOR:</b> ${totalPoints}</span>
-                <span><b>NOTA:</b> __________________</span>
-              </div>`
-        }
-        ${
-          isAnswerSheet
-            ? `<table class="qb-answer-sheet"><tbody>${items
-                .map(
-                  (item, index) =>
-                    `<tr><td>${index + 1}</td><td>A ( )</td><td>B ( )</td><td>C ( )</td><td>D ( )</td><td>Valor ${htmlEscape(cartPoints[item.id] ?? 1)}</td></tr>`
-                )
-                .join("")}</tbody></table>`
-            : ""
-        }
-        <p>${htmlEscape(root.querySelector(".qb-builder textarea")?.value || "Leia com atencao e marque apenas uma alternativa por questao.")}</p>
-        ${isAnswerSheet ? "" : items
-          .map(
-            (item, index) => `
-              <article>
-                <h3>${index + 1}. ${htmlEscape(item.statement)}</h3>
-                ${item.baseText ? `<blockquote>${htmlEscape(item.baseText)}</blockquote>` : ""}
-                <ol class="qb-alternatives">
-                  ${item.alternatives
-                    .map((alternative, optionIndex) => `<li class="${isTeacher && optionIndex === item.correctAlternative ? "is-correct" : ""}"><b>${optionLabel(optionIndex)}</b> ${htmlEscape(alternative)}</li>`)
-                    .join("")}
-                </ol>
-                ${
-                  isTeacher
-                    ? `<p><strong>Gabarito:</strong> ${optionLabel(item.correctAlternative)} &middot; ${htmlEscape(item.justification)}<br><strong>Habilidade:</strong> ${htmlEscape(item.skill)}<br><strong>Descritor:</strong> ${htmlEscape(item.descriptor)}<br><strong>Distratores:</strong> ${htmlEscape(item.distractors.join(" "))}<br><strong>Orientação de correcao:</strong> ${htmlEscape(item.intervention || "Retomar a habilidade indicada com atividade de recomposicao.")}</p>`
-                    : `<p>${item.estimatedTime} min &middot; ${htmlEscape(item.component)} &middot; ${htmlEscape(item.skill)} &middot; Valor ${htmlEscape(cartPoints[item.id] ?? 1)}</p>`
-                }
-                <footer>Pagina simulada ${index + 1} de ${items.length} &middot; Versão ${htmlEscape(versionCode)}</footer>
-              </article>
-            `
-          )
-          .join("")}
-        <footer class="qb-preview-footer">RAIZES E SABERES EDUCACIONAL &middot; ${items.length} questoes &middot; ${totalTime} min &middot; Versão ${htmlEscape(versionCode)}</footer>
-      </div>
-    `;
-    previewPanel.setAttribute("tabindex", "-1");
-    window.setTimeout(() => {
-      previewPanel.focus({ preventScroll: true });
-      previewPanel.scrollIntoView({ block: "center", behavior: "smooth" });
-    }, 0);
+  };
+  const preparePilotPreview = async (kind) => {
+    if (!pilotSession) return () => true;
+    const session = pilotSession, revision = assessmentRevision;
+    const result = await session.prepare(cart.map(itemById), kind);
+    requireAssessmentActor();
+    if (session !== pilotSession || revision !== assessmentRevision) throw Error('Seleção alterada. Abra uma nova prévia.');
+    for (const item of result.items) pilotItems.set(item.id, item);
+    return () => pilotSession === session && revision === assessmentRevision && result.current();
   };
 
   const hydrateConfirmedAssessment = (assessment) => {
@@ -23697,6 +23978,10 @@ const initQuestionBank = () => {
     root.querySelectorAll('[data-qb-new-assessment]').forEach(node => {
       node.disabled = Boolean(assessmentSavePromise || assessmentSwitchBusy || sessionStorage.getItem(assessmentSaveKey));
     });
+    if (pilotSession) {
+      if(notice){notice.hidden=false;notice.textContent=pilotMessage;}
+      root.querySelectorAll('[data-qb-save-draft],[data-qb-publish-digital],[data-qb-new-assessment],[data-qb-open-assessment],[data-qb-duplicate-assessment],[data-qb-reapply-assessment],[data-qb-archive-assessment]').forEach(button=>{button.disabled=true;button.title=pilotMessage;});
+    }
     const publish=root.querySelector('[data-qb-publish-digital]');if(publish)publish.textContent=activeAssessmentProtected?'Reaplicar':'Salvar e escolher turma';
   };
   const renderSaved = () => {
@@ -23729,8 +24014,11 @@ const initQuestionBank = () => {
         empty.textContent = "Nenhuma questao encontrada com os filtros atuais.";
       }
     }
+    if(!items.length && originFilter==='saeb')empty.textContent='Nenhum acervo oficial SAEB verificado disponível. Itens autorais alinhados ao SAEB permanecem em RS EDUCACIONAL.';
+    if(!items.length && originFilter==='enem')empty.textContent=window.RSEnemInstitutional ? 'Selecione a turma para consultar o piloto ENEM, quando disponível. Nenhum acervo ENEM real foi importado.' : 'Nenhuma questão ENEM disponível neste acervo.';
     empty.hidden = items.length > 0;
     renderMetrics(items);
+    root.dispatchEvent(new Event("qb-bank-filtered"));
     renderDashboardSummaries();
     await renderDetail(current);
     if (!current()) return;
@@ -23762,6 +24050,7 @@ const initQuestionBank = () => {
   });
 
   const syncCartToAssessment = async () => {
+    if (pilotSession) throw Error(pilotMessage);
     requireAssessmentActor();
     if(activeAssessmentProtected)throw Object.assign(Error(protectedAssessmentMessage),{status:400,code:'42501'});
     if (!cart.length) return null;
@@ -23819,6 +24108,7 @@ const initQuestionBank = () => {
   const uncertainSaveMessage='A confirmação do salvamento está pendente. Consulte Avaliações salvas e abra a avaliação confirmada antes de continuar. Não repita a criação.';
   const saveControls='.qb-builder input,.qb-builder select,.qb-builder textarea,[data-qb-points],[data-qb-save-draft],[data-qb-preview],[data-qb-publish-digital],[data-qb-generate],.qb-cart button,[data-qb-add],[data-qb-clear-cart],[data-qb-open-assessment],[data-qb-duplicate-assessment],[data-qb-reapply-assessment],[data-qb-archive-assessment],[data-qb-new-assessment]';
   const saveAssessmentOnce = () => {
+    if (pilotSession) throw Error(pilotMessage);
     requireAssessmentActor();
     if(assessmentSavePromise)return assessmentSavePromise;
     if(assessmentSwitchBusy)return Promise.reject(Error('Aguarde a abertura ou duplicação terminar.'));
@@ -23846,6 +24136,7 @@ const initQuestionBank = () => {
     return assessmentSavePromise;
   };
   const ensureSavedForPreview = async () => {
+    if (pilotSession) throw Error(pilotMessage);
     requireAssessmentActor();
     if(assessmentSwitchBusy)throw Error('Aguarde a abertura ou duplicação terminar.');
     if(!assessmentSavePromise && sessionStorage.getItem(assessmentSaveKey))throw Error(uncertainSaveMessage);
@@ -23875,12 +24166,17 @@ const initQuestionBank = () => {
   };
 
   const printPreview = async (kind) => {
+    const pilotCurrent = await preparePilotPreview(kind);
+    const actorContext = schoolPrintContext();
+    const documentKey = () => JSON.stringify({ cart, cartPoints, questions: cart.map(itemById), fields: [...root.querySelectorAll('.qb-builder input,.qb-builder select,.qb-builder textarea')].map(input => input.value) });
+    const selectedDocument = documentKey();
+    const printContext = () => pilotCurrent() && actorContext() && selectedDocument === documentKey();
     const items = cart.map(itemById).filter(Boolean);
     if (!items.length) {
       setSelectionStatus("Selecione questoes antes de gerar PDF.", "error");
       return;
     }
-    if (mode === "supabase") {
+    if (!pilotSession && mode === "supabase") {
       const savedAssessment = await ensureSavedForPreview();
       const assessmentId = savedAssessment?.assessment?.id || savedAssessment?.id || activeAssessmentId;
       if (!assessmentId) {
@@ -23892,11 +24188,30 @@ const initQuestionBank = () => {
         format: "PDF",
       });
     }
+    if (!printContext()) throw Error("Contexto alterado.");
     renderPreview(kind);
-    window.setTimeout(() => window.print(), 80);
+    await schoolPrintReady();
+    if (!printContext()) throw Error("Contexto alterado.");
+    const printVersion = await schoolPrintVersion({assessmentId: activeAssessmentId, questions: items.map(item => ({id:item.id,statement:item.statement,alternatives:item.alternatives}))});
+    const printSheet = previewPanel.querySelector(".qb-preview-sheet").cloneNode(true);
+    printSheet.querySelectorAll('article footer').forEach(footer => footer.remove());
+    if (kind === "student") {
+      // Only the printed student test: the answer sheet retains its original template.
+      [...printSheet.querySelectorAll('.qb-preview-meta > span')].slice(0, 2).forEach(field => {
+        const label = field.querySelector('b');
+        if (!label) return;
+        const line = document.createElement('span');
+        line.className = 'qb-print-write-line';
+        line.setAttribute('aria-hidden', 'true');
+        field.classList.add('qb-print-write-field');
+        field.replaceChildren(label, line);
+      });
+    }
+    RSPrint.open({ assessmentKind: kind === "student" || kind === "teacher" ? kind : undefined, title: kind === "teacher" ? "Gabarito do professor" : kind === "answers" ? "Cartão-resposta" : "Prova do aluno", html: `<p>Modelo RS-v1 · Documento ${htmlEscape(activeAssessmentId || "Prévia")} · SHA256 ${printVersion}</p>` + printSheet.innerHTML, current: printContext });
   };
 
   const generateDocxExport = async (kind) => {
+    if (pilotSession) throw Error(pilotMessage);
     const items = cart.map(itemById).filter(Boolean);
     if (!items.length) {
       setSelectionStatus("Selecione questoes antes de gerar DOCX.", "error");
@@ -23936,6 +24251,7 @@ const initQuestionBank = () => {
   });
 
   const publishCurrentAssessmentDigitally = () => {
+    if (pilotSession) throw Error(pilotMessage);
     requireAssessmentActor();
     if(!assessmentSavePromise && sessionStorage.getItem(assessmentSaveKey))throw Error(uncertainSaveMessage);
     if(assessmentHandoffComplete)return Promise.resolve(null);
@@ -23967,6 +24283,8 @@ const initQuestionBank = () => {
       setSelectionStatus(`${item.id} ja esta selecionada.`, "info");
       return;
     }
+    if (pilotSession && !item.pilotSource?.demoOnly && cart.map(itemById).filter(q=>!q?.pilotSource?.demoOnly).length >= 10) throw Error('Limite de 10 autorais por teste.');
+    if (pilotSession && cart.length >= 100) throw Error("Limite de 100 questões.");
     cart.push(item.id);
     cartPoints[item.id] = cartPoints[item.id] ?? 1;
     for(const [selector,key] of [['[data-qb-assessment-year]','year'],['[data-qb-assessment-component]','component']]) {
@@ -24048,6 +24366,14 @@ const initQuestionBank = () => {
     let switchControls=[];
     try {
       requireAssessmentActor();
+      if (pilotSession && button.matches('[data-qb-new-assessment],[data-qb-save-draft],[data-qb-publish-digital],[data-qb-open-assessment],[data-qb-duplicate-assessment],[data-qb-reapply-assessment],[data-qb-archive-assessment],[data-qb-create-draft],[data-qb-submit-review],[data-qb-retry-review],[data-qb-workflow-review],[data-qb-workflow-approve],[data-qb-workflow-archive]')) throw Error(pilotMessage);
+      if (pilotSession && button.matches('[data-qb-preview],[data-qb-preview-local],[data-qb-generate]')) {
+        const kind=button.dataset.qbPreview || 'student';
+        const current=await preparePilotPreview(kind);
+        if (!current()) throw Error('Contexto alterado.');
+        renderPreview(kind);
+        setSelectionStatus(pilotMessage); return;
+      }
       if (button.hasAttribute('data-qb-new-assessment')) {
         if (assessmentSavePromise || assessmentSwitchBusy) throw Error('Aguarde a operação atual terminar antes de iniciar outra avaliação.');
         if (sessionStorage.getItem(assessmentSaveKey)) throw Error(uncertainSaveMessage);
@@ -24077,7 +24403,12 @@ const initQuestionBank = () => {
       }
       if(activeAssessmentProtected && button.matches('[data-qb-save-draft],[data-qb-add],[data-qb-remove],[data-qb-up],[data-qb-down],[data-qb-clear-cart]')){setError(protectedAssessmentMessage);return;}
       if (button.dataset.qbAdd) {
-        button.textContent = "Selecionando";
+        const item=itemById(button.dataset.qbAdd), session=pilotSession, revision=assessmentRevision;
+        if(session){
+          await session.validateAddition(item);
+          requireAssessmentActor();
+          if(session!==pilotSession||revision!==assessmentRevision)throw Error('Seleção alterada. Tente novamente.');
+        }
         selectQuestion(button.dataset.qbAdd);
       }
       if (button.dataset.qbAdapt) {
@@ -24096,7 +24427,7 @@ const initQuestionBank = () => {
         cart = cart.filter((id) => id !== button.dataset.qbRemove);
         delete cartPoints[button.dataset.qbRemove];
         saveDraftSnapshot("question-removed");
-        if (activeAssessmentId && item) {
+        if (!pilotSession && activeAssessmentId && item) {
           try {
             await questionBankDataService.removeQuestionFromAssessment(activeAssessmentId, item.uuid || item.id);
           } catch (error) {
@@ -24287,13 +24618,69 @@ const initQuestionBank = () => {
     }
   });
 
+  const setBankOrigin = value => {
+    originFilter=value;scopeFilter='all';
+    syncExamFilterVisibility();
+    render().catch(error=>setError(error.message));
+  };
+  const pilotBridge = {
+    items: () => cart.map(itemById).filter(Boolean),
+    catalog(items) {pilotCatalog.clear();items.forEach(item=>pilotCatalog.set(item.id,item));populateFilterOptions();render().catch(error=>setError(error.message));},
+    filtered: () => getFilteredItems().filter(item=>item.pilotSource?.demoOnly).map(item=>item.pilotSource),
+    origin: setBankOrigin,
+    originValue: () => originFilter,
+    start(session) {
+      requireAssessmentActor();
+      if (activeAssessmentId || activeAssessmentProtected || assessmentSavePromise || assessmentSwitchBusy || sessionStorage.getItem(assessmentSaveKey)) throw Error('Inicie uma nova avaliação vazia antes de usar o piloto. A avaliação salva foi preservada.');
+      if (!pilotSession) {
+        pilotRestore={cart:[...cart],points:{...cartPoints},selectedId,fields:builderFields.map(node=>({node,value:node.value}))};
+        pilotSession = session;root.dataset.enemActive="true";assessmentRevision++;
+      }
+      renderAssessmentProtection();
+    },
+    add(items) {
+      requireAssessmentActor();
+      if (!pilotSession) throw Error('Selecione uma turma para iniciar o piloto.');
+      if (cart.length + items.filter(item=>!cart.includes(item.id)).length > 100) throw Error('Limite de 100 questões.');
+      for (const item of items) {pilotItems.set(item.id,item);if(!cart.includes(item.id)){cart.push(item.id);cartPoints[item.id]=1;}}
+      saveDraftSnapshot('pilot-selection');renderCart();renderAssessmentProtection();
+    },
+    remove(id) {cart=cart.filter(value=>value!==id);delete cartPoints[id];saveDraftSnapshot('pilot-remove');renderCart();},
+    open(view) {goToQuestionBankView(view);},
+    end() {
+      if (!pilotSession) return;
+      pilotSession=null;delete root.dataset.enemActive;pilotItems.clear();pilotCatalog.clear();cart=[];cartPoints={};assessmentRevision++;
+      previewPanel.replaceChildren();previewPanel.hidden=true;
+      if (!assessmentActorCurrent()) return;
+      if(pilotRestore){cart=pilotRestore.cart;cartPoints=pilotRestore.points;selectedId=pilotRestore.selectedId;pilotRestore.fields.forEach(({node,value})=>node.value=value);pilotRestore=null;}
+      root.querySelectorAll('[data-qb-save-draft],[data-qb-publish-digital],[data-qb-new-assessment],[data-qb-open-assessment],[data-qb-duplicate-assessment],[data-qb-reapply-assessment],[data-qb-archive-assessment]').forEach(button=>{button.disabled=false;button.removeAttribute('title');});
+      populateFilterOptions();
+      const remaining=getFilteredItems();grid.innerHTML=remaining.map(renderCard).join('');renderMetrics(remaining);empty.hidden=remaining.length>0;
+      if(originFilter==='enem')empty.textContent='Piloto ENEM encerrado. Nenhum acervo ENEM real foi importado.';
+      renderCart();renderAssessmentProtection();
+    }
+  };
+  // Same-page bank/assessment navigation must preserve the one in-memory selection.
+  document.addEventListener('click', event => {
+    if (!assessmentActorCurrent() || event.defaultPrevented || event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    const link=event.target.closest('a[href],[data-question-bank-shell-href]');if(!link || link.target) return;
+    const url=new URL(link.dataset.questionBankShellHref || link.href,location.href);
+    const route=path=>path.replace(/\.html$/, '').replace(/\/$/,'');
+    if(url.origin!==location.origin || route(url.pathname)!==route(location.pathname)) return;
+    const view=url.searchParams.get('view') || questionBankHashView[url.hash.slice(1)];
+    if (!['banco','avaliacoes','dashboard'].includes(view)) return;
+    event.preventDefault();event.stopImmediatePropagation();pilotBridge.open(view);
+  }, true);
+  root.querySelectorAll('[data-qb-origin]').forEach(button=>button.addEventListener('click',()=>setBankOrigin(button.dataset.qbOrigin)));
   restoreDraftSnapshot();
   installEditorialTextareaAutoGrow();
   nativeCategory?.load();
   syncQuestionBankView();
+  if (!window.location.hash) scrollQuestionBankToTop();
   window.addEventListener("popstate", syncQuestionBankView);
   installSupabaseSessionListener();
   refresh();
+  window.RSEnemInstitutional?.mount(root, pilotBridge);
 };
 
 const htmlEscape = (value) =>
@@ -24950,8 +25337,16 @@ const mapInstitutionalStudent = (student = {}, classItem = null) => {
 };
 
 const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
-  if (!force && teacherInstitutionalState.status === "ready") return teacherInstitutionalState;
-  if (!force && teacherInstitutionalState.promise) return teacherInstitutionalState.promise;
+  const requestedSchool = getPrintableParams().get("school") || "";
+  const actor = getTeacherAttendanceActor();
+  const requestKey = `${actor}:${getPrintableParams().has("school") ? requestedSchool : "auto"}`;
+  if (!force && teacherInstitutionalState.status === "ready" && teacherInstitutionalState.profile?.id === getPlatformSession().userId && (!teacherInstitutionalState.requestKey || teacherInstitutionalState.requestKey === requestKey) && (!requestedSchool || teacherInstitutionalState.profile?.schoolId === requestedSchool)) return teacherInstitutionalState;
+  if (!force && teacherInstitutionalState.promise && teacherInstitutionalState.requestKey === requestKey) return teacherInstitutionalState.promise;
+  const revision = teacherInstitutionalState.revision = (teacherInstitutionalState.revision || 0) + 1;
+  teacherInstitutionalState.requestKey = requestKey;
+  const current = () => teacherInstitutionalState.revision === revision && actor === getTeacherAttendanceActor() && requestKey === `${getTeacherAttendanceActor()}:${getPrintableParams().has("school") ? (getPrintableParams().get("school") || "") : "auto"}`;
+  const nextState = { schools: [], profile: null, classes: [], memberships: [], teacherByClass: {}, studentsByClass: {}, studentsById: {}, teacher: null, schoolMembership: null };
+  const finish = () => { if (current()) Object.assign(teacherInstitutionalState, nextState); return teacherInstitutionalState; };
   teacherInstitutionalState.status = "loading";
   teacherInstitutionalState.error = "";
   teacherInstitutionalState.promise = (async () => {
@@ -24964,23 +25359,31 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
         { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
       );
       const profile = Array.isArray(profileRows) ? profileRows[0] : null;
-      if (!profile?.id) {
+      if (!profile?.id || profile.status !== "active") {
         throw new Error("Profile institucional não encontrado para a sessão autenticada.");
       }
 
       const teacherRows = await client.request(
         "teachers",
-        `?select=id,school_id,profile_id,disciplina,status&profile_id=${supabaseEq(profile.id)}&status=eq.active&limit=1`,
+        `?select=id,school_id,profile_id,disciplina,status&profile_id=${supabaseEq(profile.id)}&status=eq.active&limit=100`,
         { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
       );
-      const teacher = Array.isArray(teacherRows) ? teacherRows[0] : null;
+      const linkedSchoolIds = [...new Set((teacherRows || []).map(item => item.school_id).filter(Boolean))];
+      const linkedSchools = linkedSchoolIds.length ? await client.request("schools", `?select=id,nome,status&id=${supabaseIn(linkedSchoolIds)}&status=eq.active`, { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }) : [];
+      nextState.schools = linkedSchools || [];
+      const selectedSchool = getPrintableParams().has("school") ? requestedSchool : (linkedSchools.length === 1 ? linkedSchools[0].id : "");
+      const teacher = (teacherRows || []).find(item => item.school_id === selectedSchool && linkedSchools.some(school => school.id === item.school_id));
+      if (!selectedSchool || !teacher) {
+        Object.assign(nextState, { status: "empty", profile: { id: profile.id, displayName: profile.display_name || "Professor", role: profile.platform_role, schoolId: "" }, classes: [], memberships: [], teacherByClass: {}, studentsByClass: {}, studentsById: {}, teacher: null, schoolMembership: null });
+        return finish();
+      }
       if (!teacher?.id || !teacher?.school_id) {
         throw new Error("Não foi possível identificar o vinculo institucional deste professor.");
       }
 
       const schoolMembershipRows = await client.request(
         "school_memberships",
-        `?select=id,school_id,profile_id,membership_role,status&profile_id=${supabaseEq(profile.id)}&school_id=${supabaseEq(teacher.school_id)}&status=eq.active&limit=1`,
+        `?select=id,school_id,profile_id,membership_role,status&profile_id=${supabaseEq(profile.id)}&school_id=${supabaseEq(teacher.school_id)}&status=eq.active&started_at=lte.${encodeURIComponent(new Date().toISOString())}&or=(ended_at.is.null,ended_at.gt.${encodeURIComponent(new Date().toISOString())})&limit=1`,
         { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
       );
       const schoolMembership = Array.isArray(schoolMembershipRows) ? schoolMembershipRows[0] : null;
@@ -24990,34 +25393,34 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
 
       const membershipRows = await client.request(
         "class_teacher_memberships",
-        `?select=id,class_id,teacher_id,role,status&teacher_id=${supabaseEq(teacher.id)}&status=eq.active`,
+        `?select=id,class_id,teacher_id,role,status&teacher_id=${supabaseEq(teacher.id)}&status=eq.active&started_at=lte.${encodeURIComponent(new Date().toISOString())}&or=(ended_at.is.null,ended_at.gt.${encodeURIComponent(new Date().toISOString())})`,
         { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
       );
       const teacherByClass = Object.fromEntries((membershipRows || []).filter((item) => item.class_id && item.teacher_id).map((item) => [item.class_id, item.teacher_id]));
       const teacherId = teacher.id;
       const classIds = [...new Set((membershipRows || []).map((item) => item.class_id).filter(Boolean))];
       if (!classIds.length) {
-        teacherInstitutionalState.profile = {
+        nextState.profile = {
           id: profile.id,
           displayName: profile.display_name || "Professor",
           role: profile.platform_role || context.role,
           teacherId,
           schoolId: teacher.school_id,
         };
-        teacherInstitutionalState.teacher = teacher;
-        teacherInstitutionalState.schoolMembership = schoolMembership;
-        teacherInstitutionalState.classes = [];
-        teacherInstitutionalState.memberships = membershipRows || [];
-        teacherInstitutionalState.teacherByClass = teacherByClass;
-        teacherInstitutionalState.studentsByClass = {};
-        teacherInstitutionalState.studentsById = {};
-        teacherInstitutionalState.status = "empty";
-        return teacherInstitutionalState;
+        nextState.teacher = teacher;
+        nextState.schoolMembership = schoolMembership;
+        nextState.classes = [];
+        nextState.memberships = membershipRows || [];
+        nextState.teacherByClass = teacherByClass;
+        nextState.studentsByClass = {};
+        nextState.studentsById = {};
+        nextState.status = "empty";
+        return finish();
       }
 
       const classRows = await client.request(
         "classes",
-        `?select=id,nome,school_id,status,turno,school_year&id=${supabaseIn(classIds)}&school_id=${supabaseEq(teacher.school_id)}`,
+        `?select=id,nome,school_id,status,turno,school_year&id=${supabaseIn(classIds)}&school_id=${supabaseEq(teacher.school_id)}&status=eq.active`,
         { requireAuthenticated: true, allowedRoles: teacherAllowedRoles }
       );
       const schoolIds = [...new Set((classRows || []).map((item) => item.school_id).filter(Boolean))];
@@ -25058,43 +25461,43 @@ const ensureTeacherInstitutionalData = async ({ force = false } = {}) => {
         }))
         .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 
-      teacherInstitutionalState.profile = {
+      nextState.profile = {
         id: profile.id,
         displayName: profile.display_name || "Professor",
         role: profile.platform_role || context.role,
         teacherId,
         schoolId: teacher.school_id,
       };
-      teacherInstitutionalState.teacher = teacher;
-      teacherInstitutionalState.schoolMembership = schoolMembership;
-      teacherInstitutionalState.classes = classes;
-      teacherInstitutionalState.memberships = membershipRows || [];
-      teacherInstitutionalState.teacherByClass = teacherByClass;
-      teacherInstitutionalState.studentsByClass = studentsByClass;
-      teacherInstitutionalState.studentsById = studentsById;
-      teacherInstitutionalState.loadedAt = new Date().toISOString();
-      teacherInstitutionalState.status = classes.length ? "ready" : "empty";
-      return teacherInstitutionalState;
+      nextState.teacher = teacher;
+      nextState.schoolMembership = schoolMembership;
+      nextState.classes = classes;
+      nextState.memberships = membershipRows || [];
+      nextState.teacherByClass = teacherByClass;
+      nextState.studentsByClass = studentsByClass;
+      nextState.studentsById = studentsById;
+      nextState.loadedAt = new Date().toISOString();
+      nextState.status = classes.length ? "ready" : "empty";
+      return finish();
     } catch (error) {
-      teacherInstitutionalState.status = "error";
-      teacherInstitutionalState.error = error.message || "Falha ao carregar dados institucionais.";
-      teacherInstitutionalState.classes = [];
-      teacherInstitutionalState.memberships = [];
-      teacherInstitutionalState.teacherByClass = {};
-      teacherInstitutionalState.studentsByClass = {};
-      teacherInstitutionalState.studentsById = {};
-      teacherInstitutionalState.teacher = null;
-      teacherInstitutionalState.schoolMembership = null;
-      return teacherInstitutionalState;
+      nextState.status = "error";
+      nextState.error = error.message || "Falha ao carregar dados institucionais.";
+      nextState.classes = [];
+      nextState.memberships = [];
+      nextState.teacherByClass = {};
+      nextState.studentsByClass = {};
+      nextState.studentsById = {};
+      nextState.teacher = null;
+      nextState.schoolMembership = null;
+      return finish();
     } finally {
-      teacherInstitutionalState.promise = null;
+      if (revision === teacherInstitutionalState.revision) teacherInstitutionalState.promise = null;
     }
   })();
   return teacherInstitutionalState.promise;
 };
 
 const secretariaAllowedRoles = ["secretaria", "admin", "gestor", "coordenador"];
-const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "calendario", "avalia", "analytics", "relatorios", "comunicados", "conteudosDisponiveis", "acessosAlunos", "acesso"];
+const secretariaViews = ["painel", "alunos", "novoAluno", "turmas", "novaTurma", "professores", "novoProfessor", "matriculas", "responsaveis", "novoResponsavel", "documentos", "pendencias", "frequencia", "diario", "calendario", "avalia", "analytics", "relatorios", "comunicados", "conteudosDisponiveis", "acessosAlunos", "acesso"];
 const secretariaOfficialViews = ["painel", "alunos", "matriculas", "acessosAlunos", "responsaveis", "turmas", "professores", "frequencia", "calendario", "avalia", "analytics", "relatorios", "documentos", "comunicados", "conteudosDisponiveis", "acesso"];
 const secretariaActiveStatuses = new Set(["active", "ativo"]);
 const secretariaSchoolContextStorageKey = "raizes.secretaria.selectedSchoolId";
@@ -25119,31 +25522,43 @@ const getSecretariaCurrentView = () => {
   return secretariaViews.includes(view) ? view : "painel";
 };
 
+const getSecretariaSchoolStorageKey = () => {
+  const actor = getPlatformSession().userId;
+  return actor ? `${secretariaSchoolContextStorageKey}:v2:${encodeURIComponent(actor)}` : "";
+};
+
 const getStoredSecretariaSchoolId = () => {
+  const key = getSecretariaSchoolStorageKey();
+  if (!key) return "";
   try {
-    return window.localStorage?.getItem(secretariaSchoolContextStorageKey) || "";
+    return window.localStorage?.getItem(key) || "";
   } catch {
     return "";
   }
 };
 
 const setStoredSecretariaSchoolId = (schoolId = "") => {
+  const key = getSecretariaSchoolStorageKey();
+  if (!key) return;
   try {
-    if (schoolId) window.localStorage?.setItem(secretariaSchoolContextStorageKey, schoolId);
-    else window.localStorage?.removeItem(secretariaSchoolContextStorageKey);
+    if (schoolId) window.localStorage?.setItem(key, schoolId);
+    else window.localStorage?.removeItem(key);
   } catch {}
 };
 
-const getRequestedSecretariaSchoolId = () => getSecretariaParams().get("school") || getStoredSecretariaSchoolId() || "";
+const getRequestedSecretariaSchoolId = () => getSecretariaParams().has("school") ? (getSecretariaParams().get("school") || "") : getStoredSecretariaSchoolId();
 
 const resolveSecretariaSelectedSchool = (schools = []) => {
-  const activeSchools = (schools || []).filter((school) => isSecretariaActiveStatus(school.status));
-  const candidates = activeSchools.length ? activeSchools : (schools || []);
-  const requestedId = getRequestedSecretariaSchoolId();
-  return (schools || []).find((school) => school.id === requestedId) || candidates[0] || {};
+  if (!getPlatformSession().userId) return {};
+  const activeSchools = [...new Map((schools || []).filter(school => school.id && isSecretariaActiveStatus(school.status)).map(school => [school.id, school])).values()];
+  const requested = activeSchools.find(school => school.id === getRequestedSecretariaSchoolId());
+  // An explicit invalid URL must not silently switch the user's school.
+  if (getSecretariaParams().has("school")) return requested || {};
+  return requested || (activeSchools.length === 1 ? activeSchools[0] : {});
 };
 
 const normalizeSecretariaSchoolScopedData = (payload = {}, selectedSchoolId = "") => {
+  if (!selectedSchoolId) return Object.fromEntries(Object.entries(payload).map(([key, value]) => [key, Array.isArray(value) ? [] : value]));
   const selectedSchools = (payload.schools || []).filter((school) => !selectedSchoolId || school.id === selectedSchoolId);
   const selectedClassIds = new Set((payload.classes || []).filter((item) => !selectedSchoolId || item.school_id === selectedSchoolId).map((item) => item.id));
   const selectedStudentIds = new Set((payload.students || []).filter((item) => !selectedSchoolId || item.school_id === selectedSchoolId || selectedClassIds.has(item.class_id)).map((item) => item.id));
@@ -25182,12 +25597,12 @@ const normalizeSecretariaSchoolScopedData = (payload = {}, selectedSchoolId = ""
     documentTypes: (payload.documentTypes || []).filter((item) => !item.school_id || !selectedSchoolId || item.school_id === selectedSchoolId),
     studentDocuments: (payload.studentDocuments || []).filter((item) => selectedStudentIds.has(item.student_id)),
     studentDocumentEvents: (payload.studentDocumentEvents || []).filter((item) => selectedStudentIds.has(item.student_id)),
-    attendanceRecords: (payload.attendanceRecords || []).filter((item) => selectedStudentIds.has(item.student_id) || selectedClassIds.has(item.class_id)),
+    attendanceRecords: (payload.attendanceRecords || []).filter((item) => item.school_id === selectedSchoolId && selectedClassIds.has(item.class_id)),
     attendanceEvents: (payload.attendanceEvents || []).filter((item) => {
       if (!item.attendance_record_id) return false;
-      return (payload.attendanceRecords || []).some((record) => record.id === item.attendance_record_id && (selectedStudentIds.has(record.student_id) || selectedClassIds.has(record.class_id)));
+      return (payload.attendanceRecords || []).some((record) => record.id === item.attendance_record_id && record.school_id === selectedSchoolId && item.school_id === selectedSchoolId && selectedClassIds.has(record.class_id));
     }),
-    classDiaryEntries: (payload.classDiaryEntries || []).filter((item) => selectedClassIds.has(item.class_id) || (!selectedSchoolId || item.school_id === selectedSchoolId)),
+    classDiaryEntries: (payload.classDiaryEntries || []).filter((item) => item.school_id === selectedSchoolId && selectedClassIds.has(item.class_id)),
     communications: (payload.communications || []).filter((item) => !selectedSchoolId || item.school_id === selectedSchoolId),
     communicationEvents: (payload.communicationEvents || []).filter((item) => (payload.communications || []).some((communication) => communication.id === item.communication_id && (!selectedSchoolId || communication.school_id === selectedSchoolId))),
     communicationDeliverySummaries: (payload.communicationDeliverySummaries || []).filter((item) => (payload.communications || []).some((communication) => communication.id === item.communication_id && (!selectedSchoolId || communication.school_id === selectedSchoolId))),
@@ -25220,13 +25635,20 @@ const getSecretariaAnalyticsPeriodRange = () => {
   };
 };
 
+const getSecretariaDiaryPeriodKey = (classId, from, to) => `${getTeacherAttendanceActor()}:${secretariaInstitutionalState.selectedSchoolId || ""}:${getDiaryPeriodKey(classId, from, to)}`;
+const secretariaDiaryContextAllowed = (classId) => secretariaInstitutionalState.status === "ready" && secretariaInstitutionalState.context?.userId === getPlatformSession().userId &&
+  secretariaInstitutionalState.selectedSchoolId === getRequestedSecretariaSchoolId() && (secretariaInstitutionalState.classes || []).some(item => item.id === classId && item.school_id === secretariaInstitutionalState.selectedSchoolId);
+
 const ensureSecretariaDiaryPeriodSummary = async ({ force = false, classId = "", from = "", to = "" } = {}) => {
   const selectedClassId = classId || getSecretariaParams().get("class") || "";
   const range = { ...getSecretariaDiaryPeriodRange(), from: from || getSecretariaDiaryPeriodRange().from, to: to || getSecretariaDiaryPeriodRange().to };
-  const key = getDiaryPeriodKey(selectedClassId, range.from, range.to);
-  if (!selectedClassId || !range.from || !range.to) return secretariaDiaryPeriodState;
+  const key = getSecretariaDiaryPeriodKey(selectedClassId, range.from, range.to);
+  if (!selectedClassId || !range.from || !range.to || !secretariaDiaryContextAllowed(selectedClassId)) return secretariaDiaryPeriodState;
   if (!force && secretariaDiaryPeriodState.status === "ready" && secretariaDiaryPeriodState.key === key) return secretariaDiaryPeriodState;
-  if (!force && secretariaDiaryPeriodState.promise && secretariaDiaryPeriodState.key === key) return secretariaDiaryPeriodState.promise;
+  if (secretariaDiaryPeriodState.promise && secretariaDiaryPeriodState.key === key) return secretariaDiaryPeriodState.promise;
+  const revision = secretariaDiaryPeriodState.revision = (secretariaDiaryPeriodState.revision || 0) + 1;
+  const current = () => revision === secretariaDiaryPeriodState.revision && key === getSecretariaDiaryPeriodKey(selectedClassId, range.from, range.to) && secretariaDiaryContextAllowed(selectedClassId);
+  secretariaDiaryPeriodState.summary = null;
   secretariaDiaryPeriodState.status = "loading";
   secretariaDiaryPeriodState.error = "";
   secretariaDiaryPeriodState.key = key;
@@ -25243,16 +25665,18 @@ const ensureSecretariaDiaryPeriodSummary = async ({ force = false, classId = "",
         requireAuthenticated: true,
         allowedRoles: secretariaAllowedRoles,
       });
+      if (!current()) return secretariaDiaryPeriodState;
       const summary = normalizeRpcJson(result);
       if (summary.error) throw new Error(summary.error);
       secretariaDiaryPeriodState.summary = summary;
       secretariaDiaryPeriodState.status = "ready";
     } catch (error) {
+      if (!current()) return secretariaDiaryPeriodState;
       secretariaDiaryPeriodState.summary = null;
       secretariaDiaryPeriodState.error = error.message || "Não foi possível consolidar o período do Diário.";
       secretariaDiaryPeriodState.status = "error";
     } finally {
-      secretariaDiaryPeriodState.promise = null;
+      if (revision === secretariaDiaryPeriodState.revision) secretariaDiaryPeriodState.promise = null;
     }
     return secretariaDiaryPeriodState;
   })();
@@ -25261,8 +25685,6 @@ const ensureSecretariaDiaryPeriodSummary = async ({ force = false, classId = "",
 
 const getSecretariaPrimarySchool = () =>
   (secretariaInstitutionalState.schools || []).find((item) => item.id === secretariaInstitutionalState.selectedSchoolId)
-  || (secretariaInstitutionalState.schools || []).find((item) => isSecretariaActiveStatus(item.status))
-  || secretariaInstitutionalState.schools?.[0]
   || {};
 
 const getSecretariaCurrentSchoolYear = (school = getSecretariaPrimarySchool()) => {
@@ -25680,7 +26102,11 @@ const handleOfficialReportExport = async (audience = "secretaria", format = "pdf
 const bindOfficialReportControls = (root, audience = "secretaria") => {
   if (!root) return;
   root.querySelectorAll("[data-report-print]").forEach((button) => {
-    button.addEventListener("click", () => window.print());
+    button.addEventListener("click", () => {
+      const params = audience === "teacher" ? getTeacherReportParams() : audience === "secretaria" ? getSecretariaReportParams() : null;
+      if (params && ["attendance", "diary"].includes(params.type)) printSchoolReport(audience).catch(error => window.alert(error.message));
+      else window.print();
+    });
   });
   root.querySelectorAll("[data-report-export]").forEach((button) => {
     button.addEventListener("click", () => handleOfficialReportExport(audience, button.dataset.reportExport || "pdf"));
@@ -25714,8 +26140,14 @@ const rerenderOfficialReportSurface = (audience = "secretaria") => {
 };
 
 const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
-  if (!force && secretariaInstitutionalState.status === "ready") return secretariaInstitutionalState;
-  if (!force && secretariaInstitutionalState.promise) return secretariaInstitutionalState.promise;
+  const actor = getTeacherAttendanceActor();
+  const school = getRequestedSecretariaSchoolId();
+  const key = `${actor}:${school}`;
+  if (!force && secretariaInstitutionalState.status === "ready" && secretariaInstitutionalState.context?.userId === getPlatformSession().userId && secretariaInstitutionalState.requestKey === key) return secretariaInstitutionalState;
+  if (!force && secretariaInstitutionalState.promise && secretariaInstitutionalState.requestKey === key) return secretariaInstitutionalState.promise;
+  const revision = secretariaInstitutionalState.revision = (secretariaInstitutionalState.revision || 0) + 1;
+  secretariaInstitutionalState.requestKey = key;
+  const current = () => revision === secretariaInstitutionalState.revision && actor === getTeacherAttendanceActor() && school === getRequestedSecretariaSchoolId();
   secretariaInstitutionalState.status = "loading";
   secretariaInstitutionalState.error = "";
   secretariaInstitutionalState.promise = (async () => {
@@ -25846,9 +26278,19 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
           body: "{}",
         }).catch(() => ({})),
       ]);
+      if (!current()) return secretariaInstitutionalState;
       const selectedSchool = resolveSecretariaSelectedSchool(authorizedSchools || []);
       const selectedSchoolId = selectedSchool?.id || "";
-      if (selectedSchoolId) setStoredSecretariaSchoolId(selectedSchoolId);
+      if (selectedSchoolId) {
+        setStoredSecretariaSchoolId(selectedSchoolId);
+        // Keep downstream guards and links consistent even when storage is unavailable.
+        if (!getSecretariaParams().has("school")) {
+          const params = getSecretariaParams();
+          params.set("school", selectedSchoolId);
+          window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
+        }
+        secretariaInstitutionalState.requestKey = `${actor}:${getRequestedSecretariaSchoolId()}`;
+      }
       const scoped = normalizeSecretariaSchoolScopedData({
         context,
         schools: authorizedSchools || [],
@@ -25926,6 +26368,7 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
       });
       return secretariaInstitutionalState;
     } catch (error) {
+      if (!current()) return secretariaInstitutionalState;
       Object.assign(secretariaInstitutionalState, {
         status: "error",
         error: error.message || "Não foi possível carregar a Secretaria pelo Supabase.",
@@ -25963,7 +26406,7 @@ const ensureSecretariaInstitutionalData = async ({ force = false } = {}) => {
       });
       return secretariaInstitutionalState;
     } finally {
-      secretariaInstitutionalState.promise = null;
+      if (revision === secretariaInstitutionalState.revision) secretariaInstitutionalState.promise = null;
     }
   })();
   return secretariaInstitutionalState.promise;
@@ -26216,7 +26659,8 @@ function attendanceSummary(records = []) {
   const absent = records.filter((record) => record.status === "absent").length;
   const justified = records.filter((record) => record.status === "justified").length;
   const percent = total ? Math.round((present / total) * 100) : 0;
-  return { total, present, absent, justified, percent };
+  const days = new Set(records.map(record => record.attendance_date).filter(Boolean)).size;
+  return { total, days, present, absent, justified, percent };
 }
 
 const secretariaTeacherName = (teacher = {}, index = buildSecretariaIndex()) =>
@@ -26486,6 +26930,7 @@ const secretariaViewIcon = {
   turmas: "users",
   professores: "cap",
   frequencia: "calendar",
+  diario: "doc",
   calendario: "calendar",
   avalia: "chart",
   analytics: "chart",
@@ -26939,6 +27384,7 @@ const renderSecretariaNav = (currentView) => {
     responsaveis: "Responsáveis",
     documentos: "Documentos",
     frequencia: "Frequência",
+    diario: "Diário de Classe",
     avalia: "Avalia+",
     analytics: "Analytics",
     relatorios: "Relatórios",
@@ -26971,6 +27417,7 @@ const renderSecretariaGlobalHeader = (index = buildSecretariaIndex()) => {
         <div>
           <small>Escola atual · Ano letivo ${htmlEscape(getSecretariaCurrentSchoolYear(school) || "Não informado")}</small>
           <select class="secretaria-context-select" data-secretaria-school-selector aria-label="Selecionar escola atual da Secretaria">
+            <option value="">Selecione uma escola</option>
             ${authorizedSchools.map((item) => `<option value="${htmlEscape(item.id)}" ${item.id === school.id ? "selected" : ""}>${htmlEscape(normalizeSchoolName(item))}</option>`).join("")}
           </select>
         </div>
@@ -27025,6 +27472,7 @@ const renderSecretariaDashboardPanel = (index) => {
   ];
   return `
     <div class="secretaria-dashboard-grid">
+      <section class="panel" data-secretaria-register-shortcuts><h2>Registros da turma</h2>${secretariaInstitutionalState.selectedSchoolId ? `<div class="secretaria-quick-actions"><a aria-label="Frequência" href="${secretariaLink("frequencia")}">Frequência</a><a aria-label="Diário de Classe" href="${secretariaLink("diario")}">Diário de Classe</a></div>` : `<p role="status">Selecione uma escola autorizada para acessar Frequência e Diário de Classe.</p>`}</section>
       <div class="secretaria-metric-row secretaria-dashboard-metrics" aria-label="Indicadores principais da Secretaria">
         ${metrics.map((metric) => `<article>${secretariaInlineIcon(metric.icon)}<span>${htmlEscape(metric.label)}</span><strong>${metric.value}</strong></article>`).join("")}
       </div>
@@ -27405,7 +27853,7 @@ const renderSecretariaClassDiaryPanel = (classItem, index) => {
   if (!classItem?.id) return "";
   const entries = index.classDiaryByClass[classItem.id] || [];
   const range = getSecretariaDiaryPeriodRange();
-  const key = getDiaryPeriodKey(classItem.id, range.from, range.to);
+  const key = getSecretariaDiaryPeriodKey(classItem.id, range.from, range.to);
   const isCurrent = secretariaDiaryPeriodState.key === key;
   const status = isCurrent ? secretariaDiaryPeriodState.status : "idle";
   const summary = isCurrent ? secretariaDiaryPeriodState.summary : null;
@@ -27414,7 +27862,7 @@ const renderSecretariaClassDiaryPanel = (classItem, index) => {
   const plannedItems = Array.isArray(summary?.planned_items) ? summary.planned_items : [];
   return `
     <section class="panel span-2">
-      <div class="panel-head"><h2>Diário de Classe</h2><span>${entries.length} registro${entries.length === 1 ? "" : "s"}</span></div>
+      <div class="panel-head"><h2>Diário de Classe</h2>${schoolPrintButton("secretaria-diary", classItem.id)}<span>${entries.length} registro${entries.length === 1 ? "" : "s"}</span></div>
       <form class="secretaria-form-grid" data-secretaria-diary-period-form>
         <input type="hidden" name="class_id" value="${htmlEscape(classItem.id)}" />
         <label><span>De</span><input type="date" name="diaryFrom" value="${htmlEscape(range.from)}" /></label>
@@ -27979,9 +28427,10 @@ const renderSecretariaAttendanceView = (index) => {
   const summary = attendanceSummary(records);
   return `
     <section class="panel span-2">
-      <div class="panel-head"><h2>Frequência</h2><span>${records.length} registro${records.length === 1 ? "" : "s"}</span></div>
+      <div class="panel-head"><h2>Frequência</h2>${schoolPrintButton("secretaria-attendance")}<span>${records.length} registro${records.length === 1 ? "" : "s"}</span></div>
       <form class="analytics-grid secretaria-grid" method="get" action="secretaria.html">
         <input type="hidden" name="view" value="frequencia" />
+        <input type="hidden" name="school" value="${htmlEscape(secretariaInstitutionalState.selectedSchoolId || "")}" />
         <label><span>Turma</span><select name="class"><option value="">Todas</option>${(secretariaInstitutionalState.classes || []).map((classItem) => `<option value="${htmlEscape(classItem.id)}" ${classItem.id === selectedClassId ? "selected" : ""}>${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>
         <label><span>Aluno</span><select name="student"><option value="">Todos</option>${(secretariaInstitutionalState.students || []).map((student) => `<option value="${htmlEscape(student.id)}" ${student.id === selectedStudentId ? "selected" : ""}>${htmlEscape(normalizeStudentName(student))}</option>`).join("")}</select></label>
         <label><span>De</span><input type="date" name="from" value="${htmlEscape(from)}" /></label>
@@ -27989,7 +28438,8 @@ const renderSecretariaAttendanceView = (index) => {
         <button type="submit">Filtrar</button>
       </form>
       <div class="metric-row">
-        <article>Dias registrados<strong>${summary.total}</strong><span>Consulta institucional</span></article>
+        <article>Registros de frequência<strong>${summary.total}</strong><span>Registros por aluno</span></article>
+        <article>Dias registrados<strong>${summary.days}</strong><span>Datas distintas no filtro</span></article>
         <article>Presencas<strong>${summary.present}</strong><span>${summary.percent}%</span></article>
         <article>Faltas<strong>${summary.absent}</strong><span>sem ranking</span></article>
         <article>Justificadas<strong>${summary.justified}</strong><span>consulta</span></article>
@@ -28964,7 +29414,7 @@ const renderSecretariaReportsView = (index) => {
       </section>
       <section class="panel span-2">
         <form class="analytics-grid secretaria-grid" method="get" action="secretaria.html">
-          <input type="hidden" name="view" value="relatorios" />
+          <input type="hidden" name="view" value="relatorios" />${["attendance", "diary"].includes(params.type) ? `<input type="hidden" name="school" value="${htmlEscape(secretariaInstitutionalState.selectedSchoolId || "")}" />` : ""}
           <label><span>Relatório</span><select name="report">${allowedReports.map((id) => {
             const item = getOfficialReport(id);
             return `<option value="${htmlEscape(id)}" ${id === params.type ? "selected" : ""}>${htmlEscape(item.title)}</option>`;
@@ -28987,9 +29437,18 @@ const renderSecretariaReportsView = (index) => {
   `;
 };
 
+const renderSecretariaDiaryView = (index) => {
+  const schoolId = secretariaInstitutionalState.selectedSchoolId;
+  const classes = (secretariaInstitutionalState.classes || []).filter(item => item.school_id === schoolId && isSecretariaActiveStatus(item.status));
+  const selected = classes.find(item => item.id === getSecretariaParams().get("class"));
+  return `<section class="panel"><h2>Diário de Classe</h2><p>Escolha uma turma da escola selecionada.</p><ul class="clean-list">${classes.map(item => `<li><a href="${secretariaLink("diario", { class: item.id })}">${htmlEscape(normalizeClassName(item))}</a></li>`).join("") || "<li>Nenhuma turma autorizada nesta escola.</li>"}</ul></section>${selected ? renderSecretariaClassDiaryPanel(selected, index) : ""}`;
+};
+
 const renderSecretariaReadyView = () => {
   const view = getSecretariaCurrentView();
   const index = buildSecretariaIndex();
+  const selectedSchool = (secretariaInstitutionalState.authorizedSchools || []).find(school => school.id === secretariaInstitutionalState.selectedSchoolId && isSecretariaActiveStatus(school.status));
+  if (secretariaInstitutionalState.context?.userId !== getPlatformSession().userId || !selectedSchool || (getRequestedSecretariaSchoolId() && getRequestedSecretariaSchoolId() !== selectedSchool.id)) return `${renderSecretariaGlobalHeader(index)}<section class="panel"><p role="status">Selecione uma escola autorizada para acessar Frequência e Diário de Classe.</p></section>`;
   const content = {
     painel: () => renderSecretariaDashboardPanel(index),
     alunos: () => renderSecretariaStudentsView(index),
@@ -29004,6 +29463,7 @@ const renderSecretariaReadyView = () => {
     documentos: () => renderSecretariaPendenciasView(index),
     pendencias: () => renderSecretariaPendenciasView(index),
     frequencia: () => renderSecretariaAttendanceView(index),
+    diario: () => renderSecretariaDiaryView(index),
     calendario: () => renderSecretariaCalendarView(index),
     avalia: () => renderSecretariaAvaliaResultsView(index),
     analytics: () => renderSecretariaAnalyticsView(index),
@@ -29031,6 +29491,21 @@ const renderSecretariaDashboard = () => `
 const initSecretariaInstitutional = () => {
   const area = document.querySelector("[data-secretaria-v1]");
   if (!area) return;
+  const actor = getTeacherAttendanceActor();
+  if (initSecretariaInstitutional.sessionGuard) {
+    window.removeEventListener("storage", initSecretariaInstitutional.sessionGuard);
+    window.removeEventListener("focus", initSecretariaInstitutional.sessionGuard);
+  }
+  initSecretariaInstitutional.sessionGuard = () => {
+    if (!document.body.contains(area) || actor === getTeacherAttendanceActor()) return;
+    secretariaInstitutionalState.revision = (secretariaInstitutionalState.revision || 0) + 1;
+    Object.assign(secretariaInstitutionalState, { status: "idle", context: null, selectedSchoolId: "", schools: [], classes: [], attendanceRecords: [], attendanceEvents: [], classDiaryEntries: [] });
+    secretariaDiaryPeriodState.revision = (secretariaDiaryPeriodState.revision || 0) + 1;
+    Object.assign(secretariaDiaryPeriodState, { status: "idle", key: "", summary: null, promise: null });
+    area.innerHTML = '<p role="alert">A sessão mudou. Recarregue para consultar as escolas do usuário atual.</p><a href="">Recarregar página</a>';
+  };
+  window.addEventListener("storage", initSecretariaInstitutional.sessionGuard);
+  window.addEventListener("focus", initSecretariaInstitutional.sessionGuard);
   hydrateSchoolContentInspection(area, () => getSecretariaPrimarySchool().id);
   const schoolSelector = area.querySelector("[data-secretaria-school-selector]");
   if (schoolSelector) {
@@ -29100,7 +29575,7 @@ const initSecretariaInstitutional = () => {
       event.preventDefault();
       const data = new FormData(diaryPeriodForm);
       const params = getSecretariaParams();
-      params.set("view", "turmas");
+      params.set("view", getSecretariaCurrentView() === "diario" ? "diario" : "turmas");
       params.set("class", String(data.get("class_id") || params.get("class") || ""));
       params.set("diaryFrom", String(data.get("diaryFrom") || ""));
       params.set("diaryTo", String(data.get("diaryTo") || ""));
@@ -30036,7 +30511,7 @@ const initSecretariaInstitutional = () => {
         initSecretariaInstitutional();
       });
   }
-  if (secretariaInstitutionalState.status === "ready" && getSecretariaCurrentView() === "turmas" && getSecretariaParams().get("class")) {
+  if (secretariaInstitutionalState.status === "ready" && ["turmas", "diario"].includes(getSecretariaCurrentView()) && getSecretariaParams().get("class")) {
     const classId = getSecretariaParams().get("class") || "";
     const range = getSecretariaDiaryPeriodRange();
     const before = `${secretariaDiaryPeriodState.status}:${secretariaDiaryPeriodState.key}`;
@@ -30140,6 +30615,16 @@ const questionBankFallbackStore = {
   })),
 };
 
+// Only explicit ENEM metadata from the known catalog shape; never infer from text,
+// school year, component, the resolver boolean, or an absent foreign-language option.
+const questionBankExamMetadata = (row) => {
+  const exam = row.metadata?.enem;
+  if (!exam || typeof exam !== 'object' || Array.isArray(exam)) return {examYear:'', language:'', theme:''};
+  const year = String(exam.examYear ?? '').trim();
+  const languages = {'português':'Português', 'portugues':'Português', 'pt':'Português', 'pt-br':'Português', 'inglês':'Inglês', 'ingles':'Inglês', 'en':'Inglês', 'en-us':'Inglês', 'espanhol':'Espanhol', 'es':'Espanhol'};
+  const languageKey = String(exam.language ?? '').trim().toLowerCase();
+  return {examYear: /^\d{4}$/.test(year) ? year : '', language: Object.hasOwn(languages, languageKey) ? languages[languageKey] : '', theme: typeof exam.theme === 'string' ? exam.theme.trim() : ''};
+};
 const mapQuestionFromSupabase = (row) => {
   const alternatives = [...(row.alternatives || [])].sort((a, b) => (a.position || 0) - (b.position || 0));
   const correctIndex = alternatives.findIndex((alternative) => alternative.is_correct);
@@ -30152,6 +30637,7 @@ const mapQuestionFromSupabase = (row) => {
     component: row.component,
     stage: row.stage,
     year: row.school_year,
+    ...questionBankExamMetadata(row),
     unit: row.thematic_unit || "",
     object: row.knowledge_object || "",
     skill: row.bncc_skill || "",
@@ -31204,10 +31690,30 @@ const initCurationBatches = () => {
 const initTeacherWorkspace = () => {
   const workspace = document.querySelector("[data-teacher-workspace]");
   if (!workspace) return;
+  const workspaceActor = getTeacherAttendanceActor();
+  const workspaceIsCurrent = () => workspaceActor === getTeacherAttendanceActor() && document.body.contains(workspace);
   const content = workspace.querySelector("[data-teacher-content]");
   const home = workspace.querySelector("[data-teacher-home]");
   const search = workspace.querySelector("[data-teacher-search]");
-  const teacherWorkspaceViewKeys = new Set(["inicio", "notificacoes", "calendario", "mensagens", "acesso", "perfil", "planejamentos", "turmas", "alunos", "acompanhamento", "biblioteca", "atividades", "favoritos", "experiências", "jogos", "avaliacoes", "relatorios", "formação", "universidade", "configuracoes"]);
+  if (initTeacherWorkspace.attendanceSessionGuard) {
+    window.removeEventListener("storage", initTeacherWorkspace.attendanceSessionGuard);
+    window.removeEventListener("focus", initTeacherWorkspace.attendanceSessionGuard);
+  }
+  const attendanceActor = getTeacherAttendanceActor();
+  initTeacherWorkspace.attendanceSessionGuard = () => {
+    if (attendanceActor === getTeacherAttendanceActor() || !document.body.contains(workspace)) return;
+    ++teacherAttendanceState.revision;
+    Object.assign(teacherAttendanceState, { status: "idle", records: [], key: "", promise: null, result: null, message: "", operation: null, saving: false, confirmedKey: null, confirmedRecords: null });
+    teacherInstitutionalState.revision = (teacherInstitutionalState.revision || 0) + 1;
+    Object.assign(teacherInstitutionalState, { status: "idle", profile: null, classes: [], schools: [], studentsByClass: {}, studentsById: {} });
+    Object.assign(teacherStudentNotesState, { status: "idle", notes: [], key: "", promise: null });
+    teacherDiaryState.revision += 1;
+    Object.assign(teacherDiaryState, { status: "idle", entries: [], key: "", promise: null, message: "" });
+    workspace.innerHTML = '<p role="alert">A sessão mudou. Recarregue a página para consultar as turmas do usuário atual.</p><a href="">Recarregar página</a>';
+  };
+  window.addEventListener("storage", initTeacherWorkspace.attendanceSessionGuard);
+  window.addEventListener("focus", initTeacherWorkspace.attendanceSessionGuard);
+  const teacherWorkspaceViewKeys = new Set(["inicio", "frequencia", "diario", "notificacoes", "calendario", "mensagens", "acesso", "perfil", "planejamentos", "turmas", "alunos", "acompanhamento", "biblioteca", "atividades", "favoritos", "experiências", "jogos", "avaliacoes", "relatorios", "formação", "universidade", "configuracoes"]);
   const getValidTeacherView = (view) => {
     const normalized = normalizeTeacherWorkspaceView(view);
     return teacherWorkspaceViewKeys.has(normalized) ? normalized : "inicio";
@@ -31219,7 +31725,7 @@ const initTeacherWorkspace = () => {
   const refreshPlanningView = async ({ force = true } = {}) => {
     await ensureTeacherPlanningWeek({ force });
     const path = window.location.pathname.split("/").pop() || "";
-    if (path === "professor-turma.html" && getTeacherClassTab() === "semana") {
+    if (isTeacherClassPage() && getTeacherClassTab() === "semana") {
       rerenderTeacherClassPage();
       return;
     }
@@ -31292,6 +31798,8 @@ const initTeacherWorkspace = () => {
     if (!content) {
       if (!updateUrl) return;
       const params = new URLSearchParams({ view: normalizedView });
+      const selectedSchool = getTeacherSelectedSchoolId();
+      if (selectedSchool) params.set("school", selectedSchool);
       if (normalizedView === "mensagens") {
         const page = document.querySelector("[data-app-page]")?.dataset.appPage;
         const id = getPrintableParams().get("id") || "";
@@ -31361,7 +31869,8 @@ const initTeacherWorkspace = () => {
   };
 
   const rerenderTeacherClassPage = () => {
-    const currentWorkspace = document.querySelector("[data-teacher-workspace]") || workspace;
+    if (!workspaceIsCurrent()) return;
+    const currentWorkspace = workspace;
     if (!document.body.contains(currentWorkspace)) return;
     currentWorkspace.outerHTML = renderTeacherClassPage();
     requestAnimationFrame(() => document.querySelector(".teacher-workspace")?.classList.add("is-mounted"));
@@ -31369,7 +31878,8 @@ const initTeacherWorkspace = () => {
   };
 
   const rerenderTeacherStudentPage = () => {
-    const currentWorkspace = document.querySelector("[data-teacher-workspace]") || workspace;
+    if (!workspaceIsCurrent()) return;
+    const currentWorkspace = workspace;
     if (!document.body.contains(currentWorkspace)) return;
     currentWorkspace.outerHTML = renderTeacherStudentPage();
     requestAnimationFrame(() => document.querySelector(".teacher-workspace")?.classList.add("is-mounted"));
@@ -31377,17 +31887,16 @@ const initTeacherWorkspace = () => {
   };
 
   const hydrateTeacherAttendanceIfNeeded = async ({ force = false } = {}) => {
-    const path = window.location.pathname.split("/").pop() || "";
-    if (path !== "professor-turma.html" || getTeacherClassTab() !== "frequencia" || teacherInstitutionalState.status !== "ready") return;
-    const classId = getPrintableParams().get("id") || getTeacherInstitutionalClasses()[0]?.id || "";
-    const date = getTeacherAttendanceDate();
+    if (!workspaceIsCurrent() || teacherAttendanceState.saving || !isTeacherClassPage() || getTeacherClassTab() !== "frequencia" || teacherInstitutionalState.status !== "ready") return;
+    const classId = getTeacherAttendanceClassId(), date = getTeacherAttendanceDate(), route = getTeacherAttendanceRoute();
     if (!classId || !date) return;
-    const before = `${teacherAttendanceState.status}:${teacherAttendanceState.key}:${teacherAttendanceState.records.length}`;
-    await ensureTeacherAttendanceDay({ force, classId, date });
-    const after = `${teacherAttendanceState.status}:${teacherAttendanceState.key}:${teacherAttendanceState.records.length}`;
-    if (before !== after && document.body.contains(workspace)) {
-      rerenderTeacherClassPage();
-    }
+    const key = getTeacherAttendanceKey(classId, date);
+    if (!force && teacherAttendanceState.key === key && ["ready", "error"].includes(teacherAttendanceState.status)) return;
+    const pending = ensureTeacherAttendanceDay({ force, classId, date });
+    const revision = teacherAttendanceState.revision;
+    await pending;
+    if (!workspaceIsCurrent() || teacherAttendanceState.saving || revision !== teacherAttendanceState.revision || teacherAttendanceState.key !== key || route !== getTeacherAttendanceRoute()) return;
+    rerenderTeacherClassPage();
   };
 
   workspace.addEventListener("click", async (event) => {
@@ -31423,9 +31932,17 @@ const initTeacherWorkspace = () => {
       }
       return;
     }
+    const reloadAttendance = event.target.closest("[data-attendance-reload]");
+    if (reloadAttendance) {
+      if (teacherAttendanceState.saving) return;
+      if (!window.confirm("Recarregar descarta alterações ainda não salvas. Continuar?")) return;
+      await hydrateTeacherAttendanceIfNeeded({ force: true });
+      return;
+    }
     const markAll = event.target.closest("[data-attendance-mark-all]");
     if (markAll) {
       event.preventDefault();
+      if (teacherAttendanceState.saving || !window.confirm("Marcar todos os alunos exibidos como presentes? Revise antes de salvar.")) return;
       workspace.querySelectorAll(".tw-attendance-row").forEach((row) => {
         row.querySelector("input[value='present']").checked = true;
         row.querySelectorAll(".tw-attendance-choice").forEach((choice) => {
@@ -31716,21 +32233,14 @@ const initTeacherWorkspace = () => {
       }
       if (attendanceForm) {
         const data = new FormData(attendanceForm);
-        const classId = attendanceForm.dataset.classId || getPrintableParams().get("id") || "";
-        const date = String(data.get("attendanceDate") || getTeacherAttendanceDate());
-        const students = getTeacherInstitutionalStudents(classId);
-        const records = students.map((student) => ({
-          student_id: student.id,
-          status: String(data.get(`attendance_${student.id}`) || "present"),
-          notes: String(data.get(`notes_${student.id}`) || "").trim() || null,
-        }));
+        const classId = attendanceForm.dataset.classId || getTeacherAttendanceClassId();
+        const date = String(data.get("attendanceDate") || getTeacherAttendanceDate()), route = getTeacherAttendanceRoute();
+        if (attendanceForm.dataset.attendanceKey !== getTeacherAttendanceKey(classId, date)) throw new Error("A sessão mudou. Recarregue a página antes de registrar frequência.");
+        const records = collectTeacherAttendanceChanges(data, getTeacherInstitutionalStudents(classId));
         await saveTeacherAttendanceDay({ classId, date, records });
-        await ensureTeacherAttendanceDay({ force: true, classId, date });
-        teacherAttendanceState.message = "Frequência salva com sucesso.";
+        if (!workspaceIsCurrent() || !document.body.contains(attendanceForm) || route !== getTeacherAttendanceRoute()) return;
         const params = new URLSearchParams(window.location.search);
-        params.set("id", classId);
-        params.set("tab", "frequencia");
-        params.set("date", date);
+        params.set("id", classId); params.set("tab", "frequencia"); params.set("date", date);
         window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
         rerenderTeacherClassPage();
         return;
@@ -31760,16 +32270,25 @@ const initTeacherWorkspace = () => {
         content.innerHTML = renderTeacherWorkspaceView("mensagens");
       }
     } catch (error) {
+      if (attendanceForm && !workspaceIsCurrent()) return;
       window.alert(error.message || "Não foi possível salvar no Supabase.");
     } finally {
       if (submitButton) {
         submitButton.disabled = false;
         submitButton.textContent = previousLabel;
+        if (attendanceForm && workspaceIsCurrent()) syncTeacherAttendanceControls();
       }
     }
   });
 
   workspace.addEventListener("change", async (event) => {
+    const schoolSelector = event.target.closest("[data-teacher-school-selector]");
+    if (schoolSelector) {
+      const params = new URLSearchParams({ view: activeTeacherView });
+      params.set("school", schoolSelector.value || "");
+      window.location.assign(`professor.html?${params.toString()}`);
+      return;
+    }
     const planningClassSelect = event.target.closest("[data-planning-class]");
     if (planningClassSelect) {
       teacherPlanningState.selectedClassId = planningClassSelect.value || "";
@@ -31876,10 +32395,10 @@ const initTeacherWorkspace = () => {
   }
 
   ensureTeacherInstitutionalData().then(() => {
-    if (teacherInstitutionalState.hydratedDom || !document.body.contains(workspace)) return;
+    if (teacherInstitutionalState.hydratedDom || !workspaceIsCurrent()) return;
     teacherInstitutionalState.hydratedDom = true;
     const path = window.location.pathname.split("/").pop() || "professor.html";
-    if (path === "professor-turma.html") {
+    if (isTeacherClassPage()) {
       const classId = getPrintableParams().get("id") || getTeacherInstitutionalClasses()[0]?.id || "";
       if (getTeacherClassTab() === "semana") {
         teacherPlanningState.status = "idle";
@@ -31904,6 +32423,9 @@ const initTeacherWorkspace = () => {
           .then(() => ensureTeacherDiaryEntries({ force: true, classId, date }))
           .then(() => ensureTeacherDiaryPeriodSummary({ force: true, classId, from: range.from, to: range.to }))
           .then(rerenderTeacherClassPage);
+        // Keep the captured workspace mounted until hydration finishes. Replacing it
+        // here makes the guarded completion callback discard its own result.
+        return;
       }
       workspace.outerHTML = renderTeacherClassPage();
       requestAnimationFrame(() => document.querySelector(".teacher-workspace")?.classList.add("is-mounted"));
@@ -33154,7 +33676,7 @@ const renderAppPage = () => {
   }
 
   if (["professor", "professorTurma", "professorAluno"].includes(activeKey)) {
-    mount.innerHTML = activeModule.html;
+    mount.innerHTML = activeKey === "professorTurma" ? renderTeacherClassPage() : activeModule.html;
     initPlatformLogout();
     requestAnimationFrame(() => {
       document.querySelector(".teacher-workspace")?.classList.add("is-mounted");
@@ -33386,5 +33908,108 @@ const renderAppPage = () => {
   initCanonicalVideoPlayer();
   initGlobalAccessibility();
 };
+
+const schoolPrintCoverage = (count) => `<p><strong>Conferência da consulta:</strong> ${Number.isInteger(count)?`${count} registros retornados. `:''}Este documento imprime os registros retornados pela consulta, sem cortes de texto ou de linhas na prévia. A completude histórica do período não está certificada. Confira a quantidade com os registros esperados antes de usar como fechamento.</p>`;
+// Browser-only print adapters: fresh reads, explicit context, no export/job writes.
+const schoolPrintContext = () => {
+  const actor = getTeacherAttendanceActor(), href = location.href;
+  return () => Boolean(getPlatformSession().userId) && actor === getTeacherAttendanceActor() && href === location.href;
+};
+let schoolPrintLoading = null;
+const schoolPrintReady = () => {
+  if (window.RSPrint) return Promise.resolve();
+  if (!schoolPrintLoading) schoolPrintLoading = new Promise((resolve,reject) => {
+    const script=document.createElement('script');script.src='/school-print.js';
+    script.onload=resolve;script.onerror=()=>{schoolPrintLoading=null;script.remove();reject(Error('Não foi possível abrir a prévia. Tente novamente.'));};document.head.append(script);
+  });
+  return schoolPrintLoading;
+};
+const schoolPrintButton = (kind, classId='') => `<button type="button" data-rs-print="${kind}" data-print-class="${htmlEscape(classId)}">Imprimir / Salvar em PDF</button>`;
+const schoolPrintRows = (rows) => {
+  const fields = {student_name:'Aluno',class_name:'Turma',school_name:'Escola',entry_date:'Data',attendance_date:'Data',title:'Título',status:'Situação',present:'Presenças',absent:'Faltas',justified:'Justificadas',attendance_rate:'Frequência (%)',taught_content:'Conteúdo ministrado',pedagogical_notes:'Registro pedagógico coletivo'};
+  const keys=Object.keys(fields).filter(key=>rows.some(row=>row[key]!==undefined));
+  if(rows.length&&!keys.length)throw Error('Não há campos compatíveis para imprimir esta consulta.');
+  return rows.length ? RSPrint.table(keys.map(key=>fields[key]),rows.map(row=>keys.map(key=>row[key]??''))) : '<p>Nenhum registro no filtro selecionado.</p>';
+};
+const printSchoolRegister = async (kind, classId='') => {
+  const current=schoolPrintContext();await schoolPrintReady();if(!current())throw Error('Contexto alterado.');
+  let title='',subtitle='',html='';
+  if(!['teacher-attendance','teacher-diary','teacher-diary-period','secretaria-attendance','secretaria-diary'].includes(kind))throw Error('Documento fora do escopo de impressão.');
+  if(kind.startsWith('teacher-')){
+    if(!teacherAttendanceContextAllowed(classId))throw Error('Turma não autorizada.');
+    const cls=getTeacherInstitutionalClasses().find(c=>c.id===classId);
+    const date=getTeacherDiaryDate();subtitle=`${cls.schoolName || ''} · ${cls.name}`;
+    if(kind==='teacher-attendance'){
+      if(teacherAttendanceState.saving)throw Error('Aguarde a confirmação do salvamento.');
+      const day=getTeacherAttendanceDate();await ensureTeacherAttendanceDay({force:true,classId,date:day});
+      if(!current()||!teacherAttendanceContextAllowed(classId)||teacherAttendanceState.status!=='ready'||teacherAttendanceState.key!==getTeacherAttendanceKey(classId,day))throw Error('Frequência não confirmada. Recarregue.');
+      const currentStudentIds=new Set(getTeacherInstitutionalStudents(classId).map(s=>s.id));
+      if(teacherAttendanceState.records.some(r=>!currentStudentIds.has(r.student_id)))throw Error('Há registros de alunos fora do cadastro atual. Consulte os registros históricos na Secretaria; esta folha não reconstrói matrículas passadas.');
+      title='Frequência';subtitle+=` · ${day} · Somente registros salvos · Cadastro atual`;
+      html=RSPrint.table(['Aluno','Situação'],getTeacherInstitutionalStudents(classId).map(s=>[s.name,attendanceStatusLabel(getTeacherAttendanceRecordByStudent(s.id)?.status || '') || 'Sem registro']));
+      const savedStatuses=getTeacherInstitutionalStudents(classId).map(s=>getTeacherAttendanceRecordByStudent(s.id)?.status || '');
+      html+=`<p>Presentes: ${savedStatuses.filter(s=>s==='present').length} · Faltas: ${savedStatuses.filter(s=>s==='absent').length} · Justificadas: ${savedStatuses.filter(s=>s==='justified').length} · Sem registro: ${savedStatuses.filter(s=>!s).length}</p>`;
+      html+='<p>Alunos do cadastro atual; não é uma reconstrução das matrículas na data consultada. Totais referentes somente a esta lista. Sem registro não significa presença nem falta; não permite concluir se houve aula ou chamada. Alterações não salvas não são impressas.</p>';
+    }else{
+      await ensureTeacherDiaryEntries({force:true,classId,date});
+      if(!current()||!teacherAttendanceContextAllowed(classId)||teacherDiaryState.status!=='ready'||teacherDiaryState.key!==getTeacherDiaryKey(classId,date))throw Error('Diário não confirmado.');
+      const range=kind==='teacher-diary-period'?getTeacherDiaryPeriodRange():{from:date,to:date};
+      title='Diário de Classe';subtitle+=` · ${range.from} a ${range.to} · Somente registros salvos`;
+      html=RSPrint.diary(teacherDiaryState.entries.filter(e=>e.entryDate>=range.from&&e.entryDate<=range.to));
+    }
+  }else{
+    const state=secretariaInstitutionalState, school=state.selectedSchoolId;
+    if(state.status!=='ready'||state.context?.userId!==getPlatformSession().userId||!school||getSecretariaPrimarySchool().id!==school)throw Error('Escola não autorizada.');
+    const index=buildSecretariaIndex(), params=getSecretariaParams();
+    classId=classId||params.get('class')||'';
+    if(classId&&!state.classes.some(c=>c.id===classId&&c.school_id===school))throw Error('Turma não autorizada.');
+    const diary=kind==='secretaria-diary', range=diary?getSecretariaDiaryPeriodRange():{from:params.get('from')||'',to:params.get('to')||''};
+    const student=params.get('student')||'';
+    const rows=await createSupabaseRestClient().request(diary?'rpc/secretaria_list_class_diary_entries':'rpc/secretaria_list_attendance_records','',{method:'POST',body:'{}',requireAuthenticated:true,allowedRoles:secretariaAllowedRoles});
+    if(!current()||state.selectedSchoolId!==school||state.context?.userId!==getPlatformSession().userId||!Array.isArray(rows))throw Error('Contexto ou consulta alterados.');
+    const selected=rows.filter(r=>r.school_id===school&&state.classes.some(c=>c.id===r.class_id)&&(!classId||r.class_id===classId)&&(!student||diary||r.student_id===student)&&(!range.from||(r.entry_date||r.attendance_date)>=range.from)&&(!range.to||(r.entry_date||r.attendance_date)<=range.to));
+    title=diary?'Diário de Classe':'Frequência';subtitle=`${normalizeSchoolName(getSecretariaPrimarySchool())} · ${classId?normalizeClassName(index.classById.get(classId)||{}):'Turmas autorizadas'} · ${range.from||'Início'} a ${range.to||'Hoje'}`;
+    html=diary?RSPrint.diary(selected):RSPrint.table(['Data','Turma','Aluno','Situação'],selected.map(r=>[r.attendance_date,normalizeClassName(index.classById.get(r.class_id)||{}),normalizeStudentName(index.studentById.get(r.student_id)||{}),attendanceStatusLabel(r.status)]));
+    if(!diary)html+='<p>Consulta de registros salvos. Ausência de linha não significa presença nem falta; não comprova se houve chamada. Para totais por período, consulte Relatórios.</p>';
+  }
+  if(!current())throw Error('Contexto alterado.');RSPrint.open({title,subtitle,html:html+schoolPrintCoverage(),current,downloadPdf:true});
+};
+const printSchoolReport = async (audience) => {
+  const requested=audience==='teacher'?getTeacherReportParams():audience==='secretaria'?getSecretariaReportParams():null;
+  if(!requested||!['attendance','diary'].includes(requested.type))throw Error('Relatório fora do escopo de impressão.');
+  const current=schoolPrintContext();await schoolPrintReady();
+  if(audience==='teacher'){if(!teacherAttendanceContextAllowed(getTeacherReportParams().classId))throw Error('Turma não autorizada.');await ensureTeacherOfficialReport({force:true});}
+  else if(audience==='secretaria'){if(secretariaInstitutionalState.context?.userId!==getPlatformSession().userId||secretariaInstitutionalState.status!=='ready'||!secretariaInstitutionalState.selectedSchoolId)throw Error('Escola não autorizada.');await ensureSecretariaOfficialReport({force:true});}
+  else throw Error('Use a exportação oficial para este relatório.');
+  if(!current())throw Error('Sessão ou filtro alterado.');
+  const state=officialReportsState[audience], params=audience==='teacher'?getTeacherReportParams():getSecretariaReportParams();
+  if(state.status!=='ready')throw Error('Não foi possível consultar o relatório completo.');
+  const rows=state.result?.rows||state.result?.entries||state.result?.assignments||[];
+  if(rows.some(r=>(params.classId&&r.class_id&&r.class_id!==params.classId)||(params.schoolId&&r.school_id&&r.school_id!==params.schoolId)))throw Error('Resposta de outro contexto.');
+  const school=audience==='teacher'?getTeacherCurrentSchoolName():normalizeSchoolName(getSecretariaPrimarySchool());
+  RSPrint.open({title:getOfficialReport(params.type).title,subtitle:`${school} · ${params.range.from} a ${params.range.to}`,html:schoolPrintRows(rows)+schoolPrintCoverage(rows.length),current,downloadPdf:true});
+};
+const schoolPrintVersion = async (publicDocument) => {
+  const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(publicDocument)));
+  return [...new Uint8Array(bytes)].map(byte=>byte.toString(16).padStart(2,'0')).join('');
+};
+const printAssessmentPayload = async (payload, expected, current) => {
+  await schoolPrintReady();if(!current())throw Error('Contexto alterado.');
+  if(!payload||payload.school_id!==expected.schoolId||payload.class_id!==expected.classId||payload.assessment?.id!==expected.assessmentId||payload.export_type!==expected.type)throw Error('Artefato não corresponde à aplicação selecionada.');
+  const questions=payload.questions||[],students=payload.students||[];
+  if(students.some(s=>(s.school_id&&s.school_id!==expected.schoolId)||(s.class_id&&s.class_id!==expected.classId)))throw Error('Aluno fora do contexto da aplicação.');
+  if(expected.type==='ANSWER_SHEET'&&!questions.length)throw Error('A prova não tem questões para montar o cartão-resposta.');
+  let html='';
+  if(expected.type==='ATTENDANCE_LIST')html=RSPrint.table(['Aluno','Assinatura'],students.map(s=>[s.student_name,'___________________']));
+  else if(expected.type==='ANSWER_SHEET')html=(students.length?students:[{student_name:'Nome: ___________________'}]).map((s,index)=>`<article style="${index?'break-before:page':''}"><h2>${RSPrint.escape(s.student_name)}</h2>${RSPrint.table(['Questão','Alternativas'],questions.map((q,i)=>[q.position||i+1,(q.alternatives||[]).map(a=>`${a.label} ( )`).join('    ')]))}</article>`).join('');
+  else throw Error('Tipo de documento não autorizado neste atalho.');
+  const version=await schoolPrintVersion({assessmentId:payload.assessment.id,bookletId:payload.booklet_id||null,questions:questions.map(q=>({id:q.question_id,position:q.position,statement:q.statement,alternatives:(q.alternatives||[]).map(a=>({id:a.id,label:a.label,body:a.body}))}))});
+  html=`<p>Modelo RS-v1 · Documento ${RSPrint.escape(payload.assessment.id)} · SHA256 ${version}</p>`+html;
+  RSPrint.open({title:expected.type==='ANSWER_SHEET'?'Cartão-resposta':'Lista de presença da prova',subtitle:`${payload.assessment.title||'Avaliação'} · Versão ${payload.booklet_id||payload.assessment.id}`,html,current});
+};
+document.addEventListener('click', event => {
+  const button=event.target.closest?.('[data-rs-print]');if(!button)return;event.preventDefault();
+  button.disabled=true;printSchoolRegister(button.dataset.rsPrint,button.dataset.printClass).catch(error=>window.alert(error.message)).finally(()=>button.disabled=false);
+});
 
 renderAppPage();

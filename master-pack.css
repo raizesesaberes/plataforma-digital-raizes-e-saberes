@@ -26260,3 +26260,37 @@ html[data-a11y-reduced-motion="true"] *::after {
 
 [data-teacher-messages] form button, [data-message-preview] button, [data-message-recovery] button { border: 0; border-radius: 999px; background: #e5f1eb; color: #176e52; font: inherit; font-weight: 700; padding: 12px 16px; cursor: pointer; margin: 4px 4px 4px 0; }
 [data-teacher-messages] button:disabled { opacity: .55; cursor: wait; }
+
+/* Question bank origin controls: scoped layout; approved metric cards unchanged. */
+.question-bank .qb-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 10rem;
+}
+.question-bank .qb-toolbar > div:first-child { grid-column: 1 / -1; }
+.question-bank .qb-toolbar [data-qb-sort] { width: 10rem; max-width: 100%; min-width: 0; }
+.question-bank .qb-scope-tabs { flex-wrap: nowrap; min-width: 0; }
+.question-bank .qb-scope-tabs button { min-height: 44px; padding: 0 16px; font-size: .9rem; }
+.question-bank .qb-scope-tabs button:focus-visible { outline: 3px solid #124e91; outline-offset: 2px; }
+@media (max-width: 1100px) {
+  .question-bank .qb-toolbar { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .question-bank .qb-scope-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .question-bank .qb-scope-tabs button { min-width: 0; padding: 0 10px; }
+}
+@media (max-width: 900px) {
+  .question-bank[data-qb-active-view="banco"] .qb-layout { grid-template-columns: minmax(0, 1fr); }
+  .question-bank[data-qb-active-view="banco"] .qb-results { min-width: 0; }
+}
+
+/* RS Educacional: presentation only; origin keys and approved print styles retained. */
+@media (min-width: 901px) {
+  .question-bank[data-qb-active-view="banco"] .qb-layout { grid-template-columns: 200px minmax(0, 1fr); }
+}
+.question-bank .qb-toolbar { grid-template-columns: minmax(0, 1fr); }
+.question-bank .qb-scope-tabs { display: grid; grid-template-columns: 1fr 1.8fr 1fr 1fr; gap: 10px; }
+.question-bank .qb-scope-tabs button { min-height: 48px; min-width: 0; padding: 8px 12px; font-size: .9rem; }
+@media (max-width: 600px) {
+  .question-bank .qb-scope-tabs { gap: 4px; }
+  .question-bank .qb-scope-tabs button { padding: 6px 3px; font-size: .65rem; overflow-wrap: normal; }
+}

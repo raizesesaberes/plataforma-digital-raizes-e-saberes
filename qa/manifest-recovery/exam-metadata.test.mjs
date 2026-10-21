@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+const s=readFileSync('app-pages.js','utf8');const context=vm.createContext({});
+vm.runInContext(s.slice(s.indexOf('const questionBankExamMetadata ='),s.indexOf('const mapAssessmentFromSupabase ='))+'\nthis.metadata=questionBankExamMetadata;this.map=mapQuestionFromSupabase;',context);
+const plain=v=>JSON.parse(JSON.stringify(v));
+for(const enem of [undefined,null,false,true,{},[],{foreign_language:'EN'},{examYear:'2º ano',language:'unknown'},{language:'__proto__'},{language:'constructor'}])assert.deepEqual(plain(context.metadata({metadata:{enem}})),{examYear:'',language:'',theme:''});
+for(const [raw,normalized] of [['pt-BR','Português'],['Português','Português'],['EN','Inglês'],['Inglês','Inglês'],['es','Espanhol'],['Espanhol','Espanhol']])assert.deepEqual(plain(context.metadata({metadata:{enem:{examYear:2020,language:raw,theme:' Tema '}}})),{examYear:'2020',language:normalized,theme:'Tema'});
+const mapped=context.map({school_year:'2º ano',component:'Matemática',statement:'Texto citado em espanhol',metadata:{enem:{examYear:2020,language:'pt'}}});
+assert.equal(mapped.year,'2º ano');assert.equal(mapped.examYear,'2020');assert.equal(mapped.language,'Português');assert.equal(mapped.component,'Matemática');
+assert.equal(context.map({statement:'Texto em inglês',metadata:{enem_metadata_truthy:true}}).language,'');
+assert.equal(context.map({metadata:{enem_metadata_truthy:true}}).examYear,'');
+console.log('PASS explicit metadata only; school/exam years separate; no language inferred from component, text, foreign option or resolver flag; unknown stays unknown.');
