@@ -25205,23 +25205,6 @@ const initQuestionBank = () => {
   window.addEventListener("popstate", syncQuestionBankView);
   installSupabaseSessionListener();
   refresh();
-  if(getSupabaseUserContext().role==='admin'){
-    const entry=document.createElement('button');entry.type='button';entry.textContent='Carregar 3 ENEM para conferência no banco';
-    root.querySelector('[data-qb-origin]')?.parentElement.append(entry);
-    entry.addEventListener('click',async()=>{
-      entry.disabled=true;
-      try{
-        if(!loading.hidden)throw Error('Aguarde o carregamento do banco antes de iniciar a conferência.');
-        const request=async id=>normalizeRpcJson(await createSupabaseRestClient().request('rpc/admin_get_question_category','',{method:'POST',requireAuthenticated:true,allowedRoles:['admin'],body:JSON.stringify({p_question_id:id})}));
-        const readRows=uuid=>createSupabaseRestClient().request('question_items',uuid?`?id=eq.${encodeURIComponent(uuid)}&select=*,alternatives:question_alternatives(*)&limit=2`:`?code=in.(${[...qbAdminReviewPilotCodes].join(',')})&select=*,alternatives:question_alternatives(*)&order=code.asc&limit=4`,{requireAuthenticated:true,allowedRoles:['admin']});
-        const session=await qbMixedReviewSession({getActor:getSupabaseUserContext,request,readRows,mapRow:mapQuestionFromSupabase});
-        if(pilotSession)throw Error('Encerre a conferência atual recarregando a página.');
-        pilotMessage='REVISÃO ADMINISTRATIVA — NÃO PUBLICADA. Seleção mista em memória; salvar, publicar e enviar a alunos indisponíveis.';
-        pilotBridge.start(session);pilotBridge.catalog(session.pilot);pilotBridge.origin('enem');
-        setSelectionStatus(pilotMessage);entry.textContent='3 ENEM carregadas · revisão não publicada';
-      }catch(error){setError(error.message);entry.disabled=false;}
-    });
-  }
   initOfficialEnemTrioImport({root});
   window.RSEnemInstitutional?.mount(root, pilotBridge);
 };
