@@ -22380,12 +22380,10 @@ async function enrichTeacherRows(rows,{request,current,validateContent}){
   if(row.publication_status!=='PUBLICADO')throw Error('RESOLVER_NONPUBLIC_ITEM');
   // Only explicit ENEM provenance requests rich metadata; no inference from titles.
   if(!row.metadata?.enem){result.push(row);continue;}
-  const query=`?id=in.(${row.id})&publication_status=eq.PUBLICADO&curation_status=eq.APROVADO&workflow_status=eq.APROVADO&select=id,blocks:metadata->content->blocks,inline_assets:metadata->enemPilotInline->assets,examYear:metadata->enem->examYear,language:metadata->enem->language,theme:metadata->enem->theme,attribution:metadata->enem->attribution,item_license:question_licenses!question_items_license_id_fkey!inner(publication_allowed),source_gate:question_sources!question_items_source_id_fkey!inner(source_license:question_licenses!question_sources_license_id_fkey!inner(publication_allowed))&item_license.publication_allowed=eq.true&source_gate.source_license.publication_allowed=eq.true&limit=2`;
-  const found=await request('question_items',query);
-  if(!current())throw Error('RESOLVER_CONTEXT_CHANGED');
-  if(!Array.isArray(found)||found.length!==1||found[0].id!==row.id)throw Error('AUTHORIZED_RICH_CONTENT_UNAVAILABLE');
-  const rich=found[0];
-  if(rich.item_license?.publication_allowed!==true||rich.source_gate?.source_license?.publication_allowed!==true)throw Error('RICH_LICENSE_GATE_CLOSED');
+  if(row.curation_status!=='APROVADO'||row.workflow_status!=='APROVADO'||row.license?.publication_allowed!==true||row.source?.license?.publication_allowed!==true)throw Error('RICH_LICENSE_GATE_CLOSED');
+  const projected=row.authorized_rich_content;
+  if(!projected||typeof projected!=='object')throw Error('AUTHORIZED_RICH_CONTENT_UNAVAILABLE');
+  const rich={blocks:projected.blocks,inline_assets:projected.inline_assets,attribution:projected.attribution,examYear:row.metadata.enem.examYear,language:row.metadata.enem.language??null,theme:row.metadata.enem.theme};
   const validated=await validateContent(rich);
   if(!current())throw Error('RESOLVER_CONTEXT_CHANGED');
   // Explicit projection: never merge unrelated/private metadata from a response.
