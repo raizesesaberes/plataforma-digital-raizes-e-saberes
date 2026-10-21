@@ -24728,7 +24728,7 @@ const initQuestionBank = () => {
       if(items.some(item=>{const next=fresh.find(q=>q.uuid===item.uuid);return !next||fingerprint(next)!==fingerprint(item);}))throw Error('CONTENT_RESOLVER_PRINT_CONTENT_CHANGED');
       if(!printContext())throw Error('CONTENT_RESOLVER_STALE_LOAD');
     }
-    RSPrint.open({ assessmentKind: kind === "student" || kind === "teacher" ? kind : undefined, title: pilotSession?.kind==='admin-real' ? "REVISÃO ADMINISTRATIVA — NÃO PUBLICADA" : kind === "teacher" ? "Gabarito do professor" : kind === "answers" ? "Cartão-resposta" : "Prova do aluno", html: `<p>Modelo RS-v1 · Documento ${htmlEscape(activeAssessmentId || "Prévia")} · SHA256 ${printVersion}</p>` + printSheet.innerHTML, current: printContext });
+    RSPrint.open({ assessmentKind: ["student", "teacher", "answers"].includes(kind) ? kind : undefined, title: pilotSession?.kind==='admin-real' ? "REVISÃO ADMINISTRATIVA — NÃO PUBLICADA" : kind === "teacher" ? "Gabarito do professor" : kind === "answers" ? "Cartão-resposta" : "Prova do aluno", html: `<p>Modelo RS-v1 · Documento ${htmlEscape(activeAssessmentId || "Prévia")} · SHA256 ${printVersion}</p>` + printSheet.innerHTML, current: printContext });
   };
 
   const generateDocxExport = async (kind) => {
