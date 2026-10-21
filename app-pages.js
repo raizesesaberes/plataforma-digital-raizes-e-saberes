@@ -22479,7 +22479,19 @@ const questionBankDistinctItems = (items, demoMode = false) => {
   }
   return [...unique.values()];
 };
+// Origin is provenance, not media-loading state or permission to publish/select.
+const questionBankVerifiedEnemOrigin = item => {
+  const row = item?.raw;
+  if (!row || !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(row.id || '') || item.uuid !== row.id) return false;
+  const sources = {
+    '66f53268-29ef-4cbf-8230-5f8b699d4042': ['q_701ec4ec8338437398453a440f84859a','q_cc77a30dcaed48bca166e3249b0e5cf9','q_5ac1d0dc757846acb4e1ebf6b8f5cef6'],
+    '979857c0-6bd8-520d-89a7-b1d049bf074a': ['q_8ebbc34fb37b4b25896b999f5d0321d1','q_44fe373cbde24378bc0b7899c592d099','q_dac9ad1f99324ff3a7fb958d7c4bdca1'],
+  };
+  const external = row.metadata?.source_identity?.source_question_id;
+  return Boolean(sources[row.source_id]?.includes(external) && row.code === 'ENEM-SOURCE-' + external && item.id === row.code && String(row.metadata?.enem?.examYear) === '2013');
+};
 const questionBankCountOrigin = item => {
+  if(questionBankVerifiedEnemOrigin(item))return 'enem';
   if(typeof qbTeacherRichOf==='function' && qbTeacherRichOf(item))return 'enem';
   const classification = String(item.legalClassification || '').replaceAll(' ', '_');
   if (classification.startsWith('ITEM_AUTORAL_')) return 'authoral';

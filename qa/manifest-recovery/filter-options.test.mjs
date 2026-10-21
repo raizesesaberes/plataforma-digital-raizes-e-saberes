@@ -6,7 +6,7 @@ const body=source.slice(source.indexOf('  const populateFilterOptions = () => {'
 function run(items){
  const filters=['examYear','language','component','theme'].map(key=>({dataset:{qbFilter:key},value:'',options:[{value:'',textContent:'Todos'}],querySelectorAll(){return this.options.slice(1).map(o=>({remove:()=>this.options.splice(this.options.indexOf(o),1)}));},append(o){this.options.push(o);}}));
  const help={textContent:''};const context={filters,bankItems:()=>items,syncExamFilterVisibility:()=>{},document:{createElement:()=>({})},root:{querySelector:s=>s.includes('examYear')?filters[0]:help}};
- vm.runInNewContext(body+'populateFilterOptions();',context);
+ vm.runInNewContext(source.slice(source.indexOf('const questionBankStageFilterValue ='),source.indexOf('const questionBankExamMetadata ='))+body+'populateFilterOptions();',context);
  return Object.fromEntries(filters.map(f=>[f.dataset.qbFilter,f.options.map(o=>o.value)]));
 }
 assert.deepEqual(run([{}]),{examYear:[''],language:[''],component:[''],theme:['']});
