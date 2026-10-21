@@ -20352,7 +20352,7 @@ const modules = {
               <summary>Filtros avançados</summary>
               <div class="qb-filter-grid">
             <label><span>Buscar</span><input type="search" data-qb-search placeholder="Codigo, habilidade, enunciado..." /></label>
-            <label><span>Etapa</span><select data-qb-filter="stage"><option value="">Todas</option></select></label>
+            <label><span>Segmento / etapa</span><select data-qb-filter="stage"><option value="">Todas</option></select></label>
             <label><span>Ano escolar</span><select data-qb-filter="year"><option value="">Todos</option></select></label>
             <label data-qb-enem-field hidden><span>Ano da prova</span><select data-qb-filter="examYear" aria-describedby="qb-exam-year-help"><option value="">Todos</option></select><small id="qb-exam-year-help" data-qb-exam-year-help></small></label>
             <label data-qb-enem-field hidden><span>Idioma da questão</span><select data-qb-filter="language" aria-describedby="qb-language-help"><option value="">Todos</option></select><small id="qb-language-help">Usa o idioma informado nos metadados. Idioma ausente não é considerado Português.</small></label>
@@ -22369,7 +22369,73 @@ const initQuestionBankShellNavigation = () => {
   });
 };
 
+// Prepared adapter: integrate only after the audited projection contract is confirmed.
+// The existing class-scoped resolver is the sole source of eligible question IDs.
+async function enrichTeacherRows(rows,{request,current,validateContent}){
+ const uuid=x=>typeof x==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(x);
+ if(!Array.isArray(rows)||rows.some(r=>!uuid(r.id))||new Set(rows.map(r=>r.id)).size!==rows.length)throw Error('RESOLVER_IDENTITIES_INVALID');
+ const result=[];
+ for(const row of rows){
+  if(!current())throw Error('RESOLVER_CONTEXT_CHANGED');
+  if(row.publication_status!=='PUBLICADO')throw Error('RESOLVER_NONPUBLIC_ITEM');
+  // Only explicit ENEM provenance requests rich metadata; no inference from titles.
+  if(!row.metadata?.enem){result.push(row);continue;}
+  const query=`?id=in.(${row.id})&publication_status=eq.PUBLICADO&curation_status=eq.APROVADO&workflow_status=eq.APROVADO&select=id,blocks:metadata->content->blocks,inline_assets:metadata->enemPilotInline->assets,examYear:metadata->enem->examYear,language:metadata->enem->language,theme:metadata->enem->theme,attribution:metadata->enem->attribution,item_license:question_licenses!question_items_license_id_fkey!inner(publication_allowed),source_gate:question_sources!question_items_source_id_fkey!inner(source_license:question_licenses!question_sources_license_id_fkey!inner(publication_allowed))&item_license.publication_allowed=eq.true&source_gate.source_license.publication_allowed=eq.true&limit=2`;
+  const found=await request('question_items',query);
+  if(!current())throw Error('RESOLVER_CONTEXT_CHANGED');
+  if(!Array.isArray(found)||found.length!==1||found[0].id!==row.id)throw Error('AUTHORIZED_RICH_CONTENT_UNAVAILABLE');
+  const rich=found[0];
+  if(rich.item_license?.publication_allowed!==true||rich.source_gate?.source_license?.publication_allowed!==true)throw Error('RICH_LICENSE_GATE_CLOSED');
+  const validated=await validateContent(rich);
+  if(!current())throw Error('RESOLVER_CONTEXT_CHANGED');
+  // Explicit projection: never merge unrelated/private metadata from a response.
+  result.push({...row,metadata:{...row.metadata,content:{blocks:rich.blocks},enem:{examYear:rich.examYear,language:rich.language,theme:rich.theme,attribution:rich.attribution}},authorizedRichContent:validated});
+ }
+ return result;
+}
+
+const qbTeacherRichValidated=new WeakSet();
+const qbTeacherRichOf=item=>item?.authorizedRichContent&&qbTeacherRichValidated.has(item.authorizedRichContent)?item.authorizedRichContent:null;
+const qbValidateTeacherRich = async rich=>{
+ if(!Array.isArray(rich.blocks)||!rich.blocks.length||rich.blocks.length>256||!Array.isArray(rich.inline_assets)||rich.inline_assets.length>16)throw Error('ENEM_RICH_CONTENT_MISSING');
+ const assets=new Map();let total=0;
+ for(const a of rich.inline_assets){
+  if(typeof a.path!=='string'||a.path.startsWith('/')||a.path.includes('\\')||a.path.split('/').some(p=>!p||p==='.'||p==='..')||assets.has(a.path)||!/^[a-f0-9]{64}$/.test(a.sha256||''))throw Error('ENEM_ASSET_INVALID');
+  total+=a.bytes;if(total>524288)throw Error('ENEM_ASSET_LIMIT');
+  assets.set(a.path,await qbValidatePng(a,a.sha256));
+ }
+ for(const b of rich.blocks){
+  if(b.type==='text'&&typeof b.value==='string'&&b.value.length<=100000)continue;
+  if(b.type==='asset'&&typeof b.value==='string'&&assets.has(b.value))continue;
+  throw Error('ENEM_BLOCK_OR_ASSET_UNAVAILABLE');
+ }
+ const value={blocks:rich.blocks,assets};qbTeacherRichValidated.add(value);return value;
+};
+const qbTeacherRichAttribution = item=>{
+ const scope={
+ 'ENEM-SOURCE-q_8ebbc34fb37b4b25896b999f5d0321d1':[150,23],
+ 'ENEM-SOURCE-q_44fe373cbde24378bc0b7899c592d099':[163,27],
+ 'ENEM-SOURCE-q_dac9ad1f99324ff3a7fb958d7c4bdca1':[169,28]};
+ const x=scope[item.id];if(!x||item.sourceId!=='979857c0-6bd8-520d-89a7-b1d049bf074a')throw Error('ENEM_ATTRIBUTION_SCOPE_UNCONFIRMED');
+ return `<p class="qb-source-attribution">Fonte: <a href="https://riep.inep.gov.br/items/9b70bb32-dc67-4fde-8214-8f4713d9a386/full" target="_blank" rel="noopener noreferrer">Inep. ENEM 2013, 2º dia, caderno 5 amarelo, questão ${x[0]}, p. ${x[1]}</a>. Licença <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. Transcrição e reformatação para o portal Raízes e Saberes. Sem vínculo ou endosso do Inep.</p>`;
+};
+const qbTeacherRichBody = item=>{
+ const r=qbTeacherRichOf(item);if(!r)throw Error('ENEM_RICH_CONTENT_NOT_VALIDATED');
+ const text=r.blocks.filter(b=>b.type==='text').map(b=>b.value.trim().replace(/\s+/g,' '));
+ const body=r.blocks.map(b=>{
+  if(b.type==='text')return `<p style="white-space:pre-wrap">${htmlEscape(b.value)}</p>`;
+  const a=r.assets.get(b.value);return `<figure style="margin:6px 0;break-inside:avoid"><img src="${htmlEscape(a.url)}" width="${a.width}" height="${a.height}" alt="${htmlEscape(a.alt)}" style="width:${Math.min(a.width,480)}px;max-width:100%;height:auto"></figure>`;
+ }).join('');
+ const command=questionBankDistinctCommand(item);
+ return body+(command&&!text.includes(command.replace(/\s+/g,' '))?`<p>${htmlEscape(command)}</p>`:'');
+};
+const qbTeacherRichArticle = (item,index,showAnswer=false)=>{
+ if(item.alternatives?.length!==5||!Number.isInteger(item.correctAlternative)||item.correctAlternative<0||item.correctAlternative>4)throw Error('ENEM_ALTERNATIVES_INVALID');
+ return `<article class="qb-enem-rich" style="break-before:auto;break-after:auto"><h3 style="break-after:avoid">${index==null?'':index+1+'. '}${htmlEscape(item.title||item.id)}</h3>${qbTeacherRichBody(item)}<ol class="qb-alternatives" style="display:block;break-inside:avoid">${item.alternatives.map((a,i)=>`<li><b>${String.fromCharCode(65+i)}</b> ${htmlEscape(a)}</li>`).join('')}</ol>${showAnswer?`<p>Gabarito: ${String.fromCharCode(65+item.correctAlternative)}</p>`:''}${qbTeacherRichAttribution(item)}</article>`;
+};
+
 const renderInstitutionalQuestionProof = (item, { showAnswerKey = false, scopeLabel = "" } = {}) => {
+    if(qbTeacherRichOf(item))return qbTeacherRichArticle(item,null,showAnswerKey);
     const optionLabel = index => String.fromCharCode(65 + index);
     const correctText = item.alternatives?.[item.correctAlternative] || "";
     const command = item.commandText && item.commandText !== item.statement ? item.commandText : "";
@@ -22414,9 +22480,11 @@ const questionBankDistinctItems = (items, demoMode = false) => {
   return [...unique.values()];
 };
 const questionBankCountOrigin = item => {
+  if(typeof qbTeacherRichOf==='function' && qbTeacherRichOf(item))return 'enem';
   const classification = String(item.legalClassification || '').replaceAll(' ', '_');
   if (classification.startsWith('ITEM_AUTORAL_')) return 'authoral';
-  // No verified real ENEM/SAEB import contract is installed in this client yet.
+  if(typeof qbInlineImages!=='undefined' && qbInlineImages.has(item) && qbAdminReviewEligible(item))return 'enem';
+  // Only validated, persisted pilot records count as real ENEM.
   // Names, curricular alignment and demo ENEM metadata are not provenance verification.
   return 'other';
 };
@@ -22431,6 +22499,12 @@ const questionBankCountSummary = (catalog, filtered, selected, demoMode = false)
   return {catalog: split(catalog), filtered: split(filtered), selected: split(selected)};
 };
 
+const questionBankPrintableYear = value => String(value || '').trim()==='Faixas canônicas explícitas' ? '' : String(value || '');
+const questionBankDistinctCommand = item => {
+ const command=String(item.commandText || '').trim(), statement=String(item.statement || '').trim();
+ return command && command.replace(/\s+/g,' ')!==statement.replace(/\s+/g,' ') ? command : '';
+};
+
 const renderQuestionBankPreview = (context, kind = "student", options = {}) => {
   const optionLabel = index => String.fromCharCode(65 + index);
   const shortText = (value, limit) => {const text=String(value || "").replace(/\s+/g," ").trim();return text.length>limit?`${text.slice(0,limit-1)}...`:text;};
@@ -22442,13 +22516,14 @@ const renderQuestionBankPreview = (context, kind = "student", options = {}) => {
       return;
     }
     const isTeacher = kind === "teacher";
+    const adminReview=options.adminReview===true;
     const isAnswerSheet = kind === "answers";
     const isLocalPreview = options.local === true;
     const totalTime = items.reduce((sum, item) => sum + item.estimatedTime, 0);
     const totalPoints = items.reduce((sum, item) => sum + Number(cartPoints[item.id] ?? 1), 0);
     const assessmentTitle = titleInput?.value || "Avaliação";
     const component = root.querySelector("[data-qb-assessment-component]")?.value || "";
-    const year = root.querySelector("[data-qb-assessment-year]")?.value || "";
+    const year = questionBankPrintableYear(root.querySelector("[data-qb-assessment-year]")?.value);
     const className = getTeacherInstitutionalClasses().find(item => item.id === getPrintableParams().get("class"))?.name || "__________________";
     const printTeacherName = ["professor", "teacher"].includes(getPlatformSession().role) ? getPlatformSession().name || "__________________" : "__________________";
     const applicationDate = root.querySelector(".qb-builder input[type='date']")?.value || "";
@@ -22477,7 +22552,7 @@ const renderQuestionBankPreview = (context, kind = "student", options = {}) => {
           <small>${isTeacher ? "AVALIA+ - GABARITO E ORIENTACOES DE CORRECAO" : isAnswerSheet ? "AVALIA+ - REGISTRO DE RESPOSTAS" : "AVALIA+ - AVALIACAO DA APRENDIZAGEM"}</small>
         </header>
         ${
-          isTeacher
+          isTeacher && !adminReview
             ? `<div class="qb-preview-meta">
                 <span><b>AVALIACAO:</b> ${htmlEscape(assessmentTitle)}</span>
                 <span><b>COMPONENTE:</b> ${htmlEscape(component)}</span>
@@ -22491,9 +22566,9 @@ const renderQuestionBankPreview = (context, kind = "student", options = {}) => {
                 <span><b>USO DO PROFESSOR</b></span>
               </div>
               <table class="qb-answer-summary">
-                <thead><tr><th>Questão</th><th>Resposta</th><th>Valor</th><th>Habilidade</th><th>Descritor</th></tr></thead>
+                <thead><tr><th>Questão</th><th>Resposta</th></tr></thead>
                 <tbody>${items
-                  .map((item, index) => `<tr><td>${index + 1}</td><td>${optionLabel(item.correctAlternative)}</td><td>${htmlEscape(cartPoints[item.id] ?? 1)}</td><td>${htmlEscape(item.skill)}</td><td>${htmlEscape(shortText(item.descriptor, 80))}</td></tr>`)
+                  .map((item, index) => `<tr data-question-id="${htmlEscape(item.uuid||item.id)}"><td>${index + 1}</td><td>${optionLabel(item.correctAlternative)}</td></tr>`)
                   .join("")}</tbody>
               </table>`
             : `<div class="qb-preview-meta">
@@ -22521,12 +22596,13 @@ const renderQuestionBankPreview = (context, kind = "student", options = {}) => {
             : ""
         }
         <p>${htmlEscape(root.querySelector(".qb-builder textarea")?.value || "Leia com atencao e marque apenas uma alternativa por questao.")}</p>
-        ${isAnswerSheet ? "" : items
+        ${isAnswerSheet ? "" : adminReview ? qbMixedReviewArticles(items,kind,getSupabaseConfig().url) : isTeacher ? "" : items
           .map(
-            (item, index) => `
+            (item, index) => qbTeacherRichOf(item) ? qbTeacherRichArticle(item,index) : `
               <article>
                 <h3>${index + 1}. ${htmlEscape(item.statement)}</h3>
                 ${item.baseText ? `<blockquote>${htmlEscape(item.baseText)}</blockquote>` : ""}
+                ${questionBankDistinctCommand(item) ? `<p>${htmlEscape(questionBankDistinctCommand(item))}</p>` : ""}
                 <ol class="qb-alternatives">
                   ${item.alternatives
                     .map((alternative, optionIndex) => `<li class="${isTeacher && optionIndex === item.correctAlternative ? "is-correct" : ""}"><b>${optionLabel(optionIndex)}</b> ${htmlEscape(alternative)}</li>`)
@@ -22551,6 +22627,419 @@ const renderQuestionBankPreview = (context, kind = "student", options = {}) => {
       previewPanel.scrollIntoView({ block: "center", behavior: "smooth" });
     }, 0);
   };
+
+const qbInlineImages = new WeakMap();
+const qbInlineAllowed = new Map([
+ ['ENEM-SOURCE-q_701ec4ec8338437398453a440f84859a','556b40baead420cdb7b28f3ff008a3e9ac3d7c2f2753c9bd79e045dabb14560a'],
+ ['ENEM-SOURCE-q_cc77a30dcaed48bca166e3249b0e5cf9','7d9a7e2fe59a6d3d64575af299c76e9e26bffe4ec4a40fe74c3b9909f30af9f2'],
+ ['ENEM-SOURCE-q_5ac1d0dc757846acb4e1ebf6b8f5cef6','8bf110ded2d4f56195b88e96ee1c602978a28ff7fbe4639f1112fe034f46f5bb']]);
+const qbInlineSha = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(x=>x.toString(16).padStart(2,'0')).join('');
+const qbInlineCrc = bytes => {let c=0xffffffff;for(const b of bytes){c^=b;for(let n=0;n<8;n++)c=(c>>>1)^((c&1)?0xedb88320:0);}return (c^0xffffffff)>>>0;};
+const qbValidatePng = async (asset, expected) => {
+ if(asset.mime!=='image/png'||asset.sha256!==expected||!Number.isInteger(asset.bytes)||asset.bytes<1||asset.bytes>65536||typeof asset.base64!=='string'||asset.base64.length>87384||! /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(asset.base64))throw Error('INLINE_PNG_INVALID');
+ const raw=Uint8Array.from(atob(asset.base64),c=>c.charCodeAt(0));if(raw.length!==asset.bytes||btoa(String.fromCharCode(...raw))!==asset.base64||await qbInlineSha(raw)!==expected)throw Error('INLINE_HASH_MISMATCH');
+ if([137,80,78,71,13,10,26,10].some((v,i)=>raw[i]!==v))throw Error('INLINE_PNG_SIGNATURE');
+ const view=new DataView(raw.buffer);let pos=8,ihdr=false,idat=false,end=false,w=0,h=0;
+ while(pos<raw.length){if(pos+12>raw.length)throw Error('INLINE_PNG_TRUNCATED');const len=view.getUint32(pos),next=pos+len+12;if(next>raw.length)throw Error('INLINE_PNG_TRUNCATED');const type=String.fromCharCode(...raw.slice(pos+4,pos+8));if(qbInlineCrc(raw.slice(pos+4,pos+8+len))!==view.getUint32(pos+8+len))throw Error('INLINE_PNG_CRC');
+ if(!ihdr){if(type!=='IHDR'||len!==13)throw Error('INLINE_PNG_IHDR');w=view.getUint32(pos+8);h=view.getUint32(pos+12);ihdr=true;}else if(type==='IHDR')throw Error('INLINE_PNG_IHDR');
+ if(type==='IDAT')idat=true;if(type==='IEND'){if(len!==0||next!==raw.length)throw Error('INLINE_PNG_TRAILING');end=true;}pos=next;}
+ if(!ihdr||!idat||!end||w!==asset.width||h!==asset.height||w<1||h<1||w>2048||h>2048)throw Error('INLINE_PNG_DIMENSIONS');
+ return {url:'data:image/png;base64,'+asset.base64,width:w,height:h,alt:'Imagem original; descrição acessível pendente'};
+};
+const qbValidateInlineItem = async item => {
+ const meta=item.raw?.metadata,assets=meta?.enemPilotInline?.assets;
+ if(!qbInlineAllowed.has(item.id)||assets?.length!==1||meta.enemPilotInline.publication_allowed!==false||meta.enemPilotInline.rights_status!=='PENDING')throw Error('INLINE_PILOT_ONLY');
+ const a=assets[0],original=meta.source_occurrence?.assets;
+ if(original?.length!==1||a.path!==original[0].path||a.sha256!==original[0].sha256||a.bytes!==original[0].bytes||JSON.stringify(meta.content)!==JSON.stringify(meta.source_occurrence.content))throw Error('INLINE_SOURCE_MISMATCH');
+ const image=await qbValidatePng(a,qbInlineAllowed.get(item.id));
+ qbInlineImages.set(item,new Map([[a.path,image]]));return a.bytes;
+};
+const qbReadPilotBundle = async bytes => {
+ if(bytes.byteLength>262144||await qbInlineSha(bytes)!=='8fd6f08fb56dd7bd35da42044cad4a7b3ffd61a225f78be7d289764bbf449616')throw Error('LOCAL_PILOT_BUNDLE_HASH_REQUIRED');
+ const b=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+ if(b.items?.length!==3||new Set(b.items.map(p=>p.code)).size!==3)throw Error('FIRST_PILOT_ONLY');
+ let total=0;for(const p of b.items){
+  if(!qbInlineAllowed.has(p.code)||new TextEncoder().encode(JSON.stringify({p_item:p})).length>131072||p.source_id!=='66f53268-29ef-4cbf-8230-5f8b699d4042'||p.license_id!=='083f2388-edab-46fc-8010-ee930ba1b552'||p.publication_status!=='NAO_PUBLICADO'||p.published_at!==null)throw Error('PILOT_PAYLOAD_INVALID');
+  total+=await qbValidateInlineItem({id:p.code,raw:{metadata:p.metadata}});
+ }if(total>131072)throw Error('INLINE_TOTAL_TOO_LARGE');return b;
+};
+
+// Admin-only, in-memory review of the three persisted pilot records. No assessment writes.
+const qbAdminReviewPilotCodes = new Set(['ENEM-SOURCE-q_701ec4ec8338437398453a440f84859a','ENEM-SOURCE-q_cc77a30dcaed48bca166e3249b0e5cf9','ENEM-SOURCE-q_5ac1d0dc757846acb4e1ebf6b8f5cef6']);
+const qbAdminReviewPersistedIds = new Map([
+ ['ENEM-SOURCE-q_701ec4ec8338437398453a440f84859a','dd39252d-8d62-4f16-94b1-d4449b62ecfc'],
+ ['ENEM-SOURCE-q_cc77a30dcaed48bca166e3249b0e5cf9','a8058f9b-2f07-4f43-a053-b7ab9c02c92b'],
+ ['ENEM-SOURCE-q_5ac1d0dc757846acb4e1ebf6b8f5cef6','d9b51c98-9662-450a-b19c-f63f3484ed7e']]);
+const qbAdminReviewUuid = value => /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value || '');
+const qbAdminReviewEligible = item => Boolean(item && qbAdminReviewPilotCodes.has(item.id) && qbAdminReviewUuid(item.uuid) && qbAdminReviewPersistedIds.get(item.id)===item.uuid && item.raw?.source_id==='66f53268-29ef-4cbf-8230-5f8b699d4042' && item.raw?.metadata?.source_identity?.source_question_id===item.id.slice('ENEM-SOURCE-'.length) && item.publicationStatus === 'NAO_PUBLICADO' && item.curationStatus === 'RASCUNHO' && item.raw?.metadata?.content?.blocks?.length);
+const qbAdminReviewImage = (item, assetPath, storageOrigin) => {
+  if (typeof assetPath !== 'string' || assetPath.startsWith('/') || /[\\:\x00-\x1f]/.test(assetPath) || assetPath.split('/').some(p => !p || p === '.' || p === '..')) throw Error('REVIEW_ASSET_PATH_INVALID');
+  if(item.raw?.metadata?.enemPilotInline){const image=qbInlineImages.get(item)?.get(assetPath);if(!image)throw Error('INLINE_NOT_VALIDATED');return image;}
+  throw Error('INLINE_PILOT_REQUIRED');
+};
+// Scoped density: authoral-card dimensions on screen; continuous A4 flow in print.
+const qbAdminReviewLayout = `<style data-qb-admin-review-layout>
+.qb-admin-review-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px;margin:12px 0}
+.qb-admin-review-cards .qb-card{padding:16px;gap:8px;min-height:0;height:auto}
+.qb-admin-review-cards label{display:flex;align-items:center;gap:8px;font-size:1rem;font-weight:700}
+.qb-admin-review-cards p{font-size:.8rem;line-height:1.45;margin:0}
+.qb-admin-review-sheet{display:block!important;max-width:780px;width:100%;height:auto!important;min-height:0!important;overflow:visible!important;padding:14px;box-sizing:border-box}
+.qb-admin-review-sheet .qb-admin-review-question{display:block!important;padding:6px 0;margin:0;border:0;border-top:1px solid #ddd;border-radius:0;box-shadow:none;height:auto!important;min-height:0!important;break-before:auto;break-after:auto;break-inside:auto;page-break-before:auto;page-break-after:auto;page-break-inside:auto}
+.qb-admin-review-sheet .qb-admin-review-question h3{font-size:14px;margin:0 0 6px;line-height:1.35;break-after:avoid}
+.qb-admin-review-sheet .qb-admin-review-question p{font-size:14px;line-height:1.4;margin:4px 0;orphans:3;widows:3}
+.qb-admin-review-sheet figure{margin:4px 0;break-inside:avoid;page-break-inside:avoid}
+.qb-admin-review-sheet figure img{display:block;max-width:100%;height:auto;object-fit:contain}
+.qb-admin-review-sheet figcaption{font-size:10px;color:#555;margin-top:2px}
+.qb-admin-review-sheet .qb-alternatives{display:block;padding:0;list-style:none;margin:4px 0;break-inside:avoid;page-break-inside:avoid}
+.qb-admin-review-sheet .qb-admin-review-options{display:block;break-inside:avoid;page-break-inside:avoid}
+.qb-admin-review-sheet .qb-admin-review-start{display:block;break-inside:avoid;page-break-inside:avoid}
+.qb-admin-review-sheet .qb-admin-review-start h3{break-after:avoid;page-break-after:avoid}
+.qb-admin-review-sheet .qb-alternatives li{font-size:14px;line-height:1.35;margin:2px 0;break-inside:avoid}
+@media print{.qb-admin-review-sheet>.qb-preview-footer{display:none}.qb-admin-review-sheet .qb-preview-cover strong{display:none}.qb-admin-review-sheet{max-width:none;padding:0;border:0;box-shadow:none}.qb-admin-review-sheet .qb-admin-review-question{break-before:auto!important;break-after:auto!important;break-inside:auto!important;page-break-before:auto!important;page-break-after:auto!important;page-break-inside:auto!important}}
+</style>`;
+const qbAdminReviewCards = (items,selection) => items.map(item=>{
+ const number=item.raw.metadata.source_occurrence.question_number;
+ const text=item.raw.metadata.content.blocks.filter(b=>b.type==='text').map(b=>b.value).join(' ');
+ const summary=text.length>180?text.slice(0,177)+'…':text;
+ return `<article class="qb-card ${selection.includes(item.uuid)?'is-selected':''}"><label><input type="checkbox" data-review-id="${htmlEscape(item.uuid)}" ${selection.includes(item.uuid)?'checked':''}>ENEM 2013 · Questão ${htmlEscape(number)}</label><p>${htmlEscape(summary)}</p><small>Matemática · NÃO PUBLICADA · conteúdo completo na prova de revisão</small></article>`;
+}).join('');
+const qbAdminReviewBody = (item, storageOrigin, heading = '', options = '') => {
+  if(!qbAdminReviewEligible(item))throw Error('REVIEW_ITEM_NOT_ELIGIBLE');
+  const content=item.raw.metadata.content;
+  if(!Array.isArray(content.blocks))throw Error('REVIEW_BLOCKS_REQUIRED');
+  const blocks=content.blocks.map(block=>{
+    if(block.type==='text' && typeof block.value==='string')return `<p style="white-space:pre-wrap">${htmlEscape(block.value)}</p>`;
+    if(block.type==='asset'){
+      const media=qbAdminReviewImage(item,block.value,storageOrigin);
+      return `<figure><img src="${htmlEscape(media.url)}" alt="${htmlEscape(media.alt)}" referrerpolicy="no-referrer" width="${media.width}" height="${media.height}" style="width:${Math.min(media.width,item.id==='ENEM-SOURCE-q_5ac1d0dc757846acb4e1ebf6b8f5cef6'?480:440)}px;max-width:100%;height:auto"><figcaption>Imagem original · revisão editorial</figcaption></figure>`;
+    }
+    throw Error('REVIEW_BLOCK_TYPE_INVALID');
+  });
+  if(!blocks.length)throw Error('REVIEW_BLOCKS_REQUIRED');
+  if(!heading)return blocks.join('');
+  // Keep the original final prompt with its choices; no content is synthesized.
+  const hasFinalPrompt=options && blocks.length>1 && content.blocks.at(-1).type==='text';
+  const rest=blocks.slice(1,hasFinalPrompt?-1:undefined).join('');
+  return `<div class="qb-admin-review-start">${heading}${blocks[0]}</div>${rest}${options?`<div class="qb-admin-review-options">${hasFinalPrompt?blocks.at(-1):''}${options}</div>`:''}`;
+};
+const qbAdminReviewSheet = (items, kind, storageOrigin) => {
+  if(!['student','teacher'].includes(kind) || !items.length || items.length>3 || new Set(items.map(i=>i.uuid)).size!==items.length)throw Error('REVIEW_SELECTION_INVALID');
+  return `${qbAdminReviewLayout}<section class="qb-preview-sheet qb-admin-review-sheet"><header class="qb-preview-cover"><strong>REVISÃO ADMINISTRATIVA — NÃO PUBLICADA</strong><span>${kind==='teacher'?'GABARITO DE CONFERÊNCIA':'PROVA DE CONFERÊNCIA'}</span><small>Somente revisão. Não salva como avaliação, não atribuída a alunos. Direitos em análise.</small></header>${items.map((item,n)=>{
+    if(!qbAdminReviewEligible(item))throw Error('REVIEW_ITEM_NOT_ELIGIBLE');
+    const rows=[...(item.raw?.alternatives||[])].sort((a,b)=>a.position-b.position);
+    if(rows.length!==5 || rows.map(a=>a.label).join('')!=='ABCDE' || rows.some((a,i)=>a.position!==i+1 || typeof a.body!=='string' || !a.body.trim()) || rows.filter(a=>a.is_correct===true).length!==1)throw Error('REVIEW_FIVE_ALTERNATIVES_REQUIRED');
+    const answer=rows.find(a=>a.is_correct===true).label;
+    // No reviewed explanation contract exists for this pilot; do not invent one.
+    if(kind==='teacher')return `<p class="qb-answer-key" data-question-id="${htmlEscape(item.uuid)}"><b>${n+1}</b> — ${htmlEscape(answer)}</p>`;
+    const choices=`<ol class="qb-alternatives">${rows.map(a=>`<li><b>${htmlEscape(a.label)}</b> ${htmlEscape(a.body)}</li>`).join('')}</ol>`;
+    return `<article class="qb-admin-review-question">${qbAdminReviewBody(item,storageOrigin,`<h3>${n+1}. ENEM 2013 · Questão ${htmlEscape(item.raw.metadata.source_occurrence.question_number)}</h3>`,choices)}</article>`;
+  }).join('')}<footer class="qb-preview-footer">${items.length} questões · REVISÃO ADMINISTRATIVA — NÃO PUBLICADA</footer></section>`;
+};
+const qbAdminReviewAuthorize = async (items, actor, getActor, request) => {
+  if(!actor?.userId || actor.role!=='admin')throw Error('REVIEW_ADMIN_REQUIRED');
+  const current=()=>getActor().userId===actor.userId && getActor().role==='admin';
+  if(!current())throw Error('REVIEW_ACTOR_CHANGED');
+  const list=items.length?items:[null];
+  for(const item of list){
+    if(item && !qbAdminReviewEligible(item))throw Error('REVIEW_ITEM_NOT_ELIGIBLE');
+    const response=await request(item?.uuid || null);
+    if(!current())throw Error('REVIEW_ACTOR_CHANGED');
+    if(response?.status!=='PASS' || (item && (response.question_id!==item.uuid || response.item?.editorial_status!=='DRAFT')))throw Error('REVIEW_SERVER_NOT_CONFIRMED');
+  }
+  return current;
+};
+// Read the persisted pilot explicitly; never depend on the pre-import catalog cache.
+const qbAdminReviewLoadPilot = async ({actor,getActor,request,readRows,mapRow}) => {
+  await qbAdminReviewAuthorize([],actor,getActor,request);
+  const rows=await readRows();
+  if(!Array.isArray(rows)||rows.length>3)throw Error('REVIEW_PILOT_RESPONSE_INVALID');
+  const items=rows.map(mapRow);
+  if(new Set(items.map(i=>i.uuid)).size!==items.length||new Set(items.map(i=>i.id)).size!==items.length)throw Error('REVIEW_PILOT_DUPLICATE');
+  await qbAdminReviewAuthorize(items,actor,getActor,request);
+  for(const item of items){await qbValidateInlineItem(item);if(getActor().userId!==actor.userId||getActor().role!=='admin')throw Error('REVIEW_ACTOR_CHANGED');}
+  return items;
+};
+const qbAdminReviewOpenPrint = async ({items,actor,getActor,request,images,ready,open,current,kind,markup}) => {
+  await qbAdminReviewAuthorize(items,actor,getActor,request);
+  try{await ready();}catch{throw Error('REVIEW_PRINT_UNAVAILABLE');}
+  if(!current())throw Error('REVIEW_ACTOR_CHANGED');
+  try{await Promise.all(images.map(async img=>{await img.decode();if(!img.naturalWidth)throw Error('decode');}));}catch{throw Error('REVIEW_IMAGE_NOT_READY');}
+  await qbAdminReviewAuthorize(items,actor,getActor,request);
+  if(!current())throw Error('REVIEW_ACTOR_CHANGED');
+  try{open({title:'REVISÃO ADMINISTRATIVA — NÃO PUBLICADA',assessmentKind:kind,html:markup,current});}catch{if(!current())throw Error('REVIEW_ACTOR_CHANGED');throw Error('REVIEW_PRINT_UNAVAILABLE');}
+};
+const qbAdminReviewPreserveOnPrintError = (error,current) => current() && ['REVIEW_PRINT_UNAVAILABLE','REVIEW_IMAGE_NOT_READY'].includes(error?.message);
+const qbMixedReviewArticles=(items,kind,origin)=>{
+ if(!['student','teacher','answers'].includes(kind)||new Set(items.map(i=>i.uuid)).size!==items.length)throw Error('REVIEW_SELECTION_INVALID');
+ return items.map((item,n)=>{
+  const pilot=qbAdminReviewEligible(item);
+  if(!pilot&&(item.publicationStatus!=='PUBLICADO'||questionBankCountOrigin(item)!=='authoral'))throw Error('REVIEW_PUBLISHED_AUTHORAL_REQUIRED');
+  if(!Number.isInteger(item.correctAlternative)||item.correctAlternative<0||item.correctAlternative>=item.alternatives.length)throw Error('REVIEW_ANSWER_INVALID');
+  if(kind==='teacher')return `<p class="qb-answer-key" data-question-id="${htmlEscape(item.uuid)}"><b>${n+1}</b> — ${String.fromCharCode(65+item.correctAlternative)}</p>`;
+  const choices=`<ol class="qb-alternatives">${item.alternatives.map((a,i)=>`<li><b>${String.fromCharCode(65+i)}</b> ${htmlEscape(a)}</li>`).join('')}</ol>`;
+  if(pilot)return `<article class="qb-admin-review-question" data-question-id="${htmlEscape(item.uuid)}">${qbAdminReviewBody(item,origin,`<h3>${n+1}. ENEM 2013 · Questão ${htmlEscape(item.raw.metadata.source_occurrence.question_number)}</h3>`,choices)}</article>`;
+  return `<article class="qb-admin-review-question" data-question-id="${htmlEscape(item.uuid)}"><h3>${n+1}. ${htmlEscape(item.statement)}</h3>${item.baseText?`<blockquote>${htmlEscape(item.baseText)}</blockquote>`:''}${questionBankDistinctCommand(item)?`<p>${htmlEscape(questionBankDistinctCommand(item))}</p>`:''}${choices}</article>`;
+ }).join('');
+};
+
+// Reads only: the existing authenticated client and RLS remain authoritative.
+const qbMixedReviewSession = async ({getActor,request,readRows,mapRow}) => {
+ const actor={...getActor()};
+ const current=()=>getActor().userId===actor.userId&&getActor().role==='admin';
+ const authorize=items=>qbAdminReviewAuthorize(items,actor,getActor,request);
+ const pilot=await qbAdminReviewLoadPilot({actor,getActor,request,readRows:()=>readRows(null),mapRow});
+ if(pilot.length!==3)throw Error('REVIEW_THREE_PERSISTED_ITEMS_REQUIRED');
+ const validate=async item=>{
+  await authorize([]);
+  if(!item||!qbAdminReviewUuid(item.uuid))throw Error('REVIEW_ITEM_NOT_VISIBLE');
+  const rows=await readRows(item.uuid);
+  if(!current()||!Array.isArray(rows)||rows.length!==1)throw Error('REVIEW_ITEM_NOT_VISIBLE');
+  const fresh=mapRow(rows[0]);
+  if(fresh.uuid!==item.uuid||fresh.id!==item.id)throw Error('REVIEW_ITEM_CHANGED');
+  if(qbAdminReviewPilotCodes.has(fresh.id)){await authorize([fresh]);await qbValidateInlineItem(fresh);}
+  else if(fresh.publicationStatus!=='PUBLICADO'||questionBankCountOrigin(fresh)!=='authoral')throw Error('REVIEW_PUBLISHED_AUTHORAL_REQUIRED');
+  if(!current())throw Error('REVIEW_ACTOR_CHANGED');
+  return fresh;
+ };
+ return {kind:'admin-real',pilot,current,validateAddition:validate,async prepare(items){
+  if(!items.length||items.length>100||new Set(items.map(i=>i.uuid)).size!==items.length)throw Error('REVIEW_SELECTION_INVALID');
+  const fresh=[];for(const item of items)fresh.push(await validate(item));
+  return {items:fresh,current};
+ },decorate(panel,kind){
+  const sheet=panel.querySelector('.qb-preview-sheet');
+  sheet.classList.add('qb-admin-review-sheet');
+  sheet.insertAdjacentHTML('afterbegin',qbAdminReviewLayout+'<p role="status"><strong>REVISÃO ADMINISTRATIVA — NÃO PUBLICADA</strong> · Não salva nem enviada a alunos.</p>');
+  panel.querySelectorAll('[data-qb-docx],[data-qb-print="answers"]').forEach(b=>{b.disabled=true;});
+ }};
+};
+
+const initQuestionBankAdminReview = ({root}) => {
+  if(getSupabaseUserContext().role!=='admin')return;
+  const host=document.createElement('section');host.className='panel qb-admin-review';
+  host.innerHTML=qbAdminReviewLayout+'<h2>Conferência administrativa do lote ENEM</h2><p>Revisão em memória · NÃO PUBLICADA · não enviada a alunos.</p><button type="button" data-review-enable>Consultar lote para revisão</button><div class="qb-grid qb-admin-review-cards" data-review-list></div><div data-review-actions hidden><button type="button" data-review-all>Selecionar todas</button><button type="button" data-review-preview="student">Montar prova de revisão</button><button type="button" data-review-preview="teacher">Conferir gabarito</button><button type="button" data-review-print="student">Imprimir prova de revisão</button><button type="button" data-review-print="teacher">Imprimir gabarito</button></div><p role="status" data-review-status></p><div data-review-preview-host></div>';
+  root.prepend(host);
+  const list=host.querySelector('[data-review-list]'),output=host.querySelector('[data-review-preview-host]'),status=host.querySelector('[data-review-status]');
+  let actor=null,loaded=[],selection=[],busy=false,revision=0;
+  const getActor=()=>getSupabaseUserContext();
+  const request=async questionId=>normalizeRpcJson(await createSupabaseRestClient().request('rpc/admin_get_question_category','',{method:'POST',requireAuthenticated:true,allowedRoles:['admin'],body:JSON.stringify({p_question_id:questionId})}));
+  const readPilotRows=async(uuid=null)=>{
+    const codes=[...qbAdminReviewPilotCodes].join(',');
+    const query=`?code=in.(${codes})${uuid?`&id=eq.${encodeURIComponent(uuid)}`:''}&select=*,alternatives:question_alternatives(*)&order=code.asc&limit=4`;
+    return createSupabaseRestClient().request('question_items',query,{requireAuthenticated:true,allowedRoles:['admin']});
+  };
+  const invalidate=()=>{actor=null;loaded=[];selection=[];revision++;list.replaceChildren();output.replaceChildren();host.querySelector('[data-review-actions]').hidden=true;};
+  const current=()=>actor && getActor().userId===actor.userId && getActor().role==='admin';
+  const renderList=()=>{list.innerHTML=qbAdminReviewCards(loaded,selection);};
+  const freshItems=async items=>{
+    const fresh=[];
+    for(const item of items){
+      if(!current())throw Error('REVIEW_ACTOR_CHANGED');
+      const rows=await readPilotRows(item.uuid);if(!Array.isArray(rows)||rows.length!==1)throw Error('REVIEW_ITEM_NOT_VISIBLE');const row=mapQuestionFromSupabase(rows[0]);
+      if(!current() || !row || row.uuid!==item.uuid || row.id!==item.id)throw Error('REVIEW_ITEM_CHANGED');
+      fresh.push(row);
+    }
+    await qbAdminReviewAuthorize(fresh,actor,getActor,request);
+    for(const item of fresh){await qbValidateInlineItem(item);if(!current())throw Error('REVIEW_ACTOR_CHANGED');}
+    return fresh;
+  };
+  host.addEventListener('change',event=>{event.stopPropagation();if(!current()||busy){invalidate();return;}const id=event.target.dataset.reviewId;if(!id)return;selection=Array.from(list.querySelectorAll('input:checked')).map(x=>x.dataset.reviewId);revision++;output.replaceChildren();});
+  host.addEventListener('click',async event=>{
+    event.stopPropagation();const button=event.target.closest('button');if(!button||busy)return;
+    busy=true;host.querySelectorAll('button,input').forEach(x=>x.disabled=true);
+    try{
+      if(button.hasAttribute('data-review-enable')){
+        invalidate();actor={userId:getActor().userId,role:getActor().role};await qbAdminReviewAuthorize([],actor,getActor,request);
+        loaded=await qbAdminReviewLoadPilot({actor,getActor,request,readRows:()=>readPilotRows(),mapRow:mapQuestionFromSupabase});selection=[];renderList();host.querySelector('[data-review-actions]').hidden=!loaded.length;
+        status.textContent=loaded.length?`${loaded.length} questões DRAFT confirmadas para revisão admin.`:'A consulta ao banco não retornou questões do piloto para esta sessão. Nenhuma importação foi repetida.';return;
+      }
+      if(!current())throw Error('REVIEW_ACTOR_CHANGED');
+      if(button.hasAttribute('data-review-all')){selection=loaded.map(i=>i.uuid);revision++;renderList();output.replaceChildren();return;}
+      const kind=button.dataset.reviewPreview || button.dataset.reviewPrint;if(!kind)return;
+      const snapshot=revision,chosen=selection.map(id=>loaded.find(i=>i.uuid===id));if(!chosen.length)throw Error('REVIEW_SELECTION_EMPTY');
+      const items=await freshItems(chosen);if(!current()||snapshot!==revision)throw Error('REVIEW_SELECTION_CHANGED');
+      const markup=qbAdminReviewSheet(items,kind,getSupabaseConfig().url);output.innerHTML=markup;
+      if(button.dataset.reviewPrint){
+        await qbAdminReviewOpenPrint({items,actor,getActor,request,images:[...output.querySelectorAll('img')],ready:schoolPrintReady,open:options=>window.RSPrint.open(options),kind,markup,current:()=>Boolean(document.body.contains(host)&&current()&&snapshot===revision)});
+      }
+      status.textContent='Revisão em memória. Nenhuma avaliação salva ou enviada; publicação permanece bloqueada.';
+    }catch(error){if(qbAdminReviewPreserveOnPrintError(error,current)){status.textContent='Não foi possível preparar a impressão. A seleção e a prova foram preservadas; tente imprimir novamente.';}else{invalidate();status.textContent='Não foi possível confirmar a revisão administrativa. Recarregue o lote; acesso, dados e imagens precisam estar confirmados.';}}
+    finally{busy=false;host.querySelectorAll('button,input').forEach(x=>x.disabled=false);}
+  });
+  window.addEventListener('storage',()=>{if(!current())invalidate();});
+  window.addEventListener('focus',()=>{if(!current())invalidate();});
+};
+
+// Explicit user-click import. Local payload stays out of public builds; no token export.
+const qbPilotStable = x => JSON.stringify((function sort(v){return Array.isArray(v)?v.map(sort):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,sort(v[k])])):v;})(x));
+const qbPilotReadback = (row,p,actorId) => {
+ if(!row||!qbAdminReviewUuid(row.id)||row.code!==p.code||row.created_by!==actorId||row.publication_status!=='NAO_PUBLICADO'||row.curation_status!=='RASCUNHO'||row.workflow_status!=='EM_ELABORACAO'||row.published_at!==null)throw Error('PILOT_READBACK_STATE');
+ for(const k of ['internal_title','component','question_type','statement','source_id','author_name','license_id','correct_answer','legal_classification','curriculum_source'])if(row[k]!==p[k])throw Error('PILOT_READBACK_FIELD');
+ if(qbPilotStable(row.metadata)!==qbPilotStable(p.metadata))throw Error('PILOT_READBACK_METADATA');
+ if(row.stage!=='Transversal delimitado'||row.school_year!=='Faixas canônicas explícitas')throw Error('PILOT_READBACK_CATEGORY_LABEL');
+ const ordered=[...(row.alternatives||[])].sort((a,b)=>a.position-b.position);
+ if(ordered.length!==5||ordered.some((a,i)=>a.position!==i+1))throw Error('PILOT_READBACK_POSITIONS');
+ const alts=ordered.map(a=>({label:a.label,body:a.body,is_correct:a.is_correct}));
+ if(qbPilotStable(alts)!==qbPilotStable(p.alternatives))throw Error('PILOT_READBACK_ALTERNATIVES');return row.id;
+};
+const qbPilotImportMachine = ({authorize,readFile,parseBundle,preflight,createItem,verifyCategory,loadJournal,saveJournal}) => {
+ let busy=false,generation=0,prepared=null,state={status:'IDLE',applyEnabled:false};
+ const view=()=>({...state});
+ const existing=async(p,actor)=>{const rows=await preflight(p);if(rows.length>1)throw Error('PILOT_DUPLICATE_CONFLICT');if(rows.length){qbPilotReadback(rows[0],p,actor);await verifyCategory(rows[0].id,p);return rows[0];}return null;};
+ return {view,reset(){generation++;prepared=null;state={status:'IDLE',applyEnabled:false};},
+ async dryRun(file){
+  if(busy)throw Error('PILOT_BUSY');busy=true;const ticket=++generation;prepared=null;state={status:'CHECKING',applyEnabled:false};
+  try{const actor=await authorize();const bundle=await parseBundle(await readFile(file));for(const p of bundle.items)await existing(p,actor);if(await authorize()!==actor||ticket!==generation)throw Error('PILOT_ACTOR_CHANGED');prepared={actor,bundle,ticket};state={status:'READY_FOR_EXPLICIT_CLICK',occurrences:3,alternatives:15,applyEnabled:true};return view();}
+  catch{state={status:'BLOCKED',applyEnabled:false};throw Error('PILOT_DRY_RUN_BLOCKED');}finally{busy=false;}
+ },
+ async apply(){
+  if(busy)throw Error('PILOT_BUSY');if(!prepared||!state.applyEnabled)throw Error('PILOT_DRY_RUN_REQUIRED');busy=true;state.applyEnabled=false;const plan=prepared;
+  try{
+   const journal=loadJournal();if(!journal||Array.isArray(journal)||typeof journal!=='object')throw Error('PILOT_JOURNAL_INVALID');
+   for(const p of plan.bundle.items){
+    if(plan.ticket!==generation||await authorize()!==plan.actor)throw Error('PILOT_ACTOR_CHANGED');
+    const payloadHash=await qbInlineSha(new TextEncoder().encode(qbPilotStable(p))),key=p.code;
+    let rec=journal[key];if(rec&&(rec.actor!==plan.actor||rec.requestId!==p.category_request_id||rec.payloadHash!==payloadHash))throw Error('PILOT_RETRY_CONFLICT');
+    const found=await existing(p,plan.actor);
+    if(plan.ticket!==generation||await authorize()!==plan.actor)throw Error('PILOT_ACTOR_CHANGED');
+    if(found){journal[key]={actor:plan.actor,requestId:p.category_request_id,payloadHash,status:'VERIFIED',questionId:found.id};saveJournal(journal);continue;}
+    if(rec&&rec.status!=='PLANNED')throw Error('PILOT_UNCERTAIN_NO_ROW');
+    rec=journal[key]={actor:plan.actor,requestId:p.category_request_id,payloadHash,status:'IN_FLIGHT'};saveJournal(journal);
+    try{await createItem(p);const saved=await existing(p,plan.actor);if(!saved)throw Error('PILOT_ROW_MISSING');if(plan.ticket!==generation||await authorize()!==plan.actor)throw Error('PILOT_ACTOR_CHANGED');rec.status='VERIFIED';rec.questionId=saved.id;saveJournal(journal);}
+    catch{rec.status='UNCERTAIN';saveJournal(journal);throw Error('PILOT_PARTIAL_OR_UNCERTAIN');}
+   }
+   state={status:'VERIFIED_FIRST_BATCH',occurrences:3,applyEnabled:false};prepared=null;return view();
+  }catch{prepared=null;state={status:'STOPPED_RECONCILE',applyEnabled:false};throw Error('PILOT_STOPPED_RECONCILE');}finally{busy=false;}
+ }};
+};
+const qbOfficialTrioCodes=new Set(['ENEM-SOURCE-q_8ebbc34fb37b4b25896b999f5d0321d1','ENEM-SOURCE-q_44fe373cbde24378bc0b7899c592d099','ENEM-SOURCE-q_dac9ad1f99324ff3a7fb958d7c4bdca1']);
+const qbOfficialTrioParse=async bytes=>{
+ if(bytes.byteLength!==88463||await qbInlineSha(bytes)!=='85425e6108b1068f77a990bf30203cd066a90d7086b7ffedba9b27c4f2316374')throw Error('OFFICIAL_FILE_HASH_REQUIRED');
+ const b=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+ if(b.items?.length!==3||new Set(b.items.map(p=>p.code)).size!==3)throw Error('OFFICIAL_EXACT_TRIO');
+ for(const p of b.items){
+  if(!qbOfficialTrioCodes.has(p.code)||p.source_id!=='979857c0-6bd8-520d-89a7-b1d049bf074a'||p.license_id!=='ea9194c9-4620-5e11-b4d8-011b3ef8a097'||p.legal_classification!=='ITEM_OFICIAL_PUBLICAMENTE_LIBERADO'||p.author_name!=='INEP'||p.metadata.enem.language!==null||p.publication_status!=='NAO_PUBLICADO')throw Error('OFFICIAL_SCOPE');
+  await qbValidateTeacherRich({blocks:p.metadata.content.blocks,inline_assets:p.metadata.enemPilotInline.assets});
+ }
+ return b;
+};
+const qbOfficialTrioReadback=(row,p,actor,category)=>{
+ if(!row||!qbAdminReviewUuid(row.id)||row.code!==p.code||row.created_by!==actor)throw Error('OFFICIAL_READBACK_ID');
+ for(const k of ['internal_title','component','question_type','statement','command_text','base_text','source_id','author_name','license_id','correct_answer','legal_classification','curriculum_source'])if(row[k]!==p[k])throw Error('OFFICIAL_READBACK_CONTENT');
+ if(qbPilotStable(row.metadata)!==qbPilotStable(p.metadata))throw Error('OFFICIAL_READBACK_METADATA');
+ const alts=[...(row.alternatives||[])].sort((a,b)=>a.position-b.position);
+ if(alts.length!==5||alts.some((a,i)=>a.position!==i+1)||qbPilotStable(alts.map(a=>({label:a.label,body:a.body,is_correct:a.is_correct})))!==qbPilotStable(p.alternatives))throw Error('OFFICIAL_READBACK_ALTERNATIVES');
+ if(category?.status!=='PASS'||category.question_id!==row.id||category.item?.subject_id!==p.canonical_category.subject_id||category.item.category_mode!=='TRANSVERSAL'||category.item.grade_id!==null||qbPilotStable([...(category.item.category_grade_ids||[])].sort())!==qbPilotStable([...p.canonical_category.category_grade_ids].sort()))throw Error('OFFICIAL_READBACK_CATEGORY');
+ const published=row.workflow_status==='APROVADO'&&row.curation_status==='APROVADO'&&row.publication_status==='PUBLICADO'&&Boolean(row.published_at)&&category.item.editorial_status==='PUBLISHED';
+ const draft=row.workflow_status==='EM_ELABORACAO'&&row.curation_status==='RASCUNHO'&&row.publication_status==='NAO_PUBLICADO'&&row.published_at===null&&category.item.editorial_status==='DRAFT';
+ if(!published&&!draft)throw Error('OFFICIAL_READBACK_STATE');
+ return {id:row.id,published};
+};
+const qbOfficialTrioMachine=({authorize,parse,preflight,readback,create,publish,loadJournal,saveJournal})=>{
+ let busy=false,plan=null;
+ const checked=async(p,actor)=>{const matches=await preflight(p);if(matches.length>1)throw Error('OFFICIAL_DUPLICATE_CONFLICT');if(!matches.length)return null;return readback(matches[0].id,p,actor);};
+ return {reset(){plan=null;},async dryRun(file){
+  if(busy)throw Error('OFFICIAL_BUSY');busy=true;plan=null;
+  try{const actor=await authorize(),bundle=await parse(await file.arrayBuffer());for(const p of bundle.items)await checked(p,actor);if(await authorize()!==actor)throw Error('OFFICIAL_ACTOR_CHANGED');plan={actor,bundle};return {ready:true,items:3};}finally{busy=false;}
+ },async apply(){
+  if(busy||!plan)throw Error('OFFICIAL_DRY_RUN_REQUIRED');busy=true;const selected=plan;plan=null;
+  try{const journal=loadJournal();if(!journal||Array.isArray(journal)||typeof journal!=='object')throw Error('OFFICIAL_JOURNAL_INVALID');
+   for(const p of selected.bundle.items){
+    if(await authorize()!==selected.actor)throw Error('OFFICIAL_ACTOR_CHANGED');
+    const hash=await qbInlineSha(new TextEncoder().encode(qbPilotStable(p)));let rec=journal[p.code];
+    if(rec&&(rec.actor!==selected.actor||rec.requestId!==p.category_request_id||rec.payloadHash!==hash))throw Error('OFFICIAL_RESUME_CONFLICT');
+    let state=await checked(p,selected.actor);
+    if(!rec){rec=journal[p.code]={actor:selected.actor,requestId:p.category_request_id,payloadHash:hash,status:'PLANNED'};saveJournal(journal);}
+    if(!state){
+     if(rec.status!=='PLANNED')throw Error('OFFICIAL_UNCERTAIN_CREATE_RECONCILE');
+     if(await authorize()!==selected.actor)throw Error('OFFICIAL_ACTOR_CHANGED');
+     rec.status='CREATE_IN_FLIGHT';saveJournal(journal);
+     try{await create(p);state=await checked(p,selected.actor);if(!state)throw Error('MISSING');}catch{rec.status='CREATE_UNCERTAIN';saveJournal(journal);throw Error('OFFICIAL_CREATE_UNCERTAIN');}
+    }
+    rec.questionId=state.id;
+    if(!state.published){
+     if(rec.status==='PUBLISH_UNCERTAIN'||rec.status==='PUBLISH_IN_FLIGHT')throw Error('OFFICIAL_UNCERTAIN_PUBLISH_RECONCILE');
+     if(await authorize()!==selected.actor)throw Error('OFFICIAL_ACTOR_CHANGED');
+     rec.status='PUBLISH_IN_FLIGHT';saveJournal(journal);
+     try{await publish(state.id);state=await checked(p,selected.actor);if(!state?.published)throw Error('NOT_PUBLISHED');}catch{rec.status='PUBLISH_UNCERTAIN';saveJournal(journal);throw Error('OFFICIAL_PUBLISH_UNCERTAIN');}
+    }
+    if(await authorize()!==selected.actor)throw Error('OFFICIAL_ACTOR_CHANGED');
+    rec.status='PUBLISHED_VERIFIED';saveJournal(journal);
+   }
+   return {published:3,teacherVerified:false};
+  }finally{busy=false;}
+ }};
+};
+const initOfficialEnemTrioImport=({root})=>{
+ if(getSupabaseUserContext().role!=='admin')return;
+ const host=document.createElement('section');host.className='panel';host.innerHTML='<h2>Lote oficial ENEM 2013 · Q150, Q163 e Q169</h2><p>Importação definitiva com CC BY 4.0. Validação e publicação por questão; se interromper, mantenha o mesmo arquivo para reconciliar.</p><label>Arquivo local oficial<input type="file" accept=".json,application/json" data-official-file></label><button type="button" data-official-check>1. Validar lote oficial</button><button type="button" data-official-apply disabled>2. Importar e publicar 3 questões oficiais</button><p role="status" data-official-status></p>';root.prepend(host);
+ const file=host.querySelector('[data-official-file]'),check=host.querySelector('[data-official-check]'),apply=host.querySelector('[data-official-apply]'),status=host.querySelector('[data-official-status]');let actor=null;
+ const req=(route,query='',options={})=>createSupabaseRestClient().request(route,query,{...options,requireAuthenticated:true,allowedRoles:['admin']});
+ const rpc=async(name,body)=>normalizeRpcJson(await req('rpc/'+name,'',{method:'POST',body:JSON.stringify(body)}));
+ const authorize=async()=>{
+  if(!actor||getSupabaseUserContext().role!=='admin'||getSupabaseUserContext().userId!==actor)throw Error('OFFICIAL_ADMIN_REQUIRED');
+  if((await rpc('admin_get_question_category',{p_question_id:null}))?.status!=='PASS')throw Error('OFFICIAL_ADMIN_SERVER_REQUIRED');
+  const l=await req('question_licenses','?id=eq.ea9194c9-4620-5e11-b4d8-011b3ef8a097&select=id,publication_allowed,allows_commercial_use,allows_adaptation,requires_attribution');
+  const s=await req('question_sources','?id=eq.979857c0-6bd8-520d-89a7-b1d049bf074a&select=id,license_id');
+  if(l.length!==1||l[0].publication_allowed!==true||l[0].allows_commercial_use!==true||l[0].allows_adaptation!==true||l[0].requires_attribution!==true||s.length!==1||s[0].license_id!==l[0].id||getSupabaseUserContext().userId!==actor||getSupabaseUserContext().role!=='admin')throw Error('OFFICIAL_RIGHTS_OR_SESSION_CHANGED');return actor;
+ };
+ const preflight=async p=>{
+  const ids=p.metadata.source_identity;const rows=[];
+  for(const [key,value] of [['code',p.code],['metadata->source_identity->>source_question_id',ids.source_question_id],['metadata->source_identity->>occurrence_id',ids.occurrence_id]])rows.push(...await req('question_items',`?${key}=eq.${encodeURIComponent(value)}&select=id&limit=2`));
+  return [...new Map(rows.map(r=>[r.id,r])).values()];
+ };
+ const journalKey='raizes:enem-official-trio-2013:journal:v1';
+ const machine=qbOfficialTrioMachine({authorize,parse:async bytes=>{const b=await qbOfficialTrioParse(bytes);for(const p of b.items)for(const a of p.metadata.enemPilotInline.assets){const img=new Image();img.src='data:image/png;base64,'+a.base64;await img.decode();if(img.naturalWidth!==a.width||img.naturalHeight!==a.height)throw Error('OFFICIAL_IMAGE_DECODE');}return b;},preflight,
+ readback:async(id,p,user)=>{const snap=await rpc('avalia_plus_question_snapshot',{p_question_id:id});const cat=await rpc('admin_get_question_category',{p_question_id:id});return qbOfficialTrioReadback({...snap.question,alternatives:snap.alternatives},p,user,cat);},
+ create:p=>rpc('avalia_plus_create_item',{p_item:p}),publish:id=>rpc('avalia_plus_set_item_workflow',{p_question_id:id,p_status:'APROVADO',p_comment:'Publicação autorizada do lote oficial INEP ENEM 2013 D2 caderno 5, Q150/Q163/Q169; conteúdo e imagens validados; CC BY 4.0 com atribuição.'}),
+ loadJournal:()=>JSON.parse(localStorage.getItem(journalKey)||'{}'),saveJournal:j=>localStorage.setItem(journalKey,JSON.stringify(j))});
+ file.addEventListener('change',()=>{machine.reset();apply.disabled=true;status.textContent='Selecione Validar lote oficial antes de executar.';});
+ host.addEventListener('click',async event=>{event.stopPropagation();const b=event.target.closest('button');if(!b||b.disabled)return;const writing=b===apply;if(!writing&&!file.files?.[0]){status.textContent='Selecione official-trio-import.json.';return;}if(!writing)actor=getSupabaseUserContext().userId;check.disabled=true;apply.disabled=true;file.disabled=true;
+ try{if(writing){await machine.apply();status.textContent='3 questões confirmadas como PUBLICADO/APROVADO, categoria PUBLISHED. A leitura pelo professor ainda precisa ser conferida.';}else{await machine.dryRun(file.files[0]);apply.disabled=false;status.textContent='Lote real validado: Q150/C, Q163/C, Q169/D; 15 alternativas, 2 PNGs. Clique no botão 2 para importar e publicar.';}}
+ catch(e){status.textContent='Interrompido: '+String(e?.message||'OFFICIAL_ERROR').replace(/[^A-Z0-9_]/g,'').slice(0,100)+'. Pode haver progresso parcial. Preserve o arquivo e o registro; não repita operações incertas.';apply.disabled=true;}
+ finally{check.disabled=false;file.disabled=false;}
+ });
+};
+
+const initQuestionBankPilotImport = ({root}) => {
+ if(getSupabaseUserContext().role!=='admin')return;
+ const host=document.createElement('section');host.className='panel qb-admin-import';
+ host.innerHTML='<h2>Importar primeiro lote ENEM para revisão</h2><p>Somente três questões. Cada questão e suas imagens são gravadas atomicamente; o conjunto de três não é uma transação única. Permanecem NÃO PUBLICADAS.</p><label>Arquivo local de importação<input type="file" accept=".json,application/json" data-pilot-file></label><button type="button" data-pilot-check>1. Executar dry-run</button><button type="button" data-pilot-apply disabled>2. Importar somente o piloto</button><p role="status" data-pilot-result></p>';
+ root.prepend(host);let actor=null;
+ const result=host.querySelector('[data-pilot-result]'),input=host.querySelector('[data-pilot-file]'),check=host.querySelector('[data-pilot-check]'),apply=host.querySelector('[data-pilot-apply]');
+ const req=(route,query='',options={})=>createSupabaseRestClient().request(route,query,{...options,requireAuthenticated:true,allowedRoles:['admin']});
+ const category=async id=>normalizeRpcJson(await req('rpc/admin_get_question_category','',{method:'POST',body:JSON.stringify({p_question_id:id})}));
+ const authorize=async()=>{
+  const now=getSupabaseUserContext();if(!actor?.userId||now.userId!==actor.userId||now.role!=='admin')throw Error('PILOT_ADMIN_REQUIRED');
+  if((await category(null))?.status!=='PASS')throw Error('PILOT_ADMIN_SERVER');
+  const licenses=await req('question_licenses','?id=eq.083f2388-edab-46fc-8010-ee930ba1b552&select=id,publication_allowed,allows_commercial_use,allows_adaptation,requires_attribution,license_url');
+  const sources=await req('question_sources','?id=eq.66f53268-29ef-4cbf-8230-5f8b699d4042&select=id,license_id');
+  if(licenses.length!==1||licenses[0].id!=='083f2388-edab-46fc-8010-ee930ba1b552'||licenses[0].requires_attribution!==true||licenses[0].license_url!==null||licenses[0].publication_allowed!==false||licenses[0].allows_commercial_use!==false||licenses[0].allows_adaptation!==false||sources.length!==1||sources[0].id!=='66f53268-29ef-4cbf-8230-5f8b699d4042'||sources[0].license_id!==licenses[0].id||getSupabaseUserContext().userId!==actor.userId||getSupabaseUserContext().role!=='admin')throw Error('PILOT_RIGHTS_OR_ACTOR_CHANGED');
+  return actor.userId;
+ };
+ const preflight=async p=>{
+  const select='&select=*,alternatives:question_alternatives(*)';
+  const byCode=await req('question_items',`?code=eq.${encodeURIComponent(p.code)}${select}`);
+  const external=p.metadata.source_identity.source_question_id;
+  const byExternal=await req('question_items',`?metadata->source_identity->>source_question_id=eq.${encodeURIComponent(external)}${select}`);
+  return [...new Map([...byCode,...byExternal].map(x=>[x.id,x])).values()];
+ };
+ const verifyCategory=async(id,p)=>{const r=await category(id);if(r?.status!=='PASS'||r.question_id!==id||r.item?.editorial_status!=='DRAFT'||r.item.subject_id!==p.canonical_category.subject_id||r.item.category_mode!=='TRANSVERSAL'||r.item.grade_id!==null||qbPilotStable([...(r.item.category_grade_ids||[])].sort())!==qbPilotStable([...p.canonical_category.category_grade_ids].sort()))throw Error('PILOT_CATEGORY_READBACK');};
+ const journalKey='raizes:enem-first-pilot-journal:v1';
+ const machine=qbPilotImportMachine({authorize,readFile:f=>f.arrayBuffer(),parseBundle:async bytes=>{const bundle=await qbReadPilotBundle(bytes);for(const p of bundle.items){for(const a of p.metadata.enemPilotInline.assets){const image=new Image();image.src='data:image/png;base64,'+a.base64;await image.decode();if(image.naturalWidth!==a.width||image.naturalHeight!==a.height)throw Error('INLINE_DECODE_FAILED');}}return bundle;},preflight,createItem:p=>req('rpc/avalia_plus_create_item','',{method:'POST',body:JSON.stringify({p_item:p})}),verifyCategory,
+ loadJournal:()=>JSON.parse(localStorage.getItem(journalKey)||'{}'),saveJournal:journal=>localStorage.setItem(journalKey,JSON.stringify(journal))});
+ input.addEventListener('change',event=>{event.stopPropagation();machine.reset();actor=null;apply.disabled=true;result.textContent='Arquivo selecionado; execute o dry-run antes de importar.';});
+ host.addEventListener('click',async event=>{
+  event.stopPropagation();const button=event.target.closest('button');if(!button||button.disabled)return;
+  const isApply=button.hasAttribute('data-pilot-apply');if(!isApply&&!input.files?.[0]){result.textContent='Selecione o arquivo local preparado.';return;}
+  if(!isApply)actor={userId:getSupabaseUserContext().userId,role:getSupabaseUserContext().role};
+  check.disabled=true;apply.disabled=true;input.disabled=true;
+  try{const state=isApply?await machine.apply():await machine.dryRun(input.files[0]);result.textContent=isApply?'Três questões e imagens confirmadas como NÃO PUBLICADAS. Atualize o catálogo para revisão admin; demais lotes não foram importados.':'Dry-run confirmado: três questões, 15 alternativas e PNGs validados. Importação somente ao clicar no botão 2.';apply.disabled=!state.applyEnabled;}
+  catch{result.textContent=isApply?'Operação interrompida. Nenhuma publicação. Pode haver questões já gravadas como rascunho; mantenha o mesmo arquivo e execute dry-run para reconciliar sem duplicar.':'Dry-run bloqueado: arquivo, sessão, direitos ou registros existentes não foram confirmados. Este dry-run não gravou questões.';apply.disabled=true;}
+  finally{check.disabled=false;input.disabled=false;}
+ });
+ const invalidate=()=>{if(actor&&(getSupabaseUserContext().userId!==actor.userId||getSupabaseUserContext().role!=='admin')){machine.reset();actor=null;input.value='';apply.disabled=true;result.textContent='Sessão alterada. Importação bloqueada.';}};
+ window.addEventListener('storage',invalidate);window.addEventListener('focus',invalidate);
+};
 
 const initQuestionBank = () => {
   const root = document.querySelector("[data-question-bank]");
@@ -22635,8 +23124,8 @@ const initQuestionBank = () => {
   let pilotSession = null, pilotRestore = null;
   const pilotItems = new Map(), pilotCatalog = new Map();
   let originFilter="all";
-  const bankItems=()=>[...questions,...pilotCatalog.values()];
-  const pilotMessage = "Seleção sintética temporária: prévia e impressão de teste disponíveis. Salvar e aplicar a alunos não está disponível.";
+  const bankItems=()=>[...new Map([...questions,...pilotCatalog.values()].map(item=>[item.id,item])).values()];
+  let pilotMessage = "Seleção sintética temporária: prévia e impressão de teste disponíveis. Salvar e aplicar a alunos não está disponível.";
   let mode = questionBankDataService.mode();
   const assessmentActorId=getSupabaseUserContext().userId;
   const assessmentActorAbort=new AbortController();
@@ -22693,16 +23182,16 @@ const initQuestionBank = () => {
       const key = select.dataset.qbFilter;
       const current = select.value;
       select.querySelectorAll("option:not(:first-child)").forEach((option) => option.remove());
-      const values = [...new Set(bankItems().map(item => item[key]).filter(Boolean).map(String))].sort();
+      const values = [...new Set([...bankItems().map(item => questionBankFilterValue(item, key)).filter(Boolean), ...(key === 'stage' ? ['ENSINO_MEDIO'] : [])])].sort();
       values
         .forEach((value) => {
           const option = document.createElement("option");
           option.value = value;
-          option.textContent = value;
+          option.textContent = key === 'stage' && value === 'ENSINO_MEDIO' ? 'Ensino Médio' : value;
           select.append(option);
         });
       const pendingValue = select.dataset.pendingValue;
-      const nextValue = pendingValue || current;
+      const nextValue = key === 'stage' ? questionBankStageFilterValue(pendingValue || current) : pendingValue || current;
       select.value = [...select.options].some((option) => option.value === nextValue) ? nextValue : "";
       delete select.dataset.pendingValue;
     });
@@ -23610,7 +24099,7 @@ const initQuestionBank = () => {
       // Alignment with SAEB does not make an authoral item an official SAEB item.
       const origin=item.pilotSource?.demoOnly?'enem':questionBankCountOrigin(item);
       if(originFilter!=='all' && originFilter!==origin)return false;
-      const fieldMatches = Object.entries(filterValues).every(([key, value]) => !value || String(item[key]??'') === value);
+      const fieldMatches = Object.entries(filterValues).every(([key, value]) => !value || questionBankFilterValue(item, key) === (key === 'stage' ? questionBankStageFilterValue(value) : value));
       const useMatches = !usedValue || (usedValue === "used" ? item.usedCount > 0 : item.usedCount === 0);
       const scopeMatches =
         scopeFilter === "mine"
@@ -23692,7 +24181,7 @@ const initQuestionBank = () => {
       <p>${htmlEscape(shortText(item.statement, 170))}</p>
       <ol>
         ${item.alternatives
-          .slice(0, 4)
+          .slice(0, 5)
           .map(
             (alternative, index) =>
               `<li class="${showAnswer && index === item.correctAlternative ? "is-correct" : ""}"><b>${optionLabel(index)}</b><span>${htmlEscape(shortText(alternative, 80))}</span></li>`
@@ -23706,12 +24195,12 @@ const initQuestionBank = () => {
     <article class="qb-card ${item.id === selectedId ? "is-focused" : ""} ${isSelected(item.id) ? "is-selected" : ""}" data-qb-card="${htmlEscape(item.id)}">
       <div class="qb-card-top">
         <span>${htmlEscape(item.id)}</span>
-        <mark>${htmlEscape(item.pilotSource?.demoOnly?"ENEM · SINTÉTICA":(questionBankCountOrigin(item)==="authoral" || getQuestionScopeKind(item)==="AUTORAL" ? "RS EDUCACIONAL" : getQuestionScopeKind(item)))}</mark>
+        <mark>${htmlEscape(item.pilotSource?.demoOnly?"ENEM · SINTÉTICA":questionBankCountOrigin(item)==="enem"?"ENEM":(questionBankCountOrigin(item)==="authoral" || getQuestionScopeKind(item)==="AUTORAL" ? "RS EDUCACIONAL" : getQuestionScopeKind(item)))}</mark>
       </div>
       <h3>${htmlEscape(shortText(item.statement || item.title, 110))}</h3>
       <p>${htmlEscape(item.component)} &middot; ${htmlEscape(item.year)} &middot; ${htmlEscape(item.skill)}</p>
       <p class="qb-card-descriptor">${htmlEscape(shortText(item.descriptor || item.object || item.unit, 130))}</p>
-      ${renderQuestionMiniature(item)}
+      ${qbAdminReviewEligible(item)?'<small>NÃO PUBLICADA · revisão administrativa</small>':''}${renderQuestionMiniature(item)}
       <div class="qb-tags"><span>${htmlEscape(item.type)}</span><span>${htmlEscape(item.difficulty)}</span><span>${htmlEscape(item.proficiency)}</span><span>${item.estimatedTime} min</span><span>${htmlEscape(item.resource)}</span></div>
       <div class="qb-card-actions">
         <button type="button" data-qb-view="${item.id}" aria-label="Ver questao ${htmlEscape(item.id)}">Ver questao</button>
@@ -23720,13 +24209,13 @@ const initQuestionBank = () => {
             ? `<button type="button" data-qb-editorial-edit="${htmlEscape(item.id)}">Editar oficial</button>`
             : `<button type="button" data-qb-adapt="${item.id}" ${item.publicationStatus === "PUBLICADO" && canAdaptQuestion() ? "" : "disabled"}>Adaptar questão</button>`
         }
-        <button type="button" data-qb-add="${item.id}" class="${isSelected(item.id) ? "is-selected" : ""}" aria-pressed="${isSelected(item.id)}" ${item.publicationStatus !== "PUBLICADO" || isSelected(item.id) ? "disabled" : ""}>${isSelected(item.id) ? "Selecionada" : "Selecionar"}</button>
+        <button type="button" data-qb-add="${item.id}" class="${isSelected(item.id) ? "is-selected" : ""}" aria-pressed="${isSelected(item.id)}" ${(item.publicationStatus !== "PUBLICADO" && !(pilotSession?.kind==='admin-real' && pilotSession.current() && qbAdminReviewEligible(item))) || isSelected(item.id) ? "disabled" : ""}>${isSelected(item.id) ? "Selecionada" : "Selecionar"}</button>
         ${item.pilotSource?.demoOnly&&isSelected(item.id)?`<button type="button" data-qb-remove="${item.id}" aria-label="Desfazer seleção de ${htmlEscape(item.id)}">Desfazer seleção</button>`:''}
       </div>
     </article>
   `;
 
-  const renderQuestionProof = (item, options = {}) => renderInstitutionalQuestionProof(item, { ...options, scopeLabel: getQuestionScopeKind(item) });
+  const renderQuestionProof = (item, options = {}) => pilotSession?.kind==='admin-real' && qbAdminReviewEligible(item) ? qbAdminReviewSheet([item],'student',getSupabaseConfig().url) : renderInstitutionalQuestionProof(item, { ...options, scopeLabel: getQuestionScopeKind(item) });
 
   const renderQuestionMetadata = (item, history = []) => `
     <div class="qb-detail-grid">
@@ -23810,7 +24299,8 @@ const initQuestionBank = () => {
   const openQuestionPreview = async (questionId, opener = document.activeElement) => {
     requireAssessmentActor();
     const item = itemById(questionId);
-    if (pilotSession && (pilotItems.has(questionId)||pilotCatalog.has(questionId))) { pilotSession.view(questionId); return; }
+    if (pilotSession && pilotSession.kind!=='admin-real' && (pilotItems.has(questionId)||pilotCatalog.has(questionId))) { pilotSession.view(questionId); return; }
+    if(pilotSession?.kind==='admin-real')await pilotSession.validateAddition(item);
     const generation = ++questionPreviewGeneration;
     if (!item) { closeQuestionPreview(); return; }
     questionPreviewId = item.id;
@@ -23867,7 +24357,7 @@ const initQuestionBank = () => {
               ? `<button type="button" data-qb-editorial-edit="${htmlEscape(item.id)}">Editar oficial</button>`
               : `<button type="button" data-qb-adapt="${item.id}" ${item.publicationStatus === "PUBLICADO" && canAdaptQuestion() ? "" : "disabled"}>Adaptar questão</button>`
           }
-          <button type="button" data-qb-add="${item.id}" class="${isSelected(item.id) ? "is-selected" : ""}" aria-pressed="${isSelected(item.id)}" ${item.publicationStatus !== "PUBLICADO" || isSelected(item.id) ? "disabled" : ""}>${isSelected(item.id) ? "Selecionada" : "Selecionar esta questao"}</button>
+          <button type="button" data-qb-add="${item.id}" class="${isSelected(item.id) ? "is-selected" : ""}" aria-pressed="${isSelected(item.id)}" ${(item.publicationStatus !== "PUBLICADO" && !(pilotSession?.kind==='admin-real' && pilotSession.current() && qbAdminReviewEligible(item))) || isSelected(item.id) ? "disabled" : ""}>${isSelected(item.id) ? "Selecionada" : "Selecionar esta questao"}</button>
         </div>
       </div>
       ${renderQuestionProof(item, { showAnswerKey: true })}
@@ -23917,7 +24407,7 @@ const initQuestionBank = () => {
                   <strong>${htmlEscape(item.id)}</strong>
                   <p>${htmlEscape(shortText(item.statement, 92))}</p>
                   <small>${htmlEscape(item.component)} &middot; ${htmlEscape(item.skill)} &middot; ${item.estimatedTime} min</small>
-                  <div class="qb-cart-mini">${item.alternatives.slice(0, 4).map((alternative, optionIndex) => `<i>${optionLabel(optionIndex)} ${htmlEscape(shortText(alternative, 34))}</i>`).join("")}</div>
+                  <div class="qb-cart-mini">${item.alternatives.slice(0, 5).map((alternative, optionIndex) => `<i>${optionLabel(optionIndex)} ${htmlEscape(shortText(alternative, 34))}</i>`).join("")}</div>
                 </div>
                 <input type="number" min="0" step="0.5" value="${cartPoints[item.id] ?? 1}" data-qb-points="${item.id}" aria-label="Pontuação da questao ${item.id}" />
                 <button type="button" data-qb-view="${item.id}" aria-label="Ver ${item.id}">Ver</button>
@@ -23935,8 +24425,8 @@ const initQuestionBank = () => {
   };
 
   const renderPreview = (kind = "student", options = {}) => {
-    const title = pilotSession ? {value: `${titleInput.value || 'Avaliação'} — TESTE SINTÉTICO / NÃO APLICAR A ALUNOS`} : titleInput;
-    renderQuestionBankPreview({root,cart,itemById,previewPanel,cartPoints,titleInput:title,activeAssessmentId}, kind, options);
+    const title = pilotSession ? {value: `${titleInput.value || 'Avaliação'} — ${pilotSession.kind==='admin-real'?'REVISÃO ADMINISTRATIVA — NÃO PUBLICADA':'TESTE SINTÉTICO / NÃO APLICAR A ALUNOS'}`} : titleInput;
+    renderQuestionBankPreview({root,cart,itemById,previewPanel,cartPoints,titleInput:title,activeAssessmentId}, kind, {...options,adminReview:pilotSession?.kind==='admin-real'});
     if (pilotSession) {
       pilotSession.decorate(previewPanel, kind);
       previewPanel.querySelectorAll('[data-qb-docx]').forEach(button => {button.disabled=true;button.title=pilotMessage;});
@@ -24135,8 +24625,20 @@ const initQuestionBank = () => {
     })().finally(()=>{assessmentSavePromise=null;if(assessmentActorCurrent())controls.forEach(({node,disabled})=>{node.disabled=disabled;});});
     return assessmentSavePromise;
   };
-  const ensureSavedForPreview = async () => {
+  const refreshTeacherSelection = async () => {
+    if(pilotSession||!['professor','teacher'].includes(getSupabaseUserContext().role))return;
+    if(!cart.map(itemById).some(item=>item?.raw?.metadata?.enem))return;
+    const selected=[...cart],revision=assessmentRevision;
+    try{
+      const fresh=await questionBankDataService.listQuestions();requireAssessmentActor();
+      if(revision!==assessmentRevision||JSON.stringify(cart)!==JSON.stringify(selected))throw Error('CONTENT_RESOLVER_STALE_LOAD');
+      if(selected.some(id=>!fresh.some(q=>q.id===id)))throw Error('CONTENT_RESOLVER_SELECTED_ITEM_UNAVAILABLE');
+      questions=fresh;
+    }catch(error){previewPanel.replaceChildren();previewPanel.hidden=true;throw error;}
+  };
+  const ensureSavedForPreview = async ({fresh=false}={}) => {
     if (pilotSession) throw Error(pilotMessage);
+    if(!fresh)await refreshTeacherSelection();
     requireAssessmentActor();
     if(assessmentSwitchBusy)throw Error('Aguarde a abertura ou duplicação terminar.');
     if(!assessmentSavePromise && sessionStorage.getItem(assessmentSaveKey))throw Error(uncertainSaveMessage);
@@ -24150,7 +24652,7 @@ const initQuestionBank = () => {
       return null;
     }
     if(!titleInput?.value.trim()){setSelectionStatus('Informe o título da avaliação antes de salvar.','error');return null;}
-    const selectedYears=[...new Set(cart.map(itemById).filter(Boolean).map(q=>q.year).filter(Boolean))];
+    const selectedYears=[...new Set(cart.map(itemById).filter(Boolean).map(q=>questionBankPrintableYear(q.year)).filter(Boolean))];
     const chosenYear=root.querySelector('[data-qb-assessment-year]')?.value.trim();
     if(selectedYears.length===1 && chosenYear!==selectedYears[0]){setSelectionStatus(`O ano deve corresponder às questões selecionadas: ${selectedYears[0]}.`,'error');return null;}
     try {
@@ -24166,6 +24668,7 @@ const initQuestionBank = () => {
   };
 
   const printPreview = async (kind) => {
+    await refreshTeacherSelection();
     const pilotCurrent = await preparePilotPreview(kind);
     const actorContext = schoolPrintContext();
     const documentKey = () => JSON.stringify({ cart, cartPoints, questions: cart.map(itemById), fields: [...root.querySelectorAll('.qb-builder input,.qb-builder select,.qb-builder textarea')].map(input => input.value) });
@@ -24177,7 +24680,7 @@ const initQuestionBank = () => {
       return;
     }
     if (!pilotSession && mode === "supabase") {
-      const savedAssessment = await ensureSavedForPreview();
+      const savedAssessment = await ensureSavedForPreview({fresh:true});
       const assessmentId = savedAssessment?.assessment?.id || savedAssessment?.id || activeAssessmentId;
       if (!assessmentId) {
         return;
@@ -24191,12 +24694,14 @@ const initQuestionBank = () => {
     if (!printContext()) throw Error("Contexto alterado.");
     renderPreview(kind);
     await schoolPrintReady();
+    if(items.some(qbTeacherRichOf))await Promise.all([...previewPanel.querySelectorAll('img')].map(async img=>{await img.decode();if(!img.naturalWidth)throw Error('ENEM_IMAGE_NOT_READY');}));
+    if(pilotSession?.kind==='admin-real'){await Promise.all([...previewPanel.querySelectorAll('img')].map(async img=>{await img.decode();if(!img.naturalWidth)throw Error('REVIEW_IMAGE_NOT_READY');}));await pilotSession.prepare(items);}
     if (!printContext()) throw Error("Contexto alterado.");
     const printVersion = await schoolPrintVersion({assessmentId: activeAssessmentId, questions: items.map(item => ({id:item.id,statement:item.statement,alternatives:item.alternatives}))});
     const printSheet = previewPanel.querySelector(".qb-preview-sheet").cloneNode(true);
     printSheet.querySelectorAll('article footer').forEach(footer => footer.remove());
-    if (kind === "student") {
-      // Only the printed student test: the answer sheet retains its original template.
+    if (kind === "student" || (kind === "teacher" && pilotSession?.kind==='admin-real')) {
+      // Same existing writing lines for administrative key; answer sheet unchanged.
       [...printSheet.querySelectorAll('.qb-preview-meta > span')].slice(0, 2).forEach(field => {
         const label = field.querySelector('b');
         if (!label) return;
@@ -24207,7 +24712,13 @@ const initQuestionBank = () => {
         field.replaceChildren(label, line);
       });
     }
-    RSPrint.open({ assessmentKind: kind === "student" || kind === "teacher" ? kind : undefined, title: kind === "teacher" ? "Gabarito do professor" : kind === "answers" ? "Cartão-resposta" : "Prova do aluno", html: `<p>Modelo RS-v1 · Documento ${htmlEscape(activeAssessmentId || "Prévia")} · SHA256 ${printVersion}</p>` + printSheet.innerHTML, current: printContext });
+    if(!pilotSession && items.some(qbTeacherRichOf)){
+      const fresh=await questionBankDataService.listQuestions();requireAssessmentActor();
+      const fingerprint=q=>JSON.stringify({id:q.uuid,statement:q.statement,command:q.commandText,alternatives:q.alternatives,key:q.correctAlternative,blocks:qbTeacherRichOf(q)?.blocks,assets:qbTeacherRichOf(q)?[...qbTeacherRichOf(q).assets]:null});
+      if(items.some(item=>{const next=fresh.find(q=>q.uuid===item.uuid);return !next||fingerprint(next)!==fingerprint(item);}))throw Error('CONTENT_RESOLVER_PRINT_CONTENT_CHANGED');
+      if(!printContext())throw Error('CONTENT_RESOLVER_STALE_LOAD');
+    }
+    RSPrint.open({ assessmentKind: kind === "student" || kind === "teacher" ? kind : undefined, title: pilotSession?.kind==='admin-real' ? "REVISÃO ADMINISTRATIVA — NÃO PUBLICADA" : kind === "teacher" ? "Gabarito do professor" : kind === "answers" ? "Cartão-resposta" : "Prova do aluno", html: `<p>Modelo RS-v1 · Documento ${htmlEscape(activeAssessmentId || "Prévia")} · SHA256 ${printVersion}</p>` + printSheet.innerHTML, current: printContext });
   };
 
   const generateDocxExport = async (kind) => {
@@ -24275,7 +24786,7 @@ const initQuestionBank = () => {
     const item = itemById(id);
     if (!item) return;
     selectedId = item.id;
-    if (item.publicationStatus !== "PUBLICADO") {
+    if (item.publicationStatus !== "PUBLICADO" && !(pilotSession?.kind==='admin-real' && pilotSession.current() && qbAdminReviewEligible(item))) {
       setSelectionStatus(`${item.id} indisponivel para selecao.`, "error");
       return;
     }
@@ -24289,7 +24800,7 @@ const initQuestionBank = () => {
     cartPoints[item.id] = cartPoints[item.id] ?? 1;
     for(const [selector,key] of [['[data-qb-assessment-year]','year'],['[data-qb-assessment-component]','component']]) {
       const field=root.querySelector(selector), values=[...new Set(cart.map(itemById).filter(Boolean).map(q=>q[key]).filter(Boolean))];
-      if(field && !field.value && values.length===1)field.value=values[0];
+      if(field && !field.value && values.length===1)field.value=key==='year'?questionBankPrintableYear(values[0]):values[0];
     }
     saveDraftSnapshot("question-selected");
     setSelectionStatus(`${item.id} selecionada para a avaliação.`, "success");
@@ -24366,6 +24877,7 @@ const initQuestionBank = () => {
     let switchControls=[];
     try {
       requireAssessmentActor();
+      if (pilotSession?.kind==='admin-real' && button.matches('[data-qb-editorial-edit],[data-qb-adapt]'))throw Error(pilotMessage);
       if (pilotSession && button.matches('[data-qb-new-assessment],[data-qb-save-draft],[data-qb-publish-digital],[data-qb-open-assessment],[data-qb-duplicate-assessment],[data-qb-reapply-assessment],[data-qb-archive-assessment],[data-qb-create-draft],[data-qb-submit-review],[data-qb-retry-review],[data-qb-workflow-review],[data-qb-workflow-approve],[data-qb-workflow-archive]')) throw Error(pilotMessage);
       if (pilotSession && button.matches('[data-qb-preview],[data-qb-preview-local],[data-qb-generate]')) {
         const kind=button.dataset.qbPreview || 'student';
@@ -24481,6 +24993,7 @@ const initQuestionBank = () => {
         }
       }
       if (button.hasAttribute("data-qb-preview-local")) {
+        await refreshTeacherSelection();
         saveDraftSnapshot("local-preview");
         renderPreview("student", { local: true });
         setSelectionStatus("Prévia local aberta sem salvar no Supabase.", "info");
@@ -24680,6 +25193,24 @@ const initQuestionBank = () => {
   window.addEventListener("popstate", syncQuestionBankView);
   installSupabaseSessionListener();
   refresh();
+  if(getSupabaseUserContext().role==='admin'){
+    const entry=document.createElement('button');entry.type='button';entry.textContent='Carregar 3 ENEM para conferência no banco';
+    root.querySelector('[data-qb-origin]')?.parentElement.append(entry);
+    entry.addEventListener('click',async()=>{
+      entry.disabled=true;
+      try{
+        if(!loading.hidden)throw Error('Aguarde o carregamento do banco antes de iniciar a conferência.');
+        const request=async id=>normalizeRpcJson(await createSupabaseRestClient().request('rpc/admin_get_question_category','',{method:'POST',requireAuthenticated:true,allowedRoles:['admin'],body:JSON.stringify({p_question_id:id})}));
+        const readRows=uuid=>createSupabaseRestClient().request('question_items',uuid?`?id=eq.${encodeURIComponent(uuid)}&select=*,alternatives:question_alternatives(*)&limit=2`:`?code=in.(${[...qbAdminReviewPilotCodes].join(',')})&select=*,alternatives:question_alternatives(*)&order=code.asc&limit=4`,{requireAuthenticated:true,allowedRoles:['admin']});
+        const session=await qbMixedReviewSession({getActor:getSupabaseUserContext,request,readRows,mapRow:mapQuestionFromSupabase});
+        if(pilotSession)throw Error('Encerre a conferência atual recarregando a página.');
+        pilotMessage='REVISÃO ADMINISTRATIVA — NÃO PUBLICADA. Seleção mista em memória; salvar, publicar e enviar a alunos indisponíveis.';
+        pilotBridge.start(session);pilotBridge.catalog(session.pilot);pilotBridge.origin('enem');
+        setSelectionStatus(pilotMessage);entry.textContent='3 ENEM carregadas · revisão não publicada';
+      }catch(error){setError(error.message);entry.disabled=false;}
+    });
+  }
+  initOfficialEnemTrioImport({root});
   window.RSEnemInstitutional?.mount(root, pilotBridge);
 };
 
@@ -30617,6 +31148,15 @@ const questionBankFallbackStore = {
 
 // Only explicit ENEM metadata from the known catalog shape; never infer from text,
 // school year, component, the resolver boolean, or an absent foreign-language option.
+// Segment filtering uses explicit stage data only; ENEM origin/year grants no stage.
+const questionBankStageFilterValue = (value) => {
+  const stage = String(value ?? '').trim();
+  const key = stage.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[\s-]+/g, '_');
+  return key === 'ENSINO_MEDIO' ? 'ENSINO_MEDIO' : stage;
+};
+const questionBankFilterValue = (item, key) => key === 'stage'
+  ? questionBankStageFilterValue(item.stage) : String(item[key] ?? '');
+
 const questionBankExamMetadata = (row) => {
   const exam = row.metadata?.enem;
   if (!exam || typeof exam !== 'object' || Array.isArray(exam)) return {examYear:'', language:'', theme:''};
@@ -30685,6 +31225,7 @@ const mapQuestionFromSupabase = (row) => {
     intervention: row.recommended_intervention || "",
     usedCount: row.usage_count || 0,
     lastUsedClass: row.last_used_class || "",
+    authorizedRichContent: row.authorizedRichContent,
     raw: row,
   };
 };
@@ -30776,7 +31317,9 @@ const questionBankDataService = (() => {
       } while (true);
     }
     assertCurrent();
-    return { enabled: true, result: { ...result, total: rows.size, details_total: rows.size }, rows: [...rows.values()] };
+    const enriched=await enrichTeacherRows([...rows.values()],{request:(resource,query)=>checkedRequest(resource,query,{requireAuthenticated:true,allowedRoles:allowedAssessmentRoles}),current:()=>{assertCurrent();return true;},validateContent:qbValidateTeacherRich});
+    assertCurrent();
+    return { enabled: true, result: { ...result, total: rows.size, details_total: rows.size }, rows: enriched };
   };
   const pickDefaultQuestionSource = (sources = []) => {
     const validSources = sources.filter((source) => source?.id && (source.license_id || source.license?.id));
