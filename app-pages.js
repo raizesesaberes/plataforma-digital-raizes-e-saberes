@@ -22384,7 +22384,7 @@ async function enrichTeacherRows(rows,{request,current,validateContent}){
   if(row.curation_status!=='APROVADO'||row.workflow_status!=='APROVADO'||row.license?.publication_allowed!==true||row.source?.license?.publication_allowed!==true)throw Error('RICH_LICENSE_GATE_CLOSED');
   const projected=row.authorized_rich_content;
   if(!projected||typeof projected!=='object')throw Error('AUTHORIZED_RICH_CONTENT_UNAVAILABLE');
-  const rich={blocks:projected.blocks,alternative_blocks:projected.alternative_blocks,inline_assets:projected.inline_assets,attribution:projected.attribution,examYear:row.metadata.enem.examYear,language:row.metadata.enem.language??null,theme:row.metadata.enem.theme};
+  const rich={blocks:projected.blocks,alternative_blocks:projected.alternative_blocks,inline_assets:projected.inline_assets,attribution:projected.attribution,examYear:row.metadata.enem.examYear,language:row.metadata.enem.language??null,theme:row.metadata.enem.theme,asset_scope:projected.asset_scope,code:row.code,source_id:row.source_id,license_id:row.license_id};
   richResponseBytes+=new TextEncoder().encode(JSON.stringify(rich)).byteLength;
   if(richResponseBytes>4194304)throw Error('ENEM_RESPONSE_PAYLOAD_LIMIT');
   const legacyTextCodes=new Set(['ENEM-SOURCE-q_8ebbc34fb37b4b25896b999f5d0321d1','ENEM-SOURCE-q_44fe373cbde24378bc0b7899c592d099','ENEM-SOURCE-q_dac9ad1f99324ff3a7fb958d7c4bdca1']);
@@ -22412,7 +22412,7 @@ const qbValidateTeacherRich = async rich=>{
  for(const a of rich.inline_assets){
   if(typeof a.path!=='string'||a.path.startsWith('/')||a.path.includes('\\')||a.path.split('/').some(p=>!p||p==='.'||p==='..')||assets.has(a.path)||!/^[a-f0-9]{64}$/.test(a.sha256||''))throw Error('ENEM_ASSET_INVALID');
   total+=a.bytes;if(total>524288)throw Error('ENEM_ASSET_LIMIT');
-  assets.set(a.path,await qbValidatePng(a,a.sha256));
+  assets.set(a.path,await qbValidatePng(a,a.sha256,{...rich.asset_scope,code:rich.code,source_id:rich.source_id,license_id:rich.license_id}));
  }
  for(const b of rich.blocks){
   if(b.type==='text'&&typeof b.value==='string'&&b.value.length<=100000)continue;
@@ -22431,6 +22431,10 @@ const qbValidateTeacherRich = async rich=>{
  const value={blocks:rich.blocks,assets,alternative_blocks};qbTeacherRichValidated.add(value);return value;
 };
 const qbTeacherRichAttribution = item=>{
+ if(item.sourceId==='c0605976-6b7e-5740-9702-4a392f53bc47' && ["ENEM-SOURCE-q_0444bfbba49e2a87540fb6d1", "ENEM-SOURCE-q_b63b23cc82a8be1baca400bb"].includes(item.id)){
+  const n=item.id==='ENEM-SOURCE-q_0444bfbba49e2a87540fb6d1'?26:27;
+  return `<p class="qb-source-attribution">Fonte: <a href="https://riep.inep.gov.br/items/129c4ee7-69a1-4819-9e64-d05d03acffa1/full" target="_blank" rel="noopener noreferrer">Inep. ENEM 1998, aplicação regular, amarelo, questão ${n}, suporte p. 8 e comando p. 9</a>. Licença <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. Transcrição digital, separação por questão e reinclusão do suporte compartilhado. Sem vínculo ou endosso do Inep.</p>`;
+ }
  const scope={
  'ENEM-SOURCE-q_8ebbc34fb37b4b25896b999f5d0321d1':[150,23],
  'ENEM-SOURCE-q_44fe373cbde24378bc0b7899c592d099':[163,27],
@@ -22506,6 +22510,12 @@ const questionBankDistinctItems = (items, demoMode = false) => {
   return [...unique.values()];
 };
 // Origin is provenance, not media-loading state or permission to publish/select.
+const qbOfficialReleases=Object.freeze([{"id":"enem-2013-official12-v1","version":1,"year":2013,"source":"32f5d3f2-bce5-5a45-bcff-23063639648b","license":"95c80a61-c500-5711-8ea8-5ec4587a56e7","language":null,"bytes":960498,"sha256":"dca3685e6465fd8ed46d6f177f3f9ddf4af2f4ba977afe356ce88d9834fedc20","items":{"ENEM-SOURCE-q_9174516f944a49499db9364f4883277b":{"source_question_id":"q_9174516f944a49499db9364f4883277b","occurrence_id":"occ_v2_1bcc3e6af2dbb213286dd72f948f525b","requestId":"f2fa7024-f761-5fb0-bcbd-20ca240b4246"},"ENEM-SOURCE-q_d875f95bef3d4a7ead713233a1eb36db":{"source_question_id":"q_d875f95bef3d4a7ead713233a1eb36db","occurrence_id":"occ_v2_5141aa779b7999269316daed1caeddc7","requestId":"26377d20-5405-5dd1-9a51-60b6aeb0ff68"},"ENEM-SOURCE-q_fbd54d1e8a9349efa9d497e88da04cf2":{"source_question_id":"q_fbd54d1e8a9349efa9d497e88da04cf2","occurrence_id":"occ_v2_fb89a8b6aeea70ba4d9d7471a1f02957","requestId":"e415fcb4-01f2-5406-a3cd-4fa7797585d7"},"ENEM-SOURCE-q_cef02d4eaba74ec2aa9f2224c771efd6":{"source_question_id":"q_cef02d4eaba74ec2aa9f2224c771efd6","occurrence_id":"occ_v2_9e66f51dbee6ceb79636dfc466a22a82","requestId":"199b7d83-f3a2-55fb-9c5d-6c3afc942aa9"},"ENEM-SOURCE-q_cc2bbaebe63f45b0883eb5e893b9c03f":{"source_question_id":"q_cc2bbaebe63f45b0883eb5e893b9c03f","occurrence_id":"occ_v2_453e6efdd98e273bea46a253839f83c4","requestId":"f4c693c1-a807-58eb-9d22-feea72fa226a"},"ENEM-SOURCE-q_8d1dac370f3b4edda75ff8da78cca45a":{"source_question_id":"q_8d1dac370f3b4edda75ff8da78cca45a","occurrence_id":"occ_v2_1ea04073b62112332c1044c4f337337e","requestId":"8a754c67-c30a-53ac-b353-d121e55aa0e4"},"ENEM-SOURCE-q_694d78130fe24f4abcc23d857df8e4dc":{"source_question_id":"q_694d78130fe24f4abcc23d857df8e4dc","occurrence_id":"occ_v2_64be8a4ba16a89cc61307f631e002c00","requestId":"b47dc89c-2b43-5ba9-be38-fe2bdd61eef0"},"ENEM-SOURCE-q_80881d856e2143ccb2ad263769833e73":{"source_question_id":"q_80881d856e2143ccb2ad263769833e73","occurrence_id":"occ_v2_e6a0cc87480c558f7e82731259bf0f72","requestId":"96b548a5-d6c9-5274-b991-d750c941d34f"},"ENEM-SOURCE-q_4ee8023bb9ad472a9f03b142103e42c3":{"source_question_id":"q_4ee8023bb9ad472a9f03b142103e42c3","occurrence_id":"occ_v2_397feda1c49fc7e40dbf344c300f4978","requestId":"245c1af2-fd28-5273-9941-851c1feb8a1d"},"ENEM-SOURCE-q_6c1a326049744a4893a9b86b59258d13":{"source_question_id":"q_6c1a326049744a4893a9b86b59258d13","occurrence_id":"occ_v2_b9e3e3eb3654b3ae63238c6a68f0b01e","requestId":"c5e5e18e-b78b-5a57-a49d-e94b398fbe0f"},"ENEM-SOURCE-q_f86eeb57d3b9438bb9fff97dafc83d9d":{"source_question_id":"q_f86eeb57d3b9438bb9fff97dafc83d9d","occurrence_id":"occ_v2_494a4b1862a14e4157f24427767fc2b5","requestId":"0430d64a-f75c-5706-86bc-318a48c22d5a"},"ENEM-SOURCE-q_b3462ab80a3f420b95a44823acbaff6e":{"source_question_id":"q_b3462ab80a3f420b95a44823acbaff6e","occurrence_id":"occ_v2_f55e8f946ccd290e1dba85a45df3a713","requestId":"99feaf52-0c82-50d8-b69d-6c43727f14c0"}}},{"id":"enem-1998-q26-q27-v1","version":1,"year":1998,"source":"c0605976-6b7e-5740-9702-4a392f53bc47","license":"a39b1f4b-736b-5a98-86ef-094eb744ebca","language":"Português","bytes":203085,"sha256":"274c4a2f1e1bf7d832ee83758f610802f7e31834e36ce9f65e6a4964291634b9","items":{"ENEM-SOURCE-q_0444bfbba49e2a87540fb6d1":{"source_question_id":"q_0444bfbba49e2a87540fb6d1","occurrence_id":"occ_02f96dec08b0224283f27598","question_number":26,"requestId":"057d17f9-f2f5-51e7-9f97-f1c1a24a11b9"},"ENEM-SOURCE-q_b63b23cc82a8be1baca400bb":{"source_question_id":"q_b63b23cc82a8be1baca400bb","occurrence_id":"occ_74a83c4eb2a19965b7afa9c5","question_number":27,"requestId":"5bda3260-a3f3-51e2-8b85-8a70a8ab964d"}}}]);
+const qbOfficialReleaseForRow = row => {
+ const identity=row?.metadata?.source_identity,code=row?.code;
+ if(typeof code!=='string'||!code.trim()||typeof identity?.source_question_id!=='string'||!identity.source_question_id.trim()||typeof identity?.occurrence_id!=='string'||!identity.occurrence_id.trim())return undefined;
+ return qbOfficialReleases.find(r=>Object.hasOwn(r.items,code)&&r.source===row.source_id&&r.license===row.license_id&&String(row?.metadata?.enem?.examYear)===String(r.year)&&r.items[code].source_question_id===identity.source_question_id&&r.items[code].occurrence_id===identity.occurrence_id);
+};
 const questionBankVerifiedEnemOrigin = item => {
   const row = item?.raw;
   if (!row || !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(row.id || '') || item.uuid !== row.id) return false;
@@ -22514,6 +22524,7 @@ const questionBankVerifiedEnemOrigin = item => {
     '979857c0-6bd8-520d-89a7-b1d049bf074a': ['q_8ebbc34fb37b4b25896b999f5d0321d1','q_44fe373cbde24378bc0b7899c592d099','q_dac9ad1f99324ff3a7fb958d7c4bdca1'],
   };
   const scoped12={"q_9174516f944a49499db9364f4883277b":"occ_v2_1bcc3e6af2dbb213286dd72f948f525b","q_d875f95bef3d4a7ead713233a1eb36db":"occ_v2_5141aa779b7999269316daed1caeddc7","q_fbd54d1e8a9349efa9d497e88da04cf2":"occ_v2_fb89a8b6aeea70ba4d9d7471a1f02957","q_cef02d4eaba74ec2aa9f2224c771efd6":"occ_v2_9e66f51dbee6ceb79636dfc466a22a82","q_cc2bbaebe63f45b0883eb5e893b9c03f":"occ_v2_453e6efdd98e273bea46a253839f83c4","q_8d1dac370f3b4edda75ff8da78cca45a":"occ_v2_1ea04073b62112332c1044c4f337337e","q_694d78130fe24f4abcc23d857df8e4dc":"occ_v2_64be8a4ba16a89cc61307f631e002c00","q_80881d856e2143ccb2ad263769833e73":"occ_v2_e6a0cc87480c558f7e82731259bf0f72","q_4ee8023bb9ad472a9f03b142103e42c3":"occ_v2_397feda1c49fc7e40dbf344c300f4978","q_6c1a326049744a4893a9b86b59258d13":"occ_v2_b9e3e3eb3654b3ae63238c6a68f0b01e","q_f86eeb57d3b9438bb9fff97dafc83d9d":"occ_v2_494a4b1862a14e4157f24427767fc2b5","q_b3462ab80a3f420b95a44823acbaff6e":"occ_v2_f55e8f946ccd290e1dba85a45df3a713"};
+  if(qbOfficialReleaseForRow(row) && item.id===row.code)return true;
   const external = row.metadata?.source_identity?.source_question_id;
   if(row.source_id==='32f5d3f2-bce5-5a45-bcff-23063639648b')return Boolean(row.license_id==='95c80a61-c500-5711-8ea8-5ec4587a56e7'&&scoped12[external]&&row.metadata?.source_identity?.occurrence_id===scoped12[external]&&row.code==='ENEM-SOURCE-'+external&&item.id===row.code&&String(row.metadata?.enem?.examYear)==='2013');
   return Boolean(sources[row.source_id]?.includes(external) && row.code === 'ENEM-SOURCE-' + external && item.id === row.code && String(row.metadata?.enem?.examYear) === '2013');
@@ -22675,10 +22686,13 @@ const qbInlineAllowed = new Map([
  ['ENEM-SOURCE-q_5ac1d0dc757846acb4e1ebf6b8f5cef6','8bf110ded2d4f56195b88e96ee1c602978a28ff7fbe4639f1112fe034f46f5bb']]);
 const qbInlineSha = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(x=>x.toString(16).padStart(2,'0')).join('');
 const qbInlineCrc = bytes => {let c=0xffffffff;for(const b of bytes){c^=b;for(let n=0;n<8;n++)c=(c>>>1)^((c&1)?0xedb88320:0);}return (c^0xffffffff)>>>0;};
-const qbValidatePng = async (asset, expected) => {
+const qbValidatePng = async (asset, expected, scope = null) => {
  // Reviewed exception: original Q167 PNG only; all other PNGs retain 64 KiB.
  const large=expected==='d9158d4a2865f004fa163b47962be0241211fb8147eebdea472c457de1e5136f';
- const limit=large?524288:65536;
+ const allowed1998={"q_0444bfbba49e2a87540fb6d1":"occ_02f96dec08b0224283f27598","q_b63b23cc82a8be1baca400bb":"occ_74a83c4eb2a19965b7afa9c5"};
+ const special1998=expected==='eff27f9052e7a766a796c2b61665875bcae1bf17b710dd8171a21f9561fea9ab' && scope?.release_id==='enem-1998-q26-q27-v1' && scope?.exam_year===1998 && allowed1998[scope?.external_id]===scope?.occurrence_id && Boolean(allowed1998[scope?.external_id]) && scope?.code==='ENEM-SOURCE-'+scope?.external_id && scope?.source_id==='c0605976-6b7e-5740-9702-4a392f53bc47' && scope?.license_id==='a39b1f4b-736b-5a98-86ef-094eb744ebca';
+ const limit=large?524288:special1998?71239:65536;
+ if(special1998&&(asset?.bytes!==71239||asset?.width!==804||asset?.height!==633))throw Error('INLINE_1998_IDENTITY_MISMATCH');
  if(!asset||asset.mime!=='image/png'||asset.sha256!==expected||!Number.isInteger(asset.bytes)||asset.bytes<1||asset.bytes>limit||typeof asset.base64!=='string'||asset.base64.length>4*Math.ceil(limit/3)||asset.base64.length%4!==0||/[^A-Za-z0-9+/=]/.test(asset.base64)||!Number.isInteger(asset.width)||!Number.isInteger(asset.height)||asset.width<1||asset.height<1||asset.width>2048||asset.height>2048)throw Error('INLINE_PNG_INVALID');
  if(large&&(asset.bytes!==468023||asset.width!==992||asset.height!==704))throw Error('INLINE_Q167_IDENTITY_MISMATCH');
  let binary;try{binary=atob(asset.base64);}catch{throw Error('INLINE_PNG_INVALID');}const raw=Uint8Array.from(binary,c=>c.charCodeAt(0));if(raw.length!==asset.bytes||btoa(binary)!==asset.base64||await qbInlineSha(raw)!==expected)throw Error('INLINE_HASH_MISMATCH');
@@ -22961,15 +22975,17 @@ const qbPilotImportMachine = ({authorize,readFile,parseBundle,preflight,createIt
 const qbOfficial12Codes=new Set(["ENEM-SOURCE-q_9174516f944a49499db9364f4883277b", "ENEM-SOURCE-q_d875f95bef3d4a7ead713233a1eb36db", "ENEM-SOURCE-q_fbd54d1e8a9349efa9d497e88da04cf2", "ENEM-SOURCE-q_cef02d4eaba74ec2aa9f2224c771efd6", "ENEM-SOURCE-q_cc2bbaebe63f45b0883eb5e893b9c03f", "ENEM-SOURCE-q_8d1dac370f3b4edda75ff8da78cca45a", "ENEM-SOURCE-q_694d78130fe24f4abcc23d857df8e4dc", "ENEM-SOURCE-q_80881d856e2143ccb2ad263769833e73", "ENEM-SOURCE-q_4ee8023bb9ad472a9f03b142103e42c3", "ENEM-SOURCE-q_6c1a326049744a4893a9b86b59258d13", "ENEM-SOURCE-q_f86eeb57d3b9438bb9fff97dafc83d9d", "ENEM-SOURCE-q_b3462ab80a3f420b95a44823acbaff6e"]);
 const qbOfficial12ReleaseEnabled=true; // Enable only after reviewed DB migration and scoped rights readback.
 const qbOfficial12Parse=async bytes=>{
- if(!qbOfficial12ReleaseEnabled)throw Error('OFFICIAL12_RELEASE_REVIEW_PENDING');
- if(bytes.byteLength!==960498||await qbInlineSha(bytes)!=='dca3685e6465fd8ed46d6f177f3f9ddf4af2f4ba977afe356ce88d9834fedc20')throw Error('OFFICIAL_FILE_HASH_REQUIRED');
+ if(!qbOfficial12ReleaseEnabled)throw Error('OFFICIAL_REVIEW_PENDING');
+ const hash=await qbInlineSha(bytes),release=qbOfficialReleases.find(r=>r.bytes===bytes.byteLength&&r.sha256===hash);
+ if(!release)throw Error('OFFICIAL_FILE_HASH_REQUIRED');
  const b=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
- if(b.items?.length!==12||new Set(b.items.map(p=>p.code)).size!==12)throw Error('OFFICIAL_EXACT_TRIO');
+ if(b.items?.length!==Object.keys(release.items).length||new Set(b.items.map(p=>p.code)).size!==b.items.length)throw Error('OFFICIAL_EXACT_BATCH');
  for(const p of b.items){
-  if(!qbOfficial12Codes.has(p.code)||p.source_id!=='32f5d3f2-bce5-5a45-bcff-23063639648b'||p.license_id!=='95c80a61-c500-5711-8ea8-5ec4587a56e7'||p.legal_classification!=='ITEM_OFICIAL_PUBLICAMENTE_LIBERADO'||p.author_name!=='INEP'||p.metadata.enem.language!==null||p.publication_status!=='NAO_PUBLICADO')throw Error('OFFICIAL_SCOPE');
-  await qbValidateTeacherRich({blocks:p.metadata.content.blocks,alternative_blocks:p.metadata.content.alternatives,inline_assets:p.metadata.enemPilotInline.assets});
+  const i=release.items[p.code],identity=p.metadata?.source_identity;
+  if(!i||p.source_id!==release.source||p.license_id!==release.license||identity?.source_question_id!==i.source_question_id||identity?.occurrence_id!==i.occurrence_id||p.category_request_id!==i.requestId||p.metadata?.enem?.examYear!==release.year||p.metadata.enem.language!==release.language||p.legal_classification!=='ITEM_OFICIAL_PUBLICAMENTE_LIBERADO'||p.author_name!=='INEP'||p.publication_status!=='NAO_PUBLICADO')throw Error('OFFICIAL_SCOPE');
+  await qbValidateTeacherRich({blocks:p.metadata.content.blocks,alternative_blocks:p.metadata.content.alternatives,inline_assets:p.metadata.enemPilotInline.assets,code:p.code,source_id:p.source_id,license_id:p.license_id,asset_scope:{release_id:release.id,exam_year:release.year,external_id:identity.source_question_id,occurrence_id:identity.occurrence_id}});
  }
- return b;
+ return {...b,release};
 };
 const qbOfficial12Readback=(row,p,actor,category)=>{
  if(!row||!qbAdminReviewUuid(row.id)||row.code!==p.code||row.created_by!==actor)throw Error('OFFICIAL_READBACK_ID');
@@ -22988,7 +23004,7 @@ const qbOfficial12Machine=({authorize,parse,preflight,readback,create,publish,lo
  const checked=async(p,actor)=>{const matches=await preflight(p);if(matches.length>1)throw Error('OFFICIAL_DUPLICATE_CONFLICT');if(!matches.length)return null;return readback(matches[0].id,p,actor);};
  return {reset(){plan=null;},async dryRun(file){
   if(busy)throw Error('OFFICIAL_BUSY');busy=true;plan=null;
-  try{const actor=await authorize(),bundle=await parse(await file.arrayBuffer());for(const p of bundle.items)await checked(p,actor);if(await authorize()!==actor)throw Error('OFFICIAL_ACTOR_CHANGED');plan={actor,bundle};return {ready:true,items:12};}finally{busy=false;}
+  try{const actor=await authorize(),bundle=await parse(await file.arrayBuffer());for(const p of bundle.items)await checked(p,actor);if(await authorize()!==actor)throw Error('OFFICIAL_ACTOR_CHANGED');plan={actor,bundle};return {ready:true,items:bundle.items.length};}finally{busy=false;}
  },async apply(){
   if(busy||!plan)throw Error('OFFICIAL_DRY_RUN_REQUIRED');busy=true;const selected=plan;plan=null;
   try{const journal=loadJournal();if(!journal||Array.isArray(journal)||typeof journal!=='object')throw Error('OFFICIAL_JOURNAL_INVALID');
@@ -23014,21 +23030,21 @@ const qbOfficial12Machine=({authorize,parse,preflight,readback,create,publish,lo
     if(await authorize()!==selected.actor)throw Error('OFFICIAL_ACTOR_CHANGED');
     rec.status='PUBLISHED_VERIFIED';saveJournal(journal);
    }
-   return {published:12,teacherVerified:false};
+   return {published:selected.bundle.items.length,teacherVerified:false};
   }finally{busy=false;}
  }};
 };
 const initOfficialEnem12Import=({root})=>{
  if(getSupabaseUserContext().role!=='admin')return;
- const host=document.createElement('section');host.className='panel';host.innerHTML='<h2>Lote oficial ENEM 2013 · 12 itens revisados</h2><p>Importação definitiva com CC BY 4.0. Validação e publicação por questão; se interromper, mantenha o mesmo arquivo para reconciliar.</p><label>Arquivo local oficial<input type="file" accept=".json,application/json" data-official-file></label><button type="button" data-official-check>1. Validar lote oficial</button><button type="button" data-official-apply disabled>2. Importar e publicar 12 questões oficiais</button><p role="status" data-official-status></p>';root.prepend(host);
- const file=host.querySelector('[data-official-file]'),check=host.querySelector('[data-official-check]'),apply=host.querySelector('[data-official-apply]'),status=host.querySelector('[data-official-status]');let actor=null;
+ const host=document.createElement('section');host.className='panel';host.innerHTML='<h2>Lotes oficiais ENEM · arquivos revisados</h2><p>Importação definitiva com CC BY 4.0. Validação e publicação por questão; se interromper, mantenha o mesmo arquivo para reconciliar.</p><label>Arquivo local oficial<input type="file" accept=".json,application/json" data-official-file></label><button type="button" data-official-check>1. Validar lote oficial</button><button type="button" data-official-apply disabled>2. Importar e publicar lote validado</button><p role="status" data-official-status></p>';root.prepend(host);
+ const file=host.querySelector('[data-official-file]'),check=host.querySelector('[data-official-check]'),apply=host.querySelector('[data-official-apply]'),status=host.querySelector('[data-official-status]');let actor=null,selectedRelease=null;
  const req=(route,query='',options={})=>createSupabaseRestClient().request(route,query,{...options,requireAuthenticated:true,allowedRoles:['admin']});
  const rpc=async(name,body)=>normalizeRpcJson(await req('rpc/'+name,'',{method:'POST',body:JSON.stringify(body)}));
  const authorize=async()=>{
-  if(!actor||getSupabaseUserContext().role!=='admin'||getSupabaseUserContext().userId!==actor)throw Error('OFFICIAL_ADMIN_REQUIRED');
+  if(!selectedRelease||!actor||getSupabaseUserContext().role!=='admin'||getSupabaseUserContext().userId!==actor)throw Error('OFFICIAL_ADMIN_REQUIRED');
   if((await rpc('admin_get_question_category',{p_question_id:null}))?.status!=='PASS')throw Error('OFFICIAL_ADMIN_SERVER_REQUIRED');
-  const l=await req('question_licenses','?id=eq.95c80a61-c500-5711-8ea8-5ec4587a56e7&select=id,publication_allowed,allows_commercial_use,allows_adaptation,requires_attribution');
-  const s=await req('question_sources','?id=eq.32f5d3f2-bce5-5a45-bcff-23063639648b&select=id,license_id');
+  const l=await req('question_licenses',`?id=eq.${selectedRelease.license}&select=id,publication_allowed,allows_commercial_use,allows_adaptation,requires_attribution`);
+  const s=await req('question_sources',`?id=eq.${selectedRelease.source}&select=id,license_id`);
   if(l.length!==1||l[0].publication_allowed!==true||l[0].allows_commercial_use!==true||l[0].allows_adaptation!==true||l[0].requires_attribution!==true||s.length!==1||s[0].license_id!==l[0].id||getSupabaseUserContext().userId!==actor||getSupabaseUserContext().role!=='admin')throw Error('OFFICIAL_RIGHTS_OR_SESSION_CHANGED');return actor;
  };
  const preflight=async p=>{
@@ -23036,14 +23052,14 @@ const initOfficialEnem12Import=({root})=>{
   for(const [key,value] of [['code',p.code],['metadata->source_identity->>source_question_id',ids.source_question_id],['metadata->source_identity->>occurrence_id',ids.occurrence_id]])rows.push(...await req('question_items',`?${key}=eq.${encodeURIComponent(value)}&select=id&limit=2`));
   return [...new Map(rows.map(r=>[r.id,r])).values()];
  };
- const journalKey='raizes:enem-official-12-2013:journal:v1';
+ const journalKey=()=>selectedRelease.id==='enem-2013-official12-v1'?'raizes:enem-official-12-2013:journal:v1':`raizes:enem-official:${selectedRelease.id}:${selectedRelease.sha256}:journal:v1`;
  const machine=qbOfficial12Machine({authorize,parse:async bytes=>{const b=await qbOfficial12Parse(bytes);for(const p of b.items)for(const a of p.metadata.enemPilotInline.assets){const img=new Image();img.src='data:image/png;base64,'+a.base64;await img.decode();if(img.naturalWidth!==a.width||img.naturalHeight!==a.height)throw Error('OFFICIAL_IMAGE_DECODE');}return b;},preflight,
  readback:async(id,p,user)=>{const snap=await rpc('avalia_plus_question_snapshot',{p_question_id:id});const cat=await rpc('admin_get_question_category',{p_question_id:id});return qbOfficial12Readback({...snap.question,alternatives:snap.alternatives},p,user,cat);},
- create:p=>rpc('avalia_plus_create_item',{p_item:p}),publish:id=>rpc('avalia_plus_set_item_workflow',{p_question_id:id,p_status:'APROVADO',p_comment:'Publicação autorizada do lote oficial INEP ENEM 2013 D2 caderno 5, 12 itens individualmente revisados; conteúdo e imagens validados; CC BY 4.0 com atribuição.'}),
- loadJournal:()=>JSON.parse(localStorage.getItem(journalKey)||'{}'),saveJournal:j=>localStorage.setItem(journalKey,JSON.stringify(j))});
+ create:p=>rpc('avalia_plus_create_item',{p_item:p}),publish:id=>rpc('avalia_plus_set_item_workflow',{p_question_id:id,p_status:'APROVADO',p_comment:`Publicação autorizada do lote ${selectedRelease.id}; conteúdo e imagens validados; CC BY 4.0 com atribuição.`}),
+ loadJournal:()=>JSON.parse(localStorage.getItem(journalKey())||'{}'),saveJournal:j=>localStorage.setItem(journalKey(),JSON.stringify(j))});
  file.addEventListener('change',()=>{machine.reset();apply.disabled=true;status.textContent='Selecione Validar lote oficial antes de executar.';});
- host.addEventListener('click',async event=>{event.stopPropagation();const b=event.target.closest('button');if(!b||b.disabled)return;const writing=b===apply;if(!writing&&!file.files?.[0]){status.textContent='Selecione official12-import.private.json.';return;}if(!writing)actor=getSupabaseUserContext().userId;check.disabled=true;apply.disabled=true;file.disabled=true;
- try{if(writing){await machine.apply();status.textContent='12 questões confirmadas como PUBLICADO/APROVADO, categoria PUBLISHED. A leitura pelo professor ainda precisa ser conferida.';}else{await machine.dryRun(file.files[0]);apply.disabled=false;status.textContent='Lote real validado: 12 questões; 60 alternativas, 17 PNGs. Clique no botão 2 para importar e publicar.';}}
+ host.addEventListener('click',async event=>{event.stopPropagation();const b=event.target.closest('button');if(!b||b.disabled)return;const writing=b===apply;if(!writing&&!file.files?.[0]){status.textContent='Selecione o arquivo oficial revisado do lote.';return;}if(!writing)actor=getSupabaseUserContext().userId;check.disabled=true;apply.disabled=true;file.disabled=true;
+ try{if(writing){const result=await machine.apply();status.textContent=`${result.published} questões confirmadas como PUBLICADO/APROVADO, categoria PUBLISHED. A leitura pelo professor ainda precisa ser conferida.`;}else{const bytes=await file.files[0].arrayBuffer(),hash=await qbInlineSha(bytes);selectedRelease=qbOfficialReleases.find(r=>r.bytes===bytes.byteLength&&r.sha256===hash);if(!selectedRelease)throw Error('OFFICIAL_FILE_HASH_REQUIRED');const result=await machine.dryRun({arrayBuffer:async()=>bytes});apply.disabled=false;status.textContent=`Lote ${selectedRelease.year} validado: ${result.items} questões. Clique no botão 2 para importar e publicar.`;}}
  catch(e){status.textContent='Interrompido: '+String(e?.message||'OFFICIAL_ERROR').replace(/[^A-Z0-9_]/g,'').slice(0,100)+'. Pode haver progresso parcial. Preserve o arquivo e o registro; não repita operações incertas.';apply.disabled=true;}
  finally{check.disabled=false;file.disabled=false;}
  });
