@@ -78,7 +78,7 @@
         main > article.qb-enem-rich > .qb-alternatives > li{break-inside:avoid;page-break-inside:avoid}
         main > article.qb-enem-rich:has(+ article.qb-enem-rich){margin-bottom:12px}
         main > article.qb-enem-rich + article.qb-enem-rich{margin-top:12px;padding-top:8px}
-        main > article.qb-enem-rich > figure > img{max-width:min(100%,400px)!important;height:auto}
+        main > article.qb-enem-rich > figure > img{max-width:min(100%,300px)!important;height:auto}
       }
     </style>` : '';
     const printFooterStyles = ['teacher','answers'].includes(assessmentKind) ? '<style>@media print{body > footer.rs-print-generated-footer{display:none}}</style>' : '';
