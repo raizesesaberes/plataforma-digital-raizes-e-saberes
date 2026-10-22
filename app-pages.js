@@ -10351,7 +10351,7 @@ const renderTeacherAssessmentsView = () => {
       <nav class="teacher-avalia-nav" aria-label="Fluxo Avalia+">
         <a href="banco-questoes.html" class="is-primary"><strong>Banco de Questões</strong><span>Pesquisar e selecionar itens</span></a>
         <a href="banco-questoes.html#nova-questao"><strong>+ Nova questão</strong><span>Autoria pelo banco canônico</span></a>
-        <a href="banco-questoes.html#construtor"><strong>+ Nova avaliação</strong><span>Montar avaliação com itens</span></a>
+        <a href="banco-questoes.html?qbNew=1#construtor"><strong>+ Nova avaliação</strong><span>Montar avaliação com itens</span></a>
         <a href="#aplicacoes"><strong>Aplicações</strong><span>Configurar e publicar</span></a>
         <a href="#resultados"><strong>Resultados</strong><span>Acompanhar entregas</span></a>
       </nav>
@@ -20347,7 +20347,7 @@ const modules = {
         </section>
         <div class="qb-layout" data-qb-main-layout>
           <aside class="panel qb-filters" aria-label="Filtros do banco de questoes">
-            <div class="panel-head"><h2>Pesquisa e filtros</h2><button type="button" data-qb-clear>Limpar</button></div>
+            <div class="panel-head"><h2>Pesquisa e filtros</h2><button type="button" data-qb-clear>Limpar filtros</button></div>
             <details class="qb-filter-drawer" open>
               <summary>Filtros avançados</summary>
               <div class="qb-filter-grid">
@@ -20397,6 +20397,7 @@ const modules = {
               <p role="status">Você está consultando uma avaliação já aplicada. Para selecionar questões em outra prova, inicie uma nova avaliação. A original será preservada.</p>
               <button type="button" data-qb-new-assessment>Iniciar nova avaliação</button>
             </div>
+            <div class="qb-card-actions" aria-label="Seleção da prova"><button type="button" data-qb-new-assessment>Nova prova</button><button type="button" data-qb-clear-cart>Limpar seleção</button></div>
             <div class="qb-grid" data-qb-grid></div>
             <div class="qb-state" data-qb-empty hidden>Nenhuma questao encontrada com os filtros atuais.</div>
             <section class="panel qb-detail" data-qb-detail aria-live="polite" hidden></section>
@@ -20506,7 +20507,7 @@ const modules = {
             </section>
           </main>
           <aside class="panel qb-cart" aria-label="Carrinho da avaliação" data-qb-panel="avaliacoes">
-            <div class="panel-head"><h2>Avaliação</h2><button type="button" data-qb-clear-cart>Limpar</button></div>
+            <div class="panel-head"><h2>Avaliação</h2><button type="button" data-qb-clear-cart>Limpar seleção</button></div>
             <div class="qb-selection-status" data-qb-selection-status aria-live="polite"></div>
             <div class="qb-cart-list" data-qb-cart-list></div>
             <div class="qb-cart-summary"><strong data-qb-cart-time>0 min</strong><span>tempo estimado</span></div>
@@ -24258,7 +24259,7 @@ const initQuestionBank = () => {
             : `<button type="button" data-qb-adapt="${item.id}" ${item.publicationStatus === "PUBLICADO" && canAdaptQuestion() ? "" : "disabled"}>Adaptar questão</button>`
         }
         <button type="button" data-qb-add="${item.id}" class="${isSelected(item.id) ? "is-selected" : ""}" aria-pressed="${isSelected(item.id)}" ${(item.publicationStatus !== "PUBLICADO" && !(pilotSession?.kind==='admin-real' && pilotSession.current() && qbAdminReviewEligible(item))) || isSelected(item.id) ? "disabled" : ""}>${isSelected(item.id) ? "Selecionada" : "Selecionar"}</button>
-        ${item.pilotSource?.demoOnly&&isSelected(item.id)?`<button type="button" data-qb-remove="${item.id}" aria-label="Desfazer seleção de ${htmlEscape(item.id)}">Desfazer seleção</button>`:''}
+        ${isSelected(item.id)?`<button type="button" data-qb-deselect="${htmlEscape(item.id)}" aria-label="Desmarcar questão ${htmlEscape(item.id)}">Desmarcar questão</button>`:''}
       </div>
     </article>
   `;
@@ -24406,6 +24407,7 @@ const initQuestionBank = () => {
               : `<button type="button" data-qb-adapt="${item.id}" ${item.publicationStatus === "PUBLICADO" && canAdaptQuestion() ? "" : "disabled"}>Adaptar questão</button>`
           }
           <button type="button" data-qb-add="${item.id}" class="${isSelected(item.id) ? "is-selected" : ""}" aria-pressed="${isSelected(item.id)}" ${(item.publicationStatus !== "PUBLICADO" && !(pilotSession?.kind==='admin-real' && pilotSession.current() && qbAdminReviewEligible(item))) || isSelected(item.id) ? "disabled" : ""}>${isSelected(item.id) ? "Selecionada" : "Selecionar esta questao"}</button>
+          ${isSelected(item.id)?`<button type="button" data-qb-deselect="${htmlEscape(item.id)}" aria-label="Desmarcar questão ${htmlEscape(item.id)}">Desmarcar questão</button>`:''}
         </div>
       </div>
       ${renderQuestionProof(item, { showAnswerKey: true })}
@@ -24504,7 +24506,7 @@ const initQuestionBank = () => {
     saveDraftSnapshot('assessment-confirmed',{syncPoints:false});
   };
   const protectedAssessmentMessage = 'Esta avaliação já foi aplicada. O conteúdo original está protegido. Use Reaplicar para escolher o destinatário e o período, ou Duplicar para editar uma nova avaliação.';
-  const protectedEditControls = '.qb-builder input,.qb-builder select,.qb-builder textarea,[data-qb-save-draft],[data-qb-points],.qb-cart button,[data-qb-add],[data-qb-clear-cart]';
+  const protectedEditControls = '.qb-builder input,.qb-builder select,.qb-builder textarea,[data-qb-save-draft],[data-qb-points],.qb-cart button,[data-qb-add],[data-qb-deselect],[data-qb-clear-cart]';
   const renderAssessmentProtection = () => {
     const notice=root.querySelector('[data-qb-assessment-protection]');
     if(notice){notice.hidden=!activeAssessmentProtected;notice.textContent=protectedAssessmentMessage;}
@@ -24644,7 +24646,7 @@ const initQuestionBank = () => {
   let assessmentSavePromise=null, assessmentHandoffPromise=null, assessmentHandoffComplete=false;
   const assessmentSaveKey=`raizes:assessment-save-pending:${assessmentActorId || 'anonymous'}`;
   const uncertainSaveMessage='A confirmação do salvamento está pendente. Consulte Avaliações salvas e abra a avaliação confirmada antes de continuar. Não repita a criação.';
-  const saveControls='.qb-builder input,.qb-builder select,.qb-builder textarea,[data-qb-points],[data-qb-save-draft],[data-qb-preview],[data-qb-publish-digital],[data-qb-generate],.qb-cart button,[data-qb-add],[data-qb-clear-cart],[data-qb-open-assessment],[data-qb-duplicate-assessment],[data-qb-reapply-assessment],[data-qb-archive-assessment],[data-qb-new-assessment]';
+  const saveControls='.qb-builder input,.qb-builder select,.qb-builder textarea,[data-qb-points],[data-qb-save-draft],[data-qb-preview],[data-qb-publish-digital],[data-qb-generate],.qb-cart button,[data-qb-add],[data-qb-deselect],[data-qb-clear-cart],[data-qb-open-assessment],[data-qb-duplicate-assessment],[data-qb-reapply-assessment],[data-qb-archive-assessment],[data-qb-new-assessment]';
   const saveAssessmentOnce = () => {
     if (pilotSession) throw Error(pilotMessage);
     requireAssessmentActor();
@@ -24893,6 +24895,12 @@ const initQuestionBank = () => {
 
   const attemptLoginResume = async () => {
     const params = new URLSearchParams(window.location.search);
+    if (params.get('qbNew') === '1') {
+      params.delete('qbNew');
+      window.history.replaceState(null, '', `${window.location.pathname}${params.size ? '?' + params.toString() : ''}${window.location.hash}`);
+      root.querySelector('[data-qb-new-assessment]')?.click();
+      return;
+    }
     if (didAttemptLoginResume || params.get("qbResume") !== "1") return;
     didAttemptLoginResume = true;
     restoreDraftSnapshot();
@@ -24943,10 +24951,10 @@ const initQuestionBank = () => {
         if (sessionStorage.getItem(assessmentSaveKey)) throw Error(uncertainSaveMessage);
         if (!activeAssessmentProtected &&
             !window.confirm('Iniciar outra avaliação? O rascunho local atual será substituído. Avaliações já salvas serão preservadas.')) return;
-        activeAssessmentId = null; activeAssessmentProtected = false; cart = []; cartPoints = {};
+        activeAssessmentId = null; activeAssessmentProtected = false; cart = []; cartPoints = {}; selectedId = null;
         assessmentHandoffComplete = false;
         root.querySelectorAll('.qb-builder input,.qb-builder textarea').forEach(node => { node.value = ''; });
-        root.querySelector('[data-qb-cover]').selectedIndex = 0;
+        root.querySelectorAll('.qb-builder select').forEach(node => { node.selectedIndex = 0; });
         previewPanel.hidden = true;
         saveDraftSnapshot('new-assessment', { syncPoints: false });
         setSelectionStatus('Nova avaliação iniciada. Selecione as questões autorizadas para montar a prova.', 'success');
@@ -24965,7 +24973,19 @@ const initQuestionBank = () => {
         if(!confirmed?.id || confirmed.id!==id)throw Error('Avaliação não confirmada pelo servidor.');
         window.location.assign(`professor.html?view=avaliacoes&assessment_id=${encodeURIComponent(id)}#aplicacoes`);return;
       }
-      if(activeAssessmentProtected && button.matches('[data-qb-save-draft],[data-qb-add],[data-qb-remove],[data-qb-up],[data-qb-down],[data-qb-clear-cart]')){setError(protectedAssessmentMessage);return;}
+      if(activeAssessmentProtected && button.matches('[data-qb-save-draft],[data-qb-add],[data-qb-deselect],[data-qb-remove],[data-qb-up],[data-qb-down],[data-qb-clear-cart]')){setError(protectedAssessmentMessage);return;}
+      if (button.matches('[data-qb-add],[data-qb-deselect],[data-qb-clear-cart],[data-qb-remove],[data-qb-up],[data-qb-down]')) {
+        if (assessmentSavePromise || assessmentSwitchBusy) throw Error('Aguarde o salvamento ou a abertura terminar antes de alterar a seleção.');
+        if (sessionStorage.getItem(assessmentSaveKey)) throw Error(uncertainSaveMessage);
+      }
+      if (button.dataset.qbDeselect) {
+        syncPointInputs();
+        cart = cart.filter(id => id !== button.dataset.qbDeselect);
+        delete cartPoints[button.dataset.qbDeselect];
+        previewPanel.hidden = true;
+        saveDraftSnapshot('question-deselected', { syncPoints: false });
+        setSelectionStatus('Questão desmarcada nesta edição. A avaliação salva só será atualizada ao salvar.', 'info');
+      }
       if (button.dataset.qbAdd) {
         const item=itemById(button.dataset.qbAdd), session=pilotSession, revision=assessmentRevision;
         if(session){
@@ -25024,12 +25044,15 @@ const initQuestionBank = () => {
         usedFilter.value = "";
       }
       if (button.hasAttribute("data-qb-clear-cart")) {
+        if (cart.length && !window.confirm('Limpar todas as questões selecionadas? A seleção local será descartada. As avaliações já salvas serão preservadas.')) return;
         cart = [];
         cartPoints = {};
+        selectedId = null;
         activeAssessmentId = null;
-        saveDraftSnapshot("cart-cleared");
+        assessmentHandoffComplete = false;
+        saveDraftSnapshot("cart-cleared", { syncPoints: false });
         previewPanel.hidden = true;
-        setSelectionStatus("Carrinho limpo.", "info");
+        setSelectionStatus("Seleção limpa. Nenhuma avaliação salva foi alterada.", "info");
       }
       if (button.hasAttribute("data-qb-save-draft")) {
         const savedAssessment = await ensureSavedForPreview();
@@ -25234,7 +25257,9 @@ const initQuestionBank = () => {
     if(url.origin!==location.origin || route(url.pathname)!==route(location.pathname)) return;
     const view=url.searchParams.get('view') || questionBankHashView[url.hash.slice(1)];
     if (!['banco','avaliacoes','dashboard'].includes(view)) return;
-    event.preventDefault();event.stopImmediatePropagation();pilotBridge.open(view);
+    event.preventDefault();event.stopImmediatePropagation();
+    if (url.searchParams.get('qbNew') === '1') root.querySelector('[data-qb-new-assessment]')?.click();
+    pilotBridge.open(view);
   }, true);
   root.querySelectorAll('[data-qb-origin]').forEach(button=>button.addEventListener('click',()=>setBankOrigin(button.dataset.qbOrigin)));
   restoreDraftSnapshot();
