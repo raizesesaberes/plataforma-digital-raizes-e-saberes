@@ -1,0 +1,40 @@
+# REVIEW ONLY; not installed in .github/workflows.
+name: Reviewed ENEM ingestion
+on:
+  push:
+    branches: [service/enem-ingestion-worker]
+    paths: ['ingestion/approved/*.json']
+permissions:
+  contents: read
+concurrency:
+  group: enem-jaesjldrbjbdmzzggxzw
+  cancel-in-progress: false
+jobs:
+  ingest:
+    if: github.event_name == 'push' && github.repository_id == '1297887230'
+    runs-on: ubuntu-latest
+    environment: enem-ingest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout exact public commit without stored credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin https://github.com/raizesesaberes/plataforma-digital-raizes-e-saberes.git
+          git sparse-checkout init --cone
+          git sparse-checkout set ingestion
+          git -c protocol.version=2 fetch --depth=1 --filter=blob:none origin "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: Validate runtime and submit reviewed target
+        shell: bash
+        env:
+          INGEST_ENDPOINT: ${{ vars.ENEM_INGEST_ENDPOINT }}
+        run: |
+          set -euo pipefail
+          node --test ingestion/runtime/oidc.test.mjs
+          node ingestion/runtime/submit-approved.mjs

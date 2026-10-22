@@ -1,0 +1,1 @@
+{"name":"rs-enem-ingestion-worker","version":"0.0.0-review","private":true,"type":"module","engines":{"node":"24.x"},"dependencies":{"pg":"8.23.1"},"scripts":{"test":"node --test *.test.mjs"}}

@@ -1,0 +1,9 @@
+node_modules/
+*.test.mjs
+*.md
+*-tests.txt
+*-review.json
+*-blocked.json
+dependency-audit.json
+SHA256SUMS.txt
+manifest-reconciliation.json

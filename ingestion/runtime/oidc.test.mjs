@@ -1,0 +1,14 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {webcrypto} from 'node:crypto';import {verifyOIDC} from './oidc.mjs';
+const key=await webcrypto.subtle.generateKey({name:'RSASSA-PKCS1-v1_5',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},true,['sign','verify']);
+const jwk={...await webcrypto.subtle.exportKey('jwk',key.publicKey),kid:'fixture',use:'sig',alg:'RS256'};const now=1800000000;
+const trust={audience:'urn:test',ref:'refs/heads/service/enem-ingestion-worker',workflowRef:'repo/path@ref',workflowSha:'a'.repeat(40),commit:'b'.repeat(40)};
+const claims={iss:'https://token.actions.githubusercontent.com',aud:trust.audience,repository_id:'1297887230',repository:'raizesesaberes/plataforma-digital-raizes-e-saberes',ref:trust.ref,workflow_ref:trust.workflowRef,workflow_sha:trust.workflowSha,sha:trust.commit,event_name:'push',ref_type:'branch',iat:now-10,nbf:now-10,exp:now+290,jti:'fixture-only-jti',run_id:'123',run_attempt:'1'};
+Object.assign(claims,{sub:'repo:raizesesaberes/plataforma-digital-raizes-e-saberes:environment:enem-ingest',repository_owner_id:'299967037',environment:'enem-ingest',runner_environment:'github-hosted'});
+async function signed(c){const enc=o=>Buffer.from(JSON.stringify(o)).toString('base64url');const s=enc({alg:'RS256',kid:'fixture'})+'.'+enc(c);return s+'.'+Buffer.from(await webcrypto.subtle.sign('RSASSA-PKCS1-v1_5',key.privateKey,Buffer.from(s))).toString('base64url');}
+const opts={now,cryptoImpl:webcrypto,fetcher:async()=>({ok:true,text:async()=>JSON.stringify({keys:[jwk]})})};
+test('real RSA signature verifies scoped claims',async()=>assert.equal((await verifyOIDC(await signed(claims),trust,opts)).run_id,'123'));
+for(const [name,patch] of Object.entries({fork:{repository_id:'9'},branch:{ref:'refs/heads/main'},pr:{event_name:'pull_request'},workflow:{workflow_sha:'c'.repeat(40)},commit:{sha:'c'.repeat(40)},audience:{aud:'other'},issuer:{iss:'https://evil.invalid'},expired:{exp:now-1},future:{nbf:now+60},longlife:{exp:now+3600}}))test('reject '+name,async()=>assert.rejects(verifyOIDC(await signed({...claims,...patch}),trust,opts)));
+test('signature tampering denied',async()=>{const token=await signed(claims);const parts=token.split('.');parts[1]=Buffer.from(JSON.stringify({...claims,run_id:'999'})).toString('base64url');await assert.rejects(verifyOIDC(parts.join('.'),trust,opts),/SIGNATURE/);});
+for(const [name,patch] of Object.entries({owner:{repository_owner_id:'7'},subject:{sub:'repo:evil/a:environment:enem-ingest'},environment:{environment:'other'},runner:{runner_environment:'self-hosted'}}))test('reject '+name,async()=>assert.rejects(verifyOIDC(await signed({...claims,...patch}),trust,opts)));
+
+test('old candidate ref denied under worker trust',async()=>assert.rejects(verifyOIDC(await signed({...claims,ref:'refs/heads/candidate/manifest-recovery-20261021'}),trust,opts),/JWT_SCOPE/));
