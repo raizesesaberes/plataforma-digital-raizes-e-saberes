@@ -24642,8 +24642,12 @@ const initQuestionBank = () => {
     try{
       const fresh=await questionBankDataService.listQuestions();requireAssessmentActor();
       if(revision!==assessmentRevision||JSON.stringify(cart)!==JSON.stringify(selected))throw Error('CONTENT_RESOLVER_STALE_LOAD');
-      if(selected.some(id=>!fresh.some(q=>q.id===id)))throw Error('CONTENT_RESOLVER_SELECTED_ITEM_UNAVAILABLE');
-      questions=fresh;
+      const resolved=selected.map(id=>fresh.find(q=>q.id===id||q.uuid===id));
+      if(resolved.some(q=>!q))throw Error('CONTENT_RESOLVER_SELECTED_ITEM_UNAVAILABLE');
+      const nextCart=resolved.map(q=>q.id);
+      if(new Set(nextCart).size!==nextCart.length)throw Error('CONTENT_RESOLVER_SELECTED_ITEM_CONFLICT');
+      const nextPoints=Object.fromEntries(resolved.map((q,index)=>[q.id,cartPoints[selected[index]] ?? cartPoints[q.id] ?? 1]));
+      questions=fresh;cart=nextCart;cartPoints=nextPoints;
     }catch(error){previewPanel.replaceChildren();previewPanel.hidden=true;throw error;}
   };
   const ensureSavedForPreview = async ({fresh=false}={}) => {
