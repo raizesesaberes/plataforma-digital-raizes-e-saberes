@@ -22374,7 +22374,7 @@ const initQuestionBankShellNavigation = () => {
 async function enrichTeacherRows(rows,{request,current,validateContent}){
  const uuid=x=>typeof x==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(x);
  if(!Array.isArray(rows)||rows.some(r=>!uuid(r.id))||new Set(rows.map(r=>r.id)).size!==rows.length)throw Error('RESOLVER_IDENTITIES_INVALID');
- const result=[];
+ const result=[];let richResponseBytes=0;
  for(const row of rows){
   if(!current())throw Error('RESOLVER_CONTEXT_CHANGED');
   if(row.publication_status!=='PUBLICADO')throw Error('RESOLVER_NONPUBLIC_ITEM');
@@ -22383,8 +22383,18 @@ async function enrichTeacherRows(rows,{request,current,validateContent}){
   if(row.curation_status!=='APROVADO'||row.workflow_status!=='APROVADO'||row.license?.publication_allowed!==true||row.source?.license?.publication_allowed!==true)throw Error('RICH_LICENSE_GATE_CLOSED');
   const projected=row.authorized_rich_content;
   if(!projected||typeof projected!=='object')throw Error('AUTHORIZED_RICH_CONTENT_UNAVAILABLE');
-  const rich={blocks:projected.blocks,inline_assets:projected.inline_assets,attribution:projected.attribution,examYear:row.metadata.enem.examYear,language:row.metadata.enem.language??null,theme:row.metadata.enem.theme};
+  const rich={blocks:projected.blocks,alternative_blocks:projected.alternative_blocks,inline_assets:projected.inline_assets,attribution:projected.attribution,examYear:row.metadata.enem.examYear,language:row.metadata.enem.language??null,theme:row.metadata.enem.theme};
+  richResponseBytes+=new TextEncoder().encode(JSON.stringify(rich)).byteLength;
+  if(richResponseBytes>4194304)throw Error('ENEM_RESPONSE_PAYLOAD_LIMIT');
+  const legacyTextCodes=new Set(['ENEM-SOURCE-q_8ebbc34fb37b4b25896b999f5d0321d1','ENEM-SOURCE-q_44fe373cbde24378bc0b7899c592d099','ENEM-SOURCE-q_dac9ad1f99324ff3a7fb958d7c4bdca1']);
+  const legacyText=legacyTextCodes.has(row.code)&&row.source_id==='979857c0-6bd8-520d-89a7-b1d049bf074a'&&projected.alternative_blocks===null;
+  const needsRichAlternatives=!legacyText||(row.alternatives||[]).some(a=>typeof a.body!=='string'||!a.body.trim());
+  if(needsRichAlternatives&&!Array.isArray(projected.alternative_blocks))throw Error('ENEM_ALTERNATIVE_PROJECTION_REQUIRED');
   const validated=await validateContent(rich);
+  if(validated.alternative_blocks){
+   const ordered=[...(row.alternatives||[])].sort((a,b)=>a.position-b.position);
+   if(ordered.length!==5||validated.alternative_blocks.some((a,i)=>a.label!==ordered[i].label||a.text!==ordered[i].body))throw Error('ENEM_ALTERNATIVE_PROJECTION_MISMATCH');
+  }
   if(!current())throw Error('RESOLVER_CONTEXT_CHANGED');
   // Explicit projection: never merge unrelated/private metadata from a response.
   result.push({...row,metadata:{...row.metadata,content:{blocks:rich.blocks},enem:{examYear:rich.examYear,language:rich.language,theme:rich.theme,attribution:rich.attribution}},authorizedRichContent:validated});
@@ -22395,6 +22405,7 @@ async function enrichTeacherRows(rows,{request,current,validateContent}){
 const qbTeacherRichValidated=new WeakSet();
 const qbTeacherRichOf=item=>item?.authorizedRichContent&&qbTeacherRichValidated.has(item.authorizedRichContent)?item.authorizedRichContent:null;
 const qbValidateTeacherRich = async rich=>{
+ if(new TextEncoder().encode(JSON.stringify(rich)).byteLength>1048576)throw Error('ENEM_ITEM_PAYLOAD_LIMIT');
  if(!Array.isArray(rich.blocks)||!rich.blocks.length||rich.blocks.length>256||!Array.isArray(rich.inline_assets)||rich.inline_assets.length>16)throw Error('ENEM_RICH_CONTENT_MISSING');
  const assets=new Map();let total=0;
  for(const a of rich.inline_assets){
@@ -22407,14 +22418,24 @@ const qbValidateTeacherRich = async rich=>{
   if(b.type==='asset'&&typeof b.value==='string'&&assets.has(b.value))continue;
   throw Error('ENEM_BLOCK_OR_ASSET_UNAVAILABLE');
  }
- const value={blocks:rich.blocks,assets};qbTeacherRichValidated.add(value);return value;
+ let alternative_blocks=null;
+ if(rich.alternative_blocks!==undefined&&rich.alternative_blocks!==null){
+  if(!Array.isArray(rich.alternative_blocks)||rich.alternative_blocks.length!==5)throw Error('ENEM_ALTERNATIVE_PROJECTION_INVALID');
+  alternative_blocks=rich.alternative_blocks.map((a,i)=>{
+   if(!a||a.label!=='ABCDE'[i]||typeof a.text!=='string'||a.text.length>100000||!Array.isArray(a.asset_paths)||a.asset_paths.length>16||(!a.text.trim()&&!a.asset_paths.length))throw Error('ENEM_ALTERNATIVE_CONTENT_INVALID');
+   if(a.asset_paths.some(path=>typeof path!=='string'||!assets.has(path)))throw Error('ENEM_ALTERNATIVE_IMAGE_MISSING');
+   return {label:a.label,text:a.text,asset_paths:[...a.asset_paths]};
+  });
+ }
+ const value={blocks:rich.blocks,assets,alternative_blocks};qbTeacherRichValidated.add(value);return value;
 };
 const qbTeacherRichAttribution = item=>{
  const scope={
  'ENEM-SOURCE-q_8ebbc34fb37b4b25896b999f5d0321d1':[150,23],
  'ENEM-SOURCE-q_44fe373cbde24378bc0b7899c592d099':[163,27],
  'ENEM-SOURCE-q_dac9ad1f99324ff3a7fb958d7c4bdca1':[169,28]};
- const x=scope[item.id];if(!x||item.sourceId!=='979857c0-6bd8-520d-89a7-b1d049bf074a')throw Error('ENEM_ATTRIBUTION_SCOPE_UNCONFIRMED');
+ const scope17={"ENEM-SOURCE-q_9174516f944a49499db9364f4883277b": [148, 23], "ENEM-SOURCE-q_d875f95bef3d4a7ead713233a1eb36db": [151, 23], "ENEM-SOURCE-q_fbd54d1e8a9349efa9d497e88da04cf2": [152, 24], "ENEM-SOURCE-q_cef02d4eaba74ec2aa9f2224c771efd6": [153, 24], "ENEM-SOURCE-q_cc2bbaebe63f45b0883eb5e893b9c03f": [154, 24], "ENEM-SOURCE-q_8d1dac370f3b4edda75ff8da78cca45a": [155, 24], "ENEM-SOURCE-q_694d78130fe24f4abcc23d857df8e4dc": [157, 25], "ENEM-SOURCE-q_80881d856e2143ccb2ad263769833e73": [158, 25], "ENEM-SOURCE-q_4ee8023bb9ad472a9f03b142103e42c3": [159, 25], "ENEM-SOURCE-q_810d916647d840cb86a55499a9936fd5": [160, 26], "ENEM-SOURCE-q_7a335f04515f47c3a585ecdfe303c7e6": [161, 26], "ENEM-SOURCE-q_2fdc1ad3cac143c5a6fb1f8f073e9193": [162, 26], "ENEM-SOURCE-q_6c1a326049744a4893a9b86b59258d13": [167, 27], "ENEM-SOURCE-q_f86eeb57d3b9438bb9fff97dafc83d9d": [168, 28], "ENEM-SOURCE-q_1869b54a7318415a8e08d4dda08358e5": [172, 29], "ENEM-SOURCE-q_db7db1bc0c504b60980f873d3e08a136": [173, 29], "ENEM-SOURCE-q_b3462ab80a3f420b95a44823acbaff6e": [176, 30]};
+ const x=scope[item.id]||scope17[item.id];const expectedSource=scope[item.id]?'979857c0-6bd8-520d-89a7-b1d049bf074a':'32f5d3f2-bce5-5a45-bcff-23063639648b';if(!x||item.sourceId!==expectedSource)throw Error('ENEM_ATTRIBUTION_SCOPE_UNCONFIRMED');
  return `<p class="qb-source-attribution">Fonte: <a href="https://riep.inep.gov.br/items/9b70bb32-dc67-4fde-8214-8f4713d9a386/full" target="_blank" rel="noopener noreferrer">Inep. ENEM 2013, 2º dia, caderno 5 amarelo, questão ${x[0]}, p. ${x[1]}</a>. Licença <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. Transcrição e reformatação para o portal Raízes e Saberes. Sem vínculo ou endosso do Inep.</p>`;
 };
 const qbTeacherRichBody = item=>{
@@ -22427,9 +22448,15 @@ const qbTeacherRichBody = item=>{
  const command=questionBankDistinctCommand(item);
  return body+(command&&!text.includes(command.replace(/\s+/g,' '))?`<p>${htmlEscape(command)}</p>`:'');
 };
+const qbTeacherRichAlternativeMarkup = (item,text,index)=>{
+ const r=qbTeacherRichOf(item);if(!r)throw Error('ENEM_RICH_CONTENT_NOT_VALIDATED');
+ if(!r.alternative_blocks){if(typeof text!=='string'||!text.trim())throw Error('ENEM_ALTERNATIVE_PROJECTION_REQUIRED');return htmlEscape(text);}
+ const a=r.alternative_blocks[index];if(a.text!==text||a.label!=='ABCDE'[index])throw Error('ENEM_ALTERNATIVE_PROJECTION_MISMATCH');
+ return htmlEscape(a.text)+a.asset_paths.map(path=>{const img=r.assets.get(path);return `<img src="${htmlEscape(img.url)}" alt="${htmlEscape(img.alt||'')}" width="${img.width}" height="${img.height}" style="display:block;width:${Math.min(img.width,300)}px;max-width:100%;height:auto">`;}).join('');
+};
 const qbTeacherRichArticle = (item,index,showAnswer=false)=>{
  if(item.alternatives?.length!==5||!Number.isInteger(item.correctAlternative)||item.correctAlternative<0||item.correctAlternative>4)throw Error('ENEM_ALTERNATIVES_INVALID');
- return `<article class="qb-enem-rich" style="break-before:auto;break-after:auto"><h3 style="break-after:avoid">${index==null?'':index+1+'. '}${htmlEscape(item.title||item.id)}</h3>${qbTeacherRichBody(item)}<ol class="qb-alternatives" style="display:block;break-inside:avoid">${item.alternatives.map((a,i)=>`<li><b>${String.fromCharCode(65+i)}</b> ${htmlEscape(a)}</li>`).join('')}</ol>${showAnswer?`<p>Gabarito: ${String.fromCharCode(65+item.correctAlternative)}</p>`:''}${qbTeacherRichAttribution(item)}</article>`;
+ return `<article class="qb-enem-rich" style="break-before:auto;break-after:auto"><h3 style="break-after:avoid">${index==null?'':index+1+'. '}${htmlEscape(item.title||item.id)}</h3>${qbTeacherRichBody(item)}<ol class="qb-alternatives" style="display:block;break-inside:avoid">${item.alternatives.map((a,i)=>`<li><b>${String.fromCharCode(65+i)}</b> ${qbTeacherRichAlternativeMarkup(item,a,i)}</li>`).join('')}</ol>${showAnswer?`<p>Gabarito: ${String.fromCharCode(65+item.correctAlternative)}</p>`:''}${qbTeacherRichAttribution(item)}</article>`;
 };
 
 const renderInstitutionalQuestionProof = (item, { showAnswerKey = false, scopeLabel = "" } = {}) => {
@@ -22646,15 +22673,22 @@ const qbInlineAllowed = new Map([
 const qbInlineSha = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(x=>x.toString(16).padStart(2,'0')).join('');
 const qbInlineCrc = bytes => {let c=0xffffffff;for(const b of bytes){c^=b;for(let n=0;n<8;n++)c=(c>>>1)^((c&1)?0xedb88320:0);}return (c^0xffffffff)>>>0;};
 const qbValidatePng = async (asset, expected) => {
- if(asset.mime!=='image/png'||asset.sha256!==expected||!Number.isInteger(asset.bytes)||asset.bytes<1||asset.bytes>65536||typeof asset.base64!=='string'||asset.base64.length>87384||! /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(asset.base64))throw Error('INLINE_PNG_INVALID');
- const raw=Uint8Array.from(atob(asset.base64),c=>c.charCodeAt(0));if(raw.length!==asset.bytes||btoa(String.fromCharCode(...raw))!==asset.base64||await qbInlineSha(raw)!==expected)throw Error('INLINE_HASH_MISMATCH');
+ // Reviewed exception: original Q167 PNG only; all other PNGs retain 64 KiB.
+ const large=expected==='d9158d4a2865f004fa163b47962be0241211fb8147eebdea472c457de1e5136f';
+ const limit=large?524288:65536;
+ if(!asset||asset.mime!=='image/png'||asset.sha256!==expected||!Number.isInteger(asset.bytes)||asset.bytes<1||asset.bytes>limit||typeof asset.base64!=='string'||asset.base64.length>4*Math.ceil(limit/3)||asset.base64.length%4!==0||/[^A-Za-z0-9+/=]/.test(asset.base64)||!Number.isInteger(asset.width)||!Number.isInteger(asset.height)||asset.width<1||asset.height<1||asset.width>2048||asset.height>2048)throw Error('INLINE_PNG_INVALID');
+ if(large&&(asset.bytes!==468023||asset.width!==992||asset.height!==704))throw Error('INLINE_Q167_IDENTITY_MISMATCH');
+ let binary;try{binary=atob(asset.base64);}catch{throw Error('INLINE_PNG_INVALID');}const raw=Uint8Array.from(binary,c=>c.charCodeAt(0));if(raw.length!==asset.bytes||btoa(binary)!==asset.base64||await qbInlineSha(raw)!==expected)throw Error('INLINE_HASH_MISMATCH');
  if([137,80,78,71,13,10,26,10].some((v,i)=>raw[i]!==v))throw Error('INLINE_PNG_SIGNATURE');
  const view=new DataView(raw.buffer);let pos=8,ihdr=false,idat=false,end=false,w=0,h=0;
  while(pos<raw.length){if(pos+12>raw.length)throw Error('INLINE_PNG_TRUNCATED');const len=view.getUint32(pos),next=pos+len+12;if(next>raw.length)throw Error('INLINE_PNG_TRUNCATED');const type=String.fromCharCode(...raw.slice(pos+4,pos+8));if(qbInlineCrc(raw.slice(pos+4,pos+8+len))!==view.getUint32(pos+8+len))throw Error('INLINE_PNG_CRC');
  if(!ihdr){if(type!=='IHDR'||len!==13)throw Error('INLINE_PNG_IHDR');w=view.getUint32(pos+8);h=view.getUint32(pos+12);ihdr=true;}else if(type==='IHDR')throw Error('INLINE_PNG_IHDR');
  if(type==='IDAT')idat=true;if(type==='IEND'){if(len!==0||next!==raw.length)throw Error('INLINE_PNG_TRAILING');end=true;}pos=next;}
  if(!ihdr||!idat||!end||w!==asset.width||h!==asset.height||w<1||h<1||w>2048||h>2048)throw Error('INLINE_PNG_DIMENSIONS');
- return {url:'data:image/png;base64,'+asset.base64,width:w,height:h,alt:'Imagem original; descrição acessível pendente'};
+ const url='data:image/png;base64,'+asset.base64;
+ const decoded=new Image();decoded.src=url;try{await decoded.decode();}catch{throw Error('INLINE_PNG_DECODE_FAILED');}
+ if(decoded.naturalWidth!==w||decoded.naturalHeight!==h)throw Error('INLINE_PNG_DECODE_DIMENSIONS');
+ return {url,width:w,height:h,alt:'Imagem original; descrição acessível pendente'};
 };
 const qbValidateInlineItem = async item => {
  const meta=item.raw?.metadata,assets=meta?.enemPilotInline?.assets;
@@ -22921,18 +22955,20 @@ const qbPilotImportMachine = ({authorize,readFile,parseBundle,preflight,createIt
   }catch{prepared=null;state={status:'STOPPED_RECONCILE',applyEnabled:false};throw Error('PILOT_STOPPED_RECONCILE');}finally{busy=false;}
  }};
 };
-const qbOfficialTrioCodes=new Set(['ENEM-SOURCE-q_8ebbc34fb37b4b25896b999f5d0321d1','ENEM-SOURCE-q_44fe373cbde24378bc0b7899c592d099','ENEM-SOURCE-q_dac9ad1f99324ff3a7fb958d7c4bdca1']);
-const qbOfficialTrioParse=async bytes=>{
- if(bytes.byteLength!==88463||await qbInlineSha(bytes)!=='85425e6108b1068f77a990bf30203cd066a90d7086b7ffedba9b27c4f2316374')throw Error('OFFICIAL_FILE_HASH_REQUIRED');
+const qbOfficial12Codes=new Set(["ENEM-SOURCE-q_9174516f944a49499db9364f4883277b", "ENEM-SOURCE-q_d875f95bef3d4a7ead713233a1eb36db", "ENEM-SOURCE-q_fbd54d1e8a9349efa9d497e88da04cf2", "ENEM-SOURCE-q_cef02d4eaba74ec2aa9f2224c771efd6", "ENEM-SOURCE-q_cc2bbaebe63f45b0883eb5e893b9c03f", "ENEM-SOURCE-q_8d1dac370f3b4edda75ff8da78cca45a", "ENEM-SOURCE-q_694d78130fe24f4abcc23d857df8e4dc", "ENEM-SOURCE-q_80881d856e2143ccb2ad263769833e73", "ENEM-SOURCE-q_4ee8023bb9ad472a9f03b142103e42c3", "ENEM-SOURCE-q_6c1a326049744a4893a9b86b59258d13", "ENEM-SOURCE-q_f86eeb57d3b9438bb9fff97dafc83d9d", "ENEM-SOURCE-q_b3462ab80a3f420b95a44823acbaff6e"]);
+const qbOfficial12ReleaseEnabled=true; // Enable only after reviewed DB migration and scoped rights readback.
+const qbOfficial12Parse=async bytes=>{
+ if(!qbOfficial12ReleaseEnabled)throw Error('OFFICIAL12_RELEASE_REVIEW_PENDING');
+ if(bytes.byteLength!==960498||await qbInlineSha(bytes)!=='dca3685e6465fd8ed46d6f177f3f9ddf4af2f4ba977afe356ce88d9834fedc20')throw Error('OFFICIAL_FILE_HASH_REQUIRED');
  const b=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
- if(b.items?.length!==3||new Set(b.items.map(p=>p.code)).size!==3)throw Error('OFFICIAL_EXACT_TRIO');
+ if(b.items?.length!==12||new Set(b.items.map(p=>p.code)).size!==12)throw Error('OFFICIAL_EXACT_TRIO');
  for(const p of b.items){
-  if(!qbOfficialTrioCodes.has(p.code)||p.source_id!=='979857c0-6bd8-520d-89a7-b1d049bf074a'||p.license_id!=='ea9194c9-4620-5e11-b4d8-011b3ef8a097'||p.legal_classification!=='ITEM_OFICIAL_PUBLICAMENTE_LIBERADO'||p.author_name!=='INEP'||p.metadata.enem.language!==null||p.publication_status!=='NAO_PUBLICADO')throw Error('OFFICIAL_SCOPE');
-  await qbValidateTeacherRich({blocks:p.metadata.content.blocks,inline_assets:p.metadata.enemPilotInline.assets});
+  if(!qbOfficial12Codes.has(p.code)||p.source_id!=='32f5d3f2-bce5-5a45-bcff-23063639648b'||p.license_id!=='95c80a61-c500-5711-8ea8-5ec4587a56e7'||p.legal_classification!=='ITEM_OFICIAL_PUBLICAMENTE_LIBERADO'||p.author_name!=='INEP'||p.metadata.enem.language!==null||p.publication_status!=='NAO_PUBLICADO')throw Error('OFFICIAL_SCOPE');
+  await qbValidateTeacherRich({blocks:p.metadata.content.blocks,alternative_blocks:p.metadata.content.alternatives,inline_assets:p.metadata.enemPilotInline.assets});
  }
  return b;
 };
-const qbOfficialTrioReadback=(row,p,actor,category)=>{
+const qbOfficial12Readback=(row,p,actor,category)=>{
  if(!row||!qbAdminReviewUuid(row.id)||row.code!==p.code||row.created_by!==actor)throw Error('OFFICIAL_READBACK_ID');
  for(const k of ['internal_title','component','question_type','statement','command_text','base_text','source_id','author_name','license_id','correct_answer','legal_classification','curriculum_source'])if(row[k]!==p[k])throw Error('OFFICIAL_READBACK_CONTENT');
  if(qbPilotStable(row.metadata)!==qbPilotStable(p.metadata))throw Error('OFFICIAL_READBACK_METADATA');
@@ -22944,12 +22980,12 @@ const qbOfficialTrioReadback=(row,p,actor,category)=>{
  if(!published&&!draft)throw Error('OFFICIAL_READBACK_STATE');
  return {id:row.id,published};
 };
-const qbOfficialTrioMachine=({authorize,parse,preflight,readback,create,publish,loadJournal,saveJournal})=>{
+const qbOfficial12Machine=({authorize,parse,preflight,readback,create,publish,loadJournal,saveJournal})=>{
  let busy=false,plan=null;
  const checked=async(p,actor)=>{const matches=await preflight(p);if(matches.length>1)throw Error('OFFICIAL_DUPLICATE_CONFLICT');if(!matches.length)return null;return readback(matches[0].id,p,actor);};
  return {reset(){plan=null;},async dryRun(file){
   if(busy)throw Error('OFFICIAL_BUSY');busy=true;plan=null;
-  try{const actor=await authorize(),bundle=await parse(await file.arrayBuffer());for(const p of bundle.items)await checked(p,actor);if(await authorize()!==actor)throw Error('OFFICIAL_ACTOR_CHANGED');plan={actor,bundle};return {ready:true,items:3};}finally{busy=false;}
+  try{const actor=await authorize(),bundle=await parse(await file.arrayBuffer());for(const p of bundle.items)await checked(p,actor);if(await authorize()!==actor)throw Error('OFFICIAL_ACTOR_CHANGED');plan={actor,bundle};return {ready:true,items:12};}finally{busy=false;}
  },async apply(){
   if(busy||!plan)throw Error('OFFICIAL_DRY_RUN_REQUIRED');busy=true;const selected=plan;plan=null;
   try{const journal=loadJournal();if(!journal||Array.isArray(journal)||typeof journal!=='object')throw Error('OFFICIAL_JOURNAL_INVALID');
@@ -22975,21 +23011,21 @@ const qbOfficialTrioMachine=({authorize,parse,preflight,readback,create,publish,
     if(await authorize()!==selected.actor)throw Error('OFFICIAL_ACTOR_CHANGED');
     rec.status='PUBLISHED_VERIFIED';saveJournal(journal);
    }
-   return {published:3,teacherVerified:false};
+   return {published:12,teacherVerified:false};
   }finally{busy=false;}
  }};
 };
-const initOfficialEnemTrioImport=({root})=>{
+const initOfficialEnem12Import=({root})=>{
  if(getSupabaseUserContext().role!=='admin')return;
- const host=document.createElement('section');host.className='panel';host.innerHTML='<h2>Lote oficial ENEM 2013 · Q150, Q163 e Q169</h2><p>Importação definitiva com CC BY 4.0. Validação e publicação por questão; se interromper, mantenha o mesmo arquivo para reconciliar.</p><label>Arquivo local oficial<input type="file" accept=".json,application/json" data-official-file></label><button type="button" data-official-check>1. Validar lote oficial</button><button type="button" data-official-apply disabled>2. Importar e publicar 3 questões oficiais</button><p role="status" data-official-status></p>';root.prepend(host);
+ const host=document.createElement('section');host.className='panel';host.innerHTML='<h2>Lote oficial ENEM 2013 · 12 itens revisados</h2><p>Importação definitiva com CC BY 4.0. Validação e publicação por questão; se interromper, mantenha o mesmo arquivo para reconciliar.</p><label>Arquivo local oficial<input type="file" accept=".json,application/json" data-official-file></label><button type="button" data-official-check>1. Validar lote oficial</button><button type="button" data-official-apply disabled>2. Importar e publicar 12 questões oficiais</button><p role="status" data-official-status></p>';root.prepend(host);
  const file=host.querySelector('[data-official-file]'),check=host.querySelector('[data-official-check]'),apply=host.querySelector('[data-official-apply]'),status=host.querySelector('[data-official-status]');let actor=null;
  const req=(route,query='',options={})=>createSupabaseRestClient().request(route,query,{...options,requireAuthenticated:true,allowedRoles:['admin']});
  const rpc=async(name,body)=>normalizeRpcJson(await req('rpc/'+name,'',{method:'POST',body:JSON.stringify(body)}));
  const authorize=async()=>{
   if(!actor||getSupabaseUserContext().role!=='admin'||getSupabaseUserContext().userId!==actor)throw Error('OFFICIAL_ADMIN_REQUIRED');
   if((await rpc('admin_get_question_category',{p_question_id:null}))?.status!=='PASS')throw Error('OFFICIAL_ADMIN_SERVER_REQUIRED');
-  const l=await req('question_licenses','?id=eq.ea9194c9-4620-5e11-b4d8-011b3ef8a097&select=id,publication_allowed,allows_commercial_use,allows_adaptation,requires_attribution');
-  const s=await req('question_sources','?id=eq.979857c0-6bd8-520d-89a7-b1d049bf074a&select=id,license_id');
+  const l=await req('question_licenses','?id=eq.95c80a61-c500-5711-8ea8-5ec4587a56e7&select=id,publication_allowed,allows_commercial_use,allows_adaptation,requires_attribution');
+  const s=await req('question_sources','?id=eq.32f5d3f2-bce5-5a45-bcff-23063639648b&select=id,license_id');
   if(l.length!==1||l[0].publication_allowed!==true||l[0].allows_commercial_use!==true||l[0].allows_adaptation!==true||l[0].requires_attribution!==true||s.length!==1||s[0].license_id!==l[0].id||getSupabaseUserContext().userId!==actor||getSupabaseUserContext().role!=='admin')throw Error('OFFICIAL_RIGHTS_OR_SESSION_CHANGED');return actor;
  };
  const preflight=async p=>{
@@ -22997,14 +23033,14 @@ const initOfficialEnemTrioImport=({root})=>{
   for(const [key,value] of [['code',p.code],['metadata->source_identity->>source_question_id',ids.source_question_id],['metadata->source_identity->>occurrence_id',ids.occurrence_id]])rows.push(...await req('question_items',`?${key}=eq.${encodeURIComponent(value)}&select=id&limit=2`));
   return [...new Map(rows.map(r=>[r.id,r])).values()];
  };
- const journalKey='raizes:enem-official-trio-2013:journal:v1';
- const machine=qbOfficialTrioMachine({authorize,parse:async bytes=>{const b=await qbOfficialTrioParse(bytes);for(const p of b.items)for(const a of p.metadata.enemPilotInline.assets){const img=new Image();img.src='data:image/png;base64,'+a.base64;await img.decode();if(img.naturalWidth!==a.width||img.naturalHeight!==a.height)throw Error('OFFICIAL_IMAGE_DECODE');}return b;},preflight,
- readback:async(id,p,user)=>{const snap=await rpc('avalia_plus_question_snapshot',{p_question_id:id});const cat=await rpc('admin_get_question_category',{p_question_id:id});return qbOfficialTrioReadback({...snap.question,alternatives:snap.alternatives},p,user,cat);},
- create:p=>rpc('avalia_plus_create_item',{p_item:p}),publish:id=>rpc('avalia_plus_set_item_workflow',{p_question_id:id,p_status:'APROVADO',p_comment:'Publicação autorizada do lote oficial INEP ENEM 2013 D2 caderno 5, Q150/Q163/Q169; conteúdo e imagens validados; CC BY 4.0 com atribuição.'}),
+ const journalKey='raizes:enem-official-12-2013:journal:v1';
+ const machine=qbOfficial12Machine({authorize,parse:async bytes=>{const b=await qbOfficial12Parse(bytes);for(const p of b.items)for(const a of p.metadata.enemPilotInline.assets){const img=new Image();img.src='data:image/png;base64,'+a.base64;await img.decode();if(img.naturalWidth!==a.width||img.naturalHeight!==a.height)throw Error('OFFICIAL_IMAGE_DECODE');}return b;},preflight,
+ readback:async(id,p,user)=>{const snap=await rpc('avalia_plus_question_snapshot',{p_question_id:id});const cat=await rpc('admin_get_question_category',{p_question_id:id});return qbOfficial12Readback({...snap.question,alternatives:snap.alternatives},p,user,cat);},
+ create:p=>rpc('avalia_plus_create_item',{p_item:p}),publish:id=>rpc('avalia_plus_set_item_workflow',{p_question_id:id,p_status:'APROVADO',p_comment:'Publicação autorizada do lote oficial INEP ENEM 2013 D2 caderno 5, 12 itens individualmente revisados; conteúdo e imagens validados; CC BY 4.0 com atribuição.'}),
  loadJournal:()=>JSON.parse(localStorage.getItem(journalKey)||'{}'),saveJournal:j=>localStorage.setItem(journalKey,JSON.stringify(j))});
  file.addEventListener('change',()=>{machine.reset();apply.disabled=true;status.textContent='Selecione Validar lote oficial antes de executar.';});
- host.addEventListener('click',async event=>{event.stopPropagation();const b=event.target.closest('button');if(!b||b.disabled)return;const writing=b===apply;if(!writing&&!file.files?.[0]){status.textContent='Selecione official-trio-import.json.';return;}if(!writing)actor=getSupabaseUserContext().userId;check.disabled=true;apply.disabled=true;file.disabled=true;
- try{if(writing){await machine.apply();status.textContent='3 questões confirmadas como PUBLICADO/APROVADO, categoria PUBLISHED. A leitura pelo professor ainda precisa ser conferida.';}else{await machine.dryRun(file.files[0]);apply.disabled=false;status.textContent='Lote real validado: Q150/C, Q163/C, Q169/D; 15 alternativas, 2 PNGs. Clique no botão 2 para importar e publicar.';}}
+ host.addEventListener('click',async event=>{event.stopPropagation();const b=event.target.closest('button');if(!b||b.disabled)return;const writing=b===apply;if(!writing&&!file.files?.[0]){status.textContent='Selecione official12-import.private.json.';return;}if(!writing)actor=getSupabaseUserContext().userId;check.disabled=true;apply.disabled=true;file.disabled=true;
+ try{if(writing){await machine.apply();status.textContent='12 questões confirmadas como PUBLICADO/APROVADO, categoria PUBLISHED. A leitura pelo professor ainda precisa ser conferida.';}else{await machine.dryRun(file.files[0]);apply.disabled=false;status.textContent='Lote real validado: 12 questões; 60 alternativas, 17 PNGs. Clique no botão 2 para importar e publicar.';}}
  catch(e){status.textContent='Interrompido: '+String(e?.message||'OFFICIAL_ERROR').replace(/[^A-Z0-9_]/g,'').slice(0,100)+'. Pode haver progresso parcial. Preserve o arquivo e o registro; não repita operações incertas.';apply.disabled=true;}
  finally{check.disabled=false;file.disabled=false;}
  });
@@ -25207,7 +25243,7 @@ const initQuestionBank = () => {
   window.addEventListener("popstate", syncQuestionBankView);
   installSupabaseSessionListener();
   refresh();
-  initOfficialEnemTrioImport({root});
+  initOfficialEnem12Import({root});
   window.RSEnemInstitutional?.mount(root, pilotBridge);
 };
 
