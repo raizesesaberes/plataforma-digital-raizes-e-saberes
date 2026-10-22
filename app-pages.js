@@ -22512,7 +22512,9 @@ const questionBankVerifiedEnemOrigin = item => {
     '66f53268-29ef-4cbf-8230-5f8b699d4042': ['q_701ec4ec8338437398453a440f84859a','q_cc77a30dcaed48bca166e3249b0e5cf9','q_5ac1d0dc757846acb4e1ebf6b8f5cef6'],
     '979857c0-6bd8-520d-89a7-b1d049bf074a': ['q_8ebbc34fb37b4b25896b999f5d0321d1','q_44fe373cbde24378bc0b7899c592d099','q_dac9ad1f99324ff3a7fb958d7c4bdca1'],
   };
+  const scoped12={"q_9174516f944a49499db9364f4883277b":"occ_v2_1bcc3e6af2dbb213286dd72f948f525b","q_d875f95bef3d4a7ead713233a1eb36db":"occ_v2_5141aa779b7999269316daed1caeddc7","q_fbd54d1e8a9349efa9d497e88da04cf2":"occ_v2_fb89a8b6aeea70ba4d9d7471a1f02957","q_cef02d4eaba74ec2aa9f2224c771efd6":"occ_v2_9e66f51dbee6ceb79636dfc466a22a82","q_cc2bbaebe63f45b0883eb5e893b9c03f":"occ_v2_453e6efdd98e273bea46a253839f83c4","q_8d1dac370f3b4edda75ff8da78cca45a":"occ_v2_1ea04073b62112332c1044c4f337337e","q_694d78130fe24f4abcc23d857df8e4dc":"occ_v2_64be8a4ba16a89cc61307f631e002c00","q_80881d856e2143ccb2ad263769833e73":"occ_v2_e6a0cc87480c558f7e82731259bf0f72","q_4ee8023bb9ad472a9f03b142103e42c3":"occ_v2_397feda1c49fc7e40dbf344c300f4978","q_6c1a326049744a4893a9b86b59258d13":"occ_v2_b9e3e3eb3654b3ae63238c6a68f0b01e","q_f86eeb57d3b9438bb9fff97dafc83d9d":"occ_v2_494a4b1862a14e4157f24427767fc2b5","q_b3462ab80a3f420b95a44823acbaff6e":"occ_v2_f55e8f946ccd290e1dba85a45df3a713"};
   const external = row.metadata?.source_identity?.source_question_id;
+  if(row.source_id==='32f5d3f2-bce5-5a45-bcff-23063639648b')return Boolean(row.license_id==='95c80a61-c500-5711-8ea8-5ec4587a56e7'&&scoped12[external]&&row.metadata?.source_identity?.occurrence_id===scoped12[external]&&row.code==='ENEM-SOURCE-'+external&&item.id===row.code&&String(row.metadata?.enem?.examYear)==='2013');
   return Boolean(sources[row.source_id]?.includes(external) && row.code === 'ENEM-SOURCE-' + external && item.id === row.code && String(row.metadata?.enem?.examYear) === '2013');
 };
 const questionBankCountOrigin = item => {
