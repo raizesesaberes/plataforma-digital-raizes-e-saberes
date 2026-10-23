@@ -14,7 +14,9 @@ export function createHandler({rpc,verify=verifyOIDC,approvalCatalog={version:1,
   const trust=await rpc('enem_ingest_trust',{p_digest:body.manifest_sha256});
   const verified=await verify(token,trust);
   const manifest=approvedManifest(approvalCatalog,body.manifest_sha256,trust);
-  const material=await rpc('enem_ingest_material',{p_digest:body.manifest_sha256});
+  const checked=await rpc('enem_ingest_material',{p_digest:body.manifest_sha256});
+  if(checked?.contract!=='enem-global-preflight-v1'||checked.state!=='READY'||checked.manifest!==body.manifest_sha256||!Array.isArray(checked.material))throw Error('GLOBAL_PREFLIGHT_REQUIRED');
+  const material=checked.material;
   await preflightMaterial(material,manifest);
   await rpc('enem_ingest_acquire',{p_digest:body.manifest_sha256,p_verified:verified});
   await processMaterial(material,{digest:body.manifest_sha256,verified,rpc});
