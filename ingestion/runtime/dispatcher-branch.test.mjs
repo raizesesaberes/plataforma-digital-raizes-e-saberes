@@ -1,12 +1,11 @@
-import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {spawnSync} from 'node:child_process';import {createHash} from 'node:crypto';
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {spawnSync} from 'node:child_process';import {createHash} from 'node:crypto';import {fixture} from './acceptance-fixture.mjs';
 for(const [ref,ok] of [['refs/heads/service/enem-ingestion-worker',true],['refs/heads/candidate/manifest-recovery-20261021',false],['refs/heads/main',false]])test('actual dispatcher branch '+ref,()=>{
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'dispatch-branch-'));
  try{
  const dir=path.join(root,'ingestion/runtime');fs.mkdirSync(dir,{recursive:true});fs.mkdirSync(path.join(root,'ingestion/approved'));
- for(const f of ['dispatch-v2.mjs','response.mjs','endpoint.mjs'])fs.copyFileSync(new URL('./'+f,import.meta.url),path.join(dir,f));
+ for(const f of ['dispatch-v2.mjs','response.mjs','endpoint.mjs','acceptance.mjs','png.mjs'])fs.copyFileSync(new URL('./'+f,import.meta.url),path.join(dir,f));
  fs.writeFileSync(path.join(dir,'deployment.config.json'),JSON.stringify({version:1,endpoint:'https://worker.example.invalid/api/ingest',allowedHost:'worker.example.invalid'}));
- const item={code:'ENEM-SOURCE-q_fixture_only',request_id:'00000000-0000-5000-8000-000000000001',sha256:'b'.repeat(64)};
- const raw=JSON.stringify({version:1,items:[item]});const digest=createHash('sha256').update(raw).digest('hex');
+ const f=fixture(),item=f.manifest.items[0],raw=f.raw,digest=f.digest;
  fs.writeFileSync(path.join(root,'ingestion/approved/fixture.json'),raw);
  const id='00000000-0000-4000-8000-000000000001';
  const result={manifest:digest,items:[{ordinal:1,code:item.code,id,state:'CONFIRMED',reason:null,receipt:{question_id:id,request_id:item.request_id,payload_sha:item.sha256}}]};

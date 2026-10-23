@@ -1,6 +1,8 @@
 import {connectionConfig} from './tls-config.mjs';
 import {createRpc} from './rpc-adapter.mjs';
 import {createHandler} from './handler.mjs';
+import defaultApprovals from './approvals.config.json' with {type:'json'};
+import {approvedEndpoint} from './endpoint.mjs';
 export const SESSION_SQL="select session_user::text as session_user,current_user::text as current_user,current_database() as database,rolsuper,rolcreaterole,rolcreatedb,rolbypassrls,rolreplication from pg_catalog.pg_roles where rolname=session_user";
 // Exactly one redacting listener per Client, including late events after destruction.
 // pg-pool retains its own idle listener; this listener never logs the original Error.
@@ -26,7 +28,7 @@ export function checkedPool(pool){
  const result=await run(query);if(state.failed)throw Error('DB_CONNECTION_UNCONFIRMED');broken=false;return result;
  }finally{state.reject=null;client.release(broken||state.failed);}
 }};}
-export function createRuntime({Pool,env,config,verify}){
+export function createRuntime({Pool,env,config,verify,approvalCatalog=defaultApprovals}){
  let handler;
  return async req=>{try{
   if(new URL(req.url).pathname!=='/api/ingest')return new Response(null,{status:404});
@@ -35,10 +37,12 @@ export function createRuntime({Pool,env,config,verify}){
   if(!handler){
    if(['SUPABASE_SERVICE_ROLE_KEY','SUPABASE_SECRET_KEY','DATABASE_URL'].some(k=>Object.hasOwn(env,k)))throw Error('BROAD_RUNTIME_CONFIG_FORBIDDEN');
    if(config.version!==1||config.dbUser!=='enem_ingest_runtime'||!config.dbHost)throw Error('RUNTIME_NOT_CONFIGURED');
-   const options=connectionConfig({host:config.dbHost,port:config.dbPort,database:config.database,ca:env.INGEST_DB_CA,password:env.INGEST_DB_PASSWORD},config.dbHost);
+   approvedEndpoint(config,new URL(req.url).href);
+   const options=connectionConfig({host:config.dbHost,port:config.dbPort,database:config.database,connectionUser:config.dbConnectionUser,ca:env.INGEST_DB_CA,password:env.INGEST_DB_PASSWORD},config.dbHost);
    const pool=new Pool({...options,enableChannelBinding:true});pool.on?.('error',()=>{/* no credentials or raw DB errors logged */});
-   handler=createHandler({rpc:createRpc(checkedPool(pool)),...(verify?{verify}: {})});
+   handler=createHandler({rpc:createRpc(checkedPool(pool)),approvalCatalog,...(verify?{verify}: {})});
   }
+  approvedEndpoint(config,new URL(req.url).href);
   return await handler(req);
  }catch{return Response.json({error:'INGEST_UNAVAILABLE_OR_UNCONFIRMED'},{status:503,headers:{'Cache-Control':'no-store'}});}};
 }

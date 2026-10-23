@@ -1,7 +1,8 @@
 import {EventEmitter} from 'node:events';
 import test from 'node:test';import assert from 'node:assert/strict';import {createRuntime,checkedPool,SESSION_SQL} from './runtime.mjs';import {approvedEndpoint} from './endpoint.mjs';import {connectionConfig} from './tls-config.mjs';import fs from 'node:fs';
 import {createHash} from 'node:crypto';
-const config={version:1,dbHost:'unit.supabase.co',dbPort:5432,database:'postgres',dbUser:'enem_ingest_runtime'};
+import {fixture} from './acceptance-fixture.mjs';
+const config={version:1,endpoint:'https://unit.example/api/ingest',allowedHost:'unit.example',dbHost:'unit.supabase.co',dbPort:5432,database:'postgres',dbUser:'enem_ingest_runtime'};
 const env={INGEST_DB_CA:'-----BEGIN CERTIFICATE-----\nSYNTHETIC_TEST\n-----END CERTIFICATE-----',INGEST_DB_PASSWORD:'test-only-not-a-real-password-'.repeat(2)};
 const session={session_user:'enem_ingest_runtime',current_user:'enem_ingest_runtime',database:'postgres',rolsuper:false,rolcreaterole:false,rolcreatedb:false,rolbypassrls:false,rolreplication:false};
 const request=(body={manifest_sha256:'a'.repeat(64)},headers={authorization:'Bearer synthetic.jwt.signature'})=>new Request('https://unit.example/api/ingest',{method:'POST',headers:{'Content-Type':'application/json',...headers},body:typeof body==='string'?body:JSON.stringify(body)});
@@ -26,8 +27,11 @@ test('unconfigured endpoint rejected',()=>assert.throws(()=>approvedEndpoint({ve
 test('old Supabase Edge rejected',()=>{const endpoint='https://jaesjldrbjbdmzzggxzw.supabase.co/functions/v1/enem-github-ingest';assert.throws(()=>approvedEndpoint({version:1,endpoint,allowedHost:'jaesjldrbjbdmzzggxzw.supabase.co'},endpoint));});
 test('endpoint mismatch rejected',()=>assert.throws(()=>approvedEndpoint(endpointConfig,'https://another.example/api/ingest')));
 test('dispatch/workflow no old Edge destination',()=>{for(const f of ['dispatch-v2.mjs','workflow.review.yml'])assert.ok(!fs.readFileSync(new URL('./'+f,import.meta.url),'utf8').includes('/functions/v1/'));});
-test('authorized mocked flow verifies before acquire/material and returns progress',async()=>{
- const order=[];const text=JSON.stringify({metadata:{enemPilotInline:{assets:[]},content:{blocks:[],alternatives:[]}}});const material=[{text,sha256:createHash('sha256').update(text).digest('hex')}];
- const Pool=class{async connect(){return Object.assign(new EventEmitter(),{connection:{stream:{encrypted:true,authorized:true}},async query(q){if(q.text===SESSION_SQL)return {rows:[session]};const name=q.text.match(/api\.([a-z_]+)\(/)[1];order.push(name);if(name==='acquire')assert.equal(order[order.length-2],'verified');return {rows:[{result:name==='material'?material:name==='progress'?{manifest:'a'.repeat(64),items:[{state:'CONFIRMED'}]}:{}}]};},release(){}})}};
- const h=createRuntime({Pool,env,config,verify:async()=>{order.push('verified');return {run_id:'synthetic'}}});const result=await h(request());assert.equal(result.status,200);assert.deepEqual(order,['trust','verified','acquire','material','process_item','progress']);assert.equal((await result.json()).items[0].state,'CONFIRMED');
+test('authorized mocked flow preflights the entire batch before acquire and validates receipts',async()=>{
+ const f=fixture(),order=[];
+ const Pool=class{async connect(){return Object.assign(new EventEmitter(),{connection:{stream:{encrypted:true,authorized:true}},async query(q){if(q.text===SESSION_SQL)return {rows:[session]};const name=q.text.match(/api\.([a-z_]+)\(/)[1];order.push(name);return {rows:[{result:name==='trust'?f.trust:name==='material'?f.material:name==='progress'?{manifest:f.digest,items:[{ordinal:1,code:f.p.code,state:'CONFIRMED',id:'44444444-4444-4444-8444-444444444444',reason:null,receipt:{question_id:'44444444-4444-4444-8444-444444444444',request_id:f.p.category_request_id,payload_sha:f.material[0].sha256}}]}:{}}]};},release(){}})}};
+ const h=createRuntime({Pool,env,config,approvalCatalog:f.catalog,verify:async()=>{order.push('verified');return {run_id:'synthetic'}}});const result=await h(request({manifest_sha256:f.digest}));assert.equal(result.status,200);assert.deepEqual(order,['trust','verified','material','acquire','process_item','progress']);assert.equal((await result.json()).items[0].state,'CONFIRMED');
 });
+
+test('inbound host allowlist blocks pool initialization',async()=>{const r=runtime();const req=new Request('https://unapproved.invalid/api/ingest',{method:'POST',headers:{authorization:'Bearer synthetic.jwt.signature'},body:JSON.stringify({manifest_sha256:'a'.repeat(64)})});assert.equal((await r.fetch(req)).status,503);assert.equal(r.created,0);});
+test('inbound host is rechecked after handler initialization',async()=>{const r=runtime();await r.fetch(request());const count=r.p.calls.length;const req=new Request('https://unapproved.invalid/api/ingest',{method:'POST',headers:{authorization:'Bearer synthetic.jwt.signature'},body:JSON.stringify({manifest_sha256:'a'.repeat(64)})});assert.equal((await r.fetch(req)).status,503);assert.equal(r.p.calls.length,count);});
