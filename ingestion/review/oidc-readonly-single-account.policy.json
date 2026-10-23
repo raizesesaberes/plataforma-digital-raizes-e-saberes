@@ -1,11 +1,11 @@
 {
   "kind": "HUMAN_REVIEW_POLICY_NOT_API_REQUEST",
-  "version": 1,
+  "version": 2,
   "status": "PROPOSED_NOT_APPLIED",
   "repository": "raizesesaberes/plataforma-digital-raizes-e-saberes",
-  "environment": "enem-ingest",
+  "environment": "enem-oidc-readonly",
   "scope": "OIDC_DIAGNOSTIC_GET_ONLY",
-  "supersedes": "oidc-readonly-environment.rules.json ONLY for this readonly diagnostic; original file retained as historical independent-review proposal",
+  "supersedes": "Engineering19 proposal; history retained in commit437e739673e596df7f63f9c2e9fb363babd881f8",
   "single_account": {
     "reviewer": {
       "login": "raizesesaberes",
@@ -29,7 +29,7 @@
     "tags": []
   },
   "workflow": {
-    "path": ".github/workflows/enem-ingest.yml",
+    "path": ".github/workflows/enem-oidc-readonly.yml",
     "job": "oidc-readonly",
     "event": "push",
     "permissions": {
@@ -79,14 +79,21 @@
       "Editorial review recorded",
       "Explicit publication authorization",
       "Canonical approved release and hashes",
-      "Separate authorization policy reviewed before reusing this environment for publication"
+      "Separate ingestion environment policy; no diagnostic self-review inheritance"
     ]
   },
   "environment_secrets": [],
   "limitations": [
     "GitHub environment reviewers apply to every referencing job, not to HTTP methods or an individual workflow. GET-only scope is enforced by the frozen diagnostic code, distinct audience and exact Vercel workflow/SHA claims, not by an environment method ACL.",
-    "Do not use this policy for an ingestion-capable workflow. Before any such reuse, stop and explicitly replace/revoke the diagnostic-only approval arrangement and review publication rules.",
+    "Do not use this policy for an ingestion-capable workflow. Never reuse this diagnostic environment for ingestion. Before any ingestion, stop and explicitly replace/revoke the diagnostic-only approval arrangement and review publication rules.",
     "Do not infer editorial approval from environment name, reviewer approval, GET405, JWT validation or this policy.",
-    "Do not weaken an existing remote environment automatically. If enem-ingest exists with stronger/different protection, stop and request review of that actual state."
-  ]
+    "Do not weaken an existing remote environment automatically. If enem-oidc-readonly exists with stronger/different protection, stop and request review of that actual state."
+  ],
+  "reserved_ingestion_environment": {
+    "name": "enem-ingest",
+    "prevent_self_review": true,
+    "diagnostic_policy_applies": false,
+    "publication_authorized": false,
+    "reviewer_selection": "PENDING_SEPARATE_HUMAN_POLICY"
+  }
 }

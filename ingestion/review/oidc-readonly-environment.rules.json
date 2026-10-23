@@ -1,11 +1,16 @@
 {
   "kind": "REVIEW_SPEC_NOT_API_REQUEST",
   "repository": "raizesesaberes/plataforma-digital-raizes-e-saberes",
-  "name": "enem-ingest",
+  "name": "enem-oidc-readonly",
   "required_reviewers": {
-    "selection": "PENDING_HUMAN_REVIEWER_OR_TEAM_ID",
+    "selection": {
+      "login": "raizesesaberes",
+      "id": 299967037,
+      "type": "User"
+    },
     "required": true,
-    "prevent_self_review": true
+    "prevent_self_review": false,
+    "independent_review": false
   },
   "administrator_bypass": false,
   "deployment_branch_policy": {
@@ -25,7 +30,7 @@
   "requirements": [
     "Create protected environment BEFORE installing workflow; never accept automatic unprotected environment creation",
     "Confirm plan/repository visibility supports required reviewers and disabling administrator bypass; stop if unavailable",
-    "Reviewer must be a different human from initiator and review exact future commit",
+    "Same-account manual diagnostic review only; no independent or editorial approval. Never apply to enem-ingest.",
     "Variable is public SHA, not a credential; no tokens or DB secrets in this environment"
   ]
 }

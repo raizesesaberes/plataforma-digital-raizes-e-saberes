@@ -1,39 +1,32 @@
-ENGENHARIA19 — PREPARACAO LOCAL; NADA APLICADO OU EXECUTADO.
+ENGENHARIA20 — PROPOSTA LOCAL; NAO INSTALADA, NAO EXECUTADA.
+Base: 437e739673e596df7f63f9c2e9fb363babd881f8. Historico preservado.
 
-BASE E PRECEDENCIA
-Base preservada: commit7bc6091f1669ba43803b45cd9677f07885fda132. Seus cinco arquivos permanecem byte a byte identicos, inclusive workflow, script e especificacao Trusted Source. A nova oidc-readonly-single-account.policy.json substitui SOMENTE a proposta de revisao independente para o diagnostico readonly. O arquivo antigo nao deve ser aplicado junto com a nova politica. Nada altera o gateway ou a exigencia de manifesto homologado.
+A. APROVACAO DA POLITICA (NAO AUTORIZA INSTALACAO OU EXECUCAO)
+Revisar o commit completo e registrar decisao humana externa com SHA/data/ator:
+"Aceito revisao manual pela propria conta raizesesaberes exclusivamente no ambiente enem-oidc-readonly para diagnostico GET. Nao existe revisao independente. enem-ingest permanece reservado, sem autoaprovacao. Isto nao homologa manifesto, direitos ou publicacao."
+Nenhuma aprovacao e presumida pelo codigo ou por este documento.
 
-FASE A — APROVAR A POLITICA, SEM INSTALAR
-O humano deve revisar o commit local completo, os hashes e a seguinte declaracao:
-"Autorizo propor required reviewer raizesesaberes (User ID299967037) no ambiente enem-ingest com prevent_self_review=false exclusivamente para o diagnostico OIDC GET deste commit. Reconheco que nao ha revisao independente. Essa aprovacao nao homologa questoes, direitos, manifestos ou releases e nao autoriza execucao, importacao ou publicacao."
-Registrar decisao humana com referencia, data e SHA exato em recibo externo ao codigo; nao preencher aprovacao presumida. Esta missao apenas entrega o pacote para essa decisao.
+B. INSTALACAO FUTURA — EXIGE AUTORIZACAO REMOTA SEPARADA
+1. Ler novamente branch remota, ambientes, regras, workflows e protecoes Vercel. Parar se houver divergencia, protecao mais forte ou avancos concorrentes. Nao usar force/main.
+2. ANTES de instalar o workflow: Settings > Environments > New environment > enem-oidc-readonly. Nunca permitir criacao automatica desprotegida por um job.
+3. Required reviewers: User raizesesaberes, ID299967037. Permitir self-review SOMENTE neste ambiente diagnostico. Desabilitar Allow administrators to bypass configured protection rules. Confirmar por readback/UI. Se o plano nao suportar a protecao, parar.
+4. Deployment branches and tags: Selected; unica regra literal tipo Branch service/enem-ingestion-worker. Nenhuma tag, wildcard ou main. Nao enfraquecer regras existentes.
+5. Nao adicionar secrets ou credenciais. Manter ENEM_OIDC_READONLY_EXPECTED_SHA ausente ate autorizacao de execucao.
+6. enem-ingest: NAO reutilizar nem alterar neste procedimento. Reservado para publicacao futura com prevent_self_review=true, sem autoaprovacao; definicao de revisores/politica futura depende de revisao propria. Com uma conta nao ha revisao independente; parar antes de qualquer publicacao sem politica aprovada. Nao criar esse ambiente nesta instalacao diagnostica.
+7. Sob autorizacao Vercel especifica, configurar Trusted Source conforme oidc-readonly-trusted-source.preview.json SOMENTE no projeto prj_zMBoQQzFm4iGMX1pnBRpl9HvcNyI, equipe team_DxW95pOlpbyKV4ZWtde17x47, Preview. Preservar Deployment Protection. Exigir issuer, audience readonly, IDs, branch, environment enem-oidc-readonly, workflow_ref novo e sha/workflow_sha exatos. Se nao for possivel impor cada restricao, parar. Sem production/development, wildcard ou bypass secret.
+8. Revalidar guards contra deployment automatico nos dois projetos. Sob autorizacao de push, instalar o commit revisado por fast-forward exclusivamente em service/enem-ingestion-worker. O workflow antigo enem-ingest.yml e removido por este commit; verificar ausencia dele no SHA instalado. Nao alterar main.
+9. Push pode criar run automatico de DIAGNOSTICO aguardando review. Nao aprovar esse run como parte da instalacao. SHA ausente/errado falha antes de solicitar JWT. Nenhum gatilho de ingestao e instalado.
+10. Readback: unico workflow novo, environment exato, paths somente diagnostico; permissions globais {}, job contents:read/id-token:write; GET-only; sem secrets, DB, releases ou recibos. Confirmar regras e bypass por UI, branch por lista completa e Trusted Source Preview. Registrar IDs e SHA sem tokens.
 
-FASE B — AUTORIZAR E INSTALAR REGRAS/WORKFLOW, SEM LIBERAR EXECUCAO
-Exige nova autorizacao especifica de mudancas GitHub e, separadamente, Trusted Source Vercel. Nao executar comandos desta secao agora.
-1. Consultar estado remoto atual, branch service/enem-ingestion-worker, ambientes, workflows, permissoes e plano/repositorio publico. Verificar que remoto e ancestral do commit aprovado; se houve avanco concorrente ou a politica remota divergir, parar. Nao usar force, main, merge automatico, branch alternativa ou redefinir default branch.
-2. Se enem-ingest nao existe: Settings -> Environments -> New environment -> nome exato enem-ingest. Configurar antes do push do workflow. Se existir com regras mais fortes/diferentes, parar; esta politica nao autoriza desligar protecoes ja instaladas.
-3. Required reviewers: selecionar somente raizesesaberes (ID299967037), Required review habilitada. Prevent self-review desmarcado APENAS na criacao/revisao explicitamente autorizada deste ambiente diagnostico. Desmarcar Allow administrators to bypass configured protection rules. Nao usar bypass para liberar jobs. Ler a configuracao salva e confirmar valores antes de seguir.
-4. Deployment branches and tags -> Selected branches and tags. Adicionar tipo Branch com nome literal service/enem-ingestion-worker. Nenhuma regra de tag, wildcard, main ou branches adicionais. Remover regra existente so com autorizacao especifica, nunca implicitamente. Consultar lista final e exigir exatamente essa regra.
-5. Nao adicionar secrets. Manter ENEM_OIDC_READONLY_EXPECTED_SHA AUSENTE ate a Fase C. Auditar que nao ha credenciais de banco, chaves Vercel, service_role ou variaveis que aleguem aprovacao editorial.
-6. Trusted Source Vercel: no projeto prj_zMBoQQzFm4iGMX1pnBRpl9HvcNyI/equipe team_DxW95pOlpbyKV4ZWtde17x47, preparar/configurar apenas sob autorizacao separada. Usar a especificacao oidc-readonly-trusted-source.preview.json, substituindo PENDING por SHA do commit aprovado para execucao. Preview SOMENTE, audience de diagnostico e claims exatos de repositorio/IDs/ref/environment/workflow_ref/workflow_sha/sha/event/runner. Preservar Standard Protection e regras alheias. Se uma restricao nao puder ser aplicada, parar em vez de omiti-la. Nenhuma regra Vercel e alterada nesta missao.
-7. Somente apos confirmar ambiente protegido/branch/secrets vazios, enviar o commit revisado via fast-forward EXCLUSIVO ao destino origin/service/enem-ingestion-worker, com novas verificacoes de guardas de deployment dos dois projetos. Instalar o workflow pelo commit, nunca copiar arquivos direto na main. Este passo e um push futuro e exige autorizacao propria.
-8. A instalacao inicial pode criar um run em espera na protecao do ambiente, pois o gatilho e push. Isso nao autoriza aprovar o job: deixar em espera ou cancelar com autorizacao. Nenhum passo/JWT deve executar antes da aprovacao e do SHA autorizado. Se existir qualquer job inesperado sem essa protecao, parar. Nenhum passo de deploy/importacao e incluido.
-9. Readback por leitura: workflow e script exatos, permissoes globais vazias e job contents:read/id-token:write; environment enem-ingest; aprovacao requerida, self-review permitido explicitamente, bypass admin desabilitado; unica branch selecionada; nenhuma tag/secret; SHA variavel ausente; Vercel apenas Preview. Registrar IDs e SHA sem tokens.
+C. EXECUCAO FUTURA — AUTORIZACAO DISTINTA, NAO CONCEDIDA AQUI
+Autorizar exatamente um run/attempt do SHA revisado. Configurar variavel publica ENEM_OIDC_READONLY_EXPECTED_SHA com SHA instalado e pinagem identica da Trusted Source. Nao usar automaticamente o SHA do runtime28abd13. Revisar manualmente o job enem-oidc-readonly e registrar que iniciador/aprovador sao a mesma conta. Nunca usar bypass.
+O diagnostico solicita JWT curto somente em memoria, verifica assinatura/escopo readonly e executa GET sem token e GET com x-vercel-trusted-oidc-idp-token. Nao envia application Bearer ou manifesto, nao segue redirects e nao repete automaticamente. Resultado esperado: acesso anonimo negado/redirecionado e GET autenticado405. Isso nao comprova acesso ao banco ou autorizacao de ingestao.
+Falha ou resultado desconhecido: parar, nao repetir. Registrar run/attempt/SHA/ator/aprovador/status sem JWT. Encerrar autorizacao de novas execucoes por procedimento humano previamente autorizado (por exemplo remover EXPECTED_SHA).
 
-FASE C — AUTORIZAR UMA EXECUCAO SOMENTE LEITURA
-Decisao distinta da aprovacao de politica e da instalacao. O humano deve autorizar exatamente um run/attempt do diagnostico, referencia do commit revisado e endpoint Preview fixo. Nenhuma autorizacao editorial e concedida por essa decisao.
-1. Confirmar novamente codigo/claims/Preview protegido e inativo, NOLOGIN sem alteracao, releases vazios por auditoria separada e ausencia de credenciais. Nao alterar esses estados para executar o diagnostico.
-2. Configurar ENEM_OIDC_READONLY_EXPECTED_SHA no ambiente com o SHA completo aprovado do run push. Nunca usar 28abd13 automaticamente: ele e o commit do runtime/verificador, nao contem o novo workflow. O SHA do commit preparado na Engenharia17 ou desta revisao so sera usado se for exatamente o commit instalado/executado e explicitamente aprovado.
-3. Vincular sha e workflow_sha da Trusted Source ao MESMO SHA. Nao usar placeholders, curingas, latest ou main. Se for necessario modificar regra Vercel, exigir a autorizacao correspondente.
-4. No run do evento push da branch canonica, escolher Review deployments -> enem-ingest -> Approve and deploy. Esse rotulo e do gate GitHub; o job e apenas o diagnostico GET e nao executa deployment Vercel. Registrar que ator e aprovador sao a mesma conta. Nao usar bypass administrativo. Se o run anterior foi cancelado/falhou no SHA ausente, rerun SOMENTE daquele evento push/SHA sob autorizacao; nao adicionar workflow_dispatch nem alterar claims para forcar aprovacao.
-5. Confirmar que a primeira etapa recusa SHA ausente/errado ANTES de pedir JWT. O teste autorizado emite somente JWT curto de audience readonly em memoria, valida assinatura e escopo e faz GET sem token e GET com header externo Vercel. Esperar405 autenticado; nao seguir redirecionamentos, enviar Bearer da aplicacao/manifesto, usar POST ou repetir automaticamente. Falha inesperada interrompe.
-6. Registrar run/attempt, SHA, ator, aprovador, horario, status e resultados sem JWT/jti/conteudos de token. Desabilitar novas execucoes pelo procedimento previamente autorizado (por exemplo remover a variavel publica EXPECTED_SHA apos encerrar); isso nao deve ser realizado por este workflow nem sem autorizacao de encerramento. Aguardar autorizacao especifica antes de novo run.
-
-LIMITE TECNICO IMPORTANTE
-A aprovacao do ambiente GitHub nao pode ser limitada nativamente a GET nem a um unico workflow. Portanto nao existe garantia de escopo so com prevent_self_review=false. O pacote combina codigo congelado GET-only, ausencia de credenciais/RPC, audience diagnostica distinta e Trusted Source com workflow/SHA exatos. O workflow e o verificador aprovados continuam exigindo push. Antes de qualquer reutilizacao de enem-ingest para job capaz de ingerir, parar: revisar/revogar a politica diagnostica e definir outra aprovacao para publicacao. Nunca herdar autoaprovacao de diagnostico como aprovacao editorial.
-Manifesto homologado, direitos/licenca, revisao humana, hashes, release canonico aprovado e autorizacao explicita continuam obrigatorios. Nome do ambiente, aprovar job, JWT valido ou GET405 nao satisfazem essas exigencias.
-
-FONTES OFICIAIS PARA CONFERENCIA FUTURA
+LIMITES
+Ambiente GitHub nao implementa ACL por metodo HTTP ou workflow. A restricao depende conjuntamente de codigo congelado GET-only, workflow/SHA, audience distinta, ambiente exclusivo e Trusted Source Preview. Nenhuma aprovacao diagnostica e editorial. Manifesto homologado, direitos/licenca, imagens/gabarito revisados, ausencia de quarentena e autorizacao explicita continuam obrigatorios para qualquer publicacao futura.
+Verificador canonico ingestion/runtime/oidc.mjs preservado; verificador diagnostico separado recusa ambiente/audience de ingestao.
+Fontes para revalidacao antes da instalacao:
 https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments
 https://docs.github.com/en/rest/deployments/environments
 https://docs.github.com/en/rest/deployments/branch-policies

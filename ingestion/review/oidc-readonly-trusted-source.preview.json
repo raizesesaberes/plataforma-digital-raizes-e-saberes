@@ -14,10 +14,10 @@
     "repository_owner_id": "299967037",
     "ref": "refs/heads/service/enem-ingestion-worker",
     "ref_type": "branch",
-    "environment": "enem-ingest",
+    "environment": "enem-oidc-readonly",
     "event_name": "push",
     "runner_environment": "github-hosted",
-    "workflow_ref": "raizesesaberes/plataforma-digital-raizes-e-saberes/.github/workflows/enem-ingest.yml@refs/heads/service/enem-ingestion-worker",
+    "workflow_ref": "raizesesaberes/plataforma-digital-raizes-e-saberes/.github/workflows/enem-oidc-readonly.yml@refs/heads/service/enem-ingestion-worker",
     "workflow_sha": "PENDING_REVIEWED_WORKFLOW_COMMIT_SHA",
     "sha": "PENDING_REVIEWED_WORKFLOW_COMMIT_SHA"
   },

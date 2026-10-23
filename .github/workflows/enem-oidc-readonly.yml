@@ -1,12 +1,13 @@
-# DRAFT ONLY — NOT INSTALLED. Intended path: .github/workflows/enem-ingest.yml
+# DRAFT ONLY — NOT INSTALLED. Intended path: .github/workflows/enem-oidc-readonly.yml
 # Requires pre-created protected environment and reviewed EXPECTED_SHA variable.
 name: ENEM OIDC readonly preflight
 "on":
   push:
     branches: [service/enem-ingestion-worker]
     paths:
-      - .github/workflows/enem-ingest.yml
+      - .github/workflows/enem-oidc-readonly.yml
       - ingestion/review/oidc-readonly.mjs
+      - ingestion/review/oidc-readonly-verify.mjs
 permissions: {}
 concurrency:
   group: enem-oidc-readonly-preview-jaesjldrbjbdmzzggxzw
@@ -20,7 +21,7 @@ jobs:
       github.ref == 'refs/heads/service/enem-ingestion-worker'
     runs-on: ubuntu-24.04
     environment:
-      name: enem-ingest
+      name: enem-oidc-readonly
     timeout-minutes: 5
     permissions:
       contents: read
@@ -43,7 +44,7 @@ jobs:
           persist-credentials: false
           sparse-checkout: |
             ingestion/review/oidc-readonly.mjs
-            ingestion/runtime/oidc.mjs
+            ingestion/review/oidc-readonly-verify.mjs
           sparse-checkout-cone-mode: false
       - name: Use Node.js 24 without installing application dependencies
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0

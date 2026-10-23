@@ -6,10 +6,10 @@ import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
 const REPO='raizesesaberes/plataforma-digital-raizes-e-saberes';
 const REF='refs/heads/service/enem-ingestion-worker';
-const WORKFLOW=`${REPO}/.github/workflows/enem-ingest.yml@${REF}`;
+const WORKFLOW=`${REPO}/.github/workflows/enem-oidc-readonly.yml@${REF}`;
 export const AUDIENCE='urn:rs:enem-oidc-readonly:jaesjldrbjbdmzzggxzw:preview';
 const ENDPOINT='https://enem-ingestion-worker-hj3ok2d8b-raizesesaberes.vercel.app/api/ingest';
-const OIDC_HASH='3d20a8a2f73646fb9f64be667fdaf725327e589e7814ed4426b0e9a71c117247';
+const OIDC_HASH='baa1ad890b055e54986b62a647dcede57d60be32f6672cf84b69cba8c340f10d';
 const fail=()=>{throw Error('READONLY_PREFLIGHT_REFUSED')};
 export function assertContext(env){
  const sha=env.EXPECTED_WORKFLOW_COMMIT;
@@ -20,10 +20,10 @@ export function assertContext(env){
 export async function runReadonly(env=process.env){
  const trust=assertContext(env);
  if(process.versions.node.split('.')[0]!=='24')fail();
- const modulePath=resolve('ingestion/runtime/oidc.mjs');
+ const modulePath=resolve('ingestion/review/oidc-readonly-verify.mjs');
  const bytes=await readFile(modulePath);
  if(createHash('sha256').update(bytes).digest('hex')!==OIDC_HASH)fail();
- const {verifyOIDC}=await import(pathToFileURL(modulePath).href);
+ const {verifyReadonlyOIDC}=await import(pathToFileURL(modulePath).href);
  const requestURL=new URL(env.ACTIONS_ID_TOKEN_REQUEST_URL);
  if(requestURL.protocol!=='https:'||!requestURL.hostname.endsWith('.actions.githubusercontent.com')||requestURL.port||requestURL.username||requestURL.password||requestURL.hash||typeof env.ACTIONS_ID_TOKEN_REQUEST_TOKEN!=='string'||!env.ACTIONS_ID_TOKEN_REQUEST_TOKEN)fail();
  requestURL.searchParams.set('audience',AUDIENCE);
@@ -34,7 +34,7 @@ export async function runReadonly(env=process.env){
  const raw=await issued.text();if(raw.length>32768)fail();
  let token=JSON.parse(raw).value;
  if(typeof token!=='string'||token.length>16384)fail();
- const identity=await verifyOIDC(token,trust);
+ const identity=await verifyReadonlyOIDC(token,trust);
  if(identity.run_id!==env.GITHUB_RUN_ID||identity.run_attempt!==env.GITHUB_RUN_ATTEMPT)fail();
  // Negative protection control: no OIDC token, no cookies, no redirect follow.
  const denied=await fetch(ENDPOINT,{method:'GET',redirect:'manual',signal:AbortSignal.timeout(10000)});
