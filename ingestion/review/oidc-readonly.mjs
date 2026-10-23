@@ -11,6 +11,20 @@ export const AUDIENCE='urn:rs:enem-oidc-readonly:jaesjldrbjbdmzzggxzw:preview';
 const ENDPOINT='https://enem-ingestion-worker-hj3ok2d8b-raizesesaberes.vercel.app/api/ingest';
 const OIDC_HASH='baa1ad890b055e54986b62a647dcede57d60be32f6672cf84b69cba8c340f10d';
 const fail=()=>{throw Error('READONLY_PREFLIGHT_REFUSED')};
+const PHASES=new Set(['CONTEXT','RUNTIME_INTEGRITY','OIDC_REQUEST','OIDC_VERIFICATION','OIDC_SIGNATURE','OIDC_CLAIMS','PREVIEW_HTTP','PREVIEW_PROTECTION','WORKER_RESPONSE']);
+const SIGNATURE_ERRORS=new Set(['JWT_SIZE','JWT_PARTS','JWT_ENCODING','JWT_JSON','JWT_HEADER','JWKS_FETCH','JWKS_SIZE','JWKS_FORMAT','JWKS_KEY','JWT_SIGNATURE']);
+const CLAIM_ERRORS=new Set(['READONLY_TRUST_SCOPE','JWT_SCOPE','JWT_ENVIRONMENT','JWT_TIME','JWT_EXPIRED','JWT_RUN']);
+export function safeFailurePhase(phase,error){
+ if(phase==='OIDC_VERIFICATION'){
+  if(SIGNATURE_ERRORS.has(error?.message))return 'OIDC_SIGNATURE';
+  if(CLAIM_ERRORS.has(error?.message))return 'OIDC_CLAIMS';
+ }
+ return PHASES.has(phase)?phase:'CONTEXT';
+}
+export function failureMessage(error){
+ const phase=PHASES.has(error?.diagnosticPhase)?error.diagnosticPhase:'CONTEXT';
+ return `READONLY_PREFLIGHT_FAILED_NO_RETRY phase=${phase}`;
+}
 export function assertContext(env){
  const sha=env.EXPECTED_WORKFLOW_COMMIT;
  if(!/^[a-f0-9]{40}$/.test(sha||'')||env.GITHUB_SHA!==sha||env.GITHUB_WORKFLOW_SHA!==sha||env.GITHUB_WORKFLOW_REF!==WORKFLOW||env.GITHUB_REPOSITORY!==REPO||env.GITHUB_REPOSITORY_ID!=='1297887230'||env.GITHUB_REPOSITORY_OWNER_ID!=='299967037'||env.GITHUB_REF!==REF||env.GITHUB_REF_TYPE!=='branch'||env.GITHUB_EVENT_NAME!=='push'||env.RUNNER_ENVIRONMENT!=='github-hosted')fail();
@@ -18,12 +32,16 @@ export function assertContext(env){
  return {audience:AUDIENCE,ref:REF,workflowRef:WORKFLOW,workflowSha:sha,commit:sha};
 }
 export async function runReadonly(env=process.env){
+ let phase='CONTEXT';
+ try{
  const trust=assertContext(env);
+ phase='RUNTIME_INTEGRITY';
  if(process.versions.node.split('.')[0]!=='24')fail();
  const modulePath=resolve('ingestion/review/oidc-readonly-verify.mjs');
  const bytes=await readFile(modulePath);
  if(createHash('sha256').update(bytes).digest('hex')!==OIDC_HASH)fail();
  const {verifyReadonlyOIDC}=await import(pathToFileURL(modulePath).href);
+ phase='OIDC_REQUEST';
  const requestURL=new URL(env.ACTIONS_ID_TOKEN_REQUEST_URL);
  if(requestURL.protocol!=='https:'||!requestURL.hostname.endsWith('.actions.githubusercontent.com')||requestURL.port||requestURL.username||requestURL.password||requestURL.hash||typeof env.ACTIONS_ID_TOKEN_REQUEST_TOKEN!=='string'||!env.ACTIONS_ID_TOKEN_REQUEST_TOKEN)fail();
  requestURL.searchParams.set('audience',AUDIENCE);
@@ -34,21 +52,32 @@ export async function runReadonly(env=process.env){
  const raw=await issued.text();if(raw.length>32768)fail();
  let token=JSON.parse(raw).value;
  if(typeof token!=='string'||token.length>16384)fail();
+ phase='OIDC_VERIFICATION';
  const identity=await verifyReadonlyOIDC(token,trust);
+ phase='OIDC_CLAIMS';
  if(identity.run_id!==env.GITHUB_RUN_ID||identity.run_attempt!==env.GITHUB_RUN_ATTEMPT)fail();
  // Negative protection control: no OIDC token, no cookies, no redirect follow.
+ phase='PREVIEW_HTTP';
  const denied=await fetch(ENDPOINT,{method:'GET',redirect:'manual',signal:AbortSignal.timeout(10000)});
  const deniedStatus=denied.status;
  await denied.body?.cancel();
+ phase='PREVIEW_PROTECTION';
  if(![301,302,303,307,308,401,403].includes(deniedStatus))fail();
  // External Vercel protection only. No Authorization header to the application.
  // GET is rejected by the approved runtime before Pool creation (405).
+ phase='PREVIEW_HTTP';
  const accepted=await fetch(ENDPOINT,{method:'GET',redirect:'manual',signal:AbortSignal.timeout(10000),headers:{'x-vercel-trusted-oidc-idp-token':token}});
  token='';
  const status=accepted.status;await accepted.body?.cancel();
+ phase=[301,302,303,307,308,401,403].includes(status)?'PREVIEW_PROTECTION':'WORKER_RESPONSE';
  if(status!==405)fail();
  console.log(JSON.stringify({oidc_signature_and_scope:'PASS',preview_protection:'PASS',unauthenticatedStatus:deniedStatus,authenticatedGetStatus:status,method:'GET',dbConnectionAttempted:false,applicationBearerSent:false,publicationAuthorized:false}));
+ }catch(error){
+  const safe=new Error('READONLY_PREFLIGHT_FAILED_NO_RETRY');
+  safe.diagnosticPhase=safeFailurePhase(phase,error);
+  throw safe;
+ }
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
- runReadonly().catch(()=>{console.error('READONLY_PREFLIGHT_FAILED_NO_RETRY');process.exitCode=1});
+ runReadonly().catch(error=>{console.error(failureMessage(error));process.exitCode=1});
 }

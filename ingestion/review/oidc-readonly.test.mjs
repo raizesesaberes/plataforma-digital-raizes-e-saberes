@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {verifyReadonlyOIDC} from './oidc-readonly-verify.mjs';
-import {assertContext,AUDIENCE} from './oidc-readonly.mjs';
+import {assertContext,AUDIENCE,safeFailurePhase,failureMessage} from './oidc-readonly.mjs';
 const repo='raizesesaberes/plataforma-digital-raizes-e-saberes',ref='refs/heads/service/enem-ingestion-worker',sha='a'.repeat(40),wf=`${repo}/.github/workflows/enem-oidc-readonly.yml@${ref}`;
 const trust={audience:AUDIENCE,ref,workflowRef:wf,workflowSha:sha,commit:sha};
 const claims={iss:'https://token.actions.githubusercontent.com',aud:AUDIENCE,repository:repo,repository_id:'1297887230',repository_owner_id:'299967037',ref,ref_type:'branch',workflow_ref:wf,workflow_sha:sha,sha,event_name:'push',environment:'enem-oidc-readonly',sub:`repo:${repo}:environment:enem-oidc-readonly`,runner_environment:'github-hosted',iat:1000,nbf:1000,exp:1300,jti:'test-only-fixture',run_id:'1',run_attempt:'1'};
@@ -19,3 +19,15 @@ test('workflow has exclusive environment and no ingestion triggers',()=>{const w
 test('GET only and verifier hash pinned',()=>{const s=readFileSync('ingestion/review/oidc-readonly.mjs','utf8');assert.equal((s.match(/await fetch\(/g)||[]).length,3);assert.equal((s.match(/method:'GET'/g)||[]).length,4);assert.doesNotMatch(s,/method:'(?:POST|PUT|PATCH|DELETE)'/);assert.ok(s.includes(createHash('sha256').update(readFileSync('ingestion/review/oidc-readonly-verify.mjs')).digest('hex')))});
 test('context refuses credentials before network',()=>{const e={EXPECTED_WORKFLOW_COMMIT:sha,GITHUB_SHA:sha,GITHUB_WORKFLOW_SHA:sha,GITHUB_WORKFLOW_REF:wf,GITHUB_REPOSITORY:repo,GITHUB_REPOSITORY_ID:'1297887230',GITHUB_REPOSITORY_OWNER_ID:'299967037',GITHUB_REF:ref,GITHUB_REF_TYPE:'branch',GITHUB_EVENT_NAME:'push',RUNNER_ENVIRONMENT:'github-hosted'};assertContext(e);for(const key of ['DATABASE_URL','INGEST_DB_PASSWORD','SUPABASE_SERVICE_ROLE_KEY','SUPABASE_SECRET_KEY'])assert.throws(()=>assertContext({...e,[key]:''}));});
 test('self review cannot extend to ingestion',()=>{const p=JSON.parse(readFileSync('ingestion/review/oidc-readonly-single-account.policy.json'));assert.equal(p.environment,'enem-oidc-readonly');assert.equal(p.single_account.independent_review,false);assert.equal(p.reserved_ingestion_environment.prevent_self_review,true);assert.equal(p.reserved_ingestion_environment.diagnostic_policy_applies,false);assert.equal(p.publication.authorized,false)});
+
+test('phase codes separate signature claims request HTTP and worker failures',()=>{
+ for(const code of ['JWT_SIGNATURE','JWKS_KEY','JWT_HEADER'])assert.equal(safeFailurePhase('OIDC_VERIFICATION',new Error(code)),'OIDC_SIGNATURE');
+ for(const code of ['JWT_SCOPE','JWT_ENVIRONMENT','JWT_EXPIRED','JWT_RUN'])assert.equal(safeFailurePhase('OIDC_VERIFICATION',new Error(code)),'OIDC_CLAIMS');
+ for(const phase of ['OIDC_REQUEST','PREVIEW_HTTP','PREVIEW_PROTECTION','WORKER_RESPONSE'])assert.equal(safeFailurePhase(phase,new Error('private response')),phase);
+ assert.equal(safeFailurePhase('OIDC_VERIFICATION',new Error('unknown')),'OIDC_VERIFICATION');
+});
+test('failure output cannot expose arbitrary errors or untrusted phase values',()=>{
+ assert.equal(failureMessage(new Error('private token or body')),'READONLY_PREFLIGHT_FAILED_NO_RETRY phase=CONTEXT');
+ assert.equal(failureMessage({diagnosticPhase:'private value'}),'READONLY_PREFLIGHT_FAILED_NO_RETRY phase=CONTEXT');
+ assert.equal(failureMessage({diagnosticPhase:'OIDC_CLAIMS',message:'private value'}),'READONLY_PREFLIGHT_FAILED_NO_RETRY phase=OIDC_CLAIMS');
+});
