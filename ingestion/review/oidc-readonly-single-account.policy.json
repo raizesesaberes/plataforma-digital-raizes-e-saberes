@@ -1,0 +1,92 @@
+{
+  "kind": "HUMAN_REVIEW_POLICY_NOT_API_REQUEST",
+  "version": 1,
+  "status": "PROPOSED_NOT_APPLIED",
+  "repository": "raizesesaberes/plataforma-digital-raizes-e-saberes",
+  "environment": "enem-ingest",
+  "scope": "OIDC_DIAGNOSTIC_GET_ONLY",
+  "supersedes": "oidc-readonly-environment.rules.json ONLY for this readonly diagnostic; original file retained as historical independent-review proposal",
+  "single_account": {
+    "reviewer": {
+      "login": "raizesesaberes",
+      "id": 299967037,
+      "type": "User"
+    },
+    "required_review": true,
+    "prevent_self_review": false,
+    "administrator_bypass": false,
+    "independent_review": false,
+    "disclosure": "Same GitHub account may initiate and manually approve the diagnostic; this is not independent review or editorial approval."
+  },
+  "branch_policy": {
+    "mode": "selected",
+    "branches": [
+      {
+        "name": "service/enem-ingestion-worker",
+        "type": "branch"
+      }
+    ],
+    "tags": []
+  },
+  "workflow": {
+    "path": ".github/workflows/enem-ingest.yml",
+    "job": "oidc-readonly",
+    "event": "push",
+    "permissions": {
+      "contents": "read",
+      "id-token": "write"
+    },
+    "expected_sha_variable": "ENEM_OIDC_READONLY_EXPECTED_SHA",
+    "expected_sha_rule": "Exact full SHA of human-reviewed installed commit; unset until separate execution authorization; never bind to latest/main automatically"
+  },
+  "oidc": {
+    "issuer": "https://token.actions.githubusercontent.com",
+    "audience": "urn:rs:enem-oidc-readonly:jaesjldrbjbdmzzggxzw:preview",
+    "forbidden_ingestion_audience": "urn:rs:enem-ingest:jaesjldrbjbdmzzggxzw",
+    "trusted_source_environments": [
+      "preview"
+    ],
+    "project_id": "prj_zMBoQQzFm4iGMX1pnBRpl9HvcNyI",
+    "team_id": "team_DxW95pOlpbyKV4ZWtde17x47",
+    "workflow_sha_and_commit": "Bind exact human-reviewed execution SHA before execution; no wildcard"
+  },
+  "http": {
+    "methods": [
+      "GET"
+    ],
+    "endpoint": "https://enem-ingestion-worker-hj3ok2d8b-raizesesaberes.vercel.app/api/ingest",
+    "application_authorization_header": false,
+    "manifest_body": false,
+    "follow_redirects": false,
+    "retries": 0,
+    "expected_authenticated_status": 405
+  },
+  "database": {
+    "credentials": false,
+    "connection": false,
+    "queries": false,
+    "writes": false,
+    "login_activation": false
+  },
+  "publication": {
+    "authorized": false,
+    "editorial_homologation_inferred": false,
+    "rights_approved": false,
+    "releases_created": false,
+    "future_requirements": [
+      "Human-homologated frozen manifest",
+      "Validated rights and source/license",
+      "Editorial review recorded",
+      "Explicit publication authorization",
+      "Canonical approved release and hashes",
+      "Separate authorization policy reviewed before reusing this environment for publication"
+    ]
+  },
+  "environment_secrets": [],
+  "limitations": [
+    "GitHub environment reviewers apply to every referencing job, not to HTTP methods or an individual workflow. GET-only scope is enforced by the frozen diagnostic code, distinct audience and exact Vercel workflow/SHA claims, not by an environment method ACL.",
+    "Do not use this policy for an ingestion-capable workflow. Before any such reuse, stop and explicitly replace/revoke the diagnostic-only approval arrangement and review publication rules.",
+    "Do not infer editorial approval from environment name, reviewer approval, GET405, JWT validation or this policy.",
+    "Do not weaken an existing remote environment automatically. If enem-ingest exists with stronger/different protection, stop and request review of that actual state."
+  ]
+}
