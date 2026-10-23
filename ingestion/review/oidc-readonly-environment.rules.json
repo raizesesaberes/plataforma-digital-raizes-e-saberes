@@ -1,0 +1,31 @@
+{
+  "kind": "REVIEW_SPEC_NOT_API_REQUEST",
+  "repository": "raizesesaberes/plataforma-digital-raizes-e-saberes",
+  "name": "enem-ingest",
+  "required_reviewers": {
+    "selection": "PENDING_HUMAN_REVIEWER_OR_TEAM_ID",
+    "required": true,
+    "prevent_self_review": true
+  },
+  "administrator_bypass": false,
+  "deployment_branch_policy": {
+    "mode": "selected",
+    "branches": [
+      {
+        "name": "service/enem-ingestion-worker",
+        "type": "branch"
+      }
+    ],
+    "tags": []
+  },
+  "secrets": [],
+  "variables": {
+    "ENEM_OIDC_READONLY_EXPECTED_SHA": "PENDING_REVIEWED_WORKFLOW_COMMIT_SHA"
+  },
+  "requirements": [
+    "Create protected environment BEFORE installing workflow; never accept automatic unprotected environment creation",
+    "Confirm plan/repository visibility supports required reviewers and disabling administrator bypass; stop if unavailable",
+    "Reviewer must be a different human from initiator and review exact future commit",
+    "Variable is public SHA, not a credential; no tokens or DB secrets in this environment"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "kind": "REVIEW_SPEC_NOT_API_REQUEST",
+  "teamId": "team_DxW95pOlpbyKV4ZWtde17x47",
+  "projectId": "prj_zMBoQQzFm4iGMX1pnBRpl9HvcNyI",
+  "provider": "GitHub Actions",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "applies_to_environments": [
+    "preview"
+  ],
+  "claims": {
+    "aud": "urn:rs:enem-oidc-readonly:jaesjldrbjbdmzzggxzw:preview",
+    "repository": "raizesesaberes/plataforma-digital-raizes-e-saberes",
+    "repository_id": "1297887230",
+    "repository_owner_id": "299967037",
+    "ref": "refs/heads/service/enem-ingestion-worker",
+    "ref_type": "branch",
+    "environment": "enem-ingest",
+    "event_name": "push",
+    "runner_environment": "github-hosted",
+    "workflow_ref": "raizesesaberes/plataforma-digital-raizes-e-saberes/.github/workflows/enem-ingest.yml@refs/heads/service/enem-ingestion-worker",
+    "workflow_sha": "PENDING_REVIEWED_WORKFLOW_COMMIT_SHA",
+    "sha": "PENDING_REVIEWED_WORKFLOW_COMMIT_SHA"
+  },
+  "subject_policy": "Verifier accepts only the two approved enem-ingest environment subject formats; no need to broaden Vercel rule with an unverified sub",
+  "header": "x-vercel-trusted-oidc-idp-token",
+  "protection": "KEEP_EXISTING_STANDARD_PROTECTION",
+  "requirements": [
+    "Use raw claims to include workflow_ref and immutable IDs; all listed claims must match exactly",
+    "If dashboard cannot enforce these claims, stop; do not omit constraints",
+    "Do not apply placeholders; bind future reviewed SHA in both policy and environment variable",
+    "Do not enable production, development, all-repositories or unscoped organization access",
+    "Read-only audience deliberately differs from canonical ingestion audience; do not replace with ingestion audience for convenience"
+  ]
+}
