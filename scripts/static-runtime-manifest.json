@@ -16985,7 +16985,7 @@
   },
   {
     "file": "index.html",
-    "sha256": "a7a39a2dfb98e78141acac144e5b3883ff3b6cf11c0368636b2b12424ceaeca7"
+    "sha256": "3b89cabc030cd541e201db22d40d14e8fb09dccd880ca11b703729e9e393cca4"
   },
   {
     "file": "infantil-experience-catalog.js",
@@ -17102,5 +17102,9 @@
   {
     "file": "universidade.html",
     "sha256": "3928fd874372c2d9c93fc5608ab39fd59620eec6d3251e7162e98fe3bed23e90"
+  },
+  {
+    "file": "grafica.html",
+    "sha256": "9505a46ab5c27b47718efceab711dab1fece30131d3da6c0f16a8f07d3a8601c"
   }
 ]

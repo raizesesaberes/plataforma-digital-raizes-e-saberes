@@ -1,17 +1,58 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/admin", "destination": "/admin.html" },
-    { "source": "/escola", "destination": "/escola.html" },
-    { "source": "/educacao-infantil", "destination": "/educacao-infantil.html" },
-    { "source": "/professor", "destination": "/professor.html" },
-    { "source": "/familia", "destination": "/familia.html" },
-    { "source": "/banco-questoes", "destination": "/banco-questoes.html" },
-    { "source": "/professor/turma", "destination": "/professor-turma.html" },
-    { "source": "/professor/alunos/:id", "destination": "/professor-aluno.html?id=:id" },
-    { "source": "/aluno", "destination": "/aluno.html" },
-    { "source": "/aluno/atividades", "destination": "/aluno-atividades.html" },
-    { "source": "/aluno/atividade/:id", "destination": "/aluno-atividade.html?id=:id" }
+    {
+      "source": "/grafica",
+      "destination": "/grafica.html"
+    },
+    {
+      "source": "/grafica/:path*",
+      "destination": "https://grafica-santa-helena-49b3ls8xu-grafica-santa-helena.vercel.app/grafica/:path*"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/escola",
+      "destination": "/escola.html"
+    },
+    {
+      "source": "/educacao-infantil",
+      "destination": "/educacao-infantil.html"
+    },
+    {
+      "source": "/professor",
+      "destination": "/professor.html"
+    },
+    {
+      "source": "/familia",
+      "destination": "/familia.html"
+    },
+    {
+      "source": "/banco-questoes",
+      "destination": "/banco-questoes.html"
+    },
+    {
+      "source": "/professor/turma",
+      "destination": "/professor-turma.html"
+    },
+    {
+      "source": "/professor/alunos/:id",
+      "destination": "/professor-aluno.html?id=:id"
+    },
+    {
+      "source": "/aluno",
+      "destination": "/aluno.html"
+    },
+    {
+      "source": "/aluno/atividades",
+      "destination": "/aluno-atividades.html"
+    },
+    {
+      "source": "/aluno/atividade/:id",
+      "destination": "/aluno-atividade.html?id=:id"
+    }
   ],
   "buildCommand": "node scripts/build-static-web.mjs",
   "outputDirectory": "dist",
