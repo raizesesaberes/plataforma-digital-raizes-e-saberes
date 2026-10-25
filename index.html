@@ -24,9 +24,48 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+    <style>
+      /* Scoped institutional addition; existing shared styles remain untouched. */
+      .editorial-structure{border-top:1px solid #dce5df;border-bottom:1px solid #dce5df;padding:88px 0;}
+      .editorial-structure-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:64px;align-items:center;}
+      .editorial-structure-copy{min-width:0;}
+      .editorial-structure .eyebrow{color:#296b42;}
+      .editorial-structure h2{font-size:clamp(1.9rem,2.7vw,2.65rem);line-height:1.18;letter-spacing:-.035em;color:#173d2c;}
+      .editorial-structure p{color:#526259;line-height:1.8;font-size:1rem;}
+      .editorial-structure .editorial-lead{color:#254f39;font-size:1.12rem;font-weight:600;margin-top:24px;}
+      .editorial-footer-link:focus-visible{outline:3px solid #2e7d32;outline-offset:5px;border-radius:2px;}
+      .editorial-structure-visual{margin:0;min-width:0;}
+      .editorial-structure-visual img{display:block;width:100%;height:410px;object-fit:cover;object-position:center;border-radius:8px;}
+      .editorial-structure-visual figcaption{display:grid;gap:8px;padding:18px 0 0;border-bottom:1px solid #dce5df;padding-bottom:18px;}
+      .editorial-structure-visual figcaption span{font-family:Poppins,sans-serif;font-size:1rem;font-weight:500;color:#254f39;}
+      .editorial-structure-visual figcaption small{color:#58665e;font-size:.72rem;line-height:1.6;}
+      .editorial-footer-link{display:inline-flex;align-items:center;min-height:44px;color:inherit;text-underline-offset:4px;font-size:.85rem;}
+      @media(max-width:980px){.editorial-structure-layout{gap:32px;grid-template-columns:1fr;}.editorial-structure-visual img{height:350px;}}
+      @media(max-width:620px){.section.editorial-structure{padding:60px 0;}.editorial-structure h2{font-size:1.9rem;}.editorial-structure-visual img{height:260px;}}
+      /* Fit the additional institutional link without crowding the header. */
+      .site-header .site-nav{gap:clamp(10px,1vw,14px);}
+      @media(min-width:861px) and (max-width:1280px){
+        .site-header .menu-button{display:block;order:3;}
+        .site-header .site-nav{position:absolute;top:calc(100% + 10px);right:20px;left:20px;display:none;flex-direction:column;align-items:stretch;gap:0;padding:10px;border:1px solid var(--line);border-radius:var(--radius-control);background:var(--white);box-shadow:var(--shadow-md);}
+        .site-header.is-open .site-nav{display:flex;}
+        .site-header .site-nav a{padding:14px;}
+        .site-header .site-nav a::after{display:none;}
+        .site-header .nav-cta{display:none;}
+      }
+      .site-header{right:max(20px,calc((100vw - 1440px)/2));left:max(20px,calc((100vw - 1440px)/2));gap:16px;}
+      .institutional-brands{display:flex;align-items:center;gap:16px;flex-shrink:0;}
+      .santa-helena-header-brand{display:flex;align-items:center;justify-content:center;min-height:48px;padding-left:16px;border-left:1px solid #dce5df;}
+      .santa-helena-header-brand img{display:block;width:150px;height:auto;}
+      .santa-helena-header-brand:focus-visible{outline:3px solid #2e7d32;outline-offset:4px;border-radius:4px;}
+      .editorial-structure .editorial-structure-button{margin-top:16px;color:#fff;background:linear-gradient(135deg,#2e7d32,#1b5e20);text-decoration:none;white-space:normal;text-align:center;gap:12px;}
+      .editorial-structure-button:focus-visible{outline:3px solid #2e7d32;outline-offset:4px;}
+      @media(max-width:620px){.site-header{right:16px;left:16px;gap:8px;}.institutional-brands{gap:10px;}.institutional-brands .brand{width:150px;min-width:150px;}.santa-helena-header-brand{padding-left:10px;}.santa-helena-header-brand img{width:98px;}}
+      @media(max-width:380px){.institutional-brands{gap:8px;}.institutional-brands .brand{width:120px;min-width:120px;}.santa-helena-header-brand{padding-left:8px;}.santa-helena-header-brand img{width:74px;}}
+    </style>
   </head>
   <body>
     <header class="site-header" data-header>
+      <div class="institutional-brands">
       <a class="brand" href="#inicio" aria-label="Raízes e Saberes">
         <img
           src="logo-horizontal-light.png"
@@ -35,6 +74,10 @@
         />
         <span class="brand-fallback" hidden>Raízes e Saberes</span>
       </a>
+      <a class="santa-helena-header-brand" href="#estrutura-editorial" aria-label="Editora Gráfica Santa Helena — conheça nossa estrutura editorial">
+        <img src="assets/brand/santa-helena-principal.svg" alt="Santa Helena — Editora e Gráfica" width="462" height="94" />
+      </a>
+      </div>
 
       <button class="menu-button" type="button" aria-label="Abrir menu" data-menu-button>
         <span></span>
@@ -276,6 +319,25 @@
           <a href="login.html?next=secretaria.html"><strong>Secretaria</strong><span>Indicadores da rede</span></a>
           <a href="login.html?next=gestor.html"><strong>Gestor</strong><span>Gestão escolar</span></a>
           <a href="login.html?next=familia.html"><strong>Família</strong><span>Acompanhamento dos filhos</span></a>
+        </div>
+      </section>
+
+      <!-- Institutional editorial structure: independent Santa Helena operation. -->
+      <section class="section editorial-structure" id="estrutura-editorial" aria-labelledby="editorial-title">
+        <div class="editorial-structure-layout">
+          <div class="editorial-structure-copy">
+            <p class="eyebrow">Nossa estrutura editorial</p>
+            <h2 id="editorial-title">Da concepção pedagógica à produção editorial</h2>
+            <p class="editorial-lead">Um compromisso com a educação que também se revela em cada página.</p>
+            <p>A Raízes e Saberes reúne conhecimento pedagógico, desenvolvimento editorial e produção gráfica em uma trajetória dedicada à construção de materiais educacionais.</p>
+            <p>Integrante do grupo, a Editora Gráfica Santa Helena compõe essa estrutura editorial e produtiva, conectando o cuidado com o conteúdo à qualidade de sua apresentação impressa.</p>
+            <p>A experiência de 30 anos dos fundadores no mercado gráfico e editorial fortalece essa visão: acompanhar cada projeto com seriedade, atenção aos detalhes e respeito ao seu propósito educacional.</p>
+            <a class="button primary editorial-structure-button" href="/grafica">Conheça nossa estrutura editorial e gráfica <span aria-hidden="true">↗</span></a>
+          </div>
+          <figure class="editorial-structure-visual">
+            <img src="assets/brand/estrutura-editorial-impressao.webp" width="1500" height="1000" loading="lazy" decoding="async" alt="Detalhe de uma máquina de impressão industrial, com rolos e componentes de produção gráfica" />
+            <figcaption><span>Conteúdo, edição e produção.</span><small>Fotografia de referência do setor gráfico · André Robillard / CC0</small></figcaption>
+          </figure>
         </div>
       </section>
 
@@ -641,7 +703,8 @@
         <span>Ecossistema educacional para redes de ensino.</span>
       </div>
       <div>
-        <strong>Editora Grafica Santa Helena Ltda.</strong>
+        <strong>Editora Gráfica Santa Helena Ltda.</strong>
+        <a class="editorial-footer-link" href="/grafica">Estrutura editorial e produtiva do grupo</a>
         <span>Contato comercial: graficasantahelena@yahoo.com</span>
       </div>
     </footer>
@@ -649,3 +712,4 @@
     <script src="script.js"></script>
   </body>
 </html>
+

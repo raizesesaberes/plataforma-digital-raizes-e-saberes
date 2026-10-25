@@ -16985,7 +16985,7 @@
   },
   {
     "file": "index.html",
-    "sha256": "a7a39a2dfb98e78141acac144e5b3883ff3b6cf11c0368636b2b12424ceaeca7"
+    "sha256": "8dabafcbb064b4f39ea8a2faa154fcec04dd722387d2397dab60b1166ea270f5"
   },
   {
     "file": "infantil-experience-catalog.js",
@@ -17102,5 +17102,13 @@
   {
     "file": "universidade.html",
     "sha256": "3928fd874372c2d9c93fc5608ab39fd59620eec6d3251e7162e98fe3bed23e90"
+  },
+  {
+    "file": "assets/brand/estrutura-editorial-impressao.webp",
+    "sha256": "fe4a34f1ec8a411380f958621e40aa6a7237bf89d229fae58f8cd83bf80f2e87"
+  },
+  {
+    "file": "assets/brand/santa-helena-principal.svg",
+    "sha256": "68e53023b89bea6c6e821cee5ddcf477a7d7fe24a12aba2ca01a534b349f8447"
   }
 ]
