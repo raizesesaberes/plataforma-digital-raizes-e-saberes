@@ -6,7 +6,7 @@ import { dirname, isAbsolute, join, resolve } from 'node:path';
 const root = resolve(import.meta.dirname, '..');
 const output = join(root, 'dist');
 const manifest = JSON.parse(readFileSync(join(root, 'scripts/static-runtime-manifest.json'), 'utf8'));
-if (!Array.isArray(manifest) || manifest.length !== 4277) throw new Error('Expected 4277 approved runtime files');
+if (!Array.isArray(manifest) || manifest.length !== 4278) throw new Error('Expected 4278 approved runtime files');
 const seen = new Set();
 // Validate the complete source set before replacing any previous build.
 for (const entry of manifest) {
