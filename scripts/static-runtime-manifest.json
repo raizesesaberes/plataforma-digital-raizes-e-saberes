@@ -16985,7 +16985,7 @@
   },
   {
     "file": "index.html",
-    "sha256": "a7a39a2dfb98e78141acac144e5b3883ff3b6cf11c0368636b2b12424ceaeca7"
+    "sha256": "f3ca0e9d8e518556f7ba0411e2ff671048c182445085a76aa5ce92c126a40520"
   },
   {
     "file": "infantil-experience-catalog.js",
@@ -17102,5 +17102,9 @@
   {
     "file": "universidade.html",
     "sha256": "3928fd874372c2d9c93fc5608ab39fd59620eec6d3251e7162e98fe3bed23e90"
+  },
+  {
+    "file": "assets/brand/estrutura-editorial-impressao.webp",
+    "sha256": "fe4a34f1ec8a411380f958621e40aa6a7237bf89d229fae58f8cd83bf80f2e87"
   }
 ]
