@@ -23168,6 +23168,20 @@ const initQuestionBank = () => {
   const errorNode = root.querySelector("[data-qb-error]");
   root.querySelector(".qb-notice")?.after(errorNode);
   errorNode?.setAttribute("role", "alert");
+  const errorClose=document.createElement('button');
+  errorClose.type='button';errorClose.dataset.qbDismissError='';
+  errorClose.setAttribute('aria-label','Fechar mensagem de erro');
+  errorClose.title='Fechar mensagem';errorClose.textContent='×';
+  errorClose.style.cssText='float:right;margin-left:12px;padding:0 6px;border:0;background:transparent;color:inherit;font-size:24px;line-height:1;cursor:pointer';
+
+  const errorRecovery = document.createElement('div');
+  errorRecovery.setAttribute('role','group');
+  errorRecovery.setAttribute('aria-label','Recuperação do erro');
+  errorRecovery.hidden=true;
+  errorRecovery.innerHTML='<button type="button" data-qb-dismiss-error>Limpar aviso</button> <button type="button" data-qb-error-back>Voltar ao banco</button> <button type="button" data-qb-check-save>Verificar salvamento</button>';
+  errorNode.after(errorRecovery);
+  let dismissedAssessmentSaveMarker=null;
+
   const empty = root.querySelector("[data-qb-empty]");
   const cartList = root.querySelector("[data-qb-cart-list]");
   const cartTime = root.querySelector("[data-qb-cart-time]");
@@ -24598,10 +24612,20 @@ const initQuestionBank = () => {
     if(sessionStorage.getItem(assessmentSaveKey) && !assessmentSavePromise)setError(uncertainSaveMessage);
   };
 
+  const clearQuestionBankError = () => {
+    // Dismiss only the notice. Never remove the uncertain-save marker or selection.
+    dismissedAssessmentSaveMarker=sessionStorage.getItem(assessmentSaveKey);
+    errorNode.hidden=true;errorNode.textContent='';errorRecovery.hidden=true;
+  };
   const setError = (message) => {
     loading.hidden = true;
-    errorNode.hidden = false;
-    errorNode.textContent = message;
+    const marker=sessionStorage.getItem(assessmentSaveKey);
+    if(message===uncertainSaveMessage && marker && marker===dismissedAssessmentSaveMarker){errorNode.hidden=true;errorRecovery.hidden=true;return;}
+    errorNode.hidden = !message;
+    errorNode.textContent = message || '';
+    if(message)errorNode.prepend(errorClose);
+    errorRecovery.hidden=!message;
+    errorRecovery.querySelector('[data-qb-check-save]').hidden=!marker;
   };
 
   const assessmentPayloadFromBuilder = () => ({
@@ -24954,6 +24978,23 @@ const initQuestionBank = () => {
     try{requireAssessmentActor();}catch{return;}
     const button = event.target.closest("button");
     if (!button) {
+      return;
+    }
+    if(button.hasAttribute('data-qb-dismiss-error')){clearQuestionBankError();return;}
+    if(button.hasAttribute('data-qb-error-back')){clearQuestionBankError();saveDraftSnapshot('error-back');pilotBridge.open('banco');return;}
+    if(button.hasAttribute('data-qb-check-save')){
+      if(assessmentSavePromise || assessmentSwitchBusy){setSelectionStatus('Aguarde a operação atual terminar.','info');return;}
+      const marker=sessionStorage.getItem(assessmentSaveKey);
+      button.disabled=true;
+      try{
+        const listed=await questionBankDataService.listAssessments();requireAssessmentActor();
+        if(marker!==sessionStorage.getItem(assessmentSaveKey))return;
+        assessments=listed;renderSaved();
+        clearQuestionBankError();pilotBridge.open('avaliacoes');
+        setSelectionStatus('Consulta concluída. Confira Avaliações salvas. Abra a avaliação correspondente para confirmar; nenhuma criação foi repetida e a seleção foi preservada.','info');
+        saved?.scrollIntoView({block:'nearest'});
+      }catch(error){if(assessmentActorCurrent())setError(error.message || 'Não foi possível verificar o salvamento. Sua seleção foi preservada.');}
+      finally{if(assessmentActorCurrent())button.disabled=false;}
       return;
     }
     if (button.hasAttribute('data-qb-close-question-dialog')) { closeQuestionPreview(); return; }
