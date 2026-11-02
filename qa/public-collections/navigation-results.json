@@ -1,0 +1,71 @@
+[
+  {
+    "width": 390,
+    "initiallyCollapsed": true,
+    "threeSelectorsRemainAvailable": true,
+    "collectionCounts": [
+      16,
+      36,
+      18
+    ],
+    "coversDecoded": 70,
+    "switchResetsFilters": true,
+    "repeatSelection": true,
+    "resetPreservesCollection": true,
+    "returnFocusAndHeaderOffset": true,
+    "keyboardAndModal": true,
+    "homeSectionsVisible": true,
+    "horizontalOverflow": false,
+    "pageErrors": [],
+    "httpErrors": [],
+    "externalRequestsStubbed": [
+      "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap"
+    ]
+  },
+  {
+    "width": 768,
+    "initiallyCollapsed": true,
+    "threeSelectorsRemainAvailable": true,
+    "collectionCounts": [
+      16,
+      36,
+      18
+    ],
+    "coversDecoded": 70,
+    "switchResetsFilters": true,
+    "repeatSelection": true,
+    "resetPreservesCollection": true,
+    "returnFocusAndHeaderOffset": true,
+    "keyboardAndModal": true,
+    "homeSectionsVisible": true,
+    "horizontalOverflow": false,
+    "pageErrors": [],
+    "httpErrors": [],
+    "externalRequestsStubbed": [
+      "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap"
+    ]
+  },
+  {
+    "width": 1440,
+    "initiallyCollapsed": true,
+    "threeSelectorsRemainAvailable": true,
+    "collectionCounts": [
+      16,
+      36,
+      18
+    ],
+    "coversDecoded": 70,
+    "switchResetsFilters": true,
+    "repeatSelection": true,
+    "resetPreservesCollection": true,
+    "returnFocusAndHeaderOffset": true,
+    "keyboardAndModal": true,
+    "homeSectionsVisible": true,
+    "horizontalOverflow": false,
+    "pageErrors": [],
+    "httpErrors": [],
+    "externalRequestsStubbed": [
+      "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap"
+    ]
+  }
+]

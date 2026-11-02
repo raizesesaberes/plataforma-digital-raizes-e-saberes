@@ -46,3 +46,8 @@
 @media(max-width:800px) { .public-collection-overview { grid-template-columns:1fr; } .public-collection-preview { height:220px; } .public-books-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .public-catalog-heading { display:block; } .public-catalog-filters { grid-template-columns:repeat(2,minmax(0,1fr)); } .public-book-detail { grid-template-columns:1fr; } .public-book-detail .public-book-cover { height:320px; } }
 @media(max-width:480px) { .public-books-grid { grid-template-columns:1fr; } .public-catalog-filters { padding:16px; gap:12px; } .public-book-card .public-book-cover { aspect-ratio:4/3; } .public-book-dialog { padding:18px; } }
 @media(prefers-reduced-motion:reduce) { .public-book-dialog[open] { animation:none; } .public-collections .book-card { transition:none; } }
+
+.public-collections [hidden] { display:none !important; }
+.public-collections #collections-title { scroll-margin-top:var(--public-header-offset, 190px); }
+.public-collections-back { margin-block:16px 24px; }
+.public-collection-card [aria-expanded="true"] { outline:2px solid var(--green-dark,#06462f); outline-offset:4px; }

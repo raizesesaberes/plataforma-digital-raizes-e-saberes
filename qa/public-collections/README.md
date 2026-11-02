@@ -57,3 +57,21 @@ Gate de integração: `python qa/public-collections/catalog-check.py` exige os 7
 ### Honestidade dos CTAs
 
 Cards usam “Ver detalhes” para abrir capa/síntese. O modal usa “Acessar a plataforma”, com texto neutro sobre recursos disponíveis para escola/perfil. Não promete leitura integral nem abertura da edição. A ingestão digital e o mapeamento canônico permanecem pendentes para os 70 livros; essa dependência é registrada somente neste contrato interno, sem acrescentar campos ao schema público. O login continua em `login.html?next=biblioteca.html`, sem IDs legados.
+
+## Navegação por coleção — 2026-11-02
+
+A partir de 6b4d5ae, a lista começa recolhida. Os três cards continuam disponíveis;
+selecionar ou selecionar novamente abre somente aquela coleção e limpa busca,
+ano/idade, volume e público. O seletor de coleção também troca e limpa os filtros.
+Limpar filtros mantém a coleção atual. Há retorno no início e no fim da lista;
+retornar recolhe os livros e devolve foco/rolagem ao título da seleção.
+
+Validação atual: `python qa/public-collections/navigation-check.py`, com o servidor
+local em 127.0.0.1:8769 servindo dist. Ver `navigation-results.json` e capturas
+`navigation-*-selection.png` / `navigation-*-open.png`. Este teste substitui as
+expectativas de abertura automática dos 70 livros em `browser-real-check.py`;
+os resultados anteriores permanecem como histórico do release anterior.
+
+Testes locais usam as 70 capas oficiais, mas substituem requisições externas por
+204. Não comprovam fontes remotas, acesso autenticado ou comportamento live.
+Nenhum deploy ou push faz parte deste ajuste. Assets e catálogo são preservados.

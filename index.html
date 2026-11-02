@@ -222,17 +222,20 @@
         <span id="infantil" class="public-collections-anchor" aria-hidden="true"></span>
         <div class="section-heading centered">
           <p class="eyebrow">Coleções Raízes e Saberes</p>
-          <h2 id="collections-title">Cada etapa, novas possibilidades de aprender.</h2>
+          <h2 id="collections-title" tabindex="-1">Cada etapa, novas possibilidades de aprender.</h2>
           <p>Conheça nossas três coleções e encontre os livros por ano ou idade, volume e público.</p>
         </div>
         <div class="public-collection-overview" data-public-collection-overview></div>
+        <p class="public-catalog-status" data-public-selection-status role="status">Carregando as coleções...</p>
+        <div id="public-collection-books" data-public-collection-panel hidden>
         <div class="public-catalog-heading" id="livros-das-colecoes" tabindex="-1">
-          <div><p class="eyebrow">Explore os livros</p><h3>Encontre o material para sua etapa.</h3></div>
+          <div><p class="eyebrow">Explore os livros</p><h3 data-public-active-title>Encontre o material para sua etapa.</h3></div>
           <p>Veja a capa completa e conheça a proposta de cada livro.</p>
         </div>
+        <button class="button secondary public-collections-back" type="button" data-public-back>Voltar às coleções</button>
         <form class="public-catalog-filters" data-public-catalog-filters role="search" aria-label="Buscar nas coleções">
           <label class="public-catalog-search">Buscar livro<input name="search" type="search" placeholder="Título ou tema" autocomplete="off" /></label>
-          <label>Coleção<select name="collection"><option value="">Todas as coleções</option></select></label>
+          <label>Coleção<select name="collection"></select></label>
           <label>Ano ou idade<select name="grade"><option value="">Todos</option></select></label>
           <label>Volume<select name="volume"><option value="">Todos</option></select></label>
           <label>Público<select name="audience"><option value="">Todos</option><option value="student">Aluno</option><option value="teacher">Professor</option></select></label>
@@ -241,6 +244,8 @@
         <p class="public-catalog-status" data-public-catalog-status role="status" aria-live="polite">Carregando as coleções...</p>
         <div class="public-books-grid" data-public-books-grid></div>
         <p class="public-catalog-empty" data-public-catalog-empty hidden>Nenhum livro encontrado. Experimente outra combinação de filtros.</p>
+        <button class="button secondary public-collections-back" type="button" data-public-back>Voltar às coleções</button>
+        </div>
         <noscript><p>Ative o JavaScript para explorar os livros. Você também pode <a href="#contato">conversar com nossa equipe</a>.</p></noscript>
         <dialog class="public-book-dialog" data-public-book-dialog aria-labelledby="public-book-title">
           <form method="dialog" class="public-book-dialog-actions"><button class="button secondary" aria-label="Fechar detalhes do livro">Fechar <span aria-hidden="true">×</span></button></form>

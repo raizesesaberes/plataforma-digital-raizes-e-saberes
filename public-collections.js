@@ -12,7 +12,18 @@
   const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const audienceLabel = value => value === 'teacher' ? 'Professor' : 'Aluno';
   const volumeLabel = value => value ? `Volume ${value}` : 'Volume único';
-  let catalog, lastTrigger;
+  let catalog, lastTrigger, activeCollection = '';
+  const panel = root.querySelector('[data-public-collection-panel]');
+  const selectionStatus = root.querySelector('[data-public-selection-status]');
+  const selectionHeading = root.querySelector('#collections-title');
+  const scrollTo = element => requestAnimationFrame(() => requestAnimationFrame(() => {
+    updateOffset();
+    element.focus({preventScroll:true});
+    element.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
+  }));
+  const updateSelection = () => root.querySelectorAll('[data-public-explore]').forEach(button => {
+    button.setAttribute('aria-expanded', String(button.dataset.publicExplore === activeCollection));
+  });
   const header = document.querySelector('[data-header]');
   const updateOffset = () => root.style.setProperty('--public-header-offset', `${(header?.getBoundingClientRect().height || 130) + 44}px`);
   updateOffset();
@@ -44,15 +55,16 @@
     field.value = grades.has(previous) ? previous : '';
   };
   const render = () => {
+    if (!activeCollection) return;
     const f = form.elements;
     const query = normalize(f.search.value).trim();
     const books = catalog.books.filter(book =>
-      (!f.collection.value || book.collectionId === f.collection.value) &&
+      book.collectionId === activeCollection &&
       (!f.grade.value || gradeKey(book) === f.grade.value) &&
       (!f.volume.value || (book.volume || 'single') === f.volume.value) &&
       (!f.audience.value || book.audience === f.audience.value) &&
       (!query || normalize(`${book.title} ${book.summary} ${collectionFor(book).title} ${meta(book)}`).includes(query)));
-    status.textContent = catalog.books.length ? `${books.length} de ${catalog.books.length} livros` : 'As três coleções estão sendo preparadas para apresentação. Conheça as propostas acima ou fale com nossa equipe.';
+    status.textContent = catalog.books.length ? `${books.length} de ${catalog.books.filter(book => book.collectionId === activeCollection).length} livros` : 'As três coleções estão sendo preparadas para apresentação. Conheça as propostas acima ou fale com nossa equipe.';
     empty.hidden = books.length > 0 || !catalog.books.length;
     grid.innerHTML = books.map(book => `<article class="book-card public-book-card"><div class="public-book-cover">${cover(book)}</div><p class="public-book-meta">${escape(collectionFor(book).title)} · ${escape(meta(book))}</p><h4>${escape(book.title)}</h4><p class="public-book-summary">${escape(book.summary)}</p><button class="button secondary" type="button" data-public-book="${escape(book.id)}" aria-label="Ver detalhes de ${escape(book.title)}">Ver detalhes</button></article>`).join('');
   };
@@ -77,35 +89,59 @@
     const box = dialog.getBoundingClientRect();
     if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) dialog.close();
   });
+  const resetFilters = () => {
+    for (const name of ['search', 'grade', 'volume', 'audience']) form.elements[name].value = '';
+    populateGrades();
+    const volumes = [...new Set(catalog.books.filter(book => book.collectionId === activeCollection).map(book => book.volume || 'single'))].sort();
+    form.elements.volume.innerHTML = option('', 'Todos') + volumes.map(value => option(value, volumeLabel(value === 'single' ? '' : value))).join('');
+  };
+  const selectCollection = id => {
+    const collection = catalog.collections.find(item => item.id === id);
+    if (!collection) return;
+    activeCollection = id;
+    form.elements.collection.value = id;
+    resetFilters();
+    root.querySelector('[data-public-active-title]').textContent = collection.title;
+    panel.hidden = false;
+    selectionStatus.hidden = true;
+    updateSelection(); render();
+    scrollTo(root.querySelector('#livros-das-colecoes'));
+  };
   root.addEventListener('click', event => {
+    if (!catalog) return;
     const explore = event.target.closest('[data-public-explore]');
-    if (explore && catalog) {
-      form.reset();
-      form.elements.collection.value = explore.dataset.publicExplore;
-      form.elements.grade.value = '';
-      populateGrades(); render();
-      const heading = root.querySelector('#livros-das-colecoes');
-      heading.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
-      heading.focus({preventScroll:true});
+    if (explore) selectCollection(explore.dataset.publicExplore);
+    if (event.target.closest('[data-public-back]')) {
+      activeCollection = '';
+      panel.hidden = true;
+      grid.replaceChildren();
+      selectionStatus.hidden = false;
+      updateSelection();
+      scrollTo(selectionHeading);
     }
     const trigger = event.target.closest('[data-public-book]');
-    if (trigger && catalog) showBook(catalog.books.find(book => book.id === trigger.dataset.publicBook), trigger);
+    if (trigger) showBook(catalog.books.find(book => book.id === trigger.dataset.publicBook), trigger);
   });
   form.addEventListener('submit', event => event.preventDefault());
-  form.addEventListener('input', () => { if (catalog) render(); });
-  form.addEventListener('change', event => { if (!catalog) return; if (event.target.name === 'collection') populateGrades(); render(); });
-  form.addEventListener('reset', () => setTimeout(() => { if (catalog) { populateGrades(); render(); } }, 0));
+  form.addEventListener('input', event => { if (catalog && event.target.name !== 'collection') render(); });
+  form.addEventListener('change', event => {
+    if (!catalog) return;
+    if (event.target.name === 'collection') selectCollection(event.target.value);
+    else render();
+  });
+  form.addEventListener('reset', event => {
+    event.preventDefault();
+    if (catalog && activeCollection) { resetFilters(); render(); }
+  });
   fetch('assets/colecoes/catalogo-oficial.json', {credentials:'same-origin'})
     .then(response => { if (!response.ok) throw Error('Catalog unavailable'); return response.json(); })
     .then(data => {
       catalog = validate(data);
       form.elements.collection.innerHTML += catalog.collections.map(item => option(item.id,item.title)).join('');
-      const volumes = [...new Set(catalog.books.map(book => book.volume || 'single'))].sort();
-      form.elements.volume.innerHTML += volumes.map(value => option(value,volumeLabel(value === 'single' ? '' : value))).join('');
       root.querySelector('[data-public-collection-overview]').innerHTML = catalog.collections.map(item => {
         const sample = catalog.books.find(book => book.collectionId === item.id && book.audience === 'student');
-        return `<article class="book-card public-collection-card"><div class="public-collection-preview">${sample ? cover(sample) : `<span>${escape(item.title)}</span>`}</div><p class="eyebrow">${escape(item.range)}</p><h3>${escape(item.title)}</h3><p>${escape(item.description)}</p><button class="button primary" type="button" data-public-explore="${escape(item.id)}">Explorar coleção</button></article>`;
+        return `<article class="book-card public-collection-card"><div class="public-collection-preview">${sample ? cover(sample) : `<span>${escape(item.title)}</span>`}</div><p class="eyebrow">${escape(item.range)}</p><h3>${escape(item.title)}</h3><p>${escape(item.description)}</p><button class="button primary" type="button" data-public-explore="${escape(item.id)}" aria-controls="public-collection-books" aria-expanded="false">Explorar coleção</button></article>`;
       }).join('');
-      populateGrades(); render();
-    }).catch(() => { status.textContent = 'Não foi possível carregar os livros agora. Recarregue a página ou fale com nossa equipe.'; });
+      selectionStatus.textContent = 'Selecione uma coleção para explorar seus livros.';
+    }).catch(() => { selectionStatus.textContent = 'Não foi possível carregar os livros agora. Recarregue a página ou fale com nossa equipe.'; });
 })();
