@@ -31,3 +31,11 @@ O catálogo ainda tem books=[]; a aprovação dos 70 livros reais continua pende
 6. Rollback: restaurar os aliases ao deploy imediatamente anterior registrado na etapa 3 (`dpl_Am2W5En8H7tMHNSVjJ86i5CG1eVf` no estado atualmente confirmado) pelo fluxo Vercel de rollback. Revalidar os aliases. Reverter o commit público em Git para impedir reintrodução futura; nenhum banco requer rollback neste escopo.
 
 O CTA permanece “Ver detalhes” e “Acessar a plataforma”; não promete leitura nem passagem de ID da edição. A reconciliação/ingestão de leitura é independente e continua bloqueada.
+
+## Novo anexo direto do usuário — 02/11/2026, 08:00 BRT
+
+O usuário anexou diretamente `sediment://file_00000000f714820ea1d662b528a9c7c8` com o mesmo nome e instruiu integrar preservando produção. Essa é uma nova origem autorizada, distinta da referência Library anterior. Não foi reutilizado o arquivo antigo nem sua URL.
+
+O prepare_materialize do file_id exato reconheceu o novo anexo, nome e 9.118.316 bytes. Retornou transferência para `/workspace/official-catalog-user-upload/RAIZES_E_SABERES_CATALOGO_OFICIAL_70_CAPAS_2026.zip`; sem library_file_id ou versão para esse upload direto. O helper oficial, obtido novamente da skill, falhou com `library file transfer failed: download failed`. A única tentativa adicional do mesmo helper com execução escalada também falhou; não houve negação de autorização. Diretório confirmado vazio.
+
+Resultado: nenhum byte do ZIP instalado, SHA-256 esperado ainda não conferido, nenhuma capa/JSON integrado, nenhum original modificado. Não é falta de reconhecimento do upload e reenviar o mesmo arquivo não foi solicitado. É necessária resolução da transferência/entrega local no ambiente para continuar. Branch isolada permanece pronta com estrutura pública, catálogo vazio, sem push/deploy. Nenhuma consulta Supabase ou acesso a deploy protegido foi repetido.
