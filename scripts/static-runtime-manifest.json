@@ -17402,5 +17402,21 @@
   {
     "file": "assets/colecoes/oficiais/rs2026-indigena-09-professor.webp",
     "sha256": "5bab99f4d2046808cadaf2a30219a8a7e9b1b9d073a97feacdf9ad135f83acc8"
+  },
+  {
+    "file": "edition-library.html",
+    "sha256": "e3bd52339fc2f089b8cb04937b7856306bb370a6028166bf1bf760ee665ec4b7"
+  },
+  {
+    "file": "library-edition-boot.mjs",
+    "sha256": "b32938e2504b19733b115c5099a16722ea1535d325a83f0d7c5b4d1a19bd3299"
+  },
+  {
+    "file": "library-edition-client.mjs",
+    "sha256": "0b9108fe4194822cdbbad827b1bc56894600fc98000c20ff299d7ce840418633"
+  },
+  {
+    "file": "library-edition-reader.mjs",
+    "sha256": "218a1b00557c865fd4f1bc7583a8964e97d3959deafdb47356e8401b79e607b2"
   }
 ]
