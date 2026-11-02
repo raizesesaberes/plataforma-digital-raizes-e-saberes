@@ -62,6 +62,7 @@
       @media(max-width:620px){.site-header{right:16px;left:16px;gap:8px;}.institutional-brands{gap:10px;}.institutional-brands .brand{width:150px;min-width:150px;}.santa-helena-header-brand{padding-left:10px;}.santa-helena-header-brand img{width:98px;}}
       @media(max-width:380px){.institutional-brands{gap:8px;}.institutional-brands .brand{width:120px;min-width:120px;}.santa-helena-header-brand{padding-left:8px;}.santa-helena-header-brand img{width:74px;}}
     </style>
+    <link rel="stylesheet" href="public-collections.css" />
   </head>
   <body>
     <header class="site-header" data-header>
@@ -88,7 +89,7 @@
       <nav class="site-nav" data-nav aria-label="Menu principal">
         <a href="#ecossistema">Ecossistema</a>
         <a href="#video-institucional">Vídeo</a>
-        <a href="#infantil">Educação Infantil</a>
+        <a href="#colecoes">Coleções Raízes e Saberes</a>
         <a class="nav-platform-link" href="login.html">Plataforma</a>
         <a href="#universidade">Universidade</a>
         <a href="#resultados">Resultados</a>
@@ -217,47 +218,34 @@
         </button>
       </section>
 
-      <section class="section soft-section infantil-section" id="infantil">
+      <section class="section soft-section public-collections" id="colecoes" aria-labelledby="collections-title" data-public-collections>
+        <span id="infantil" class="public-collections-anchor" aria-hidden="true"></span>
         <div class="section-heading centered">
-          <p class="eyebrow">Educação Infantil</p>
-          <h2>Coleção Educação Infantil para acompanhar as primeiras descobertas.</h2>
-          <p>
-            Materiais didáticos organizados para apoiar o desenvolvimento infantil com linguagem
-            acolhedora, propostas pedagógicas estruturadas e experiências significativas de aprendizagem.
-          </p>
-          <a class="button primary section-cta" href="#contato">Explore a Coleção Educação Infantil</a>
+          <p class="eyebrow">Coleções Raízes e Saberes</p>
+          <h2 id="collections-title">Cada etapa, novas possibilidades de aprender.</h2>
+          <p>Conheça nossas três coleções e encontre os livros por ano ou idade, volume e público.</p>
         </div>
-
-        <div class="collection-list infantil-books">
-          <article class="book-card">
-            <div class="book-cover-frame">
-              <img src="assets/_legacy-root/RAIZES_INFANTIL2_VOL1_BIBLIOTECA.webp" alt="Capa oficial da coleção Educação Infantil 2 anos Volume 1" loading="lazy" />
-            </div>
-            <h3>Infantil 2 anos</h3>
-            <p>Primeiras experiências, acolhimento e descobertas.</p>
-          </article>
-          <article class="book-card">
-            <div class="book-cover-frame">
-              <img src="assets/_legacy-root/RAIZES_INFANTIL3_VOL1_BIBLIOTECA.webp" alt="Capa oficial da coleção Educação Infantil 3 anos Volume 1" loading="lazy" />
-            </div>
-            <h3>Infantil 3 anos</h3>
-            <p>Exploração, linguagem, convivência e autonomia.</p>
-          </article>
-          <article class="book-card">
-            <div class="book-cover-frame">
-              <img src="assets/_legacy-root/RAIZES_INFANTIL4_VOL1_BIBLIOTECA.webp" alt="Capa oficial da coleção Educação Infantil 4 anos Volume 1" loading="lazy" />
-            </div>
-            <h3>Infantil 4 anos</h3>
-            <p>Curiosidade, cultura, brincadeiras e investigação.</p>
-          </article>
-          <article class="book-card">
-            <div class="book-cover-frame">
-              <img src="assets/_legacy-root/RAIZES_INFANTIL5_VOL1_BIBLIOTECA.webp" alt="Capa oficial da coleção Educação Infantil 5 anos Volume 1" loading="lazy" />
-            </div>
-            <h3>Infantil 5 anos</h3>
-            <p>Preparação, repertório e continuidade da aprendizagem.</p>
-          </article>
+        <div class="public-collection-overview" data-public-collection-overview></div>
+        <div class="public-catalog-heading" id="livros-das-colecoes" tabindex="-1">
+          <div><p class="eyebrow">Explore os livros</p><h3>Encontre o material para sua etapa.</h3></div>
+          <p>Veja a capa completa e conheça a proposta de cada livro.</p>
         </div>
+        <form class="public-catalog-filters" data-public-catalog-filters role="search" aria-label="Buscar nas coleções">
+          <label class="public-catalog-search">Buscar livro<input name="search" type="search" placeholder="Título ou tema" autocomplete="off" /></label>
+          <label>Coleção<select name="collection"><option value="">Todas as coleções</option></select></label>
+          <label>Ano ou idade<select name="grade"><option value="">Todos</option></select></label>
+          <label>Volume<select name="volume"><option value="">Todos</option></select></label>
+          <label>Público<select name="audience"><option value="">Todos</option><option value="student">Aluno</option><option value="teacher">Professor</option></select></label>
+          <button class="button secondary" type="reset">Limpar filtros</button>
+        </form>
+        <p class="public-catalog-status" data-public-catalog-status role="status" aria-live="polite">Carregando as coleções...</p>
+        <div class="public-books-grid" data-public-books-grid></div>
+        <p class="public-catalog-empty" data-public-catalog-empty hidden>Nenhum livro encontrado. Experimente outra combinação de filtros.</p>
+        <noscript><p>Ative o JavaScript para explorar os livros. Você também pode <a href="#contato">conversar com nossa equipe</a>.</p></noscript>
+        <dialog class="public-book-dialog" data-public-book-dialog aria-labelledby="public-book-title">
+          <form method="dialog" class="public-book-dialog-actions"><button class="button secondary" aria-label="Fechar detalhes do livro">Fechar <span aria-hidden="true">×</span></button></form>
+          <div data-public-book-detail></div>
+        </dialog>
       </section>
 
       <section class="section platform" id="plataforma">
@@ -710,6 +698,7 @@
     </footer>
 
     <script src="script.js"></script>
+    <script src="public-collections.js" defer></script>
   </body>
 </html>
 

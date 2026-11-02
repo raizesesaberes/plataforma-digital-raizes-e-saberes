@@ -16985,7 +16985,7 @@
   },
   {
     "file": "index.html",
-    "sha256": "8dabafcbb064b4f39ea8a2faa154fcec04dd722387d2397dab60b1166ea270f5"
+    "sha256": "2582003e422f2fdb73c814d9cd32d16d755c828d9f6e2444df2bedf325398b8f"
   },
   {
     "file": "infantil-experience-catalog.js",
@@ -17110,5 +17110,17 @@
   {
     "file": "assets/brand/santa-helena-principal.svg",
     "sha256": "68e53023b89bea6c6e821cee5ddcf477a7d7fe24a12aba2ca01a534b349f8447"
+  },
+  {
+    "file": "public-collections.css",
+    "sha256": "c9ccc3469f7c9816ad4cda6e4f999eb0ee2b096e731483fae89fa0eabd0bbd9d"
+  },
+  {
+    "file": "public-collections.js",
+    "sha256": "ad007d89c833b6b8ed02410d1bc321183fa93a940e6526bf85ebcda4d0f1367f"
+  },
+  {
+    "file": "assets/colecoes/catalogo-oficial.json",
+    "sha256": "89f8cf9648556693d4a592402dd7d1a7862fe6d1a7eccc2a9540b14cfd5a811c"
   }
 ]

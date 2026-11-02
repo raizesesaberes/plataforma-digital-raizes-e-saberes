@@ -1,0 +1,38 @@
+[
+  {
+    "width": 390,
+    "books": 70,
+    "combinedFilters": true,
+    "emptyAndReset": true,
+    "keyboardDialog": true,
+    "focusRestored": true,
+    "landscapeContain": true,
+    "headerOverlap": false,
+    "horizontalOverflow": false,
+    "errors": []
+  },
+  {
+    "width": 768,
+    "books": 70,
+    "combinedFilters": true,
+    "emptyAndReset": true,
+    "keyboardDialog": true,
+    "focusRestored": true,
+    "landscapeContain": true,
+    "headerOverlap": false,
+    "horizontalOverflow": false,
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "books": 70,
+    "combinedFilters": true,
+    "emptyAndReset": true,
+    "keyboardDialog": true,
+    "focusRestored": true,
+    "landscapeContain": true,
+    "headerOverlap": false,
+    "horizontalOverflow": false,
+    "errors": []
+  }
+]

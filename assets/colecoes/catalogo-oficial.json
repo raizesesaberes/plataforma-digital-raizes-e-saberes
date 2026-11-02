@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "collections": [
+    {"id":"raizes-crescer","title":"Raízes Crescer","stage":"infantil","range":"Educação Infantil · 2 a 5 anos","description":"Livros do aluno e do professor organizados por idade e volume para a Educação Infantil."},
+    {"id":"avalia-mais","title":"Avalia+","stage":"fundamental","range":"Ensino Fundamental · 1º ao 9º ano","description":"Português e Matemática integrados em livros do aluno e do professor, organizados por ano e volume."},
+    {"id":"indigena-afro-brasileira","title":"Coleção Indígena e Afro-Brasileira","stage":"fundamental","range":"Ensino Fundamental · 1º ao 9º ano","description":"Livros do aluno e do professor dedicados às culturas indígenas e afro-brasileiras ao longo do Ensino Fundamental."}
+  ],
+  "books": []
+}
