@@ -8,7 +8,7 @@ Mudanças isoladas do escopo anterior:
 - `public-collections.css`: estilos limitados ao novo catálogo, reutilizando botões/cards, cores e tipografia do site. Capas sempre inteiras em `object-fit: contain`, inclusive paisagem EI2/EI3. Altura do cabeçalho observada para compensar deslocamento das âncoras.
 - `public-collections.js`: coleção, ano/idade, volume, público e busca textual combináveis; estado vazio, reset, modal nativo com Escape e devolução de foco; links integrais somente para `login.html?next=biblioteca.html`.
 - `assets/colecoes/catalogo-oficial.json`: três propostas gerais e lista `books` VAZIA. Não há capas antigas rotuladas como novas nem sínteses fictícias publicáveis. O estado de preparação é mostrado até a integração.
-- Manifesto adiciona somente os três novos arquivos runtime e atualiza hash de index. Build passa de 4.278 para 4.281 fontes verificadas, 1.934 publicáveis nesta branch após a retirada de 2.347 assets legados.
+- Manifesto adiciona somente os três novos arquivos runtime e atualiza hash de index. Build passa de 4.278 para 4.281 fontes verificadas, 4.281 publicáveis nesta branch isolada; nenhuma retirada de assets legados faz parte dela.
 
 ## Contrato para integrar o pacote oficial
 
@@ -44,11 +44,11 @@ Preservar `version: 1` e as coleções (IDs `raizes-crescer`, `avalia-mais`, `in
 
 `browser-check.py` intercepta somente respostas HTTP locais e injeta 70 registros sintéticos e retângulos PNG temporários de retrato/paisagem; não grava esses livros em JSON/runtime. Tudo externo é bloqueado. Testou 390/768/1440px, contagens 16/36/18, filtros combinados, busca sem resultado e reset, modal por teclado, Escape/foco, botão fechar, caminho autenticado, ausência de PDF/Drive, object-fit, âncora sem sobreposição do cabeçalho e sem overflow horizontal. Zero erros JS. Resultado em `results.json`; imagens marcadas `synthetic` apenas para QA. Também verifica que o catálogo fonte continua vazio em preparação.
 
-Comandos: `node --check public-collections.js`; `git diff --check`; `node scripts/build-static-web.mjs`; `node qa/legacy-library-retirement/build-check.mjs`; servir `dist` em 127.0.0.1:8769 e executar `python qa/public-collections/browser-check.py`.
+Comandos: `node --check public-collections.js`; `git diff --check`; `node scripts/build-static-web.mjs`; servir `dist` em 127.0.0.1:8769 e executar `python qa/public-collections/browser-check.py`.
 
 ## Separação para publicação futura
 
-Não publicar a branch inteira enquanto a retirada remota continua bloqueada. A estrutura pública está em commit separado e pode ser revisada/transportada isoladamente para uma branch baseada no deploy real de produção, preservando os hashes dos demais arquivos. O ajuste público do build é somente a contagem; não transportar por engano o filtro de retirada e a dependência do inventário presentes nesta branch. A integração das capas muda essa contagem novamente. Confirmar produção atual antes de qualquer release.
+A estrutura pública foi isolada em `feat/public-official-collections`, baseada no commit de produção `d6fb2bb7a597de8ef6175aa1291ee06cebea0782`, novamente confirmado no Vercel. Não há filtro de retirada de assets nem dependência do inventário; app-pages.js, estilos da plataforma e Supabase são idênticos à base. A integração das capas muda a contagem novamente. Ainda não publicar: faltam integrar os assets reais, revisar e validar o release.
 
 As duas capturas de referência (`libfile_df96e40162948191be1fb3983e0fe108` e `libfile_3826663f04f48191955b76703cb30636`) foram resolvidas por prepare_materialize, mas os dois downloads pelo helper retornaram `library file transfer failed: download failed`. Nenhum original foi alterado. Seus pixels não puderam ser inspecionados neste executor; o alinhamento estrutural usou o código de produção e a descrição fornecida pelo root, e as novas screenshots locais foram visualizadas.
 
