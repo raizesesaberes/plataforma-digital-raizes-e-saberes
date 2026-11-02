@@ -53,3 +53,7 @@ Não publicar a branch inteira enquanto a retirada remota continua bloqueada. A 
 As duas capturas de referência (`libfile_df96e40162948191be1fb3983e0fe108` e `libfile_3826663f04f48191955b76703cb30636`) foram resolvidas por prepare_materialize, mas os dois downloads pelo helper retornaram `library file transfer failed: download failed`. Nenhum original foi alterado. Seus pixels não puderam ser inspecionados neste executor; o alinhamento estrutural usou o código de produção e a descrição fornecida pelo root, e as novas screenshots locais foram visualizadas.
 
 Gate de integração: `python qa/public-collections/catalog-check.py` exige os 70 livros, contagens por coleção, combinações únicas ano/volume/público, imagens existentes e dimensões reais, e rejeita campos extras privados. Enquanto o pacote está pendente, somente `--allow-pending` aceita explicitamente a lista vazia e reporta PENDING; não usar essa opção como aprovação de release.
+
+### Honestidade dos CTAs
+
+Cards usam “Ver detalhes” para abrir capa/síntese. O modal usa “Acessar a plataforma”, com texto neutro sobre recursos disponíveis para escola/perfil. Não promete leitura integral nem abertura da edição. A ingestão digital e o mapeamento canônico permanecem pendentes para os 70 livros; essa dependência é registrada somente neste contrato interno, sem acrescentar campos ao schema público. O login continua em `login.html?next=biblioteca.html`, sem IDs legados.
