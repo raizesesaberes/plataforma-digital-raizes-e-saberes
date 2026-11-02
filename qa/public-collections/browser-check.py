@@ -5,6 +5,7 @@ from PIL import Image
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parent
 catalog=json.loads((ROOT.parents[1]/'assets/colecoes/catalogo-oficial.json').read_text())
+catalog['books']=[]  # Fixtures remain separate from the official source.
 for collection in catalog['collections']:
   grades=range(2,6) if collection['stage']=='infantil' else range(1,10)
   volumes=[''] if collection['id']=='indigena-afro-brasileira' else ['1','2']
@@ -65,8 +66,8 @@ with sync_playwright() as p:
   assert not errors,errors
   results.append({'width':width,'books':70,'combinedFilters':True,'emptyAndReset':True,'keyboardDialog':True,'focusRestored':True,'landscapeContain':True,'headerOverlap':False,'horizontalOverflow':False,'errors':errors})
   context.close()
- # Source catalog remains intentionally empty until official assets arrive.
- context=browser.new_context();context.route('**/*',lambda r:r.continue_() if r.request.url.startswith('http://127.0.0.1:8769/') else r.abort());page=context.new_page();page.goto('http://127.0.0.1:8769/index.html');page.locator('[data-public-explore]').first.wait_for();assert page.locator('[data-public-book]').count()==0;assert 'preparadas' in page.locator('[data-public-catalog-status]').inner_text();context.close()
+ # Verify the real source catalog without intercepting its data.
+ context=browser.new_context();context.route('**/*',lambda r:r.continue_() if r.request.url.startswith('http://127.0.0.1:8769/') else r.abort());page=context.new_page();page.goto('http://127.0.0.1:8769/index.html');page.locator('[data-public-explore]').first.wait_for();assert page.locator('[data-public-book]').count()==70;context.close()
  browser.close()
 (ROOT/'results.json').write_text(json.dumps(results,indent=2)+'\n')
 print(json.dumps(results,indent=2))

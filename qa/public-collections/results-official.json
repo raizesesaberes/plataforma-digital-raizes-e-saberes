@@ -1,0 +1,74 @@
+[
+  {
+    "width": 390,
+    "officialBooks": 70,
+    "landscape": 8,
+    "portrait": 62,
+    "collectionCounts": [
+      16,
+      36,
+      18
+    ],
+    "combinedFilters": true,
+    "accentSearch": true,
+    "emptyAndReset": true,
+    "focusTrapAndRestore": true,
+    "escapeAndClose": true,
+    "headerOverlap": false,
+    "horizontalOverflow": false,
+    "localHttpErrors": [],
+    "pageErrors": [],
+    "consoleErrors": [],
+    "externalRequestsStubbed": [
+      "https://fonts.googleapis.com/css2"
+    ]
+  },
+  {
+    "width": 768,
+    "officialBooks": 70,
+    "landscape": 8,
+    "portrait": 62,
+    "collectionCounts": [
+      16,
+      36,
+      18
+    ],
+    "combinedFilters": true,
+    "accentSearch": true,
+    "emptyAndReset": true,
+    "focusTrapAndRestore": true,
+    "escapeAndClose": true,
+    "headerOverlap": false,
+    "horizontalOverflow": false,
+    "localHttpErrors": [],
+    "pageErrors": [],
+    "consoleErrors": [],
+    "externalRequestsStubbed": [
+      "https://fonts.googleapis.com/css2"
+    ]
+  },
+  {
+    "width": 1440,
+    "officialBooks": 70,
+    "landscape": 8,
+    "portrait": 62,
+    "collectionCounts": [
+      16,
+      36,
+      18
+    ],
+    "combinedFilters": true,
+    "accentSearch": true,
+    "emptyAndReset": true,
+    "focusTrapAndRestore": true,
+    "escapeAndClose": true,
+    "headerOverlap": false,
+    "horizontalOverflow": false,
+    "localHttpErrors": [],
+    "pageErrors": [],
+    "consoleErrors": [],
+    "externalRequestsStubbed": [
+      "https://fonts.googleapis.com/css2"
+    ]
+  }
+]

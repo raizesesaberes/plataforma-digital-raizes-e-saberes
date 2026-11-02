@@ -17113,14 +17113,294 @@
   },
   {
     "file": "public-collections.css",
-    "sha256": "c9ccc3469f7c9816ad4cda6e4f999eb0ee2b096e731483fae89fa0eabd0bbd9d"
+    "sha256": "aa612f05795fe3f73781bfbaa365c059c77fb09b8a0fb0ad7f9fddfe1981b453"
   },
   {
     "file": "public-collections.js",
-    "sha256": "52d6f0e704cb5dae5448307340043ad4b19c9a79f0bcf86810b27e00e070b6ad"
+    "sha256": "693f87a4aa29a08baaf12cf43a4dde0463af5297bc23ee972eeedd7a3f4b6ce1"
   },
   {
     "file": "assets/colecoes/catalogo-oficial.json",
-    "sha256": "89f8cf9648556693d4a592402dd7d1a7862fe6d1a7eccc2a9540b14cfd5a811c"
+    "sha256": "40018a303825c4da0de55cb9db8cfd43fb7e7712be202664cc37f1d576accec9"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-01-v1-aluno.webp",
+    "sha256": "fcf3e4a441b5fc6d95bad9bee3807278a8937445e39be443ca6dfd1e1820aa93"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-01-v1-professor.webp",
+    "sha256": "e8600c33d26bdce66df98c54642304f06835407e9c28aafdc79a9121d356d363"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-01-v2-aluno.webp",
+    "sha256": "8c5d11d572b59acb51200a695506335ddf24ba3ab841931ed9627434d13fd18d"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-01-v2-professor.webp",
+    "sha256": "f97f46e3013f38ef05d51abf658b3528c7bf1b72d5a5d6338858101972ec4906"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-02-v1-aluno.webp",
+    "sha256": "96b3206aa489fc502e099b9ad781afd2b709231cde79f1a91e957628f2922e24"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-02-v1-professor.webp",
+    "sha256": "bd4bdfdb51613dafc2713eeab32478e32dc7c5692cc77495ed1d11911f86f44f"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-02-v2-aluno.webp",
+    "sha256": "193b8006ae2246bce93fde5c434ef07fb21e49dd2ea16f330303b3e204c17802"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-02-v2-professor.webp",
+    "sha256": "d3fa1a64ea3851fe77ea3cce68118e9b1aea5b5c6e24274c1f6929b523cbcbdd"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-03-v1-aluno.webp",
+    "sha256": "4db0169149edb4caa0edf2a0462a0dc1b62e75d598fc77634e08b0f8238d822d"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-03-v1-professor.webp",
+    "sha256": "d09a705b70c178149489d654d6c066fbe10b40059a5c2da65ddd8d38b5824f34"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-03-v2-aluno.webp",
+    "sha256": "fd82dd498005405677c479baeabd278b2799608cffd9931bc06f72f5c4d1f2af"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-03-v2-professor.webp",
+    "sha256": "470233104b7229b046edfc6fd47eb871e07371b4fb9d7c7a30c0470f0b7bb586"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-04-v1-aluno.webp",
+    "sha256": "ce22fa9f89346b20a4803f9e6af8edff578459f538b096b64fc35cf7902dac19"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-04-v1-professor.webp",
+    "sha256": "bc268ca563c731f740d2f49e424f8cf0a12a47be0cc68e160b00d314c6a24537"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-04-v2-aluno.webp",
+    "sha256": "0846a47f369921d693162f3506f8a23ba75865e41eb365757def7f0448f8040d"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-04-v2-professor.webp",
+    "sha256": "aa1b008d5bbb37be4f75c2f0d5994168fddb04a82c7df2379b086598ad2c6cc9"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-05-v1-aluno.webp",
+    "sha256": "30bc5e905ac67e087d8aef4e784f6e299f3c04c767a2d0f9ea422b097b947b66"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-05-v1-professor.webp",
+    "sha256": "a040798d57fc6aa1f05868b275fa71cd203accf81650bd0d393e48fe4456bd5d"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-05-v2-aluno.webp",
+    "sha256": "3776b03ba9fe131e68ea95204aefb6970f35d02b8a7118d1d6b52280eaf1e187"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-05-v2-professor.webp",
+    "sha256": "b9955e4792a2067a9edcdc0b0b47f854d1df58ae60425550fddbe06cfb2a2158"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-06-v1-aluno.webp",
+    "sha256": "27155b123ac3fb3749ee977db101ee83983262500ecf0b37b4c51a17347972d5"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-06-v1-professor.webp",
+    "sha256": "4ca443ea8e9c9dc1f2b4ba80e6e644371af176a9e0e41bdd183a20e76b51c291"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-06-v2-aluno.webp",
+    "sha256": "92a82cf3592d8e33c1a24394c3cb832448c4d5b1b6577b184374bf861e251000"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-06-v2-professor.webp",
+    "sha256": "1fa7d867222ab19c8ba370d4e6f2f6b6bc3ff415445ea3e02503f56b13a54fb1"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-07-v1-aluno.webp",
+    "sha256": "2aa4cac56e48316a4efbc836473eca6b9163a51e54878ed83462b581266bc8d4"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-07-v1-professor.webp",
+    "sha256": "1be2c9a328e1744731ff7ad24ff1d851b0505fa37e9a8d0b517b3873b96f6afc"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-07-v2-aluno.webp",
+    "sha256": "7f881255ba665de8466abb4546c16505331f568ab412e0af168bca16e56db35e"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-07-v2-professor.webp",
+    "sha256": "e404e44988975e9dea66ea13eae2920d378bf7ba0c0b712fb75e8f3e877ee215"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-08-v1-aluno.webp",
+    "sha256": "ec502edf7a3f53f5fa63377ad916a773bf77fc05c56345aa662ab7ef2954786e"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-08-v1-professor.webp",
+    "sha256": "4b75b018e4e29255dab4de26b0be32ecbd28b181c039beba5fa43d17df84ae9c"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-08-v2-aluno.webp",
+    "sha256": "3117a946980ca615c61ae3a3f6039f3a1624eb6f639c90a4030c7eaaafc1a8e7"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-08-v2-professor.webp",
+    "sha256": "22754656641653331f0265766e1d8f5a9f2a93714ed166e1a05bce14e50a1cb7"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-09-v1-aluno.webp",
+    "sha256": "82f640090047ee53f94f2682352bf6055661db1e14259f8c7662b6ea0052d2a9"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-09-v1-professor.webp",
+    "sha256": "d1a833db8c19c384ab4baef88903ece07eb50e11faa2f716959f78252d3a53b2"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-09-v2-aluno.webp",
+    "sha256": "2095d3b0d25ee1f265453b3cb62d69a764e82ec3beb3fbcfcd94b4f6375ed26d"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-avalia-09-v2-professor.webp",
+    "sha256": "c5e4c10bc9bc3048b38d559b9ecd973c658366070d996b7c87779a3180d5edff"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-crescer-02-v1-aluno.webp",
+    "sha256": "018192c4913fe42dc6d26119855d6c2b599a988477ad8bdb53c79ca4a047889a"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-crescer-02-v1-professor.webp",
+    "sha256": "9a0725bac1d3a4bc02ee6b54475a1f39f9e17eb0506ca0cbfeda751a31b424b0"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-crescer-02-v2-aluno.webp",
+    "sha256": "a0bdd65c726a5bb276ffd78164c85e99c9e3cb25c5992d124df3c3af8f82470d"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-crescer-02-v2-professor.webp",
+    "sha256": "9e27f18604158f3a4b97eb1f1e662d81a5b8395aae765d2df0056782305fb137"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-crescer-03-v1-aluno.webp",
+    "sha256": "2954d79caed5e81ea34090d3dce4fd15bc523c0b2a9beb50ca9a198090c89565"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-crescer-03-v1-professor.webp",
+    "sha256": "d8a459439313e802c712ce7d3179fbc2d6e014a3b401f534868c54653961ff7b"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-crescer-03-v2-aluno.webp",
+    "sha256": "f96172ff8bdbb9ffda3ad8b4d4d2675dbccbb47eff5a0b4faf8ae90e832da9d1"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-crescer-03-v2-professor.webp",
+    "sha256": "5ef0268f46f05a9b46bdad943795eb45cf2bdcaf97d6d27e12987ea3f088f3a6"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-crescer-04-v1-aluno.webp",
+    "sha256": "53f21b7b7218d6b51fb69e51317b2c38b74bf456d30d235713884ec49a1dfb38"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-crescer-04-v1-professor.webp",
+    "sha256": "aed96263998cc97499576f41e3499a6ff56d9921a28c05f6f107b5c4c6733563"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-crescer-04-v2-aluno.webp",
+    "sha256": "7088006bbdbb37cc5f42373d7bdb1dce825d5e32afbcb1753cddc2cabb0620c8"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-crescer-04-v2-professor.webp",
+    "sha256": "0d6831a98237f5c390d9653c44147788f039da0bc540406769135d9b6c39ac20"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-crescer-05-v1-aluno.webp",
+    "sha256": "a0ea11f95d4f45aaf8b428f3b54d65fe1e96bd8aece893f3f84f8e7ced04f0ed"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-crescer-05-v1-professor.webp",
+    "sha256": "1ebcfe94209a002cf624b3f97e73db8c43598e0500f0d429728efc85993e2185"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-crescer-05-v2-aluno.webp",
+    "sha256": "af9e1088898e8f7ca60c384f0f0ffff80bffcc306769aa1206c007830f590810"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-crescer-05-v2-professor.webp",
+    "sha256": "b53caec52bf7e40da6ae3cd06a3ac79561f8b52ae0c04160b2d551bc92b5e780"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-01-aluno.webp",
+    "sha256": "1efcedb3ba759d4a1cda99996bf5f3bb298538e4686a3c6a7c6528100e7f34d1"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-01-professor.webp",
+    "sha256": "a54a6b1f99de51a5c589e875c65639c13e0dcd5457bcd2a458426cf9ad0499cc"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-02-aluno.webp",
+    "sha256": "fd5c18b0f5d26374d122302a8974b35ad21b750a20c4c07739b0c30fc285e652"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-02-professor.webp",
+    "sha256": "5ac0c1a3f07b2b42e766fbd6afaee4886da7a4a9f84bc11d6faaa291fbcde759"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-03-aluno.webp",
+    "sha256": "5ce715e797b168aa5212c1cead7d2b7d297e2585a4023f733c3db13bbdd09a64"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-03-professor.webp",
+    "sha256": "098a15dad398e19c9f1e979dc8e688b1ec3d9a1580378eb4282165222f83e9a3"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-04-aluno.webp",
+    "sha256": "1fd561f742c6d9eec2cbfa639af14b8f2a21c0d18dd9334dde06b9da81a20bef"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-04-professor.webp",
+    "sha256": "3f335b693505762a727cf6a7cbc68af44aeb0bcd56176d038c2b5d02307ffeef"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-05-aluno.webp",
+    "sha256": "548479b493f5a9a9afd737e52c4563bb1b9f1c3beb42030cdbc1804001234b07"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-05-professor.webp",
+    "sha256": "a7ec8c591f59de334a98d9e5a1c23ee1f56a4ccd327a67d9c3be3a3e48dc0883"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-06-aluno.webp",
+    "sha256": "51cb6a41f8c5f62514a14167ceb3fd5f3916731455296038467677ea636352b7"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-06-professor.webp",
+    "sha256": "bf86a91a3cb6462b5e2c823dfda6581929680e845ef208340f1be898e431f1d1"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-07-aluno.webp",
+    "sha256": "145b2b16f19fd383487f8d18e9886d1aba21782a2864e6012c283ca6192bb468"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-07-professor.webp",
+    "sha256": "4bc34bf1602ea7d193957b946642f610d1f677805c2763bbdbe6f7b0fab7532a"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-08-aluno.webp",
+    "sha256": "16dacb581eff08e56fc133f53228b75065d2b838c2c8a1a831edf657ff76462a"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-08-professor.webp",
+    "sha256": "5b0b065cbecd4125814fcf5de97ef48dbc8b7f9178257dbcdfc684609c6a9a6f"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-09-aluno.webp",
+    "sha256": "caa7a82347ece56f523f1dd15c157e152c538325077e99721419b4762b30068b"
+  },
+  {
+    "file": "assets/colecoes/oficiais/rs2026-indigena-09-professor.webp",
+    "sha256": "5bab99f4d2046808cadaf2a30219a8a7e9b1b9d073a97feacdf9ad135f83acc8"
   }
 ]

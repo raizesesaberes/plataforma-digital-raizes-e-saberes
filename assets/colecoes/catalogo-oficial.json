@@ -1,9 +1,1008 @@
 {
   "version": 1,
   "collections": [
-    {"id":"raizes-crescer","title":"Raízes Crescer","stage":"infantil","range":"Educação Infantil · 2 a 5 anos","description":"Livros do aluno e do professor organizados por idade e volume para a Educação Infantil."},
-    {"id":"avalia-mais","title":"Avalia+","stage":"fundamental","range":"Ensino Fundamental · 1º ao 9º ano","description":"Português e Matemática integrados em livros do aluno e do professor, organizados por ano e volume."},
-    {"id":"indigena-afro-brasileira","title":"Coleção Indígena e Afro-Brasileira","stage":"fundamental","range":"Ensino Fundamental · 1º ao 9º ano","description":"Livros do aluno e do professor dedicados às culturas indígenas e afro-brasileiras ao longo do Ensino Fundamental."}
+    {
+      "id": "raizes-crescer",
+      "title": "Raízes Crescer",
+      "stage": "infantil",
+      "range": "Educação Infantil · 2 a 5 anos",
+      "description": "Raízes Crescer reúne experiências para crianças de 2 a 5 anos, com livros do aluno e manuais do professor em dois volumes por idade. Brincadeiras, histórias, exploração do mundo e registros autorais valorizam diferentes formas de participação, com orientações para mediação e acompanhamento das descobertas."
+    },
+    {
+      "id": "avalia-mais",
+      "title": "Avalia+",
+      "stage": "fundamental",
+      "range": "Ensino Fundamental · 1º ao 9º ano",
+      "description": "Do 1º ao 9º ano, a Avalia+ reúne Língua Portuguesa e Matemática em volumes integrados. Leituras, produções e situações-problema convidam os estudantes a investigar e explicar suas estratégias. Os livros do professor oferecem orientações, respostas comentadas e apoio ao acompanhamento da aprendizagem."
+    },
+    {
+      "id": "indigena-afro-brasileira",
+      "title": "Coleção Indígena e Afro-Brasileira",
+      "stage": "fundamental",
+      "range": "Ensino Fundamental · 1º ao 9º ano",
+      "description": "Do 1º ao 9º ano, a coleção propõe conhecer histórias indígenas, africanas e afro-brasileiras por meio de fontes, investigações e produções. Os livros do aluno e os manuais do professor articulam diversidade, direitos e participação, com progressão das atividades e orientações de mediação."
+    }
   ],
-  "books": []
+  "books": [
+    {
+      "id": "rs2026-crescer-02-v1-aluno",
+      "collectionId": "raizes-crescer",
+      "title": "Raízes Crescer • 2 anos • Volume 1 • Livro do Aluno",
+      "grade": 2,
+      "volume": "1",
+      "audience": "student",
+      "summary": "Encontros, cuidado, sons, gestos, natureza e brincadeiras compõem este primeiro percurso para crianças de 2 anos. O livro acolhe escolhas, movimentos, marcas e lembranças das experiências, com espaço para diferentes formas de participação e acompanhamento atento do adulto.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-crescer-02-v1-aluno.webp",
+        "width": 600,
+        "height": 425
+      }
+    },
+    {
+      "id": "rs2026-crescer-02-v1-professor",
+      "collectionId": "raizes-crescer",
+      "title": "Raízes Crescer • 2 anos • Volume 1 • Manual do Professor",
+      "grade": 2,
+      "volume": "1",
+      "audience": "teacher",
+      "summary": "Acompanha as experiências do primeiro volume de 2 anos com orientações de preparação, mediação e observação. Apoia encontros sobre cuidado, linguagens expressivas, natureza e brincadeira, considerando segurança, acessibilidade e diferentes modos de participação, sem exigir um produto igual de todas as crianças.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-crescer-02-v1-professor.webp",
+        "width": 600,
+        "height": 425
+      }
+    },
+    {
+      "id": "rs2026-crescer-02-v2-aluno",
+      "collectionId": "raizes-crescer",
+      "title": "Raízes Crescer • 2 anos • Volume 2 • Livro do Aluno",
+      "grade": 2,
+      "volume": "2",
+      "audience": "student",
+      "summary": "Escolhas e brincadeiras em companhia dão continuidade às descobertas aos 2 anos. As propostas exploram materiais, sons, mensagens, observação e narrativas, acolhendo gestos, fala, movimento e registros livres. O percurso respeita pausas e pode começar independentemente do primeiro volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-crescer-02-v2-aluno.webp",
+        "width": 600,
+        "height": 425
+      }
+    },
+    {
+      "id": "rs2026-crescer-02-v2-professor",
+      "collectionId": "raizes-crescer",
+      "title": "Raízes Crescer • 2 anos • Volume 2 • Manual do Professor",
+      "grade": 2,
+      "volume": "2",
+      "audience": "teacher",
+      "summary": "Orienta o planejamento das experiências de escolhas e brincadeiras em companhia do segundo volume de 2 anos. Reúne mediações, instrumentos de acompanhamento e referências para organizar materiais, observar iniciativas e decidir retomadas, respeitando o bem-estar e a autoria da criança.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-crescer-02-v2-professor.webp",
+        "width": 600,
+        "height": 425
+      }
+    },
+    {
+      "id": "rs2026-crescer-03-v1-aluno",
+      "collectionId": "raizes-crescer",
+      "title": "Raízes Crescer • 3 anos • Volume 1 • Livro do Aluno",
+      "grade": 3,
+      "volume": "1",
+      "audience": "student",
+      "summary": "Aos 3 anos, o percurso reúne encontros e acordos para brincar, ateliê de sons e histórias, investigações no quintal e construção de lugares. As experiências acolhem descobertas e registros pessoais, com portfólio de lembranças e mediação do adulto ao longo das propostas.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-crescer-03-v1-aluno.webp",
+        "width": 600,
+        "height": 425
+      }
+    },
+    {
+      "id": "rs2026-crescer-03-v1-professor",
+      "collectionId": "raizes-crescer",
+      "title": "Raízes Crescer • 3 anos • Volume 1 • Manual do Professor",
+      "grade": 3,
+      "volume": "1",
+      "audience": "teacher",
+      "summary": "Oferece fundamentos, planejamento e mediações correspondentes ao primeiro volume de 3 anos. Ajuda a preparar os encontros, apoiar a participação e acompanhar experiências de convivência, criação e investigação, com instrumentos de registro e repertórios para orientar as próximas escolhas docentes.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-crescer-03-v1-professor.webp",
+        "width": 600,
+        "height": 425
+      }
+    },
+    {
+      "id": "rs2026-crescer-03-v2-aluno",
+      "collectionId": "raizes-crescer",
+      "title": "Raízes Crescer • 3 anos • Volume 2 • Livro do Aluno",
+      "grade": 3,
+      "volume": "2",
+      "audience": "student",
+      "summary": "Brincar e cuidar juntos, trocar recados, observar mudanças e construir histórias são os caminhos deste volume para crianças de 3 anos. As propostas ampliam experiências com sons, imagens e lugares, valorizando diferentes formas de expressão e o registro de lembranças da turma.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-crescer-03-v2-aluno.webp",
+        "width": 600,
+        "height": 425
+      }
+    },
+    {
+      "id": "rs2026-crescer-03-v2-professor",
+      "collectionId": "raizes-crescer",
+      "title": "Raízes Crescer • 3 anos • Volume 2 • Manual do Professor",
+      "grade": 3,
+      "volume": "2",
+      "audience": "teacher",
+      "summary": "Apoia o professor no acompanhamento do segundo volume de 3 anos, dedicado a brincar, comunicar, cuidar e investigar mudanças. Reúne orientações por proposta, instrumentos de acompanhamento e repertórios para ajustar os apoios e dar continuidade às descobertas reais da turma.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-crescer-03-v2-professor.webp",
+        "width": 600,
+        "height": 425
+      }
+    },
+    {
+      "id": "rs2026-crescer-04-v1-aluno",
+      "collectionId": "raizes-crescer",
+      "title": "Raízes Crescer • 4 anos • Volume 1 • Livro do Aluno",
+      "grade": 4,
+      "volume": "1",
+      "audience": "student",
+      "summary": "Conhecer a turma, ouvir histórias, investigar o pátio e criar uma feira de brincar organizam este volume para crianças de 4 anos. Experiências e atividades integradas convidam a conversar, compor, desenhar e guardar descobertas, sem exigir leitura autônoma ou escrita convencional.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-crescer-04-v1-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-crescer-04-v1-professor",
+      "collectionId": "raizes-crescer",
+      "title": "Raízes Crescer • 4 anos • Volume 1 • Manual do Professor",
+      "grade": 4,
+      "volume": "1",
+      "audience": "teacher",
+      "summary": "Apresenta fundamentos e mediações para acompanhar a turma de 4 anos em experiências com convivência, histórias, pátio e feira de brincar. Inclui preparação, perguntas possíveis, apoios, repertórios e instrumentos de registro, articulados às propostas do primeiro volume do aluno.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-crescer-04-v1-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-crescer-04-v2-aluno",
+      "collectionId": "raizes-crescer",
+      "title": "Raízes Crescer • 4 anos • Volume 2 • Livro do Aluno",
+      "grade": 4,
+      "volume": "2",
+      "audience": "student",
+      "summary": "Mensagens, caminhos, água, vento e histórias compartilhadas ampliam o percurso das crianças de 4 anos. O volume integra brincadeiras, investigações e registros que convidam a retomar ideias, experimentar materiais e comunicar descobertas, com diferentes formas de participação e apoio do adulto.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-crescer-04-v2-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-crescer-04-v2-professor",
+      "collectionId": "raizes-crescer",
+      "title": "Raízes Crescer • 4 anos • Volume 2 • Manual do Professor",
+      "grade": 4,
+      "volume": "2",
+      "audience": "teacher",
+      "summary": "Acompanha as experiências de mensagens, percursos, água, vento e circulação de histórias do segundo volume de 4 anos. Reúne mediações, repertórios e instrumentos para planejar, observar e retomar descobertas, preservando a experiência concreta e as escolhas das crianças antes do registro.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-crescer-04-v2-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-crescer-05-v1-aluno",
+      "collectionId": "raizes-crescer",
+      "title": "Raízes Crescer • 5 anos • Volume 1 • Livro do Aluno",
+      "grade": 5,
+      "volume": "1",
+      "audience": "student",
+      "summary": "Participação na turma, histórias e rimas, plantas, medidas e caminhos compartilhados orientam este volume para crianças de 5 anos. As propostas aproximam nomes, letras, sons, números e formas das brincadeiras, com registros autorais, exploração concreta e recursos para novas experiências.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-crescer-05-v1-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-crescer-05-v1-professor",
+      "collectionId": "raizes-crescer",
+      "title": "Raízes Crescer • 5 anos • Volume 1 • Manual do Professor",
+      "grade": 5,
+      "volume": "1",
+      "audience": "teacher",
+      "summary": "Orienta o professor nas seis unidades do primeiro volume de 5 anos, articulando participação, linguagem, brincadeiras sonoras, natureza e medidas. Apresenta preparação, mediação, observação e continuidade das experiências, com instrumentos de documentação e respeito às hipóteses de escrita das crianças.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-crescer-05-v1-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-crescer-05-v2-aluno",
+      "collectionId": "raizes-crescer",
+      "title": "Raízes Crescer • 5 anos • Volume 2 • Livro do Aluno",
+      "grade": 5,
+      "volume": "2",
+      "audience": "student",
+      "summary": "Organizar uma biblioteca, explorar materiais, criar uma feira e compartilhar memórias são alguns desafios deste segundo volume para crianças de 5 anos. Jogos, coleções, sons e narrativas convidam a planejar, explicar escolhas, testar ideias e rever tentativas em companhia.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-crescer-05-v2-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-crescer-05-v2-professor",
+      "collectionId": "raizes-crescer",
+      "title": "Raízes Crescer • 5 anos • Volume 2 • Manual do Professor",
+      "grade": 5,
+      "volume": "2",
+      "audience": "teacher",
+      "summary": "Acompanha o segundo volume de 5 anos com orientações para biblioteca, ateliê, feira, jogos, memórias e narrativas. Ajuda a propor desafios de planejamento, explicação e revisão de ideias, apoiando diferentes participações e documentando o percurso sem exigir leitura ou escrita convencional.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-crescer-05-v2-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-01-v1-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 1º ano | Volume 1 | Livro do Aluno",
+      "grade": 1,
+      "volume": "1",
+      "audience": "student",
+      "summary": "Nomes, contos, cantigas e relatos aproximam a criança da leitura e da escrita. Em Matemática, passeios, feira e situações da turma convidam a explorar números e estratégias. As atividades incluem conversas, observação e registros com apoio docente.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-01-v1-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-01-v1-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 1º ano | Volume 1 | Manual do Professor",
+      "grade": 1,
+      "volume": "1",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar nomes, contos, cantigas e descobertas com números. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-01-v1-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-01-v2-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 1º ano | Volume 2 | Livro do Aluno",
+      "grade": 1,
+      "volume": "2",
+      "audience": "student",
+      "summary": "Parlendas, poemas, rimas e novas versões de contos ampliam as experiências de linguagem. Quintal, escola, brincadeiras e uma exposição de animais dão contexto às propostas matemáticas. O volume convida a compartilhar descobertas e registrar diferentes maneiras de pensar.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-01-v2-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-01-v2-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 1º ano | Volume 2 | Manual do Professor",
+      "grade": 1,
+      "volume": "2",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar parlendas, poemas, contos e números em brincadeiras. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-01-v2-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-02-v1-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 2º ano | Volume 1 | Livro do Aluno",
+      "grade": 2,
+      "volume": "1",
+      "audience": "student",
+      "summary": "Imagens, legendas, versos, receitas, notícias e fábulas mobilizam leitura e produção de textos. Coleções, aves, jogos e planos da turma organizam os desafios matemáticos. As propostas combinam conversa, investigação e registros para acompanhar as descobertas dos estudantes.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-02-v1-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-02-v1-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 2º ano | Volume 1 | Manual do Professor",
+      "grade": 2,
+      "volume": "1",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar legendas, receitas, fábulas e investigações com coleções. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-02-v1-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-02-v2-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 2º ano | Volume 2 | Livro do Aluno",
+      "grade": 2,
+      "volume": "2",
+      "audience": "student",
+      "summary": "Fotolegendas, convites, notícias, bilhetes e adivinhas convidam a observar e comunicar descobertas. Mercado, dinheiro, formas e partilhas aproximam a Matemática de situações cotidianas. O estudante compara informações, experimenta estratégias e registra suas ideias ao longo das atividades.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-02-v2-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-02-v2-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 2º ano | Volume 2 | Manual do Professor",
+      "grade": 2,
+      "volume": "2",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar notícias, bilhetes, medidas, dinheiro e formas. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-02-v2-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-03-v1-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 3º ano | Volume 1 | Livro do Aluno",
+      "grade": 3,
+      "volume": "1",
+      "audience": "student",
+      "summary": "Cartas, receitas, fábulas, campanhas e jornal falado articulam leitura, pesquisa e produção. Em Matemática, investigações no parque e na praça exploram padrões, formas, medidas e partilhas. O volume oferece situações para explicar raciocínios e construir registros próprios.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-03-v1-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-03-v1-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 3º ano | Volume 1 | Manual do Professor",
+      "grade": 3,
+      "volume": "1",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar cartas, campanhas, padrões, medidas e partilhas. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-03-v1-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-03-v2-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 3º ano | Volume 2 | Livro do Aluno",
+      "grade": 3,
+      "volume": "2",
+      "audience": "student",
+      "summary": "Parlendas, recomendações de leitura, cartas, histórias em quadrinhos e mistérios ampliam as práticas de linguagem. Feira, esporte, casa, bairro e escola contextualizam desafios matemáticos. As atividades convidam a comparar possibilidades, comunicar ideias e rever estratégias com a turma.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-03-v2-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-03-v2-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 3º ano | Volume 2 | Manual do Professor",
+      "grade": 3,
+      "volume": "2",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar recomendações de leitura, quadrinhos e desafios matemáticos cotidianos. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-03-v2-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-04-v1-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 4º ano | Volume 1 | Livro do Aluno",
+      "grade": 4,
+      "volume": "1",
+      "audience": "student",
+      "summary": "Contos tradicionais, instruções, pesquisas, regras e mensagens orientam as práticas de leitura e escrita. Números e desafios situados em parques, feiras e oficinas compõem o percurso matemático. As propostas valorizam explicar escolhas, compartilhar procedimentos e revisar produções.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-04-v1-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-04-v1-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 4º ano | Volume 1 | Manual do Professor",
+      "grade": 4,
+      "volume": "1",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar contos, instruções, pesquisa e resolução de desafios numéricos. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-04-v1-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-04-v2-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 4º ano | Volume 2 | Livro do Aluno",
+      "grade": 4,
+      "volume": "2",
+      "audience": "student",
+      "summary": "Textos informativos, ciência, notícias, entrevistas e instruções estimulam perguntas e produção de conhecimentos. Mostra, museu, parque e ateliê oferecem contextos para investigar números e resolver desafios. O estudante relaciona informações, organiza registros e compartilha suas descobertas.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-04-v2-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-04-v2-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 4º ano | Volume 2 | Manual do Professor",
+      "grade": 4,
+      "volume": "2",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar ciência, notícias, entrevistas e investigações matemáticas. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-04-v2-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-05-v1-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 5º ano | Volume 1 | Livro do Aluno",
+      "grade": 5,
+      "volume": "1",
+      "audience": "student",
+      "summary": "Verbetes, poemas, contos, notícias e pesquisas sobre alimentação ampliam a leitura e a produção textual. Viagens, gincanas e eventos escolares contextualizam números, formas e cálculos. O percurso propõe observar informações, discutir escolhas e explicar as soluções construídas.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-05-v1-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-05-v1-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 5º ano | Volume 1 | Manual do Professor",
+      "grade": 5,
+      "volume": "1",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar verbetes, narrativas, pesquisas e estratégias de cálculo. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-05-v1-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-05-v2-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 5º ano | Volume 2 | Livro do Aluno",
+      "grade": 5,
+      "volume": "2",
+      "audience": "student",
+      "summary": "Debates, reportagens, recomendações e narrativas convidam a conferir informações e produzir para diferentes leitores. A Matemática explora estratégias, medidas, partilhas e chances em desafios contextualizados. O volume articula investigação, argumentação e revisão dos caminhos usados pelo estudante.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-05-v2-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-05-v2-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 5º ano | Volume 2 | Manual do Professor",
+      "grade": 5,
+      "volume": "2",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar debates, reportagens, medidas, partilhas e chances. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-05-v2-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-06-v1-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 6º ano | Volume 1 | Livro do Aluno",
+      "grade": 6,
+      "volume": "1",
+      "audience": "student",
+      "summary": "Notícias, diversidade linguística, imagens, entrevistas e textos científicos convidam a ler com atenção às fontes. Frações, padrões, formas e medidas organizam o percurso matemático. O estudante compara informações, argumenta e explica estratégias de resolução em diferentes contextos.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-06-v1-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-06-v1-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 6º ano | Volume 1 | Manual do Professor",
+      "grade": 6,
+      "volume": "1",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar notícias, fontes, frações, padrões e formas. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-06-v1-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-06-v2-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 6º ano | Volume 2 | Livro do Aluno",
+      "grade": 6,
+      "volume": "2",
+      "audience": "student",
+      "summary": "Memórias, teatro, opiniões, contos e informações em circulação ampliam as experiências de leitura e autoria. Frações, proporcionalidade, figuras, chances e dados oferecem situações de investigação matemática. O volume propõe representar problemas, comparar soluções e comunicar conclusões fundamentadas.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-06-v2-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-06-v2-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 6º ano | Volume 2 | Manual do Professor",
+      "grade": 6,
+      "volume": "2",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar memórias, teatro, proporcionalidade, figuras e dados. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-06-v2-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-07-v1-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 7º ano | Volume 1 | Livro do Aluno",
+      "grade": 7,
+      "volume": "1",
+      "audience": "student",
+      "summary": "Cartazes, narrativas, notícias, entrevistas e divulgação de conhecimentos aproximam leitura e participação social. Frações, decimais, relações algébricas, ângulos e medidas compõem o trabalho matemático. As atividades convidam a comparar representações, justificar escolhas e revisar produções próprias.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-07-v1-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-07-v1-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 7º ano | Volume 1 | Manual do Professor",
+      "grade": 7,
+      "volume": "1",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar cartazes, notícias, frações, álgebra e medidas. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-07-v1-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-07-v2-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 7º ano | Volume 2 | Livro do Aluno",
+      "grade": 7,
+      "volume": "2",
+      "audience": "student",
+      "summary": "Biografias, notícias científicas e novas versões de histórias exploram vozes e efeitos de sentido. Porcentagens, figuras, coordenadas, proporções, probabilidade e padrões ampliam os desafios matemáticos. O estudante relaciona registros, testa estratégias e comunica suas interpretações e conclusões.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-07-v2-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-07-v2-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 7º ano | Volume 2 | Manual do Professor",
+      "grade": 7,
+      "volume": "2",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar biografias, notícias científicas, porcentagens, coordenadas e probabilidade. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-07-v2-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-08-v1-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 8º ano | Volume 1 | Livro do Aluno",
+      "grade": 8,
+      "volume": "1",
+      "audience": "student",
+      "summary": "Entrevistas, opiniões, fontes e textos de participação orientam a leitura crítica e o debate. Razões, porcentagens, potências, raízes, polígonos e álgebra organizam as investigações matemáticas. O percurso valoriza evidências, comparação de estratégias e justificativas construídas pelo estudante.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-08-v1-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-08-v1-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 8º ano | Volume 1 | Manual do Professor",
+      "grade": 8,
+      "volume": "1",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar debate, evidências, porcentagens, potências, polígonos e álgebra. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-08-v1-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-08-v2-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 8º ano | Volume 2 | Livro do Aluno",
+      "grade": 8,
+      "volume": "2",
+      "audience": "student",
+      "summary": "Arte, imagens, contextos e argumentação convidam a investigar sentidos e circulação dos textos. Medidas, áreas, dados, sequências, grandezas, equações e gráficos ampliam as representações matemáticas. As propostas articulam análise, produção autoral e explicação dos procedimentos utilizados.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-08-v2-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-08-v2-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 8º ano | Volume 2 | Manual do Professor",
+      "grade": 8,
+      "volume": "2",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar arte, argumentação, áreas, dados, equações e gráficos. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-08-v2-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-09-v1-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 9º ano | Volume 1 | Livro do Aluno",
+      "grade": 9,
+      "volume": "1",
+      "audience": "student",
+      "summary": "Perfis, memórias, notícias, humor e textos científicos mobilizam investigação e argumentação responsável. Frações, equações, números racionais, grandezas e semelhança sustentam os desafios matemáticos. O estudante confronta informações, constrói representações e justifica escolhas nas produções e resoluções.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-09-v1-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-09-v1-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 9º ano | Volume 1 | Manual do Professor",
+      "grade": 9,
+      "volume": "1",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar perfis, memórias, argumentação, equações e semelhança. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-09-v1-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-09-v2-aluno",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 9º ano | Volume 2 | Livro do Aluno",
+      "grade": 9,
+      "volume": "2",
+      "audience": "student",
+      "summary": "Figuras de linguagem, narrativas, opiniões e diversidade linguística convidam a comparar vozes e produzir com propósito. Razões, equações, gráficos, dados, porcentagens e argumentos geométricos ampliam o percurso matemático. As atividades valorizam investigação, revisão e comunicação de estratégias próprias.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-09-v2-aluno.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-avalia-09-v2-professor",
+      "collectionId": "avalia-mais",
+      "title": "Avalia+ | 9º ano | Volume 2 | Manual do Professor",
+      "grade": 9,
+      "volume": "2",
+      "audience": "teacher",
+      "summary": "Oferece orientações de aplicação e respostas comentadas para acompanhar narrativas, diversidade linguística, gráficos, porcentagens e geometria. Referências às páginas do aluno, sugestões de mediação e critérios de observação apoiam o planejamento docente e a retomada das dificuldades identificadas durante o volume.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-avalia-09-v2-professor.webp",
+        "width": 600,
+        "height": 849
+      }
+    },
+    {
+      "id": "rs2026-indigena-01-aluno",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 1º ano — Livro do Aluno",
+      "grade": 1,
+      "volume": "",
+      "audience": "student",
+      "summary": "Uma introdução às histórias indígenas, africanas e afro-brasileiras a partir da identidade, das memórias e da convivência. Leituras acompanhadas, observação de imagens, conversas e registros por desenho ou escrita convidam a criança a descobrir saberes, direitos e formas de cuidar da vida.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-01-aluno.webp",
+        "width": 600,
+        "height": 777
+      }
+    },
+    {
+      "id": "rs2026-indigena-01-professor",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 1º ano — Manual do Professor",
+      "grade": 1,
+      "volume": "",
+      "audience": "teacher",
+      "summary": "Acompanha as primeiras descobertas da criança com orientações de mediação, respostas comentadas e avaliação. Organiza sequências sobre identidade, povos indígenas, África, convivência e natureza, oferecendo alternativas de participação e critérios para apoiar a leitura compartilhada e os diferentes modos de registro.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-01-professor.webp",
+        "width": 600,
+        "height": 777
+      }
+    },
+    {
+      "id": "rs2026-indigena-02-aluno",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 2º ano — Livro do Aluno",
+      "grade": 2,
+      "volume": "",
+      "audience": "student",
+      "summary": "Amplia a investigação de identidades, povos indígenas e culturas africanas e afro-brasileiras por meio de textos, imagens, mapas e relatos. As propostas articulam observação, conversa, comparação e registros curtos, valorizando a curiosidade, a autoria e o respeito às diferentes experiências.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-02-aluno.webp",
+        "width": 600,
+        "height": 777
+      }
+    },
+    {
+      "id": "rs2026-indigena-02-professor",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 2º ano — Manual do Professor",
+      "grade": 2,
+      "volume": "",
+      "audience": "teacher",
+      "summary": "Orienta o trabalho com perguntas, fontes e registros no 2º ano. Reúne objetivos, mediação, respostas comentadas e acompanhamento das atividades, com apoio à leitura compartilhada e à escrita mediada para estudar identidades, diversidade indígena e histórias africanas e afro-brasileiras.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-02-professor.webp",
+        "width": 600,
+        "height": 777
+      }
+    },
+    {
+      "id": "rs2026-indigena-03-aluno",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 3º ano — Livro do Aluno",
+      "grade": 3,
+      "volume": "",
+      "audience": "student",
+      "summary": "Investiga identidade e diversidade, cultura afro-brasileira, povos indígenas e formação da população brasileira. Textos e registros convidam a comparar informações, reconhecer mudanças e permanências e produzir legendas, painéis e relatos, com espaços para escrever, desenhar e rever ideias.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-03-aluno.webp",
+        "width": 600,
+        "height": 777
+      }
+    },
+    {
+      "id": "rs2026-indigena-03-professor",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 3º ano — Manual do Professor",
+      "grade": 3,
+      "volume": "",
+      "audience": "teacher",
+      "summary": "Apoia a investigação com fontes no 3º ano por meio de objetivos, orientações de mediação, respostas comentadas e avaliação formativa. Propõe comparar registros, discutir escolhas de memória e aproximar os estudos da história local, respeitando diferentes formas de participação.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-03-professor.webp",
+        "width": 600,
+        "height": 777
+      }
+    },
+    {
+      "id": "rs2026-indigena-04-aluno",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 4º ano — Livro do Aluno",
+      "grade": 4,
+      "volume": "",
+      "audience": "student",
+      "summary": "Explora a formação do povo brasileiro, as relações entre África e Brasil, os povos indígenas e a cidadania. Mapas, fotografias, textos e situações fictícias ajudam a investigar circulações, transformações e permanências, elaborar explicações e revisar ideias com apoio em fontes.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-04-aluno.webp",
+        "width": 600,
+        "height": 777
+      }
+    },
+    {
+      "id": "rs2026-indigena-04-professor",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 4º ano — Manual do Professor",
+      "grade": 4,
+      "volume": "",
+      "audience": "teacher",
+      "summary": "Orienta a construção de relações entre histórias, lugares e conhecimentos no 4º ano. Oferece mediação para investigar transformações, permanências e circulações, contextualizar casos africanos e indígenas e acompanhar as explicações dos estudantes, com planejamento flexível e atenção aos limites das fontes.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-04-professor.webp",
+        "width": 600,
+        "height": 777
+      }
+    },
+    {
+      "id": "rs2026-indigena-05-aluno",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 5º ano — Livro do Aluno",
+      "grade": 5,
+      "volume": "",
+      "audience": "student",
+      "summary": "Relaciona identidade, cidadania e organização do Estado brasileiro às histórias africanas, afro-brasileiras e indígenas. Aborda povos indígenas contemporâneos, diversidade africana, escravização e resistência, combinando leitura de fontes, produção textual, revisão e projetos para pensar direitos e participação coletiva.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-05-aluno.webp",
+        "width": 600,
+        "height": 777
+      }
+    },
+    {
+      "id": "rs2026-indigena-05-professor",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 5º ano — Manual do Professor",
+      "grade": 5,
+      "volume": "",
+      "audience": "teacher",
+      "summary": "Acompanha o estudo de instituições, territórios, conhecimentos e direitos no 5º ano. Orienta a leitura de fontes e a análise de casos situados, articulando organização política, povos indígenas contemporâneos, histórias africanas e resistência negra a registros, revisão e acompanhamento da aprendizagem.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-05-professor.webp",
+        "width": 600,
+        "height": 777
+      }
+    },
+    {
+      "id": "rs2026-indigena-06-aluno",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 6º ano — Livro do Aluno",
+      "grade": 6,
+      "volume": "",
+      "audience": "student",
+      "summary": "Propõe investigar identidades, histórias indígenas, África e formação da sociedade brasileira, articulando direitos humanos, cidadania e juventude. Textos, fichas de fontes, comparações e situações fictícias apoiam explicações fundamentadas, produção de respostas e um projeto integrador com responsabilidade e respeito à diversidade.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-06-aluno.webp",
+        "width": 600,
+        "height": 777
+      }
+    },
+    {
+      "id": "rs2026-indigena-06-professor",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 6º ano — Manual do Professor",
+      "grade": 6,
+      "volume": "",
+      "audience": "teacher",
+      "summary": "Reúne orientações de mediação, respostas comentadas e critérios de avaliação para acompanhar o 6º ano. Ajuda a distinguir observação, informação e inferência, contextualizar fontes e apoiar registros diversos nos estudos de histórias indígenas e afro-brasileiras, direitos, cidadania e participação.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-06-professor.webp",
+        "width": 600,
+        "height": 777
+      }
+    },
+    {
+      "id": "rs2026-indigena-07-aluno",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 7º ano — Livro do Aluno",
+      "grade": 7,
+      "volume": "",
+      "audience": "student",
+      "summary": "Aprofunda histórias de sociedades africanas, conexões atlânticas e resistências negras, em diálogo com direitos humanos e povos indígenas. A investigação de fontes se amplia para juventudes, cidadania digital e participação social, com produção textual, revisões e projetos que convidam a argumentar e reconhecer limites.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-07-aluno.webp",
+        "width": 600,
+        "height": 777
+      }
+    },
+    {
+      "id": "rs2026-indigena-07-professor",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 7º ano — Manual do Professor",
+      "grade": 7,
+      "volume": "",
+      "audience": "teacher",
+      "summary": "Apoia a progressão entre contextualizar, comparar, argumentar e revisar no 7º ano. Organiza orientações e respostas comentadas para estudar sociedades africanas, escravização moderna, resistências e direitos, articulando fontes históricas às questões indígenas, às juventudes e à participação no presente.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-07-professor.webp",
+        "width": 600,
+        "height": 777
+      }
+    },
+    {
+      "id": "rs2026-indigena-08-aluno",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 8º ano — Livro do Aluno",
+      "grade": 8,
+      "volume": "",
+      "audience": "student",
+      "summary": "Investiga escravização, resistências negras, quilombos e processos de libertação, relacionando fontes e mudanças históricas. Estuda também contribuições, direitos, educação e espiritualidades indígenas, com atividades de interpretação, pesquisa orientada e projetos sobre identidade, diversidade, memória e participação cidadã.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-08-aluno.webp",
+        "width": 600,
+        "height": 777
+      }
+    },
+    {
+      "id": "rs2026-indigena-08-professor",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 8º ano — Manual do Professor",
+      "grade": 8,
+      "volume": "",
+      "audience": "teacher",
+      "summary": "Orienta o estudo da escravização, das resistências e dos processos de libertação, junto às histórias e aos direitos indígenas. As fichas relacionam páginas do aluno, objetivos, encaminhamentos, respostas comentadas e critérios de acompanhamento, com atenção à contextualização e ao tratamento cuidadoso de temas sensíveis.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-08-professor.webp",
+        "width": 600,
+        "height": 777
+      }
+    },
+    {
+      "id": "rs2026-indigena-09-aluno",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 9º ano — Livro do Aluno",
+      "grade": 9,
+      "volume": "",
+      "audience": "student",
+      "summary": "Relaciona abolição e pós-abolição, desigualdades raciais, diáspora africana, direitos humanos e protagonismos indígenas. Textos, dados, mapas localizadores e casos orientam a construção de argumentos, a análise dos limites das fontes e a elaboração de produções e projetos com responsabilidade.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-09-aluno.webp",
+        "width": 600,
+        "height": 777
+      }
+    },
+    {
+      "id": "rs2026-indigena-09-professor",
+      "collectionId": "indigena-afro-brasileira",
+      "title": "História e Cultura Afro-Brasileira e Indígena — 9º ano — Manual do Professor",
+      "grade": 9,
+      "volume": "",
+      "audience": "teacher",
+      "summary": "Oferece orientações de ensino, respostas comentadas e avaliação para o percurso do 9º ano. Apoia a análise do pós-abolição, das histórias africanas e afro-brasileiras, dos direitos e dos povos indígenas, valorizando explicações sustentadas, comparação de evidências e revisão de conclusões.",
+      "cover": {
+        "src": "assets/colecoes/oficiais/rs2026-indigena-09-professor.webp",
+        "width": 600,
+        "height": 777
+      }
+    }
+  ]
 }

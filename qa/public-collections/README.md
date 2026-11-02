@@ -1,6 +1,6 @@
 # Catálogo público das três coleções — estrutura local
 
-Status: estrutura implementada; conteúdo final PENDENTE do pacote de 70 capas e sínteses do root. Nenhum push/deploy. Não confundir o catálogo público com autorização de leitura integral.
+Status: 70 capas oficiais e sínteses integradas e verificadas nesta instância. Ver RELEASE-REVIEW.md e results-official.json para QA atual; as seções abaixo documentam a estrutura e os testes sintéticos anteriores. Nenhum push/deploy. Não confundir o catálogo público com autorização de leitura integral.
 
 Mudanças isoladas do escopo anterior:
 

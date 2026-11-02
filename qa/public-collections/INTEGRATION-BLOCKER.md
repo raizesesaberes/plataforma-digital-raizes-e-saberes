@@ -1,3 +1,5 @@
+> Registro histórico do executor anterior. Resolvido nesta instância: pacote oficial recebido e integrado; consultar RELEASE-REVIEW.md.
+
 # Pacote oficial e isolamento — 2026-11-02
 
 ## Transferência bloqueada (falha, não negação de autorização)
