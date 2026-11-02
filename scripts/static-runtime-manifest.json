@@ -17418,5 +17418,13 @@
   {
     "file": "library-edition-reader.mjs",
     "sha256": "218a1b00557c865fd4f1bc7583a8964e97d3959deafdb47356e8401b79e607b2"
+  },
+  {
+    "file": "library-pilot-upload.html",
+    "sha256": "1d7872b17c55d087f525140359811b3cb968ad519a244fc54f1c7b352cd35c4d"
+  },
+  {
+    "file": "library-pilot-upload.mjs",
+    "sha256": "623c912c9c1db4818fea381b0b555de641d77b25a1266c39fac9212065df0039"
   }
 ]

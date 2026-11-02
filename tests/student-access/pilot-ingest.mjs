@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {stripTypeScriptTypes} from 'node:module';
+const base='supabase/functions/library-pilot-private-ingest/';
+const list=JSON.parse(readFileSync(base+'allowlist.json'));const [path,expected]=Object.entries(list)[0];
+const entry=JSON.parse(readFileSync('../publicacao-piloto-5ano-execucao.json')).upload_entries.find(x=>x.path===path);
+const bytes=readFileSync(entry.local_path);let role='admin',status='active',writes=0,exists=false;
+const client={auth:{getUser:async()=>({data:{user:{id:'synthetic',app_metadata:{platform_role:role}}}})},from(){const q={select:()=>q,eq:()=>q,maybeSingle:async()=>({data:{platform_role:role,status}})};return q;},storage:{from(bucket){assert.equal(bucket,'pages');return {upload:async(p,b,options)=>{assert.equal(options.upsert,false);assert.equal(p,path);writes++;return exists?{error:{}}:{};},download:async()=>({data:new Blob([bytes])})};}}};
+function load(deadline){let handler;let source=readFileSync(base+'index.ts','utf8').replace(/^import .*;\n/gm,'').replace('const EXPIRES_AT=0;',`const EXPIRES_AT=${deadline};`);new Function('Deno','createClient','allowlist',stripTypeScriptTypes(source))({env:{get:()=> 'synthetic'},serve:fn=>handler=fn},()=>client,list);return handler;}
+const req=(body=bytes,p=path,auth=true,size=body.length)=>new Request('https://synthetic.invalid/?path='+encodeURIComponent(p),{method:'POST',headers:{...(auth?{Authorization:'Bearer synthetic'}:{}),'Content-Type':'image/jpeg','Content-Length':String(size)},body});
+assert.equal((await load(0)(req())).status,410);assert.equal(writes,0);
+const run=load(Date.now()+60000);
+assert.equal((await run(req(bytes,path,false))).status,401);
+role='professor';assert.equal((await run(req())).status,403);role='admin';status='inactive';assert.equal((await run(req())).status,403);status='active';
+assert.equal((await run(req(bytes,'../../other'))).status,403);
+assert.equal((await run(req(bytes,path,true,1))).status,400);
+const corrupt=Buffer.from(bytes);corrupt[corrupt.length-10]^=1;assert.equal((await run(req(corrupt))).status,400);assert.equal(writes,0);
+const success=await run(req());assert.equal(success.status,201);assert.equal((await success.json()).sha256,expected.sha256);
+exists=true;assert.equal((await run(req())).status,409);
+assert.equal((await load(Date.now()-1)(req())).status,410);
+console.log('PASS: closed/expired, missing session, teacher, inactive admin, path, size, hash, upload/readback integrity, no overwrite. Synthetic services only.');
