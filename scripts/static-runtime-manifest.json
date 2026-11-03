@@ -17085,7 +17085,7 @@
   },
   {
     "file": "styles.css",
-    "sha256": "19510e968bc09dcdfeb744c72ac9f612bc31b054b60160946e16932fa05b8e5a"
+    "sha256": "acc1b78e31a6e6266341a5aed82063ab31f0e254ee206aba8c4cefae3938cc20"
   },
   {
     "file": "supabase-config.js",
@@ -17409,7 +17409,7 @@
   },
   {
     "file": "library-edition-boot.mjs",
-    "sha256": "41728e04a0a25f470bc9f65bbd7fd937f598bb9e6cbadc4414eaa3e5b684861e"
+    "sha256": "fd72b699fb8c8efaac7b19c0ec459d096b3a4226f468ec4c16a38cb57094d2ab"
   },
   {
     "file": "library-edition-client.mjs",

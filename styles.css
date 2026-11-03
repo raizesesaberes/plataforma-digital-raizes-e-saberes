@@ -5351,3 +5351,45 @@ h3 {
   }
 
 }
+
+/* Official library: scoped presentation, authorized data only. */
+.student-library-page { gap:24px; }
+.student-library-page .student-library-hero { min-height:0; padding:28px; background:#f0f7f2; border:1px solid #dce9df; box-shadow:none; }
+.student-library-page .student-library-hero h1 { font-size:clamp(28px,3vw,40px); line-height:1.15; color:#123e2e; max-width:none; }
+.student-library-page .student-library-hero p { color:#53655c; font-size:16px; }
+.ed-status { color:#53655c; font-size:14px; margin:0 0 16px; }
+.ed-toolbar { display:flex; gap:16px; align-items:end; margin-bottom:24px; flex-wrap:wrap; }
+.ed-toolbar label { display:grid; gap:8px; color:#214d3b; font-size:14px; font-weight:600; }
+.ed-search { flex:1; min-width:200px; }
+.ed-toolbar input,.ed-toolbar select { width:100%; min-height:46px; border:1px solid #cadbd0; border-radius:12px; padding:10px 14px; background:#fff; color:#233c30; font:inherit; }
+.ed-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr)); gap:24px; align-items:stretch; }
+.ed-card { display:flex; flex-direction:column; border:1px solid #dce8df; border-radius:18px; overflow:hidden; background:#fff; min-width:0; box-shadow:0 4px 16px #17452e08; }
+.ed-cover { height:260px; padding:20px; background:#eef4ef; display:grid; place-items:center; position:relative; }
+.ed-cover img { display:none; max-height:220px; max-width:100%; width:auto; object-fit:contain; box-shadow:0 5px 13px #163b2525; }
+.ed-cover.is-loaded img { display:block; }
+.ed-cover.is-loaded .ed-cover-fallback { display:none; }
+.ed-cover-fallback { color:#617567; font-size:14px; }
+.ed-card-body { padding:20px; display:flex; flex:1; flex-direction:column; align-items:start; gap:12px; }
+.ed-badge { color:#286343; background:#edf6ef; border-left:3px solid #eb9a44; border-radius:5px; padding:5px 9px; font-size:12px; font-weight:650; }
+.ed-card h2 { margin:0; color:#173f2f; font-size:18px; line-height:1.4; overflow-wrap:anywhere; }
+.ed-meta { color:#64736a; font-size:14px; margin:0 0 6px; }
+.ed-read { width:100%; margin-top:auto; min-height:44px; border:0; border-radius:10px; background:#17613f; color:white; font:inherit; font-weight:650; cursor:pointer; }
+.ed-read:hover { background:#104a30; }
+.ed-toolbar :focus-visible,.ed-read:focus-visible,.ed-reader button:focus-visible { outline:3px solid #edab60; outline-offset:3px; }
+.ed-empty { padding:28px; border:1px dashed #c5d9cb; border-radius:14px; color:#52685a; background:#f6faf6; }
+.ed-grid[hidden],.ed-card[hidden],.ed-toolbar[hidden],.ed-toolbar label[hidden],.ed-empty[hidden] { display:none!important; }
+.ed-reader { border:1px solid #dce8df; border-radius:18px; background:#fff; overflow:hidden; }
+.ed-reader .reader-header { background:#f1f7f2; padding:18px; gap:16px; }
+.ed-reader .reader-header h2 { font-size:20px; color:#173f2f; }
+.ed-reader .reader-controls { flex-wrap:wrap; gap:10px; padding:16px; }
+.ed-reader button { min-height:42px; }
+@media(max-width:640px){
+ .student-library-page .student-library-hero { padding:20px; }
+ .ed-grid { grid-template-columns:1fr; gap:18px; }
+ .ed-toolbar { flex-direction:column; align-items:stretch; }
+ .ed-reader .reader-layout { display:flex; flex-direction:column; }
+ .ed-reader .reader-rail { width:100%; max-width:none; }
+ .ed-reader .thumbnail-list { max-height:110px!important; display:flex; overflow:auto; }
+ .ed-reader .thumbnail-list button { min-width:65px; }
+ .ed-reader .reader-header { flex-direction:column; align-items:start; }
+}
