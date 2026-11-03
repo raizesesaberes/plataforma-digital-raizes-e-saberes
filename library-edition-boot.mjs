@@ -1,6 +1,13 @@
 import {libraryEditionClient} from './library-edition-client.mjs';
 import {connectEditionReader} from './library-edition-reader.mjs';
 const config=window.RAIZES_SUPABASE||{};
+// Embedded mode changes presentation only; list and read requests keep the
+// same server-side school, grade and audience authorization.
+if(new URLSearchParams(window.location.search).get('embedded')==='1'){
+ document.querySelector('main > a')?.setAttribute('hidden','');
+ document.querySelector('main > h1')?.setAttribute('hidden','');
+}
+
 const status=document.querySelector('#edition-status'),list=document.querySelector('#edition-list'),host=document.querySelector('#edition-reader');
 const token=()=>{try{return JSON.parse(localStorage.getItem('raizes:supabase-auth-session')||'null')?.access_token||localStorage.getItem('raizes:supabase-access-token')||'';}catch{return '';}};
 async function request(path,body){

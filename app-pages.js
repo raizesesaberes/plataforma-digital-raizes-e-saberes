@@ -2474,52 +2474,24 @@ const renderStudentLibraryHome = () => {
     return renderContentGovernanceLoading("Biblioteca do aluno");
   }
   const books = getGovernedLibraryBooks(getStudentAvailableBooks());
-  const collections = [...new Set(books.map((book) => book.collection).filter(Boolean))];
-  const stages = [...new Set(books.map((book) => book.level || book.year).filter(Boolean))];
-  const recommendedBook = books.find((book) => (book.id || book.bookId) === "livro-005") || books[0];
   return `
     <div class="student-library-page" data-student-library>
       <section class="student-library-hero">
         <div>
           <span>Biblioteca</span>
           <h1>Livros para explorar</h1>
-          <p>Escolha uma leitura, abra o livro digital e continue explorando com calma.</p>
-          <p><a class="bv-card-action" href="edition-library.html">Abrir novas edições digitais</a></p>
-        </div>
-        ${recommendedBook ? `
-          <a class="student-library-feature" href="${studentBookLink(recommendedBook)}">
-            ${studentLazyImg(recommendedBook.catalogCover || recommendedBook.cover || recommendedBook.src, recommendedBook.catalogTitle || recommendedBook.title || "Livro indicado")}
-            <strong>${printableEscape(recommendedBook.catalogTitle || recommendedBook.title)}</strong>
-            <small>${printableEscape(recommendedBook.level || recommendedBook.year || "")}</small>
-          </a>
-        ` : ""}
-      </section>
-
-      <section class="student-library-context" aria-label="Contexto da Biblioteca">
-        <article><span>Acervo</span><strong>Biblioteca do aluno</strong></article>
-        <article><span>Etapa</span><strong>${printableEscape(getActiveStudentProfile().className || studentInstitutionalState.context?.school_year || "Aluno")}</strong></article>
-        <article><span>Leitura</span><strong>Livros digitais</strong></article>
-      </section>
-
-      <section class="student-library-controls" aria-label="Filtros da Biblioteca">
-        <label><span>Buscar livro</span><input data-bv-search type="search" placeholder="Titulo, coleção ou etapa" /></label>
-        <div class="student-library-filter-row">
-          <button type="button" data-bv-filter-age="all" class="is-active">Todos</button>
-          ${stages.map((stage) => `<button type="button" data-bv-filter-age="${printableEscape(stage)}">${printableEscape(stage)}</button>`).join("")}
-          ${collections.map((collection) => `<button type="button" data-bv-filter-volume="${printableEscape(collection)}">${printableEscape(collection)}</button>`).join("")}
+          <p>Escolha uma leitura e abra o livro digital.</p>
         </div>
       </section>
-
-      <section class="student-library-section">
-        <div class="student-section-heading">
-          <span>${books.length} livros</span>
-          <h2>Atividades de leitura</h2>
-        </div>
-        <div class="student-library-grid" data-bv-results>
-          ${books.map(renderStudentBookCard).join("")}
-        </div>
-        <p class="bv-empty-state" data-bv-empty hidden>Nenhum livro encontrado com estes filtros.</p>
+      <section aria-label="Livros digitais disponíveis">
+        <iframe src="edition-library.html?embedded=1" title="Livros digitais autorizados para sua turma" allow="fullscreen" style="display:block;width:100%;height:80vh;min-height:600px;border:0;border-radius:16px;background:white"></iframe>
       </section>
+      ${books.length ? `
+        <details class="student-library-section">
+          <summary>Outros materiais de leitura (${books.length})</summary>
+          <div class="student-library-grid">${books.map(renderStudentBookCard).join("")}</div>
+        </details>
+      ` : ""}
     </div>
   `;
 };
