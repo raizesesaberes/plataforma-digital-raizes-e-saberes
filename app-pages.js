@@ -7643,10 +7643,9 @@ const renderTeacherPremiumHome = () => `
         <h2>Recursos pedagógicos</h2>
         <div class="teacher-content-grid">
           ${[
-            { title: "Biblioteca Viva", detail: "Explorar conteúdos", icon: "book", tone: "green", view: "biblioteca" },
+            { title: "Biblioteca", detail: "Livros e manuais disponíveis", icon: "book", tone: "green", view: "biblioteca" },
             { title: "Atividades Imprimíveis", detail: "Ver atividades", icon: "doc", tone: "purple", view: "atividades" },
             { title: "Experiências", detail: "Apoio ao planejamento", icon: "flask", tone: "teal", view: "experiências" },
-            { title: "Book Viewer", detail: "Abrir livros e guias", icon: "book", tone: "orange", view: "biblioteca" },
           ].map(renderTeacherContentCard).join("")}
         </div>
       </section>
@@ -9057,11 +9056,7 @@ const renderStudentInstitutionalHomeContent = () => {
         <h1>OLA, ${printableEscape(getStudentFirstName().toUpperCase())}!</h1>
         <p>${isStudentInstitutionalMode() ? `${printableEscape(profile.fullName)} · ${printableEscape(profile.className)} · ${printableEscape(profile.teacherName)}` : "Vamos descobrir coisas novas hoje?"}</p>
       </div>
-      ${studentLazyImg("assets/aluno/oficial-hero-aluno.png", "", "student-hero-art")}
     </section>
-
-    ${renderStudentPersonalScheduleBoard()}
-    ${renderStudentInstitutionalWeeklyBoard()}
 
     <section class="student-premium-card-grid" aria-label="Áreas principais do aluno">
       ${[
@@ -9070,6 +9065,9 @@ const renderStudentInstitutionalHomeContent = () => {
         { title: "Meus Livros", text: "Materiais do aluno aparecem na Biblioteca.", href: "biblioteca.html", icon: "book", tone: "purple", cta: "ABRIR" },
       ].map(renderStudentPremiumCard).join("")}
     </section>
+
+    ${renderStudentPersonalScheduleBoard()}
+    ${renderStudentInstitutionalWeeklyBoard()}
   `;
 };
 

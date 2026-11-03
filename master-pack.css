@@ -26294,3 +26294,59 @@ html[data-a11y-reduced-motion="true"] *::after {
   .question-bank .qb-scope-tabs { gap: 4px; }
   .question-bank .qb-scope-tabs button { padding: 6px 3px; font-size: .65rem; overflow-wrap: normal; }
 }
+
+/* Shared learning workspace presentation. Authorization and action hooks are unchanged. */
+.student-premium-workspace, .teacher-workspace.teacher-pilot {
+ --learning-bg:#f7f9f6; --learning-surface:#fff; --learning-green:#175c40;
+ --learning-ink:#203c2e; --learning-muted:#596b60; --learning-line:#dce6dd;
+ --learning-soft:#eef5ef; --learning-accent:#d68a3d; --learning-brown:#795b43;
+ background:var(--learning-bg); color:var(--learning-ink); font-family:Inter,system-ui,sans-serif; font-size:16px; line-height:1.5;
+}
+.student-premium-workspace .student-premium-sidebar,
+.teacher-pilot .tw-sidebar { background:#124b35; box-shadow:none; }
+.student-premium-workspace .student-premium-logo img,
+.teacher-pilot .tw-teacher-card img { max-width:116px; filter:none; }
+.student-premium-workspace .student-premium-sidebar nav a,
+.teacher-pilot .tw-sidebar nav button { font:600 14px/1.4 Inter,system-ui,sans-serif; min-height:44px; }
+.student-premium-workspace .student-premium-sidebar nav a.is-active,
+.teacher-pilot .tw-sidebar nav button.is-active { background:#28664b; box-shadow:inset 3px 0 #df9b50; }
+.student-premium-workspace .student-premium-hero,
+.teacher-pilot .teacher-premium-hero { min-height:0; padding:28px; grid-template-columns:minmax(0,1fr); background:var(--learning-soft); border:1px solid var(--learning-line); box-shadow:none; border-radius:18px; }
+.student-premium-workspace .student-premium-hero h1,
+.teacher-pilot .teacher-premium-hero h1 { font:700 clamp(28px,3vw,38px)/1.2 Inter,system-ui,sans-serif; color:var(--learning-green); margin:8px 0; }
+.student-premium-workspace .student-premium-hero p,
+.teacher-pilot .teacher-premium-hero p { font-size:16px; font-weight:400; line-height:1.5; color:var(--learning-muted); }
+.student-premium-workspace .student-premium-card,
+.student-premium-workspace .student-side-card,
+.teacher-pilot .teacher-metric-card,
+.teacher-pilot .teacher-content-card,
+.teacher-pilot .teacher-side-card { border:1px solid var(--learning-line); background:var(--learning-surface); border-radius:14px; box-shadow:0 3px 12px #183c2605; }
+.student-premium-workspace .student-premium-card strong,
+.student-premium-workspace .student-side-card h2,
+.teacher-pilot .teacher-premium-section h2,
+.teacher-pilot .teacher-side-card h2,
+.teacher-pilot .teacher-metric-card strong,
+.teacher-pilot .teacher-content-card strong { font-family:Inter,system-ui,sans-serif; font-size:18px; font-weight:650; text-transform:none; line-height:1.35; color:var(--learning-ink); }
+.student-premium-workspace .student-premium-card p,
+.student-premium-workspace .student-side-card p,
+.teacher-pilot .teacher-content-card small,
+.teacher-pilot .premium-empty span { color:var(--learning-muted); font-size:14px; font-weight:400; line-height:1.5; }
+.student-premium-workspace .student-premium-card .premium-icon,
+.teacher-pilot .teacher-metric-card .premium-icon,
+.teacher-pilot .teacher-content-card .premium-icon { width:44px; height:44px; background:var(--learning-soft); color:var(--learning-green); border-radius:12px; }
+.student-premium-workspace .student-premium-card > span { background:var(--learning-soft); color:var(--learning-green); font-size:13px; font-weight:650; }
+.student-premium-workspace :is(a,button,input,select):focus-visible,
+.teacher-pilot :is(a,button,input,select):focus-visible { outline:3px solid var(--learning-accent); outline-offset:3px; }
+.teacher-pilot .teacher-content-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+@media(max-width:1100px) {
+ .student-premium-workspace .student-premium-grid,.teacher-pilot .teacher-premium-layout { grid-template-columns:minmax(0,1fr); }
+}
+@media(max-width:640px) {
+ .student-premium-workspace .student-premium-hero,.teacher-pilot .teacher-premium-hero { padding:20px; }
+ .teacher-pilot .teacher-content-grid { grid-template-columns:minmax(0,1fr); }
+ .student-premium-workspace .student-premium-card-grid { grid-template-columns:minmax(0,1fr); }
+}
+
+.student-premium-workspace .student-premium-hero span,
+.teacher-pilot .teacher-premium-hero span { font:650 12px/1.4 Inter,system-ui,sans-serif; letter-spacing:.04em; color:var(--learning-green); }
+.student-premium-workspace .student-premium-card { min-height:160px; }
