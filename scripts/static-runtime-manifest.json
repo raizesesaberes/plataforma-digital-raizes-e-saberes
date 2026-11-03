@@ -21,7 +21,7 @@
   },
   {
     "file": "app-pages.js",
-    "sha256": "c325b8dc7e6295eace21bec721e5d60eb924a6e6efd3c8ed51bd0307cbdfbdbd"
+    "sha256": "999c01fc5940b1150282dcdf8fc9a0a33a7a66fdf843b07b634fde75ab4fa7a2"
   },
   {
     "file": "arvore.html",
@@ -17426,5 +17426,13 @@
   {
     "file": "library-pilot-upload.mjs",
     "sha256": "74000c87171b1d8d5118995d946455292c91a41c610680110f7e447ae758da25"
+  },
+  {
+    "file": "admin-edition.html",
+    "sha256": "341a2565631cd4069f28cc490e398380a2ef14c0e4615cc7d708f09b702e2c71"
+  },
+  {
+    "file": "admin-edition-boot.mjs",
+    "sha256": "3a628166bacfef7879ea6189f3a58ed5f67cf56d6cfba5db6075b1899e001700"
   }
 ]

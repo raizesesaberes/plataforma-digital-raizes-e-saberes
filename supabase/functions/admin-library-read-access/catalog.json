@@ -1,0 +1,492 @@
+{
+  "f9db671e-880b-52ea-aa36-5e5114b9cd26": {
+    "content_item_id": "ff96ab62-cfcc-5ac5-a569-c6235c49a1c6",
+    "source_id": "12HCl4hc8-OIwW91kQQKKZzEczas-TTDw",
+    "source_sha256": "5fd077c7369d3ab5d8f5ffbd3ac9e2701d8f1100a9185e041a2d32fbe2d8bd9b",
+    "page_count": 164,
+    "audience": "teacher"
+  },
+  "a0d95a29-42aa-5e84-bdaf-91fd4f139610": {
+    "content_item_id": "d36b4785-e2f5-57c8-865a-31d84b7f9132",
+    "source_id": "15GUju_rXMVDx6X0kOXRNXDuhQSqMG87k",
+    "source_sha256": "f075583ffb1fa1855f2fb3d43b16dfba7eb99d33f377ee26373a354f83c6a0d7",
+    "page_count": 482,
+    "audience": "student"
+  },
+  "9cfe6192-6559-5e66-b81c-9c79bfd9bf8d": {
+    "content_item_id": "aff28653-97ab-560d-baee-0f325870b1dd",
+    "source_id": "1s1zSUzl_ziqJMw5Xk1n_oWTbgRJMBM7h",
+    "source_sha256": "27d036fd134e8d24e6eafaa991ab3f604c05b6d06ab4eaefe16b8cde8a13f3a4",
+    "page_count": 138,
+    "audience": "teacher"
+  },
+  "e9675861-5c97-5243-856e-4b8ed01281fc": {
+    "content_item_id": "b1fcae20-d570-59ca-a7f6-bdacb4abbf95",
+    "source_id": "1H4gjCtTehFCkbq_Wn1FB1LnEwLxsTonX",
+    "source_sha256": "84c892c7419ad46f69a279439c45dd5bb189aec9ceaf4ab2965f1c58d6240e6d",
+    "page_count": 438,
+    "audience": "student"
+  },
+  "5829f2be-4d45-5555-8194-9c60055e0f73": {
+    "content_item_id": "9be35229-3ad3-59e4-8ac0-39de3ce5c116",
+    "source_id": "1AesokZdIgeL4b32qHWWbDCrId3vXQcET",
+    "source_sha256": "9467f94f562c505a45669961bf2d0a1e0e61e5ebedbfdaefca80483b1bd2e7eb",
+    "page_count": 157,
+    "audience": "teacher"
+  },
+  "39115318-0887-58f0-b8e1-cd34983fd810": {
+    "content_item_id": "70d05e90-e279-5518-9e3d-cddb356dcdb3",
+    "source_id": "1L-HakEfleDQRN3p2rPgfu3If0Q_T4Sdz",
+    "source_sha256": "6619738db0ef0e85f4adf96568e13931c8b4acbaa356ae9daa79b9d0582af1be",
+    "page_count": 142,
+    "audience": "student"
+  },
+  "7c9241cb-7c3b-5985-8a55-39f5d1393436": {
+    "content_item_id": "de3f84f2-a5d0-551d-9cb5-f9950d9d7e44",
+    "source_id": "1p94g7PN-5UZp7RlJwxzpiNcKpjrobrjV",
+    "source_sha256": "8289e40ea8451b7cfdd1bfa8e21edea997098b7f1b3d706d11b0997614c76604",
+    "page_count": 157,
+    "audience": "teacher"
+  },
+  "18fb6b93-e4b5-515a-823c-0d99df88ceaf": {
+    "content_item_id": "59cee23c-4370-52f9-bcbb-4c42aeb7f2d9",
+    "source_id": "1R64I2-SkyH3tnNBciJ_mQYFk976Ke3RR",
+    "source_sha256": "3b9fdc5a2bb06ba3ca0e5e23faba52876ffb7f316446804c8936a5f40305ccf7",
+    "page_count": 142,
+    "audience": "student"
+  },
+  "ed528f13-3d81-519f-8584-87cf9b42954e": {
+    "content_item_id": "a40d2838-6c08-5042-bbdc-4471f5c232f9",
+    "source_id": "1OXwOTFgdemTkg6_hN6mX55S_HZfve62C",
+    "source_sha256": "8efa2ac4fccb1fb8cfb032613dce6422d7a67a48c22d89dd6fd98d1bd867a5d0",
+    "page_count": 172,
+    "audience": "student"
+  },
+  "dea7e042-6dc0-554e-85e9-e4da2c53bd61": {
+    "content_item_id": "d64b7dc8-c93b-524d-bf6d-e2949ee52f0b",
+    "source_id": "1G7MJTSurNK-KGfLE4P9YXI4aadcoK2Iw",
+    "source_sha256": "875b1d7feea87bb9845c3a7bc094395a67bebbba2dabf98c3f7a51bb36ddfd61",
+    "page_count": 87,
+    "audience": "teacher"
+  },
+  "75a10930-56ba-5fd1-bdee-f657efcec2b4": {
+    "content_item_id": "1cbbb9a1-1324-523e-ae5d-75e37280f8b2",
+    "source_id": "17X-hB_Dr4ktAFyuMXsEDOdWGHN1EWCrm",
+    "source_sha256": "ac103426c6731af4f561561460b8cf712110e3e537a2627ada715dab6b37a13f",
+    "page_count": 430,
+    "audience": "student"
+  },
+  "59b91850-5428-5dc9-ae5d-4f5d5f9018e3": {
+    "content_item_id": "b9984572-cefa-529a-b05f-143a56c3437a",
+    "source_id": "1AX4296M6NoInh4I2FGju5G_iFPGZklsw",
+    "source_sha256": "d65452598b972f350e953133d9a50f22ee34359c90849247b44f6e8b8bd8009c",
+    "page_count": 432,
+    "audience": "student"
+  },
+  "0fe70350-f03b-5840-a66f-9a8ad931b760": {
+    "content_item_id": "09fa60c0-85d9-5a31-8301-c298b1ff7892",
+    "source_id": "1vacUytaob2kJ9z_AKDmMe2qt5fzMlunv",
+    "source_sha256": "3b1b9133f1228aedec65c05f6434646bb421fd7cf381a447d582180e2bbd1562",
+    "page_count": 116,
+    "audience": "teacher"
+  },
+  "59276260-a832-579b-a8b7-af7d90b217f8": {
+    "content_item_id": "6d880361-6f7b-5c89-956c-1a19dc8bceb3",
+    "source_id": "1ABP-vQoCiVCFJkVTtd3kN9XxI4LvIZlv",
+    "source_sha256": "6d937145510e87f00c0212311f78ac594a5bb67b4f65b0aecd3ccfb9dbb8a361",
+    "page_count": 130,
+    "audience": "teacher"
+  },
+  "2e25f74e-5b13-5a11-87aa-b6b421805f77": {
+    "content_item_id": "99673c0c-71c5-51c7-a0cf-72b3f7767153",
+    "source_id": "1niQiIHOBjIeoxKvQwpAJVThMx23gMzqq",
+    "source_sha256": "6d8dea9171b36267db56ecf8c292ae61786977e45fdc81cee1c606058a011994",
+    "page_count": 114,
+    "audience": "teacher"
+  },
+  "799eeeaa-073a-564e-baab-e81e9de3c8e0": {
+    "content_item_id": "9359badb-1981-5a48-ab13-54b32bc458a1",
+    "source_id": "1GTtdABSSoBbGE86SkSk--8_kFx7mILfN",
+    "source_sha256": "3ceae7b9418e4555527c20633aa9859c2256353d2456f0bb9f5842e12bde33a0",
+    "page_count": 214,
+    "audience": "student"
+  },
+  "ea45cfdd-f763-5d3f-a07a-004b46938d0e": {
+    "content_item_id": "f3f82cad-1e0f-512d-8eb5-29c2a88cebec",
+    "source_id": "1assEOGGYQhDdfGw4FM7lqeD8TdOrhJ2t",
+    "source_sha256": "c5d64e9f36afe073ccb503c0aa82ac5c7b2efb48ccc7b6559e5165f1fea85681",
+    "page_count": 132,
+    "audience": "teacher"
+  },
+  "48b7be62-4f85-57ae-98a1-c80151518bb8": {
+    "content_item_id": "78f90333-36ea-5fb6-a503-1037eb921eac",
+    "source_id": "1dky8GLUW-PKsQb-z9IjPvOzUuSTBInsM",
+    "source_sha256": "9057eb4052f690030f836485270cfefadf05997ae58d22428335e6bd7ee5fae5",
+    "page_count": 122,
+    "audience": "teacher"
+  },
+  "c72a0765-3dc8-54cc-93e0-b97c1d1fbb25": {
+    "content_item_id": "5a14bed0-4f1d-5b11-853d-a270778ff3a4",
+    "source_id": "1hPzjcrfpJmXYS06zKXulgHs1mfqC3POl",
+    "source_sha256": "6a2576348a329e5803c41dc4531989289551411a767c88bb3ef219c4457e1763",
+    "page_count": 386,
+    "audience": "student"
+  },
+  "9e8a55e6-b6fd-5f02-878b-9cff08731508": {
+    "content_item_id": "b79e234c-5acf-5b43-a588-ce1750d1e4d9",
+    "source_id": "1TRn6F-HhSUN2eBatY0iIyYLjrUh3dTw8",
+    "source_sha256": "26fafe516e686a87fbb6d431252cc8ee59ab0828fe5c93bf735fa8ed6334f9fc",
+    "page_count": 426,
+    "audience": "student"
+  },
+  "16d8c063-0359-5cdf-8e05-a983083e3d50": {
+    "content_item_id": "cb79945d-3644-5048-8ce6-766a16bc69a2",
+    "source_id": "1_Pg0mZbXlfGbmc0RJzpjdxpKGVw7q9Hp",
+    "source_sha256": "2fa25d42179e495bebeedecdda425561cd2232b8292c886d2df948c85c1f5102",
+    "page_count": 80,
+    "audience": "teacher"
+  },
+  "5d1cac7a-8f54-523c-bbd9-cd4460f30ddd": {
+    "content_item_id": "53445ce7-6267-5ce0-b3aa-7b4405a89bd2",
+    "source_id": "1-5671L7l3fFvfT4Qzz8w40LMp-xoBJQS",
+    "source_sha256": "7ff2cfa7af991651ef6f83285374e7a9b6ff156b987a703774bad5dd9639a754",
+    "page_count": 142,
+    "audience": "student"
+  },
+  "39dca9a1-4b43-5b7f-ad75-06500b1cd378": {
+    "content_item_id": "16caff9a-52b0-59e8-b729-7e64f36b1e25",
+    "source_id": "1QI4pytRx5HwPKsJehMIpDnQM2_rQyr2F",
+    "source_sha256": "f66b234e471d8252dd965d4a91988c5a621fc48a6c49157a5870e1687fb89ac1",
+    "page_count": 77,
+    "audience": "teacher"
+  },
+  "969e935a-92b5-5993-bde4-864f5282185f": {
+    "content_item_id": "635aed67-44ee-558a-b55c-d2f69320f5ce",
+    "source_id": "1WKKzJxU0cYYDTvocr7wPQ0h6FjwIGtFS",
+    "source_sha256": "50b8ab4524d7442611b65bbd05c2db5634ea4a08417f094ea4e0e0f446169672",
+    "page_count": 142,
+    "audience": "student"
+  },
+  "65ab8b30-aa0c-5417-89c0-604e6bd28625": {
+    "content_item_id": "57810211-2a9c-5c9b-b412-881b99aeb496",
+    "source_id": "1Y8l0aZT8Pz6CWbQhKDB6a9OIXv3ssfjE",
+    "source_sha256": "9b2f19fd155d0a1cd228ec21a926ba0817f2733371019b1de21944f4bfd88a11",
+    "page_count": 336,
+    "audience": "student"
+  },
+  "570f41da-bb20-5c1f-aa60-ae043e09d916": {
+    "content_item_id": "4fa90d50-14a0-5021-ba63-32f50213d486",
+    "source_id": "1PlsSIoPaMSiPeWzjs5kj1HT5Tn6CIuEJ",
+    "source_sha256": "5e8e3e5c45ada43d59051e598b432a3596c8ae3e54fabbdc988daa89c7f321af",
+    "page_count": 378,
+    "audience": "student"
+  },
+  "08f55112-89d3-50d7-81e0-d6524d8665da": {
+    "content_item_id": "19676eca-57fe-56ab-9817-068e643f4ca9",
+    "source_id": "17RS_zB5xQjMKk-QM-vQu_fpr7-uL1gGT",
+    "source_sha256": "80b368d91738ca168d25ae36521379de34343b4488ef69b82977872c44fdff8d",
+    "page_count": 112,
+    "audience": "teacher"
+  },
+  "f1d91322-3fb9-5d95-8298-46f24285f5cd": {
+    "content_item_id": "88ba844c-8050-5d47-87bb-ad6f6a345aca",
+    "source_id": "1yHoRmuJ2L367v5HdInAQoAtM8OoeMDpc",
+    "source_sha256": "7a1b3687b8aa844309f24a4b4c6bd29f7ce3a3f3eeeaea70e35eb576d1508acd",
+    "page_count": 98,
+    "audience": "teacher"
+  },
+  "718ca9cd-d9b2-54da-ab64-db6f4baf4389": {
+    "content_item_id": "b8fa1d24-289b-54ea-83e8-95e23c1c33e5",
+    "source_id": "1xMCt6ZUq0SwCTRcljz3edjSO-bXCpnBE",
+    "source_sha256": "72d6ab3315a47b91a95bdaff056744e860a9072bd1d688fa9eba3056adb7845c",
+    "page_count": 152,
+    "audience": "student"
+  },
+  "414c3785-c983-5cca-996d-8501fc8241cf": {
+    "content_item_id": "a9cd8a03-d85c-5a55-ae6c-7043b3fc1aee",
+    "source_id": "1PGdnnDKEA3wn4-0xvwlffVYVuxlpBhMh",
+    "source_sha256": "8ecd06096206e2a9f755a804fff566269707994295233e608bea9689a979b85e",
+    "page_count": 86,
+    "audience": "teacher"
+  },
+  "a732d404-e8f0-5ea4-85f6-2e41c8698d06": {
+    "content_item_id": "01a559b6-729f-5003-b704-dab6f55af440",
+    "source_id": "1qQ0yTzBowhKj7-LTLXXW1IBmK7og842E",
+    "source_sha256": "9e8591ca899e33a6135c024cae665cbc64fa879157b4c03536563b9c133bd5df",
+    "page_count": 160,
+    "audience": "teacher"
+  },
+  "bd47e88a-35ab-553d-96b0-394055487fc2": {
+    "content_item_id": "0a536e8d-0954-50d2-a8ac-d5668f34ec05",
+    "source_id": "1o8Q9sJHs_UEbUJPZsdunqGAjKNd9hAhl",
+    "source_sha256": "e94d03ba42bee27bd298f5b0ba4b333b7fc33a110681498f029abb981b4716d8",
+    "page_count": 340,
+    "audience": "student"
+  },
+  "ac8ca870-b3a4-5713-bbe5-943357fed44d": {
+    "content_item_id": "b9ce773a-2837-5c19-b3ef-7c73a2cd824a",
+    "source_id": "1s0bVenyia0EQ6gj0UJW3kh7qstZxSeT-",
+    "source_sha256": "fe7abed91258740fc825eb18e85c522e5db318f2a86425219d58875fced7258f",
+    "page_count": 156,
+    "audience": "teacher"
+  },
+  "6cdf3735-9f98-5e2e-a09d-a45157c4e5ca": {
+    "content_item_id": "897f5fcc-e0d5-5d02-9ef9-1244fd769d8a",
+    "source_id": "13nzBusHPuhhN1bNOKG2m9v-7pOGz8aef",
+    "source_sha256": "13692b18cc061520642ce0364b935f9d129ea7df34e1b4d02be5d925cc200b6c",
+    "page_count": 362,
+    "audience": "student"
+  },
+  "0d58398d-dc49-5c1a-8de0-658358cde59d": {
+    "content_item_id": "4a57352d-bfcb-5560-b0a5-9e18946c3c72",
+    "source_id": "1OAVtQm5leb0SWK862xUmKimjw4Z261AZ",
+    "source_sha256": "94271df41313bcc9d46af9ff391cf87f7b3e523295c149de14487d62f88fad2d",
+    "page_count": 164,
+    "audience": "student"
+  },
+  "fd0200f9-cad5-5593-bdec-7ddcb9a4af76": {
+    "content_item_id": "746553e9-fed2-54c7-ab7d-705b4f3758bd",
+    "source_id": "14jIESIp6qHdwI3Ms3aUmY-AzzCxLn4t7",
+    "source_sha256": "636d78c9c56b391418432399bcf187c844abf0b4c78a5fb3653da04e6a2fcbc6",
+    "page_count": 75,
+    "audience": "teacher"
+  },
+  "aedad60a-e287-559a-8de4-c3b1aca485d4": {
+    "content_item_id": "d89a4fb2-76b4-5e3f-8da5-06774da6544d",
+    "source_id": "1VhEbC2xT6L78dIVs7FCT0W8tcDXHB8sR",
+    "source_sha256": "c7c3823f56fa9ddfdf9f2f000fd85814d8b3bd33b3d534b5f796d1a118c3e757",
+    "page_count": 127,
+    "audience": "teacher"
+  },
+  "c5cbbc37-f26a-524d-9987-063609e2adf6": {
+    "content_item_id": "185035e6-3033-528b-abd1-626207d5cf0c",
+    "source_id": "1LnMAimrP9EghclzAtraHpPnzvI80OVVS",
+    "source_sha256": "94e85993944e0d0a1caff87200e540e4045f1fba443a18b817cdb6c557a1454e",
+    "page_count": 96,
+    "audience": "student"
+  },
+  "f731dfe1-b191-5492-9a72-21af75c0425b": {
+    "content_item_id": "dae3240c-332b-59e4-b9d1-8acbb37134a6",
+    "source_id": "1bncHHm8YkUGH8qxtFSYlmXi_KrnvB3kj",
+    "source_sha256": "613ee64f9b48b14a5a9d0eb67b9cae25cf5021f944dd0526e6025182f2875359",
+    "page_count": 128,
+    "audience": "teacher"
+  },
+  "f3f61bde-4029-5402-82a7-ba5d78d91cca": {
+    "content_item_id": "7760efb6-91fb-5706-9033-86ec54c1dc3d",
+    "source_id": "1RMru_Fk3ZQx_P04KiPdnP5CroWPt0_M0",
+    "source_sha256": "97d2792e69591196c472f725dc4d869eb47df0d8aa71cab4aa42b83155d82729",
+    "page_count": 96,
+    "audience": "student"
+  },
+  "751f43ce-87af-53a4-978a-9f741eb95bdf": {
+    "content_item_id": "06fd88fe-fea0-5a73-9ced-55fc93195161",
+    "source_id": "1yDWk-h36i1qeNDBbrsfAGuG5cnKt2Z7J",
+    "source_sha256": "2f448e47ec2f7b31987cfdf0c9ad37cb43a82d280dd6a7833bee7b359496d741",
+    "page_count": 172,
+    "audience": "teacher"
+  },
+  "f5fa875c-f08e-5248-afea-3c18792bcbda": {
+    "content_item_id": "86da60b0-d12d-53f6-81d8-e7dc4f506e05",
+    "source_id": "16Bla6MLyZJV2R6RVxZaC6_-aWvkOSUIU",
+    "source_sha256": "0a8663100c806355bc66f775a26dbd05c5d3011bd5be978b258614326099d5a2",
+    "page_count": 148,
+    "audience": "teacher"
+  },
+  "2c98b22a-9659-5ab2-b302-a97616bcdc18": {
+    "content_item_id": "73de4c35-f6bd-550b-9080-094e9a3c6c5a",
+    "source_id": "15iz5jsCsDf8_NjNM2yTsvzEApAlnpUqc",
+    "source_sha256": "f0c7b83ead9ba6ac0bec00303a697259c8c7b8d1175fe42cc4d6254bb9b3510e",
+    "page_count": 222,
+    "audience": "student"
+  },
+  "d0ca4c50-fce6-5ccb-8815-47554b819c56": {
+    "content_item_id": "00d74ee0-f227-5b03-b6c4-0a1a17557ba6",
+    "source_id": "1CmIWWcnqCvYXYLqoJNe4hUnAzWvlHBD3",
+    "source_sha256": "2bb04e19f5bae9061b97933a1575819a1d14522267846c09d45960b20ff17915",
+    "page_count": 238,
+    "audience": "student"
+  },
+  "3fd0915a-47be-5309-a773-e09ee8b1dd51": {
+    "content_item_id": "8bec6c3d-bfc4-5000-9355-fd3cbc40252e",
+    "source_id": "1b6CqgGFxwktinicoqeIv6td4e_HXgW43",
+    "source_sha256": "e3f178089dc34396f4c59dde1b08bdeb323bd42983bf52b55c7b2aeda9dce457",
+    "page_count": 178,
+    "audience": "student"
+  },
+  "e7131051-b169-5363-8623-672f7bb849af": {
+    "content_item_id": "fec6a3d3-7187-5e9c-9991-0ee4e9b008b8",
+    "source_id": "1U9k039avIyTW4yegYuE4BUW3l6WWv3OC",
+    "source_sha256": "28722ba436e92a410a510cff74eb99256ff1b8a759cd8a055da577a4aa52ed14",
+    "page_count": 89,
+    "audience": "teacher"
+  },
+  "d51bdb49-f57a-50de-afd6-ca9deb74a5ca": {
+    "content_item_id": "62f969de-a16e-5c67-bf32-d3cf90d9f46b",
+    "source_id": "12-QFCuMwRI9LCbvwirl8oKjpM9zr3fDx",
+    "source_sha256": "1934c8f7401cecf1b915c4a0e81168cb2603b114b15491b0b50d4433363a85f5",
+    "page_count": 124,
+    "audience": "teacher"
+  },
+  "b42474f3-94d5-5a42-b6ca-da8092b45f40": {
+    "content_item_id": "d465040f-8168-5c9f-9d47-c5f7ad5adde0",
+    "source_id": "1o5d6AS3GmEwO0gg5oH8SVkAxpeYj8L-S",
+    "source_sha256": "bba841622690a180ec9fad6b356aa21f51ab40c3d4e81a721674fd4cc4cb7762",
+    "page_count": 96,
+    "audience": "student"
+  },
+  "b7614d79-6ee1-5e53-b0b6-d64815a608ef": {
+    "content_item_id": "a5b4a07b-182c-59f6-86c0-37b788c56647",
+    "source_id": "1VaYRHftZN76z9HWmdZWKW8d2rQKOzZ7r",
+    "source_sha256": "cd2a227379defa19a249904b3e259355359d0fb70e32b06a8c6d121511c25212",
+    "page_count": 124,
+    "audience": "teacher"
+  },
+  "e2939838-6f1a-5155-8081-a0323f5f6253": {
+    "content_item_id": "c40ba836-d7c9-5451-97c2-5ca7a3056628",
+    "source_id": "19q-HhsqyvZ4ANtJypD1WFkhHaaKcPexX",
+    "source_sha256": "a02fbf1d0afb6de62b803c84a7da6df9007e73c24f76c4e7aa20aaf870a59087",
+    "page_count": 96,
+    "audience": "student"
+  },
+  "dac3a40f-459d-51ad-bf7a-dffbddd00bd5": {
+    "content_item_id": "72205e90-1060-4981-81b1-88d9273f1592",
+    "source_id": "1HgbaJvBjXp7RAq7OYBnX6zZGH53Hdj6P",
+    "source_sha256": "481712b62908fa08e2ddb795a43be6ae3c0d31da0971e694f37c383d74055344",
+    "page_count": 170,
+    "audience": "student"
+  },
+  "ce99fcc3-7dc6-5610-8731-eb4b98b5674f": {
+    "content_item_id": "fdfee03b-8bd4-4c67-8594-5f46c24d768d",
+    "source_id": "1qEJUxNeSJbC0NfRImzHTlla1cviKWm82",
+    "source_sha256": "eeb0e1a84e5071df01612b842e5f59253afe35fcfc8b733089734b02ed7f0f8d",
+    "page_count": 119,
+    "audience": "teacher"
+  },
+  "1d1c1632-a066-5100-bc08-5f4b5069a377": {
+    "content_item_id": "0cc40c25-9ad4-50eb-9c1e-6d870d920729",
+    "source_id": "1y89pI_s3clxVMny5ft5IGcuWfx0PoFOI",
+    "source_sha256": "87628627b740b4b27c8f85d9272ffda64724cd44a249c9ee004214ce92f1ec96",
+    "page_count": 312,
+    "audience": "student"
+  },
+  "b794e954-8bc8-515f-8f8f-ee518da87a7f": {
+    "content_item_id": "1537cf44-96b0-5f01-8f5d-f07eba767843",
+    "source_id": "1i9Ayu4U-iyoRTkkrBMGKNxDWx2zb4Xqy",
+    "source_sha256": "dd3e2f5bf1259cadf830ab85c80362db1434996520b8559b14902a110060c098",
+    "page_count": 310,
+    "audience": "student"
+  },
+  "5f734c57-8591-59cc-acba-a28069e4a50f": {
+    "content_item_id": "fb8314ba-d083-5044-aaeb-6319048bf645",
+    "source_id": "1TIpIGs2TOBbXPBbCOWlJbdNwbfRPpKr4",
+    "source_sha256": "bff0309d5869244946cbbc99533957a6821c8d1617ac3ab5efafe7145d4f0fb8",
+    "page_count": 152,
+    "audience": "teacher"
+  },
+  "77bdfbe7-4492-5a68-bb14-6ab03159d7a0": {
+    "content_item_id": "83115eb6-c846-51d3-bf50-7d51a986dfbe",
+    "source_id": "1b64HG7dSZ2UDKj4u_D1QYTD-OdVc-TjI",
+    "source_sha256": "8b0c9b7a8b07afea2852e07f190d7bbe6b925c4aaa2ca8dd984cb17b61ea4709",
+    "page_count": 186,
+    "audience": "teacher"
+  },
+  "25658f9b-80af-5f85-bc60-5cc986819dd9": {
+    "content_item_id": "08593447-07e3-513d-98da-8b5734b599bb",
+    "source_id": "1uFuNoTURIEt76hWlL1atfCAeUSNDvQrU",
+    "source_sha256": "bc8b2a5bf70cbee741be94f5fa6f1646af04471d2e7b48fd9af366b3c8b26fd2",
+    "page_count": 142,
+    "audience": "student"
+  },
+  "6b2274b1-405d-52f1-a668-69616cfdd015": {
+    "content_item_id": "a18114d2-2557-5677-b8a1-cf2045ffecbb",
+    "source_id": "1Pj_KjGqnpIV3Wf4CP81y7IqhzqI6Vu6P",
+    "source_sha256": "06fd4495ebcf5f23381f22dcf3d85e3fd09111cbae7848bb559e4d38ea873480",
+    "page_count": 88,
+    "audience": "teacher"
+  },
+  "62b700eb-692c-57f2-8034-70b6f998a15c": {
+    "content_item_id": "50aa15cf-8601-5a31-a29a-8f036a92df09",
+    "source_id": "1Oy94Yusw0DQ0lWQ_aLrmHmejgfLV1Awk",
+    "source_sha256": "552af2ecd7b1e2cacb54d7a20b9c96d52a6fbf31a6c1b459ca97ebdf458470aa",
+    "page_count": 166,
+    "audience": "teacher"
+  },
+  "308fdd33-0346-5b55-9d1e-2d293fb2ca15": {
+    "content_item_id": "21a4f7f9-cf3f-5a0d-a70a-3fe3a6994c31",
+    "source_id": "14B0lYhcxjNKllQw7SduXFm5GQdanjz9b",
+    "source_sha256": "c5b383e3c530e1f6996149148b61848b55a3a693164c0f320f6860fcc78b6759",
+    "page_count": 184,
+    "audience": "teacher"
+  },
+  "23405ffe-daf0-5b15-b150-4702e760aa98": {
+    "content_item_id": "834e08ef-9473-577b-b8bc-e39c0ec2925f",
+    "source_id": "1k3Ocht9vgUjqOxRNAAuJHXJqOMTNQm1P",
+    "source_sha256": "e42f9ffbb33ea39fa7ef5463eacaef4f423737167e333764f273913e863af497",
+    "page_count": 300,
+    "audience": "student"
+  },
+  "21f8f3d7-cc84-5ab8-8bf6-051ae92f888b": {
+    "content_item_id": "89bc7da1-e3a0-5ce1-803a-a808d4cc647f",
+    "source_id": "1Lcb8PlU4pICRFYL01MbCoVoQ9-F55BrG",
+    "source_sha256": "46c52924f847610484d93391304b736e37b17eebfddf59f46cba5921d707f9bc",
+    "page_count": 306,
+    "audience": "student"
+  },
+  "df7a9b54-b2f5-5815-a42d-fd0ab1bc5c94": {
+    "content_item_id": "9df5e3fc-1cd9-5e1c-bd99-e4e8d1e545b7",
+    "source_id": "1u8W8FmyMZykACrqwRUP5xxm7msOvsQ34",
+    "source_sha256": "a2f2bff644517e6499dbdf07e76367b7c84b2cd75c3cac1a72c7c418c9aa4299",
+    "page_count": 134,
+    "audience": "student"
+  },
+  "ffaec96c-4571-5278-96e4-f18973bea0fd": {
+    "content_item_id": "a8044091-6ea8-5556-8406-98ccd69e6651",
+    "source_id": "1g14PCeA3AlvDJJPTrX59wP_oHvT4Uss8",
+    "source_sha256": "af2308a988cd87e93af1dfde4008dd089acfdc3da27193417a2118ab9ef9bbe3",
+    "page_count": 95,
+    "audience": "teacher"
+  },
+  "c80097bb-9519-5ca6-b15e-9eb86a0cf166": {
+    "content_item_id": "94d599b6-2bf6-5992-aee2-ea1155b59173",
+    "source_id": "19pBqv4RXuZiPOURyuRVg5Xt7RVE0vgql",
+    "source_sha256": "bcef792f545278a4269b92b0fe9a5b1c6fb7adffc2be6bcb487c50af26a58ecb",
+    "page_count": 164,
+    "audience": "teacher"
+  },
+  "cb65bc0d-246a-5907-8bee-0d1801db404f": {
+    "content_item_id": "481d2c8a-3e2b-5573-b21a-0e6eb3f946d3",
+    "source_id": "1RovrsEn0jsZoPjUflW3BUxx822Za4OZj",
+    "source_sha256": "efc9a91fb29124e6c66c3ca045acc012adfd926c469282466f9d434db570e645",
+    "page_count": 180,
+    "audience": "teacher"
+  },
+  "ac9026d0-7b56-58c6-82d0-bc6241cb2576": {
+    "content_item_id": "f9074439-3c98-52cb-8f42-5af3cc036f9e",
+    "source_id": "19sn0SPzFZduZouigRc4t7K6qY46qMFki",
+    "source_sha256": "1f5966077e54eed1cc8b6fb0ea363bdfb10deb6b72ace547320e4072c9d77c79",
+    "page_count": 250,
+    "audience": "student"
+  },
+  "290d0225-f0dc-537a-ab1f-6f7ad35383e3": {
+    "content_item_id": "a92abea7-65e8-584e-8c59-7648ef9bd2a8",
+    "source_id": "1u4V1lVv2w83S2Ukj9O8J6P6gln6xfYm4",
+    "source_sha256": "27b20155763e756e4abf8eabadbe408716a7933356ac1c96e3ef4502148ca5ac",
+    "page_count": 310,
+    "audience": "student"
+  },
+  "1b0ab512-d1b0-50f9-92da-c612baea1a45": {
+    "content_item_id": "e036b563-43e5-5a55-acf6-1429a5052db8",
+    "source_id": "1vCyiOgXkGzCghM9NfPBeriQjyVHoHK0h",
+    "source_sha256": "b97365747345f14629d5d0f35fc4e280e1643092c510e5b72b391e46eed009ff",
+    "page_count": 109,
+    "audience": "student"
+  },
+  "b7304f86-b823-5d68-b4f2-3fa035d410d7": {
+    "content_item_id": "0526d40a-cc1c-54b9-8dc9-9c6edaf0b9bd",
+    "source_id": "1SSMxgnDYQre4uAGXYcQ1uB4DhiiQ-3Cm",
+    "source_sha256": "4c6f7cfdb9a5df0b4e4aecff8decb96ffe4dc6142da7758db313665ad3eef5bd",
+    "page_count": 74,
+    "audience": "teacher"
+  }
+}

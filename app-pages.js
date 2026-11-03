@@ -11813,7 +11813,7 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
           }),
         }).then(normalizeRpcJson).catch(() => []),
         client.request("content_items", "?select=id,title,editorial_status,owner_scope,metadata&content_type=eq.BOOK&metadata->delivery_adapter->>kind=eq.library_book&order=title.asc", options)
-          .then((rows) => ({ items: rows.map(row => ({ content_item_id: row.id, title: row.title, editorial_status: row.editorial_status, owner_scope: row.owner_scope, ...row.metadata?.official_edition })), error: "" }))
+          .then((rows) => ({ items: rows.map(row => ({ content_item_id: row.id, book_id: row.metadata?.delivery_adapter?.resource_id, title: row.title, editorial_status: row.editorial_status, owner_scope: row.owner_scope, ...row.metadata?.official_edition })), error: "" }))
           .catch(() => ({ items: [], error: "Não foi possível consultar as edições oficiais. Atualize a página para tentar novamente." })),
       ]);
       adminOperationalState.status = "ready";
@@ -14784,7 +14784,7 @@ const renderAdminOfficialEditions = () => {
       <small>${printableEscape(item.collection || "Coleção não informada")} · ${printableEscape(item.school_year)} · ${item.audience === "teacher" ? "Professor" : item.audience === "student" ? "Aluno" : "Público não informado"} · ${Number.isInteger(item.page_count) ? item.page_count : "—"} páginas</small>
       <span>${printableEscape(item.editorial_status)} · ${item.ingestion_status === "verified" ? "Arquivos conferidos no armazenamento" : "Envio pendente"}</span>
       <small>Escopo: ${printableEscape(item.owner_scope)} · Registro: ${printableEscape(item.content_item_id)}</small>
-      <p>Conferência de cadastro. A leitura administrativa integral ainda não está habilitada.</p>
+      ${item.ingestion_status === "verified" && /^[a-f0-9-]{36}$/.test(item.book_id || "") ? `<a href="admin-edition?book=${encodeURIComponent(item.book_id)}">Conferir livro</a>` : `<p>A leitura ficará disponível após a conferência dos arquivos.</p>`}
     </div></article>`).join("") || "<p>Nenhuma edição cadastrada retornada.</p>"}</div></section>`;
 };
 
