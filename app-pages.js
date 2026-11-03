@@ -17026,7 +17026,6 @@ const renderOfficialSchoolRealContent = () => {
   const location = [school.municipio, school.estado].filter(Boolean).join(" - ");
   return `
     <header class="official-school-real-hero" id="inicio">
-      <img src="assets/home-official/minha-escola-v1-hero.png" alt="" loading="eager" decoding="async" onerror="this.hidden=true" />
       <div class="official-school-real-hero-copy">
         <span>MINHA ESCOLA</span>
         <p>BEM-VINDOS A</p>

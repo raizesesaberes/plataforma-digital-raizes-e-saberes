@@ -26350,3 +26350,55 @@ html[data-a11y-reduced-motion="true"] *::after {
 .student-premium-workspace .student-premium-hero span,
 .teacher-pilot .teacher-premium-hero span { font:650 12px/1.4 Inter,system-ui,sans-serif; letter-spacing:.04em; color:var(--learning-green); }
 .student-premium-workspace .student-premium-card { min-height:160px; }
+
+/* Institutional home presentation; data, navigation hooks and access gates retained. */
+[data-admin-workspace], .app-shell[data-environment="escola"] {
+ --institution-green:#175c40; --institution-ink:#203c2e; --institution-muted:#596b60;
+ --institution-line:#dce6dd; --institution-soft:#eef5ef;
+ background:#f7f9f6; color:var(--institution-ink); font:400 16px/1.5 Inter,system-ui,sans-serif;
+}
+[data-admin-workspace] .admin-sidebar,
+.app-shell[data-environment="escola"] .app-sidebar { background:#124b35; box-shadow:none; }
+[data-admin-workspace] .admin-sidebar-logo { min-height:0; padding:8px 4px; }
+[data-admin-workspace] .admin-sidebar-logo img,
+.app-shell[data-environment="escola"] .sidebar-logo img { max-width:116px; max-height:130px; filter:none; }
+[data-admin-workspace] .admin-sidebar nav button,
+.app-shell[data-environment="escola"] .app-nav a { font:600 14px/1.4 Inter,system-ui,sans-serif; min-height:44px; }
+[data-admin-workspace] .admin-sidebar nav button.is-active,
+.app-shell[data-environment="escola"] .app-nav a.is-active { background:#28664b; box-shadow:inset 3px 0 #df9b50; }
+[data-admin-workspace] .admin-sidebar nav button.is-active::after,
+.app-shell[data-environment="escola"] .app-nav a.is-active::after { background:#df9b50; }
+.app-shell[data-environment="escola"] .app-main { background:#f7f9f6; }
+[data-admin-workspace] .admin-hero,
+.app-shell[data-environment="escola"] .official-school-real-hero { background:var(--institution-soft); border:1px solid var(--institution-line); border-radius:18px; box-shadow:none; min-height:0; }
+[data-admin-workspace] .admin-hero { padding:28px; }
+.app-shell[data-environment="escola"] .official-school-real-hero-copy { min-height:0; padding:28px; max-width:900px; }
+[data-admin-workspace] .admin-hero h1,
+.app-shell[data-environment="escola"] .official-school-real-hero-copy h1 { font:700 clamp(28px,3vw,38px)/1.2 Inter,system-ui,sans-serif; color:var(--institution-green); overflow-wrap:anywhere; }
+[data-admin-workspace] .admin-hero p,
+.app-shell[data-environment="escola"] .official-school-real-hero-copy small { color:var(--institution-muted); font:400 16px/1.5 Inter,system-ui,sans-serif; }
+.app-shell[data-environment="escola"] .official-school-real-hero-copy p { margin-top:12px; font-size:14px; font-weight:500; text-transform:none; }
+[data-admin-workspace] .admin-hero-badges span { min-width:0; background:#fff; color:var(--institution-green); font-weight:600; text-transform:none; }
+[data-admin-workspace] :is(.admin-board,.admin-metric-card,.admin-context-strip article,.admin-door-card),
+.app-shell[data-environment="escola"] :is(.official-school-panel,.official-school-communication-card,.official-school-shortcut-list a) { border:1px solid var(--institution-line); border-radius:14px; background:#fff; box-shadow:0 3px 12px #183c2605; }
+[data-admin-workspace] :is(.admin-section-head h2,.admin-door-card strong),
+.app-shell[data-environment="escola"] :is(.official-school-section-head h2,.official-school-shortcut-list strong) { font:650 18px/1.35 Inter,system-ui,sans-serif; color:var(--institution-ink); text-transform:none; }
+[data-admin-workspace] :is(.admin-section-head span,.admin-metric-card span,.admin-metric-card small,.admin-status-item span,.admin-recent-item span),
+.app-shell[data-environment="escola"] :is(.official-school-section-head p,.official-school-shortcut-list span,.official-school-communication-card p) { font:400 14px/1.5 Inter,system-ui,sans-serif; color:var(--institution-muted); text-transform:none; }
+[data-admin-workspace] .admin-metric-card strong { font:700 28px/1.2 Inter,system-ui,sans-serif; color:var(--institution-green); }
+[data-admin-workspace] :is(.admin-quick-list button,.admin-topbar button,.admin-topbar-link) { font-family:Inter,system-ui,sans-serif; font-weight:600; }
+[data-admin-workspace] :is(.admin-metric-card,.admin-door-card,.admin-context-strip) .admin-inline-icon,
+.app-shell[data-environment="escola"] :is(.official-school-shortcut-list,.official-school-communication-card) .secretaria-icon { width:44px; height:44px; border-radius:12px; color:var(--institution-green); background:var(--institution-soft); }
+[data-admin-workspace] :is(a,button,input,select):focus-visible,
+.app-shell[data-environment="escola"] :is(a,button,input,select):focus-visible { outline:3px solid #d68a3d; outline-offset:3px; }
+[data-admin-workspace] .admin-overview-grid { grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); }
+@media(max-width:1100px) {
+ [data-admin-workspace] :is(.admin-operation-grid,.admin-context-strip),
+ .app-shell[data-environment="escola"] .official-school-real-grid { grid-template-columns:minmax(0,1fr); }
+}
+@media(max-width:640px) {
+ [data-admin-workspace] .admin-hero { grid-template-columns:minmax(0,1fr); padding:20px; }
+ [data-admin-workspace] .admin-hero-badges { justify-content:start; }
+ [data-admin-workspace] .admin-door-grid { grid-template-columns:minmax(0,1fr); }
+ .app-shell[data-environment="escola"] .official-school-real-hero-copy { padding:20px; }
+}
