@@ -2484,6 +2484,7 @@ const renderStudentLibraryHome = () => {
           <span>Biblioteca</span>
           <h1>Livros para explorar</h1>
           <p>Escolha uma leitura, abra o livro digital e continue explorando com calma.</p>
+          <p><a class="bv-card-action" href="edition-library.html">Abrir novas edições digitais</a></p>
         </div>
         ${recommendedBook ? `
           <a class="student-library-feature" href="${studentBookLink(recommendedBook)}">
@@ -5737,7 +5738,7 @@ const renderTeacherLibraryView = () => {
           <h2>Biblioteca</h2>
           <p>ACESSO AOS MATERIAIS DIGITAIS DA PLATAFORMA.</p>
         </div>
-        <button type="button" data-teacher-open-url="biblioteca.html">ABRIR BIBLIOTECA</button>
+        <button type="button" data-teacher-open-url="edition-library.html">ABRIR NOVAS EDIÇÕES DIGITAIS</button>
       </div>
       <div class="tw-library-entry-grid">
         ${categoryCards.map(renderTeacherLibraryCategoryCard).join("")}
