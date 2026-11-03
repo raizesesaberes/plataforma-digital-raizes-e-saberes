@@ -26402,3 +26402,71 @@ html[data-a11y-reduced-motion="true"] *::after {
  [data-admin-workspace] .admin-door-grid { grid-template-columns:minmax(0,1fr); }
  .app-shell[data-environment="escola"] .official-school-real-hero-copy { padding:20px; }
 }
+
+/* Approved institutional workspace. Student home is intentionally excluded. */
+.rs-workspace { --rs-workspace-green:#175c40; --rs-workspace-line:#dce6dd; font-family:Inter,system-ui,sans-serif; color:#203c2e; background:#f7f9f6; }
+.rs-workspace [hidden], .rs-workspace .rs-search-hidden { display:none !important; }
+.rs-workspace :is(.tw-sidebar,.admin-sidebar,.app-sidebar) { background:#124b35; padding:20px 16px; box-shadow:none; }
+.rs-workspace :is(.tw-teacher-card,.admin-sidebar-logo,.sidebar-logo) { display:flex; flex-direction:column; align-items:center; margin:0 0 16px; padding:0; min-height:0; }
+.rs-workspace :is(.tw-teacher-card,.admin-sidebar-logo,.sidebar-logo) img { display:block; width:160px; max-width:160px; height:124px; max-height:none; object-fit:contain; filter:none; }
+.rs-workspace .tw-teacher-card > div { font-size:14px; text-align:center; }
+.rs-workspace .tw-teacher-card strong { font-size:15px; }
+.rs-workspace .tw-teacher-card small { display:none; }
+.rs-workspace .admin-id-card { padding:10px; font:400 14px/1.4 Inter,system-ui,sans-serif; overflow-wrap:anywhere; }
+.rs-workspace .admin-id-card strong { display:none; }
+.rs-workspace :is(.tw-sidebar,.admin-sidebar,.app-sidebar) nav { gap:4px; }
+.rs-workspace :is(.tw-sidebar nav button,.admin-sidebar nav button,.app-nav a) { display:flex; gap:12px; min-height:44px; padding:10px 12px; font:600 15px/1.4 Inter,system-ui,sans-serif; text-transform:none; border-radius:8px; }
+.rs-workspace :is(.tw-sidebar nav button,.admin-sidebar nav button,.app-nav a) i { width:20px; height:20px; flex:0 0 20px; background:transparent; color:inherit; }
+.rs-workspace :is(.tw-sidebar nav button,.admin-sidebar nav button,.app-nav a) i::before { width:20px; height:20px; }
+.rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) { display:flex; align-items:center; flex-wrap:wrap; gap:16px; min-height:64px; height:auto; padding:10px 16px; background:#fff; border:1px solid #dce6dd; border-radius:12px; box-shadow:none; }
+.rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) > label { flex:1 1 240px; min-width:0; max-width:520px; margin:0; display:block; }
+.rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) > label > span { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+.rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) input { width:100%; min-width:0; min-height:44px; border:1px solid #dce6dd; border-radius:8px; background:#f7f9f6; padding:10px 14px; color:#203c2e; font:400 15px/1.4 Inter,system-ui,sans-serif; }
+.rs-workspace :is(.tw-top-actions,.admin-topbar-actions,.rs-global-actions) { display:flex; gap:8px; flex-wrap:wrap; margin-left:auto; min-width:0; }
+.rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:10px 14px; border:1px solid #dce6dd; border-radius:8px; background:#fff; color:#175c40; font:600 15px/1.4 Inter,system-ui,sans-serif; white-space:normal; box-shadow:none; cursor:pointer; }
+.rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) button i { width:20px; height:20px; }
+.rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) button i::before { width:20px; height:20px; }
+.rs-workspace .rs-school-link { float:right; font-size:14px; color:#175c40; }
+.rs-workspace :is(.teacher-metric-grid,.teacher-content-grid) { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.rs-workspace .teacher-premium-layout { grid-template-columns:minmax(0,1fr) 280px; gap:20px; }
+.rs-workspace .teacher-premium-section { padding:20px; border:1px solid #dce6dd; border-radius:14px; background:#fff; }
+.rs-workspace :is(.teacher-side-card button,.rs-admin-primary button) { min-height:44px; border:1px solid #dce6dd; border-radius:8px; background:#eef5ef; color:#175c40; padding:10px 14px; font:600 15px/1.4 Inter,system-ui,sans-serif; cursor:pointer; }
+.rs-workspace .teacher-side-card p { font:400 16px/1.5 Inter,system-ui,sans-serif; color:#596b60; }
+.rs-workspace .rs-admin-primary .admin-quick-list { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.rs-workspace .rs-admin-primary button { min-height:96px; font-size:18px; text-align:left; }
+.rs-workspace .official-school-real-shortcuts .official-school-section-head > span,
+.rs-workspace .official-school-real-hero-copy > span { display:none; }
+.rs-workspace .official-school-shortcut-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.rs-workspace .official-school-shortcut-list a { min-height:150px; padding:20px; }
+.rs-workspace .official-school-shortcut-list :is(strong,em) { text-transform:none; }
+.rs-workspace .official-school-communication-list { max-height:440px; overflow:auto; }
+.rs-workspace .official-school-communication-card summary { color:#175c40; cursor:pointer; min-height:44px; padding:12px 0; font-weight:600; }
+.rs-workspace .official-school-communication-card p { white-space:pre-wrap; overflow-wrap:anywhere; }
+.rs-workspace :is(a,button,input,select,summary):focus-visible { outline:3px solid #d68a3d; outline-offset:3px; }
+.rs-workspace .rs-menu-toggle { display:none !important; }
+@media(min-width:1024px) {
+ .rs-workspace:is(.teacher-workspace,.admin-workspace,.app-shell) { grid-template-columns:232px minmax(0,1fr); }
+ .rs-workspace :is(.tw-sidebar,.admin-sidebar,.app-sidebar) { position:sticky; top:0; height:100vh; max-height:100vh; overflow-y:auto; }
+ .rs-workspace :is(.tw-sidebar nav button,.platform-logout-button) span { position:static; width:auto; height:auto; overflow:visible; clip:auto; clip-path:none; }
+}
+@media(max-width:1200px) {
+ .rs-workspace .teacher-premium-layout { grid-template-columns:minmax(0,1fr); }
+ .rs-workspace .teacher-right-rail { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:1023px) {
+ .rs-workspace:is(.teacher-workspace,.admin-workspace,.app-shell) { display:block; }
+ .rs-workspace :is(.tw-main,.admin-main,.app-main) { margin:0; padding:16px; min-width:0; }
+ .rs-workspace :is(.tw-sidebar,.admin-sidebar,.app-sidebar) { display:none; }
+ .rs-workspace.rs-menu-open :is(.tw-sidebar,.admin-sidebar,.app-sidebar) { display:block; position:fixed; z-index:150; left:0; top:80px; bottom:0; width:232px; max-height:calc(100vh - 80px); height:auto; overflow:auto; box-shadow:10px 0 30px #0003; }
+ .rs-workspace :is(.tw-sidebar nav button,.platform-logout-button) span { position:static; width:auto; height:auto; overflow:visible; clip:auto; clip-path:none; }
+ .rs-workspace .rs-menu-toggle { display:inline-flex !important; }
+ .rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) { position:relative; top:auto; }
+ .rs-workspace :is(.tw-top-actions,.admin-topbar-actions,.rs-global-actions) { margin-left:0; }
+}
+@media(max-width:640px) {
+ .rs-workspace :is(.teacher-metric-grid,.teacher-content-grid,.teacher-right-rail,.official-school-shortcut-list,.rs-admin-primary .admin-quick-list) { grid-template-columns:minmax(0,1fr); }
+ .rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) { gap:8px; padding:10px; }
+ .rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) > label { flex-basis:180px; }
+ .rs-workspace :is(.tw-top-actions,.admin-topbar-actions,.rs-global-actions) { width:100%; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
+ .rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) button { padding:10px 6px; font-size:14px; }
+}

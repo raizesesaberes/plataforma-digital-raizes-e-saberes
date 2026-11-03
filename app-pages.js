@@ -4665,13 +4665,12 @@ const teacherInlineIcon = (icon, label = "") => {
 };
 
 const renderTeacherTopbar = () => `
-  <header class="tw-topbar" aria-label="Ações do professor">
-    <label><span>Pesquisar</span><input type="search" data-teacher-search placeholder="Buscar conteúdos, alunos, turmas..." /></label>
+  <header class="tw-topbar" aria-label="Ações do professor"><button type="button" class="rs-menu-toggle" data-rs-menu-toggle aria-expanded="false">Menu</button>
+    <label><span>Buscar nesta tela</span><input type="search" data-teacher-search placeholder="Buscar nesta tela..." /></label>
     <div class="tw-top-actions teacher-global-actions" aria-label="Ações globais do Professor">
-      <button type="button" data-platform-back>${teacherInlineIcon("progresso", "VOLTAR")}</button>
-      <button type="button" data-teacher-open-url="professor.html${getTeacherSelectedSchoolId() ? `?school=${encodeURIComponent(getTeacherSelectedSchoolId())}` : ""}">${teacherInlineIcon("home", "INICIO")}</button>
-      <button type="button" data-teacher-open-url="escola.html">${teacherInlineIcon("escola", "MINHA ESCOLA")}</button>
-      <button type="button" data-platform-logout>${teacherInlineIcon("sair", "SAIR")}</button>
+      <button type="button" data-platform-back>${teacherInlineIcon("progresso", "Voltar")}</button>
+      <button type="button" data-teacher-open-url="professor.html${getTeacherSelectedSchoolId() ? `?school=${encodeURIComponent(getTeacherSelectedSchoolId())}` : ""}">${teacherInlineIcon("home", "Início")}</button>
+      <button type="button" data-platform-logout>${teacherInlineIcon("sair", "Sair")}</button>
     </div>
   </header>
 `;
@@ -7618,21 +7617,20 @@ const renderTeacherPremiumHome = () => `
     <main class="teacher-premium-main">
       <section class="teacher-premium-hero">
         <div>
-          <span>Área do Professor</span>
+          <span>Área do Professor</span><a class="rs-school-link" href="escola.html">Minha Escola</a>
           <h1>${printableEscape(getTeacherDisplayName())}</h1>
           <p>${teacherInstitutionalState.status === "ready" ? `${printableEscape(getTeacherCurrentSchoolName())} · ${getTeacherInstitutionalClasses().length} turma${getTeacherInstitutionalClasses().length === 1 ? "" : "s"} · ${getTeacherInstitutionalStudents().length} aluno${getTeacherInstitutionalStudents().length === 1 ? "" : "s"} vinculados.` : "Identificando vinculo institucional do professor autenticado."}</p>
         </div>
       </section>
 
       ${renderTeacherAttendanceDiaryShortcuts()}
-      ${renderTeacherHomeClassFeature()}
+
 
       <section class="teacher-premium-section">
-        <h2>Áreas principais</h2>
+        <h2>Organizar e acompanhar</h2>
         <div class="teacher-metric-grid">
           ${[
             { title: "Minhas Turmas", text: `${getTeacherInstitutionalClasses().length} turma${getTeacherInstitutionalClasses().length === 1 ? "" : "s"}`, icon: "users", tone: "green", view: "turmas" },
-            { title: "Alunos vinculados", text: `${getTeacherInstitutionalStudents().length} aluno${getTeacherInstitutionalStudents().length === 1 ? "" : "s"}`, icon: "aluno", tone: "blue", view: "turmas" },
             { title: "Planejamento", text: "Organizar semana", icon: "calendar", tone: "orange", view: "planejamentos" },
             { title: "Acompanhamento", text: "Acompanhar turma", icon: "portfolio", tone: "purple", view: "acompanhamento" },
           ].map(renderTeacherMetricCard).join("")}
@@ -7650,14 +7648,17 @@ const renderTeacherPremiumHome = () => `
         </div>
       </section>
 
-      ${renderTeacherPlanningStrip()}
+
     </main>
-    ${renderTeacherSideRail()}
+    <aside class="teacher-right-rail" aria-label="Comunicação e materiais">
+      <section class="teacher-side-card"><h2>Mensagens</h2><p>Consulte as conversas da escola e das famílias.</p><button type="button" data-teacher-view="mensagens" data-teacher-search-item>Ver mensagens</button></section>
+      <section class="teacher-side-card"><h2>Avalia+</h2><p>Avaliações e relatórios das turmas vinculadas.</p><button type="button" data-teacher-view="avaliacoes" data-teacher-search-item>Abrir Avalia+</button></section>
+    </aside>
   </section>
 `;
 
 const renderTeacherPilotHome = () => `
-  <section class="teacher-workspace teacher-pilot" data-teacher-workspace>
+  <section class="teacher-workspace teacher-pilot rs-workspace" data-teacher-workspace>
     ${renderTeacherSidebar("inicio")}
     <div class="tw-main">
       ${renderTeacherTopbar()}
@@ -8208,7 +8209,7 @@ const renderTeacherDiaryPanel = (classItem, students = []) => {
 };
 
 const renderTeacherClassPage = () => `
-  <section class="teacher-workspace teacher-pilot" data-teacher-workspace>
+  <section class="teacher-workspace teacher-pilot rs-workspace" data-teacher-workspace>
     ${renderTeacherSidebar("turmas")}
     <div class="tw-main">
       ${renderTeacherTopbar()}
@@ -8325,7 +8326,7 @@ const renderTeacherStudentPage = () => {
   const classItem = student ? getTeacherInstitutionalClasses().find((item) => item.id === student.classId) : null;
   const isReady = institutionalReady && student;
   return `
-    <section class="teacher-workspace teacher-pilot" data-teacher-workspace>
+    <section class="teacher-workspace teacher-pilot rs-workspace" data-teacher-workspace>
       ${renderTeacherSidebar("acompanhamento")}
       <div class="tw-main">
         ${renderTeacherTopbar()}
@@ -11969,33 +11970,13 @@ const renderAdminReadOnlyHome = () => {
   const quickActions = [
     { view: "usuarios", icon: "users", label: "Gerenciar usuários" },
     { view: "escolas", icon: "escola", label: "Gerenciar escolas" },
-    { view: "conteudos", icon: "book", label: "Gerenciar conteúdos" },
+    { view: "conteudos", icon: "book", label: "Banco de Conteúdos" },
     { view: "implantacao", icon: "clipboard", label: "Acompanhar implantação" },
   ];
   return `
-    <section class="admin-context-strip" aria-label="Contexto Admin">
-      <article>
-        ${adminInlineIcon("perfil")}
-        <div>
-          <span>Administrador/TI</span>
-          <strong>${printableEscape(currentEmail)}</strong>
-          <small>${printableEscape(adminSessionLabel)}</small>
-        </div>
-      </article>
-      <article>
-        ${adminInlineIcon("check")}
-        <div>
-          <span>Ambiente</span>
-          <strong>Principal</strong>
-        </div>
-      </article>
-      <article>
-        ${adminInlineIcon("chart")}
-        <div>
-          <span>Escopo</span>
-          <strong>Acompanhamento operacional</strong>
-        </div>
-      </article>
+    <section class="admin-board rs-admin-primary" aria-label="Acessos principais">
+      <div class="admin-section-head"><h2>Acessos principais</h2></div>
+      <div class="admin-quick-list">${quickActions.slice(0, 3).map(renderAdminQuickAction).join("")}</div>
     </section>
     <section class="admin-overview-grid" aria-label="Indicadores principais">
       ${primaryMetrics.map(renderAdminMetricCard).join("")}
@@ -12003,17 +11984,17 @@ const renderAdminReadOnlyHome = () => {
     <section class="admin-operation-grid" aria-label="Operação Admin">
       <section class="admin-board admin-status-board">
         <div class="admin-section-head">
-          <h2>Atenção / status</h2>
+          <h2>Visão da operação</h2>
           <span>Painel de leitura</span>
         </div>
         <div class="admin-status-list">${renderAdminStatusItems(statusItems)}</div>
       </section>
       <section class="admin-board admin-quick-board">
         <div class="admin-section-head">
-          <h2>Ações rápidas</h2>
+          <h2>Implantação</h2>
           <span>Módulos Admin</span>
         </div>
-        <div class="admin-quick-list">${quickActions.map(renderAdminQuickAction).join("")}</div>
+        <div class="admin-quick-list">${quickActions.slice(3).map(renderAdminQuickAction).join("")}</div>
       </section>
       <section class="admin-board admin-recent-board">
         <div class="admin-section-head">
@@ -15445,16 +15426,15 @@ const renderAdminWorkspaceView = (view = "inicio") => {
 };
 
 const renderAdminDashboard = () => `
-  <section class="admin-workspace" data-admin-workspace>
+  <section class="admin-workspace rs-workspace" data-admin-workspace>
     ${renderAdminSidebar("painel")}
     <main class="admin-main">
-      <header class="admin-topbar">
-        <label><span>Busca Admin</span><input type="search" placeholder="Buscar estado, módulos e portas..." data-admin-search /></label>
+      <header class="admin-topbar"><button type="button" class="rs-menu-toggle" data-rs-menu-toggle aria-expanded="false">Menu</button>
+        <label><span>Buscar nesta tela</span><input type="search" placeholder="Buscar nesta tela..." data-admin-search /></label>
         <div class="admin-topbar-actions" aria-label="Navegação global">
-          <button type="button" data-admin-back>${adminInlineIcon("back", "VOLTAR")}</button>
-          <button type="button" data-platform-home>${adminInlineIcon("home", "INICIO")}</button>
-          <a class="admin-topbar-link" href="escola.html">${adminInlineIcon("escola", "MINHA ESCOLA")}</a>
-          <button type="button" data-platform-logout>${adminInlineIcon("sair", "SAIR")}</button>
+          <button type="button" data-admin-back>${adminInlineIcon("back", "Voltar")}</button>
+          <button type="button" data-platform-home>${adminInlineIcon("home", "Início")}</button>
+          <button type="button" data-platform-logout>${adminInlineIcon("sair", "Sair")}</button>
         </div>
       </header>
       <section class="admin-hero">
@@ -15463,10 +15443,7 @@ const renderAdminDashboard = () => `
           <h1>Painel Admin</h1>
           <p>Visão operacional do ecossistema Raízes e Saberes.</p>
         </div>
-        <div class="admin-hero-badges">
-          <span>Sessao autorizada</span>
-          <span>Leitura operacional</span>
-        </div>
+
       </section>
       <section class="admin-content" data-admin-content>${renderAdminWorkspaceView("painel")}</section>
     </main>
@@ -16900,12 +16877,12 @@ const renderOfficialSchoolCommunicationCard = (communication = {}) => {
   const audienceType = String(communication.audience_type || "school").toLowerCase();
   const audienceLabel = audienceType === "class" ? "Turma" : audienceType === "student" ? "Aluno/Família" : "Toda a escola";
   return `
-    <article class="official-school-communication-card">
+    <article class="official-school-communication-card" data-school-home-search-item>
       <div class="official-school-communication-icon" aria-hidden="true">${renderOfficialSchoolIcon("mail")}</div>
       <div>
         <strong>${schoolOfficialEscape(title)}</strong>
         <span class="official-school-communication-badge">${schoolOfficialEscape(audienceLabel)}</span>
-        ${body ? `<p>${schoolOfficialEscape(body)}</p>` : ""}
+        ${body ? `<details><summary>Ler comunicado</summary><p>${schoolOfficialEscape(body)}</p></details>` : ""}
         ${date ? `<span>${schoolOfficialEscape(date)}</span>` : ""}
       </div>
     </article>
@@ -16924,7 +16901,7 @@ const renderOfficialSchoolCommunications = (communications = []) => {
       </div>
     `;
   }
-  return visibleCommunications.slice(0, 3).map(renderOfficialSchoolCommunicationCard).join("");
+  return visibleCommunications.map(renderOfficialSchoolCommunicationCard).join("");
 };
 
 const renderOfficialSchoolWeeklyChallenge = () => `
@@ -17028,41 +17005,23 @@ const renderOfficialSchoolRealContent = () => {
     <header class="official-school-real-hero" id="inicio">
       <div class="official-school-real-hero-copy">
         <span>MINHA ESCOLA</span>
-        <p>BEM-VINDOS A</p>
+
         <h1>${schoolOfficialEscape(schoolName)}</h1>
-        <small>Um espaco de aprendizagem, convivência e descobertas.</small>
+        <small>Comunicados, recomendações e conteúdos da sua escola.</small>
       </div>
     </header>
-
-    ${renderOfficialSchoolWeeklyChallenge()}
-
-    <section class="official-school-real-grid">
-      <article class="official-school-panel official-school-real-communications" id="comunicados">
-        <div class="official-school-section-head">
-          <span>${renderOfficialSchoolIcon("mail")} Comunicados</span>
-          <h2>Comunicados da Escola</h2>
-          <p>Avisos publicados pela Secretaria para o seu perfil institucional.</p>
-        </div>
-        <div class="official-school-communication-list">
-          ${renderOfficialSchoolCommunications(officialSchoolState.communications)}
-        </div>
-        <a class="official-school-view-all" href="#comunicados">Ver todos os comunicados</a>
-      </article>
-
-      ${renderOfficialSchoolTeacherRecommendations(officialSchoolState.recommendations)}
-    </section>
 
     <article class="official-school-panel official-school-real-shortcuts" id="biblioteca-jogos">
       <div class="official-school-section-head">
         <span>${renderOfficialSchoolIcon("escola")} Explore e Descubra</span>
         <h2>Biblioteca e Jogos</h2>
-        <p>Atalhos para os módulos ja existentes da plataforma.</p>
+        <p>Leituras e experiências disponíveis para você.</p>
       </div>
       <div class="official-school-shortcut-list">
         ${officialSchoolShortcuts
           .map(
             (shortcut) => `
-              <a href="${shortcut.href}">
+              <a href="${shortcut.href}" data-school-home-search-item>
                 ${renderOfficialSchoolIcon(shortcut.icon)}
                 <strong>${schoolOfficialEscape(shortcut.title)}</strong>
                 <span>${schoolOfficialEscape(shortcut.detail)}</span>
@@ -17073,6 +17032,24 @@ const renderOfficialSchoolRealContent = () => {
           .join("")}
       </div>
     </article>
+
+    <section class="official-school-real-grid">
+      <article class="official-school-panel official-school-real-communications" id="comunicados">
+        <div class="official-school-section-head">
+          <span>${renderOfficialSchoolIcon("mail")} Comunicados</span>
+          <h2>Comunicados da Escola</h2>
+          <p>Avisos destinados ao seu perfil.</p>
+        </div>
+        <div class="official-school-communication-list">
+          ${renderOfficialSchoolCommunications(officialSchoolState.communications)}
+        </div>
+      </article>
+
+      ${renderOfficialSchoolTeacherRecommendations(officialSchoolState.recommendations)}
+    </section>
+
+
+    ${renderOfficialSchoolWeeklyChallenge()}
   `;
 };
 
@@ -17345,6 +17322,11 @@ const hydrateOfficialSchoolDashboard = async (root) => {
 const initOfficialSchoolDashboard = () => {
   const root = document.querySelector("[data-official-school]");
   if (root?.dataset.officialSchoolMode === "real") {
+    const search = document.querySelector('.app-shell[data-environment="escola"] .app-search input');
+    search?.addEventListener("input", () => {
+      const query = search.value.trim().toLocaleLowerCase("pt-BR");
+      root.querySelectorAll("[data-school-home-search-item]").forEach(item => item.classList.toggle("rs-search-hidden", Boolean(query) && !item.textContent.toLocaleLowerCase("pt-BR").includes(query)));
+    });
     hydrateOfficialSchoolDashboard(root);
     return;
   }
@@ -32501,6 +32483,7 @@ const initTeacherWorkspace = () => {
     initTeacherAvaliaApplication();
     bindOfficialReportControls(workspace, "teacher");
     if (search) search.value = "";
+    home?.querySelectorAll(".rs-search-hidden").forEach(item => item.classList.remove("rs-search-hidden"));
     if (normalizedView === "planejamentos") {
       ensureTeacherPlanningWeek().then(() => {
         if (activeTeacherView === "planejamentos" && content && document.body.contains(workspace)) {
@@ -33047,8 +33030,9 @@ const initTeacherWorkspace = () => {
 
   search?.addEventListener("input", () => {
     const query = search.value.trim().toLowerCase();
-    content?.querySelectorAll("[data-teacher-search-item]").forEach((item) => {
-      item.hidden = Boolean(query) && !item.textContent.toLowerCase().includes(query);
+    const target = activeTeacherView === "inicio" ? workspace.querySelector("[data-teacher-home]") : content;
+    target?.querySelectorAll("[data-teacher-search-item]").forEach((item) => {
+      item.classList.toggle("rs-search-hidden", Boolean(query) && !item.textContent.toLowerCase().includes(query));
     });
   });
 
@@ -34194,7 +34178,31 @@ const initGlobalAccessibility = () => {
   });
 };
 
+const initWorkspaceMenu = () => {
+  if (initWorkspaceMenu.bound) return;
+  initWorkspaceMenu.bound = true;
+  const close = (root, restoreFocus = false) => {
+    root.classList.remove("rs-menu-open");
+    const toggle = root.querySelector("[data-rs-menu-toggle]");
+    toggle?.setAttribute("aria-expanded", "false");
+    if (restoreFocus) toggle?.focus();
+  };
+  document.addEventListener("click", event => {
+    const toggle = event.target.closest?.("[data-rs-menu-toggle]");
+    const root = event.target.closest?.(".rs-workspace");
+    if (!root) return;
+    if (toggle) {
+      const open = root.classList.toggle("rs-menu-open");
+      toggle.setAttribute("aria-expanded", String(open));
+    } else if (event.target.closest?.("aside nav a, aside nav button")) close(root);
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") document.querySelectorAll(".rs-workspace.rs-menu-open").forEach(root => close(root, true));
+  });
+};
+
 const initPlatformLogout = () => {
+  initWorkspaceMenu();
   if (platformLogoutInitialized) return;
   platformLogoutInitialized = true;
   document.addEventListener("click", async (event) => {
@@ -34496,7 +34504,7 @@ const renderAppPage = () => {
   const shellLogoHref = currentRole ? getRoleHome(currentRole) : shellHomeHref;
   const topFilter = environmentKey === "escola" || environmentKey === "secretaria" || environmentKey === "bancoQuestoes" ? "" : `<button class="top-filter" type="button">Filtros</button>`;
   const moduleSwitcher = environmentKey === "escola"
-    ? `<nav class="module-switcher official-school-switcher" aria-label="Navegação da Escola">${ecosystemModuleLinks(activeKey, environmentKey)}</nav>`
+    ? ""
     : environmentKey === "secretaria"
       ? ""
     : environmentKey === "bancoQuestoes"
@@ -34506,18 +34514,18 @@ const renderAppPage = () => {
   const shellUserFallback = studentShellProfile ? getStudentProfileInitials(studentShellProfile.fullName) : "MS";
   const shellUserLabel = studentShellProfile ? printableEscape(studentShellProfile.firstName) : environment.user;
   const topActions = environmentKey === "escola"
-    ? ""
+    ? `<div class="rs-global-actions" aria-label="Navegação global"><button type="button" data-platform-back>${adminInlineIcon("back", "Voltar")}</button><button type="button" data-platform-home>${adminInlineIcon("home", "Início")}</button><button type="button" data-platform-logout>${adminInlineIcon("sair", "Sair")}</button></div>`
     : environmentKey === "secretaria"
       ? `<div class="top-actions secretaria-top-actions" aria-label="Ações da Secretaria"><button type="button" data-secretaria-back>${secretariaInlineIcon("progresso", "VOLTAR")}</button><button type="button" data-platform-home>${secretariaInlineIcon("home", "INICIO")}</button><a href="escola.html">${secretariaInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${secretariaInlineIcon("sair", "SAIR")}</button></div>`
     : environmentKey === "bancoQuestoes"
       ? `<div class="admin-topbar-actions" aria-label="Navegação global"><button type="button" data-platform-back>${adminInlineIcon("back", "VOLTAR")}</button><button type="button" data-platform-home>${adminInlineIcon("home", "INICIO")}</button><a class="admin-topbar-link" href="escola.html">${adminInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${adminInlineIcon("sair", "SAIR")}</button></div>`
     : `<div class="top-actions" aria-label="Ações"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>${shellUserFallback}</span>`}<strong>${shellUserLabel}</strong></div></div>`;
   const topbarClass = environmentKey === "bancoQuestoes" ? "app-topbar admin-topbar" : "app-topbar";
-  const topbarMenu = environmentKey === "bancoQuestoes" ? "" : `<a class="icon-button menu-toggle" href="${shellHomeHref}" aria-label="Início">☰</a>`;
-  const topbarSearchLabel = environmentKey === "bancoQuestoes" ? "Busca Banco" : "Pesquisar";
+  const topbarMenu = ["bancoQuestoes", "escola"].includes(environmentKey) ? "" : `<a class="icon-button menu-toggle" href="${shellHomeHref}" aria-label="Início">☰</a>`;
+  const topbarSearchLabel = environmentKey === "bancoQuestoes" ? "Busca Banco" : environmentKey === "escola" ? "Buscar nesta tela" : "Pesquisar";
 
   mount.innerHTML = `
-    <div class="app-shell" data-environment="${environmentKey}" data-active-module="${activeKey}">
+    <div class="app-shell${environmentKey === "escola" ? " rs-workspace" : ""}" data-environment="${environmentKey}" data-active-module="${activeKey}">
       <aside class="app-sidebar" aria-label="Navegação principal">
         <a class="sidebar-logo" href="${shellLogoHref}" aria-label="Raízes e Saberes">
           <img src="logo-sidebar-dark.png" alt="Raízes e Saberes Ecossistema Educacional" onerror="this.hidden=true; this.nextElementSibling.hidden=false;" />
@@ -34532,8 +34540,8 @@ const renderAppPage = () => {
       </aside>
       <main class="app-main">
         <header class="${topbarClass}">
-          ${topbarMenu}
-          <label class="app-search"><span>${topbarSearchLabel}</span><input type="search" placeholder="${environment.search}" /></label>
+          ${environmentKey === "escola" ? '<button type="button" class="rs-menu-toggle" data-rs-menu-toggle aria-expanded="false">Menu</button>' : topbarMenu}
+          <label class="app-search"><span>${topbarSearchLabel}</span><input type="search" placeholder="${environmentKey === "escola" ? "Buscar nesta tela..." : environment.search}" /></label>
           ${topFilter}
           ${moduleSwitcher}
           ${topActions}
