@@ -5714,14 +5714,21 @@ const renderTeacherLibraryView = () => {
           <h2>Biblioteca</h2>
           <p>ACESSO AOS MATERIAIS DIGITAIS DA PLATAFORMA.</p>
         </div>
-        <button type="button" data-teacher-open-url="edition-library.html">ABRIR NOVAS EDIÇÕES DIGITAIS</button>
       </div>
+      <div data-teacher-edition-host>
+        <p role="status" id="edition-status">Conferindo acesso à biblioteca…</p>
+        <section id="edition-list" aria-label="Livros disponíveis"></section>
+        <section id="edition-reader" hidden></section>
+      </div>
+    </section>
+    <details class="tw-board tw-library-shell">
+      <summary>Outros materiais e recursos existentes</summary>
       <div class="tw-library-entry-grid">
         ${categoryCards.map(renderTeacherLibraryCategoryCard).join("")}
       </div>
-    </section>
     ${renderTeacherLibraryShelf("Material do aluno", `${studentBooks.length} livros existentes`, studentBooks.slice(0, 4))}
     ${renderTeacherLibraryShelf("Material do professor", `${teacherGuides.length} guias existentes`, teacherGuides.slice(0, 4))}
+    </details>
   `;
 };
 
@@ -32477,7 +32484,18 @@ const initTeacherWorkspace = () => {
       content.hidden = false;
       if (home) home.hidden = true;
     }
+    initTeacherWorkspace.editionCleanup?.();
+    initTeacherWorkspace.editionCleanup = null;
     content.innerHTML = renderTeacherWorkspaceView(normalizedView);
+    const editionHost = content.querySelector("[data-teacher-edition-host]");
+    if (editionHost) import("./library-edition-boot.mjs").then(async ({ mountEditionLibrary }) => {
+      if (!editionHost.isConnected) return;
+      const cleanup = await mountEditionLibrary(editionHost);
+      if (!editionHost.isConnected) cleanup?.();
+      else initTeacherWorkspace.editionCleanup = cleanup;
+    }).catch(() => {
+      if (editionHost.isConnected) editionHost.querySelector("#edition-status").textContent = "Não foi possível carregar a biblioteca. Entre novamente e tente acessar.";
+    });
     workspace.querySelectorAll("[data-teacher-view]").forEach((button) => {
       button.classList.toggle("is-active", getValidTeacherView(button.dataset.teacherView) === normalizedView);
     });
