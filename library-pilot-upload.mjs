@@ -1,5 +1,5 @@
 const input=document.querySelector('#package'),send=document.querySelector('#send'),status=document.querySelector('#status'),output=document.querySelector('#result');
-const approvedPackages={"251e29c0469d6aa50b1573fd662fb9e4213414892e96f0fd35dbdb8e3f869284":{"name":"official-resume-06.zip","size":104825531,"entries":1378},"9a9fd85f6b4f195b119370d2a1bb11ebaa44f0e323ed023d822c7c2b4f5aa6c0":{"name":"official-remaining-07.zip","size":339510576,"entries":2632}};
+const approvedPackages={"cca4784e7e942ce17ef342c5ca2bdb5d236335ca1f6c6e60038e4c412a9ac5be":{"name":"official-final-06.zip","size":93407428,"entries":1156},"9a9fd85f6b4f195b119370d2a1bb11ebaa44f0e323ed023d822c7c2b4f5aa6c0":{"name":"official-remaining-07.zip","size":339510576,"entries":2632}};
 const config=window.RAIZES_SUPABASE;
 const token=()=>{try{return JSON.parse(localStorage.getItem('raizes:supabase-auth-session')||'null')?.access_token||localStorage.getItem('raizes:supabase-access-token')||'';}catch{return '';}};
 const endpoint=config.url+'/functions/v1/library-pilot-private-ingest';
