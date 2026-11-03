@@ -33,10 +33,12 @@ Deno.serve(async(req:Request)=>{
  // A second deadline check covers uploads that finish after expiry.
  if(Date.now()>=EXPIRES_AT)return reply({code:'importer_closed'},410);
  const uploaded=await admin.storage.from('pages').upload(target,bytes,{contentType:'image/jpeg',upsert:false});
- if(uploaded.error)return reply({code:'upload_rejected'},409);
+ const alreadyExists=!!uploaded.error && (String(uploaded.error.statusCode)==='409' || uploaded.error.message==='The resource already exists');
+ if(uploaded.error&&!alreadyExists)return reply({code:'upload_rejected'},409);
+ // A repeated request must pass the same full readback verification; never overwrite.
  const downloaded=await admin.storage.from('pages').download(target);
  if(downloaded.error||!downloaded.data)return reply({code:'verification_failed'},502);
  const actual=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await downloaded.data.arrayBuffer()))).map(x=>x.toString(16).padStart(2,'0')).join('');
  if(downloaded.data.size!==expected.size||actual!==expected.sha256)return reply({code:'verification_failed'},502);
- return reply({ok:true,path:target,size:expected.size,sha256:actual},201);
+ return reply({ok:true,path:target,size:expected.size,sha256:actual,already_exists:alreadyExists},201);
 });

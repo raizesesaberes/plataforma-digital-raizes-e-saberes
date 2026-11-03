@@ -1,5 +1,5 @@
 const input=document.querySelector('#package'),send=document.querySelector('#send'),status=document.querySelector('#status'),output=document.querySelector('#result');
-const approvedPackages={"31cdb8e0144e20cde337f2bdba35b3c3dbc0ced66f5a6280ab01448178a1bad6":{"name":"official-resume-05.zip","size":260304441,"entries":2171},"49dfd5ffa678fc3ba7ff973f53601a90eb16080be49a9a63c7a27d8abba5a9b2":{"name":"official-remaining-06.zip","size":523519702,"entries":4292},"9a9fd85f6b4f195b119370d2a1bb11ebaa44f0e323ed023d822c7c2b4f5aa6c0":{"name":"official-remaining-07.zip","size":339510576,"entries":2632}};
+const approvedPackages={"251e29c0469d6aa50b1573fd662fb9e4213414892e96f0fd35dbdb8e3f869284":{"name":"official-resume-06.zip","size":104825531,"entries":1378},"9a9fd85f6b4f195b119370d2a1bb11ebaa44f0e323ed023d822c7c2b4f5aa6c0":{"name":"official-remaining-07.zip","size":339510576,"entries":2632}};
 const config=window.RAIZES_SUPABASE;
 const token=()=>{try{return JSON.parse(localStorage.getItem('raizes:supabase-auth-session')||'null')?.access_token||localStorage.getItem('raizes:supabase-access-token')||'';}catch{return '';}};
 const endpoint=config.url+'/functions/v1/library-pilot-private-ingest';
