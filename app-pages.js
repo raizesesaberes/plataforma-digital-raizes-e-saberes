@@ -11771,6 +11771,7 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
         permissionFlags,
         adminSettings,
         auditEvents,
+        officialEditions,
       ] = await Promise.all([
         client.request("schools", "?select=id,nome,codigo_inep,municipio,estado,diretor,status&order=nome.asc", options),
         client.request("rpc/admin_list_auth_users", "", { ...options, method: "POST", body: "{}" }).catch(() => []),
@@ -11811,6 +11812,9 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
             p_limit: 120,
           }),
         }).then(normalizeRpcJson).catch(() => []),
+        client.request("content_items", "?select=id,title,editorial_status,owner_scope,metadata&content_type=eq.BOOK&metadata->delivery_adapter->>kind=eq.library_book&order=title.asc", options)
+          .then((rows) => ({ items: rows.map(row => ({ content_item_id: row.id, title: row.title, editorial_status: row.editorial_status, owner_scope: row.owner_scope, ...row.metadata?.official_edition })), error: "" }))
+          .catch(() => ({ items: [], error: "Não foi possível consultar as edições oficiais. Atualize a página para tentar novamente." })),
       ]);
       adminOperationalState.status = "ready";
       adminOperationalState.data = {
@@ -11835,6 +11839,7 @@ const ensureAdminReadOnlyData = async ({ force = false } = {}) => {
         permissionFlags: permissionFlags || [],
         adminSettings: adminSettings || {},
         auditEvents: auditEvents || [],
+        officialEditions,
       };
       return adminOperationalState;
     } catch (error) {
@@ -14768,6 +14773,21 @@ const renderAdminSchoolExceptionsManager = ({ catalog, availabilityByContent, sc
   `;
 };
 
+const renderAdminOfficialEditions = () => {
+  const state = adminOperationalState.data?.officialEditions;
+  if (!state || state.error) return `<section class="admin-board"><h2>Edições oficiais</h2><p role="alert">${printableEscape(state?.error || "Consulta ainda não concluída.")}</p></section>`;
+  const items = Array.isArray(state.items) ? state.items : [];
+  return `<section class="admin-board"><h2>Edições oficiais no armazenamento privado</h2>
+    <p>${items.length} edições cadastradas. O status editorial e a conferência dos arquivos são independentes da distribuição por escola.</p>
+    <div class="admin-content-governance-list">${items.map(item => `<article class="admin-content-item"><div class="admin-content-item-main">
+      <strong>${printableEscape(item.title)}</strong>
+      <small>${printableEscape(item.collection || "Coleção não informada")} · ${printableEscape(item.school_year)} · ${item.audience === "teacher" ? "Professor" : item.audience === "student" ? "Aluno" : "Público não informado"} · ${Number.isInteger(item.page_count) ? item.page_count : "—"} páginas</small>
+      <span>${printableEscape(item.editorial_status)} · ${item.ingestion_status === "verified" ? "Arquivos conferidos no armazenamento" : "Envio pendente"}</span>
+      <small>Escopo: ${printableEscape(item.owner_scope)} · Registro: ${printableEscape(item.content_item_id)}</small>
+      <p>Conferência de cadastro. A leitura administrativa integral ainda não está habilitada.</p>
+    </div></article>`).join("") || "<p>Nenhuma edição cadastrada retornada.</p>"}</div></section>`;
+};
+
 const renderAdminContentGovernanceConsole = () => {
   if (['entitlements', 'network-contracts'].includes(new URLSearchParams(window.location.search).get('type'))) return '<section class="admin-board"><contract-operations></contract-operations></section>';
   if (adminOperationalState.status === "loading" || adminOperationalState.status === "idle") {
@@ -14808,7 +14828,7 @@ const renderAdminContentGovernanceConsole = () => {
     return renderAdminSchoolExceptionsManager({ catalog, availabilityByContent, schools, schoolsById });
   }
   if (contentTypeView && ["book", "activity", "game", "experience", "vídeo", "other"].includes(normalizedContentTypeView)) {
-    return renderAdminContentTypeManager({ catalog, type: normalizedContentTypeView, availabilityByContent, schoolsById });
+    return (normalizedContentTypeView === "book" ? renderAdminOfficialEditions() : "") + renderAdminContentTypeManager({ catalog, type: normalizedContentTypeView, availabilityByContent, schoolsById });
   }
   const contentSessionRole = normalizePlatformRole(getPlatformSession().role || "");
   const contentQuestionBankRoles = [
