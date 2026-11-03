@@ -2484,7 +2484,11 @@ const renderStudentLibraryHome = () => {
         </div>
       </section>
       <section aria-label="Livros digitais disponíveis">
-        <iframe src="edition-library.html?embedded=1" title="Livros digitais autorizados para sua turma" allow="fullscreen" style="display:block;width:100%;height:80vh;min-height:600px;border:0;border-radius:16px;background:white"></iframe>
+        <div data-student-edition-host>
+          <p role="status" id="edition-status">Conferindo acesso à biblioteca…</p>
+          <section id="edition-list" aria-label="Livros disponíveis"></section>
+          <section id="edition-reader" hidden></section>
+        </div>
       </section>
       ${books.length ? `
         <details class="student-library-section">
@@ -33241,6 +33245,10 @@ const initStudentInstitutionalLibrary = () => {
     root.outerHTML = renderStudentLibraryHome();
     initLibrarySearch();
     initLibraryAssetFallbacks();
+    const host = document.querySelector("[data-student-edition-host]");
+    if (host) import("./library-edition-boot.mjs").then(({ mountEditionLibrary }) => {
+      if (host.isConnected) mountEditionLibrary(host);
+    }).catch(() => { if (host.isConnected) host.textContent = "Não foi possível carregar a biblioteca. Atualize a página e tente novamente."; });
   });
 };
 

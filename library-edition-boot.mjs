@@ -1,14 +1,8 @@
 import {libraryEditionClient} from './library-edition-client.mjs';
 import {connectEditionReader} from './library-edition-reader.mjs';
+export async function mountEditionLibrary(root=document){
 const config=window.RAIZES_SUPABASE||{};
-// Embedded mode changes presentation only; list and read requests keep the
-// same server-side school, grade and audience authorization.
-if(new URLSearchParams(window.location.search).get('embedded')==='1'){
- document.querySelector('main > a')?.setAttribute('hidden','');
- document.querySelector('main > h1')?.setAttribute('hidden','');
-}
-
-const status=document.querySelector('#edition-status'),list=document.querySelector('#edition-list'),host=document.querySelector('#edition-reader');
+const status=root.querySelector('#edition-status'),list=root.querySelector('#edition-list'),host=root.querySelector('#edition-reader');
 const token=()=>{try{return JSON.parse(localStorage.getItem('raizes:supabase-auth-session')||'null')?.access_token||localStorage.getItem('raizes:supabase-access-token')||'';}catch{return '';}};
 async function request(path,body){
  const session=token();if(!session)throw Error('session_required');
@@ -36,3 +30,6 @@ try{
  status.textContent=books.length?`${books.length} livros disponíveis para sua sessão.`:'Nenhuma edição disponível para sua escola e turma no momento.';
 }catch{status.textContent='Não foi possível carregar a biblioteca. Entre na plataforma e tente novamente.';}
 window.addEventListener('pagehide',()=>{generation++;controller?.dispose();});
+
+}
+if (/\/edition-library(?:\.html)?$/.test(window.location.pathname)) void mountEditionLibrary();
