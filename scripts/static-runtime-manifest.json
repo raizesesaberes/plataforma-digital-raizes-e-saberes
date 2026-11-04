@@ -21,7 +21,7 @@
   },
   {
     "file": "app-pages.js",
-    "sha256": "6408f12c9aee9f660a2f862ec41668ba49fdc247d05e61ce50a194e995f6ce8e"
+    "sha256": "006bbb3e452b614c5293bbdf550641d77e7af8ff69f268d072a9f97b15a9d3c3"
   },
   {
     "file": "arvore.html",
@@ -17021,7 +17021,7 @@
   },
   {
     "file": "master-pack.css",
-    "sha256": "d88d1330b388be5c643ac5982a96efc698eb8f129dade193af795faf22613fe0"
+    "sha256": "b1e16fd7b4d0492108ba1ac5f68b22bb20ec3dfd952d0a76a23c3aefe3e71484"
   },
   {
     "file": "missao.html",
@@ -17437,6 +17437,6 @@
   },
   {
     "file": "library-edition-search-ui.mjs",
-    "sha256": "aeb4c0e888e4ef962c79de3abb97280c7808dbe72558da888144ca40f9807cc4"
+    "sha256": "700a5608b6c9563f3667fa65a0043d13da4d12cd856397a5279b1e8ec8922d9a"
   }
 ]

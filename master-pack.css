@@ -26470,3 +26470,45 @@ html[data-a11y-reduced-motion="true"] *::after {
  .rs-workspace :is(.tw-top-actions,.admin-topbar-actions,.rs-global-actions) { width:100%; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
  .rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) button { padding:10px 6px; font-size:14px; }
 }
+
+/* Student library uses the approved workspace frame; reader remains shared. */
+.rs-student-library .app-main{background:#f7f9f6;min-width:0;padding:24px;}
+.rs-student-library .app-sidebar{color:#fff;}
+.rs-student-library .app-nav a{color:#eef5ef;}
+.rs-student-library .app-nav a.is-active{background:#28664b;box-shadow:inset 3px 0 #df9b50;}
+.rs-student-library .sidebar-logo{width:100%;justify-content:center;}
+.rs-student-library .sidebar-logo img{width:160px;height:124px;object-fit:contain;}
+.rs-student-library .sidebar-profile{display:none;}
+.rs-student-library .environment-label{color:#dce6dd;text-transform:none;font-size:14px;}
+.rs-student-library .route-screen{background:transparent;}
+.rs-student-library .book-stage{background:#eef5ef;}
+.rs-student-library .book-reader{background:#f7f9f6;}
+.rs-student-library .reader-header{background:#fff;}
+.rs-student-library .app-search input{box-sizing:border-box;}
+.rs-student-library .app-topbar .app-search{max-width:none;}
+@media(max-width:1023px){.rs-student-library .app-main{padding:12px;}}
+
+
+/* Student stage, isolated from reader search. Original brand and all schedule hooks retained. */
+.student-premium-workspace{font:400 16px/1.5 Inter,system-ui,sans-serif;color:#203c2e;background:#f7f9f6}
+.student-premium-workspace .student-premium-sidebar{background:#124b35;box-shadow:none}
+.student-premium-workspace .student-premium-logo img{width:160px;max-width:160px;height:124px;max-height:none;object-fit:contain;filter:none;margin:auto}
+.student-premium-workspace .student-premium-sidebar nav a{font-size:15px;font-weight:600;min-height:44px;border-radius:8px;gap:12px;text-transform:none}
+.student-premium-workspace .student-premium-sidebar nav a i{width:20px;height:20px;flex:0 0 20px}
+.student-premium-workspace .student-premium-topbar{background:#fff;border:1px solid #dce6dd;border-radius:12px;box-shadow:none;padding:12px;gap:16px;flex-wrap:wrap}
+.student-premium-workspace .student-premium-global-actions{gap:8px;flex-wrap:wrap}
+.student-premium-workspace .student-premium-global-actions :is(a,button){min-height:44px;font:600 15px/1.4 Inter,system-ui,sans-serif;padding:10px 14px;border:1px solid #dce6dd;border-radius:8px;background:#fff;color:#175c40}
+.student-premium-workspace :is(.student-premium-card,.student-side-card,.student-class-schedule-panel){background:#fff;border:1px solid #dce6dd;border-radius:14px;box-shadow:none}
+.student-premium-workspace .student-premium-card{min-height:124px;padding:20px}
+.student-premium-workspace :is(.student-side-card h2,.student-class-schedule-title h2){font:650 18px/1.35 Inter,system-ui,sans-serif;color:#203c2e;text-transform:none}
+.student-premium-workspace .student-shortcut{min-height:44px;background:#eef5ef;color:#175c40}
+.student-premium-workspace .student-class-schedule-scroll{overflow-x:auto}
+.student-premium-workspace .student-class-schedule-actions button{min-height:44px;border-radius:8px;font:600 15px/1.4 Inter,system-ui,sans-serif}
+.student-premium-workspace :is(a,button,input):focus-visible{outline:3px solid #d68a3d;outline-offset:3px}
+@media(max-width:640px){.student-premium-workspace .student-premium-global-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}.student-premium-workspace .student-premium-global-actions :is(a,button){padding:10px 8px;font-size:14px}.student-premium-workspace .student-class-schedule-head{flex-wrap:wrap;gap:12px}}
+
+.student-premium-workspace .student-class-schedule-panel{min-width:0;grid-template-columns:minmax(0,1fr)}
+.student-premium-workspace .student-class-schedule-panel form,.student-premium-workspace .student-class-schedule-scroll{min-width:0;max-width:100%;width:100%}
+.student-premium-workspace .student-class-schedule-title,.student-premium-workspace .student-class-schedule-title>div{min-width:0}
+@media(max-width:640px){.student-premium-workspace .student-class-schedule-head{display:flex;flex-direction:column;align-items:stretch}.student-premium-workspace .student-class-schedule-title{width:100%}.student-premium-workspace .student-class-schedule-title p{overflow-wrap:anywhere}.student-premium-workspace .student-premium-sidebar nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:4px}.student-premium-workspace .student-premium-sidebar nav a{padding:8px;gap:8px}.student-premium-workspace .student-premium-sidebar nav a span{position:static;width:auto;height:auto;overflow:visible;clip:auto;clip-path:none;display:inline;font-size:13px}}
+.student-premium-workspace .student-premium-logo{display:flex;justify-content:center;width:100%;}

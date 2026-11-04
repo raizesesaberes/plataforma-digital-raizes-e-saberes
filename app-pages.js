@@ -8406,13 +8406,12 @@ const renderStudentPremiumSidebar = () => `
         .map(([href, label, icon], index) => {
           const viewParam = getPrintableParams().get("view") || "inicio";
           const hrefView = new URL(href, window.location.origin).searchParams.get("view") || "inicio";
-          const isActive = hrefView === viewParam || (index === 0 && viewParam === "inicio");
+          const isActive = new URL(href, window.location.origin).pathname.replace(/\.html$/, "").replace(/\/$/, "") === window.location.pathname.replace(/\.html$/, "").replace(/\/$/, "") && hrefView === viewParam;
           const unread = hrefView === "recados" ? communicationUnreadCount(studentInstitutionalState.messages || []) : 0;
           return `<a class="${isActive ? "is-active" : ""}" href="${href}">${premiumIcon(icon)}<span>${unread > 0 ? `${label} ${unread}` : label}</span></a>`;
         })
         .join("")}
     </nav>
-    <button class="student-premium-logout" type="button" data-platform-logout>${premiumIcon("logout")}<span>SAIR</span></button>
   </aside>
 `;
 
@@ -8422,10 +8421,9 @@ const renderStudentPremiumTopbar = () => `
     <div class="student-premium-topbar-right">
       <a class="student-premium-user-pill" href="perfil.html" aria-label="Abrir perfil">${getActiveStudentProfile().avatar ? studentLazyImg(getActiveStudentProfile().avatar, "", "student-top-avatar") : premiumIcon("aluno")}<strong>${printableEscape(getActiveStudentProfile().firstName)}</strong></a>
       <nav class="student-premium-global-actions" aria-label="Ações globais do aluno">
-        <button type="button" data-platform-back>${premiumIcon("progresso")}<span>VOLTAR</span></button>
-        <a href="aluno.html">${premiumIcon("home")}<span>INICIO</span></a>
-        <a href="escola.html">${premiumIcon("escola")}<span>MINHA ESCOLA</span></a>
-        <button type="button" data-platform-logout>${premiumIcon("logout")}<span>SAIR</span></button>
+        <button type="button" data-platform-back>${premiumIcon("progresso")}<span>Voltar</span></button>
+        <a href="aluno.html">${premiumIcon("home")}<span>Início</span></a>
+        <button type="button" data-platform-logout>${premiumIcon("logout")}<span>Sair</span></button>
       </nav>
     </div>
   </header>
@@ -8438,8 +8436,6 @@ const renderStudentQuickRail = () => `
       ${[
         ["aluno-atividades.html", "Atividades", "atividades", "green"],
         ["aluno.html?view=agenda", "Agenda", "calendario", "lime"],
-        ["biblioteca.html", "Abrir Livro", "book", "blue"],
-        ["perfil.html", "Meu Perfil", "user", "teal"],
       ]
         .map(([href, label, icon, tone]) => `<a class="student-shortcut is-${tone}" href="${href}">${premiumIcon(icon)}<span>${label}</span><b>›</b></a>`)
         .join("")}
@@ -34500,10 +34496,11 @@ const renderAppPage = () => {
         : `<a class="${(environmentKey === "bancoQuestoes" ? key === questionBankView : environmentKey === "secretaria" ? key === getSecretariaCurrentView() : environmentKey === "gestor" ? key === getMunicipalNetworkView() : key === activeKey) ? "is-active" : ""}" href="${href}">${label}</a>`
     )
     .join("");
+  const studentLibraryShell = currentRole === "aluno" && activeKey === "biblioteca";
   const shellHomeHref = currentRole ? getRoleHome(currentRole) : environmentKey === "aluno" ? "aluno.html" : environmentKey === "escola" ? "escola.html" : platformRoute("/", "index.html");
   const shellLogoHref = currentRole ? getRoleHome(currentRole) : shellHomeHref;
-  const topFilter = environmentKey === "escola" || environmentKey === "secretaria" || environmentKey === "bancoQuestoes" ? "" : `<button class="top-filter" type="button">Filtros</button>`;
-  const moduleSwitcher = environmentKey === "escola"
+  const topFilter = studentLibraryShell || environmentKey === "escola" || environmentKey === "secretaria" || environmentKey === "bancoQuestoes" ? "" : `<button class="top-filter" type="button">Filtros</button>`;
+  const moduleSwitcher = studentLibraryShell || environmentKey === "escola"
     ? ""
     : environmentKey === "secretaria"
       ? ""
@@ -34513,7 +34510,7 @@ const renderAppPage = () => {
   const studentShellProfile = environmentKey === "aluno" ? getActiveStudentProfile() : null;
   const shellUserFallback = studentShellProfile ? getStudentProfileInitials(studentShellProfile.fullName) : "MS";
   const shellUserLabel = studentShellProfile ? printableEscape(studentShellProfile.firstName) : environment.user;
-  const topActions = environmentKey === "escola"
+  const topActions = studentLibraryShell || environmentKey === "escola"
     ? `<div class="rs-global-actions" aria-label="Navegação global"><button type="button" data-platform-back>${adminInlineIcon("back", "Voltar")}</button><button type="button" data-platform-home>${adminInlineIcon("home", "Início")}</button><button type="button" data-platform-logout>${adminInlineIcon("sair", "Sair")}</button></div>`
     : environmentKey === "secretaria"
       ? `<div class="top-actions secretaria-top-actions" aria-label="Ações da Secretaria"><button type="button" data-secretaria-back>${secretariaInlineIcon("progresso", "VOLTAR")}</button><button type="button" data-platform-home>${secretariaInlineIcon("home", "INICIO")}</button><a href="escola.html">${secretariaInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${secretariaInlineIcon("sair", "SAIR")}</button></div>`
@@ -34521,11 +34518,11 @@ const renderAppPage = () => {
       ? `<div class="admin-topbar-actions" aria-label="Navegação global"><button type="button" data-platform-back>${adminInlineIcon("back", "VOLTAR")}</button><button type="button" data-platform-home>${adminInlineIcon("home", "INICIO")}</button><a class="admin-topbar-link" href="escola.html">${adminInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${adminInlineIcon("sair", "SAIR")}</button></div>`
     : `<div class="top-actions" aria-label="Ações"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>${shellUserFallback}</span>`}<strong>${shellUserLabel}</strong></div></div>`;
   const topbarClass = environmentKey === "bancoQuestoes" ? "app-topbar admin-topbar" : "app-topbar";
-  const topbarMenu = ["bancoQuestoes", "escola"].includes(environmentKey) ? "" : `<a class="icon-button menu-toggle" href="${shellHomeHref}" aria-label="Início">☰</a>`;
-  const topbarSearchLabel = environmentKey === "bancoQuestoes" ? "Busca Banco" : environmentKey === "escola" ? "Buscar nesta tela" : "Pesquisar";
+  const topbarMenu = studentLibraryShell || ["bancoQuestoes", "escola"].includes(environmentKey) ? "" : `<a class="icon-button menu-toggle" href="${shellHomeHref}" aria-label="Início">☰</a>`;
+  const topbarSearchLabel = environmentKey === "bancoQuestoes" ? "Busca Banco" : studentLibraryShell || environmentKey === "escola" ? "Buscar nesta tela" : "Pesquisar";
 
   mount.innerHTML = `
-    <div class="app-shell${environmentKey === "escola" ? " rs-workspace" : ""}" data-environment="${environmentKey}" data-active-module="${activeKey}">
+    <div class="app-shell${studentLibraryShell ? " rs-workspace rs-student-library" : environmentKey === "escola" ? " rs-workspace" : ""}" data-environment="${environmentKey}" data-active-module="${activeKey}">
       <aside class="app-sidebar" aria-label="Navegação principal">
         <a class="sidebar-logo" href="${shellLogoHref}" aria-label="Raízes e Saberes">
           <img src="logo-sidebar-dark.png" alt="Raízes e Saberes Ecossistema Educacional" onerror="this.hidden=true; this.nextElementSibling.hidden=false;" />
@@ -34540,8 +34537,8 @@ const renderAppPage = () => {
       </aside>
       <main class="app-main">
         <header class="${topbarClass}">
-          ${environmentKey === "escola" ? '<button type="button" class="rs-menu-toggle" data-rs-menu-toggle aria-expanded="false">Menu</button>' : topbarMenu}
-          <label class="app-search"><span>${topbarSearchLabel}</span><input type="search" placeholder="${environmentKey === "escola" ? "Buscar nesta tela..." : environment.search}" /></label>
+          ${studentLibraryShell || environmentKey === "escola" ? '<button type="button" class="rs-menu-toggle" data-rs-menu-toggle aria-expanded="false">Menu</button>' : topbarMenu}
+          <label class="app-search"><span>${topbarSearchLabel}</span><input type="search" placeholder="${studentLibraryShell || environmentKey === "escola" ? "Buscar nesta tela..." : environment.search}" /></label>
           ${topFilter}
           ${moduleSwitcher}
           ${topActions}
@@ -34551,6 +34548,13 @@ const renderAppPage = () => {
     </div>
     <nav class="mobile-tabbar" aria-label="Navegação mobile">${mobileNav}</nav>
   `;
+
+  if (studentLibraryShell) {
+    const search = mount.querySelector('.app-search input');
+    const target = () => [...mount.querySelectorAll('.edition-search input,.ed-toolbar input')].find(input => input.getClientRects().length);
+    search?.addEventListener('input', () => {const input=target();if(input){input.value=search.value;input.dispatchEvent(new Event('input',{bubbles:true}));}});
+    search?.addEventListener('keydown', event => {if(event.key==='Enter'){event.preventDefault();const input=target();if(input?.closest('.edition-search')){input.value=search.value;input.closest('.edition-search').querySelector('[data-search]')?.click();}}});
+  }
 
   requestAnimationFrame(() => {
     document.querySelector(".route-screen")?.classList.add("is-mounted");
