@@ -14824,7 +14824,7 @@ const renderAdminContentGovernanceConsole = () => {
       <div class="admin-section-head"><h2>Acervo Mestre</h2><span>Visão por módulo</span></div>
       <div class="admin-content-module-grid">
         ${canSeeQuestionBank ? renderAdminContentModuleCard({ title: "Banco de Questões", count: "Consultar", countLabel: "acervo editorial", description: "O total editorial e os direitos contratados são consultados separadamente; não representam o mesmo conjunto.", status: "OPERACIONAL", icon: "clipboard", href: "banco-questoes.html?view=dashboard" }) : ""}
-        ${renderAdminContentModuleCard({ title: "Livros", count: totals.book || 0, countLabel: "itens", description: "Obras e materiais da Biblioteca Viva.", status: statusFromCount(totals.book), icon: "book", href: adminContentUrl({ type: "book", page: 1 }) })}
+        ${renderAdminContentModuleCard({ title: "Livros", count: totals.book || 0, countLabel: "itens do catálogo anterior", description: "Abra para conferir também as edições oficiais no armazenamento privado, listadas separadamente.", status: statusFromCount(totals.book), icon: "book", href: adminContentUrl({ type: "book", page: 1 }) })}
         ${renderAdminContentModuleCard({ title: "Atividades", count: totals.activity || 0, countLabel: "itens", description: "Atividades imprimíveis, digitais e de apoio pedagógico.", status: statusFromCount(totals.activity), icon: "doc", href: adminContentUrl({ type: "activity", page: 1 }) })}
         ${renderAdminContentModuleCard({ title: "Jogos e Interações", count: totals.game || 0, countLabel: "itens", description: "Jogos, objetos interativos e experiências guiadas.", status: statusFromCount(totals.game), icon: "site", href: adminContentUrl({ type: "game", page: 1 }) })}
         ${renderAdminContentModuleCard({ title: "Vídeos", count: totals.vídeo || 0, countLabel: "itens", description: "Mídias pedagógicas em organização para distribuição.", status: Number(totals.vídeo || 0) > 0 ? "OPERACIONAL" : "EM IMPLANTAÇÃO", icon: "chart", href: adminContentUrl({ type: "vídeo", page: 1 }) })}
@@ -15190,7 +15190,6 @@ const renderAdminSidebar = (active = "inicio") => `
       ${adminReadOnlyNav
         .map((item) => `<button type="button" data-admin-view="${item.key}" class="${item.key === active ? "is-active" : ""}">${adminInlineIcon(item.icon, item.label)}</button>`)
         .join("")}
-      <button class="platform-logout-button" type="button" data-platform-logout>${adminInlineIcon("sair", "SAIR")}</button>
     </nav>
   </aside>
 `;
