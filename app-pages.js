@@ -4650,7 +4650,6 @@ const renderTeacherSidebar = (activeView = "inicio") => `
         )
         .join("")}
     </nav>
-    <button class="platform-logout-button" type="button" data-platform-logout><i data-icon="logout"></i><span>SAIR</span></button>
   </aside>
 `;
 
@@ -33067,7 +33066,7 @@ const initTeacherWorkspace = () => {
       initTeacherWorkspace();
       return;
     }
-    if (path === "professor-aluno.html") {
+    if (["professor-aluno", "professor-aluno.html"].includes(path)) {
       const studentId = getPrintableParams().get("id") || "";
       const student = teacherInstitutionalState.studentsById?.[studentId] || null;
       const classId = student?.classId || "";
@@ -33075,6 +33074,8 @@ const initTeacherWorkspace = () => {
         ensureTeacherStudentNotes({ force: true, classId, studentId })
           .then(() => ensureTeacherDiaryEntries({ force: true, classId, date: getTeacherDiaryDate() }))
           .then(rerenderTeacherStudentPage);
+        // Preserve the mounted workspace until the guarded hydration finishes.
+        return;
       }
       workspace.outerHTML = renderTeacherStudentPage();
       requestAnimationFrame(() => document.querySelector(".teacher-workspace")?.classList.add("is-mounted"));
