@@ -2903,7 +2903,7 @@ const renderKnowledgeTreeFull = (data) => {
     <div class="knowledge-tree-full" aria-label="Minha Árvore Viva completa">
       <section class="knowledge-tree-hero">
         <div>
-          <span>Asset 010</span>
+          <span>Minha Árvore</span>
           <h1>Árvore do Conhecimento</h1>
           <p>Seu aprendizado cresce. Sua arvore floresce. Seu futuro se transforma.</p>
         </div>
@@ -3491,7 +3491,7 @@ const renderStudentLegacyProfilePage = () => {
 };
 
 const renderStudentProfilePage = () => {
-  if (!isStudentInstitutionalMode()) return renderStudentLegacyProfilePage();
+  if (!isStudentInstitutionalMode()) return `<aside class="rs-demo-notice" role="note">Perfil demonstrativo: a imagem de exemplo não representa o progresso real do aluno.</aside>${renderStudentLegacyProfilePage()}`;
   const isBlocked = studentInstitutionalState.status !== "ready";
   const profile = getActiveStudentProfile();
   const gamification = getStudentGamificationAudit();
@@ -9862,7 +9862,7 @@ const renderOfficialReportExportControls = (state = {}) => `
   <div class="official-report-actions">
     <button type="button" data-report-export="pdf" ${state.exportStatus === "loading" ? "disabled" : ""}>Gerar PDF</button>
     <button type="button" data-report-export="xlsx" ${state.exportStatus === "loading" ? "disabled" : ""}>Exportar XLSX</button>
-    <button type="button" data-report-print>Imprimir MVP</button>
+    <button type="button" data-report-print>Imprimir</button>
   </div>
   ${state.exportStatus === "loading" ? "<p>Gerando arquivo oficial...</p>" : ""}
   ${state.exportError ? `<p>${htmlEscape(state.exportError)}</p>` : ""}
@@ -9936,7 +9936,7 @@ const renderOfficialReportPreview = ({ title, subtitle = "", range = {}, state =
       ${confidential ? `<p><strong>CONFIDENCIAL — USO INSTITUCIONAL</strong></p>` : ""}
       ${renderOfficialReportSummary(result.summary || {})}
       ${renderOfficialReportRows(result.rows || result.assignments || result.entries || [])}
-      <p>Prévia live. PDF oficial e XLSX congelam um snapshot imutável do relatório no momento da emissão.</p>
+      <p>Os arquivos PDF e XLSX representam os dados no momento da emissão.</p>
       ${renderOfficialReportHistory(state)}
     </section>
   `;
@@ -10205,7 +10205,7 @@ const renderMunicipalNetworkReadyView = () => {
   const reportsView = `
     <section class="panel span-2">
       <div class="panel-head"><h2>${secretariaInlineIcon("doc", "Relatórios")}</h2>${renderOfficialReportExportControls(officialReportsState.municipal)}</div>
-      ${renderOfficialReportCatalogCards(["attendance", "avalia", "network-analytics"])}
+      <p>Exporte os indicadores consolidados das escolas vinculadas à rede.</p>
       <p><strong>Raízes e Saberes</strong> · ${htmlEscape(network.name || "Rede Municipal")} · Período ${htmlEscape(overview.period?.date_from || "")} a ${htmlEscape(overview.period?.date_to || "")}</p>
       <div class="metric-row">
         <article>Escolas<strong>${analyticsNumberLabel(summary.schools_total)}</strong><span>vinculadas à rede</span></article>
@@ -10218,7 +10218,7 @@ const renderMunicipalNetworkReadyView = () => {
       <ul class="clean-list">
         ${comparison.map((school) => `<li><strong>${htmlEscape(school.school_name || "Escola")}</strong><span>Frequência ${analyticsPercentLabel(school.attendance_rate)} · Avalia+ ${analyticsPercentLabel(school.assessment_average)} · BNCC ${analyticsPercentLabel(school.bncc_percentage)} · Diário ${analyticsNumberLabel(school.diary_entries)}</span></li>`).join("") || "<li>Dados insuficientes para consolidar escolas no período.</li>"}
       </ul>
-      <p>Prévia live. PDF oficial e XLSX congelam um snapshot imutável do relatório no momento da emissão.</p>
+      <p>Os arquivos PDF e XLSX representam os dados no momento da emissão.</p>
       ${renderOfficialReportHistory(officialReportsState.municipal)}
     </section>
   `;
@@ -10555,10 +10555,10 @@ const renderTeacherReportsView = () => {
   const selectedClass = classes.find((classItem) => classItem.id === params.classId) || classes[0] || {};
   const allowedReports = ["attendance", "diary", "avalia"];
   return `
-    <div class="analytics-grid secretaria-grid">
+    <div class="analytics-grid secretaria-grid rs-reports">
       <section class="panel span-2">
-        <div class="panel-head"><h2>${secretariaInlineIcon("doc", "Relatórios")}</h2><span>Professor · P0</span></div>
-        ${renderOfficialReportCatalogCards(allowedReports)}
+        <div class="panel-head"><h2>${secretariaInlineIcon("doc", "Relatórios")}</h2><span>Professor</span></div>
+        <p>Selecione o relatório, a turma e o período para consultar os registros autorizados.</p>
       </section>
       <section class="panel span-2">
         <form class="tw-form-grid" method="get" action="professor.html">
@@ -10570,7 +10570,7 @@ const renderTeacherReportsView = () => {
           <label><span>Turma</span><select name="class">${classes.map((classItem) => `<option value="${htmlEscape(classItem.id)}" ${classItem.id === params.classId ? "selected" : ""}>${htmlEscape(classItem.name || normalizeClassName(classItem))}</option>`).join("")}</select></label>
           <label><span>De</span><input type="date" name="reportFrom" value="${htmlEscape(params.range.from)}" /></label>
           <label><span>Até</span><input type="date" name="reportTo" value="${htmlEscape(params.range.to)}" /></label>
-          <button type="submit">Gerar preview</button>
+          <button type="submit">Gerar relatório</button>
         </form>
       </section>
       ${renderOfficialReportPreview({
@@ -10821,7 +10821,7 @@ const renderTeacherWorkspaceView = (view) => {
     perfil: `
       <section class="tw-board tw-card-grid">
         ${renderTeacherCard()}
-        <article class="tw-metric-card"><span>Agenda</span><strong>Manha e tarde</strong><small>Educação Infantil</small></article>
+        <article class="tw-metric-card"><span>Agenda</span><a href="professor.html?view=calendario">Consultar calendário</a><small>Compromissos e planejamento</small></article>
         <article class="tw-metric-card"><span>Turmas</span><strong>${institutionalClasses.length}</strong><small>Vínculos institucionais ativos</small></article>
       </section>
     `,
@@ -11557,11 +11557,12 @@ const renderSupportPortal = () => {
   const selectedTicket = new URLSearchParams(window.location.search || "").get("ticket") || "";
   const selectedDetail = supportState.detail?.ticket?.id === selectedTicket ? supportState.detail : null;
   return `
-    <section class="admin-workspace support-workspace" data-support-portal>
+    <section class="admin-workspace support-workspace rs-workspace" data-support-portal>
       <main class="admin-main">
         <header class="admin-topbar">
           <label><span>Busca</span><input type="search" placeholder="Buscar chamados..." data-admin-search /></label>
           <div class="admin-topbar-actions">
+            <button type="button" data-platform-back>${adminInlineIcon("back", "Voltar")}</button>
             <button type="button" data-platform-home>${adminInlineIcon("home", "INÍCIO")}</button>
             <button type="button" data-platform-logout>${adminInlineIcon("sair", "SAIR")}</button>
           </div>
@@ -12039,7 +12040,7 @@ const renderAdminSupportConsole = () => {
         <h2>Fila de atendimento</h2>
         <span>${tickets.length} chamados autorizados</span>
       </div>
-      <div class="admin-filter-row">
+      <div class="admin-filter-row admin-support-filters">
         <label><span>Status</span><select disabled><option>Todos</option></select></label>
         <label><span>Prioridade</span><select disabled><option>Todas</option></select></label>
         <label><span>Categoria</span><select disabled><option>Todas</option></select></label>
@@ -15239,7 +15240,7 @@ const renderAdminPermissionMatrix = () => {
         <h2>Perfis e permissões</h2>
         <span>Administrar x Utilizar · flags não substituem RLS</span>
       </div>
-      <div class="admin-permission-table" role="table" aria-label="Liberação operacional por perfil">
+      <div class="admin-permission-table admin-role-permissions" role="table" tabindex="0" aria-label="Liberação operacional por perfil">
         <div role="row"><strong>Funcionalidade</strong><strong>Perfil</strong><strong>Escopo</strong><strong>Status</strong><strong>Ação</strong></div>
         ${rows
           .map((item) => `
@@ -15336,7 +15337,7 @@ const renderAdminAuditConsole = () => {
         <label><span>Ação</span><input name="action" value="${printableEscape(adminAuditFilterState.action)}" placeholder="Ex.: role_changed" /></label>
         <button type="submit">Filtrar</button>
       </form>
-      <div class="admin-permission-table" role="table" aria-label="Eventos de auditoria">
+      <div class="admin-permission-table" role="table" tabindex="0" aria-label="Eventos de auditoria">
         <div role="row"><strong>QUEM</strong><strong>O QUE</strong><strong>QUANDO</strong><strong>ONDE/ESCOLA</strong><strong>MÓDULO</strong><strong>RESULTADO</strong></div>
         ${rows.length ? rows.map((event) => `
           <div role="row">
@@ -17048,7 +17049,7 @@ const renderEarlyChildhoodDashboard = () => {
   const { institution, ages, defaultAge } = schoolCollectiveData;
   const activeAge = ages[defaultAge] || Object.values(ages)[0];
   return `
-    <section class="school-collective" data-school-collective data-active-age="${defaultAge}">
+    <aside class="rs-demo-notice" role="note">Ambiente demonstrativo: a escola e os desafios abaixo são exemplos.</aside><section class="school-collective" data-school-collective data-active-age="${defaultAge}">
       <header class="school-context-strip">
         <div>
           <span>Área da Escola</span>
@@ -19081,7 +19082,7 @@ const renderFamilyDashboard = () => {
       ? "Família / Educação Infantil"
       : `Olá, família de ${student.name}!`;
   return `
-    <main class="family-v1" data-family-area data-week-start="${weekStartIso}">
+    <main class="family-v1 rs-workspace" data-family-area data-week-start="${weekStartIso}">
       <aside class="family-v1-sidebar">
         <a class="family-v1-logo" href="familia.html"><img src="logo-sidebar-dark.png" alt="Raízes e Saberes Educacional" onerror="this.hidden=true" /></a>
         <div class="family-v1-person">
@@ -19095,7 +19096,7 @@ const renderFamilyDashboard = () => {
         </nav>
       </aside>
       <section class="family-v1-main">
-        <header class="family-v1-topbar">
+        <header class="family-v1-topbar"><button type="button" class="rs-menu-toggle" data-rs-menu-toggle aria-expanded="false">Menu</button>
           <label><span>Buscar</span><input type="search" placeholder="Buscar conteúdos, aluno, agenda..." data-family-search /></label>
           <div class="family-global-actions" aria-label="Comandos globais">
             <button type="button" data-family-back>${premiumIcon("voltar")}<span>Voltar</span></button>
@@ -19111,7 +19112,7 @@ const renderFamilyDashboard = () => {
             <p>${printableEscape(student.className)} · ${printableEscape(student.school)}</p>
           </div>
         </header>
-        <section class="family-v1-content" data-family-content>${renderFamilyView(view)}</section>
+        ${!isFamilyInstitutionalMode() ? '<aside class="rs-demo-notice" role="note">Ambiente demonstrativo: os dados de exemplo não representam registros escolares reais.</aside>' : ""}<section class="family-v1-content" data-family-content>${renderFamilyView(view)}</section>
       </section>
       <nav class="family-v1-mobile" aria-label="Navegação mobile">
         ${familyAreaViews.map(([key, label]) => `<a class="${key === view ? "is-active" : ""}" href="familia.html?view=${key}">${familyAreaViewLabel(key, label)}</a>`).join("")}
@@ -19653,13 +19654,13 @@ const modules = {
     title: "Minha Árvore",
     subtitle: "Asset 010 - Árvore Viva",
     code: "PLAT-V2-006",
-    html: renderKnowledgeTreeFull(knowledgeTreeFixtures.growing),
+    html: `<aside class="rs-demo-notice" role="note">Demonstração da árvore: XP, medalhas e conquistas abaixo são exemplos, não o progresso real do aluno.</aside>${renderKnowledgeTreeFull(knowledgeTreeFixtures.growing)}`,
   },
   missao: {
     title: "Missão do Dia",
     subtitle: "Uma nova aventura para aprender brincando",
     code: "PLAT-V2-007",
-    html: renderMissionPlayer(missionFixtures.colorMatch001),
+    html: `<aside class="rs-demo-notice" role="note">Missão demonstrativa: respostas e recompensas desta atividade não representam resultados escolares oficiais.</aside>${renderMissionPlayer(missionFixtures.colorMatch001)}`,
   },
   jogos: {
     title: getCurrentPlatformRole() === "aluno" ? "Jogos e Experiências" : "Jogar e Descobrir",
@@ -20252,7 +20253,7 @@ const modules = {
     subtitle: "Inteligência em avaliação",
     code: "MS-004",
     html: `
-      <div class="dashboard-head blue"><div><p>MS-004</p><h1>AVALIA+</h1><span>Inteligência em avaliação</span></div></div>
+      <aside class="rs-demo-notice" role="note">Painel demonstrativo: indicadores e gráficos ilustrativos. Aplicações Digitais apresenta somente resultados autorizados quando disponíveis.</aside><div class="dashboard-head blue"><div><p>MS-004</p><h1>AVALIA+</h1><span>Inteligência em avaliação</span></div></div>
       <div class="metric-row"><article>Participações<strong>18.742</strong><span>95,4%</span></article><article>Desempenho Médio<strong>72,6%</strong><span>▲ 6,3 p.p.</span></article><article>Acertos<strong>16.842</strong><span>▲ 8,7%</span></article><article>Aprendizado Adequado<strong>68,4%</strong><span>▲ 7,1 p.p.</span></article><article>Atenção Especial<strong>24,8%</strong><span>▼ 3,2 p.p.</span></article><article>Critico<strong>6,8%</strong><span>▼ 3,9 p.p.</span></article></div>
       <div class="analytics-grid">
         <section class="panel span-2"><h2>Evolucao da Aprendizagem</h2><div class="line-chart blue-line"></div></section>
@@ -30009,13 +30010,13 @@ const renderSecretariaReportsView = (index) => {
   const students = secretariaInstitutionalState.students || [];
   const allowedReports = ["attendance", "diary", "avalia", "school-analytics"];
   return `
-    <div class="analytics-grid secretaria-grid">
+    <div class="analytics-grid secretaria-grid rs-reports">
       <section class="panel span-2">
-        <div class="panel-head"><h2>${secretariaInlineIcon("doc", "Relatórios")}</h2><span>Catálogo P0 · live</span></div>
-        ${renderOfficialReportCatalogCards(allowedReports)}
+        <div class="panel-head"><h2>${secretariaInlineIcon("doc", "Relatórios")}</h2><span>Consulta escolar</span></div>
+        <p>Selecione o relatório, os filtros e o período para consultar os registros autorizados.</p>
       </section>
       <section class="panel span-2">
-        <form class="analytics-grid secretaria-grid" method="get" action="secretaria.html">
+        <form class="analytics-grid secretaria-grid tw-form-grid" method="get" action="secretaria.html">
           <input type="hidden" name="view" value="relatorios" />${["attendance", "diary"].includes(params.type) ? `<input type="hidden" name="school" value="${htmlEscape(secretariaInstitutionalState.selectedSchoolId || "")}" />` : ""}
           <label><span>Relatório</span><select name="report">${allowedReports.map((id) => {
             const item = getOfficialReport(id);
@@ -30025,7 +30026,7 @@ const renderSecretariaReportsView = (index) => {
           <label><span>Aluno</span><select name="student"><option value="">Todos</option>${students.map((student) => `<option value="${htmlEscape(student.id)}" ${student.id === params.studentId ? "selected" : ""}>${htmlEscape(normalizeStudentName(student))}</option>`).join("")}</select></label>
           <label><span>De</span><input type="date" name="reportFrom" value="${htmlEscape(params.range.from)}" /></label>
           <label><span>Até</span><input type="date" name="reportTo" value="${htmlEscape(params.range.to)}" /></label>
-          <button type="submit">Gerar preview</button>
+          <button type="submit">Gerar relatório</button>
         </form>
       </section>
       ${renderOfficialReportPreview({
@@ -34238,7 +34239,7 @@ const renderCategoryWorkspace = () => {
   const session=getPlatformSession(), role=getCurrentPlatformRole(), teacher=role==='professor';
   const roleLabel={professor:'Professor',aluno:'Aluno',educacao_infantil:'Educação Infantil',gestor:'Gestor',coordenador:'Coordenador',admin:'Administrador'}[role] || 'Conta autenticada';
   const nav=teacher ? teacherWorkspaceNav.map(([key,label,icon,href])=>`<a class="${key==='conteudos'?'is-active':''}" href="${categoryEscape(href || 'professor.html?view='+encodeURIComponent(key))}">${categoryEscape(label)}</a>`).join('') : `<a href="${categoryEscape(getRoleHome(role))}">Início</a><a class="is-active" href="conteudos-categorias.html">Meus conteúdos</a>`;
-  return `<section class="teacher-workspace content-workspace is-mounted"><aside class="tw-sidebar" aria-label="Menu de ${categoryEscape(roleLabel)}"><article class="tw-teacher-card"><img src="logo-sidebar-dark.png" alt="Raízes e Saberes"><div><span>${categoryEscape(roleLabel)}</span><strong>${categoryEscape(session.name || session.email || 'Conta autenticada')}</strong><small data-content-school-name>Escola: consultando vínculo...</small></div></article><nav>${nav}</nav><button type="button" data-platform-logout>Sair</button></aside><div class="tw-main"><header class="content-workspace-topbar"><button type="button" data-platform-back>Voltar</button><a href="${categoryEscape(getRoleHome(role))}">Início</a><button type="button" data-platform-logout>Sair</button></header><main>${renderCategoryConsumer()}</main></div></section>`;
+  return `<section class="teacher-workspace content-workspace rs-workspace is-mounted"><aside class="tw-sidebar" aria-label="Menu de ${categoryEscape(roleLabel)}"><article class="tw-teacher-card"><img src="logo-sidebar-dark.png" alt="Raízes e Saberes"><div><span>${categoryEscape(roleLabel)}</span><strong>${categoryEscape(session.name || session.email || 'Conta autenticada')}</strong><small data-content-school-name>Escola: consultando vínculo...</small></div></article><nav>${nav}</nav><button type="button" data-platform-logout>Sair</button></aside><div class="tw-main"><header class="content-workspace-topbar"><button type="button" class="rs-menu-toggle" data-rs-menu-toggle aria-expanded="false">Menu</button><button type="button" data-platform-back>Voltar</button><a href="${categoryEscape(getRoleHome(role))}">Início</a><button type="button" data-platform-logout>Sair</button></header><main>${renderCategoryConsumer()}</main></div></section>`;
 };
 const renderCategoryConsumer = () => `<section class="category-consumer" data-category-consumer><header><h1>Meus conteúdos</h1><p>Categorias autorizadas para sua escola e turma.</p></header><p data-category-consumer-status role="status" aria-live="polite">Consultando categorias...</p><div class="category-module-grid" data-category-consumer-modules aria-label="Categorias disponíveis"></div><div data-category-consumer-items></div><article data-category-consumer-detail></article></section>`;
 const initCategoryConsumer = () => {
@@ -34426,10 +34427,10 @@ const renderAppPage = () => {
       .join("");
 
     mount.innerHTML = `
-      <section class="admin-workspace question-bank-workspace" data-question-bank-workspace>
+      <section class="admin-workspace question-bank-workspace rs-workspace" data-question-bank-workspace>
         ${renderQuestionBankAdminSidebar(questionBankView)}
         <main class="admin-main">
-          <header class="admin-topbar">
+          <header class="admin-topbar"><button type="button" class="rs-menu-toggle" data-rs-menu-toggle aria-expanded="false">Menu</button>
             <label><span>Busca Banco de Questões</span><input type="search" placeholder="${environment.search}" /></label>
             <div class="admin-topbar-actions" aria-label="Navegação global">
               <button type="button" data-platform-back>${adminInlineIcon("back", "VOLTAR")}</button>
@@ -34485,11 +34486,11 @@ const renderAppPage = () => {
         : `<a class="${(environmentKey === "bancoQuestoes" ? key === questionBankView : environmentKey === "secretaria" ? key === getSecretariaCurrentView() : environmentKey === "gestor" ? key === getMunicipalNetworkView() : key === activeKey) ? "is-active" : ""}" href="${href}">${label}</a>`
     )
     .join("");
-  const studentLibraryShell = currentRole === "aluno" && activeKey === "biblioteca";
+  const studentWorkspaceShell = currentRole === "aluno" && ["biblioteca", "missao", "arvore", "jogos"].includes(activeKey);
   const shellHomeHref = currentRole ? getRoleHome(currentRole) : environmentKey === "aluno" ? "aluno.html" : environmentKey === "escola" ? "escola.html" : platformRoute("/", "index.html");
   const shellLogoHref = currentRole ? getRoleHome(currentRole) : shellHomeHref;
-  const topFilter = studentLibraryShell || environmentKey === "escola" || environmentKey === "secretaria" || environmentKey === "bancoQuestoes" ? "" : `<button class="top-filter" type="button">Filtros</button>`;
-  const moduleSwitcher = studentLibraryShell || environmentKey === "escola"
+  const topFilter = studentWorkspaceShell || environmentKey === "escola" || environmentKey === "secretaria" || environmentKey === "bancoQuestoes" ? "" : `<button class="top-filter" type="button">Filtros</button>`;
+  const moduleSwitcher = studentWorkspaceShell || environmentKey === "escola"
     ? ""
     : environmentKey === "secretaria"
       ? ""
@@ -34499,19 +34500,21 @@ const renderAppPage = () => {
   const studentShellProfile = environmentKey === "aluno" ? getActiveStudentProfile() : null;
   const shellUserFallback = studentShellProfile ? getStudentProfileInitials(studentShellProfile.fullName) : "MS";
   const shellUserLabel = studentShellProfile ? printableEscape(studentShellProfile.firstName) : environment.user;
-  const topActions = studentLibraryShell || environmentKey === "escola"
+  const topActions = studentWorkspaceShell || environmentKey === "escola"
     ? `<div class="rs-global-actions" aria-label="Navegação global"><button type="button" data-platform-back>${adminInlineIcon("back", "Voltar")}</button><button type="button" data-platform-home>${adminInlineIcon("home", "Início")}</button><button type="button" data-platform-logout>${adminInlineIcon("sair", "Sair")}</button></div>`
     : environmentKey === "secretaria"
       ? `<div class="top-actions secretaria-top-actions" aria-label="Ações da Secretaria"><button type="button" data-secretaria-back>${secretariaInlineIcon("progresso", "VOLTAR")}</button><button type="button" data-platform-home>${secretariaInlineIcon("home", "INICIO")}</button><a href="escola.html">${secretariaInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${secretariaInlineIcon("sair", "SAIR")}</button></div>`
     : environmentKey === "bancoQuestoes"
       ? `<div class="admin-topbar-actions" aria-label="Navegação global"><button type="button" data-platform-back>${adminInlineIcon("back", "VOLTAR")}</button><button type="button" data-platform-home>${adminInlineIcon("home", "INICIO")}</button><a class="admin-topbar-link" href="escola.html">${adminInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${adminInlineIcon("sair", "SAIR")}</button></div>`
+    : currentRole
+      ? `<div class="rs-global-actions" aria-label="Navegação global"><button type="button" data-platform-back>${adminInlineIcon("back", "Voltar")}</button><button type="button" data-platform-home>${adminInlineIcon("home", "Início")}</button><button type="button" data-platform-logout>${adminInlineIcon("sair", "Sair")}</button></div>`
     : `<div class="top-actions" aria-label="Ações"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>${shellUserFallback}</span>`}<strong>${shellUserLabel}</strong></div></div>`;
   const topbarClass = environmentKey === "bancoQuestoes" ? "app-topbar admin-topbar" : "app-topbar";
-  const topbarMenu = studentLibraryShell || ["bancoQuestoes", "escola"].includes(environmentKey) ? "" : `<a class="icon-button menu-toggle" href="${shellHomeHref}" aria-label="Início">☰</a>`;
-  const topbarSearchLabel = environmentKey === "bancoQuestoes" ? "Busca Banco" : studentLibraryShell || environmentKey === "escola" ? "Buscar nesta tela" : "Pesquisar";
+  const topbarMenu = currentRole || studentWorkspaceShell || ["bancoQuestoes", "escola"].includes(environmentKey) ? "" : `<a class="icon-button menu-toggle" href="${shellHomeHref}" aria-label="Início">☰</a>`;
+  const topbarSearchLabel = environmentKey === "bancoQuestoes" ? "Busca Banco" : studentWorkspaceShell || environmentKey === "escola" ? "Buscar nesta tela" : "Pesquisar";
 
   mount.innerHTML = `
-    <div class="app-shell${studentLibraryShell ? " rs-workspace rs-student-library" : environmentKey === "escola" ? " rs-workspace" : ""}" data-environment="${environmentKey}" data-active-module="${activeKey}">
+    <div class="app-shell${studentWorkspaceShell ? " rs-workspace rs-student-workspace" : currentRole ? " rs-workspace" : ""}" data-environment="${environmentKey}" data-active-module="${activeKey}">
       <aside class="app-sidebar" aria-label="Navegação principal">
         <a class="sidebar-logo" href="${shellLogoHref}" aria-label="Raízes e Saberes">
           <img src="logo-sidebar-dark.png" alt="Raízes e Saberes Ecossistema Educacional" onerror="this.hidden=true; this.nextElementSibling.hidden=false;" />
@@ -34526,8 +34529,8 @@ const renderAppPage = () => {
       </aside>
       <main class="app-main">
         <header class="${topbarClass}">
-          ${studentLibraryShell || environmentKey === "escola" ? '<button type="button" class="rs-menu-toggle" data-rs-menu-toggle aria-expanded="false">Menu</button>' : topbarMenu}
-          <label class="app-search"><span>${topbarSearchLabel}</span><input type="search" placeholder="${studentLibraryShell || environmentKey === "escola" ? "Buscar nesta tela..." : environment.search}" /></label>
+          ${currentRole ? '<button type="button" class="rs-menu-toggle" data-rs-menu-toggle aria-expanded="false">Menu</button>' : topbarMenu}
+          <label class="app-search"><span>${topbarSearchLabel}</span><input type="search" placeholder="${studentWorkspaceShell || environmentKey === "escola" ? "Buscar nesta tela..." : environment.search}" /></label>
           ${topFilter}
           ${moduleSwitcher}
           ${topActions}
@@ -34538,11 +34541,24 @@ const renderAppPage = () => {
     <nav class="mobile-tabbar" aria-label="Navegação mobile">${mobileNav}</nav>
   `;
 
-  if (studentLibraryShell) {
+  if (studentWorkspaceShell && activeKey === "biblioteca") {
     const search = mount.querySelector('.app-search input');
     const target = () => [...mount.querySelectorAll('.edition-search input,.ed-toolbar input')].find(input => input.getClientRects().length);
     search?.addEventListener('input', () => {const input=target();if(input){input.value=search.value;input.dispatchEvent(new Event('input',{bubbles:true}));}});
     search?.addEventListener('keydown', event => {if(event.key==='Enter'){event.preventDefault();const input=target();if(input?.closest('.edition-search')){input.value=search.value;input.closest('.edition-search').querySelector('[data-search]')?.click();}}});
+  }
+
+  if (studentWorkspaceShell && activeKey !== "biblioteca") {
+    const search = mount.querySelector('.app-search input');
+    const result = document.createElement('span');result.className='student-page-search-status';result.setAttribute('role','status');
+    search.after(result);
+    const matches = () => {
+      const query=search.value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+      const items=[...mount.querySelectorAll('.route-screen h1,.route-screen h2,.route-screen h3,.route-screen .official-school-game-card')].filter(item=>!item.closest('.official-school-game-card')||item.matches('.official-school-game-card'));
+      return items.filter(item=>{const found=Boolean(query)&&item.textContent.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(query);item.classList.toggle('student-search-match',found);return found;});
+    };
+    search.addEventListener('input',()=>{const found=matches();result.textContent=search.value.trim()?`${found.length} resultados nesta tela`:'';});
+    search.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();matches()[0]?.scrollIntoView({block:'center',behavior:'smooth'});}});
   }
 
   requestAnimationFrame(() => {
