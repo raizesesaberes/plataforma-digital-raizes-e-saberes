@@ -2670,8 +2670,6 @@ const ecosystemModuleLinks = (activeKey, environmentKey = "") => {
           ["arvore.html", "Minha Árvore"],
           ["biblioteca.html", "Biblioteca"],
           ["jogos.html", "Jogar e Descobrir"],
-          ["perfil.html", "Perfil"],
-          ["familia.html", "Família"],
         ]
       : environmentKey === "educacaoInfantil"
         ? [
@@ -3326,7 +3324,6 @@ const profileAccessConfig = {
       { label: "Ver minha arvore", href: "arvore.html", tone: "green" },
       { label: "Abrir livro", href: "biblioteca.html?from=aluno", tone: "blue" },
       { label: "Jogar", href: "jogos.html", tone: "purple" },
-      { label: "Meu perfil", href: "perfil.html", tone: "teal" },
     ],
     tabs: [
       { label: "Início", href: "aluno.html" },
@@ -3334,8 +3331,6 @@ const profileAccessConfig = {
       { label: "Minha Árvore", href: "arvore.html" },
       { label: "Biblioteca", href: "biblioteca.html?from=aluno" },
       { label: "Jogos", href: "jogos.html" },
-      { label: "Perfil", href: "perfil.html" },
-      { label: "Família", href: "familia.html" },
       { label: "Atividades", href: "aluno-atividades.html" },
     ],
   },
@@ -8392,8 +8387,6 @@ const studentPremiumNav = [
   ["biblioteca.html", "Biblioteca", "book"],
   ["conteudos-categorias.html", "Meus conteúdos", "book"],
   ["jogos.html", "Jogar e Descobrir", "game"],
-  ["perfil.html", "Perfil", "user"],
-  ["familia.html", "Família", "family"],
 ];
 
 const renderStudentPremiumSidebar = () => `
@@ -20582,8 +20575,6 @@ const environments = {
       ["arvore", "MINHA ARVORE", "arvore.html"],
       ["biblioteca", "BIBLIOTECA", "biblioteca.html?from=aluno"],
       ["jogos", "JOGAR E DESCOBRIR", "jogos.html"],
-      ["perfil", "PERFIL", "perfil.html"],
-      ["familia", "FAMILIA", "familia.html"],
       ["logout", "SAIR", "#"],
     ],
     mobile: [
@@ -20592,8 +20583,6 @@ const environments = {
       ["arvore", "ARVORE", "arvore.html"],
       ["biblioteca", "BIBLIOTECA", "biblioteca.html?from=aluno"],
       ["jogos", "JOGAR", "jogos.html"],
-      ["perfil", "PERFIL", "perfil.html"],
-      ["familia", "FAMILIA", "familia.html"],
       ["logout", "SAIR", "#"],
     ],
   },

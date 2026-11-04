@@ -13,6 +13,23 @@ export async function connectEditionReader(root, client, bookId) {
  const count=request.manifest?.pageCount;
  if(!Number.isSafeInteger(count)||count<1)throw Error('invalid_manifest');
  root.dataset.totalPages=String(count);
+ // Reuse the protected first-page thumbnail; never construct a public asset URL.
+ let coverRequest;
+ const thumbnail=number=>number===1?(coverRequest??=client.read(bookId,'thumb',1)):client.read(bookId,'thumb',number);
+ const title=root.querySelector('.reader-header h2');
+ const identity=root.ownerDocument.createElement('div');identity.className='reader-book-identity';
+ const cover=root.ownerDocument.createElement('span');cover.className='reader-book-cover';
+ const fallback=root.ownerDocument.createElement('span');fallback.textContent='Capa indisponível';
+ const coverImage=root.ownerDocument.createElement('img');coverImage.alt='Capa do livro';coverImage.hidden=true;
+ cover.append(fallback,coverImage);
+ const coverStyle=root.ownerDocument.createElement('style');
+ coverStyle.textContent='.ed-reader .reader-header .reader-book-identity{display:flex;align-items:center;gap:12px;flex:1 1 280px;min-width:0}.ed-reader .reader-book-identity h2{flex:1;min-width:0}.reader-book-cover{width:56px;height:78px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid #dce6dd;border-radius:6px;background:#f7f9f6;overflow:hidden}.reader-book-cover img{width:100%;height:100%;object-fit:contain}.reader-book-cover span{font:400 10px/1.3 system-ui;text-align:center;color:#596b60;padding:3px}.reader-book-cover [hidden]{display:none!important}@media(max-width:700px){.ed-reader .reader-header .reader-book-identity{flex:0 1 100%;width:100%}.reader-book-cover{width:44px;height:62px}}';
+ if(title){title.before(identity);identity.append(cover,title);root.append(coverStyle);
+  coverImage.onload=()=>{if(!disposed){coverImage.hidden=false;fallback.hidden=true;}};
+  coverImage.onerror=()=>{coverImage.hidden=true;fallback.hidden=false;coverImage.removeAttribute('src');};
+  void thumbnail(1).then(result=>{if(!disposed&&result.asset?.kind==='thumb'&&result.asset.pageNumber===1&&result.asset.signedUrl)coverImage.src=result.asset.signedUrl;}).catch(()=>{});
+ }
+
  const fail=()=>{search?.clear();image.removeAttribute('src');image.hidden=true;if(error)error.hidden=false;if(errorDetail)errorDetail.textContent='Não foi possível acessar esta página. Tente novamente.';};
  const show=async(number)=>{
   if(disposed||!Number.isSafeInteger(number)||number<1||number>count)return;
@@ -46,7 +63,7 @@ export async function connectEditionReader(root, client, bookId) {
  const observer=new IntersectionObserver(entries=>{
   for(const entry of entries){if(!entry.isIntersecting)continue;observer.unobserve(entry.target);
    const number=Number(entry.target.dataset.page);
-   void client.read(bookId,'thumb',number).then(result=>{
+   void thumbnail(number).then(result=>{
     if(!disposed&&result.asset?.kind==='thumb'&&result.asset.pageNumber===number)entry.target.src=result.asset.signedUrl;
    }).catch(()=>entry.target.setAttribute('alt',`Miniatura ${number} indisponível`));
   }
@@ -59,5 +76,5 @@ export async function connectEditionReader(root, client, bookId) {
  const imageError=()=>fail();image.addEventListener('error',imageError);
  search=connectEditionSearch(root,client,bookId,show);
  await show(1);
- return {show,dispose(){disposed=true;generation++;search?.dispose();observer.disconnect();root.removeEventListener('click',click);image.removeEventListener('error',imageError);image.removeAttribute('src');}};
+ return {show,dispose(){disposed=true;generation++;search?.dispose();coverImage.onload=null;coverImage.onerror=null;coverImage.removeAttribute('src');if(title&&identity.parentNode)identity.before(title);identity.remove();coverStyle.remove();observer.disconnect();root.removeEventListener('click',click);image.removeEventListener('error',imageError);image.removeAttribute('src');}};
 }
