@@ -26643,4 +26643,8 @@ html[data-a11y-reduced-motion="true"] *::after {
 .rs-workspace .admin-permission-table>div>*{font-size:14px;}
 @media(max-width:640px){.rs-workspace .admin-section-head{align-items:flex-start;flex-direction:column;gap:8px;}.rs-workspace .admin-section-head>span{text-align:left;}}
 
+/* Keep final pagination controls clear of the floating accessibility launcher. */
+.rs-workspace .admin-content-pagination{margin-bottom:80px;}
+.rs-workspace .admin-content-pagination a{scroll-margin-bottom:100px;}
+
 }
