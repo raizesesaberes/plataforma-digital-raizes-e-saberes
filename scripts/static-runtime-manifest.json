@@ -17413,11 +17413,11 @@
   },
   {
     "file": "library-edition-client.mjs",
-    "sha256": "0b9108fe4194822cdbbad827b1bc56894600fc98000c20ff299d7ce840418633"
+    "sha256": "17bec6bd3339144804575ff869f74191f96bf6746fb56c5ef1f23da743a50fcb"
   },
   {
     "file": "library-edition-reader.mjs",
-    "sha256": "218a1b00557c865fd4f1bc7583a8964e97d3959deafdb47356e8401b79e607b2"
+    "sha256": "7796471194caa4760be1e055ab8994422dd0deb8a2fbf7a5bc47c74926a6614f"
   },
   {
     "file": "library-pilot-upload.html",
@@ -17434,5 +17434,9 @@
   {
     "file": "admin-edition-boot.mjs",
     "sha256": "3a628166bacfef7879ea6189f3a58ed5f67cf56d6cfba5db6075b1899e001700"
+  },
+  {
+    "file": "library-edition-search-ui.mjs",
+    "sha256": "e25c3a6df7c8fab6f150381d3c49b3cd2e92507c3d5954d7f9ea0e79af46be98"
   }
 ]

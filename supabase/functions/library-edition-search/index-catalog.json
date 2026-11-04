@@ -1,0 +1,492 @@
+{
+  "f9db671e-880b-52ea-aa36-5e5114b9cd26": {
+    "bookId": "f9db671e-880b-52ea-aa36-5e5114b9cd26",
+    "sourceSha256": "5fd077c7369d3ab5d8f5ffbd3ac9e2701d8f1100a9185e041a2d32fbe2d8bd9b",
+    "pageCount": 164,
+    "bytes": 3333681,
+    "sha256": "ab779aabade4405a9a91f464dc90024d2118bd298b64c7b61a41766441b9893c"
+  },
+  "a0d95a29-42aa-5e84-bdaf-91fd4f139610": {
+    "bookId": "a0d95a29-42aa-5e84-bdaf-91fd4f139610",
+    "sourceSha256": "f075583ffb1fa1855f2fb3d43b16dfba7eb99d33f377ee26373a354f83c6a0d7",
+    "pageCount": 482,
+    "bytes": 2802402,
+    "sha256": "d408f75638bfa1c7bcd2a89c3e92d6bf5df71595ba0420242c2cbc067b07f9aa"
+  },
+  "9cfe6192-6559-5e66-b81c-9c79bfd9bf8d": {
+    "bookId": "9cfe6192-6559-5e66-b81c-9c79bfd9bf8d",
+    "sourceSha256": "27d036fd134e8d24e6eafaa991ab3f604c05b6d06ab4eaefe16b8cde8a13f3a4",
+    "pageCount": 138,
+    "bytes": 2738411,
+    "sha256": "14f324f1dc7d1d857776a75546d873cf0cdc5e325e1988cd73976639ce2e8250"
+  },
+  "e9675861-5c97-5243-856e-4b8ed01281fc": {
+    "bookId": "e9675861-5c97-5243-856e-4b8ed01281fc",
+    "sourceSha256": "84c892c7419ad46f69a279439c45dd5bb189aec9ceaf4ab2965f1c58d6240e6d",
+    "pageCount": 438,
+    "bytes": 2609047,
+    "sha256": "436903e8d95a90e90cb6e2a9bced093ab1296b9389e420232704c1ccf7eeb226"
+  },
+  "5829f2be-4d45-5555-8194-9c60055e0f73": {
+    "bookId": "5829f2be-4d45-5555-8194-9c60055e0f73",
+    "sourceSha256": "9467f94f562c505a45669961bf2d0a1e0e61e5ebedbfdaefca80483b1bd2e7eb",
+    "pageCount": 157,
+    "bytes": 1377704,
+    "sha256": "57e487da38d60e3eec9df913bb31a1faa9712994a7f9c192b34c59c7289b84d6"
+  },
+  "39115318-0887-58f0-b8e1-cd34983fd810": {
+    "bookId": "39115318-0887-58f0-b8e1-cd34983fd810",
+    "sourceSha256": "6619738db0ef0e85f4adf96568e13931c8b4acbaa356ae9daa79b9d0582af1be",
+    "pageCount": 142,
+    "bytes": 573687,
+    "sha256": "62b675840b5b870b2d1d0fe079badd217938693f0e29cfa95ea8b936ee8f92ea"
+  },
+  "7c9241cb-7c3b-5985-8a55-39f5d1393436": {
+    "bookId": "7c9241cb-7c3b-5985-8a55-39f5d1393436",
+    "sourceSha256": "8289e40ea8451b7cfdd1bfa8e21edea997098b7f1b3d706d11b0997614c76604",
+    "pageCount": 157,
+    "bytes": 1339135,
+    "sha256": "f0f0242c09cbdac2448199ba8a705784bd37dba621699994a9e07c2723370c97"
+  },
+  "18fb6b93-e4b5-515a-823c-0d99df88ceaf": {
+    "bookId": "18fb6b93-e4b5-515a-823c-0d99df88ceaf",
+    "sourceSha256": "3b9fdc5a2bb06ba3ca0e5e23faba52876ffb7f316446804c8936a5f40305ccf7",
+    "pageCount": 142,
+    "bytes": 562608,
+    "sha256": "46100fdcbeaae6d64abcf830d0342211c23744b9c60c82188ef04614ed2e1c88"
+  },
+  "ed528f13-3d81-519f-8584-87cf9b42954e": {
+    "bookId": "ed528f13-3d81-519f-8584-87cf9b42954e",
+    "sourceSha256": "8efa2ac4fccb1fb8cfb032613dce6422d7a67a48c22d89dd6fd98d1bd867a5d0",
+    "pageCount": 172,
+    "bytes": 1373563,
+    "sha256": "1a2c3cb56f1329acb980fcf0354cc6aac47e0093200074d09ea3679f51c3b871"
+  },
+  "dea7e042-6dc0-554e-85e9-e4da2c53bd61": {
+    "bookId": "dea7e042-6dc0-554e-85e9-e4da2c53bd61",
+    "sourceSha256": "875b1d7feea87bb9845c3a7bc094395a67bebbba2dabf98c3f7a51bb36ddfd61",
+    "pageCount": 87,
+    "bytes": 939242,
+    "sha256": "78d5fe0fa56ac76cf841f36652c4767863cf24cdf15c1be7d589643db7b5518e"
+  },
+  "75a10930-56ba-5fd1-bdee-f657efcec2b4": {
+    "bookId": "75a10930-56ba-5fd1-bdee-f657efcec2b4",
+    "sourceSha256": "ac103426c6731af4f561561460b8cf712110e3e537a2627ada715dab6b37a13f",
+    "pageCount": 430,
+    "bytes": 2513930,
+    "sha256": "dd835d59953deae64a41979e0a7e1ec6a6c6404c6282f2a521d448740b1bbac5"
+  },
+  "59b91850-5428-5dc9-ae5d-4f5d5f9018e3": {
+    "bookId": "59b91850-5428-5dc9-ae5d-4f5d5f9018e3",
+    "sourceSha256": "d65452598b972f350e953133d9a50f22ee34359c90849247b44f6e8b8bd8009c",
+    "pageCount": 432,
+    "bytes": 2450490,
+    "sha256": "34622cd1c1a5ce957cc4f1b489534a8da6937600a9d0c79dfb6c2139ea7a0339"
+  },
+  "0fe70350-f03b-5840-a66f-9a8ad931b760": {
+    "bookId": "0fe70350-f03b-5840-a66f-9a8ad931b760",
+    "sourceSha256": "3b1b9133f1228aedec65c05f6434646bb421fd7cf381a447d582180e2bbd1562",
+    "pageCount": 116,
+    "bytes": 2151054,
+    "sha256": "48e6fd16cd809723f4cf42e81ced80e4ad276c8f47b38c3cbb94531627beef85"
+  },
+  "59276260-a832-579b-a8b7-af7d90b217f8": {
+    "bookId": "59276260-a832-579b-a8b7-af7d90b217f8",
+    "sourceSha256": "6d937145510e87f00c0212311f78ac594a5bb67b4f65b0aecd3ccfb9dbb8a361",
+    "pageCount": 130,
+    "bytes": 2235057,
+    "sha256": "cfa264eb6927096e8f36c8802b5c621136f84ed1e8c063be4cc08114614bd709"
+  },
+  "2e25f74e-5b13-5a11-87aa-b6b421805f77": {
+    "bookId": "2e25f74e-5b13-5a11-87aa-b6b421805f77",
+    "sourceSha256": "6d8dea9171b36267db56ecf8c292ae61786977e45fdc81cee1c606058a011994",
+    "pageCount": 114,
+    "bytes": 1359938,
+    "sha256": "359f8ede9b3d3e937b8422ee286d806e6f902d316d906792e72513ad23a69fe8"
+  },
+  "799eeeaa-073a-564e-baab-e81e9de3c8e0": {
+    "bookId": "799eeeaa-073a-564e-baab-e81e9de3c8e0",
+    "sourceSha256": "3ceae7b9418e4555527c20633aa9859c2256353d2456f0bb9f5842e12bde33a0",
+    "pageCount": 214,
+    "bytes": 1901331,
+    "sha256": "5a6ec4d68ab93c96337391f4a83234495f94dd8bd5e74cacf44a170e84d1afc3"
+  },
+  "ea45cfdd-f763-5d3f-a07a-004b46938d0e": {
+    "bookId": "ea45cfdd-f763-5d3f-a07a-004b46938d0e",
+    "sourceSha256": "c5d64e9f36afe073ccb503c0aa82ac5c7b2efb48ccc7b6559e5165f1fea85681",
+    "pageCount": 132,
+    "bytes": 2599811,
+    "sha256": "7534a1fa49ae21d5874cdc38929c407f30efe4c6948992c76dde524b7b670f6a"
+  },
+  "48b7be62-4f85-57ae-98a1-c80151518bb8": {
+    "bookId": "48b7be62-4f85-57ae-98a1-c80151518bb8",
+    "sourceSha256": "9057eb4052f690030f836485270cfefadf05997ae58d22428335e6bd7ee5fae5",
+    "pageCount": 122,
+    "bytes": 2011340,
+    "sha256": "2939c5476e9c07aab87840fec3c1e7651d10e73894f5701a2d1c51bbda30b0ab"
+  },
+  "c72a0765-3dc8-54cc-93e0-b97c1d1fbb25": {
+    "bookId": "c72a0765-3dc8-54cc-93e0-b97c1d1fbb25",
+    "sourceSha256": "6a2576348a329e5803c41dc4531989289551411a767c88bb3ef219c4457e1763",
+    "pageCount": 386,
+    "bytes": 2034237,
+    "sha256": "b8abf40cb0f9737643e653292b635f31d0c6120450a6a8ac089e73d985ac429f"
+  },
+  "9e8a55e6-b6fd-5f02-878b-9cff08731508": {
+    "bookId": "9e8a55e6-b6fd-5f02-878b-9cff08731508",
+    "sourceSha256": "26fafe516e686a87fbb6d431252cc8ee59ab0828fe5c93bf735fa8ed6334f9fc",
+    "pageCount": 426,
+    "bytes": 2453397,
+    "sha256": "3d07a42577dca60ce307a244cb85129a799ada1a0a1ff75ff5b4b34a48f11463"
+  },
+  "16d8c063-0359-5cdf-8e05-a983083e3d50": {
+    "bookId": "16d8c063-0359-5cdf-8e05-a983083e3d50",
+    "sourceSha256": "2fa25d42179e495bebeedecdda425561cd2232b8292c886d2df948c85c1f5102",
+    "pageCount": 80,
+    "bytes": 1218540,
+    "sha256": "42796378f567b0e3b0fe979cd1715ad6d7d67a6d2f281f778d4f601d3f1587ac"
+  },
+  "5d1cac7a-8f54-523c-bbd9-cd4460f30ddd": {
+    "bookId": "5d1cac7a-8f54-523c-bbd9-cd4460f30ddd",
+    "sourceSha256": "7ff2cfa7af991651ef6f83285374e7a9b6ff156b987a703774bad5dd9639a754",
+    "pageCount": 142,
+    "bytes": 597022,
+    "sha256": "12dab8f82b38cd6e06b75c21bb918bcb2b565942890e33be7b28fbac0448562f"
+  },
+  "39dca9a1-4b43-5b7f-ad75-06500b1cd378": {
+    "bookId": "39dca9a1-4b43-5b7f-ad75-06500b1cd378",
+    "sourceSha256": "f66b234e471d8252dd965d4a91988c5a621fc48a6c49157a5870e1687fb89ac1",
+    "pageCount": 77,
+    "bytes": 1150362,
+    "sha256": "accb9585c9ebb26ba9cc1d5a59571d1b35a8d17bd86ff9ae4177d0eb027acc23"
+  },
+  "969e935a-92b5-5993-bde4-864f5282185f": {
+    "bookId": "969e935a-92b5-5993-bde4-864f5282185f",
+    "sourceSha256": "50b8ab4524d7442611b65bbd05c2db5634ea4a08417f094ea4e0e0f446169672",
+    "pageCount": 142,
+    "bytes": 600171,
+    "sha256": "b66c5c1676ca219e7b74358fc37dea8aed26104a7f58756ea33d001cdae50eb5"
+  },
+  "65ab8b30-aa0c-5417-89c0-604e6bd28625": {
+    "bookId": "65ab8b30-aa0c-5417-89c0-604e6bd28625",
+    "sourceSha256": "9b2f19fd155d0a1cd228ec21a926ba0817f2733371019b1de21944f4bfd88a11",
+    "pageCount": 336,
+    "bytes": 1895407,
+    "sha256": "21821b5ceae681d4542a1540a2bf6f095dba2930b2b0b3ef9ec859091feb1931"
+  },
+  "570f41da-bb20-5c1f-aa60-ae043e09d916": {
+    "bookId": "570f41da-bb20-5c1f-aa60-ae043e09d916",
+    "sourceSha256": "5e8e3e5c45ada43d59051e598b432a3596c8ae3e54fabbdc988daa89c7f321af",
+    "pageCount": 378,
+    "bytes": 1946188,
+    "sha256": "3786702477b30050de3c8a56bdc80b30b75edcd2d98c94e63656421b3265ddbc"
+  },
+  "08f55112-89d3-50d7-81e0-d6524d8665da": {
+    "bookId": "08f55112-89d3-50d7-81e0-d6524d8665da",
+    "sourceSha256": "80b368d91738ca168d25ae36521379de34343b4488ef69b82977872c44fdff8d",
+    "pageCount": 112,
+    "bytes": 1904250,
+    "sha256": "1bfae9416835e4969bbdb24ddfcacbb620aa8b66cd2ab80b3a6ec0a1ab51c90c"
+  },
+  "f1d91322-3fb9-5d95-8298-46f24285f5cd": {
+    "bookId": "f1d91322-3fb9-5d95-8298-46f24285f5cd",
+    "sourceSha256": "7a1b3687b8aa844309f24a4b4c6bd29f7ce3a3f3eeeaea70e35eb576d1508acd",
+    "pageCount": 98,
+    "bytes": 1626814,
+    "sha256": "65560bfceedbb80e6a072aa931700d15b4b01f0db4dc67d66cf6ec86a886b6db"
+  },
+  "718ca9cd-d9b2-54da-ab64-db6f4baf4389": {
+    "bookId": "718ca9cd-d9b2-54da-ab64-db6f4baf4389",
+    "sourceSha256": "72d6ab3315a47b91a95bdaff056744e860a9072bd1d688fa9eba3056adb7845c",
+    "pageCount": 152,
+    "bytes": 1221754,
+    "sha256": "df0177095843931c8ea8c5e9148f57eb0c34891e653bb5fdc69a6e8b7dbaf761"
+  },
+  "414c3785-c983-5cca-996d-8501fc8241cf": {
+    "bookId": "414c3785-c983-5cca-996d-8501fc8241cf",
+    "sourceSha256": "8ecd06096206e2a9f755a804fff566269707994295233e608bea9689a979b85e",
+    "pageCount": 86,
+    "bytes": 897727,
+    "sha256": "1edbb1b86c0442781a769e05f9b014ca8bb6812ed4fe0645e259f94b8031c4e3"
+  },
+  "a732d404-e8f0-5ea4-85f6-2e41c8698d06": {
+    "bookId": "a732d404-e8f0-5ea4-85f6-2e41c8698d06",
+    "sourceSha256": "9e8591ca899e33a6135c024cae665cbc64fa879157b4c03536563b9c133bd5df",
+    "pageCount": 160,
+    "bytes": 3315618,
+    "sha256": "60937ba46dfb02221c36acc7af9841f2431dbf2480d7d38711c32fa1491e3d61"
+  },
+  "bd47e88a-35ab-553d-96b0-394055487fc2": {
+    "bookId": "bd47e88a-35ab-553d-96b0-394055487fc2",
+    "sourceSha256": "e94d03ba42bee27bd298f5b0ba4b333b7fc33a110681498f029abb981b4716d8",
+    "pageCount": 340,
+    "bytes": 1910096,
+    "sha256": "6631e80c1b01fe9a3fed81801c1900ca8043eae19d73023107c18ca74216920f"
+  },
+  "ac8ca870-b3a4-5713-bbe5-943357fed44d": {
+    "bookId": "ac8ca870-b3a4-5713-bbe5-943357fed44d",
+    "sourceSha256": "fe7abed91258740fc825eb18e85c522e5db318f2a86425219d58875fced7258f",
+    "pageCount": 156,
+    "bytes": 3439238,
+    "sha256": "872bec4b0618cc9aad188f69bb9cb6437462d3bb4c692df3f64c5c2e43220e6e"
+  },
+  "6cdf3735-9f98-5e2e-a09d-a45157c4e5ca": {
+    "bookId": "6cdf3735-9f98-5e2e-a09d-a45157c4e5ca",
+    "sourceSha256": "13692b18cc061520642ce0364b935f9d129ea7df34e1b4d02be5d925cc200b6c",
+    "pageCount": 362,
+    "bytes": 2141988,
+    "sha256": "527f24ea4653819f8670712efc03d8e0801f93cef236c6c4092abacb8c9e5213"
+  },
+  "0d58398d-dc49-5c1a-8de0-658358cde59d": {
+    "bookId": "0d58398d-dc49-5c1a-8de0-658358cde59d",
+    "sourceSha256": "94271df41313bcc9d46af9ff391cf87f7b3e523295c149de14487d62f88fad2d",
+    "pageCount": 164,
+    "bytes": 1262101,
+    "sha256": "6a8591d77dfb345b589b1a300772050653a8a8fbe8325563922719bf745e55c4"
+  },
+  "fd0200f9-cad5-5593-bdec-7ddcb9a4af76": {
+    "bookId": "fd0200f9-cad5-5593-bdec-7ddcb9a4af76",
+    "sourceSha256": "636d78c9c56b391418432399bcf187c844abf0b4c78a5fb3653da04e6a2fcbc6",
+    "pageCount": 75,
+    "bytes": 656226,
+    "sha256": "709467875896a3afe27955017f2f5676f10d1ab4f6560ef49be138206a578f1f"
+  },
+  "aedad60a-e287-559a-8de4-c3b1aca485d4": {
+    "bookId": "aedad60a-e287-559a-8de4-c3b1aca485d4",
+    "sourceSha256": "c7c3823f56fa9ddfdf9f2f000fd85814d8b3bd33b3d534b5f796d1a118c3e757",
+    "pageCount": 127,
+    "bytes": 1730630,
+    "sha256": "682e1531ac42a6fe653a3db5b6a2599527e6c6b60bff5157472e1f8664842358"
+  },
+  "c5cbbc37-f26a-524d-9987-063609e2adf6": {
+    "bookId": "c5cbbc37-f26a-524d-9987-063609e2adf6",
+    "sourceSha256": "94e85993944e0d0a1caff87200e540e4045f1fba443a18b817cdb6c557a1454e",
+    "pageCount": 96,
+    "bytes": 336666,
+    "sha256": "70e6610cff63660d8e2443364bf1c2a6ce8eba32e4fc7c17c8b9e49249928db3"
+  },
+  "f731dfe1-b191-5492-9a72-21af75c0425b": {
+    "bookId": "f731dfe1-b191-5492-9a72-21af75c0425b",
+    "sourceSha256": "613ee64f9b48b14a5a9d0eb67b9cae25cf5021f944dd0526e6025182f2875359",
+    "pageCount": 128,
+    "bytes": 1706783,
+    "sha256": "fa6c5ccb50b91e5bea0dc242025cfd2986f6d31e7d188652b0f660593bf73c08"
+  },
+  "f3f61bde-4029-5402-82a7-ba5d78d91cca": {
+    "bookId": "f3f61bde-4029-5402-82a7-ba5d78d91cca",
+    "sourceSha256": "97d2792e69591196c472f725dc4d869eb47df0d8aa71cab4aa42b83155d82729",
+    "pageCount": 96,
+    "bytes": 327870,
+    "sha256": "31bbf04d1d9e1369470a6905d4d613408255a3eb731baa1f0a8389bfe02100ad"
+  },
+  "751f43ce-87af-53a4-978a-9f741eb95bdf": {
+    "bookId": "751f43ce-87af-53a4-978a-9f741eb95bdf",
+    "sourceSha256": "2f448e47ec2f7b31987cfdf0c9ad37cb43a82d280dd6a7833bee7b359496d741",
+    "pageCount": 172,
+    "bytes": 3583657,
+    "sha256": "c501031044fb25d02666cfb68dc270636c6685421e4e05707e5b658b05bb7755"
+  },
+  "f5fa875c-f08e-5248-afea-3c18792bcbda": {
+    "bookId": "f5fa875c-f08e-5248-afea-3c18792bcbda",
+    "sourceSha256": "0a8663100c806355bc66f775a26dbd05c5d3011bd5be978b258614326099d5a2",
+    "pageCount": 148,
+    "bytes": 3120919,
+    "sha256": "377e1ea9b877ef880946b395976cb87dc3be76978cfbe46101821e71d9b07cae"
+  },
+  "2c98b22a-9659-5ab2-b302-a97616bcdc18": {
+    "bookId": "2c98b22a-9659-5ab2-b302-a97616bcdc18",
+    "sourceSha256": "f0c7b83ead9ba6ac0bec00303a697259c8c7b8d1175fe42cc4d6254bb9b3510e",
+    "pageCount": 222,
+    "bytes": 1792080,
+    "sha256": "f37262750f0021965e4a52943a7837428122e73c07058d2fa1a325f5d830c9ce"
+  },
+  "d0ca4c50-fce6-5ccb-8815-47554b819c56": {
+    "bookId": "d0ca4c50-fce6-5ccb-8815-47554b819c56",
+    "sourceSha256": "2bb04e19f5bae9061b97933a1575819a1d14522267846c09d45960b20ff17915",
+    "pageCount": 238,
+    "bytes": 1845147,
+    "sha256": "27e1087c87075d056750bbb55342ea01ce2596da8873345086647cafba4abc02"
+  },
+  "3fd0915a-47be-5309-a773-e09ee8b1dd51": {
+    "bookId": "3fd0915a-47be-5309-a773-e09ee8b1dd51",
+    "sourceSha256": "e3f178089dc34396f4c59dde1b08bdeb323bd42983bf52b55c7b2aeda9dce457",
+    "pageCount": 178,
+    "bytes": 1408030,
+    "sha256": "a0ec1c0aa4a4e6c95505531aa320666d2eb948bf4f01ce6bd37e598f69292dd6"
+  },
+  "e7131051-b169-5363-8623-672f7bb849af": {
+    "bookId": "e7131051-b169-5363-8623-672f7bb849af",
+    "sourceSha256": "28722ba436e92a410a510cff74eb99256ff1b8a759cd8a055da577a4aa52ed14",
+    "pageCount": 89,
+    "bytes": 1180386,
+    "sha256": "e432ca786b8ed54b81c334e07a86ea2df74567b8d1b135158a25f07bb786bf3c"
+  },
+  "d51bdb49-f57a-50de-afd6-ca9deb74a5ca": {
+    "bookId": "d51bdb49-f57a-50de-afd6-ca9deb74a5ca",
+    "sourceSha256": "1934c8f7401cecf1b915c4a0e81168cb2603b114b15491b0b50d4433363a85f5",
+    "pageCount": 124,
+    "bytes": 2232445,
+    "sha256": "6d92816f4578543c5c9b8359c75728faf5aa4a2487d16a1470c8c69e054c423d"
+  },
+  "b42474f3-94d5-5a42-b6ca-da8092b45f40": {
+    "bookId": "b42474f3-94d5-5a42-b6ca-da8092b45f40",
+    "sourceSha256": "bba841622690a180ec9fad6b356aa21f51ab40c3d4e81a721674fd4cc4cb7762",
+    "pageCount": 96,
+    "bytes": 256025,
+    "sha256": "df589f8e8cc6606a398f328b5e8044e3e5d51a3da11724001b7a35e3bda89313"
+  },
+  "b7614d79-6ee1-5e53-b0b6-d64815a608ef": {
+    "bookId": "b7614d79-6ee1-5e53-b0b6-d64815a608ef",
+    "sourceSha256": "cd2a227379defa19a249904b3e259355359d0fb70e32b06a8c6d121511c25212",
+    "pageCount": 124,
+    "bytes": 2390793,
+    "sha256": "3425cc74411c21934d5e6e1bfb04bedeec68e43386d6741b6341adc03f2db06e"
+  },
+  "e2939838-6f1a-5155-8081-a0323f5f6253": {
+    "bookId": "e2939838-6f1a-5155-8081-a0323f5f6253",
+    "sourceSha256": "a02fbf1d0afb6de62b803c84a7da6df9007e73c24f76c4e7aa20aaf870a59087",
+    "pageCount": 96,
+    "bytes": 234817,
+    "sha256": "fd5d90ddd403f73efcb22ed9fd30b10cb58522c1de5b5d683c01ac6676ed2eda"
+  },
+  "dac3a40f-459d-51ad-bf7a-dffbddd00bd5": {
+    "bookId": "dac3a40f-459d-51ad-bf7a-dffbddd00bd5",
+    "sourceSha256": "481712b62908fa08e2ddb795a43be6ae3c0d31da0971e694f37c383d74055344",
+    "pageCount": 170,
+    "bytes": 1502996,
+    "sha256": "e33a21b3fb139f45f2876b31a375dcc21d7c269f070d2781536cff25bce1ed1f"
+  },
+  "ce99fcc3-7dc6-5610-8731-eb4b98b5674f": {
+    "bookId": "ce99fcc3-7dc6-5610-8731-eb4b98b5674f",
+    "sourceSha256": "eeb0e1a84e5071df01612b842e5f59253afe35fcfc8b733089734b02ed7f0f8d",
+    "pageCount": 119,
+    "bytes": 1319873,
+    "sha256": "b679e04995b7f3097cb5372e7b9c871357a9766579b3e7394bdefd689e77ca34"
+  },
+  "1d1c1632-a066-5100-bc08-5f4b5069a377": {
+    "bookId": "1d1c1632-a066-5100-bc08-5f4b5069a377",
+    "sourceSha256": "87628627b740b4b27c8f85d9272ffda64724cd44a249c9ee004214ce92f1ec96",
+    "pageCount": 312,
+    "bytes": 1601750,
+    "sha256": "4c9349615f1a8390562a750903ff058262a3c82ca69a78e5b08156e1f38dd8c6"
+  },
+  "b794e954-8bc8-515f-8f8f-ee518da87a7f": {
+    "bookId": "b794e954-8bc8-515f-8f8f-ee518da87a7f",
+    "sourceSha256": "dd3e2f5bf1259cadf830ab85c80362db1434996520b8559b14902a110060c098",
+    "pageCount": 310,
+    "bytes": 1739211,
+    "sha256": "0db6b661135c9cc62498371587055864c7a35709eb0738f79e8ae4e35e49de9e"
+  },
+  "5f734c57-8591-59cc-acba-a28069e4a50f": {
+    "bookId": "5f734c57-8591-59cc-acba-a28069e4a50f",
+    "sourceSha256": "bff0309d5869244946cbbc99533957a6821c8d1617ac3ab5efafe7145d4f0fb8",
+    "pageCount": 152,
+    "bytes": 3266062,
+    "sha256": "20a06892225bdc9ac8d0126d53f896c4989eba09729b45ad26e22bf4b8d107a6"
+  },
+  "77bdfbe7-4492-5a68-bb14-6ab03159d7a0": {
+    "bookId": "77bdfbe7-4492-5a68-bb14-6ab03159d7a0",
+    "sourceSha256": "8b0c9b7a8b07afea2852e07f190d7bbe6b925c4aaa2ca8dd984cb17b61ea4709",
+    "pageCount": 186,
+    "bytes": 4092975,
+    "sha256": "e63016fb9e49ccb1d51a27edc67baf2af714b2b7e317ecb5d4aeefc130237475"
+  },
+  "25658f9b-80af-5f85-bc60-5cc986819dd9": {
+    "bookId": "25658f9b-80af-5f85-bc60-5cc986819dd9",
+    "sourceSha256": "bc8b2a5bf70cbee741be94f5fa6f1646af04471d2e7b48fd9af366b3c8b26fd2",
+    "pageCount": 142,
+    "bytes": 1185021,
+    "sha256": "4cd4e53365882a9861b2f1f5a67bf0b5bf7c5b138be241cc22e0cd4c7fdda781"
+  },
+  "6b2274b1-405d-52f1-a668-69616cfdd015": {
+    "bookId": "6b2274b1-405d-52f1-a668-69616cfdd015",
+    "sourceSha256": "06fd4495ebcf5f23381f22dcf3d85e3fd09111cbae7848bb559e4d38ea873480",
+    "pageCount": 88,
+    "bytes": 886656,
+    "sha256": "d946bd0fc126c3221b777099ac13115321b5aa1ade1c1e42c196559b100f40e9"
+  },
+  "62b700eb-692c-57f2-8034-70b6f998a15c": {
+    "bookId": "62b700eb-692c-57f2-8034-70b6f998a15c",
+    "sourceSha256": "552af2ecd7b1e2cacb54d7a20b9c96d52a6fbf31a6c1b459ca97ebdf458470aa",
+    "pageCount": 166,
+    "bytes": 3594235,
+    "sha256": "d17b5444f3a749a54f96ac3466f4b83b402c64c4563c736f18db4ff68d679f21"
+  },
+  "308fdd33-0346-5b55-9d1e-2d293fb2ca15": {
+    "bookId": "308fdd33-0346-5b55-9d1e-2d293fb2ca15",
+    "sourceSha256": "c5b383e3c530e1f6996149148b61848b55a3a693164c0f320f6860fcc78b6759",
+    "pageCount": 184,
+    "bytes": 4046454,
+    "sha256": "74c2343257329b53976d533498d8b572601da34291c1851e3f48946d756abd83"
+  },
+  "23405ffe-daf0-5b15-b150-4702e760aa98": {
+    "bookId": "23405ffe-daf0-5b15-b150-4702e760aa98",
+    "sourceSha256": "e42f9ffbb33ea39fa7ef5463eacaef4f423737167e333764f273913e863af497",
+    "pageCount": 300,
+    "bytes": 1651366,
+    "sha256": "79cb32139ba54ded6430a31a5aa3ba0b06dc5cdf46ffd40e47161bee814b634a"
+  },
+  "21f8f3d7-cc84-5ab8-8bf6-051ae92f888b": {
+    "bookId": "21f8f3d7-cc84-5ab8-8bf6-051ae92f888b",
+    "sourceSha256": "46c52924f847610484d93391304b736e37b17eebfddf59f46cba5921d707f9bc",
+    "pageCount": 306,
+    "bytes": 1671565,
+    "sha256": "4a417b0daf9ff8aba7adfeb1e4e29017cc3296ce0f7280cf233aa7f1c2f1f458"
+  },
+  "df7a9b54-b2f5-5815-a42d-fd0ab1bc5c94": {
+    "bookId": "df7a9b54-b2f5-5815-a42d-fd0ab1bc5c94",
+    "sourceSha256": "a2f2bff644517e6499dbdf07e76367b7c84b2cd75c3cac1a72c7c418c9aa4299",
+    "pageCount": 134,
+    "bytes": 1031926,
+    "sha256": "2d30255fc38ffd915af3060fcc45e47cc6a92423636b41596d57a552fa45428c"
+  },
+  "ffaec96c-4571-5278-96e4-f18973bea0fd": {
+    "bookId": "ffaec96c-4571-5278-96e4-f18973bea0fd",
+    "sourceSha256": "af2308a988cd87e93af1dfde4008dd089acfdc3da27193417a2118ab9ef9bbe3",
+    "pageCount": 95,
+    "bytes": 1144276,
+    "sha256": "932eb30f2842c42f27a91e5c045c726c8a8de9692ca6257532d48bde80d70097"
+  },
+  "c80097bb-9519-5ca6-b15e-9eb86a0cf166": {
+    "bookId": "c80097bb-9519-5ca6-b15e-9eb86a0cf166",
+    "sourceSha256": "bcef792f545278a4269b92b0fe9a5b1c6fb7adffc2be6bcb487c50af26a58ecb",
+    "pageCount": 164,
+    "bytes": 3603524,
+    "sha256": "fdc150c0a309edf5bfbd2b15cb6ed97205175df23e78a1e68120bae72176b04a"
+  },
+  "cb65bc0d-246a-5907-8bee-0d1801db404f": {
+    "bookId": "cb65bc0d-246a-5907-8bee-0d1801db404f",
+    "sourceSha256": "efc9a91fb29124e6c66c3ca045acc012adfd926c469282466f9d434db570e645",
+    "pageCount": 180,
+    "bytes": 3916393,
+    "sha256": "afc021a72e2f3a62d03f997c8069e77fa7cb00d13093a49bbfe42cb8cc3842f3"
+  },
+  "ac9026d0-7b56-58c6-82d0-bc6241cb2576": {
+    "bookId": "ac9026d0-7b56-58c6-82d0-bc6241cb2576",
+    "sourceSha256": "1f5966077e54eed1cc8b6fb0ea363bdfb10deb6b72ace547320e4072c9d77c79",
+    "pageCount": 250,
+    "bytes": 1208095,
+    "sha256": "5127e3a17df26dac71e18e5618c6a75135e23e104c4699ea738a2b21c43f2426"
+  },
+  "290d0225-f0dc-537a-ab1f-6f7ad35383e3": {
+    "bookId": "290d0225-f0dc-537a-ab1f-6f7ad35383e3",
+    "sourceSha256": "27b20155763e756e4abf8eabadbe408716a7933356ac1c96e3ef4502148ca5ac",
+    "pageCount": 310,
+    "bytes": 1796262,
+    "sha256": "8cca4b40a83fec5e41b0cb9bc228735ccd2924e5c09fae15fc8798645ae21620"
+  },
+  "1b0ab512-d1b0-50f9-92da-c612baea1a45": {
+    "bookId": "1b0ab512-d1b0-50f9-92da-c612baea1a45",
+    "sourceSha256": "b97365747345f14629d5d0f35fc4e280e1643092c510e5b72b391e46eed009ff",
+    "pageCount": 109,
+    "bytes": 818014,
+    "sha256": "040a30b0fe7ea9ba4236e4732d83971a76961554d212509022cd5009748a9d5d"
+  },
+  "b7304f86-b823-5d68-b4f2-3fa035d410d7": {
+    "bookId": "b7304f86-b823-5d68-b4f2-3fa035d410d7",
+    "sourceSha256": "4c6f7cfdb9a5df0b4e4aecff8decb96ffe4dc6142da7758db313665ad3eef5bd",
+    "pageCount": 74,
+    "bytes": 887376,
+    "sha256": "63f2b558687d9bf6a8d03b7051602ab025d9a59b6dcfc88704a63dafe790deee"
+  }
+}

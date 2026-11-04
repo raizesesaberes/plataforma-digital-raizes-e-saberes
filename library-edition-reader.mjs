@@ -1,3 +1,4 @@
+import {connectEditionSearch} from './library-edition-search-ui.mjs';
 // Controller for the existing reader controls. All page URLs come from the
 // protected service; no static path or PDF fallback is permitted.
 export async function connectEditionReader(root, client, bookId) {
@@ -7,15 +8,15 @@ export async function connectEditionReader(root, client, bookId) {
  const error=root.querySelector('[data-page-error]');
  const errorDetail=root.querySelector('[data-page-error-detail]');
  const thumbs=root.querySelector('[data-thumbnail-list]');
- let current=1,zoom=1,generation=0,disposed=false;
+ let current=1,zoom=1,generation=0,disposed=false,search;
  const request=await client.read(bookId,'manifest');
  const count=request.manifest?.pageCount;
  if(!Number.isSafeInteger(count)||count<1)throw Error('invalid_manifest');
  root.dataset.totalPages=String(count);
- const fail=()=>{image.removeAttribute('src');image.hidden=true;if(error)error.hidden=false;if(errorDetail)errorDetail.textContent='Não foi possível acessar esta página. Tente novamente.';};
+ const fail=()=>{search?.clear();image.removeAttribute('src');image.hidden=true;if(error)error.hidden=false;if(errorDetail)errorDetail.textContent='Não foi possível acessar esta página. Tente novamente.';};
  const show=async(number)=>{
   if(disposed||!Number.isSafeInteger(number)||number<1||number>count)return;
-  const version=++generation;current=number;
+  const version=++generation;current=number;search?.clear();
   image.removeAttribute('src');image.hidden=true;if(error)error.hidden=true;
   label.textContent=`${current} / ${count}`;
   for(const target of root.querySelectorAll('[data-page-count]'))target.textContent=`${current}/${count}`;
@@ -56,6 +57,7 @@ export async function connectEditionReader(root, client, bookId) {
   const thumb=root.ownerDocument.createElement('img');thumb.dataset.page=String(number);thumb.alt=`Miniatura ${number}`;thumb.loading='lazy';button.append(thumb);thumbs.append(button);observer.observe(thumb);
  }
  const imageError=()=>fail();image.addEventListener('error',imageError);
+ search=connectEditionSearch(root,client,bookId,show);
  await show(1);
- return {show,dispose(){disposed=true;generation++;observer.disconnect();root.removeEventListener('click',click);image.removeEventListener('error',imageError);image.removeAttribute('src');}};
+ return {show,dispose(){disposed=true;generation++;search?.dispose();observer.disconnect();root.removeEventListener('click',click);image.removeEventListener('error',imageError);image.removeAttribute('src');}};
 }
