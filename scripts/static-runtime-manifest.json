@@ -17434,5 +17434,9 @@
   {
     "file": "admin-edition-boot.mjs",
     "sha256": "3a628166bacfef7879ea6189f3a58ed5f67cf56d6cfba5db6075b1899e001700"
+  },
+  {
+    "file": "library-search-pilot.html",
+    "sha256": "640c3eae5a95df9b981f809ab525fbee3d6397b87abfabe2b276081f44098679"
   }
 ]
