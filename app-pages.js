@@ -20876,7 +20876,6 @@ const renderQuestionBankAdminSidebar = (activeView = "dashboard") => {
             >${adminInlineIcon(questionBankAdminNavIcons[key] || "site", label)}</button>
           `)
           .join("")}
-        <button class="platform-logout-button" type="button" data-platform-logout>${adminInlineIcon("sair", "SAIR")}</button>
       </nav>
     </aside>
   `;
@@ -23011,7 +23010,7 @@ const qbOfficial12Machine=({authorize,parse,preflight,readback,create,publish,lo
 };
 const initOfficialEnem12Import=({root})=>{
  if(getSupabaseUserContext().role!=='admin')return;
- const host=document.createElement('section');host.className='panel';host.innerHTML='<h2>Lotes oficiais ENEM · arquivos revisados</h2><p>Importação definitiva com CC BY 4.0. Validação e publicação por questão; se interromper, mantenha o mesmo arquivo para reconciliar.</p><label>Arquivo local oficial<input type="file" accept=".json,application/json" data-official-file></label><button type="button" data-official-check>1. Validar lote oficial</button><button type="button" data-official-apply disabled>2. Importar e publicar lote validado</button><p role="status" data-official-status></p>';root.prepend(host);
+ const host=document.createElement('section');host.className='panel rs-official-import';host.innerHTML='<h2>Lotes oficiais ENEM · arquivos revisados</h2><p>Importação definitiva com CC BY 4.0. Validação e publicação por questão; se interromper, mantenha o mesmo arquivo para reconciliar.</p><label>Arquivo local oficial<input type="file" accept=".json,application/json" data-official-file></label><button type="button" data-official-check>1. Validar lote oficial</button><button type="button" data-official-apply disabled>2. Importar e publicar lote validado</button><p role="status" data-official-status></p>';root.prepend(host);
  const file=host.querySelector('[data-official-file]'),check=host.querySelector('[data-official-check]'),apply=host.querySelector('[data-official-apply]'),status=host.querySelector('[data-official-status]');let actor=null,selectedRelease=null;
  const req=(route,query='',options={})=>createSupabaseRestClient().request(route,query,{...options,requireAuthenticated:true,allowedRoles:['admin']});
  const rpc=async(name,body)=>normalizeRpcJson(await req('rpc/'+name,'',{method:'POST',body:JSON.stringify(body)}));

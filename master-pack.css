@@ -26647,4 +26647,12 @@ html[data-a11y-reduced-motion="true"] *::after {
 .rs-workspace .admin-content-pagination{margin-bottom:80px;}
 .rs-workspace .admin-content-pagination a{scroll-margin-bottom:100px;}
 
+.rs-workspace .rs-official-import{display:flex;flex-wrap:wrap;align-items:end;gap:12px;}
+.rs-workspace .rs-official-import>h2,.rs-workspace .rs-official-import>p{flex-basis:100%;margin:0;}
+.rs-workspace .rs-official-import>label{display:grid;gap:8px;flex:1 1 280px;min-width:0;}
+.rs-workspace .rs-official-import input{max-width:100%;min-width:0;font:inherit;}
+.rs-workspace .rs-official-import button{min-height:44px;padding:10px 14px;border:1px solid #d7e3db;border-radius:10px;background:#f1f6f2;color:#174c37;font:600 14px/1.4 Inter,system-ui,sans-serif;cursor:pointer;}
+.rs-workspace .rs-official-import button:disabled{opacity:.5;cursor:not-allowed;}
+.rs-workspace .rs-official-import input::file-selector-button{padding:9px 12px;margin-right:8px;border:1px solid #d7e3db;border-radius:10px;background:#f1f6f2;color:#174c37;font:inherit;}
+
 }
