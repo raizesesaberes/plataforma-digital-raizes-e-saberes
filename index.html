@@ -44,6 +44,8 @@
       @media(max-width:620px){.section.editorial-structure{padding:60px 0;}.editorial-structure h2{font-size:1.9rem;}.editorial-structure-visual img{height:260px;}}
       /* Fit the additional institutional link without crowding the header. */
       .site-header .site-nav{gap:clamp(10px,1vw,14px);}
+      .site-header .site-nav .nav-collections-link{text-align:center;line-height:1.35;flex-shrink:0;}
+      .nav-collections-link span{display:block;white-space:nowrap;}
       @media(min-width:861px) and (max-width:1280px){
         .site-header .menu-button{display:block;order:3;}
         .site-header .site-nav{position:absolute;top:calc(100% + 10px);right:20px;left:20px;display:none;flex-direction:column;align-items:stretch;gap:0;padding:10px;border:1px solid var(--line);border-radius:var(--radius-control);background:var(--white);box-shadow:var(--shadow-md);}
@@ -89,7 +91,7 @@
       <nav class="site-nav" data-nav aria-label="Menu principal">
         <a href="#ecossistema">Ecossistema</a>
         <a href="#video-institucional">Vídeo</a>
-        <a href="#colecoes">Coleções Raízes e Saberes</a>
+        <a class="nav-collections-link" href="#colecoes"><span>Coleções</span><span>Raízes e Saberes</span></a>
         <a class="nav-platform-link" href="login.html">Plataforma</a>
         <a href="#universidade">Universidade</a>
         <a href="#resultados">Resultados</a>
