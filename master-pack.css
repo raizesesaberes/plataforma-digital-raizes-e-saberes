@@ -26655,4 +26655,6 @@ html[data-a11y-reduced-motion="true"] *::after {
 .rs-workspace .rs-official-import button:disabled{opacity:.5;cursor:not-allowed;}
 .rs-workspace .rs-official-import input::file-selector-button{padding:9px 12px;margin-right:8px;border:1px solid #d7e3db;border-radius:10px;background:#f1f6f2;color:#174c37;font:inherit;}
 
+@media(max-width:640px){.question-bank-workspace .admin-topbar-actions{grid-template-columns:repeat(2,minmax(0,1fr));}.question-bank-workspace .admin-topbar-actions>a{min-width:0;white-space:normal;}}
+
 }
