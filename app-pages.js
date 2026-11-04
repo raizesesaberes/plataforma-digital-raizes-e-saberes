@@ -28817,7 +28817,7 @@ const renderSecretariaEnrollmentsView = (index) => {
         <ul class="clean-list">${movementRows || "<li>Nenhuma movimentação retornada pelo Supabase.</li>"}</ul>
       </section>
       <section class="panel span-2">
-        <div class="panel-head"><h2>Importacao CSV</h2><span>${importBatches.length ? `${importBatches.length} lote(s)` : "EMPTY_REAL"}</span></div>
+        <div class="panel-head"><h2>Importacao CSV</h2><span>${importBatches.length ? `${importBatches.length} lote(s)` : "Nenhum lote importado"}</span></div>
         <form data-secretaria-import-form>
           <input type="hidden" name="school_id" value="${htmlEscape(school.id || "")}" />
           <label><span>Arquivo/origem</span><input name="file_name" placeholder="matriculas-2026.csv" /></label>
@@ -29146,7 +29146,7 @@ const renderSecretariaSchoolAccessView = (index) => {
               ${secretariaBadge(schoolAccessStatusLabel(row.status), schoolAccessStatusTone(row.status))}
               <span>${htmlEscape(row.class_name || "Turma nao informada")} · ${htmlEscape(schoolAccessEventTime(row.occurred_at))} · ${htmlEscape(row.origin || "manual")}</span>
             </li>
-          `).join("") || "<li>EMPTY_REAL: nenhum movimento registrado para os filtros atuais.</li>"}
+          `).join("") || "<li>Nenhum movimento registrado para os filtros atuais.</li>"}
         </ul>
       </section>
       <section class="panel span-2">
@@ -29330,7 +29330,7 @@ const renderSecretariaStudentAccessCenterView = (index) => {
                   : `<button type="button" data-secretaria-student-access-action="provision_student" data-student-id="${htmlEscape(student.id)}">Gerar acesso</button>`}
               </div>
             </li>
-          `).join("") || "<li>EMPTY_REAL: nenhum aluno encontrado para os filtros atuais.</li>"}
+          `).join("") || "<li>Nenhum aluno encontrado para os filtros atuais.</li>"}
         </ul>
         <div class="secretaria-pagination">
           <span>Página ${safePage} de ${totalPages}</span>
@@ -29340,7 +29340,7 @@ const renderSecretariaStudentAccessCenterView = (index) => {
       </section>
       <section class="panel span-2 secretaria-access-warning">
         <div class="panel-head"><h2>Entrega por contato</h2><span>Operacional</span></div>
-        <p>CONTACT_DELIVERY=EMPTY_REAL nesta etapa: a central emite comprovante imprimível/PDF. Envio por e-mail institucional pode usar o mesmo motor quando canal autorizado estiver configurado.</p>
+        <p>A central disponibiliza comprovante para impressão ou PDF. O envio por e-mail institucional ainda não está disponível.</p>
       </section>
     </div>
   `;
@@ -29604,7 +29604,7 @@ const renderSecretariaAcademicCalendarPanel = (index) => {
   const letiveDays = schoolDays.filter((day) => day.day_type === "letivo").length;
   return `
     <section class="panel span-2">
-      <div class="panel-head"><h2>Ano letivo e periodos</h2><span>${academicYears.length ? `${academicYears.length} ano(s)` : "EMPTY_REAL"}</span></div>
+      <div class="panel-head"><h2>Ano letivo e periodos</h2><span>${academicYears.length ? `${academicYears.length} ano(s)` : "Nenhum ano configurado"}</span></div>
       <div class="metric-row">
         <article>Ano ativo<strong>${htmlEscape(selectedYear.school_year || "-")}</strong><span>${selectedYear.start_date ? `${htmlEscape(formatFamilyCanonicalDate(selectedYear.start_date))} a ${htmlEscape(formatFamilyCanonicalDate(selectedYear.end_date))}` : "Configure o ano letivo"}</span></article>
         <article>Periodos<strong>${terms.length}</strong><span>bimestres/etapas cadastrados</span></article>
@@ -29653,7 +29653,7 @@ const renderSecretariaClassSchedulePanel = (index) => {
   const slots = selectedClass.id ? (index.classScheduleSlotsByClass[selectedClass.id] || []) : [];
   return `
     <section class="panel span-2">
-      <div class="panel-head"><h2>Componentes e horarios</h2><span>${slots.length ? `${slots.length} horario(s)` : "EMPTY_REAL"}</span></div>
+      <div class="panel-head"><h2>Componentes e horarios</h2><span>${slots.length ? `${slots.length} horario(s)` : "Nenhum horário configurado"}</span></div>
       <form class="secretaria-form-grid" data-secretaria-class-subject-form>
         <input type="hidden" name="school_id" value="${htmlEscape(school.id || "")}" />
         <label><span>Turma</span><select name="class_id" required>${activeClasses.map((classItem) => `<option value="${htmlEscape(classItem.id)}">${htmlEscape(normalizeClassName(classItem))}</option>`).join("")}</select></label>

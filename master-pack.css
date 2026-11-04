@@ -26657,4 +26657,10 @@ html[data-a11y-reduced-motion="true"] *::after {
 
 @media(max-width:640px){.question-bank-workspace .admin-topbar-actions{grid-template-columns:repeat(2,minmax(0,1fr));}.question-bank-workspace .admin-topbar-actions>a{min-width:0;white-space:normal;}}
 
+.rs-workspace .secretaria-context-chip .secretaria-avatar{flex:0 0 46px;width:46px;min-width:46px;max-width:46px;height:46px;}
+@media(max-width:640px){.rs-workspace .secretaria-top-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:8px;}.rs-workspace .secretaria-top-actions :is(a,button){min-width:0;padding:10px 8px;white-space:normal;}.rs-workspace .secretaria-context-chip>div{min-width:0;flex:1;}}
+
+.rs-workspace [data-school-content-inspection] button{min-height:44px;padding:10px 14px;border:1px solid #d7e3db;border-radius:10px;background:#f1f6f2;color:#174c37;font:600 14px/1.4 Inter,system-ui,sans-serif;cursor:pointer;}
+.rs-workspace [data-school-content-inspection] button:disabled{opacity:.5;cursor:not-allowed;}
+
 }

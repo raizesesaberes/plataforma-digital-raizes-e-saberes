@@ -18,6 +18,7 @@
   const onStorage=()=>stop();window.addEventListener('storage',onStorage);window.addEventListener('popstate',onStorage);
   const fail=error=>{
    clear();status.setAttribute('role','alert');
+   if(error?.name==='AbortError'||/signal is aborted/i.test(error?.message||'')){status.textContent='A consulta demorou mais que o esperado. Tente atualizar a consulta. Nenhum total foi presumido.';return;}
    status.textContent=error?.code==='PGRST202'||error?.code==='42883'?'Consulta institucional ainda não instalada. Não é possível aferir disponibilidade; nenhum total foi presumido.':`Não foi possível aferir os conteúdos desta escola. ${error?.message||'Tente novamente.'}`;
   };
   const validate=r=>{
