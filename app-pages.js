@@ -2945,7 +2945,7 @@ const renderKnowledgeTreeFull = (data) => {
         </section>
         <section class="knowledge-tree-card">
           <h2>Integração com Missoes Digitais</h2>
-          ${renderKnowledgeTreeMission({ title: "Encontre as Cores", description: "Missão concluida adiciona XP, folhas e medalhas.", rewardXp: 25, href: "#", actionLabel: "Continuar missao" }, state)}
+          ${renderKnowledgeTreeMission({ title: "Encontre as Cores", description: "Missão concluida adiciona XP, folhas e medalhas.", rewardXp: 25, href: "missao.html", actionLabel: "Abrir missão demonstrativa" }, state)}
         </section>
       </section>
 
@@ -19566,7 +19566,7 @@ const renderGamesModule = () => {
           <h2>Escolha sua proxima descoberta</h2>
           <p>Somente os jogos disponiveis para sua turma aparecem aqui.</p>
         </div>
-        <div class="official-school-games">${renderStudentOfficialGameCards()}</div>
+        <div class="official-school-games">${renderStudentOfficialGameCards() || '<p class="muted" role="status">Nenhum jogo disponível para sua turma no momento. Os jogos aparecerão aqui quando forem liberados pela escola.</p>'}</div>
       </section>
     `;
   }
@@ -19578,7 +19578,7 @@ const renderGamesModule = () => {
           <h2>Jogos disponiveis</h2>
           <p>Somente os jogos liberados para a escola da crianca aparecem aqui.</p>
         </div>
-        <div class="official-school-games">${renderStudentOfficialGameCards()}</div>
+        <div class="official-school-games">${renderStudentOfficialGameCards() || '<p class="muted" role="status">Nenhum jogo disponível para sua turma no momento. Os jogos aparecerão aqui quando forem liberados pela escola.</p>'}</div>
       </section>
     `;
   }
@@ -20576,7 +20576,6 @@ const environments = {
       ["arvore", "MINHA ARVORE", "arvore.html"],
       ["biblioteca", "BIBLIOTECA", "biblioteca.html?from=aluno"],
       ["jogos", "JOGAR E DESCOBRIR", "jogos.html"],
-      ["logout", "SAIR", "#"],
     ],
     mobile: [
       ["aluno", "INICIO", "aluno.html"],
@@ -20584,7 +20583,6 @@ const environments = {
       ["arvore", "ARVORE", "arvore.html"],
       ["biblioteca", "BIBLIOTECA", "biblioteca.html?from=aluno"],
       ["jogos", "JOGAR", "jogos.html"],
-      ["logout", "SAIR", "#"],
     ],
   },
   educacaoInfantil: {
