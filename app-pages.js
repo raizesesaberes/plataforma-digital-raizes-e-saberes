@@ -26112,7 +26112,12 @@ const secretariaBadgeTone = (status) => {
   return "info";
 };
 const secretariaBadge = (label, tone = "neutral") => `<span class="secretaria-badge is-${tone}">${htmlEscape(label)}</span>`;
-const secretariaSchoolYear = (enrollment = {}, classItem = {}) => enrollment.school_year || classItem.school_year || classItem.ano_escolar || "Ano nao informado";
+const secretariaSchoolYear = (enrollment = {}, classItem = {}) => {
+  const year = [enrollment.school_year, classItem.school_year]
+    .map(value => String(value ?? "").trim())
+    .find(value => /^(19|20|21)\d{2}$/.test(value));
+  return year || "Ano não informado";
+};
 const secretariaTodayIso = () => new Date().toISOString().slice(0, 10);
 const getSecretariaParams = () => new URLSearchParams(window.location.search);
 const getSecretariaCurrentView = () => {
