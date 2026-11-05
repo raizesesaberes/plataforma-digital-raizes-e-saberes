@@ -34312,6 +34312,7 @@ const initCategoryConsumer = () => {
 
 const renderAppPage = () => {
   const mount = document.querySelector("[data-app-page]");
+  if (mount?.dataset.appPage === 'aluno' && mount.dataset.selfManaged === 'true' && mount.dataset.selfPresentation !== 'basic') return;
   if (!mount) {
     return;
   }
@@ -34722,4 +34723,7 @@ document.addEventListener('click', event => {
   button.disabled=true;printSchoolRegister(button.dataset.rsPrint,button.dataset.printClass).catch(error=>window.alert(error.message)).finally(()=>button.disabled=false);
 });
 
+window.addEventListener('rs-self-basic-remount', () => {
+  if (document.querySelector('[data-app-page="aluno"]')?.dataset.selfPresentation === 'basic') renderAppPage();
+});
 renderAppPage();

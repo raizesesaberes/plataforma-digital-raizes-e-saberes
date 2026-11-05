@@ -17,11 +17,11 @@
   },
   {
     "file": "aluno.html",
-    "sha256": "e2461a6905c0bdfeb851f11a02f20863833117a20890e5d985dddc9cdc8dfd01"
+    "sha256": "c94dcaa1b8423878e2ad7267e4a299e9bb8c9e28c17882472c953125d168588f"
   },
   {
     "file": "app-pages.js",
-    "sha256": "bc2af8b1e207e9130778f64ad6aeb140168de05d2e6c2e15ee8417be1e17e554"
+    "sha256": "c7ffbad03bff4eb5bbf31c951ce22cf025c011e7952598a2b98fa82a60f5f8d5"
   },
   {
     "file": "arvore.html",
@@ -17438,5 +17438,33 @@
   {
     "file": "library-edition-search-ui.mjs",
     "sha256": "700a5608b6c9563f3667fa65a0043d13da4d12cd856397a5279b1e8ec8922d9a"
+  },
+  {
+    "file": "student-self-infantil/automatic-navigation.mjs",
+    "sha256": "c46b5cd82629decef7041f2c9166c22f02732a093527e1305a81779f7540f07e"
+  },
+  {
+    "file": "student-self-infantil/boot.mjs",
+    "sha256": "9fbbc5b77264dbbb1f529a2d6165f3b020dfb8bf262be1da0f623e5dad47140e"
+  },
+  {
+    "file": "student-self-infantil/client.mjs",
+    "sha256": "31c0c554863e6e0edd43d636c92afcac8330cd4def80175139372aacffbc9374"
+  },
+  {
+    "file": "student-self-infantil/navigation.mjs",
+    "sha256": "c38ac74f46a60e42d6c9589c89643ffcee8d18d0df5d5b7574d6bddd76098772"
+  },
+  {
+    "file": "student-self-infantil/presentation.mjs",
+    "sha256": "aab08f088cf1b275e2a1a7dc7a4e3769eca60d68142088723baa21d5d76eb1f1"
+  },
+  {
+    "file": "student-self-infantil/session-bridge.mjs",
+    "sha256": "513914415c3df363722a2832e86ccd2a131e5c886b42b1cfcd1c6ec34cb409d4"
+  },
+  {
+    "file": "student-self-infantil/view.css",
+    "sha256": "f744e65f8762c02c8361f1188bb055b2bc0c22097926b6da1d965c24f3855338"
   }
 ]
