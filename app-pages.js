@@ -22535,12 +22535,18 @@ const questionBankVerifiedEnemOrigin = item => {
   return Boolean(sources[row.source_id]?.includes(external) && row.code === 'ENEM-SOURCE-' + external && item.id === row.code && String(row.metadata?.enem?.examYear) === '2013');
 };
 const questionBankCountOrigin = item => {
+  // Authenticated relational provenance identifies origin, not permission to use an item.
+  // Keep publication, licensing and teacher access gates independent from this counter.
+  const row = item?.raw;
+  if (row && item.uuid === row.id && item.id === row.code
+    && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(row.id || '')
+    && row.source_id && row.source?.id === row.source_id && row.source.source_type === 'OFICIAL_INEP_ENEM') return 'enem';
   if(questionBankVerifiedEnemOrigin(item))return 'enem';
   if(typeof qbTeacherRichOf==='function' && qbTeacherRichOf(item))return 'enem';
   const classification = String(item.legalClassification || '').replaceAll(' ', '_');
   if (classification.startsWith('ITEM_AUTORAL_')) return 'authoral';
   if(typeof qbInlineImages!=='undefined' && qbInlineImages.has(item) && qbAdminReviewEligible(item))return 'enem';
-  // Only validated, persisted pilot records count as real ENEM.
+  // Legacy pilot validation remains available when relational provenance is absent.
   // Names, curricular alignment and demo ENEM metadata are not provenance verification.
   return 'other';
 };
@@ -24243,7 +24249,7 @@ const initQuestionBank = () => {
     put('[data-qb-count-scope]', demoMode
       ? 'Acervo demonstrativo local; nenhum total real certificado.'
       : questionBankDataService.getQuestionAccessState().status === 'EDITORIAL_FULL_BANK'
-        ? 'Acervo retornado ao perfil editorial. Completude global ainda não certificada.'
+        ? 'Acervo editorial autorizado carregado integralmente; contagem conferida com o servidor.'
         : 'Acervo real das turmas autorizadas do perfil.' + (showSynthetic ? ' Escolher uma turma no piloto altera apenas o catálogo sintético.' : ''));
     put('[data-qb-published]', realItems.filter(item => item.publicationStatus === "PUBLICADO").length);
     put('[data-qb-review]', realItems.filter(item => getEditorialWorkflowStatus(item) === "EM_REVISAO").length);
@@ -25573,6 +25579,7 @@ const createSupabaseRestClient = () => {
     if (response.status === 204) return null;
     const result=await response.json();
     assertRequestActor(requestContext);
+    if (options.returnPageMetadata) return { data: result, contentRange: response.headers.get('Content-Range') };
     return result;
   };
 
@@ -31422,6 +31429,42 @@ const questionBankDataService = (() => {
     return { content_type: "QUESTION", school_id: teacher.school_id, limit: 10, classIds };
   };
   let teacherQuestionLoadGeneration = 0;
+  let editorialQuestionLoadGeneration = 0;
+  const getEditorialQuestionRows = async (request, context, {onProgress} = {}) => {
+    const generation = ++editorialQuestionLoadGeneration;
+    const assertCurrent = () => {
+      if (!context.userId || getSupabaseUserContext().userId !== context.userId) throw new Error('CONTENT_RESOLVER_ACCOUNT_CHANGED');
+      if (generation !== editorialQuestionLoadGeneration) throw new Error('CONTENT_RESOLVER_STALE_LOAD');
+    };
+    const fail = () => { throw new Error('A consulta do acervo ficou incompleta ou mudou durante o carregamento. Recarregue o Banco para conferir novamente.'); };
+    const rows = [];
+    let total = null, cursor = '';
+    const limit = 50;
+    do {
+      assertCurrent();
+      const page = await questionBankRead(signal => request('question_items',
+        `?select=${questionSelect}&order=id.asc&limit=${limit}${cursor ? `&id=gt.${cursor}` : ''}`, {
+          requireAuthenticated: true, expectedUserId: context.userId, signal,
+          prefer: 'count=exact', returnPageMetadata: true,
+        }));
+      assertCurrent();
+      const range = /^(\d+-\d+|\*)\/(\d+)$/.exec(page?.contentRange || '');
+      if (!range || !Array.isArray(page.data) || page.data.length > limit) fail();
+      const remaining = Number(range[2]);
+      if (!Number.isSafeInteger(remaining) || remaining < 0) fail();
+      if (total === null) total = remaining;
+      if (remaining !== total - rows.length || (!page.data.length && remaining > 0) || page.data.length > remaining) fail();
+      if (page.data.length && range[1] !== `0-${page.data.length - 1}`) fail();
+      for (const row of page.data) {
+        if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(row?.id || '') || (cursor && row.id <= cursor)) fail();
+        cursor = row.id;
+        rows.push(row);
+      }
+      onProgress?.(`Consultando acervo editorial: ${rows.length} de ${total} itens verificados. Aguarde a conclusão.`);
+    } while (rows.length < total);
+    assertCurrent();
+    return rows;
+  };
   const getTeacherResolvedQuestionRows = async (request, context = {}, {onProgress} = {}) => {
     const generation = ++teacherQuestionLoadGeneration;
     const assertCurrent = () => {
@@ -31703,8 +31746,8 @@ const questionBankDataService = (() => {
           },
         }));
       }
-      questionAccessState = { status: "EDITORIAL_FULL_BANK", total: null, detailsTotal: null, source: "question_items" };
-      const rows = await request("question_items", `?select=${questionSelect}&order=last_reviewed_at.desc.nullslast&order=created_at.desc`);
+      const rows = await getEditorialQuestionRows(request, context, options);
+      questionAccessState = { status: "EDITORIAL_FULL_BANK", total: rows.length, detailsTotal: rows.length, source: "question_items" };
       return rows.map(mapQuestionFromSupabase);
     },
     async getQuestionById(id) {
