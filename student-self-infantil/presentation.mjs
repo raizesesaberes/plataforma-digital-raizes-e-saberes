@@ -8,6 +8,8 @@ export function mountSelfInfantil({window,root,session,supabaseUrl,publishableKe
  const el=(tag,text)=>{const n=doc.createElement(tag);if(text)n.textContent=text;return n;};
  const status=el('p');status.setAttribute('role','status');
  function clear(state){generation++;active=false;offset=0;root.replaceChildren();root.dataset.state=state;root.dataset.selfPresentation=state;}
+ function loginRequired(){clear('login_required');root.append(el('p','Sua sessão não está válida. Entre novamente com seu login.'));const link=el('a','Entrar novamente');link.href='/login?next=%2Faluno';root.append(link);}
+ function failure(error,message){if(['missing_session','session_expired','session_changed'].includes(error?.message))loginRequired();else denied(message);}
  function denied(message){clear('denied');root.append(el('p',message));}
  async function details(item){
   if(!active)return;const ticket=++generation;root.querySelector('[data-content]')?.remove();status.textContent='Carregando informações';
@@ -20,7 +22,7 @@ export function mountSelfInfantil({window,root,session,supabaseUrl,publishableKe
    if(typeof text==='string'&&text.trim())panel.append(el('p',text));
    const back=el('button','Voltar à lista');back.onclick=()=>{generation++;panel.remove();status.textContent='Escolha um conteúdo para ver suas informações';};panel.append(back);
    root.append(panel);status.textContent='Informações do conteúdo';
-  }catch{if(ticket===generation)denied('Não foi possível autorizar esta leitura.');}
+  }catch(error){if(ticket===generation)failure(error,'Não foi possível autorizar esta leitura.');}
  }
  async function loadCatalog(){
   const ticket=++generation;root.querySelector('[data-content]')?.remove();
@@ -38,7 +40,7 @@ export function mountSelfInfantil({window,root,session,supabaseUrl,publishableKe
    if(offset){const b=el('button','Anterior');b.onclick=()=>{offset=Math.max(0,offset-24);void loadCatalog();};list.append(b);}
    if(items.length===24){const b=el('button','Próxima');b.onclick=()=>{offset+=24;void loadCatalog();};list.append(b);}
    root.querySelector('[data-catalog]')?.remove();root.append(list);status.textContent='Escolha um conteúdo para ver suas informações';
-  }catch{if(ticket===generation)denied('Não foi possível autorizar o catálogo.');}
+  }catch(error){if(ticket===generation)failure(error,'Não foi possível autorizar o catálogo.');}
  }
  const navigation=createAutomaticNavigation({getAccessToken:session.getAccessToken,readNavigation:createNavigationReader({supabaseUrl,publishableKey,fetchImpl}),render:s=>{
   clear(s.state);

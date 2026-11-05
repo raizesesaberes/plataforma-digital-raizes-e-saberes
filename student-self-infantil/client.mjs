@@ -4,6 +4,7 @@ export function createSelfInfantilReader({supabaseUrl,publishableKey,getAccessTo
  async function request(body){
   const token=await getAccessToken();if(!token)throw Error('missing_session');
   const response=await fetchImpl(url,{method:'POST',cache:'no-store',headers:{Authorization:'Bearer '+token,apikey:publishableKey,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(response.status===401)throw Error('session_expired');
   const payload=await response.json();if(!response.ok||payload?.ok!==true)throw Error('read_denied');return payload;
  }
  return Object.freeze({
