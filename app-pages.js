@@ -23114,6 +23114,17 @@ const initQuestionBankPilotImport = ({root}) => {
  window.addEventListener('storage',invalidate);window.addEventListener('focus',invalidate);
 };
 
+// Bound read-only bank requests; never retry or time out a write here.
+const questionBankRead = async (operation) => {
+  const controller = new AbortController();
+  let timer;
+  try {
+    return await Promise.race([Promise.resolve().then(() => operation(controller.signal)), new Promise((_, reject) => {
+      timer = setTimeout(() => { controller.abort(); reject(new Error('A consulta demorou além do esperado. Recarregue o Banco para tentar novamente.')); }, 45000);
+    })]);
+  } finally { clearTimeout(timer); }
+};
+
 const initQuestionBank = () => {
   const root = document.querySelector("[data-question-bank]");
   if (!root) {
@@ -23195,6 +23206,7 @@ const initQuestionBank = () => {
   const cancelAdaptationButton = root.querySelector("[data-qb-cancel-adaptation]");
   const actionFeedback = root.querySelector("[data-qb-action-feedback]");
   let questions = [];
+  let catalogConfirmed = false;
   let assessments = [];
   let selectedId = null;
   let activeAssessmentId = null;
@@ -24210,7 +24222,14 @@ const initQuestionBank = () => {
     });
   };
 
+  const setCatalogPending = (message) => {
+    root.querySelector('[data-qb-count-scope]').textContent = message;
+    if (catalogConfirmed) return;
+    root.querySelectorAll('[data-qb-count-summary] strong,.qb-metrics strong').forEach(node => { node.textContent = '—'; });
+    root.querySelector('[data-qb-result-count]').textContent = 'Consulta não concluída';
+  };
   const renderMetrics = (items) => {
+    if (!catalogConfirmed) { setCatalogPending(root.querySelector('[data-qb-count-scope]').textContent); return; }
     const demoMode = mode !== "supabase";
     const counts = questionBankCountSummary(bankItems(), items, cart.map(itemById).filter(Boolean), demoMode);
     const showSynthetic = demoMode || Boolean(window.RSEnemInstitutional) || counts.catalog.synthetic > 0 || counts.selected.synthetic > 0;
@@ -24909,10 +24928,19 @@ const initQuestionBank = () => {
     const current=()=>assessmentActorCurrent() && revision===assessmentRevision && generation===assessmentRefreshGeneration && assessmentId===activeAssessmentId && !assessmentSavePromise && !assessmentSwitchBusy && sessionStorage.getItem(assessmentSaveKey)===pendingMarker;
     loading.hidden = false;
     errorNode.hidden = true;
+    setCatalogPending('Consultando as turmas e o acervo autorizado…');
     mode = questionBankDataService.mode();
+    let catalogLoaded = false;
     try {
-      const loadedQuestions=await questionBankDataService.listQuestions();if(!current())return;
-      const loadedAssessments=await questionBankDataService.listAssessments();if(!current())return;
+      const loadedQuestions=await questionBankDataService.listQuestions({onProgress: message => { if(current())setCatalogPending(message); }});if(!current())return;
+      // The authorized catalogue is independent from the saved-assessment read.
+      questions=loadedQuestions;catalogConfirmed=true;catalogLoaded=true;
+      populateFilterOptions();
+      const visible=getFilteredItems();grid.innerHTML=visible.map(renderCard).join('');
+      renderMetrics(visible);renderDashboardSummaries();empty.hidden=visible.length>0;
+      if(!visible.length)empty.textContent='Nenhuma questão disponível no escopo e nos filtros atuais.';
+      loading.hidden=true;
+      const loadedAssessments=await questionBankRead(signal => questionBankDataService.listAssessments({signal}));if(!current())return;
       const loaded=assessmentId ? await questionBankDataService.getAssessmentById(assessmentId,{expectedUserId:assessmentActorId,signal:assessmentActorAbort.signal}) : null;
       if(!current())return;
       if(assessmentId && (!loaded?.id || loaded.id!==assessmentId))throw Error('Avaliação não confirmada pelo servidor.');
@@ -24927,7 +24955,8 @@ const initQuestionBank = () => {
       await render(current);if(!current())return;await attemptLoginResume();
     } catch(error) {
       if(!current() || /CONTENT_RESOLVER_(STALE_LOAD|ACCOUNT_CHANGED)/.test(error.message || ''))return;
-      setError(error.message || 'Não foi possível atualizar a consulta. Sua edição foi preservada.');
+      if(!catalogLoaded)setCatalogPending('Consulta do acervo não concluída. Veja a mensagem de erro.');
+      setError((catalogLoaded ? 'O acervo foi carregado, mas a atualização complementar não foi concluída. ' : '') + (error.message || 'Não foi possível atualizar a consulta. Sua edição foi preservada.'));
     } finally {
       if(current())loading.hidden=true;
     }
@@ -31393,7 +31422,7 @@ const questionBankDataService = (() => {
     return { content_type: "QUESTION", school_id: teacher.school_id, limit: 10, classIds };
   };
   let teacherQuestionLoadGeneration = 0;
-  const getTeacherResolvedQuestionRows = async (request, context = {}) => {
+  const getTeacherResolvedQuestionRows = async (request, context = {}, {onProgress} = {}) => {
     const generation = ++teacherQuestionLoadGeneration;
     const assertCurrent = () => {
       if (!context.userId || getSupabaseUserContext().userId !== context.userId) throw new Error("CONTENT_RESOLVER_ACCOUNT_CHANGED");
@@ -31401,7 +31430,7 @@ const questionBankDataService = (() => {
     };
     const checkedRequest = async (resource, query, options) => {
       assertCurrent();
-      const value = await request(resource, query, { ...options, expectedUserId: context.userId });
+      const value = await questionBankRead(signal => request(resource, query, { ...options, expectedUserId: context.userId, signal }));
       assertCurrent();
       return value;
     };
@@ -31410,7 +31439,7 @@ const questionBankDataService = (() => {
     let result = { status: "PASS", total: 0, details_total: 0 };
     // Keep explicit class scope for BOTH legacy and dynamic resolvers. Legacy
     // treats a missing class as an unrestricted grade; never issue that request.
-    for (const classId of classIds) {
+    for (const [classIndex,classId] of classIds.entries()) {
       let offset = 0;
       do {
         result = normalizeRpcJson(await checkedRequest("rpc/content_resolve_question_details_for_user", "", {
@@ -31434,6 +31463,7 @@ const questionBankDataService = (() => {
         for (const row of page) rows.set(row.id, row);
         // Advance by received rows so a shorter server page cannot skip items.
         offset += result.items.length;
+        onProgress?.(`Consultando turma ${classIndex+1} de ${classIds.length}: ${offset} de ${total} itens verificados. Aguarde a conclusão do acervo.`);
         if (offset >= total) break;
       } while (true);
     }
@@ -31653,11 +31683,11 @@ const questionBankDataService = (() => {
   };
 
   const remote = {
-    async listQuestions() {
+    async listQuestions(options = {}) {
       const { request, getContext } = client();
       const context = await getContext();
       if (isTeacherResolverContext(context)) {
-        const resolved = await getTeacherResolvedQuestionRows(request, context);
+        const resolved = await getTeacherResolvedQuestionRows(request, context, options);
         questionAccessState = {
           status: resolved.result?.status || "UNKNOWN",
           total: Number(resolved.result?.total ?? 0),
@@ -31701,10 +31731,10 @@ const questionBankDataService = (() => {
       const { request } = client();
       return request("question_licenses", "?select=*&order=name.asc");
     },
-    async listAssessments() {
+    async listAssessments({signal} = {}) {
       const { request } = client();
       try {
-        const rows = await request("assessments", `?select=${assessmentSelect}&status=neq.ARQUIVADA&order=updated_at.desc`);
+        const rows = await request("assessments", `?select=${assessmentSelect}&status=neq.ARQUIVADA&order=updated_at.desc`, {signal});
         return rows.map(mapAssessmentFromSupabase);
       } catch (error) {
         if (String(error.message || "").includes("Sessao expirada")) {
