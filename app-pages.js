@@ -198,6 +198,18 @@ const normalizeContentGovernanceType = (type = "") => {
   if (["experiences", "experiência", "experiências"].includes(value)) return "experience";
   return value;
 };
+// The web player uses slugs while persisted school grants use canonical game IDs.
+// School-scoped loading and availability status/date checks remain unchanged.
+const normalizeContentGovernanceId = (type, id = "") => {
+  const value = String(id || "");
+  if (normalizeContentGovernanceType(type) !== "game") return value;
+  switch (value) {
+    case "organizando-cesta": return "RS-EI-GAME-ORGANIZANDO-CESTA";
+    case "jardim-descobertas": return "RS-EI-GAME-JARDIM-DESCOBERTAS";
+    case "atelie-bia": return "RS-EI-GAME-ATELIE-BIA";
+    default: return value;
+  }
+};
 const isContentGovernanceRequired = () =>
   hasValidPlatformSession() && contentGovernanceConsumerRoles.has(getCurrentPlatformRole());
 const isContentGovernanceReady = () => !isContentGovernanceRequired() || contentGovernanceState.status === "ready";
@@ -264,12 +276,12 @@ const isContentAvailableToSession = (type, id) => {
   if (!isContentGovernanceRequired()) return true;
   if (!id || contentGovernanceState.status !== "ready") return false;
   const normalizedType = normalizeContentGovernanceType(type);
-  const normalizedId = String(id || "");
+  const normalizedId = normalizeContentGovernanceId(normalizedType, id);
   const now = new Date();
   return contentGovernanceState.availability.some(
     (row) =>
       normalizeContentGovernanceType(row.content_type) === normalizedType &&
-      String(row.content_id || "") === normalizedId &&
+      normalizeContentGovernanceId(normalizedType, row.content_id) === normalizedId &&
       isAvailabilityRowActive(row, now)
   );
 };
