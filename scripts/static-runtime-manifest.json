@@ -17449,7 +17449,7 @@
   },
   {
     "file": "student-self-infantil/client.mjs",
-    "sha256": "31c0c554863e6e0edd43d636c92afcac8330cd4def80175139372aacffbc9374"
+    "sha256": "4c54c0c548d8269bbdcf682c6447a477718b9f4f0b6aed51e35ab43f54bf74a7"
   },
   {
     "file": "student-self-infantil/navigation.mjs",
@@ -17457,7 +17457,7 @@
   },
   {
     "file": "student-self-infantil/presentation.mjs",
-    "sha256": "aab08f088cf1b275e2a1a7dc7a4e3769eca60d68142088723baa21d5d76eb1f1"
+    "sha256": "0b1daf67706a2c2115b0648b7e18470f4ec2da608f3908983d80b95e5c74f3bf"
   },
   {
     "file": "student-self-infantil/session-bridge.mjs",
