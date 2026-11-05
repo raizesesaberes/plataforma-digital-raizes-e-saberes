@@ -17481,14 +17481,14 @@
   },
   {
     "file": "student-weekly-board/board.mjs",
-    "sha256": "93afaaef6fe578a10f25db978f939ace6a21ca015d5142f0b19a67a829f126f9"
+    "sha256": "0e5e521922a36c13a8c5e73d07c9fe91b3693812961cb1f36f69f6fda6141e2b"
   },
   {
     "file": "student-weekly-board/weekly.css",
-    "sha256": "d4fa83c47b9c0facebf24d1b03f557e1b34f45a2622c40583382a33e8b9e007f"
+    "sha256": "5d826636bb0b1932d8eccb7d5b14c82752c840f17f55542b8a28522d9ce47098"
   },
   {
     "file": "student-weekly-board/mount.mjs",
-    "sha256": "65f2bc6bc85fa8d08595b5b9e5a2e6cdae273f61bff1cea96f939e9969162cb9"
+    "sha256": "ecb67ac0b14e8842d360766fa90bbc5b53d1b25867a79c634e97b4b2f7849917"
   }
 ]

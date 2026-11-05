@@ -2,7 +2,7 @@ import {mountWeeklyBoard} from './board.mjs';
 import {createWeeklyRpcTransport} from './transport.mjs';
 const active=new Map();
 const dispose=(root)=>{const item=active.get(root);if(!item)return;active.delete(root);item.transport.dispose();item.board?.dispose();};
-function check(){for(const [root,item] of active){if(!root.isConnected||item.identity()!==item.subject)dispose(root);}}
+function check(){for(const [root,item] of active){if(!root.isConnected||item.identity()!==item.subject)dispose(root);else item.board?.checkCalendar();}}
 const observer=new MutationObserver(check);observer.observe(document.documentElement,{childList:true,subtree:true});
 for(const event of ['storage','focus','pageshow'])window.addEventListener(event,check);
 window.addEventListener('pagehide',()=>{for(const root of active.keys())dispose(root);});
