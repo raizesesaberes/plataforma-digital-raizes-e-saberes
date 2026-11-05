@@ -8384,6 +8384,23 @@ const renderTeacherStudentPage = () => {
   `;
 };
 
+// Presentation only: server-owned context is supplied by the session-bound boot.
+const getStudentFamilyContext = () => {
+  const own = window.RSStudentFamilyContext;
+  const context = studentInstitutionalState.context;
+  if (!own || own.stage !== 'EI' || studentInstitutionalState.status !== 'ready') return null;
+  if (['student_id','enrollment_id','school_id','class_id'].some(key => !own[key] || own[key] !== context?.[key])) return null;
+  return context;
+};
+const renderStudentFamilyPending = (kind) => {
+  const context = getStudentFamilyContext();
+  if (!context) return '';
+  const name = typeof context.student_name === 'string' ? context.student_name.trim() : '';
+  const title = kind === 'routine' ? 'Rotina da semana' : name ? `O que ${name} fez hoje` : 'O que aconteceu hoje';
+  const text = kind === 'routine' ? 'O quadro de rotina do Infantil está em preparação.' : 'O acompanhamento do diário pela família ainda não está disponível.';
+  return `<section class="student-side-card" data-family-pending="${kind}"><h2>${printableEscape(title)}</h2><p>${text}</p></section>`;
+};
+
 const studentPremiumNav = [
   ["aluno.html", "Início", "home"],
   ["aluno.html?view=avaliacoes", "Avaliações", "avalia"],
@@ -8451,13 +8468,13 @@ const renderStudentQuickRail = () => `
       }
     </section>
     <section class="student-side-card is-pink">
-      <h2>Recado da Professora</h2>
+      <h2>${getStudentFamilyContext() ? "Recados para a família" : "Recado da Professora"}</h2>
       ${isStudentInstitutionalMode() && studentInstitutionalState.status === "ready" && (studentInstitutionalState.messages || []).length
         ? renderStudentInboxList({ compact: true })
         : renderPremiumEmpty("QUANDO SUA PROFESSORA ENVIAR UM RECADO, ELE APARECERA AQUI.", "", "pink")}
     </section>
     <section class="student-side-card is-warm">
-      <h2>Agenda</h2>
+      <h2>${getStudentFamilyContext() ? "Lembretes para a família" : "Agenda"}</h2>
       ${isStudentInstitutionalMode() && studentInstitutionalState.status === "ready" && (studentInstitutionalState.agendaEvents || []).length
         ? `<ul class="clean-list">${(studentInstitutionalState.agendaEvents || []).slice(0, 3).map((entry) => `<li><strong>${printableEscape(entry.title)}</strong><span>${printableEscape(formatFamilyCanonicalDate(entry.entry_date) || entry.entry_date || "")} · ${printableEscape(formatFamilyEntryTime(entry))}</span></li>`).join("")}</ul>`
         : renderPremiumEmpty("NENHUM ITEM PUBLICADO.", "Quando a escola publicar compromissos, eles aparecerao aqui.", "orange")}
@@ -8739,6 +8756,7 @@ const renderStudentPersonalScheduleRow = (slot = {}, index = 0, editing = false)
 
 const renderStudentPersonalScheduleBoard = () => {
   if (!isStudentInstitutionalMode()) return "";
+  if (getStudentFamilyContext()) return renderStudentFamilyPending('routine');
   const schedule = getStudentPersonalSchedule();
   const editing = studentPersonalScheduleEditing;
   const isEmpty = isStudentPersonalScheduleEmpty(schedule);
@@ -9000,8 +9018,8 @@ const renderStudentInboxView = () => {
     <section class="family-panel family-messages-panel student-inbox-panel">
       <div class="family-section-head">
         <div>
-          <h2>Recados</h2>
-          <p>Comunicados liberados para sua turma, escola ou para voce.</p>
+          <h2>${getStudentFamilyContext() ? "Recados para a família" : "Recados"}</h2>
+          <p>${getStudentFamilyContext() ? "Comunicados disponibilizados para este aluno, sua turma ou escola." : "Comunicados liberados para sua turma, escola ou para voce."}</p>
         </div>
         <span>${unread > 0 ? `${unread} não lido${unread === 1 ? "" : "s"}` : "Tudo lido"}</span>
       </div>
@@ -9049,7 +9067,7 @@ const renderStudentInstitutionalHomeContent = () => {
     <section class="student-premium-hero">
       <div>
         <span>${isStudentInstitutionalMode() ? printableEscape(profile.schoolName) : "Aluno Ensino Fundamental"}</span>
-        <h1>OLA, ${printableEscape(getStudentFirstName().toUpperCase())}!</h1>
+        <h1>${getStudentFamilyContext() ? printableEscape(getStudentFamilyContext().student_name?.trim() ? `Família de ${getStudentFamilyContext().student_name.trim()}` : 'Família') : `OLA, ${printableEscape(getStudentFirstName().toUpperCase())}!`}</h1>
         <p>${isStudentInstitutionalMode() ? `${printableEscape(profile.fullName)} · ${printableEscape(profile.className)} · ${printableEscape(profile.teacherName)}` : "Vamos descobrir coisas novas hoje?"}</p>
       </div>
     </section>
@@ -9063,6 +9081,7 @@ const renderStudentInstitutionalHomeContent = () => {
     </section>
 
     ${renderStudentPersonalScheduleBoard()}
+    ${renderStudentFamilyPending('diary')}
     ${renderStudentInstitutionalWeeklyBoard()}
   `;
 };
@@ -19668,7 +19687,7 @@ const modules = {
     html: `<aside class="rs-demo-notice" role="note">Missão demonstrativa: respostas e recompensas desta atividade não representam resultados escolares oficiais.</aside>${renderMissionPlayer(missionFixtures.colorMatch001)}`,
   },
   jogos: {
-    title: getCurrentPlatformRole() === "aluno" ? "Jogos e Experiências" : "Jogar e Descobrir",
+    title: "Jogar e Descobrir",
     subtitle: getCurrentPlatformRole() === "aluno" ? "Descobertas para aprender brincando" : "Hub oficial dos jogos digitais",
     code: getCurrentPlatformRole() === "aluno" ? "ALUNO-JOGOS" : "GAME-ENGINE-2.0",
     get html() {
@@ -25725,7 +25744,9 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
         allowedRoles: ["aluno", "admin"],
       }).catch(() => []);
       const profile = Array.isArray(profileRows) ? profileRows[0] || null : null;
+      const familyProof = window.RSStudentFamilyContext;
       const studentContext = await getStudentCanonicalContext(client);
+      if (familyProof && (window.RSStudentFamilyContext !== familyProof || ['student_id','enrollment_id','school_id','class_id'].some(key => familyProof[key] !== studentContext?.[key]))) throw new Error('O contexto do aluno mudou. Entre novamente.');
       const student = await client
         .request("students", `?select=*&id=${supabaseEq(studentContext.student_id)}&limit=1`, {
           requireAuthenticated: true,
@@ -25771,6 +25792,7 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
         ...teacher,
         profile: teacherProfilesById.get(teacher.profile_id) || null,
       }));
+      if (familyProof && (window.RSStudentFamilyContext !== familyProof || student.id !== familyProof.student_id || enrollment.id !== familyProof.enrollment_id || classItem.id !== familyProof.class_id || school.id !== familyProof.school_id)) throw new Error('Não foi possível confirmar o contexto próprio do aluno.');
       studentInstitutionalState.weekStartIso = studentInstitutionalState.weekStartIso || familyWeekStartIso();
       studentInstitutionalState.calendarError = "";
       studentInstitutionalState.context = studentContext;
@@ -25816,6 +25838,7 @@ const ensureStudentInstitutionalData = async ({ force = false } = {}) => {
             return normalizeStudentPersonalSchedulePayload(null);
           }),
         ]);
+        if (familyProof && window.RSStudentFamilyContext !== familyProof) return;
         studentInstitutionalState.entries = (entries || []).filter((entry) => entry.status === "published");
         studentInstitutionalState.agendaEvents = studentInstitutionalState.entries;
         studentInstitutionalState.recommendations = recommendations || [];
@@ -34314,6 +34337,10 @@ const renderAppPage = () => {
   const mount = document.querySelector("[data-app-page]");
   if (mount?.dataset.appPage === 'aluno' && mount.dataset.selfManaged === 'true' && mount.dataset.selfPresentation !== 'basic') return;
   if (!mount) {
+    return;
+  }
+  if (mount.dataset.appPage === 'aluno' && window.RSStudentFamilyContext && studentInstitutionalState.status === 'ready' && !getStudentFamilyContext()) {
+    mount.textContent = 'Não foi possível confirmar o contexto próprio do aluno.';
     return;
   }
 

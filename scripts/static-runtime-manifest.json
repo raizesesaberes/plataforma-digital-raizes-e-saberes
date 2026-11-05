@@ -17,11 +17,11 @@
   },
   {
     "file": "aluno.html",
-    "sha256": "c94dcaa1b8423878e2ad7267e4a299e9bb8c9e28c17882472c953125d168588f"
+    "sha256": "c3d82490408b2d9e0f90564d87b2ba210a7f6d752e86b46119963ce84721b819"
   },
   {
     "file": "app-pages.js",
-    "sha256": "c7ffbad03bff4eb5bbf31c951ce22cf025c011e7952598a2b98fa82a60f5f8d5"
+    "sha256": "9650e01cd0b6c1cc297aabb4f7361041c3689f9b2bb32019ad9991b8fe923ec5"
   },
   {
     "file": "arvore.html",
@@ -17445,7 +17445,7 @@
   },
   {
     "file": "student-self-infantil/boot.mjs",
-    "sha256": "9fbbc5b77264dbbb1f529a2d6165f3b020dfb8bf262be1da0f623e5dad47140e"
+    "sha256": "a79b5d0fcb2d03af21b5053ecc02056f0b0524c9a52fad471cfa5f86bd4c0cc6"
   },
   {
     "file": "student-self-infantil/client.mjs",
@@ -17470,5 +17470,9 @@
   {
     "file": "student-self-infantil/area-shell.mjs",
     "sha256": "9b865ca8527884549749593393f18e1b137614e20792476eedda6ed04091b571"
+  },
+  {
+    "file": "student-self-infantil/existing-student-navigation.mjs",
+    "sha256": "68087f27099a08936003ec5c81ea74033b041addb1575876647818f5dd23a0c6"
   }
 ]
