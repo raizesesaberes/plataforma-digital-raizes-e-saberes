@@ -6289,7 +6289,7 @@
   },
   {
     "file": "assets/builds/caixa-misteriosa-premium-01/capitulo-01.css",
-    "sha256": "bf82f30e875ec427182c67e4a708a1cf1f55ca82e6a9af24fa3c55d5bfc6f44b"
+    "sha256": "8620ce9fdc3fb9af2e7e47633d7ede2245e8d69939d733b3b4233327b2203edc"
   },
   {
     "file": "assets/builds/caixa-misteriosa-premium-01/capitulo-01.js",
@@ -16973,7 +16973,7 @@
   },
   {
     "file": "game-engine.css",
-    "sha256": "e257a67d255a133e4932cab0217e581c61daf683ccfc810c9a6b08c46c87c1d9"
+    "sha256": "9ee9f2a7ebfc8c66ca86c32860a0e84142d1d1d86ca5062fc0d8d358d39f3d9a"
   },
   {
     "file": "game-engine.js",
@@ -17021,7 +17021,7 @@
   },
   {
     "file": "master-pack.css",
-    "sha256": "f576c890617a66f47496dc0d2dfec7d0c3639e5157519fcab23de5a5070c937e"
+    "sha256": "ac39a50aaa2c238c0343270f1dc4a03bc0663c37a4923db5879f2bd837c0f553"
   },
   {
     "file": "missao.html",

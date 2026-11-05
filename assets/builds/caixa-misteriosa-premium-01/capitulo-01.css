@@ -2289,3 +2289,10 @@ body {
     font-size: 1rem !important;
   }
 }
+
+/* Visual-only surface treatment. Do not move scene/score hotspots or bitmap controls. */
+@media screen {
+  .premium-chapter :is(.premium-scene-command,.premium-final-command) { background-color: #f1f6f2; color: #203c2e; border-color: #cbdcd0; box-shadow: 0 4px 16px rgba(23,76,55,.12); text-shadow: none; }
+  .premium-chapter :is(.premium-final-restart-button,.premium-next-discovery-button,.premium-action-button) { background-color: #175c40; background-image: none; color: #fff; border-color: #175c40; box-shadow: 0 3px 0 #10472f; text-shadow: none; }
+  .premium-chapter button:focus-visible { outline: 3px solid #b7802b; outline-offset: 3px; }
+}

@@ -10153,3 +10153,16 @@ body.game-immersive-active .game-stage,
     opacity: 0;
   }
 }
+
+/* Visual-only chrome for the three official engines; scene geometry is untouched. */
+@media screen {
+  .game-engine:is([data-active-game="organizando-cesta"],[data-active-game="jardim-descobertas"],[data-active-game="atelie-bia"]) :is(.game-topbar,.game-panel,.game-audio-panel) { background: #fff; border-color: #dce6dd; box-shadow: none; }
+  .game-engine:is([data-active-game="organizando-cesta"],[data-active-game="jardim-descobertas"],[data-active-game="atelie-bia"]) :is(.game-title-block h1,.game-panel h2,.game-audio-panel h2) { color: #203c2e; font-family: Inter,system-ui,sans-serif; font-weight: 650; text-transform: none; }
+  .game-engine:is([data-active-game="organizando-cesta"],[data-active-game="jardim-descobertas"],[data-active-game="atelie-bia"]) .game-primary-button { background-color: #175c40; background-image: none; border-color: #175c40; color: #fff; box-shadow: 0 3px 0 #10472f; text-shadow: none; }
+  .game-engine:is([data-active-game="organizando-cesta"],[data-active-game="jardim-descobertas"],[data-active-game="atelie-bia"]) .game-secondary-button { background-color: #f1f6f2; border-color: #cbdcd0; color: #175c40; box-shadow: none; text-shadow: none; }
+  .game-engine:is([data-active-game="organizando-cesta"],[data-active-game="jardim-descobertas"],[data-active-game="atelie-bia"]) :is(.garden-prompt,.game-instructions) { background-color: #f1f6f2; border-color: #cbdcd0; color: #203c2e; box-shadow: none; }
+  .game-engine:is([data-active-game="organizando-cesta"],[data-active-game="jardim-descobertas"],[data-active-game="atelie-bia"]) :is(button,a):focus-visible { outline: 3px solid #b7802b; outline-offset: 3px; }
+}
+@media screen {
+  .game-engine[data-active-game="atelie-bia"] :is(.guided-tool-panel,.guided-status-panel,.guided-painting-header,.guided-final-header) { background-color: #f1f6f2; border-color: #cbdcd0; color: #203c2e; box-shadow: none; }
+}
