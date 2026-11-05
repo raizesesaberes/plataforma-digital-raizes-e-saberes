@@ -21,7 +21,7 @@
   },
   {
     "file": "app-pages.js",
-    "sha256": "9650e01cd0b6c1cc297aabb4f7361041c3689f9b2bb32019ad9991b8fe923ec5"
+    "sha256": "b7df9e5956064e0b2d126a5a23ed21412099236a9be9804dd22bae7a6612d4bb"
   },
   {
     "file": "arvore.html",
@@ -17474,5 +17474,21 @@
   {
     "file": "student-self-infantil/existing-student-navigation.mjs",
     "sha256": "68087f27099a08936003ec5c81ea74033b041addb1575876647818f5dd23a0c6"
+  },
+  {
+    "file": "student-weekly-board/transport.mjs",
+    "sha256": "4b8839e79ac01fab777035331f1de8af3a5300c3a5467acdbfc24fc07cf7bcef"
+  },
+  {
+    "file": "student-weekly-board/board.mjs",
+    "sha256": "93afaaef6fe578a10f25db978f939ace6a21ca015d5142f0b19a67a829f126f9"
+  },
+  {
+    "file": "student-weekly-board/weekly.css",
+    "sha256": "d4fa83c47b9c0facebf24d1b03f557e1b34f45a2622c40583382a33e8b9e007f"
+  },
+  {
+    "file": "student-weekly-board/mount.mjs",
+    "sha256": "65f2bc6bc85fa8d08595b5b9e5a2e6cdae273f61bff1cea96f939e9969162cb9"
   }
 ]

@@ -8375,6 +8375,12 @@ const renderTeacherStudentPage = () => {
               <div class="tw-section-head"><h2>Registros</h2><span>Histórico</span></div>
               ${renderTeacherEmptyState("NENHUM REGISTRO PEDAGOGICO DISPONIVEL.")}
             </article>
+            <article class="tw-board" data-teacher-weekly-panel>
+              <h2>Rotina da semana — Infantil</h2>
+              <p>Recados por dia para toda a turma ou apenas para este aluno. Anotações da família permanecem privadas.</p>
+              <button type="button" class="tw-primary-link" data-teacher-weekly-open data-class-id="${printableEscape(student.classId)}" data-student-id="${printableEscape(student.id)}">Abrir quadro semanal</button>
+              <div data-teacher-weekly-root></div>
+            </article>
             ${renderTeacherStudentNotesPanel(student, classItem)}
           </section>
           ` : `<section class="tw-board">${renderTeacherInstitutionalStatus(institutionalReady ? "ALUNO NAO ENCONTRADO NAS TURMAS AUTORIZADAS." : "CARREGANDO FICHA DO ALUNO.")}</section>`}
@@ -8397,7 +8403,7 @@ const renderStudentFamilyPending = (kind) => {
   if (!context) return '';
   const name = typeof context.student_name === 'string' ? context.student_name.trim() : '';
   const title = kind === 'routine' ? 'Rotina da semana' : name ? `O que ${name} fez hoje` : 'O que aconteceu hoje';
-  const text = kind === 'routine' ? 'O quadro de rotina do Infantil está em preparação.' : 'O acompanhamento do diário pela família ainda não está disponível.';
+  const text = kind === 'routine' ? 'Carregando o quadro da semana…' : 'O acompanhamento do diário pela família ainda não está disponível.';
   return `<section class="student-side-card" data-family-pending="${kind}"><h2>${printableEscape(title)}</h2><p>${text}</p></section>`;
 };
 
@@ -32344,6 +32350,7 @@ const initCurationBatches = () => {
 const initTeacherWorkspace = () => {
   const workspace = document.querySelector("[data-teacher-workspace]");
   if (!workspace) return;
+  initTeacherWeeklyBoard(workspace);
   const workspaceActor = getTeacherAttendanceActor();
   const workspaceIsCurrent = () => workspaceActor === getTeacherAttendanceActor() && document.body.contains(workspace);
   const content = workspace.querySelector("[data-teacher-content]");
@@ -33136,10 +33143,54 @@ const initTeacherWorkspace = () => {
   hydrateTeacherAttendanceIfNeeded();
 };
 
+// Weekly-board UI bridge only; every read/save is authorized again by its RPC.
+const weeklyBoardSessionIdentity = () => {
+  const session = getPlatformSession();
+  return hasValidPlatformSession() && ['aluno','professor'].includes(session.role) ? `${session.userId}:${session.role}` : null;
+};
+const mountAuthorizedWeeklyBoard = async (root, teacherTarget = null) => {
+  if (!root || root.dataset.weeklyMountStarted === 'true') return;
+  const identity = weeklyBoardSessionIdentity();
+  if (!identity || (!teacherTarget && !getStudentFamilyContext())) return;
+  root.dataset.weeklyMountStarted = 'true';
+  const actor = getPlatformSession().userId;
+  try {
+    const { mount } = await import('./student-weekly-board/mount.mjs');
+    if (!root.isConnected || weeklyBoardSessionIdentity() !== identity) return;
+    const rpc = async (name, args) => {
+      try {
+        const data = await createSupabaseRestClient().request(`rpc/${name}`, '', {
+          method: 'POST', requireAuthenticated: true, allowedRoles: [teacherTarget ? 'professor' : 'aluno'],
+          expectedUserId: actor, body: JSON.stringify(args)
+        });
+        return { data: normalizeRpcJson(data) };
+      } catch (error) {
+        return { error: { message: error.status === 401 || error.code === 'ASSESSMENT_ACTOR_CHANGED' ? 'SESSION_REQUIRED' : error.databaseMessage || error.message } };
+      }
+    };
+    await mount({ root, rpc, sessionIdentity: weeklyBoardSessionIdentity, teacherTarget,
+      existingWeekElement: teacherTarget ? null : root.closest('[data-student-dashboard]')?.querySelector('.student-week-panel'),
+      weekStart: teacherTarget ? null : studentInstitutionalState.weekStartIso });
+  } catch { root.textContent = 'Não foi possível carregar o quadro semanal. Recarregue a página para tentar novamente.'; }
+};
+const initTeacherWeeklyBoard = (workspace) => {
+  const button = workspace.querySelector('[data-teacher-weekly-open]');
+  if (!button || button.dataset.bound === 'true') return;
+  button.dataset.bound = 'true';
+  button.addEventListener('click', async () => {
+    const classId = button.dataset.classId, studentId = button.dataset.studentId;
+    if (!teacherAttendanceContextAllowed(classId) || !getTeacherInstitutionalStudents(classId).some(s => s.id === studentId)) return;
+    button.disabled = true;
+    button.hidden = true;
+    await mountAuthorizedWeeklyBoard(workspace.querySelector('[data-teacher-weekly-root]'), { classId, studentId });
+  });
+};
+
 const initStudentInstitutionalDashboard = () => {
   const dashboard = document.querySelector("[data-student-dashboard]");
   if (!dashboard || !isStudentInstitutionalMode()) return;
   initStudentHomeSearch(dashboard);
+  if (getStudentFamilyContext()) mountAuthorizedWeeklyBoard(dashboard.querySelector('[data-family-pending="routine"]'));
   dashboard.addEventListener("click", async (event) => {
     const scheduleEditButton = event.target.closest?.("[data-student-schedule-edit]");
     if (scheduleEditButton) {
