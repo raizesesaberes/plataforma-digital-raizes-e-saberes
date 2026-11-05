@@ -7588,7 +7588,7 @@ const getTeacherSelectedSchoolId = () => {
 const renderTeacherSchoolSelector = () => {
   const schools = teacherInstitutionalState.schools || [];
   const selected = getTeacherSelectedSchoolId();
-  return `<label class="tw-planning-toolbar"><span>Escola</span><select data-teacher-school-selector aria-label="Selecionar escola do professor"><option value="">Selecione uma escola</option>${schools.filter(school => school.status === "active").map(school => `<option value="${printableEscape(school.id)}" ${school.id === selected ? "selected" : ""}>${printableEscape(normalizeSchoolName(school))}</option>`).join("")}</select></label>`;
+  return `<label class="tw-planning-toolbar tw-register-school"><span>Escola</span><select data-teacher-school-selector aria-label="Selecionar escola do professor"><option value="">Selecione uma escola</option>${schools.filter(school => school.status === "active").map(school => `<option value="${printableEscape(school.id)}" ${school.id === selected ? "selected" : ""}>${printableEscape(normalizeSchoolName(school))}</option>`).join("")}</select></label>`;
 };
 
 const renderTeacherAttendanceDiaryShortcuts = () => {
@@ -7599,11 +7599,17 @@ const renderTeacherAttendanceDiaryShortcuts = () => {
   ].map(renderTeacherMetricCard).join("")}</div>` : `<p role="status">Selecione uma escola autorizada para acessar Frequência e Diário de Classe.</p>`}</section>`;
 };
 
+const renderTeacherRegisterClassSelector = (view, schoolId, selectedClassId = "") => {
+  const classes = schoolId ? getTeacherInstitutionalClasses().filter(item => item.schoolId === schoolId) : [];
+  const disabled = !classes.length || teacherAttendanceState.saving || teacherDiaryState.saving;
+  return `<label class="tw-register-class-selector"><span>Turma</span><select data-teacher-register-class data-register-view="${printableEscape(view)}" data-school-id="${printableEscape(schoolId)}" aria-label="Selecionar turma para ${view === "diario" ? "Diário de Classe" : "Frequência"}" ${disabled ? "disabled" : ""}><option value="">${classes.length ? "Selecione uma turma" : "Nenhuma turma disponível"}</option>${classes.map(item => `<option value="${printableEscape(item.id)}" ${item.id === selectedClassId ? "selected" : ""}>${printableEscape(item.name)}</option>`).join("")}</select></label>`;
+};
+
 const renderTeacherRegisterClasses = (view) => {
   const schoolId = getTeacherSelectedSchoolId();
   const classes = schoolId ? getTeacherInstitutionalClasses().filter(item => item.schoolId === schoolId) : [];
   const title = view === "diario" ? "Diário de Classe" : "Frequência";
-  return `<section class="tw-board" data-teacher-register-classes><h2>${title}</h2>${renderTeacherSchoolSelector()}${!schoolId ? `<p role="status">Selecione uma escola autorizada para acessar os registros.</p>` : `<p>Escolha uma turma da escola selecionada.</p><ul class="clean-list">${classes.map(item => `<li><a href="${getTeacherClassHref(item)}&tab=${view}">${printableEscape(item.name)}</a></li>`).join("") || "<li>Nenhuma turma autorizada nesta escola.</li>"}</ul>`}</section>`;
+  return `<section class="tw-board tw-register-picker" data-teacher-register-classes><header><h2>${title}</h2><p>Selecione a escola e a turma para consultar ou registrar a aula.</p></header><div class="tw-register-context">${renderTeacherSchoolSelector()}${renderTeacherRegisterClassSelector(view, schoolId)}</div>${!schoolId ? `<p role="status">Selecione uma escola autorizada para acessar os registros.</p>` : `<ul class="clean-list tw-register-class-list">${classes.map(item => `<li><a href="${getTeacherClassHref(item)}&tab=${view}"><strong>${printableEscape(item.name)}</strong><span>Abrir ${view === "diario" ? "diário" : "frequência"} →</span></a></li>`).join("") || "<li role=\"status\">Nenhuma turma autorizada nesta escola.</li>"}</ul>`}</section>`;
 };
 
 const renderTeacherPremiumHome = () => `
@@ -7959,7 +7965,7 @@ const renderTeacherAttendancePanel = (classItem, students = []) => {
             <span>Data da chamada</span>
             <input type="date" name="attendanceDate" value="${printableEscape(date)}" data-teacher-attendance-date />
           </label>
-          <button type="button" data-attendance-mark-all ${ready ? "" : "disabled"}>MARCAR TODOS COMO PRESENTES</button>
+          <button type="button" data-attendance-mark-all ${ready ? "" : "disabled"}>Marcar todos como presentes</button>
           <button type="button" data-attendance-reload ${teacherAttendanceState.saving || teacherAttendanceState.status === "loading" ? "disabled" : ""}>Consultar novamente</button>
         </div>
         ${isLoading ? renderTeacherInstitutionalStatus("CARREGANDO FREQUENCIA DO DIA.") : ""}
@@ -7967,7 +7973,7 @@ const renderTeacherAttendancePanel = (classItem, students = []) => {
         ${students.length ? `<div class="tw-attendance-list">${rows}</div>` : renderTeacherEmptyState("NENHUM ALUNO ATIVO NESTA TURMA.")}
         <div class="tw-attendance-footer">
           <p data-attendance-feedback>${printableEscape((teacherAttendanceState.key === getTeacherAttendanceKey(classItem?.id, date) ? teacherAttendanceState.message : "") || "Marque explicitamente a situação de todos os alunos. Sem registro não significa presença.")}</p>
-          <button type="submit" ${ready && students.length ? "" : "disabled"}>SALVAR FREQUÊNCIA</button>
+          <button type="submit" ${ready && students.length ? "" : "disabled"}>Salvar frequência</button>
         </div>
       </form>
     </section>
@@ -8177,8 +8183,8 @@ const renderTeacherDiaryPanel = (classItem, students = []) => {
           <textarea name="pedagogicalNotes" rows="5" maxlength="1800" placeholder="Observação coletiva da aula/turma. Observações individuais ficam para etapa futura." ${closed ? "disabled" : ""}>${printableEscape(entry?.pedagogicalNotes || "")}</textarea>
         </label>
         <div class="tw-planning-form-actions">
-          <button type="submit" ${closed ? "disabled" : ""}>SALVAR RASCUNHO</button>
-          <button type="button" data-teacher-diary-close="${printableEscape(entry?.id || "")}" ${entry?.id && !closed ? "" : "disabled"}>FINALIZAR REGISTRO</button>
+          <button type="submit" ${closed ? "disabled" : ""}>Salvar rascunho</button>
+          <button type="button" data-teacher-diary-close="${printableEscape(entry?.id || "")}" ${entry?.id && !closed ? "" : "disabled"}>Finalizar registro</button>
           <span>${printableEscape(entry ? teacherDiaryStatusLabel(entry.status) : "Novo rascunho")} · ${students.length} alunos vinculados · ${entry?.activityLinkCount || 0} atividade${Number(entry?.activityLinkCount || 0) === 1 ? "" : "s"}</span>
         </div>
       </form>
@@ -8235,12 +8241,13 @@ const renderTeacherClassPage = () => `
         { label: "Minhas Turmas", href: getTeacherWorkspaceHref("turmas") },
         { label: isReady ? classItem.name : "Turma" },
       ])}
-      <section class="tw-hero">
+      <section class="tw-hero ${["diario", "frequencia"].includes(activeTab) ? "tw-register-hero" : ""}">
         <div>
           <span>MINHAS TURMAS</span>
           <h1>${isReady ? printableEscape(classItem.name) : "TURMA"}</h1>
           <p>${isReady ? `${printableEscape(classItem.schoolName)} · ${printableEscape(classItem.shift || "Turno nao informado")} · ${students.length} alunos vinculados.` : "Carregando turma autorizada."}</p>
         </div>
+        ${isReady && ["diario", "frequencia"].includes(activeTab) ? renderTeacherRegisterClassSelector(activeTab, classItem.schoolId, classItem.id) : ""}
         <div class="tw-hero-actions">
           <a href="${getTeacherWorkspaceHref("turmas")}">VOLTAR PARA MINHAS TURMAS</a>
           ${isReady ? `<a href="atividades.html?target=class&class=${encodeURIComponent(classItem.id)}">ESCOLHER ATIVIDADE</a>` : ""}
@@ -32918,6 +32925,19 @@ const initTeacherWorkspace = () => {
   });
 
   workspace.addEventListener("change", async (event) => {
+    const registerClassSelect = event.target.closest("[data-teacher-register-class]");
+    if (registerClassSelect) {
+      const view = registerClassSelect.dataset.registerView;
+      const classItem = getTeacherInstitutionalClasses().find(item => item.id === registerClassSelect.value && item.schoolId === registerClassSelect.dataset.schoolId);
+      if (teacherInstitutionalState.status !== "ready" || teacherAttendanceState.saving || teacherDiaryState.saving || !classItem || !["diario", "frequencia"].includes(view)) return;
+      const target = new URL(getTeacherClassHref(classItem), window.location.href);
+      target.searchParams.set("tab", view);
+      const dateParam = view === "diario" ? "diaryDate" : "date";
+      const date = getPrintableParams().get(dateParam);
+      if (date) target.searchParams.set(dateParam, date);
+      window.location.assign(target.pathname + target.search);
+      return;
+    }
     const schoolSelector = event.target.closest("[data-teacher-school-selector]");
     if (schoolSelector) {
       const params = new URLSearchParams({ view: activeTeacherView });
