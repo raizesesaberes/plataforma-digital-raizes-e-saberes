@@ -11995,9 +11995,10 @@ const renderAdminReadOnlyHome = () => {
     { view: "implantacao", icon: "clipboard", label: "Acompanhar implantação" },
   ];
   return `
+    <div class="rs-admin-home">
     <section class="admin-board rs-admin-primary" aria-label="Acessos principais">
       <div class="admin-section-head"><h2>Acessos principais</h2></div>
-      <div class="admin-quick-list">${quickActions.slice(0, 3).map(renderAdminQuickAction).join("")}</div>
+      <div class="admin-quick-list">${quickActions.map(renderAdminQuickAction).join("")}</div>
     </section>
     <section class="admin-overview-grid" aria-label="Indicadores principais">
       ${primaryMetrics.map(renderAdminMetricCard).join("")}
@@ -12010,13 +12011,7 @@ const renderAdminReadOnlyHome = () => {
         </div>
         <div class="admin-status-list">${renderAdminStatusItems(statusItems)}</div>
       </section>
-      <section class="admin-board admin-quick-board">
-        <div class="admin-section-head">
-          <h2>Implantação</h2>
-          <span>Módulos Admin</span>
-        </div>
-        <div class="admin-quick-list">${quickActions.slice(3).map(renderAdminQuickAction).join("")}</div>
-      </section>
+      ${renderAdminDoorCards()}
       <section class="admin-board admin-recent-board">
         <div class="admin-section-head">
           <h2>Atividade recente</h2>
@@ -12025,7 +12020,7 @@ const renderAdminReadOnlyHome = () => {
         <div class="admin-recent-list">${renderAdminRecentActivity(activeCommunications)}</div>
       </section>
     </section>
-    ${renderAdminDoorCards()}
+    </div>
   `;
 };
 

@@ -26789,3 +26789,20 @@ html[data-a11y-reduced-motion="true"] *::after {
 .admin-content-surface .admin-content-pagination{flex-wrap:wrap;gap:12px;font-size:14px}
 @media(max-width:1100px){.admin-content-surface .admin-content-filterbar{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-content-surface .admin-content-flow{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.admin-content-surface{gap:16px}.admin-content-surface .admin-board{padding:14px}.admin-content-surface .admin-content-module-grid,.admin-content-surface .admin-content-item,.admin-content-surface .admin-content-item:has(>.admin-content-availability-form),.admin-content-surface .admin-content-filterbar,.admin-content-surface .admin-content-availability-form{grid-template-columns:minmax(0,1fr)}.admin-content-surface .admin-content-item{padding:12px}.admin-content-surface .admin-content-manage-link{justify-self:start}}
+
+/* Admin home: primary shortcuts and compact central administrative doors. */
+[data-admin-workspace] .rs-admin-home{display:grid;gap:16px;min-width:0}
+[data-admin-workspace] .rs-admin-home .rs-admin-primary .admin-quick-list{grid-template-columns:repeat(4,minmax(0,1fr))}
+[data-admin-workspace] .rs-admin-home .rs-admin-primary button{min-height:80px;font-size:16px}
+[data-admin-workspace] .rs-admin-home .admin-operation-grid{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);align-items:stretch;gap:16px}
+[data-admin-workspace] .rs-admin-home .admin-operation-grid>.admin-board{min-width:0;align-content:start;padding:18px;gap:16px}
+[data-admin-workspace] .rs-admin-home .admin-operation-grid .admin-section-head{flex-wrap:wrap;gap:6px}
+[data-admin-workspace] .rs-admin-home .admin-operation-grid .admin-section-head h2{font-size:18px;overflow-wrap:anywhere}
+[data-admin-workspace] .rs-admin-home .admin-door-grid{grid-template-columns:minmax(0,1fr);gap:10px}
+[data-admin-workspace] .rs-admin-home .admin-door-card{min-height:64px;padding:10px;gap:10px;border-radius:10px}
+[data-admin-workspace] .rs-admin-home .admin-door-card .admin-inline-icon{width:32px;height:32px;border-radius:8px}
+[data-admin-workspace] .rs-admin-home .admin-door-card span{font:600 14px/1.4 Inter,system-ui,sans-serif;overflow-wrap:anywhere}
+[data-admin-workspace] .rs-admin-home .admin-door-card strong{font:400 13px/1.4 Inter,system-ui,sans-serif;overflow-wrap:anywhere}
+[data-admin-workspace] .rs-admin-home :is(.admin-status-item,.admin-recent-item){min-width:0;overflow-wrap:anywhere}
+@media(max-width:1100px){[data-admin-workspace] .rs-admin-home .rs-admin-primary .admin-quick-list{grid-template-columns:repeat(2,minmax(0,1fr))}[data-admin-workspace] .rs-admin-home .admin-operation-grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:540px){[data-admin-workspace] .rs-admin-home .rs-admin-primary .admin-quick-list{grid-template-columns:minmax(0,1fr)}[data-admin-workspace] .rs-admin-home .rs-admin-primary button{min-height:56px}}
