@@ -34766,6 +34766,7 @@ const renderAppPage = () => {
   initPremiumLibrary();
   initLibraryAssetFallbacks();
   initMissionPlayer();
+  if (activeKey === "jogos") window.RSGameEngine?.mountAll?.();
   initQuestionBank();
   initSecretariaInstitutional();
   initDigitalStudentAssessments();

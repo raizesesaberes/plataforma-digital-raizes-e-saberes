@@ -10337,13 +10337,18 @@
     },
   };
 
+  const mountedRoots = new WeakSet();
   const mountAll = () => {
     document.querySelectorAll("[data-game-engine]").forEach((root) => {
+      if (mountedRoots.has(root)) return;
       const engine = new GameEngine(root, root.dataset.gameId || "caixa-misteriosa");
-      if (!window.RSGameEngine.engine) window.RSGameEngine.engine = engine;
       engine.mount();
+      mountedRoots.add(root);
+      if (!window.RSGameEngine.engine?.root?.isConnected) window.RSGameEngine.engine = engine;
     });
   };
+
+  window.RSGameEngine.mountAll = mountAll;
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", mountAll);
