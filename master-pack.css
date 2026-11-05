@@ -26750,3 +26750,42 @@ html[data-a11y-reduced-motion="true"] *::after {
   @media(max-width:540px) { .official-school-games-page { padding: 16px; } .official-school-games { grid-template-columns: minmax(0,1fr); } }
 }
 @media screen { .official-school-game-card img { object-fit: contain; background: #f1f6f2; } }
+
+/* Admin Contents: compact cards scoped to this screen; actions/data unchanged. */
+.admin-content-surface{display:grid;gap:20px;min-width:0;font:400 15px/1.5 Inter,system-ui,sans-serif;color:#203c2e}
+.admin-content-surface .admin-board{min-width:0;padding:20px;border:1px solid #dce6df;border-radius:12px;box-shadow:none}
+.admin-content-surface .admin-section-head{align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.admin-content-surface .admin-section-head h2,.admin-content-surface .admin-board>h2{font:650 20px/1.35 Inter,system-ui,sans-serif;margin:0}
+.admin-content-surface .admin-section-head>span{font:400 13px/1.5 Inter,system-ui,sans-serif;color:#596b60}
+.admin-content-surface .admin-content-module-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
+.admin-content-surface .admin-content-module-card{min-height:0;padding:16px;gap:12px;border-radius:10px;border-color:#dce6df;box-shadow:none}
+.admin-content-surface .admin-content-module-top{align-items:flex-start;flex-wrap:wrap;gap:8px}
+.admin-content-surface .admin-content-module-icon{width:32px;height:32px}
+.admin-content-surface .admin-content-module-body{gap:8px}
+.admin-content-surface .admin-content-module-body>strong{font:650 17px/1.35 Inter,system-ui,sans-serif;overflow-wrap:anywhere}
+.admin-content-surface .admin-content-module-count{flex-wrap:wrap;gap:4px 8px}
+.admin-content-surface .admin-content-module-count b{font:700 26px/1.2 Inter,system-ui,sans-serif;overflow-wrap:anywhere}
+.admin-content-surface .admin-content-module-count span{font:400 12px/1.4 Inter,system-ui,sans-serif;text-transform:none}
+.admin-content-surface .admin-content-module-card p{font:400 14px/1.5 Inter,system-ui,sans-serif}
+.admin-content-surface .admin-content-status-chip{font:600 11px/1.4 Inter,system-ui,sans-serif;padding:4px 8px;white-space:normal;text-align:right}
+.admin-content-surface .admin-content-module-card>a{font:600 14px/1.4 Inter,system-ui,sans-serif;min-height:44px;padding:8px 12px;text-transform:none}
+.admin-content-surface .admin-content-flow{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.admin-content-surface .admin-content-flow-arrow{display:none}
+.admin-content-surface .admin-content-flow article{min-width:0;padding:12px;gap:6px;border-radius:10px}
+.admin-content-surface .admin-content-flow article strong{font:600 14px/1.4 Inter,system-ui,sans-serif}
+.admin-content-surface .admin-content-flow article small{font:400 12px/1.5 Inter,system-ui,sans-serif}
+.admin-content-surface .admin-content-filterbar{grid-template-columns:minmax(180px,2fr) repeat(3,minmax(110px,1fr));gap:12px}
+.admin-content-surface .admin-content-filterbar :is(input,select,button,a){box-sizing:border-box;min-height:44px;font-size:14px}
+.admin-content-surface .admin-content-filterbar label span,.admin-content-surface .admin-content-availability-form label span{font:600 13px/1.4 Inter,system-ui,sans-serif;text-transform:none}
+.admin-content-surface .admin-content-item{grid-template-columns:minmax(0,1fr) auto;gap:16px;padding:16px;border-radius:10px}
+.admin-content-surface .admin-content-item:has(>.admin-content-item-main:only-child){grid-template-columns:minmax(0,1fr)}
+.admin-content-surface .admin-content-item:has(>.admin-content-availability-form){grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.admin-content-surface .admin-content-item-main{gap:6px;overflow-wrap:anywhere}
+.admin-content-surface .admin-content-item-main>strong{font:600 16px/1.4 Inter,system-ui,sans-serif}
+.admin-content-surface .admin-content-item-main :is(small,span,p),.admin-content-surface .admin-content-muted{font:400 13px/1.5 Inter,system-ui,sans-serif;overflow-wrap:anywhere}
+.admin-content-surface .admin-content-manage-link{min-height:44px;align-self:center}
+.admin-content-surface .admin-content-availability-form{min-width:0;gap:10px}
+.admin-content-surface .admin-content-availability-form :is(input,select,button){box-sizing:border-box;min-width:0;max-width:100%;min-height:44px;font-size:14px}
+.admin-content-surface .admin-content-pagination{flex-wrap:wrap;gap:12px;font-size:14px}
+@media(max-width:1100px){.admin-content-surface .admin-content-filterbar{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-content-surface .admin-content-flow{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.admin-content-surface{gap:16px}.admin-content-surface .admin-board{padding:14px}.admin-content-surface .admin-content-module-grid,.admin-content-surface .admin-content-item,.admin-content-surface .admin-content-item:has(>.admin-content-availability-form),.admin-content-surface .admin-content-filterbar,.admin-content-surface .admin-content-availability-form{grid-template-columns:minmax(0,1fr)}.admin-content-surface .admin-content-item{padding:12px}.admin-content-surface .admin-content-manage-link{justify-self:start}}

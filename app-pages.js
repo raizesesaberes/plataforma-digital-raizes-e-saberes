@@ -15427,7 +15427,7 @@ const renderAdminWorkspaceView = (view = "inicio") => {
     homologados: `<section class="admin-board"><div class="admin-section-head"><h2>Ambientes publicados</h2><span>Disponiveis conforme perfil</span></div><div class="admin-feature-grid">${available.map(renderAdminFeatureCard).join("")}</div></section>`,
     logs: renderAdminAuditConsole(),
     configuracoes: renderAdminSettingsConsole(),
-    conteúdos: renderAdminContentGovernanceConsole(),
+    conteúdos: `<div class="admin-content-surface">${renderAdminContentGovernanceConsole()}</div>`,
     implantação: renderAdminImplementationConsole(),
     auditoria: renderAdminAuditConsole(),
     ambientes: `
