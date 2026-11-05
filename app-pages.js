@@ -14757,10 +14757,16 @@ const renderAdminSchoolExceptionsManager = ({ catalog, availabilityByContent, sc
   `;
 };
 
+const adminOfficialEditionsSummary = (state = adminOperationalState.data?.officialEditions) => {
+  if (!state || state.error || !Array.isArray(state.items)) {
+    return { items: [], count: null, error: state?.error || "Consulta ainda não concluída." };
+  }
+  return { items: state.items, count: state.items.length, error: "" };
+};
+
 const renderAdminOfficialEditions = () => {
-  const state = adminOperationalState.data?.officialEditions;
-  if (!state || state.error) return `<section class="admin-board"><h2>Edições oficiais</h2><p role="alert">${printableEscape(state?.error || "Consulta ainda não concluída.")}</p></section>`;
-  const items = Array.isArray(state.items) ? state.items : [];
+  const { items, error } = adminOfficialEditionsSummary();
+  if (error) return `<section class="admin-board"><h2>Edições oficiais</h2><p role="alert">${printableEscape(error)}</p></section>`;
   return `<section class="admin-board"><h2>Edições oficiais no armazenamento privado</h2>
     <p>${items.length} edições cadastradas. O status editorial e a conferência dos arquivos são independentes da distribuição por escola.</p>
     <div class="admin-content-governance-list">${items.map(item => `<article class="admin-content-item"><div class="admin-content-item-main">
@@ -14783,6 +14789,7 @@ const renderAdminContentGovernanceConsole = () => {
   const data = adminOperationalState.data || {};
   const schools = data.schools || [];
   const schoolsById = new Map(schools.map((school) => [school.id, school]));
+  const officialEditions = adminOfficialEditionsSummary(data.officialEditions);
   const catalog = buildAdminContentCatalog();
   const availabilityByContent = adminContentAvailabilityIndex().byContent;
   const totals = catalog.reduce((acc, item) => {
@@ -14856,7 +14863,7 @@ const renderAdminContentGovernanceConsole = () => {
       <div class="admin-section-head"><h2>Acervo Mestre</h2><span>Visão por módulo</span></div>
       <div class="admin-content-module-grid">
         ${canSeeQuestionBank ? renderAdminContentModuleCard({ title: "Banco de Questões", count: "Consultar", countLabel: "acervo editorial", description: "O total editorial e os direitos contratados são consultados separadamente; não representam o mesmo conjunto.", status: "OPERACIONAL", icon: "clipboard", href: "banco-questoes.html?view=dashboard" }) : ""}
-        ${renderAdminContentModuleCard({ title: "Livros", count: totals.book || 0, countLabel: "itens do catálogo anterior", description: "Abra para conferir também as edições oficiais no armazenamento privado, listadas separadamente.", status: statusFromCount(totals.book), icon: "book", href: adminContentUrl({ type: "book", page: 1 }) })}
+        ${renderAdminContentModuleCard({ title: "Livros", count: officialEditions.error ? "—" : officialEditions.count, countLabel: "edições oficiais cadastradas", description: officialEditions.error || "Livros do aluno e do professor. O catálogo anterior aparece separado ao abrir a lista.", status: officialEditions.error ? "CONSULTA INDISPONÍVEL" : statusFromCount(officialEditions.count), icon: "book", href: adminContentUrl({ type: "book", page: 1 }) })}
         ${renderAdminContentModuleCard({ title: "Atividades", count: totals.activity || 0, countLabel: "itens", description: "Atividades imprimíveis, digitais e de apoio pedagógico.", status: statusFromCount(totals.activity), icon: "doc", href: adminContentUrl({ type: "activity", page: 1 }) })}
         ${renderAdminContentModuleCard({ title: "Jogos e Interações", count: totals.game || 0, countLabel: "itens", description: "Jogos, objetos interativos e experiências guiadas.", status: statusFromCount(totals.game), icon: "site", href: adminContentUrl({ type: "game", page: 1 }) })}
         ${renderAdminContentModuleCard({ title: "Vídeos", count: totals.vídeo || 0, countLabel: "itens", description: "Mídias pedagógicas em organização para distribuição.", status: Number(totals.vídeo || 0) > 0 ? "OPERACIONAL" : "EM IMPLANTAÇÃO", icon: "chart", href: adminContentUrl({ type: "vídeo", page: 1 }) })}
