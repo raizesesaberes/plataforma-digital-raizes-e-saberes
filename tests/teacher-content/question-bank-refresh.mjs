@@ -13,9 +13,9 @@ function deferred(){let resolve;const promise=new Promise(r=>resolve=r);return {
 let actor='teacher', calls=0, writes=[];
 const nodes=new Map();const node=k=>{if(!nodes.has(k))nodes.set(k,new Proxy({},{set(o,p,v){writes.push([k,p,v]);o[p]=v;return true;}}));return nodes.get(k);};
 let requestHook=async()=>{},historyHook=async()=>[],assessmentsHook=async()=>[];
-const box={console,Set,Map,Date,Promise,URLSearchParams, getSupabaseUserContext:()=>({userId:actor}),supabaseEq:x=>'eq.'+x,allowedAssessmentRoles:[],normalizeRpcJson:x=>x,
- questionDialog:{open:false},closeQuestionPreview:()=>{},
- root:{querySelector:node,querySelectorAll:()=>[]},loading:node('loading'),errorNode:node('error'),empty:node('empty'),grid:node('grid'),detail:node('detail'),
+const box={console,Set,Map,Date,Promise,URLSearchParams,Event, getSupabaseUserContext:()=>({userId:actor}),supabaseEq:x=>'eq.'+x,allowedAssessmentRoles:[],normalizeRpcJson:x=>x,
+ questionBankRead:fn=>fn(),enrichTeacherRows:async rows=>rows,qbValidateTeacherRich:async x=>x,setCatalogPending:()=>{},catalogConfirmed:false,renderAssessmentProtection:()=>{},questionDialog:{open:false},closeQuestionPreview:()=>{},
+ root:{querySelector:node,querySelectorAll:()=>[],dispatchEvent:()=>{}},loading:node('loading'),errorNode:node('error'),empty:node('empty'),grid:node('grid'),detail:node('detail'),
  sessionStorage:{getItem:()=>null},setError:msg=>{node('error').textContent=msg;},localDevNotice:()=>'',populateFilterOptions:()=>{},attemptLoginResume:async()=>{},
  getFilteredItems:()=>box.questions,renderCard:x=>x.id,renderMetrics:()=>{},renderDashboardSummaries:()=>{},renderCart:()=>{},renderSaved:()=>{},renderAccess:()=>{},renderReviewQueue:()=>{},syncQuestionBankView:()=>{},focusQuestionBankHashTarget:()=>{},
  canEditOfficialQuestion:()=>false,canAdaptQuestion:()=>true,isSelected:()=>false,renderQuestionProof:x=>x.id,renderQuestionMetadata:()=>'',htmlEscape:x=>x,
