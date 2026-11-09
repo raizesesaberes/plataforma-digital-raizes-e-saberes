@@ -9,7 +9,6 @@ const demoAccess = {
 
 const supabaseSessionKey = "raizes:supabase-auth-session";
 const loginParams = new URLSearchParams(window.location.search);
-const requiresSupabaseAuth = loginParams.get("auth") === "supabase";
 const isLogoutReturn = loginParams.get("logout") === "1";
 
 const clearStoredAuthSession = () => {
@@ -73,19 +72,24 @@ const getRoleHome = (role) =>
 
 const getNextPage = () => {
   const requestedPage = new URLSearchParams(window.location.search).get("next");
-  if (!requestedPage) {
-    return "";
-  }
-
+  if (!requestedPage) return "";
   try {
-    const decodedPage = decodeURIComponent(requestedPage);
-    return decodedPage.startsWith("http") ? "" : decodedPage;
-  } catch (error) {
-    return "";
-  }
+    // URLSearchParams already decoded once. Reject ambiguous delimiters, schemes,
+    // protocol-relative URLs and control characters rather than decoding twice.
+    if (requestedPage !== requestedPage.trim() || /[\\\u0000-\u0020\u007f]/.test(requestedPage)
+      || /^\/\//.test(requestedPage) || /^[a-z][a-z0-9+.-]*:/i.test(requestedPage)
+      || /%(?:0[0-9a-f]|1[0-9a-f]|7f|2f|5c|3a|25)/i.test(requestedPage)) return "";
+    const target = new URL(requestedPage, window.location.href);
+    if (target.origin !== window.location.origin || target.username || target.password) return "";
+    // App state is restored locally. No token, query or fragment is forwarded.
+    if (/^\/app(?:\/|$)/.test(target.pathname)) return "/app/";
+    return requestedPage;
+  } catch (_error) { return ""; }
 };
 
 const nextPage = getNextPage();
+const isAppLogin = nextPage === "/app/";
+const requiresSupabaseAuth = loginParams.get("auth") === "supabase" || isAppLogin;
 const needsCuratorAccess = nextPage.startsWith("curadoria.html");
 const getNextPageName = () => {
   try {
@@ -230,13 +234,13 @@ if (requiresSupabaseAuth) {
   }
 }
 
-const saveSupabaseSession = (authData) => {
+const saveSupabaseSession = (authData, verifiedPlatformRole) => {
   if (!authData?.access_token) {
     return null;
   }
   const payload = decodeJwtPayload(authData.access_token);
   const appMetadata = payload.app_metadata || {};
-  const platformRole = getSessionRoleFromAuthData(authData);
+  const platformRole = verifiedPlatformRole ?? getSessionRoleFromAuthData(authData);
   const questionBankRole =
     appMetadata.question_bank_role ||
     appMetadata.app_role ||
@@ -260,6 +264,23 @@ const saveSupabaseSession = (authData) => {
   return { userId: payload.sub || authData.user?.id || null, platformRole, questionBankRole };
 };
 
+const resolveAppLoginProfile = async (authData, baseUrl, anonKey) => {
+  if (!authData?.access_token || !authData?.user?.id) throw new Error("Acesso ao App não confirmado.");
+  const headers = { apikey: anonKey, Authorization: `Bearer ${authData.access_token}`, "Content-Type": "application/json" };
+  const verifiedResponse = await fetch(`${baseUrl}/auth/v1/user`, { headers, cache: "no-store", redirect: "error" });
+  if (!verifiedResponse.ok) throw new Error("Acesso ao App não confirmado.");
+  const verifiedUser = await verifiedResponse.json();
+  const claims = decodeJwtPayload(authData.access_token);
+  if (verifiedUser?.id !== authData.user.id || claims.sub !== verifiedUser.id || !Number.isFinite(Number(claims.exp)) || Number(claims.exp) <= Date.now() / 1000 + 60) throw new Error("Acesso ao App não confirmado.");
+  const profileResponse = await fetch(`${baseUrl}/rest/v1/rpc/app_get_self_profile`, { method: "POST", headers, body: "{}", cache: "no-store", redirect: "error" });
+  if (!profileResponse.ok) throw new Error("Acesso ao App não confirmado.");
+  const rows = await profileResponse.json();
+  const row = Array.isArray(rows) && rows.length === 1 ? rows[0] : null;
+  const role = String(row?.platform_role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+  if (row?.profile_id !== verifiedUser.id || !["active", "ativo"].includes(String(row?.status).toLowerCase()) || !["aluno", "educacao_infantil", "professor"].includes(role)) throw new Error("Perfil sem acesso ao App.");
+  return { userId: verifiedUser.id, platformRole: role, questionBankRole: null };
+};
+
 const authenticateWithSupabase = async (email, password, { requireQuestionBankRole = false } = {}) => {
   const config = window.RAIZES_SUPABASE || {};
   const baseUrl = config.url?.replace(/\/$/, "");
@@ -278,6 +299,11 @@ const authenticateWithSupabase = async (email, password, { requireQuestionBankRo
     return false;
   }
   const authData = await response.json();
+  if (isAppLogin) {
+    const appContext = await resolveAppLoginProfile(authData, baseUrl, config.anonKey);
+    saveSupabaseSession(authData, appContext.platformRole);
+    return { ...appContext, requiresPasswordChange: authData.user?.user_metadata?.password_change_required === true };
+  }
   const context = saveSupabaseSession(authData);
   if (!context?.userId) return false;
   if (requireQuestionBankRole && !context.questionBankRole) return false;
@@ -315,6 +341,12 @@ const authenticateStudentInstitutional = async (login, password) => {
     const error = new Error(result?.message || invalidCredentialMessage);
     error.code = result?.code || "invalid_credentials";
     throw error;
+  }
+  if (isAppLogin) {
+    const appContext = await resolveAppLoginProfile(result.session, baseUrl, config.anonKey);
+    if (!["aluno", "educacao_infantil"].includes(appContext.platformRole)) throw new Error("Perfil sem acesso institucional de aluno.");
+    saveSupabaseSession(result.session, appContext.platformRole);
+    return appContext;
   }
   const context = saveSupabaseSession(result.session);
   if (!context?.userId) throw new Error("Não foi possível iniciar a sessão do aluno.");

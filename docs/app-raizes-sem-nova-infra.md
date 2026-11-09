@@ -15,7 +15,7 @@ Reutilizar recursos existentes evita novo custo fixo de provisionamento. Não eq
 - Repositório `https://github.com/raizesesaberes/plataforma-digital-raizes-e-saberes` já contém o código da plataforma/mobile.
 - Existem Vercel `app-raizes-e-saberes` (`prj_ErvEo0crji7MrJrq19ebw2py8QPK`), `plataforma-digital-raizes-e-saberes` e `raizes-e-saberes-app-preview-bc0b188`. Não é preciso criar outro projeto frontend.
 - O deployment recente do projeto App aponta ao mesmo repositório, branch histórica `review/mobile-avalia-data-compat`, SHA 620b8428. Isso não prova que o `/app/` atual esteja publicado.
-- A fonte isolada atual, com build/manifesto revisados, está na branch local `feature/app-raizes-web`; código até 32fbe8e. Não houve push/deploy desta frente.
+- A fonte isolada atual, com build/manifesto revisados, está na branch local `feature/app-raizes-web`; sessão segura em e4a485e, com ajuste Colorir4e91990 incorporado localmente em2a02c74. Não houve push/deploy desta frente.
 - Configuração completa de build/root/output dos projetos Vercel não foi exposta pela API consultada. Confirmar o destino/build antes de publicar preview. Preservar as proteções SSO existentes; não criar bypass público.
 - Projetos/domínios Vercel diferentes não compartilham localStorage. Para testar sessão real, servir o login central e `/app/` no mesmo preview. Na entrega definitiva, manter `/app/` na origem da plataforma. Não transportar tokens entre domínios.
 
@@ -48,7 +48,7 @@ Depois de confirmar que o primeiro VALIDATION pode receber homologação do App:
 5. Preparar escola, turmas e identidades fictícias dos três perfis. Obter confirmação apropriada para criar/configurar contas e acesso persistente; senhas em fluxo seguro, nunca em chat/repositório.
 6. Homologar sessão, RLS, licenças, leituras/gravações e dispositivos físicos. Somente depois coordenar liberação no domínio definitivo.
 
-A confirmação mínima que falta para essa alternativa é o uso do projeto `RS-SCHOOL-TEMPLATE-V1-VALIDATION` para homologação, preservando o trabalho existente, seguida das confirmações específicas de alterações/acesso necessárias. Não é uma solicitação para contratar nova branch paga.
+O usuário autorizou reutilizar o que for necessário na estrutura existente. O alvo conservador selecionado é `RS-SCHOOL-TEMPLATE-V1-VALIDATION`, preservando o trabalho existente. Alterações de autenticação ou criação de acesso persistente continuam exigindo aprovação específica. Não é uma solicitação para contratar nova branch paga.
 
 ### Alternativa: testes controlados no backend atual
 
@@ -70,6 +70,10 @@ A suíte atual de 40 testes App, histórico, 20 unitários Missão e QA Chrome s
 
 Somente metadados e contagens agregadas do Supabase, propriedades sanitizadas Vercel, referências Git e arquivos locais. Nenhuma identidade/credencial de usuário consultada; nenhuma criação de conta, chave, projeto, branch de banco ou alteração de schema/permissão/produção. Fonte no iMac foi verificada novamente em 32fbe8e, limpa antes deste documento.
 
-## Restrição posterior
+## Continuação confirmada
 
-O usuário mencionou substituir algo antigo pelo que aprovou, mas o destino pode ser o frontend Vercel ou o projeto de validação Supabase. O responsável pediu esclarecimento. Nenhuma substituição, exclusão, push ou deploy deve ocorrer enquanto o alvo e o escopo não estiverem confirmados. Aprovação visual não equivale à homologação autenticada ainda pendente.
+Após esclarecimento, o usuário autorizou reutilizar ou substituir apenas o necessário. A opção preparada é aditiva, sem apagar banco/conta/Edge nem substituir o App publicado. Aprovação visual não equivale à homologação autenticada ainda pendente.
+
+A chave pública publishable já existente do primeiro VALIDATION foi obtida pelo conector, sem criação de credencial. A configuração local de teste fica fora do checkout público. `prepare-app-validation.mjs` só aceita o artefato compilado em dist, o alvo VALIDATION exato e ambiente preview (ou teste local explícito); recusa ambiente production e preserva a configuração-fonte. Testes negativos incluem destino errado, chave legacy de outro projeto, symlink/hardlink e rollback de falha de empacotamento. Nenhum deploy ocorreu.
+
+Configuração pública do Auth verificada sem login: email habilitado, confirmação por email exigida, anonymous desabilitado. Não mudar essas opções. Contas sintéticas precisam de um fluxo administrativo autorizado de criação/confirmacão, ou emails de teste controlados com confirmação; não reutilizar a conta existente desconhecida e não inserir auth.users manualmente.

@@ -1,0 +1,11 @@
+Static runtime prepared: 5558 verified files in dist; unlisted files excluded.
+{
+  "mode": "validation",
+  "projectRef": "fpzvkyoxsnhxalibdqpm",
+  "backendOrigin": "https://fpzvkyoxsnhxalibdqpm.supabase.co",
+  "publicConfigurationSha256": "7b9646ddb74a724d88e1693f189a29b28990c9215a675c07e48c93eb29a2ec5c",
+  "sameOriginLoginFiles": true,
+  "remoteActions": 0,
+  "sourceConfigurationUnchanged": true,
+  "previewOnly": true
+}

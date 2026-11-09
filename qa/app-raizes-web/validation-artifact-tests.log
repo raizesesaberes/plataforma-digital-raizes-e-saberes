@@ -1,0 +1,19 @@
+✔ literal public configuration is parsed without executing code (8.253451ms)
+✔ secret/service keys and unexpected fields are rejected (8.157271ms)
+✔ validation rejects production and the occupied second template (30.215157ms)
+✔ only exact HTTPS origin and explicit approved mode are accepted (3.749548ms)
+✔ artifact requires real entry and same-origin login, never logs a key (9.889397ms)
+✔ preview build changes only compiled config and emits no key (98.085817ms)
+✔ production environment is denied even with local override (17.16576ms)
+✔ wrong backend and wrong legacy key project are rejected before writing (10.820865ms)
+✔ source or another directory cannot be selected as output (6.378399ms)
+✔ failed artifact check restores the compiled config (30.225294ms)
+✔ linked configuration cannot overwrite source (15.226629ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 752.104681

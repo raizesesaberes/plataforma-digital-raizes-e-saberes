@@ -1,0 +1,28 @@
+✔ Infantil available without expiry (1.925285ms)
+✔ future, cancelled and expired fail closed (0.329745ms)
+✔ invalid window fails closed (0.21306ms)
+✔ explicit age and no expiry enforced (0.529936ms)
+✔ fingerprint changes on class revision cancellation range (0.358689ms)
+✔ snapshot byte identity verified and engine normalized (11.789802ms)
+✔ escape html (0.582594ms)
+✔ timezone explicit and DST gaps rejected (37.709129ms)
+✔ approved immutable source manifest verifies all copied assets (965.399638ms)
+✔ build manifest has four explicit baseline overrides and no test fixtures (454.003949ms)
+✔ official module has no browser storage or revoked editor RPC (8.282263ms)
+✔ late artwork ACK cannot change another activity version (1.407645ms)
+✔ leave guard confirms pending or failed paint and dirty or saving plans (11.361889ms)
+✔ print injection only eligible canonical roles (8.601675ms)
+✔ production adapter preserves direct RPC shapes and session/error guards (11.598225ms)
+✔ game hub retains four game cards without duplicated coloring galleries or player injection (9.044961ms)
+✔ real page initialization calls institutional mount after route HTML insertion (8.867659ms)
+✔ themes group independently from activity ids and preserve approved order (1.918313ms)
+✔ new tab keeps the coloring gallery and authorized legacy route fallback (8.403183ms)
+✔ full-screen theme home retains a way back to the platform (0.844858ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1694.66593

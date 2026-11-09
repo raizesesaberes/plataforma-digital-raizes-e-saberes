@@ -16,6 +16,11 @@
       "file": "colorir-descobrir.html",
       "original_sha256": "fdf5df4cfabc631b5446a2313866ea1d2b0fda4c65e4af3035b5216641ef4cdc",
       "sha256": "3a0bf3a7a4f089372b572c2db75262c20a0ce00cd323d6fa0f81bc18c9cbad66"
+    },
+    {
+      "file": "login.js",
+      "original_sha256": "10e39e2abe33db74490d906f4bb60c8b387ab13d4f9511f9c0cca51417479f47",
+      "sha256": "75b488ab460feb9b7f59a8ef5cbf6199833a72abcd7fde760b24dcf446c37bdf"
     }
   ],
   "files": [
