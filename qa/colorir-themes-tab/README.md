@@ -21,7 +21,7 @@ A apresentação usa somente revisões retornadas por `mission_print_catalog_v1`
 
 ## Verificação local
 
-- 19 testes de unidade/contratos.
+- 20 testes de unidade/contratos.
 - Suite institucional em Chrome, larguras 1440 e 390, dados e RPCs sintéticos, motores reais.
 - Fluxos de professora, planos privados/publicação, persistência de missão, conflito, expiração, troca de conta e licença.
 - Temas 0/1/8, duas atividades no mesmo tema, segunda identidade distinta com hash e arte válidos, Ganhar vida, volta ao tema, histórico Back/Forward, cancelamento e toques repetidos.

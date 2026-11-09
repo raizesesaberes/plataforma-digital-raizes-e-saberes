@@ -77,11 +77,11 @@
     },
     {
       "file": "mission-runtime/coloring/discovery.css",
-      "sha256": "5e491f1906894c1db6fa3ae598fcb148a16499042e413993bcfa1eed520fca43"
+      "sha256": "cfdf2ecc1a12ca3df11c46a7ccadaa7520e0752b00439c9049b9525fec705086"
     },
     {
       "file": "mission-runtime/coloring/discovery.mjs",
-      "sha256": "0894a5434a5aa9d1c95597f215e599ecdffed8d6753f33278fbd198986220bde"
+      "sha256": "fbc021b9735ab6b6390651039d5d8042850837a7b26f2765c02c78d45cc69a27"
     },
     {
       "file": "mission-runtime/coloring/folhas-colorir-oito-temas.pdf",
@@ -125,7 +125,7 @@
     },
     {
       "file": "mission-runtime/institutional.mjs",
-      "sha256": "ed88cceeffc7e9e7c39afbd2c8b2ecb017e8f03885ef2f1046251e59af99c84c"
+      "sha256": "ecef53032f0dc3b3d407faa9836ae30fea04bd1cf6da3bfa9e7fa5f4741909b6"
     },
     {
       "file": "mission-runtime/logo-app.png",
