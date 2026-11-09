@@ -8,7 +8,7 @@ Base: 132da48959b5dd9614f11afbcac704747ff1596f.
 - Tema → desenhos autorizados → pintura → retorno ao mesmo tema.
 - Identidade de tema separada da identidade do desenho; permite várias atividades por tema sem trocar a navegação.
 - Nenhum desenho novo, alteração de licença, cadastro ou gravação de missão.
-- Jogar e Descobrir conserva o renderizador e a apresentação legacy existentes.
+- Jogar e Descobrir conserva os quatro jogos, cartões e jogadores existentes. A pedido do usuário, a galeria duplicada de Colorir foi removida dessa tela após a aprovação da aba própria (base 4d85baf).
 - A antiga rota escolar/admin de Colorir continua disponível para os papéis já autorizados.
 
 ## Contrato
