@@ -1,0 +1,5 @@
+const CACHE='rs-play-shell-v19';const SHELL=["./index.html","./assets/index-Di3aszpa.js","./assets/react-Db-_YT-E.js","./assets/index-CdTl_7LW.css"];
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL))));
+self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
+self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(e.request.method!=='GET'||u.origin!==location.origin||!u.href.startsWith(self.registration.scope))return;const relative=u.href.slice(self.registration.scope.length);if(!(e.request.mode==='navigate'||relative.startsWith('assets/')||relative.startsWith('runtime/thumbs/')||relative.startsWith('educational/')))return;
+e.respondWith((async()=>{const c=await caches.open(CACHE);if(e.request.mode==='navigate'){try{const r=await fetch(e.request);if(r.ok)await c.put(e.request,r.clone());return r;}catch{return await c.match(e.request)||await c.match(new URL('./index.html',self.registration.scope))||Response.error();}}const cached=await c.match(e.request);if(cached)return cached;const r=await fetch(e.request);if(r.ok)await c.put(e.request,r.clone());return r;})());});

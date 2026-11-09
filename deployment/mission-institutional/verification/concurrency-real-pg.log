@@ -1,0 +1,24 @@
+LOCK advisory
+LOCK advisory
+PASS concurrent artwork expected version: exactly one write
+LOCK advisory
+PASS artwork membership revoked while waiting: no write
+LOCK advisory
+PASS artwork license revoked while waiting: no write
+LOCK advisory
+PASS artwork release revoked while waiting: no write
+LOCK advisory
+PASS student enrollment expires during artwork advisory wait: no write
+LOCK transactionid
+PASS cancel committed before waiting artwork acquires row lock: no write
+LOCK advisory
+PASS assignment membership revoked while waiting: no insert
+LOCK advisory
+PASS assignment license revoked while waiting: no insert
+LOCK advisory
+PASS assignment release revoked while waiting: no insert
+PASS multiweek plans isolated
+LOCK advisory
+LOCK advisory
+PASS concurrent publish same request id: one receipt and one assignment
+{"passed":11,"failed":0,"postgres":"17.6","remoteWrites":false,"sqlChanged":false}

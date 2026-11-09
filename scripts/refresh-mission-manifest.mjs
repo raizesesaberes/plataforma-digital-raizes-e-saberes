@@ -1,0 +1,6 @@
+// Explicit developer action after review; the production build never updates digests.
+import {readFileSync,writeFileSync,readdirSync,lstatSync} from 'node:fs';import {resolve,join} from 'node:path';import {createHash} from 'node:crypto';
+const root=resolve(import.meta.dirname,'..');const sha=file=>createHash('sha256').update(readFileSync(join(root,file))).digest('hex');
+const baseline=JSON.parse(readFileSync(join(root,'scripts/static-runtime-manifest.json')));const overrides=['app-pages.js','missao.html'].map(file=>({file,original_sha256:baseline.find(e=>e.file===file).sha256,sha256:sha(file)}));
+const files=[];function walk(dir){for(const name of readdirSync(join(root,dir)).sort()){const file=dir+'/'+name;if(file==='mission-runtime/tests'||file.endsWith('/runtime-copy-manifest.json'))continue;const stat=lstatSync(join(root,file));if(stat.isSymbolicLink())throw Error('Symlink '+file);if(stat.isDirectory())walk(file);else files.push({file,sha256:sha(file)});}}walk('mission-runtime');
+writeFileSync(join(root,'scripts/mission-runtime-manifest.json'),JSON.stringify({schema:1,baseCommit:'1f550ba4f3e3bd16984a3979893e7608e1d90135',overrides,files},null,2)+'\n');console.log('Mission manifest updated explicitly:',files.length,'runtime files; app-pages.js and missao.html explicit baseline overrides');

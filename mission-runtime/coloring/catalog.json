@@ -1,0 +1,440 @@
+[
+  {
+    "id": "cachorro",
+    "theme": "Bichinhos que vivem perto de nós",
+    "title": "Cachorro",
+    "fact": "O cachorro usa o nariz para descobrir muitos cheiros.",
+    "factSource": {
+      "title": "How Dogs Use Smell to Perceive the World",
+      "url": "https://vcahospitals.com/know-your-pet/how-dogs-use-smell-to-perceive-the-world"
+    },
+    "letter": "C",
+    "initialWords": [
+      "casa",
+      "cavalo"
+    ],
+    "script": {
+      "welcome": "Amiguinhos, olhem o cachorro! Que tal apontar o nariz dele?",
+      "discovery": "Amiguinhos, vamos descobrir? O cachorro usa o nariz para descobrir muitos cheiros.",
+      "sound": "Amiguinhos, cachorro, casa, cavalo. Vamos escutar como essas palavras começam? A letra C se chama cê. Nessas palavras, ela representa o mesmo som inicial.",
+      "celebrate": "Amiguinhos, escolham as cores que quiserem! Cada um pode pintar só um pouquinho ou continuar. Quando quiser, toque em Ganhar vida para ver seu desenho se mexer."
+    },
+    "ageGuidance": {
+      "2-3": "Oferecer conhecer, descobrir e pintar em frases curtas, com acompanhamento de um adulto. Aceitar apontar, gesticular, observar ou sair. Pular a etapa de letras e sons. A animação fica disponível mesmo sem pintar.",
+      "4-5": "Convidar a ouvir e comparar palavras, sem exigir resposta, leitura, repetição ou acerto. A etapa de sons é opcional e pode ser pulada. Não exigir completar a pintura e não avaliar cores.",
+      "adultNote": "Distinguir o nome da letra do som inicial. Modelar a palavra naturalmente, sem cobrar pronúncia ou tratar variações de fala como erro."
+    },
+    "catalogId": "RS-INF-COLORIR-CACHORRO-001",
+    "revision": 1,
+    "status": "draft",
+    "type": "coloring",
+    "ageRanges": [
+      "2-3",
+      "4-5"
+    ],
+    "subject": "Educação Infantil · Exploração, linguagem e expressão",
+    "art": "art/cachorro.png",
+    "print": {
+      "format": "A4",
+      "page": 1,
+      "localFile": "folhas-colorir-sete-temas.pdf"
+    },
+    "previewUrl": "http://127.0.0.1:58687/#atividade/cachorro",
+    "narration": {
+      "voice": "Alicia",
+      "provider": "Narakeet",
+      "locale": "pt-BR",
+      "status": "awaiting_licensed_audio",
+      "licenseStatus": "pending",
+      "audio": null
+    },
+    "artSha256": "663fcdd842faa9c7716832f20b34150aafea0cffaa9c9ddbb13fb45ae6cc2efc",
+    "contentHash": "f25ecc9ca464fe95f443e412f56560244a409f6edb454a7069e20f9754722b50"
+  },
+  {
+    "id": "preguica",
+    "theme": "Bichinhos da floresta",
+    "title": "Preguiça",
+    "fact": "O bicho-preguiça passa grande parte do tempo nas árvores. Há preguiças nas florestas do Brasil.",
+    "factSource": {
+      "title": "Why are Sloths So Slow? And Other Sloth Facts",
+      "url": "https://nationalzoo.si.edu/animals/news/why-are-sloths-so-slow-and-other-sloth-facts"
+    },
+    "letter": "P",
+    "initialWords": [
+      "prato",
+      "prancha"
+    ],
+    "script": {
+      "welcome": "Amiguinhos, este é o bicho-preguiça! Vamos observar seus braços compridos?",
+      "discovery": "Amiguinhos, vamos descobrir? O bicho-preguiça passa grande parte do tempo nas árvores. Há preguiças nas florestas do Brasil.",
+      "sound": "Amiguinhos, vamos dizer preguiça, prato, prancha. Elas começam com os sons de pr juntos. Preguiça começa com a letra P, chamada pê; o nome da letra não é o som da palavra.",
+      "celebrate": "Amiguinhos, escolham as cores que quiserem! Cada um pode pintar só um pouquinho ou continuar. Quando quiser, toque em Ganhar vida para ver seu desenho se mexer."
+    },
+    "ageGuidance": {
+      "2-3": "Oferecer conhecer, descobrir e pintar em frases curtas, com acompanhamento de um adulto. Aceitar apontar, gesticular, observar ou sair. Pular a etapa de letras e sons. A animação fica disponível mesmo sem pintar.",
+      "4-5": "Convidar a ouvir e comparar palavras, sem exigir resposta, leitura, repetição ou acerto. A etapa de sons é opcional e pode ser pulada. Não exigir completar a pintura e não avaliar cores.",
+      "adultNote": "Usar Preguiça como palavra-alvo exibida, com P; explicar que o nome completo é bicho-preguiça. Prato e prancha compartilham o encontro inicial /pr/. Não dizer que bicho-preguiça começa com P."
+    },
+    "catalogId": "RS-INF-COLORIR-PREGUICA-001",
+    "revision": 1,
+    "status": "draft",
+    "type": "coloring",
+    "ageRanges": [
+      "2-3",
+      "4-5"
+    ],
+    "subject": "Educação Infantil · Exploração, linguagem e expressão",
+    "art": "art/preguica.png",
+    "print": {
+      "format": "A4",
+      "page": 2,
+      "localFile": "folhas-colorir-sete-temas.pdf"
+    },
+    "previewUrl": "http://127.0.0.1:58687/#atividade/preguica",
+    "narration": {
+      "voice": "Alicia",
+      "provider": "Narakeet",
+      "locale": "pt-BR",
+      "status": "awaiting_licensed_audio",
+      "licenseStatus": "pending",
+      "audio": null
+    },
+    "artSha256": "7f55cb3863798c2569d770ebe69a3c1a953e32c4e716dc543f66897a9675df27",
+    "contentHash": "2094e5212722049ee15006445be0abb99aaef70ebe05de6d92918bb3edcfa148"
+  },
+  {
+    "id": "borboleta",
+    "theme": "Bichinhos que voam",
+    "title": "Borboleta",
+    "fact": "Muitas borboletas visitam flores para beber néctar.",
+    "factSource": {
+      "title": "Butterfly facts | London Zoo",
+      "url": "https://www.londonzoo.org/whats-here/habitats/butterfly-paradise/butterfly-facts"
+    },
+    "letter": "B",
+    "initialWords": [
+      "bola",
+      "boneca"
+    ],
+    "script": {
+      "welcome": "Amiguinhos, olhem a borboleta! Quem quiser pode abrir os braços como asas.",
+      "discovery": "Amiguinhos, vamos descobrir? Muitas borboletas visitam flores para beber néctar.",
+      "sound": "Amiguinhos, borboleta, bola, boneca. Vamos ouvir o começo dessas palavras? Elas começam com o mesmo som e com a letra B, chamada bê.",
+      "celebrate": "Amiguinhos, escolham as cores que quiserem! Cada um pode pintar só um pouquinho ou continuar. Quando quiser, toque em Ganhar vida para ver seu desenho se mexer."
+    },
+    "ageGuidance": {
+      "2-3": "Oferecer conhecer, descobrir e pintar em frases curtas, com acompanhamento de um adulto. Aceitar apontar, gesticular, observar ou sair. Pular a etapa de letras e sons. A animação fica disponível mesmo sem pintar.",
+      "4-5": "Convidar a ouvir e comparar palavras, sem exigir resposta, leitura, repetição ou acerto. A etapa de sons é opcional e pode ser pulada. Não exigir completar a pintura e não avaliar cores.",
+      "adultNote": "Distinguir o nome da letra do som inicial. Modelar a palavra naturalmente, sem cobrar pronúncia ou tratar variações de fala como erro."
+    },
+    "catalogId": "RS-INF-COLORIR-BORBOLETA-001",
+    "revision": 1,
+    "status": "draft",
+    "type": "coloring",
+    "ageRanges": [
+      "2-3",
+      "4-5"
+    ],
+    "subject": "Educação Infantil · Exploração, linguagem e expressão",
+    "art": "art/borboleta.png",
+    "print": {
+      "format": "A4",
+      "page": 3,
+      "localFile": "folhas-colorir-sete-temas.pdf"
+    },
+    "previewUrl": "http://127.0.0.1:58687/#atividade/borboleta",
+    "narration": {
+      "voice": "Alicia",
+      "provider": "Narakeet",
+      "locale": "pt-BR",
+      "status": "awaiting_licensed_audio",
+      "licenseStatus": "pending",
+      "audio": null
+    },
+    "artSha256": "f3bf97a8899bd774f23545b95085a1b48361ccb864392e6fb5a3b3991d2e3bfe",
+    "contentHash": "af6258be30f64501f1d41d1682bd6383248b934c683917c3ebedfce4d42b9944"
+  },
+  {
+    "id": "peixe",
+    "theme": "Bichinhos que vivem no mar",
+    "title": "Peixe",
+    "fact": "O peixe usa as brânquias para retirar da água o oxigênio de que precisa para respirar.",
+    "factSource": {
+      "title": "Vertebrates Breathing in Water | AMNH",
+      "url": "https://www.amnh.org/learn-teach/resources-for-learning/hall-of-ocean-life/water-vertebrates-breathing"
+    },
+    "letter": "P",
+    "initialWords": [
+      "pato",
+      "panela"
+    ],
+    "script": {
+      "welcome": "Amiguinhos, este peixe mora no mar. Vamos fazer uma mão nadar pelo ar?",
+      "discovery": "Amiguinhos, vamos descobrir? O peixe usa as brânquias para retirar da água o oxigênio de que precisa para respirar.",
+      "sound": "Amiguinhos, peixe, pato, panela. Escute o som que aparece no começo. Essas palavras começam com a letra P, chamada pê.",
+      "celebrate": "Amiguinhos, escolham as cores que quiserem! Cada um pode pintar só um pouquinho ou continuar. Quando quiser, toque em Ganhar vida para ver seu desenho se mexer."
+    },
+    "ageGuidance": {
+      "2-3": "Oferecer conhecer, descobrir e pintar em frases curtas, com acompanhamento de um adulto. Aceitar apontar, gesticular, observar ou sair. Pular a etapa de letras e sons. A animação fica disponível mesmo sem pintar.",
+      "4-5": "Convidar a ouvir e comparar palavras, sem exigir resposta, leitura, repetição ou acerto. A etapa de sons é opcional e pode ser pulada. Não exigir completar a pintura e não avaliar cores.",
+      "adultNote": "Distinguir o nome da letra do som inicial. Modelar a palavra naturalmente, sem cobrar pronúncia ou tratar variações de fala como erro."
+    },
+    "catalogId": "RS-INF-COLORIR-PEIXE-001",
+    "revision": 1,
+    "status": "draft",
+    "type": "coloring",
+    "ageRanges": [
+      "2-3",
+      "4-5"
+    ],
+    "subject": "Educação Infantil · Exploração, linguagem e expressão",
+    "art": "art/peixe.png",
+    "print": {
+      "format": "A4",
+      "page": 4,
+      "localFile": "folhas-colorir-sete-temas.pdf"
+    },
+    "previewUrl": "http://127.0.0.1:58687/#atividade/peixe",
+    "narration": {
+      "voice": "Alicia",
+      "provider": "Narakeet",
+      "locale": "pt-BR",
+      "status": "awaiting_licensed_audio",
+      "licenseStatus": "pending",
+      "audio": null
+    },
+    "artSha256": "503940577a39efa5acf793094af0317a20595a06684cfc1c18a2724256476a52",
+    "contentHash": "8a808e7aa577977b3e2e76d48d04a1e9052ca7489f8607a7ee3c2dcc7faf336f"
+  },
+  {
+    "id": "banana",
+    "theme": "Frutas",
+    "title": "Banana",
+    "fact": "As bananas crescem juntas em cachos.",
+    "factSource": {
+      "title": "Colheita - Banana | Embrapa",
+      "url": "https://www.atermaisdigital.cnptia.embrapa.br/web/banana/colheita"
+    },
+    "letter": "B",
+    "initialWords": [
+      "bala",
+      "balão"
+    ],
+    "script": {
+      "welcome": "Amiguinhos, esta é a banana! Vamos acompanhar sua curva com o dedo no ar?",
+      "discovery": "Amiguinhos, vamos descobrir? As bananas crescem juntas em cachos.",
+      "sound": "Amiguinhos, banana, bala, balão. Vamos falar devagar e ouvir o começo? Elas começam com o mesmo som e com a letra B, chamada bê.",
+      "celebrate": "Amiguinhos, escolham as cores que quiserem! Cada um pode pintar só um pouquinho ou continuar. Quando quiser, toque em Ganhar vida para ver seu desenho se mexer."
+    },
+    "ageGuidance": {
+      "2-3": "Oferecer conhecer, descobrir e pintar em frases curtas, com acompanhamento de um adulto. Aceitar apontar, gesticular, observar ou sair. Pular a etapa de letras e sons. A animação fica disponível mesmo sem pintar.",
+      "4-5": "Convidar a ouvir e comparar palavras, sem exigir resposta, leitura, repetição ou acerto. A etapa de sons é opcional e pode ser pulada. Não exigir completar a pintura e não avaliar cores.",
+      "adultNote": "Distinguir o nome da letra do som inicial. Modelar a palavra naturalmente, sem cobrar pronúncia ou tratar variações de fala como erro."
+    },
+    "catalogId": "RS-INF-COLORIR-BANANA-001",
+    "revision": 1,
+    "status": "draft",
+    "type": "coloring",
+    "ageRanges": [
+      "2-3",
+      "4-5"
+    ],
+    "subject": "Educação Infantil · Exploração, linguagem e expressão",
+    "art": "art/banana.png",
+    "print": {
+      "format": "A4",
+      "page": 5,
+      "localFile": "folhas-colorir-sete-temas.pdf"
+    },
+    "previewUrl": "http://127.0.0.1:58687/#atividade/banana",
+    "narration": {
+      "voice": "Alicia",
+      "provider": "Narakeet",
+      "locale": "pt-BR",
+      "status": "awaiting_licensed_audio",
+      "licenseStatus": "pending",
+      "audio": null
+    },
+    "artSha256": "37cf999ab9e0331fdf9c578014f0373d0952d845a4b025bfbbd8e5f15cb3cf32",
+    "contentHash": "9c4933edb9bf98e16baff67580a516e008b8d5f83767439feb1e5e93ca277d0f"
+  },
+  {
+    "id": "cenoura",
+    "theme": "Legumes",
+    "title": "Cenoura",
+    "fact": "A parte da cenoura que comemos é uma raiz. Existem cenouras laranjas, roxas e de cor creme.",
+    "factSource": {
+      "title": "Cenoura - Embrapa Hortaliças",
+      "url": "https://www.embrapa.br/en/web/hortalicas/hortalica-nao-e-so-salada/cenoura"
+    },
+    "letter": "C",
+    "initialWords": [
+      "sapo",
+      "sino"
+    ],
+    "script": {
+      "welcome": "Amiguinhos, esta é a cenoura! Vamos olhar a raiz e suas folhas?",
+      "discovery": "Amiguinhos, vamos descobrir? A parte da cenoura que comemos é uma raiz. Existem cenouras laranjas, roxas e de cor creme.",
+      "sound": "Amiguinhos, cenoura, sapo, sino. Escute o som do começo: sss. Cenoura começa com a letra C, chamada cê. Sapo e sino começam com S. Letras diferentes podem representar o mesmo som.",
+      "celebrate": "Amiguinhos, escolham as cores que quiserem! Cada um pode pintar só um pouquinho ou continuar. Quando quiser, toque em Ganhar vida para ver seu desenho se mexer."
+    },
+    "ageGuidance": {
+      "2-3": "Oferecer conhecer, descobrir e pintar em frases curtas, com acompanhamento de um adulto. Aceitar apontar, gesticular, observar ou sair. Pular a etapa de letras e sons. A animação fica disponível mesmo sem pintar.",
+      "4-5": "Convidar a ouvir e comparar palavras, sem exigir resposta, leitura, repetição ou acerto. A etapa de sons é opcional e pode ser pulada. Não exigir completar a pintura e não avaliar cores.",
+      "adultNote": "Cenoura começa com /s/, diferente do /k/ de cachorro. As palavras de comparação podem ter letras iniciais diferentes."
+    },
+    "catalogId": "RS-INF-COLORIR-CENOURA-001",
+    "revision": 1,
+    "status": "draft",
+    "type": "coloring",
+    "ageRanges": [
+      "2-3",
+      "4-5"
+    ],
+    "subject": "Educação Infantil · Exploração, linguagem e expressão",
+    "art": "art/cenoura.png",
+    "print": {
+      "format": "A4",
+      "page": 6,
+      "localFile": "folhas-colorir-sete-temas.pdf"
+    },
+    "previewUrl": "http://127.0.0.1:58687/#atividade/cenoura",
+    "narration": {
+      "voice": "Alicia",
+      "provider": "Narakeet",
+      "locale": "pt-BR",
+      "status": "awaiting_licensed_audio",
+      "licenseStatus": "pending",
+      "audio": null
+    },
+    "artSha256": "ce0c821ef9619dbda1ddc1addb360b82d130135dac458e2e7bf2eab95547b405",
+    "contentHash": "820039c7c9d63a270175bafb1f541d35fd5761d11c2f0e3b570249e482014803"
+  },
+  {
+    "id": "leao",
+    "theme": "Selva",
+    "title": "Leão",
+    "fact": "O leão africano vive em lugares como a savana, com capim e árvores espalhadas. Ele não é um animal nativo do Brasil.",
+    "factSource": {
+      "title": "African Lion - Denver Zoo Conservation Alliance",
+      "url": "https://denverzoo.org/animals/african-lion/"
+    },
+    "letter": "L",
+    "initialWords": [
+      "lua",
+      "lata"
+    ],
+    "script": {
+      "welcome": "Amiguinhos, este é o leão africano! Vamos conhecer a savana onde ele pode viver?",
+      "discovery": "Amiguinhos, vamos descobrir? O leão africano vive em lugares como a savana, com capim e árvores espalhadas. Ele não é um animal nativo do Brasil.",
+      "sound": "Amiguinhos, leão, lua, lata. Vamos ouvir o som que começa essas palavras? Elas começam com a letra L, chamada ele.",
+      "celebrate": "Amiguinhos, escolham as cores que quiserem! Cada um pode pintar só um pouquinho ou continuar. Quando quiser, toque em Ganhar vida para ver seu desenho se mexer."
+    },
+    "ageGuidance": {
+      "2-3": "Oferecer conhecer, descobrir e pintar em frases curtas, com acompanhamento de um adulto. Aceitar apontar, gesticular, observar ou sair. Pular a etapa de letras e sons. A animação fica disponível mesmo sem pintar.",
+      "4-5": "Convidar a ouvir e comparar palavras, sem exigir resposta, leitura, repetição ou acerto. A etapa de sons é opcional e pode ser pulada. Não exigir completar a pintura e não avaliar cores.",
+      "adultNote": "Selva é apenas o nome da categoria do catálogo. Mostrar savana africana na ambientação, não floresta tropical nem fauna brasileira."
+    },
+    "catalogId": "RS-INF-COLORIR-LEAO-001",
+    "revision": 1,
+    "status": "draft",
+    "type": "coloring",
+    "ageRanges": [
+      "2-3",
+      "4-5"
+    ],
+    "subject": "Educação Infantil · Exploração, linguagem e expressão",
+    "art": "art/leao.png",
+    "print": {
+      "format": "A4",
+      "page": 7,
+      "localFile": "folhas-colorir-sete-temas.pdf"
+    },
+    "previewUrl": "http://127.0.0.1:58687/#atividade/leao",
+    "narration": {
+      "voice": "Alicia",
+      "provider": "Narakeet",
+      "locale": "pt-BR",
+      "status": "awaiting_licensed_audio",
+      "licenseStatus": "pending",
+      "audio": null
+    },
+    "artSha256": "ad38898792838583bf7a25ab69b8d039df4ac6c081c8bbe96e1b132aaf0ca05f",
+    "contentHash": "20402a8ff70d1c124cbc6e71b20adb499c825720e033e91ff91afddf565b664c"
+  },
+  {
+    "id": "numero3",
+    "theme": "Números",
+    "title": "Número 3",
+    "fact": "Aqui há três estrelas. O número 3 representa essa quantidade.",
+    "factSource": {
+      "title": "Stanford DREME · Counting on Counting",
+      "url": "https://prek-math-te.stanford.edu/counting/counting-on-counting/"
+    },
+    "letter": null,
+    "initialWords": [],
+    "script": {
+      "welcome": "Amiguinhos, este é o número 3. Vamos descobrir as estrelas que estão com ele?",
+      "discovery": "Amiguinhos, aqui há três estrelas. O número 3 representa essa quantidade.",
+      "sound": "Amiguinhos, vamos tocar em uma estrela de cada vez: uma, duas, três. São três estrelas! Podemos começar por qualquer uma, contando cada estrela só uma vez.",
+      "celebrate": "Amiguinhos, escolham as cores que quiserem para o número e as estrelas! Vocês podem contar, pintar só um pouquinho ou observar. Quando quiser, toque em Ganhar vida para ver a sua pintura se mexer."
+    },
+    "ageGuidance": {
+      "2-3": "O adulto pode modelar uma, duas, três, apontando uma estrela diferente a cada palavra. A criança pode observar, acompanhar com o dedo ou participar se quiser. Não exigir que reconheça ou diga o numeral.",
+      "4-5": "Convidar a escolher por qual estrela começar e tocar cada estrela apenas uma vez. Ao terminar, dizer naturalmente: são três estrelas. Não exigir resposta, velocidade, escrita ou acerto.",
+      "adultNote": "Relacionar um toque a um objeto e o último número à quantidade total. Toques repetidos na mesma estrela não aumentam a contagem. Não há avaliação, bloqueio da pintura ou obrigação de completar."
+    },
+    "catalogId": "RS-INF-COLORIR-NUMERO3-001",
+    "revision": 1,
+    "status": "draft",
+    "type": "coloring",
+    "ageRanges": [
+      "2-3",
+      "4-5"
+    ],
+    "subject": "Educação Infantil · Quantidades, exploração e expressão",
+    "art": "art/numero3.png",
+    "print": {
+      "format": "A4",
+      "page": 1,
+      "localFile": "numero-3-colorir.pdf"
+    },
+    "previewUrl": "http://127.0.0.1:58687/#atividade/numero3",
+    "narration": {
+      "voice": "Alicia",
+      "provider": "Narakeet",
+      "locale": "pt-BR",
+      "status": "awaiting_licensed_audio",
+      "licenseStatus": "pending",
+      "audio": null
+    },
+    "counting": {
+      "quantity": 3,
+      "objectSingular": "estrela",
+      "objectPlural": "estrelas",
+      "targets": [
+        {
+          "x": 6.5,
+          "y": 67.7,
+          "width": 28.5,
+          "height": 27.8
+        },
+        {
+          "x": 35.8,
+          "y": 67.7,
+          "width": 28.5,
+          "height": 27.8
+        },
+        {
+          "x": 64.8,
+          "y": 67.7,
+          "width": 28.5,
+          "height": 27.8
+        }
+      ]
+    },
+    "artSha256": "74eb03b13d8f9af7aae2529140e15bf9d5acc71a1009e9953c8f4202bb109d30",
+    "contentHash": "750e56f9a4ab7f6a085b190da7d2814e37a8d172b581c2e84530e3c8839a4763"
+  }
+]

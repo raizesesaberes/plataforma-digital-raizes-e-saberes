@@ -1,0 +1,12 @@
+{
+  "source": "verified studio-integrado-v28 domain",
+  "sha256": {
+    "content.ts": "8638a86a4db3c4ead8cffdf9ee86b899f9f4cad579d66f305f75bda70b82d48f",
+    "fields.ts": "83df5bc5222bcc61a7ddc913d1891f8a0d6c620681598a8ad4ef388eb062fbaa",
+    "extended-content.ts": "978e2a84b4350ac9db180abb2b69f6ecbf10db07cf9095a35155cf52a0f5ddd6",
+    "grid.ts": "095acc6c575cd50ad95ccff208b90c19e293cddc0a20b0587f25d90c1b954f07",
+    "bundled-images.ts": "5e7d5601830fa194041e4c344a82b6f07ae59bbb69ed6c5b8835848793de00ec"
+  },
+  "transformation": "Relative imports .ts suffix only; source logic unchanged",
+  "zod": "4.6.7"
+}

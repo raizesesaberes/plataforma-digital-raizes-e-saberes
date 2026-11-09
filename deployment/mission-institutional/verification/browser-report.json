@@ -1,0 +1,31 @@
+{
+  "synthetic": true,
+  "productionAuthenticated": false,
+  "checks": [
+    {
+      "width": 1440,
+      "selfTests": "RUNNING backend simulado; módulos e runtimes reais.\nPASS class selection, explicit age, no expiry, private save, navigation preservation\nPASS publish in-flight edit blocked or aborts stale confirmation\nPASS atomic publish, lost-response same-key retry, repeated click, cancellation\nPASS empty requested week retained and prior week preserved\nPASS rapid class change\nPASS teacher active and cached editor/preview revoked\nPASS revoked published card pruned privately without historical cancellation\nPASS real paint engine save, account restore, optimistic conflict preserves remote data\nPASS dirty SPA exit, pending paint close and failed paint close guards\nPASS selected-only student, actual Colorir24 palette, removal closes player\nPASS actual iframe A/B late ACK preserves B artwork version\nPASS >25day expiry and account switch\nPASS wrong-role/wrong-school mock denial\nPASS exact expiry\nPASS altered snapshot blocked\nPASS 8 prints, explicit 2–3 age\nALL TESTS PASSED"
+    },
+    {
+      "width": 1440,
+      "directStudio": "PASS top-level empty, jogo and institutional routes blocked before bundle; iframe without institutional blocked"
+    },
+    {
+      "width": 1440,
+      "editor": "PASS actual Studio save ACK; Edge denial preserves draft, successful mocked Edge publication; revoked RPC never used"
+    },
+    {
+      "width": 390,
+      "selfTests": "RUNNING backend simulado; módulos e runtimes reais.\nPASS class selection, explicit age, no expiry, private save, navigation preservation\nPASS publish in-flight edit blocked or aborts stale confirmation\nPASS atomic publish, lost-response same-key retry, repeated click, cancellation\nPASS empty requested week retained and prior week preserved\nPASS rapid class change\nPASS teacher active and cached editor/preview revoked\nPASS revoked published card pruned privately without historical cancellation\nPASS real paint engine save, account restore, optimistic conflict preserves remote data\nPASS dirty SPA exit, pending paint close and failed paint close guards\nPASS selected-only student, actual Colorir24 palette, removal closes player\nPASS actual iframe A/B late ACK preserves B artwork version\nPASS >25day expiry and account switch\nPASS wrong-role/wrong-school mock denial\nPASS exact expiry\nPASS altered snapshot blocked\nPASS 8 prints, explicit 2–3 age\nALL TESTS PASSED"
+    },
+    {
+      "width": 390,
+      "directStudio": "PASS top-level empty, jogo and institutional routes blocked before bundle; iframe without institutional blocked"
+    },
+    {
+      "width": 390,
+      "editor": "PASS actual Studio save ACK; Edge denial preserves draft, successful mocked Edge publication; revoked RPC never used"
+    }
+  ],
+  "pageErrors": []
+}

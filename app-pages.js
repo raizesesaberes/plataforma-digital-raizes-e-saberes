@@ -45,7 +45,7 @@ const routeAccessRules = {
   alunoAtividades: ["aluno"],
   alunoAtividade: ["aluno"],
   arvore: ["aluno"],
-  missao: ["aluno"],
+  missao: ["aluno", "educacao_infantil"],
   jogos: ["aluno", "educacao_infantil", "escola", "secretaria", "gestor", "coordenador", "admin"],
   colorirDescobrir: ["educacao_infantil", "escola", "admin"],
   perfil: ["aluno"],
@@ -102,7 +102,7 @@ const protectedRouteKeyByPage = {
   suporte: "suporte",
 };
 const studentAllowedRouteKeys = new Set(["catalogoCategorias","aluno", "alunoAtividades", "alunoAtividade", "atividades", "missao", "arvore", "biblioteca", "jogos", "perfil", "viewer", "motorAtividade", "escolaColetiva", "suporte"]);
-const earlyChildhoodAllowedRouteKeys = new Set(["catalogoCategorias","familia", "educacaoInfantil", "jogos", "biblioteca", "viewer", "colorirDescobrir", "escolaColetiva", "suporte"]);
+const earlyChildhoodAllowedRouteKeys = new Set(["atividades","missao","catalogoCategorias","familia", "educacaoInfantil", "jogos", "biblioteca", "viewer", "colorirDescobrir", "escolaColetiva", "suporte"]);
 const schoolAllowedRouteKeys = new Set(["escolaColetiva", "jogos", "biblioteca", "viewer", "colorirDescobrir", "suporte"]);
 const decodePlatformJwtPayload = (token) => {
   try {
@@ -3814,6 +3814,7 @@ const teacherWorkspaceNav = [
   ["diario", "Diário de Classe", "doc"],
   ["mensagens", "Mensagens", "mensagens"],
   ["planejamentos", "Planejamento", "calendar"],
+  ["missao", "Missão do Dia", "star"],
   ["atividades", "Atividades Imprimíveis", "doc"],
   ["avaliacoes", "Avalia+", "avalia"],
   ["relatorios", "Relatórios", "doc"],
@@ -10821,6 +10822,7 @@ const renderTeacherWorkspaceView = (view) => {
     ...activities.slice(0, 3).map((activity) => ({ kind: "Ativ", title: activity.title, detail: activity.type, view: "experiências" })),
   ];
   const viewMap = {
+    missao: `<section data-institutional-mission="teacher"></section>`,
     frequencia: renderTeacherRegisterClasses("frequencia"),
     diario: renderTeacherRegisterClasses("diario"),
     inicio: `
@@ -19136,6 +19138,8 @@ const renderFamilyDashboard = () => {
           <small>${printableEscape(student.className || "Base institucional")}</small>
         </div>
         <nav aria-label="Área Aluno e Família">
+          <a href="missao.html"><span>Missão do Dia</span></a>
+          <a href="atividades.html"><span>Atividades para Imprimir</span></a>
           ${familyAreaViews.map(([key, label, icon]) => `<a class="${key === view ? "is-active" : ""}" href="familia.html?view=${key}">${premiumIcon(icon)}<span>${familyAreaViewLabel(key, label)}</span></a>`).join("")}
         </nav>
       </aside>
@@ -19704,7 +19708,7 @@ const modules = {
     title: "Missão do Dia",
     subtitle: "Uma nova aventura para aprender brincando",
     code: "PLAT-V2-007",
-    html: `<aside class="rs-demo-notice" role="note">Missão demonstrativa: respostas e recompensas desta atividade não representam resultados escolares oficiais.</aside>${renderMissionPlayer(missionFixtures.colorMatch001)}`,
+    html: `<section data-institutional-mission="student"></section>`,
   },
   jogos: {
     title: "Jogar e Descobrir",
@@ -20640,6 +20644,8 @@ const environments = {
       ["educacaoInfantil", "Início", "educacao-infantil.html"],
       ["site", "Site", "index.html"],
       ["jogos", "Jogos", "jogos.html"],
+      ["missao", "Missão do Dia", "missao.html"],
+      ["atividades", "Atividades para Imprimir", "atividades.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
       ["colorirDescobrir", "Colorir e Descobrir", "colorir-descobrir.html"],
       ["viewer", "Book Viewer", "book-viewer.html"],
@@ -20649,6 +20655,8 @@ const environments = {
       ["educacaoInfantil", "Início", "educacao-infantil.html"],
       ["site", "Site", "index.html"],
       ["jogos", "Jogos", "jogos.html"],
+      ["missao", "Missão do Dia", "missao.html"],
+      ["atividades", "Atividades para Imprimir", "atividades.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
       ["colorirDescobrir", "Colorir", "colorir-descobrir.html"],
       ["viewer", "Livro", "book-viewer.html"],
@@ -32461,7 +32469,7 @@ const initTeacherWorkspace = () => {
   };
   window.addEventListener("storage", initTeacherWorkspace.attendanceSessionGuard);
   window.addEventListener("focus", initTeacherWorkspace.attendanceSessionGuard);
-  const teacherWorkspaceViewKeys = new Set(["inicio", "frequencia", "diario", "notificacoes", "calendario", "mensagens", "acesso", "perfil", "planejamentos", "turmas", "alunos", "acompanhamento", "biblioteca", "atividades", "favoritos", "experiências", "jogos", "avaliacoes", "relatorios", "formação", "universidade", "configuracoes"]);
+  const teacherWorkspaceViewKeys = new Set(["missao","inicio", "frequencia", "diario", "notificacoes", "calendario", "mensagens", "acesso", "perfil", "planejamentos", "turmas", "alunos", "acompanhamento", "biblioteca", "atividades", "favoritos", "experiências", "jogos", "avaliacoes", "relatorios", "formação", "universidade", "configuracoes"]);
   const getValidTeacherView = (view) => {
     const normalized = normalizeTeacherWorkspaceView(view);
     return teacherWorkspaceViewKeys.has(normalized) ? normalized : "inicio";
@@ -32558,6 +32566,8 @@ const initTeacherWorkspace = () => {
       window.location.assign(`/professor.html?${params.toString()}`);
       return;
     }
+    const missionHost = content.querySelector('[data-institutional-mission]');
+    if (missionHost?.missionCanLeave && !missionHost.missionCanLeave()) return;
     activeTeacherView = normalizedView;
     if (updateUrl) {
       const params = new URLSearchParams(window.location.search);
@@ -32576,6 +32586,7 @@ const initTeacherWorkspace = () => {
     initTeacherWorkspace.editionCleanup?.();
     initTeacherWorkspace.editionCleanup = null;
     content.innerHTML = renderTeacherWorkspaceView(normalizedView);
+    initInstitutionalMissions();
     const editionHost = content.querySelector("[data-teacher-edition-host]");
     if (editionHost) import("./library-edition-boot.mjs").then(async ({ mountEditionLibrary }) => {
       if (!editionHost.isConnected) return;
@@ -33423,6 +33434,9 @@ const initStudentInstitutionalLibrary = () => {
 const initPrintableActivities = () => {
   const root = document.querySelector("[data-printable-app]");
   if (!root) return;
+  if (["professor", "aluno", "educacao_infantil"].includes(getCurrentPlatformRole()) && !root.querySelector("[data-institutional-mission]")) {
+    const host = document.createElement("section"); host.dataset.institutionalMission = "prints"; root.prepend(host); initInstitutionalMissions();
+  }
   let debounceTimer = null;
   const updateUrlFromForm = () => {
     const form = root.querySelector("[data-pa-filters]");
@@ -34766,6 +34780,7 @@ const renderAppPage = () => {
   initPremiumLibrary();
   initLibraryAssetFallbacks();
   initMissionPlayer();
+  initInstitutionalMissions();
   if (activeKey === "jogos") window.RSGameEngine?.mountAll?.();
   initQuestionBank();
   initSecretariaInstitutional();
@@ -34892,4 +34907,35 @@ document.addEventListener('click', event => {
 window.addEventListener('rs-self-basic-remount', () => {
   if (document.querySelector('[data-app-page="aluno"]')?.dataset.selfPresentation === 'basic') renderAppPage();
 });
+const missionSessionIdentity = () => {
+ const session = getPlatformSession();
+ return hasValidPlatformSession() && session.userId ? `${session.userId}:${getCurrentPlatformRole()}` : null;
+};
+const initInstitutionalMissions = () => {
+ document.querySelectorAll('[data-institutional-mission]').forEach(async root => {
+  if (root.dataset.mounted) return; root.dataset.mounted='true';
+  try {
+   const { mountMission } = await import('./mission-runtime/institutional.mjs');
+   if (!root.isConnected) return;
+   await mountMission({root, mode:root.dataset.institutionalMission, sessionIdentity:missionSessionIdentity,
+    rpc:async(name,args)=>{
+     const actor=missionSessionIdentity(); if(!actor)throw Error('Sessão necessária.');
+     let value;
+     if(name==='mission-publish-revision') {
+      const config=getSupabaseConfig(), context=await resolveSupabaseUserContext({requireAuthenticated:true,allowedRoles:['professor','gestor','coordenador','admin']});
+      if(actor!==missionSessionIdentity())throw Error('Sessão alterada.');
+      const response=await fetch(`${config.url.replace(/\/$/,'')}/functions/v1/mission-publish-revision`,{method:'POST',headers:{apikey:config.anonKey,Authorization:`Bearer ${context.token}`,'Content-Type':'application/json'},body:JSON.stringify(args)});
+      if(actor!==missionSessionIdentity())throw Error('Sessão alterada.');
+      value=await response.json().catch(()=>null);
+      if(!response.ok)throw Error(value?.error||value?.message||'A revisão não passou pela validação. O rascunho foi preservado.');
+     } else {
+      value=await createSupabaseRestClient().request(`rpc/${name}`,'',{method:'POST',body:JSON.stringify(args),requireAuthenticated:true,expectedUserId:getPlatformSession().userId,allowedRoles:['professor','aluno','educacao_infantil','gestor','coordenador','admin']});
+     }
+     if(actor!==missionSessionIdentity())throw Error('Sessão alterada.');
+     return {data:normalizeRpcJson(value)};
+    }});
+  } catch { if(root.isConnected)root.textContent='Não foi possível abrir as missões. Entre novamente e tente acessar.'; }
+ });
+};
+
 renderAppPage();
