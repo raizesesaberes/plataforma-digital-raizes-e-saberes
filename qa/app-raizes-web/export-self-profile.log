@@ -1,0 +1,60 @@
+
+Using (experimental) base path: /app
+Starting Metro Bundler
+
+| (node:10386) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:10386) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+Web Bundled 18067ms hosted-entry.tsx (267 modules)
+
+› Assets (39):
+assets/branding/rs_crescer_bg_phone.1da1ecdef41f6dc81f6b173951734dcf.png (1.4MB)
+assets/branding/rs_crescer_bg_tablet.b3e4f5be28cc3edcdc2a24438b11713f.png (1.1MB)
+assets/branding/rs_login_phone.721640b8d5b3a5c97b7480c071d21030.png (1.5MB)
+assets/branding/rs_login_tablet.33713e990d386eab3ed9e7b19bc2356e.png (786KB)
+assets/branding/rs_splash_phone.2f10fb359d61372fb0e2189651259b42.png (1.5MB)
+assets/branding/rs_splash_tablet.e477272ccea228132cbbb39f4e8e48c0.png (809KB)
+assets/branding/rs_student_bg_phone.1da1ecdef41f6dc81f6b173951734dcf.png (1.4MB)
+assets/branding/rs_student_bg_tablet.b3e4f5be28cc3edcdc2a24438b11713f.png (1.1MB)
+assets/crescer-home/icon_agenda.c47502ae1c092b29327f3daeec0863af.png (526KB)
+assets/crescer-home/icon_atividades.c5e050dd1238c7c1b1a8584a12a62f8e.png (448KB)
+assets/crescer-home/icon_biblioteca.9986541feb3ffd2f513f1341c4bf99a2.png (538KB)
+assets/crescer-home/icon_conquistas.27bf27cbce6830550b8915a0ca9916d2.png (579KB)
+assets/crescer-home/icon_descobertas.13847c82c34c99cd9b45a3b8eae00a1f.png (573KB)
+assets/crescer-home/icon_familia.6004010485bf6ba25f40e5b3ab980547.png (500KB)
+assets/crescer-home/icon_jogos.07446a2e0a0bfa2d0f12ac2c8eba426a.png (395KB)
+assets/crescer-home/icon_missao.7e44bc5b937b6e9ea9ada65d85d0fc5f.png (31KB)
+assets/crescer-home/icon_notificacoes.a97bb0b3255323cb23a7ec78dc747a42.png (442KB)
+assets/crescer-home/icon_pendencias.a97bb0b3255323cb23a7ec78dc747a42.png (442KB)
+assets/crescer-home/icon_semana.c47502ae1c092b29327f3daeec0863af.png (526KB)
+assets/experience/borboleta.193e8b5a70680ac8579c72b928fc4ade.png (1.2MB)
+assets/experience/logo.05a875fcdd084f6fe6185aa82c2ca073.png (85KB)
+assets/icon-catalog/professor/prof_alert_bell.3716b1fb68bb65ea2117c46abf3f45f5.png (240KB)
+assets/icon-catalog/professor/prof_calendar_clock.3d4e007afdbc8cfc394b60941c3b5308.png (196KB)
+assets/icon-catalog/professor/prof_care_settings.5f11a3081883d7a56d0461bd6918ce6a.png (196KB)
+assets/icon-catalog/professor/prof_chat_bubbles.b4d6b80d6f68fcc67de7f8c76ec5096c.png (194KB)
+assets/icon-catalog/professor/prof_checklist_pencil.13899b27c6867eb81dacd8a037057cd5.png (214KB)
+assets/icon-catalog/professor/prof_checklist.0b90205ed50cd625fd89702a04b39526.png (283KB)
+assets/icon-catalog/professor/prof_graduation_books.f998c2a0badb54c1e7e69d8dca404585.png (307KB)
+assets/icon-catalog/professor/prof_group_chat.d9e5da3ac9065b01b07999f14ea2023c.png (228KB)
+assets/icon-catalog/professor/prof_growth_chart.dc777e6732a3a02b626ecfe2c20bf6f6.png (171KB)
+assets/icon-catalog/professor/prof_idea_books.75b08f52d4e777ddd74fa70aca6f0899.png (206KB)
+assets/icon-catalog/professor/prof_notebook_pencil.f54cac47bba348a74dc6fde13d257e84.png (245KB)
+assets/icon-catalog/professor/prof_people_search.ddfaadb33c569a083ef4f7adb4d1e0a2.png (247KB)
+assets/icon-catalog/professor/prof_person_edit.82243fd307ee42fa3a7994fcd23ec0cb.png (173KB)
+assets/icon-catalog/professor/prof_trophy.8c7714af940d41541a6f7baae6f24aa6.png (178KB)
+assets/teacher-home/icon_classes_tracking.655fd0a91c1efdb60955943f7fdfd09f.png (1.4MB)
+assets/teacher-home/icon_communication_avalia.a0a82191fd297587107041ae3bc30e98.png (1.1MB)
+assets/teacher-home/icon_notifications_diary.70b722e44489af93d8bb6ab2d534f7db.png (1.1MB)
+assets/teacher-home/icon_people_calendar.656f56ef834cf8afc03496e0f5321b1a.png (1.3MB)
+
+› web bundles (1):
+_expo/static/js/web/hosted-entry-2a7ef94847aa259b6321d8591a7a6c50.js (1.1MB)
+
+› Files (2):
+index.html (1.2KB)
+metadata.json (49B)
+
+Exported: ../build/real-web
+Real hosted entry exported to app/. No publication. No environment credentials embedded.

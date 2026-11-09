@@ -18,7 +18,7 @@ Estado de 9 de novembro de 2026: implementação isolada, não publicada. Não h
 
 Fonte de produção: `https://github.com/raizesesaberes/plataforma-digital-raizes-e-saberes`, branch `preview/student-library-unified`, base `132da48959b5dd9614f11afbcac704747ff1596f`.
 
-Checkout de trabalho: `platform`, branch `feature/app-raizes-web`. É uma cópia isolada; app original, produção, bancos, licenças, Site privado e lojas não foram alterados. Colorir foi conciliado localmente com os commits 2fcea36 e 4d85baf. Isso não atesta promoção desse SHA em produção.
+Checkout de trabalho: `platform`, branch `feature/app-raizes-web`. É uma cópia isolada; app original, licenças, Site privado e lojas não foram alterados por esta integração. A correção separada de autorização do contexto de aluno foi aplicada no banco de produção em 9 de novembro, sem publicar o App. Colorir foi conciliado localmente com os commits 2fcea36 e 4d85baf. Isso não atesta promoção desse SHA em produção.
 
 ## Verificação realizada
 
@@ -33,7 +33,7 @@ Checkout de trabalho: `platform`, branch `feature/app-raizes-web`. É uma cópia
 
 ## Limitações e bloqueios concretos
 
-1. **Não houve homologação autenticada real.** Não existe banco de teste isolado preparado. O preview automático da plataforma aponta para Supabase de produção e não pode receber registros fictícios. Faltam contas autorizadas de teste e confirmação de contratos/RLS/licenças nos três perfis, incluindo negativas entre escolas/turmas e persistência.
+1. **Não houve homologação autenticada real.** Os projetos VALIDATION existentes foram avaliados, mas ainda não receberam os contratos necessários ao App. O preview automático da plataforma aponta para Supabase de produção e não pode receber registros fictícios. Faltam contas autorizadas de teste e confirmação de contratos/RLS/licenças nos três perfis, incluindo negativas entre escolas/turmas e persistência.
 2. **Paridade funcional não está concluída.** Avaliações, respostas de comunicação e edição de avisos continuam com flags desabilitadas. O diário agora permite rascunhos com revisão esperada e releitura; o fechamento continua indisponível por ausência de revisão otimista no contrato atual. A interface não simula sucesso dessas funções. É necessário integrar/homologar esses fluxos antes de anunciá-los como disponíveis.
 3. **Renovação de sessão não foi implementada.** O app não gira refresh tokens nem disputa a sessão entre abas. Ao expirar, bloqueia e encaminha ao login central. Logout remoto pode falhar por rede e isso é informado.
 4. **Safari/iPhone e Chrome Android físicos pendentes.** Validar teclado, safe-area, orientação, pintura por toque, impressão/download, upload, rede interrompida, retomada, voltar/avançar e confirmação de saída. QA local não comprova compatibilidade real nesses dispositivos.
@@ -70,3 +70,13 @@ Limitação de navegação restante: Colorir dentro de /app usa seus controles i
 ## Direção atual de custo
 
 O usuário pediu reaproveitar Supabase, Vercel e GitHub existentes. O App final já foi projetado para isso; não exige nova assinatura/projeto. Homologação passa a priorizar o primeiro VALIDATION existente após avaliação/autorização, preservando sua conta e Edge. Ver `app-raizes-sem-nova-infra.md` para plano e limites. Nenhum serviço foi alterado.
+
+## Atualização de sessão e destino de hospedagem
+
+A entrada hosted agora depende de `app_get_self_profile()`, uma consulta limitada ao próprio UID. Confere a identidade retornada pelo Auth, o perfil ativo, o papel e o vínculo de aluno ou professora; não faz fallback para leitura ampla das tabelas users/profiles. O RPC ainda não está instalado para o App. O pacote falha fechado enquanto essa dependência estiver ausente e não deve ser publicado assim.
+
+A fonte integrada e o export foram sincronizados. TypeScript, 45 testes do App (incluindo 5 verificações de destino), suíte de histórico, export de 42 arquivos e build estático de 5.558 arquivos passaram. Chrome local sintético abriu o perfil infantil e Missão com a nova sessão. A rodada completa dos três perfis após essa mudança e os dispositivos físicos continuam pendentes.
+
+`check-app-hosting-target.mjs` exige modo e projeto explícitos, configuração pública sem fallback local e arquivos de login no mesmo domínio. O pacote atual aponta para produção e foi corretamente recusado como VALIDATION. Não é uma homologação isolada nem deve receber fixtures. Não houve push ou deploy do App.
+
+O plano atual reutiliza o primeiro VALIDATION sem apagar seus dados, Auth ou Edge. A preparação contempla primeiro sessão e catálogo, não paridade completa. Criação de contas/credenciais sintéticas, se necessária para teste autenticado, ainda depende de autorização específica.

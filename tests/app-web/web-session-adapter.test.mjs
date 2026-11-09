@@ -17,13 +17,14 @@ test('real adapter uses Auth + server role + active institutional context, and c
  const store=()=>storage.set('raizes:supabase-auth-session',JSON.stringify({access_token:token,user:{id:'student-a'},expires_at:claims.exp,platform_role:'professor'}));store();
  globalThis.window={location:{protocol:'https:',pathname:'/app/'},RAIZES_SUPABASE:{url:'https://backend.invalid',anonKey:'sb_publishable_test'},localStorage:{getItem:key=>storage.get(key)||null,removeItem:key=>storage.delete(key)},addEventListener:(key,fn)=>handlers[key]=fn,setInterval:()=>0,setTimeout,clearTimeout};
  globalThis.document={visibilityState:'visible',addEventListener:()=>{}};
- let active=true, context=true, identity='student-a';const requests=[];
+ let active=true, context=true, identity='student-a', profileId='student-a', platformRole='aluno', studentIds=['s'], teacherId='student-a';const requests=[];
  globalThis.fetch=async(url)=>{
    requests.push(url);
    if(url.endsWith('/auth/v1/user'))return Response.json({id:identity});
-   if(url.includes('/profiles?'))return Response.json([{status:active?'ativo':'inactive',platform_role:'aluno'}]);
-   if(url.includes('/users?'))return Response.json([{perfil:'aluno',ativo:true}]);
-   if(url.includes('/rpc/student_get_context'))return Response.json(context?[{student_id:'s',school_id:'school',class_id:'class',segment:'fundamental'}]:[]);
+   if(url.includes('/rpc/app_get_self_profile'))return Response.json([{profile_id:profileId,status:active?'ativo':'inactive',platform_role:platformRole,student_ids:studentIds}]);
+   if(url.includes('/users?')||url.includes('/profiles?'))throw Error('legacy table access forbidden');
+   if(url.includes('/rpc/teacher_get_context'))return Response.json([{profile_id:teacherId,teacher_id:'t',school_id:'school',active_class_links:1}]);
+   if(url.includes('/rpc/student_get_context'))return Response.json(context?[{student_id:'s',school_id:'school',class_id:'class',segment:'ENSINO_FUNDAMENTAL'}]:[]);
    if(url.includes('/auth/v1/logout'))return new Response(null,{status:204});
    throw Error('unexpected mock route');
  };
@@ -40,8 +41,14 @@ test('real adapter uses Auth + server role + active institutional context, and c
    assert.equal(requests.slice(before).filter(url=>url.endsWith('/auth/v1/user')).length,1);
    handlers.storage({key:'raizes:supabase-auth-session'});assert.equal(web.currentPlatformSessionIdentity(),null);
    active=false;const denied=web.loadPlatformSession();const deniedReady=web.awaitPlatformSessionReady(result.session);await assert.rejects(denied,/profile_inactive/);await assert.rejects(deniedReady);assert.equal(web.currentPlatformSessionIdentity(),null);active=true;
-   context=false;await assert.rejects(web.loadPlatformSession(),/student_context_missing/);context=true;
+   context=false;await assert.rejects(web.loadPlatformSession(),/institutional_context_missing/);context=true;
    identity='other';await assert.rejects(web.loadPlatformSession(),/server_identity_mismatch/);identity='student-a';
+   profileId='other';await assert.rejects(web.loadPlatformSession(),/profile_identity_mismatch/);profileId='student-a';
+   studentIds=[];await assert.rejects(web.loadPlatformSession(),/student_identity_mismatch/);studentIds=['s'];
+   platformRole='admin';await assert.rejects(web.loadPlatformSession(),/unsupported_role/);
+   platformRole='professor';assert.equal((await web.loadPlatformSession()).role,'professor');
+   teacherId='other';await assert.rejects(web.loadPlatformSession(),/teacher_identity_mismatch/);teacherId='student-a';platformRole='aluno';
+   assert.ok(requests.every(url=>!url.includes('/users?')&&!url.includes('/profiles?')));
    await web.loadPlatformSession();storage.set('unrelated','keep');storage.set('sb-other-project-auth-token','keep');
    assert.equal((await web.signOutPlatformSession()).revoked,true);assert.equal(storage.get('unrelated'),'keep');assert.equal(storage.get('sb-other-project-auth-token'),'keep');assert.equal(storage.has('raizes:supabase-auth-session'),false);
    assert.equal(web.currentPlatformSessionIdentity(),null);

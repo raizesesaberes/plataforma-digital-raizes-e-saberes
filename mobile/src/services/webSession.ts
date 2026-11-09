@@ -1,4 +1,4 @@
-import { getAppRoleForSession, restGet, rpc, type MobileSession, type SessionAppRole } from './library';
+import { rpc, type MobileSession, type SessionAppRole } from './library';
 import { SESSION_KEY, createSessionGuard, installHostedGuard, parsePublicConfig } from './webSessionCore';
 export type PlatformSessionState = {status: 'locked'; reason: string} | {status: 'ready'; session: MobileSession; role: SessionAppRole};
 const listeners = new Set<(state: PlatformSessionState) => void>();
@@ -55,14 +55,29 @@ async function validatePlatformSession(version: number): Promise<LoadedSession> 
     if (!response.ok) throw Error('auth_validation_failed');
     const user = await response.json();
     if (user?.id !== session.userId) throw Error('server_identity_mismatch');
-    // Local JWT metadata and stored roles never authorize access.
-    const profiles = await restGet<Array<{status?: string}>>(session, `profiles?select=status&id=eq.${encodeURIComponent(session.userId)}&limit=1`);
-    if (!profiles[0] || !['active', 'ativo'].includes(String(profiles[0].status).toLowerCase())) throw Error('profile_inactive');
-    const role = await getAppRoleForSession(session);
-    if (!['crescer', 'fundamental', 'professor'].includes(role)) throw Error('unsupported_role');
-    const context = await rpc<Array<Record<string, unknown>>>(session, role === 'professor' ? 'teacher_get_context' : 'student_get_context', {});
+    // Self-profile RPC is UID-filtered and grants no table-wide SELECT privileges.
+    // Neither JWT metadata, legacy users nor matching e-mail can choose a role.
+    const profiles = await rpc<Array<{profile_id: string; platform_role: string; status: string; student_ids: string[]}>>(session, 'app_get_self_profile', {});
+    const profile = profiles[0];
+    if (profiles.length !== 1 || profile?.profile_id !== session.userId) throw Error('profile_identity_mismatch');
+    if (!['active', 'ativo'].includes(String(profile.status).toLowerCase())) throw Error('profile_inactive');
+    const platformRole = String(profile.platform_role).normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    if (!['aluno', 'educacao_infantil', 'professor'].includes(platformRole)) throw Error('unsupported_role');
+    const context = await rpc<Array<Record<string, unknown>>>(session, platformRole === 'professor' ? 'teacher_get_context' : 'student_get_context', {});
     const row = context[0];
-    if (!row?.school_id || (role === 'professor' ? !row.teacher_id || Number(row.active_class_links) <= 0 : !row.student_id || !row.class_id)) throw Error('institutional_context_missing');
+    if (context.length !== 1 || !row?.school_id) throw Error('institutional_context_missing');
+    let role: SessionAppRole;
+    if (platformRole === 'professor') {
+      if (row.profile_id !== session.userId) throw Error('teacher_identity_mismatch');
+      if (!row.teacher_id || !Number.isFinite(Number(row.active_class_links)) || Number(row.active_class_links) <= 0) throw Error('institutional_context_missing');
+      role = 'professor';
+    } else {
+      if (!row.student_id || !row.class_id || !Array.isArray(profile.student_ids) || !profile.student_ids.includes(String(row.student_id))) throw Error('student_identity_mismatch');
+      const segment = String(row.segment).normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase();
+      if (segment === 'EDUCACAO_INFANTIL') role = 'crescer';
+      else if (platformRole === 'aluno' && ['ENSINO_FUNDAMENTAL', 'ENSINO_MEDIO'].includes(segment)) role = 'fundamental';
+      else throw Error('unsupported_segment');
+    }
     guard.assert(session, epoch);
     if (version !== loadVersion) throw Error('verification_superseded');
     const canonical = guard.commit(session, epoch);

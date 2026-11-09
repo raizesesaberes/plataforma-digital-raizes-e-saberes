@@ -1,0 +1,58 @@
+✔ save preserves links and metadata, uses original revision, confirms readback (4.686448ms)
+✔ create uses empty expected revision and zero links (0.534508ms)
+✔ stale expected revision rejects before mutation (15.396007ms)
+✔ closed entry cannot be saved; close capability never sends a request (0.767589ms)
+✔ 403 and 409 are not converted into success or retried (1.775035ms)
+✔ lost acknowledgement after commit reconciles without a second write (0.753857ms)
+✔ uncertain uncommitted write requires explicit reload before retry (8.583895ms)
+✔ mismatched or incomplete read response fails closed (1.060852ms)
+✔ context changes prevent network requests (0.411349ms)
+✔ concurrent save is rejected while first operation is in flight (0.608322ms)
+✔ unmount/session change during read prevents returned data or mutation (0.523618ms)
+✔ success response with mismatched readback is never reported as saved (0.69912ms)
+✔ lost ack followed by failed readback locks mutation until an explicit successful load (0.597426ms)
+✔ real library RPC and hosted guard accept canonical session, reject clones and transmit If-Match (606.260011ms)
+✔ legacy title routes, empty details and unknown routes fail closed (2.824364ms)
+✔ institutional routes require a renderer and planning requires a teacher (0.371838ms)
+✔ real detail routes remain scoped to their supported roles (0.320631ms)
+✔ guard is wired before dispatch, requires session, preserves native and preview (0.248758ms)
+✔ literal public configuration is parsed without executing code (13.437831ms)
+✔ secret/service keys and unexpected fields are rejected (0.801228ms)
+✔ validation rejects production and the occupied second template (0.723606ms)
+✔ only exact HTTPS origin and explicit approved mode are accepted (2.587605ms)
+✔ artifact requires real entry and same-origin login, never logs a key (7.365225ms)
+✔ real adapter uses Auth + server role + active institutional context, and clears only known keys (665.982632ms)
+(node:9908) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/danielhenriquealmeidamarques/Documents/Codex/2026-11-09/app-raizes-web/platform/mobile/src/services/webSessionCore.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/danielhenriquealmeidamarques/Documents/Codex/2026-11-09/app-raizes-web/platform/mobile/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ missing and malformed sessions are denied (6.557837ms)
+✔ stored identity cannot override JWT subject (0.5652ms)
+✔ stored expiration cannot extend JWT (0.406948ms)
+✔ missing expiration is denied (0.314584ms)
+✔ candidate ignores spoofed role and does not retain refresh token (1.578181ms)
+✔ public config rejects secrets, URLs with credentials, query and insecure URLs (0.93133ms)
+✔ guard refuses unverified or fabricated session objects (0.823779ms)
+✔ logout permanently invalidates the previous session object (0.4146ms)
+✔ same-user token change invalidates old operations (0.50508ms)
+✔ expiry invalidates active state (19.808358ms)
+✔ storage change prevents request dispatch (3.094468ms)
+✔ logout aborts pending fetch and denies late result even if transport ignores abort (97.611089ms)
+✔ server denial locks state (5.721475ms)
+✔ body cannot be consumed after account changes (2.858407ms)
+✔ new generation supersedes validation (0.609964ms)
+✔ revalidation preserves canonical object but blocks its requests until commit (0.42842ms)
+✔ logout or expiry during revalidation prevents canonical session resurrection (0.380484ms)
+✔ continuity identity survives only same-raw live revalidation, never grants request access (0.354483ms)
+✔ continuity identity is removed immediately on expiry or logout (0.321112ms)
+✔ first mutation during verification waits for commit; validation candidate never deadlocks (12.140333ms)
+✔ queued mutation never dispatches after logout, token change, expiration or server denial (0.926238ms)
+ℹ tests 45
+ℹ suites 0
+ℹ pass 45
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1904.684505
+PASS: list/detail back-forward; cancellation repair; no payload in browser history; forward-branch discard; forged-position ignored; foreign cancel preserves current state; foreign allow resets home; fresh epoch and next push/back/forward after both resets; cleanup.

@@ -1,0 +1,57 @@
+✔ save preserves links and metadata, uses original revision, confirms readback (3.811212ms)
+✔ create uses empty expected revision and zero links (0.514766ms)
+✔ stale expected revision rejects before mutation (2.023842ms)
+✔ closed entry cannot be saved; close capability never sends a request (0.756076ms)
+✔ 403 and 409 are not converted into success or retried (1.275447ms)
+✔ lost acknowledgement after commit reconciles without a second write (0.706463ms)
+✔ uncertain uncommitted write requires explicit reload before retry (11.284815ms)
+✔ mismatched or incomplete read response fails closed (0.870246ms)
+✔ context changes prevent network requests (0.395413ms)
+✔ concurrent save is rejected while first operation is in flight (1.186902ms)
+✔ unmount/session change during read prevents returned data or mutation (0.512228ms)
+✔ success response with mismatched readback is never reported as saved (1.619478ms)
+✔ lost ack followed by failed readback locks mutation until an explicit successful load (1.114545ms)
+✔ real library RPC and hosted guard accept canonical session, reject clones and transmit If-Match (650.900342ms)
+✔ legacy title routes, empty details and unknown routes fail closed (12.191634ms)
+✔ institutional routes require a renderer and planning requires a teacher (0.500593ms)
+✔ real detail routes remain scoped to their supported roles (2.099827ms)
+✔ guard is wired before dispatch, requires session, preserves native and preview (3.65501ms)
+✔ literal public configuration is parsed without executing code (2.793244ms)
+✔ secret/service keys and unexpected fields are rejected (0.786565ms)
+✔ validation rejects production and the occupied second template (0.53408ms)
+✔ only exact HTTPS origin and explicit approved mode are accepted (1.908349ms)
+✔ artifact requires real entry and same-origin login, never logs a key (6.850045ms)
+✔ real adapter uses Auth + server role + active institutional context, and clears only known keys (799.449972ms)
+(node:10382) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/danielhenriquealmeidamarques/Documents/Codex/2026-11-09/app-raizes-web/platform/mobile/src/services/webSessionCore.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/danielhenriquealmeidamarques/Documents/Codex/2026-11-09/app-raizes-web/platform/mobile/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ missing and malformed sessions are denied (4.910082ms)
+✔ stored identity cannot override JWT subject (0.543565ms)
+✔ stored expiration cannot extend JWT (7.988437ms)
+✔ missing expiration is denied (0.373064ms)
+✔ candidate ignores spoofed role and does not retain refresh token (1.783515ms)
+✔ public config rejects secrets, URLs with credentials, query and insecure URLs (0.942864ms)
+✔ guard refuses unverified or fabricated session objects (0.753967ms)
+✔ logout permanently invalidates the previous session object (0.397094ms)
+✔ same-user token change invalidates old operations (0.459237ms)
+✔ expiry invalidates active state (0.514855ms)
+✔ storage change prevents request dispatch (5.853143ms)
+✔ logout aborts pending fetch and denies late result even if transport ignores abort (116.748918ms)
+✔ server denial locks state (2.658214ms)
+✔ body cannot be consumed after account changes (13.915519ms)
+✔ new generation supersedes validation (0.387783ms)
+✔ revalidation preserves canonical object but blocks its requests until commit (0.430609ms)
+✔ logout or expiry during revalidation prevents canonical session resurrection (0.466092ms)
+✔ continuity identity survives only same-raw live revalidation, never grants request access (0.377148ms)
+✔ continuity identity is removed immediately on expiry or logout (0.318786ms)
+✔ first mutation during verification waits for commit; validation candidate never deadlocks (2.49788ms)
+✔ queued mutation never dispatches after logout, token change, expiration or server denial (1.857196ms)
+ℹ tests 45
+ℹ suites 0
+ℹ pass 45
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2039.640509
