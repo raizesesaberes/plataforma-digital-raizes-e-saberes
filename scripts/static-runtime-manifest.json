@@ -17481,11 +17481,11 @@
   },
   {
     "file": "student-weekly-board/board.mjs",
-    "sha256": "0e5e521922a36c13a8c5e73d07c9fe91b3693812961cb1f36f69f6fda6141e2b"
+    "sha256": "df19e1dd8a4c6d7d074445b301ecc0798c89bb893aec081f47eac13a9b385c32"
   },
   {
     "file": "student-weekly-board/weekly.css",
-    "sha256": "5d826636bb0b1932d8eccb7d5b14c82752c840f17f55542b8a28522d9ce47098"
+    "sha256": "dff52ed07e8cca37426159bad77de5833f5788901f7d4c9660e5f969ef25cc2c"
   },
   {
     "file": "student-weekly-board/mount.mjs",
