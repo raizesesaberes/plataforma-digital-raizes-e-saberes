@@ -1,3 +1,4 @@
+import {platformAdapter} from './platform-adapter.mjs';
 import {mountMission,available} from '/mission-runtime/institutional.mjs';
 const log=document.querySelector('#test-status'),host=document.querySelector('#host'),results=[];
 const report=text=>{results.push(text);log.textContent=results.join('\n');};
@@ -11,7 +12,7 @@ const revs=[await rev('10000000-0000-4000-8000-000000000001','colorir',JSON.stri
 const classes=[{id:'20000000-0000-4000-8000-000000000001',name:'Turma sintética Infantil',grade:'infantil'},{id:'20000000-0000-4000-8000-000000000002',name:'Turma sintética 1',grade:'1'}];
 let teacherRevoked=false,actor='fixture:teacher',calls=[],list=[],plans={},art={document:null,version:0},failure='',delay=0,planDelay=0,artDelay=0,publishLost=false,receipts=new Map(),cleanup=()=>{},drafts=[];
 const assignment=(revision=revs[0],extra={})=>({...revision,id:'30000000-0000-4000-8000-000000000001',revision_id:revision.id,class_id:classes[0].id,starts_at:new Date(Date.now()-3600000).toISOString(),ends_at:revision.engine==='colorir'?null:new Date(Date.now()+3600000).toISOString(),timezone:'UTC',ageRange:revision.engine==='colorir'?'4-5':null,...extra});
-const rpc=async(name,args)=>{calls.push({name,args});if(failure===name||failure==='all')throw Error('AUTHORIZATION_DENIED');if(name==='mission_teacher_list_catalog_v1'&&delay)await pause(delay);const key=args.p_class_id+':'+(args.p_week||args.p_document?.week);let data;
+const rawRpc=async(name,args)=>{calls.push({name,args});if(failure===name||failure==='all')throw Error('AUTHORIZATION_DENIED');if(name==='mission_teacher_list_catalog_v1'&&delay)await pause(delay);const key=args.p_class_id+':'+(args.p_week||args.p_document?.week);let data;
 switch(name){case 'mission_teacher_classes_v1':data=classes;break;
 case 'mission_print_open_v1':{const i=Number(args.p_revision_id.slice(-12))-1;data=colors[i]?await rev(args.p_revision_id,'colorir',JSON.stringify(colors[i]),'infantil'):null;break;}
 case 'mission_print_catalog_v1':data=await Promise.all(colors.map((c,i)=>rev('40000000-0000-4000-8000-'+String(i+1).padStart(12,'0'),'colorir',JSON.stringify(c),'infantil')));break;
@@ -28,14 +29,23 @@ case 'mission_student_list_v1':data=list.filter(x=>!x.cancelled_at&&available(x)
 case 'mission_student_open_v1':data=list.find(x=>x.id===args.p_assignment_id&&available(x))||null;break;
 case 'mission_student_load_artwork_v1':data=art;break;
 case 'mission_student_save_artwork_v1':if(artDelay)await pause(artDelay);if(args.p_expected_version!==art.version)throw Error('ARTWORK_CONFLICT');data=art={document:args.p_document,version:art.version+1};break;
-default:throw Error('Unexpected RPC '+name);}return {data:structuredClone(data)};};
+default:throw Error('Unexpected RPC '+name);}return structuredClone(data);};
+const platformSource=await(await fetch('/app-pages.js')).text();
+const rpc=platformAdapter(platformSource,{
+ missionSessionIdentity:()=>actor,
+ getPlatformSession:()=>({userId:actor}),
+ createSupabaseRestClient:()=>({request:(path,_query,options)=>rawRpc(path.slice(4),JSON.parse(options.body))}),
+ getSupabaseConfig:()=>({url:'https://fixture.invalid',anonKey:'synthetic'}),
+ resolveSupabaseUserContext:async()=>({token:'synthetic'}),
+ fetch:async(_url,options)=>{try{const data=await rawRpc('mission-publish-revision',JSON.parse(options.body));return {ok:true,json:async()=>data};}catch(error){return {ok:false,json:async()=>({error:error.message})};}}
+});
 const $=s=>host.shadowRoot?.querySelector(s),$$=s=>[...host.shadowRoot?.querySelectorAll(s)||[]];
 const change=(s,value)=>{const node=$(s);assert(node,'Missing '+s);node.value=value;node.dispatchEvent(new Event('change',{bubbles:true}));};const click=s=>{assert($(s),'Missing '+s);$(s).click();};
 async function mount(mode){cleanup();host.replaceChildren();failure='';actor='fixture:'+mode;cleanup=await mountMission({root:host,mode,rpc,sessionIdentity:()=>actor});}
 window.__missionTest={getCalls:()=>calls,getDrafts:()=>drafts,setFailure:value=>failure=value};window.confirm=()=>true;const view=new URLSearchParams(location.search).get('view');
 if(view){list=view==='student'?[assignment()]:[];await mount(view);log.textContent='Fixture com RPCs simuladas. Nenhum acesso de produção.';if(view==='teacher')change('#mission-class',classes[0].id);}
 else try{
-report('RUNNING backend simulado; módulos e runtimes reais.');
+report('RUNNING production platform adapter; direct JSON RPC mocks; real modules/runtimes.');
 await mount('teacher');change('#mission-class',classes[0].id);await wait(()=>$('[data-pick]'),'catalog');assert($$('[data-pick]').length===1,'wrong catalog');click('[data-pick]');click('#add-plans');window.confirm=()=>false;assert(!host.missionCanLeave(),'dirty SPA exit not guarded');window.confirm=()=>true;assert(!$("input[name=end]"),'Infantil expiry');change('input[name=start]','2026-11-08T10:00');change('select[name=zone]','UTC');change('select[name=age]','4-5');click('#save-plan');await wait(()=>Object.values(plans).some(p=>p.version===1),'private save');await wait(()=>!$('#save-plan').disabled,'save render');assert(list.length===0,'save assigned');click('[data-view=selection]');click('[data-view=publication]');assert($('input[name=start]').value==='2026-11-08T10:00','lost draft');report('PASS class selection, explicit age, no expiry, private save, navigation preservation');
 change('input[name=start]','2026-11-08T11:00');planDelay=200;click('#publish-plan');assert($('#body').inert,'publish controls not inert');change('input[name=start]','2026-11-08T12:00');await wait(()=>!$('#publish-plan').disabled,'publish mutation abort');assert(!calls.some(c=>c.name==='mission_teacher_publish_plan_v1'),'published changed confirmation');assert(!$('#body').inert,'controls remain locked');planDelay=0;report('PASS publish in-flight edit blocked or aborts stale confirmation');publishLost=true;click('#publish-plan');await wait(()=>list.length===1,'publication');await wait(()=>!$('#publish-plan').disabled,'lost response');click('#publish-plan');await wait(()=>!$('#publish-plan').disabled,'publish render');click('#publish-plan');await pause(50);assert(list.length===1,'duplicate');click('[data-cancel]');await wait(()=>!!list[0].cancelled_at,'cancel');const pubCalls=calls.filter(c=>c.name==='mission_teacher_publish_plan_v1');assert(pubCalls.length===2&&pubCalls[0].args.p_request_id===pubCalls[1].args.p_request_id,'unstable retry request');report('PASS atomic publish, lost-response same-key retry, repeated click, cancellation');
 change('#plan-week','2026-11-16');await wait(()=>$('input[name=start]')===null,'new week');assert(Object.keys(plans).length===1,'lost old week');assert($('#plan-week').value==='2026-11-16','empty week reset');report('PASS empty requested week retained and prior week preserved');

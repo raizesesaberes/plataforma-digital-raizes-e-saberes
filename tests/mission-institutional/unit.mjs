@@ -22,3 +22,18 @@ test('leave guard confirms pending or failed paint and dirty or saving plans',()
 });
 
 test('print injection only eligible canonical roles',()=>{const shell=readFileSync(resolve(root,'app-pages.js'),'utf8');assert(shell.includes('["professor", "aluno", "educacao_infantil"].includes(getCurrentPlatformRole()) && !root.querySelector("[data-institutional-mission]")'));});
+
+// Real production callback regression: JSONB arrays must not collapse to row zero.
+test('production adapter preserves direct RPC shapes and session/error guards',async()=>{
+ const {platformAdapter}=await import('./platform-adapter.mjs');
+ const source=readFileSync(resolve(root,'app-pages.js'),'utf8');
+ let identity='teacher:1',payload,fail=false,change=false,requests=0;
+ const rpc=platformAdapter(source,{
+  missionSessionIdentity:()=>identity,getPlatformSession:()=>({userId:'teacher:1'}),
+  createSupabaseRestClient:()=>({request:async(path,_q,opts)=>{requests++;assert.equal(path,'rpc/mission_teacher_classes_v1');assert.equal(opts.requireAuthenticated,true);if(fail)throw Error('RPC_FAILED');if(change)identity='teacher:2';return payload;}})
+ });
+ for(const value of [[],[{id:'one'}],[{id:'one'},{id:'two'}],{id:'one',version:2},null]){payload=value;const result=await rpc('mission_teacher_classes_v1',{});assert.strictEqual(result.data,value);}
+ fail=true;await assert.rejects(rpc('mission_teacher_classes_v1',{}),/RPC_FAILED/);fail=false;
+ change=true;await assert.rejects(rpc('mission_teacher_classes_v1',{}),/Sessão alterada/);change=false;
+ identity=null;const count=requests;await assert.rejects(rpc('mission_teacher_classes_v1',{}),/Sessão necessária/);assert.equal(requests,count);
+});

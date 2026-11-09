@@ -34932,7 +34932,7 @@ const initInstitutionalMissions = () => {
       value=await createSupabaseRestClient().request(`rpc/${name}`,'',{method:'POST',body:JSON.stringify(args),requireAuthenticated:true,expectedUserId:getPlatformSession().userId,allowedRoles:['professor','aluno','educacao_infantil','gestor','coordenador','admin']});
      }
      if(actor!==missionSessionIdentity())throw Error('Sessão alterada.');
-     return {data:normalizeRpcJson(value)};
+     return {data:value};
     }});
   } catch { if(root.isConnected)root.textContent='Não foi possível abrir as missões. Entre novamente e tente acessar.'; }
  });
