@@ -73,3 +73,8 @@ test('new tab preserves the game hub source and authorized legacy route fallback
  assert(getter.includes('["aluno", "educacao_infantil"]'));assert(getter.includes('data-student-discovery-slot'));assert(getter.includes('window.renderColorirDescobrirApp'));
  const entry=readFileSync(resolve(root,'colorir-descobrir.html'),'utf8');assert(entry.indexOf('src="supabase-config.js"')<entry.indexOf('src="app-pages.js'));
 });
+
+test('full-screen theme home retains a way back to the platform',async()=>{
+ const {discoveryMarkup}=await import('../../mission-runtime/coloring/discovery.mjs');
+ const markup=discoveryMarkup([],{homeHref:'/aluno'});assert(markup.includes('href="/aluno"'));assert(markup.includes('← Início'));assert(!discoveryMarkup([]).includes('discovery-exit'));
+});

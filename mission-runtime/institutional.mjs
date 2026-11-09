@@ -103,7 +103,7 @@ export async function mountMission({root,mode='student',discoveryLayout='themes'
  function renderDiscoveryChoices(){
   if(!current())return;
   if(discoveryTheme&&!groupColoringThemes(catalog).some(t=>t.id===discoveryTheme))discoveryTheme='';
-  $('#body').innerHTML=discoveryMarkup(catalog,{themeId:discoveryTheme,age:discoveryAge});
+  $('#body').innerHTML=discoveryMarkup(catalog,{themeId:discoveryTheme,age:discoveryAge,homeHref:discoveryHistory?'/aluno':''});
   $$('[data-theme]').forEach(b=>b.onclick=()=>changeDiscoveryTheme(b.dataset.theme));
   $$('[data-themes-home]').forEach(b=>b.onclick=e=>{e.preventDefault();changeDiscoveryTheme('');});
   $$('[data-discovery-age]').forEach(b=>b.onclick=()=>{discoveryAge=b.dataset.discoveryAge;renderDiscoveryChoices();$('[data-discovery-age="'+discoveryAge+'"]')?.focus({preventScroll:true});});
