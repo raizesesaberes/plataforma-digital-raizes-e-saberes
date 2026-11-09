@@ -4,9 +4,9 @@ Preparado em 2026-11-09. Nenhum ambiente/conta/credencial criado. Documento de e
 
 ## Escolha e orçamento
 
-Preferência: branch Supabase temporária `app-raizes-homologacao`, na organização já utilizada pelo projeto, sem dados de produção. Confirmar organização, plano atual e cotação antes da criação. Não sobrescrever RS-SCHOOL-TEMPLATE-V1-VALIDATION ou VALIDATION-2: não possuem os contratos do app e sua reutilização não foi autorizada.
+Preferência: branch Supabase temporária `app-raizes-homologacao`, na organização já utilizada pelo projeto, sem dados de produção. Organização atual confirmada por metadados: Raizes e saberes digital, plano Pro, região sa-east-1. Não é necessário upgrade para branching. Confirmar o uso dessa organização e obter cotação específica antes da criação. Não sobrescrever RS-SCHOOL-TEMPLATE-V1-VALIDATION ou VALIDATION-2: não possuem os contratos do app e sua reutilização não foi autorizada.
 
-Preço oficial consultado: Micro US$0,01344/h, aproximadamente US$0,32/24 h ou US$2,26/7 dias, só compute. Somam-se eventual uso excedente e impostos. Branches não são cobertas por Spend Cap ou pelos créditos de compute. Branching exige Pro, a partir de US$25/mês por organização, caso ainda não contratado. Não prometer teto automático ou total fechado com base nessa estimativa.
+Preço oficial consultado: Micro US$0,01344/h, aproximadamente US$0,32/24 h ou US$2,26/7 dias, só compute. Somam-se eventual uso excedente e impostos. Branches não são cobertas por Spend Cap ou pelos créditos de compute. Branching exige Pro; a organização atual já possui esse plano, portanto não há nova assinatura de Pro necessária para essa opção. Não prometer teto automático ou total fechado com base nessa estimativa.
 
 Alternativas: projeto separado (mesma ordem de compute em organização paga; Free somente se houver cota elegível), ou stack local com dados sintéticos (sem cobrança de hospedagem, mas não fornece por si só acesso Safari remoto).
 
@@ -62,3 +62,5 @@ A primeira branch via dashboard pode registrar metadados/habilitar branching no 
 ## Saída de homologação
 
 Guardar SHA, hashes de build, versões de schema, resultados e limitações sem dados privados. Revisar autorização de publicação separadamente. Não mesclar ou implantar em produção como efeito de criar/testar a branch. Lojas continuam fora deste escopo.
+
+Cotação específica não foi obtida: a ferramenta requer confirmação da organização pelo usuário antes de get_cost. A tarifa acima é documentação oficial, não cotação da conta. Nenhuma chamada confirm_cost, create_branch ou criação/configuração de credenciais foi executada.
