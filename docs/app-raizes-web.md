@@ -63,6 +63,10 @@ Consulta de metadados atual encontrou as quatro versões FASE3 no ledger. O upse
 
 ## QA final desta etapa
 
-Build integrado com 5.558 arquivos, TypeScript, 40 testes App, suíte de histórico e 20 testes unitários da Missão passaram. Chrome local sintético em390px: abriu Diário, bloqueou Voltar com alterações não salvas e deu feedback, salvou rascunho via adaptador real com transporte simulado, confirmou releitura e permitiu retorno. Em320px: agenda com títulos iguais abriu o segundo registro correto; Voltar retornou à lista e Avançar ao mesmo detalhe. Logout removeu conteúdo; console sem erros/avisos. Nenhuma chamada a backend real. Servidor QA e aba encerrados ao terminar.
+Build integrado com 5.558 arquivos, TypeScript, 40 testes App, suíte de histórico e 20 testes unitários da Missão passaram. Chrome local sintético em 390px: abriu Diário, bloqueou Voltar com alterações não salvas e deu feedback, salvou rascunho via adaptador real com transporte simulado, confirmou releitura e permitiu retorno. Em 320px: agenda com títulos iguais abriu o segundo registro correto; Voltar retornou à lista e Avançar ao mesmo detalhe. Logout removeu conteúdo; console sem erros/avisos. Nenhuma chamada a backend real. Servidor QA e aba encerrados ao terminar.
 
 Limitação de navegação restante: Colorir dentro de /app usa seus controles internos de tema/desenho; integrar esses subpassos ao histórico do navegador requer ampliar um contrato público de leitura/restauração de navegação no runtime. Não foi usado acesso por DOM ou cliques sintéticos para simular esse contrato.
+
+## Direção atual de custo
+
+O usuário pediu reaproveitar Supabase, Vercel e GitHub existentes. O App final já foi projetado para isso; não exige nova assinatura/projeto. Homologação passa a priorizar o primeiro VALIDATION existente após avaliação/autorização, preservando sua conta e Edge. Ver `app-raizes-sem-nova-infra.md` para plano e limites. Nenhum serviço foi alterado.

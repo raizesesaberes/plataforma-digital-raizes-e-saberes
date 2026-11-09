@@ -1,5 +1,7 @@
 # Roteiro de homologação isolada do App Raízes
 
+> Plano atualizado: priorizar a infraestrutura já contratada, sem nova instância. Ver `app-raizes-sem-nova-infra.md`. A branch paga abaixo é alternativa histórica, não requisito do App.
+
 Preparado em 2026-11-09. Nenhum ambiente/conta/credencial criado. Documento de execução futura, não autorização para criar, gastar ou alterar acesso.
 
 ## Escolha e orçamento
