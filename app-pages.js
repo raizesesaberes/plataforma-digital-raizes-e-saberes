@@ -19616,7 +19616,6 @@ const renderGamesModule = () => {
         </div>
         <div class="official-school-games">${renderStudentOfficialGameCards() || '<p class="muted" role="status">Nenhum jogo disponível para sua turma no momento. Os jogos aparecerão aqui quando forem liberados pela escola.</p>'}</div>
       </section>
-      <section data-student-discovery-slot></section>
     `;
   }
   if (isFamilyExperience && (!requestedGameId || !officialGameAllowed)) {
@@ -19629,7 +19628,6 @@ const renderGamesModule = () => {
         </div>
         <div class="official-school-games">${renderStudentOfficialGameCards() || '<p class="muted" role="status">Nenhum jogo disponível para sua turma no momento. Os jogos aparecerão aqui quando forem liberados pela escola.</p>'}</div>
       </section>
-      ${isStudentEarlyChildhoodContext() ? '<section data-institutional-mission="discovery" aria-label="Colorir e descobrir"></section>' : ""}
     `;
   }
   const playerAttribute = requestedGameId

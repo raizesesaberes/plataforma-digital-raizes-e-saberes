@@ -38,15 +38,15 @@ test('production adapter preserves direct RPC shapes and session/error guards',a
  identity=null;const count=requests;await assert.rejects(rpc('mission_teacher_classes_v1',{}),/Sessão necessária/);assert.equal(requests,count);
 });
 
-test('game hub retains four game cards and gates discovery to Infantil without player injection',()=>{
+test('game hub retains four game cards without duplicated coloring galleries or player injection',()=>{
  const source=readFileSync(resolve(root,'app-pages.js'),'utf8');
  const start=source.indexOf('const renderGamesModule ='),end=source.indexOf('\nconst modules =',start),module=source.slice(start,end);
  const render=Function('getRequestedGameId','getCurrentPlatformRole','isContentGovernanceRequired','isContentGovernanceReady','officialSchoolGameIds','isContentAvailableToSession','renderStudentOfficialGameCards','isStudentEarlyChildhoodContext',module+';return renderGamesModule;');
  const ids=['caixa-misteriosa','organizando-cesta','jardim-descobertas','atelie-bia'];
  for(const role of ['aluno','educacao_infantil'])for(const infant of [true,false])for(const requested of ['',...ids]){
  const html=render(()=>requested,()=>role,()=>false,()=>true,ids,()=>true,()=>ids.map(id=>'<a href="jogos.html?game='+id+'">'+id+'</a>').join(''),()=>infant)();
- assert.equal(html.includes('data-institutional-mission="discovery"'),role==='educacao_infantil'&&infant&&!requested);
- assert.equal(html.includes('data-student-discovery-slot'),role==='aluno'&&!requested);
+ assert.equal(html.includes('data-institutional-mission="discovery"'),false);
+ assert.equal(html.includes('data-student-discovery-slot'),false);
  if(!requested)for(const id of ids)assert(html.includes('jogos.html?game='+id));else assert(html.includes('data-game-id="'+requested+'"'));
  }
 });
@@ -65,7 +65,7 @@ test('themes group independently from activity ids and preserve approved order',
  themes=groupColoringThemes([...rows,{id:'future',snapshot:{coloring:future}}]);assert.equal(themes.length,8);assert.equal(themes[0].activities.length,2);assert.equal(themes[0].activities[1].id,'future');assert.equal(themeForActivity({...future,themeId:'unknown'}),null);
  assert.equal(groupColoringThemes([]).length,0);assert.equal(groupColoringThemes(rows.slice(3,4))[0].id,'bichinhos-do-mar');
 });
-test('new tab preserves the game hub source and authorized legacy route fallback',()=>{
+test('new tab keeps the coloring gallery and authorized legacy route fallback',()=>{
  const source=readFileSync(resolve(root,'app-pages.js'),'utf8');
  assert(source.includes('colorirDescobrir: ["aluno", "educacao_infantil", "escola", "admin"]'));
  assert(source.includes('const studentAllowedRouteKeys = new Set(["colorirDescobrir",'));
