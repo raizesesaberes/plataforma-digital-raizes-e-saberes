@@ -19616,6 +19616,7 @@ const renderGamesModule = () => {
         </div>
         <div class="official-school-games">${renderStudentOfficialGameCards() || '<p class="muted" role="status">Nenhum jogo disponível para sua turma no momento. Os jogos aparecerão aqui quando forem liberados pela escola.</p>'}</div>
       </section>
+      <section data-student-discovery-slot></section>
     `;
   }
   if (isFamilyExperience && (!requestedGameId || !officialGameAllowed)) {
@@ -19628,6 +19629,7 @@ const renderGamesModule = () => {
         </div>
         <div class="official-school-games">${renderStudentOfficialGameCards() || '<p class="muted" role="status">Nenhum jogo disponível para sua turma no momento. Os jogos aparecerão aqui quando forem liberados pela escola.</p>'}</div>
       </section>
+      ${isStudentEarlyChildhoodContext() ? '<section data-institutional-mission="discovery" aria-label="Colorir e descobrir"></section>' : ""}
     `;
   }
   const playerAttribute = requestedGameId
@@ -34912,12 +34914,26 @@ const missionSessionIdentity = () => {
  return hasValidPlatformSession() && session.userId ? `${session.userId}:${getCurrentPlatformRole()}` : null;
 };
 const initInstitutionalMissions = () => {
+ document.querySelectorAll('[data-student-discovery-slot]').forEach(async slot => {
+  if(slot.dataset.hydrating) return; slot.dataset.hydrating='true';
+  const actor=missionSessionIdentity();
+  if(!actor || getCurrentPlatformRole()!=='aluno') return;
+  try {
+   const state=await ensureStudentInstitutionalData();
+   if(!slot.isConnected || actor!==missionSessionIdentity()) return;
+   if(state?.status!=='ready')throw Error('Contexto indisponível.');
+   if(!isStudentEarlyChildhoodContext()) return;
+   slot.innerHTML='<section data-institutional-mission="discovery" aria-label="Colorir e descobrir"></section>';
+   initInstitutionalMissions();
+  } catch { if(slot.isConnected && actor===missionSessionIdentity())slot.textContent='Não foi possível consultar os temas. Atualize a página para tentar novamente.'; }
+ });
  document.querySelectorAll('[data-institutional-mission]').forEach(async root => {
   if (root.dataset.mounted) return; root.dataset.mounted='true';
   try {
    const { mountMission } = await import('./mission-runtime/institutional.mjs');
    if (!root.isConnected) return;
    await mountMission({root, mode:root.dataset.institutionalMission, sessionIdentity:missionSessionIdentity,
+    discoveryAllowed:()=>["aluno","educacao_infantil"].includes(getCurrentPlatformRole()) && isStudentEarlyChildhoodContext(),
     rpc:async(name,args)=>{
      const actor=missionSessionIdentity(); if(!actor)throw Error('Sessão necessária.');
      let value;

@@ -5,7 +5,7 @@
     {
       "file": "app-pages.js",
       "original_sha256": "18618c982c3b6d49f57ad73ea66556b64889bf729b5a9dcffe614563c9076c92",
-      "sha256": "c717d62c05f3e61ad2c64ac77c3571f76d2d9bbfe82c3b3d8b726f85a23b5ebb"
+      "sha256": "7285f82ca3f22d2eb2e97e4b5b35ba650383954c5d5c54a7bad398d673b6688e"
     },
     {
       "file": "missao.html",
@@ -24,7 +24,7 @@
     },
     {
       "file": "mission-runtime/coloring/app.mjs",
-      "sha256": "9b0bf696a02ad4430141534538d4074d2b8dde7d18d3c8f077db57ed49fbe824"
+      "sha256": "e372000652392a33ac801c89f0ff5dc7cb853af2e0e6064458004d1ce91dd193"
     },
     {
       "file": "mission-runtime/coloring/art/banana.png",
@@ -108,7 +108,7 @@
     },
     {
       "file": "mission-runtime/institutional.mjs",
-      "sha256": "5f548c2347bf6b48626fa10c561c20a9c1f89b0f2148f23fd4d2cafcde7d8875"
+      "sha256": "2c626ca7c6b46c25a337d0bcbde8ce0d8b408e6e516e04fc9bfb71b643b11075"
     },
     {
       "file": "mission-runtime/logo-app.png",

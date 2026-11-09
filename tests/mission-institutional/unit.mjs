@@ -32,8 +32,25 @@ test('production adapter preserves direct RPC shapes and session/error guards',a
   missionSessionIdentity:()=>identity,getPlatformSession:()=>({userId:'teacher:1'}),
   createSupabaseRestClient:()=>({request:async(path,_q,opts)=>{requests++;assert.equal(path,'rpc/mission_teacher_classes_v1');assert.equal(opts.requireAuthenticated,true);if(fail)throw Error('RPC_FAILED');if(change)identity='teacher:2';return payload;}})
  });
- for(const value of [[],[{id:'one'}],[{id:'one'},{id:'two'}],{id:'one',version:2},null]){payload=value;const result=await rpc('mission_teacher_classes_v1',{});assert.strictEqual(result.data,value);}
+ for(const value of [[],[{id:'one'}],[{id:'one'},{id:'two'}],Array.from({length:8},(_,i)=>({id:String(i)})),{id:'one',version:2},null]){payload=value;const result=await rpc('mission_teacher_classes_v1',{});assert.strictEqual(result.data,value);}
  fail=true;await assert.rejects(rpc('mission_teacher_classes_v1',{}),/RPC_FAILED/);fail=false;
  change=true;await assert.rejects(rpc('mission_teacher_classes_v1',{}),/Sessão alterada/);change=false;
  identity=null;const count=requests;await assert.rejects(rpc('mission_teacher_classes_v1',{}),/Sessão necessária/);assert.equal(requests,count);
+});
+
+test('game hub retains four game cards and gates discovery to Infantil without player injection',()=>{
+ const source=readFileSync(resolve(root,'app-pages.js'),'utf8');
+ const start=source.indexOf('const renderGamesModule ='),end=source.indexOf('\nconst modules =',start),module=source.slice(start,end);
+ const render=Function('getRequestedGameId','getCurrentPlatformRole','isContentGovernanceRequired','isContentGovernanceReady','officialSchoolGameIds','isContentAvailableToSession','renderStudentOfficialGameCards','isStudentEarlyChildhoodContext',module+';return renderGamesModule;');
+ const ids=['caixa-misteriosa','organizando-cesta','jardim-descobertas','atelie-bia'];
+ for(const role of ['aluno','educacao_infantil'])for(const infant of [true,false])for(const requested of ['',...ids]){
+ const html=render(()=>requested,()=>role,()=>false,()=>true,ids,()=>true,()=>ids.map(id=>'<a href="jogos.html?game='+id+'">'+id+'</a>').join(''),()=>infant)();
+ assert.equal(html.includes('data-institutional-mission="discovery"'),role==='educacao_infantil'&&infant&&!requested);
+ assert.equal(html.includes('data-student-discovery-slot'),role==='aluno'&&!requested);
+ if(!requested)for(const id of ids)assert(html.includes('jogos.html?game='+id));else assert(html.includes('data-game-id="'+requested+'"'));
+ }
+});
+
+test('real page initialization calls institutional mount after route HTML insertion',()=>{
+ const source=readFileSync(resolve(root,'app-pages.js'),'utf8');const start=source.indexOf('const renderAppPage =');const body=source.slice(start,source.indexOf('const missionSessionIdentity',start));assert(start>0);assert(body.indexOf('${routeHtml}')>=0);assert(body.indexOf('initInstitutionalMissions();')>body.indexOf('${routeHtml}'));
 });
