@@ -2,7 +2,7 @@
   "name": "raizes-e-saberes-mobile",
   "version": "0.1.0",
   "private": true,
-  "main": "expo/AppEntry",
+  "main": "./index.ts",
   "scripts": {
     "start": "expo start",
     "ios": "expo start --ios",

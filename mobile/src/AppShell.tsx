@@ -1,8 +1,13 @@
+import { HostedStudentFeed } from "./screens/HostedStudentFeed";
+import { useHostedNavigation } from "./hooks-hosted-navigation";
+import { DemoSection } from "./screens/DemoSection";
+import { ExperienceHome } from "./screens/ExperienceHome";
+import { MissionWorkspace, EmbeddedExperience, initialMissionState } from "./screens/MissionWorkspace";
 import { AssessmentJourney } from "./screens/AssessmentJourney";
 import { CommunicationJourney } from "./screens/CommunicationJourney";
 import { Action as JourneyAction } from "./components/JourneyKit";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Feather } from "@expo/vector-icons";
+import { AppIcon as Feather } from "./components/AppIcon";
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions, type ImageSourcePropType } from "react-native";
 import {
   AppHeader,
@@ -150,16 +155,41 @@ type Route = {
   title: string;
 };
 
-export function AppShell({ profile, session, onLogout }: { profile: AppProfile; session: MobileSession | null; onLogout: () => void }) {
+// Hosted routes must resolve to an implemented real-data screen, never a legacy shell.
+// This is a presentation guard; API authorization remains enforced by the backend.
+function isHostedRouteSupported(role: AppProfile["role"], key: ModuleKey, hasInstitutional: boolean) {
+  if (!["crescer", "fundamental", "professor"].includes(role)) return false;
+  const route = String(key);
+  if (["mission", "coloring", "coloring-mission", "mission-planner", "prints"].includes(route)
+      || (role === "fundamental" && route === "games")) {
+    return hasInstitutional && (route !== "mission-planner" || role === "professor");
+  }
+  if (role === "professor") {
+    return ["home", "classes", "attendance", "communication", "agenda", "diary", "avalia", "tracking", "notifications", "profile", "profile:accessibility"].includes(route);
+  }
+  if (role !== "crescer" && role !== "fundamental") return false;
+  if (["home", "activities", "library", "agenda", "notifications", "profile"].includes(route)) return true;
+  if (/^(activity|book):[^:]+$/.test(route)) return true;
+  if (role === "fundamental") return ["avalia", "communication", "profile:accessibility"].includes(route);
+  return ["discoveries", "games", "achievements", "family", "family:week", "family:agenda", "family:notifications", "family:messages"].includes(route)
+    || /^(discovery|game|achievement):[^:]+$/.test(route);
+}
+
+export function AppShell({ profile, session, onLogout, preview = false, hosted = false, renderInstitutional, canLeave = () => true }: { profile: AppProfile; session: MobileSession | null; onLogout: () => void; preview?: boolean; hosted?: boolean; renderInstitutional?: (key: ModuleKey) => React.ReactNode; canLeave?: () => boolean }) {
+  const sectionBack = useRef<(() => boolean) | null>(null);
+  const registerSectionBack = useCallback((handler: (() => boolean) | null) => { sectionBack.current = handler; }, []);
+  const [missionState, setMissionState] = useState(initialMissionState);
   const [stack, setStack] = useState<Route[]>([{ key: "home", title: "Início" }]);
   const [readNotificationTitles, setReadNotificationTitles] = useState<string[]>([]);
   const route = stack[stack.length - 1];
+  const navigation = useHostedNavigation(hosted, [{key:"home",title:"Início"}] as Route[], setStack, canLeave);
   const tone = profile.accent === "child" ? "child" : profile.accent === "blue" ? "blue" : profile.role === "professor" ? "teacher" : "paper";
 
   const moduleMap = useMemo(() => new Map(profile.modules.map((item) => [item.key, item])), [profile.modules]);
 
   function goTo(key: ModuleKey) {
-    const title = String(key).startsWith("notification:")
+    if (key === "home") { goHome(); return; }
+    const title = key === "prints" ? "Atividades para Imprimir" : key === "games" ? "Jogos" : key === "mission" ? "Missão do Dia" : key === "coloring" || key === "coloring-mission" ? "Colorir e descobrir" : key === "mission-planner" ? "Planejamento da professora" : String(key).startsWith("notification:")
       ? "Notificação"
       : String(key).startsWith("agenda:")
       ? "Compromisso"
@@ -179,17 +209,19 @@ export function AppShell({ profile, session, onLogout }: { profile: AppProfile; 
           ? "Leitura"
           : String(key).startsWith("avalia:")
             ? "Avalia+"
-        : key === "home"
-          ? "Início"
-          : moduleMap.get(key)?.label ?? "Módulo";
-    setStack((current) => [...current, { key, title }]);
+        : moduleMap.get(key)?.label ?? "Módulo";
+    if (stack[stack.length - 1]?.key === key) return;
+    const nextStack = [...stack, {key,title}];
+    if(hosted)navigation.push(nextStack,String(key).includes(":")?"detalhe":String(key));else setStack(nextStack);
   }
 
   function goHome() {
-    setStack([{ key: "home", title: "Início" }]);
+    if(hosted)navigation.push([{ key: "home", title: "Início" }],"home");else setStack([{ key: "home", title: "Início" }]);
   }
 
   function goBack() {
+    if (preview && sectionBack.current?.()) return;
+    if(hosted && navigation.back())return;
     setStack((current) => (current.length > 1 ? current.slice(0, -1) : current));
   }
 
@@ -199,18 +231,30 @@ export function AppShell({ profile, session, onLogout }: { profile: AppProfile; 
 
   return (
     <View style={styles.root}>
-      <Screen tone={tone}>
-        {profile.role === "crescer" && route.key === "home" ? null : (
+      <Screen tone={tone} clean fullBleed={["coloring", "coloring-mission", "mission-planner", "prints"].includes(route.key)} scroll={hosted || !["coloring", "coloring-mission", "mission-planner", "prints"].includes(route.key)}>
+        {route.key === "home" ? null : (
           <AppHeader
             title={route.title}
             subtitle={profile.title}
             onBack={stack.length > 1 ? goBack : undefined}
-            onHome={route.key !== "home" ? goHome : undefined}
+            onHome={goHome}
             onLogout={onLogout}
           />
         )}
-        {route.key === "home" ? (
-          <HomeScreen profile={profile} session={session} onOpen={goTo} onLogout={onLogout} />
+        {hosted && !preview && (!session || !isHostedRouteSupported(profile.role, route.key, Boolean(renderInstitutional))) ? (
+          <EmptyState title={session ? "Área indisponível" : "Entre para continuar"} body={session ? "Abra uma área disponível pelo início. Este endereço não oferece conteúdo nesta versão do aplicativo." : "Sua sessão é necessária para consultar os dados da escola."} />
+        ) : route.key === "home" ? (
+          <ExperienceHome profile={profile} session={session} onOpen={goTo} onLogout={onLogout} preview={preview} hosted={hosted} />
+        ) : hosted && profile.role !== "professor" && ["agenda", "notifications"].includes(route.key) ? (
+          <HostedStudentFeed session={session} kind={route.key as "agenda" | "notifications"}/>
+        ) : hosted && renderInstitutional && (["mission", "coloring", "coloring-mission", "mission-planner", "prints"].includes(route.key) || (route.key === "games" && profile.role === "fundamental")) ? (
+          renderInstitutional(route.key)
+        ) : route.key === "mission" || (!preview && route.key === "games" && profile.role === "fundamental") ? (
+          <MissionWorkspace profile={profile} preview={preview} onOpen={goTo} state={missionState} onState={setMissionState} />
+        ) : ["coloring", "coloring-mission", "mission-planner", "prints"].includes(route.key) ? (
+          preview ? <EmbeddedExperience kind={route.key as "coloring" | "coloring-mission" | "mission-planner" | "prints"} /> : <MissionWorkspace profile={profile} preview={false} onOpen={goTo} state={missionState} onState={setMissionState} />
+        ) : preview ? (
+          <DemoSection key={`${profile.role}:${route.key}`} profile={profile} activeKey={route.key} onOpen={goTo} onBack={goBack} onLogout={onLogout} registerBack={registerSectionBack}/>
         ) : (
           <ModuleScreen
             profile={profile}
@@ -6466,11 +6510,12 @@ function TeacherDiaryScreen({
 
       <View style={styles.teacherDiaryFormCard}>
         <Text style={styles.teacherCommunicationFieldLabel}>Data da aula</Text>
-        <TextInput accessibilityLabel="Data da aula" value={date} onChangeText={onDateChange} style={styles.teacherCommunicationInput} />
+        <TextInput accessibilityLabel="Data da aula" editable={!writeGap} value={date} onChangeText={onDateChange} style={styles.teacherCommunicationInput} />
 
         <Text style={styles.teacherCommunicationFieldLabel}>Conteúdo trabalhado</Text>
         <TextInput
           accessibilityLabel="Conteúdo trabalhado"
+          editable={!writeGap}
           value={content}
           onChangeText={onContentChange}
           multiline
@@ -6481,6 +6526,7 @@ function TeacherDiaryScreen({
         <Text style={styles.teacherCommunicationFieldLabel}>Registro pedagógico</Text>
         <TextInput
           accessibilityLabel="Registro pedagógico"
+          editable={!writeGap}
           value={record}
           onChangeText={onRecordChange}
           multiline

@@ -1,0 +1,174 @@
+{
+  "schema": 1,
+  "baseCommit": "132da48959b5dd9614f11afbcac704747ff1596f",
+  "files": [
+    {
+      "file": "app/_expo/static/js/web/hosted-entry-0d13578c0baf6ba3a23ce05ef886d5ab.js",
+      "sha256": "82eff16e43678c6311fd02aa699ab4d0c512cddb2249b4c4f570eea6e87266c4"
+    },
+    {
+      "file": "app/assets/assets/branding/rs_crescer_bg_phone.1da1ecdef41f6dc81f6b173951734dcf.png",
+      "sha256": "6c97a711582c7f20985468f4ea6e76925438a0a5abd3f7c67b66a40915c12ea6"
+    },
+    {
+      "file": "app/assets/assets/branding/rs_crescer_bg_tablet.b3e4f5be28cc3edcdc2a24438b11713f.png",
+      "sha256": "e890c43b3236f94ba95d39ed19491b93777b3d7d7db40fab1fa025840a56c25c"
+    },
+    {
+      "file": "app/assets/assets/branding/rs_login_phone.721640b8d5b3a5c97b7480c071d21030.png",
+      "sha256": "bf79241b719f63b842c420e6c78969d4944ac1521cde9c4859bbf1b10fd360d3"
+    },
+    {
+      "file": "app/assets/assets/branding/rs_login_tablet.33713e990d386eab3ed9e7b19bc2356e.png",
+      "sha256": "26b06b4f78c33ed40bda38a6b34c2707d7cbee8a3fbc8540ed6d469144adfd08"
+    },
+    {
+      "file": "app/assets/assets/branding/rs_splash_phone.2f10fb359d61372fb0e2189651259b42.png",
+      "sha256": "1d253893c7b5452f68d5967839a17e72541fae19fddec5114a332d1c10bdd9ea"
+    },
+    {
+      "file": "app/assets/assets/branding/rs_splash_tablet.e477272ccea228132cbbb39f4e8e48c0.png",
+      "sha256": "3a82be24a726e7abbc6cbd16aae5467d54250c3e19bd748d119262b5830a2410"
+    },
+    {
+      "file": "app/assets/assets/branding/rs_student_bg_phone.1da1ecdef41f6dc81f6b173951734dcf.png",
+      "sha256": "6c97a711582c7f20985468f4ea6e76925438a0a5abd3f7c67b66a40915c12ea6"
+    },
+    {
+      "file": "app/assets/assets/branding/rs_student_bg_tablet.b3e4f5be28cc3edcdc2a24438b11713f.png",
+      "sha256": "e890c43b3236f94ba95d39ed19491b93777b3d7d7db40fab1fa025840a56c25c"
+    },
+    {
+      "file": "app/assets/assets/crescer-home/icon_agenda.c47502ae1c092b29327f3daeec0863af.png",
+      "sha256": "0cf7b4d31a98b259abb58863673c2bc0b0e8b10a5abc392b2349a7b78aa18881"
+    },
+    {
+      "file": "app/assets/assets/crescer-home/icon_atividades.c5e050dd1238c7c1b1a8584a12a62f8e.png",
+      "sha256": "04a5f5296bcc7648a1c7ad60d70ac7329f07630cf1578164ded2e64984c1300d"
+    },
+    {
+      "file": "app/assets/assets/crescer-home/icon_biblioteca.9986541feb3ffd2f513f1341c4bf99a2.png",
+      "sha256": "8273b3363ba4f3e4f71729d5df4460f27d1f037c2b8f08657be3fed6aee20498"
+    },
+    {
+      "file": "app/assets/assets/crescer-home/icon_conquistas.27bf27cbce6830550b8915a0ca9916d2.png",
+      "sha256": "eaf664295d83d6d368c9d8157988855d8041ed5f6c5c16bb1e595ecff593f88f"
+    },
+    {
+      "file": "app/assets/assets/crescer-home/icon_descobertas.13847c82c34c99cd9b45a3b8eae00a1f.png",
+      "sha256": "1f9ac98763d81920bdb3739c96bea193a54880f23d5471a834a819b613b841c5"
+    },
+    {
+      "file": "app/assets/assets/crescer-home/icon_familia.6004010485bf6ba25f40e5b3ab980547.png",
+      "sha256": "38f5f1f37ea7b7850628e912bdefe6b9c74a503068a99db87646dcd344e8f8a3"
+    },
+    {
+      "file": "app/assets/assets/crescer-home/icon_jogos.07446a2e0a0bfa2d0f12ac2c8eba426a.png",
+      "sha256": "4d65205a6220263f354d951ff835a5fc0834fcc063359adca2252eba600c8d3c"
+    },
+    {
+      "file": "app/assets/assets/crescer-home/icon_missao.7e44bc5b937b6e9ea9ada65d85d0fc5f.png",
+      "sha256": "0afe13c3270339f1e0c0ba97603286ff3608db1dada241fd748520c35ae210c4"
+    },
+    {
+      "file": "app/assets/assets/crescer-home/icon_notificacoes.a97bb0b3255323cb23a7ec78dc747a42.png",
+      "sha256": "3e242f9a38aaa45a21b3cc871f4465c1d812c9c086fb0476769097d8677c40bd"
+    },
+    {
+      "file": "app/assets/assets/crescer-home/icon_pendencias.a97bb0b3255323cb23a7ec78dc747a42.png",
+      "sha256": "3e242f9a38aaa45a21b3cc871f4465c1d812c9c086fb0476769097d8677c40bd"
+    },
+    {
+      "file": "app/assets/assets/crescer-home/icon_semana.c47502ae1c092b29327f3daeec0863af.png",
+      "sha256": "0cf7b4d31a98b259abb58863673c2bc0b0e8b10a5abc392b2349a7b78aa18881"
+    },
+    {
+      "file": "app/assets/assets/experience/borboleta.193e8b5a70680ac8579c72b928fc4ade.png",
+      "sha256": "f3bf97a8899bd774f23545b95085a1b48361ccb864392e6fb5a3b3991d2e3bfe"
+    },
+    {
+      "file": "app/assets/assets/experience/logo.05a875fcdd084f6fe6185aa82c2ca073.png",
+      "sha256": "2c22f6689c63e8a34bbb5f56d83d27e3a134b41ea4ff14802e785baf715d0e27"
+    },
+    {
+      "file": "app/assets/assets/icon-catalog/professor/prof_alert_bell.3716b1fb68bb65ea2117c46abf3f45f5.png",
+      "sha256": "9814f03ed6867a0fe3c7edd051c02199a21ff75c8b8cec00c61b7429b28aede8"
+    },
+    {
+      "file": "app/assets/assets/icon-catalog/professor/prof_calendar_clock.3d4e007afdbc8cfc394b60941c3b5308.png",
+      "sha256": "a4696e185bcae51e5dba33cbe32aa889b40ba106caea4b7802748cc7bcea4c4b"
+    },
+    {
+      "file": "app/assets/assets/icon-catalog/professor/prof_care_settings.5f11a3081883d7a56d0461bd6918ce6a.png",
+      "sha256": "5b2b9498ba02a8e1f0b951d16503271773212bcd1ab40ebca7149d7910a2bbff"
+    },
+    {
+      "file": "app/assets/assets/icon-catalog/professor/prof_chat_bubbles.b4d6b80d6f68fcc67de7f8c76ec5096c.png",
+      "sha256": "57ff5828addcbb7f2a078ed6fb6deb6a8fdc50157e443c883bebdb229a3f9cb6"
+    },
+    {
+      "file": "app/assets/assets/icon-catalog/professor/prof_checklist.0b90205ed50cd625fd89702a04b39526.png",
+      "sha256": "6413d9f7e3ac0fd5d8d99dc3319d9d68d8e80687a52e30270dccb2bccc363d78"
+    },
+    {
+      "file": "app/assets/assets/icon-catalog/professor/prof_checklist_pencil.13899b27c6867eb81dacd8a037057cd5.png",
+      "sha256": "f54ee08a67c7c8a590027f4520d5cb2fb73d40428631d389bb8ffa122a350d27"
+    },
+    {
+      "file": "app/assets/assets/icon-catalog/professor/prof_graduation_books.f998c2a0badb54c1e7e69d8dca404585.png",
+      "sha256": "f8cdbe9feea42fc0a61f347f8d94991f3573dce2e94ddc3503c222d55755f77d"
+    },
+    {
+      "file": "app/assets/assets/icon-catalog/professor/prof_group_chat.d9e5da3ac9065b01b07999f14ea2023c.png",
+      "sha256": "29b621fb428dc3bf10122e38a2967c21fd8fbea4fae6e44bb3c6b546d8b821f1"
+    },
+    {
+      "file": "app/assets/assets/icon-catalog/professor/prof_growth_chart.dc777e6732a3a02b626ecfe2c20bf6f6.png",
+      "sha256": "0cc76dd3eb4efb593ab638baf5e486a16127bdb8319f2085ff0df2c58e63a8f5"
+    },
+    {
+      "file": "app/assets/assets/icon-catalog/professor/prof_idea_books.75b08f52d4e777ddd74fa70aca6f0899.png",
+      "sha256": "650c80db7fb3838eb5907e926a0134f1287b17f86dc80d2ba30be49ff3a29434"
+    },
+    {
+      "file": "app/assets/assets/icon-catalog/professor/prof_notebook_pencil.f54cac47bba348a74dc6fde13d257e84.png",
+      "sha256": "ca2a0b42ac5623df9889ebaa60ade266df4324022b5a428399983bfa483bedc8"
+    },
+    {
+      "file": "app/assets/assets/icon-catalog/professor/prof_people_search.ddfaadb33c569a083ef4f7adb4d1e0a2.png",
+      "sha256": "596026f67672e2474b82413d5333586801574e3ec629ba75a623d6d6202b7898"
+    },
+    {
+      "file": "app/assets/assets/icon-catalog/professor/prof_person_edit.82243fd307ee42fa3a7994fcd23ec0cb.png",
+      "sha256": "086c37bf0a41178b346284d474f48d8885c1727c8c2a91e6c849058755d9cb2d"
+    },
+    {
+      "file": "app/assets/assets/icon-catalog/professor/prof_trophy.8c7714af940d41541a6f7baae6f24aa6.png",
+      "sha256": "a9d002445edbb97aa9e3e0bdd00b9f776ea69f54fb03233b5183fdf345e22d42"
+    },
+    {
+      "file": "app/assets/assets/teacher-home/icon_classes_tracking.655fd0a91c1efdb60955943f7fdfd09f.png",
+      "sha256": "b7d0ad13a5ef753e53180e62e65f4c2ec6cd7abe40f47a6e2d6efade7bc9836d"
+    },
+    {
+      "file": "app/assets/assets/teacher-home/icon_communication_avalia.a0a82191fd297587107041ae3bc30e98.png",
+      "sha256": "416265b721a60a5b85622aa9455c84d2ea334b8a73c697b2804fe8637b4dffa5"
+    },
+    {
+      "file": "app/assets/assets/teacher-home/icon_notifications_diary.70b722e44489af93d8bb6ab2d534f7db.png",
+      "sha256": "7db0b9b2477e5ff6727cd12b62283e6c53de8ad72bfeedffd8e5607f6758a3de"
+    },
+    {
+      "file": "app/assets/assets/teacher-home/icon_people_calendar.656f56ef834cf8afc03496e0f5321b1a.png",
+      "sha256": "d487820a70f539aae85b39b71ee80990d8267d11d4dcfc52ca5e5e06b15e18bb"
+    },
+    {
+      "file": "app/index.html",
+      "sha256": "c8cbf261110e736b8ef7162fe1116cb4d720f5cc62f720b62f010a1f4280e152"
+    },
+    {
+      "file": "app/platform-runtime.js",
+      "sha256": "74fe8e0d96799f265f8889a870e0aa9d4579295bde90fe922738d60513202756"
+    }
+  ]
+}

@@ -1,181 +1,26 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { StatusBar } from "expo-status-bar";
-import { Animated, Easing, Image, StyleSheet, Text, useWindowDimensions, View } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { AppShell } from "./src/AppShell";
-import { splashAssetFor } from "./src/branding";
-import { LoginScreen } from "./src/screens/LoginScreen";
-import { appProfiles, type AppRole } from "./src/data/fixtures";
-import type { MobileSession } from "./src/services/library";
+import React, {useEffect, useState} from 'react';
+import {StatusBar} from 'expo-status-bar';
+import {AccessibilityInfo, Animated, Easing, Image, Pressable, StyleSheet, Text, View, useWindowDimensions} from 'react-native';
+import {AppIcon as Feather} from './src/components/AppIcon';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {AppShell} from './src/AppShell';
+import {LoginScreen} from './src/screens/LoginScreen';
+import {appProfiles, type AppRole} from './src/data/fixtures';
+import type {MobileSession} from './src/services/library';
 
-const SPLASH_DURATION_MS = 2000;
-
-function SplashScreen({ onComplete }: { onComplete: () => void }) {
-  const { width, height } = useWindowDimensions();
-  const [progress, setProgress] = useState(0);
-  const spin = useRef(new Animated.Value(0)).current;
-  const splashAspectRatio = width >= 700 ? 1448 / 1086 : 948 / 1659;
-  const assetFrame = useMemo(() => getAssetFrame(width, height, splashAspectRatio), [height, splashAspectRatio, width]);
-
-  useEffect(() => {
-    const startedAt = Date.now();
-    const timer = setInterval(() => {
-      const nextProgress = Math.min(100, Math.round(((Date.now() - startedAt) / SPLASH_DURATION_MS) * 100));
-      setProgress(nextProgress);
-      if (nextProgress >= 100) {
-        clearInterval(timer);
-        onComplete();
-      }
-    }, 40);
-
-    return () => clearInterval(timer);
-  }, [onComplete]);
-
-  useEffect(() => {
-    const animation = Animated.loop(
-      Animated.timing(spin, {
-        toValue: 1,
-        duration: 1100,
-        easing: Easing.linear,
-        useNativeDriver: true
-      })
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [spin]);
-
-  const rotation = spin.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"]
-  });
-
-  return (
-    <View style={styles.splashScreen}>
-      <Image source={splashAssetFor(width)} resizeMode="cover" style={[styles.splashImage, assetFrame]} />
-      <View style={[styles.splashLayer, assetFrame]}>
-        <View style={styles.splashLoaderWrap}>
-          <View style={styles.splashLoaderShadow}>
-            <View style={styles.splashRing}>
-              <Animated.View style={[styles.splashOrbit, { transform: [{ rotate: rotation }] }]}>
-                <View style={styles.splashDot} />
-              </Animated.View>
-              <Text style={styles.splashPercent}>{progress}%</Text>
-            </View>
-          </View>
-          <Text style={styles.splashLoadingText}>Carregando</Text>
-        </View>
-      </View>
-    </View>
-  );
+function Splash({onComplete, preview=false}:{onComplete:()=>void;preview?:boolean}){
+ const [progress]=useState(()=>new Animated.Value(0));const {height}=useWindowDimensions();
+ useEffect(()=>{let active=true;let animation:Animated.CompositeAnimation|undefined;AccessibilityInfo.isReduceMotionEnabled().then(reduce=>{if(!active)return;animation=Animated.timing(progress,{toValue:1,duration:reduce?0:1500,easing:Easing.out(Easing.quad),useNativeDriver:false});animation.start();});const timer=preview?undefined:setTimeout(onComplete,1800);return()=>{active=false;if(timer)clearTimeout(timer);animation?.stop();};},[progress,onComplete,preview]);
+ return <View style={s.splash} testID="app-splash"><View style={s.outer}/><View style={s.inner}/>{preview&&<Text style={s.splashPreview}>PRÉVIA · TELA DE ABERTURA</Text>}<Image source={require('./assets/experience/logo.png')} style={[s.logo,height<700&&{width:220,height:100,marginBottom:24}]} resizeMode="contain" accessibilityLabel="Raízes e Saberes"/><Text style={[s.splashTitle,height<700&&{fontSize:29,lineHeight:36}]}>Grandes futuros{'\n'}nascem aqui.</Text><Text style={s.splashText}>Um novo dia para aprender e florescer.</Text><View style={s.track}><Animated.View style={[s.progress,{width:progress.interpolate({inputRange:[0,1],outputRange:['0%','100%']})}]}/></View><Text style={s.loading}>{preview?'ASSIM COMEÇA A EXPERIÊNCIA':'PREPARANDO SEU ESPAÇO'}</Text>{preview&&<><Pressable accessibilityRole="button" accessibilityLabel="Ver tela de login" onPress={onComplete} style={s.splashButton}><Text style={s.splashButtonText}>Ver tela de login</Text><Feather name="arrow-right" size={18} color="#fff"/></Pressable><Text style={s.splashHint}>Na versão final, a abertura segue automaticamente.</Text></>}<Text style={s.signature}>ECOSSISTEMA EDUCACIONAL</Text></View>;
 }
-
-function getAssetFrame(width: number, height: number, aspectRatio: number) {
-  const widthBasedHeight = width / aspectRatio;
-  const heightBasedWidth = height * aspectRatio;
-  const useWidth = widthBasedHeight >= height;
-  const baseWidth = useWidth ? width : heightBasedWidth;
-  const baseHeight = useWidth ? widthBasedHeight : height;
-
-  return {
-    height: baseHeight,
-    left: (width - baseWidth) / 2,
-    top: (height - baseHeight) / 2,
-    width: baseWidth
-  };
+export function Application({preview=false}:{preview?:boolean}){
+ const [splash,setSplash]=useState(true),[role,setRole]=useState<AppRole|null>(null),[session,setSession]=useState<MobileSession|null>(null),[epoch,setEpoch]=useState(0),[entrySection,setEntrySection]=useState<'login'|'profiles'>('login');
+ const baseProfile=role&&(session||preview)?appProfiles[role]:null;
+ const profile=baseProfile&&preview?{...baseProfile,userName:role==='crescer'?'Lia':role==='fundamental'?'Alex':'Professora Ana',school:'Escola de demonstração',className:role==='crescer'?'Infantil 4 anos · fictício':'6º ano · fictício'}:baseProfile;
+ const logout=()=>{setRole(null);setSession(null);setEntrySection('login');setEpoch(x=>x+1);};
+ const review=(section:'splash'|'login'|'profiles')=>{setRole(null);setSession(null);setEpoch(x=>x+1);setEntrySection(section==='profiles'?'profiles':'login');setSplash(section==='splash');};
+ const done=React.useCallback(()=>setSplash(false),[]);
+ return <SafeAreaProvider><StatusBar style="dark"/><View style={s.app}>{preview&&!splash&&<View style={s.banner}><View style={s.bannerLabel}><Feather name="eye" size={13} color="#47654c"/><Text style={s.bannerText}>PRÉVIA V2 · DADOS DEMONSTRATIVOS</Text></View><View style={s.reviewNav}>{(['splash','login','profiles'] as const).map((page,i)=><Pressable key={page} accessibilityRole="button" accessibilityLabel={['Rever splash','Rever login','Escolher perfil'][i]} onPress={()=>review(page)} style={s.switch}><Feather name={(['play','lock','users'] as const)[i]} size={14} color="#385c44"/><Text style={s.switchText}>{['Splash','Login','Perfis'][i]}</Text></Pressable>)}{profile&&<Pressable accessibilityRole="button" accessibilityLabel="Trocar perfil" onPress={()=>review('profiles')} style={s.switch}><Text style={s.switchText}>Trocar</Text><Feather name="repeat" size={14} color="#385c44"/></Pressable>}</View></View>}{splash?<Splash onComplete={done} preview={preview}/>:profile?<AppShell key={`${role}:${session?.userId||'demo'}:${epoch}`} profile={profile} session={session} onLogout={logout} preview={preview}/>:<LoginScreen key={epoch} preview={preview} initialSection={entrySection} onSelectRole={(nextRole,nextSession)=>{setRole(nextRole);setSession(nextSession??null);}}/>}</View></SafeAreaProvider>;
 }
-
-export default function App() {
-  const [showSplash, setShowSplash] = useState(true);
-  const [role, setRole] = useState<AppRole | null>(null);
-  const [session, setSession] = useState<MobileSession | null>(null);
-  const profile = useMemo(() => (role ? appProfiles[role] : null), [role]);
-  const authenticatedProfile = profile && session ? profile : null;
-
-  return (
-    <SafeAreaProvider>
-      <StatusBar style="dark" />
-      {showSplash ? (
-        <SplashScreen onComplete={() => setShowSplash(false)} />
-      ) : authenticatedProfile ? (
-        <AppShell
-          profile={authenticatedProfile}
-          session={session}
-          onLogout={() => {
-            setRole(null);
-            setSession(null);
-          }}
-        />
-      ) : (
-        <LoginScreen
-          onSelectRole={(nextRole, nextSession) => {
-            setRole(nextRole);
-            setSession(nextSession ?? null);
-          }}
-        />
-      )}
-    </SafeAreaProvider>
-  );
-}
-
-const styles = StyleSheet.create({
-  splashScreen: {
-    backgroundColor: "#f8fbef",
-    flex: 1
-  },
-  splashImage: {
-    position: "absolute"
-  },
-  splashLayer: {
-    position: "absolute"
-  },
-  splashLoaderWrap: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "flex-end",
-    gap: 12,
-    paddingBottom: "12%"
-  },
-  splashLoaderShadow: {
-    borderRadius: 52,
-    shadowColor: "#0b5136",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.18,
-    shadowRadius: 22
-  },
-  splashRing: {
-    width: 82,
-    height: 82,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 41,
-    borderWidth: 6,
-    borderColor: "rgba(255, 174, 36, 0.26)",
-    backgroundColor: "rgba(255, 255, 255, 0.84)"
-  },
-  splashOrbit: {
-    position: "absolute",
-    width: 82,
-    height: 82,
-    alignItems: "center"
-  },
-  splashDot: {
-    width: 15,
-    height: 15,
-    marginTop: -5,
-    borderRadius: 8,
-    backgroundColor: "#f59d16",
-    borderWidth: 3,
-    borderColor: "#fff9e8"
-  },
-  splashPercent: {
-    color: "#075c3a",
-    fontSize: 19,
-    fontWeight: "900"
-  },
-  splashLoadingText: {
-    color: "#0b6a42",
-    fontSize: 14,
-    fontWeight: "800",
-    letterSpacing: 0
-  }
-});
+export default function App(){return <Application/>;}
+const s=StyleSheet.create({app:{flex:1,backgroundColor:'#faf7ee'},splash:{flex:1,alignItems:'center',justifyContent:'center',backgroundColor:'#faf7ee',padding:26,overflow:'hidden'},outer:{position:'absolute',width:570,height:570,borderRadius:285,borderWidth:1,borderColor:'#e4e8d6'},inner:{position:'absolute',width:460,height:460,borderRadius:230,backgroundColor:'#eef0e0',opacity:.55},logo:{width:270,height:123,marginBottom:36},splashTitle:{fontSize:36,lineHeight:43,fontWeight:'800',color:'#1c513e',textAlign:'center',letterSpacing:-1.1},splashText:{fontSize:14,lineHeight:21,color:'#718367',marginTop:16,textAlign:'center'},track:{height:4,width:140,borderRadius:2,backgroundColor:'#dde3cc',marginTop:30,overflow:'hidden'},progress:{height:4,borderRadius:2,backgroundColor:'#69864f'},loading:{fontSize:8,fontWeight:'700',letterSpacing:2,color:'#7a8a6a',marginTop:13},signature:{position:'absolute',bottom:25,fontSize:9,letterSpacing:2,color:'#7c8c72'},splashPreview:{position:'absolute',top:30,fontSize:9,letterSpacing:1.5,color:'#667b58',fontWeight:'700'},splashButton:{backgroundColor:'#205b43',borderRadius:14,minHeight:50,paddingHorizontal:22,flexDirection:'row',alignItems:'center',gap:15,marginTop:26},splashButtonText:{color:'#fff',fontWeight:'700',fontSize:14},splashHint:{fontSize:10,color:'#7c8c72',textAlign:'center',marginTop:12,maxWidth:260},banner:{backgroundColor:'#eaf0df',borderBottomWidth:1,borderBottomColor:'#dbe4cf',paddingHorizontal:12,paddingVertical:4,flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:3,flexWrap:'wrap'},bannerLabel:{flexDirection:'row',alignItems:'center',gap:6,paddingVertical:6},bannerText:{fontSize:8,fontWeight:'700',letterSpacing:.6,color:'#526c4e'},reviewNav:{flexDirection:'row',alignItems:'center',gap:1,flexWrap:'wrap'},switch:{flexDirection:'row',alignItems:'center',gap:5,minHeight:40,paddingHorizontal:8},switchText:{fontSize:11,fontWeight:'700',color:'#385c44'}});

@@ -1,3 +1,4 @@
+import { authenticatedFetch, hostedConfig } from "./webSessionCore";
 export type MobileSession = {
   accessToken: string;
   refreshToken?: string;
@@ -448,6 +449,8 @@ const SUPABASE_URL = (process.env.EXPO_PUBLIC_SUPABASE_URL || "").trim().replace
 const SUPABASE_PUBLISHABLE_KEY = (process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "").trim();
 
 function requireSupabaseConfig() {
+  const web = hostedConfig();
+  if (web) return web;
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY || SUPABASE_PUBLISHABLE_KEY.toLowerCase().includes("service_role")) {
     throw new Error("supabase_public_config_missing");
   }
@@ -1015,7 +1018,7 @@ export async function getEarlyChildhoodDiscoveryAsset(session: MobileSession, di
 
 async function getEarlyChildhoodContentAsset(session: MobileSession, contentKind: "activity" | "discovery" | "game", contentId: string, assetId: string): Promise<EarlyChildhoodAsset> {
   const config = requireSupabaseConfig();
-  const response = await fetch(`${config.url}/functions/v1/student-early-childhood-asset-access`, {
+  const response = await authenticatedFetch(session, `${config.url}/functions/v1/student-early-childhood-asset-access`, {
     method: "POST",
     headers: authenticatedHeaders(session),
     body: JSON.stringify({
@@ -1114,7 +1117,7 @@ export async function getEarlyChildhoodGame(session: MobileSession, gameId: stri
 
 export async function getEarlyChildhoodGameManifest(session: MobileSession, gameId: string): Promise<EarlyChildhoodGameManifest> {
   const config = requireSupabaseConfig();
-  const response = await fetch(`${config.url}/functions/v1/student-early-childhood-asset-access`, {
+  const response = await authenticatedFetch(session, `${config.url}/functions/v1/student-early-childhood-asset-access`, {
     method: "POST",
     headers: authenticatedHeaders(session),
     body: JSON.stringify({
@@ -1631,7 +1634,7 @@ export async function getCrescerNotificationCenter(session: MobileSession): Prom
 
 export async function rpc<T>(session: MobileSession, name: string, body: Record<string, unknown>): Promise<T> {
   const config = requireSupabaseConfig();
-  const response = await fetch(`${config.url}/rest/v1/rpc/${name}`, {
+  const response = await authenticatedFetch(session, `${config.url}/rest/v1/rpc/${name}`, {
     method: "POST",
     headers: authenticatedHeaders(session),
     body: JSON.stringify(body)
@@ -1645,7 +1648,7 @@ export async function rpc<T>(session: MobileSession, name: string, body: Record<
 
 export async function restGet<T>(session: MobileSession, path: string): Promise<T> {
   const config = requireSupabaseConfig();
-  const response = await fetch(`${config.url}/rest/v1/${path}`, {
+  const response = await authenticatedFetch(session, `${config.url}/rest/v1/${path}`, {
     method: "GET",
     headers: authenticatedHeaders(session)
   });
@@ -1658,7 +1661,7 @@ export async function restGet<T>(session: MobileSession, path: string): Promise<
 
 async function edgeRead<T>(session: MobileSession, body: Record<string, unknown>): Promise<T> {
   const config = requireSupabaseConfig();
-  const response = await fetch(`${config.url}/functions/v1/student-library-read-access`, {
+  const response = await authenticatedFetch(session, `${config.url}/functions/v1/student-library-read-access`, {
     method: "POST",
     headers: authenticatedHeaders(session),
     body: JSON.stringify(body)

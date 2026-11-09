@@ -22,3 +22,7 @@ assets/video/*.mp4
 .env
 .env.*
 !.env.example
+
+mobile/.metro-cache*/
+
+/mobile/node_modules

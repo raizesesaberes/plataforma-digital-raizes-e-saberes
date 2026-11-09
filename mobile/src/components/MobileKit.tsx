@@ -1,5 +1,5 @@
 import React from "react";
-import { Feather } from "@expo/vector-icons";
+import { AppIcon as Feather } from "./AppIcon";
 import {
   Image,
   Pressable,
@@ -22,22 +22,26 @@ const ToneContext = React.createContext<ScreenTone>("paper");
 export function Screen({
   children,
   scroll = true,
-  tone = "paper"
+  tone = "paper",
+  clean = false,
+  fullBleed = false
 }: {
   children: React.ReactNode;
   scroll?: boolean;
   tone?: ScreenTone;
+  clean?: boolean;
+  fullBleed?: boolean;
 }) {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
-  const backgroundColor =
+  const backgroundColor = clean ? "#faf7ee" :
     tone === "child" ? colors.childSoft : tone === "blue" ? colors.blueSoft : tone === "teacher" ? colors.brandSoft : colors.paper;
   const content = (
     <ToneContext.Provider value={tone}>
-      <View style={[styles.screenInner, { paddingTop: insets.top + spacing.md }]}>{children}</View>
+      <View style={[styles.screenInner, { paddingTop: insets.top + spacing.md }, fullBleed && { paddingHorizontal: 0 }]}>{children}</View>
     </ToneContext.Provider>
   );
-  const backgroundEnvironment = getBackgroundEnvironment(tone);
+  const backgroundEnvironment = clean ? null : getBackgroundEnvironment(tone);
   const backgroundSource = backgroundEnvironment ? brandedAssetFor(backgroundEnvironment, width) : undefined;
   const backgroundFrame = getAssetFrame(width, height, width >= 700 ? 2048 / 2732 : 1290 / 2796);
   const shell = backgroundSource ? (
@@ -613,8 +617,8 @@ const styles = StyleSheet.create({
   },
   bottomLabel: {
     color: colors.muted,
-    fontSize: 9,
-    fontWeight: "800"
+    fontSize: 10,
+    fontWeight: "700"
   },
   bottomLabelActive: {
     color: colors.brand

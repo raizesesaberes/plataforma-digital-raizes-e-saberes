@@ -6,6 +6,11 @@ export type AppRole = "crescer" | "fundamental" | "professor";
 
 export type ModuleKey =
   | "home"
+  | "mission"
+  | "coloring"
+  | "coloring-mission"
+  | "mission-planner"
+  | "prints"
   | "discoveries"
   | "activities"
   | "library"
@@ -96,7 +101,7 @@ export const appProfiles: Record<AppRole, AppProfile> = {
   },
   professor: {
     role: "professor",
-    title: "Professor",
+    title: "Professora",
     subtitle: "Rotina docente",
     userName: "Professora Helena",
     school: "Escola Municipal Raízes e Saberes",
