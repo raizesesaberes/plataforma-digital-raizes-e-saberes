@@ -3,8 +3,8 @@
   "baseCommit": "4e91990aa5d7e98fbf18b793156f5229a998461f",
   "files": [
     {
-      "file": "app/_expo/static/js/web/hosted-entry-e693800257dbf38bdd4ad32468df85e7.js",
-      "sha256": "0b565650bfed99f8e2293504dc54b7f53a6cffdd9ea0b719052f24b40e9cadac"
+      "file": "app/_expo/static/js/web/hosted-entry-548a52a5270558da3902624fd8e5a28f.js",
+      "sha256": "fe5598ae5d045541300b833dea4e6f66b0ee886c5ba25e7b332cd69d891a4186"
     },
     {
       "file": "app/assets/assets/branding/rs_crescer_bg_phone.1da1ecdef41f6dc81f6b173951734dcf.png",
@@ -163,12 +163,16 @@
       "sha256": "d487820a70f539aae85b39b71ee80990d8267d11d4dcfc52ca5e5e06b15e18bb"
     },
     {
+      "file": "app/build-mode.json",
+      "sha256": "1301fc98a83163ff410c06f861d40ec590c801964b3d5d56e1cf2f6447fa4443"
+    },
+    {
       "file": "app/index.html",
-      "sha256": "7bef9bb19454f7285748fcd77e78a460b2f012cd28de617f8f4ba532db4cbe46"
+      "sha256": "ff3a4dac18f060674c4f72f16f7cabfa74abe65bea19716c0b7b478cf44825f4"
     },
     {
       "file": "app/platform-runtime.js",
-      "sha256": "04f7e5bbf714876d63f354691555d9efe8daf87ae6f9af5526a281405939f8bf"
+      "sha256": "5031469ae2b5ba8ac82e509a2a88af0f0cf6c773c4cdf327544e1e82c8441d1c"
     }
   ],
   "overrides": [

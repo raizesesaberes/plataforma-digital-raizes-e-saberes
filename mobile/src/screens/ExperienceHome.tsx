@@ -1,8 +1,9 @@
+import { READ_BETA, isReadBetaRoute } from '../services/readBetaPolicy';
 import React, { useEffect, useState } from "react";
 import { AppIcon as Feather } from "../components/AppIcon";
 import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import type { AppProfile, IconName, ModuleKey } from "../data/fixtures";
-import { getCrescerStudentProfile, getStudentProfile, getTeacherHomeSummary, getTeacherMobileClasses, type MobileSession } from "../services/library";
+import { getCrescerStudentProfile, getStudentProfile, getTeacherHomeSummary, getTeacherContext, getTeacherMobileClasses, type MobileSession } from "../services/library";
 
 type Props = { profile: AppProfile; session: MobileSession | null; onOpen: (key: ModuleKey) => void; onLogout: () => void; preview?: boolean; hosted?: boolean };
 type Identity = { name: string; school: string; detail: string; classes?: number };
@@ -62,10 +63,10 @@ export function ExperienceHome({ profile, session, onOpen, onLogout, preview = f
       try {
         let next: Identity;
         if (profile.role === "professor") {
-          const [summary, classes] = await Promise.all([getTeacherHomeSummary(session!), getTeacherMobileClasses(session!)]);
+          const [summary, classes] = await Promise.all([(READ_BETA ? getTeacherContext(session!) : getTeacherHomeSummary(session!)), getTeacherMobileClasses(session!)]);
           next = { name: summary.teacherName, school: summary.schoolName, detail: `${classes.length} turma${classes.length === 1 ? "" : "s"} vinculada${classes.length === 1 ? "" : "s"}`, classes: classes.length };
         } else {
-          const student = await (profile.role === "crescer" ? getCrescerStudentProfile(session!) : getStudentProfile(session!));
+          const student = await (!READ_BETA && profile.role === "crescer" ? getCrescerStudentProfile(session!) : getStudentProfile(session!));
           next = { name: student.name, school: student.schoolName, detail: [student.className, student.schoolYear || student.ageGroup].filter(Boolean).join(" · ") };
         }
         if (active) setLoaded({ key: identityKey, data: next, error: false });
@@ -80,7 +81,7 @@ export function ExperienceHome({ profile, session, onOpen, onLogout, preview = f
   const identity = preview ? demo[profile.role] : loaded?.key === identityKey ? loaded.data : null;
   const error = !preview && loaded?.key === identityKey && loaded.error;
   const greeting = identity ? `Olá, ${teacher ? identity.name : identity.name.split(" ")[0]}!` : error ? "Seu espaço de aprendizagem" : "Preparando seu espaço…";
-  const primary = shortcuts[profile.role].map(item => hosted && item.key === "diary" ? {...item, body: "Consulte e salve rascunhos"} : item);
+  const primary = shortcuts[profile.role].map(item => READ_BETA && !isReadBetaRoute(profile.role,item.key) ? {...item, body: "Indisponível neste beta"} : hosted && item.key === "diary" ? {...item, body: "Consulte e salve rascunhos"} : item);
   const used = new Set(primary.map(item => item.key));
   const more = [...profile.modules.filter(item => !used.has(item.key) && item.key !== "home" && item.key !== missionKey), ...(child || teacher ? [{key:"prints" as ModuleKey,label:"Atividades para Imprimir",icon:"printer" as IconName,description:"Folhas e orientações para explorar."}] : [])];
   const missionTitle = teacher ? "Pequenas missões.\nGrandes descobertas." : child ? "Que descoberta\nvamos fazer hoje?" : "Um novo desafio.\nUm passo adiante.";
@@ -112,11 +113,11 @@ export function ExperienceHome({ profile, session, onOpen, onLogout, preview = f
         <View style={[s.missionCopy, narrow && s.missionCopyNarrow]}>
           <View style={s.missionEyebrow}><Feather name={teacher ? "calendar" : "star"} size={15} color={palette.gold} /><Text style={s.missionEyebrowText}>{badge}</Text></View>
           <Text style={[s.missionTitle, narrow && s.missionTitleSmall, tiny && { fontSize: 28 }]}>{missionTitle}</Text>
-          <Text style={s.missionBody}>{preview ? missionSubtitle : hosted ? (teacher ? "Planeje atividades para suas turmas, confira o período e publique quando estiver pronto." : "Consulte as atividades disponíveis para sua turma e continue de onde parou.") : "Um novo espaço para reunir atividades preparadas para cada turma. A conexão com as missões institucionais ainda está em preparação."}</Text>
+          <Text style={s.missionBody}>{READ_BETA ? "Missões, atividades e gravações ainda não estão liberadas neste beta. Consulte sua biblioteca e informações escolares; para as demais funções, use a plataforma normal." : preview ? missionSubtitle : hosted ? (teacher ? "Planeje atividades para suas turmas, confira o período e publique quando estiver pronto." : "Consulte as atividades disponíveis para sua turma e continue de onde parou.") : "Um novo espaço para reunir atividades preparadas para cada turma. A conexão com as missões institucionais ainda está em preparação."}</Text>
           <Pressable onPress={() => onOpen(missionKey)} accessibilityRole="button" accessibilityLabel={teacher ? "Planejar Missão do Dia" : "Abrir Missão do Dia"} style={({ pressed }) => [s.missionButton, pressed && s.pressed]}>
-            <Text style={s.missionButtonText}>{preview ? teacher ? "Planejar uma missão" : "Explorar minha missão" : hosted ? teacher ? "Planejar minhas missões" : "Abrir minhas missões" : "Conhecer a nova área"}</Text><Feather name="arrow-right" size={18} color={palette.ink} />
+            <Text style={s.missionButtonText}>{READ_BETA ? "Ver disponibilidade" : preview ? teacher ? "Planejar uma missão" : "Explorar minha missão" : hosted ? teacher ? "Planejar minhas missões" : "Abrir minhas missões" : "Conhecer a nova área"}</Text><Feather name="arrow-right" size={18} color={palette.ink} />
           </Pressable>
-          <Text style={s.missionNote}>{preview ? "Exemplo para experimentar · sem envio a alunos" : hosted ? "Atividades e permissões vinculadas à sua conta" : "Integração de missões em preparação"}</Text>
+          <Text style={s.missionNote}>{READ_BETA ? "Beta real de consulta · sem salvar progresso" : preview ? "Exemplo para experimentar · sem envio a alunos" : hosted ? "Atividades e permissões vinculadas à sua conta" : "Integração de missões em preparação"}</Text>
         </View>
         {!narrow ? <View style={s.missionArt} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <View style={s.artOrbit} />

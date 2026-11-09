@@ -34385,21 +34385,8 @@ const initWorkspaceMenu = () => {
   });
 };
 
-function initAppRaizesShortcut() {
-  const root=document.querySelector('[data-app-page]');
-  if(!root||!hasValidPlatformSession()||!['professor','aluno','educacao_infantil'].includes(getCurrentPlatformRole()))return;
-  if(root.querySelector('[data-app-raizes-shortcut]'))return;
-  const bar=document.createElement('nav');bar.dataset.appRaizesShortcut='true';bar.setAttribute('aria-label','App Raízes');
-  bar.style.cssText='display:flex;justify-content:flex-end;padding:6px 16px;background:#eef1e3;border-bottom:1px solid #dce3d1;box-sizing:border-box;';
-  const link=document.createElement('a');link.href='/app/';link.setAttribute('aria-label','App Raízes: abrir versão para celular');
-  link.style.cssText='display:inline-flex;align-items:center;gap:8px;min-height:44px;color:#1c513e;text-decoration:none;font:700 14px system-ui,sans-serif;';
-  link.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="21" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M9 5h6M11 18h2"/></svg><span>App Raízes</span>';
-  bar.append(link);root.prepend(bar);
-}
-
 const initPlatformLogout = () => {
   initWorkspaceMenu();
-  initAppRaizesShortcut();
   if (platformLogoutInitialized) return;
   platformLogoutInitialized = true;
   document.addEventListener("click", async (event) => {

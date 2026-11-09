@@ -5,6 +5,7 @@ import ts from '../../mobile/node_modules/typescript/lib/typescript.js';
 async function moduleURL(name, replacements={}) {
   let source=await readFile(new URL(`../../mobile/src/services/${name}.ts`,import.meta.url),'utf8');
   let js=ts.transpile(source,{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022});
+  js=js.replace(/(["'])\.\/readBetaPolicy(?:\.ts)?\1/g,JSON.stringify(new URL('../../mobile/src/services/readBetaPolicy.ts',import.meta.url).href));
   for (const [name,url] of Object.entries(replacements)) js=js.replaceAll(`"./${name}"`,JSON.stringify(url)).replaceAll(`'./${name}'`,JSON.stringify(url));
   return `data:text/javascript;base64,${Buffer.from(js).toString('base64')}`;
 }

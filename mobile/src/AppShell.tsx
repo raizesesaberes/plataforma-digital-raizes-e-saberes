@@ -1,3 +1,5 @@
+import { READ_BETA, isReadBetaRoute } from './services/readBetaPolicy';
+import { ReadBetaSummary } from './screens/ReadBetaSummary';
 import { HostedTeacherCommands } from "./screens/HostedTeacherCommands";
 import { HostedStudentFeed } from "./screens/HostedStudentFeed";
 import { useHostedNavigation } from "./hooks-hosted-navigation";
@@ -256,10 +258,14 @@ export function AppShell({ profile, session, onLogout, preview = false, hosted =
             onLogout={onLogout}
           />
         )}
-        {hosted && !preview && (!session || !isHostedRouteSupported(profile.role, route.key, Boolean(renderInstitutional))) ? (
+        {hosted && READ_BETA && !isReadBetaRoute(profile.role, String(route.key)) ? (
+          <EmptyState title="Área indisponível neste beta" body="Esta função ainda não está liberada no beta de leitura. Use a plataforma normal pelo botão Plataforma acima." />
+        ) : hosted && !preview && (!session || !isHostedRouteSupported(profile.role, route.key, Boolean(renderInstitutional))) ? (
           <EmptyState title={session ? "Área indisponível" : "Entre para continuar"} body={session ? "Abra uma área disponível pelo início. Este endereço não oferece conteúdo nesta versão do aplicativo." : "Sua sessão é necessária para consultar os dados da escola."} />
         ) : route.key === "home" ? (
           <ExperienceHome profile={profile} session={session} onOpen={goTo} onLogout={onLogout} preview={preview} hosted={hosted} />
+        ) : hosted && READ_BETA && session && (route.key === 'profile' || (profile.role === 'professor' && ['classes','notifications'].includes(route.key))) ? (
+          <ReadBetaSummary key={`${route.key}:${session.userId}:${session.accessToken}`} session={session} role={profile.role} route={route.key}/>
         ) : hosted && String(route.key) === "profile:accessibility" ? (
           <EmptyState title="Acessibilidade em integração" body="As preferências reais de acessibilidade ainda não estão disponíveis no app." />
         ) : hosted && profile.role === "professor" && (route.key === "attendance" || route.key === "communication") ? (

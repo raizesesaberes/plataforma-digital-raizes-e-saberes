@@ -17,6 +17,14 @@ for (const entry of feature.files) {
 const allowedOverrides=['app-pages.js','missao.html','colorir-descobrir.html','login.js'];
 if (feature.overrides.length !== allowedOverrides.length || feature.overrides.some(e=>!allowedOverrides.includes(e.file)) || new Set(feature.overrides.map(e=>e.file)).size!==allowedOverrides.length) throw Error('Unapproved baseline override');
 for (const override of feature.overrides) if (baseline.find(e=>e.file===override.file)?.sha256 !== override.original_sha256) throw Error('Baseline identity changed');
+// A private beta link must not announce itself through the public platform menu.
+const mode = JSON.parse(readFileSync(join(root, 'app/build-mode.json'), 'utf8')).mode;
+if (mode === 'real-read-beta') {
+ // Verified bytes of 4e91990aa5d7e98fbf18b793156f5229a998461f:app-pages.js.
+ const productionMenuSha256 = 'fbe2abd6783576e5f24aa2e8a34753fbbf0a0ba085435566d30dd7baf042164f';
+ const actual = createHash('sha256').update(readFileSync(join(root, 'app-pages.js'))).digest('hex');
+ if (actual !== productionMenuSha256) throw Error('Read beta requires baseline platform menu without App shortcut');
+}
 const appOverrides=validateAppOverrides(app.overrides,baseline,feature.overrides);
 const manifest=[...baseline.map(e=>{const override=[...feature.overrides,...appOverrides].find(o=>o.file===e.file);return override?{file:e.file,sha256:override.sha256}:e;}),...feature.files,...app.files];
 if (!Array.isArray(baseline) || baseline.length !== 4373) throw new Error('Expected 4373 approved runtime files');

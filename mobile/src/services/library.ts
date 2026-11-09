@@ -1,3 +1,4 @@
+import { assertReadBetaRequest } from "./readBetaPolicy";
 import { authenticatedFetch, hostedConfig } from "./webSessionCore";
 export type MobileSession = {
   accessToken: string;
@@ -896,6 +897,7 @@ type RpcNotificationCenterRow = {
 
 export async function signInWithPassword(email: string, password: string): Promise<MobileSession> {
   const config = requireSupabaseConfig();
+  assertReadBetaRequest(`${config.url}/auth/v1/token?grant_type=password`, {method: "POST"}, config.url);
   const response = await fetch(`${config.url}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: {

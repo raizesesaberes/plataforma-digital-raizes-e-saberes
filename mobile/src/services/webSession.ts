@@ -1,3 +1,4 @@
+import { assertReadBetaRequest } from "./readBetaPolicy";
 import { rpc, type MobileSession, type SessionAppRole } from './library';
 import { SESSION_KEY, createSessionGuard, installHostedGuard, parsePublicConfig } from './webSessionCore';
 export type PlatformSessionState = {status: 'locked'; reason: string} | {status: 'ready'; session: MobileSession; role: SessionAppRole};
@@ -123,6 +124,7 @@ export async function signOutPlatformSession(): Promise<{revoked: boolean}> {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 8000);
   try {
+    assertReadBetaRequest(`${cfg.url}/auth/v1/logout?scope=local`, {method: "POST"}, cfg.url);
     const response = await fetch(`${cfg.url}/auth/v1/logout?scope=local`, {method: 'POST', headers: {apikey: cfg.publishableKey, Authorization: `Bearer ${token}`}, signal: controller.signal, cache: 'no-store', redirect: 'error'});
     return {revoked: response.ok};
   } catch { return {revoked: false}; }

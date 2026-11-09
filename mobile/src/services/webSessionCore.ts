@@ -1,3 +1,4 @@
+import { assertReadBetaRequest } from "./readBetaPolicy.ts";
 /** No browser state is read until the hosted entry explicitly enables this adapter. */
 export const SESSION_KEY = 'raizes:supabase-auth-session';
 export type SessionIdentity = { accessToken: string; userId: string; email?: string };
@@ -72,6 +73,7 @@ export function createSessionGuard(read: () => string | null, onLock: (reason: s
     if (current.expiresAt <= now() + 60000) { invalidate('session_expired'); throw Error('session_expired'); }
   }
   async function request(session: SessionIdentity, input: string, init: RequestInit = {}): Promise<Response> {
+    assertReadBetaRequest(input, init, hostedConfig()?.url);
     const epoch = generation;
     if (current?.verifying && current.retainedValidated && current.canonical === session) {
       // UI actions queue behind the existing verification. Its private candidate
@@ -114,5 +116,6 @@ export function installHostedGuard(config: () => PublicConfig, guard: ReturnType
 }
 export function hostedConfig(): PublicConfig | null { return hosted ? configReader!() : null; }
 export function authenticatedFetch(session: SessionIdentity, input: string, init: RequestInit): Promise<Response> {
+  assertReadBetaRequest(input, init, hostedConfig()?.url);
   return hosted ? requestGuard!.request(session, input, init) : fetch(input, init);
 }
