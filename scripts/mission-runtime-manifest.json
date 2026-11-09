@@ -5,12 +5,17 @@
     {
       "file": "app-pages.js",
       "original_sha256": "18618c982c3b6d49f57ad73ea66556b64889bf729b5a9dcffe614563c9076c92",
-      "sha256": "b58958954501e1723f2fd0120a242935843c8835e8beb8a5e9e25743e913fe77"
+      "sha256": "3af5ff394cc259e98e9fc653369b7a49600a710f9921fbe923dcd0719d5e938d"
     },
     {
       "file": "missao.html",
       "original_sha256": "6aaf3d40fd7525e5d0f7eaa8daad4453cf8a2f523b98bda6004c421e16562e92",
       "sha256": "c1cd0f9c0fad760a5f5b8d999f9a904838deb0f9b2780dd7277f5cbd2fe6fb88"
+    },
+    {
+      "file": "colorir-descobrir.html",
+      "original_sha256": "fdf5df4cfabc631b5446a2313866ea1d2b0fda4c65e4af3035b5216641ef4cdc",
+      "sha256": "3a0bf3a7a4f089372b572c2db75262c20a0ce00cd323d6fa0f81bc18c9cbad66"
     }
   ],
   "files": [
@@ -24,7 +29,7 @@
     },
     {
       "file": "mission-runtime/coloring/app.mjs",
-      "sha256": "e372000652392a33ac801c89f0ff5dc7cb853af2e0e6064458004d1ce91dd193"
+      "sha256": "e7cdf08205c4d6fb3076471abced88b8c077066207894a895301b968f42ac492"
     },
     {
       "file": "mission-runtime/coloring/art/banana.png",
@@ -71,6 +76,14 @@
       "sha256": "80f5bcbe20d2808285c83e646950c1763200d15ef127f7caeff09fba9e7327ac"
     },
     {
+      "file": "mission-runtime/coloring/discovery.css",
+      "sha256": "5e491f1906894c1db6fa3ae598fcb148a16499042e413993bcfa1eed520fca43"
+    },
+    {
+      "file": "mission-runtime/coloring/discovery.mjs",
+      "sha256": "0894a5434a5aa9d1c95597f215e599ecdffed8d6753f33278fbd198986220bde"
+    },
+    {
       "file": "mission-runtime/coloring/folhas-colorir-oito-temas.pdf",
       "sha256": "1c50c894c7416b6e1e04bc7ce2dc4d8e2ec9613115f2e4ec6fe9f3a677757e1c"
     },
@@ -107,8 +120,12 @@
       "sha256": "2af03fda95e8ddd6eef80fd27bdc737280efb711d1ef98dc71b249bf2f453f77"
     },
     {
+      "file": "mission-runtime/coloring/themes.mjs",
+      "sha256": "40370b7de25f4367ec69f89f400abcfd1a056936c83062c93baae38f43371c54"
+    },
+    {
       "file": "mission-runtime/institutional.mjs",
-      "sha256": "e6da5d4b676fe0d6c3f16c27193eede6749bb541755eb58b77e9849257a6c16f"
+      "sha256": "ed88cceeffc7e9e7c39afbd2c8b2ecb017e8f03885ef2f1046251e59af99c84c"
     },
     {
       "file": "mission-runtime/logo-app.png",

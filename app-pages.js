@@ -47,7 +47,7 @@ const routeAccessRules = {
   arvore: ["aluno"],
   missao: ["aluno", "educacao_infantil"],
   jogos: ["aluno", "educacao_infantil", "escola", "secretaria", "gestor", "coordenador", "admin"],
-  colorirDescobrir: ["educacao_infantil", "escola", "admin"],
+  colorirDescobrir: ["aluno", "educacao_infantil", "escola", "admin"],
   perfil: ["aluno"],
   biblioteca: ["aluno", "educacao_infantil", "escola", "professor", "secretaria", "gestor", "coordenador", "admin"],
   viewer: ["aluno", "educacao_infantil", "escola", "professor", "secretaria", "gestor", "coordenador", "admin"],
@@ -101,7 +101,7 @@ const protectedRouteKeyByPage = {
   "colorir-descobrir": "colorirDescobrir",
   suporte: "suporte",
 };
-const studentAllowedRouteKeys = new Set(["catalogoCategorias","aluno", "alunoAtividades", "alunoAtividade", "atividades", "missao", "arvore", "biblioteca", "jogos", "perfil", "viewer", "motorAtividade", "escolaColetiva", "suporte"]);
+const studentAllowedRouteKeys = new Set(["colorirDescobrir","catalogoCategorias","aluno", "alunoAtividades", "alunoAtividade", "atividades", "missao", "arvore", "biblioteca", "jogos", "perfil", "viewer", "motorAtividade", "escolaColetiva", "suporte"]);
 const earlyChildhoodAllowedRouteKeys = new Set(["atividades","missao","catalogoCategorias","familia", "educacaoInfantil", "jogos", "biblioteca", "viewer", "colorirDescobrir", "escolaColetiva", "suporte"]);
 const schoolAllowedRouteKeys = new Set(["escolaColetiva", "jogos", "biblioteca", "viewer", "colorirDescobrir", "suporte"]);
 const decodePlatformJwtPayload = (token) => {
@@ -8437,7 +8437,7 @@ const renderStudentPremiumSidebar = () => `
       <img src="logo-sidebar-dark.png" alt="Raízes e Saberes" onerror="this.hidden=true" />
     </a>
     <nav>
-      ${studentPremiumNav
+      ${[...studentPremiumNav, ...(isStudentEarlyChildhoodContext() ? [["colorir-descobrir.html", "Colorir e Descobrir", "star"]] : [])]
         .map(([href, label, icon], index) => {
           const viewParam = getPrintableParams().get("view") || "inicio";
           const hrefView = new URL(href, window.location.origin).searchParams.get("view") || "inicio";
@@ -19725,6 +19725,7 @@ const modules = {
     subtitle: "Atividades criativas da escola",
     code: "COLORIR-DESCOBRIR",
     get html() {
+      if (["aluno", "educacao_infantil"].includes(getCurrentPlatformRole())) return '<section data-student-discovery-slot role="region" aria-label="Colorir e Descobrir">Consultando seus temas…</section>';
       return window.renderColorirDescobrirApp?.() || `<div class="pcd-app" data-colorir-descobrir-app></div>`;
     },
   },
@@ -34703,7 +34704,7 @@ const renderAppPage = () => {
         : `<a class="${(environmentKey === "bancoQuestoes" ? key === questionBankView : environmentKey === "secretaria" ? key === getSecretariaCurrentView() : environmentKey === "gestor" ? key === getMunicipalNetworkView() : key === activeKey) ? "is-active" : ""}" href="${href}">${label}</a>`
     )
     .join("");
-  const studentWorkspaceShell = currentRole === "aluno" && ["biblioteca", "missao", "arvore", "jogos"].includes(activeKey);
+  const studentWorkspaceShell = currentRole === "aluno" && ["biblioteca", "missao", "arvore", "jogos", "colorirDescobrir"].includes(activeKey);
   const shellHomeHref = currentRole ? getRoleHome(currentRole) : environmentKey === "aluno" ? "aluno.html" : environmentKey === "escola" ? "escola.html" : platformRoute("/", "index.html");
   const shellLogoHref = currentRole ? getRoleHome(currentRole) : shellHomeHref;
   const topFilter = studentWorkspaceShell || environmentKey === "escola" || environmentKey === "secretaria" || environmentKey === "bancoQuestoes" ? "" : `<button class="top-filter" type="button">Filtros</button>`;
@@ -34926,17 +34927,32 @@ const missionSessionIdentity = () => {
  const session = getPlatformSession();
  return hasValidPlatformSession() && session.userId ? `${session.userId}:${getCurrentPlatformRole()}` : null;
 };
+const initColorirStudentNavigation = () => {
+ if(getCurrentPlatformRole()!=='aluno')return;
+ const shell=document.querySelector('.app-shell[data-environment="aluno"]');if(!shell||shell.dataset.colorirNavigation)return;
+ shell.dataset.colorirNavigation='pending';const actor=missionSessionIdentity();
+ ensureStudentInstitutionalData().then(state=>{
+  if(!shell.isConnected||actor!==missionSessionIdentity()||state?.status!=='ready'||!isStudentEarlyChildhoodContext())return;
+  const active=shell.dataset.activeModule==='colorirDescobrir';
+  for(const nav of [shell.querySelector('.app-nav'),document.querySelector('.mobile-tabbar')]){
+   if(!nav||nav.querySelector('[data-colorir-nav]'))continue;
+   const link=document.createElement('a');link.href='colorir-descobrir.html';link.dataset.colorirNav='true';link.textContent='Colorir e Descobrir';
+   if(active){link.className='is-active';link.setAttribute('aria-current','page');}nav.append(link);
+  }
+ }).catch(()=>{});
+};
 const initInstitutionalMissions = () => {
+ initColorirStudentNavigation();
  document.querySelectorAll('[data-student-discovery-slot]').forEach(async slot => {
   if(slot.dataset.hydrating) return; slot.dataset.hydrating='true';
   const actor=missionSessionIdentity();
-  if(!actor || getCurrentPlatformRole()!=='aluno') return;
+  if(!actor || !["aluno","educacao_infantil"].includes(getCurrentPlatformRole())) return;
   try {
-   const state=await ensureStudentInstitutionalData();
+   const state=getCurrentPlatformRole()==='aluno'?await ensureStudentInstitutionalData():{status:'ready'};
    if(!slot.isConnected || actor!==missionSessionIdentity()) return;
    if(state?.status!=='ready')throw Error('Contexto indisponível.');
-   if(!isStudentEarlyChildhoodContext()) return;
-   slot.innerHTML='<section data-institutional-mission="discovery" aria-label="Colorir e descobrir"></section>';
+   if(!isStudentEarlyChildhoodContext()){if(document.querySelector('[data-app-page="colorirDescobrir"]'))slot.textContent='Colorir e Descobrir está disponível para a Educação Infantil.';return;}
+   slot.innerHTML='<section data-institutional-mission="discovery" data-discovery-layout="'+(document.querySelector('[data-app-page="colorirDescobrir"]')?'themes':'legacy')+'" aria-label="Colorir e descobrir"></section>';
    initInstitutionalMissions();
   } catch { if(slot.isConnected && actor===missionSessionIdentity())slot.textContent='Não foi possível consultar os temas. Atualize a página para tentar novamente.'; }
  });
@@ -34945,7 +34961,7 @@ const initInstitutionalMissions = () => {
   try {
    const { mountMission } = await import('./mission-runtime/institutional.mjs');
    if (!root.isConnected) return;
-   await mountMission({root, mode:root.dataset.institutionalMission, sessionIdentity:missionSessionIdentity,
+   await mountMission({root, mode:root.dataset.institutionalMission, discoveryLayout:root.dataset.discoveryLayout||(document.querySelector('[data-app-page="colorirDescobrir"]')?'themes':'legacy'), sessionIdentity:missionSessionIdentity,
     discoveryAllowed:()=>["aluno","educacao_infantil"].includes(getCurrentPlatformRole()) && isStudentEarlyChildhoodContext(),
     rpc:async(name,args)=>{
      const actor=missionSessionIdentity(); if(!actor)throw Error('Sessão necessária.');
