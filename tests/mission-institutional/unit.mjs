@@ -9,7 +9,7 @@ test('snapshot byte identity verified and engine normalized',async()=>{const jso
 test('escape html',()=>assert.equal(escapeHtml('<a "x">&'), '&lt;a &quot;x&quot;&gt;&amp;'));
 test('timezone explicit and DST gaps rejected',()=>{assert.equal(localDeadlineToUtc('2026-11-08T10:00','America/Sao_Paulo'),'2026-11-08T13:00:00.000Z');assert.throws(()=>localDeadlineToUtc('2026-03-08T02:30','America/New_York'));assert.throws(()=>localDeadlineToUtc('2026-11-01T01:30','America/New_York'));});
 test('approved immutable source manifest verifies all copied assets',()=>{const m=JSON.parse(readFileSync(resolve(root,'mission-runtime/runtime-copy-manifest.json')));assert.equal(m.files.length,1137);let changed=0;for(const e of m.files){assert.equal(sha(readFileSync(resolve(root,'mission-runtime',e.file))),e.sha256,e.file);if(!e.unchanged)changed++;else assert.equal(e.sha256,e.source_sha256);}assert.equal(changed,5);});
-test('build manifest has two explicit baseline overrides and no test fixtures',()=>{const m=JSON.parse(readFileSync(resolve(root,'scripts/mission-runtime-manifest.json')));assert.equal(m.overrides.length,2);assert.equal(m.overrides[0].file,'app-pages.js');for(const e of m.files){assert(!e.file.includes('/tests/'));assert(!e.file.endsWith('runtime-copy-manifest.json'));assert.equal(sha(readFileSync(resolve(root,e.file))),e.sha256);}assert(!existsSync(resolve(root,'dist/tests')));});
+test('build manifest has three explicit baseline overrides and no test fixtures',()=>{const m=JSON.parse(readFileSync(resolve(root,'scripts/mission-runtime-manifest.json')));assert.deepEqual(m.overrides.map(o=>o.file),['app-pages.js','missao.html','colorir-descobrir.html']);assert.equal(m.overrides[0].file,'app-pages.js');for(const e of m.files){assert(!e.file.includes('/tests/'));assert(!e.file.endsWith('runtime-copy-manifest.json'));assert.equal(sha(readFileSync(resolve(root,e.file))),e.sha256);}assert(!existsSync(resolve(root,'dist/tests')));});
 test('official module has no browser storage or revoked editor RPC',()=>{const s=readFileSync(resolve(root,'mission-runtime/institutional.mjs'),'utf8');assert(!/localStorage\.|sessionStorage\./.test(s));assert(!s.includes('mission_teacher_publish_revision_v1'));assert(s.includes('mission-publish-revision'));assert(s.includes('p_week:week'));});
 test('late artwork ACK cannot change another activity version',async()=>{
  const source=readFileSync(resolve(root,'mission-runtime/institutional.mjs'),'utf8');const line=source.split('\n').find(x=>x.includes('artQueue=artQueue.then'));const body=line.slice(line.indexOf('artQueue=artQueue.then(async()=>{')+'artQueue=artQueue.then(async()=>{'.length,line.lastIndexOf('});}'));
@@ -53,4 +53,23 @@ test('game hub retains four game cards and gates discovery to Infantil without p
 
 test('real page initialization calls institutional mount after route HTML insertion',()=>{
  const source=readFileSync(resolve(root,'app-pages.js'),'utf8');const start=source.indexOf('const renderAppPage =');const body=source.slice(start,source.indexOf('const missionSessionIdentity',start));assert(start>0);assert(body.indexOf('${routeHtml}')>=0);assert(body.indexOf('initInstitutionalMissions();')>body.indexOf('${routeHtml}'));
+});
+
+
+test('themes group independently from activity ids and preserve approved order',async()=>{
+ const {groupColoringThemes,themeForActivity}=await import('../../mission-runtime/coloring/themes.mjs');
+ const activities=JSON.parse(readFileSync(resolve(root,'mission-runtime/coloring/catalog.json')));
+ const rows=activities.map((snapshot,i)=>({id:'revision-'+i,snapshot}));
+ let themes=groupColoringThemes(rows);assert.equal(themes.length,8);assert.deepEqual(themes.map(t=>t.label),['Perto de nós','Floresta','Bichinhos que voam','Bichinhos do mar','Frutas','Legumes','Selva','Números']);
+ const future={...activities[0],id:'future-drawing',title:'Synthetic future drawing',themeId:'perto-de-nos'};
+ themes=groupColoringThemes([...rows,{id:'future',snapshot:{coloring:future}}]);assert.equal(themes.length,8);assert.equal(themes[0].activities.length,2);assert.equal(themes[0].activities[1].id,'future');assert.equal(themeForActivity({...future,themeId:'unknown'}),null);
+ assert.equal(groupColoringThemes([]).length,0);assert.equal(groupColoringThemes(rows.slice(3,4))[0].id,'bichinhos-do-mar');
+});
+test('new tab preserves the game hub source and authorized legacy route fallback',()=>{
+ const source=readFileSync(resolve(root,'app-pages.js'),'utf8');
+ assert(source.includes('colorirDescobrir: ["aluno", "educacao_infantil", "escola", "admin"]'));
+ assert(source.includes('const studentAllowedRouteKeys = new Set(["colorirDescobrir",'));
+ const start=source.indexOf('  colorirDescobrir: {'),end=source.indexOf('  perfil: {',start),getter=source.slice(start,end);
+ assert(getter.includes('["aluno", "educacao_infantil"]'));assert(getter.includes('data-student-discovery-slot'));assert(getter.includes('window.renderColorirDescobrirApp'));
+ const entry=readFileSync(resolve(root,'colorir-descobrir.html'),'utf8');assert(entry.indexOf('src="supabase-config.js"')<entry.indexOf('src="app-pages.js'));
 });

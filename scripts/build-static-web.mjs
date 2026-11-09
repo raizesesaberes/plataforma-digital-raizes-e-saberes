@@ -11,7 +11,7 @@ if (!Array.isArray(feature.files) || !Array.isArray(feature.overrides)) throw Er
 for (const entry of feature.files) {
  if (!entry.file.startsWith('mission-runtime/') || entry.file.includes('/tests/') || entry.file.endsWith('runtime-copy-manifest.json')) throw Error('Non-runtime feature path');
 }
-const allowedOverrides=['app-pages.js','missao.html'];
+const allowedOverrides=['app-pages.js','missao.html','colorir-descobrir.html'];
 if (feature.overrides.length !== allowedOverrides.length || feature.overrides.some(e=>!allowedOverrides.includes(e.file)) || new Set(feature.overrides.map(e=>e.file)).size!==allowedOverrides.length) throw Error('Unapproved baseline override');
 for (const override of feature.overrides) if (baseline.find(e=>e.file===override.file)?.sha256 !== override.original_sha256) throw Error('Baseline identity changed');
 const manifest=[...baseline.map(e=>{const override=feature.overrides.find(o=>o.file===e.file);return override?{file:e.file,sha256:override.sha256}:e;}),...feature.files];
