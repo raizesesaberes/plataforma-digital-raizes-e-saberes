@@ -80,7 +80,7 @@ export function ExperienceHome({ profile, session, onOpen, onLogout, preview = f
   const identity = preview ? demo[profile.role] : loaded?.key === identityKey ? loaded.data : null;
   const error = !preview && loaded?.key === identityKey && loaded.error;
   const greeting = identity ? `Olá, ${teacher ? identity.name : identity.name.split(" ")[0]}!` : error ? "Seu espaço de aprendizagem" : "Preparando seu espaço…";
-  const primary = shortcuts[profile.role].map(item => hosted && item.key === "diary" ? {...item, body: "Consulte os registros da turma"} : item);
+  const primary = shortcuts[profile.role].map(item => hosted && item.key === "diary" ? {...item, body: "Consulte e salve rascunhos"} : item);
   const used = new Set(primary.map(item => item.key));
   const more = [...profile.modules.filter(item => !used.has(item.key) && item.key !== "home" && item.key !== missionKey), ...(child || teacher ? [{key:"prints" as ModuleKey,label:"Atividades para Imprimir",icon:"printer" as IconName,description:"Folhas e orientações para explorar."}] : [])];
   const missionTitle = teacher ? "Pequenas missões.\nGrandes descobertas." : child ? "Que descoberta\nvamos fazer hoje?" : "Um novo desafio.\nUm passo adiante.";

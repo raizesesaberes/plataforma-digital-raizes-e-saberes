@@ -12,6 +12,9 @@ import {
 export type HostedStudentFeedProps = {
   session: MobileSession | null;
   kind: "agenda" | "notifications";
+  detailToken?: string;
+  onDetail?: (token: string) => void;
+  onDetailBack?: () => void;
 };
 type FeedItem =
   | { kind: "agenda"; record: CrescerCalendarEvent }
@@ -19,30 +22,33 @@ type FeedItem =
 type FeedState =
   | { status: "loading" }
   | { status: "error"; forbidden: boolean }
-  | { status: "ready"; items: FeedItem[] };
+  | { status: "ready"; items: FeedItem[]; generation: string };
 
 /** Hosted only. Never resolves a detail through fixtures or a non-unique title. */
-export function HostedStudentFeed({ session, kind }: HostedStudentFeedProps) {
+export function HostedStudentFeed({ session, kind, detailToken, onDetail, onDetailBack }: HostedStudentFeedProps) {
   if (!session) {
     return <JourneyCard><Text style={s.text}>Entre para consultar {kind === "agenda" ? "sua agenda" : "suas notificações"}.</Text></JourneyCard>;
   }
   // A credential/account change clears old data synchronously, before effects run.
-  return <StudentFeed key={`${session.userId}:${session.accessToken}:${kind}`} session={session} kind={kind} />;
+  return <StudentFeed key={`${session.userId}:${session.accessToken}:${kind}`} session={session} kind={kind} detailToken={detailToken} onDetail={onDetail} onDetailBack={onDetailBack} />;
 }
 
-function StudentFeed({ session, kind }: { session: MobileSession; kind: HostedStudentFeedProps["kind"] }) {
+function StudentFeed({ session, kind, detailToken, onDetail, onDetailBack }: HostedStudentFeedProps & {session: MobileSession}) {
   const [state, setState] = useState<FeedState>({ status: "loading" });
-  const [selected, setSelected] = useState<FeedItem | null>(null);
+  const [localToken, setLocalToken] = useState<string | undefined>();
+  const token = onDetail ? detailToken : localToken;
+  const selected = state.status === "ready" && token?.startsWith(state.generation + ":")
+    ? state.items[Number(token.slice(state.generation.length + 1))] ?? null : null;
   const [revision, setRevision] = useState(0);
   useEffect(() => {
     let active = true;
-    setSelected(null);
+    setLocalToken(undefined);
     setState({ status: "loading" });
     const request: Promise<FeedItem[]> = kind === "agenda"
       ? getCrescerCalendarEvents(session).then((rows) => rows.map((record) => ({ kind: "agenda" as const, record })))
       : getCrescerNotificationCenter(session).then((rows) => rows.map((record) => ({ kind: "notifications" as const, record })));
     void request.then((items) => {
-      if (active) setState({ status: "ready", items });
+      if (active) setState({ status: "ready", items, generation: crypto.randomUUID() });
     }).catch((error: unknown) => {
       if (active) setState({ status: "error", forbidden: error instanceof Error && /:(401|403)(:|$)/.test(error.message) });
     });
@@ -50,7 +56,7 @@ function StudentFeed({ session, kind }: { session: MobileSession; kind: HostedSt
   }, [session, kind, revision]);
 
   function refresh() {
-    setSelected(null);
+    setLocalToken(undefined);
     setState({ status: "loading" });
     setRevision((value) => value + 1);
   }
@@ -58,7 +64,7 @@ function StudentFeed({ session, kind }: { session: MobileSession; kind: HostedSt
   if (selected) {
     return (
       <JourneyCard>
-        <Action title={kind === "agenda" ? "Voltar à agenda" : "Voltar às notificações"} onPress={() => setSelected(null)} />
+        <Action title={kind === "agenda" ? "Voltar à agenda" : "Voltar às notificações"} onPress={() => onDetailBack ? onDetailBack() : setLocalToken(undefined)} />
         <Text accessibilityRole="header" style={s.title}>{selected.record.title}</Text>
         {selected.kind === "agenda" ? <>
           <Text style={s.muted}>{calendarDate(selected.record.eventDate)}{selected.record.startTime ? ` · ${selected.record.startTime}` : ""}{selected.record.endTime ? ` até ${selected.record.endTime}` : ""}</Text>
@@ -94,7 +100,7 @@ function StudentFeed({ session, kind }: { session: MobileSession; kind: HostedSt
           <Text accessibilityRole="header" style={s.title}>{item.record.title}</Text>
           <Text style={s.muted}>{item.kind === "agenda" ? calendarDate(item.record.eventDate) : `${item.record.origin} · ${deliveryDate(item.record.deliveredAt)}`}</Text>
           {item.kind === "notifications" && item.record.unread ? <Text style={s.muted}>Não lida, conforme a última consulta</Text> : null}
-          <Action title={`Ver detalhes: ${item.record.title}`} onPress={() => setSelected(item)} />
+          <Action title={`Ver detalhes: ${item.record.title}`} onPress={() => {const token = `${state.generation}:${index}`;if(onDetail)onDetail(token);else setLocalToken(token);}} />
         </JourneyCard>
       )) : null}
     </View>

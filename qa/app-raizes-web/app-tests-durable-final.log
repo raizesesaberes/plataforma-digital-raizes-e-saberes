@@ -1,0 +1,53 @@
+✔ save preserves links and metadata, uses original revision, confirms readback (6.234759ms)
+✔ create uses empty expected revision and zero links (4.298716ms)
+✔ stale expected revision rejects before mutation (1.841385ms)
+✔ closed entry cannot be saved; close capability never sends a request (1.460068ms)
+✔ 403 and 409 are not converted into success or retried (2.20914ms)
+✔ lost acknowledgement after commit reconciles without a second write (0.901768ms)
+✔ uncertain uncommitted write requires explicit reload before retry (4.20444ms)
+✔ mismatched or incomplete read response fails closed (2.067515ms)
+✔ context changes prevent network requests (0.637881ms)
+✔ concurrent save is rejected while first operation is in flight (1.022465ms)
+✔ unmount/session change during read prevents returned data or mutation (0.761878ms)
+✔ success response with mismatched readback is never reported as saved (0.993934ms)
+✔ lost ack followed by failed readback locks mutation until an explicit successful load (1.048166ms)
+✔ real library RPC and hosted guard accept canonical session, reject clones and transmit If-Match (775.316278ms)
+✔ legacy title routes, empty details and unknown routes fail closed (4.063526ms)
+✔ institutional routes require a renderer and planning requires a teacher (0.635211ms)
+✔ real detail routes remain scoped to their supported roles (0.619751ms)
+✔ guard is wired before dispatch, requires session, preserves native and preview (0.438116ms)
+✔ real adapter uses Auth + server role + active institutional context, and clears only known keys (1123.456128ms)
+(node:8855) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/danielhenriquealmeidamarques/Documents/Codex/2026-11-09/app-raizes-web/platform/mobile/src/services/webSessionCore.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/danielhenriquealmeidamarques/Documents/Codex/2026-11-09/app-raizes-web/platform/mobile/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ missing and malformed sessions are denied (29.451798ms)
+✔ stored identity cannot override JWT subject (0.813266ms)
+✔ stored expiration cannot extend JWT (0.656567ms)
+✔ missing expiration is denied (0.610415ms)
+✔ candidate ignores spoofed role and does not retain refresh token (2.531084ms)
+✔ public config rejects secrets, URLs with credentials, query and insecure URLs (1.501429ms)
+✔ guard refuses unverified or fabricated session objects (4.675755ms)
+✔ logout permanently invalidates the previous session object (0.776455ms)
+✔ same-user token change invalidates old operations (0.953556ms)
+✔ expiry invalidates active state (0.983726ms)
+✔ storage change prevents request dispatch (1.330604ms)
+✔ logout aborts pending fetch and denies late result even if transport ignores abort (10.07132ms)
+✔ server denial locks state (12.75058ms)
+✔ body cannot be consumed after account changes (2.824091ms)
+✔ new generation supersedes validation (0.629584ms)
+✔ revalidation preserves canonical object but blocks its requests until commit (0.800515ms)
+✔ logout or expiry during revalidation prevents canonical session resurrection (0.67071ms)
+✔ continuity identity survives only same-raw live revalidation, never grants request access (0.649259ms)
+✔ continuity identity is removed immediately on expiry or logout (0.54889ms)
+✔ first mutation during verification waits for commit; validation candidate never deadlocks (3.290723ms)
+✔ queued mutation never dispatches after logout, token change, expiration or server denial (1.503875ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2426.511161
+PASS: list/detail back-forward; cancellation repair; no payload in browser history; forward-branch discard; forged-position ignored; foreign cancel preserves current state; foreign allow resets home; fresh epoch and next push/back/forward after both resets; cleanup.

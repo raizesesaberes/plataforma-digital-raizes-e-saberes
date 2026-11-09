@@ -1632,11 +1632,11 @@ export async function getCrescerNotificationCenter(session: MobileSession): Prom
   }));
 }
 
-export async function rpc<T>(session: MobileSession, name: string, body: Record<string, unknown>): Promise<T> {
+export async function rpc<T>(session: MobileSession, name: string, body: Record<string, unknown>, options?: { ifMatch?: string }): Promise<T> {
   const config = requireSupabaseConfig();
   const response = await authenticatedFetch(session, `${config.url}/rest/v1/rpc/${name}`, {
     method: "POST",
-    headers: authenticatedHeaders(session),
+    headers: { ...authenticatedHeaders(session), ...(options?.ifMatch !== undefined ? { "If-Match": options.ifMatch } : {}) },
     body: JSON.stringify(body)
   });
   if (!response.ok) {

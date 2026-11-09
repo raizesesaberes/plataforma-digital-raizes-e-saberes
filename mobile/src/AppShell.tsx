@@ -151,6 +151,7 @@ type TeacherSplitIcon = {
 };
 
 type Route = {
+  feedDetail?: string;
   key: ModuleKey;
   title: string;
 };
@@ -175,7 +176,7 @@ function isHostedRouteSupported(role: AppProfile["role"], key: ModuleKey, hasIns
     || /^(discovery|game|achievement):[^:]+$/.test(route);
 }
 
-export function AppShell({ profile, session, onLogout, preview = false, hosted = false, renderInstitutional, canLeave = () => true }: { profile: AppProfile; session: MobileSession | null; onLogout: () => void; preview?: boolean; hosted?: boolean; renderInstitutional?: (key: ModuleKey) => React.ReactNode; canLeave?: () => boolean }) {
+export function AppShell({ profile, session, onLogout, preview = false, hosted = false, renderInstitutional, renderDiary, canLeave = () => true }: { profile: AppProfile; session: MobileSession | null; onLogout: () => void; preview?: boolean; hosted?: boolean; renderInstitutional?: (key: ModuleKey) => React.ReactNode; renderDiary?: () => React.ReactNode; canLeave?: () => boolean }) {
   const sectionBack = useRef<(() => boolean) | null>(null);
   const registerSectionBack = useCallback((handler: (() => boolean) | null) => { sectionBack.current = handler; }, []);
   const [missionState, setMissionState] = useState(initialMissionState);
@@ -246,7 +247,9 @@ export function AppShell({ profile, session, onLogout, preview = false, hosted =
         ) : route.key === "home" ? (
           <ExperienceHome profile={profile} session={session} onOpen={goTo} onLogout={onLogout} preview={preview} hosted={hosted} />
         ) : hosted && profile.role !== "professor" && ["agenda", "notifications"].includes(route.key) ? (
-          <HostedStudentFeed session={session} kind={route.key as "agenda" | "notifications"}/>
+          <HostedStudentFeed session={session} kind={route.key as "agenda" | "notifications"} detailToken={route.feedDetail} onDetail={token => { if(route.feedDetail === token)return; navigation.push([...stack,{...route,feedDetail:token}],"detalhe"); }} onDetailBack={goBack}/>
+        ) : hosted && profile.role === "professor" && route.key === "diary" && renderDiary ? (
+          renderDiary()
         ) : hosted && renderInstitutional && (["mission", "coloring", "coloring-mission", "mission-planner", "prints"].includes(route.key) || (route.key === "games" && profile.role === "fundamental")) ? (
           renderInstitutional(route.key)
         ) : route.key === "mission" || (!preview && route.key === "games" && profile.role === "fundamental") ? (

@@ -1,0 +1,39 @@
+{
+  "recorded_at": "2026-11-09",
+  "environment": "iMac, Chrome, loopback only, synthetic fetch; no real account/backend",
+  "source_branch": "feature/app-raizes-web",
+  "base_runtime": "4d85baf00eecc72eed604738f71a7b70b641a0a2",
+  "app_bundle": "app/_expo/static/js/web/hosted-entry-099914672ddd3c6f4f0a605fd0779eff.js",
+  "app_bundle_sha256": "a97b6fa604ae9b73439322fea4684d4c6f99154fb5aa54b0449c3e56cd41b1c9",
+  "static_runtime_files": 5558,
+  "tests": {
+    "app": {
+      "pass": 40,
+      "fail": 0
+    },
+    "history": "pass",
+    "mission_unit": {
+      "pass": 20,
+      "fail": 0
+    },
+    "typescript": "pass"
+  },
+  "browser_checks": [
+    "390px teacher diary: dirty navigation blocked with feedback",
+    "390px teacher diary: synthetic draft save plus readback confirmed",
+    "390px teacher diary: return after save",
+    "320px agenda: equal titles select correct second record",
+    "320px history: Back to list, Forward to same record",
+    "logout removes account UI",
+    "no console errors/warnings in final run"
+  ],
+  "not_verified": [
+    "real Auth/RLS/write persistence",
+    "Safari iPhone and Chrome Android physical devices",
+    "feature flags and full parity",
+    "Colorir inner navigation browser history",
+    "production shortcut placement",
+    "store builds/publication"
+  ],
+  "publication": false
+}
