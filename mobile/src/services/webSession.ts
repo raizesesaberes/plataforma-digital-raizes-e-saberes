@@ -128,3 +128,23 @@ export async function signOutPlatformSession(): Promise<{revoked: boolean}> {
   } catch { return {revoked: false}; }
   finally { window.clearTimeout(timeout); }
 }
+
+/** Edition endpoints only. Uses the same validated identity and response-body guard. */
+export async function callPlatformLibraryFunction(session: MobileSession, name: string, args: Record<string, unknown>): Promise<unknown> {
+  if (!['library-edition-read-access', 'library-edition-search'].includes(name)) throw Error('function_not_allowed');
+  await awaitPlatformSessionReady(session);
+  const cfg = config();
+  const response = await guard.request(session, `${cfg.url}/functions/v1/${name}`, {method: 'POST', headers: {apikey: cfg.publishableKey, Authorization: `Bearer ${session.accessToken}`, 'Content-Type': 'application/json'}, body: JSON.stringify(args)});
+  if (!response.ok) throw Error('edition_function_request_failed');
+  const data = await response.json();
+  // Signed assets are data, not trusted navigation. Reject redirects to arbitrary
+  // origins and executable/non-network schemes before the reader receives a URL.
+  if (name === 'library-edition-read-access' && data?.asset) {
+    const raw = data.asset.signedUrl;
+    if (typeof raw !== 'string') throw Error('invalid_edition_asset_url');
+    let url: URL;
+    try { url = new URL(raw); } catch { throw Error('invalid_edition_asset_url'); }
+    if (url.protocol !== 'https:' || url.origin !== cfg.url || url.username || url.password) throw Error('invalid_edition_asset_url');
+  }
+  return data;
+}

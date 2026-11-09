@@ -2,6 +2,16 @@
 
 Estado em 9 de novembro de 2026: implementação local revisada; nenhum deploy do App ou instalação no VALIDATION foi realizado.
 
+## Continuação: acesso ao produto real
+
+O objetivo permanece a mesma conta e as mesmas informações da plataforma, sem novo cadastro para o aluno. A Biblioteca oficial de edições foi integrada ao App, com o mesmo cliente/leitor e transporte de sessão protegido. Materiais anteriores continuam acessíveis pela biblioteca da plataforma; não se afirma unificação de progresso entre leitores.
+
+Comandos docentes receberam seleção por IDs, data explícita, revisão de frequência por registro, matrícula elegível na data, releitura e bloqueio de reenvio incerto. A navegação global respeita o rascunho/operação pendente. Acessibilidade hosted não encaminha à tela demonstrativa.
+
+A revisão independente encontrou e acompanhou a correção de três pontos: guarda global docente, matrícula histórica e restauração da biblioteca após BFCache. Passaram 82 testes App, TypeScript, 20 testes de Missão e a suíte de histórico. Testes offline do leitor também passaram; BFCache foi exercitado com eventos simulados, não em iPhone físico. Export gerado com 42 arquivos. A conferência do pacote e a UI integrada são registradas separadamente em `app-raizes-real-delivery-plan.md`.
+
+O iMac desconectou durante a montagem estática; a retomada verificou que dist ainda tinha arquivos anteriores, antes de repetir somente a montagem gerada. Nenhum comando remoto estava em execução.
+
 ## Recursos existentes
 
 - Destino proposto: RS-SCHOOL-TEMPLATE-V1-VALIDATION (`fpzvkyoxsnhxalibdqpm`), preservando sua conta Auth, documentos e Edge. Não usar o segundo template nem produção para fixtures.

@@ -2,6 +2,7 @@
 import { createHash } from 'node:crypto';
 import { cpSync, lstatSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
+import { validateAppOverrides } from './lib/app-runtime-overrides.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const output = join(root, 'dist');
@@ -16,7 +17,8 @@ for (const entry of feature.files) {
 const allowedOverrides=['app-pages.js','missao.html','colorir-descobrir.html','login.js'];
 if (feature.overrides.length !== allowedOverrides.length || feature.overrides.some(e=>!allowedOverrides.includes(e.file)) || new Set(feature.overrides.map(e=>e.file)).size!==allowedOverrides.length) throw Error('Unapproved baseline override');
 for (const override of feature.overrides) if (baseline.find(e=>e.file===override.file)?.sha256 !== override.original_sha256) throw Error('Baseline identity changed');
-const manifest=[...baseline.map(e=>{const override=feature.overrides.find(o=>o.file===e.file);return override?{file:e.file,sha256:override.sha256}:e;}),...feature.files,...app.files];
+const appOverrides=validateAppOverrides(app.overrides,baseline,feature.overrides);
+const manifest=[...baseline.map(e=>{const override=[...feature.overrides,...appOverrides].find(o=>o.file===e.file);return override?{file:e.file,sha256:override.sha256}:e;}),...feature.files,...app.files];
 if (!Array.isArray(baseline) || baseline.length !== 4373) throw new Error('Expected 4373 approved runtime files');
 const seen = new Set();
 // Validate the complete source set before replacing any previous build.

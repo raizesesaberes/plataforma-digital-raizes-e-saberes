@@ -1,0 +1,28 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Offline BFCache lifecycle</title><output id="result">Running</output><p id="edition-status"></p><div id="edition-list"></div><div id="edition-reader" hidden></div>
+<script type="module">
+import {mountEditionLibrary} from '../../library-edition-boot.mjs';
+const checks=[],assert=(yes,name)=>{if(!yes)throw Error(name);checks.push(name);};
+const tick=()=>new Promise(r=>setTimeout(r,0));const until=async fn=>{for(let n=0;n<100&&!fn();n++)await tick();assert(fn(),'expected lifecycle settled');};
+const pixel='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+const key='raizes:supabase-auth-session',previous=localStorage.getItem(key),original=window.fetch;let lists=0;
+try {
+ window.RAIZES_SUPABASE={url:'https://offline.invalid',anonKey:'synthetic'};localStorage.setItem(key,JSON.stringify({access_token:'synthetic-only'}));
+ window.fetch=async(url,options)=>{
+  if(url.endsWith('/rpc/library_list_editions')){lists++;return Response.json([{book_id:'synthetic',title:'Teste',page_count:2,audience:'student'}]);}
+  if(url.endsWith('/functions/v1/library-edition-read-access')){const body=JSON.parse(options.body);return Response.json(body.assetKind==='manifest'?{ok:true,manifest:{pageCount:2}}:{ok:true,asset:{kind:body.assetKind,pageNumber:body.pageNumber,signedUrl:pixel}});}
+  throw Error('network forbidden');
+ };
+ const dispose=await mountEditionLibrary(document);assert(lists===1,'default catalog initially loads');document.querySelector('.ed-read').click();await until(()=>document.querySelector('[data-page-image]')?.hasAttribute('src'));
+ const oldImages=[...document.querySelectorAll('img')];window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));
+ assert(oldImages.every(image=>!image.hasAttribute('src')),'BFCache hide removes private URLs including detached images');
+ assert(document.querySelector('#edition-list').children.length===0,'BFCache does not retain private catalog');
+ window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));await until(()=>lists===2&&document.querySelector('.ed-read'));
+ assert(!document.querySelector('#edition-list').hidden,'restored default catalog is visible after leaving reader');
+ window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));await until(()=>lists===3&&document.querySelector('.ed-read'));
+ assert(document.querySelectorAll('.ed-toolbar').length===1,'repeated restoration does not duplicate controls');
+ window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));dispose();window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));await tick();
+ assert(lists===3,'explicit original disposal cancels pending restored mount');
+ const nonCached=await mountEditionLibrary(document);const before=lists;window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:false}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:false}));await tick();assert(lists===before,'ordinary unload does not remount');nonCached();
+ document.querySelector('#result').textContent='PASS '+checks.length+' checks: '+checks.join('; ');
+}catch(error){document.querySelector('#result').textContent='FAIL '+error.stack;}finally{window.fetch=original;if(previous===null)localStorage.removeItem(key);else localStorage.setItem(key,previous);}
+</script></html>

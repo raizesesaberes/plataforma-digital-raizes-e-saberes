@@ -1,3 +1,4 @@
+import { HostedTeacherCommands } from "./screens/HostedTeacherCommands";
 import { HostedStudentFeed } from "./screens/HostedStudentFeed";
 import { useHostedNavigation } from "./hooks-hosted-navigation";
 import { DemoSection } from "./screens/DemoSection";
@@ -176,14 +177,27 @@ function isHostedRouteSupported(role: AppProfile["role"], key: ModuleKey, hasIns
     || /^(discovery|game|achievement):[^:]+$/.test(route);
 }
 
-export function AppShell({ profile, session, onLogout, preview = false, hosted = false, renderInstitutional, renderDiary, canLeave = () => true }: { profile: AppProfile; session: MobileSession | null; onLogout: () => void; preview?: boolean; hosted?: boolean; renderInstitutional?: (key: ModuleKey) => React.ReactNode; renderDiary?: () => React.ReactNode; canLeave?: () => boolean }) {
+export function AppShell({ profile, session, onLogout, preview = false, hosted = false, renderInstitutional, renderDiary, renderLibrary, registerHostedLeaveGuard, canLeave = () => true }: { profile: AppProfile; session: MobileSession | null; onLogout: () => void; preview?: boolean; hosted?: boolean; renderInstitutional?: (key: ModuleKey) => React.ReactNode; renderDiary?: () => React.ReactNode; renderLibrary?: () => React.ReactNode; registerHostedLeaveGuard?: (guard: (() => boolean) | null) => void; canLeave?: () => boolean }) {
   const sectionBack = useRef<(() => boolean) | null>(null);
   const registerSectionBack = useCallback((handler: (() => boolean) | null) => { sectionBack.current = handler; }, []);
   const [missionState, setMissionState] = useState(initialMissionState);
   const [stack, setStack] = useState<Route[]>([{ key: "home", title: "Início" }]);
   const [readNotificationTitles, setReadNotificationTitles] = useState<string[]>([]);
   const route = stack[stack.length - 1];
-  const navigation = useHostedNavigation(hosted, [{key:"home",title:"Início"}] as Route[], setStack, canLeave);
+  const commandLeave = useRef<(() => boolean) | null>(null);
+  const hostedLeaveRegistrar = useRef(registerHostedLeaveGuard);
+  hostedLeaveRegistrar.current = registerHostedLeaveGuard;
+  const registerCommandLeave = useCallback((guard: (() => boolean) | null) => {
+    commandLeave.current = guard;
+    hostedLeaveRegistrar.current?.(guard);
+  }, []);
+  useEffect(() => () => {
+    if (commandLeave.current) {
+      commandLeave.current = null;
+      hostedLeaveRegistrar.current?.(null);
+    }
+  }, []);
+  const navigation = useHostedNavigation(hosted, [{key:"home",title:"Início"}] as Route[], setStack, () => canLeave() && (!commandLeave.current || commandLeave.current()));
   const tone = profile.accent === "child" ? "child" : profile.accent === "blue" ? "blue" : profile.role === "professor" ? "teacher" : "paper";
 
   const moduleMap = useMemo(() => new Map(profile.modules.map((item) => [item.key, item])), [profile.modules]);
@@ -246,8 +260,14 @@ export function AppShell({ profile, session, onLogout, preview = false, hosted =
           <EmptyState title={session ? "Área indisponível" : "Entre para continuar"} body={session ? "Abra uma área disponível pelo início. Este endereço não oferece conteúdo nesta versão do aplicativo." : "Sua sessão é necessária para consultar os dados da escola."} />
         ) : route.key === "home" ? (
           <ExperienceHome profile={profile} session={session} onOpen={goTo} onLogout={onLogout} preview={preview} hosted={hosted} />
+        ) : hosted && String(route.key) === "profile:accessibility" ? (
+          <EmptyState title="Acessibilidade em integração" body="As preferências reais de acessibilidade ainda não estão disponíveis no app." />
+        ) : hosted && profile.role === "professor" && (route.key === "attendance" || route.key === "communication") ? (
+          <HostedTeacherCommands session={session} kind={route.key} registerLeaveGuard={registerCommandLeave} />
         ) : hosted && profile.role !== "professor" && ["agenda", "notifications"].includes(route.key) ? (
           <HostedStudentFeed session={session} kind={route.key as "agenda" | "notifications"} detailToken={route.feedDetail} onDetail={token => { if(route.feedDetail === token)return; navigation.push([...stack,{...route,feedDetail:token}],"detalhe"); }} onDetailBack={goBack}/>
+        ) : hosted && route.key === "library" ? (
+          renderLibrary ? renderLibrary() : <EmptyState title="Biblioteca em integração" body="O catálogo real ainda não está disponível neste acesso." />
         ) : hosted && profile.role === "professor" && route.key === "diary" && renderDiary ? (
           renderDiary()
         ) : hosted && renderInstitutional && (["mission", "coloring", "coloring-mission", "mission-planner", "prints"].includes(route.key) || (route.key === "games" && profile.role === "fundamental")) ? (

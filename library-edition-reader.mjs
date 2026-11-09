@@ -1,7 +1,7 @@
 import {connectEditionSearch} from './library-edition-search-ui.mjs';
 // Controller for the existing reader controls. All page URLs come from the
 // protected service; no static path or PDF fallback is permitted.
-export async function connectEditionReader(root, client, bookId) {
+export async function connectEditionReader(root, client, bookId, options={}) {
  const image=root.querySelector('[data-page-image]');
  const label=root.querySelector('[data-page-label]');
  const frame=root.querySelector('[data-reader-page]');
@@ -10,6 +10,7 @@ export async function connectEditionReader(root, client, bookId) {
  const thumbs=root.querySelector('[data-thumbnail-list]');
  let current=1,zoom=1,generation=0,disposed=false,search;
  const request=await client.read(bookId,'manifest');
+ if(options.signal?.aborted)throw Error('reader_disposed');
  const count=request.manifest?.pageCount;
  if(!Number.isSafeInteger(count)||count<1)throw Error('invalid_manifest');
  root.dataset.totalPages=String(count);
@@ -57,7 +58,7 @@ export async function connectEditionReader(root, client, bookId) {
    zoom=Math.max(.5,Math.min(3,zoom+(button.matches('[data-zoom-in]')?.1:-.1)));
    frame.style.setProperty('--zoom',String(zoom));
    const value=root.querySelector('[data-zoom-label]');if(value)value.textContent=`${Math.round(zoom*100)}%`;
-  }else if(button.matches('[data-fullscreen-reader]'))void frame.requestFullscreen?.();
+  }else if(button.matches('[data-fullscreen-reader]'))void frame.requestFullscreen?.().catch(()=>{});
  };
  root.addEventListener('click',click);
  const observer=new IntersectionObserver(entries=>{
@@ -65,7 +66,7 @@ export async function connectEditionReader(root, client, bookId) {
    const number=Number(entry.target.dataset.page);
    void thumbnail(number).then(result=>{
     if(!disposed&&result.asset?.kind==='thumb'&&result.asset.pageNumber===number)entry.target.src=result.asset.signedUrl;
-   }).catch(()=>entry.target.setAttribute('alt',`Miniatura ${number} indisponível`));
+   }).catch(()=>!disposed&&entry.target.setAttribute('alt',`Miniatura ${number} indisponível`));
   }
  },{root:thumbs,rootMargin:'100px'});
  thumbs.replaceChildren();
@@ -75,6 +76,8 @@ export async function connectEditionReader(root, client, bookId) {
  }
  const imageError=()=>fail();image.addEventListener('error',imageError);
  search=connectEditionSearch(root,client,bookId,show);
- await show(1);
- return {show,dispose(){disposed=true;generation++;search?.dispose();coverImage.onload=null;coverImage.onerror=null;coverImage.removeAttribute('src');if(title&&identity.parentNode)identity.before(title);identity.remove();coverStyle.remove();observer.disconnect();root.removeEventListener('click',click);image.removeEventListener('error',imageError);image.removeAttribute('src');}};
+ const dispose=()=>{if(disposed)return;disposed=true;generation++;search?.dispose();coverImage.onload=null;coverImage.onerror=null;coverImage.removeAttribute('src');if(title&&identity.parentNode)identity.before(title);identity.remove();coverStyle.remove();observer.disconnect();root.removeEventListener('click',click);image.removeEventListener('error',imageError);image.removeAttribute('src');for(const thumb of thumbs.querySelectorAll('img'))thumb.removeAttribute('src');options.signal?.removeEventListener('abort',dispose);};
+ options.signal?.addEventListener('abort',dispose,{once:true});
+ if(options.signal?.aborted)dispose();else await show(1);
+ return {show,dispose};
 }

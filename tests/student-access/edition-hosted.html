@@ -1,0 +1,35 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline edition lifecycle tests</title><output id="result">Running</output><div id="host"></div>
+<script type="module">
+import {mountEditionLibrary,libraryEditionClient} from '../../library-edition-boot.mjs';
+import {connectEditionReader} from '../../library-edition-reader.mjs';
+const results=[];const assert=(value,name)=>{if(!value)throw Error(name);results.push(name);};
+const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
+const host=document.querySelector('#host'),root=host.attachShadow({mode:'open'});
+const setup=()=>{root.innerHTML='<p id="edition-status"></p><div id="edition-list"></div><div id="edition-reader"></div>';};
+const pixel='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+const books=[{book_id:'synthetic',title:'Teste sem rede',page_count:3,audience:'student'}];
+let reads=0;
+try {
+ Object.defineProperty(window,'RAIZES_SUPABASE',{get(){throw Error('hosted read legacy config');}});
+ const originalFetch=window.fetch;window.fetch=()=>{throw Error('network forbidden');};
+ setup();let resolveList;const abort=new AbortController();
+ const mount=mountEditionLibrary(root,{signal:abort.signal,client:{list:()=>new Promise(r=>resolveList=r),read:()=>{reads++;}}});
+ abort.abort();resolveList(books);const end=await mount;end();
+ assert(root.querySelector('#edition-list').children.length===0&&reads===0,'late list cannot render or request images after unmount');
+ setup();let resolveCover;const controller=new AbortController();
+ const dispose=await mountEditionLibrary(root,{signal:controller.signal,client:{list:async()=>books,read:()=>new Promise(r=>resolveCover=r)}});
+ const detachedImage=root.querySelector('img');controller.abort();dispose();resolveCover({asset:{kind:'thumb',pageNumber:1,signedUrl:pixel}});await tick();
+ assert(!detachedImage.hasAttribute('src'),'late cover cannot assign private URL');
+ assert(!root.querySelector('.ed-toolbar'),'catalog disposes inserted controls');
+ setup();const realAdapter=libraryEditionClient({rpc:async()=>({data:null})});await mountEditionLibrary(root,{client:realAdapter});
+ assert(root.querySelector('#edition-status').textContent.includes('Não foi possível'),'malformed list displays error, not empty success');
+ setup();let resolvePage;const pageAbort=new AbortController();
+ const cleanup=await mountEditionLibrary(root,{signal:pageAbort.signal,client:{list:async()=>books,read:async(id,kind,page)=>kind==='manifest'?{manifest:{pageCount:3}}:kind==='page'?new Promise(r=>resolvePage=r):{asset:{kind,pageNumber:page,signedUrl:pixel}}}});
+ root.querySelector('.ed-read').click();await tick();const detachedReader=root.querySelector('[data-book-reader]');
+ assert(!!detachedReader,'reader mounts after manifest');pageAbort.abort();cleanup();resolvePage({asset:{kind:'page',pageNumber:1,signedUrl:pixel}});await tick();
+ assert([...detachedReader.querySelectorAll('img')].every(img=>!img.hasAttribute('src')),'abort while first page awaits clears all private image URLs');
+ assert(!root.querySelector('[data-book-reader]'),'reader removed on abort');
+ window.fetch=originalFetch;
+ document.querySelector('#result').textContent='PASS '+results.length+' checks: '+results.join('; ');
+}catch(error){document.querySelector('#result').textContent='FAIL '+error.stack;}
+</script></html>
