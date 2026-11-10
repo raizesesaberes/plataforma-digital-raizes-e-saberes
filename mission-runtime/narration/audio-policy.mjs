@@ -40,20 +40,39 @@ async function issue(clip, binding) {
   return cue;
 }
 
-// Rehash on each request. Do not trust a copied ID, the stored hash alone, or a
-// previously verified mutable object. The engine remains the only state writer.
-export async function gameCue(session, clipId) {
-  const stateBefore = JSON.stringify(session);
-  const content = session?.content;
+// Capture JSON-shaped values without serializing large image data URLs on
+// every playback guard. Keys, array length and every leaf are still compared.
+export function unchangedSnapshot(value) {
+  function capture(source, ancestors = new Set()) {
+    if (source === null || typeof source !== 'object') return candidate => Object.is(candidate, source);
+    if (ancestors.has(source)) throw TypeError('Cyclic state is not supported');
+    const next = new Set(ancestors); next.add(source);
+    const array = Array.isArray(source), length = array ? source.length : null;
+    const keys = Object.keys(source), children = keys.map(key => capture(source[key], next));
+    return candidate => {
+      if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate) !== array || array && candidate.length !== length) return false;
+      const currentKeys = Object.keys(candidate);
+      return currentKeys.length === keys.length && keys.every((key, index) => currentKeys[index] === key && children[index](candidate[key]));
+    };
+  }
+  return capture(value);
+}
+// One exact content hash per presentation batch, and a fresh hash for each
+// explicit listen request. Never trust an ID, cached digest or mutable object.
+export async function gameCues(session, clipIds) {
+  const unchanged = unchangedSnapshot(session), content = session?.content;
   const example = approvedCopy.examples[content?.id];
-  if (!example || example.template !== content.template) return null;
+  if (!example || example.template !== content.template) return [];
   const digest = await contentDigest(content);
-  if (digest !== example.canonicalSha256 || JSON.stringify(session) !== stateBefore) return null;
+  if (digest !== example.canonicalSha256 || !unchanged(session)) return [];
   const state = gameCopyState(session, example);
   const permitted = [state.before, state.help, state.after,
     ...(session.complete ? [state.motor.finish] : [state.motor.entry, state.motor.help])];
-  const cue = await issue(permitted.find(clip => clip?.id === clipId), `game:${content.id}:${content.template}:${digest}`);
-  return JSON.stringify(session) === stateBefore ? cue : null;
+  const cues = await Promise.all(clipIds.map(clipId => issue(permitted.find(clip => clip?.id === clipId), `game:${content.id}:${content.template}:${digest}`)));
+  return unchanged(session) ? cues : [];
+}
+export async function gameCue(session, clipId) {
+  return (await gameCues(session, [clipId]))[0] || null;
 }
 
 // The caller must already have passed the institutional snapshot/art checks.

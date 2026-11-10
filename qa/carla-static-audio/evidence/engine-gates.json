@@ -1,0 +1,112 @@
+[
+  {
+    "template": "quiz",
+    "id": "ed05-EF1-ciencias-variedades-quiz-01",
+    "actualEngine": true,
+    "wrongAttemptReviewed": true,
+    "approvedExplanationGate": true,
+    "audioCueGate": true,
+    "installedEntry": false,
+    "installedExplanation": false,
+    "editedContentRejected": true
+  },
+  {
+    "template": "association",
+    "id": "ed05-EF4-ciencias-variedades-association-01",
+    "actualEngine": true,
+    "wrongAttemptReviewed": true,
+    "approvedExplanationGate": true,
+    "audioCueGate": true,
+    "installedEntry": false,
+    "installedExplanation": false,
+    "editedContentRejected": true
+  },
+  {
+    "template": "memory",
+    "id": "ed05-EI4-ciencias-variedades-memory-01",
+    "actualEngine": true,
+    "wrongAttemptReviewed": true,
+    "approvedExplanationGate": true,
+    "audioCueGate": true,
+    "installedEntry": false,
+    "installedExplanation": false,
+    "editedContentRejected": true
+  },
+  {
+    "template": "sequence",
+    "id": "ed05-EF1-matematica-sequence-01",
+    "actualEngine": true,
+    "wrongAttemptReviewed": true,
+    "approvedExplanationGate": true,
+    "audioCueGate": true,
+    "installedEntry": false,
+    "installedExplanation": false,
+    "editedContentRejected": true
+  },
+  {
+    "template": "classification",
+    "id": "ed05-EM1-matematica-classification-01",
+    "actualEngine": true,
+    "wrongAttemptReviewed": true,
+    "approvedExplanationGate": true,
+    "audioCueGate": true,
+    "installedEntry": false,
+    "installedExplanation": false,
+    "editedContentRejected": true
+  },
+  {
+    "template": "puzzle",
+    "id": "ed05-EF1-ciencias-variedades-puzzle-01",
+    "actualEngine": true,
+    "wrongAttemptReviewed": true,
+    "approvedExplanationGate": true,
+    "audioCueGate": true,
+    "installedEntry": false,
+    "installedExplanation": false,
+    "editedContentRejected": true
+  },
+  {
+    "template": "word-search",
+    "id": "ed05-EM3-ciencias-variedades-word-search-01",
+    "actualEngine": true,
+    "wrongAttemptReviewed": true,
+    "approvedExplanationGate": true,
+    "audioCueGate": true,
+    "installedEntry": false,
+    "installedExplanation": true,
+    "editedContentRejected": true
+  },
+  {
+    "template": "crossword",
+    "id": "ed05-EF1-ciencias-variedades-crossword-01",
+    "actualEngine": true,
+    "wrongAttemptReviewed": true,
+    "approvedExplanationGate": true,
+    "audioCueGate": true,
+    "installedEntry": false,
+    "installedExplanation": false,
+    "editedContentRejected": true
+  },
+  {
+    "template": "completion",
+    "id": "ed05-EI4-portugues-completion-01",
+    "actualEngine": true,
+    "wrongAttemptReviewed": true,
+    "approvedExplanationGate": true,
+    "audioCueGate": true,
+    "installedEntry": false,
+    "installedExplanation": false,
+    "editedContentRejected": true
+  },
+  {
+    "template": "trail",
+    "id": "ed05-EM1-matematica-trail-01",
+    "actualEngine": true,
+    "wrongAttemptReviewed": true,
+    "approvedExplanationGate": true,
+    "audioCueGate": true,
+    "installedEntry": false,
+    "installedExplanation": false,
+    "editedContentRejected": true
+  }
+]

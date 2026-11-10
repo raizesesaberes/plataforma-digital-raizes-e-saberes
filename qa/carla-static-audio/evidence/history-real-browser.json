@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "checkpointAssets": 42,
+  "testOnlyExtraClip": "quiz-exemplo-explicacao",
+  "sha256": "9e999941cbbf0505f1e06cea758e6ed91780db75e3335d6c8fdd1a9a50db0406",
+  "bytes": 107216,
+  "durationSeconds": 5.642437,
+  "listenedIndividually": false,
+  "chromeOutputMuted": true,
+  "viewportWidth": 390,
+  "reducedMotion": true,
+  "explicitListenAfterItemAdvancePlusMs": 1500,
+  "entireRealClipReachedEnded": true,
+  "originalAdvanceUnchanged": true,
+  "productionRegistryChanged": false,
+  "limitations": [
+    "P10 file served by isolated QA route only.",
+    "Chrome headless; not a listening assessment, physical phone, Safari or screen reader."
+  ],
+  "errors": []
+}

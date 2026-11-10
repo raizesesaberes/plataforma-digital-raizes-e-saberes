@@ -272,3 +272,43 @@ for (const command of ['stop', 'pause', 'resume']) test('game ' + command + ' ca
     assert.deepEqual(calls, [command], 'older listen must not call play after the newer command');
   } finally { held?.restore(); internals.H = previous; }
 });
+
+for (const phase of ['before deferred preparation', 'during deferred digest']) test('game cleanup prevents stale controls ' + phase, async () => {
+  const {r} = await import('../../mission-runtime/studio/assets/react-Db-_YT-E.js');
+  const {useGameAudio} = await import('../../mission-runtime/narration/game-audio.mjs');
+  const {assetRegistry} = await import('../../mission-runtime/narration/asset-registry.mjs');
+  const read = path => readFileSync(new URL('../../' + path, import.meta.url));
+  const catalog = JSON.parse(read('mission-runtime/catalog.json')), manifest = JSON.parse(read('scripts/mission-runtime-manifest.json'));
+  const [id, example] = Object.entries(approvedCopy.examples).find(([, example]) => example.template === 'quiz');
+  const expand = value => Array.isArray(value) ? value.map(expand) : value && typeof value === 'object' ? Object.fromEntries(Object.entries(value).map(([key, item]) => {
+    if (key === 'src' && typeof item === 'string' && item.startsWith('rsplay-asset:')) {
+      const entry = manifest.files.find(entry => entry.sha256 === item.slice(13) && entry.file.startsWith('mission-runtime/studio/runtime/assets/'));
+      return [key, 'data:' + (entry.file.endsWith('.png') ? 'image/png' : 'image/jpeg') + ';base64,' + read(entry.file).toString('base64')];
+    }
+    return [key, expand(item)];
+  })) : value;
+  const content = expand(JSON.parse(read('mission-runtime/studio/' + catalog.find(entry => entry.id === id).runtimeFile)));
+  const session = {content, questionIndex: 0, feedback: null, matched: [], flipped: [], correct: 0, complete: false};
+  const updates = [], calls = [], effects = [], deferred = [];
+  const player = {setContext() {}, stop() {calls.push('stop');}, dispose() {calls.push('dispose');}};
+  const refs = [{current: player}, {current: null}, {current: 0}];
+  const React = r(), internals = React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
+  const previous = internals.H, nativeSet = globalThis.setTimeout, nativeClear = globalThis.clearTimeout;
+  let refIndex = 0, stateIndex = 0, cleanup, held;
+  internals.H = {useRef: () => refs[refIndex++], useState: () => [stateIndex++ ? {state:'idle'} : null, value => updates.push(value)], useLayoutEffect: fn => effects.push(fn), useEffect() {}};
+  globalThis.setTimeout = fn => {deferred.push(fn); return 123;};
+  globalThis.clearTimeout = token => {assert.equal(token,123); calls.push('clear');};
+  try {
+    useGameAudio(session, example, {registry: () => assetRegistry});
+    cleanup = effects[0](); assert.equal(deferred.length,1);
+    held = holdNextDigest();
+    if (phase === 'during deferred digest') {deferred[0](); assert(held.pending);}
+    cleanup(); cleanup = null;
+    if (phase === 'before deferred preparation') {deferred[0](); assert.equal(held.pending,false);}
+    else await held.release();
+    globalThis.setTimeout = nativeSet; globalThis.clearTimeout = nativeClear;
+    await tick(); await tick();
+    assert.deepEqual(updates,[null], 'a cleaned-up cycle never publishes a prepared cue');
+    assert.deepEqual(calls,['clear','stop']);
+  } finally {held?.restore(); globalThis.setTimeout=nativeSet; globalThis.clearTimeout=nativeClear; cleanup?.(); internals.H=previous;}
+});

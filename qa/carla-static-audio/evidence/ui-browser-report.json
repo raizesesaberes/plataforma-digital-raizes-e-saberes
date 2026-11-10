@@ -1,0 +1,19 @@
+{
+  "testDoublesOnly": true,
+  "realAudio": false,
+  "results": [
+    {
+      "coloring": "keyboard, second gesture, pause/resume, tab cancellation, empty-stage fallback"
+    },
+    {
+      "coloring": "cancelled slow load does not start after tab change"
+    },
+    {
+      "quiz": "answer hidden before engine gate, original advance retained, manual review later, host revocation"
+    },
+    {
+      "trail": "explanation remains playable in history well after native item advance; fake media only"
+    }
+  ],
+  "errors": []
+}

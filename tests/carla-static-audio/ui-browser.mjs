@@ -8,7 +8,8 @@ import {editorialClips, textDigest, sha256} from '../../mission-runtime/narratio
 import {approvedCopy} from '../../mission-runtime/narration/approved-copy.mjs';
 const clips = editorialClips(), bytes = new Uint8Array(256).fill(67), hash = await sha256(bytes);
 const quiz = Object.entries(approvedCopy.examples).find(([, value]) => value.template === 'quiz');
-const ids = ['colorir.cachorro.welcome', approvedCopy.motors.quiz.entry.id, quiz[1].after.id];
+const trail = Object.entries(approvedCopy.examples).find(([, value]) => value.template === 'trail');
+const ids = ['colorir.cachorro.welcome', approvedCopy.motors.quiz.entry.id, quiz[1].after.id, trail[1].after.id];
 const registry = {schemaVersion: 1, editorialRevision: approvedCopy.revision,
   release: {status: 'approved', approvalRef: 'browser-fixture-only'},
   licenses: [{id: 'fixture', provider: 'ElevenLabs', commercialUse: true, status: 'confirmed', confirmedOn: '2026-11-10', evidenceRef: 'not-a-real-license'}],
@@ -83,6 +84,24 @@ try {
   assert(await frame.evaluate(() => carlaTestMedia.every(media => media.paused)));
   assert(await frame.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
   results.push({quiz: 'answer hidden before engine gate, original advance retained, manual review later, host revocation'});
+  await h.install(p, '/mission-runtime/studio/?snapshot=1&institutional=1'); await h.wait(p, 'rs-teacher-ready');
+  const trailEntry = catalog.find(item => item.id === trail[0]);
+  const trailContent = JSON.parse(await readFile(root + '/mission-runtime/studio/' + trailEntry.runtimeFile));
+  await h.send(p, {type: 'rs-teacher-preview', content: trailEntry});
+  ui = p.frameLocator('iframe'); frame = p.frames()[1];
+  assert.equal(await ui.locator(`[data-carla-audio-id="${trail[1].after.id}"]`).count(), 0);
+  const first = trailContent.nodes[0], correct = first.options.find(option => option.id === first.correctOptionId);
+  await ui.getByRole('button', {name: correct.label, exact: true}).click();
+  await ui.getByText(trailContent.nodes[1].prompt, {exact: true}).waitFor();
+  await p.waitForTimeout(1500);
+  if (!(await ui.locator('[data-carla-guidance]').evaluate(element => element.open))) await ui.locator('[data-carla-guidance] summary').click();
+  await ui.locator(`[data-carla-audio-id="${trail[1].after.id}"]`).click();
+  await ui.getByRole('button', {name: 'Tentar iniciar narração', exact: true}).click();
+  await ui.getByText('Ouvindo Carla.', {exact: true}).waitFor();
+  assert.equal(await ui.locator('[data-copy-kind="before"]').count(), 0);
+  await ui.getByRole('button', {name: 'Parar narração', exact: true}).click();
+  assert(await frame.evaluate(() => carlaTestMedia.every(media => media.paused)));
+  results.push({trail: 'explanation remains playable in history well after native item advance; fake media only'});
   assert.deepEqual(errors, []);
   await mkdir(root + '/qa/carla-static-audio/evidence', {recursive: true});
   await writeFile(root + '/qa/carla-static-audio/evidence/ui-browser-report.json', JSON.stringify({testDoublesOnly: true, realAudio: false, results, errors}, null, 2));

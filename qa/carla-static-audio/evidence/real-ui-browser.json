@@ -1,0 +1,71 @@
+{
+  "passed": true,
+  "realAudio": true,
+  "registryAssets": 42,
+  "chromeOutputMuted": true,
+  "listeningAssessment": false,
+  "limitations": [
+    "Not a listening/voice-quality assessment.",
+    "Chrome headless only; no Safari/iOS or screen reader.",
+    "Local harness host/removal contract, not authenticated institutional production UI.",
+    "Native play is transparently observed; Audio, registry, bytes and playback promises are not replaced."
+  ],
+  "results": [
+    {
+      "check": "Colorir real MP3",
+      "passed": true,
+      "explicitKeyboardGesture": true,
+      "playingTime": 0.25543,
+      "pauseResumeStop": true,
+      "tabCancellation": true
+    },
+    {
+      "check": "production stopFrameAudio plus local host iframe removal",
+      "wasPlaying": true,
+      "stoppedBeforeRemoval": true,
+      "iframeRemoved": true,
+      "stoppedAfterRemoval": true
+    },
+    {
+      "check": "real quiz proposal MP3 with existing music and answer cancellation",
+      "passed": true,
+      "musicBlocksNarration": true,
+      "musicStartStopsNarration": true,
+      "responseStopsNarration": true,
+      "advanceElapsedMs": 1483.6000000014901,
+      "configuredAdvanceMs": 1200
+    }
+  ],
+  "requests": [
+    {
+      "url": "[local-origin]/mission-runtime/narration/audio/colorir-cachorro-welcome.mp3",
+      "method": "GET"
+    },
+    {
+      "url": "[local-origin]/mission-runtime/narration/audio/colorir-cachorro-welcome.mp3",
+      "method": "GET"
+    },
+    {
+      "url": "[local-origin]/mission-runtime/narration/audio/colorir-cachorro-welcome.mp3",
+      "method": "GET"
+    },
+    {
+      "url": "[local-origin]/mission-runtime/narration/audio/quiz-exemplo-pergunta.mp3",
+      "method": "GET"
+    },
+    {
+      "url": "[local-origin]/mission-runtime/narration/audio/quiz-exemplo-pergunta.mp3",
+      "method": "GET"
+    }
+  ],
+  "errors": [],
+  "violations": [
+    {
+      "directive": "script-src",
+      "blockedURI": "eval",
+      "source": "/mission-runtime/studio/assets/index-Di3aszpa.js",
+      "line": 333,
+      "column": 95378
+    }
+  ]
+}

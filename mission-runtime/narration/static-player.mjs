@@ -34,7 +34,7 @@ const messages = {
 // Dependencies are injectable for offline tests; production never uses a TTS API.
 export class StaticNarrator {
   constructor({onStatus = () => {}, registry = () => assetRegistry, document: doc = globalThis.document,
-    window: win = globalThis.window, fetch: fetcher = globalThis.fetch,
+    window: win = globalThis.window, fetch: fetcher = (...args) => globalThis.fetch(...args),
     makeAudio = () => new Audio(), urls = URL,
     musicPlaying = () => Boolean(doc?.querySelector('audio[data-game-music]:not([data-carla-audio])') &&
       [...doc.querySelectorAll('audio[data-game-music]')].some(audio => !audio.paused && !audio.ended)),

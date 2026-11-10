@@ -4,7 +4,7 @@ import {readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync} from 'node:
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {pendingRegistry} from './pending-fixture.mjs';
-import {editorialClips, coloringCue, gameCue, resolveAsset, safeAssetPath, sha256, textDigest} from '../../mission-runtime/narration/audio-policy.mjs';
+import {editorialClips, coloringCue, gameCue, resolveAsset, safeAssetPath, sha256, textDigest, unchangedSnapshot} from '../../mission-runtime/narration/audio-policy.mjs';
 import {StaticNarrator} from '../../mission-runtime/narration/static-player.mjs';
 import {approvedCopy} from '../../mission-runtime/narration/approved-copy.mjs';
 import {validateCarlaAudio} from '../../scripts/lib/carla-audio-validation.mjs';
@@ -359,4 +359,30 @@ const invalidPilot = {
 };
 for (const [label, mutate] of Object.entries(invalidPilot)) test('pilot review rejects ' + label, async () => {
   const f = await pilotFixture(); mutate(f); assert.equal(resolveAsset(f.cue, f.registry), null);
+});
+
+
+test('default browser fetch keeps the Window receiver instead of the player', async () => {
+  const original = globalThis.fetch;
+  let receiver;
+  globalThis.fetch = function () {
+    receiver = this;
+    if (this !== globalThis) throw new TypeError('Illegal invocation');
+    return Promise.resolve(new Response(bytes));
+  };
+  const f = await playerFixture({fetch: undefined});
+  try {
+    assert.equal(await f.player.play(f.cue, click), true);
+    assert.equal(receiver, globalThis);
+  } finally { f.player.dispose(); globalThis.fetch = original; }
+});
+
+
+test('structural snapshot guard preserves every JSON value without mutating input', () => {
+  const value={content:{image:{src:'data:image/png;base64,'+'A'.repeat(100000)},items:[{id:'x',answer:'approved'}]},feedback:null};
+  const unchanged=unchangedSnapshot(value);assert(unchanged(value));assert(unchanged(structuredClone(value)));
+  for(const mutate of [v=>{v.content.items[0].answer='changed';},v=>{v.content.image.src+='changed';},v=>{v.feedback='correct';},v=>{v.content.items.push({id:'y'});},v=>{delete v.content.image;},v=>{v.extra=true;}]){
+    const changed=structuredClone(value);mutate(changed);assert.equal(unchanged(changed),false);
+  }
+  assert(unchanged(value));
 });

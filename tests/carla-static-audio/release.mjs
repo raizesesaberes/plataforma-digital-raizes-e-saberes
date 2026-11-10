@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {assetRegistry} from '../../mission-runtime/narration/asset-registry.mjs';
-import {editorialClips,coloringCue,gameCue,resolveAsset} from '../../mission-runtime/narration/audio-policy.mjs';
+import {editorialClips,coloringCue,gameCue,gameCues,resolveAsset} from '../../mission-runtime/narration/audio-policy.mjs';
 import {coloringAudioNotices} from '../../mission-runtime/narration/coloring-audio.mjs';
 import {approvedCopy, contentDigest} from '../../mission-runtime/narration/resolve.mjs';
 import {StaticNarrator} from '../../mission-runtime/narration/static-player.mjs';
@@ -83,4 +83,34 @@ for(const [id,example] of Object.entries(approvedCopy.examples))test('exact game
  const explored={...session,matched:[example.itemId],feedback:['quiz','trail'].includes(example.template)?'correct':null,complete:['sequence','puzzle'].includes(example.template)};
  const after=await gameCue(explored,example.after.id);assert(after);
  assert.equal(Boolean(resolveAsset(after)),assetRegistry.assets.some(a=>a.clipId===example.after.id));
+});
+
+function quizSession() {
+ const [id,example]=Object.entries(approvedCopy.examples).find(([,e])=>e.template==='quiz');
+ const entry=catalog.find(c=>c.id===id),content=expandAssets(JSON.parse(read('mission-runtime/studio/'+entry.runtimeFile)));
+ return {example,session:{content,questionIndex:0,feedback:null,matched:[],flipped:[],correct:0,complete:false}};
+}
+test('presentation batches hash large content once; explicit listen always rehashes',async()=>{
+ const {example,session}=quizSession(),original=crypto.subtle.digest;let largeDigests=0;
+ crypto.subtle.digest=function(algorithm,bytes){if(bytes.byteLength>100000)largeDigests++;return original.call(this,algorithm,bytes);};
+ try {
+  const cues=await gameCues(session,[example.before.id,approvedCopy.motors.quiz.entry.id,approvedCopy.motors.quiz.help.id,example.after.id]);
+  assert.equal(cues.length,4);assert(cues.slice(0,3).every(Boolean));assert.equal(cues[3],null);assert.equal(largeDigests,1);
+  assert(await gameCue(session,example.before.id));assert.equal(largeDigests,2);
+ } finally {crypto.subtle.digest=original;}
+});
+for(const phase of ['content','text'])test('batch rejects state mutation during asynchronous '+phase+' digest',async()=>{
+ const {example,session}=quizSession(),original=crypto.subtle.digest;let release,intercepted=false;
+ crypto.subtle.digest=function(algorithm,bytes){
+  const pending=original.call(this,algorithm,bytes);
+  if(!intercepted&&(phase==='content'?bytes.byteLength>100000:bytes.byteLength<100000)){
+   intercepted=true;return new Promise(resolve=>{release=()=>pending.then(resolve);});
+  }
+  return pending;
+ };
+ try {
+  const pending=gameCues(session,[example.before.id,approvedCopy.motors.quiz.entry.id]);
+  while(!release)await new Promise(resolve=>setTimeout(resolve,1));
+  session.feedback='correct';release();assert.deepEqual(await pending,[]);assert(intercepted);
+ }finally{crypto.subtle.digest=original;release?.();}
 });

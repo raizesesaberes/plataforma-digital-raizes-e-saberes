@@ -1,6 +1,6 @@
 import {r as requireReact} from '../studio/assets/react-Db-_YT-E.js';
 import {assetRegistry} from './asset-registry.mjs';
-import {gameCue, resolveAsset, releasedRegistry} from './audio-policy.mjs';
+import {gameCue, gameCues, unchangedSnapshot, resolveAsset, releasedRegistry} from './audio-policy.mjs';
 import {gameCopyState} from './resolve.mjs';
 import {StaticNarrator} from './static-player.mjs';
 const React = requireReact(), h = React.createElement;
@@ -17,7 +17,10 @@ function clipsFor(session, example) {
 export function useGameAudio(session, example, {registry = () => assetRegistry} = {}) {
   const controller = React.useRef(null), live = React.useRef(null), clickRequest = React.useRef(0);
   const [ready, setReady] = React.useState(null), [status, setStatus] = React.useState({state: 'idle', message: ''});
-  const enabled = releasedRegistry(registry()) && Boolean(example);
+  const currentRegistry = registry();
+  const registered = new Set(Array.isArray(currentRegistry?.assets) ? currentRegistry.assets.map(asset => asset?.clipId) : []);
+  const candidates = example ? clipsFor(session, example).filter(clip => registered.has(clip.id)) : [];
+  const enabled = releasedRegistry(currentRegistry) && candidates.length > 0;
   live.current = {session, example};
   React.useLayoutEffect(() => {
     if (!enabled) {
@@ -25,15 +28,20 @@ export function useGameAudio(session, example, {registry = () => assetRegistry} 
       return;
     }
     const player = controller.current ||= new StaticNarrator({onStatus: setStatus, registry});
-    let active = true; const stateSnapshot = JSON.stringify(session); clickRequest.current++;
-    const valid = cue => active && JSON.stringify(session) === stateSnapshot && live.current.session === session && live.current.example === example &&
+    let active = true; const unchanged = unchangedSnapshot(session); clickRequest.current++;
+    const valid = cue => active && unchanged(session) && live.current.session === session && live.current.example === example &&
       clipsFor(session, example).some(clip => clip.id === cue?.clipId);
     player.setContext(session, valid);
     setReady(null);
-    Promise.all(clipsFor(session, example).map(clip => gameCue(session, clip.id))).then(cues => {
-      if (active && live.current.session === session) setReady({session, cues: cues.filter(cue => cue && resolveAsset(cue, registry()))});
-    }).catch(() => { if (active) setReady(null); });
-    return () => { active = false; clickRequest.current++; player.stop(); };
+    // Defer only optional control preparation, leaving the engine's existing
+    // effects/timers free to register before hashing embedded image bytes.
+    const preparation = setTimeout(() => {
+      if (!active) return;
+      gameCues(session, candidates.map(clip => clip.id)).then(cues => {
+        if (active && live.current.session === session) setReady({session, cues: cues.filter(cue => cue && resolveAsset(cue, registry()))});
+      }).catch(() => { if (active) setReady(null); });
+    }, 0);
+    return () => { active = false; clearTimeout(preparation); clickRequest.current++; player.stop(); };
   }, [session, example, enabled]);
   React.useEffect(() => () => { controller.current?.dispose(); controller.current = null; }, []);
   const cues = ready?.session === session && enabled ? ready.cues : [];

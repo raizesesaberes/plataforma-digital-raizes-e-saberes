@@ -1,0 +1,115 @@
+{
+  "baseline": "50c479aa2e79ee07dfea90a36387265b7d0d2de9 (runtime bc7de6c)",
+  "checkpointAssets": 42,
+  "conditions": "Alternating isolated Chrome headless runs, same 1280px viewport and exact quiz; no voice click. Transparent native timer observer, no timer change.",
+  "runs": [
+    {
+      "candidate": false,
+      "clicked": 2769.10000000149,
+      "scheduled": 3036.800000000745,
+      "fired": 4237.5,
+      "advanced": 4435.800000000745,
+      "elapsedMs": 1666.699999999255,
+      "timerMs": 1200.699999999255,
+      "violations": [
+        {
+          "directive": "script-src",
+          "blocked": "eval",
+          "source": "/mission-runtime/studio/assets/index-Di3aszpa.js",
+          "line": 333,
+          "column": 95378
+        }
+      ]
+    },
+    {
+      "candidate": true,
+      "clicked": 3268.2000000029802,
+      "scheduled": 3578.60000000149,
+      "fired": 4780.10000000149,
+      "advanced": 4923.10000000149,
+      "elapsedMs": 1654.8999999985099,
+      "timerMs": 1201.5,
+      "violations": [
+        {
+          "directive": "script-src",
+          "blocked": "eval",
+          "source": "/mission-runtime/studio/assets/index-Di3aszpa.js",
+          "line": 333,
+          "column": 95378
+        }
+      ]
+    },
+    {
+      "candidate": false,
+      "clicked": 2117.2999999970198,
+      "scheduled": 2258.89999999851,
+      "fired": 3460.5,
+      "advanced": 3638.099999997765,
+      "elapsedMs": 1520.800000000745,
+      "timerMs": 1201.6000000014901,
+      "violations": [
+        {
+          "directive": "script-src",
+          "blocked": "eval",
+          "source": "/mission-runtime/studio/assets/index-Di3aszpa.js",
+          "line": 333,
+          "column": 95378
+        }
+      ]
+    },
+    {
+      "candidate": true,
+      "clicked": 2371.300000000745,
+      "scheduled": 2503.39999999851,
+      "fired": 3706.300000000745,
+      "advanced": 3843.800000000745,
+      "elapsedMs": 1472.5,
+      "timerMs": 1202.9000000022352,
+      "violations": [
+        {
+          "directive": "script-src",
+          "blocked": "eval",
+          "source": "/mission-runtime/studio/assets/index-Di3aszpa.js",
+          "line": 333,
+          "column": 95378
+        }
+      ]
+    },
+    {
+      "candidate": false,
+      "clicked": 1987.6000000014901,
+      "scheduled": 2133.800000000745,
+      "fired": 3334.89999999851,
+      "advanced": 3515.39999999851,
+      "elapsedMs": 1527.7999999970198,
+      "timerMs": 1201.0999999977648,
+      "violations": [
+        {
+          "directive": "script-src",
+          "blocked": "eval",
+          "source": "/mission-runtime/studio/assets/index-Di3aszpa.js",
+          "line": 333,
+          "column": 95378
+        }
+      ]
+    },
+    {
+      "candidate": true,
+      "clicked": 1935.300000000745,
+      "scheduled": 2071.199999999255,
+      "fired": 3272.699999999255,
+      "advanced": 3408.10000000149,
+      "elapsedMs": 1472.800000000745,
+      "timerMs": 1201.5,
+      "violations": [
+        {
+          "directive": "script-src",
+          "blocked": "eval",
+          "source": "/mission-runtime/studio/assets/index-Di3aszpa.js",
+          "line": 333,
+          "column": 95378
+        }
+      ]
+    }
+  ]
+}

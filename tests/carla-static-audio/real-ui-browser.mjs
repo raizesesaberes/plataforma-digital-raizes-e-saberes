@@ -45,7 +45,8 @@ try {
       return Reflect.apply(nativePlay, this, args);
     };
     document.addEventListener('securitypolicyviolation', event => {
-      window.__carlaCspViolation({directive: event.effectiveDirective, blockedURI: event.blockedURI});
+      window.__carlaCspViolation({directive: event.effectiveDirective, blockedURI: event.blockedURI,
+        source: new URL(event.sourceFile, location.href).pathname, line: event.lineNumber, column: event.columnNumber});
     });
   });
   const narration = frame => frame.evaluate(() => window.__carlaRealMedia.filter(media => media.hasAttribute('data-carla-audio')).map(media => ({
@@ -149,13 +150,18 @@ try {
   const timing = await frame.evaluate(() => window.__carlaAnswerTiming);
   const elapsedMs = timing.advancedAt - timing.clickedAt;
   // A real 1.2 s timer is subject to renderer scheduling; report exact elapsed.
-  assert(elapsedMs >= 1100 && elapsedMs < 3500, `unexpected quiz advance timing: ${elapsedMs} ms`);
+  assert(elapsedMs >= 1100 && elapsedMs < 2500, `unexpected quiz advance timing: ${elapsedMs} ms`);
   assert.notEqual(await frame.locator('#quiz-question-title').textContent(), questionBefore);
   const engineSource = await readFile(resolve(repo, 'mission-runtime/studio/assets/Player-nHpDXt_8.js'), 'utf8');
   assert(engineSource.includes('2200:1200'), 'unchanged runtime must still configure its 1200 ms advance');
   results.push({check: 'real quiz proposal MP3 with existing music and answer cancellation', passed: true, musicBlocksNarration: true, musicStartStopsNarration: true, responseStopsNarration: true, advanceElapsedMs: elapsedMs, configuredAdvanceMs: 1200});
   assert.deepEqual(errors, [], 'no page errors');
-  assert.deepEqual(violations, [], 'no CSP violations under the approved document CSP');
+  // Independently reproduced in untouched baseline 50c479a/bc7de6c with the
+  // same harness and exact same source position. Keep eval blocked; reject
+  // any new violation, especially media. Do not loosen script-src for it.
+  const baselineViolation = {directive: 'script-src', blockedURI: 'eval',
+    source: '/mission-runtime/studio/assets/index-Di3aszpa.js', line: 333, column: 95378};
+  assert.deepEqual(violations, [baselineViolation], 'only the verified existing baseline eval block is expected');
   report = {passed: true, realAudio: true, registryAssets: assetRegistry.assets.length, chromeOutputMuted: true, listeningAssessment: false,
     limitations: ['Not a listening/voice-quality assessment.', 'Chrome headless only; no Safari/iOS or screen reader.', 'Local harness host/removal contract, not authenticated institutional production UI.', 'Native play is transparently observed; Audio, registry, bytes and playback promises are not replaced.'], results, requests, errors, violations};
   console.log(JSON.stringify(report, null, 2));

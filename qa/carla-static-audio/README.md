@@ -6,7 +6,7 @@ Base: `bc7de6c68a1155ebacc18edf1afa4b36bddf5449`, release previamente verificada
 
 O candidato local admite **42 arquivos reais de P00–P06**, somando **4.941.913 bytes**. São seis arquivos P00 ouvidos e aprovados pelo usuário e 36 admitidos pelo padrão de voz do piloto com conferência individual de origem e testes técnicos. O registro está preenchido e habilita os controles desse conjunto ao executar o candidato local. `release.approvalRef` identifica admissão local, não afirma publicação.
 
-**Não houve push, deploy ou alteração de produção por esta entrega.** O QA dos adaptadores em navegador ainda não foi executado; a transferência para o executor compatível está bloqueada. Nenhum lote posterior a P06 foi admitido automaticamente.
+**Não houve deploy ou alteração de produção por este checkpoint.** A árvore foi transferida pela feature autorizada e conferida por hash em worktree isolado no iMac. Os adaptadores e arquivos reais passaram no Chrome headless 157. Nenhum lote posterior a P06 foi admitido automaticamente.
 
 Cobertura parcial: cachorro, preguiça, borboleta, peixe e banana; as 14 falas comuns; a fala de três estrelas; a proposta do quiz específico e a explicação do caça-palavras específico. Restam 75 das 117 falas sem arquivo neste checkpoint. Os avisos da etapa, animação e painel do adulto distinguem disponibilidade parcial sem anunciar a plataforma completa.
 
@@ -25,7 +25,7 @@ Cobertura parcial: cachorro, preguiça, borboleta, peixe e banana; as 14 falas c
 - Fonte: texto e ID de geração/download conferidos no histórico de origem. `sourceTextVerified: true`, `sourceVerification: "generation_history"`, referência opaca. **Não houve transcrição independente do áudio**: `independentTranscription: false`.
 - Todos os arquivos: hash, bytes, formato, duração e decodificação integral conferidos. Revisões de origem/técnicas privadas também verificaram silêncios, níveis e ausência de áudio PCM duplicado entre textos distintos.
 - P00: modo `individual`, `listened: true`, `individualAuditoryQuality: "passed"`, referência pública `voice-pilot-20261110-p00`.
-- P01–P05: modo `approved_voice_pilot + per_file_technical_and_source_checks`, `listened: false`, `individualAuditoryQuality: "not_assessed"`, referência ao piloto. O validador exige um asset real do piloto individualmente aprovado, com a mesma voz/modelo. Isso não transforma revisão técnica em julgamento auditivo individual.
+- P01–P06: modo `approved_voice_pilot + per_file_technical_and_source_checks`, `listened: false`, `individualAuditoryQuality: "not_assessed"`, referência ao piloto. O validador exige um asset real do piloto individualmente aprovado, com a mesma voz/modelo. Isso não transforma revisão técnica em julgamento auditivo individual.
 - Ausência, incerteza de correspondência ou anomalia mantém o arquivo fora do registro até revisão.
 
 Comprovantes, saldo, cobrança, conta, nomes de revisores, IDs da Space, IDs de geração e URLs privadas **não entram** no registro ou allowlist. O importador grava o mapa de referências somente na pasta privada externa ao repo. Os MP3 admitidos contêm apenas tag de encoder, sem outros metadados de arquivo ou stream.
@@ -54,21 +54,26 @@ Arquivo: `mission-runtime/studio/index.html`, meta `Content-Security-Policy`. A 
 
 ## Evidências e limites
 
-- `evidence/unit.log`: **157 testes** passam. Incluem fixtures de mídia/DOM, estados de carregamento, corridas, revogação, gesto semelhante ao Safari, registro vazio, privacidade, arquivo/allowlist, 40 arquivos reais de Colorir passando pelo hash do controlador antes de mídia simulada e os dez conteúdos canônicos de jogos em testes locais de apresentação. Esses últimos não são execução do motor ou UI real.
+- `evidence/unit.log`: **164 testes** passam. Incluem fixtures de mídia/DOM, estados de carregamento, corridas, revogação, gesto semelhante ao Safari, registro vazio, privacidade, arquivo/allowlist, 40 arquivos reais de Colorir passando pelo hash do controlador antes de mídia simulada e os dez conteúdos canônicos de jogos em testes locais de apresentação. Esses últimos não são execução do motor ou UI real.
 - `evidence/regression-unit.log`: **92 regressões** da base passam. Preservação dos snapshots, validações e bundles conferida.
 - `evidence/asset-validation.json`: 42 arquivos conferidos, incluindo ffprobe e **decodificação integral com ffmpeg**.
 - `evidence/build.log`: **5.612 arquivos** verificados no build; QA, fixtures, scripts de importação e registros privados excluídos.
 - Ensaio independente no Chrome 157 headless do iMac: os seis P00 reais passaram em hash → Blob → reprodução com tempo avançando → pausa, sob a CSP exata, sem violações. Controle negativo sem `media-src` bloqueou a mídia. Reprodução silenciada, sem avaliação auditiva por este executor. Esse ensaio não usou os adaptadores da nova branch.
-- `tests/carla-static-audio/engine-gates.mjs` e `ui-browser.mjs`: preparados, **ainda não executados**. Chrome nesta nuvem foi impedido por erro de socket, inclusive na execução ampliada autorizada. Nenhuma repetição para contornar a restrição.
-- Pendentes: UI real com o código final, fluxo entre iframes, celular físico, Safari/iOS real, leitor de tela e QA autenticado de produção. A suíte simulada não substitui esses testes.
+- `evidence/engine-gates.json`: dez motores reais exercitados, incluindo tentativas erradas, gates das explicações e progressão de quiz/trilha.
+- `evidence/ui-browser-report.json`: UI a 390 px, teclado, movimento reduzido, segundo gesto simulado, pausa/retomada, cancelamento durante carga e mudança de aba, histórico de quiz/trilha após avanço e revogação do host. A mídia desta suíte é simulada.
+- `evidence/real-ui-browser.json`: MP3 reais e Audio nativo com tempo avançando, Blob verificado, teclado, pausa/retomada/parada, troca de aba, remoção de iframe e competição com a música existente. Avanço do quiz observado em 1.484 ms, timer configurado intacto em 1.200 ms. Chrome silenciado, sem julgamento auditivo.
+- `evidence/history-real-browser.json`: explicação real P10 de 5,64 s, apenas em rota QA fora da allowlist, iniciada manualmente 1,5 s após a troca de item e reproduzida inteira até ended. O checkpoint continua em 42 assets. Trilha foi coberta com mídia simulada, não com MP3 real.
+- `evidence/performance.json`: três pares alternados baseline/candidato; medianas de clique à troca 1.528 ms / 1.473 ms, limites 1.521–1.667 / 1.473–1.655 ms. Timer medido aproximadamente 1.201–1.203 ms nos dois. A primeira implementação apresentava custo repetido de serialização; a versão final coalesce o hash por ciclo, compara estado estruturalmente e rehasha cada clique explícito, sem cache duradouro de objeto mutável.
+- CSP: a reprodução não viola media-src. O mesmo eval bloqueado já observado no baseline, no bundle intacto index-Di3aszpa.js:333:95378, permanece bloqueado. A suíte rejeita qualquer outra violação. script-src não foi relaxado.
+- Pendentes: celular físico, Safari/iOS real, leitor de tela e QA autenticado de produção. Chrome headless e simulação não substituem essas avaliações.
 
 ## Transferência e publicação
 
 O CLI Vercel confirmou branches de produção `main` (plataforma) e `service/enem-ingestion-worker` (segundo projeto), distintas da feature. Git read ampliado no iMac confirmou release `bc7de6c`; checkout existente estava limpo em `50c479a` e não foi alterado.
 
-O bundle preparatório foi salvo na Library, mas o helper de materialização exige Python moderno e o Mac oferece Python 3.9. O helper não foi modificado. A nuvem não tem credenciais de push Git. O primeiro `create_blob` pelo conector foi recusado por exigir autorização específica do repo, antes de qualquer criação. Depois da confirmação explícita do usuário para enviar código e áudios a esse repo, a repetição única do primeiro create_blob foi aceita. A transferência da árvore pela branch isolada está em andamento; não houve deploy de produção.
+Transferência autorizada concluída pela branch feature. Commit remoto inicial `20780a45c7cc2ec478a4057054b7ce428e89d545`, árvore `f24683f85c2b77fc539403f5b3d75d3c586ade30`, pai bc7de6c. Os resultados incertos de blobs foram reconciliados antes de retomada; não resta upload incerto. O checkout anterior permaneceu intacto, e o QA usa novo worktree.
 
-Antes de publicar: obter a autorização específica de upload, transferir para novo worktree sem alterar os existentes, conferir base/árvore, rodar os testes de navegador no Chrome isolado, repetir verificações da versão final e só então avaliar publicação. A admissão local dos MP3 não declara esses passos concluídos.
+O helper da Library não foi modificado e nenhuma credencial foi criada. A opção Git foi autorizada e usada após confirmação específica do repositório. Não houve publicação de produção. Antes de publicar qualquer novo conjunto: conferir a árvore final, repetir build/allowlist, testes de integridade e QA pertinente aos novos arquivos.
 
 ## Comandos locais
 
@@ -79,7 +84,7 @@ node scripts/validate-carla-audio.mjs --inspect-media
 node --test tests/carla-static-audio/unit.mjs tests/carla-static-audio/ui-unit.mjs tests/carla-static-audio/release.mjs
 node --test tests/carla-guidance/unit.mjs tests/mission-institutional/unit.mjs tests/app-web/edition-library.test.mjs tests/app-web/hosting-target.test.mjs tests/app-web/login-return.test.mjs tests/app-web/runtime-overrides.test.mjs tests/app-web/validation-artifact.test.mjs tests/app-web/web-session.test.mjs
 node scripts/build-static-web.mjs
-# Pendentes em executor compatível, sem usar o browser pessoal:
+# Executados no Chrome isolado, sem usar o browser pessoal:
 PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/chrome node tests/carla-static-audio/engine-gates.mjs
 PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/chrome node tests/carla-static-audio/ui-browser.mjs
 ```
@@ -88,4 +93,6 @@ PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/chrome no
 
 Um Ouvir anterior que ainda aguardava SHA-256 podia vencer Parar/Pausar/Retomar. Os dois adaptadores agora invalidam essa intenção pendente antes do comando mais recente; o stop público de Colorir também faz isso. Sete testes com digest atrasado cobrem os comandos nos dois adaptadores e o stop público. Não há nova reprodução depois da interrupção.
 
-Durante a transferência autorizada, 28 blobs foram aceitos, mas o upload de um MP3 P03 foi recusado por falta de autorização específica alegada pela ferramenta. Nenhum commit ou branch remoto foi criado. Os uploads foram interrompidos; antes de retomada, os resultados de operações paralelas potencialmente concluídas precisam ser reconciliados por leitura.
+## Correções verificadas no navegador
+
+O fetch nativo exigia o receptor Window. O controlador agora o invoca por wrapper, sem alterar destino, credenciais, hash ou política. Um teste cobre o receptor. Preparação opcional de controles não bloqueia os efeitos do motor: hash de conteúdo coalescido por ciclo e guard estrutural de cada valor. Testes permanentes cobrem mutação durante hash de conteúdo/texto, hash novo por clique e cleanup antes do timer ou durante o digest.

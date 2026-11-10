@@ -4618,11 +4618,11 @@
     },
     {
       "file": "mission-runtime/narration/audio-policy.mjs",
-      "sha256": "8bcca58fe4c9707ac6179eba043aaaaa9006020fb1597d978f1032b2721305eb"
+      "sha256": "c9a91bd877ade160882a3320d966bfe9340f764454777747dba7545d7bb327df"
     },
     {
       "file": "mission-runtime/narration/static-player.mjs",
-      "sha256": "84a3d55447626da97a9dc48e0c8406263dde483e096a16ea5ade7299da6dfde8"
+      "sha256": "bf99d141611e6328cf1f250f394953d6ebea61d73df7b816febd9faea9ff81cb"
     },
     {
       "file": "mission-runtime/narration/audio-lifecycle.mjs",
@@ -4630,7 +4630,7 @@
     },
     {
       "file": "mission-runtime/narration/game-audio.mjs",
-      "sha256": "11d0bfec656f50c0af3d12bc3cc0d048f9997f1a464f478327cea2601fdc289e"
+      "sha256": "ea3fdca235f927b1f878464835108cf842b90ba407d1995f95e6a3b9e64ca6bc"
     },
     {
       "file": "mission-runtime/narration/coloring-audio.mjs",
