@@ -16,7 +16,7 @@ const {launchHarness, root} = await load('tests/carla-guidance/harness.mjs');
 assert.equal(root, repo, 'harness must serve the selected checkout');
 const {assetRegistry} = await load('mission-runtime/narration/asset-registry.mjs');
 const {approvedCopy} = await load('mission-runtime/narration/approved-copy.mjs');
-assert.equal(assetRegistry.assets.length, 42, 'this QA targets the P00-P06 checkpoint');
+assert.equal(assetRegistry.assets.length, 88, 'this QA targets the P00-P14 checkpoint');
 const [quizId, quiz] = Object.entries(approvedCopy.examples).find(([, value]) => value.template === 'quiz');
 const admitted = id => { const asset = assetRegistry.assets.find(asset => asset.clipId === id); assert(asset, 'missing admitted clip: ' + id); return asset; };
 admitted('colorir.cachorro.welcome'); admitted(quiz.before.id);

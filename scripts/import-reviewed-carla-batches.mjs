@@ -49,7 +49,7 @@ for(const batch of batches){
   const publicReviewRef=pilot?'voice-pilot-20261110-p00':review.reference;
   assert(/^[a-zA-Z0-9_-]{1,120}$/.test(publicReviewRef));
   assets.push({clipId:clip.clipId,textSha256:checked.textSha256,bindings:clip.bindings,status:'reviewed',path:'mission-runtime/narration/audio/'+entry.fileName,
-   sha256:digest,bytes:bytes.length,durationSeconds:tech.durationSeconds,voiceId:record.voiceId,modelLabel:record.modelUiLabel,licenseId:'commercial-voice-20261110',
+   sha256:digest,bytes:bytes.length,durationSeconds:Number(tech.durationSeconds.toFixed(3)),voiceId:record.voiceId,modelLabel:record.modelUiLabel,licenseId:'commercial-voice-20261110',
    review:{mode:pilot?'individual':'approved_voice_pilot + per_file_technical_and_source_checks',reference:publicReviewRef,sourceReference:publicSourceRef,
     sourceTextVerified:true,sourceVerification:'generation_history',independentTranscription:false,listened:pilot,individualAuditoryQuality:pilot?'passed':'not_assessed',
     pilotReference:pilot?null:'voice-pilot-20261110-p00',technical:{hashVerified:true,fullDecodePassed:true,formatPassed:true}}});

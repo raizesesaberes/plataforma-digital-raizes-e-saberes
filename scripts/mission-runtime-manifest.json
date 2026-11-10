@@ -4614,7 +4614,7 @@
     },
     {
       "file": "mission-runtime/narration/asset-registry.mjs",
-      "sha256": "3faa785cff887e456350633ca0fb64673a5a9763f6df4f07ab678d0584931629"
+      "sha256": "137a838159e9b365e0490ea4ad24ce0d96e4341ff021d4e733afd33155a1f2b8"
     },
     {
       "file": "mission-runtime/narration/audio-policy.mjs",
@@ -4807,6 +4807,190 @@
     {
       "file": "mission-runtime/narration/audio/colorir-banana-letter_4_5.mp3",
       "sha256": "05184d8238b48133306c92a0bccedb5eccddb3e54ad10ad5abfda9b83564aa8c"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-cenoura-welcome.mp3",
+      "sha256": "05f840061635d4919fe392a004f6ffc4d512c056daaba3fb2bae36d874a4ac70"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-cenoura-discovery_2_3.mp3",
+      "sha256": "a4ea6a9fc1a2e520aa4ee1f1b85853af683f0b9768de420e30fe409b8678c815"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-cenoura-discovery_4_5.mp3",
+      "sha256": "e57cb73c06eb2145d37f1f0d35bd5207bf0d3816d17856ee6192525fef1a785e"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-cenoura-sound_4_5.mp3",
+      "sha256": "4f0f6df3cef8097c5f7bbb8b9a0c9372289a7467331bac77fb97753de9c0d16d"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-cenoura-letter_4_5.mp3",
+      "sha256": "ec9c7c33de1d4f5bc3a16b1478d5af6924a18a12b5fcced3e3f8d5b1c81749fa"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-leao-welcome.mp3",
+      "sha256": "27831f736cf8cf45918eb8aa3ad9243b24c36c6b2103a146ae613b80c59853be"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-leao-discovery_2_3.mp3",
+      "sha256": "7f26bffb2c19250639a9f6207791c94341550dbb964ba7ec18ed36368c48452f"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-leao-discovery_4_5.mp3",
+      "sha256": "781a3c2582d602859ecf522ac55e3138033b0b9228fcdb12b753af6f951bfd12"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-leao-sound_4_5.mp3",
+      "sha256": "c590e0a9ff8dc7d53106d4995947336a37579e68edebf56bdbe8c24aeaa3e45b"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-leao-letter_4_5.mp3",
+      "sha256": "47b68833bdda1a6582ebdcc2afed2b809ed066cfcfb9538b2f1368715152fe01"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-numero3-welcome.mp3",
+      "sha256": "e36fdc0cf9fcd9f4536273a1179d38aad20f7ae940f0dc77ef6d7c25745da7dc"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-numero3-discovery_2_3.mp3",
+      "sha256": "7e1036102813d073eae570d2703572a98eb9c5011d9f8ba806a4325f76565c92"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-numero3-discovery_4_5.mp3",
+      "sha256": "3d615f6c0e1273e05187d72d8ae051cd72a841cbb8a4283fb53642664d8cda25"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-numero3-count_invite.mp3",
+      "sha256": "c6fed680f301f10910778042917328fcc1627ccc6f750e7634b2af59cbab08b0"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-numero3-count_one.mp3",
+      "sha256": "0610116fc1ad2a55ffe32938f71531a5abc0c115399457fca92b9388bc324ff5"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-numero3-count_two.mp3",
+      "sha256": "62414d9b7721f22908d3d74060e822cd4df43b37831461e0c32aef591765cc1c"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-numero3-count_reset.mp3",
+      "sha256": "0ef2e942483bf16e4aa4d85a0f1c756c822f9f8f36ca505f25623849ecfa8010"
+    },
+    {
+      "file": "mission-runtime/narration/audio/quiz-entrada.mp3",
+      "sha256": "b51c96c8ef84a2f3f56e9e62e65e9ba89fd10e7ab7a40581f8a15eaca2821d15"
+    },
+    {
+      "file": "mission-runtime/narration/audio/quiz-ajuda.mp3",
+      "sha256": "81708b515dac05fd5eafe162a4c776dd00dc73bbc240209af875e102ecdfe6e8"
+    },
+    {
+      "file": "mission-runtime/narration/audio/quiz-celebracao.mp3",
+      "sha256": "4e1de75a91e995218c295b39ac68d52fe1e8158643e222172a74fe786a5a93a0"
+    },
+    {
+      "file": "mission-runtime/narration/audio/quiz-exemplo-ajuda.mp3",
+      "sha256": "3e2d536ae66574de650dcb0508ded8beb474df9fc874ca2d49b5eeb5b5d554e7"
+    },
+    {
+      "file": "mission-runtime/narration/audio/quiz-exemplo-explicacao.mp3",
+      "sha256": "9e999941cbbf0505f1e06cea758e6ed91780db75e3335d6c8fdd1a9a50db0406"
+    },
+    {
+      "file": "mission-runtime/narration/audio/association-entrada.mp3",
+      "sha256": "427c8c655a0a1d43314a9ec32262678f467f8dc011ae2d9b2b19684d4a1ef73f"
+    },
+    {
+      "file": "mission-runtime/narration/audio/association-ajuda.mp3",
+      "sha256": "08657fda9d258f5488cf8ae0387aa03b11cb329b6977d87567b5533c40524ed3"
+    },
+    {
+      "file": "mission-runtime/narration/audio/association-celebracao.mp3",
+      "sha256": "d4fd4762fb9f88def964d973a1c6f4711b65855f60b778728389d9bc0a6fa5aa"
+    },
+    {
+      "file": "mission-runtime/narration/audio/association-exemplo-pergunta.mp3",
+      "sha256": "aeb53b8edc5ab202ab63c907babd9dd505d01183818a01016934624ed615230d"
+    },
+    {
+      "file": "mission-runtime/narration/audio/association-exemplo-ajuda.mp3",
+      "sha256": "1b49675ebbb56b50172ff6c710a247c99be6d2a61d6fa3d8f6ca051c8f5f63b0"
+    },
+    {
+      "file": "mission-runtime/narration/audio/association-exemplo-explicacao.mp3",
+      "sha256": "36995fa6cb1d206b5cb4401048f022ff8ac38cb8c2540e44d27791dabbacf989"
+    },
+    {
+      "file": "mission-runtime/narration/audio/memory-entrada.mp3",
+      "sha256": "d7d68619fdbdee63a7dd276ba6dd192ea5a1132161c8e269b10aefada154e3ae"
+    },
+    {
+      "file": "mission-runtime/narration/audio/memory-ajuda.mp3",
+      "sha256": "b11a660fb145dc6310af09159fa43d12de81b9c54653b1118269bbf1acbdd730"
+    },
+    {
+      "file": "mission-runtime/narration/audio/memory-celebracao.mp3",
+      "sha256": "580efaec8402a272140ff7c3d2e92b390263248382738f6996f29d0f4077224a"
+    },
+    {
+      "file": "mission-runtime/narration/audio/memory-exemplo-pergunta.mp3",
+      "sha256": "eef10e57e274a11c590580fc9ab63daf6ef468b5cc33c59cb468b4fd39742e07"
+    },
+    {
+      "file": "mission-runtime/narration/audio/memory-exemplo-ajuda.mp3",
+      "sha256": "c56939efd1e5032310cd62bd0691264b6942c7e103f666165649da1132f087e1"
+    },
+    {
+      "file": "mission-runtime/narration/audio/memory-exemplo-explicacao.mp3",
+      "sha256": "86e13eb3fc59e95195e05feffdc030cf0966dc19015b02580b85cc5af9edfeec"
+    },
+    {
+      "file": "mission-runtime/narration/audio/sequence-entrada.mp3",
+      "sha256": "0b8a350aa593a62e9f15628f99f39a267386db467a9ab478bb8173fe844e7cea"
+    },
+    {
+      "file": "mission-runtime/narration/audio/sequence-ajuda.mp3",
+      "sha256": "4873fc62805cade7deff4b5026ba3f41c4067a6b3a2423ff5da36e0e4da037ec"
+    },
+    {
+      "file": "mission-runtime/narration/audio/sequence-celebracao.mp3",
+      "sha256": "d049c0cf56dc329959946477b20c9e5ee6715ec576798684cf99b6d785d5b5a7"
+    },
+    {
+      "file": "mission-runtime/narration/audio/sequence-exemplo-pergunta.mp3",
+      "sha256": "ad77ef40576ab14497198a5ea911a2b9484dd4e83e52de2b04b31da3171b2b43"
+    },
+    {
+      "file": "mission-runtime/narration/audio/sequence-exemplo-ajuda.mp3",
+      "sha256": "38145b9b0d831e38278232edf6f36b8640f1cfb5a5aa142d6992b05d6963355f"
+    },
+    {
+      "file": "mission-runtime/narration/audio/sequence-exemplo-explicacao.mp3",
+      "sha256": "cfd37b76512cea56fc203cb0af88d467a881c5206811890084c07f1346051b5f"
+    },
+    {
+      "file": "mission-runtime/narration/audio/classification-entrada.mp3",
+      "sha256": "80d566023ae7bc29104a01723075feb1dd33c7cc79bda72ce2a58bcd486d21eb"
+    },
+    {
+      "file": "mission-runtime/narration/audio/classification-ajuda.mp3",
+      "sha256": "3d908e42c3157295cd64e6e321aaa55c1a4c5cea481af623ecbf1811d7ae7e8d"
+    },
+    {
+      "file": "mission-runtime/narration/audio/classification-celebracao.mp3",
+      "sha256": "b3ba791e2a02bdbff487ec85a49c190944984f4d23134461307307a5bf01b6e8"
+    },
+    {
+      "file": "mission-runtime/narration/audio/classification-exemplo-pergunta.mp3",
+      "sha256": "1a2bd73edf47ba3718e371d307364bf0382e8bb134c5a45d9f8625f48a6dc446"
+    },
+    {
+      "file": "mission-runtime/narration/audio/classification-exemplo-ajuda.mp3",
+      "sha256": "06cf4612ff6f6476807bba0d0f7d291c8f9101ec3a07a462fa971fb5da956c2d"
+    },
+    {
+      "file": "mission-runtime/narration/audio/classification-exemplo-explicacao.mp3",
+      "sha256": "be7d81d1206fb9905052e7248ea7061a9c7b41c0f1b24f4b6185bcddf8c92cc3"
     }
   ]
 }
