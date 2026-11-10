@@ -1,0 +1,197 @@
+{
+  "localSynthetic": true,
+  "productionAuthenticated": false,
+  "results": [
+    {
+      "motor": "quiz",
+      "initialBinding": true,
+      "preAnswerHidden": true,
+      "editedSnapshotRejected": true
+    },
+    {
+      "motor": "association",
+      "initialBinding": true,
+      "preAnswerHidden": true,
+      "editedSnapshotRejected": true
+    },
+    {
+      "motor": "memory",
+      "initialBinding": true,
+      "preAnswerHidden": true,
+      "editedSnapshotRejected": true
+    },
+    {
+      "motor": "sequence",
+      "initialBinding": true,
+      "preAnswerHidden": true,
+      "editedSnapshotRejected": true
+    },
+    {
+      "motor": "classification",
+      "initialBinding": true,
+      "preAnswerHidden": true,
+      "editedSnapshotRejected": true
+    },
+    {
+      "motor": "puzzle",
+      "initialBinding": true,
+      "preAnswerHidden": true,
+      "editedSnapshotRejected": true
+    },
+    {
+      "motor": "word-search",
+      "initialBinding": true,
+      "preAnswerHidden": true,
+      "editedSnapshotRejected": true
+    },
+    {
+      "motor": "crossword",
+      "initialBinding": true,
+      "preAnswerHidden": true,
+      "editedSnapshotRejected": true
+    },
+    {
+      "motor": "completion",
+      "initialBinding": true,
+      "preAnswerHidden": true,
+      "editedSnapshotRejected": true
+    },
+    {
+      "motor": "trail",
+      "initialBinding": true,
+      "preAnswerHidden": true,
+      "editedSnapshotRejected": true
+    },
+    {
+      "colorir": "cachorro",
+      "age": "2-3",
+      "copy": true,
+      "soundStillDisabled": true,
+      "paintingAndLife": true
+    },
+    {
+      "colorir": "cachorro",
+      "age": "4-5",
+      "copy": true,
+      "soundStillDisabled": true,
+      "paintingAndLife": true
+    },
+    {
+      "colorir": "preguica",
+      "age": "2-3",
+      "copy": true,
+      "soundStillDisabled": true,
+      "paintingAndLife": true
+    },
+    {
+      "colorir": "preguica",
+      "age": "4-5",
+      "copy": true,
+      "soundStillDisabled": true,
+      "paintingAndLife": true
+    },
+    {
+      "colorir": "borboleta",
+      "age": "2-3",
+      "copy": true,
+      "soundStillDisabled": true,
+      "paintingAndLife": true
+    },
+    {
+      "colorir": "borboleta",
+      "age": "4-5",
+      "copy": true,
+      "soundStillDisabled": true,
+      "paintingAndLife": true
+    },
+    {
+      "colorir": "peixe",
+      "age": "2-3",
+      "copy": true,
+      "soundStillDisabled": true,
+      "paintingAndLife": true
+    },
+    {
+      "colorir": "peixe",
+      "age": "4-5",
+      "copy": true,
+      "soundStillDisabled": true,
+      "paintingAndLife": true
+    },
+    {
+      "colorir": "banana",
+      "age": "2-3",
+      "copy": true,
+      "soundStillDisabled": true,
+      "paintingAndLife": true
+    },
+    {
+      "colorir": "banana",
+      "age": "4-5",
+      "copy": true,
+      "soundStillDisabled": true,
+      "paintingAndLife": true
+    },
+    {
+      "colorir": "cenoura",
+      "age": "2-3",
+      "copy": true,
+      "soundStillDisabled": true,
+      "paintingAndLife": true
+    },
+    {
+      "colorir": "cenoura",
+      "age": "4-5",
+      "copy": true,
+      "soundStillDisabled": true,
+      "paintingAndLife": true
+    },
+    {
+      "colorir": "leao",
+      "age": "2-3",
+      "copy": true,
+      "soundStillDisabled": true,
+      "paintingAndLife": true
+    },
+    {
+      "colorir": "leao",
+      "age": "4-5",
+      "copy": true,
+      "soundStillDisabled": true,
+      "paintingAndLife": true
+    },
+    {
+      "colorir": "numero3",
+      "age": "2-3",
+      "copy": true,
+      "soundStillDisabled": true,
+      "paintingAndLife": true
+    },
+    {
+      "colorir": "numero3",
+      "age": "4-5",
+      "copy": true,
+      "soundStillDisabled": true,
+      "paintingAndLife": true
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "narrationRequests": [],
+  "existingMusicPreloads": [
+    "/mission-runtime/studio/music/adventure.mp3",
+    "/mission-runtime/studio/music/adventure.mp3",
+    "/mission-runtime/studio/music/carefree.mp3",
+    "/mission-runtime/studio/music/carefree.mp3",
+    "/mission-runtime/studio/music/adventure.mp3",
+    "/mission-runtime/studio/music/carefree.mp3",
+    "/mission-runtime/studio/music/adventure.mp3",
+    "/mission-runtime/studio/music/carefree.mp3",
+    "/mission-runtime/studio/music/adventure.mp3",
+    "/mission-runtime/studio/music/carefree.mp3",
+    "/mission-runtime/studio/music/adventure.mp3",
+    "/mission-runtime/studio/music/carefree.mp3",
+    "/mission-runtime/studio/music/adventure.mp3",
+    "/mission-runtime/studio/music/carefree.mp3"
+  ]
+}

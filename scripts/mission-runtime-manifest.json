@@ -34,7 +34,7 @@
     },
     {
       "file": "mission-runtime/coloring/app.mjs",
-      "sha256": "e7cdf08205c4d6fb3076471abced88b8c077066207894a895301b968f42ac492"
+      "sha256": "0add170ac0a4e0753588862b106bc8685b2cf61b9724b59647fe2d7c0f559a80"
     },
     {
       "file": "mission-runtime/coloring/art/banana.png",
@@ -102,7 +102,7 @@
     },
     {
       "file": "mission-runtime/coloring/narrator.mjs",
-      "sha256": "07c7b782a51067742b6660706c1f48e62f85ae968efcdf63314d62ae46f25051"
+      "sha256": "10eff9af8a54712bdb13155b0dca3ce11ed7a9d91e087794b48901b06e3ad42e"
     },
     {
       "file": "mission-runtime/coloring/numero-3-colorir.pdf",
@@ -202,7 +202,7 @@
     },
     {
       "file": "mission-runtime/studio/assets/Player-nHpDXt_8.js",
-      "sha256": "27ca6376b5abf53e48b79dea19034b78b6807900fab928bd95b49e2f433c96d6"
+      "sha256": "b886be145e2db41f492cb21de1c64a095e3e6d6ec0d2d7e13278b47e62c70906"
     },
     {
       "file": "mission-runtime/studio/assets/index-BPk8NBkE.js",
@@ -266,7 +266,7 @@
     },
     {
       "file": "mission-runtime/studio/index.html",
-      "sha256": "3b7f192747b00c3ac9b3d8e7c56fef4c428eda4d79fa665c5c61ce4c49fc19f0"
+      "sha256": "478d3f7d2f4a02238d75465567fd76a29969983d0efa2f39c7f2efe44b14a3db"
     },
     {
       "file": "mission-runtime/studio/institutional-bootstrap.mjs",
@@ -4595,6 +4595,22 @@
     {
       "file": "mission-runtime/workflow.css",
       "sha256": "df64f45dd4530f455c5a0a7e92dc630cd4bb1b48528ffeb14a5036f6e0bd82e0"
+    },
+    {
+      "file": "mission-runtime/narration/approved-copy.mjs",
+      "sha256": "9083d53d8059cf9bb2970b398e0f5fe322df7608a409922671183e85a288ba52"
+    },
+    {
+      "file": "mission-runtime/narration/game-guidance.mjs",
+      "sha256": "14fc3c5c18b636de9011fb817d0ac53f03c3dd9bb8f280ba98ead10398b4be94"
+    },
+    {
+      "file": "mission-runtime/narration/guidance.css",
+      "sha256": "f62a4570e5efc27bf84188b5ded47d179d756ed55e032a1d66939d5806529d16"
+    },
+    {
+      "file": "mission-runtime/narration/resolve.mjs",
+      "sha256": "6119ee5c8cfb879406a88922f3569cf0ca919f6750ee0bd3b08d13a7b8b7bcb6"
     }
   ]
 }

@@ -1,0 +1,525 @@
+{
+  "activities": [
+    {
+      "activityId": "cachorro",
+      "source": {
+        "file": "mission-runtime/coloring/catalog.json",
+        "catalogId": "RS-INF-COLORIR-CACHORRO-001",
+        "revision": 1,
+        "contentHash": "f25ecc9ca464fe95f443e412f56560244a409f6edb454a7069e20f9754722b50",
+        "factSource": {
+          "title": "How Dogs Use Smell to Perceive the World",
+          "url": "https://vcahospitals.com/know-your-pet/how-dogs-use-smell-to-perceive-the-world"
+        }
+      },
+      "teacherNote": "Nomeie o nariz na imagem. Aceite olhar, apontar ou comentar, sem exigir resposta. Não proponha aproximar o rosto de cães desconhecidos nem cheirar materiais.",
+      "clips": [
+        "colorir.cachorro.welcome",
+        "colorir.cachorro.discovery_2_3",
+        "colorir.cachorro.discovery_4_5",
+        "colorir.cachorro.sound_4_5",
+        "colorir.cachorro.letter_4_5"
+      ]
+    },
+    {
+      "activityId": "preguica",
+      "source": {
+        "file": "mission-runtime/coloring/catalog.json",
+        "catalogId": "RS-INF-COLORIR-PREGUICA-001",
+        "revision": 1,
+        "contentHash": "2094e5212722049ee15006445be0abb99aaef70ebe05de6d92918bb3edcfa148",
+        "factSource": {
+          "title": "Why are Sloths So Slow? And Other Sloth Facts",
+          "url": "https://nationalzoo.si.edu/animals/news/why-are-sloths-so-slow-and-other-sloth-facts"
+        }
+      },
+      "teacherNote": "A palavra exibida e comparada é preguiça, não bicho-preguiça. Prato e prancha compartilham o encontro inicial /pr/. Modele palavras completas; não acrescente uma vogal artificial nem cobre a pronúncia do encontro consonantal.",
+      "clips": [
+        "colorir.preguica.welcome",
+        "colorir.preguica.discovery_2_3",
+        "colorir.preguica.discovery_4_5",
+        "colorir.preguica.sound_4_5",
+        "colorir.preguica.letter_4_5"
+      ]
+    },
+    {
+      "activityId": "borboleta",
+      "source": {
+        "file": "mission-runtime/coloring/catalog.json",
+        "catalogId": "RS-INF-COLORIR-BORBOLETA-001",
+        "revision": 1,
+        "contentHash": "af6258be30f64501f1d41d1682bd6383248b934c683917c3ebedfce4d42b9944",
+        "factSource": {
+          "title": "Butterfly facts | London Zoo",
+          "url": "https://www.londonzoo.org/whats-here/habitats/butterfly-paradise/butterfly-facts"
+        }
+      },
+      "teacherNote": "Se néctar suscitar curiosidade, explique oralmente como um líquido produzido pelas flores. Não exigir abrir os braços: observar também é participar. Não usar a gravura estilizada para avaliar número de patas ou simetria biológica.",
+      "clips": [
+        "colorir.borboleta.welcome",
+        "colorir.borboleta.discovery_2_3",
+        "colorir.borboleta.discovery_4_5",
+        "colorir.borboleta.sound_4_5",
+        "colorir.borboleta.letter_4_5"
+      ]
+    },
+    {
+      "activityId": "peixe",
+      "source": {
+        "file": "mission-runtime/coloring/catalog.json",
+        "catalogId": "RS-INF-COLORIR-PEIXE-001",
+        "revision": 1,
+        "contentHash": "8a808e7aa577977b3e2e76d48d04a1e9052ca7489f8607a7ee3c2dcc7faf336f",
+        "factSource": {
+          "title": "Vertebrates Breathing in Water | AMNH",
+          "url": "https://www.amnh.org/learn-teach/resources-for-learning/hall-of-ocean-life/water-vertebrates-breathing"
+        }
+      },
+      "teacherNote": "Não afirmar que todos os peixes vivem no mar nem que peixes respiram a molécula de água. Brânquias é uma palavra de descoberta, não vocabulário a cobrar. A animação representa a gravura digital, não comprova características de uma espécie.",
+      "clips": [
+        "colorir.peixe.welcome",
+        "colorir.peixe.discovery_2_3",
+        "colorir.peixe.discovery_4_5",
+        "colorir.peixe.sound_4_5",
+        "colorir.peixe.letter_4_5"
+      ]
+    },
+    {
+      "activityId": "banana",
+      "source": {
+        "file": "mission-runtime/coloring/catalog.json",
+        "catalogId": "RS-INF-COLORIR-BANANA-001",
+        "revision": 1,
+        "contentHash": "9c4933edb9bf98e16baff67580a516e008b8d5f83767439feb1e5e93ca277d0f",
+        "factSource": {
+          "title": "Colheita - Banana | Embrapa",
+          "url": "https://www.atermaisdigital.cnptia.embrapa.br/web/banana/colheita"
+        }
+      },
+      "teacherNote": "Cacho é a curiosidade botânica, mas a imagem mostra uma banana: não pedir à criança que aponte um cacho ausente. Não associar amarelo a resposta correta; todas as escolhas de cor são aceitas.",
+      "clips": [
+        "colorir.banana.welcome",
+        "colorir.banana.discovery_2_3",
+        "colorir.banana.discovery_4_5",
+        "colorir.banana.sound_4_5",
+        "colorir.banana.letter_4_5"
+      ]
+    },
+    {
+      "activityId": "cenoura",
+      "source": {
+        "file": "mission-runtime/coloring/catalog.json",
+        "catalogId": "RS-INF-COLORIR-CENOURA-001",
+        "revision": 1,
+        "contentHash": "820039c7c9d63a270175bafb1f541d35fd5761d11c2f0e3b570249e482014803",
+        "factSource": {
+          "title": "Cenoura - Embrapa Hortaliças",
+          "url": "https://www.embrapa.br/en/web/hortalicas/hortalica-nao-e-so-salada/cenoura"
+        }
+      },
+      "teacherNote": "Preservar a diferença entre /s/ em cenoura e /k/ em cachorro. Não ensinar que toda letra C tem um único som. Deixar os nomes das letras para o bloco opcional; não enviar a escrita sss ao TTS sem revisão auditiva.",
+      "clips": [
+        "colorir.cenoura.welcome",
+        "colorir.cenoura.discovery_2_3",
+        "colorir.cenoura.discovery_4_5",
+        "colorir.cenoura.sound_4_5",
+        "colorir.cenoura.letter_4_5"
+      ]
+    },
+    {
+      "activityId": "leao",
+      "source": {
+        "file": "mission-runtime/coloring/catalog.json",
+        "catalogId": "RS-INF-COLORIR-LEAO-001",
+        "revision": 1,
+        "contentHash": "20402a8ff70d1c124cbc6e71b20adb499c825720e033e91ff91afddf565b664c",
+        "factSource": {
+          "title": "African Lion - Denver Zoo Conservation Alliance",
+          "url": "https://denverzoo.org/animals/african-lion/"
+        }
+      },
+      "teacherNote": "Selva continua como nome do tema aprovado. Na curiosidade, distinguir savana africana de floresta brasileira. Não acrescentar rugido alto ou inesperado; não generalizar a todos os leões a presença de juba.",
+      "clips": [
+        "colorir.leao.welcome",
+        "colorir.leao.discovery_2_3",
+        "colorir.leao.discovery_4_5",
+        "colorir.leao.sound_4_5",
+        "colorir.leao.letter_4_5"
+      ]
+    },
+    {
+      "activityId": "numero3",
+      "source": {
+        "file": "mission-runtime/coloring/catalog.json",
+        "catalogId": "RS-INF-COLORIR-NUMERO3-001",
+        "revision": 1,
+        "contentHash": "750e56f9a4ab7f6a085b190da7d2814e37a8d172b581c2e84530e3c8839a4763",
+        "factSource": {
+          "title": "Stanford DREME · Counting on Counting",
+          "url": "https://prek-math-te.stanford.edu/counting/counting-on-counting/"
+        }
+      },
+      "teacherNote": "Sincronizar cada clipe com um toque novo, não com posição fixa. A ordem escolhida pode variar; estrela repetida não aumenta a contagem. O total deve ser dito após três estrelas distintas. Sem numeral por escrito ou pronúncia obrigatórios.",
+      "clips": [
+        "colorir.numero3.welcome",
+        "colorir.numero3.discovery_2_3",
+        "colorir.numero3.discovery_4_5",
+        "colorir.numero3.count_invite",
+        "colorir.numero3.count_one",
+        "colorir.numero3.count_two",
+        "colorir.numero3.count_three",
+        "colorir.numero3.count_reset"
+      ]
+    }
+  ],
+  "clips": [
+    {
+      "id": "colorir.cachorro.welcome",
+      "activityId": "cachorro",
+      "stage": "welcome",
+      "spokenText": "Amiguinhos, este é o cachorro. Vamos olhar o nariz dele?"
+    },
+    {
+      "id": "colorir.cachorro.discovery_2_3",
+      "activityId": "cachorro",
+      "stage": "discovery_2_3",
+      "spokenText": "O cachorro usa o nariz para descobrir cheiros."
+    },
+    {
+      "id": "colorir.cachorro.discovery_4_5",
+      "activityId": "cachorro",
+      "stage": "discovery_4_5",
+      "spokenText": "O cachorro usa o nariz para descobrir muitos cheiros. Observar e cheirar ajudam o cachorro a conhecer o que está ao seu redor."
+    },
+    {
+      "id": "colorir.cachorro.sound_4_5",
+      "activityId": "cachorro",
+      "stage": "sound_4_5",
+      "spokenText": "Cachorro, casa, cavalo. Escutem o começo dessas palavras. Vocês podem só ouvir ou falar junto, se quiserem."
+    },
+    {
+      "id": "colorir.cachorro.letter_4_5",
+      "activityId": "cachorro",
+      "stage": "letter_4_5",
+      "spokenText": "Em cachorro, casa e cavalo, a primeira letra é C. O nome dessa letra é cê."
+    },
+    {
+      "id": "colorir.preguica.welcome",
+      "activityId": "preguica",
+      "stage": "welcome",
+      "spokenText": "Amiguinhos, este é o bicho-preguiça. Vamos observar seus braços compridos?"
+    },
+    {
+      "id": "colorir.preguica.discovery_2_3",
+      "activityId": "preguica",
+      "stage": "discovery_2_3",
+      "spokenText": "O bicho-preguiça passa muito tempo nas árvores."
+    },
+    {
+      "id": "colorir.preguica.discovery_4_5",
+      "activityId": "preguica",
+      "stage": "discovery_4_5",
+      "spokenText": "O bicho-preguiça passa grande parte do tempo nas árvores. Há preguiças nas florestas do Brasil."
+    },
+    {
+      "id": "colorir.preguica.sound_4_5",
+      "activityId": "preguica",
+      "stage": "sound_4_5",
+      "spokenText": "Preguiça, prato, prancha. Escutem como começam essas palavras. Vocês podem apenas ouvir, sem repetir."
+    },
+    {
+      "id": "colorir.preguica.letter_4_5",
+      "activityId": "preguica",
+      "stage": "letter_4_5",
+      "spokenText": "A palavra preguiça começa com a letra P. O nome dessa letra é pê."
+    },
+    {
+      "id": "colorir.borboleta.welcome",
+      "activityId": "borboleta",
+      "stage": "welcome",
+      "spokenText": "Amiguinhos, olhem a borboleta. Quem quiser pode abrir os braços como asas."
+    },
+    {
+      "id": "colorir.borboleta.discovery_2_3",
+      "activityId": "borboleta",
+      "stage": "discovery_2_3",
+      "spokenText": "Muitas borboletas visitam flores para beber néctar."
+    },
+    {
+      "id": "colorir.borboleta.discovery_4_5",
+      "activityId": "borboleta",
+      "stage": "discovery_4_5",
+      "spokenText": "Muitas borboletas se alimentam do néctar das flores. Vamos observar as asas da nossa borboleta?"
+    },
+    {
+      "id": "colorir.borboleta.sound_4_5",
+      "activityId": "borboleta",
+      "stage": "sound_4_5",
+      "spokenText": "Borboleta, bola, boneca. Vamos escutar o começo dessas palavras? Vocês podem só ouvir."
+    },
+    {
+      "id": "colorir.borboleta.letter_4_5",
+      "activityId": "borboleta",
+      "stage": "letter_4_5",
+      "spokenText": "Borboleta, bola e boneca começam com a letra B. O nome dessa letra é bê."
+    },
+    {
+      "id": "colorir.peixe.welcome",
+      "activityId": "peixe",
+      "stage": "welcome",
+      "spokenText": "Amiguinhos, este é o peixe do nosso tema do mar. Quem quiser pode fazer a mão nadar pelo ar."
+    },
+    {
+      "id": "colorir.peixe.discovery_2_3",
+      "activityId": "peixe",
+      "stage": "discovery_2_3",
+      "spokenText": "O peixe respira na água usando as brânquias."
+    },
+    {
+      "id": "colorir.peixe.discovery_4_5",
+      "activityId": "peixe",
+      "stage": "discovery_4_5",
+      "spokenText": "O peixe usa as brânquias para retirar da água o oxigênio de que precisa para respirar."
+    },
+    {
+      "id": "colorir.peixe.sound_4_5",
+      "activityId": "peixe",
+      "stage": "sound_4_5",
+      "spokenText": "Peixe, pato, panela. Escutem o som do começo dessas palavras. Vocês podem ouvir de novo, se quiserem."
+    },
+    {
+      "id": "colorir.peixe.letter_4_5",
+      "activityId": "peixe",
+      "stage": "letter_4_5",
+      "spokenText": "Peixe, pato e panela começam com a letra P. O nome dessa letra é pê."
+    },
+    {
+      "id": "colorir.banana.welcome",
+      "activityId": "banana",
+      "stage": "welcome",
+      "spokenText": "Amiguinhos, esta é a banana. Quem quiser pode acompanhar a curva dela com o dedo no ar."
+    },
+    {
+      "id": "colorir.banana.discovery_2_3",
+      "activityId": "banana",
+      "stage": "discovery_2_3",
+      "spokenText": "As bananas crescem juntas em cachos."
+    },
+    {
+      "id": "colorir.banana.discovery_4_5",
+      "activityId": "banana",
+      "stage": "discovery_4_5",
+      "spokenText": "As bananas crescem juntas em cachos. Na nossa gravura, podemos observar o formato de uma banana."
+    },
+    {
+      "id": "colorir.banana.sound_4_5",
+      "activityId": "banana",
+      "stage": "sound_4_5",
+      "spokenText": "Banana, bala, balão. Vamos ouvir o começo dessas palavras? Quem quiser pode falar junto."
+    },
+    {
+      "id": "colorir.banana.letter_4_5",
+      "activityId": "banana",
+      "stage": "letter_4_5",
+      "spokenText": "Banana, bala e balão começam com a letra B. O nome dessa letra é bê."
+    },
+    {
+      "id": "colorir.cenoura.welcome",
+      "activityId": "cenoura",
+      "stage": "welcome",
+      "spokenText": "Amiguinhos, esta é a cenoura. Vamos observar a raiz e as folhas?"
+    },
+    {
+      "id": "colorir.cenoura.discovery_2_3",
+      "activityId": "cenoura",
+      "stage": "discovery_2_3",
+      "spokenText": "A parte da cenoura que comemos é uma raiz."
+    },
+    {
+      "id": "colorir.cenoura.discovery_4_5",
+      "activityId": "cenoura",
+      "stage": "discovery_4_5",
+      "spokenText": "A parte da cenoura que comemos é uma raiz. Existem cenouras laranjas, roxas e de cor creme."
+    },
+    {
+      "id": "colorir.cenoura.sound_4_5",
+      "activityId": "cenoura",
+      "stage": "sound_4_5",
+      "spokenText": "Cenoura, sapo, sino. Escutem o som do começo dessas palavras. Vocês podem só ouvir ou repetir, se quiserem."
+    },
+    {
+      "id": "colorir.cenoura.letter_4_5",
+      "activityId": "cenoura",
+      "stage": "letter_4_5",
+      "spokenText": "Cenoura começa com a letra C. Sapo e sino começam com a letra S. Letras diferentes podem representar o mesmo som."
+    },
+    {
+      "id": "colorir.leao.welcome",
+      "activityId": "leao",
+      "stage": "welcome",
+      "spokenText": "Amiguinhos, este é o leão africano. Vamos conhecer uma descoberta sobre ele?"
+    },
+    {
+      "id": "colorir.leao.discovery_2_3",
+      "activityId": "leao",
+      "stage": "discovery_2_3",
+      "spokenText": "O leão africano pode viver na savana, um lugar com muito capim."
+    },
+    {
+      "id": "colorir.leao.discovery_4_5",
+      "activityId": "leao",
+      "stage": "discovery_4_5",
+      "spokenText": "O leão africano vive em lugares como a savana, com capim e árvores espalhadas. Ele não é um animal nativo do Brasil."
+    },
+    {
+      "id": "colorir.leao.sound_4_5",
+      "activityId": "leao",
+      "stage": "sound_4_5",
+      "spokenText": "Leão, lua, lata. Vamos escutar o começo dessas palavras? Vocês podem ouvir sem repetir."
+    },
+    {
+      "id": "colorir.leao.letter_4_5",
+      "activityId": "leao",
+      "stage": "letter_4_5",
+      "spokenText": "Leão, lua e lata começam com a letra L. O nome dessa letra é ele."
+    },
+    {
+      "id": "colorir.numero3.welcome",
+      "activityId": "numero3",
+      "stage": "welcome",
+      "spokenText": "Amiguinhos, este é o número três. Vamos olhar as estrelas que estão com ele?"
+    },
+    {
+      "id": "colorir.numero3.discovery_2_3",
+      "activityId": "numero3",
+      "stage": "discovery_2_3",
+      "spokenText": "Aqui há três estrelas. Podemos olhar ou contar juntos."
+    },
+    {
+      "id": "colorir.numero3.discovery_4_5",
+      "activityId": "numero3",
+      "stage": "discovery_4_5",
+      "spokenText": "Aqui há três estrelas. O número três representa essa quantidade."
+    },
+    {
+      "id": "colorir.numero3.count_invite",
+      "activityId": "numero3",
+      "stage": "count_invite",
+      "spokenText": "Vamos contar? Escolham uma estrela de cada vez. Podemos começar por qualquer uma."
+    },
+    {
+      "id": "colorir.numero3.count_one",
+      "activityId": "numero3",
+      "stage": "count_one",
+      "spokenText": "Uma estrela."
+    },
+    {
+      "id": "colorir.numero3.count_two",
+      "activityId": "numero3",
+      "stage": "count_two",
+      "spokenText": "Duas estrelas."
+    },
+    {
+      "id": "colorir.numero3.count_three",
+      "activityId": "numero3",
+      "stage": "count_three",
+      "spokenText": "Três estrelas. Contamos cada estrela uma vez. São três ao todo."
+    },
+    {
+      "id": "colorir.numero3.count_reset",
+      "activityId": "numero3",
+      "stage": "count_reset",
+      "spokenText": "Vamos contar outra vez? As cores da pintura continuam aqui."
+    },
+    {
+      "id": "common.paint_touch",
+      "activityId": null,
+      "stage": "paint_touch",
+      "spokenText": "Escolham uma cor. Depois, toquem em uma parte do desenho. Um toque colore essa parte."
+    },
+    {
+      "id": "common.paint_more_colors",
+      "activityId": null,
+      "stage": "paint_more_colors",
+      "spokenText": "Querem ver outras cores? Toquem em Mais cores para abrir a caixa."
+    },
+    {
+      "id": "common.paint_brush",
+      "activityId": null,
+      "stage": "paint_brush",
+      "spokenText": "Escolham Pincel. Passem o dedo ou o mouse dentro da parte onde começaram. O contorno fica protegido."
+    },
+    {
+      "id": "common.paint_erase",
+      "activityId": null,
+      "stage": "paint_erase",
+      "spokenText": "Para tirar uma cor, escolham Apagar e toquem na parte que querem apagar."
+    },
+    {
+      "id": "common.paint_undo",
+      "activityId": null,
+      "stage": "paint_undo",
+      "spokenText": "Querem voltar um passo? Toquem em Desfazer."
+    },
+    {
+      "id": "common.paint_keyboard",
+      "activityId": null,
+      "stage": "paint_keyboard",
+      "spokenText": "Vocês também podem escolher uma cor e usar Partes do desenho para pintar pelos botões."
+    },
+    {
+      "id": "common.life_invite",
+      "activityId": null,
+      "stage": "life_invite",
+      "spokenText": "Amiguinhos, quando quiserem, toquem em Ganhar vida. Vocês podem pintar só um pouquinho ou apenas observar."
+    },
+    {
+      "id": "common.life_show",
+      "activityId": null,
+      "stage": "life_show",
+      "spokenText": "Olhem o desenho com as cores que vocês escolheram."
+    },
+    {
+      "id": "common.life_no_paint",
+      "activityId": null,
+      "stage": "life_no_paint",
+      "spokenText": "Olhem o desenho. Vocês podem observar ou voltar a pintar."
+    },
+    {
+      "id": "common.life_pause",
+      "activityId": null,
+      "stage": "life_pause",
+      "spokenText": "Vocês podem pausar o movimento ou voltar a pintar."
+    },
+    {
+      "id": "common.finished",
+      "activityId": null,
+      "stage": "finished",
+      "spokenText": "Nossa descoberta chegou ao fim. Vocês podem continuar pintando, se quiserem."
+    },
+    {
+      "id": "common.permission_to_observe",
+      "activityId": null,
+      "stage": "permission_to_observe",
+      "spokenText": "Cada um pode escolher como participar. Olhar, pintar e descansar também fazem parte."
+    },
+    {
+      "id": "common.skip_sounds",
+      "activityId": null,
+      "stage": "skip_sounds",
+      "spokenText": "Vocês podem pular os sons e continuar pintando."
+    },
+    {
+      "id": "common.audio_unavailable",
+      "activityId": null,
+      "stage": "audio_unavailable",
+      "spokenText": "Não foi possível ouvir agora. O texto continua na tela e vocês podem continuar a atividade."
+    }
+  ],
+  "metrics": {
+    "activities": 8,
+    "clips": 57,
+    "characters": 4194,
+    "words": 733
+  }
+}

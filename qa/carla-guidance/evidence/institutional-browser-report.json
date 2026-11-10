@@ -1,0 +1,31 @@
+{
+  "synthetic": true,
+  "productionAuthenticated": false,
+  "checks": [
+    {
+      "width": 1440,
+      "selfTests": "RUNNING production platform adapter; direct JSON RPC mocks; real modules/runtimes.\nPASS class selection, explicit age, no expiry, private save, navigation preservation\nPASS explicit publication command and cancel without assignments\nPASS publish in-flight edit blocked or aborts stale confirmation\nPASS atomic publish, lost-response same-key retry, repeated click, cancellation\nPASS empty requested week retained and prior week preserved\nPASS rapid class change\nPASS teacher active and cached editor/preview revoked\nPASS revoked published card pruned privately without historical cancellation\nPASS real paint engine save, account restore, optimistic conflict preserves remote data\nPASS dirty SPA exit, pending paint close and failed paint close guards\nPASS selected-only student, actual Colorir24 palette, removal closes player\nPASS actual iframe A/B late ACK preserves B artwork version\nPASS >25day expiry and account switch\nPASS wrong-role/wrong-school mock denial\nPASS exact expiry\nPASS altered snapshot blocked\nPASS empty student status clears and all three available publications render\nPASS 8 prints, explicit 2–3 age\nPASS discovery direct JSON arrays 0/1/8 through real platform callback\nPASS Fundamental excluded before RPC and expired session clears UI\nPASS both explicit age paths, real painting, child-only controls and no assignments/artwork/XP writes\nPASS cancellation, revocation during choice/open and active license/enrollment revocation close\nPASS no enrollment empty and account switch closes pending choice\nPASS active catalog/open errors and valid changed snapshot hash close player/cards\nPASS approved theme home, theme → drawing → paint → same theme → home, explicit age, repeated clicks and no writes\nPASS multiple authorized activities in one theme without changing navigation\nPASS theme browser back/forward, cancelled age and authorization revocation\nPASS exact production game hub: four games and player routes retained for aluno/EI, Infantil/Fundamental, return and repeated init; no duplicated coloring gallery or catalog requests\nPASS exact new tab getter+initializer: theme home, delayed Infantil classification, Fundamental no-RPC gate, explicit EI, account race, hydration failure/rejection and desktop/mobile navigation without duplicates\nALL TESTS PASSED"
+    },
+    {
+      "width": 1440,
+      "directStudio": "PASS top-level empty, jogo and institutional routes blocked before bundle; iframe without institutional blocked"
+    },
+    {
+      "width": 1440,
+      "editor": "PASS actual Studio save ACK; Edge denial preserves draft, successful mocked Edge publication; revoked RPC never used"
+    },
+    {
+      "width": 390,
+      "selfTests": "RUNNING production platform adapter; direct JSON RPC mocks; real modules/runtimes.\nPASS class selection, explicit age, no expiry, private save, navigation preservation\nPASS explicit publication command and cancel without assignments\nPASS publish in-flight edit blocked or aborts stale confirmation\nPASS atomic publish, lost-response same-key retry, repeated click, cancellation\nPASS empty requested week retained and prior week preserved\nPASS rapid class change\nPASS teacher active and cached editor/preview revoked\nPASS revoked published card pruned privately without historical cancellation\nPASS real paint engine save, account restore, optimistic conflict preserves remote data\nPASS dirty SPA exit, pending paint close and failed paint close guards\nPASS selected-only student, actual Colorir24 palette, removal closes player\nPASS actual iframe A/B late ACK preserves B artwork version\nPASS >25day expiry and account switch\nPASS wrong-role/wrong-school mock denial\nPASS exact expiry\nPASS altered snapshot blocked\nPASS empty student status clears and all three available publications render\nPASS 8 prints, explicit 2–3 age\nPASS discovery direct JSON arrays 0/1/8 through real platform callback\nPASS Fundamental excluded before RPC and expired session clears UI\nPASS both explicit age paths, real painting, child-only controls and no assignments/artwork/XP writes\nPASS cancellation, revocation during choice/open and active license/enrollment revocation close\nPASS no enrollment empty and account switch closes pending choice\nPASS active catalog/open errors and valid changed snapshot hash close player/cards\nPASS approved theme home, theme → drawing → paint → same theme → home, explicit age, repeated clicks and no writes\nPASS multiple authorized activities in one theme without changing navigation\nPASS theme browser back/forward, cancelled age and authorization revocation\nPASS exact production game hub: four games and player routes retained for aluno/EI, Infantil/Fundamental, return and repeated init; no duplicated coloring gallery or catalog requests\nPASS exact new tab getter+initializer: theme home, delayed Infantil classification, Fundamental no-RPC gate, explicit EI, account race, hydration failure/rejection and desktop/mobile navigation without duplicates\nALL TESTS PASSED"
+    },
+    {
+      "width": 390,
+      "directStudio": "PASS top-level empty, jogo and institutional routes blocked before bundle; iframe without institutional blocked"
+    },
+    {
+      "width": 390,
+      "editor": "PASS actual Studio save ACK; Edge denial preserves draft, successful mocked Edge publication; revoked RPC never used"
+    }
+  ],
+  "pageErrors": []
+}

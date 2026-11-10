@@ -89,7 +89,7 @@
     {
       "file": "studio/assets/Player-nHpDXt_8.js",
       "source_sha256": "4a334caa35d73956ad69381d8a4b702b9af27ad38afa27bc754baae10a67bafc",
-      "sha256": "27ca6376b5abf53e48b79dea19034b78b6807900fab928bd95b49e2f433c96d6",
+      "sha256": "b886be145e2db41f492cb21de1c64a095e3e6d6ec0d2d7e13278b47e62c70906",
       "unchanged": false
     },
     {
@@ -185,7 +185,7 @@
     {
       "file": "studio/index.html",
       "source_sha256": "5be247f5f9fdd3b0ebf96bcb2dabb1a05c608d5f512209c705b4bec02e0cd136",
-      "sha256": "3b7f192747b00c3ac9b3d8e7c56fef4c428eda4d79fa665c5c61ce4c49fc19f0",
+      "sha256": "478d3f7d2f4a02238d75465567fd76a29969983d0efa2f39c7f2efe44b14a3db",
       "unchanged": false
     },
     {
@@ -6665,7 +6665,7 @@
     {
       "file": "coloring/app.mjs",
       "source_sha256": "6053507596d2dcd82474644381215f660651cc946d2ab79da0f58eea4ab2e36b",
-      "sha256": "e7cdf08205c4d6fb3076471abced88b8c077066207894a895301b968f42ac492",
+      "sha256": "0add170ac0a4e0753588862b106bc8685b2cf61b9724b59647fe2d7c0f559a80",
       "unchanged": false
     },
     {
@@ -6755,8 +6755,8 @@
     {
       "file": "coloring/narrator.mjs",
       "source_sha256": "07c7b782a51067742b6660706c1f48e62f85ae968efcdf63314d62ae46f25051",
-      "sha256": "07c7b782a51067742b6660706c1f48e62f85ae968efcdf63314d62ae46f25051",
-      "unchanged": true
+      "sha256": "10eff9af8a54712bdb13155b0dca3ce11ed7a9d91e087794b48901b06e3ad42e",
+      "unchanged": false
     },
     {
       "file": "coloring/numero-3-colorir.pdf",

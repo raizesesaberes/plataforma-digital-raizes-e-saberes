@@ -1,0 +1,5 @@
+PASS Studio own full snapshot, async acknowledgment, wrong request ignored, no localStorage writes
+PASS Studio failed save is never shown as saved
+PASS Coloring restore, save acknowledgment, locked selection, no localStorage writes
+PASS Coloring save failure disclosed and altered content hash rejected
+PASS no page errors

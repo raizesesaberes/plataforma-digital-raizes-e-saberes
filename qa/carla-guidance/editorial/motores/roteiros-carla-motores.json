@@ -1,0 +1,354 @@
+{
+  "motores": [
+    {
+      "motor": "quiz",
+      "atividade": {
+        "id": "ed05-EF1-ciencias-variedades-quiz-01",
+        "titulo": "Do que estes objetos são feitos?"
+      },
+      "falas_base": [
+        {
+          "id": "quiz-entrada",
+          "texto": "Observe a pergunta e escolha uma alternativa. Depois, confira o retorno da atividade."
+        },
+        {
+          "id": "quiz-ajuda",
+          "texto": "Volte à pergunta e procure a pista que ajuda a comparar as alternativas."
+        },
+        {
+          "id": "quiz-celebracao",
+          "texto": "Você chegou ao fim desta descoberta. Obrigada por participar!"
+        }
+      ],
+      "exemplo_real": {
+        "pre_resposta": {
+          "id": "quiz-exemplo-pergunta",
+          "texto": "Esta colher foi feita de uma parte do tronco de uma árvore. Qual é o material? As alternativas são madeira, metal e papel."
+        },
+        "ajuda_sem_resposta": {
+          "id": "quiz-exemplo-ajuda",
+          "texto": "Pense na informação sobre a origem da colher. Ela ajuda mais do que olhar apenas a cor."
+        },
+        "pos_resposta": {
+          "id": "quiz-exemplo-explicacao",
+          "texto": "A colher descrita é de madeira. Outra colher pode ser de metal, por exemplo."
+        }
+      }
+    },
+    {
+      "motor": "association",
+      "atividade": {
+        "id": "ed05-EF4-ciencias-variedades-association-01",
+        "titulo": "Partes da planta e suas funções"
+      },
+      "falas_base": [
+        {
+          "id": "association-entrada",
+          "texto": "Selecione um item na primeira coluna e, depois, sua combinação na segunda coluna."
+        },
+        {
+          "id": "association-ajuda",
+          "texto": "Observe o que cada item representa e compare as possibilidades da outra coluna."
+        },
+        {
+          "id": "association-celebracao",
+          "texto": "As relações ficaram reunidas. Você pode retomar o que descobriu quando quiser."
+        }
+      ],
+      "exemplo_real": {
+        "pre_resposta": {
+          "id": "association-exemplo-pergunta",
+          "texto": "Nesta atividade, vamos relacionar partes de uma planta terrestre com suas funções. Escolha uma parte na primeira coluna e procure sua função na segunda."
+        },
+        "ajuda_sem_resposta": {
+          "id": "association-exemplo-ajuda",
+          "texto": "Compare as funções apresentadas. Pense no que cada parte faz na planta deste desenho."
+        },
+        "pos_resposta": {
+          "id": "association-exemplo-explicacao",
+          "texto": "Neste exemplo, a raiz absorve água do solo. Esta relação descreve uma planta terrestre comum."
+        }
+      }
+    },
+    {
+      "motor": "memory",
+      "atividade": {
+        "id": "ed05-EI4-ciencias-variedades-memory-01",
+        "titulo": "Objetos de cuidado"
+      },
+      "falas_base": [
+        {
+          "id": "memory-entrada",
+          "texto": "Observe as figuras. Depois, vire duas cartas por vez para procurar figuras iguais."
+        },
+        {
+          "id": "memory-ajuda",
+          "texto": "Compare os detalhes das figuras e lembre onde você viu uma parecida."
+        },
+        {
+          "id": "memory-celebracao",
+          "texto": "As duplas apareceram! Foi bom explorar essas figuras com você."
+        }
+      ],
+      "exemplo_real": {
+        "pre_resposta": {
+          "id": "memory-exemplo-pergunta",
+          "texto": "Vamos brincar com figuras de objetos de cuidado. Você pode observar e escolher sem precisar falar o nome."
+        },
+        "ajuda_sem_resposta": {
+          "id": "memory-exemplo-ajuda",
+          "texto": "Veja os detalhes da figura que está aberta. Procure outra igual quando quiser."
+        },
+        "pos_resposta": {
+          "id": "memory-exemplo-explicacao",
+          "texto": "Duas escovas iguais. A escova de dentes ajuda no cuidado da boca."
+        }
+      }
+    },
+    {
+      "motor": "sequence",
+      "atividade": {
+        "id": "ed05-EF1-matematica-sequence-01",
+        "titulo": "Vamos organizar os dias da semana!"
+      },
+      "falas_base": [
+        {
+          "id": "sequence-entrada",
+          "texto": "Use Subir e Descer para organizar os cartões. Quando terminar, selecione Conferir sequência."
+        },
+        {
+          "id": "sequence-ajuda",
+          "texto": "Compare cada cartão com o anterior e o seguinte. Mude uma posição de cada vez."
+        },
+        {
+          "id": "sequence-celebracao",
+          "texto": "A sequência ficou organizada. Você acompanhou cada mudança de posição."
+        }
+      ],
+      "exemplo_real": {
+        "pre_resposta": {
+          "id": "sequence-exemplo-pergunta",
+          "texto": "A turma fez atividades de segunda-feira a quinta-feira. Coloque os cartões na ordem dos dias. Comece pela segunda-feira."
+        },
+        "ajuda_sem_resposta": {
+          "id": "sequence-exemplo-ajuda",
+          "texto": "Procure o dia que a pergunta pede para começar. Depois pense no dia que vem logo após cada cartão."
+        },
+        "pos_resposta": {
+          "id": "sequence-exemplo-explicacao",
+          "texto": "O intervalo ficou assim: segunda-feira, terça-feira, quarta-feira e quinta-feira. Cada cartão mostra o dia seguinte ao anterior."
+        }
+      }
+    },
+    {
+      "motor": "classification",
+      "atividade": {
+        "id": "ed05-EM1-matematica-classification-01",
+        "titulo": "Que tipo de variável foi coletada?"
+      },
+      "falas_base": [
+        {
+          "id": "classification-entrada",
+          "texto": "Observe cada exemplo e escolha, na mesma linha, o grupo que combina com ele."
+        },
+        {
+          "id": "classification-ajuda",
+          "texto": "Considere como a informação foi registrada. Compare a definição de cada grupo antes de escolher."
+        },
+        {
+          "id": "classification-celebracao",
+          "texto": "A classificação está concluída. Você relacionou os exemplos aos critérios apresentados."
+        }
+      ],
+      "exemplo_real": {
+        "pre_resposta": {
+          "id": "classification-exemplo-pergunta",
+          "texto": "Considere este exemplo: código numérico que identifica uma turma, sem ordem. Qual grupo descreve essa variável?"
+        },
+        "ajuda_sem_resposta": {
+          "id": "classification-exemplo-ajuda",
+          "texto": "Não use apenas a aparência do registro. Pense no que o número representa neste exemplo."
+        },
+        "pos_resposta": {
+          "id": "classification-exemplo-explicacao",
+          "texto": "Neste caso, a variável é qualitativa nominal. O código identifica uma categoria; ele não mede quantidade nem estabelece uma ordem."
+        }
+      }
+    },
+    {
+      "motor": "puzzle",
+      "atividade": {
+        "id": "ed05-EF1-ciencias-variedades-puzzle-01",
+        "titulo": "Peixe inteiro em quatro partes"
+      },
+      "falas_base": [
+        {
+          "id": "puzzle-entrada",
+          "texto": "Observe a imagem. Arraste uma peça ao encaixe ou selecione a peça e depois o lugar onde quer colocá-la."
+        },
+        {
+          "id": "puzzle-ajuda",
+          "texto": "Compare as cores e os contornos com a imagem de referência. Procure partes que continuam de uma peça para outra."
+        },
+        {
+          "id": "puzzle-celebracao",
+          "texto": "A imagem ficou inteira. Agora você pode observar seus detalhes com calma."
+        }
+      ],
+      "exemplo_real": {
+        "pre_resposta": {
+          "id": "puzzle-exemplo-pergunta",
+          "texto": "Vamos montar a imagem de um peixe em quatro partes. Observe a imagem de referência e escolha uma peça para começar."
+        },
+        "ajuda_sem_resposta": {
+          "id": "puzzle-exemplo-ajuda",
+          "texto": "Compare o desenho da peça com o desenho inteiro. Você pode experimentar outro encaixe se precisar."
+        },
+        "pos_resposta": {
+          "id": "puzzle-exemplo-explicacao",
+          "texto": "O peixe está inteiro. Se quiser, procure o olho, a cauda e as nadadeiras. Este desenho não mostra o tamanho real do peixe."
+        }
+      }
+    },
+    {
+      "motor": "word-search",
+      "atividade": {
+        "id": "ed05-EM3-ciencias-variedades-word-search-01",
+        "titulo": "Perguntas de eletromagnetismo"
+      },
+      "falas_base": [
+        {
+          "id": "word-search-entrada",
+          "texto": "Resolva a pista e selecione a palavra inteira na grade. Use as duas pontas ou arraste em linha reta."
+        },
+        {
+          "id": "word-search-ajuda",
+          "texto": "Pense primeiro no conceito da pista. Depois procure sua palavra na horizontal ou na vertical."
+        },
+        {
+          "id": "word-search-celebracao",
+          "texto": "As palavras foram encontradas. Você pode rever os conceitos que elas representam."
+        }
+      ],
+      "exemplo_real": {
+        "pre_resposta": {
+          "id": "word-search-exemplo-pergunta",
+          "texto": "Que processo permite obter força eletromotriz pela variação do fluxo magnético?"
+        },
+        "ajuda_sem_resposta": {
+          "id": "word-search-exemplo-ajuda",
+          "texto": "Compare aproximar um ímã de um fio enrolado com mantê-lo parado. Qual mudança produz o efeito elétrico?"
+        },
+        "pos_resposta": {
+          "id": "word-search-exemplo-explicacao",
+          "texto": "A palavra encontrada é indução. A indução eletromagnética produz força eletromotriz quando o fluxo magnético varia no tempo. Para haver circulação contínua de cargas, também é necessário um caminho condutor fechado."
+        }
+      }
+    },
+    {
+      "motor": "crossword",
+      "atividade": {
+        "id": "ed05-EF1-ciencias-variedades-crossword-01",
+        "titulo": "Três materiais em pistas"
+      },
+      "falas_base": [
+        {
+          "id": "crossword-entrada",
+          "texto": "Leia a pista, digite a palavra no campo de resposta e use o botão Conferir da própria pista."
+        },
+        {
+          "id": "crossword-ajuda",
+          "texto": "Compare a pista com a quantidade de letras e com as letras que já aparecem nos cruzamentos."
+        },
+        {
+          "id": "crossword-celebracao",
+          "texto": "As palavras se encontraram na grade. Você reuniu as pistas desta descoberta."
+        }
+      ],
+      "exemplo_real": {
+        "pre_resposta": {
+          "id": "crossword-exemplo-pergunta",
+          "texto": "Pista um: material das páginas do livro ilustrado. A palavra fica na horizontal e tem cinco letras."
+        },
+        "ajuda_sem_resposta": {
+          "id": "crossword-exemplo-ajuda",
+          "texto": "Pense no material das páginas. Confira se a palavra que você pensou tem a quantidade de letras indicada."
+        },
+        "pos_resposta": {
+          "id": "crossword-exemplo-explicacao",
+          "texto": "A palavra é papel. Nesta ilustração, as páginas do livro são feitas desse material."
+        }
+      }
+    },
+    {
+      "motor": "completion",
+      "atividade": {
+        "id": "ed05-EI4-portugues-completion-01",
+        "titulo": "Brincadeira com sons"
+      },
+      "falas_base": [
+        {
+          "id": "completion-entrada",
+          "texto": "Observe a frase e escolha uma das opções para completar o trecho que falta."
+        },
+        {
+          "id": "completion-ajuda",
+          "texto": "Pense na frase inteira. Compare as opções com a situação apresentada."
+        },
+        {
+          "id": "completion-celebracao",
+          "texto": "Exploramos as frases e os sons. Obrigada por brincar comigo!"
+        }
+      ],
+      "exemplo_real": {
+        "pre_resposta": {
+          "id": "completion-exemplo-pergunta",
+          "texto": "Para imitar o gato, podemos dizer... As opções são miau e vrum. Você pode escolher uma figura; não precisa repetir o som."
+        },
+        "ajuda_sem_resposta": {
+          "id": "completion-exemplo-ajuda",
+          "texto": "Compare as duas opções com a situação da frase. Um adulto pode apresentar os sons, se você quiser."
+        },
+        "pos_resposta": {
+          "id": "completion-exemplo-explicacao",
+          "texto": "Nesta brincadeira, usamos miau para representar o som do gato. Você pode só observar, sem repetir."
+        }
+      }
+    },
+    {
+      "motor": "trail",
+      "atividade": {
+        "id": "ed05-EM1-matematica-trail-01",
+        "titulo": "Comparar dois serviços fictícios"
+      },
+      "falas_base": [
+        {
+          "id": "trail-entrada",
+          "texto": "Leia a situação da etapa e escolha uma alternativa. O jogo apresenta as etapas em ordem."
+        },
+        {
+          "id": "trail-ajuda",
+          "texto": "Retome os dados da situação e resolva uma parte de cada vez antes de comparar as alternativas."
+        },
+        {
+          "id": "trail-celebracao",
+          "texto": "Você percorreu as etapas desta análise. As explicações ficam disponíveis para revisão."
+        }
+      ],
+      "exemplo_real": {
+        "pre_resposta": {
+          "id": "trail-exemplo-pergunta",
+          "texto": "Neste modelo fictício, o tempo de uso é um número inteiro de zero a dez horas. O serviço A custa dez reais mais dois reais por hora. O serviço B custa quatro reais por hora. Não há outras taxas. Para duas horas, quais são os custos de A e B? As opções são: A, quatorze reais, e B, oito reais; A, doze reais, e B, oito reais; A, quatorze reais, e B, seis reais."
+        },
+        "ajuda_sem_resposta": {
+          "id": "trail-exemplo-ajuda",
+          "texto": "Substitua duas horas em cada expressão, separadamente. Calcule os dois custos e só então compare os valores."
+        },
+        "pos_resposta": {
+          "id": "trail-exemplo-explicacao",
+          "texto": "Para duas horas, o serviço A custa dez mais duas vezes dois: quatorze reais. O serviço B custa quatro vezes dois: oito reais."
+        }
+      }
+    }
+  ]
+}

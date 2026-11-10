@@ -1,0 +1,52 @@
+{
+  "ed05-EF1-ciencias-variedades-quiz-01": {
+    "canonicalSha256": "012f1f76874dd36ba25a2680d08f52ca5d23dc6ee3a993a42f67814f6e34beb3",
+    "runtimeSha256": "77c936b11e841908a16115dca34f930af79a968ca35ae2b4c8633b258f5d562b",
+    "template": "quiz"
+  },
+  "ed05-EF4-ciencias-variedades-association-01": {
+    "canonicalSha256": "01dbb3acc462c9aefb269a01666c597c8578ad104c9c0f4fc8c5147fc8795545",
+    "runtimeSha256": "9dad59a409f79bfe79ea97bc0fd55535fd38f4d36b483ede790c9d62a1e3f305",
+    "template": "association"
+  },
+  "ed05-EI4-ciencias-variedades-memory-01": {
+    "canonicalSha256": "af60842c5389baf73eef89740b1fb62af8ef8fe5e4b00ccabc033870d696945e",
+    "runtimeSha256": "cf914cdf385f44224d937eb2832c666c419ae080fe85bc929140c87f94508327",
+    "template": "memory"
+  },
+  "ed05-EF1-matematica-sequence-01": {
+    "canonicalSha256": "1d654959816600489dcd32bc153eb0ee4533c29a9412938d6269f64f83576124",
+    "runtimeSha256": "21be49661a44e9d67e879dd9756844c16c273bbd7bf0cd1dc91f58236be27ceb",
+    "template": "sequence"
+  },
+  "ed05-EM1-matematica-classification-01": {
+    "canonicalSha256": "f684c8fd3a1e387494b84544b1b98972bdcdf8fb8fa1658778b1dc5b68b6560a",
+    "runtimeSha256": "5c53e6a8d43110b57786cb348cfd343e9ab274d597848728e963a6152f4d64c3",
+    "template": "classification"
+  },
+  "ed05-EF1-ciencias-variedades-puzzle-01": {
+    "canonicalSha256": "23e50baf0206d54b165ed4e938480fbf912736d2589743f3f4b2bf89561d3962",
+    "runtimeSha256": "ed083e052975a9d86283d11ca2e0a62691053be960aa4747ce99c4808d04c157",
+    "template": "puzzle"
+  },
+  "ed05-EM3-ciencias-variedades-word-search-01": {
+    "canonicalSha256": "cb48a6d90363d49ac80272f73f7d09317d2c9dc5ba49e1d7061981bc2e0e09f6",
+    "runtimeSha256": "54586d9b07bf00a214e2f2d378639c8407a717e0654e402af2422d1257fa8419",
+    "template": "word-search"
+  },
+  "ed05-EF1-ciencias-variedades-crossword-01": {
+    "canonicalSha256": "3b7c320d8c22b70de2d8bdbae9ddbf24e9702ee4b5c3dc03b37f3734f3cd1b9b",
+    "runtimeSha256": "f2c57f3d03a6bcd611b6f509ffe9a4b3515fb075b476510821ba14b58abc307d",
+    "template": "crossword"
+  },
+  "ed05-EI4-portugues-completion-01": {
+    "canonicalSha256": "db44c4e143ec2af3a0eef64557020a1ecba77a5d3d38f345bd00ebcb4a75d32f",
+    "runtimeSha256": "5565ee64fde34aed4f22c846c66abf17847c7d46b0dba7fa5e87f1a2dbc4d7ab",
+    "template": "completion"
+  },
+  "ed05-EM1-matematica-trail-01": {
+    "canonicalSha256": "ca4b80631fec824e43a53e2a7daa520308aeb829ce3f515917401290f3574aa6",
+    "runtimeSha256": "adb9e69eb4ca6f2b2c9f93076a640c9297814d07efe7aab96b84b61c1fb00b41",
+    "template": "trail"
+  }
+}

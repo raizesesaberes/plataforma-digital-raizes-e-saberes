@@ -1,0 +1,17 @@
+{
+  "baseCommit": "5e50fccc955af2d273f6c54668921c37e94a12c9",
+  "file": "mission-runtime/studio/assets/Player-nHpDXt_8.js",
+  "beforeSha256": "27ca6376b5abf53e48b79dea19034b78b6807900fab928bd95b49e2f433c96d6",
+  "afterSha256": "b886be145e2db41f492cb21de1c64a095e3e6d6ec0d2d7e13278b47e62c70906",
+  "replacements": [
+    {
+      "before": "})]}),g&&(0,h.jsx)(`p`,{className:`puzzle-storage-notice`",
+      "after": "})]}),(0,h.jsx)(__CarlaGuidance,{session:s,puzzle:!0}),g&&(0,h.jsx)(`p`,{className:`puzzle-storage-notice`"
+    },
+    {
+      "before": "})}),Y(A)&&(0,h.jsxs)(`p`,{role:`status`",
+      "after": "})}),(0,h.jsx)(__CarlaGuidance,{session:s}),Y(A)&&(0,h.jsxs)(`p`,{role:`status`"
+    }
+  ],
+  "prepend": "import {GameGuidance as __CarlaGuidance} from \"../../narration/game-guidance.mjs\";\n"
+}

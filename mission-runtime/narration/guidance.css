@@ -1,0 +1,8 @@
+.approved-guidance { margin: .75rem 0; min-width: 0; }
+.approved-guidance details { border: 1px solid #d9e4dd; border-radius: .7rem; padding: .65rem .8rem; background: #f7faf8; }
+.approved-guidance summary { cursor: pointer; font-weight: 700; line-height: 1.5; }
+.approved-guidance summary:focus-visible { outline: 3px solid #1c513e; outline-offset: 3px; }
+.approved-guidance p { overflow-wrap: anywhere; line-height: 1.5; margin: .65rem 0; }
+.approved-guidance h3 { font-size: 1rem; margin: .8rem 0 .3rem; }
+.approved-guidance .approved-voice-status { font-size: .85rem; color: #42574a; }
+.puzzle-player > .approved-guidance { margin: .5rem 1rem; }
