@@ -3,8 +3,8 @@
   "baseCommit": "4e91990aa5d7e98fbf18b793156f5229a998461f",
   "files": [
     {
-      "file": "app/_expo/static/js/web/hosted-entry-7092c036eb53ac07ef0ff64e37ec6b37.js",
-      "sha256": "d8a898a4ff43dfe07071bb1a5c0ac9ce03ddefcea7f38392a1d8ab06b18d2d23"
+      "file": "app/_expo/static/js/web/hosted-entry-0fdffd321b7d5af47570911c34d11330.js",
+      "sha256": "7a1926ac0d78563bd7ae06d9366c436ae68ed10017aa882843de6a9dd32d805a"
     },
     {
       "file": "app/assets/assets/branding/rs_crescer_bg_phone.1da1ecdef41f6dc81f6b173951734dcf.png",
@@ -168,7 +168,7 @@
     },
     {
       "file": "app/index.html",
-      "sha256": "000fbf9069d6b742476e8ff9b4cf9729782724860dba7e2105443229843eb267"
+      "sha256": "c92796b1401f0742d27cbe6f9cb22c6fba7f4ef3a7af5c8aea4d12b5dde6359f"
     },
     {
       "file": "app/platform-runtime.js",

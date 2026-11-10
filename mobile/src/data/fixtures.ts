@@ -81,7 +81,7 @@ export const appProfiles: Record<AppRole, AppProfile> = {
   },
   fundamental: {
     role: "fundamental",
-    title: "Ensino Fundamental / Ensino Médio",
+    title: "Da Educação Infantil ao Ensino Médio",
     subtitle: "Ambiente do estudante",
     userName: "Pedro Henrique",
     school: "Escola Municipal Raízes e Saberes",

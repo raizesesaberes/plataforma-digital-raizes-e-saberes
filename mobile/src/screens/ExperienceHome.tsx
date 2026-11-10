@@ -46,7 +46,7 @@ export function ExperienceHome({ profile, session, onOpen, onLogout, preview = f
   const tiny = width < 380;
   const teacher = profile.role === "professor";
   const child = profile.role === "crescer";
-  const roleLabel = teacher ? "AMBIENTE DA PROFESSORA" : child ? "EDUCAÇÃO INFANTIL" : "FUNDAMENTAL E MÉDIO";
+  const roleLabel = teacher ? "AMBIENTE DA PROFESSORA" : child ? "EDUCAÇÃO INFANTIL" : profile.title;
   const identityKey = `${profile.role}:${session?.userId ?? "none"}`;
   const [loaded, setLoaded] = useState<{ key: string; data: Identity | null; error: boolean } | null>(null);
   const [refresh, setRefresh] = useState(0);
