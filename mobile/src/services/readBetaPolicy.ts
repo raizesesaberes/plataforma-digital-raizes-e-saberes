@@ -16,7 +16,11 @@ export function assertReadBetaRequest(input: string, init: RequestInit = {}, exp
   if (!expectedOrigin || url.origin !== expectedOrigin || url.username || url.password || url.hash) return denied();
   const method = (init.method || 'GET').toUpperCase();
   if (url.pathname === '/auth/v1/user' && !url.search && method === 'GET') return;
-  // Explicit logout is the only allowed state-changing operation.
+  // Authentication is the only state-changing exception: the exact existing
+  // password grant, institutional student login and explicit local logout.
+  // This never enables signup, recovery, refresh, profile edits or school writes.
+  if (url.pathname === '/auth/v1/token' && url.search === '?grant_type=password' && method === 'POST') return;
+  if (url.pathname === '/functions/v1/student-institutional-login' && !url.search && method === 'POST') return;
   if (url.pathname === '/auth/v1/logout' && url.search === '?scope=local' && method === 'POST') return;
   if (method !== 'POST' || url.search) return denied();
   const rpc = url.pathname.match(/^\/rest\/v1\/rpc\/([a-z_]+)$/)?.[1];

@@ -29,6 +29,15 @@ export function parseSession(raw: string | null, now = Date.now()) {
   if (!Number.isFinite(expiresAt) || expiresAt <= now + 60000) throw Error('session_expired');
   return { session: Object.freeze({ accessToken: value.access_token, userId: value.user.id }) as SessionIdentity, expiresAt };
 }
+/** Settle cancellation even when a stalled/custom transport ignores AbortSignal. */
+function abortable<T>(operation: Promise<T>, signal: AbortSignal): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const abort = () => reject(Error('session_unverified'));
+    signal.addEventListener('abort', abort, {once: true});
+    if (signal.aborted) abort();
+    operation.then(resolve, reject).finally(() => signal.removeEventListener('abort', abort));
+  });
+}
 export function createSessionGuard(read: () => string | null, onLock: (reason: string) => void, now = Date.now) {
   let generation = 0;
   let current: {raw: string | null; session: SessionIdentity; canonical: SessionIdentity; retainedValidated: boolean; verifying: boolean; expiresAt: number; epoch: number} | null = null;
@@ -84,10 +93,10 @@ export function createSessionGuard(read: () => string | null, onLock: (reason: s
     assert(session, epoch);
     const controller = new AbortController(); requests.add(controller);
     try {
-      const response = await fetch(input, {...init, signal: controller.signal, cache: 'no-store', redirect: 'error'});
+      const response = await abortable(fetch(input, {...init, signal: controller.signal, cache: 'no-store', redirect: 'error'}), controller.signal);
       assert(session, epoch);
       // Consume the body inside the guard; no late JSON can escape after account changes.
-      const body = await response.text();
+      const body = await abortable(response.text(), controller.signal);
       assert(session, epoch);
       if (response.status === 401 || response.status === 403) { invalidate('server_denied'); throw Error('server_denied'); }
       const result = new Response(body || null, {status: response.status, statusText: response.statusText, headers: response.headers});

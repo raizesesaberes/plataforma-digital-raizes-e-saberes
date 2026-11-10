@@ -1,0 +1,51 @@
+{
+  "baseCommit": "6dffdaf157af24f459c117a4904de9c2b2643407",
+  "buildMode": {
+    "mode": "real-read-beta",
+    "published": false
+  },
+  "manifestSha256": "6bcb51b3a552e493101ed4dc6424eef85c6c3d1cd5db208206f83efa8c6d229e",
+  "bundle": [
+    {
+      "file": "app/_expo/static/js/web/hosted-entry-7092c036eb53ac07ef0ff64e37ec6b37.js",
+      "sha256": "d8a898a4ff43dfe07071bb1a5c0ac9ce03ddefcea7f38392a1d8ab06b18d2d23"
+    }
+  ],
+  "appFiles": 43,
+  "runtimeFiles": 5559,
+  "screenshots": [
+    {
+      "file": "qa/own-login/login-1280.jpg",
+      "sha256": "69b96f6dc079fdbb386de88c018a02f4121e34a5632d6f24fba8d3b91562af71"
+    },
+    {
+      "file": "qa/own-login/login-320.jpg",
+      "sha256": "a1a557534b47d052cf1fcb452e63099fa381142101c660589b7300db3326ae83"
+    },
+    {
+      "file": "qa/own-login/login-390.jpg",
+      "sha256": "5b4f81da5e8be73b2c1f28be1c431421687042b53804206d2d8a638f98665929"
+    },
+    {
+      "file": "qa/own-login/login-768.jpg",
+      "sha256": "91820e54dfb0b5b2a92de5b182eb8a18a283b5bb320ef7060fe6aa8198d71a44"
+    },
+    {
+      "file": "qa/own-login/splash-390.jpg",
+      "sha256": "4d379b3a4afc78ff9ccfc80f8912cde646d50cba6c6e58ce6542717087cd1925"
+    },
+    {
+      "file": "qa/own-login/splash-landscape.jpg",
+      "sha256": "813d469e74260e09da7995d5df4debc7dabe5d8f57af4cfd0628362bcd8ededc"
+    }
+  ],
+  "tests": {
+    "app": 127,
+    "mission_unit": 20,
+    "history": "PASS",
+    "typescript": "PASS"
+  },
+  "visual": "Chrome desktop; synthetic loopback only; 320/390/768/1280; landscape 768x360",
+  "realAuthTested": false,
+  "published": false
+}
