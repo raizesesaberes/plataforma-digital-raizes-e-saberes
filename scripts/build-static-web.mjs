@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, lstatSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { validateAppOverrides } from './lib/app-runtime-overrides.mjs';
+import { validateCarlaAudio } from './lib/carla-audio-validation.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const output = join(root, 'dist');
@@ -14,6 +15,8 @@ if (!Array.isArray(feature.files) || !Array.isArray(feature.overrides)) throw Er
 for (const entry of feature.files) {
  if (!entry.file.startsWith('mission-runtime/') || entry.file.includes('/tests/') || entry.file.endsWith('runtime-copy-manifest.json')) throw Error('Non-runtime feature path');
 }
+// Audio remains separate from institutional snapshots; fail closed on unreviewed assets.
+validateCarlaAudio({root, runtimeManifest: feature.files});
 const allowedOverrides=['app-pages.js','missao.html','colorir-descobrir.html','login.js'];
 if (feature.overrides.length !== allowedOverrides.length || feature.overrides.some(e=>!allowedOverrides.includes(e.file)) || new Set(feature.overrides.map(e=>e.file)).size!==allowedOverrides.length) throw Error('Unapproved baseline override');
 for (const override of feature.overrides) if (baseline.find(e=>e.file===override.file)?.sha256 !== override.original_sha256) throw Error('Baseline identity changed');

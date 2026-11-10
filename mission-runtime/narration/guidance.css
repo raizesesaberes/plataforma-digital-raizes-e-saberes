@@ -6,3 +6,14 @@
 .approved-guidance h3 { font-size: 1rem; margin: .8rem 0 .3rem; }
 .approved-guidance .approved-voice-status { font-size: .85rem; color: #42574a; }
 .puzzle-player > .approved-guidance { margin: .5rem 1rem; }
+
+/* Static narration controls: no autoplay, motion or fixed-width layout. */
+.carla-audio-panel { min-width: 0; margin: .75rem 0; padding: .65rem; border: 1px solid #ccdcd2; border-radius: .65rem; background: #f7faf8; }
+.carla-audio-actions { display: flex; gap: .4rem; flex-wrap: wrap; margin: .5rem 0; }
+.carla-audio-panel button, .carla-audio-listen { min-height: 44px; max-width: 100%; margin: .2rem; padding: .45rem .65rem; border: 1px solid #688574; border-radius: .45rem; background: #fff; color: #17432e; font: inherit; white-space: normal; overflow-wrap: anywhere; cursor: pointer; }
+.carla-audio-panel button:disabled { cursor: default; opacity: .55; }
+.carla-audio-panel button:focus-visible, .carla-audio-listen:focus-visible, .carla-audio-panel summary:focus-visible { outline: 3px solid #17432e; outline-offset: 3px; }
+.carla-audio-panel p { line-height: 1.5; overflow-wrap: anywhere; }
+.carla-audio-panel .carla-audio-note { font-size: .85rem; }
+
+@media (prefers-reduced-motion: reduce) { .carla-audio-panel button, .carla-audio-listen { transition: none; transform: none; } }

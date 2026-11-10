@@ -1,3 +1,4 @@
+import {stopFrameAudio} from './narration/audio-lifecycle.mjs';
 import {discoveryMarkup} from './coloring/discovery.mjs';
 import {groupColoringThemes} from './coloring/themes.mjs';
 import {localDeadlineToUtc,formatDeadline} from './time.mjs';
@@ -27,7 +28,7 @@ export async function mountMission({root,mode='student',discoveryLayout='themes'
  if(discoveryHistory)discoveryTheme=readDiscoveryTheme();
  const current=()=>alive&&root.isConnected&&sessionIdentity()===identity&&(mode!=='discovery'||discoveryAllowed());
  const status=(text,error=false)=>{if(!alive)return;$('#status').textContent=text;$('#status').className=error?'notice error':'status-note';};
- const close=()=>{$$('dialog').forEach(d=>d.close());$('#body').hidden=false;epoch++;clearTimeout(expiry);active=null;frame=null;editor=null;$('#player').replaceChildren();};
+ const close=()=>{stopFrameAudio(frame);$$('dialog').forEach(d=>d.close());$('#body').hidden=false;epoch++;clearTimeout(expiry);active=null;frame=null;editor=null;$('#player').replaceChildren();};
  const invalidate=()=>{if(!alive)return;close();epoch++;selected.clear();catalog=[];assignments=[];$('#body').replaceChildren();status('Sessão alterada. Entre novamente para consultar as atividades.',true);};
  const call=async(name,args={})=>{if(!current()){invalidate();throw Error('Sessão alterada.');}let result=await rpc(name,args);if(!current()){invalidate();throw Error('Sessão alterada.');}if(result?.error)throw Error(result.error.message||'Não foi possível confirmar a operação.');const value=result?.data??result;if(Array.isArray(value)&&value.some(r=>r?.snapshot_json))return Promise.all(value.map(hydrateSnapshot));if(value?.snapshot_json)return hydrateSnapshot(value);return value;};
  const act=fn=>async event=>{try{await fn(event);}catch(error){status(error.message||'Não foi possível concluir a operação.',true);}};

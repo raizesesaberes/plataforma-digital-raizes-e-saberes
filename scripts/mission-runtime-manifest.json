@@ -34,7 +34,7 @@
     },
     {
       "file": "mission-runtime/coloring/app.mjs",
-      "sha256": "0add170ac0a4e0753588862b106bc8685b2cf61b9724b59647fe2d7c0f559a80"
+      "sha256": "70a1f0c7a8d0e475b1f87a88e9e793269c65e72ee95a4e874f2c7fd3b38f9a16"
     },
     {
       "file": "mission-runtime/coloring/art/banana.png",
@@ -130,7 +130,7 @@
     },
     {
       "file": "mission-runtime/institutional.mjs",
-      "sha256": "ecef53032f0dc3b3d407faa9836ae30fea04bd1cf6da3bfa9e7fa5f4741909b6"
+      "sha256": "37c37739fb242433a826c001d21bea217a00ef2937d2e71ca8aa0982a0fcca14"
     },
     {
       "file": "mission-runtime/logo-app.png",
@@ -266,7 +266,7 @@
     },
     {
       "file": "mission-runtime/studio/index.html",
-      "sha256": "478d3f7d2f4a02238d75465567fd76a29969983d0efa2f39c7f2efe44b14a3db"
+      "sha256": "ff4e6564b7037cc1f5e2c214dc8d6801bf6bcd1f6dfbe3fd01e647d0855ad6bd"
     },
     {
       "file": "mission-runtime/studio/institutional-bootstrap.mjs",
@@ -4602,15 +4602,211 @@
     },
     {
       "file": "mission-runtime/narration/game-guidance.mjs",
-      "sha256": "14fc3c5c18b636de9011fb817d0ac53f03c3dd9bb8f280ba98ead10398b4be94"
+      "sha256": "74411238d25ef9ed2d51cd4a2686786776c44cf568070fc76948b9866abeadc7"
     },
     {
       "file": "mission-runtime/narration/guidance.css",
-      "sha256": "f62a4570e5efc27bf84188b5ded47d179d756ed55e032a1d66939d5806529d16"
+      "sha256": "c9ca37c36248b182c6036a83d9a085d1308bc18e19ae8754333bf43a1679bf49"
     },
     {
       "file": "mission-runtime/narration/resolve.mjs",
       "sha256": "6119ee5c8cfb879406a88922f3569cf0ca919f6750ee0bd3b08d13a7b8b7bcb6"
+    },
+    {
+      "file": "mission-runtime/narration/asset-registry.mjs",
+      "sha256": "3faa785cff887e456350633ca0fb64673a5a9763f6df4f07ab678d0584931629"
+    },
+    {
+      "file": "mission-runtime/narration/audio-policy.mjs",
+      "sha256": "8bcca58fe4c9707ac6179eba043aaaaa9006020fb1597d978f1032b2721305eb"
+    },
+    {
+      "file": "mission-runtime/narration/static-player.mjs",
+      "sha256": "84a3d55447626da97a9dc48e0c8406263dde483e096a16ea5ade7299da6dfde8"
+    },
+    {
+      "file": "mission-runtime/narration/audio-lifecycle.mjs",
+      "sha256": "c4db40d4504e4706f86b03184d3d97ae364d284342ac904b24bcee22b8d64fcc"
+    },
+    {
+      "file": "mission-runtime/narration/game-audio.mjs",
+      "sha256": "11d0bfec656f50c0af3d12bc3cc0d048f9997f1a464f478327cea2601fdc289e"
+    },
+    {
+      "file": "mission-runtime/narration/coloring-audio.mjs",
+      "sha256": "309a51d05073fd5bbc56ef4706d6e113171b8ff00306aa38106dc04113ec4983"
+    },
+    {
+      "file": "mission-runtime/narration/audio-controls.css",
+      "sha256": "4ffb9c77119bd68683a7d3b893beba1db03745305fe34ded0d2846da3c3e1d06"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-cachorro-welcome.mp3",
+      "sha256": "96559cf5830e4e62629084da0afd3553277434f3cd277a63da61ee4be21078e8"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-cachorro-discovery_4_5.mp3",
+      "sha256": "0a531128bd17190a6a3367fe9fe6655409f2017c4ccf2ee88d2c60ef5527a5f9"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-numero3-count_three.mp3",
+      "sha256": "50f464fa966fbf4bbe052242f5614f276633db05da8013734cb94350c86165ff"
+    },
+    {
+      "file": "mission-runtime/narration/audio/common-audio_unavailable.mp3",
+      "sha256": "0a93971edf95f3539c8f1bcfd79675c3eb16deaa27ed4ae6a15289adb76ebd27"
+    },
+    {
+      "file": "mission-runtime/narration/audio/quiz-exemplo-pergunta.mp3",
+      "sha256": "89d990b7fc453b14ef2fe3894ef5a439b0fb42506095a527f87ecc77a27f39dc"
+    },
+    {
+      "file": "mission-runtime/narration/audio/word-search-exemplo-explicacao.mp3",
+      "sha256": "b4e61218a9628cda1b94676a396d8da033324da69117b02a59edf9130e4f869a"
+    },
+    {
+      "file": "mission-runtime/narration/audio/common-paint_touch.mp3",
+      "sha256": "1e447f0e1b1535029f311b993f980a0462f493dc34d86cd20ea5ca30686399a4"
+    },
+    {
+      "file": "mission-runtime/narration/audio/common-paint_more_colors.mp3",
+      "sha256": "2976dddb46f1687b19f90a0c62618d358e21c6f6282e21b12a851ad3ba23f4c2"
+    },
+    {
+      "file": "mission-runtime/narration/audio/common-paint_brush.mp3",
+      "sha256": "502365979aad3a25f856a66d931fa82bd664e7d374009a2dde0da10d39343612"
+    },
+    {
+      "file": "mission-runtime/narration/audio/common-paint_erase.mp3",
+      "sha256": "ee8a5e1d0dfbd34e2780e8551c2d9a25f182e0cf5a7f1f03bfbdfaf4b1f20150"
+    },
+    {
+      "file": "mission-runtime/narration/audio/common-paint_undo.mp3",
+      "sha256": "5226743bf031c04eed67143b24e0ab4f276f1cc3d49e963722a891696ceedf8c"
+    },
+    {
+      "file": "mission-runtime/narration/audio/common-paint_keyboard.mp3",
+      "sha256": "bfef3f3dbff486ae626c8bb108aca701da8f320395e679a1f6d61cdddab29b60"
+    },
+    {
+      "file": "mission-runtime/narration/audio/common-life_invite.mp3",
+      "sha256": "0c6fb54ab18993fd7e00b3f7ac5c2582170d887f9d3fa400351a2d60e918d86a"
+    },
+    {
+      "file": "mission-runtime/narration/audio/common-life_show.mp3",
+      "sha256": "f96e2ebbb44c125b9b1d05e6f6ff2e2784a4c324915864f3e7a05bb93b4d2966"
+    },
+    {
+      "file": "mission-runtime/narration/audio/common-life_no_paint.mp3",
+      "sha256": "5efe76c1ce99b48f883cfa661917b3dc6d174f16f2bdff8dcf5e99464897a055"
+    },
+    {
+      "file": "mission-runtime/narration/audio/common-life_pause.mp3",
+      "sha256": "20e0e80155a5bccf092a72588175e0c6e63bd0f54e188033e9b39cb4997201e6"
+    },
+    {
+      "file": "mission-runtime/narration/audio/common-finished.mp3",
+      "sha256": "a91e38e16bcabcb9f344ab70ed18c7958c79cb254fa28f55f2e559bed49b0b18"
+    },
+    {
+      "file": "mission-runtime/narration/audio/common-permission_to_observe.mp3",
+      "sha256": "4dd8c430631851a3b968bd70793b905730ac73d1d7c967ba4469fa095ca1e19c"
+    },
+    {
+      "file": "mission-runtime/narration/audio/common-skip_sounds.mp3",
+      "sha256": "2102bc383d9b692e0b83729d86d4f32a1f92fef7810fcee99244e8425331686e"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-cachorro-discovery_2_3.mp3",
+      "sha256": "c5c4d99aeb223b020d1e5ef5103039f61c04c494e5cd208154a3692ad35bf9da"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-cachorro-sound_4_5.mp3",
+      "sha256": "b30e9c9430cbabb866020f8870179d81fdffc62be22bd24423da24d8ddeecdf6"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-cachorro-letter_4_5.mp3",
+      "sha256": "baccab9233cc1c5ab591259037f5c5a4a89582d75a6c10b9c087c6d686548af5"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-preguica-welcome.mp3",
+      "sha256": "337eefae2524981bbab2074fdcd48bdd6efb83d5f84c654fffad2b8624219385"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-preguica-discovery_2_3.mp3",
+      "sha256": "5593246d6b1a94bac5baf540dc731d55f8bc42450a0a8b9479112b7e02a77649"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-preguica-discovery_4_5.mp3",
+      "sha256": "1fd744a258f2cf6782d5eb07c678836364740f8ae8205b8de9b456914ae565bc"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-preguica-sound_4_5.mp3",
+      "sha256": "f6869965113b3f2e83de59c185bd90e45d3c7c28f609f336e7d5d135d351cd00"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-preguica-letter_4_5.mp3",
+      "sha256": "e55775525048e0b2a16ff503a833040abd830888984cb3e9c6ad4ca781f34e8c"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-borboleta-welcome.mp3",
+      "sha256": "08c54278b4a70fdfa877e09d6af25570e7276b8a06c58ae370c1b601de37f6c8"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-borboleta-discovery_2_3.mp3",
+      "sha256": "1a03804d480aafd443fda501a1a3acd43eb7ad8230b7c2d8b0e1042d069589cd"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-borboleta-discovery_4_5.mp3",
+      "sha256": "32f9f9842420f5c3b2f09aa28d325fb073267cbb8a617d1f6534a248df84bfc4"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-borboleta-sound_4_5.mp3",
+      "sha256": "cb58c158c6afd00320e62f4f46d9718fa8202d30fb1e7483528f3c95a30dbc3a"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-borboleta-letter_4_5.mp3",
+      "sha256": "48e50b14dc233f137d6d5fb52d6881fe1e275949b3eb378a0e0122de5f6bc0cb"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-peixe-welcome.mp3",
+      "sha256": "efe8ee0fb1b848186a87c94cd5f6275a7856969baac1ed65c535633560c91b6d"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-peixe-discovery_2_3.mp3",
+      "sha256": "1caf3e495f73a3c9c4573cbc5d7ba93854d918ac506637e313179258ead3f172"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-peixe-discovery_4_5.mp3",
+      "sha256": "f14061e02e7a89f4ed4c352c5b514d12ad5658bb1567b4ccb6953e99ca5757ab"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-peixe-sound_4_5.mp3",
+      "sha256": "f0ff174cd2f764819d103cdfa766c1c73f2ddb992a14ed75a32beefbe392358d"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-peixe-letter_4_5.mp3",
+      "sha256": "b2df9a1468f6408b0e589a9d1a9bfd43aeb05e3e8e8f5f4e7dc0e663ff6fa7f2"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-banana-welcome.mp3",
+      "sha256": "a8a8f7aa785454fd263da815465c1dea842eb4aafd325a03a9ac17a41cb828c0"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-banana-discovery_2_3.mp3",
+      "sha256": "a24d8094f8293cfb0b3f2c3e7633f91e42785a0d5097aa053c7aa59642946bf5"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-banana-discovery_4_5.mp3",
+      "sha256": "d6baa8ac084bba57bedbf7f09f47f176d2ee2f96d11bcaacad2a95abaf06ffb8"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-banana-sound_4_5.mp3",
+      "sha256": "2cb8c60ffe32205f29dd013a78dbdb22ff064ea895c92ac57fa153e17d710639"
+    },
+    {
+      "file": "mission-runtime/narration/audio/colorir-banana-letter_4_5.mp3",
+      "sha256": "05184d8238b48133306c92a0bccedb5eccddb3e54ad10ad5abfda9b83564aa8c"
     }
   ]
 }

@@ -185,7 +185,7 @@
     {
       "file": "studio/index.html",
       "source_sha256": "5be247f5f9fdd3b0ebf96bcb2dabb1a05c608d5f512209c705b4bec02e0cd136",
-      "sha256": "478d3f7d2f4a02238d75465567fd76a29969983d0efa2f39c7f2efe44b14a3db",
+      "sha256": "ff4e6564b7037cc1f5e2c214dc8d6801bf6bcd1f6dfbe3fd01e647d0855ad6bd",
       "unchanged": false
     },
     {
@@ -6665,7 +6665,7 @@
     {
       "file": "coloring/app.mjs",
       "source_sha256": "6053507596d2dcd82474644381215f660651cc946d2ab79da0f58eea4ab2e36b",
-      "sha256": "0add170ac0a4e0753588862b106bc8685b2cf61b9724b59647fe2d7c0f559a80",
+      "sha256": "70a1f0c7a8d0e475b1f87a88e9e793269c65e72ee95a4e874f2c7fd3b38f9a16",
       "unchanged": false
     },
     {
