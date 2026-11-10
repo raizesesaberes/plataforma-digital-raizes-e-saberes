@@ -1,0 +1,33 @@
+{
+  "projectId": "prj_FQGMiEgtPpMjGeQLMKhSNpPfcvXn",
+  "teamId": "team_DxW95pOlpbyKV4ZWtde17x47",
+  "deploymentId": "dpl_2MvraQbqYakaAiihj5xyvJpf3oVx",
+  "sourceCommit": "bc7de6c68a1155ebacc18edf1afa4b36bddf5449",
+  "target": "production",
+  "state": "READY",
+  "url": "https://www.raizesesaberes.com.br",
+  "immutableUrl": "https://plataforma-digital-raizes-e-saberes-m7qirans1-raizesesaberes.vercel.app",
+  "priorDeploymentId": "dpl_8RnQvWSwWxEieBdv26QTKgmXxpU5",
+  "createdAt": 1794322977259,
+  "buildingAt": 1794323022231,
+  "readyAt": 1794323049383,
+  "buildDurationSeconds": 27.152,
+  "totalDurationSeconds": 72.124,
+  "runtimeFiles": 5563,
+  "sourceFilesIncludingConfig": 5564,
+  "runtimeErrors": {
+    "window": "30m",
+    "levels": [
+      "error",
+      "fatal"
+    ],
+    "groupsReturned": 0
+  },
+  "drainsCheck": {
+    "status": 404,
+    "configuration": "not verified"
+  },
+  "audioGenerated": false,
+  "audioEnabled": false,
+  "authenticatedSchoolTest": false
+}

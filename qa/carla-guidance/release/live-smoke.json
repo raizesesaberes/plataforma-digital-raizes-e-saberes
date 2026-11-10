@@ -1,0 +1,122 @@
+{
+  "origin": "https://www.raizesesaberes.com.br",
+  "checkedAt": "2026-11-10T15:04:53.264Z",
+  "sourceCommit": "bc7de6c68a1155ebacc18edf1afa4b36bddf5449",
+  "publicFiles": [
+    {
+      "path": "mission-runtime/narration/guidance.css",
+      "status": 200,
+      "sha256": "f62a4570e5efc27bf84188b5ded47d179d756ed55e032a1d66939d5806529d16"
+    },
+    {
+      "path": "mission-runtime/narration/resolve.mjs",
+      "status": 200,
+      "sha256": "6119ee5c8cfb879406a88922f3569cf0ca919f6750ee0bd3b08d13a7b8b7bcb6"
+    },
+    {
+      "path": "mission-runtime/narration/game-guidance.mjs",
+      "status": 200,
+      "sha256": "14fc3c5c18b636de9011fb817d0ac53f03c3dd9bb8f280ba98ead10398b4be94"
+    },
+    {
+      "path": "mission-runtime/coloring/narrator.mjs",
+      "status": 200,
+      "sha256": "10eff9af8a54712bdb13155b0dca3ce11ed7a9d91e087794b48901b06e3ad42e"
+    },
+    {
+      "path": "mission-runtime/narration/approved-copy.mjs",
+      "status": 200,
+      "sha256": "9083d53d8059cf9bb2970b398e0f5fe322df7608a409922671183e85a288ba52"
+    },
+    {
+      "path": "mission-runtime/coloring/app.mjs",
+      "status": 200,
+      "sha256": "0add170ac0a4e0753588862b106bc8685b2cf61b9724b59647fe2d7c0f559a80"
+    },
+    {
+      "path": "mission-runtime/coloring/catalog.json",
+      "status": 200,
+      "sha256": "8268f4b3ba3ef27ce952c667c34b6199ebf555f7c0d490e770f615633515821c"
+    },
+    {
+      "path": "mission-runtime/studio/index.html",
+      "status": 200,
+      "sha256": "478d3f7d2f4a02238d75465567fd76a29969983d0efa2f39c7f2efe44b14a3db"
+    },
+    {
+      "path": "mission-runtime/institutional.mjs",
+      "status": 200,
+      "sha256": "ecef53032f0dc3b3d407faa9836ae30fea04bd1cf6da3bfa9e7fa5f4741909b6"
+    },
+    {
+      "path": "mission-runtime/catalog.json",
+      "status": 200,
+      "sha256": "361202d9b412813230728c435f6c37248fdd46a636824f6d74303e689091e199"
+    },
+    {
+      "path": "mission-runtime/studio/assets/Player-nHpDXt_8.js",
+      "status": 200,
+      "sha256": "b886be145e2db41f492cb21de1c64a095e3e6d6ec0d2d7e13278b47e62c70906"
+    },
+    {
+      "path": "app-pages.js",
+      "status": 200,
+      "sha256": "fbe2abd6783576e5f24aa2e8a34753fbbf0a0ba085435566d30dd7baf042164f"
+    },
+    {
+      "path": "login.js",
+      "status": 200,
+      "sha256": "75b488ab460feb9b7f59a8ef5cbf6199833a72abcd7fde760b24dcf446c37bdf"
+    },
+    {
+      "path": "login.html",
+      "status": 200,
+      "sha256": "9d5a4c61d350e1af03fa5c79b5fd066adead6e98f7f3fc21506f751cc48eca20"
+    },
+    {
+      "path": "game-engine.js",
+      "status": 200,
+      "sha256": "4a19d9d96e7efd6d58a30206bf671cfcff3198ec2f955fd24e6950fbf3e10444"
+    },
+    {
+      "path": "app/index.html",
+      "status": 200,
+      "sha256": "c92796b1401f0742d27cbe6f9cb22c6fba7f4ef3a7af5c8aea4d12b5dde6359f"
+    },
+    {
+      "path": "colorir-descobrir.html",
+      "status": 200,
+      "sha256": "3a0bf3a7a4f089372b572c2db75262c20a0ce00cd323d6fa0f81bc18c9cbad66"
+    },
+    {
+      "path": "library-edition-reader.mjs",
+      "status": 200,
+      "sha256": "de7a386b880060cb4bf41116d7a74890a639ca0a77df89d7263ab3c45f5d61c6"
+    },
+    {
+      "path": "app/platform-runtime.js",
+      "status": 200,
+      "sha256": "5031469ae2b5ba8ac82e509a2a88af0f0cf6c773c4cdf327544e1e82c8441d1c"
+    },
+    {
+      "path": "app/_expo/static/js/web/hosted-entry-0fdffd321b7d5af47570911c34d11330.js",
+      "status": 200,
+      "sha256": "7a1926ac0d78563bd7ae06d9366c436ae68ed10017aa882843de6a9dd32d805a"
+    }
+  ],
+  "viewports": [
+    1280,
+    390
+  ],
+  "publicLogin": true,
+  "directStudioGuard": true,
+  "authenticatedSchoolJourney": false,
+  "pageErrors": [],
+  "httpFailures": [],
+  "screenshots": [
+    "login-1280.png",
+    "app-login-1280.png",
+    "login-390.png",
+    "app-login-390.png"
+  ]
+}

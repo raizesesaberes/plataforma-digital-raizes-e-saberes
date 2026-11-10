@@ -2,7 +2,7 @@
 
 ## Entrega
 
-Integração **textual e local**, baseada no commit `5e50fccc955af2d273f6c54668921c37e94a12c9`. Não houve geração de voz, contratação, upload de áudio, migração de banco, push ou publicação.
+Integração **textual**, baseada no commit `5e50fccc955af2d273f6c54668921c37e94a12c9`, publicada em 10 de novembro de 2026 com autorização. Commit de runtime: `bc7de6c68a1155ebacc18edf1afa4b36bddf5449`. Não houve geração de voz, contratação, upload de áudio ou migração de banco. A seção de publicação abaixo complementa a verificação local.
 
 O pacote editorial contém 117 falas e 10.119 caracteres:
 
@@ -67,3 +67,19 @@ Ao revisar intencionalmente o conteúdo ou o runtime, atualizar os hashes dos ar
 - Capturas em 1.280 px e 390 px registram a revisão visual. No celular os jogos mantêm a região de instruções rolável existente; a seção de apoio abre pelo teclado e seu texto pode ser percorrido nessa região.
 
 A verificação é local e sintética. Não substitui escuta pedagógica da futura gravação, homologação com professores/crianças, navegação autenticada em produção ou testes em dispositivos físicos/Safari/VoiceOver. A expansão para os demais jogos exige novos textos e vínculos revisados. A ativação de áudio exige confirmação da assinatura/licença comercial, nova geração licenciada e testes próprios de pausa, interrupção, volume, música e acesso sem áudio. Nenhuma amostra gratuita foi incorporada.
+
+## Publicação verificada em 10 de novembro de 2026
+
+- Domínio: https://www.raizesesaberes.com.br
+- Projeto: `prj_FQGMiEgtPpMjGeQLMKhSNpPfcvXn`, equipe `team_DxW95pOlpbyKV4ZWtde17x47`.
+- Deployment: `dpl_2MvraQbqYakaAiihj5xyvJpf3oVx`, estado READY, destino production.
+- Commit publicado: `bc7de6c68a1155ebacc18edf1afa4b36bddf5449`, enviado sem force push para `release/app-own-login-20261110` e `feature/carla-approved-guidance`. O commit posterior de evidências não altera o runtime.
+- Base anterior: `dpl_8RnQvWSwWxEieBdv26QTKgmXxpU5`. Todos os 5.559 arquivos de runtime correspondiam à base 5e50fcc; a configuração estática de publicação também correspondeu por hash. Não foi necessário reconciliar código divergente.
+- Foi publicado somente o conteúdo do build validado, com a mesma configuração estática e as mesmas rotas. Nenhuma alteração de proteção, autenticação, projeto, plano ou domínio.
+- Todos os 5.564 arquivos-fonte do novo deployment (runtime mais configuração) conferidos por hash contra o pacote aprovado.
+- Vinte arquivos críticos, incluindo os novos módulos e os arquivos preservados de login, App, catálogos e leitor, conferidos por SHA-256 diretamente no domínio público.
+- Login público da plataforma e do App, em 1.280 e 390 px: zero erros de página e zero erros HTTP de primeira parte. O acesso direto ao Studio continua bloqueado antes de carregar o jogo.
+- Consulta de logs do novo deployment nos últimos 30 minutos não retornou grupos de erro/fatal. A consulta separada de drains retornou 404; não se afirma que monitoramento contínuo esteja configurado.
+- Não houve teste autenticado com conta escolar real, alteração de dados ou geração/ativação de áudio.
+
+Evidências em `release/`: comparação da base, comparação integral do deployment, `live-smoke.json` e capturas públicas de login. O teste público pode ser repetido com `node tests/carla-guidance/production-smoke.mjs`, usando o mesmo pacote local em `dist` e as variáveis Playwright/Chrome descritas acima.
