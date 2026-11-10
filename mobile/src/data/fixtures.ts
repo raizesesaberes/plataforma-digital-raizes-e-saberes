@@ -112,6 +112,7 @@ export const appProfiles: Record<AppRole, AppProfile> = {
     bottomTabs: ["home", "classes", "agenda", "tracking", "profile"],
     modules: [
       { key: "classes", label: "Minhas Turmas", icon: "users", description: "Turmas e alunos sob sua responsabilidade." },
+      { key: "library", label: "Biblioteca", icon: "book-open", description: "Livros disponíveis para seu vínculo escolar." },
       { key: "attendance", label: "Frequência", icon: "clipboard", description: "Registro rápido de presença." },
       { key: "communication", label: "Comunicação", icon: "message-square", description: "Recados para turma e aluno." },
       commonModules.agenda,

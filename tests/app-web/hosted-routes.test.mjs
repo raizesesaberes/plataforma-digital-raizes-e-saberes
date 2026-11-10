@@ -67,6 +67,24 @@ test('real detail routes remain scoped to their supported roles', () => {
   for (const route of ['home', 'profile', 'agenda', 'mission']) assert.equal(supports('unknown', route, true), false);
 });
 
+test('official library supports teacher and student shells, not arbitrary roles or library URLs', () => {
+  for (const role of ['professor', 'crescer', 'fundamental']) {
+    assert.equal(supports(role, 'library', false), true, role);
+    for (const route of ['library:teacher', 'library?role=professor', 'library#teacher', '/professor.html?view=biblioteca', 'book', 'book:']) {
+      assert.equal(supports(role, route, true), false, `${role}:${route}`);
+    }
+  }
+  for (const role of ['unknown', 'admin', 'aluno', 'professor?role=aluno']) {
+    assert.equal(supports(role, 'library', true), false, role);
+  }
+  for (const role of ['crescer', 'fundamental']) {
+    for (const route of ['classes', 'attendance', 'diary', 'tracking']) {
+      assert.equal(supports(role, route, true), false, `${role}:${route}`);
+    }
+  }
+  assert.equal(supports('professor', 'book:student-only-legacy-reader', true), false);
+});
+
 test('guard is wired before dispatch, requires session, preserves native and preview', () => {
   const guard = source.indexOf('hosted && !preview && (!session || !isHostedRouteSupported');
   const dispatch = source.indexOf('<ExperienceHome', guard);

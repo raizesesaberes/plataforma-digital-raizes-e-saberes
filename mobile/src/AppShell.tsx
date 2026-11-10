@@ -169,7 +169,7 @@ function isHostedRouteSupported(role: AppProfile["role"], key: ModuleKey, hasIns
     return hasInstitutional && (route !== "mission-planner" || role === "professor");
   }
   if (role === "professor") {
-    return ["home", "classes", "attendance", "communication", "agenda", "diary", "avalia", "tracking", "notifications", "profile", "profile:accessibility"].includes(route);
+    return ["home", "classes", "library", "attendance", "communication", "agenda", "diary", "avalia", "tracking", "notifications", "profile", "profile:accessibility"].includes(route);
   }
   if (role !== "crescer" && role !== "fundamental") return false;
   if (["home", "activities", "library", "agenda", "notifications", "profile"].includes(route)) return true;
