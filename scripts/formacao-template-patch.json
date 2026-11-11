@@ -1,8 +1,6 @@
 {
   "schema": 1,
-  "baselineCommit": "c2d112908a8d357ede1ffca75a13b8be929e300c",
-  "baselineSha256": "fbe2abd6783576e5f24aa2e8a34753fbbf0a0ba085435566d30dd7baf042164f",
-  "reviewedSha256": "b732e616a7d16e79419aee8f9c71d43d38c70cc5276f1cd582c8d6aaded4f359",
+  "reviewedSha256": "8091d08fbd13a1129154d38a9aaf216be4df7d25ead1bf8a9677aa38a1646dd1",
   "patches": [
     {
       "start": 7261,
@@ -148,7 +146,7 @@
         "        <a class=\"fd-primary\" href=\"formacao.html\">Acessar minha formação <span aria-hidden=\"true\">→</span></a>\n",
         "        <a class=\"fd-secondary\" href=\"personal-learning.html\">Meus cursos e certificados <span aria-hidden=\"true\">↗</span></a>\n",
         "      </div>\n",
-        "      <p class=\"fd-access-note\">As aulas exigem uma conta institucional, vínculo autorizado e licença de formação ativa.</p>\n",
+        "      <p class=\"fd-access-note\">Use a mesma conta da plataforma para acessar as aulas das coleções.</p>\n",
         "    </div>\n",
         "    <ol class=\"fd-hierarchy\" aria-label=\"Organização das aulas\">\n",
         "      <li><span>01</span>Coleção</li>\n",
@@ -259,35 +257,57 @@
       ]
     },
     {
-      "start": 19766,
+      "start": 19747,
       "approved": [
-        "          <img src=\"formacao-runtime/editorial-aprendizagem.svg\" alt=\"\" width=\"800\" height=\"500\" />\n"
+        "    subtitle: \"Coleções, cursos e seu percurso de formação\",\n"
       ],
       "baseline": [
-        "          <img src=\"assets/universidade/banner-principal.webp\" alt=\"\" />\n"
+        "    subtitle: \"Catalogo publico de cursos gratuitos\",\n"
       ]
     },
     {
-      "start": 19772,
+      "start": 19756,
       "approved": [
-        "            <span>Aulas das coleções, organizadas por ano, volume e unidade, com acesso institucional protegido.</span>\n"
-      ],
-      "baseline": [
-        "            <span>Cursos proprios, trilhas, assessorias, encontros, historico e certificados em preparação.</span>\n"
-      ]
-    },
-    {
-      "start": 19780,
-      "approved": [
-        "        <div id=\"formacao-raizes\">\n",
-        "          ${renderFormationGateway()}\n",
-        "          <section class=\"fd-personal-entry\" aria-label=\"Cursos pessoais e certificados\">\n",
-        "            <div><h2>Meus cursos e certificados</h2><p>Organize os cursos externos que você escolheu e guarde seus certificados em um espaço privado.</p></div>\n",
-        "            <a href=\"personal-learning.html\">Abrir meu espaço pessoal →</a>\n",
+        "        <link rel=\"stylesheet\" href=\"formacao-runtime/gateway.css?v=20261111\" />\n",
+        "        <div data-university-home>\n",
+        "          <section class=\"university-public-hero\" id=\"universidade\">\n",
+        "            <div><span>Universidade Raízes e Saberes</span><h1>Seu próximo passo na formação.</h1><p>Escolha por onde começar. Conhecimento para transformar sua prática.</p></div>\n",
+        "            <img src=\"formacao-runtime/editorial-aprendizagem.svg\" alt=\"\" width=\"800\" height=\"500\" />\n",
         "          </section>\n",
-        "        </div>\n"
+        "          <nav class=\"fd-entry-cards\" aria-label=\"Áreas da Universidade\">\n",
+        "            <a href=\"formacao.html\"><img src=\"formacao-runtime/editorial-praticas.svg\" alt=\"\" width=\"800\" height=\"500\" /><h2>Nossas coleções</h2><p>Encontre as aulas por coleção, componente e ano.</p><strong>Explorar as aulas →</strong></a>\n",
+        "            <a href=\"#catalogo\"><img src=\"formacao-runtime/editorial-inclusao.svg\" alt=\"\" width=\"800\" height=\"500\" /><h2>Cursos externos</h2><p>Pesquise cursos gratuitos de outras instituições.</p><strong>Buscar cursos →</strong></a>\n",
+        "            <a href=\"personal-learning.html\"><img src=\"formacao-runtime/editorial-tecnologia.svg\" alt=\"\" width=\"800\" height=\"500\" /><h2>Meus cursos e certificados</h2><p>Organize seus estudos e certificados em um só lugar.</p><strong>Abrir meu espaço →</strong></a>\n",
+        "          </nav>\n",
+        "        </div>\n",
+        "        <div data-university-external hidden>\n",
+        "        <nav class=\"fd-panel-navigation\" aria-label=\"Navegação da formação\"><a href=\"#universidade\">← Voltar à Universidade</a><a href=\"formacao.html\">Nossas coleções →</a><a href=\"personal-learning.html\">Meus cursos e certificados →</a></nav>\n"
       ],
       "baseline": [
+        "        <section class=\"university-public-hero\" id=\"universidade\">\n",
+        "          <div>\n",
+        "            <span>Universidade Raízes e Saberes</span>\n",
+        "            <h1>Descubra cursos gratuitos confiaveis para sua formação profissional.</h1>\n",
+        "            <p>Um nucleo publico de curadoria para pesquisar, comparar e acessar cursos gratuitos oferecidos por instituicoes externas.</p>\n",
+        "            <div class=\"university-hero-actions\">\n",
+        "              <a href=\"#catalogo\" data-catalog-section=\"catalogo\">Encontrar cursos gratuitos</a>\n",
+        "              <a href=\"#formacao-raizes\" data-catalog-section=\"formacao-raizes\">Formação Raízes e Saberes</a>\n",
+        "            </div>\n",
+        "          </div>\n",
+        "          <img src=\"assets/universidade/banner-principal.webp\" alt=\"\" />\n",
+        "        </section>\n",
+        "\n",
+        "        <nav class=\"university-gateway\" aria-label=\"Áreas da Universidade\">\n",
+        "          <a href=\"#formacao-raizes\" data-catalog-section=\"formacao-raizes\">\n",
+        "            <strong>Formação Raízes e Saberes</strong>\n",
+        "            <span>Cursos proprios, trilhas, assessorias, encontros, historico e certificados em preparação.</span>\n",
+        "          </a>\n",
+        "          <a href=\"#catalogo\" data-catalog-section=\"catalogo\" class=\"is-primary\">\n",
+        "            <strong>Encontre Cursos Gratuitos</strong>\n",
+        "            <span>Catalogo publico com busca, filtros, rankings, comparação e acesso ao curso na instituição.</span>\n",
+        "          </a>\n",
+        "        </nav>\n",
+        "\n",
         "        <section class=\"university-prep-panel\" id=\"formacao-raizes\">\n",
         "          <div>\n",
         "            <span>Área institucional</span>\n",
@@ -319,11 +339,12 @@
         "          <article><h3>Cursos e módulos</h3><div><button type=\"button\">Cursos EMPTY_REAL</button><button type=\"button\">Módulos EMPTY_REAL</button><button type=\"button\">Aulas EMPTY_REAL</button></div></article>\n",
         "          <article><h3>Vídeos e materiais</h3><div><button type=\"button\">Vídeos EMPTY_REAL</button><button type=\"button\">PDFs EMPTY_REAL</button><button type=\"button\">Apoios EMPTY_REAL</button></div></article>\n",
         "          <article><h3>Progresso</h3><div><button type=\"button\">Histórico EMPTY_REAL</button><button type=\"button\">Certificados EMPTY_REAL</button><button type=\"button\">Conclusões EMPTY_REAL</button></div></article>\n",
-        "        </section>\n"
+        "        </section>\n",
+        "\n"
       ]
     },
     {
-      "start": 19820,
+      "start": 19802,
       "approved": [],
       "baseline": [
         "                <option value=\"rating\">Mais bem avaliados</option>\n",
@@ -331,7 +352,7 @@
       ]
     },
     {
-      "start": 19839,
+      "start": 19821,
       "approved": [
         "            <article><h3>Destaques verificados</h3><div data-most-accessed></div></article>\n",
         "            <article><h3>Cursos de curta duração</h3><div data-best-rated></div></article>\n"
@@ -342,7 +363,7 @@
       ]
     },
     {
-      "start": 19846,
+      "start": 19828,
       "approved": [
         "            <div class=\"catalog-section-head\"><div><span>Instituicoes em destaque</span><h3>Instituições e plataformas de origem</h3></div></div>\n"
       ],
@@ -351,7 +372,7 @@
       ]
     },
     {
-      "start": 19882,
+      "start": 19864,
       "approved": [
         "        <aside class=\"university-prep-panel\" aria-label=\"Sobre os cursos externos\">\n",
         "          <div>\n",
@@ -378,9 +399,10 @@
       ]
     },
     {
-      "start": 19888,
+      "start": 19870,
       "approved": [
-        "        </aside>\n"
+        "        </aside>\n",
+        "        </div>\n"
       ],
       "baseline": [
         "        </section>\n",
@@ -397,7 +419,7 @@
       ]
     },
     {
-      "start": 20657,
+      "start": 20640,
       "approved": [
         "      [\"trilhas\", \"Formação docente\", \"formacao.html\"],\n",
         "      [\"cursos\", \"Meus cursos\", \"personal-learning.html\"],\n",
@@ -414,7 +436,7 @@
       ]
     },
     {
-      "start": 20671,
+      "start": 20654,
       "approved": [
         "      [\"trilhas\", \"Formação\", \"formacao.html\"],\n",
         "      [\"cursos\", \"Meus cursos\", \"personal-learning.html\"],\n",
@@ -425,6 +447,60 @@
         "      [\"cursos\", \"Meus Cursos\", \"#\"],\n",
         "      [\"certificados\", \"Certificados\", \"#\"],\n"
       ]
+    },
+    {
+      "start": 25356,
+      "approved": [],
+      "baseline": [
+        "  const config = getSupabaseConfig();\n"
+      ]
+    },
+    {
+      "start": 25357,
+      "approved": [
+        "  if (!session?.refresh_token) return null;\n",
+        "  const { refreshSession } = await import(\"./formacao-runtime/session.mjs\");\n",
+        "  try {\n",
+        "    return await refreshSession({ config: getSupabaseConfig(), storage: localStorage, session });\n",
+        "  } catch (error) {\n",
+        "    // A transient outage must not erase a valid login. Logout/account changes\n",
+        "    // are checked by the shared coordinator before any refresh can be saved.\n",
+        "    if (error?.code === \"session_required\" || error?.code === \"session_changed\") return null;\n",
+        "    throw error;\n"
+      ],
+      "baseline": [
+        "  const baseUrl = config.url?.replace(/\\/$/, \"\");\n",
+        "  if (!baseUrl || !config.anonKey || !session?.refresh_token) {\n",
+        "    return null;\n"
+      ]
+    },
+    {
+      "start": 25367,
+      "approved": [],
+      "baseline": [
+        "  const response = await fetch(`${baseUrl}/auth/v1/token?grant_type=refresh_token`, {\n",
+        "    method: \"POST\",\n",
+        "    headers: {\n",
+        "      apikey: config.anonKey,\n",
+        "      \"Content-Type\": \"application/json\",\n",
+        "    },\n",
+        "    body: JSON.stringify({ refresh_token: session.refresh_token }),\n",
+        "  });\n",
+        "  if (!response.ok) {\n",
+        "    clearSupabaseSession();\n",
+        "    return null;\n",
+        "  }\n",
+        "  const nextSession = await response.json();\n",
+        "  storeSupabaseSession(nextSession);\n",
+        "  return getStoredSupabaseSession();\n"
+      ]
+    },
+    {
+      "start": 34626,
+      "approved": [
+        "    : environmentKey === \"universidade\" ? `<nav class=\"rs-global-actions\" aria-label=\"Navegação global\"><a href=\"plataforma.html\">Início</a><a href=\"login.html?next=universidade.html\">Entrar</a></nav>`\n"
+      ],
+      "baseline": []
     }
   ]
 }

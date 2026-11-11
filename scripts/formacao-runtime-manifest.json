@@ -4,19 +4,19 @@
   "files": [
     {
       "file": "formacao.html",
-      "sha256": "cc956065007709b36252a8c448f2569358bf2a288debd96124d23d1854ddfa55"
+      "sha256": "f4fa4a74c3c01cb5e1280d1f7be20da394178168771247ecbfd91a428a3f299b"
     },
     {
       "file": "personal-learning.html",
-      "sha256": "22b456e3a70c24e4654079653afd9175623b4348ad2fcdc6c9ae4d2676170d77"
+      "sha256": "5e0902a2868f96fd634211eff6c764a999065add917ece4196eb3e2b56eab191"
     },
     {
       "file": "formacao-runtime/app.mjs",
-      "sha256": "1d3c39a769919abb7f6f7ce4b0d7b0ad741b4d073873190184e4b2c1e221c282"
+      "sha256": "177d2cba1893697d44d2f2b7ded9100acdf95c70ea5f65b3c40bf84f086c8dea"
     },
     {
       "file": "formacao-runtime/client.mjs",
-      "sha256": "0d2df0b895dfafedb9d2761b4bf29a84b273fadaff3d790c60d47558a075f431"
+      "sha256": "bf44ac570c70505ee88535565088d2cccd03ecfae34f98b3c85bb67fc1f56f63"
     },
     {
       "file": "formacao-runtime/editorial-aprendizagem.svg",
@@ -36,11 +36,15 @@
     },
     {
       "file": "formacao-runtime/formacao.css",
-      "sha256": "481ef8fe90720dab77530a6a31d43c6942fbfcc8fc3ea72774e82f63952b961e"
+      "sha256": "1f01dc97ddd2b61a6cb59819296256c70acb0f99dcccab0bfdabcea40271f08f"
     },
     {
       "file": "formacao-runtime/gateway.css",
-      "sha256": "bb33ee218a5893d038e71f100f43a48542acf46815620fd87c65c8c75d90114b"
+      "sha256": "9670d7f5bddc41323f1e7c10558929e613b9ecba4c43f62c26f6a2db6f73a2dd"
+    },
+    {
+      "file": "formacao-runtime/session.mjs",
+      "sha256": "b81db700e01907c6522a430508124192c2ceb39bab5aefd445fd47b4b4bf1d05"
     },
     {
       "file": "personal-learning-runtime/app.mjs",
@@ -48,7 +52,7 @@
     },
     {
       "file": "personal-learning-runtime/client.mjs",
-      "sha256": "8e289881d8a62f7a92d9a7ddeafe2fed316823a35d98395176753c198a630dc4"
+      "sha256": "26a93ee8718f0e59268851deed69a29bd080f0e3bfa541a4d28f6de21f4a7117"
     },
     {
       "file": "personal-learning-runtime/model.mjs",
@@ -63,7 +67,7 @@
     {
       "file": "script.js",
       "original_sha256": "9fd9c28aa27a3afc9b5835af5dc14f91341274fd200e4456020ec6f8d189b315",
-      "sha256": "28939356be7cae6e6872e855a7a76f238a4b5f9b12ef571bc06c020e4484c27a"
+      "sha256": "75a8a7708457c4e86184a26fb29864468c375ab0f44911dd78bfeb97d704f870"
     }
   ]
 }

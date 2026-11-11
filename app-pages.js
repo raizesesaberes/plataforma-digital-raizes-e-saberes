@@ -7362,7 +7362,7 @@ const renderFormationGateway = () => `
         <a class="fd-primary" href="formacao.html">Acessar minha formação <span aria-hidden="true">→</span></a>
         <a class="fd-secondary" href="personal-learning.html">Meus cursos e certificados <span aria-hidden="true">↗</span></a>
       </div>
-      <p class="fd-access-note">As aulas exigem uma conta institucional, vínculo autorizado e licença de formação ativa.</p>
+      <p class="fd-access-note">Use a mesma conta da plataforma para acessar as aulas das coleções.</p>
     </div>
     <ol class="fd-hierarchy" aria-label="Organização das aulas">
       <li><span>01</span>Coleção</li>
@@ -19745,7 +19745,7 @@ const modules = {
   },
   universidade: {
     title: "Universidade Raízes e Saberes",
-    subtitle: "Catalogo publico de cursos gratuitos",
+    subtitle: "Coleções, cursos e seu percurso de formação",
     code: "MS-008",
     html: `
       <div class="university-catalog-platform" data-course-catalog>
@@ -19754,38 +19754,20 @@ const modules = {
             ? `<a class="university-teacher-return" href="professor.html?view=formacao">VOLTAR PARA ÁREA DO PROFESSOR</a>`
             : ""
         }
-        <section class="university-public-hero" id="universidade">
-          <div>
-            <span>Universidade Raízes e Saberes</span>
-            <h1>Descubra cursos gratuitos confiaveis para sua formação profissional.</h1>
-            <p>Um nucleo publico de curadoria para pesquisar, comparar e acessar cursos gratuitos oferecidos por instituicoes externas.</p>
-            <div class="university-hero-actions">
-              <a href="#catalogo" data-catalog-section="catalogo">Encontrar cursos gratuitos</a>
-              <a href="#formacao-raizes" data-catalog-section="formacao-raizes">Formação Raízes e Saberes</a>
-            </div>
-          </div>
-          <img src="formacao-runtime/editorial-aprendizagem.svg" alt="" width="800" height="500" />
-        </section>
-
-        <nav class="university-gateway" aria-label="Áreas da Universidade">
-          <a href="#formacao-raizes" data-catalog-section="formacao-raizes">
-            <strong>Formação Raízes e Saberes</strong>
-            <span>Aulas das coleções, organizadas por ano, volume e unidade, com acesso institucional protegido.</span>
-          </a>
-          <a href="#catalogo" data-catalog-section="catalogo" class="is-primary">
-            <strong>Encontre Cursos Gratuitos</strong>
-            <span>Catalogo publico com busca, filtros, rankings, comparação e acesso ao curso na instituição.</span>
-          </a>
-        </nav>
-
-        <div id="formacao-raizes">
-          ${renderFormationGateway()}
-          <section class="fd-personal-entry" aria-label="Cursos pessoais e certificados">
-            <div><h2>Meus cursos e certificados</h2><p>Organize os cursos externos que você escolheu e guarde seus certificados em um espaço privado.</p></div>
-            <a href="personal-learning.html">Abrir meu espaço pessoal →</a>
+        <link rel="stylesheet" href="formacao-runtime/gateway.css?v=20261111" />
+        <div data-university-home>
+          <section class="university-public-hero" id="universidade">
+            <div><span>Universidade Raízes e Saberes</span><h1>Seu próximo passo na formação.</h1><p>Escolha por onde começar. Conhecimento para transformar sua prática.</p></div>
+            <img src="formacao-runtime/editorial-aprendizagem.svg" alt="" width="800" height="500" />
           </section>
+          <nav class="fd-entry-cards" aria-label="Áreas da Universidade">
+            <a href="formacao.html"><img src="formacao-runtime/editorial-praticas.svg" alt="" width="800" height="500" /><h2>Nossas coleções</h2><p>Encontre as aulas por coleção, componente e ano.</p><strong>Explorar as aulas →</strong></a>
+            <a href="#catalogo"><img src="formacao-runtime/editorial-inclusao.svg" alt="" width="800" height="500" /><h2>Cursos externos</h2><p>Pesquise cursos gratuitos de outras instituições.</p><strong>Buscar cursos →</strong></a>
+            <a href="personal-learning.html"><img src="formacao-runtime/editorial-tecnologia.svg" alt="" width="800" height="500" /><h2>Meus cursos e certificados</h2><p>Organize seus estudos e certificados em um só lugar.</p><strong>Abrir meu espaço →</strong></a>
+          </nav>
         </div>
-
+        <div data-university-external hidden>
+        <nav class="fd-panel-navigation" aria-label="Navegação da formação"><a href="#universidade">← Voltar à Universidade</a><a href="formacao.html">Nossas coleções →</a><a href="personal-learning.html">Meus cursos e certificados →</a></nav>
         <section class="knowledge-center-shell" id="centros-conhecimento">
           <header class="knowledge-center-head">
             <div>
@@ -19887,6 +19869,7 @@ const modules = {
             <p>A Universidade reúne indicações de cursos externos. Inscrições, requisitos de participação e certificados são de responsabilidade de cada instituição. Confira as condições no site oficial antes de se inscrever.</p>
           </div>
         </aside>
+        </div>
       </div>
     `,
   },
@@ -25371,27 +25354,17 @@ const isStoredSessionExpired = (session, skewSeconds = 60) =>
   !session?.access_token || Number(session.expires_at || 0) <= Math.floor(Date.now() / 1000) + skewSeconds;
 
 const refreshStoredSupabaseSession = async () => {
-  const config = getSupabaseConfig();
   const session = getStoredSupabaseSession();
-  const baseUrl = config.url?.replace(/\/$/, "");
-  if (!baseUrl || !config.anonKey || !session?.refresh_token) {
-    return null;
+  if (!session?.refresh_token) return null;
+  const { refreshSession } = await import("./formacao-runtime/session.mjs");
+  try {
+    return await refreshSession({ config: getSupabaseConfig(), storage: localStorage, session });
+  } catch (error) {
+    // A transient outage must not erase a valid login. Logout/account changes
+    // are checked by the shared coordinator before any refresh can be saved.
+    if (error?.code === "session_required" || error?.code === "session_changed") return null;
+    throw error;
   }
-  const response = await fetch(`${baseUrl}/auth/v1/token?grant_type=refresh_token`, {
-    method: "POST",
-    headers: {
-      apikey: config.anonKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ refresh_token: session.refresh_token }),
-  });
-  if (!response.ok) {
-    clearSupabaseSession();
-    return null;
-  }
-  const nextSession = await response.json();
-  storeSupabaseSession(nextSession);
-  return getStoredSupabaseSession();
 };
 
 const getSupabaseAccessToken = (config = getSupabaseConfig()) =>
@@ -34651,6 +34624,7 @@ const renderAppPage = () => {
       ? `<div class="admin-topbar-actions" aria-label="Navegação global"><button type="button" data-platform-back>${adminInlineIcon("back", "VOLTAR")}</button><button type="button" data-platform-home>${adminInlineIcon("home", "INICIO")}</button><a class="admin-topbar-link" href="escola.html">${adminInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${adminInlineIcon("sair", "SAIR")}</button></div>`
     : currentRole
       ? `<div class="rs-global-actions" aria-label="Navegação global"><button type="button" data-platform-back>${adminInlineIcon("back", "Voltar")}</button><button type="button" data-platform-home>${adminInlineIcon("home", "Início")}</button><button type="button" data-platform-logout>${adminInlineIcon("sair", "Sair")}</button></div>`
+    : environmentKey === "universidade" ? `<nav class="rs-global-actions" aria-label="Navegação global"><a href="plataforma.html">Início</a><a href="login.html?next=universidade.html">Entrar</a></nav>`
     : `<div class="top-actions" aria-label="Ações"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>${shellUserFallback}</span>`}<strong>${shellUserLabel}</strong></div></div>`;
   const topbarClass = environmentKey === "bancoQuestoes" ? "app-topbar admin-topbar" : "app-topbar";
   const topbarMenu = currentRole || studentWorkspaceShell || ["bancoQuestoes", "escola"].includes(environmentKey) ? "" : `<a class="icon-button menu-toggle" href="${shellHomeHref}" aria-label="Início">☰</a>`;

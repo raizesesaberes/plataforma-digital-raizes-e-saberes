@@ -1,7 +1,7 @@
 export const BUCKET = 'personal-learning-certificates';
 export const MAX_FILE_BYTES = 10 * 1024 * 1024;
 export const SIGNED_TTL = 60;
-export const ALLOWED_ROLES = new Set(['professor', 'educacao_infantil', 'coordenador', 'gestor', 'admin', 'admin_ti', 'administrador', 'administrador_nacional']);
+export const ALLOWED_ROLES = new Set(['professor', 'coordenador', 'gestor', 'admin', 'admin_ti', 'administrador', 'administrador_nacional']);
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export class LearningError extends Error {
   constructor(code, status = 400) { super(code); this.code = code; this.status = status; }

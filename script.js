@@ -3233,6 +3233,7 @@ const renderCourseDetail = (courseId) => {
 
   detail.hidden = false;
   detail.innerHTML = `
+    <a class="fd-detail-back" href="#catalogo">← Voltar aos cursos</a>
     <header class="course-detail-hero">
       ${courseEditorialArt(course)}
       <div>
@@ -3323,7 +3324,7 @@ const renderCourseCatalog = () => {
     const section = document.createElement('section');
     section.className = 'university-prep-panel'; section.dataset.verifiedResourcePortals = '';
     section.innerHTML = '<div><span>Outras fontes de estudo</span><h2>Recursos de formação para professores</h2><p>Materiais consultados na plataforma de origem. Nenhum vídeo, imagem ou apostila de terceiros é republicado aqui.</p></div><div>' + verifiedTrainingCuration.resource_portals.map(portal => `<article><h3>${portal.title}</h3><p>${portal.summary}</p><p><strong>Certificação:</strong> Não garantida para estes módulos. Consulte as condições na plataforma de origem.</p><a href="${portal.url}" target="_blank" rel="noopener noreferrer">Explorar ${portal.provider} ↗</a></article>`).join('') + '</div>';
-    catalog.append(section);
+    (catalog.querySelector("[data-university-external]") || catalog).append(section);
   }
 
   const filtersTarget = document.querySelector("[data-course-filters]");
@@ -3764,7 +3765,7 @@ document.addEventListener("click", (event) => {
   if (detailButton) {
     renderCourseDetail(detailButton.dataset.openCourseDetail);
     const course = demoCuratedCourses.find((item) => item.id === detailButton.dataset.openCourseDetail);
-    history.replaceState(null, "", `#curso-${course?.slug || detailButton.dataset.openCourseDetail}`);
+    history.pushState(null, "", `#curso-${course?.slug || detailButton.dataset.openCourseDetail}`);
     return;
   }
 
@@ -3808,19 +3809,30 @@ renderKnowledgeCategoryCards();
 renderKnowledgeCenterCards();
 renderCourseCatalog();
 renderSmartDiscovery();
-if (window.location.hash.startsWith("#curso-")) {
-  const slug = window.location.hash.replace("#curso-", "");
-  const course = demoCuratedCourses.find((item) => item.slug === slug || item.id === slug);
-  if (course) {
-    renderCourseDetail(course.id);
-  }
-}
-if (window.location.hash.startsWith("#centro-")) {
-  const slug = window.location.hash.replace("#centro-", "");
-  const center = demoKnowledgeCenters.find((item) => item.slug === slug || item.id === slug);
-  if (center) {
-    renderKnowledgeCenterDetail(center.id);
-  }
-}
 window.addEventListener("scroll", syncHeader, { passive: true });
 syncLibrary();
+
+// University has a quiet entrance and a separate, bookmarkable public course panel.
+const syncUniversityPanel = () => {
+  const home = document.querySelector('[data-university-home]');
+  const panel = document.querySelector('[data-university-external]');
+  if (!home || !panel) return;
+  const queryCourse = new URLSearchParams(location.search).get('curso') || new URLSearchParams(location.search).get('course');
+  const hash = location.hash.slice(1) || (queryCourse ? `curso-${queryCourse}` : '');
+  const external = Boolean(hash && !['universidade', 'formacao-raizes'].includes(hash));
+  home.hidden = external; panel.hidden = !external;
+  const detail = document.querySelector('[data-course-detail]');
+  const centerDetail = document.querySelector('[data-knowledge-center-detail]');
+  if (detail) detail.hidden = true;
+  if (centerDetail) centerDetail.hidden = true;
+  if (hash.startsWith('curso-')) {
+    const slug = hash.slice(6), course = demoCuratedCourses.find(item => item.slug === slug || item.id === slug);
+    if (course) renderCourseDetail(course.id);
+  }
+  if (hash.startsWith('centro-')) {
+    const slug = hash.slice(7), center = demoKnowledgeCenters.find(item => item.slug === slug || item.id === slug);
+    if (center) renderKnowledgeCenterDetail(center.id);
+  }
+};
+syncUniversityPanel();
+window.addEventListener('hashchange', syncUniversityPanel);

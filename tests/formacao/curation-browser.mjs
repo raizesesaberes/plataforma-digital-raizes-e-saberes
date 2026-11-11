@@ -12,7 +12,7 @@ try {for(const width of [1440,390,320]) {
  const page=await browser.newPage({viewport:{width,height:900},locale:'pt-BR'}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));const offsite=[];
  await page.route('**/*',route=>{if(route.request().url().startsWith(origin+'/'))return route.continue();offsite.push(route.request().url());return route.abort();});
- await page.goto(origin+'/universidade.html'); await page.locator('[data-course-results] .public-course-card').first().waitFor();
+ await page.goto(origin+'/universidade.html#catalogo'); await page.locator('[data-course-results] .public-course-card').first().waitFor();
  const counts=await page.evaluate(()=>({courses:demoCuratedCourses.length,verified:demoCuratedCourses.filter(c=>c.lastVerifiedAt==='2026-11-11').length,providers:demoCourseProviders.length,unique:new Set(demoCuratedCourses.map(c=>c.id)).size,untrustedImages:demoCuratedCourses.filter(c=>c.imageUrl&&/^https?:/.test(c.imageUrl)).length,expired:externalCourseDeadlinePassed({completionDeadline:'2020-01-01'}),fresh:externalCourseDeadlinePassed({completionDeadline:'2099-01-01'})}));
  console.log('Viewport',width,'courses',counts.courses);assert.equal(counts.courses,counts.unique);assert.equal(counts.verified,32);assert.equal(counts.untrustedImages,0);assert.equal(counts.expired,true);assert.equal(counts.fresh,false);
  const search=page.locator('[data-course-search]');await search.fill('Scratch');assert.equal(await page.locator('[data-course-results] .public-course-card').count(),2);
