@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-labelledby="title">
+  <title id="title">Livros, folhas e diferentes caminhos de aprendizagem</title>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffdf6"/><stop offset="1" stop-color="#e8ddbc"/></linearGradient>
+    <linearGradient id="forest" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#35755a"/><stop offset="1" stop-color="#124637"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e9ca80"/><stop offset="1" stop-color="#b88c3d"/></linearGradient>
+    <linearGradient id="sage" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a7be94"/><stop offset="1" stop-color="#789c74"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#fffdf5"/><stop offset="1" stop-color="#f7f3e6"/></radialGradient>
+  </defs>
+  <path fill="url(#glow)" d="M0 0h800v500H0z"/>
+  <path d="M0 395C140 339 217 469 382 431s300-32 418-88v157H0Z" fill="#e3e8d7"/>
+  <path d="M0 452c207-70 279 28 443-9s260-10 357-31v88H0Z" fill="#d3dfcc" opacity=".6"/>
+  <g fill="none" stroke="#c9d6bc" stroke-width="1.5"><circle cx="420" cy="254" r="181"/><circle cx="420" cy="254" r="211" opacity=".5"/><path d="M59 366c51-19 45-75 80-114M680 137c-17 22-31 50-26 88"/></g>
+  <g fill="#9db18b" opacity=".8"><path d="M93 324c-35 1-44-18-40-41 29 0 42 17 40 41Z"/><path d="M107 299c-5-33 7-49 32-52 6 28-7 48-32 52Z"/><path d="M669 166c2-27 17-36 39-30-4 26-18 35-39 30Z"/><path d="M657 191c-27-6-33-22-23-42 24 8 31 23 23 42Z"/></g>
+  <g fill="#c2a05e"><path d="m169 121 4 12 12 4-12 4-4 12-4-12-12-4 12-4Z"/><path d="m664 338 3 9 9 3-9 3-3 9-3-9-9-3 9-3Z"/><circle cx="607" cy="89" r="4"/><circle cx="187" cy="363" r="3"/></g>
+  <ellipse cx="415" cy="406" rx="210" ry="22" fill="#315343" opacity=".09"/>
+  
+  <g transform="rotate(-8 338 275)">
+    <rect x="233" y="138" width="107" height="254" rx="13" fill="url(#forest)"/>
+    <path d="M251 139v251" stroke="#ffffff" stroke-opacity=".15" stroke-width="3"/>
+    <path d="M269 174h43m-43 8h43m-43 154h43m-43 8h43" stroke="#cdb773" stroke-width="3"/>
+    <circle cx="288" cy="254" r="21" fill="none" stroke="#b5c7a5" stroke-width="2"/>
+    <path d="M279 260v-14l18 7Z" fill="#b5c7a5"/>
+  </g>
+  <g transform="rotate(5 387 273)">
+    <rect x="345" y="181" width="89" height="216" rx="12" fill="url(#gold)"/>
+    <path d="M362 183v212" stroke="#fff5d7" stroke-opacity=".4" stroke-width="3"/>
+    <path d="M378 217h35m-35 7h35m-35 131h35m-35 7h35" stroke="#856a36" stroke-width="2.5" opacity=".7"/>
+    <path d="M393 267c-17-22-32 2 1 23 32-21 17-45-1-23Z" fill="#f7ecd0"/>
+  </g>
+  <g transform="rotate(17 479 278)">
+    <rect x="448" y="158" width="77" height="239" rx="11" fill="url(#sage)"/>
+    <path d="M464 160v234" stroke="#dce7ca" stroke-width="3"/>
+    <path d="M477 190h32m-32 8h32m-32 146h32" stroke="#3f6a4e" stroke-width="2.5"/>
+    <path d="M485 278c-2-24 7-37 26-39 1 22-9 35-26 39Zm0 0c-21-1-30-10-29-27 19 0 29 10 29 27Z" fill="#dfe8d2"/>
+  </g>
+  <g fill="none" stroke="#2d654b" stroke-width="3" stroke-linecap="round"><path d="M551 382c19-33 18-71 43-101"/></g>
+  <path d="M566 340c-32 1-43-14-39-38 28 1 42 14 39 38Z" fill="#89aa78"/>
+  <path d="M573 320c-1-30 14-44 39-40-1 26-16 40-39 40Z" fill="#356e50"/>
+  <circle cx="513" cy="116" r="27" fill="#d9be79"/>
+  <circle cx="560" cy="142" r="17" fill="#93b18a"/>
+  <circle cx="555" cy="99" r="8" fill="#517b5b"/>
+
+</svg>

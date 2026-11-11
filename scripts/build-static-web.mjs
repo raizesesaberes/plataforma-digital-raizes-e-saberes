@@ -4,6 +4,8 @@ import { cpSync, lstatSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { validateAppOverrides } from './lib/app-runtime-overrides.mjs';
 import { validateCarlaAudio } from './lib/carla-audio-validation.mjs';
+import { validateFormacaoManifest } from './lib/formacao-runtime.mjs';
+import { restoreReviewedFormationTemplate } from './lib/formacao-platform-menu.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const output = join(root, 'dist');
@@ -25,11 +27,16 @@ const mode = JSON.parse(readFileSync(join(root, 'app/build-mode.json'), 'utf8'))
 if (mode === 'real-read-beta') {
  // Verified bytes of 4e91990aa5d7e98fbf18b793156f5229a998461f:app-pages.js.
  const productionMenuSha256 = 'fbe2abd6783576e5f24aa2e8a34753fbbf0a0ba085435566d30dd7baf042164f';
- const actual = createHash('sha256').update(readFileSync(join(root, 'app-pages.js'))).digest('hex');
+ // Only reviewed Formation edits may differ; undo them before validating
+ // the original platform menu. New App shortcuts still fail closed.
+ const formationPatch = JSON.parse(readFileSync(join(root, 'scripts/formacao-template-patch.json'), 'utf8'));
+ const restored = restoreReviewedFormationTemplate(readFileSync(join(root, 'app-pages.js')), formationPatch);
+ const actual = createHash('sha256').update(restored).digest('hex');
  if (actual !== productionMenuSha256) throw Error('Read beta requires baseline platform menu without App shortcut');
 }
 const appOverrides=validateAppOverrides(app.overrides,baseline,feature.overrides);
-const manifest=[...baseline.map(e=>{const override=[...feature.overrides,...appOverrides].find(o=>o.file===e.file);return override?{file:e.file,sha256:override.sha256}:e;}),...feature.files,...app.files];
+const training=validateFormacaoManifest(JSON.parse(readFileSync(join(root,'scripts/formacao-runtime-manifest.json'),'utf8')),baseline,feature.overrides,appOverrides);
+const manifest=[...baseline.map(e=>{const override=[...feature.overrides,...appOverrides,...training.overrides].find(o=>o.file===e.file);return override?{file:e.file,sha256:override.sha256}:e;}),...feature.files,...app.files,...training.files];
 if (!Array.isArray(baseline) || baseline.length !== 4373) throw new Error('Expected 4373 approved runtime files');
 const seen = new Set();
 // Validate the complete source set before replacing any previous build.

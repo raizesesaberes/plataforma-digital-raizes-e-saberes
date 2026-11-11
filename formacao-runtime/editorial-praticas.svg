@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-labelledby="title">
+  <title id="title">Planejamento pedagógico, contagem e organização de ideias</title>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffdf6"/><stop offset="1" stop-color="#e8ddbc"/></linearGradient>
+    <linearGradient id="forest" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#35755a"/><stop offset="1" stop-color="#124637"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e9ca80"/><stop offset="1" stop-color="#b88c3d"/></linearGradient>
+    <linearGradient id="sage" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a7be94"/><stop offset="1" stop-color="#789c74"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#fffdf5"/><stop offset="1" stop-color="#f7f3e6"/></radialGradient>
+  </defs>
+  <path fill="url(#glow)" d="M0 0h800v500H0z"/>
+  <path d="M0 395C140 339 217 469 382 431s300-32 418-88v157H0Z" fill="#e3e8d7"/>
+  <path d="M0 452c207-70 279 28 443-9s260-10 357-31v88H0Z" fill="#d3dfcc" opacity=".6"/>
+  <g fill="none" stroke="#c9d6bc" stroke-width="1.5"><circle cx="420" cy="254" r="181"/><circle cx="420" cy="254" r="211" opacity=".5"/><path d="M59 366c51-19 45-75 80-114M680 137c-17 22-31 50-26 88"/></g>
+  <g fill="#9db18b" opacity=".8"><path d="M93 324c-35 1-44-18-40-41 29 0 42 17 40 41Z"/><path d="M107 299c-5-33 7-49 32-52 6 28-7 48-32 52Z"/><path d="M669 166c2-27 17-36 39-30-4 26-18 35-39 30Z"/><path d="M657 191c-27-6-33-22-23-42 24 8 31 23 23 42Z"/></g>
+  <g fill="#c2a05e"><path d="m169 121 4 12 12 4-12 4-4 12-4-12-12-4 12-4Z"/><path d="m664 338 3 9 9 3-9 3-3 9-3-9-9-3 9-3Z"/><circle cx="607" cy="89" r="4"/><circle cx="187" cy="363" r="3"/></g>
+  <ellipse cx="415" cy="406" rx="210" ry="22" fill="#315343" opacity=".09"/>
+  
+  <g transform="rotate(-7 343 260)">
+    <rect x="226" y="115" width="226" height="281" rx="17" fill="url(#forest)"/>
+    <rect x="239" y="130" width="200" height="251" rx="8" fill="url(#paper)"/>
+    <rect x="298" y="100" width="83" height="40" rx="10" fill="url(#gold)"/>
+    <rect x="318" y="110" width="43" height="9" rx="4.5" fill="#a08343"/>
+    <g stroke="#bdc9ad" stroke-width="4" stroke-linecap="round"><path d="M292 187h111M292 244h111M292 301h111"/><path d="M292 202h76M292 259h78M292 316h62" stroke-width="2"/></g>
+    <g fill="#e0e8d2"><rect x="258" y="178" width="23" height="23" rx="6"/><rect x="258" y="235" width="23" height="23" rx="6"/><rect x="258" y="292" width="23" height="23" rx="6"/></g>
+    <g fill="none" stroke="#4c7a52" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m264 189 5 5 8-9m-13 61 5 5 8-9m-13 61 5 5 8-9"/></g>
+  </g>
+  <g transform="rotate(7 537 302)">
+    <path d="M469 371V226m122 145V226m-133 147h144" stroke="#285b44" stroke-width="13" stroke-linecap="round"/>
+    <path d="M470 252h119m-119 41h119m-119 41h119" stroke="#81966d" stroke-width="4"/>
+    <g fill="url(#gold)"><rect x="483" y="237" width="19" height="31" rx="9"/><rect x="507" y="237" width="19" height="31" rx="9"/><rect x="546" y="278" width="19" height="31" rx="9"/></g>
+    <g fill="url(#sage)"><rect x="483" y="278" width="19" height="31" rx="9"/><rect x="507" y="278" width="19" height="31" rx="9"/><rect x="530" y="319" width="19" height="31" rx="9"/><rect x="554" y="319" width="19" height="31" rx="9"/></g>
+  </g>
+  <g transform="rotate(24 521 161)"><rect x="513" y="109" width="17" height="122" rx="5" fill="#c5a255"/><path d="m513 225 8.5 25 8.5-25" fill="#edddba"/><path d="m518 240 3.5 10 3.5-10" fill="#31523c"/><path d="M518 119v100" stroke="#f4d994" stroke-width="3"/></g>
+
+</svg>

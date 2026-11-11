@@ -7259,36 +7259,48 @@ const renderTeacherTrackingView = () => {
   return `<section class="tw-board">${renderTeacherInstitutionalStatus("ACOMPANHAMENTO AGUARDANDO VINCULO INSTITUCIONAL REAL.")}</section>`;
 };
 
+// Reviewed source metadata: data/curation_batches/2026-11-11-formacao-verificada.json.
+// These cards open the current public detail, never imply enrollment or certification here.
 const teacherFormationCourses = [
   {
-    title: "Docencia Plural - Formação em Interculturalidade e Bilinguismo",
+    title: "Docência Plural - Formação em Interculturalidade e Bilinguismo",
     provider: "EV.G - Escola Virtual.Gov",
-    category: "Inclusao e diversidade",
+    category: "Inclusão e diversidade",
     workload: "40h",
-    status: "Inscricoes abertas",
-    certificate: "Certificado informado pela instituição",
-    image: "assets/universidade/curso-educacao-inclusiva.webp",
-    href: "universidade.html?from=teacher#curso-docencia-plural-interculturalidade-bilinguismo",
+    status: "Fonte oficial consultada em 11/11/2026",
+    certificate: "Certificado gratuito Enap, sujeito ao Guia do Participante e ao prazo de 60 dias após inscrição.",
+    image: "formacao-runtime/editorial-inclusao.svg",
+    href: "universidade.html?from=teacher#curso-real-docencia-plural",
   },
   {
     title: "Formação de Professores do Programa Aprender Valor",
     provider: "EV.G - Escola Virtual.Gov",
     category: "Educação financeira",
     workload: "40h",
-    status: "Inscricoes abertas",
-    certificate: "Certificado informado pela instituição",
-    image: "assets/universidade/trilha-praticas-pedagogicas.webp",
-    href: "universidade.html?from=teacher#curso-formação-professores-programa-aprender-valor",
+    status: "Fonte oficial consultada em 11/11/2026",
+    certificate: "Conteúdo Banco Central; certificado gratuito Enap, sujeito ao Guia do Participante e ao prazo de 60 dias.",
+    image: "formacao-runtime/editorial-praticas.svg",
+    href: "universidade.html?from=teacher#curso-real-aprender-valor",
   },
   {
-    title: "Inclusao e Acessibilidade na Educação",
+    title: "Inclusão e Acessibilidade na Educação",
     provider: "Mundi/IFSul",
-    category: "Educação Inclusiva",
+    category: "Educação inclusiva",
     workload: "30h",
-    status: "Disponível",
-    certificate: "Certificado informado pela instituição",
-    image: "assets/universidade/trilha-inclusao-diversidade.webp",
-    href: "universidade.html?from=teacher#curso-inclusão-acessibilidade-educação-ifsul",
+    status: "Fonte oficial consultada em 11/11/2026",
+    certificate: "Certificado anunciado pelo Mundi/IFSul. Consulte os critérios de aprovação no ambiente do curso.",
+    image: "formacao-runtime/editorial-aprendizagem.svg",
+    href: "universidade.html?from=teacher#curso-real-inclusao-acessibilidade-ifsul",
+  },
+  {
+    title: "Alfabetização, Letramento e Tecnologias Digitais",
+    provider: "ESKADA/UEMA",
+    category: "Práticas pedagógicas",
+    workload: "60h",
+    status: "Fonte oficial consultada em 11/11/2026",
+    certificate: "Certificado gratuito UEMA, condicionado à realização das atividades e à aprovação.",
+    image: "formacao-runtime/editorial-tecnologia.svg",
+    href: "universidade.html?from=teacher#curso-real-alfabetizacao-letramento-tecnologias",
   },
 ];
 
@@ -7297,7 +7309,7 @@ const teacherFormationMaterials = [
     title: "Curadoria de Educação Inclusiva",
     type: "Centro de conhecimento",
     description: "Cursos e referencias para acolher diferentes necessidades de aprendizagem.",
-    href: "universidade.html?from=teacher#centro-educação-inclusiva",
+    href: "universidade.html?from=teacher#centro-educacao-inclusiva",
     icon: "book",
   },
   {
@@ -7316,13 +7328,6 @@ const teacherFormationMaterials = [
   },
 ];
 
-const teacherFormationPaths = [
-  ["Formação Docente", "Percurso para estudo individual e aplicação em sala.", "1 curso real vinculado"],
-  ["Gestão Pedagógica", "Percurso para leitura institucional e organização pedagógica.", "1 curso real vinculado"],
-  ["Avalia+", "Percurso preparado para diagnostico, devolutivas e acompanhamento.", "1 curso real vinculado"],
-  ["Tecnologias Educacionais", "Percurso para recursos digitais e boas práticas.", "1 curso real vinculado"],
-];
-
 const renderTeacherFormationCourse = (course) => `
   <article class="tw-formation-card tw-formation-course" data-teacher-search-item>
     <img src="${printableEscape(course.image)}" alt="" loading="lazy" />
@@ -7331,7 +7336,7 @@ const renderTeacherFormationCourse = (course) => `
       <strong>${printableEscape(course.title)}</strong>
       <small>${printableEscape(course.provider)} - ${printableEscape(course.workload)} - ${printableEscape(course.status)}</small>
       <small>${printableEscape(course.certificate)}</small>
-      <a class="tw-primary-link" href="${printableEscape(course.href)}">ABRIR CURSO</a>
+      <a class="tw-primary-link" href="${printableEscape(course.href)}">VER DETALHES DO CURSO</a>
     </div>
   </article>
 `;
@@ -7346,67 +7351,53 @@ const renderTeacherFormationMaterial = (material) => `
   </article>
 `;
 
+const renderFormationGateway = () => `
+  <link rel="stylesheet" href="formacao-runtime/gateway.css?v=20261111" />
+  <section class="fd-gateway" aria-label="Formação docente Raízes e Saberes">
+    <div>
+      <span class="fd-eyebrow">FORMAÇÃO DOCENTE · ACESSO INSTITUCIONAL</span>
+      <h2>Saberes que se transformam<br />em prática.</h2>
+      <p>Aprofunde seu trabalho com as coleções Raízes e Saberes. Encontre as orientações de cada aula em um espaço organizado para acompanhar seu planejamento.</p>
+      <div class="fd-actions">
+        <a class="fd-primary" href="formacao.html">Acessar minha formação <span aria-hidden="true">→</span></a>
+        <a class="fd-secondary" href="personal-learning.html">Meus cursos e certificados <span aria-hidden="true">↗</span></a>
+      </div>
+      <p class="fd-access-note">As aulas exigem uma conta institucional, vínculo autorizado e licença de formação ativa.</p>
+    </div>
+    <ol class="fd-hierarchy" aria-label="Organização das aulas">
+      <li><span>01</span>Coleção</li>
+      <li><span>02</span>Ano / faixa etária</li>
+      <li><span>03</span>Volume</li>
+      <li><span>04</span>Unidade</li>
+      <li><span>05</span>Aula</li>
+    </ol>
+  </section>
+`;
+
 const renderTeacherFormationView = () => `
   <section class="tw-board tw-formation-shell">
     <div class="tw-planning-heading">
       <div>
         <span>Formação</span>
         <h2>Universidade Raízes e Saberes</h2>
-        <p>Cursos, trilhas e materiais selecionados para apoiar sua formação continuada.</p>
+        <p>Um espaço para sua formação docente e novas descobertas para a sala de aula.</p>
       </div>
-      <button type="button" data-teacher-open-url="universidade.html?from=teacher">ABRIR UNIVERSIDADE</button>
+      <button type="button" data-teacher-open-url="universidade.html?from=teacher">EXPLORAR A UNIVERSIDADE</button>
     </div>
-    <div class="tw-formation-overview">
-      ${renderTeacherTrackingMetric("Cursos disponiveis", String(teacherFormationCourses.length), "Curadoria real ja preservada", "cap")}
-      ${renderTeacherTrackingMetric("Trilhas", String(teacherFormationPaths.length), "Percursos preparados por tema", "map")}
-      ${renderTeacherTrackingMetric("Materiais", String(teacherFormationMaterials.length), "Centros e apoio", "book")}
-      ${renderTeacherTrackingMetric("Progresso", "Preparado", "Acompanhamento futuro", "progresso")}
+    ${renderFormationGateway()}
+    <div class="fd-personal-entry">
+      <div><h3>Seu percurso, organizado por você.</h3><p>Reúna cursos externos e seus certificados em um espaço pessoal e privado.</p></div>
+      <a href="personal-learning.html">Meus cursos e certificados →</a>
     </div>
-    <div class="tw-tracking-grid">
-      <section class="tw-board tw-tracking-section">
-        <div class="tw-section-head"><h2>Continuar aprendendo</h2><span>Preparado</span></div>
-        <p class="ua-empty">Nenhum curso iniciado pela professora ainda. O progresso aparecera aqui quando houver fonte real de acompanhamento formativo.</p>
-      </section>
-      <section class="tw-board tw-tracking-section">
-        <div class="tw-section-head"><h2>Cursos disponiveis</h2><a class="tw-primary-link" href="universidade.html?from=teacher#catalogo">Ver catalogo</a></div>
-        <div class="tw-formation-list">${teacherFormationCourses.map(renderTeacherFormationCourse).join("")}</div>
-      </section>
-    </div>
-    <div class="tw-tracking-grid">
-      <section class="tw-board tw-tracking-section">
-        <div class="tw-section-head"><h2>Vídeos e materiais</h2><span>Acervo existente</span></div>
-        <div class="tw-formation-grid">${teacherFormationMaterials.map(renderTeacherFormationMaterial).join("")}</div>
-      </section>
-      <section class="tw-board tw-tracking-section">
-        <div class="tw-section-head"><h2>Trilhas de formação</h2><span>Percursos</span></div>
-        <div class="tw-tracking-list">
-          ${teacherFormationPaths
-            .map(
-              ([title, description, detail]) => `
-                <article class="tw-tracking-item" data-teacher-search-item>
-                  <div>
-                    <span>Trilha</span>
-                    <strong>${printableEscape(title)}</strong>
-                    <small>${printableEscape(description)}</small>
-                  </div>
-                  <mark>${printableEscape(detail)}</mark>
-                </article>
-              `
-            )
-            .join("")}
-        </div>
-      </section>
-    </div>
-    <div class="tw-tracking-grid">
-      <section class="tw-board tw-tracking-section">
-        <div class="tw-section-head"><h2>Progresso formativo</h2><span>Em preparação</span></div>
-        <p class="ua-empty">O acompanhamento de progresso ainda nao esta disponivel. Nenhum progresso ficticio foi exibido.</p>
-      </section>
-      <section class="tw-board tw-tracking-section">
-        <div class="tw-section-head"><h2>Certificados</h2><span>Em preparação</span></div>
-        <p class="ua-empty">A emissao de certificados ainda nao esta disponivel nesta etapa.</p>
-      </section>
-    </div>
+    <section class="tw-board tw-tracking-section">
+      <div class="tw-section-head"><h2>Cursos gratuitos selecionados</h2><a class="tw-primary-link" href="universidade.html?from=teacher#catalogo">Ver catálogo público</a></div>
+      <p class="fd-external-note">Explore a curadoria de cursos oferecidos por instituições externas. Inscrição, acompanhamento e eventual certificação seguem as regras de cada instituição.</p>
+      <div class="tw-formation-list">${teacherFormationCourses.map(renderTeacherFormationCourse).join("")}</div>
+    </section>
+    <section class="tw-board tw-tracking-section">
+      <div class="tw-section-head"><h2>Centros de conhecimento</h2><span>Explore por tema</span></div>
+      <div class="tw-formation-grid">${teacherFormationMaterials.map(renderTeacherFormationMaterial).join("")}</div>
+    </section>
   </section>
 `;
 
@@ -19773,13 +19764,13 @@ const modules = {
               <a href="#formacao-raizes" data-catalog-section="formacao-raizes">Formação Raízes e Saberes</a>
             </div>
           </div>
-          <img src="assets/universidade/banner-principal.webp" alt="" />
+          <img src="formacao-runtime/editorial-aprendizagem.svg" alt="" width="800" height="500" />
         </section>
 
         <nav class="university-gateway" aria-label="Áreas da Universidade">
           <a href="#formacao-raizes" data-catalog-section="formacao-raizes">
             <strong>Formação Raízes e Saberes</strong>
-            <span>Cursos proprios, trilhas, assessorias, encontros, historico e certificados em preparação.</span>
+            <span>Aulas das coleções, organizadas por ano, volume e unidade, com acesso institucional protegido.</span>
           </a>
           <a href="#catalogo" data-catalog-section="catalogo" class="is-primary">
             <strong>Encontre Cursos Gratuitos</strong>
@@ -19787,38 +19778,13 @@ const modules = {
           </a>
         </nav>
 
-        <section class="university-prep-panel" id="formacao-raizes">
-          <div>
-            <span>Área institucional</span>
-            <h2>Formação Raízes e Saberes</h2>
-            <p>Estrutura funcional preparada para receber cursos internos, formação continuada, implantação das colecoes, assessorias, webinarios, encontros, certificados e historico formativo.</p>
-          </div>
-          <ul>
-            <li>Catalogo interno por público e segmento</li>
-            <li>Cursos, módulos, aulas, vídeos e materiais de apoio</li>
-            <li>Progresso e certificados quando o motor formativo receber acervo real</li>
-          </ul>
-        </section>
-
-        <section class="university-prep-panel" id="formacao-estrutura">
-          <div>
-            <span>Mobiliacao estrutural</span>
-            <h2>Armário pronto para cursos próprios</h2>
-            <p>Não há cursos internos definitivos publicados nesta fase. A ausência de acervo é tratada como EMPTY_REAL, preservando o espaço para inserir posteriormente capacitação inicial, formação continuada, vídeos, materiais e treinamento de uso da plataforma.</p>
-          </div>
-          <ul>
-            <li>Educação Infantil: pronto para trilhas e aulas</li>
-            <li>Ensino Fundamental: pronto para cursos por segmento</li>
-            <li>Professor: integrado à aba Formação</li>
-          </ul>
-        </section>
-
-        <section class="catalog-ranking-grid" aria-label="Estrutura da Formação Raízes">
-          <article><h3>Públicos</h3><div><button type="button">Educação Infantil</button><button type="button">Ensino Fundamental</button><button type="button">Professor</button></div></article>
-          <article><h3>Cursos e módulos</h3><div><button type="button">Cursos EMPTY_REAL</button><button type="button">Módulos EMPTY_REAL</button><button type="button">Aulas EMPTY_REAL</button></div></article>
-          <article><h3>Vídeos e materiais</h3><div><button type="button">Vídeos EMPTY_REAL</button><button type="button">PDFs EMPTY_REAL</button><button type="button">Apoios EMPTY_REAL</button></div></article>
-          <article><h3>Progresso</h3><div><button type="button">Histórico EMPTY_REAL</button><button type="button">Certificados EMPTY_REAL</button><button type="button">Conclusões EMPTY_REAL</button></div></article>
-        </section>
+        <div id="formacao-raizes">
+          ${renderFormationGateway()}
+          <section class="fd-personal-entry" aria-label="Cursos pessoais e certificados">
+            <div><h2>Meus cursos e certificados</h2><p>Organize os cursos externos que você escolheu e guarde seus certificados em um espaço privado.</p></div>
+            <a href="personal-learning.html">Abrir meu espaço pessoal →</a>
+          </section>
+        </div>
 
         <section class="knowledge-center-shell" id="centros-conhecimento">
           <header class="knowledge-center-head">
@@ -19852,8 +19818,6 @@ const modules = {
               <span>Ordenar</span>
               <select data-course-sort>
                 <option value="featured">Destaques da curadoria</option>
-                <option value="rating">Mais bem avaliados</option>
-                <option value="access">Mais acessados</option>
                 <option value="recent">Adicionados recentemente</option>
                 <option value="hours">Menor carga horaria</option>
               </select>
@@ -19873,14 +19837,14 @@ const modules = {
           </section>
 
           <section class="catalog-ranking-grid" aria-label="Rankings">
-            <article><h3>Mais acessados</h3><div data-most-accessed></div></article>
-            <article><h3>Mais bem avaliados</h3><div data-best-rated></div></article>
+            <article><h3>Destaques verificados</h3><div data-most-accessed></div></article>
+            <article><h3>Cursos de curta duração</h3><div data-best-rated></div></article>
             <article><h3>Adicionados recentemente</h3><div data-recent-courses></div></article>
             <article><h3>Com certificado</h3><div data-certificate-courses></div></article>
           </section>
 
           <section class="catalog-provider-strip">
-            <div class="catalog-section-head"><div><span>Instituicoes em destaque</span><h3>Ofertantes publicos reconhecidos</h3></div></div>
+            <div class="catalog-section-head"><div><span>Instituicoes em destaque</span><h3>Instituições e plataformas de origem</h3></div></div>
             <div data-featured-providers></div>
           </section>
 
@@ -19916,33 +19880,13 @@ const modules = {
 
         <section class="course-detail-panel" id="detalhes" data-course-detail hidden></section>
 
-        <section class="curation-admin-panel" id="administracao">
-          <header>
-            <span>Administração e curadoria</span>
-            <h2>Estrutura inicial para gestão do catalogo</h2>
-          </header>
-          <div class="admin-action-grid">
-            <article>Cadastrar instituição</article>
-            <article>Cadastrar e editar curso</article>
-            <article>Publicar e despublicar</article>
-            <article>Verificar link oficial</article>
-            <article>Adicionar categorias e tags</article>
-            <article>Destacar ou arquivar curso</article>
-            <article>Registrar notas internas</article>
-            <article>Atualizar informações verificadas</article>
-            <article>Validar certificado externo enviado</article>
+        <aside class="university-prep-panel" aria-label="Sobre os cursos externos">
+          <div>
+            <span>Informações importantes</span>
+            <h2>Seu aprendizado continua na instituição ofertante.</h2>
+            <p>A Universidade reúne indicações de cursos externos. Inscrições, requisitos de participação e certificados são de responsabilidade de cada instituição. Confira as condições no site oficial antes de se inscrever.</p>
           </div>
-        </section>
-
-        <section class="catalog-data-panel" id="estrutura-dados">
-          <header>
-            <span>Base escalavel</span>
-            <h2>Entidades preparadas para a proxima fase</h2>
-          </header>
-          <div class="data-table-list">
-            <code>course_providers</code><code>curated_courses</code><code>course_categories</code><code>course_tags</code><code>course_tag_relations</code><code>course_reviews</code><code>course_favorites</code><code>course_clicks</code><code>course_verifications</code><code>learning_paths</code><code>learning_path_courses</code>
-          </div>
-        </section>
+        </aside>
       </div>
     `,
   },
@@ -20711,13 +20655,9 @@ const environments = {
     nav: [
       ["heading", "Formação Raízes e Saberes", "#"],
       ["universidade", "Início", "universidade.html#formacao-raizes"],
-      ["trilhas", "Trilhas de Aprendizagem", "#formacao-raizes"],
-      ["cursos", "Meus Cursos", "#formacao-raizes"],
-      ["certificados", "Certificados", "#formacao-raizes"],
-      ["videoaulas", "Vídeoaulas", "#formacao-raizes"],
-      ["avaliacoes", "Avaliações", "#formacao-raizes"],
-      ["eventos", "Eventos", "#formacao-raizes"],
-      ["historico", "Histórico Formativo", "#formacao-raizes"],
+      ["trilhas", "Formação docente", "formacao.html"],
+      ["cursos", "Meus cursos", "personal-learning.html"],
+      ["certificados", "Meus certificados", "personal-learning.html"],
       ["centros", "Centros de Conhecimento", "#centros-conhecimento"],
       ["heading", "Catalogo Gratuito", "#"],
       ["encontrar", "Encontrar Cursos", "#catalogo"],
@@ -20729,9 +20669,9 @@ const environments = {
     ],
     mobile: [
       ["universidade", "Início", "universidade.html"],
-      ["trilhas", "Trilhas", "#"],
-      ["cursos", "Meus Cursos", "#"],
-      ["certificados", "Certificados", "#"],
+      ["trilhas", "Formação", "formacao.html"],
+      ["cursos", "Meus cursos", "personal-learning.html"],
+      ["certificados", "Certificados", "personal-learning.html"],
       ["biblioteca", "Biblioteca", "biblioteca.html"],
     ],
   },

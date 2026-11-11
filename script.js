@@ -362,6 +362,1856 @@ const demoCuratedCourses = [
   },
 ];
 
+// Editorial facts verified on 2026-11-11. No third-party course media is hosted.
+const verifiedTrainingCuration = {
+  "providers": [
+    {
+      "id": "prov-aprenda-ifrs",
+      "name": "Aprenda Mais / IFRS",
+      "type": "Instituto federal público",
+      "officialSiteUrl": "https://aprendamais.mec.gov.br/",
+      "highlighted": true,
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "id": "prov-aprenda-ifba",
+      "name": "Aprenda Mais / IFBA",
+      "type": "Instituto federal público",
+      "officialSiteUrl": "https://aprendamais.mec.gov.br/",
+      "highlighted": true,
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "id": "prov-bradesco-ev",
+      "name": "Fundação Bradesco / Escola Virtual",
+      "type": "Instituição educacional privada sem fins lucrativos",
+      "officialSiteUrl": "https://www.ev.org.br/",
+      "highlighted": true,
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "id": "prov-cefope-sedu-es",
+      "name": "CEFOPE / SEDU-ES",
+      "type": "Secretaria estadual de educação",
+      "officialSiteUrl": "https://formacoes.sedu.es.gov.br/formacoes-mooc",
+      "highlighted": true,
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    }
+  ],
+  "courses": [
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Instituto Federal do Rio Grande do Sul (IFRS)",
+      "certificateLabel": "Certificado gratuito por Instituto Federal do Rio Grande do Sul (IFRS), sujeito à aprovação e aos prazos",
+      "certificationConditions": "Curso livre, sem tutoria. Certificado gratuito pela instituição ofertante após acesso aos materiais, realização das atividades, aproveitamento mínimo de 60% e prazo mínimo. Emissão até o encerramento da turma em 31/01/2027. Não equivale a graduação ou pós-graduação.",
+      "certificateRulesUrl": "https://aprendamais.mec.gov.br/mod/page/view.php?id=100&lang=pt_br",
+      "additionalSourceUrls": [
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=45212&lang=pt_br"
+      ],
+      "completionDeadline": "2027-01-31",
+      "certificateFee": "Gratuito",
+      "audience": "Estudantes de licenciatura e profissionais da educação",
+      "id": "real-aprendizagem-significativa-ifrs",
+      "slug": "aprendizagem-significativa-ifrs",
+      "title": "Aprendizagem Significativa - Turma 2026B",
+      "providerId": "prov-aprenda-ifrs",
+      "theme": "Formacao Docente",
+      "category": "Aprendizagem e didática",
+      "knowledgeCenter": "Formacao Docente",
+      "workloadHours": 30,
+      "workloadLabel": "30h",
+      "courseUrl": "https://aprendamais.mec.gov.br/course/info.php?id=3178",
+      "summary": "Estudo de fundamentos e abordagens de aprendizagem significativa para apoiar o ensino.",
+      "tags": [
+        "formacao docente"
+      ],
+      "requirements": "Leitura em português e equipamento com áudio e vídeo. Prazo mínimo para certificado: 5 dias após inscrição.",
+      "minimumCertificateDays": 5,
+      "fullDescription": "Estudo de fundamentos e abordagens de aprendizagem significativa para apoiar o ensino. Curso livre, sem tutoria. Certificado gratuito pela instituição ofertante após acesso aos materiais, realização das atividades, aproveitamento mínimo de 60% e prazo mínimo. Emissão até o encerramento da turma em 31/01/2027. Não equivale a graduação ou pós-graduação.",
+      "curatorRecommendedFor": "Estudantes de licenciatura e profissionais da educação",
+      "sourceUrls": [
+        "https://aprendamais.mec.gov.br/course/info.php?id=3178",
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=100&lang=pt_br",
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=45212&lang=pt_br"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Instituto Federal do Rio Grande do Sul (IFRS)",
+      "certificateLabel": "Certificado gratuito por Instituto Federal do Rio Grande do Sul (IFRS), sujeito à aprovação e aos prazos",
+      "certificationConditions": "Curso livre, sem tutoria. Certificado gratuito pela instituição ofertante após acesso aos materiais, realização das atividades, aproveitamento mínimo de 60% e prazo mínimo. Emissão até o encerramento da turma em 31/01/2027. Não equivale a graduação ou pós-graduação.",
+      "certificateRulesUrl": "https://aprendamais.mec.gov.br/mod/page/view.php?id=100&lang=pt_br",
+      "additionalSourceUrls": [
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=45212&lang=pt_br"
+      ],
+      "completionDeadline": "2027-01-31",
+      "certificateFee": "Gratuito",
+      "audience": "Estudantes e profissionais de qualquer área",
+      "id": "real-avaliacao-ead-ifrs",
+      "slug": "avaliacao-ead-ifrs",
+      "title": "Avaliação na Educação a Distância - Turma 2026B",
+      "providerId": "prov-aprenda-ifrs",
+      "theme": "Avaliacao",
+      "category": "Avaliação e feedback",
+      "knowledgeCenter": "Avaliacao Formativa",
+      "workloadHours": 20,
+      "workloadLabel": "20h",
+      "courseUrl": "https://aprendamais.mec.gov.br/course/info.php?id=3183",
+      "summary": "Introdução a métodos de avaliação em EaD, feedback e acompanhamento da aprendizagem.",
+      "tags": [
+        "avaliacao"
+      ],
+      "requirements": "Leitura em português e equipamento com áudio e vídeo. Prazo mínimo para certificado: 4 dias após inscrição.",
+      "minimumCertificateDays": 4,
+      "fullDescription": "Introdução a métodos de avaliação em EaD, feedback e acompanhamento da aprendizagem. Curso livre, sem tutoria. Certificado gratuito pela instituição ofertante após acesso aos materiais, realização das atividades, aproveitamento mínimo de 60% e prazo mínimo. Emissão até o encerramento da turma em 31/01/2027. Não equivale a graduação ou pós-graduação.",
+      "curatorRecommendedFor": "Estudantes e profissionais de qualquer área",
+      "sourceUrls": [
+        "https://aprendamais.mec.gov.br/course/info.php?id=3183",
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=100&lang=pt_br",
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=45212&lang=pt_br"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Instituto Federal da Bahia (IFBA)",
+      "certificateLabel": "Certificado gratuito por Instituto Federal da Bahia (IFBA), sujeito à aprovação e aos prazos",
+      "certificationConditions": "Curso livre, sem tutoria. Certificado gratuito pela instituição ofertante após acesso aos materiais, realização das atividades, aproveitamento mínimo de 60% e prazo mínimo. Emissão até o encerramento da turma em 31/01/2027. Não equivale a graduação ou pós-graduação.",
+      "certificateRulesUrl": "https://aprendamais.mec.gov.br/mod/page/view.php?id=100&lang=pt_br",
+      "additionalSourceUrls": [
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=45212&lang=pt_br"
+      ],
+      "completionDeadline": "2027-01-31",
+      "certificateFee": "Gratuito",
+      "audience": "Estudantes e profissionais da educação",
+      "id": "real-pei-educacao-basica-ifba",
+      "slug": "pei-educacao-basica-ifba",
+      "title": "Planejamento Educacional Individualizado na Educação Básica - Turma 2026B",
+      "providerId": "prov-aprenda-ifba",
+      "theme": "Educacao Inclusiva",
+      "category": "Inclusão e diversidade",
+      "knowledgeCenter": "Educacao Inclusiva",
+      "workloadHours": 20,
+      "workloadLabel": "20h",
+      "courseUrl": "https://aprendamais.mec.gov.br/course/info.php?id=3529",
+      "summary": "Fundamentos do planejamento individualizado, adaptações e flexibilização curricular.",
+      "tags": [
+        "educacao inclusiva"
+      ],
+      "requirements": "Leitura em português e equipamento com áudio e vídeo. Prazo mínimo para certificado: 4 dias após inscrição.",
+      "minimumCertificateDays": 4,
+      "fullDescription": "Fundamentos do planejamento individualizado, adaptações e flexibilização curricular. Curso livre, sem tutoria. Certificado gratuito pela instituição ofertante após acesso aos materiais, realização das atividades, aproveitamento mínimo de 60% e prazo mínimo. Emissão até o encerramento da turma em 31/01/2027. Não equivale a graduação ou pós-graduação.",
+      "curatorRecommendedFor": "Estudantes e profissionais da educação",
+      "sourceUrls": [
+        "https://aprendamais.mec.gov.br/course/info.php?id=3529",
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=100&lang=pt_br",
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=45212&lang=pt_br"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Instituto Federal do Rio Grande do Sul (IFRS)",
+      "certificateLabel": "Certificado gratuito por Instituto Federal do Rio Grande do Sul (IFRS), sujeito à aprovação e aos prazos",
+      "certificationConditions": "Curso livre, sem tutoria. Certificado gratuito pela instituição ofertante após acesso aos materiais, realização das atividades, aproveitamento mínimo de 60% e prazo mínimo. Emissão até o encerramento da turma em 31/01/2027. Não equivale a graduação ou pós-graduação.",
+      "certificateRulesUrl": "https://aprendamais.mec.gov.br/mod/page/view.php?id=100&lang=pt_br",
+      "additionalSourceUrls": [
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=45212&lang=pt_br"
+      ],
+      "completionDeadline": "2027-01-31",
+      "certificateFee": "Gratuito",
+      "audience": "Professores, gestores e estudantes da área de educação",
+      "id": "real-gestao-democratica-ifrs",
+      "slug": "gestao-democratica-ifrs",
+      "title": "Gestão Democrática nos Sistemas e na Escola - Turma 2026B",
+      "providerId": "prov-aprenda-ifrs",
+      "theme": "Gestao Escolar",
+      "category": "Gestão escolar",
+      "knowledgeCenter": "Gestao Escolar",
+      "workloadHours": 30,
+      "workloadLabel": "30h",
+      "courseUrl": "https://aprendamais.mec.gov.br/course/info.php?id=3329",
+      "summary": "Estudo de gestão democrática, financiamento da educação e projeto político-pedagógico.",
+      "tags": [
+        "gestao escolar"
+      ],
+      "requirements": "Leitura em português e equipamento com áudio e vídeo. Prazo mínimo para certificado: 5 dias após inscrição.",
+      "minimumCertificateDays": 5,
+      "fullDescription": "Estudo de gestão democrática, financiamento da educação e projeto político-pedagógico. Curso livre, sem tutoria. Certificado gratuito pela instituição ofertante após acesso aos materiais, realização das atividades, aproveitamento mínimo de 60% e prazo mínimo. Emissão até o encerramento da turma em 31/01/2027. Não equivale a graduação ou pós-graduação.",
+      "curatorRecommendedFor": "Professores, gestores e estudantes da área de educação",
+      "sourceUrls": [
+        "https://aprendamais.mec.gov.br/course/info.php?id=3329",
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=100&lang=pt_br",
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=45212&lang=pt_br"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Instituto Federal do Rio Grande do Sul (IFRS)",
+      "certificateLabel": "Certificado gratuito por Instituto Federal do Rio Grande do Sul (IFRS), sujeito à aprovação e aos prazos",
+      "certificationConditions": "Curso livre, sem tutoria. Certificado gratuito pela instituição ofertante após acesso aos materiais, realização das atividades, aproveitamento mínimo de 60% e prazo mínimo. Emissão até o encerramento da turma em 31/01/2027. Não equivale a graduação ou pós-graduação.",
+      "certificateRulesUrl": "https://aprendamais.mec.gov.br/mod/page/view.php?id=100&lang=pt_br",
+      "additionalSourceUrls": [
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=45212&lang=pt_br"
+      ],
+      "completionDeadline": "2027-01-31",
+      "certificateFee": "Gratuito",
+      "audience": "Professores da educação básica e estudantes do ensino médio",
+      "id": "real-jogos-brinquedos-ifrs",
+      "slug": "jogos-brinquedos-ifrs",
+      "title": "Jogos, Brinquedos e Brincadeiras - Turma 2026B",
+      "providerId": "prov-aprenda-ifrs",
+      "theme": "Educacao Infantil",
+      "category": "Infância e ludicidade",
+      "knowledgeCenter": "Educacao Infantil",
+      "workloadHours": 20,
+      "workloadLabel": "20h",
+      "courseUrl": "https://aprendamais.mec.gov.br/course/info.php?id=3370",
+      "summary": "Introdução à história, aos conceitos e às possibilidades educativas dos jogos e brincadeiras.",
+      "tags": [
+        "educacao infantil"
+      ],
+      "requirements": "Leitura em português e equipamento com áudio e vídeo. Prazo mínimo para certificado: 4 dias após inscrição.",
+      "minimumCertificateDays": 4,
+      "fullDescription": "Introdução à história, aos conceitos e às possibilidades educativas dos jogos e brincadeiras. Curso livre, sem tutoria. Certificado gratuito pela instituição ofertante após acesso aos materiais, realização das atividades, aproveitamento mínimo de 60% e prazo mínimo. Emissão até o encerramento da turma em 31/01/2027. Não equivale a graduação ou pós-graduação.",
+      "curatorRecommendedFor": "Professores da educação básica e estudantes do ensino médio",
+      "sourceUrls": [
+        "https://aprendamais.mec.gov.br/course/info.php?id=3370",
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=100&lang=pt_br",
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=45212&lang=pt_br"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Instituto Federal do Rio Grande do Sul (IFRS)",
+      "certificateLabel": "Certificado gratuito por Instituto Federal do Rio Grande do Sul (IFRS), sujeito à aprovação e aos prazos",
+      "certificationConditions": "Curso livre, sem tutoria. Certificado gratuito pela instituição ofertante após acesso aos materiais, realização das atividades, aproveitamento mínimo de 60% e prazo mínimo. Emissão até o encerramento da turma em 31/01/2027. Não equivale a graduação ou pós-graduação.",
+      "certificateRulesUrl": "https://aprendamais.mec.gov.br/mod/page/view.php?id=100&lang=pt_br",
+      "additionalSourceUrls": [
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=45212&lang=pt_br"
+      ],
+      "completionDeadline": "2027-01-31",
+      "certificateFee": "Gratuito",
+      "audience": "Profissionais da educação",
+      "id": "real-projetos-interdisciplinares-ifrs",
+      "slug": "projetos-interdisciplinares-ifrs",
+      "title": "Projetos Educacionais e Interdisciplinares - Turma 2026B",
+      "providerId": "prov-aprenda-ifrs",
+      "theme": "Formacao Docente",
+      "category": "Projetos e planejamento",
+      "knowledgeCenter": "Formacao Docente",
+      "workloadHours": 30,
+      "workloadLabel": "30h",
+      "courseUrl": "https://aprendamais.mec.gov.br/course/info.php?id=3462",
+      "summary": "Fundamentos para organizar e desenvolver projetos educacionais interdisciplinares.",
+      "tags": [
+        "formacao docente"
+      ],
+      "requirements": "Leitura em português e equipamento com áudio e vídeo. Prazo mínimo para certificado: 5 dias após inscrição.",
+      "minimumCertificateDays": 5,
+      "fullDescription": "Fundamentos para organizar e desenvolver projetos educacionais interdisciplinares. Curso livre, sem tutoria. Certificado gratuito pela instituição ofertante após acesso aos materiais, realização das atividades, aproveitamento mínimo de 60% e prazo mínimo. Emissão até o encerramento da turma em 31/01/2027. Não equivale a graduação ou pós-graduação.",
+      "curatorRecommendedFor": "Profissionais da educação",
+      "sourceUrls": [
+        "https://aprendamais.mec.gov.br/course/info.php?id=3462",
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=100&lang=pt_br",
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=45212&lang=pt_br"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Instituto Federal do Rio Grande do Sul (IFRS)",
+      "certificateLabel": "Certificado gratuito por Instituto Federal do Rio Grande do Sul (IFRS), sujeito à aprovação e aos prazos",
+      "certificationConditions": "Curso livre, sem tutoria. Certificado gratuito pela instituição ofertante após acesso aos materiais, realização das atividades, aproveitamento mínimo de 60% e prazo mínimo. Emissão até o encerramento da turma em 31/01/2027. Não equivale a graduação ou pós-graduação.",
+      "certificateRulesUrl": "https://aprendamais.mec.gov.br/mod/page/view.php?id=100&lang=pt_br",
+      "additionalSourceUrls": [
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=45212&lang=pt_br"
+      ],
+      "completionDeadline": "2027-01-31",
+      "certificateFee": "Gratuito",
+      "audience": "Profissionais da educação",
+      "id": "real-protecao-criancas-ifrs",
+      "slug": "protecao-criancas-ifrs",
+      "title": "Proteção e Cuidados para Crianças - Turma 2026B",
+      "providerId": "prov-aprenda-ifrs",
+      "theme": "Educacao Infantil",
+      "category": "Proteção e cuidado",
+      "knowledgeCenter": "Educacao Infantil",
+      "workloadHours": 20,
+      "workloadLabel": "20h",
+      "courseUrl": "https://aprendamais.mec.gov.br/course/info.php?id=3464",
+      "summary": "Estudo da proteção à infância e das redes de cuidado e proteção social.",
+      "tags": [
+        "educacao infantil"
+      ],
+      "requirements": "Leitura em português e equipamento com áudio e vídeo. Prazo mínimo para certificado: 4 dias após inscrição.",
+      "minimumCertificateDays": 4,
+      "fullDescription": "Estudo da proteção à infância e das redes de cuidado e proteção social. Curso livre, sem tutoria. Certificado gratuito pela instituição ofertante após acesso aos materiais, realização das atividades, aproveitamento mínimo de 60% e prazo mínimo. Emissão até o encerramento da turma em 31/01/2027. Não equivale a graduação ou pós-graduação.",
+      "curatorRecommendedFor": "Profissionais da educação",
+      "sourceUrls": [
+        "https://aprendamais.mec.gov.br/course/info.php?id=3464",
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=100&lang=pt_br",
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=45212&lang=pt_br"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Instituto Federal do Rio Grande do Sul (IFRS)",
+      "certificateLabel": "Certificado gratuito por Instituto Federal do Rio Grande do Sul (IFRS), sujeito à aprovação e aos prazos",
+      "certificationConditions": "Curso livre, sem tutoria. Certificado gratuito pela instituição ofertante após acesso aos materiais, realização das atividades, aproveitamento mínimo de 60% e prazo mínimo. Emissão até o encerramento da turma em 31/01/2027. Não equivale a graduação ou pós-graduação.",
+      "certificateRulesUrl": "https://aprendamais.mec.gov.br/mod/page/view.php?id=100&lang=pt_br",
+      "additionalSourceUrls": [
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=45212&lang=pt_br"
+      ],
+      "completionDeadline": "2027-01-31",
+      "certificateFee": "Gratuito",
+      "audience": "Professores, pedagogos e profissionais de escolas",
+      "id": "real-materiais-didaticos-ifrs",
+      "slug": "materiais-didaticos-ifrs",
+      "title": "Equipamentos e Materiais Didáticos - Turma 2026B",
+      "providerId": "prov-aprenda-ifrs",
+      "theme": "BNCC",
+      "category": "Materiais e prática pedagógica",
+      "knowledgeCenter": "BNCC",
+      "workloadHours": 40,
+      "workloadLabel": "40h",
+      "courseUrl": "https://aprendamais.mec.gov.br/course/info.php?id=3269",
+      "summary": "Uso pedagógico de materiais e equipamentos nas diferentes etapas e modalidades de ensino.",
+      "tags": [
+        "bncc"
+      ],
+      "requirements": "Leitura em português e equipamento com áudio e vídeo. Prazo mínimo para certificado: 6 dias após inscrição.",
+      "minimumCertificateDays": 6,
+      "fullDescription": "Uso pedagógico de materiais e equipamentos nas diferentes etapas e modalidades de ensino. Curso livre, sem tutoria. Certificado gratuito pela instituição ofertante após acesso aos materiais, realização das atividades, aproveitamento mínimo de 60% e prazo mínimo. Emissão até o encerramento da turma em 31/01/2027. Não equivale a graduação ou pós-graduação.",
+      "curatorRecommendedFor": "Professores, pedagogos e profissionais de escolas",
+      "sourceUrls": [
+        "https://aprendamais.mec.gov.br/course/info.php?id=3269",
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=100&lang=pt_br",
+        "https://aprendamais.mec.gov.br/mod/page/view.php?id=45212&lang=pt_br"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Escola Virtual da Fundação Bradesco",
+      "certificateLabel": "Certificado gratuito pela Escola Virtual da Fundação Bradesco, conforme conclusão e modalidade",
+      "certificationConditions": "Curso e certificado gratuitos. Navegação completa e, em cursos com avaliação final, aproveitamento mínimo de 70% para conclusão. Cursos sem avaliação emitem certificado de participação. Prazo de 60 dias. Confirmar o tipo de certificado no ambiente do curso. Cursos livres, sem reconhecimento de graduação pelo MEC. A FAQ atual informa validade de dois anos para o certificado.",
+      "certificateRulesUrl": "https://www.ev.org.br/faq",
+      "requirements": "Idade mínima de 18 anos, cadastro com CPF e e-mail. Sem pré-requisito acadêmico. Prazo de 60 dias após matrícula.",
+      "audience": "Educadores e interessados em práticas pedagógicas",
+      "certificateFee": "Gratuito",
+      "sourceAvailability": "Ficha pública com botão de matrícula; matrícula e certificação não testadas mediante login.",
+      "id": "real-aprendizagem-criativa-bradesco",
+      "slug": "aprendizagem-criativa-bradesco",
+      "title": "Conceitos de Aprendizagem Criativa",
+      "providerId": "prov-bradesco-ev",
+      "theme": "Formacao Docente",
+      "category": "Criatividade e metodologias",
+      "knowledgeCenter": "Formacao Docente",
+      "workloadHours": 6,
+      "workloadLabel": "6h",
+      "courseUrl": "https://www.ev.org.br/cursos/conceitos-de-aprendizagem-criativa",
+      "summary": "Introdução à aprendizagem criativa, metodologias ativas e propostas mão na massa.",
+      "tags": [
+        "formacao docente"
+      ],
+      "fullDescription": "Introdução à aprendizagem criativa, metodologias ativas e propostas mão na massa. Curso e certificado gratuitos. Navegação completa e, em cursos com avaliação final, aproveitamento mínimo de 70% para conclusão. Cursos sem avaliação emitem certificado de participação. Prazo de 60 dias. Confirmar o tipo de certificado no ambiente do curso. Cursos livres, sem reconhecimento de graduação pelo MEC. A FAQ atual informa validade de dois anos para o certificado.",
+      "curatorRecommendedFor": "Educadores e interessados em práticas pedagógicas",
+      "sourceUrls": [
+        "https://www.ev.org.br/cursos/conceitos-de-aprendizagem-criativa",
+        "https://www.ev.org.br/faq"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Escola Virtual da Fundação Bradesco",
+      "certificateLabel": "Certificado gratuito pela Escola Virtual da Fundação Bradesco, conforme conclusão e modalidade",
+      "certificationConditions": "Curso e certificado gratuitos. Navegação completa e, em cursos com avaliação final, aproveitamento mínimo de 70% para conclusão. Cursos sem avaliação emitem certificado de participação. Prazo de 60 dias. Confirmar o tipo de certificado no ambiente do curso. Cursos livres, sem reconhecimento de graduação pelo MEC. A FAQ atual informa validade de dois anos para o certificado.",
+      "certificateRulesUrl": "https://www.ev.org.br/faq",
+      "requirements": "Idade mínima de 18 anos, cadastro com CPF e e-mail. Sem pré-requisito acadêmico. Prazo de 60 dias após matrícula.",
+      "audience": "Educadores e interessados em práticas pedagógicas",
+      "certificateFee": "Gratuito",
+      "sourceAvailability": "Ficha pública com botão de matrícula; matrícula e certificação não testadas mediante login.",
+      "id": "real-design-thinking-bradesco",
+      "slug": "design-thinking-bradesco",
+      "title": "Design Thinking para Educadores",
+      "providerId": "prov-bradesco-ev",
+      "theme": "Formacao Docente",
+      "category": "Criatividade e metodologias",
+      "knowledgeCenter": "Formacao Docente",
+      "workloadHours": 20,
+      "workloadLabel": "20h",
+      "courseUrl": "https://www.ev.org.br/cursos/design-thinking-para-educadores",
+      "summary": "Design thinking aplicado à descoberta de desafios, colaboração e experimentação na educação.",
+      "tags": [
+        "formacao docente"
+      ],
+      "fullDescription": "Design thinking aplicado à descoberta de desafios, colaboração e experimentação na educação. Curso e certificado gratuitos. Navegação completa e, em cursos com avaliação final, aproveitamento mínimo de 70% para conclusão. Cursos sem avaliação emitem certificado de participação. Prazo de 60 dias. Confirmar o tipo de certificado no ambiente do curso. Cursos livres, sem reconhecimento de graduação pelo MEC. A FAQ atual informa validade de dois anos para o certificado.",
+      "curatorRecommendedFor": "Educadores e interessados em práticas pedagógicas",
+      "sourceUrls": [
+        "https://www.ev.org.br/cursos/design-thinking-para-educadores",
+        "https://www.ev.org.br/faq"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Escola Virtual da Fundação Bradesco",
+      "certificateLabel": "Certificado gratuito pela Escola Virtual da Fundação Bradesco, conforme conclusão e modalidade",
+      "certificationConditions": "Curso e certificado gratuitos. Navegação completa e, em cursos com avaliação final, aproveitamento mínimo de 70% para conclusão. Cursos sem avaliação emitem certificado de participação. Prazo de 60 dias. Confirmar o tipo de certificado no ambiente do curso. Cursos livres, sem reconhecimento de graduação pelo MEC. A FAQ atual informa validade de dois anos para o certificado.",
+      "certificateRulesUrl": "https://www.ev.org.br/faq",
+      "requirements": "Idade mínima de 18 anos, cadastro com CPF e e-mail. Sem pré-requisito acadêmico. Prazo de 60 dias após matrícula.",
+      "audience": "Educadores e interessados em práticas pedagógicas",
+      "certificateFee": "Gratuito",
+      "sourceAvailability": "Ficha pública com botão de matrícula; matrícula e certificação não testadas mediante login.",
+      "id": "real-educacao-inclusiva-bradesco",
+      "slug": "educacao-inclusiva-bradesco",
+      "title": "Educação Inclusiva",
+      "providerId": "prov-bradesco-ev",
+      "theme": "Educacao Inclusiva",
+      "category": "Inclusão e diversidade",
+      "knowledgeCenter": "Educacao Inclusiva",
+      "workloadHours": 20,
+      "workloadLabel": "20h",
+      "courseUrl": "https://www.ev.org.br/cursos/educacao-inclusiva",
+      "summary": "Fundamentos da educação inclusiva, planejamento acessível e reflexão sobre práticas docentes.",
+      "tags": [
+        "educacao inclusiva"
+      ],
+      "fullDescription": "Fundamentos da educação inclusiva, planejamento acessível e reflexão sobre práticas docentes. Curso e certificado gratuitos. Navegação completa e, em cursos com avaliação final, aproveitamento mínimo de 70% para conclusão. Cursos sem avaliação emitem certificado de participação. Prazo de 60 dias. Confirmar o tipo de certificado no ambiente do curso. Cursos livres, sem reconhecimento de graduação pelo MEC. A FAQ atual informa validade de dois anos para o certificado.",
+      "curatorRecommendedFor": "Educadores e interessados em práticas pedagógicas",
+      "sourceUrls": [
+        "https://www.ev.org.br/cursos/educacao-inclusiva",
+        "https://www.ev.org.br/faq"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Escola Virtual da Fundação Bradesco",
+      "certificateLabel": "Certificado gratuito pela Escola Virtual da Fundação Bradesco, conforme conclusão e modalidade",
+      "certificationConditions": "Curso e certificado gratuitos. Navegação completa e, em cursos com avaliação final, aproveitamento mínimo de 70% para conclusão. Cursos sem avaliação emitem certificado de participação. Prazo de 60 dias. Confirmar o tipo de certificado no ambiente do curso. Cursos livres, sem reconhecimento de graduação pelo MEC. A FAQ atual informa validade de dois anos para o certificado.",
+      "certificateRulesUrl": "https://www.ev.org.br/faq",
+      "requirements": "Idade mínima de 18 anos, cadastro com CPF e e-mail. Sem pré-requisito acadêmico. Prazo de 60 dias após matrícula.",
+      "audience": "Educadores e interessados em práticas pedagógicas",
+      "certificateFee": "Gratuito",
+      "sourceAvailability": "Ficha pública com botão de matrícula; matrícula e certificação não testadas mediante login.",
+      "id": "real-scratch-introducao-bradesco",
+      "slug": "scratch-introducao-bradesco",
+      "title": "Introdução ao Scratch: Linguagem de Programação na Computação Criativa",
+      "providerId": "prov-bradesco-ev",
+      "theme": "Tecnologias Educacionais",
+      "category": "Computação e criação digital",
+      "knowledgeCenter": "Tecnologias Educacionais",
+      "workloadHours": 6,
+      "workloadLabel": "6h",
+      "courseUrl": "https://www.ev.org.br/cursos/introducao-ao-scratch-linguagem-de-programacao-na-computacao-criativa",
+      "summary": "Introdução à programação em blocos e às possibilidades pedagógicas do Scratch.",
+      "tags": [
+        "tecnologias educacionais"
+      ],
+      "fullDescription": "Introdução à programação em blocos e às possibilidades pedagógicas do Scratch. Curso e certificado gratuitos. Navegação completa e, em cursos com avaliação final, aproveitamento mínimo de 70% para conclusão. Cursos sem avaliação emitem certificado de participação. Prazo de 60 dias. Confirmar o tipo de certificado no ambiente do curso. Cursos livres, sem reconhecimento de graduação pelo MEC. A FAQ atual informa validade de dois anos para o certificado.",
+      "curatorRecommendedFor": "Educadores e interessados em práticas pedagógicas",
+      "sourceUrls": [
+        "https://www.ev.org.br/cursos/introducao-ao-scratch-linguagem-de-programacao-na-computacao-criativa",
+        "https://www.ev.org.br/faq"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Escola Virtual da Fundação Bradesco",
+      "certificateLabel": "Certificado gratuito pela Escola Virtual da Fundação Bradesco, conforme conclusão e modalidade",
+      "certificationConditions": "Curso e certificado gratuitos. Navegação completa e, em cursos com avaliação final, aproveitamento mínimo de 70% para conclusão. Cursos sem avaliação emitem certificado de participação. Prazo de 60 dias. Confirmar o tipo de certificado no ambiente do curso. Cursos livres, sem reconhecimento de graduação pelo MEC. A FAQ atual informa validade de dois anos para o certificado.",
+      "certificateRulesUrl": "https://www.ev.org.br/faq",
+      "requirements": "Idade mínima de 18 anos, cadastro com CPF e e-mail. Sem pré-requisito acadêmico. Prazo de 60 dias após matrícula.",
+      "audience": "Educadores e interessados em práticas pedagógicas",
+      "certificateFee": "Gratuito",
+      "sourceAvailability": "Ficha pública com botão de matrícula; matrícula e certificação não testadas mediante login.",
+      "id": "real-scratch-extensoes-bradesco",
+      "slug": "scratch-extensoes-bradesco",
+      "title": "Scratch, suas extensões e computação física",
+      "providerId": "prov-bradesco-ev",
+      "theme": "Tecnologias Educacionais",
+      "category": "Computação e criação digital",
+      "knowledgeCenter": "Tecnologias Educacionais",
+      "workloadHours": 6,
+      "workloadLabel": "6h",
+      "courseUrl": "https://www.ev.org.br/cursos/scratch-suas-extensoes-e-computacao-fisica",
+      "summary": "Integração do Scratch com artefatos físicos em projetos de computação criativa.",
+      "tags": [
+        "tecnologias educacionais"
+      ],
+      "fullDescription": "Integração do Scratch com artefatos físicos em projetos de computação criativa. Curso e certificado gratuitos. Navegação completa e, em cursos com avaliação final, aproveitamento mínimo de 70% para conclusão. Cursos sem avaliação emitem certificado de participação. Prazo de 60 dias. Confirmar o tipo de certificado no ambiente do curso. Cursos livres, sem reconhecimento de graduação pelo MEC. A FAQ atual informa validade de dois anos para o certificado.",
+      "curatorRecommendedFor": "Educadores e interessados em práticas pedagógicas",
+      "sourceUrls": [
+        "https://www.ev.org.br/cursos/scratch-suas-extensoes-e-computacao-fisica",
+        "https://www.ev.org.br/faq"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Inscrição contínua informada pelo provedor",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Enap - Escola Nacional de Administração Pública",
+      "certificateLabel": "Certificado gratuito Enap, sujeito à aprovação e ao prazo do curso",
+      "certificationConditions": "Curso aberto e gratuito. Certificação Enap conforme nota e tempo mínimo definidos no Guia do Participante, disponível após inscrição. A nota mínima varia por curso; não há certificação automática pela Raízes e Saberes.",
+      "certificateRulesUrl": "https://www.escolavirtual.gov.br/perguntas-frequentes",
+      "requirements": "Cadastro no provedor e cumprimento do Guia do Participante.",
+      "certificateFee": "Gratuito",
+      "id": "real-inovacoes-tecnologia-evg",
+      "slug": "inovacoes-tecnologia-evg",
+      "title": "Inovações em Tecnologia Educacional",
+      "providerId": "prov-evg",
+      "theme": "Tecnologias Educacionais",
+      "category": "Tecnologia e inovação",
+      "knowledgeCenter": "Tecnologias Educacionais",
+      "workloadHours": 25,
+      "workloadLabel": "25h",
+      "courseUrl": "https://www.escolavirtual.gov.br/curso/511",
+      "summary": "Reflexão sobre inovação na educação e condições para desenvolvê-la nas instituições. Disponibilidade de 30 dias após inscrição.",
+      "tags": [
+        "tecnologias educacionais"
+      ],
+      "audience": "Gestores, coordenadores e profissionais da educação; aberto a qualquer pessoa",
+      "fullDescription": "Reflexão sobre inovação na educação e condições para desenvolvê-la nas instituições. Disponibilidade de 30 dias após inscrição. Curso aberto e gratuito. Certificação Enap conforme nota e tempo mínimo definidos no Guia do Participante, disponível após inscrição. A nota mínima varia por curso; não há certificação automática pela Raízes e Saberes.",
+      "curatorRecommendedFor": "Gestores, coordenadores e profissionais da educação; aberto a qualquer pessoa",
+      "sourceUrls": [
+        "https://www.escolavirtual.gov.br/curso/511",
+        "https://www.escolavirtual.gov.br/perguntas-frequentes"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Inscrição contínua informada pelo provedor",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Enap - Escola Nacional de Administração Pública",
+      "certificateLabel": "Certificado gratuito Enap, sujeito à aprovação e ao prazo do curso",
+      "certificationConditions": "Curso aberto e gratuito. Certificação Enap conforme nota e tempo mínimo definidos no Guia do Participante, disponível após inscrição. A nota mínima varia por curso; não há certificação automática pela Raízes e Saberes.",
+      "certificateRulesUrl": "https://www.escolavirtual.gov.br/perguntas-frequentes",
+      "requirements": "Cadastro no provedor e cumprimento do Guia do Participante.",
+      "certificateFee": "Gratuito",
+      "id": "real-avaliacao-feedback-evg",
+      "slug": "avaliacao-feedback-evg",
+      "title": "Avaliação em Processos de Aprendizagem e Modelos de Feedback",
+      "providerId": "prov-evg",
+      "theme": "Avaliacao",
+      "category": "Avaliação e feedback",
+      "knowledgeCenter": "Avaliacao Formativa",
+      "workloadHours": 30,
+      "workloadLabel": "30h",
+      "courseUrl": "https://www.escolavirtual.gov.br/curso/606",
+      "summary": "Estudo de tipos de avaliação e modelos de feedback. Disponibilidade de 30 dias após inscrição.",
+      "tags": [
+        "avaliacao"
+      ],
+      "audience": "Professores, tutores, gestores e demais interessados",
+      "fullDescription": "Estudo de tipos de avaliação e modelos de feedback. Disponibilidade de 30 dias após inscrição. Curso aberto e gratuito. Certificação Enap conforme nota e tempo mínimo definidos no Guia do Participante, disponível após inscrição. A nota mínima varia por curso; não há certificação automática pela Raízes e Saberes.",
+      "curatorRecommendedFor": "Professores, tutores, gestores e demais interessados",
+      "sourceUrls": [
+        "https://www.escolavirtual.gov.br/curso/606",
+        "https://www.escolavirtual.gov.br/perguntas-frequentes",
+        "https://www.escolavirtual.gov.br/curso/606/governoac"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Inscrição contínua informada pelo provedor",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Enap - Escola Nacional de Administração Pública",
+      "certificateLabel": "Certificado gratuito Enap, sujeito à aprovação e ao prazo do curso",
+      "certificationConditions": "Curso aberto e gratuito. Certificação Enap conforme nota e tempo mínimo definidos no Guia do Participante, disponível após inscrição. A nota mínima varia por curso; não há certificação automática pela Raízes e Saberes.",
+      "certificateRulesUrl": "https://www.escolavirtual.gov.br/perguntas-frequentes",
+      "requirements": "Cadastro no provedor e cumprimento do Guia do Participante.",
+      "certificateFee": "Gratuito",
+      "id": "real-desenvolvimento-cooperativo-evg",
+      "slug": "desenvolvimento-cooperativo-evg",
+      "title": "Desenvolvimento profissional cooperativo na escola",
+      "providerId": "prov-evg",
+      "theme": "Gestao Escolar",
+      "category": "Gestão e desenvolvimento docente",
+      "knowledgeCenter": "Gestao Escolar",
+      "workloadHours": 15,
+      "workloadLabel": "15h",
+      "courseUrl": "https://www.escolavirtual.gov.br/curso/906",
+      "summary": "Acompanhamento pedagógico, colaboração profissional e uso de evidências na escola. Conteúdo MEC, certificação Enap, disponibilidade de 30 dias.",
+      "tags": [
+        "gestao escolar"
+      ],
+      "audience": "Gestores e educadores de pré-escola e dos dois primeiros anos do ensino fundamental; aberto a qualquer pessoa",
+      "fullDescription": "Acompanhamento pedagógico, colaboração profissional e uso de evidências na escola. Conteúdo MEC, certificação Enap, disponibilidade de 30 dias. Curso aberto e gratuito. Certificação Enap conforme nota e tempo mínimo definidos no Guia do Participante, disponível após inscrição. A nota mínima varia por curso; não há certificação automática pela Raízes e Saberes.",
+      "curatorRecommendedFor": "Gestores e educadores de pré-escola e dos dois primeiros anos do ensino fundamental; aberto a qualquer pessoa",
+      "sourceUrls": [
+        "https://www.escolavirtual.gov.br/curso/906",
+        "https://www.escolavirtual.gov.br/perguntas-frequentes",
+        "https://www.escolavirtual.gov.br/curso/906/governoto"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Inscrição contínua informada pelo provedor",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Enap - Escola Nacional de Administração Pública",
+      "certificateLabel": "Certificado gratuito Enap, sujeito à aprovação e ao prazo do curso",
+      "certificationConditions": "Curso aberto e gratuito. Certificação Enap conforme nota e tempo mínimo definidos no Guia do Participante, disponível após inscrição. A nota mínima varia por curso; não há certificação automática pela Raízes e Saberes.",
+      "certificateRulesUrl": "https://www.escolavirtual.gov.br/perguntas-frequentes",
+      "requirements": "Cadastro no provedor e cumprimento do Guia do Participante.",
+      "certificateFee": "Gratuito",
+      "id": "real-racismo-religioso-evg",
+      "slug": "racismo-religioso-evg",
+      "title": "O enfrentamento ao Racismo Religioso no Brasil",
+      "providerId": "prov-evg",
+      "theme": "Educacao Inclusiva",
+      "category": "Relações étnico-raciais",
+      "knowledgeCenter": "Educacao Inclusiva",
+      "workloadHours": 30,
+      "workloadLabel": "30h",
+      "courseUrl": "https://www.escolavirtual.gov.br/curso/1206",
+      "summary": "Relações raciais e religiosas no Brasil. Conteúdo do Ministério dos Direitos Humanos e Cidadania, certificação Enap, disponibilidade de 30 dias.",
+      "tags": [
+        "educacao inclusiva"
+      ],
+      "audience": "Educadores e interessados em direitos humanos e diversidade religiosa",
+      "fullDescription": "Relações raciais e religiosas no Brasil. Conteúdo do Ministério dos Direitos Humanos e Cidadania, certificação Enap, disponibilidade de 30 dias. Curso aberto e gratuito. Certificação Enap conforme nota e tempo mínimo definidos no Guia do Participante, disponível após inscrição. A nota mínima varia por curso; não há certificação automática pela Raízes e Saberes.",
+      "curatorRecommendedFor": "Educadores e interessados em direitos humanos e diversidade religiosa",
+      "sourceUrls": [
+        "https://www.escolavirtual.gov.br/curso/1206",
+        "https://www.escolavirtual.gov.br/perguntas-frequentes"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso gratuito e certificação anunciados pelo catálogo institucional"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Instituto Federal de Educação, Ciência e Tecnologia Sul-rio-grandense (IFSul)",
+      "certificateLabel": "Certificado anunciado pelo Mundi/IFSul; consulte critérios no curso",
+      "certificationConditions": "O catálogo institucional anuncia cursos livres gratuitos e com certificado. A ficha pública não detalha a pontuação nem todos os critérios de certificação. Consulte as regras no ambiente do curso; não há promessa de aprovação automática.",
+      "certificateRulesUrl": "https://mundi.ifsul.edu.br/portal/",
+      "audience": "Educadores e interessados em diversidade e relações étnico-raciais",
+      "certificateFee": "Catálogo anuncia cursos gratuitos com certificado; a ficha não separa eventual custo de emissão.",
+      "certificateEvidenceLevel": "Oferta institucional; critérios específicos não publicados na ficha",
+      "id": "real-educacao-antirracista-ifsul",
+      "slug": "educacao-antirracista-ifsul",
+      "title": "Caminhos para a construção de uma Educação antirracista",
+      "providerId": "prov-ifsul-mundi",
+      "theme": "Educacao Inclusiva",
+      "category": "Relações étnico-raciais",
+      "knowledgeCenter": "Educacao Inclusiva",
+      "workloadHours": 30,
+      "workloadLabel": "30h",
+      "courseUrl": "https://mundi.ifsul.edu.br/portal/caminhos-para-a-construcao-de-uma-sociedade-antirracista.php",
+      "summary": "Formação introdutória para refletir sobre a construção de práticas educacionais antirracistas.",
+      "tags": [
+        "educacao inclusiva"
+      ],
+      "requirements": "Ensino médio completo. Cadastro/login no Mundi.",
+      "fullDescription": "Formação introdutória para refletir sobre a construção de práticas educacionais antirracistas. O catálogo institucional anuncia cursos livres gratuitos e com certificado. A ficha pública não detalha a pontuação nem todos os critérios de certificação. Consulte as regras no ambiente do curso; não há promessa de aprovação automática.",
+      "curatorRecommendedFor": "Educadores e interessados em diversidade e relações étnico-raciais",
+      "sourceUrls": [
+        "https://mundi.ifsul.edu.br/portal/caminhos-para-a-construcao-de-uma-sociedade-antirracista.php",
+        "https://mundi.ifsul.edu.br/portal/"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso gratuito e certificação anunciados pelo catálogo institucional"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Instituto Federal de Educação, Ciência e Tecnologia Sul-rio-grandense (IFSul)",
+      "certificateLabel": "Certificado anunciado pelo Mundi/IFSul; consulte critérios no curso",
+      "certificationConditions": "O catálogo institucional anuncia cursos livres gratuitos e com certificado. A ficha pública não detalha a pontuação nem todos os critérios de certificação. Consulte as regras no ambiente do curso; não há promessa de aprovação automática.",
+      "certificateRulesUrl": "https://mundi.ifsul.edu.br/portal/",
+      "audience": "Educadores e interessados em diversidade e relações étnico-raciais",
+      "certificateFee": "Catálogo anuncia cursos gratuitos com certificado; a ficha não separa eventual custo de emissão.",
+      "certificateEvidenceLevel": "Oferta institucional; critérios específicos não publicados na ficha",
+      "id": "real-sociedade-racializada-ifsul",
+      "slug": "sociedade-racializada-ifsul",
+      "title": "Viver em uma sociedade racializada",
+      "providerId": "prov-ifsul-mundi",
+      "theme": "Educacao Inclusiva",
+      "category": "Relações étnico-raciais",
+      "knowledgeCenter": "Educacao Inclusiva",
+      "workloadHours": 45,
+      "workloadLabel": "45h",
+      "courseUrl": "https://mundi.ifsul.edu.br/portal/viver-em-uma-sociedade-racializada-construindo-outras-subjetividades.php",
+      "summary": "Reflexão sobre relações raciais, povos originários, resistência e interseccionalidade.",
+      "tags": [
+        "educacao inclusiva"
+      ],
+      "requirements": "Ensino médio completo. Cadastro/login no Mundi.",
+      "fullDescription": "Reflexão sobre relações raciais, povos originários, resistência e interseccionalidade. O catálogo institucional anuncia cursos livres gratuitos e com certificado. A ficha pública não detalha a pontuação nem todos os critérios de certificação. Consulte as regras no ambiente do curso; não há promessa de aprovação automática.",
+      "curatorRecommendedFor": "Educadores e interessados em diversidade e relações étnico-raciais",
+      "sourceUrls": [
+        "https://mundi.ifsul.edu.br/portal/viver-em-uma-sociedade-racializada-construindo-outras-subjetividades.php",
+        "https://mundi.ifsul.edu.br/portal/"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso gratuito e certificação anunciados pelo catálogo institucional"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Instituto Federal de Educação, Ciência e Tecnologia Sul-rio-grandense (IFSul)",
+      "certificateLabel": "Certificado anunciado pelo Mundi/IFSul; consulte critérios no curso",
+      "certificationConditions": "O catálogo institucional anuncia cursos livres gratuitos e com certificado. A ficha pública não detalha a pontuação nem todos os critérios de certificação. Consulte as regras no ambiente do curso; não há promessa de aprovação automática.",
+      "certificateRulesUrl": "https://mundi.ifsul.edu.br/portal/",
+      "audience": "Educadores e interessados em diversidade e relações étnico-raciais",
+      "certificateFee": "Catálogo anuncia cursos gratuitos com certificado; a ficha não separa eventual custo de emissão.",
+      "certificateEvidenceLevel": "Oferta institucional; critérios específicos não publicados na ficha",
+      "id": "real-racismo-sutilezas-ifsul",
+      "slug": "racismo-sutilezas-ifsul",
+      "title": "Racismo e suas sutilezas",
+      "providerId": "prov-ifsul-mundi",
+      "theme": "Educacao Inclusiva",
+      "category": "Relações étnico-raciais",
+      "knowledgeCenter": "Educacao Inclusiva",
+      "workloadHours": 45,
+      "workloadLabel": "45h",
+      "courseUrl": "https://mundi.ifsul.edu.br/portal/racismo-e-suas-sutilezas.php",
+      "summary": "Estudo de manifestações do racismo, incluindo diversidade religiosa afro-brasileira e indígena.",
+      "tags": [
+        "educacao inclusiva"
+      ],
+      "requirements": "Ensino médio completo. Cadastro/login no Mundi.",
+      "fullDescription": "Estudo de manifestações do racismo, incluindo diversidade religiosa afro-brasileira e indígena. O catálogo institucional anuncia cursos livres gratuitos e com certificado. A ficha pública não detalha a pontuação nem todos os critérios de certificação. Consulte as regras no ambiente do curso; não há promessa de aprovação automática.",
+      "curatorRecommendedFor": "Educadores e interessados em diversidade e relações étnico-raciais",
+      "sourceUrls": [
+        "https://mundi.ifsul.edu.br/portal/racismo-e-suas-sutilezas.php",
+        "https://mundi.ifsul.edu.br/portal/"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso gratuito e certificação anunciados pelo catálogo institucional"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Instituto Federal de Educação, Ciência e Tecnologia Sul-rio-grandense (IFSul)",
+      "certificateLabel": "Certificado anunciado pelo Mundi/IFSul; consulte critérios no curso",
+      "certificationConditions": "O catálogo institucional anuncia cursos livres gratuitos e com certificado. A ficha pública não detalha a pontuação nem todos os critérios de certificação. Consulte as regras no ambiente do curso; não há promessa de aprovação automática.",
+      "certificateRulesUrl": "https://mundi.ifsul.edu.br/portal/",
+      "audience": "Educadores e interessados em diversidade e relações étnico-raciais",
+      "certificateFee": "Catálogo anuncia cursos gratuitos com certificado; a ficha não separa eventual custo de emissão.",
+      "certificateEvidenceLevel": "Oferta institucional; critérios específicos não publicados na ficha",
+      "id": "real-construcao-racismo-ifsul",
+      "slug": "construcao-racismo-ifsul",
+      "title": "A construção do racismo no Brasil",
+      "providerId": "prov-ifsul-mundi",
+      "theme": "Educacao Inclusiva",
+      "category": "Relações étnico-raciais",
+      "knowledgeCenter": "Educacao Inclusiva",
+      "workloadHours": 45,
+      "workloadLabel": "45h",
+      "courseUrl": "https://mundi.ifsul.edu.br/portal/a-construcao-do-racismo-no-brasil.php",
+      "summary": "Introdução à formação histórica do racismo no contexto brasileiro.",
+      "tags": [
+        "educacao inclusiva"
+      ],
+      "requirements": "Nenhum pré-requisito informado na ficha oficial. Cadastro/login no Mundi.",
+      "fullDescription": "Introdução à formação histórica do racismo no contexto brasileiro. O catálogo institucional anuncia cursos livres gratuitos e com certificado. A ficha pública não detalha a pontuação nem todos os critérios de certificação. Consulte as regras no ambiente do curso; não há promessa de aprovação automática.",
+      "curatorRecommendedFor": "Educadores e interessados em diversidade e relações étnico-raciais",
+      "sourceUrls": [
+        "https://mundi.ifsul.edu.br/portal/a-construcao-do-racismo-no-brasil.php",
+        "https://mundi.ifsul.edu.br/portal/"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Intermediário",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso gratuito e certificação anunciados pelo catálogo institucional"
+      ],
+      "curatorEstimatedLevel": "Intermediário",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Instituto Federal de Educação, Ciência e Tecnologia Sul-rio-grandense (IFSul)",
+      "certificateLabel": "Certificado anunciado pelo Mundi/IFSul; consulte critérios no curso",
+      "certificationConditions": "O catálogo institucional anuncia cursos livres gratuitos e com certificado. A ficha pública não detalha a pontuação nem todos os critérios de certificação. Consulte as regras no ambiente do curso; não há promessa de aprovação automática.",
+      "certificateRulesUrl": "https://mundi.ifsul.edu.br/portal/",
+      "audience": "Educadores e interessados em diversidade e relações étnico-raciais",
+      "certificateFee": "Catálogo anuncia cursos gratuitos com certificado; a ficha não separa eventual custo de emissão.",
+      "certificateEvidenceLevel": "Oferta institucional; critérios específicos não publicados na ficha",
+      "id": "real-cultura-afro-brasileira-ifsul",
+      "slug": "cultura-afro-brasileira-ifsul",
+      "title": "A valorização da cultura afro-brasileira na sala de aula",
+      "providerId": "prov-ifsul-mundi",
+      "theme": "Educacao Inclusiva",
+      "category": "Relações étnico-raciais",
+      "knowledgeCenter": "Educacao Inclusiva",
+      "workloadHours": 20,
+      "workloadLabel": "20h",
+      "courseUrl": "https://mundi.ifsul.edu.br/portal/a-valoriza%C3%A7%C3%A3o-da-cultura-afro-brasileira-na-sala-de-aula.php",
+      "summary": "Reflexão sobre valorização da cultura afro-brasileira no cotidiano da sala de aula.",
+      "tags": [
+        "educacao inclusiva"
+      ],
+      "requirements": "Nenhum pré-requisito informado na ficha oficial. Cadastro/login no Mundi.",
+      "fullDescription": "Reflexão sobre valorização da cultura afro-brasileira no cotidiano da sala de aula. O catálogo institucional anuncia cursos livres gratuitos e com certificado. A ficha pública não detalha a pontuação nem todos os critérios de certificação. Consulte as regras no ambiente do curso; não há promessa de aprovação automática.",
+      "curatorRecommendedFor": "Educadores e interessados em diversidade e relações étnico-raciais",
+      "sourceUrls": [
+        "https://mundi.ifsul.edu.br/portal/a-valoriza%C3%A7%C3%A3o-da-cultura-afro-brasileira-na-sala-de-aula.php",
+        "https://mundi.ifsul.edu.br/portal/"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "Universidade Estadual do Maranhão (UEMA)",
+      "certificateLabel": "Certificado gratuito emitido pela UEMA, sujeito às atividades e à aprovação",
+      "certificationConditions": "Certificado on-line pela Universidade Estadual do Maranhão após acesso aos materiais, conclusão dos módulos e atividades com a pontuação exigida. A ficha não publica a nota numérica mínima. Emissão pelo participante no ambiente do curso, não por e-mail ou correio. CAPES é parceira, não a certificadora.",
+      "certificateRulesUrl": "https://eskadauema.com/mod/page/view.php?id=3534",
+      "additionalSourceUrls": [
+        "https://www.uema.br/2023/05/cursos-da-uema-em-parceria-com-a-capes-ja-estao-com-vagas-abertas/"
+      ],
+      "audience": "Educadores e demais interessados",
+      "certificateFee": "Gratuito",
+      "requirements": "Cadastro na ESKADA/UEMA e cumprimento das atividades. Duração livre.",
+      "id": "real-gamificacao-surdos-uema",
+      "slug": "gamificacao-surdos-uema",
+      "title": "Gamificação no Ensino Inclusivo de Surdos",
+      "providerId": "prov-uema-eskada",
+      "theme": "Educacao Inclusiva",
+      "category": "Inclusão e recursos digitais",
+      "knowledgeCenter": "Educacao Inclusiva",
+      "workloadHours": 30,
+      "workloadLabel": "30h",
+      "courseUrl": "https://eskadauema.com/local/course/index.php?id=88",
+      "summary": "Possibilidades da gamificação na educação inclusiva de estudantes surdos.",
+      "tags": [
+        "educacao inclusiva"
+      ],
+      "fullDescription": "Possibilidades da gamificação na educação inclusiva de estudantes surdos. Certificado on-line pela Universidade Estadual do Maranhão após acesso aos materiais, conclusão dos módulos e atividades com a pontuação exigida. A ficha não publica a nota numérica mínima. Emissão pelo participante no ambiente do curso, não por e-mail ou correio. CAPES é parceira, não a certificadora.",
+      "curatorRecommendedFor": "Educadores e demais interessados",
+      "sourceUrls": [
+        "https://eskadauema.com/local/course/index.php?id=88",
+        "https://eskadauema.com/mod/page/view.php?id=3534",
+        "https://www.uema.br/2023/05/cursos-da-uema-em-parceria-com-a-capes-ja-estao-com-vagas-abertas/"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "CEFOPE / Secretaria da Educação do Espírito Santo (SEDU-ES)",
+      "certificateLabel": "Certificado gratuito na plataforma CEFOPE/SEDU-ES, sujeito aos critérios do curso",
+      "certificationConditions": "Curso on-line autoinstrucional gratuito, com certificado digital após conclusão das atividades e critérios mínimos de aproveitamento do curso. A ficha pública não detalha nota mínima ou prazo final. A orientação institucional permite participação de interessados de todo o Brasil, observando o público-foco de cada oferta.",
+      "certificateRulesUrl": "https://formacoes.sedu.es.gov.br/formacoes-mooc",
+      "requirements": "Cadastro no CEFOPE MOOC e cumprimento das atividades e critérios da oferta. Observe o público-foco informado.",
+      "certificateFee": "Gratuito",
+      "sourceAvailability": "Ficha pública com acesso livre e botão de acesso; matrícula e certificação não testadas mediante login.",
+      "id": "real-matematica-anos-iniciais-cefope",
+      "slug": "matematica-anos-iniciais-cefope",
+      "title": "Matemática para os Anos Iniciais",
+      "providerId": "prov-cefope-sedu-es",
+      "theme": "Matematica",
+      "category": "Matemática e resolução de problemas",
+      "knowledgeCenter": "Matematica",
+      "workloadHours": 80,
+      "workloadLabel": "80h",
+      "courseUrl": "https://cefopemooc.sedu.es.gov.br/local/master/index.php?course_id=26",
+      "summary": "Estratégias de ensino de números, geometria, medidas, álgebra, probabilidade e estatística nos anos iniciais.",
+      "tags": [
+        "matematica"
+      ],
+      "audience": "Professores dos anos iniciais do ensino fundamental",
+      "fullDescription": "Estratégias de ensino de números, geometria, medidas, álgebra, probabilidade e estatística nos anos iniciais. Curso on-line autoinstrucional gratuito, com certificado digital após conclusão das atividades e critérios mínimos de aproveitamento do curso. A ficha pública não detalha nota mínima ou prazo final. A orientação institucional permite participação de interessados de todo o Brasil, observando o público-foco de cada oferta.",
+      "curatorRecommendedFor": "Professores dos anos iniciais do ensino fundamental",
+      "sourceUrls": [
+        "https://cefopemooc.sedu.es.gov.br/local/master/index.php?course_id=26",
+        "https://formacoes.sedu.es.gov.br/formacoes-mooc"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "CEFOPE / Secretaria da Educação do Espírito Santo (SEDU-ES)",
+      "certificateLabel": "Certificado gratuito na plataforma CEFOPE/SEDU-ES, sujeito aos critérios do curso",
+      "certificationConditions": "Curso on-line autoinstrucional gratuito, com certificado digital após conclusão das atividades e critérios mínimos de aproveitamento do curso. A ficha pública não detalha nota mínima ou prazo final. A orientação institucional permite participação de interessados de todo o Brasil, observando o público-foco de cada oferta.",
+      "certificateRulesUrl": "https://formacoes.sedu.es.gov.br/formacoes-mooc",
+      "requirements": "Cadastro no CEFOPE MOOC e cumprimento das atividades e critérios da oferta. Observe o público-foco informado.",
+      "certificateFee": "Gratuito",
+      "sourceAvailability": "Ficha pública com acesso livre e botão de acesso; matrícula e certificação não testadas mediante login.",
+      "id": "real-alfabetizacao-cefope",
+      "slug": "alfabetizacao-cefope",
+      "title": "Compromisso com a Alfabetização",
+      "providerId": "prov-cefope-sedu-es",
+      "theme": "Alfabetizacao",
+      "category": "Alfabetização e letramento",
+      "knowledgeCenter": "Alfabetizacao",
+      "workloadHours": 60,
+      "workloadLabel": "60h",
+      "courseUrl": "https://cefopemooc.sedu.es.gov.br/local/master/index.php?course_id=27",
+      "summary": "Fundamentos, organização do ambiente, aspectos linguísticos e práticas avaliativas na alfabetização.",
+      "tags": [
+        "alfabetizacao"
+      ],
+      "audience": "Educadores que atuam com alfabetização",
+      "fullDescription": "Fundamentos, organização do ambiente, aspectos linguísticos e práticas avaliativas na alfabetização. Curso on-line autoinstrucional gratuito, com certificado digital após conclusão das atividades e critérios mínimos de aproveitamento do curso. A ficha pública não detalha nota mínima ou prazo final. A orientação institucional permite participação de interessados de todo o Brasil, observando o público-foco de cada oferta.",
+      "curatorRecommendedFor": "Educadores que atuam com alfabetização",
+      "sourceUrls": [
+        "https://cefopemooc.sedu.es.gov.br/local/master/index.php?course_id=27",
+        "https://formacoes.sedu.es.gov.br/formacoes-mooc"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "CEFOPE / Secretaria da Educação do Espírito Santo (SEDU-ES)",
+      "certificateLabel": "Certificado gratuito na plataforma CEFOPE/SEDU-ES, sujeito aos critérios do curso",
+      "certificationConditions": "Curso on-line autoinstrucional gratuito, com certificado digital após conclusão das atividades e critérios mínimos de aproveitamento do curso. A ficha pública não detalha nota mínima ou prazo final. A orientação institucional permite participação de interessados de todo o Brasil, observando o público-foco de cada oferta.",
+      "certificateRulesUrl": "https://formacoes.sedu.es.gov.br/formacoes-mooc",
+      "requirements": "Cadastro no CEFOPE MOOC e cumprimento das atividades e critérios da oferta. Observe o público-foco informado.",
+      "certificateFee": "Gratuito",
+      "sourceAvailability": "Ficha pública com acesso livre e botão de acesso; matrícula e certificação não testadas mediante login.",
+      "id": "real-infantil-cefope",
+      "slug": "infantil-cefope",
+      "title": "Professores da Educação Infantil - Grupos II e III",
+      "providerId": "prov-cefope-sedu-es",
+      "theme": "Educacao Infantil",
+      "category": "Infância e prática pedagógica",
+      "knowledgeCenter": "Educacao Infantil",
+      "workloadHours": 60,
+      "workloadLabel": "60h",
+      "courseUrl": "https://cefopemooc.sedu.es.gov.br/local/master/index.php?course_id=21",
+      "summary": "Concepções de infância, direitos de aprendizagem, brincadeiras e práticas pedagógicas com diversidade cultural.",
+      "tags": [
+        "educacao infantil"
+      ],
+      "audience": "Público-foco: professores da Educação Infantil das redes municipais",
+      "fullDescription": "Concepções de infância, direitos de aprendizagem, brincadeiras e práticas pedagógicas com diversidade cultural. Curso on-line autoinstrucional gratuito, com certificado digital após conclusão das atividades e critérios mínimos de aproveitamento do curso. A ficha pública não detalha nota mínima ou prazo final. A orientação institucional permite participação de interessados de todo o Brasil, observando o público-foco de cada oferta.",
+      "curatorRecommendedFor": "Público-foco: professores da Educação Infantil das redes municipais",
+      "sourceUrls": [
+        "https://cefopemooc.sedu.es.gov.br/local/master/index.php?course_id=21",
+        "https://formacoes.sedu.es.gov.br/formacoes-mooc"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "CEFOPE / Secretaria da Educação do Espírito Santo (SEDU-ES)",
+      "certificateLabel": "Certificado gratuito na plataforma CEFOPE/SEDU-ES, sujeito aos critérios do curso",
+      "certificationConditions": "Curso on-line autoinstrucional gratuito, com certificado digital após conclusão das atividades e critérios mínimos de aproveitamento do curso. A ficha pública não detalha nota mínima ou prazo final. A orientação institucional permite participação de interessados de todo o Brasil, observando o público-foco de cada oferta.",
+      "certificateRulesUrl": "https://formacoes.sedu.es.gov.br/formacoes-mooc",
+      "requirements": "Cadastro no CEFOPE MOOC e cumprimento das atividades e critérios da oferta. Observe o público-foco informado.",
+      "certificateFee": "Gratuito",
+      "sourceAvailability": "Ficha pública com acesso livre e botão de acesso; matrícula e certificação não testadas mediante login.",
+      "id": "real-educacao-indigena-cefope",
+      "slug": "educacao-indigena-cefope",
+      "title": "Educação Escolar Indígena",
+      "providerId": "prov-cefope-sedu-es",
+      "theme": "Educacao Inclusiva",
+      "category": "Educação indígena e interculturalidade",
+      "knowledgeCenter": "Educacao Inclusiva",
+      "workloadHours": 60,
+      "workloadLabel": "60h",
+      "courseUrl": "https://cefopemooc.sedu.es.gov.br/local/master/index.php?course_id=20",
+      "summary": "Formação voltada à educação escolar indígena e às realidades das comunidades e de suas escolas.",
+      "tags": [
+        "educacao inclusiva"
+      ],
+      "audience": "Público-foco: indígenas que atuam ou se preparam para atuar como professores e gestores de escolas indígenas",
+      "fullDescription": "Formação voltada à educação escolar indígena e às realidades das comunidades e de suas escolas. Curso on-line autoinstrucional gratuito, com certificado digital após conclusão das atividades e critérios mínimos de aproveitamento do curso. A ficha pública não detalha nota mínima ou prazo final. A orientação institucional permite participação de interessados de todo o Brasil, observando o público-foco de cada oferta.",
+      "curatorRecommendedFor": "Público-foco: indígenas que atuam ou se preparam para atuar como professores e gestores de escolas indígenas",
+      "sourceUrls": [
+        "https://cefopemooc.sedu.es.gov.br/local/master/index.php?course_id=20",
+        "https://formacoes.sedu.es.gov.br/formacoes-mooc"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    },
+    {
+      "area": "Educacao",
+      "relatedTrail": "Formacao Docente",
+      "modality": "Online",
+      "level": "Básico",
+      "selfPaced": true,
+      "isFree": true,
+      "language": "pt-BR",
+      "rating": 0,
+      "reviewsCount": 0,
+      "accessCount": 0,
+      "addedAt": "2026-11-11",
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "status": "publicado",
+      "featured": false,
+      "imageUrl": "",
+      "enrollmentDeadline": null,
+      "enrollmentStatus": "Disponível no catálogo oficial; acesso mediante cadastro",
+      "certificateAvailable": true,
+      "objectives": [],
+      "syllabus": [],
+      "curatorStrengths": [
+        "Fonte oficial consultada",
+        "Curso e certificado gratuitos"
+      ],
+      "curatorEstimatedLevel": "Básico",
+      "curatorNotes": "Curadoria externa. Inscrição, atividades e certificação ocorrem no provedor. Não há vínculo de certificação com a Raízes e Saberes.",
+      "comments": [],
+      "certificateIssuer": "CEFOPE / Secretaria da Educação do Espírito Santo (SEDU-ES)",
+      "certificateLabel": "Certificado gratuito na plataforma CEFOPE/SEDU-ES, sujeito aos critérios do curso",
+      "certificationConditions": "Curso on-line autoinstrucional gratuito, com certificado digital após conclusão das atividades e critérios mínimos de aproveitamento do curso. A ficha pública não detalha nota mínima ou prazo final. A orientação institucional permite participação de interessados de todo o Brasil, observando o público-foco de cada oferta.",
+      "certificateRulesUrl": "https://formacoes.sedu.es.gov.br/formacoes-mooc",
+      "requirements": "Cadastro no CEFOPE MOOC e cumprimento das atividades e critérios da oferta. Observe o público-foco informado.",
+      "certificateFee": "Gratuito",
+      "sourceAvailability": "Ficha pública com acesso livre e botão de acesso; matrícula e certificação não testadas mediante login.",
+      "id": "real-avaliacoes-externas-cefope",
+      "slug": "avaliacoes-externas-cefope",
+      "title": "Apropriação de Resultados das Avaliações Externas para Professores das Redes Municipais de Ensino",
+      "providerId": "prov-cefope-sedu-es",
+      "theme": "Avaliacao",
+      "category": "Avaliação e uso de evidências",
+      "knowledgeCenter": "Avaliacao Formativa",
+      "workloadHours": 80,
+      "workloadLabel": "80h",
+      "courseUrl": "https://cefopemooc.sedu.es.gov.br/local/master/index.php?course_id=31",
+      "summary": "Interpretação de resultados de avaliações externas, com abordagem contextualizada no PAEBES e PAEBES Alfa.",
+      "tags": [
+        "avaliacao"
+      ],
+      "audience": "Público-foco: professores das redes municipais do Espírito Santo",
+      "fullDescription": "Interpretação de resultados de avaliações externas, com abordagem contextualizada no PAEBES e PAEBES Alfa. Curso on-line autoinstrucional gratuito, com certificado digital após conclusão das atividades e critérios mínimos de aproveitamento do curso. A ficha pública não detalha nota mínima ou prazo final. A orientação institucional permite participação de interessados de todo o Brasil, observando o público-foco de cada oferta.",
+      "curatorRecommendedFor": "Público-foco: professores das redes municipais do Espírito Santo",
+      "sourceUrls": [
+        "https://cefopemooc.sedu.es.gov.br/local/master/index.php?course_id=31",
+        "https://formacoes.sedu.es.gov.br/formacoes-mooc"
+      ],
+      "rightsNotes": "Somente metadados factuais e resumos editoriais originais, com link para a fonte. Não copiar imagens, logos, videoaulas, apostilas ou avaliações; preservar as imagens existentes. Acesso gratuito não concede licença de republicação nem indica parceria."
+    }
+  ],
+  "updates": [
+    {
+      "id": "real-docencia-plural",
+      "workloadHours": 40,
+      "workloadLabel": "40h",
+      "certificateIssuer": "Enap - Escola Nacional de Administração Pública",
+      "certificateLabel": "Certificado gratuito Enap, sujeito ao Guia do Participante",
+      "courseUrl": "https://www.escolavirtual.gov.br/curso/918",
+      "requirements": "Curso aberto. Conteudista OEI; certificador Enap. Disponibilidade de 60 dias após inscrição; cumprir o Guia do Participante.",
+      "sourceUrls": [
+        "https://www.escolavirtual.gov.br/curso/918",
+        "https://www.escolavirtual.gov.br/perguntas-frequentes"
+      ],
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "rating": 0,
+      "reviewsCount": 0
+    },
+    {
+      "id": "real-aprender-valor",
+      "workloadHours": 40,
+      "workloadLabel": "40h",
+      "certificateIssuer": "Enap - Escola Nacional de Administração Pública",
+      "certificateLabel": "Certificado gratuito Enap, sujeito ao Guia do Participante",
+      "courseUrl": "https://www.escolavirtual.gov.br/curso/1072",
+      "requirements": "Curso aberto a qualquer pessoa. Conteúdo Banco Central; certificação Enap. Disponibilidade de 60 dias; cumprir o Guia do Participante.",
+      "sourceUrls": [
+        "https://www.escolavirtual.gov.br/curso/1072",
+        "https://www.escolavirtual.gov.br/curso/1072/governoto",
+        "https://www.escolavirtual.gov.br/perguntas-frequentes"
+      ],
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "rating": 0,
+      "reviewsCount": 0
+    },
+    {
+      "id": "real-inclusao-acessibilidade-ifsul",
+      "workloadHours": 30,
+      "workloadLabel": "30h",
+      "certificateIssuer": "Instituto Federal de Educação, Ciência e Tecnologia Sul-rio-grandense (IFSul)",
+      "certificateLabel": "Certificado anunciado pelo Mundi/IFSul; consulte critérios no curso",
+      "requirements": "Nenhum pré-requisito informado. Cadastro/login no Mundi; consulte os critérios de aprovação no curso. A ficha pública não publica a nota mínima.",
+      "sourceUrls": [
+        "https://mundi.ifsul.edu.br/portal/inclusao-e-acessibilidade-na-educacao.php",
+        "https://mundi.ifsul.edu.br/portal/"
+      ],
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "rating": 0,
+      "reviewsCount": 0
+    },
+    {
+      "id": "real-alfabetizacao-letramento-tecnologias",
+      "workloadHours": 60,
+      "workloadLabel": "60h",
+      "certificateIssuer": "Universidade Estadual do Maranhão (UEMA)",
+      "certificateLabel": "Certificado gratuito UEMA, sujeito às atividades e à aprovação",
+      "courseUrl": "https://eskadauema.com/local/course/index.php?id=94",
+      "requirements": "Cadastro na ESKADA/UEMA. Acesso aos materiais, conclusão de módulos e atividades com pontuação exigida. A ficha não informa nota numérica mínima. Duração livre.",
+      "sourceUrls": [
+        "https://eskadauema.com/local/course/index.php?id=94",
+        "https://eskadauema.com/mod/page/view.php?id=3702",
+        "https://www.uema.br/2023/05/cursos-da-uema-em-parceria-com-a-capes-ja-estao-com-vagas-abertas/"
+      ],
+      "lastVerifiedAt": "2026-11-11",
+      "verificationStatus": "Ficha e regras oficiais consultadas",
+      "rating": 0,
+      "reviewsCount": 0
+    },
+    {
+      "id": "real-alimentacao-saudavel-escola",
+      "status": "arquivado",
+      "enrollmentStatus": "Indisponível para estudantes na fonte oficial",
+      "verificationStatus": "Indisponibilidade confirmada na fonte oficial",
+      "lastVerifiedAt": "2026-11-11",
+      "certificateAvailable": false,
+      "certificateLabel": "Certificação não revalidada: oferta indisponível",
+      "sourceUrls": [
+        "https://lumina.ufrgs.br/course/view.php?id=221"
+      ],
+      "curatorNotes": "A página oficial informa: Este curso está indisponível para estudantes. Metadados históricos preservados, mas a oferta foi retirada do catálogo ativo em 11/11/2026."
+    }
+  ],
+  "resource_portals": [
+    {
+      "title": "Portal da OBMEP - Tópicos para Professores",
+      "provider": "IMPA/OBMEP",
+      "url": "https://portaldaobmep.impa.br/index.php/modulo/lista?serie=9",
+      "type": "Portal de recursos de formação",
+      "summary": "Resolução de problemas, jogos e uso responsável de IA no ensino de matemática.",
+      "certificateClaim": "Não publicar certificado garantido para estes módulos: a FAQ geral prevê participação quando há avaliação geral e 70% de acertos, mas a disponibilidade dessa avaliação nos módulos docentes não foi verificada.",
+      "sourceUrls": [
+        "https://portaldaobmep.impa.br/index.php/site/tutorial",
+        "https://portaldaobmep.impa.br/index.php/modulo/ver?modulo=73",
+        "https://portaldaobmep.impa.br/index.php/modulo/ver?modulo=1043",
+        "https://portaldaobmep.impa.br/index.php/modulo/ver?modulo=1047"
+      ]
+    }
+  ]
+};
+for (const provider of verifiedTrainingCuration.providers) if (!demoCourseProviders.some(p => p.id === provider.id)) demoCourseProviders.push(provider);
+for (const update of verifiedTrainingCuration.updates) { const existing = demoCuratedCourses.find(c => c.id === update.id); if (existing) Object.assign(existing, update); }
+for (const course of verifiedTrainingCuration.courses) if (!demoCuratedCourses.some(c => c.id === course.id)) demoCuratedCourses.push(course);
+// Preserve unavailable historical metadata without advertising an active offer.
+const archivedCuratedCourses = demoCuratedCourses.filter(course => course.status !== 'publicado');
+for (let i = demoCuratedCourses.length - 1; i >= 0; i--) if (demoCuratedCourses[i].status !== 'publicado') demoCuratedCourses.splice(i, 1);
+// Old source review counts are not a live review service or Raízes statistics.
+for (const course of demoCuratedCourses) { course.rating = 0; course.reviewsCount = 0; course.accessCount = 0; }
+const externalCourseDeadlinePassed = course => !!course.completionDeadline && new Date().toISOString().slice(0, 10) > course.completionDeadline;
+const externalCourseEnrollment = course => externalCourseDeadlinePassed(course) ? 'Turma encerrada; consulte novas ofertas na instituição' : course.enrollmentStatus;
+const courseEditorialArt = (course) => {
+  const theme = normalize([course.theme, course.category, course.title].join(' '));
+  const art = /tecnolog|scratch|digital|computacao/.test(theme) ? 'tecnologia'
+    : /inclus|racial|racismo|indigena|afro|divers|intercultural/.test(theme) ? 'inclusao'
+    : /avali|gestao|planeja|projeto|financeira|matemat/.test(theme) ? 'praticas' : 'aprendizagem';
+  return `<img src="formacao-runtime/editorial-${art}.svg" alt="Ilustração editorial Raízes e Saberes" loading="lazy" decoding="async" />`;
+};
+
 const courseFilterConfig = [
   ["area", "Area", "basic"],
   ["theme", "Tema", "basic"],
@@ -373,13 +2223,12 @@ const courseFilterConfig = [
   ["audience", "Publico", "advanced"],
   ["selfPaced", "Autoinstrucional", "advanced"],
   ["enrollment", "Situacao da inscricao", "advanced"],
-  ["rating", "Avaliacao", "advanced"],
   ["added", "Data de inclusao", "advanced"],
   ["free", "Gratuidade", "advanced"],
 ];
 
 let activeCourseFilters = {};
-const initialCourseLimit = 5;
+const initialCourseLimit = 9;
 let visibleCourseLimit = initialCourseLimit;
 let areAdvancedCourseFiltersVisible = false;
 
@@ -896,10 +2745,11 @@ const matchesCourseFilter = (course, key, value) => {
     return value === "yes" ? course.selfPaced : !course.selfPaced;
   }
   if (key === "enrollment") {
-    return value === "open" ? course.enrollmentStatus === "Inscricoes abertas" : course.enrollmentStatus !== "Inscricoes abertas";
+    return value === "open" ? !externalCourseDeadlinePassed(course) : externalCourseDeadlinePassed(course);
   }
   if (key === "added") {
-    return value === "recent" ? course.addedAt >= "2026-07-15" : course.addedAt < "2026-07-15";
+    const cutoff = new Date(Date.now() - 15 * 86400000).toISOString().slice(0, 10);
+    return value === "recent" ? course.addedAt >= cutoff : course.addedAt < cutoff;
   }
   if (key === "rating") {
     return course.rating >= Number(value);
@@ -947,8 +2797,8 @@ const getFilteredDemoCourses = () => {
 const renderCourseCard = (course) => `
   <article class="public-course-card" data-course-id="${course.id}">
     <figure>
-      <img src="${course.imageUrl}" alt="Capa institucional do curso ${course.title}" loading="lazy" />
-      <span>Gratuito</span>
+      ${courseEditorialArt(course)}
+      <span>Curso gratuito</span>
     </figure>
     <div class="course-card-body">
       <div class="course-card-topline">
@@ -962,32 +2812,28 @@ const renderCourseCard = (course) => `
         <div><dt>Carga</dt><dd>${getCourseWorkloadLabel(course)}</dd></div>
         <div><dt>Modalidade</dt><dd>${course.modality}</dd></div>
         <div><dt>Certificado</dt><dd>${course.certificateAvailable ? "Informado" : "Nao oferece"}</dd></div>
-        <div><dt>Inscricao</dt><dd>${course.enrollmentStatus}</dd></div>
+        <div><dt>Inscricao</dt><dd>${externalCourseEnrollment(course)}</dd></div>
       </dl>
-      <div class="course-card-metrics">
-        <span>${getCourseRatingLabel(course)}</span>
-        <span>${course.reviewsCount ? `${course.reviewsCount} avaliacoes oficiais` : "Sem avaliacoes locais"}</span>
-        <span>${course.accessCount.toLocaleString("pt-BR")} acessos pela plataforma</span>
-      </div>
+      <div class="course-card-metrics"><span>Verificado em ${compactDate(course.lastVerifiedAt)}</span><span>${course.certificateAvailable ? "Certificado externo: consulte condições" : "Sem certificado nesta oferta"}</span></div>
       <button type="button" data-open-course-detail="${course.id}">Ver detalhes</button>
     </div>
   </article>
 `;
 
 const renderCompactCourseList = (courses) =>
-  courses.map((course) => `<button type="button" data-open-course-detail="${course.id}"><strong>${course.title}</strong><span>${getProviderName(course.providerId)} - ${getCourseWorkloadLabel(course)} - ${course.reviewsCount ? course.rating.toFixed(1) : "sem avaliacao local"}</span></button>`).join("");
+  courses.map((course) => `<button type="button" data-open-course-detail="${course.id}"><strong>${course.title}</strong><span>${getProviderName(course.providerId)} - ${getCourseWorkloadLabel(course)} - ${course.certificateAvailable ? "certificado externo" : "sem certificado"}</span></button>`).join("");
 
 const renderMiniCourseCards = (courses) =>
   courses
     .map(
       (course) => `
         <article class="mini-course-card">
-          <img src="${course.imageUrl}" alt="Capa institucional do curso ${course.title}" loading="lazy" />
+          ${courseEditorialArt(course)}
           <div>
-            <span>Gratuito</span>
+            <span>Curso gratuito</span>
             <h4>${course.title}</h4>
             <p>${getProviderName(course.providerId)}</p>
-            <div>${course.reviewsCount ? `${renderStars(course.rating)}<strong>${course.rating.toFixed(1)}</strong>` : "<strong>Sem avaliacao local</strong>"}</div>
+            <div><strong>Fonte oficial · ${compactDate(course.lastVerifiedAt)}</strong></div>
             <button type="button" data-open-course-detail="${course.id}">Ver detalhes</button>
           </div>
         </article>
@@ -995,16 +2841,12 @@ const renderMiniCourseCards = (courses) =>
     )
     .join("");
 
-const getKnowledgeCenterCourses = (center) =>
-  center.relatedCourseIds
-    .map((courseId) => demoCuratedCourses.find((course) => course.id === courseId))
-    .filter(Boolean);
-
-const getKnowledgeCenterResourceCount = (center) => {
-  const courses = getKnowledgeCenterCourses(center).length;
-  const preparedBlocks = 8;
-  return courses + preparedBlocks;
+const getKnowledgeCenterCourses = (center) => {
+  const aliases = {'kc-tecnologias': ['tecnologia educacional', 'tecnologias educacionais'], 'kc-avaliacao': ['avaliacao', 'avaliacao formativa']};
+  const names = aliases[center.id] || [normalize(center.title)];
+  return demoCuratedCourses.filter(course => center.relatedCourseIds.includes(course.id) || names.includes(normalize(course.knowledgeCenter)));
 };
+const getKnowledgeCenterResourceCount = center => getKnowledgeCenterCourses(center).length;
 
 const renderKnowledgeCategoryCards = () => {
   const target = document.querySelector("[data-knowledge-categories]");
@@ -1019,7 +2861,7 @@ const renderKnowledgeCategoryCards = () => {
           <span>${icon}</span>
           <strong>${title}</strong>
           <p>${description}</p>
-          <small>${count} conteudos preparados</small>
+          <small>Explorar cursos por tema</small>
         </article>
       `
     )
@@ -1041,7 +2883,7 @@ const renderKnowledgeCenterCards = () => {
             <span>${center.icon}</span>
             <h3>${center.title}</h3>
             <p>${center.shortDescription}</p>
-            <small>${getKnowledgeCenterResourceCount(center)} recursos preparados</small>
+            <small>${getKnowledgeCenterResourceCount(center)} cursos disponíveis</small>
             <div>${center.relatedCategories.map((category) => `<b>${category}</b>`).join("")}</div>
             <button type="button" data-open-knowledge-center="${center.id}">Explorar</button>
           </div>
@@ -1333,9 +3175,9 @@ const renderKnowledgeCenterDetail = (centerId) => {
       <h3>Visao da curadoria</h3>
       <p>Este centro organiza cursos gratuitos de instituicoes reconhecidas e ajuda o professor a encontrar uma formacao adequada antes de seguir para o ambiente oficial do curso.</p>
     </section>
-    ${renderGuidedExperience(center)}
     <div class="knowledge-resource-list" id="conteudo-${center.slug}">
-      ${renderPreparedResourceBlocks(center)}
+      <section class="knowledge-resource-block"><h3>Cursos selecionados para este tema</h3><div class="course-card-grid-public">${courses.length ? courses.map(renderCourseCard).join('') : '<p>Nenhum curso publicado neste tema ainda.</p>'}</div></section>
+      <section class="knowledge-resource-block"><h3>Organize sua formação</h3><p>O andamento é pessoal e informado por você. As atividades e os certificados continuam sob responsabilidade das instituições ofertantes.</p><a href="personal-learning.html">Abrir meus cursos e certificados</a></section>
     </div>
   `;
   detail.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1365,21 +3207,17 @@ const renderSmartDiscovery = () => {
 
   panel.hidden = false;
   panel.innerHTML = `
-    <header><span>Busca inteligente preparada</span><strong>Resultados organizados por tipo</strong></header>
+    <header><span>Busca da curadoria</span><strong>Resultados disponíveis</strong></header>
     <div>
       <article><h3>Centros</h3>${centerMatches.length ? centerMatches.map((center) => `<button type="button" data-open-knowledge-center="${center.id}">${center.title}</button>`).join("") : "<p>Nenhum centro encontrado.</p>"}</article>
       <article><h3>Cursos</h3>${courseMatches.length ? renderCompactCourseList(courseMatches.slice(0, 4)) : "<p>Nenhum curso encontrado.</p>"}</article>
-      <article><h3>Trilhas</h3>${pathMatches.length ? pathMatches.map((center) => `<p>${center.title} - trilhas por perfil preparadas</p>`).join("") : "<p>Nenhuma trilha encontrada.</p>"}</article>
-      <article><h3>Materiais</h3>${materialMatches.length ? materialMatches.map((center) => `<p>${center.title} - materiais futuros preparados</p>`).join("") : "<p>Estrutura preparada para materiais futuros.</p>"}</article>
       <article><h3>Instituicoes</h3>${providerMatches.length ? providerMatches.map((provider) => `<p>${provider.name}</p>`).join("") : "<p>Nenhuma instituicao encontrada.</p>"}</article>
-      <article><h3>Especialistas</h3><p>Estrutura preparada para especialistas demonstrativos.</p></article>
-      <article><h3>Eventos</h3><p>Estrutura preparada para eventos demonstrativos.</p></article>
     </div>
   `;
 };
 
 const renderCourseDetail = (courseId) => {
-  const course = demoCuratedCourses.find((item) => item.id === courseId) || demoCuratedCourses[0];
+  const course = demoCuratedCourses.find((item) => item.id === courseId);
   const detail = document.querySelector("[data-course-detail]");
   if (!detail || !course) {
     return;
@@ -1392,45 +3230,45 @@ const renderCourseDetail = (courseId) => {
     .filter((item) => item.id !== course.id && (item.theme === course.theme || item.area === course.area))
     .slice(0, 3);
   const curation = getCourseCuration(course);
-  const distribution = getRatingDistribution(course);
-  const maxDistribution = Math.max(...distribution, 1);
 
   detail.hidden = false;
   detail.innerHTML = `
     <header class="course-detail-hero">
-      <img src="${course.imageUrl}" alt="Capa institucional do curso ${course.title}" />
+      ${courseEditorialArt(course)}
       <div>
         <span>Ficha de curadoria - ${course.verificationStatus}</span>
         <h2>${course.title}</h2>
         <p>${getProviderName(course.providerId)}</p>
         <div class="course-detail-badges">
-          <strong>Gratuito</strong>
-          <span>${course.reviewsCount ? `${renderStars(course.rating)} ${course.rating.toFixed(1)} (${course.reviewsCount} avaliacoes oficiais)` : "Sem avaliacao local"}</span>
+          <strong>Curso gratuito</strong>
           <span>${getCourseWorkloadLabel(course)}</span>
           <span>${course.modality}</span>
           <span>${course.certificateLabel || (course.certificateAvailable ? "Certificado informado" : "Sem certificado informado")}</span>
         </div>
         <div class="course-detail-actions">
-          <a href="${course.courseUrl}" target="_blank" rel="noopener" data-external-course="${course.id}">Acessar curso na instituicao</a>
+          <a href="${course.courseUrl}" target="_blank" rel="noopener noreferrer" data-external-course="${course.id}">Acessar curso na instituicao</a>
           <button type="button" data-auth-course-action="favorite" data-course-id="${course.id}">Salvar</button>
-          <button type="button" data-auth-course-action="review" data-course-id="${course.id}">Avaliar</button>
         </div>
       </div>
     </header>
     <aside class="course-transparency-note">
-      Este curso e oferecido e administrado pela instituicao indicada. A Universidade Raizes e Saberes organiza as informacoes e direciona o usuario para o ambiente oficial do curso.
+      Este curso é oferecido e administrado pela instituição indicada. A Raízes e Saberes faz a curadoria e não emite o certificado externo. Cursos livres não equivalem a graduação ou pós-graduação; a aceitação do certificado depende do edital ou da instituição receptora. Consulte a fonte para disponibilidade e regras atualizadas.
     </aside>
     <div class="course-detail-grid">
       <section>
         <h3>Informacoes oficiais da instituicao</h3>
         <p><strong>Instituicao responsavel:</strong> ${getProviderName(course.providerId)} (${getProviderType(course.providerId)})</p>
         <p><strong>Descricao:</strong> ${course.fullDescription}</p>
-        <p><strong>Objetivos:</strong></p>
-        <ul>${course.objectives.map((item) => `<li>${item}</li>`).join("")}</ul>
-        <p><strong>Conteudos abordados:</strong></p>
-        <ul>${course.syllabus.map((item) => `<li>${item}</li>`).join("")}</ul>
+${course.objectives.length ? `<p><strong>Objetivos:</strong></p><ul>${course.objectives.map((item) => `<li>${item}</li>`).join("")}</ul>` : ""}
+        ${course.syllabus.length ? `<p><strong>Conteúdos abordados:</strong></p><ul>${course.syllabus.map((item) => `<li>${item}</li>`).join("")}</ul>` : `<p>Consulte o programa completo na página oficial do curso.</p>`}
         <p><strong>Publico recomendado:</strong> ${course.audience}</p>
         <p><strong>Requisitos:</strong> ${course.requirements}</p>
+        <p><strong>Quem emite:</strong> ${course.certificateIssuer || course.certificateLabel || 'Consulte a instituição ofertante'}</p>
+        <p><strong>Condições de certificação:</strong> ${course.certificationConditions || 'Consulte o regulamento e as atividades no ambiente oficial. A conclusão não é automática.'}</p>
+        ${course.certificateFee ? `<p><strong>Emissão do certificado:</strong> ${course.certificateFee}</p>` : ''}
+        ${course.completionDeadline ? `<p><strong>Prazo de conclusão e emissão:</strong> ${compactDate(course.completionDeadline)}. Verifique novas turmas após essa data.</p>` : ''}
+        ${course.certificateRulesUrl ? `<p><a href="${course.certificateRulesUrl}" target="_blank" rel="noopener noreferrer">Consultar regras oficiais de certificação ↗</a></p>` : ''}
+        <p><strong>Fontes:</strong></p><ul>${[...new Set([course.courseUrl, ...(course.sourceUrls || [])])].map(url => `<li><a href="${url}" target="_blank" rel="noopener noreferrer">${new URL(url).hostname} · página oficial ↗</a></li>`).join('')}</ul>
       </section>
       <aside>
         <h3>Dados do curso</h3>
@@ -1443,7 +3281,7 @@ const renderCourseDetail = (courseId) => {
           <div><dt>Idioma</dt><dd>${course.language}</dd></div>
           <div><dt>Certificado</dt><dd>${course.certificateLabel || (course.certificateAvailable ? "Sim" : "Nao")}</dd></div>
           <div><dt>Gratuidade</dt><dd>${course.isFree ? "Gratuito" : "Nao gratuito"}</dd></div>
-          <div><dt>Inscricao</dt><dd>${course.enrollmentStatus}</dd></div>
+          <div><dt>Inscricao</dt><dd>${externalCourseEnrollment(course)}</dd></div>
           <div><dt>Ultima verificacao</dt><dd>${compactDate(course.lastVerifiedAt)}</dd></div>
         </dl>
       </aside>
@@ -1457,17 +3295,13 @@ const renderCourseDetail = (courseId) => {
         <p><strong>Atualizacao das informacoes:</strong> ${compactDate(curation.updatedAt)}</p>
       </section>
       <section>
-        <h3>Comunidade</h3>
-        <div class="detail-rating"><strong>${course.reviewsCount ? course.rating.toFixed(1) : "-"}</strong><span>${course.reviewsCount ? renderStars(course.rating) : "Sem avaliacoes locais"}</span><small>${course.reviewsCount ? `${course.reviewsCount} avaliacoes oficiais` : "A comunidade da plataforma ainda nao avaliou este curso"}</small></div>
-        <div class="rating-distribution">
-          ${distribution.map((count, index) => `<span><b>${5 - index}</b><i><em style="width:${Math.round((count / maxDistribution) * 100)}%"></em></i><small>${count}</small></span>`).join("")}
-        </div>
-        <div class="detail-comments">${course.comments.length ? course.comments.map((comment) => `<blockquote>${comment}</blockquote>`).join("") : "<p>Sem comentarios da comunidade nesta apresentacao.</p>"}</div>
+        <h3>Seu percurso de formação</h3>
+        <p>Guarde este curso, organize o andamento e arquive o certificado externo no seu espaço privado. A conclusão registrada aqui é informada por você, sem validação automática do provedor.</p>
         <div class="course-progress-actions">
-          <button type="button" data-auth-course-action="review" data-course-id="${course.id}">Avaliar</button>
-          <button type="button" data-auth-course-action="favorite" data-course-id="${course.id}">Favoritar</button>
-          <button type="button" data-auth-course-action="started" data-course-id="${course.id}">Informar que iniciei</button>
-          <button type="button" data-auth-course-action="completed" data-course-id="${course.id}">Informar conclusao</button>
+          <button type="button" data-auth-course-action="favorite" data-course-id="${course.id}">Salvar nos meus cursos</button>
+          <button type="button" data-auth-course-action="started" data-course-id="${course.id}">Registrar em andamento</button>
+          <button type="button" data-auth-course-action="completed" data-course-id="${course.id}">Registrar conclusão</button>
+          <a href="personal-learning.html">Meus cursos e certificados</a>
         </div>
       </section>
       <section>
@@ -1483,6 +3317,13 @@ const renderCourseCatalog = () => {
   const catalog = document.querySelector("[data-course-catalog]");
   if (!catalog) {
     return;
+  }
+
+  if (!catalog.querySelector('[data-verified-resource-portals]')) {
+    const section = document.createElement('section');
+    section.className = 'university-prep-panel'; section.dataset.verifiedResourcePortals = '';
+    section.innerHTML = '<div><span>Outras fontes de estudo</span><h2>Recursos de formação para professores</h2><p>Materiais consultados na plataforma de origem. Nenhum vídeo, imagem ou apostila de terceiros é republicado aqui.</p></div><div>' + verifiedTrainingCuration.resource_portals.map(portal => `<article><h3>${portal.title}</h3><p>${portal.summary}</p><p><strong>Certificação:</strong> Não garantida para estes módulos. Consulte as condições na plataforma de origem.</p><a href="${portal.url}" target="_blank" rel="noopener noreferrer">Explorar ${portal.provider} ↗</a></article>`).join('') + '</div>';
+    catalog.append(section);
   }
 
   const filtersTarget = document.querySelector("[data-course-filters]");
@@ -1521,14 +3362,13 @@ const renderCourseCatalog = () => {
 
   const courses = getFilteredDemoCourses();
   const visibleCourses = courses.slice(0, visibleCourseLimit);
-  const totalAccess = demoCuratedCourses.reduce((sum, course) => sum + course.accessCount, 0);
 
   const kpis = document.querySelector("[data-catalog-kpis]");
   if (kpis) {
     kpis.innerHTML = `
-      <span><strong>${demoCuratedCourses.length}</strong><small>cursos reais</small></span>
-      <span><strong>${demoCourseProviders.length}</strong><small>instituicoes</small></span>
-      <span><strong>${totalAccess.toLocaleString("pt-BR")}</strong><small>acessos pela plataforma</small></span>
+      <span><strong>${demoCuratedCourses.length}</strong><small>cursos selecionados</small></span>
+      <span><strong>${new Set(demoCuratedCourses.map(c => c.providerId)).size}</strong><small>instituições</small></span>
+      <span><strong>${demoCuratedCourses.filter(c => c.lastVerifiedAt === "2026-11-11").length}</strong><small>fichas revistas em 11/11</small></span>
     `;
   }
 
@@ -1557,11 +3397,11 @@ const renderCourseCatalog = () => {
 
   document.querySelector("[data-featured-courses]").innerHTML = renderMiniCourseCards(demoCuratedCourses.filter((course) => course.featured));
   document.querySelector("[data-featured-providers]").innerHTML = demoCourseProviders
-    .filter((provider) => provider.highlighted)
+    .filter((provider) => provider.highlighted && demoCuratedCourses.some(course => course.providerId === provider.id))
     .map((provider) => `<article><strong>${provider.name}</strong><span>${provider.type}</span></article>`)
     .join("");
-  document.querySelector("[data-most-accessed]").innerHTML = renderCompactCourseList([...demoCuratedCourses].sort((a, b) => b.accessCount - a.accessCount).slice(0, 3));
-  document.querySelector("[data-best-rated]").innerHTML = renderCompactCourseList([...demoCuratedCourses].sort((a, b) => b.rating - a.rating).slice(0, 3));
+  document.querySelector("[data-most-accessed]").innerHTML = renderCompactCourseList([...demoCuratedCourses].filter(c => c.lastVerifiedAt === "2026-11-11").slice(0, 3));
+  document.querySelector("[data-best-rated]").innerHTML = renderCompactCourseList([...demoCuratedCourses].filter(c => c.workloadHours > 0).sort((a, b) => a.workloadHours - b.workloadHours).slice(0, 3));
   document.querySelector("[data-recent-courses]").innerHTML = renderCompactCourseList([...demoCuratedCourses].sort((a, b) => b.addedAt.localeCompare(a.addedAt)).slice(0, 3));
   document.querySelector("[data-certificate-courses]").innerHTML = renderCompactCourseList(demoCuratedCourses.filter((course) => course.certificateAvailable).slice(0, 3));
 };
@@ -1930,14 +3770,12 @@ document.addEventListener("click", (event) => {
 
   const authAction = event.target.closest?.("[data-auth-course-action]");
   if (authAction) {
-    if (!isDemoAuthenticated()) {
-      requestCatalogLogin();
-      return;
-    }
-    const actionKey = `catalog:${authAction.dataset.authCourseAction}:${authAction.dataset.courseId}`;
-    localStorage.setItem(actionKey, new Date().toISOString());
-    authAction.textContent = "Registrado";
-    authAction.disabled = true;
+    const course = demoCuratedCourses.find(item => item.id === authAction.dataset.courseId);
+    if (!course) return;
+    const status = {favorite: 'saved', started: 'in_progress', completed: 'completed'}[authAction.dataset.authCourseAction];
+    if (!status) return;
+    const params = new URLSearchParams({course: course.id, title: course.title, provider: getProviderName(course.providerId), url: course.courseUrl, status});
+    window.location.href = `personal-learning.html?${params}`;
     return;
   }
 

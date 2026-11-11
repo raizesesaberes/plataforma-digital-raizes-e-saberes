@@ -75,11 +75,14 @@ test('beta real session adapter validates Auth/profile/context, denies instituti
   assert.equal((await web.signOutPlatformSession()).revoked,true);assert.equal(requests.length,5);assert.match(requests.at(-1),/auth\/v1\/logout\?scope=local$/);assert.equal(storage.size,0);
  }finally{globalThis.fetch=original;delete globalThis.window;delete globalThis.document;}
 });
-test('beta public platform menu remains byte-identical to approved production baseline',async()=>{
+test('beta public platform menu remains byte-identical outside reviewed Formation template changes',async()=>{
  const {createHash}=await import('node:crypto');
  const baseline=JSON.parse(await readFile(new URL('../../scripts/static-runtime-manifest.json',import.meta.url),'utf8'));
  const source=await readFile(new URL('../../app-pages.js',import.meta.url));
- assert.equal(createHash('sha256').update(source).digest('hex'),'fbe2abd6783576e5f24aa2e8a34753fbbf0a0ba085435566d30dd7baf042164f');
+ const {restoreReviewedFormationTemplate}=await import('../../scripts/lib/formacao-platform-menu.mjs');
+ const patch=JSON.parse(await readFile(new URL('../../scripts/formacao-template-patch.json',import.meta.url),'utf8'));
+ assert.equal(createHash('sha256').update(restoreReviewedFormationTemplate(source,patch)).digest('hex'),'fbe2abd6783576e5f24aa2e8a34753fbbf0a0ba085435566d30dd7baf042164f');
+ assert.throws(()=>restoreReviewedFormationTemplate(source.toString()+'\n// Unreviewed public menu change',patch),/Unreviewed/);
  const builder=await readFile(new URL('../../scripts/build-static-web.mjs',import.meta.url),'utf8');
  assert.match(builder,/mode === 'real-read-beta'/);assert.match(builder,/actual !== productionMenuSha256/);
 });

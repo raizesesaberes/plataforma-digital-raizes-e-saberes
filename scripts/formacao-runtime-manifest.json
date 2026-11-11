@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "baseCommit": "c2d112908a8d357ede1ffca75a13b8be929e300c",
+  "files": [
+    {
+      "file": "formacao.html",
+      "sha256": "cc956065007709b36252a8c448f2569358bf2a288debd96124d23d1854ddfa55"
+    },
+    {
+      "file": "personal-learning.html",
+      "sha256": "22b456e3a70c24e4654079653afd9175623b4348ad2fcdc6c9ae4d2676170d77"
+    },
+    {
+      "file": "formacao-runtime/app.mjs",
+      "sha256": "1d3c39a769919abb7f6f7ce4b0d7b0ad741b4d073873190184e4b2c1e221c282"
+    },
+    {
+      "file": "formacao-runtime/client.mjs",
+      "sha256": "7662356ed0d1fa79b5f9abf4eafc53113597f8f3eee6ed40e5187f876f1a968d"
+    },
+    {
+      "file": "formacao-runtime/editorial-aprendizagem.svg",
+      "sha256": "ec6f56e78f870ef9a21a4815ccaf355200334f2c6fe8941f70695edc2778ff8f"
+    },
+    {
+      "file": "formacao-runtime/editorial-inclusao.svg",
+      "sha256": "c579239470431d2c52dbf47e94e6e20be13c90e9d38d32f95b7767c6bdc11121"
+    },
+    {
+      "file": "formacao-runtime/editorial-praticas.svg",
+      "sha256": "bd52c94ccdf0884fc6801315a50cdb2dd726037b08612009c6d50099593f1fee"
+    },
+    {
+      "file": "formacao-runtime/editorial-tecnologia.svg",
+      "sha256": "fbb77e01780b48b684e0c2f40156f08c5f077138e9049e6d8f3d6a37c877757c"
+    },
+    {
+      "file": "formacao-runtime/formacao.css",
+      "sha256": "481ef8fe90720dab77530a6a31d43c6942fbfcc8fc3ea72774e82f63952b961e"
+    },
+    {
+      "file": "formacao-runtime/gateway.css",
+      "sha256": "bb33ee218a5893d038e71f100f43a48542acf46815620fd87c65c8c75d90114b"
+    },
+    {
+      "file": "personal-learning-runtime/app.mjs",
+      "sha256": "8c397e848a97cd17d648f5cd8e8cd4c050ab0ced6c3f4a0ab28107bf9723b051"
+    },
+    {
+      "file": "personal-learning-runtime/client.mjs",
+      "sha256": "768198bf69d786ff32390fffd0fef9db8db6c2be9c26b664b9940b9505094ccd"
+    },
+    {
+      "file": "personal-learning-runtime/model.mjs",
+      "sha256": "aafb43ef2a580d2815b8001ffb112d81a9891e31b4d1b24c34a9baa898e2ebec"
+    },
+    {
+      "file": "personal-learning-runtime/personal-learning.css",
+      "sha256": "d2b8a9408abb6b699d52e32ab228ef8154b2dc497365d63f294b5f3e18fa798b"
+    }
+  ],
+  "overrides": [
+    {
+      "file": "script.js",
+      "original_sha256": "9fd9c28aa27a3afc9b5835af5dc14f91341274fd200e4456020ec6f8d189b315",
+      "sha256": "6611a45c42c887b46c2d121231888178629a52183ae6d1229419d4751ffeed40"
+    }
+  ]
+}
