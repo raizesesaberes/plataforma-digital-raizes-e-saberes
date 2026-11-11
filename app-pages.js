@@ -7375,29 +7375,17 @@ const renderFormationGateway = () => `
 `;
 
 const renderTeacherFormationView = () => `
-  <section class="tw-board tw-formation-shell">
-    <div class="tw-planning-heading">
-      <div>
-        <span>Formação</span>
-        <h2>Universidade Raízes e Saberes</h2>
-        <p>Um espaço para sua formação docente e novas descobertas para a sala de aula.</p>
-      </div>
-      <button type="button" data-teacher-open-url="universidade.html?from=teacher">EXPLORAR A UNIVERSIDADE</button>
-    </div>
-    ${renderFormationGateway()}
-    <div class="fd-personal-entry">
-      <div><h3>Seu percurso, organizado por você.</h3><p>Reúna cursos externos e seus certificados em um espaço pessoal e privado.</p></div>
-      <a href="personal-learning.html">Meus cursos e certificados →</a>
-    </div>
-    <section class="tw-board tw-tracking-section">
-      <div class="tw-section-head"><h2>Cursos gratuitos selecionados</h2><a class="tw-primary-link" href="universidade.html?from=teacher#catalogo">Ver catálogo público</a></div>
-      <p class="fd-external-note">Explore a curadoria de cursos oferecidos por instituições externas. Inscrição, acompanhamento e eventual certificação seguem as regras de cada instituição.</p>
-      <div class="tw-formation-list">${teacherFormationCourses.map(renderTeacherFormationCourse).join("")}</div>
+  <section class="tw-board tw-formation-shell" aria-label="Formação docente">
+    <link rel="stylesheet" href="formacao-runtime/gateway.css?v=20261111" />
+    <section class="university-public-hero" aria-labelledby="teacher-formation-title">
+      <div><span>Universidade Raízes e Saberes</span><h1 id="teacher-formation-title">Seu próximo passo na formação.</h1><p>Escolha por onde começar.</p></div>
+      <img src="formacao-runtime/editorial-aprendizagem.svg" alt="" width="800" height="500" />
     </section>
-    <section class="tw-board tw-tracking-section">
-      <div class="tw-section-head"><h2>Centros de conhecimento</h2><span>Explore por tema</span></div>
-      <div class="tw-formation-grid">${teacherFormationMaterials.map(renderTeacherFormationMaterial).join("")}</div>
-    </section>
+    <nav class="fd-entry-cards" aria-label="Áreas da formação docente">
+      <a href="formacao.html"><img src="formacao-runtime/editorial-praticas.svg" alt="" width="800" height="500" /><h2>Nossas coleções</h2><p>Encontre as aulas por coleção, componente e ano.</p><strong>Explorar as aulas →</strong></a>
+      <a href="universidade.html?from=teacher#catalogo"><img src="formacao-runtime/editorial-inclusao.svg" alt="" width="800" height="500" /><h2>Cursos externos</h2><p>Pesquise cursos gratuitos de outras instituições.</p><strong>Buscar cursos →</strong></a>
+      <a href="personal-learning.html"><img src="formacao-runtime/editorial-tecnologia.svg" alt="" width="800" height="500" /><h2>Meus cursos e certificados</h2><p>Organize seus estudos e certificados em um só lugar.</p><strong>Abrir meu espaço →</strong></a>
+    </nav>
   </section>
 `;
 

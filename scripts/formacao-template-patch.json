@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "reviewedSha256": "8091d08fbd13a1129154d38a9aaf216be4df7d25ead1bf8a9677aa38a1646dd1",
+  "reviewedSha256": "e528652bffcd4e96010e12a66d243f3ed4bfa8bebd6a3727ed5c9b4ae985f37c",
   "patches": [
     {
       "start": 7261,
@@ -162,53 +162,36 @@
       "baseline": []
     },
     {
-      "start": 7382,
+      "start": 7377,
       "approved": [
-        "        <p>Um espaço para sua formação docente e novas descobertas para a sala de aula.</p>\n"
+        "  <section class=\"tw-board tw-formation-shell\" aria-label=\"Formação docente\">\n",
+        "    <link rel=\"stylesheet\" href=\"formacao-runtime/gateway.css?v=20261111\" />\n",
+        "    <section class=\"university-public-hero\" aria-labelledby=\"teacher-formation-title\">\n",
+        "      <div><span>Universidade Raízes e Saberes</span><h1 id=\"teacher-formation-title\">Seu próximo passo na formação.</h1><p>Escolha por onde começar.</p></div>\n",
+        "      <img src=\"formacao-runtime/editorial-aprendizagem.svg\" alt=\"\" width=\"800\" height=\"500\" />\n",
+        "    </section>\n",
+        "    <nav class=\"fd-entry-cards\" aria-label=\"Áreas da formação docente\">\n",
+        "      <a href=\"formacao.html\"><img src=\"formacao-runtime/editorial-praticas.svg\" alt=\"\" width=\"800\" height=\"500\" /><h2>Nossas coleções</h2><p>Encontre as aulas por coleção, componente e ano.</p><strong>Explorar as aulas →</strong></a>\n",
+        "      <a href=\"universidade.html?from=teacher#catalogo\"><img src=\"formacao-runtime/editorial-inclusao.svg\" alt=\"\" width=\"800\" height=\"500\" /><h2>Cursos externos</h2><p>Pesquise cursos gratuitos de outras instituições.</p><strong>Buscar cursos →</strong></a>\n",
+        "      <a href=\"personal-learning.html\"><img src=\"formacao-runtime/editorial-tecnologia.svg\" alt=\"\" width=\"800\" height=\"500\" /><h2>Meus cursos e certificados</h2><p>Organize seus estudos e certificados em um só lugar.</p><strong>Abrir meu espaço →</strong></a>\n",
+        "    </nav>\n"
       ],
       "baseline": [
-        "        <p>Cursos, trilhas e materiais selecionados para apoiar sua formação continuada.</p>\n"
-      ]
-    },
-    {
-      "start": 7384,
-      "approved": [
-        "      <button type=\"button\" data-teacher-open-url=\"universidade.html?from=teacher\">EXPLORAR A UNIVERSIDADE</button>\n"
-      ],
-      "baseline": [
-        "      <button type=\"button\" data-teacher-open-url=\"universidade.html?from=teacher\">ABRIR UNIVERSIDADE</button>\n"
-      ]
-    },
-    {
-      "start": 7386,
-      "approved": [
-        "    ${renderFormationGateway()}\n",
-        "    <div class=\"fd-personal-entry\">\n",
-        "      <div><h3>Seu percurso, organizado por você.</h3><p>Reúna cursos externos e seus certificados em um espaço pessoal e privado.</p></div>\n",
-        "      <a href=\"personal-learning.html\">Meus cursos e certificados →</a>\n"
-      ],
-      "baseline": [
+        "  <section class=\"tw-board tw-formation-shell\">\n",
+        "    <div class=\"tw-planning-heading\">\n",
+        "      <div>\n",
+        "        <span>Formação</span>\n",
+        "        <h2>Universidade Raízes e Saberes</h2>\n",
+        "        <p>Cursos, trilhas e materiais selecionados para apoiar sua formação continuada.</p>\n",
+        "      </div>\n",
+        "      <button type=\"button\" data-teacher-open-url=\"universidade.html?from=teacher\">ABRIR UNIVERSIDADE</button>\n",
+        "    </div>\n",
         "    <div class=\"tw-formation-overview\">\n",
         "      ${renderTeacherTrackingMetric(\"Cursos disponiveis\", String(teacherFormationCourses.length), \"Curadoria real ja preservada\", \"cap\")}\n",
         "      ${renderTeacherTrackingMetric(\"Trilhas\", String(teacherFormationPaths.length), \"Percursos preparados por tema\", \"map\")}\n",
         "      ${renderTeacherTrackingMetric(\"Materiais\", String(teacherFormationMaterials.length), \"Centros e apoio\", \"book\")}\n",
-        "      ${renderTeacherTrackingMetric(\"Progresso\", \"Preparado\", \"Acompanhamento futuro\", \"progresso\")}\n"
-      ]
-    },
-    {
-      "start": 7391,
-      "approved": [
-        "    <section class=\"tw-board tw-tracking-section\">\n",
-        "      <div class=\"tw-section-head\"><h2>Cursos gratuitos selecionados</h2><a class=\"tw-primary-link\" href=\"universidade.html?from=teacher#catalogo\">Ver catálogo público</a></div>\n",
-        "      <p class=\"fd-external-note\">Explore a curadoria de cursos oferecidos por instituições externas. Inscrição, acompanhamento e eventual certificação seguem as regras de cada instituição.</p>\n",
-        "      <div class=\"tw-formation-list\">${teacherFormationCourses.map(renderTeacherFormationCourse).join(\"\")}</div>\n",
-        "    </section>\n",
-        "    <section class=\"tw-board tw-tracking-section\">\n",
-        "      <div class=\"tw-section-head\"><h2>Centros de conhecimento</h2><span>Explore por tema</span></div>\n",
-        "      <div class=\"tw-formation-grid\">${teacherFormationMaterials.map(renderTeacherFormationMaterial).join(\"\")}</div>\n",
-        "    </section>\n"
-      ],
-      "baseline": [
+        "      ${renderTeacherTrackingMetric(\"Progresso\", \"Preparado\", \"Acompanhamento futuro\", \"progresso\")}\n",
+        "    </div>\n",
         "    <div class=\"tw-tracking-grid\">\n",
         "      <section class=\"tw-board tw-tracking-section\">\n",
         "        <div class=\"tw-section-head\"><h2>Continuar aprendendo</h2><span>Preparado</span></div>\n",
@@ -257,7 +240,7 @@
       ]
     },
     {
-      "start": 19747,
+      "start": 19735,
       "approved": [
         "    subtitle: \"Coleções, cursos e seu percurso de formação\",\n"
       ],
@@ -266,7 +249,7 @@
       ]
     },
     {
-      "start": 19756,
+      "start": 19744,
       "approved": [
         "        <link rel=\"stylesheet\" href=\"formacao-runtime/gateway.css?v=20261111\" />\n",
         "        <div data-university-home>\n",
@@ -344,7 +327,7 @@
       ]
     },
     {
-      "start": 19802,
+      "start": 19790,
       "approved": [],
       "baseline": [
         "                <option value=\"rating\">Mais bem avaliados</option>\n",
@@ -352,7 +335,7 @@
       ]
     },
     {
-      "start": 19821,
+      "start": 19809,
       "approved": [
         "            <article><h3>Destaques verificados</h3><div data-most-accessed></div></article>\n",
         "            <article><h3>Cursos de curta duração</h3><div data-best-rated></div></article>\n"
@@ -363,7 +346,7 @@
       ]
     },
     {
-      "start": 19828,
+      "start": 19816,
       "approved": [
         "            <div class=\"catalog-section-head\"><div><span>Instituicoes em destaque</span><h3>Instituições e plataformas de origem</h3></div></div>\n"
       ],
@@ -372,7 +355,7 @@
       ]
     },
     {
-      "start": 19864,
+      "start": 19852,
       "approved": [
         "        <aside class=\"university-prep-panel\" aria-label=\"Sobre os cursos externos\">\n",
         "          <div>\n",
@@ -399,7 +382,7 @@
       ]
     },
     {
-      "start": 19870,
+      "start": 19858,
       "approved": [
         "        </aside>\n",
         "        </div>\n"
@@ -419,7 +402,7 @@
       ]
     },
     {
-      "start": 20640,
+      "start": 20628,
       "approved": [
         "      [\"trilhas\", \"Formação docente\", \"formacao.html\"],\n",
         "      [\"cursos\", \"Meus cursos\", \"personal-learning.html\"],\n",
@@ -436,7 +419,7 @@
       ]
     },
     {
-      "start": 20654,
+      "start": 20642,
       "approved": [
         "      [\"trilhas\", \"Formação\", \"formacao.html\"],\n",
         "      [\"cursos\", \"Meus cursos\", \"personal-learning.html\"],\n",
@@ -449,14 +432,14 @@
       ]
     },
     {
-      "start": 25356,
+      "start": 25344,
       "approved": [],
       "baseline": [
         "  const config = getSupabaseConfig();\n"
       ]
     },
     {
-      "start": 25357,
+      "start": 25345,
       "approved": [
         "  if (!session?.refresh_token) return null;\n",
         "  const { refreshSession } = await import(\"./formacao-runtime/session.mjs\");\n",
@@ -475,7 +458,7 @@
       ]
     },
     {
-      "start": 25367,
+      "start": 25355,
       "approved": [],
       "baseline": [
         "  const response = await fetch(`${baseUrl}/auth/v1/token?grant_type=refresh_token`, {\n",
@@ -496,7 +479,7 @@
       ]
     },
     {
-      "start": 34626,
+      "start": 34614,
       "approved": [
         "    : environmentKey === \"universidade\" ? `<nav class=\"rs-global-actions\" aria-label=\"Navegação global\"><a href=\"plataforma.html\">Início</a><a href=\"login.html?next=universidade.html\">Entrar</a></nav>`\n"
       ],
