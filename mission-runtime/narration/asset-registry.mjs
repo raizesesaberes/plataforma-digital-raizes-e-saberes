@@ -5,7 +5,7 @@ export const assetRegistry = freeze({
   "editorialRevision": "carla-editorial-2026-11-10-v1",
   "release": {
     "status": "approved",
-    "approvalRef": "carla-local-p00-p14-20261110"
+    "approvalRef": "carla-local-p00-p18-20261110"
   },
   "licenses": [
     {
@@ -2831,6 +2831,719 @@ export const assetRegistry = freeze({
         "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
         "reference": "source-technical-p14-20261110",
         "sourceReference": "source-p14-006-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "puzzle-entrada",
+      "textSha256": "dad531dec40102d15a7cf368def852a02d82298e26bbfb0b627151e34e1a4fab",
+      "bindings": [
+        "game:ed05-EF1-ciencias-variedades-puzzle-01:puzzle:23e50baf0206d54b165ed4e938480fbf912736d2589743f3f4b2bf89561d3962"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/puzzle-entrada.mp3",
+      "sha256": "b4aa2cfb24087d7b22de71cf8869f9b6877c3fa8b5e9f0cbe4ee2f57e7e8a32d",
+      "bytes": 140234,
+      "durationSeconds": 7.706,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p15-20261110",
+        "sourceReference": "source-p15-001-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "puzzle-ajuda",
+      "textSha256": "a9ce2ba87f4e6fd856842e43b2d305b4a24b241ba24fec3dd6383d712700d240",
+      "bindings": [
+        "game:ed05-EF1-ciencias-variedades-puzzle-01:puzzle:23e50baf0206d54b165ed4e938480fbf912736d2589743f3f4b2bf89561d3962"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/puzzle-ajuda.mp3",
+      "sha256": "5a47027714cf83f4f8545e89cd434d2b4a8930c512d24effe77bebbe2115bdc7",
+      "bytes": 143160,
+      "durationSeconds": 7.889,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p15-20261110",
+        "sourceReference": "source-p15-002-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "puzzle-celebracao",
+      "textSha256": "fbb920578af58fce20d706b534186840a43bb9396d0c60819106b4ea726c1cbe",
+      "bindings": [
+        "game:ed05-EF1-ciencias-variedades-puzzle-01:puzzle:23e50baf0206d54b165ed4e938480fbf912736d2589743f3f4b2bf89561d3962"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/puzzle-celebracao.mp3",
+      "sha256": "06212bd0d70ee2169a5341227264b4613a27ff58c42b50a15a8defa5d0da4936",
+      "bytes": 105962,
+      "durationSeconds": 5.564,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p15-20261110",
+        "sourceReference": "source-p15-003-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "puzzle-exemplo-pergunta",
+      "textSha256": "8a986042f319667a89966d1c9af075f106ce55958ac99ce9a0fb5921e23e776c",
+      "bindings": [
+        "game:ed05-EF1-ciencias-variedades-puzzle-01:puzzle:23e50baf0206d54b165ed4e938480fbf912736d2589743f3f4b2bf89561d3962"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/puzzle-exemplo-pergunta.mp3",
+      "sha256": "e9c475d35522fb342c1ce351217ea96ced393eda45c61494786d9fbc08075759",
+      "bytes": 148176,
+      "durationSeconds": 8.202,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p15-20261110",
+        "sourceReference": "source-p15-004-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "puzzle-exemplo-ajuda",
+      "textSha256": "eeeaca5192868083abf32c0656b07058f2b600e39f67fe9a746c6aaed08a9b39",
+      "bindings": [
+        "game:ed05-EF1-ciencias-variedades-puzzle-01:puzzle:23e50baf0206d54b165ed4e938480fbf912736d2589743f3f4b2bf89561d3962"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/puzzle-exemplo-ajuda.mp3",
+      "sha256": "8145098f8218328f08b2f516456df8b6296796cdf9694ce246d3e5a1881978f4",
+      "bytes": 123934,
+      "durationSeconds": 6.687,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p15-20261110",
+        "sourceReference": "source-p15-005-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "puzzle-exemplo-explicacao",
+      "textSha256": "c75d1473dd187a4b0e669a7040787cb714939f6b3560dd3e79de68de66b1ee29",
+      "bindings": [
+        "game:ed05-EF1-ciencias-variedades-puzzle-01:puzzle:23e50baf0206d54b165ed4e938480fbf912736d2589743f3f4b2bf89561d3962"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/puzzle-exemplo-explicacao.mp3",
+      "sha256": "a9296988c46dcfb9bc864ace935f35af5d2f6d1d2e6653412f139ee0c583b292",
+      "bytes": 171163,
+      "durationSeconds": 9.639,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p15-20261110",
+        "sourceReference": "source-p15-006-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "word-search-entrada",
+      "textSha256": "38183ece615479f9635e0c9271249f24a90188d41e5c756a905809d3e4d7bc6e",
+      "bindings": [
+        "game:ed05-EM3-ciencias-variedades-word-search-01:word-search:cb48a6d90363d49ac80272f73f7d09317d2c9dc5ba49e1d7061981bc2e0e09f6"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/word-search-entrada.mp3",
+      "sha256": "5b186a619bd9dad8d7349eda4f25adc4a8543faf7423bdb53af0632040cf5ac1",
+      "bytes": 133965,
+      "durationSeconds": 7.314,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p16-20261110",
+        "sourceReference": "source-p16-001-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "word-search-ajuda",
+      "textSha256": "c402fc08a4098a63b93e69c689c9d0a625d1e9d5d3bcd07a5063db5ab6bd8b57",
+      "bindings": [
+        "game:ed05-EM3-ciencias-variedades-word-search-01:word-search:cb48a6d90363d49ac80272f73f7d09317d2c9dc5ba49e1d7061981bc2e0e09f6"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/word-search-ajuda.mp3",
+      "sha256": "62260e0606bb5cd6b0f80eae0d8c0cd4de75a22f974885d82714fe0a505ed288",
+      "bytes": 127696,
+      "durationSeconds": 6.922,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p16-20261110",
+        "sourceReference": "source-p16-002-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "word-search-celebracao",
+      "textSha256": "42bddfaa776b1d0f5b3bb84b639eca26a7d0812aa4730331cb953da7c215c08b",
+      "bindings": [
+        "game:ed05-EM3-ciencias-variedades-word-search-01:word-search:cb48a6d90363d49ac80272f73f7d09317d2c9dc5ba49e1d7061981bc2e0e09f6"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/word-search-celebracao.mp3",
+      "sha256": "28146dee4d92c12f030292f017fe2dd9e0bd4d73ead1f583a73c203ad4260e27",
+      "bytes": 105962,
+      "durationSeconds": 5.564,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p16-20261110",
+        "sourceReference": "source-p16-003-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "word-search-exemplo-pergunta",
+      "textSha256": "09e10af726031650fadbe9b1862412043eb812dfc0c7ee03a32561b12f0b263e",
+      "bindings": [
+        "game:ed05-EM3-ciencias-variedades-word-search-01:word-search:cb48a6d90363d49ac80272f73f7d09317d2c9dc5ba49e1d7061981bc2e0e09f6"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/word-search-exemplo-pergunta.mp3",
+      "sha256": "572eb66ec32fba2c610792b3d4a82c33c40448c1a82e5a974f1cafe057d9c448",
+      "bytes": 108470,
+      "durationSeconds": 5.721,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p16-20261110",
+        "sourceReference": "source-p16-004-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "word-search-exemplo-ajuda",
+      "textSha256": "3f42ebcace1d40395b4864c083d8297a41c99f1faa0d9f1c789ba8110fa46826",
+      "bindings": [
+        "game:ed05-EM3-ciencias-variedades-word-search-01:word-search:cb48a6d90363d49ac80272f73f7d09317d2c9dc5ba49e1d7061981bc2e0e09f6"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/word-search-exemplo-ajuda.mp3",
+      "sha256": "baa03b7e63514f826bf658e6d9aa8188e39217ca4049575d1a335a9c537c500b",
+      "bytes": 136473,
+      "durationSeconds": 7.471,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p16-20261110",
+        "sourceReference": "source-p16-005-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "crossword-entrada",
+      "textSha256": "143b36e32f2886444674fe31381a193e4e0ee71d55d55a51a6ed261f029ae353",
+      "bindings": [
+        "game:ed05-EF1-ciencias-variedades-crossword-01:crossword:3b7c320d8c22b70de2d8bdbae9ddbf24e9702ee4b5c3dc03b37f3734f3cd1b9b"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/crossword-entrada.mp3",
+      "sha256": "be943f50555fe78c50c372335fcadb19b99a76d1512df4288a6d1c64b82644d9",
+      "bytes": 127696,
+      "durationSeconds": 6.922,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p17-20261110",
+        "sourceReference": "source-p17-001-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "crossword-ajuda",
+      "textSha256": "6a535c4376f24769527b8735a0a68dc1e492c3d1984fbe3cf0536d982b860dee",
+      "bindings": [
+        "game:ed05-EF1-ciencias-variedades-crossword-01:crossword:3b7c320d8c22b70de2d8bdbae9ddbf24e9702ee4b5c3dc03b37f3734f3cd1b9b"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/crossword-ajuda.mp3",
+      "sha256": "138100e4fef58fd7b4d223d3b6594e6124a678f4104e32721710f98804980a2a",
+      "bytes": 114739,
+      "durationSeconds": 6.113,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p17-20261110",
+        "sourceReference": "source-p17-002-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "crossword-celebracao",
+      "textSha256": "97e4ee69b155275fa50e6eb682fd32745a6b5fce834d0a9c08efa04c4a899d35",
+      "bindings": [
+        "game:ed05-EF1-ciencias-variedades-crossword-01:crossword:3b7c320d8c22b70de2d8bdbae9ddbf24e9702ee4b5c3dc03b37f3734f3cd1b9b"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/crossword-celebracao.mp3",
+      "sha256": "c0228e02666ad1b59dd308c5ea0f7c10eb6b6c69f2c4b42bfda7b173d81b1c9e",
+      "bytes": 112231,
+      "durationSeconds": 5.956,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p17-20261110",
+        "sourceReference": "source-p17-003-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "crossword-exemplo-pergunta",
+      "textSha256": "caa08b914b166146d5c2fef3bf6d1546ad54facd02a340c19d626039a16acf27",
+      "bindings": [
+        "game:ed05-EF1-ciencias-variedades-crossword-01:crossword:3b7c320d8c22b70de2d8bdbae9ddbf24e9702ee4b5c3dc03b37f3734f3cd1b9b"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/crossword-exemplo-pergunta.mp3",
+      "sha256": "98eecd0d39429b2114db13c75ef70f0e318d6d7b1f44e7836fc71b7b9a6460dc",
+      "bytes": 145668,
+      "durationSeconds": 8.046,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p17-20261110",
+        "sourceReference": "source-p17-004-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "crossword-exemplo-ajuda",
+      "textSha256": "aa6626f9471d5e2ffae9b4bba03707225b45c69d1c216c707d168f9e5e3e6765",
+      "bindings": [
+        "game:ed05-EF1-ciencias-variedades-crossword-01:crossword:3b7c320d8c22b70de2d8bdbae9ddbf24e9702ee4b5c3dc03b37f3734f3cd1b9b"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/crossword-exemplo-ajuda.mp3",
+      "sha256": "11479e3bb19b48c05d98a61b880bcb5f4efe4bd3d7d10d37d9ceb31f20d4d835",
+      "bytes": 131457,
+      "durationSeconds": 7.157,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p17-20261110",
+        "sourceReference": "source-p17-005-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "crossword-exemplo-explicacao",
+      "textSha256": "1629cc41d5d7ce22c0b05314a5bbf9629bf97040f500d061a67ee3583ad1dc12",
+      "bindings": [
+        "game:ed05-EF1-ciencias-variedades-crossword-01:crossword:3b7c320d8c22b70de2d8bdbae9ddbf24e9702ee4b5c3dc03b37f3734f3cd1b9b"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/crossword-exemplo-explicacao.mp3",
+      "sha256": "7c02764286ecb6b1488ba5920c13adb99791af754f5f992fff5fb47681237c45",
+      "bytes": 130203,
+      "durationSeconds": 7.079,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p17-20261110",
+        "sourceReference": "source-p17-006-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "completion-entrada",
+      "textSha256": "d9359c17e9d1f0bda87ef160162f97449bfde1ea176ed7a44dc72332240dae23",
+      "bindings": [
+        "game:ed05-EI4-portugues-completion-01:completion:db44c4e143ec2af3a0eef64557020a1ecba77a5d3d38f345bd00ebcb4a75d32f"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/completion-entrada.mp3",
+      "sha256": "7534ed066aee52af07b19ba56e30c2b96e03785389fcc77deb7ede8c7394a5c2",
+      "bytes": 102200,
+      "durationSeconds": 5.329,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p18-20261110",
+        "sourceReference": "source-p18-001-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "completion-ajuda",
+      "textSha256": "41cf5b302a6a3da853125fb25c8c8fae7893b129623ccaa990b96a38e1c67dee",
+      "bindings": [
+        "game:ed05-EI4-portugues-completion-01:completion:db44c4e143ec2af3a0eef64557020a1ecba77a5d3d38f345bd00ebcb4a75d32f"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/completion-ajuda.mp3",
+      "sha256": "ba000b97782930ab7513075c630c36e87243b2665d3bb38e74dc8effbf3d056f",
+      "bytes": 96767,
+      "durationSeconds": 4.989,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p18-20261110",
+        "sourceReference": "source-p18-002-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "completion-celebracao",
+      "textSha256": "38db897749aff87d307a7426644dfc0decd64bb13ba5f57025fc938c39a675db",
+      "bindings": [
+        "game:ed05-EI4-portugues-completion-01:completion:db44c4e143ec2af3a0eef64557020a1ecba77a5d3d38f345bd00ebcb4a75d32f"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/completion-celebracao.mp3",
+      "sha256": "b24a8b9de2a56453e7f2b1663dfec7942d57816b77d2823e8128f6d9e2c81e9c",
+      "bytes": 94259,
+      "durationSeconds": 4.833,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p18-20261110",
+        "sourceReference": "source-p18-003-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "completion-exemplo-pergunta",
+      "textSha256": "1f927005b269335d693ac7ab1a8c21dc4f02543c8e54efc20fbf9802f12693da",
+      "bindings": [
+        "game:ed05-EI4-portugues-completion-01:completion:db44c4e143ec2af3a0eef64557020a1ecba77a5d3d38f345bd00ebcb4a75d32f"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/completion-exemplo-pergunta.mp3",
+      "sha256": "c10f350d02b239ec9ac07266ca19650b9d00fff015acf7d95f6d31ac7ffedc9b",
+      "bytes": 187882,
+      "durationSeconds": 10.684,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p18-20261110",
+        "sourceReference": "source-p18-004-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "completion-exemplo-ajuda",
+      "textSha256": "d7d28409b8113a66f0f82118eedf68c3ce902567a925caf9bacc1dcaf634e344",
+      "bindings": [
+        "game:ed05-EI4-portugues-completion-01:completion:db44c4e143ec2af3a0eef64557020a1ecba77a5d3d38f345bd00ebcb4a75d32f"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/completion-exemplo-ajuda.mp3",
+      "sha256": "b0632c0ea97d169af3fd9b890afde3c62f12eedc508edede2fd8731890bca66a",
+      "bytes": 126442,
+      "durationSeconds": 6.844,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p18-20261110",
+        "sourceReference": "source-p18-005-20261110",
+        "sourceTextVerified": true,
+        "sourceVerification": "generation_history",
+        "independentTranscription": false,
+        "listened": false,
+        "individualAuditoryQuality": "not_assessed",
+        "pilotReference": "voice-pilot-20261110-p00",
+        "technical": {
+          "hashVerified": true,
+          "fullDecodePassed": true,
+          "formatPassed": true
+        }
+      }
+    },
+    {
+      "clipId": "completion-exemplo-explicacao",
+      "textSha256": "f655674459a5bdaa52f6cb8a22e087cce7f90242018b2aa6f149027976075c9d",
+      "bindings": [
+        "game:ed05-EI4-portugues-completion-01:completion:db44c4e143ec2af3a0eef64557020a1ecba77a5d3d38f345bd00ebcb4a75d32f"
+      ],
+      "status": "reviewed",
+      "path": "mission-runtime/narration/audio/completion-exemplo-explicacao.mp3",
+      "sha256": "187db9808c705fb6e2594d71d82779d91ab41122e12138b10952db9570033fee",
+      "bytes": 140234,
+      "durationSeconds": 7.706,
+      "voiceId": "m151rjrbWXbBqyq56tly",
+      "modelLabel": "Eleven v4",
+      "licenseId": "commercial-voice-20261110",
+      "review": {
+        "mode": "approved_voice_pilot + per_file_technical_and_source_checks",
+        "reference": "source-technical-p18-20261110",
+        "sourceReference": "source-p18-006-20261110",
         "sourceTextVerified": true,
         "sourceVerification": "generation_history",
         "independentTranscription": false,

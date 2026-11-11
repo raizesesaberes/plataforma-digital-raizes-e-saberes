@@ -4614,7 +4614,7 @@
     },
     {
       "file": "mission-runtime/narration/asset-registry.mjs",
-      "sha256": "137a838159e9b365e0490ea4ad24ce0d96e4341ff021d4e733afd33155a1f2b8"
+      "sha256": "dfa00aaf244fc68020fbf151902c95b4779476bf3dba04b82d6d49b0e2e496f4"
     },
     {
       "file": "mission-runtime/narration/audio-policy.mjs",
@@ -4991,6 +4991,98 @@
     {
       "file": "mission-runtime/narration/audio/classification-exemplo-explicacao.mp3",
       "sha256": "be7d81d1206fb9905052e7248ea7061a9c7b41c0f1b24f4b6185bcddf8c92cc3"
+    },
+    {
+      "file": "mission-runtime/narration/audio/puzzle-entrada.mp3",
+      "sha256": "b4aa2cfb24087d7b22de71cf8869f9b6877c3fa8b5e9f0cbe4ee2f57e7e8a32d"
+    },
+    {
+      "file": "mission-runtime/narration/audio/puzzle-ajuda.mp3",
+      "sha256": "5a47027714cf83f4f8545e89cd434d2b4a8930c512d24effe77bebbe2115bdc7"
+    },
+    {
+      "file": "mission-runtime/narration/audio/puzzle-celebracao.mp3",
+      "sha256": "06212bd0d70ee2169a5341227264b4613a27ff58c42b50a15a8defa5d0da4936"
+    },
+    {
+      "file": "mission-runtime/narration/audio/puzzle-exemplo-pergunta.mp3",
+      "sha256": "e9c475d35522fb342c1ce351217ea96ced393eda45c61494786d9fbc08075759"
+    },
+    {
+      "file": "mission-runtime/narration/audio/puzzle-exemplo-ajuda.mp3",
+      "sha256": "8145098f8218328f08b2f516456df8b6296796cdf9694ce246d3e5a1881978f4"
+    },
+    {
+      "file": "mission-runtime/narration/audio/puzzle-exemplo-explicacao.mp3",
+      "sha256": "a9296988c46dcfb9bc864ace935f35af5d2f6d1d2e6653412f139ee0c583b292"
+    },
+    {
+      "file": "mission-runtime/narration/audio/word-search-entrada.mp3",
+      "sha256": "5b186a619bd9dad8d7349eda4f25adc4a8543faf7423bdb53af0632040cf5ac1"
+    },
+    {
+      "file": "mission-runtime/narration/audio/word-search-ajuda.mp3",
+      "sha256": "62260e0606bb5cd6b0f80eae0d8c0cd4de75a22f974885d82714fe0a505ed288"
+    },
+    {
+      "file": "mission-runtime/narration/audio/word-search-celebracao.mp3",
+      "sha256": "28146dee4d92c12f030292f017fe2dd9e0bd4d73ead1f583a73c203ad4260e27"
+    },
+    {
+      "file": "mission-runtime/narration/audio/word-search-exemplo-pergunta.mp3",
+      "sha256": "572eb66ec32fba2c610792b3d4a82c33c40448c1a82e5a974f1cafe057d9c448"
+    },
+    {
+      "file": "mission-runtime/narration/audio/word-search-exemplo-ajuda.mp3",
+      "sha256": "baa03b7e63514f826bf658e6d9aa8188e39217ca4049575d1a335a9c537c500b"
+    },
+    {
+      "file": "mission-runtime/narration/audio/crossword-entrada.mp3",
+      "sha256": "be943f50555fe78c50c372335fcadb19b99a76d1512df4288a6d1c64b82644d9"
+    },
+    {
+      "file": "mission-runtime/narration/audio/crossword-ajuda.mp3",
+      "sha256": "138100e4fef58fd7b4d223d3b6594e6124a678f4104e32721710f98804980a2a"
+    },
+    {
+      "file": "mission-runtime/narration/audio/crossword-celebracao.mp3",
+      "sha256": "c0228e02666ad1b59dd308c5ea0f7c10eb6b6c69f2c4b42bfda7b173d81b1c9e"
+    },
+    {
+      "file": "mission-runtime/narration/audio/crossword-exemplo-pergunta.mp3",
+      "sha256": "98eecd0d39429b2114db13c75ef70f0e318d6d7b1f44e7836fc71b7b9a6460dc"
+    },
+    {
+      "file": "mission-runtime/narration/audio/crossword-exemplo-ajuda.mp3",
+      "sha256": "11479e3bb19b48c05d98a61b880bcb5f4efe4bd3d7d10d37d9ceb31f20d4d835"
+    },
+    {
+      "file": "mission-runtime/narration/audio/crossword-exemplo-explicacao.mp3",
+      "sha256": "7c02764286ecb6b1488ba5920c13adb99791af754f5f992fff5fb47681237c45"
+    },
+    {
+      "file": "mission-runtime/narration/audio/completion-entrada.mp3",
+      "sha256": "7534ed066aee52af07b19ba56e30c2b96e03785389fcc77deb7ede8c7394a5c2"
+    },
+    {
+      "file": "mission-runtime/narration/audio/completion-ajuda.mp3",
+      "sha256": "ba000b97782930ab7513075c630c36e87243b2665d3bb38e74dc8effbf3d056f"
+    },
+    {
+      "file": "mission-runtime/narration/audio/completion-celebracao.mp3",
+      "sha256": "b24a8b9de2a56453e7f2b1663dfec7942d57816b77d2823e8128f6d9e2c81e9c"
+    },
+    {
+      "file": "mission-runtime/narration/audio/completion-exemplo-pergunta.mp3",
+      "sha256": "c10f350d02b239ec9ac07266ca19650b9d00fff015acf7d95f6d31ac7ffedc9b"
+    },
+    {
+      "file": "mission-runtime/narration/audio/completion-exemplo-ajuda.mp3",
+      "sha256": "b0632c0ea97d169af3fd9b890afde3c62f12eedc508edede2fd8731890bca66a"
+    },
+    {
+      "file": "mission-runtime/narration/audio/completion-exemplo-explicacao.mp3",
+      "sha256": "187db9808c705fb6e2594d71d82779d91ab41122e12138b10952db9570033fee"
     }
   ]
 }

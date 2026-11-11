@@ -12,16 +12,16 @@ const root=new URL('../../',import.meta.url),read=path=>readFileSync(new URL(pat
 const manifest=JSON.parse(read('scripts/mission-runtime-manifest.json'));
 const colors=JSON.parse(read('mission-runtime/coloring/catalog.json'));
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
-test('local partial admission has exactly 88 real files and six individual reviews',()=>{
- assert.equal(assetRegistry.assets.length,88);assert.equal(assetRegistry.assets.filter(a=>a.review.listened).length,6);
- assert.equal(assetRegistry.assets.filter(a=>!a.review.listened).length,82);assert(Object.isFrozen(assetRegistry));
- assert.equal(assetRegistry.release.approvalRef,'carla-local-p00-p14-20261110');
+test('local partial admission has exactly 111 real files and six individual reviews',()=>{
+ assert.equal(assetRegistry.assets.length,111);assert.equal(assetRegistry.assets.filter(a=>a.review.listened).length,6);
+ assert.equal(assetRegistry.assets.filter(a=>!a.review.listened).length,105);assert(Object.isFrozen(assetRegistry));
+ assert.equal(assetRegistry.release.approvalRef,'carla-local-p00-p18-20261110');
  for(const a of assetRegistry.assets){assert(Object.isFrozen(a.review));assert.equal(a.review.independentTranscription,false);assert.equal(a.review.sourceVerification,'generation_history');if(a.review.listened)assert.equal(a.review.reference,'voice-pilot-20261110-p00');else{assert.equal(a.review.pilotReference,'voice-pilot-20261110-p00');assert.equal(a.review.individualAuditoryQuality,'not_assessed');}}
 });
 test('all local files match exact published byte counts, hashes and allowlist',()=>{
  const result=validateCarlaAudio({root:root.pathname, runtimeManifest:manifest.files});
- assert.equal(result.assets,88);assert.equal(result.bytes,10351141);
- assert.equal(manifest.files.filter(e=>e.file.startsWith('mission-runtime/narration/audio/')).length,88);
+ assert.equal(result.assets,111);assert.equal(result.bytes,13306114);
+ assert.equal(manifest.files.filter(e=>e.file.startsWith('mission-runtime/narration/audio/')).length,111);
  for(const a of assetRegistry.assets){assert.equal(read(a.path).length,a.bytes);assert.equal(sha(read(a.path)),a.sha256);}
 });
 test('registry contains only explicitly allowed public metadata',()=>{
@@ -54,8 +54,8 @@ for(const asset of assetRegistry.assets.filter(a=>a.bindings[0].startsWith('colo
 test('all Colorir is available but later game batches remain absent',async()=>{
  for(const theme of colors){const cue=await coloringCue(theme,'2-3','welcome');assert(cue);assert(resolveAsset(cue));}
  assert.equal(assetRegistry.assets.filter(a=>a.bindings[0].startsWith('coloring:')).length,57);
- assert(!assetRegistry.assets.some(a=>a.clipId.startsWith('puzzle-')));
- assert.equal(editorialClips().length-assetRegistry.assets.length,29);
+ assert(!assetRegistry.assets.some(a=>a.clipId.startsWith('trail-')));
+ assert.equal(editorialClips().length-assetRegistry.assets.length,6);
 });
 
 
@@ -115,4 +115,33 @@ for(const phase of ['content','text'])test('batch rejects state mutation during 
   while(!release)await new Promise(resolve=>setTimeout(resolve,1));
   session.feedback='correct';release();assert.deepEqual(await pending,[]);assert(intercepted);
  }finally{crypto.subtle.digest=original;release?.();}
+});
+
+// Exercise actual released game bytes with the same controller and exact content
+// gates. Media is a test double, so this is not a browser or listening claim.
+for (const asset of assetRegistry.assets.filter(a => a.bindings[0].startsWith('game:'))) test('real game bytes pass exact gates and hash before simulated media: ' + asset.clipId, async () => {
+ const id = asset.bindings[0].split(':')[1], example = approvedCopy.examples[id];
+ const entry = catalog.find(c => c.id === id);
+ const content = expandAssets(JSON.parse(read('mission-runtime/studio/' + entry.runtimeFile)));
+ const session = {content, questionIndex: 0, feedback: null, matched: [], flipped: [], correct: 0, complete: false};
+ const motor = approvedCopy.motors[example.template];
+ if (asset.clipId === motor.finish.id) session.complete = true;
+ if (asset.clipId === example.after.id) {
+  assert.equal(await gameCue(session, asset.clipId), null);
+  session.matched = [example.itemId];
+  session.feedback = ['quiz', 'trail'].includes(example.template) ? 'correct' : null;
+  session.complete = ['sequence', 'puzzle'].includes(example.template);
+ }
+ if (asset.clipId === example.help.id && example.template === 'memory') session.flipped = ['qa-visible-card'];
+ const cue = await gameCue(session, asset.clipId);
+ assert(cue); assert.equal(resolveAsset(cue), asset);
+ const document = new EventTarget(); document.hidden = false;
+ const window = new EventTarget(); window.location = {origin: 'https://local.test'};
+ const audio = new MediaDouble(); let revoked = false;
+ const player = new StaticNarrator({document, window, musicPlaying: () => false,
+  fetch: async url => { assert.equal(new URL(url).pathname, '/' + asset.path); return new Response(read(asset.path)); },
+  makeAudio: () => audio, urls: {createObjectURL: () => 'blob:qa-only', revokeObjectURL: () => {revoked = true;}}});
+ try { player.setContext(cue.clipId, () => true); assert.equal(await player.play(cue, {type: 'click', isTrusted: true}), true);
+  assert.equal(audio.paused, false); player.stop(); assert(audio.paused && revoked);
+ } finally {player.dispose();}
 });
