@@ -1,3 +1,4 @@
+import {syncFormationPanel} from './navigation.mjs';
 import {createTrainingClient, SESSION_KEY, TOKEN_KEY, formatDuration, groupLessons, hierarchyKey} from './client.mjs';
 const main = document.querySelector('#formation-main');
 const announcer = document.querySelector('#announcer');
@@ -21,7 +22,7 @@ const collectionCover = lesson => lesson?.hierarchy.collection === 'Avalia+' && 
 
 let catalog = null, selected = null, requestController = null, mediaController = null, loadVersion = 0, mediaVersion = 0;
 const lessonFilters = {query: '', collection: '', subject: '', schoolYear: '', volume: '', unit: ''};
-let pendingMedia = false, lastKind = 'video', resumeTime = 0;
+let pendingMedia = false, lastKind = 'video', resumeTime = 0, signoutBlocked = false;
 const loginHref = 'login.html?auth=supabase&next=formacao.html';
 const announce = message => { announcer.textContent = message; };
 function disposeMedia() {
@@ -43,8 +44,7 @@ function renderGate(kind) {
   };
   const s = states[kind] || states.error;
   main.innerHTML = `<div class="page-width gate-page">${hero()}<section class="access-card" aria-labelledby="access-title" ${kind === 'loading' ? 'aria-busy="true"' : ''}><div class="access-icon">${icon(kind === 'error' ? 'refresh' : 'lock')}</div><div class="access-copy"><span class="section-eyebrow">${s.tag}</span><h2 id="access-title">${s.title}</h2><p>${s.body}</p><div class="access-actions">${s.action}<a class="text-link" href="universidade.html#catalogo">Explorar cursos gratuitos ${icon('arrow')}</a></div><small>${icon('shield')}${s.note}</small></div></section>${structure}<a class="personal-link" href="personal-learning.html">Meus cursos e certificados ${icon('arrow')}</a></div>`;
-  document.querySelector('#panel-link').href = 'plataforma.html';
-  document.querySelector('#panel-link').innerHTML = 'Voltar à plataforma <span aria-hidden="true">→</span>';
+  syncFormationPanel(null);
   announce(kind === 'loading' ? 'Verificando acesso à formação.' : s.title);
 }
 const normalizeSearch = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -77,8 +77,7 @@ function renderWorkspace() {
   disposeMedia();
   const collections = groupLessons(catalog.lessons).size;
   const units = new Set(catalog.lessons.map(hierarchyKey)).size;
-  document.querySelector('#panel-link').href = catalog.actor === 'admin' ? 'admin.html' : 'professor.html?view=formacao';
-  document.querySelector('#panel-link').innerHTML = `Voltar ao ${catalog.actor === 'admin' ? 'painel' : 'professor'} <span aria-hidden="true">→</span>`;
+  syncFormationPanel(catalog.actor);
   if (!catalog.lessons.length) {
     main.innerHTML = `<div class="page-width">${hero(true)}<section class="empty-catalog"><span class="access-icon">${icon('book')}</span><span class="section-eyebrow">SEU ESPAÇO ESTÁ PRONTO</span><h2>As próximas aulas chegarão por aqui.</h2><p>Seu acesso foi verificado. Ainda não há aulas publicadas disponíveis para o seu vínculo.</p><button class="button button-primary" data-retry>Consultar novamente ${icon('refresh')}</button><a class="text-link" href="universidade.html#catalogo">Explorar cursos gratuitos ${icon('arrow')}</a></section></div>`;
     return;
@@ -135,6 +134,7 @@ async function startMedia(kind) {
   }
 }
 async function loadCatalog() {
+  if (signoutBlocked) return;
   requestController?.abort(); requestController = new AbortController();
   const version = ++loadVersion;
   if (!client.hasSession()) { renderGate('session'); return; }
@@ -161,6 +161,8 @@ main.addEventListener('click', event => {
 });
 main.addEventListener('input', event => { const key = event.target.dataset.lessonFilter; if (key in lessonFilters) { lessonFilters[key] = event.target.value; updateLessonResults(); } });
 window.addEventListener('popstate', () => { if (catalog?.lessons.length) selectLesson(catalog.lessons.find(item => item.id === new URL(location.href).searchParams.get('aula'))?.id || catalog.lessons[0].id, {history: false}); });
+// A denied storage write must not reload private content with the old session.
+window.addEventListener('formation:signout-blocked', () => { signoutBlocked = true; loadVersion++; requestController?.abort(); disposeMedia(); catalog = null; selected = null; main.replaceChildren(); });
 window.addEventListener('storage', event => { if (event.key === null || event.key === SESSION_KEY || event.key === TOKEN_KEY) loadCatalog(); });
 window.addEventListener('pagehide', () => { loadVersion++; requestController?.abort(); disposeMedia(); });
 window.addEventListener('pageshow', event => { if (event.persisted) loadCatalog(); });

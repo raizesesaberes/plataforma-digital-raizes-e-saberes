@@ -4,15 +4,15 @@
   "files": [
     {
       "file": "formacao.html",
-      "sha256": "4c8f49b8770840cf6c9befecec94c396c56feea3df70ff035a1675512102cf60"
+      "sha256": "3e7bed4ed1da32b61d8d83201b33eee0ba1950177fa06ea433a882eb655740e5"
     },
     {
       "file": "personal-learning.html",
-      "sha256": "d38e31aaa1fa3852f05f652d8f4ca454efe8b3c9d8d9a1b59336e75c2d790908"
+      "sha256": "b56f891fbacc8c9a475478c9d303ba10f596f89e4a546f39367824b0a99c78a6"
     },
     {
       "file": "formacao-runtime/app.mjs",
-      "sha256": "177d2cba1893697d44d2f2b7ded9100acdf95c70ea5f65b3c40bf84f086c8dea"
+      "sha256": "a3c8d637870faf4f39c310cca433d3e9fb18f4b11d9e6367134c9ee3702c4936"
     },
     {
       "file": "formacao-runtime/client.mjs",
@@ -40,7 +40,11 @@
     },
     {
       "file": "formacao-runtime/gateway.css",
-      "sha256": "0f2b7edb43a01d641bf46f028651e94b2839cc3f7680e4ae4cb5719e92c0e8dc"
+      "sha256": "d2c280fef2297f1b5c16bfeb2518b472ddeb2f4590f3d170200eea4fe605e8a7"
+    },
+    {
+      "file": "formacao-runtime/navigation.mjs",
+      "sha256": "6da2b0ec0a6b280e0539d48db7942dfbdf4b87e05b38b48ca29b2c2aa087f7b7"
     },
     {
       "file": "formacao-runtime/session.mjs",
@@ -52,7 +56,7 @@
     },
     {
       "file": "personal-learning-runtime/app.mjs",
-      "sha256": "8c397e848a97cd17d648f5cd8e8cd4c050ab0ced6c3f4a0ab28107bf9723b051"
+      "sha256": "7c8fff728beb23fb90e69ac60be94c50b3687574d89db732e9df11e6e8d0d261"
     },
     {
       "file": "personal-learning-runtime/client.mjs",

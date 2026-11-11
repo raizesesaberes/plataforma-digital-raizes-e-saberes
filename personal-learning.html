@@ -14,17 +14,41 @@
 </head>
 <body class="fd-personal-page">
   <a class="skip" href="#main">Pular para o conteúdo</a>
+  <div class="fd-formation-shell" data-formation-shell>
+    <aside class="fd-platform-sidebar" id="formation-navigation" aria-label="Menu da formação" tabindex="-1">
+      <div class="fd-sidebar-heading"><a class="fd-sidebar-logo" href="universidade.html" aria-label="Raízes e Saberes, Universidade"><img src="logo-sidebar-dark.png" width="160" height="124" alt="Raízes e Saberes" /></a><button type="button" class="fd-menu-close" data-formation-menu-close aria-label="Fechar menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div>
+      <p class="fd-sidebar-label" id="formation-navigation-title">Formação docente</p>
+      <nav class="fd-platform-nav" aria-label="Áreas da formação">
+          <a href="universidade.html"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-7h6v7"/></svg><span>Universidade</span></a>
+          <a href="formacao.html"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5C9 3 5 3 2 4v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Zm0 0v15"/></svg><span>Nossas coleções</span></a>
+          <a href="universidade.html#catalogo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3h7v7m0-7L10 14M10 5H4v15h15v-6"/></svg><span>Cursos externos</span></a>
+          <a href="personal-learning.html" aria-current="page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M8 7h8M8 11h5m1 6v5l3-2 3 2v-5"/></svg><span>Meus cursos e certificados</span></a>
+      </nav>
+      <div class="fd-sidebar-return"><a data-personal-panel href="professor.html" hidden>Voltar ao painel do professor</a></div>
+    </aside>
+    <div class="fd-menu-overlay" data-formation-menu-overlay hidden aria-hidden="true"></div>
+    <div class="fd-formation-content" data-formation-content>
   <header class="site-header app-topbar fd-platform-header"><div class="header-inner">
     <a class="brand" href="universidade.html" aria-label="Raízes e Saberes, Universidade"><img src="logo-horizontal-light.png" width="190" height="81" alt="Raízes e Saberes" /></a>
     <span class="brand-label">UNIVERSIDADE<strong>Meus cursos</strong></span>
-    <nav class="header-nav module-switcher" aria-label="Módulos da formação"><a href="universidade.html">Universidade</a><a href="formacao.html">Nossas coleções</a><a href="universidade.html#catalogo">Cursos externos</a><a class="header-back" href="plataforma.html">Voltar à plataforma →</a></nav>
+      <button class="fd-menu-toggle" type="button" data-formation-menu-toggle aria-expanded="false" aria-controls="formation-navigation"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Menu</span></button>
+      <nav class="header-nav fd-global-actions" aria-label="Navegação global">
+        <button type="button" data-formation-back><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12H4m6-6-6 6 6 6"/></svg><span>Voltar</span></button>
+        <a href="universidade.html" data-formation-home><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-7h6v7"/></svg><span>Início</span></a>
+        <button type="button" data-formation-logout hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3H4v18h5m5-15 6 6-6 6m-5-6h11"/></svg><span>Sair</span></button>
+        <a href="login.html?auth=supabase&amp;next=personal-learning.html" data-formation-login>Entrar</a>
+      </nav>
   </div></header>
+  <p class="fd-session-status" data-formation-session-status role="status" hidden></p>
   <main id="main" tabindex="-1"><div class="loading" role="status">Abrindo seu espaço pessoal…</div></main>
   <footer><span>Raízes e Saberes · Universidade</span><span>Seu percurso, organizado com cuidado.</span></footer>
+    </div>
+  </div>
   <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
   <dialog id="course-dialog" aria-labelledby="editor-title"></dialog>
   <noscript><p class="noscript">Ative o JavaScript e entre com sua conta da plataforma para gerenciar seus cursos.</p></noscript>
   <script src="supabase-config.js"></script>
+  <script type="module" src="formacao-runtime/navigation.mjs"></script>
   <script type="module" src="personal-learning-runtime/app.mjs?v=20261111"></script>
 </body>
 </html>

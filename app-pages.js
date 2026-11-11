@@ -20,6 +20,7 @@ const prefersFileRoutes = () =>
   typeof window !== "undefined" &&
   (window.location.protocol === "file:" || ["localhost", "127.0.0.1", ""].includes(window.location.hostname));
 const platformRoute = (cleanPath, filePath) => (prefersFileRoutes() ? filePath : cleanPath);
+const formationHomeHref = platformRoute("/universidade", "universidade.html");
 const platformRoleHome = {
   professor: platformRoute("/professor", "professor.html"),
   aluno: platformRoute("/aluno", "aluno.html"),
@@ -3821,7 +3822,7 @@ const teacherWorkspaceNav = [
   ["biblioteca", "Biblioteca", "book"],
   ["conteudos", "Meus conteúdos", "book", "conteudos-categorias.html"],
   ["acompanhamento", "Acompanhamento", "chart"],
-  ["formação", "Formação", "cap"],
+  ["formação", "Formação", "cap", formationHomeHref],
 ];
 
 const teacherWorkspaceViewAliases = {
@@ -3831,9 +3832,12 @@ const teacherWorkspaceViewAliases = {
   "relatórios": "relatorios",
 };
 
+const isTeacherFormationView = (view = "") =>
+  ["formacao", "universidade"].includes(String(view || "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase());
+
 const normalizeTeacherWorkspaceView = (view = "") => {
   const key = String(view || "inicio").trim() || "inicio";
-  return teacherWorkspaceViewAliases[key] || key;
+  return isTeacherFormationView(key) ? "formação" : teacherWorkspaceViewAliases[key] || key;
 };
 
 const teacherAllowedRoles = ["professor", "teacher", "admin", "gestor", "coordenador"];
@@ -7374,21 +7378,6 @@ const renderFormationGateway = () => `
   </section>
 `;
 
-const renderTeacherFormationView = () => `
-  <section class="tw-board tw-formation-shell" aria-label="Formação docente">
-    <link rel="stylesheet" href="formacao-runtime/gateway.css?v=20261111" />
-    <section class="university-public-hero" aria-labelledby="teacher-formation-title">
-      <div><span>Universidade Raízes e Saberes</span><h1 id="teacher-formation-title">Seu próximo passo na formação.</h1><p>Escolha por onde começar.</p></div>
-      <img src="formacao-runtime/editorial-aprendizagem.svg" alt="" width="800" height="500" />
-    </section>
-    <nav class="fd-entry-cards" aria-label="Áreas da formação docente">
-      <a href="formacao.html"><img src="formacao-runtime/editorial-praticas.svg" alt="" width="800" height="500" /><h2>Nossas coleções</h2><p>Encontre as aulas por coleção, componente e ano.</p><strong>Explorar as aulas →</strong></a>
-      <a href="universidade.html?from=teacher#catalogo"><img src="formacao-runtime/editorial-inclusao.svg" alt="" width="800" height="500" /><h2>Cursos externos</h2><p>Pesquise cursos gratuitos de outras instituições.</p><strong>Buscar cursos →</strong></a>
-      <a href="personal-learning.html"><img src="formacao-runtime/editorial-tecnologia.svg" alt="" width="800" height="500" /><h2>Meus cursos e certificados</h2><p>Organize seus estudos e certificados em um só lugar.</p><strong>Abrir meu espaço →</strong></a>
-    </nav>
-  </section>
-`;
-
 const initTeacherMessages = () => {
  const root=document.querySelector('[data-teacher-messages]');if(!root)return;
  window.TeacherMessages?.mount(root,{
@@ -7486,7 +7475,7 @@ const renderTeacherQuickActions = () => `
       { label: "AVALIA+", icon: "avalia", view: "avaliacoes", tone: "blue" },
       { label: "BIBLIOTECA", icon: "book", view: "biblioteca", tone: "orange" },
       { label: "ACOMPANHAMENTO", icon: "portfolio", view: "acompanhamento", tone: "purple" },
-      { label: "FORMACAO", icon: "cap", view: "formação", tone: "teal" },
+      { label: "FORMACAO", icon: "cap", href: formationHomeHref, tone: "teal" },
     ]
       .map((item) => `<button type="button" class="quick-action is-${item.tone}" ${item.href ? `data-teacher-open-url="${item.href}"` : `data-teacher-view="${item.view}"`}>${premiumIcon(item.icon)}<span>${item.label}</span></button>`)
       .join("")}
@@ -10792,6 +10781,8 @@ const getStudentFirstName = () => {
 
 const renderTeacherWorkspaceView = (view) => {
   const normalizedView = normalizeTeacherWorkspaceView(view);
+  // Formation has one canonical page; legacy workspace views are navigation aliases only.
+  if (isTeacherFormationView(normalizedView)) return "";
   const { books, experiences, activities } = getTeacherBibliotecaResources();
   const institutionalClasses = getTeacherInstitutionalClasses();
   const institutionalStudents = getTeacherInstitutionalStudents();
@@ -10907,12 +10898,6 @@ const renderTeacherWorkspaceView = (view) => {
         <div class="tw-section-head"><h2>Relatórios</h2><button type="button" data-teacher-view="inicio">Voltar</button></div>
         ${renderTeacherReportsView()}
       </section>
-    `,
-    formação: `
-      ${renderTeacherFormationView()}
-    `,
-    universidade: `
-      ${renderTeacherFormationView()}
     `,
     configuracoes: `
       <section class="tw-board tw-placeholder"><h2>Configurações</h2><p>Preferências do workspace, notificações e atalhos ficarão aqui.</p></section>
@@ -19737,11 +19722,6 @@ const modules = {
     code: "MS-008",
     html: `
       <div class="university-catalog-platform" data-course-catalog>
-        ${
-          getPrintableParams().get("from") === "teacher"
-            ? `<a class="university-teacher-return" href="professor.html?view=formacao">VOLTAR PARA ÁREA DO PROFESSOR</a>`
-            : ""
-        }
         <link rel="stylesheet" href="formacao-runtime/gateway.css?v=20261111" />
         <div data-university-home>
           <div class="fd-home-intro">
@@ -20643,7 +20623,7 @@ const environments = {
     profileImage: "logo-sidebar-dark.png",
     nav: [
       ["heading", "Formação Raízes e Saberes", "#"],
-      ["universidade", "Início", "universidade.html#formacao-raizes"],
+      ["universidade", "Início", "universidade.html"],
       ["trilhas", "Formação docente", "formacao.html"],
       ["cursos", "Meus cursos", "personal-learning.html"],
       ["certificados", "Meus certificados", "personal-learning.html"],
@@ -32471,6 +32451,12 @@ const initTeacherWorkspace = () => {
 
   const openView = (view, { updateUrl = true } = {}) => {
     const normalizedView = getValidTeacherView(view);
+    if (isTeacherFormationView(normalizedView)) {
+      const missionHost = content?.querySelector('[data-institutional-mission]');
+      if (missionHost?.missionCanLeave && !missionHost.missionCanLeave()) return;
+      window.location[updateUrl ? "assign" : "replace"](formationHomeHref);
+      return;
+    }
     if (!content) {
       if (!updateUrl) return;
       const params = new URLSearchParams({ view: normalizedView });
@@ -32593,6 +32579,10 @@ const initTeacherWorkspace = () => {
   workspace.addEventListener("click", async (event) => {
     const urlButton = event.target.closest("[data-teacher-open-url]");
     if (urlButton) {
+      if (urlButton.dataset.teacherOpenUrl === formationHomeHref) {
+        const missionHost = content?.querySelector('[data-institutional-mission]');
+        if (missionHost?.missionCanLeave && !missionHost.missionCanLeave()) return;
+      }
       window.location.href = urlButton.dataset.teacherOpenUrl;
       return;
     }
@@ -34452,6 +34442,11 @@ const renderAppPage = () => {
     window.location.replace(getRoleHome(currentRole));
     return;
   }
+  if (activeKey === "professor" && isTeacherFormationView(new URLSearchParams(window.location.search).get("view"))) {
+    // Replace bookmarked/Back-Forward aliases without mounting the retired teacher entrance.
+    window.location.replace(formationHomeHref);
+    return;
+  }
   document.title = `${activeModule.title} | Raízes e Saberes`;
   maybeRefreshContentGovernancePage(activeKey);
   rememberCurrentPlatformRoute();
@@ -34628,9 +34623,10 @@ const renderAppPage = () => {
       ? `<div class="top-actions secretaria-top-actions" aria-label="Ações da Secretaria"><button type="button" data-secretaria-back>${secretariaInlineIcon("progresso", "VOLTAR")}</button><button type="button" data-platform-home>${secretariaInlineIcon("home", "INICIO")}</button><a href="escola.html">${secretariaInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${secretariaInlineIcon("sair", "SAIR")}</button></div>`
     : environmentKey === "bancoQuestoes"
       ? `<div class="admin-topbar-actions" aria-label="Navegação global"><button type="button" data-platform-back>${adminInlineIcon("back", "VOLTAR")}</button><button type="button" data-platform-home>${adminInlineIcon("home", "INICIO")}</button><a class="admin-topbar-link" href="escola.html">${adminInlineIcon("escola", "MINHA ESCOLA")}</a><button type="button" data-platform-logout>${adminInlineIcon("sair", "SAIR")}</button></div>`
+    : environmentKey === "universidade"
+      ? `<nav class="rs-global-actions" aria-label="Navegação da formação"><a href="${currentRole ? getRoleHome(currentRole) : platformRoute("/", "index.html")}">${adminInlineIcon("back", currentRole ? "Voltar ao painel" : "Voltar ao site")}</a><a href="${formationHomeHref}">${adminInlineIcon("home", "Início")}</a>${currentRole ? `<button type="button" data-platform-logout>${adminInlineIcon("sair", "Sair")}</button>` : '<a href="login.html?next=universidade.html">Entrar</a>'}</nav>`
     : currentRole
       ? `<div class="rs-global-actions" aria-label="Navegação global"><button type="button" data-platform-back>${adminInlineIcon("back", "Voltar")}</button><button type="button" data-platform-home>${adminInlineIcon("home", "Início")}</button><button type="button" data-platform-logout>${adminInlineIcon("sair", "Sair")}</button></div>`
-    : environmentKey === "universidade" ? `<nav class="rs-global-actions" aria-label="Navegação global"><a href="plataforma.html">Início</a><a href="login.html?next=universidade.html">Entrar</a></nav>`
     : `<div class="top-actions" aria-label="Ações"><span class="notif">3</span><span class="notif">2</span><div class="user-chip">${environment.avatar ? `<img src="${environment.avatar}" alt="" />` : `<span>${shellUserFallback}</span>`}<strong>${shellUserLabel}</strong></div></div>`;
   const topbarClass = environmentKey === "bancoQuestoes" ? "app-topbar admin-topbar" : "app-topbar";
   const topbarMenu = currentRole || studentWorkspaceShell || ["bancoQuestoes", "escola"].includes(environmentKey) ? "" : `<a class="icon-button menu-toggle" href="${shellHomeHref}" aria-label="Início">☰</a>`;

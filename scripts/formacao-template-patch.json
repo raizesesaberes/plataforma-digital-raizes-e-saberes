@@ -1,9 +1,43 @@
 {
   "schema": 1,
-  "reviewedSha256": "083e1b3d287570a51e0e3be2686d040351f2755c8435d653d076aea2fb67a282",
+  "reviewedSha256": "3114bbeb5f89c5e72c528119952e6553c48a1d37a27f330fc5a63dcdb45341e2",
   "patches": [
     {
-      "start": 7261,
+      "start": 22,
+      "approved": [
+        "const formationHomeHref = platformRoute(\"/universidade\", \"universidade.html\");\n"
+      ],
+      "baseline": []
+    },
+    {
+      "start": 3824,
+      "approved": [
+        "  [\"formação\", \"Formação\", \"cap\", formationHomeHref],\n"
+      ],
+      "baseline": [
+        "  [\"formação\", \"Formação\", \"cap\"],\n"
+      ]
+    },
+    {
+      "start": 3834,
+      "approved": [
+        "const isTeacherFormationView = (view = \"\") =>\n",
+        "  [\"formacao\", \"universidade\"].includes(String(view || \"\").trim().normalize(\"NFD\").replace(/[\\u0300-\\u036f]/g, \"\").toLowerCase());\n",
+        "\n"
+      ],
+      "baseline": []
+    },
+    {
+      "start": 3839,
+      "approved": [
+        "  return isTeacherFormationView(key) ? \"formação\" : teacherWorkspaceViewAliases[key] || key;\n"
+      ],
+      "baseline": [
+        "  return teacherWorkspaceViewAliases[key] || key;\n"
+      ]
+    },
+    {
+      "start": 7265,
       "approved": [
         "// Reviewed source metadata: data/curation_batches/2026-11-11-formacao-verificada.json.\n",
         "// These cards open the current public detail, never imply enrollment or certification here.\n"
@@ -11,7 +45,7 @@
       "baseline": []
     },
     {
-      "start": 7265,
+      "start": 7269,
       "approved": [
         "    title: \"Docência Plural - Formação em Interculturalidade e Bilinguismo\",\n"
       ],
@@ -20,7 +54,7 @@
       ]
     },
     {
-      "start": 7267,
+      "start": 7271,
       "approved": [
         "    category: \"Inclusão e diversidade\",\n"
       ],
@@ -29,7 +63,7 @@
       ]
     },
     {
-      "start": 7269,
+      "start": 7273,
       "approved": [
         "    status: \"Fonte oficial consultada em 11/11/2026\",\n",
         "    certificate: \"Certificado gratuito Enap, sujeito ao Guia do Participante e ao prazo de 60 dias após inscrição.\",\n",
@@ -44,7 +78,7 @@
       ]
     },
     {
-      "start": 7279,
+      "start": 7283,
       "approved": [
         "    status: \"Fonte oficial consultada em 11/11/2026\",\n",
         "    certificate: \"Conteúdo Banco Central; certificado gratuito Enap, sujeito ao Guia do Participante e ao prazo de 60 dias.\",\n",
@@ -59,7 +93,7 @@
       ]
     },
     {
-      "start": 7285,
+      "start": 7289,
       "approved": [
         "    title: \"Inclusão e Acessibilidade na Educação\",\n"
       ],
@@ -68,7 +102,7 @@
       ]
     },
     {
-      "start": 7287,
+      "start": 7291,
       "approved": [
         "    category: \"Educação inclusiva\",\n"
       ],
@@ -77,7 +111,7 @@
       ]
     },
     {
-      "start": 7289,
+      "start": 7293,
       "approved": [
         "    status: \"Fonte oficial consultada em 11/11/2026\",\n",
         "    certificate: \"Certificado anunciado pelo Mundi/IFSul. Consulte os critérios de aprovação no ambiente do curso.\",\n",
@@ -102,7 +136,7 @@
       ]
     },
     {
-      "start": 7311,
+      "start": 7315,
       "approved": [
         "    href: \"universidade.html?from=teacher#centro-educacao-inclusiva\",\n"
       ],
@@ -111,7 +145,7 @@
       ]
     },
     {
-      "start": 7330,
+      "start": 7334,
       "approved": [],
       "baseline": [
         "const teacherFormationPaths = [\n",
@@ -124,7 +158,7 @@
       ]
     },
     {
-      "start": 7338,
+      "start": 7342,
       "approved": [
         "      <a class=\"tw-primary-link\" href=\"${printableEscape(course.href)}\">VER DETALHES DO CURSO</a>\n"
       ],
@@ -133,7 +167,7 @@
       ]
     },
     {
-      "start": 7353,
+      "start": 7357,
       "approved": [
         "const renderFormationGateway = () => `\n",
         "  <link rel=\"stylesheet\" href=\"formacao-runtime/gateway.css?v=20261111\" />\n",
@@ -144,48 +178,39 @@
         "      <p>Aprofunde seu trabalho com as coleções Raízes e Saberes. Encontre as orientações de cada aula em um espaço organizado para acompanhar seu planejamento.</p>\n",
         "      <div class=\"fd-actions\">\n",
         "        <a class=\"fd-primary\" href=\"formacao.html\">Acessar minha formação <span aria-hidden=\"true\">→</span></a>\n",
-        "        <a class=\"fd-secondary\" href=\"personal-learning.html\">Meus cursos e certificados <span aria-hidden=\"true\">↗</span></a>\n",
-        "      </div>\n",
-        "      <p class=\"fd-access-note\">Use a mesma conta da plataforma para acessar as aulas das coleções.</p>\n",
-        "    </div>\n",
+        "        <a class=\"fd-secondary\" href=\"personal-learning.html\">Meus cursos e certificados <span aria-hidden=\"true\">↗</span></a>\n"
+      ],
+      "baseline": [
+        "const renderTeacherFormationView = () => `\n",
+        "  <section class=\"tw-board tw-formation-shell\">\n",
+        "    <div class=\"tw-planning-heading\">\n",
+        "      <div>\n",
+        "        <span>Formação</span>\n",
+        "        <h2>Universidade Raízes e Saberes</h2>\n",
+        "        <p>Cursos, trilhas e materiais selecionados para apoiar sua formação continuada.</p>\n"
+      ]
+    },
+    {
+      "start": 7368,
+      "approved": [
+        "      <p class=\"fd-access-note\">Use a mesma conta da plataforma para acessar as aulas das coleções.</p>\n"
+      ],
+      "baseline": [
+        "      <button type=\"button\" data-teacher-open-url=\"universidade.html?from=teacher\">ABRIR UNIVERSIDADE</button>\n"
+      ]
+    },
+    {
+      "start": 7370,
+      "approved": [
         "    <ol class=\"fd-hierarchy\" aria-label=\"Organização das aulas\">\n",
         "      <li><span>01</span>Coleção</li>\n",
         "      <li><span>02</span>Ano / faixa etária</li>\n",
         "      <li><span>03</span>Volume</li>\n",
         "      <li><span>04</span>Unidade</li>\n",
         "      <li><span>05</span>Aula</li>\n",
-        "    </ol>\n",
-        "  </section>\n",
-        "`;\n",
-        "\n"
-      ],
-      "baseline": []
-    },
-    {
-      "start": 7377,
-      "approved": [
-        "  <section class=\"tw-board tw-formation-shell\" aria-label=\"Formação docente\">\n",
-        "    <link rel=\"stylesheet\" href=\"formacao-runtime/gateway.css?v=20261111\" />\n",
-        "    <section class=\"university-public-hero\" aria-labelledby=\"teacher-formation-title\">\n",
-        "      <div><span>Universidade Raízes e Saberes</span><h1 id=\"teacher-formation-title\">Seu próximo passo na formação.</h1><p>Escolha por onde começar.</p></div>\n",
-        "      <img src=\"formacao-runtime/editorial-aprendizagem.svg\" alt=\"\" width=\"800\" height=\"500\" />\n",
-        "    </section>\n",
-        "    <nav class=\"fd-entry-cards\" aria-label=\"Áreas da formação docente\">\n",
-        "      <a href=\"formacao.html\"><img src=\"formacao-runtime/editorial-praticas.svg\" alt=\"\" width=\"800\" height=\"500\" /><h2>Nossas coleções</h2><p>Encontre as aulas por coleção, componente e ano.</p><strong>Explorar as aulas →</strong></a>\n",
-        "      <a href=\"universidade.html?from=teacher#catalogo\"><img src=\"formacao-runtime/editorial-inclusao.svg\" alt=\"\" width=\"800\" height=\"500\" /><h2>Cursos externos</h2><p>Pesquise cursos gratuitos de outras instituições.</p><strong>Buscar cursos →</strong></a>\n",
-        "      <a href=\"personal-learning.html\"><img src=\"formacao-runtime/editorial-tecnologia.svg\" alt=\"\" width=\"800\" height=\"500\" /><h2>Meus cursos e certificados</h2><p>Organize seus estudos e certificados em um só lugar.</p><strong>Abrir meu espaço →</strong></a>\n",
-        "    </nav>\n"
+        "    </ol>\n"
       ],
       "baseline": [
-        "  <section class=\"tw-board tw-formation-shell\">\n",
-        "    <div class=\"tw-planning-heading\">\n",
-        "      <div>\n",
-        "        <span>Formação</span>\n",
-        "        <h2>Universidade Raízes e Saberes</h2>\n",
-        "        <p>Cursos, trilhas e materiais selecionados para apoiar sua formação continuada.</p>\n",
-        "      </div>\n",
-        "      <button type=\"button\" data-teacher-open-url=\"universidade.html?from=teacher\">ABRIR UNIVERSIDADE</button>\n",
-        "    </div>\n",
         "    <div class=\"tw-formation-overview\">\n",
         "      ${renderTeacherTrackingMetric(\"Cursos disponiveis\", String(teacherFormationCourses.length), \"Curadoria real ja preservada\", \"cap\")}\n",
         "      ${renderTeacherTrackingMetric(\"Trilhas\", String(teacherFormationPaths.length), \"Percursos preparados por tema\", \"map\")}\n",
@@ -240,7 +265,36 @@
       ]
     },
     {
-      "start": 19735,
+      "start": 7477,
+      "approved": [
+        "      { label: \"FORMACAO\", icon: \"cap\", href: formationHomeHref, tone: \"teal\" },\n"
+      ],
+      "baseline": [
+        "      { label: \"FORMACAO\", icon: \"cap\", view: \"formação\", tone: \"teal\" },\n"
+      ]
+    },
+    {
+      "start": 10783,
+      "approved": [
+        "  // Formation has one canonical page; legacy workspace views are navigation aliases only.\n",
+        "  if (isTeacherFormationView(normalizedView)) return \"\";\n"
+      ],
+      "baseline": []
+    },
+    {
+      "start": 10900,
+      "approved": [],
+      "baseline": [
+        "    `,\n",
+        "    formação: `\n",
+        "      ${renderTeacherFormationView()}\n",
+        "    `,\n",
+        "    universidade: `\n",
+        "      ${renderTeacherFormationView()}\n"
+      ]
+    },
+    {
+      "start": 19720,
       "approved": [
         "    subtitle: \"Coleções, cursos e seu percurso de formação\",\n"
       ],
@@ -249,7 +303,7 @@
       ]
     },
     {
-      "start": 19744,
+      "start": 19724,
       "approved": [
         "        <link rel=\"stylesheet\" href=\"formacao-runtime/gateway.css?v=20261111\" />\n",
         "        <div data-university-home>\n",
@@ -271,6 +325,11 @@
         "              ${teacherFormationCourses.slice(0, 2).map(course => `<a class=\"fd-highlight-card\" href=\"${printableEscape(course.href.replace('universidade.html?from=teacher', ''))}\"><img src=\"${printableEscape(course.image)}\" alt=\"\" width=\"800\" height=\"500\" loading=\"lazy\" /><div><span class=\"fd-kicker\">${printableEscape(course.category)}</span><h3>${printableEscape(course.title)}</h3><p>${printableEscape(course.provider)} · ${printableEscape(course.workload)}</p><span class=\"fd-highlight-link\">Conhecer o curso →</span></div></a>`).join('')}\n"
       ],
       "baseline": [
+        "        ${\n",
+        "          getPrintableParams().get(\"from\") === \"teacher\"\n",
+        "            ? `<a class=\"university-teacher-return\" href=\"professor.html?view=formacao\">VOLTAR PARA ÁREA DO PROFESSOR</a>`\n",
+        "            : \"\"\n",
+        "        }\n",
         "        <section class=\"university-public-hero\" id=\"universidade\">\n",
         "          <div>\n",
         "            <span>Universidade Raízes e Saberes</span>\n",
@@ -282,7 +341,7 @@
       ]
     },
     {
-      "start": 19763,
+      "start": 19743,
       "approved": [
         "            <p class=\"fd-section-note\">Cursos de instituições externas. Consulte os critérios de participação e certificação na página de cada curso.</p>\n",
         "          </section>\n",
@@ -350,7 +409,7 @@
       ]
     },
     {
-      "start": 19808,
+      "start": 19788,
       "approved": [],
       "baseline": [
         "                <option value=\"rating\">Mais bem avaliados</option>\n",
@@ -358,7 +417,7 @@
       ]
     },
     {
-      "start": 19827,
+      "start": 19807,
       "approved": [
         "            <article><h3>Destaques verificados</h3><div data-most-accessed></div></article>\n",
         "            <article><h3>Cursos de curta duração</h3><div data-best-rated></div></article>\n"
@@ -369,7 +428,7 @@
       ]
     },
     {
-      "start": 19834,
+      "start": 19814,
       "approved": [
         "            <div class=\"catalog-section-head\"><div><span>Instituicoes em destaque</span><h3>Instituições e plataformas de origem</h3></div></div>\n"
       ],
@@ -378,7 +437,7 @@
       ]
     },
     {
-      "start": 19870,
+      "start": 19850,
       "approved": [
         "        <aside class=\"university-prep-panel\" aria-label=\"Sobre os cursos externos\">\n",
         "          <div>\n",
@@ -405,7 +464,7 @@
       ]
     },
     {
-      "start": 19876,
+      "start": 19856,
       "approved": [
         "        </aside>\n",
         "        </div>\n"
@@ -425,13 +484,15 @@
       ]
     },
     {
-      "start": 20646,
+      "start": 20625,
       "approved": [
+        "      [\"universidade\", \"Início\", \"universidade.html\"],\n",
         "      [\"trilhas\", \"Formação docente\", \"formacao.html\"],\n",
         "      [\"cursos\", \"Meus cursos\", \"personal-learning.html\"],\n",
         "      [\"certificados\", \"Meus certificados\", \"personal-learning.html\"],\n"
       ],
       "baseline": [
+        "      [\"universidade\", \"Início\", \"universidade.html#formacao-raizes\"],\n",
         "      [\"trilhas\", \"Trilhas de Aprendizagem\", \"#formacao-raizes\"],\n",
         "      [\"cursos\", \"Meus Cursos\", \"#formacao-raizes\"],\n",
         "      [\"certificados\", \"Certificados\", \"#formacao-raizes\"],\n",
@@ -442,7 +503,7 @@
       ]
     },
     {
-      "start": 20660,
+      "start": 20640,
       "approved": [
         "      [\"trilhas\", \"Formação\", \"formacao.html\"],\n",
         "      [\"cursos\", \"Meus cursos\", \"personal-learning.html\"],\n",
@@ -455,14 +516,14 @@
       ]
     },
     {
-      "start": 25362,
+      "start": 25342,
       "approved": [],
       "baseline": [
         "  const config = getSupabaseConfig();\n"
       ]
     },
     {
-      "start": 25363,
+      "start": 25343,
       "approved": [
         "  if (!session?.refresh_token) return null;\n",
         "  const { refreshSession } = await import(\"./formacao-runtime/session.mjs\");\n",
@@ -481,7 +542,7 @@
       ]
     },
     {
-      "start": 25373,
+      "start": 25353,
       "approved": [],
       "baseline": [
         "  const response = await fetch(`${baseUrl}/auth/v1/token?grant_type=refresh_token`, {\n",
@@ -502,7 +563,40 @@
       ]
     },
     {
-      "start": 34613,
+      "start": 32453,
+      "approved": [
+        "    if (isTeacherFormationView(normalizedView)) {\n",
+        "      const missionHost = content?.querySelector('[data-institutional-mission]');\n",
+        "      if (missionHost?.missionCanLeave && !missionHost.missionCanLeave()) return;\n",
+        "      window.location[updateUrl ? \"assign\" : \"replace\"](formationHomeHref);\n",
+        "      return;\n",
+        "    }\n"
+      ],
+      "baseline": []
+    },
+    {
+      "start": 32581,
+      "approved": [
+        "      if (urlButton.dataset.teacherOpenUrl === formationHomeHref) {\n",
+        "        const missionHost = content?.querySelector('[data-institutional-mission]');\n",
+        "        if (missionHost?.missionCanLeave && !missionHost.missionCanLeave()) return;\n",
+        "      }\n"
+      ],
+      "baseline": []
+    },
+    {
+      "start": 34444,
+      "approved": [
+        "  if (activeKey === \"professor\" && isTeacherFormationView(new URLSearchParams(window.location.search).get(\"view\"))) {\n",
+        "    // Replace bookmarked/Back-Forward aliases without mounting the retired teacher entrance.\n",
+        "    window.location.replace(formationHomeHref);\n",
+        "    return;\n",
+        "  }\n"
+      ],
+      "baseline": []
+    },
+    {
+      "start": 34608,
       "approved": [
         "  const topFilter = studentWorkspaceShell || environmentKey === \"universidade\" || environmentKey === \"escola\" || environmentKey === \"secretaria\" || environmentKey === \"bancoQuestoes\" ? \"\" : `<button class=\"top-filter\" type=\"button\">Filtros</button>`;\n",
         "  const moduleSwitcher = studentWorkspaceShell || environmentKey === \"universidade\" || environmentKey === \"escola\"\n"
@@ -513,14 +607,15 @@
       ]
     },
     {
-      "start": 34632,
+      "start": 34625,
       "approved": [
-        "    : environmentKey === \"universidade\" ? `<nav class=\"rs-global-actions\" aria-label=\"Navegação global\"><a href=\"plataforma.html\">Início</a><a href=\"login.html?next=universidade.html\">Entrar</a></nav>`\n"
+        "    : environmentKey === \"universidade\"\n",
+        "      ? `<nav class=\"rs-global-actions\" aria-label=\"Navegação da formação\"><a href=\"${currentRole ? getRoleHome(currentRole) : platformRoute(\"/\", \"index.html\")}\">${adminInlineIcon(\"back\", currentRole ? \"Voltar ao painel\" : \"Voltar ao site\")}</a><a href=\"${formationHomeHref}\">${adminInlineIcon(\"home\", \"Início\")}</a>${currentRole ? `<button type=\"button\" data-platform-logout>${adminInlineIcon(\"sair\", \"Sair\")}</button>` : '<a href=\"login.html?next=universidade.html\">Entrar</a>'}</nav>`\n"
       ],
       "baseline": []
     },
     {
-      "start": 34639,
+      "start": 34635,
       "approved": [
         "    <div class=\"app-shell${studentWorkspaceShell ? \" rs-workspace rs-student-workspace\" : currentRole || environmentKey === \"universidade\" ? \" rs-workspace\" : \"\"}\" data-environment=\"${environmentKey}\" data-active-module=\"${activeKey}\">\n"
       ],
@@ -529,7 +624,7 @@
       ]
     },
     {
-      "start": 34654,
+      "start": 34650,
       "approved": [
         "          ${currentRole || environmentKey === \"universidade\" ? '<button type=\"button\" class=\"rs-menu-toggle\" data-rs-menu-toggle aria-expanded=\"false\">Menu</button>' : topbarMenu}\n"
       ],
@@ -538,7 +633,7 @@
       ]
     },
     {
-      "start": 34665,
+      "start": 34661,
       "approved": [
         "\n",
         "  if (environmentKey === \"universidade\") {\n",

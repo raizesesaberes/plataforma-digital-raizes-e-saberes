@@ -2,7 +2,7 @@ import {createLearningClient, SESSION_KEY, readSession} from './client.mjs';
 import {labels, escape as e, visibleCourses, counts, dateLabel, localToday, queryDraft, normalizeData} from './model.mjs';
 const main = document.querySelector('#main'), dialog = document.querySelector('#course-dialog'), toast = document.querySelector('#toast');
 const api = createLearningClient({config: window.RAIZES_SUPABASE});
-let data = {courses: [], certificates: []}, filter = 'all', search = '', controller = new AbortController(), generation = 0, privacyEpoch = 0, prefillOpened = false, returnFocus, toastTimer;
+let data = {courses: [], certificates: []}, filter = 'all', search = '', controller = new AbortController(), generation = 0, privacyEpoch = 0, prefillOpened = false, returnFocus, toastTimer, signoutBlocked = false;
 const messages = {
   already_saved: 'Este curso ou arquivo já está salvo. Confira também os arquivados.',
   invalid_course: 'Confira o nome do curso e a instituição responsável.', invalid_url: 'Use um endereço HTTPS público e sem dados de acesso, de preferência da instituição responsável.',
@@ -60,6 +60,7 @@ function upsert(course) {
   data = normalizeData({...data, courses}); render();
 }
 async function load({initial = false} = {}) {
+  if (signoutBlocked) return;
   if (!api.hasSession()) { locked(); return; }
   const current = ++generation;
   if (initial) main.innerHTML = '<div class="loading" role="status">Carregando seus cursos e certificados…</div>';
@@ -124,7 +125,9 @@ dialog.addEventListener('submit', async event => {
   catch (error) { handleError(error, errorBox); }
   finally { if (button.isConnected) { button.disabled = false; button.textContent = 'Salvar curso'; } }
 });
+// A denied storage write must not reload private content with the old session.
+window.addEventListener('formation:signout-blocked', () => { signoutBlocked = true; clearPrivateView(); main.replaceChildren(); });
 // Clear personal content immediately after logout or account change in another tab.
-window.addEventListener('storage', event => { if (!event.key || event.key === SESSION_KEY) { clearPrivateView(); if (readSession(localStorage)) load({initial: true}); else locked(); } });
-window.addEventListener('pageshow', event => { if (event.persisted) { clearPrivateView(); load({initial: true}); } });
+window.addEventListener('storage', event => { if (signoutBlocked) return; if (!event.key || event.key === SESSION_KEY) { clearPrivateView(); if (readSession(localStorage)) load({initial: true}); else locked(); } });
+window.addEventListener('pageshow', event => { if (signoutBlocked) return; if (event.persisted) { clearPrivateView(); load({initial: true}); } });
 load({initial: true});
