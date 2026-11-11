@@ -6785,8 +6785,8 @@
     {
       "file": "coloring/style.css",
       "source_sha256": "2af03fda95e8ddd6eef80fd27bdc737280efb711d1ef98dc71b249bf2f453f77",
-      "sha256": "2af03fda95e8ddd6eef80fd27bdc737280efb711d1ef98dc71b249bf2f453f77",
-      "unchanged": true
+      "sha256": "3482323b6e50e32c43c0db5722c3cb530c5c8091835ee50935fe0241cb7a6902",
+      "unchanged": false
     },
     {
       "file": "catalog.json",

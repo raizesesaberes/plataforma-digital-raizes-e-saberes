@@ -1,0 +1,29 @@
+/* Colorir uses the existing authorized platform shell and its navigation hooks. */
+.app-shell.rs-workspace[data-active-module="colorirDescobrir"] {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  min-height: 100vh;
+  background: #f7f9f6;
+}
+.app-shell.rs-workspace[data-active-module="colorirDescobrir"] > .app-sidebar { display: flex; }
+.app-shell.rs-workspace[data-active-module="colorirDescobrir"] .app-topbar { display: flex; }
+.app-shell.rs-workspace[data-active-module="colorirDescobrir"] .app-main { min-width: 0; }
+.app-shell.rs-workspace[data-active-module="colorirDescobrir"] .screen[data-route-screen="colorirDescobrir"] { padding: 24px; }
+/* A light-DOM search cannot search the protected shadow/iframe activity. */
+.app-shell.rs-workspace[data-active-module="colorirDescobrir"] .app-search { display: none; }
+.app-shell.rs-workspace[data-active-module="colorirDescobrir"] .rs-global-actions { margin-left: auto; }
+@media (max-width: 1023px) {
+  .app-shell.rs-workspace[data-active-module="colorirDescobrir"] { display: block; }
+  .app-shell.rs-workspace[data-active-module="colorirDescobrir"] > .app-sidebar { display: none; }
+  .app-shell.rs-workspace.rs-menu-open[data-active-module="colorirDescobrir"] > .app-sidebar { display: block; }
+  .app-shell.rs-workspace[data-active-module="colorirDescobrir"] .screen[data-route-screen="colorirDescobrir"] { padding: 16px 0; }
+}
+@media (max-width: 640px) {
+  .app-shell.rs-workspace[data-active-module="colorirDescobrir"] .app-main { padding: 12px; }
+  .app-shell.rs-workspace[data-active-module="colorirDescobrir"] .rs-global-actions { width: 100%; margin-left: 0; }
+}
+/* The legacy staff illustration keeps its aspect ratio and percentage hotspots
+   inside the restored sidebar layout instead of using the full viewport width. */
+.app-shell.rs-workspace[data-active-module="colorirDescobrir"] .golden-master-container {
+  width: min(100%, calc(100vh * 1672 / 941));
+}

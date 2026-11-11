@@ -15,7 +15,7 @@
     {
       "file": "colorir-descobrir.html",
       "original_sha256": "fdf5df4cfabc631b5446a2313866ea1d2b0fda4c65e4af3035b5216641ef4cdc",
-      "sha256": "3a0bf3a7a4f089372b572c2db75262c20a0ce00cd323d6fa0f81bc18c9cbad66"
+      "sha256": "4edad85be2ee8f659dc2b672bf8ad4141809b2323aff72799fd2762264f29042"
     },
     {
       "file": "login.js",
@@ -82,7 +82,7 @@
     },
     {
       "file": "mission-runtime/coloring/discovery.css",
-      "sha256": "cfdf2ecc1a12ca3df11c46a7ccadaa7520e0752b00439c9049b9525fec705086"
+      "sha256": "c0f8c513103d543530a34fd5ad5ad26ab1c80b4df20f2bce27478e4f1b8f7f6c"
     },
     {
       "file": "mission-runtime/coloring/discovery.mjs",
@@ -122,7 +122,7 @@
     },
     {
       "file": "mission-runtime/coloring/style.css",
-      "sha256": "2af03fda95e8ddd6eef80fd27bdc737280efb711d1ef98dc71b249bf2f453f77"
+      "sha256": "3482323b6e50e32c43c0db5722c3cb530c5c8091835ee50935fe0241cb7a6902"
     },
     {
       "file": "mission-runtime/coloring/themes.mjs",
@@ -5083,6 +5083,10 @@
     {
       "file": "mission-runtime/narration/audio/completion-exemplo-explicacao.mp3",
       "sha256": "187db9808c705fb6e2594d71d82779d91ab41122e12138b10952db9570033fee"
+    },
+    {
+      "file": "mission-runtime/coloring/host.css",
+      "sha256": "09698feb290f9fa9a35c054406a7cffd77733d628e592cb130ea5d7a683da56c"
     }
   ]
 }
