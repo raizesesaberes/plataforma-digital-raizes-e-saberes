@@ -2878,7 +2878,7 @@ const renderKnowledgeCenterCards = () => {
     .map(
       (center) => `
         <article class="knowledge-center-card" style="--center-color:${center.color}">
-          <img src="${center.imageUrl}" alt="Imagem do centro ${center.title}" loading="lazy" />
+          ${courseEditorialArt({title: center.title, theme: center.title})}
           <div>
             <span>${center.icon}</span>
             <h3>${center.title}</h3>
@@ -3156,7 +3156,7 @@ const renderKnowledgeCenterDetail = (centerId) => {
   detail.hidden = false;
   detail.innerHTML = `
     <header class="knowledge-center-hero" style="--center-color:${center.color}">
-      <img src="${center.imageUrl}" alt="Imagem do centro ${center.title}" />
+      ${courseEditorialArt({title: center.title, theme: center.title})}
       <div>
         <span>Centro de Conhecimento</span>
         <h2>${center.title}</h2>

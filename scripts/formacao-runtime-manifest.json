@@ -16,7 +16,7 @@
     },
     {
       "file": "formacao-runtime/client.mjs",
-      "sha256": "7662356ed0d1fa79b5f9abf4eafc53113597f8f3eee6ed40e5187f876f1a968d"
+      "sha256": "0d2df0b895dfafedb9d2761b4bf29a84b273fadaff3d790c60d47558a075f431"
     },
     {
       "file": "formacao-runtime/editorial-aprendizagem.svg",
@@ -48,7 +48,7 @@
     },
     {
       "file": "personal-learning-runtime/client.mjs",
-      "sha256": "768198bf69d786ff32390fffd0fef9db8db6c2be9c26b664b9940b9505094ccd"
+      "sha256": "8e289881d8a62f7a92d9a7ddeafe2fed316823a35d98395176753c198a630dc4"
     },
     {
       "file": "personal-learning-runtime/model.mjs",
@@ -63,7 +63,7 @@
     {
       "file": "script.js",
       "original_sha256": "9fd9c28aa27a3afc9b5835af5dc14f91341274fd200e4456020ec6f8d189b315",
-      "sha256": "6611a45c42c887b46c2d121231888178629a52183ae6d1229419d4751ffeed40"
+      "sha256": "28939356be7cae6e6872e855a7a76f238a4b5f9b12ef571bc06c020e4484c27a"
     }
   ]
 }

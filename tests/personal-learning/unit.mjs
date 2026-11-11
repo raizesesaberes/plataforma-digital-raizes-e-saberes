@@ -210,3 +210,13 @@ test('account switch and abort during JSON body decode discard stale data',async
     await assert.rejects(()=>client.list({signal:controller.signal}),kind==='switch'?/session_changed/:/Request aborted/);
   }
 });
+
+for (const [httpStatus, expectedStatus, expectedCode] of [[400,401,'session_required'],[401,401,'session_required'],[500,503,'service_unavailable']]) {
+  test(`refresh HTTP ${httpStatus} maps to ${expectedStatus} ${expectedCode}`,async()=>{
+    const store=storage({access_token:'expired-fixture',refresh_token:'fixture-refresh',expires_at:1}); const calls=[];
+    const client=createLearningClient({config:cfg,storage:store,fetcher:async(url)=>{calls.push(url);return json({code:httpStatus===400?'refresh_token_not_found':'fixture_failure'},httpStatus);}});
+    await assert.rejects(()=>client.list(),error=>error.status===expectedStatus&&error.code===expectedCode);
+    assert.equal(calls.length,1); assert.match(calls[0],/auth\/v1\/token\?grant_type=refresh_token$/);
+    assert.equal(JSON.parse(store.getItem(SESSION_KEY)).access_token,'expired-fixture');
+  });
+}

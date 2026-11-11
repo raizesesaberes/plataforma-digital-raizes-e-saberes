@@ -27,6 +27,45 @@ const refreshClient=createTrainingClient({config,storage,fetcher:async(url,optio
 await refreshClient.catalog();assert.equal(refreshCalls.length,2);assert.equal(refreshCalls[1].options.headers.Authorization,'Bearer renewed');
 const raced=createTrainingClient({config,storage,fetcher:async()=>{storage.removeItem(SESSION_KEY);return new Response(JSON.stringify(fixture));}});
 await assert.rejects(raced.catalog(),e=>e.code==='session_changed');
+// Refresh failures are classified for the UI, not leaked as raw Auth statuses.
+for (const [httpStatus, expectedStatus, expectedCode] of [[400,401,'session_required'],[401,401,'session_required'],[403,401,'session_required'],[500,503,'service_unavailable'],[503,503,'service_unavailable']]) {
+  storage.setItem(SESSION_KEY,JSON.stringify({access_token:'expired-fixture',refresh_token:'fixture-refresh',expires_at:1}));
+  const requests=[];
+  const expired=createTrainingClient({config,storage,fetcher:async url=>{requests.push(url);return new Response(JSON.stringify({code:'refresh_token_not_found'}),{status:httpStatus});}});
+  await assert.rejects(expired.catalog(),error=>error.status===expectedStatus&&error.code===expectedCode);
+  assert.equal(requests.length,1);assert(requests[0].includes('/auth/v1/token'));
+  assert.equal(JSON.parse(storage.getItem(SESSION_KEY)).access_token,'expired-fixture');
+}
+// An Edge 401 followed by Auth 400 must also lead to the login state.
+storage.setItem(SESSION_KEY,JSON.stringify({access_token:'active-fixture',refresh_token:'fixture-refresh',expires_at:Date.now()/1000+3600}));
+let rejectionCalls=0;
+const rejectedRefresh=createTrainingClient({config,storage,fetcher:async url=>{rejectionCalls++;return new Response(JSON.stringify({code:'invalid_session'}),{status:url.includes('/auth/')?400:401});}});
+await assert.rejects(rejectedRefresh.catalog(),error=>error.code==='session_required'&&error.status===401);assert.equal(rejectionCalls,2);
+// Session and abort checks must run after JSON parsing, before data escapes.
+for (const mutation of ['logout','switch','abort']) {
+  storage.setItem(SESSION_KEY,JSON.stringify({access_token:'active-fixture',expires_at:Date.now()/1000+3600}));
+  const controller=new AbortController();
+  const parsingRace=createTrainingClient({config,storage,fetcher:async()=>({ok:true,status:200,json:async()=>{
+    if(mutation==='logout')storage.removeItem(SESSION_KEY);
+    if(mutation==='switch')storage.setItem(SESSION_KEY,JSON.stringify({access_token:'other-account-fixture'}));
+    if(mutation==='abort')controller.abort();
+    return fixture;
+  }})});
+  await assert.rejects(parsingRace.catalog({signal:controller.signal}),error=>mutation==='abort'?error.name==='AbortError':error.code==='session_changed'&&error.status===401);
+}
+// An interrupted refresh must never restore or replace the saved account.
+for (const mutation of ['logout','switch','abort']) {
+  storage.setItem(SESSION_KEY,JSON.stringify({access_token:'expired-fixture',refresh_token:'fixture-refresh',expires_at:1}));
+  const controller=new AbortController();let requests=0;
+  const interrupted=createTrainingClient({config,storage,fetcher:async()=>{requests++;return {ok:true,status:200,json:async()=>{
+    if(mutation==='logout')storage.removeItem(SESSION_KEY);
+    if(mutation==='switch')storage.setItem(SESSION_KEY,JSON.stringify({access_token:'other-account-fixture'}));
+    if(mutation==='abort')controller.abort();
+    return {access_token:'must-not-be-saved',expires_in:3600};
+  }};}});
+  await assert.rejects(interrupted.catalog({signal:controller.signal}),error=>mutation==='abort'?error.name==='AbortError':error.code==='session_changed'&&error.status===401);
+  assert.equal(requests,1);assert.notEqual(JSON.parse(storage.getItem(SESSION_KEY)||'null')?.access_token,'must-not-be-saved');
+}
 const source=await readFile(new URL('../../formacao-runtime/app.mjs',import.meta.url),'utf8');
 assert(!source.includes('Corações para presentear'));assert(!source.includes('Coleções de brinquedos'));assert(!source.includes('localStorage.setItem'));assert(!source.includes('object/public'));
-console.log('PASS training client: server authority, license/pending gating, private URL checks, refresh, logout race, grouping, metadata-only duration.');
+console.log('PASS training client: server authority, license/pending gating, private URL checks, refresh 400/401/403 vs 500/503 mapping, post-JSON session/abort races, no interrupted refresh writes, grouping, metadata-only duration.');

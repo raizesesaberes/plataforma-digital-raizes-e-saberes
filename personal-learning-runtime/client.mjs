@@ -13,7 +13,9 @@ export function createLearningClient({config, storage = localStorage, fetcher = 
       const response = await fetcher(`${base}/auth/v1/token?grant_type=refresh_token`, {method: 'POST',
         headers: {apikey: config.anonKey, 'Content-Type': 'application/json'}, cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer', signal,
         body: JSON.stringify({refresh_token: session.refresh_token})});
-      if (!response.ok) throw new LearningError(response.status >= 500 ? 'service_unavailable' : 'session_required', response.status);
+      // Supabase Auth uses HTTP 400 for a missing/expired refresh token.
+      // Normalize authentication rejection for the UI; retain outages as retryable.
+      if (!response.ok) throw new LearningError(response.status >= 500 ? 'service_unavailable' : 'session_required', response.status >= 500 ? 503 : 401);
       const next = await response.json(); if (!next?.access_token) throw new LearningError('session_required', 401);
       if (readSession(storage)?.access_token !== session.access_token) throw new LearningError('session_changed', 401);
       const saved = {...session, ...next, expires_at: next.expires_at || Math.floor(Date.now() / 1000) + Number(next.expires_in || 3600)};

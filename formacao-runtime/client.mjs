@@ -20,8 +20,10 @@ export function createTrainingClient({config, storage = localStorage, fetcher = 
         cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer', signal,
         body: JSON.stringify({refresh_token: session.refresh_token}),
       });
-      if (!response.ok) throw new TrainingError(response.status >= 500 ? 'service_unavailable' : 'session_required', response.status);
+      if (signal?.aborted) throw new DOMException('Request aborted', 'AbortError');
+      if (!response.ok) throw new TrainingError(response.status >= 500 ? 'service_unavailable' : 'session_required', response.status >= 500 ? 503 : 401);
       const next = await response.json();
+      if (signal?.aborted) throw new DOMException('Request aborted', 'AbortError');
       if (!next?.access_token) throw new TrainingError('session_required', 401);
       // Do not restore a session if another tab logged out or switched accounts.
       if (readSession(storage)?.access_token !== session.access_token) throw new TrainingError('session_changed', 401);
@@ -41,9 +43,15 @@ export function createTrainingClient({config, storage = localStorage, fetcher = 
         method: 'POST', headers: {apikey: config.anonKey, Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json'},
         cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer', signal, body: JSON.stringify(body),
       });
+      if (signal?.aborted) throw new DOMException('Request aborted', 'AbortError');
       if (readSession(storage)?.access_token !== session.access_token) throw new TrainingError('session_changed', 401);
       if (response.status === 401 && attempt === 0 && session.refresh_token) { session = await refresh(session, signal); continue; }
-      let data; try { data = await response.json(); } catch { throw new TrainingError('service_unavailable', response.status); }
+      let data; try { data = await response.json(); } catch (error) {
+        if (signal?.aborted || error?.name === 'AbortError') throw new DOMException('Request aborted', 'AbortError');
+        throw new TrainingError('service_unavailable', response.status);
+      }
+      if (signal?.aborted) throw new DOMException('Request aborted', 'AbortError');
+      if (readSession(storage)?.access_token !== session.access_token) throw new TrainingError('session_changed', 401);
       if (!response.ok || data?.ok !== true) throw new TrainingError(data?.code || 'service_unavailable', response.status);
       return data;
     }
