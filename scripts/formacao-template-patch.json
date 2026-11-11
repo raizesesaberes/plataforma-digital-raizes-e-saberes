@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "reviewedSha256": "e528652bffcd4e96010e12a66d243f3ed4bfa8bebd6a3727ed5c9b4ae985f37c",
+  "reviewedSha256": "083e1b3d287570a51e0e3be2686d040351f2755c8435d653d076aea2fb67a282",
   "patches": [
     {
       "start": 7261,
@@ -253,18 +253,22 @@
       "approved": [
         "        <link rel=\"stylesheet\" href=\"formacao-runtime/gateway.css?v=20261111\" />\n",
         "        <div data-university-home>\n",
+        "          <div class=\"fd-home-intro\">\n",
         "          <section class=\"university-public-hero\" id=\"universidade\">\n",
-        "            <div><span>Universidade Raízes e Saberes</span><h1>Seu próximo passo na formação.</h1><p>Escolha por onde começar. Conhecimento para transformar sua prática.</p></div>\n",
+        "            <div><span>Universidade Raízes e Saberes</span><h1 data-formation-greeting>Seu próximo passo na formação.</h1><p>Escolha por onde começar. Conhecimento para transformar sua prática.</p></div>\n",
         "            <img src=\"formacao-runtime/editorial-aprendizagem.svg\" alt=\"\" width=\"800\" height=\"500\" />\n",
         "          </section>\n",
+        "          <aside class=\"fd-progress-panel\" data-formation-progress aria-label=\"Seu percurso de formação\"><h3>Sua formação</h3><p>Entre com sua conta para consultar seu percurso.</p><a href=\"personal-learning.html\">Meus cursos e certificados →</a></aside>\n",
         "          <nav class=\"fd-entry-cards\" aria-label=\"Áreas da Universidade\">\n",
         "            <a href=\"formacao.html\"><img src=\"formacao-runtime/editorial-praticas.svg\" alt=\"\" width=\"800\" height=\"500\" /><h2>Nossas coleções</h2><p>Encontre as aulas por coleção, componente e ano.</p><strong>Explorar as aulas →</strong></a>\n",
         "            <a href=\"#catalogo\"><img src=\"formacao-runtime/editorial-inclusao.svg\" alt=\"\" width=\"800\" height=\"500\" /><h2>Cursos externos</h2><p>Pesquise cursos gratuitos de outras instituições.</p><strong>Buscar cursos →</strong></a>\n",
         "            <a href=\"personal-learning.html\"><img src=\"formacao-runtime/editorial-tecnologia.svg\" alt=\"\" width=\"800\" height=\"500\" /><h2>Meus cursos e certificados</h2><p>Organize seus estudos e certificados em um só lugar.</p><strong>Abrir meu espaço →</strong></a>\n",
         "          </nav>\n",
-        "        </div>\n",
-        "        <div data-university-external hidden>\n",
-        "        <nav class=\"fd-panel-navigation\" aria-label=\"Navegação da formação\"><a href=\"#universidade\">← Voltar à Universidade</a><a href=\"formacao.html\">Nossas coleções →</a><a href=\"personal-learning.html\">Meus cursos e certificados →</a></nav>\n"
+        "          </div>\n",
+        "          <section class=\"fd-highlights\" aria-labelledby=\"fd-highlights-title\">\n",
+        "            <div class=\"fd-section-heading\"><div><span class=\"fd-kicker\">PARA CONTINUAR APRENDENDO</span><h2 id=\"fd-highlights-title\">Destaques da formação</h2></div><a href=\"#catalogo\">Explorar todos os cursos →</a></div>\n",
+        "            <div class=\"fd-highlight-grid\">\n",
+        "              ${teacherFormationCourses.slice(0, 2).map(course => `<a class=\"fd-highlight-card\" href=\"${printableEscape(course.href.replace('universidade.html?from=teacher', ''))}\"><img src=\"${printableEscape(course.image)}\" alt=\"\" width=\"800\" height=\"500\" loading=\"lazy\" /><div><span class=\"fd-kicker\">${printableEscape(course.category)}</span><h3>${printableEscape(course.title)}</h3><p>${printableEscape(course.provider)} · ${printableEscape(course.workload)}</p><span class=\"fd-highlight-link\">Conhecer o curso →</span></div></a>`).join('')}\n"
       ],
       "baseline": [
         "        <section class=\"university-public-hero\" id=\"universidade\">\n",
@@ -274,8 +278,27 @@
         "            <p>Um nucleo publico de curadoria para pesquisar, comparar e acessar cursos gratuitos oferecidos por instituicoes externas.</p>\n",
         "            <div class=\"university-hero-actions\">\n",
         "              <a href=\"#catalogo\" data-catalog-section=\"catalogo\">Encontrar cursos gratuitos</a>\n",
-        "              <a href=\"#formacao-raizes\" data-catalog-section=\"formacao-raizes\">Formação Raízes e Saberes</a>\n",
+        "              <a href=\"#formacao-raizes\" data-catalog-section=\"formacao-raizes\">Formação Raízes e Saberes</a>\n"
+      ]
+    },
+    {
+      "start": 19763,
+      "approved": [
+        "            <p class=\"fd-section-note\">Cursos de instituições externas. Consulte os critérios de participação e certificação na página de cada curso.</p>\n",
+        "          </section>\n",
+        "          <section class=\"fd-collection-banner\" aria-labelledby=\"fd-collections-title\">\n",
+        "            <div class=\"fd-collection-copy\"><span class=\"fd-kicker\">NOSSAS COLEÇÕES</span><h2 id=\"fd-collections-title\">Materiais que acompanham sua prática.</h2><p>Conheça as coleções da Raízes e Saberes. As aulas disponíveis para sua escola estão no espaço de formação com acesso institucional.</p><a href=\"formacao.html\">Acessar a formação das coleções →</a><a href=\"index.html#colecoes\">Conhecer os livros →</a></div>\n",
+        "            <div class=\"fd-collection-covers\">\n",
+        "              <figure><img src=\"assets/colecoes/oficiais/rs2026-crescer-02-v1-professor.webp\" alt=\"Capa Raízes Crescer, 2 anos, volume 1, manual do professor\" width=\"600\" height=\"388\" loading=\"lazy\" /><figcaption>Raízes Crescer<span>Educação Infantil</span></figcaption></figure>\n",
+        "              <figure><img src=\"assets/colecoes/oficiais/rs2026-avalia-01-v1-professor.webp\" alt=\"Capa Avalia+, 1º ano, volume 1, manual do professor\" width=\"600\" height=\"849\" loading=\"lazy\" /><figcaption>Avalia+<span>Ensino Fundamental</span></figcaption></figure>\n",
+        "              <figure><img src=\"assets/colecoes/oficiais/rs2026-indigena-01-professor.webp\" alt=\"Capa Coleção Indígena e Afro-Brasileira, 1º ano, manual do professor\" width=\"600\" height=\"777\" loading=\"lazy\" /><figcaption>Indígena e Afro-Brasileira<span>Ensino Fundamental</span></figcaption></figure>\n",
         "            </div>\n",
+        "          </section>\n",
+        "        </div>\n",
+        "        <div data-university-external hidden>\n",
+        "        <nav class=\"fd-panel-navigation\" aria-label=\"Navegação da formação\"><a href=\"#universidade\">← Voltar à Universidade</a><a href=\"formacao.html\">Nossas coleções →</a><a href=\"personal-learning.html\">Meus cursos e certificados →</a></nav>\n"
+      ],
+      "baseline": [
         "          </div>\n",
         "          <img src=\"assets/universidade/banner-principal.webp\" alt=\"\" />\n",
         "        </section>\n",
@@ -327,7 +350,7 @@
       ]
     },
     {
-      "start": 19790,
+      "start": 19808,
       "approved": [],
       "baseline": [
         "                <option value=\"rating\">Mais bem avaliados</option>\n",
@@ -335,7 +358,7 @@
       ]
     },
     {
-      "start": 19809,
+      "start": 19827,
       "approved": [
         "            <article><h3>Destaques verificados</h3><div data-most-accessed></div></article>\n",
         "            <article><h3>Cursos de curta duração</h3><div data-best-rated></div></article>\n"
@@ -346,7 +369,7 @@
       ]
     },
     {
-      "start": 19816,
+      "start": 19834,
       "approved": [
         "            <div class=\"catalog-section-head\"><div><span>Instituicoes em destaque</span><h3>Instituições e plataformas de origem</h3></div></div>\n"
       ],
@@ -355,7 +378,7 @@
       ]
     },
     {
-      "start": 19852,
+      "start": 19870,
       "approved": [
         "        <aside class=\"university-prep-panel\" aria-label=\"Sobre os cursos externos\">\n",
         "          <div>\n",
@@ -382,7 +405,7 @@
       ]
     },
     {
-      "start": 19858,
+      "start": 19876,
       "approved": [
         "        </aside>\n",
         "        </div>\n"
@@ -402,7 +425,7 @@
       ]
     },
     {
-      "start": 20628,
+      "start": 20646,
       "approved": [
         "      [\"trilhas\", \"Formação docente\", \"formacao.html\"],\n",
         "      [\"cursos\", \"Meus cursos\", \"personal-learning.html\"],\n",
@@ -419,7 +442,7 @@
       ]
     },
     {
-      "start": 20642,
+      "start": 20660,
       "approved": [
         "      [\"trilhas\", \"Formação\", \"formacao.html\"],\n",
         "      [\"cursos\", \"Meus cursos\", \"personal-learning.html\"],\n",
@@ -432,14 +455,14 @@
       ]
     },
     {
-      "start": 25344,
+      "start": 25362,
       "approved": [],
       "baseline": [
         "  const config = getSupabaseConfig();\n"
       ]
     },
     {
-      "start": 25345,
+      "start": 25363,
       "approved": [
         "  if (!session?.refresh_token) return null;\n",
         "  const { refreshSession } = await import(\"./formacao-runtime/session.mjs\");\n",
@@ -458,7 +481,7 @@
       ]
     },
     {
-      "start": 25355,
+      "start": 25373,
       "approved": [],
       "baseline": [
         "  const response = await fetch(`${baseUrl}/auth/v1/token?grant_type=refresh_token`, {\n",
@@ -479,9 +502,57 @@
       ]
     },
     {
-      "start": 34614,
+      "start": 34613,
+      "approved": [
+        "  const topFilter = studentWorkspaceShell || environmentKey === \"universidade\" || environmentKey === \"escola\" || environmentKey === \"secretaria\" || environmentKey === \"bancoQuestoes\" ? \"\" : `<button class=\"top-filter\" type=\"button\">Filtros</button>`;\n",
+        "  const moduleSwitcher = studentWorkspaceShell || environmentKey === \"universidade\" || environmentKey === \"escola\"\n"
+      ],
+      "baseline": [
+        "  const topFilter = studentWorkspaceShell || environmentKey === \"escola\" || environmentKey === \"secretaria\" || environmentKey === \"bancoQuestoes\" ? \"\" : `<button class=\"top-filter\" type=\"button\">Filtros</button>`;\n",
+        "  const moduleSwitcher = studentWorkspaceShell || environmentKey === \"escola\"\n"
+      ]
+    },
+    {
+      "start": 34632,
       "approved": [
         "    : environmentKey === \"universidade\" ? `<nav class=\"rs-global-actions\" aria-label=\"Navegação global\"><a href=\"plataforma.html\">Início</a><a href=\"login.html?next=universidade.html\">Entrar</a></nav>`\n"
+      ],
+      "baseline": []
+    },
+    {
+      "start": 34639,
+      "approved": [
+        "    <div class=\"app-shell${studentWorkspaceShell ? \" rs-workspace rs-student-workspace\" : currentRole || environmentKey === \"universidade\" ? \" rs-workspace\" : \"\"}\" data-environment=\"${environmentKey}\" data-active-module=\"${activeKey}\">\n"
+      ],
+      "baseline": [
+        "    <div class=\"app-shell${studentWorkspaceShell ? \" rs-workspace rs-student-workspace\" : currentRole ? \" rs-workspace\" : \"\"}\" data-environment=\"${environmentKey}\" data-active-module=\"${activeKey}\">\n"
+      ]
+    },
+    {
+      "start": 34654,
+      "approved": [
+        "          ${currentRole || environmentKey === \"universidade\" ? '<button type=\"button\" class=\"rs-menu-toggle\" data-rs-menu-toggle aria-expanded=\"false\">Menu</button>' : topbarMenu}\n"
+      ],
+      "baseline": [
+        "          ${currentRole ? '<button type=\"button\" class=\"rs-menu-toggle\" data-rs-menu-toggle aria-expanded=\"false\">Menu</button>' : topbarMenu}\n"
+      ]
+    },
+    {
+      "start": 34665,
+      "approved": [
+        "\n",
+        "  if (environmentKey === \"universidade\") {\n",
+        "    const search = mount.querySelector('.app-search input');\n",
+        "    const catalogSearch = mount.querySelector('[data-course-search]');\n",
+        "    search?.addEventListener('input', () => {\n",
+        "      if (!catalogSearch) return;\n",
+        "      if (location.hash !== '#catalogo') location.hash = 'catalogo';\n",
+        "      catalogSearch.value = search.value;\n",
+        "      catalogSearch.dispatchEvent(new Event('input', {bubbles:true}));\n",
+        "    });\n",
+        "    catalogSearch?.addEventListener('input', () => { if (search) search.value = catalogSearch.value; });\n",
+        "    mount.querySelector('[data-clear-course-filters]')?.addEventListener('click', () => { if (search) search.value = ''; });\n",
+        "  }\n"
       ],
       "baseline": []
     }

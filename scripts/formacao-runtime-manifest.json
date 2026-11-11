@@ -4,11 +4,11 @@
   "files": [
     {
       "file": "formacao.html",
-      "sha256": "f4fa4a74c3c01cb5e1280d1f7be20da394178168771247ecbfd91a428a3f299b"
+      "sha256": "4c8f49b8770840cf6c9befecec94c396c56feea3df70ff035a1675512102cf60"
     },
     {
       "file": "personal-learning.html",
-      "sha256": "5e0902a2868f96fd634211eff6c764a999065add917ece4196eb3e2b56eab191"
+      "sha256": "d38e31aaa1fa3852f05f652d8f4ca454efe8b3c9d8d9a1b59336e75c2d790908"
     },
     {
       "file": "formacao-runtime/app.mjs",
@@ -40,11 +40,15 @@
     },
     {
       "file": "formacao-runtime/gateway.css",
-      "sha256": "9670d7f5bddc41323f1e7c10558929e613b9ecba4c43f62c26f6a2db6f73a2dd"
+      "sha256": "0f2b7edb43a01d641bf46f028651e94b2839cc3f7680e4ae4cb5719e92c0e8dc"
     },
     {
       "file": "formacao-runtime/session.mjs",
       "sha256": "b81db700e01907c6522a430508124192c2ceb39bab5aefd445fd47b4b4bf1d05"
+    },
+    {
+      "file": "formacao-runtime/welcome.mjs",
+      "sha256": "bccd4388db68ad5e49362b190a19e4527e679c89ce6c21374ecc72439646d333"
     },
     {
       "file": "personal-learning-runtime/app.mjs",
@@ -60,7 +64,7 @@
     },
     {
       "file": "personal-learning-runtime/personal-learning.css",
-      "sha256": "d2b8a9408abb6b699d52e32ab228ef8154b2dc497365d63f294b5f3e18fa798b"
+      "sha256": "cbebe219233c15e2ce99d51cbf6efa3c109552b5b79814c58c7ab8602bcc6373"
     }
   ],
   "overrides": [
@@ -68,6 +72,11 @@
       "file": "script.js",
       "original_sha256": "9fd9c28aa27a3afc9b5835af5dc14f91341274fd200e4456020ec6f8d189b315",
       "sha256": "75a8a7708457c4e86184a26fb29864468c375ab0f44911dd78bfeb97d704f870"
+    },
+    {
+      "file": "universidade.html",
+      "original_sha256": "3928fd874372c2d9c93fc5608ab39fd59620eec6d3251e7162e98fe3bed23e90",
+      "sha256": "ad76747f126d098de6492acef52cff5879c8468bd1d4aa0105072aea7be40022"
     }
   ]
 }

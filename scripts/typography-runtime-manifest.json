@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "overrides": [
+    {
+      "file": "styles.css",
+      "original_sha256": "acc1b78e31a6e6266341a5aed82063ab31f0e254ee206aba8c4cefae3938cc20",
+      "sha256": "73978735ee8cfc0ae57320ed22f9c9b9a27a96927d7bcf0648a1b1af80f31c8b"
+    },
+    {
+      "file": "master-pack.css",
+      "original_sha256": "37dd47fb1270b0deb5ce431180f63ff8dbe3da0db97717eaf01a2f7b1b4919fb",
+      "sha256": "7ad7a6b19b96839a7bc9743a585e94a43d4c69b6021c8f71be33000afa965d59"
+    },
+    {
+      "file": "index.html",
+      "original_sha256": "9b83747b4fb5b3c99fd7b0ec107c428012800f43bb8fa6e612ab0bad4967695a",
+      "sha256": "b7d53d6bd1256b7558569f29e5e81096246e45ba79574ae11956395d0859e45c"
+    }
+  ]
+}

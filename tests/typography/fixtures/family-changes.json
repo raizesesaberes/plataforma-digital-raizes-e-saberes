@@ -1,0 +1,1848 @@
+{
+  "changes": [
+    {
+      "file": "styles.css",
+      "selector": "/* Biblioteca Digital Showroom V1 */\n.library-showroom-page",
+      "before": "Inter, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".showroom-ecosystem-card strong",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".showroom-menu-toggle,\n.showroom-filter-button",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".showroom-user span",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".showroom-title-block .eyebrow",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".showroom-title-block h1",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".showroom-section-head h2",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".continue-card h3",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".continue-card button,\n.showroom-book-info button",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".collection-card strong",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".library-showroom-page .library-filter",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".showroom-book-info h3",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".quick-panel h2,\n.ecosystem-panel h2",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".ecosystem-panel span",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".ecosystem-panel a",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".library-side-nav a",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".library-institutional-card strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".library-sidebar-metrics strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".library-shelf-heading span",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": "body",
+      "before": "Inter, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": "h1,\nh2,\nh3,\n.button,\n.site-nav",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".placeholder-chip",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".trust-badge",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".eyebrow",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".hero-indicators strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".platform-module-grid strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".pillar-index",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".video-highlights span",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".video-card-copy small",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".video-card-copy strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".video-modal-close",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".metrics strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".course-hero span",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".course-hero strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".course-progress strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".university-stats strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".certificate-card strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".feature-number",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".assessment-sidebar strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".assessment-panel-header strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".assessment-kpis strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".assessment-insights strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".result-value",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".contact-form label",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".image-placeholder strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".assessment-list strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".site-footer strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".library-hero-panel strong",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".library-search",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".library-filter",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".library-stage-title span",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".pending-cover span",
+      "before": "Poppins, Inter, system-ui, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".library-showroom-page .showroom-book-info h3,\n.library-showroom-page .continue-card h3",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".library-showroom-page .continue-card button,\n.library-showroom-page .showroom-book-info button",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".login-page",
+      "before": "Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".login-copy p",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".login-copy h1",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".login-forgot-button",
+      "before": "Inter, sans-serif !important",
+      "after": "var(--platform-font-sans) !important"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".login-recovery-panel h2,\n.login-reset-status h2",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".login-password-field button",
+      "before": "Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".login-form button",
+      "before": "Poppins, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".login-form .login-password-toggle",
+      "before": "Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".master-app",
+      "before": "Inter, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".screen-title h1,\n.dashboard-head h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".panel-head h2,\n.panel h2,\n.quick-card h2,\n.premium-card h2,\n.ecosystem-video-card h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".collection-card-body h3",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".featured-book-card h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".library-empty-state strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".library-asset-fallback strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".continue-exploring-panel h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".ecosystem-link-panel h2,\n.ecosystem-link-panel strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".reader-header h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".reader-page-error strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".library-2-hero h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".library-2-hero-actions a,\n.library-2-card a,\n.library-2-card button,\n.library-2-ops a,\n.reader-book-profile button,\n.reader-tabs button,\n.reader-tool-panel button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".library-2-progress strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".library-2-stats strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".library-2-card h3",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".library-2-ops h3,\n.reader-book-profile h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".bv-hero h1,\n.bv-profile-hero h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".bv-hero-actions a,\n.bv-hero-actions button,\n.bv-card-action,\n.bv-reading-card a,\n.bv-filter-row button,\n.bv-age-column button,\n.bv-volume-node button,\n.bv-profile-hero button,\n.bv-profile-grid a",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".bv-hero-feature strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".bv-progress-panel strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".bv-experience-body h3",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".bv-reading-card h3",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".bv-breadcrumb-map > strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".bv-book-unit summary strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".bv-profile-grid h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".library-experience-content h3",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".library-experience-actions button,\n.library-experience-actions a",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".experience-player-header h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".experience-error-panel h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".qb-adaptation-context strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".university-platform-hero h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".university-progress-ring strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".university-achievement-card strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".university-public-hero h1,\n.catalog-head h2,\n.university-prep-panel h2,\n.curation-admin-panel h2,\n.catalog-data-panel h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".university-gateway strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".catalog-kpis strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".catalog-section-head h3,\n.catalog-full-head h3",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".course-detail-hero h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".detail-rating strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".knowledge-center-head h2,\n.knowledge-center-hero h2,\n.knowledge-curation-summary h3",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".knowledge-center-card h3",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".curation-hero h1,\n.curation-panel h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".curation-metric-grid strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".knowledge-category-grid strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".path-head h3",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".profile-platform-intro h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".profile-access-search input",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-real-profile-avatar",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-real-profile-hero h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-real-profile-hero a,\n.student-real-profile-actions a",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-real-profile-card strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-real-profile-readiness strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-teacher-card strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-sidebar button,\n.tw-sidebar a,\n.tw-top-actions button,\n.tw-section-head button,\n.tw-recommendation-card button,\n.tw-resource-card button,\n.tw-lesson-card button,\n.teacher-home-card button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-hero h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-hero-metrics strong,\n.tw-metric-card strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".teacher-home-card strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".teacher-avalia-hero span,\n.teacher-avalia-publication-form legend",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".teacher-avalia-hero h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".teacher-avalia-hero-metrics strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".teacher-avalia-nav strong,\n.teacher-avalia-assessment-list strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-section-head a,\n.tw-primary-link,\n.tw-hero-actions a",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-section-head h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-class-tabs button,\n.tw-class-tabs span",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-attendance-toolbar button,\n.tw-attendance-footer button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-attendance-row strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-planning-heading h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-planning-heading button,\n.tw-planning-add-day,\n.tw-planning-actions button,\n.tw-planning-form-actions button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-planning-day header b",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-week-day header strong,\n.tw-week-item strong,\n.tw-message-card strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-week-item-actions button,\n.tw-message-actions button,\n.tw-message-actions a",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-activity-entry strong,\n.pa-context-panel strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-activity-entry button,\n.pa-context-panel a",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-library-category strong,\n.tw-library-material strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-library-category button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-tracking-student-detail strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-tracking-summary strong,\n.tw-tracking-item strong,\n.tw-tracking-production strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-formation-card strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".university-teacher-return",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-empty-state strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".tw-student-card a",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-pedro-hero h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-pedro-actions strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-home-card strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".teacher-premium-hero span",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".teacher-premium-hero h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".teacher-class-feature span,\n.teacher-premium-section h2,\n.teacher-side-card h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".teacher-class-feature strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".teacher-class-feature button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".teacher-metric-card span,\n.teacher-content-card strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".quick-action",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".premium-empty strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-search-empty",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-premium-topbar a",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-premium-global-actions a,\n.student-premium-global-actions button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-institutional-gate strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-premium-hero span",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-premium-hero h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-mission-card span,\n.student-premium-card strong,\n.student-side-card h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-mission-card strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-mission-card a,\n.student-premium-card > span",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-class-schedule-title h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-class-schedule-actions button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-class-schedule-table thead th",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-class-schedule-table tbody th",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-shortcut",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-id-card strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-sidebar nav button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-topbar button,\n.admin-topbar-link,\n.admin-feature-card a,\n.admin-empty-state a,\n.admin-door-card",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-platform-tabs a",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-hero h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-context-strip strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-metric-card span",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-metric-card strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-door-card span",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-quick-list button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-users-filter button,\n.admin-users-filter a",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-user-avatar",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-user-main strong,\n.admin-user-detail h3,\n.admin-user-detail h4,\n.admin-role-grid strong,\n.admin-engine-grid strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-user-detail-grid strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-access-receipt strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-user-safe-actions button,\n.admin-user-safe-actions p",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-school-metric strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-school-actions button,\n.admin-school-actions a,\n.admin-school-more-actions summary",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-school-advanced-filters summary",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-contract-health strong,\n.admin-contract-taxonomy strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-contract-card header strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-contract-module strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-contract-exception-note strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-school-implementation header strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-school-create-form button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-flow article strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-module-body strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-module-count b",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-item-main strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-availability-form button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-import-package > strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-template-download strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-template-download button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-bulk-custom-mapping summary strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-import-counts strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-import-actions button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-access-dialog header h3",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-access-review strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-access-dialog footer button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-home-card strong,\n.admin-feature-card strong,\n.admin-empty-state h2,\n.admin-section-head h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-flow article",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-permission-table > div:first-child > *",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".pa-hero h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".pa-hero a,\n.pa-admin-actions a,\n.pa-card footer a,\n.pa-preview a,\n.pa-empty a",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".pa-age-card strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".pa-filters button,\n.pa-card footer button,\n.pa-preview button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".pa-recommendation-dialog h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".pa-recommendation-dialog button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".pa-card h3",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".pa-empty h1,\n.pa-empty h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".ua-assign-form header h2,\n.ua-motor-head h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".ua-assign-form button,\n.ua-student-card a,\n.ua-delivery-card button,\n.ua-delivery-open article button,\n.ua-motor-head a,\n.ua-motor-head button,\n.ua-controls button,\n.ua-tools button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".ua-student-card strong,\n.ua-delivery-card strong,\n.ua-portfolio-grid strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".ua-delivery-student-detail h4",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".coming-soon-panel h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-v1-person strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-v1-sidebar nav a,\n.family-v1-sidebar nav button,\n.family-v1-mobile a,\n.family-primary-link,\n.family-activity-card a,\n.family-activity-card button,\n.student-focus-activity header a,\n.student-focus-actions button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-v1-topbar a,\n.family-v1-topbar button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-v1-topbar strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-v1-hero span",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-v1-hero h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-hero-actions a",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-context-grid strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-profile-hero-card h3",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-profile-grid strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-profile-readonly-note strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-section-head h2,\n.family-profile-card h2,\n.student-focus-card h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-empty-state strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-list-card strong,\n.family-activity-card strong,\n.family-metric-card strong,\n.family-tree-card strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-recommendation-card strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-recommendation-card aside a,\n.family-recommendation-card aside button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-attendance-summary strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-attendance-record strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-filter-row button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-activity-columns h3",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-week-actions button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-child-selector strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-child-options button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-week-corner,\n.family-week-day,\n.family-week-slot",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-week-cell strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-summary-panel dd",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-tree-mini strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-routine-dialog button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-profile-initial",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-focus-engine strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-week-mobile h3",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-hero h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".knowledge-tree-hero h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".ecosystem-hero h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".ecosystem-section-head h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".school-collective",
+      "before": "Inter, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".school-context-strip h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".school-welcome-card h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".school-challenge-card h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".school-panel-head h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".school-empty strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".school-institutional-hero h2",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".school-access-panel strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".official-school-real-status strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".official-school-real-hero-copy h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".official-school-real-context strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".official-school-prepared-empty strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".official-school-communication-card strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".official-school-empty-card strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".official-school-shortcut-list strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".official-school-access-grid strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".official-school-game-card h3",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".school-coloring-workbench h3",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".pcd-coming-soon h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".pcd-hero h1,\n.pcd-topline h1,\n.pcd-intro-scene h1",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".pcd-back,\n.pcd-sound,\n.pcd-intro-scene button,\n.pcd-paint-header button,\n.pcd-actions button,\n.pcd-tool-grid button",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".pcd-theme-card strong,\n.pcd-figure-card strong,\n.pcd-paint-header strong",
+      "before": "Poppins, Inter, sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".a11y-panel",
+      "before": "Inter, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": "/* Shared learning workspace presentation. Authorization and action hooks are unchanged. */\n.student-premium-workspace, .teacher-workspace.teacher-pilot",
+      "before": "Inter,system-ui,sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-premium-workspace .student-premium-card strong,\n.student-premium-workspace .student-side-card h2,\n.teacher-pilot .teacher-premium-section h2,\n.teacher-pilot .teacher-side-card h2,\n.teacher-pilot .teacher-metric-card strong,\n.teacher-pilot .teacher-content-card strong",
+      "before": "Inter,system-ui,sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": "[data-admin-workspace] :is(.admin-quick-list button,.admin-topbar button,.admin-topbar-link)",
+      "before": "Inter,system-ui,sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": "/* Approved institutional workspace. Student home is intentionally excluded. */\n.rs-workspace",
+      "before": "Inter,system-ui,sans-serif",
+      "after": "var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": "/* Shared student surfaces: presentation only; activity controls keep their handlers. */\n.rs-student-workspace .route-screen",
+      "before": "Inter,system-ui,sans-serif",
+      "after": "var(--platform-font-sans)"
+    }
+  ],
+  "exceptions": [
+    {
+      "file": "styles.css",
+      "selector": ".showroom-logo-fallback",
+      "family": "Poppins, sans-serif"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".showroom-logo span",
+      "family": "Poppins, sans-serif"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".library-sidebar-brand strong",
+      "family": "Poppins, Inter, system-ui, sans-serif"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".brand-fallback",
+      "family": "Poppins, Inter, system-ui, sans-serif"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".icon",
+      "family": "Poppins, Inter, system-ui, sans-serif"
+    },
+    {
+      "file": "styles.css",
+      "selector": ".login-brand span",
+      "family": "Poppins, sans-serif"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".sidebar-logo-fallback strong",
+      "family": "Poppins, Inter, sans-serif"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".module-switcher a,\n.module-switcher-site,\n.module-switcher-logout",
+      "family": "inherit"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".interactive-story",
+      "family": "Poppins, Inter, sans-serif"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".interactive-question p",
+      "family": "Poppins, Inter, sans-serif"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".interactive-options button",
+      "family": "Poppins, Inter, sans-serif"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".interactive-feedback",
+      "family": "Poppins, Inter, sans-serif"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".interactive-confirm,\n.interactive-board button,\n.interactive-card-grid button,\n.interactive-sequence button,\n.interactive-path button",
+      "family": "Poppins, Inter, sans-serif"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".profile-sidebar-logout",
+      "family": "Poppins, Inter, sans-serif"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".profile-floating-logout",
+      "family": "Poppins, Inter, sans-serif"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".platform-logout-button",
+      "family": "Poppins, Inter, sans-serif"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-logout-button",
+      "family": "Poppins, Inter, sans-serif"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".premium-icon,\n[data-icon]",
+      "family": "Inter, sans-serif"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-premium-sidebar nav a,\n.student-premium-logout",
+      "family": "Poppins, Inter, sans-serif"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-sidebar-logo-fallback strong",
+      "family": "Poppins, Inter, sans-serif"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-access-receipt mark",
+      "family": "\"SFMono-Regular\", Consolas, monospace"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".mission-question h2",
+      "family": "Poppins, Inter, sans-serif"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".official-school-brand h1,\n.official-school-hero-copy h2,\n.official-school-section-head h2",
+      "family": "Poppins, Inter, sans-serif"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": "html[data-a11y-dyslexia=\"true\"] body",
+      "family": "\"Trebuchet MS\", Verdana, Arial, sans-serif !important"
+    }
+  ]
+}

@@ -1,0 +1,640 @@
+{
+  "changes": [
+    {
+      "file": "styles.css",
+      "selector": ".showroom-search input",
+      "before": "600 0.94rem Inter, sans-serif",
+      "after": "600 0.94rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".app-search input",
+      "before": "600 0.92rem Inter, sans-serif",
+      "after": "600 0.92rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".library-empty-state button",
+      "before": "800 0.78rem Poppins, Inter, sans-serif",
+      "after": "800 0.78rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".reader-page-error button",
+      "before": "800 0.72rem Poppins, Inter, sans-serif",
+      "after": "800 0.72rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".donut",
+      "before": "800 1.3rem Poppins, sans-serif",
+      "after": "800 1.3rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".metric-row strong",
+      "before": "800 1.6rem Poppins, sans-serif",
+      "after": "800 1.6rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".secretaria-top-actions a,\n.secretaria-top-actions button",
+      "before": "800 0.82rem Inter, sans-serif",
+      "after": "800 0.82rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".secretaria-context-chip strong,\n.secretaria-identification strong",
+      "before": "800 1.02rem Poppins, sans-serif",
+      "after": "800 1.02rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".secretaria-context-select",
+      "before": "800 1.02rem Poppins, sans-serif",
+      "after": "800 1.02rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".secretaria-form-grid input,\n.secretaria-form-grid select,\n.secretaria-form-grid textarea,\n.secretaria-filter-row input,\n.secretaria-filter-row select",
+      "before": "700 0.92rem Inter, sans-serif",
+      "after": "700 0.92rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".secretaria-badge",
+      "before": "900 0.76rem Inter, sans-serif",
+      "after": "900 0.76rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".secretaria-context-field strong",
+      "before": "800 0.92rem Inter, sans-serif",
+      "after": "800 0.92rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".secretaria-v1 .qb-builder-grid input,\n.secretaria-v1 .qb-builder-grid select,\n.secretaria-v1 form:not(.secretaria-filter-row) input,\n.secretaria-v1 form:not(.secretaria-filter-row) select,\n.secretaria-v1 form:not(.secretaria-filter-row) textarea",
+      "before": "700 0.92rem Inter, sans-serif",
+      "after": "700 0.92rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".secretaria-list-actions a,\n.secretaria-list-actions button",
+      "before": "900 0.78rem Inter, sans-serif",
+      "after": "900 0.78rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".qb-form-block h3",
+      "before": "900 0.96rem Inter, sans-serif",
+      "after": "900 0.96rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".qb-filters input,\n.qb-filters select,\n.qb-builder input,\n.qb-builder select,\n.qb-builder textarea,\n.qb-toolbar select,\n.qb-cart input",
+      "before": "700 0.84rem Inter, sans-serif",
+      "after": "700 0.84rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".question-form-field input,\n.question-form-field select,\n.question-form-field textarea,\n.qb-editorial-alternatives input:not([type=\"radio\"])",
+      "before": "700 0.92rem Inter, sans-serif",
+      "after": "700 0.92rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".qb-cart-summary strong",
+      "before": "900 1.45rem Poppins, sans-serif",
+      "after": "900 1.45rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".family-banner",
+      "before": "800 1.35rem Poppins, sans-serif",
+      "after": "800 1.35rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".teacher-avalia-publication-form input,\n.teacher-avalia-publication-form select",
+      "before": "800 0.86rem Inter, sans-serif",
+      "after": "800 0.86rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-bulk-mapping-row input,\n.admin-bulk-mapping-row select",
+      "before": "850 0.78rem Inter, sans-serif",
+      "after": "850 0.78rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".metric-feature > strong,\n.certificate-feature > strong",
+      "before": "800 2rem Poppins, Inter, sans-serif",
+      "after": "800 2rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".ecosystem-smart-footer strong",
+      "before": "800 1.8rem Poppins, Inter, sans-serif",
+      "after": "800 1.8rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".official-school-switcher a,\n.official-school-switcher button",
+      "before": "800 0.82rem Inter, sans-serif",
+      "after": "800 0.82rem var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-premium-workspace .student-premium-sidebar nav a,\n.teacher-pilot .tw-sidebar nav button",
+      "before": "600 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-premium-workspace .student-premium-hero h1,\n.teacher-pilot .teacher-premium-hero h1",
+      "before": "700 clamp(28px,3vw,38px)/1.2 Inter,system-ui,sans-serif",
+      "after": "700 clamp(28px,3vw,38px)/1.2 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-premium-workspace .student-premium-hero span,\n.teacher-pilot .teacher-premium-hero span",
+      "before": "650 12px/1.4 Inter,system-ui,sans-serif",
+      "after": "650 12px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": "/* Institutional home presentation; data, navigation hooks and access gates retained. */\n[data-admin-workspace], .app-shell[data-environment=\"escola\"]",
+      "before": "400 16px/1.5 Inter,system-ui,sans-serif",
+      "after": "400 16px/1.5 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": "[data-admin-workspace] .admin-sidebar nav button,\n.app-shell[data-environment=\"escola\"] .app-nav a",
+      "before": "600 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": "[data-admin-workspace] .admin-hero h1,\n.app-shell[data-environment=\"escola\"] .official-school-real-hero-copy h1",
+      "before": "700 clamp(28px,3vw,38px)/1.2 Inter,system-ui,sans-serif",
+      "after": "700 clamp(28px,3vw,38px)/1.2 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": "[data-admin-workspace] .admin-hero p,\n.app-shell[data-environment=\"escola\"] .official-school-real-hero-copy small",
+      "before": "400 16px/1.5 Inter,system-ui,sans-serif",
+      "after": "400 16px/1.5 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": "[data-admin-workspace] :is(.admin-section-head h2,.admin-door-card strong),\n.app-shell[data-environment=\"escola\"] :is(.official-school-section-head h2,.official-school-shortcut-list strong)",
+      "before": "650 18px/1.35 Inter,system-ui,sans-serif",
+      "after": "650 18px/1.35 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": "[data-admin-workspace] :is(.admin-section-head span,.admin-metric-card span,.admin-metric-card small,.admin-status-item span,.admin-recent-item span),\n.app-shell[data-environment=\"escola\"] :is(.official-school-section-head p,.official-school-shortcut-list span,.official-school-communication-card p)",
+      "before": "400 14px/1.5 Inter,system-ui,sans-serif",
+      "after": "400 14px/1.5 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": "[data-admin-workspace] .admin-metric-card strong",
+      "before": "700 28px/1.2 Inter,system-ui,sans-serif",
+      "after": "700 28px/1.2 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .admin-id-card",
+      "before": "400 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "400 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace :is(.tw-sidebar nav button,.admin-sidebar nav button,.app-nav a)",
+      "before": "600 15px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 15px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) input",
+      "before": "400 15px/1.4 Inter,system-ui,sans-serif",
+      "after": "400 15px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) button",
+      "before": "600 15px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 15px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace :is(.teacher-side-card button,.rs-admin-primary button)",
+      "before": "600 15px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 15px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .teacher-side-card p",
+      "before": "400 16px/1.5 Inter,system-ui,sans-serif",
+      "after": "400 16px/1.5 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": "/* Student stage, isolated from reader search. Original brand and all schedule hooks retained. */\n.student-premium-workspace",
+      "before": "400 16px/1.5 Inter,system-ui,sans-serif",
+      "after": "400 16px/1.5 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-premium-workspace .student-premium-global-actions :is(a,button)",
+      "before": "600 15px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 15px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-premium-workspace :is(.student-side-card h2,.student-class-schedule-title h2)",
+      "before": "650 18px/1.35 Inter,system-ui,sans-serif",
+      "after": "650 18px/1.35 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-premium-workspace .student-class-schedule-actions button",
+      "before": "600 15px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 15px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-student-workspace :is(.mission-toolbar button,.mission-result-actions a)",
+      "before": "600 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace :is(.tw-board,.admin-board,.family-panel,.category-consumer) h2",
+      "before": "650 20px/1.35 Inter,system-ui,sans-serif",
+      "after": "650 20px/1.35 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace :is(.tw-board,.admin-board,.family-panel,.category-consumer) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),select,textarea)",
+      "before": "400 15px/1.4 Inter,system-ui,sans-serif",
+      "after": "400 15px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace :is(.tw-sidebar nav a,.family-v1-sidebar nav a)",
+      "before": "600 15px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 15px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .family-v1-topbar input",
+      "before": "400 15px/1.4 Inter,system-ui,sans-serif",
+      "after": "400 15px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace :is(.family-global-actions,.content-workspace-topbar) :is(a,button)",
+      "before": "600 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .family-v1-hero h1",
+      "before": "700 clamp(22px,2vw,28px)/1.25 Inter,system-ui,sans-serif",
+      "after": "700 clamp(22px,2vw,28px)/1.25 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-demo-notice",
+      "before": "500 14px/1.5 Inter,system-ui,sans-serif",
+      "after": "500 14px/1.5 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace.support-workspace .admin-inline-form button[type=submit]",
+      "before": "600 15px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 15px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .rs-reports .tw-form-grid :is(input:not([type=hidden]),select,button)",
+      "before": "400 15px/1.4 Inter,system-ui,sans-serif",
+      "after": "400 15px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace [data-rs-print]",
+      "before": "600 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace :is(.dashboard-head,.screen-title) h1",
+      "before": "700 clamp(22px,2vw,28px)/1.25 Inter,system-ui,sans-serif",
+      "after": "700 clamp(22px,2vw,28px)/1.25 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace :is(.panel,.school-collective) h2",
+      "before": "650 20px/1.35 Inter,system-ui,sans-serif",
+      "after": "650 20px/1.35 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .panel p",
+      "before": "400 15px/1.6 Inter,system-ui,sans-serif",
+      "after": "400 15px/1.6 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".student-focus-activity header a",
+      "before": "600 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .secretaria-official-nav a",
+      "before": "600 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .official-report-actions button",
+      "before": "600 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .admin-role-change-form :is(input:not([type=hidden]),select,button)",
+      "before": "400 15px/1.4 Inter,system-ui,sans-serif",
+      "after": "400 15px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .rs-official-import button",
+      "before": "600 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace [data-school-content-inspection] button",
+      "before": "600 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace :is(.tw-register-picker,.tw-attendance-board,.tw-class-diary-shell)",
+      "before": "400 15px/1.5 Inter,system-ui,sans-serif",
+      "after": "400 15px/1.5 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace :is(.tw-register-picker,.tw-attendance-board,.tw-class-diary-shell) :is(h2,h3)",
+      "before": "650 20px/1.35 Inter,system-ui,sans-serif",
+      "after": "650 20px/1.35 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace :is(.tw-register-school,.tw-register-class-selector) > span",
+      "before": "600 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace :is(.tw-register-school,.tw-register-class-selector) select",
+      "before": "400 15px/1.4 Inter,system-ui,sans-serif",
+      "after": "400 15px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .tw-register-class-list strong",
+      "before": "600 15px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 15px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .tw-register-hero h1",
+      "before": "650 clamp(22px,2vw,26px)/1.3 Inter,system-ui,sans-serif",
+      "after": "650 clamp(22px,2vw,26px)/1.3 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .tw-register-hero p",
+      "before": "400 15px/1.5 Inter,system-ui,sans-serif",
+      "after": "400 15px/1.5 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .tw-register-hero > div > span",
+      "before": "600 13px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 13px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .tw-register-hero .tw-hero-actions a",
+      "before": "600 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace :is(.tw-class-diary-shell,.tw-attendance-board) :is(label > span,.tw-attendance-note span,.tw-planning-heading > div > span)",
+      "before": "600 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace :is(.tw-class-diary-shell,.tw-attendance-board) button",
+      "before": "600 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .tw-class-diary-shell .metric-row article",
+      "before": "500 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "500 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .tw-class-diary-shell .metric-row strong",
+      "before": "650 24px/1.3 Inter,system-ui,sans-serif",
+      "after": "650 24px/1.3 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .tw-class-diary-shell .metric-row span",
+      "before": "400 13px/1.4 Inter,system-ui,sans-serif",
+      "after": "400 13px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .tw-attendance-row strong",
+      "before": "600 15px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 15px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .tw-attendance-row small",
+      "before": "400 13px/1.4 Inter,system-ui,sans-serif",
+      "after": "400 13px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .tw-attendance-choice",
+      "before": "500 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "500 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".rs-workspace .tw-attendance-footer p",
+      "before": "400 14px/1.5 Inter,system-ui,sans-serif",
+      "after": "400 14px/1.5 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".official-school-games-page .official-school-section-head h2",
+      "before": "650 clamp(22px,2vw,28px)/1.3 Inter,system-ui,sans-serif",
+      "after": "650 clamp(22px,2vw,28px)/1.3 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".official-school-games-page .official-school-section-head :is(span,p)",
+      "before": "400 15px/1.5 Inter,system-ui,sans-serif",
+      "after": "400 15px/1.5 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".official-school-game-card span",
+      "before": "500 13px/1.4 Inter,system-ui,sans-serif",
+      "after": "500 13px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".official-school-game-card h3",
+      "before": "650 18px/1.4 Inter,system-ui,sans-serif",
+      "after": "650 18px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".official-school-game-card p",
+      "before": "400 15px/1.5 Inter,system-ui,sans-serif",
+      "after": "400 15px/1.5 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".official-school-game-card a",
+      "before": "600 15px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 15px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": "/* Admin Contents: compact cards scoped to this screen; actions/data unchanged. */\n.admin-content-surface",
+      "before": "400 15px/1.5 Inter,system-ui,sans-serif",
+      "after": "400 15px/1.5 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-surface .admin-section-head h2,.admin-content-surface .admin-board>h2",
+      "before": "650 20px/1.35 Inter,system-ui,sans-serif",
+      "after": "650 20px/1.35 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-surface .admin-section-head>span",
+      "before": "400 13px/1.5 Inter,system-ui,sans-serif",
+      "after": "400 13px/1.5 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-surface .admin-content-module-body>strong",
+      "before": "650 17px/1.35 Inter,system-ui,sans-serif",
+      "after": "650 17px/1.35 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-surface .admin-content-module-count b",
+      "before": "700 26px/1.2 Inter,system-ui,sans-serif",
+      "after": "700 26px/1.2 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-surface .admin-content-module-count span",
+      "before": "400 12px/1.4 Inter,system-ui,sans-serif",
+      "after": "400 12px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-surface .admin-content-module-card p",
+      "before": "400 14px/1.5 Inter,system-ui,sans-serif",
+      "after": "400 14px/1.5 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-surface .admin-content-status-chip",
+      "before": "600 11px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 11px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-surface .admin-content-module-card>a",
+      "before": "600 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-surface .admin-content-flow article strong",
+      "before": "600 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-surface .admin-content-flow article small",
+      "before": "400 12px/1.5 Inter,system-ui,sans-serif",
+      "after": "400 12px/1.5 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-surface .admin-content-filterbar label span,.admin-content-surface .admin-content-availability-form label span",
+      "before": "600 13px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 13px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-surface .admin-content-item-main>strong",
+      "before": "600 16px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 16px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": ".admin-content-surface .admin-content-item-main :is(small,span,p),.admin-content-surface .admin-content-muted",
+      "before": "400 13px/1.5 Inter,system-ui,sans-serif",
+      "after": "400 13px/1.5 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": "[data-admin-workspace] .rs-admin-home .admin-door-card span",
+      "before": "600 14px/1.4 Inter,system-ui,sans-serif",
+      "after": "600 14px/1.4 var(--platform-font-sans)"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": "[data-admin-workspace] .rs-admin-home .admin-door-card strong",
+      "before": "400 13px/1.4 Inter,system-ui,sans-serif",
+      "after": "400 13px/1.4 var(--platform-font-sans)"
+    }
+  ],
+  "exceptions": [
+    {
+      "file": "master-pack.css",
+      "selector": ".chapter",
+      "font": "800 2rem Poppins, sans-serif"
+    },
+    {
+      "file": "master-pack.css",
+      "selector": "[data-school-printable-sheet] h1",
+      "font": "900 26px Arial, sans-serif"
+    }
+  ]
+}

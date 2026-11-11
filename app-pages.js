@@ -19744,15 +19744,33 @@ const modules = {
         }
         <link rel="stylesheet" href="formacao-runtime/gateway.css?v=20261111" />
         <div data-university-home>
+          <div class="fd-home-intro">
           <section class="university-public-hero" id="universidade">
-            <div><span>Universidade Raízes e Saberes</span><h1>Seu próximo passo na formação.</h1><p>Escolha por onde começar. Conhecimento para transformar sua prática.</p></div>
+            <div><span>Universidade Raízes e Saberes</span><h1 data-formation-greeting>Seu próximo passo na formação.</h1><p>Escolha por onde começar. Conhecimento para transformar sua prática.</p></div>
             <img src="formacao-runtime/editorial-aprendizagem.svg" alt="" width="800" height="500" />
           </section>
+          <aside class="fd-progress-panel" data-formation-progress aria-label="Seu percurso de formação"><h3>Sua formação</h3><p>Entre com sua conta para consultar seu percurso.</p><a href="personal-learning.html">Meus cursos e certificados →</a></aside>
           <nav class="fd-entry-cards" aria-label="Áreas da Universidade">
             <a href="formacao.html"><img src="formacao-runtime/editorial-praticas.svg" alt="" width="800" height="500" /><h2>Nossas coleções</h2><p>Encontre as aulas por coleção, componente e ano.</p><strong>Explorar as aulas →</strong></a>
             <a href="#catalogo"><img src="formacao-runtime/editorial-inclusao.svg" alt="" width="800" height="500" /><h2>Cursos externos</h2><p>Pesquise cursos gratuitos de outras instituições.</p><strong>Buscar cursos →</strong></a>
             <a href="personal-learning.html"><img src="formacao-runtime/editorial-tecnologia.svg" alt="" width="800" height="500" /><h2>Meus cursos e certificados</h2><p>Organize seus estudos e certificados em um só lugar.</p><strong>Abrir meu espaço →</strong></a>
           </nav>
+          </div>
+          <section class="fd-highlights" aria-labelledby="fd-highlights-title">
+            <div class="fd-section-heading"><div><span class="fd-kicker">PARA CONTINUAR APRENDENDO</span><h2 id="fd-highlights-title">Destaques da formação</h2></div><a href="#catalogo">Explorar todos os cursos →</a></div>
+            <div class="fd-highlight-grid">
+              ${teacherFormationCourses.slice(0, 2).map(course => `<a class="fd-highlight-card" href="${printableEscape(course.href.replace('universidade.html?from=teacher', ''))}"><img src="${printableEscape(course.image)}" alt="" width="800" height="500" loading="lazy" /><div><span class="fd-kicker">${printableEscape(course.category)}</span><h3>${printableEscape(course.title)}</h3><p>${printableEscape(course.provider)} · ${printableEscape(course.workload)}</p><span class="fd-highlight-link">Conhecer o curso →</span></div></a>`).join('')}
+            </div>
+            <p class="fd-section-note">Cursos de instituições externas. Consulte os critérios de participação e certificação na página de cada curso.</p>
+          </section>
+          <section class="fd-collection-banner" aria-labelledby="fd-collections-title">
+            <div class="fd-collection-copy"><span class="fd-kicker">NOSSAS COLEÇÕES</span><h2 id="fd-collections-title">Materiais que acompanham sua prática.</h2><p>Conheça as coleções da Raízes e Saberes. As aulas disponíveis para sua escola estão no espaço de formação com acesso institucional.</p><a href="formacao.html">Acessar a formação das coleções →</a><a href="index.html#colecoes">Conhecer os livros →</a></div>
+            <div class="fd-collection-covers">
+              <figure><img src="assets/colecoes/oficiais/rs2026-crescer-02-v1-professor.webp" alt="Capa Raízes Crescer, 2 anos, volume 1, manual do professor" width="600" height="388" loading="lazy" /><figcaption>Raízes Crescer<span>Educação Infantil</span></figcaption></figure>
+              <figure><img src="assets/colecoes/oficiais/rs2026-avalia-01-v1-professor.webp" alt="Capa Avalia+, 1º ano, volume 1, manual do professor" width="600" height="849" loading="lazy" /><figcaption>Avalia+<span>Ensino Fundamental</span></figcaption></figure>
+              <figure><img src="assets/colecoes/oficiais/rs2026-indigena-01-professor.webp" alt="Capa Coleção Indígena e Afro-Brasileira, 1º ano, manual do professor" width="600" height="777" loading="lazy" /><figcaption>Indígena e Afro-Brasileira<span>Ensino Fundamental</span></figcaption></figure>
+            </div>
+          </section>
         </div>
         <div data-university-external hidden>
         <nav class="fd-panel-navigation" aria-label="Navegação da formação"><a href="#universidade">← Voltar à Universidade</a><a href="formacao.html">Nossas coleções →</a><a href="personal-learning.html">Meus cursos e certificados →</a></nav>
@@ -34593,8 +34611,8 @@ const renderAppPage = () => {
   const studentWorkspaceShell = currentRole === "aluno" && ["biblioteca", "missao", "arvore", "jogos", "colorirDescobrir"].includes(activeKey);
   const shellHomeHref = currentRole ? getRoleHome(currentRole) : environmentKey === "aluno" ? "aluno.html" : environmentKey === "escola" ? "escola.html" : platformRoute("/", "index.html");
   const shellLogoHref = currentRole ? getRoleHome(currentRole) : shellHomeHref;
-  const topFilter = studentWorkspaceShell || environmentKey === "escola" || environmentKey === "secretaria" || environmentKey === "bancoQuestoes" ? "" : `<button class="top-filter" type="button">Filtros</button>`;
-  const moduleSwitcher = studentWorkspaceShell || environmentKey === "escola"
+  const topFilter = studentWorkspaceShell || environmentKey === "universidade" || environmentKey === "escola" || environmentKey === "secretaria" || environmentKey === "bancoQuestoes" ? "" : `<button class="top-filter" type="button">Filtros</button>`;
+  const moduleSwitcher = studentWorkspaceShell || environmentKey === "universidade" || environmentKey === "escola"
     ? ""
     : environmentKey === "secretaria"
       ? ""
@@ -34619,7 +34637,7 @@ const renderAppPage = () => {
   const topbarSearchLabel = environmentKey === "bancoQuestoes" ? "Busca Banco" : studentWorkspaceShell || environmentKey === "escola" ? "Buscar nesta tela" : "Pesquisar";
 
   mount.innerHTML = `
-    <div class="app-shell${studentWorkspaceShell ? " rs-workspace rs-student-workspace" : currentRole ? " rs-workspace" : ""}" data-environment="${environmentKey}" data-active-module="${activeKey}">
+    <div class="app-shell${studentWorkspaceShell ? " rs-workspace rs-student-workspace" : currentRole || environmentKey === "universidade" ? " rs-workspace" : ""}" data-environment="${environmentKey}" data-active-module="${activeKey}">
       <aside class="app-sidebar" aria-label="Navegação principal">
         <a class="sidebar-logo" href="${shellLogoHref}" aria-label="Raízes e Saberes">
           <img src="logo-sidebar-dark.png" alt="Raízes e Saberes Ecossistema Educacional" onerror="this.hidden=true; this.nextElementSibling.hidden=false;" />
@@ -34634,7 +34652,7 @@ const renderAppPage = () => {
       </aside>
       <main class="app-main">
         <header class="${topbarClass}">
-          ${currentRole ? '<button type="button" class="rs-menu-toggle" data-rs-menu-toggle aria-expanded="false">Menu</button>' : topbarMenu}
+          ${currentRole || environmentKey === "universidade" ? '<button type="button" class="rs-menu-toggle" data-rs-menu-toggle aria-expanded="false">Menu</button>' : topbarMenu}
           <label class="app-search"><span>${topbarSearchLabel}</span><input type="search" placeholder="${studentWorkspaceShell || environmentKey === "escola" ? "Buscar nesta tela..." : environment.search}" /></label>
           ${topFilter}
           ${moduleSwitcher}
@@ -34645,6 +34663,19 @@ const renderAppPage = () => {
     </div>
     <nav class="mobile-tabbar" aria-label="Navegação mobile">${mobileNav}</nav>
   `;
+
+  if (environmentKey === "universidade") {
+    const search = mount.querySelector('.app-search input');
+    const catalogSearch = mount.querySelector('[data-course-search]');
+    search?.addEventListener('input', () => {
+      if (!catalogSearch) return;
+      if (location.hash !== '#catalogo') location.hash = 'catalogo';
+      catalogSearch.value = search.value;
+      catalogSearch.dispatchEvent(new Event('input', {bubbles:true}));
+    });
+    catalogSearch?.addEventListener('input', () => { if (search) search.value = catalogSearch.value; });
+    mount.querySelector('[data-clear-course-filters]')?.addEventListener('click', () => { if (search) search.value = ''; });
+  }
 
   if (studentWorkspaceShell && activeKey === "biblioteca") {
     const search = mount.querySelector('.app-search input');

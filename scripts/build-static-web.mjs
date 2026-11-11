@@ -6,6 +6,7 @@ import { validateAppOverrides } from './lib/app-runtime-overrides.mjs';
 import { validateCarlaAudio } from './lib/carla-audio-validation.mjs';
 import { validateFormacaoManifest } from './lib/formacao-runtime.mjs';
 import { restoreReviewedFormationTemplate } from './lib/formacao-platform-menu.mjs';
+import { validateTypographyManifest } from './lib/typography-runtime.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const output = join(root, 'dist');
@@ -36,7 +37,8 @@ if (mode === 'real-read-beta') {
 }
 const appOverrides=validateAppOverrides(app.overrides,baseline,feature.overrides);
 const training=validateFormacaoManifest(JSON.parse(readFileSync(join(root,'scripts/formacao-runtime-manifest.json'),'utf8')),baseline,feature.overrides,appOverrides);
-const manifest=[...baseline.map(e=>{const override=[...feature.overrides,...appOverrides,...training.overrides].find(o=>o.file===e.file);return override?{file:e.file,sha256:override.sha256}:e;}),...feature.files,...app.files,...training.files];
+const typography=validateTypographyManifest(JSON.parse(readFileSync(join(root,'scripts/typography-runtime-manifest.json'),'utf8')),baseline,[...feature.overrides,...appOverrides,...training.overrides]);
+const manifest=[...baseline.map(e=>{const override=[...feature.overrides,...appOverrides,...training.overrides,...typography.overrides].find(o=>o.file===e.file);return override?{file:e.file,sha256:override.sha256}:e;}),...feature.files,...app.files,...training.files];
 if (!Array.isArray(baseline) || baseline.length !== 4373) throw new Error('Expected 4373 approved runtime files');
 const seen = new Set();
 // Validate the complete source set before replacing any previous build.

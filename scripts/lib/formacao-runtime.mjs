@@ -1,6 +1,6 @@
 // The training release adds only these explicitly reviewed browser resources.
 // Backend, credentials, internal metadata and paid media must never reach dist.
-export const FORMACAO_OVERRIDES = Object.freeze(['script.js']);
+export const FORMACAO_OVERRIDES = Object.freeze(['script.js', 'universidade.html']);
 export function validateFormacaoManifest(manifest, baseline, featureOverrides, appOverrides) {
   if (manifest?.schema !== 1 || !Array.isArray(manifest.files) || !Array.isArray(manifest.overrides)) throw Error('Invalid training manifest');
   const seen = new Set();

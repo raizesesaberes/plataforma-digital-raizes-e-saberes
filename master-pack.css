@@ -1,4 +1,6 @@
 :root {
+  /* Shared interface family; educational type, logos and monospace remain explicit. */
+  --platform-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --rs-green-950: #042d22;
   --rs-green-900: #063f2f;
   --rs-green-800: #07543d;
@@ -40,7 +42,7 @@
   margin: 0;
   background: #f6f8fb;
   color: var(--rs-ink);
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .master-app * {
@@ -415,7 +417,7 @@
   border-radius: var(--rs-radius);
   background: #fff;
   color: var(--rs-ink);
-  font: 600 0.92rem Inter, sans-serif;
+  font: 600 0.92rem var(--platform-font-sans);
 }
 
 .top-filter {
@@ -512,7 +514,7 @@
 .screen-title h1,
 .dashboard-head h1 {
   margin: 0;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.55rem, 3vw, 2.2rem);
   line-height: 1.05;
 }
@@ -573,7 +575,7 @@
 .premium-card h2,
 .ecosystem-video-card h2 {
   margin: 0;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1rem;
 }
 
@@ -773,7 +775,7 @@
 .collection-card-body h3 {
   margin: 0;
   color: var(--rs-green-950);
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.28rem, 1.7vw, 1.8rem);
   line-height: 1.05;
 }
@@ -982,7 +984,7 @@
 .featured-book-card h2 {
   margin: 0;
   color: var(--rs-green-950);
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1rem;
 }
 
@@ -1106,7 +1108,7 @@
 
 .library-empty-state strong {
   color: var(--rs-green-950);
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1rem;
 }
 
@@ -1117,7 +1119,7 @@
   border-radius: var(--rs-radius);
   background: var(--rs-green-700);
   color: #fff;
-  font: 800 0.78rem Poppins, Inter, sans-serif;
+  font: 800 0.78rem var(--platform-font-sans);
   cursor: pointer;
 }
 
@@ -1147,7 +1149,7 @@
 .library-asset-fallback strong {
   max-width: 100%;
   overflow-wrap: anywhere;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.9rem;
   line-height: 1.18;
 }
@@ -1337,7 +1339,7 @@
 .continue-exploring-panel h2 {
   margin: 4px 0;
   color: var(--rs-green-950);
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1rem;
 }
 
@@ -1387,7 +1389,7 @@
   display: block;
   margin: 5px 0 3px;
   color: var(--rs-green-950);
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.96rem;
   line-height: 1.25;
 }
@@ -1471,7 +1473,7 @@
 }
 
 .reader-header h1 {
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.1rem, 2vw, 1.7rem);
   line-height: 1.08;
 }
@@ -1678,7 +1680,7 @@
 
 .reader-page-error strong {
   color: var(--rs-green-950);
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .reader-page-error div {
@@ -1695,7 +1697,7 @@
   border-radius: var(--rs-radius);
   background: var(--rs-green-700);
   color: #fff;
-  font: 800 0.72rem Poppins, Inter, sans-serif;
+  font: 800 0.72rem var(--platform-font-sans);
   cursor: pointer;
 }
 
@@ -1829,7 +1831,7 @@
 
 .library-2-hero h1 {
   margin: 10px 0;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2rem, 4vw, 4.2rem);
   line-height: 0.98;
   color: #083f2d;
@@ -1873,7 +1875,7 @@
   justify-content: center;
   text-decoration: none;
   font-weight: 800;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   cursor: pointer;
 }
 
@@ -1920,7 +1922,7 @@
 
 .library-2-progress strong {
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .library-2-progress small,
@@ -1947,7 +1949,7 @@
 .library-2-stats strong {
   display: block;
   font-size: 1.8rem;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   color: #083f2d;
 }
 
@@ -1995,7 +1997,7 @@
 
 .library-2-card h3 {
   margin: 0;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   color: #123d2e;
 }
 
@@ -2023,7 +2025,7 @@
 .library-2-ops h3,
 .reader-book-profile h2 {
   margin: 0;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   color: #083f2d;
 }
 
@@ -2348,7 +2350,7 @@
   margin: 8px 0 10px;
   max-width: 760px;
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2rem, 4vw, 4.1rem);
   line-height: 1;
 }
@@ -2388,7 +2390,7 @@
   justify-content: center;
   color: #0d6b4b;
   background: #e7f1ea;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 800;
   text-decoration: none;
   cursor: pointer;
@@ -2444,7 +2446,7 @@
 }
 
 .bv-hero-feature strong {
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.4rem;
 }
 
@@ -2466,7 +2468,7 @@
 .bv-progress-panel strong {
   display: block;
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.6rem;
   line-height: 1;
 }
@@ -2631,7 +2633,7 @@
 .bv-experience-body h3 {
   margin: 0;
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.1rem;
   line-height: 1.18;
 }
@@ -2702,7 +2704,7 @@
 .bv-reading-card h3 {
   margin: 6px 0;
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .bv-breadcrumb-map {
@@ -2712,7 +2714,7 @@
 
 .bv-breadcrumb-map > strong {
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.3rem;
 }
 
@@ -2928,7 +2930,7 @@
 }
 
 .bv-book-unit summary strong {
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.05rem;
 }
 
@@ -2970,7 +2972,7 @@
 .bv-profile-grid h2 {
   margin: 0 0 8px;
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .bv-profile-grid p,
@@ -3073,7 +3075,7 @@
 .library-experience-content h3 {
   margin: 10px 0;
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.45rem;
   line-height: 1.15;
 }
@@ -3133,7 +3135,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 800;
   text-decoration: none;
   cursor: pointer;
@@ -3207,7 +3209,7 @@
 
 .experience-player-header h2 {
   margin: 6px 0;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.4rem, 3vw, 2.4rem);
   line-height: 1.05;
 }
@@ -3588,7 +3590,7 @@
 }
 
 .experience-error-panel h2 {
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 @media (max-width: 760px) {
@@ -3790,7 +3792,7 @@
   background:
     radial-gradient(circle, #fff 0 52%, transparent 53%),
     conic-gradient(var(--rs-green-700) 0 72%, #8fc63d 72% 88%, #ffb020 88% 95%, #ef2d2d 95% 100%);
-  font: 800 1.3rem Poppins, sans-serif;
+  font: 800 1.3rem var(--platform-font-sans);
 }
 
 .book-mini {
@@ -3832,7 +3834,7 @@
   display: block;
   margin: 8px 0;
   color: var(--rs-ink);
-  font: 800 1.6rem Poppins, sans-serif;
+  font: 800 1.6rem var(--platform-font-sans);
 }
 
 .metric-row span {
@@ -3945,7 +3947,7 @@
   border-radius: 8px;
   background: #fff;
   color: #06462f;
-  font: 800 0.82rem Inter, sans-serif;
+  font: 800 0.82rem var(--platform-font-sans);
   text-decoration: none;
   box-shadow: 0 10px 24px rgba(18, 32, 51, 0.04);
   cursor: pointer;
@@ -4056,7 +4058,7 @@
   display: block;
   margin-top: 5px;
   color: var(--rs-ink);
-  font: 800 1.02rem Poppins, sans-serif;
+  font: 800 1.02rem var(--platform-font-sans);
 }
 
 .secretaria-context-select {
@@ -4067,7 +4069,7 @@
   border-radius: 8px;
   background: #f8fff9;
   color: var(--rs-ink);
-  font: 800 1.02rem Poppins, sans-serif;
+  font: 800 1.02rem var(--platform-font-sans);
   padding: 8px 36px 8px 10px;
 }
 
@@ -4413,7 +4415,7 @@
   border-radius: 8px;
   background: #fff;
   color: var(--rs-ink);
-  font: 700 0.92rem Inter, sans-serif;
+  font: 700 0.92rem var(--platform-font-sans);
   padding: 0 14px;
 }
 
@@ -4525,7 +4527,7 @@
   border-radius: 999px;
   background: #eef3f0;
   color: #405164;
-  font: 900 0.76rem Inter, sans-serif;
+  font: 900 0.76rem var(--platform-font-sans);
   line-height: 1;
   white-space: nowrap;
 }
@@ -4678,7 +4680,7 @@
   border-radius: 8px;
   background: #f7fbf6;
   color: var(--rs-ink);
-  font: 800 0.92rem Inter, sans-serif;
+  font: 800 0.92rem var(--platform-font-sans);
   padding: 0 14px;
 }
 
@@ -4693,7 +4695,7 @@
   border-radius: 8px;
   background: #fff;
   color: var(--rs-ink);
-  font: 700 0.92rem Inter, sans-serif;
+  font: 700 0.92rem var(--platform-font-sans);
   padding: 0 14px;
 }
 
@@ -4814,7 +4816,7 @@
   border-radius: 8px;
   background: #fff;
   color: #06462f;
-  font: 900 0.78rem Inter, sans-serif;
+  font: 900 0.78rem var(--platform-font-sans);
   text-decoration: none;
 }
 
@@ -5145,7 +5147,7 @@ td {
 .qb-form-block h3 {
   margin: 0;
   color: #12382c;
-  font: 900 0.96rem Inter, sans-serif;
+  font: 900 0.96rem var(--platform-font-sans);
 }
 
 .qb-editorial-form {
@@ -5246,7 +5248,7 @@ td {
   border-radius: var(--rs-radius);
   background: #fff;
   color: var(--rs-ink);
-  font: 700 0.84rem Inter, sans-serif;
+  font: 700 0.84rem var(--platform-font-sans);
 }
 
 .qb-filters input,
@@ -5309,7 +5311,7 @@ td {
   border-radius: var(--rs-radius);
   background: #fff;
   color: var(--rs-ink);
-  font: 700 0.92rem Inter, sans-serif;
+  font: 700 0.92rem var(--platform-font-sans);
 }
 
 .question-form-field textarea {
@@ -5443,7 +5445,7 @@ td {
 }
 
 .qb-adaptation-context strong {
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.84rem;
   letter-spacing: 0;
 }
@@ -6092,7 +6094,7 @@ td {
 }
 
 .qb-cart-summary strong {
-  font: 900 1.45rem Poppins, sans-serif;
+  font: 900 1.45rem var(--platform-font-sans);
 }
 
 .qb-primary-action {
@@ -6400,7 +6402,7 @@ td {
     radial-gradient(circle at 82% 50%, rgba(215, 169, 40, 0.2), transparent 24%),
     linear-gradient(135deg, var(--rs-green-800), var(--rs-green-600));
   color: #fff;
-  font: 800 1.35rem Poppins, sans-serif;
+  font: 800 1.35rem var(--platform-font-sans);
   line-height: 1.35;
   box-shadow: var(--rs-shadow);
 }
@@ -6475,7 +6477,7 @@ td {
   max-width: 560px;
   margin: 10px 0 10px;
   color: #092f22;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2rem, 3.4vw, 3.05rem);
   line-height: 1.05;
 }
@@ -6536,7 +6538,7 @@ td {
 }
 
 .university-progress-ring strong {
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.5rem;
 }
 
@@ -6599,7 +6601,7 @@ td {
 
 .university-achievement-card strong {
   color: #123526;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.6rem;
 }
 
@@ -6896,7 +6898,7 @@ td {
 .catalog-data-panel h2 {
   margin: 10px 0;
   color: #092f22;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   line-height: 1.08;
 }
 
@@ -6988,7 +6990,7 @@ td {
 }
 
 .university-gateway strong {
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.12rem;
 }
 
@@ -7052,7 +7054,7 @@ td {
 
 .catalog-kpis strong {
   color: #123526;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.35rem;
 }
 
@@ -7141,7 +7143,7 @@ td {
 .catalog-full-head h3 {
   margin: 4px 0 0;
   color: #173527;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .showcase-course-grid,
@@ -7560,7 +7562,7 @@ td {
 .course-detail-hero h2 {
   margin: 8px 0;
   color: #092f22;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.6rem, 3vw, 2.4rem);
 }
 
@@ -7639,7 +7641,7 @@ td {
 
 .detail-rating strong {
   color: var(--rs-green-800);
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 2rem;
 }
 
@@ -7760,7 +7762,7 @@ td {
 .knowledge-curation-summary h3 {
   margin: 8px 0;
   color: #092f22;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   line-height: 1.08;
 }
 
@@ -7817,7 +7819,7 @@ td {
 .knowledge-center-card h3 {
   margin: 0;
   color: #092f22;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .knowledge-center-card small {
@@ -8046,7 +8048,7 @@ td {
 .curation-panel h2 {
   margin: 8px 0;
   color: #092f22;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   line-height: 1.08;
 }
 
@@ -8093,7 +8095,7 @@ td {
 
 .curation-metric-grid strong {
   color: #092f22;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.6rem;
 }
 
@@ -8549,7 +8551,7 @@ td {
 
 .knowledge-category-grid strong {
   color: #092f22;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .knowledge-category-grid p,
@@ -8703,7 +8705,7 @@ td {
 
 .path-head h3 {
   color: #092f22;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .path-head p,
@@ -9007,7 +9009,7 @@ td {
 .profile-platform-intro h1 {
   margin: 4px 0 0;
   color: #0d472d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.55rem, 2.2vw, 2.3rem);
   line-height: 1.08;
 }
@@ -9170,7 +9172,7 @@ td {
   padding: 0 18px;
   background: #ffffff;
   color: #203227;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 700;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
@@ -9302,7 +9304,7 @@ td {
   border-radius: 28px;
   background: linear-gradient(145deg, #0d6b4b 0%, #2a8b43 100%);
   color: #fff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.55rem;
   font-weight: 950;
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18), 0 16px 30px rgba(13, 107, 75, 0.22);
@@ -9321,7 +9323,7 @@ td {
 .student-real-profile-hero h2 {
   margin: 4px 0 6px;
   color: #102033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.7rem, 2.7vw, 2.7rem);
   line-height: 1.04;
 }
@@ -9345,7 +9347,7 @@ td {
   padding: 0 16px;
   background: #ffffff;
   color: #0d5c3d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 950;
   text-decoration: none;
   white-space: nowrap;
@@ -9397,7 +9399,7 @@ td {
   display: block;
   margin-top: 4px;
   color: #112035;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1rem;
   font-weight: 950;
   line-height: 1.2;
@@ -9452,7 +9454,7 @@ td {
 
 .student-real-profile-readiness strong {
   color: #0d472d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 950;
 }
 
@@ -9604,7 +9606,7 @@ td {
 .tw-teacher-card strong {
   display: block;
   margin: 4px 0;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.15rem;
 }
 
@@ -9645,7 +9647,7 @@ td {
 .tw-lesson-card button,
 .teacher-home-card button {
   border: 0;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 800;
   cursor: pointer;
 }
@@ -9796,7 +9798,7 @@ td {
 
 .tw-hero h1 {
   margin: 8px 0;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2.1rem, 3.2vw, 3.7rem);
   line-height: 1.02;
   color: #083f2d;
@@ -9827,7 +9829,7 @@ td {
 
 .tw-hero-metrics strong,
 .tw-metric-card strong {
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.45rem;
   color: #083f2d;
 }
@@ -9883,7 +9885,7 @@ td {
 }
 
 .teacher-home-card strong {
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.15rem, 1.6vw, 1.55rem);
   line-height: 1.15;
 }
@@ -9937,7 +9939,7 @@ td {
 .teacher-avalia-hero span,
 .teacher-avalia-publication-form legend {
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.74rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -9947,7 +9949,7 @@ td {
   max-width: 760px;
   margin: 4px 0 8px;
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.35rem, 2vw, 2rem);
   line-height: 1.12;
 }
@@ -9983,7 +9985,7 @@ td {
 .teacher-avalia-hero-metrics strong {
   display: block;
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.45rem;
 }
 
@@ -10023,7 +10025,7 @@ td {
 .teacher-avalia-assessment-list strong {
   min-width: 0;
   color: inherit;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   overflow-wrap: anywhere;
 }
@@ -10082,7 +10084,7 @@ td {
   padding: 0 10px;
   background: #fff;
   color: #17271f;
-  font: 800 0.86rem Inter, sans-serif;
+  font: 800 0.86rem var(--platform-font-sans);
 }
 
 .teacher-avalia-publication-form > .qb-primary-action {
@@ -10133,7 +10135,7 @@ td {
   justify-content: center;
   background: #e7f1ea;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 800;
   text-decoration: none;
 }
@@ -10151,7 +10153,7 @@ td {
 
 .tw-section-head h2 {
   margin: 0;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   color: #083f2d;
 }
 
@@ -10245,7 +10247,7 @@ td {
   border: 1px solid rgba(6, 70, 47, 0.12);
   background: #fff;
   color: #49695d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
 }
 
@@ -10319,7 +10321,7 @@ td {
   padding: 0 16px;
   background: #13733f;
   color: #fff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   cursor: pointer;
 }
@@ -10357,7 +10359,7 @@ td {
 
 .tw-attendance-row strong {
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .tw-attendance-row small {
@@ -10461,7 +10463,7 @@ td {
 .tw-planning-heading h2 {
   margin: 4px 0;
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.9rem, 3vw, 3rem);
   line-height: 1.05;
 }
@@ -10482,7 +10484,7 @@ td {
   padding: 0 12px;
   background: #e7f1ea;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   cursor: pointer;
 }
@@ -10560,7 +10562,7 @@ td {
 
 .tw-planning-day header b {
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .tw-planning-list {
@@ -10689,7 +10691,7 @@ td {
 .tw-week-item strong,
 .tw-message-card strong {
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   line-height: 1.2;
 }
 
@@ -10769,7 +10771,7 @@ td {
   padding: 0 12px;
   background: #fff;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   cursor: pointer;
   display: inline-flex;
@@ -10836,7 +10838,7 @@ td {
 .tw-activity-entry strong,
 .pa-context-panel strong {
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   line-height: 1.2;
 }
 
@@ -10864,7 +10866,7 @@ td {
   place-items: center;
   background: #e7f1ea;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   text-decoration: none;
   cursor: pointer;
@@ -10978,7 +10980,7 @@ td {
 .tw-library-category strong,
 .tw-library-material strong {
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   line-height: 1.2;
 }
 
@@ -11007,7 +11009,7 @@ td {
   padding: 0 12px;
   background: #e7f1ea;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   cursor: not-allowed;
   opacity: 0.65;
@@ -11112,7 +11114,7 @@ td {
 .tw-tracking-student-detail strong {
   min-width: 0;
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   line-height: 1.2;
 }
 
@@ -11152,7 +11154,7 @@ td {
 .tw-tracking-item strong,
 .tw-tracking-production strong {
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   line-height: 1.2;
 }
 
@@ -11276,7 +11278,7 @@ td {
 
 .tw-formation-card strong {
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   line-height: 1.2;
 }
 
@@ -11307,7 +11309,7 @@ td {
   place-items: center;
   background: #e7f1ea;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   text-decoration: none;
 }
@@ -11342,7 +11344,7 @@ td {
 .tw-empty-state strong {
   display: block;
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .tw-empty-state p {
@@ -11433,7 +11435,7 @@ td {
   justify-content: center;
   background: #e7f1ea;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 800;
   text-decoration: none;
 }
@@ -11478,7 +11480,7 @@ td {
 
 .student-pedro-hero h1 {
   margin: 8px 0 0;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2.2rem, 5vw, 4.4rem);
   line-height: 1;
 }
@@ -11538,7 +11540,7 @@ td {
 }
 
 .student-pedro-actions strong {
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1rem, 2vw, 1.35rem);
   line-height: 1.15;
 }
@@ -11581,7 +11583,7 @@ td {
 }
 
 .student-home-card strong {
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.15rem, 2vw, 1.7rem);
   line-height: 1.15;
 }
@@ -11902,7 +11904,7 @@ td {
 
 .teacher-premium-hero span {
   color: #06462f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.35rem, 2vw, 2rem);
   font-weight: 900;
   text-transform: uppercase;
@@ -11911,7 +11913,7 @@ td {
 .teacher-premium-hero h1 {
   margin: 0 0 14px;
   color: #06462f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.65rem, 2.45vw, 2.7rem);
   line-height: 1.04;
 }
@@ -11980,13 +11982,13 @@ td {
 .teacher-side-card h2 {
   margin: 0;
   color: #06462f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   text-transform: uppercase;
 }
 
 .teacher-class-feature strong {
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   color: #173024;
   font-size: 1.1rem;
 }
@@ -12004,7 +12006,7 @@ td {
   padding: 0 22px;
   background: #13733f;
   color: #fff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   cursor: pointer;
 }
@@ -12080,7 +12082,7 @@ td {
 .teacher-metric-card span,
 .teacher-content-card strong {
   color: #17271f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   line-height: 1.16;
 }
@@ -12126,7 +12128,7 @@ td {
   align-items: center;
   gap: 10px;
   color: #06462f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   background: #eef7ef;
   cursor: pointer;
@@ -12172,7 +12174,7 @@ td {
 
 .premium-empty strong {
   color: #2b3d33;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.88rem;
   line-height: 1.28;
 }
@@ -12368,7 +12370,7 @@ td {
   gap: 4px;
   padding: 12px;
   color: #063f2c;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .student-premium-topbar a {
@@ -12376,7 +12378,7 @@ td {
   align-items: center;
   gap: 10px;
   color: #141d18;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   text-decoration: none;
   min-height: 44px;
@@ -12407,7 +12409,7 @@ td {
   padding: 0 14px;
   background: rgba(255, 255, 255, 0.94);
   color: #06462f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.78rem;
   font-weight: 900;
   text-decoration: none;
@@ -12446,7 +12448,7 @@ td {
 .student-institutional-gate strong {
   display: block;
   color: #14231c;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.25rem, 2vw, 1.75rem);
   font-weight: 900;
 }
@@ -12507,7 +12509,7 @@ td {
 
 .student-premium-hero span {
   color: #06462f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.8rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -12516,7 +12518,7 @@ td {
 .student-premium-hero h1 {
   margin: 0;
   color: #06462f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2rem, 3vw, 3rem);
   line-height: 1.04;
 }
@@ -12568,7 +12570,7 @@ td {
 .student-premium-card strong,
 .student-side-card h2 {
   color: #075b34;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -12577,7 +12579,7 @@ td {
   display: block;
   margin: 12px 0 8px;
   color: #141d18;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.18rem;
 }
 
@@ -12602,7 +12604,7 @@ td {
   margin-top: 14px;
   background: #13733f;
   color: #fff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   text-decoration: none;
 }
@@ -12652,7 +12654,7 @@ td {
 .student-class-schedule-title h2 {
   margin: 0;
   color: #075b34;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.25rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -12683,7 +12685,7 @@ td {
   gap: 8px;
   background: #13733f;
   color: #fff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.78rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -12747,7 +12749,7 @@ td {
 .student-class-schedule-table thead th {
   background: #eef7e9;
   color: #075b34;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.78rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -12756,7 +12758,7 @@ td {
 .student-class-schedule-table tbody th {
   background: #fff;
   color: #075b34;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
 }
 
@@ -12962,7 +12964,7 @@ td {
   align-items: center;
   color: #075b34;
   background: #eef7ef;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   text-decoration: none;
 }
@@ -13080,7 +13082,7 @@ td {
 }
 
 .admin-id-card strong {
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.2rem;
 }
 
@@ -13101,7 +13103,7 @@ td {
   gap: 12px;
   background: transparent;
   color: rgba(255, 255, 255, 0.78);
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 800;
   text-align: left;
   cursor: pointer;
@@ -13225,7 +13227,7 @@ td {
   gap: 10px;
   background: #dbece5;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   text-decoration: none;
   cursor: pointer;
@@ -13290,7 +13292,7 @@ td {
   padding: 0 12px 0 14px;
   background: #f8fbf7;
   color: #5a6a61;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.76rem;
   font-weight: 900;
   text-decoration: none;
@@ -13360,7 +13362,7 @@ td {
 .admin-hero h1 {
   max-width: 760px;
   margin: 6px 0;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2rem, 3vw, 2.8rem);
   line-height: 1;
   color: #073d35;
@@ -13452,7 +13454,7 @@ td {
 .admin-context-strip strong {
   overflow-wrap: anywhere;
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1rem;
   line-height: 1.2;
 }
@@ -13503,13 +13505,13 @@ td {
 
 .admin-metric-card span {
   color: #526b60;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
 }
 
 .admin-metric-card strong {
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.9rem, 3vw, 2.65rem);
   line-height: 1;
 }
@@ -13570,7 +13572,7 @@ td {
 
 .admin-door-card span {
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
 }
 
@@ -13654,7 +13656,7 @@ td {
   border-color: #dfe7de;
   box-shadow: 0 10px 22px rgba(18, 32, 51, 0.04);
   cursor: pointer;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   color: #06462f;
 }
@@ -13763,7 +13765,7 @@ td {
   gap: 7px;
   background: #e7f1ea;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   text-decoration: none;
   cursor: pointer;
@@ -13822,7 +13824,7 @@ td {
   place-items: center;
   background: #2d7c42;
   color: #fff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
 }
 
@@ -13838,7 +13840,7 @@ td {
 .admin-role-grid strong,
 .admin-engine-grid strong {
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   line-height: 1.18;
 }
 
@@ -13946,7 +13948,7 @@ td {
   min-width: 0;
   overflow-wrap: anywhere;
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .admin-user-detail ul {
@@ -13972,7 +13974,7 @@ td {
 
 .admin-access-receipt strong {
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.96rem;
 }
 
@@ -14010,7 +14012,7 @@ td {
   border-radius: 8px;
   background: #f3f7f4;
   color: #526b60;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
 }
 
@@ -14144,7 +14146,7 @@ td {
 
 .admin-school-metric strong {
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.25rem;
   line-height: 1;
 }
@@ -14189,7 +14191,7 @@ td {
   gap: 7px;
   background: #e7f1ea;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   cursor: pointer;
   text-decoration: none;
@@ -14310,7 +14312,7 @@ td {
   display: flex;
   align-items: center;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   cursor: pointer;
 }
@@ -14551,7 +14553,7 @@ td {
   min-width: 0;
   overflow-wrap: anywhere;
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.92rem;
   line-height: 1.25;
 }
@@ -14591,7 +14593,7 @@ td {
 
 .admin-contract-card header strong {
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1rem;
   line-height: 1.2;
 }
@@ -14651,7 +14653,7 @@ td {
 
 .admin-contract-module strong {
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   line-height: 1.2;
 }
 
@@ -14736,7 +14738,7 @@ td {
 
 .admin-contract-exception-note strong {
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .admin-contract-overview p[data-admin-contract-status] {
@@ -14786,7 +14788,7 @@ td {
 .admin-school-implementation header strong {
   min-width: 0;
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   line-height: 1.2;
 }
 
@@ -14834,7 +14836,7 @@ td {
   gap: 7px;
   background: #0d6b4b;
   color: #fff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   cursor: pointer;
 }
@@ -14916,7 +14918,7 @@ td {
 }
 
 .admin-content-flow article strong {
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   line-height: 1.15;
 }
@@ -15027,7 +15029,7 @@ td {
 .admin-content-module-body strong {
   min-width: 0;
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.02rem;
   font-weight: 950;
   line-height: 1.15;
@@ -15041,7 +15043,7 @@ td {
 }
 
 .admin-content-module-count b {
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2rem, 3.2vw, 2.85rem);
   line-height: 0.95;
 }
@@ -15183,7 +15185,7 @@ td {
 
 .admin-content-item-main strong {
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1rem;
   line-height: 1.2;
 }
@@ -15246,7 +15248,7 @@ td {
   gap: 7px;
   background: #0d6b4b;
   color: #fff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   cursor: pointer;
 }
@@ -15300,7 +15302,7 @@ td {
 
 .admin-import-package > strong {
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   line-height: 1.2;
 }
 
@@ -15329,7 +15331,7 @@ td {
 
 .admin-template-download strong {
   color: #073d35;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.82rem;
   line-height: 1.25;
 }
@@ -15352,7 +15354,7 @@ td {
   gap: 7px;
   background: #e7f1ea;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   cursor: pointer;
 }
@@ -15388,7 +15390,7 @@ td {
   padding: 7px 10px;
   background: #edf7f0;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.74rem;
   font-weight: 900;
 }
@@ -15435,7 +15437,7 @@ td {
   padding: 0 10px;
   background: #fff;
   color: #122033;
-  font: 850 0.78rem Inter, sans-serif;
+  font: 850 0.78rem var(--platform-font-sans);
 }
 
 .admin-import-counts {
@@ -15462,7 +15464,7 @@ td {
 
 .admin-import-counts strong {
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .admin-import-actions button {
@@ -15476,7 +15478,7 @@ td {
   gap: 7px;
   background: #e7f1ea;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   cursor: pointer;
 }
@@ -15553,7 +15555,7 @@ td {
 .admin-access-dialog header h3 {
   margin: 0;
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   line-height: 1.18;
 }
 
@@ -15589,7 +15591,7 @@ td {
 
 .admin-access-review strong {
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   overflow-wrap: anywhere;
 }
 
@@ -15647,7 +15649,7 @@ td {
   padding: 0 13px;
   background: #e7f1ea;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   cursor: pointer;
 }
@@ -15796,7 +15798,7 @@ td {
 .admin-empty-state h2,
 .admin-section-head h2 {
   margin: 0;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   color: #122033;
   line-height: 1.15;
 }
@@ -15878,7 +15880,7 @@ td {
   place-items: center;
   background: #f8fbf7;
   color: #073d35;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   text-align: center;
 }
@@ -15906,7 +15908,7 @@ td {
 .admin-permission-table > div:first-child > * {
   background: #f1f6dc;
   color: #465b16;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
 }
 
@@ -15953,7 +15955,7 @@ td {
 .pa-hero h1 {
   margin: 0;
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2rem, 4vw, 3.4rem);
   line-height: 1.03;
 }
@@ -15979,7 +15981,7 @@ td {
   padding: 0 14px;
   background: #0d6b4b;
   color: #fff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   text-decoration: none;
 }
@@ -16026,7 +16028,7 @@ td {
 
 .pa-age-card strong {
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.25rem;
 }
 
@@ -16103,7 +16105,7 @@ td {
   padding: 0 14px;
   background: #e7f1ea;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   cursor: pointer;
 }
@@ -16176,7 +16178,7 @@ td {
 .pa-recommendation-dialog h2 {
   margin: 4px 0 0;
   color: #122033;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .pa-recommendation-dialog label {
@@ -16226,7 +16228,7 @@ td {
   padding: 0 16px;
   background: #fff;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   cursor: pointer;
 }
@@ -16303,7 +16305,7 @@ td {
 .pa-card h3 {
   margin: 0;
   color: #112f25;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.05rem;
   line-height: 1.2;
 }
@@ -16348,7 +16350,7 @@ td {
 .pa-empty h2 {
   margin: 0;
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .pa-empty p {
@@ -16441,7 +16443,7 @@ td {
 .ua-motor-head h1 {
   margin: 0;
   color: #083f2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .ua-assign-form header span,
@@ -16507,7 +16509,7 @@ td {
   padding: 0 14px;
   background: #0d6b4b;
   color: #fff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   text-decoration: none;
   cursor: pointer;
@@ -16581,7 +16583,7 @@ td {
 .ua-delivery-card strong,
 .ua-portfolio-grid strong {
   color: #123227;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .ua-student-card small,
@@ -16645,7 +16647,7 @@ td {
 .ua-delivery-student-detail h4 {
   margin: 0;
   color: #123227;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .ua-delivery-student-detail dl {
@@ -17349,7 +17351,7 @@ td {
 .coming-soon-panel h1 {
   margin: 0;
   color: #064530;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2rem, 4vw, 3.4rem);
 }
 
@@ -17504,7 +17506,7 @@ td {
 
 .family-v1-person strong {
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.08rem;
 }
 
@@ -17533,7 +17535,7 @@ td {
   padding: 0 18px;
   background: transparent;
   color: rgba(255, 255, 255, 0.86);
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   text-decoration: none;
   cursor: pointer;
@@ -17682,7 +17684,7 @@ td {
   padding: 0 14px;
   background: rgba(255, 255, 255, 0.9);
   color: #06462f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.72rem;
   font-weight: 900;
   text-decoration: none;
@@ -17713,7 +17715,7 @@ td {
   padding: 0 18px;
   background: rgba(255, 255, 255, 0.9);
   color: #173024;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
 }
 
@@ -17748,7 +17750,7 @@ td {
 
 .family-v1-hero span {
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.72rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -17758,7 +17760,7 @@ td {
   max-width: 720px;
   margin: 4px 0;
   color: #08482f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2rem, 3vw, 3rem);
   line-height: 1.05;
 }
@@ -17791,7 +17793,7 @@ td {
   border: 1px solid rgba(13, 107, 75, 0.14);
   background: #0d6b4b;
   color: #ffffff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.78rem;
   font-weight: 900;
   text-decoration: none;
@@ -17867,7 +17869,7 @@ td {
   min-width: 0;
   overflow-wrap: anywhere;
   color: #162f24;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.9rem;
   line-height: 1.18;
 }
@@ -17924,7 +17926,7 @@ td {
 .family-profile-hero-card h3 {
   margin: 0;
   color: #10281d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.35rem, 2.5vw, 2rem);
   line-height: 1.08;
 }
@@ -17983,7 +17985,7 @@ td {
 .family-profile-grid strong {
   min-width: 0;
   color: #183529;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.92rem;
   line-height: 1.18;
   overflow-wrap: anywhere;
@@ -18012,7 +18014,7 @@ td {
   display: block;
   margin-bottom: 3px;
   color: #6d4d09;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.9rem;
 }
 
@@ -18059,7 +18061,7 @@ td {
 .student-focus-card h1 {
   margin: 0;
   color: #0b4b2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1rem;
   line-height: 1.15;
 }
@@ -18079,7 +18081,7 @@ td {
 
 .family-empty-state strong {
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.78rem;
 }
 
@@ -18113,7 +18115,7 @@ td {
   display: block;
   margin: 6px 0;
   color: #162f24;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .family-message-list {
@@ -18324,7 +18326,7 @@ td {
 
 .family-recommendation-card strong {
   color: #14291f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.98rem;
   line-height: 1.2;
 }
@@ -18386,7 +18388,7 @@ td {
   padding: 0 14px;
   background: #0d6b4b;
   color: #fff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.72rem;
   font-weight: 950;
   text-decoration: none;
@@ -18434,7 +18436,7 @@ td {
 
 .family-attendance-summary strong {
   color: #14291f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.7rem;
   font-weight: 950;
   line-height: 1;
@@ -18471,7 +18473,7 @@ td {
 
 .family-attendance-record strong {
   color: #172d23;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1rem;
   font-weight: 950;
 }
@@ -18559,7 +18561,7 @@ td {
   padding: 0 12px;
   background: #fff;
   color: #607269;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   cursor: pointer;
 }
@@ -18580,7 +18582,7 @@ td {
 .family-activity-columns h3 {
   margin: 0 0 10px;
   color: #0b4b2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .family-week-panel {
@@ -18615,7 +18617,7 @@ td {
   padding: 0 9px;
   background: #f8fbf7;
   color: #667468;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.66rem;
   font-weight: 900;
 }
@@ -18648,7 +18650,7 @@ td {
 .family-child-selector strong {
   min-width: 0;
   color: #183529;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.98rem;
   overflow-wrap: anywhere;
 }
@@ -18668,7 +18670,7 @@ td {
   padding: 10px 12px;
   background: #ffffff;
   color: #0b4b2d;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   text-align: left;
   cursor: pointer;
@@ -18713,7 +18715,7 @@ td {
   place-items: center;
   background: #edf6e8;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.68rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -18744,7 +18746,7 @@ td {
 
 .family-week-cell strong {
   color: #183529;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.74rem;
   line-height: 1.1;
 }
@@ -18914,7 +18916,7 @@ td {
 .family-summary-panel dd {
   margin: 0;
   color: #173328;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 0.82rem;
   font-weight: 900;
   text-align: right;
@@ -18953,7 +18955,7 @@ td {
 
 .family-tree-mini strong {
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .family-routine-modal[hidden] {
@@ -19021,7 +19023,7 @@ td {
   padding: 0 14px;
   background: #0d6b4b;
   color: #fff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   cursor: pointer;
 }
@@ -19088,7 +19090,7 @@ td {
   place-items: center;
   background: linear-gradient(135deg, #1f9b5f, #0b6a43);
   color: #fff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 2.4rem;
   font-weight: 900;
 }
@@ -19131,7 +19133,7 @@ td {
   display: block;
   margin-bottom: 6px;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .student-focus-actions {
@@ -19387,7 +19389,7 @@ td {
   .family-week-mobile h3 {
     margin: 0;
     color: #0d6b4b;
-    font-family: Poppins, Inter, sans-serif;
+    font-family: var(--platform-font-sans);
     font-size: 0.9rem;
   }
 
@@ -19525,7 +19527,7 @@ td {
 .student-hero h1 {
   margin: 0 0 8px;
   color: #064530;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.45rem, 3vw, 2.25rem);
   line-height: 1.02;
 }
@@ -20210,7 +20212,7 @@ td {
 .knowledge-tree-hero h1 {
   margin: 6px 0 8px;
   color: #073b2a;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2rem, 4vw, 3.4rem);
   line-height: 1;
 }
@@ -20957,7 +20959,7 @@ td {
   max-width: 620px;
   margin: 0;
   color: #fff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2rem, 4vw, 3.7rem);
   line-height: 0.98;
   text-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
@@ -21197,7 +21199,7 @@ td {
 
 .ecosystem-section-head h2 {
   margin: 0;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.05rem;
 }
 
@@ -21426,7 +21428,7 @@ td {
 .metric-feature > strong,
 .certificate-feature > strong {
   display: block;
-  font: 800 2rem Poppins, Inter, sans-serif;
+  font: 800 2rem var(--platform-font-sans);
 }
 
 .metric-feature p,
@@ -21651,7 +21653,7 @@ td {
 
 .ecosystem-smart-footer strong {
   color: var(--rs-green-700);
-  font: 800 1.8rem Poppins, Inter, sans-serif;
+  font: 800 1.8rem var(--platform-font-sans);
   line-height: 1;
 }
 
@@ -23164,7 +23166,7 @@ td {
   padding: 0;
   background: transparent;
   color: #10231f;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .school-collective * {
@@ -23193,7 +23195,7 @@ td {
 .school-context-strip h1 {
   margin: 0 0 6px;
   color: #07582f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.7rem, 2.4vw, 2.45rem);
   line-height: 1.02;
   text-transform: uppercase;
@@ -23308,7 +23310,7 @@ td {
 .school-welcome-card h2 {
   margin: 0 0 10px;
   color: #fff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2rem, 3vw, 3.25rem);
   line-height: 1.08;
   text-transform: uppercase;
@@ -23358,7 +23360,7 @@ td {
 .school-challenge-card h2 {
   margin: 18px 0 8px;
   color: #07582f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(1.35rem, 2vw, 2rem);
   text-transform: uppercase;
 }
@@ -23458,7 +23460,7 @@ td {
   gap: 10px;
   margin: 0;
   color: #07582f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.15rem;
   text-transform: uppercase;
 }
@@ -23695,7 +23697,7 @@ td {
 
 .school-empty strong {
   color: #07582f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.05rem;
 }
 
@@ -23739,7 +23741,7 @@ td {
   max-width: 760px;
   margin: 0;
   color: #fff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2rem, 3vw, 3.25rem);
   line-height: 1.06;
 }
@@ -23797,7 +23799,7 @@ td {
 .school-access-panel strong {
   display: block;
   color: #07582f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.2rem;
   text-transform: uppercase;
 }
@@ -23913,7 +23915,7 @@ td {
   border-radius: 8px;
   background: #fff;
   color: #06462f;
-  font: 800 0.82rem Inter, sans-serif;
+  font: 800 0.82rem var(--platform-font-sans);
   text-decoration: none;
   box-shadow: 0 10px 24px rgba(18, 32, 51, 0.04);
   cursor: pointer;
@@ -24019,7 +24021,7 @@ td {
 }
 
 .official-school-real-status strong {
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.35rem;
   color: #07582f;
 }
@@ -24089,7 +24091,7 @@ td {
   max-width: 640px;
   margin: 8px 0 0;
   color: #06452b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2.35rem, 5vw, 5rem);
   line-height: 0.98;
   letter-spacing: 0;
@@ -24129,7 +24131,7 @@ td {
 
 .official-school-real-context strong {
   color: #10231f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.08rem;
 }
 
@@ -24189,7 +24191,7 @@ td {
 .official-school-prepared-empty strong {
   display: block;
   color: #10231f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1rem;
   line-height: 1.25;
 }
@@ -24234,7 +24236,7 @@ td {
 .official-school-communication-card strong {
   display: block;
   color: #10231f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1rem;
   line-height: 1.25;
 }
@@ -24273,7 +24275,7 @@ td {
 
 .official-school-empty-card strong {
   color: #10231f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .official-school-empty-card span {
@@ -24303,7 +24305,7 @@ td {
 
 .official-school-shortcut-list strong {
   color: #07582f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1rem;
 }
 
@@ -24540,7 +24542,7 @@ td {
 }
 
 .official-school-access-grid strong {
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.05rem;
 }
 
@@ -24590,7 +24592,7 @@ td {
   min-height: 44px;
   margin: 0;
   color: #07582f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1rem;
   line-height: 1.16;
   text-transform: uppercase;
@@ -24755,7 +24757,7 @@ td {
 .school-coloring-workbench h3 {
   margin: 0;
   color: #07582f;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.5rem;
   text-transform: uppercase;
 }
@@ -25217,7 +25219,7 @@ td {
 .pcd-coming-soon h1 {
   margin: 0;
   color: #0d6b4b;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2rem, 5vw, 4.2rem);
   line-height: 1;
 }
@@ -25260,7 +25262,7 @@ td {
 .pcd-intro-scene h1 {
   margin: 0;
   color: #073d35;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: clamp(2rem, 5vw, 4.6rem);
   line-height: 1;
 }
@@ -25285,7 +25287,7 @@ td {
   padding: 0 18px;
   background: #0d6b4b;
   color: #fff;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-weight: 900;
   text-decoration: none;
   cursor: pointer;
@@ -25321,7 +25323,7 @@ td {
 .pcd-figure-card strong,
 .pcd-paint-header strong {
   color: #073d35;
-  font-family: Poppins, Inter, sans-serif;
+  font-family: var(--platform-font-sans);
   font-size: 1.22rem;
   text-align: center;
 }
@@ -25841,7 +25843,7 @@ html {
   display: grid;
   justify-items: end;
   gap: 10px;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--platform-font-sans);
 }
 
 .a11y-toggle,
@@ -26300,20 +26302,20 @@ html[data-a11y-reduced-motion="true"] *::after {
  --learning-bg:#f7f9f6; --learning-surface:#fff; --learning-green:#175c40;
  --learning-ink:#203c2e; --learning-muted:#596b60; --learning-line:#dce6dd;
  --learning-soft:#eef5ef; --learning-accent:#d68a3d; --learning-brown:#795b43;
- background:var(--learning-bg); color:var(--learning-ink); font-family:Inter,system-ui,sans-serif; font-size:16px; line-height:1.5;
+ background:var(--learning-bg); color:var(--learning-ink); font-family: var(--platform-font-sans); font-size:16px; line-height:1.5;
 }
 .student-premium-workspace .student-premium-sidebar,
 .teacher-pilot .tw-sidebar { background:#124b35; box-shadow:none; }
 .student-premium-workspace .student-premium-logo img,
 .teacher-pilot .tw-teacher-card img { max-width:116px; filter:none; }
 .student-premium-workspace .student-premium-sidebar nav a,
-.teacher-pilot .tw-sidebar nav button { font:600 14px/1.4 Inter,system-ui,sans-serif; min-height:44px; }
+.teacher-pilot .tw-sidebar nav button { font: 600 14px/1.4 var(--platform-font-sans); min-height:44px; }
 .student-premium-workspace .student-premium-sidebar nav a.is-active,
 .teacher-pilot .tw-sidebar nav button.is-active { background:#28664b; box-shadow:inset 3px 0 #df9b50; }
 .student-premium-workspace .student-premium-hero,
 .teacher-pilot .teacher-premium-hero { min-height:0; padding:28px; grid-template-columns:minmax(0,1fr); background:var(--learning-soft); border:1px solid var(--learning-line); box-shadow:none; border-radius:18px; }
 .student-premium-workspace .student-premium-hero h1,
-.teacher-pilot .teacher-premium-hero h1 { font:700 clamp(28px,3vw,38px)/1.2 Inter,system-ui,sans-serif; color:var(--learning-green); margin:8px 0; }
+.teacher-pilot .teacher-premium-hero h1 { font: 700 clamp(28px,3vw,38px)/1.2 var(--platform-font-sans); color:var(--learning-green); margin:8px 0; }
 .student-premium-workspace .student-premium-hero p,
 .teacher-pilot .teacher-premium-hero p { font-size:16px; font-weight:400; line-height:1.5; color:var(--learning-muted); }
 .student-premium-workspace .student-premium-card,
@@ -26326,7 +26328,7 @@ html[data-a11y-reduced-motion="true"] *::after {
 .teacher-pilot .teacher-premium-section h2,
 .teacher-pilot .teacher-side-card h2,
 .teacher-pilot .teacher-metric-card strong,
-.teacher-pilot .teacher-content-card strong { font-family:Inter,system-ui,sans-serif; font-size:18px; font-weight:650; text-transform:none; line-height:1.35; color:var(--learning-ink); }
+.teacher-pilot .teacher-content-card strong { font-family: var(--platform-font-sans); font-size:18px; font-weight:650; text-transform:none; line-height:1.35; color:var(--learning-ink); }
 .student-premium-workspace .student-premium-card p,
 .student-premium-workspace .student-side-card p,
 .teacher-pilot .teacher-content-card small,
@@ -26348,14 +26350,14 @@ html[data-a11y-reduced-motion="true"] *::after {
 }
 
 .student-premium-workspace .student-premium-hero span,
-.teacher-pilot .teacher-premium-hero span { font:650 12px/1.4 Inter,system-ui,sans-serif; letter-spacing:.04em; color:var(--learning-green); }
+.teacher-pilot .teacher-premium-hero span { font: 650 12px/1.4 var(--platform-font-sans); letter-spacing:.04em; color:var(--learning-green); }
 .student-premium-workspace .student-premium-card { min-height:160px; }
 
 /* Institutional home presentation; data, navigation hooks and access gates retained. */
 [data-admin-workspace], .app-shell[data-environment="escola"] {
  --institution-green:#175c40; --institution-ink:#203c2e; --institution-muted:#596b60;
  --institution-line:#dce6dd; --institution-soft:#eef5ef;
- background:#f7f9f6; color:var(--institution-ink); font:400 16px/1.5 Inter,system-ui,sans-serif;
+ background:#f7f9f6; color:var(--institution-ink); font: 400 16px/1.5 var(--platform-font-sans);
 }
 [data-admin-workspace] .admin-sidebar,
 .app-shell[data-environment="escola"] .app-sidebar { background:#124b35; box-shadow:none; }
@@ -26363,7 +26365,7 @@ html[data-a11y-reduced-motion="true"] *::after {
 [data-admin-workspace] .admin-sidebar-logo img,
 .app-shell[data-environment="escola"] .sidebar-logo img { max-width:116px; max-height:130px; filter:none; }
 [data-admin-workspace] .admin-sidebar nav button,
-.app-shell[data-environment="escola"] .app-nav a { font:600 14px/1.4 Inter,system-ui,sans-serif; min-height:44px; }
+.app-shell[data-environment="escola"] .app-nav a { font: 600 14px/1.4 var(--platform-font-sans); min-height:44px; }
 [data-admin-workspace] .admin-sidebar nav button.is-active,
 .app-shell[data-environment="escola"] .app-nav a.is-active { background:#28664b; box-shadow:inset 3px 0 #df9b50; }
 [data-admin-workspace] .admin-sidebar nav button.is-active::after,
@@ -26374,19 +26376,19 @@ html[data-a11y-reduced-motion="true"] *::after {
 [data-admin-workspace] .admin-hero { padding:28px; }
 .app-shell[data-environment="escola"] .official-school-real-hero-copy { min-height:0; padding:28px; max-width:900px; }
 [data-admin-workspace] .admin-hero h1,
-.app-shell[data-environment="escola"] .official-school-real-hero-copy h1 { font:700 clamp(28px,3vw,38px)/1.2 Inter,system-ui,sans-serif; color:var(--institution-green); overflow-wrap:anywhere; }
+.app-shell[data-environment="escola"] .official-school-real-hero-copy h1 { font: 700 clamp(28px,3vw,38px)/1.2 var(--platform-font-sans); color:var(--institution-green); overflow-wrap:anywhere; }
 [data-admin-workspace] .admin-hero p,
-.app-shell[data-environment="escola"] .official-school-real-hero-copy small { color:var(--institution-muted); font:400 16px/1.5 Inter,system-ui,sans-serif; }
+.app-shell[data-environment="escola"] .official-school-real-hero-copy small { color:var(--institution-muted); font: 400 16px/1.5 var(--platform-font-sans); }
 .app-shell[data-environment="escola"] .official-school-real-hero-copy p { margin-top:12px; font-size:14px; font-weight:500; text-transform:none; }
 [data-admin-workspace] .admin-hero-badges span { min-width:0; background:#fff; color:var(--institution-green); font-weight:600; text-transform:none; }
 [data-admin-workspace] :is(.admin-board,.admin-metric-card,.admin-context-strip article,.admin-door-card),
 .app-shell[data-environment="escola"] :is(.official-school-panel,.official-school-communication-card,.official-school-shortcut-list a) { border:1px solid var(--institution-line); border-radius:14px; background:#fff; box-shadow:0 3px 12px #183c2605; }
 [data-admin-workspace] :is(.admin-section-head h2,.admin-door-card strong),
-.app-shell[data-environment="escola"] :is(.official-school-section-head h2,.official-school-shortcut-list strong) { font:650 18px/1.35 Inter,system-ui,sans-serif; color:var(--institution-ink); text-transform:none; }
+.app-shell[data-environment="escola"] :is(.official-school-section-head h2,.official-school-shortcut-list strong) { font: 650 18px/1.35 var(--platform-font-sans); color:var(--institution-ink); text-transform:none; }
 [data-admin-workspace] :is(.admin-section-head span,.admin-metric-card span,.admin-metric-card small,.admin-status-item span,.admin-recent-item span),
-.app-shell[data-environment="escola"] :is(.official-school-section-head p,.official-school-shortcut-list span,.official-school-communication-card p) { font:400 14px/1.5 Inter,system-ui,sans-serif; color:var(--institution-muted); text-transform:none; }
-[data-admin-workspace] .admin-metric-card strong { font:700 28px/1.2 Inter,system-ui,sans-serif; color:var(--institution-green); }
-[data-admin-workspace] :is(.admin-quick-list button,.admin-topbar button,.admin-topbar-link) { font-family:Inter,system-ui,sans-serif; font-weight:600; }
+.app-shell[data-environment="escola"] :is(.official-school-section-head p,.official-school-shortcut-list span,.official-school-communication-card p) { font: 400 14px/1.5 var(--platform-font-sans); color:var(--institution-muted); text-transform:none; }
+[data-admin-workspace] .admin-metric-card strong { font: 700 28px/1.2 var(--platform-font-sans); color:var(--institution-green); }
+[data-admin-workspace] :is(.admin-quick-list button,.admin-topbar button,.admin-topbar-link) { font-family: var(--platform-font-sans); font-weight:600; }
 [data-admin-workspace] :is(.admin-metric-card,.admin-door-card,.admin-context-strip) .admin-inline-icon,
 .app-shell[data-environment="escola"] :is(.official-school-shortcut-list,.official-school-communication-card) .secretaria-icon { width:44px; height:44px; border-radius:12px; color:var(--institution-green); background:var(--institution-soft); }
 [data-admin-workspace] :is(a,button,input,select):focus-visible,
@@ -26404,7 +26406,7 @@ html[data-a11y-reduced-motion="true"] *::after {
 }
 
 /* Approved institutional workspace. Student home is intentionally excluded. */
-.rs-workspace { --rs-workspace-green:#175c40; --rs-workspace-line:#dce6dd; font-family:Inter,system-ui,sans-serif; color:#203c2e; background:#f7f9f6; }
+.rs-workspace { --rs-workspace-green:#175c40; --rs-workspace-line:#dce6dd; font-family: var(--platform-font-sans); color:#203c2e; background:#f7f9f6; }
 .rs-workspace [hidden], .rs-workspace .rs-search-hidden { display:none !important; }
 .rs-workspace :is(.tw-sidebar,.admin-sidebar,.app-sidebar) { background:#124b35; padding:20px 16px; box-shadow:none; }
 .rs-workspace :is(.tw-teacher-card,.admin-sidebar-logo,.sidebar-logo) { display:flex; flex-direction:column; align-items:center; margin:0 0 16px; padding:0; min-height:0; }
@@ -26412,26 +26414,26 @@ html[data-a11y-reduced-motion="true"] *::after {
 .rs-workspace .tw-teacher-card > div { font-size:14px; text-align:center; }
 .rs-workspace .tw-teacher-card strong { font-size:15px; }
 .rs-workspace .tw-teacher-card small { display:none; }
-.rs-workspace .admin-id-card { padding:10px; font:400 14px/1.4 Inter,system-ui,sans-serif; overflow-wrap:anywhere; }
+.rs-workspace .admin-id-card { padding:10px; font: 400 14px/1.4 var(--platform-font-sans); overflow-wrap:anywhere; }
 .rs-workspace .admin-id-card strong { display:none; }
 .rs-workspace :is(.tw-sidebar,.admin-sidebar,.app-sidebar) nav { gap:4px; }
-.rs-workspace :is(.tw-sidebar nav button,.admin-sidebar nav button,.app-nav a) { display:flex; gap:12px; min-height:44px; padding:10px 12px; font:600 15px/1.4 Inter,system-ui,sans-serif; text-transform:none; border-radius:8px; }
+.rs-workspace :is(.tw-sidebar nav button,.admin-sidebar nav button,.app-nav a) { display:flex; gap:12px; min-height:44px; padding:10px 12px; font: 600 15px/1.4 var(--platform-font-sans); text-transform:none; border-radius:8px; }
 .rs-workspace :is(.tw-sidebar nav button,.admin-sidebar nav button,.app-nav a) i { width:20px; height:20px; flex:0 0 20px; background:transparent; color:inherit; }
 .rs-workspace :is(.tw-sidebar nav button,.admin-sidebar nav button,.app-nav a) i::before { width:20px; height:20px; }
 .rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) { display:flex; align-items:center; flex-wrap:wrap; gap:16px; min-height:64px; height:auto; padding:10px 16px; background:#fff; border:1px solid #dce6dd; border-radius:12px; box-shadow:none; }
 .rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) > label { flex:1 1 240px; min-width:0; max-width:520px; margin:0; display:block; }
 .rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) > label > span { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
-.rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) input { width:100%; min-width:0; min-height:44px; border:1px solid #dce6dd; border-radius:8px; background:#f7f9f6; padding:10px 14px; color:#203c2e; font:400 15px/1.4 Inter,system-ui,sans-serif; }
+.rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) input { width:100%; min-width:0; min-height:44px; border:1px solid #dce6dd; border-radius:8px; background:#f7f9f6; padding:10px 14px; color:#203c2e; font: 400 15px/1.4 var(--platform-font-sans); }
 .rs-workspace :is(.tw-top-actions,.admin-topbar-actions,.rs-global-actions) { display:flex; gap:8px; flex-wrap:wrap; margin-left:auto; min-width:0; }
-.rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:10px 14px; border:1px solid #dce6dd; border-radius:8px; background:#fff; color:#175c40; font:600 15px/1.4 Inter,system-ui,sans-serif; white-space:normal; box-shadow:none; cursor:pointer; }
+.rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:10px 14px; border:1px solid #dce6dd; border-radius:8px; background:#fff; color:#175c40; font: 600 15px/1.4 var(--platform-font-sans); white-space:normal; box-shadow:none; cursor:pointer; }
 .rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) button i { width:20px; height:20px; }
 .rs-workspace :is(.tw-topbar,.admin-topbar,.app-topbar) button i::before { width:20px; height:20px; }
 .rs-workspace .rs-school-link { float:right; font-size:14px; color:#175c40; }
 .rs-workspace :is(.teacher-metric-grid,.teacher-content-grid) { grid-template-columns:repeat(3,minmax(0,1fr)); }
 .rs-workspace .teacher-premium-layout { grid-template-columns:minmax(0,1fr) 280px; gap:20px; }
 .rs-workspace .teacher-premium-section { padding:20px; border:1px solid #dce6dd; border-radius:14px; background:#fff; }
-.rs-workspace :is(.teacher-side-card button,.rs-admin-primary button) { min-height:44px; border:1px solid #dce6dd; border-radius:8px; background:#eef5ef; color:#175c40; padding:10px 14px; font:600 15px/1.4 Inter,system-ui,sans-serif; cursor:pointer; }
-.rs-workspace .teacher-side-card p { font:400 16px/1.5 Inter,system-ui,sans-serif; color:#596b60; }
+.rs-workspace :is(.teacher-side-card button,.rs-admin-primary button) { min-height:44px; border:1px solid #dce6dd; border-radius:8px; background:#eef5ef; color:#175c40; padding:10px 14px; font: 600 15px/1.4 var(--platform-font-sans); cursor:pointer; }
+.rs-workspace .teacher-side-card p { font: 400 16px/1.5 var(--platform-font-sans); color:#596b60; }
 .rs-workspace .rs-admin-primary .admin-quick-list { grid-template-columns:repeat(3,minmax(0,1fr)); }
 .rs-workspace .rs-admin-primary button { min-height:96px; font-size:18px; text-align:left; }
 .rs-workspace .official-school-real-shortcuts .official-school-section-head > span,
@@ -26490,20 +26492,20 @@ html[data-a11y-reduced-motion="true"] *::after {
 
 
 /* Student stage, isolated from reader search. Original brand and all schedule hooks retained. */
-.student-premium-workspace{font:400 16px/1.5 Inter,system-ui,sans-serif;color:#203c2e;background:#f7f9f6}
+.student-premium-workspace{font: 400 16px/1.5 var(--platform-font-sans);color:#203c2e;background:#f7f9f6}
 .student-premium-workspace .student-premium-sidebar{background:#124b35;box-shadow:none}
 .student-premium-workspace .student-premium-logo img{width:160px;max-width:160px;height:124px;max-height:none;object-fit:contain;filter:none;margin:auto}
 .student-premium-workspace .student-premium-sidebar nav a{font-size:15px;font-weight:600;min-height:44px;border-radius:8px;gap:12px;text-transform:none}
 .student-premium-workspace .student-premium-sidebar nav a i{width:20px;height:20px;flex:0 0 20px}
 .student-premium-workspace .student-premium-topbar{background:#fff;border:1px solid #dce6dd;border-radius:12px;box-shadow:none;padding:12px;gap:16px;flex-wrap:wrap}
 .student-premium-workspace .student-premium-global-actions{gap:8px;flex-wrap:wrap}
-.student-premium-workspace .student-premium-global-actions :is(a,button){min-height:44px;font:600 15px/1.4 Inter,system-ui,sans-serif;padding:10px 14px;border:1px solid #dce6dd;border-radius:8px;background:#fff;color:#175c40}
+.student-premium-workspace .student-premium-global-actions :is(a,button){min-height:44px;font: 600 15px/1.4 var(--platform-font-sans);padding:10px 14px;border:1px solid #dce6dd;border-radius:8px;background:#fff;color:#175c40}
 .student-premium-workspace :is(.student-premium-card,.student-side-card,.student-class-schedule-panel){background:#fff;border:1px solid #dce6dd;border-radius:14px;box-shadow:none}
 .student-premium-workspace .student-premium-card{min-height:124px;padding:20px}
-.student-premium-workspace :is(.student-side-card h2,.student-class-schedule-title h2){font:650 18px/1.35 Inter,system-ui,sans-serif;color:#203c2e;text-transform:none}
+.student-premium-workspace :is(.student-side-card h2,.student-class-schedule-title h2){font: 650 18px/1.35 var(--platform-font-sans);color:#203c2e;text-transform:none}
 .student-premium-workspace .student-shortcut{min-height:44px;background:#eef5ef;color:#175c40}
 .student-premium-workspace .student-class-schedule-scroll{overflow-x:auto}
-.student-premium-workspace .student-class-schedule-actions button{min-height:44px;border-radius:8px;font:600 15px/1.4 Inter,system-ui,sans-serif}
+.student-premium-workspace .student-class-schedule-actions button{min-height:44px;border-radius:8px;font: 600 15px/1.4 var(--platform-font-sans)}
 .student-premium-workspace :is(a,button,input):focus-visible{outline:3px solid #d68a3d;outline-offset:3px}
 @media(max-width:640px){.student-premium-workspace .student-premium-global-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}.student-premium-workspace .student-premium-global-actions :is(a,button){padding:10px 8px;font-size:14px}.student-premium-workspace .student-class-schedule-head{flex-wrap:wrap;gap:12px}}
 
@@ -26514,7 +26516,7 @@ html[data-a11y-reduced-motion="true"] *::after {
 .student-premium-workspace .student-premium-logo{display:flex;justify-content:center;width:100%;}
 
 /* Shared student surfaces: presentation only; activity controls keep their handlers. */
-.rs-student-workspace .route-screen{color:#203c2e;font-family:Inter,system-ui,sans-serif;min-width:0;}
+.rs-student-workspace .route-screen{color:#203c2e;font-family: var(--platform-font-sans);min-width:0;}
 .rs-student-workspace :is(.mission-header,.mission-toolbar,.mission-card,.mission-question,.mission-result,.knowledge-tree-hero,.knowledge-tree-card,.knowledge-tree-levels,.official-school-panel){background:#fff;border:1px solid #dce6dd;border-radius:12px;box-shadow:0 3px 12px #164d3b08;}
 .rs-student-workspace :is(.mission-module,.knowledge-tree-full,.official-school-games-page){max-width:1280px;margin:0 auto;}
 .rs-student-workspace :is(.mission-header,.knowledge-tree-hero){padding:20px;gap:16px;}
@@ -26529,7 +26531,7 @@ html[data-a11y-reduced-motion="true"] *::after {
 .rs-student-workspace .mission-card-ribbon{transform:none;font-size:15px;padding:8px 14px;box-shadow:none;}
 .rs-student-workspace .knowledge-tree-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
 .rs-student-workspace .knowledge-tree-levels{overflow-x:auto;}
-.rs-student-workspace :is(.mission-toolbar button,.mission-result-actions a){min-height:44px;font:600 14px/1.4 Inter,system-ui,sans-serif;border-radius:8px;}
+.rs-student-workspace :is(.mission-toolbar button,.mission-result-actions a){min-height:44px;font: 600 14px/1.4 var(--platform-font-sans);border-radius:8px;}
 .rs-student-workspace .student-search-match{outline:2px solid #c68a36;outline-offset:4px;scroll-margin-top:100px;}
 .student-page-search-status{font-size:12px;color:#596b60;}
 @media(max-width:700px){
@@ -26550,21 +26552,21 @@ html[data-a11y-reduced-motion="true"] *::after {
 @media screen {
 .rs-workspace :is(.tw-board,.tw-planning-card,.admin-board,.admin-feature-card,.family-panel,.family-card,.category-consumer,.secretaria-panel,.official-school-panel){border:1px solid #dce6dd;border-radius:12px;background:#fff;box-shadow:0 3px 12px #164d3b08;min-width:0;}
 .rs-workspace :is(.tw-main,.admin-main,.app-main,.family-v1-main){background:#f7f9f6;min-width:0;}
-.rs-workspace :is(.tw-board,.admin-board,.family-panel,.category-consumer) h2{font:650 20px/1.35 Inter,system-ui,sans-serif;color:#203c2e;text-transform:none;}
+.rs-workspace :is(.tw-board,.admin-board,.family-panel,.category-consumer) h2{font: 650 20px/1.35 var(--platform-font-sans);color:#203c2e;text-transform:none;}
 .rs-workspace :is(.tw-board,.admin-board,.family-panel,.category-consumer) p{font-size:15px;line-height:1.6;overflow-wrap:anywhere;}
-.rs-workspace :is(.tw-board,.admin-board,.family-panel,.category-consumer) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),select,textarea){max-width:100%;min-height:44px;box-sizing:border-box;border:1px solid #cbdcd0;border-radius:8px;font:400 15px/1.4 Inter,system-ui,sans-serif;padding:10px 12px;}
-.rs-workspace :is(.tw-sidebar nav a,.family-v1-sidebar nav a){font:600 15px/1.4 Inter,system-ui,sans-serif;min-height:44px;padding:10px 12px;border-radius:8px;display:flex;align-items:center;gap:12px;}
+.rs-workspace :is(.tw-board,.admin-board,.family-panel,.category-consumer) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),select,textarea){max-width:100%;min-height:44px;box-sizing:border-box;border:1px solid #cbdcd0;border-radius:8px;font: 400 15px/1.4 var(--platform-font-sans);padding:10px 12px;}
+.rs-workspace :is(.tw-sidebar nav a,.family-v1-sidebar nav a){font: 600 15px/1.4 var(--platform-font-sans);min-height:44px;padding:10px 12px;border-radius:8px;display:flex;align-items:center;gap:12px;}
 .rs-workspace .family-v1-sidebar{background:#124b35;padding:20px 16px;box-shadow:none;}
 .rs-workspace .family-v1-logo{display:flex;justify-content:center;}
 .rs-workspace .family-v1-logo img{width:160px;height:124px;max-width:160px;max-height:none;object-fit:contain;}
 .rs-workspace :is(.family-v1-topbar,.content-workspace-topbar){display:flex;align-items:center;flex-wrap:wrap;gap:12px;background:#fff;border:1px solid #dce6dd;border-radius:12px;padding:12px;}
 .rs-workspace .family-v1-topbar label{flex:1 1 240px;min-width:0;}
-.rs-workspace .family-v1-topbar input{width:100%;min-height:44px;box-sizing:border-box;padding:10px 14px;border:1px solid #dce6dd;border-radius:8px;background:#f7f9f6;font:400 15px/1.4 Inter,system-ui,sans-serif;}
+.rs-workspace .family-v1-topbar input{width:100%;min-height:44px;box-sizing:border-box;padding:10px 14px;border:1px solid #dce6dd;border-radius:8px;background:#f7f9f6;font: 400 15px/1.4 var(--platform-font-sans);}
 .rs-workspace :is(.family-global-actions,.content-workspace-topbar){gap:8px;}
-.rs-workspace :is(.family-global-actions,.content-workspace-topbar) :is(a,button){min-height:44px;border:1px solid #dce6dd;border-radius:8px;background:#fff;color:#175c40;font:600 14px/1.4 Inter,system-ui,sans-serif;padding:10px 12px;}
+.rs-workspace :is(.family-global-actions,.content-workspace-topbar) :is(a,button){min-height:44px;border:1px solid #dce6dd;border-radius:8px;background:#fff;color:#175c40;font: 600 14px/1.4 var(--platform-font-sans);padding:10px 12px;}
 .rs-workspace :is(.family-v1-hero,.admin-hero){background:transparent;box-shadow:none;}
-.rs-workspace .family-v1-hero h1{font:700 clamp(22px,2vw,28px)/1.25 Inter,system-ui,sans-serif;}
-.rs-demo-notice{padding:12px 16px;margin:0 0 16px;border:1px solid #d6b881;border-left:4px solid #ac772f;border-radius:8px;background:#fff8e9;color:#624617;font:500 14px/1.5 Inter,system-ui,sans-serif;}
+.rs-workspace .family-v1-hero h1{font: 700 clamp(22px,2vw,28px)/1.25 var(--platform-font-sans);}
+.rs-demo-notice{padding:12px 16px;margin:0 0 16px;border:1px solid #d6b881;border-left:4px solid #ac772f;border-radius:8px;background:#fff8e9;color:#624617;font: 500 14px/1.5 var(--platform-font-sans);}
 .rs-workspace.support-workspace{display:block;}.rs-workspace.support-workspace .admin-main{margin-left:0;}
 @media(min-width:1024px){.family-v1.rs-workspace{grid-template-columns:232px minmax(0,1fr);}.rs-workspace .family-v1-sidebar{position:sticky;top:0;max-height:100vh;overflow:auto;}}
 @media(max-width:1023px){.family-v1.rs-workspace{display:block;}.rs-workspace .family-v1-sidebar{display:none;}.rs-workspace.rs-menu-open .family-v1-sidebar{display:block;position:fixed;z-index:150;left:0;top:80px;bottom:0;width:232px;overflow:auto;box-shadow:10px 0 30px #0003;}.rs-workspace .family-v1-main{margin:0;padding:16px;}.rs-workspace .family-v1-topbar{position:relative;}.rs-workspace .family-global-actions{display:flex;flex-wrap:wrap;}}
@@ -26577,7 +26579,7 @@ html[data-a11y-reduced-motion="true"] *::after {
 .rs-workspace.support-workspace .admin-inline-form label{display:flex;flex-direction:column;gap:8px;min-width:0;}
 .rs-workspace.support-workspace .admin-inline-form :is(input,select,textarea){width:100%;}
 .rs-workspace.support-workspace .admin-inline-form label:has(textarea){grid-column:1/-1;}
-.rs-workspace.support-workspace .admin-inline-form button[type=submit]{min-height:44px;padding:10px 16px;border:0;border-radius:8px;background:#175c40;color:#fff;font:600 15px/1.4 Inter,system-ui,sans-serif;}
+.rs-workspace.support-workspace .admin-inline-form button[type=submit]{min-height:44px;padding:10px 16px;border:0;border-radius:8px;background:#175c40;color:#fff;font: 600 15px/1.4 var(--platform-font-sans);}
 @media(max-width:640px){.rs-workspace.support-workspace .admin-inline-form{grid-template-columns:minmax(0,1fr);}}
 
 .rs-workspace .family-v1-topbar input{padding-left:48px;}
@@ -26592,13 +26594,13 @@ html[data-a11y-reduced-motion="true"] *::after {
 
 .rs-workspace .rs-reports .tw-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:end;}
 .rs-workspace .rs-reports .tw-form-grid label{display:flex;flex-direction:column;gap:6px;min-width:0;}
-.rs-workspace .rs-reports .tw-form-grid :is(input:not([type=hidden]),select,button){width:100%;box-sizing:border-box;min-height:44px;padding:10px 12px;border:1px solid #cbdcd0;border-radius:8px;font:400 15px/1.4 Inter,system-ui,sans-serif;}
+.rs-workspace .rs-reports .tw-form-grid :is(input:not([type=hidden]),select,button){width:100%;box-sizing:border-box;min-height:44px;padding:10px 12px;border:1px solid #cbdcd0;border-radius:8px;font: 400 15px/1.4 var(--platform-font-sans);}
 .rs-workspace .rs-reports .tw-form-grid button{background:#175c40;color:#fff;font-weight:600;}
 @media(max-width:640px){.rs-workspace .rs-reports .tw-form-grid{grid-template-columns:minmax(0,1fr);}}
 
 .rs-workspace .rs-reports{grid-template-columns:minmax(0,1fr);}
 
-.rs-workspace [data-rs-print]{min-height:44px;padding:10px 14px;border:1px solid #cbdcd0;border-radius:8px;background:#fff;color:#175c40;font:600 14px/1.4 Inter,system-ui,sans-serif;}
+.rs-workspace [data-rs-print]{min-height:44px;padding:10px 14px;border:1px solid #cbdcd0;border-radius:8px;background:#fff;color:#175c40;font: 600 14px/1.4 var(--platform-font-sans);}
 
 /* Internal lists retain their columns and keyboard access on narrow screens. */
 .rs-workspace .admin-role-permissions>div{grid-template-columns:minmax(180px,1.4fr) repeat(4,minmax(120px,1fr));min-width:660px;}
@@ -26613,23 +26615,23 @@ html[data-a11y-reduced-motion="true"] *::after {
 .rs-workspace :is(.panel,.metric-row>article){border:1px solid #dce6dd;border-radius:12px;box-shadow:0 3px 12px #164d3b08;background:#fff;min-width:0;}
 .rs-workspace .metric-row{gap:12px;}
 .rs-workspace .metric-row>article{padding:16px;}
-.rs-workspace :is(.dashboard-head,.screen-title) h1{color:#175c40;font:700 clamp(22px,2vw,28px)/1.25 Inter,system-ui,sans-serif;}
-.rs-workspace :is(.panel,.school-collective) h2{font:650 20px/1.35 Inter,system-ui,sans-serif;color:#203c2e;text-transform:none;}
-.rs-workspace .panel p{font:400 15px/1.6 Inter,system-ui,sans-serif;overflow-wrap:anywhere;}
-.student-focus-activity header a{display:inline-flex;align-items:center;min-height:44px;box-sizing:border-box;padding:10px 14px;border:1px solid #cbdcd0;border-radius:8px;background:#fff;color:#175c40;font:600 14px/1.4 Inter,system-ui,sans-serif;}
+.rs-workspace :is(.dashboard-head,.screen-title) h1{color:#175c40;font: 700 clamp(22px,2vw,28px)/1.25 var(--platform-font-sans);}
+.rs-workspace :is(.panel,.school-collective) h2{font: 650 20px/1.35 var(--platform-font-sans);color:#203c2e;text-transform:none;}
+.rs-workspace .panel p{font: 400 15px/1.6 var(--platform-font-sans);overflow-wrap:anywhere;}
+.student-focus-activity header a{display:inline-flex;align-items:center;min-height:44px;box-sizing:border-box;padding:10px 14px;border:1px solid #cbdcd0;border-radius:8px;background:#fff;color:#175c40;font: 600 14px/1.4 var(--platform-font-sans);}
 
 .rs-workspace .secretaria-official-nav{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;}
-.rs-workspace .secretaria-official-nav a{display:inline-flex;align-items:center;gap:6px;min-height:44px;box-sizing:border-box;padding:8px 12px;border:1px solid #dce6dd;border-radius:8px;color:#175c40;background:#fff;font:600 14px/1.4 Inter,system-ui,sans-serif;text-decoration:none;}
+.rs-workspace .secretaria-official-nav a{display:inline-flex;align-items:center;gap:6px;min-height:44px;box-sizing:border-box;padding:8px 12px;border:1px solid #dce6dd;border-radius:8px;color:#175c40;background:#fff;font: 600 14px/1.4 var(--platform-font-sans);text-decoration:none;}
 .rs-workspace .secretaria-official-nav a:is(.active,.is-active){background:#175c40;color:#fff;}
 .rs-workspace .secretaria-official-nav a:is(.active,.is-active) .secretaria-inline-icon{color:inherit;}
 
 .rs-workspace .official-report-actions{display:flex;flex-wrap:wrap;gap:8px;}
-.rs-workspace .official-report-actions button{min-height:44px;padding:10px 14px;border:1px solid #cbdcd0;border-radius:8px;background:#fff;color:#175c40;font:600 14px/1.4 Inter,system-ui,sans-serif;}
+.rs-workspace .official-report-actions button{min-height:44px;padding:10px 14px;border:1px solid #cbdcd0;border-radius:8px;background:#fff;color:#175c40;font: 600 14px/1.4 var(--platform-font-sans);}
 @media(max-width:640px){.rs-workspace .panel-head:has(.official-report-actions){align-items:flex-start;flex-direction:column;gap:12px;}}
 
 .rs-workspace .admin-role-change-form{display:grid;gap:12px;margin-top:16px;}
 .rs-workspace .admin-role-change-form label{display:flex;flex-direction:column;gap:6px;min-width:0;}
-.rs-workspace .admin-role-change-form :is(input:not([type=hidden]),select,button){box-sizing:border-box;width:100%;min-height:44px;padding:10px 12px;border:1px solid #cbdcd0;border-radius:8px;font:400 15px/1.4 Inter,system-ui,sans-serif;}
+.rs-workspace .admin-role-change-form :is(input:not([type=hidden]),select,button){box-sizing:border-box;width:100%;min-height:44px;padding:10px 12px;border:1px solid #cbdcd0;border-radius:8px;font: 400 15px/1.4 var(--platform-font-sans);}
 .rs-workspace .admin-role-change-form button{background:#175c40;color:#fff;font-weight:600;}
 
 .rs-workspace [data-question-bank]:not([data-qb-active-view="dashboard"]):not([data-qb-active-view="banco"]) [data-qb-count-summary]{display:none;}
@@ -26651,7 +26653,7 @@ html[data-a11y-reduced-motion="true"] *::after {
 .rs-workspace .rs-official-import>h2,.rs-workspace .rs-official-import>p{flex-basis:100%;margin:0;}
 .rs-workspace .rs-official-import>label{display:grid;gap:8px;flex:1 1 280px;min-width:0;}
 .rs-workspace .rs-official-import input{max-width:100%;min-width:0;font:inherit;}
-.rs-workspace .rs-official-import button{min-height:44px;padding:10px 14px;border:1px solid #d7e3db;border-radius:10px;background:#f1f6f2;color:#174c37;font:600 14px/1.4 Inter,system-ui,sans-serif;cursor:pointer;}
+.rs-workspace .rs-official-import button{min-height:44px;padding:10px 14px;border:1px solid #d7e3db;border-radius:10px;background:#f1f6f2;color:#174c37;font: 600 14px/1.4 var(--platform-font-sans);cursor:pointer;}
 .rs-workspace .rs-official-import button:disabled{opacity:.5;cursor:not-allowed;}
 .rs-workspace .rs-official-import input::file-selector-button{padding:9px 12px;margin-right:8px;border:1px solid #d7e3db;border-radius:10px;background:#f1f6f2;color:#174c37;font:inherit;}
 
@@ -26660,7 +26662,7 @@ html[data-a11y-reduced-motion="true"] *::after {
 .rs-workspace .secretaria-context-chip .secretaria-avatar{flex:0 0 46px;width:46px;min-width:46px;max-width:46px;height:46px;}
 @media(max-width:640px){.rs-workspace .secretaria-top-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:8px;}.rs-workspace .secretaria-top-actions :is(a,button){min-width:0;padding:10px 8px;white-space:normal;}.rs-workspace .secretaria-context-chip>div{min-width:0;flex:1;}}
 
-.rs-workspace [data-school-content-inspection] button{min-height:44px;padding:10px 14px;border:1px solid #d7e3db;border-radius:10px;background:#f1f6f2;color:#174c37;font:600 14px/1.4 Inter,system-ui,sans-serif;cursor:pointer;}
+.rs-workspace [data-school-content-inspection] button{min-height:44px;padding:10px 14px;border:1px solid #d7e3db;border-radius:10px;background:#f1f6f2;color:#174c37;font: 600 14px/1.4 var(--platform-font-sans);cursor:pointer;}
 .rs-workspace [data-school-content-inspection] button:disabled{opacity:.5;cursor:not-allowed;}
 
 }
@@ -26670,11 +26672,11 @@ html[data-a11y-reduced-motion="true"] *::after {
   .rs-workspace :is(.tw-register-picker,.tw-attendance-board,.tw-class-diary-shell) {
     padding: 20px;
     gap: 20px;
-    font: 400 15px/1.5 Inter,system-ui,sans-serif;
+    font: 400 15px/1.5 var(--platform-font-sans);
   }
   .rs-workspace :is(.tw-register-picker,.tw-attendance-board,.tw-class-diary-shell) :is(h2,h3) {
     margin: 0;
-    font: 650 20px/1.35 Inter,system-ui,sans-serif;
+    font: 650 20px/1.35 var(--platform-font-sans);
     text-transform: none;
   }
   .rs-workspace :is(.tw-register-picker,.tw-attendance-board,.tw-class-diary-shell) p { margin: 4px 0 0; font-weight: 400; }
@@ -26682,43 +26684,43 @@ html[data-a11y-reduced-motion="true"] *::after {
   .rs-workspace :is(.tw-register-school,.tw-register-class-selector) {
     display: grid; align-content: start; justify-content: stretch; gap: 6px; min-width: 0; margin: 0;
   }
-  .rs-workspace :is(.tw-register-school,.tw-register-class-selector) > span { font: 600 14px/1.4 Inter,system-ui,sans-serif; color: #203c2e; text-transform: none; }
+  .rs-workspace :is(.tw-register-school,.tw-register-class-selector) > span { font: 600 14px/1.4 var(--platform-font-sans); color: #203c2e; text-transform: none; }
   .rs-workspace :is(.tw-register-school,.tw-register-class-selector) select {
     width: 100%; min-width: 0; max-width: 100%; min-height: 44px; box-sizing: border-box;
-    border: 1px solid #cbdcd0; border-radius: 8px; padding: 10px 12px; background: #fff; color: #203c2e; font: 400 15px/1.4 Inter,system-ui,sans-serif;
+    border: 1px solid #cbdcd0; border-radius: 8px; padding: 10px 12px; background: #fff; color: #203c2e; font: 400 15px/1.4 var(--platform-font-sans);
   }
   .rs-workspace .tw-register-class-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin: 0; }
   .rs-workspace .tw-register-class-list li { min-width: 0; padding: 0; border: 0; }
   .rs-workspace .tw-register-class-list a { display: grid; gap: 4px; padding: 14px; border: 1px solid #dce6dd; border-radius: 8px; color: #203c2e; text-decoration: none; overflow-wrap: anywhere; }
   .rs-workspace .tw-register-class-list a:hover { background: #f1f6f2; border-color: #175c40; }
-  .rs-workspace .tw-register-class-list strong { font: 600 15px/1.4 Inter,system-ui,sans-serif; }
+  .rs-workspace .tw-register-class-list strong { font: 600 15px/1.4 var(--platform-font-sans); }
   .rs-workspace .tw-register-class-list span { font-size: 14px; color: #52675a; }
   .rs-workspace .tw-register-hero { display: grid; grid-template-columns: minmax(0,1fr) minmax(220px,320px); gap: 16px; padding: 20px; align-items: end; background: #fff; border: 1px solid #dce6dd; border-radius: 12px; box-shadow: none; }
-  .rs-workspace .tw-register-hero h1 { margin: 4px 0 8px; color: #203c2e; font: 650 clamp(22px,2vw,26px)/1.3 Inter,system-ui,sans-serif; overflow-wrap: anywhere; text-transform: none; }
-  .rs-workspace .tw-register-hero p { margin: 0; color: #52675a; font: 400 15px/1.5 Inter,system-ui,sans-serif; }
-  .rs-workspace .tw-register-hero > div > span { color: #52675a; font: 600 13px/1.4 Inter,system-ui,sans-serif; }
+  .rs-workspace .tw-register-hero h1 { margin: 4px 0 8px; color: #203c2e; font: 650 clamp(22px,2vw,26px)/1.3 var(--platform-font-sans); overflow-wrap: anywhere; text-transform: none; }
+  .rs-workspace .tw-register-hero p { margin: 0; color: #52675a; font: 400 15px/1.5 var(--platform-font-sans); }
+  .rs-workspace .tw-register-hero > div > span { color: #52675a; font: 600 13px/1.4 var(--platform-font-sans); }
   .rs-workspace .tw-register-hero .tw-hero-actions { grid-column: 1 / -1; justify-content: start; gap: 8px; }
-  .rs-workspace .tw-register-hero .tw-hero-actions a { font: 600 14px/1.4 Inter,system-ui,sans-serif; text-transform: none; }
+  .rs-workspace .tw-register-hero .tw-hero-actions a { font: 600 14px/1.4 var(--platform-font-sans); text-transform: none; }
   .rs-workspace .tw-class-diary-shell .tw-planning-heading { align-items: start; gap: 16px; }
-  .rs-workspace :is(.tw-class-diary-shell,.tw-attendance-board) :is(label > span,.tw-attendance-note span,.tw-planning-heading > div > span) { font: 600 14px/1.4 Inter,system-ui,sans-serif; text-transform: none; color: #203c2e; }
-  .rs-workspace :is(.tw-class-diary-shell,.tw-attendance-board) button { min-height: 44px; padding: 10px 14px; border-radius: 8px; font: 600 14px/1.4 Inter,system-ui,sans-serif; white-space: normal; }
+  .rs-workspace :is(.tw-class-diary-shell,.tw-attendance-board) :is(label > span,.tw-attendance-note span,.tw-planning-heading > div > span) { font: 600 14px/1.4 var(--platform-font-sans); text-transform: none; color: #203c2e; }
+  .rs-workspace :is(.tw-class-diary-shell,.tw-attendance-board) button { min-height: 44px; padding: 10px 14px; border-radius: 8px; font: 600 14px/1.4 var(--platform-font-sans); white-space: normal; }
   .rs-workspace :is(.tw-class-diary-shell,.tw-attendance-board) button:disabled { opacity: .55; cursor: not-allowed; }
   .rs-workspace .tw-class-diary-shell .tw-planning-heading button { margin: 8px 8px 0 0; }
   .rs-workspace .tw-class-diary-shell .tw-planning-form { gap: 16px; }
   .rs-workspace .tw-class-diary-shell .metric-row { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; margin: 0; }
-  .rs-workspace .tw-class-diary-shell .metric-row article { min-width: 0; padding: 14px; border: 1px solid #dce6dd; border-radius: 8px; background: #f8faf8; box-shadow: none; font: 500 14px/1.4 Inter,system-ui,sans-serif; }
-  .rs-workspace .tw-class-diary-shell .metric-row strong { margin: 4px 0; font: 650 24px/1.3 Inter,system-ui,sans-serif; }
-  .rs-workspace .tw-class-diary-shell .metric-row span { font: 400 13px/1.4 Inter,system-ui,sans-serif; }
+  .rs-workspace .tw-class-diary-shell .metric-row article { min-width: 0; padding: 14px; border: 1px solid #dce6dd; border-radius: 8px; background: #f8faf8; box-shadow: none; font: 500 14px/1.4 var(--platform-font-sans); }
+  .rs-workspace .tw-class-diary-shell .metric-row strong { margin: 4px 0; font: 650 24px/1.3 var(--platform-font-sans); }
+  .rs-workspace .tw-class-diary-shell .metric-row span { font: 400 13px/1.4 var(--platform-font-sans); }
   .rs-workspace .tw-class-diary-shell .tw-diary-history { display: grid; gap: 12px; border-top: 1px solid #dce6dd; padding-top: 20px; }
   .rs-workspace .tw-class-diary-shell .tw-diary-history li { display: grid; gap: 6px; overflow-wrap: anywhere; }
   .rs-workspace .tw-attendance-toolbar { justify-content: start; align-items: end; }
   .rs-workspace .tw-attendance-toolbar label { min-width: 0; width: 180px; }
   .rs-workspace .tw-attendance-row { grid-template-columns: minmax(140px,1fr) minmax(280px,1.4fr) minmax(160px,1fr); gap: 14px; padding: 14px; }
-  .rs-workspace .tw-attendance-row strong { font: 600 15px/1.4 Inter,system-ui,sans-serif; }
-  .rs-workspace .tw-attendance-row small { font: 400 13px/1.4 Inter,system-ui,sans-serif; }
-  .rs-workspace .tw-attendance-choice { min-height: 44px; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; font: 500 14px/1.4 Inter,system-ui,sans-serif; }
+  .rs-workspace .tw-attendance-row strong { font: 600 15px/1.4 var(--platform-font-sans); }
+  .rs-workspace .tw-attendance-row small { font: 400 13px/1.4 var(--platform-font-sans); }
+  .rs-workspace .tw-attendance-choice { min-height: 44px; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; font: 500 14px/1.4 var(--platform-font-sans); }
   .rs-workspace .tw-attendance-footer { align-items: center; border-top: 1px solid #dce6dd; padding-top: 16px; }
-  .rs-workspace .tw-attendance-footer p { flex: 1 1 260px; font: 400 14px/1.5 Inter,system-ui,sans-serif; }
+  .rs-workspace .tw-attendance-footer p { flex: 1 1 260px; font: 400 14px/1.5 var(--platform-font-sans); }
   .rs-workspace :is(.tw-register-picker,.tw-register-hero,.tw-attendance-board,.tw-class-diary-shell) :is(a,button,input,select,textarea):focus-visible { outline: 3px solid #b7802b; outline-offset: 3px; }
   @media (max-width: 1100px) { .rs-workspace .tw-attendance-row { grid-template-columns: minmax(0,1fr); } }
   @media (max-width: 720px) {
@@ -26735,15 +26737,15 @@ html[data-a11y-reduced-motion="true"] *::after {
 @media screen {
   .official-school-games-page { padding: 24px; border: 1px solid #dce6dd; border-radius: 12px; background: #fff; box-shadow: none; }
   .official-school-games-page .official-school-section-head { margin-bottom: 20px; }
-  .official-school-games-page .official-school-section-head h2 { color: #203c2e; font: 650 clamp(22px,2vw,28px)/1.3 Inter,system-ui,sans-serif; text-transform: none; }
-  .official-school-games-page .official-school-section-head :is(span,p) { color: #52675a; font: 400 15px/1.5 Inter,system-ui,sans-serif; text-transform: none; }
+  .official-school-games-page .official-school-section-head h2 { color: #203c2e; font: 650 clamp(22px,2vw,28px)/1.3 var(--platform-font-sans); text-transform: none; }
+  .official-school-games-page .official-school-section-head :is(span,p) { color: #52675a; font: 400 15px/1.5 var(--platform-font-sans); text-transform: none; }
   .official-school-games { gap: 16px; }
   .official-school-game-card { border: 1px solid #dce6dd; border-radius: 12px; background: #fff; box-shadow: none; }
   .official-school-game-card div { gap: 10px; padding: 0 16px 16px; }
-  .official-school-game-card span { color: #52675a; font: 500 13px/1.4 Inter,system-ui,sans-serif; text-transform: none; }
-  .official-school-game-card h3 { min-height: 0; color: #203c2e; font: 650 18px/1.4 Inter,system-ui,sans-serif; text-transform: none; overflow-wrap: anywhere; }
-  .official-school-game-card p { color: #52675a; font: 400 15px/1.5 Inter,system-ui,sans-serif; }
-  .official-school-game-card a { min-height: 44px; box-sizing: border-box; border-radius: 8px; background: #175c40; color: #fff; box-shadow: none; font: 600 15px/1.4 Inter,system-ui,sans-serif; text-transform: none; }
+  .official-school-game-card span { color: #52675a; font: 500 13px/1.4 var(--platform-font-sans); text-transform: none; }
+  .official-school-game-card h3 { min-height: 0; color: #203c2e; font: 650 18px/1.4 var(--platform-font-sans); text-transform: none; overflow-wrap: anywhere; }
+  .official-school-game-card p { color: #52675a; font: 400 15px/1.5 var(--platform-font-sans); }
+  .official-school-game-card a { min-height: 44px; box-sizing: border-box; border-radius: 8px; background: #175c40; color: #fff; box-shadow: none; font: 600 15px/1.4 var(--platform-font-sans); text-transform: none; }
   .official-school-game-card a:hover { background: #10472f; }
   .official-school-game-card a:focus-visible { outline: 3px solid #b7802b; outline-offset: 3px; }
   @media(max-width:900px) { .official-school-games { grid-template-columns: repeat(2,minmax(0,1fr)); } }
@@ -26752,37 +26754,37 @@ html[data-a11y-reduced-motion="true"] *::after {
 @media screen { .official-school-game-card img { object-fit: contain; background: #f1f6f2; } }
 
 /* Admin Contents: compact cards scoped to this screen; actions/data unchanged. */
-.admin-content-surface{display:grid;gap:20px;min-width:0;font:400 15px/1.5 Inter,system-ui,sans-serif;color:#203c2e}
+.admin-content-surface{display:grid;gap:20px;min-width:0;font: 400 15px/1.5 var(--platform-font-sans);color:#203c2e}
 .admin-content-surface .admin-board{min-width:0;padding:20px;border:1px solid #dce6df;border-radius:12px;box-shadow:none}
 .admin-content-surface .admin-section-head{align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:16px}
-.admin-content-surface .admin-section-head h2,.admin-content-surface .admin-board>h2{font:650 20px/1.35 Inter,system-ui,sans-serif;margin:0}
-.admin-content-surface .admin-section-head>span{font:400 13px/1.5 Inter,system-ui,sans-serif;color:#596b60}
+.admin-content-surface .admin-section-head h2,.admin-content-surface .admin-board>h2{font: 650 20px/1.35 var(--platform-font-sans);margin:0}
+.admin-content-surface .admin-section-head>span{font: 400 13px/1.5 var(--platform-font-sans);color:#596b60}
 .admin-content-surface .admin-content-module-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
 .admin-content-surface .admin-content-module-card{min-height:0;padding:16px;gap:12px;border-radius:10px;border-color:#dce6df;box-shadow:none}
 .admin-content-surface .admin-content-module-top{align-items:flex-start;flex-wrap:wrap;gap:8px}
 .admin-content-surface .admin-content-module-icon{width:32px;height:32px}
 .admin-content-surface .admin-content-module-body{gap:8px}
-.admin-content-surface .admin-content-module-body>strong{font:650 17px/1.35 Inter,system-ui,sans-serif;overflow-wrap:anywhere}
+.admin-content-surface .admin-content-module-body>strong{font: 650 17px/1.35 var(--platform-font-sans);overflow-wrap:anywhere}
 .admin-content-surface .admin-content-module-count{flex-wrap:wrap;gap:4px 8px}
-.admin-content-surface .admin-content-module-count b{font:700 26px/1.2 Inter,system-ui,sans-serif;overflow-wrap:anywhere}
-.admin-content-surface .admin-content-module-count span{font:400 12px/1.4 Inter,system-ui,sans-serif;text-transform:none}
-.admin-content-surface .admin-content-module-card p{font:400 14px/1.5 Inter,system-ui,sans-serif}
-.admin-content-surface .admin-content-status-chip{font:600 11px/1.4 Inter,system-ui,sans-serif;padding:4px 8px;white-space:normal;text-align:right}
-.admin-content-surface .admin-content-module-card>a{font:600 14px/1.4 Inter,system-ui,sans-serif;min-height:44px;padding:8px 12px;text-transform:none}
+.admin-content-surface .admin-content-module-count b{font: 700 26px/1.2 var(--platform-font-sans);overflow-wrap:anywhere}
+.admin-content-surface .admin-content-module-count span{font: 400 12px/1.4 var(--platform-font-sans);text-transform:none}
+.admin-content-surface .admin-content-module-card p{font: 400 14px/1.5 var(--platform-font-sans)}
+.admin-content-surface .admin-content-status-chip{font: 600 11px/1.4 var(--platform-font-sans);padding:4px 8px;white-space:normal;text-align:right}
+.admin-content-surface .admin-content-module-card>a{font: 600 14px/1.4 var(--platform-font-sans);min-height:44px;padding:8px 12px;text-transform:none}
 .admin-content-surface .admin-content-flow{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .admin-content-surface .admin-content-flow-arrow{display:none}
 .admin-content-surface .admin-content-flow article{min-width:0;padding:12px;gap:6px;border-radius:10px}
-.admin-content-surface .admin-content-flow article strong{font:600 14px/1.4 Inter,system-ui,sans-serif}
-.admin-content-surface .admin-content-flow article small{font:400 12px/1.5 Inter,system-ui,sans-serif}
+.admin-content-surface .admin-content-flow article strong{font: 600 14px/1.4 var(--platform-font-sans)}
+.admin-content-surface .admin-content-flow article small{font: 400 12px/1.5 var(--platform-font-sans)}
 .admin-content-surface .admin-content-filterbar{grid-template-columns:minmax(180px,2fr) repeat(3,minmax(110px,1fr));gap:12px}
 .admin-content-surface .admin-content-filterbar :is(input,select,button,a){box-sizing:border-box;min-height:44px;font-size:14px}
-.admin-content-surface .admin-content-filterbar label span,.admin-content-surface .admin-content-availability-form label span{font:600 13px/1.4 Inter,system-ui,sans-serif;text-transform:none}
+.admin-content-surface .admin-content-filterbar label span,.admin-content-surface .admin-content-availability-form label span{font: 600 13px/1.4 var(--platform-font-sans);text-transform:none}
 .admin-content-surface .admin-content-item{grid-template-columns:minmax(0,1fr) auto;gap:16px;padding:16px;border-radius:10px}
 .admin-content-surface .admin-content-item:has(>.admin-content-item-main:only-child){grid-template-columns:minmax(0,1fr)}
 .admin-content-surface .admin-content-item:has(>.admin-content-availability-form){grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 .admin-content-surface .admin-content-item-main{gap:6px;overflow-wrap:anywhere}
-.admin-content-surface .admin-content-item-main>strong{font:600 16px/1.4 Inter,system-ui,sans-serif}
-.admin-content-surface .admin-content-item-main :is(small,span,p),.admin-content-surface .admin-content-muted{font:400 13px/1.5 Inter,system-ui,sans-serif;overflow-wrap:anywhere}
+.admin-content-surface .admin-content-item-main>strong{font: 600 16px/1.4 var(--platform-font-sans)}
+.admin-content-surface .admin-content-item-main :is(small,span,p),.admin-content-surface .admin-content-muted{font: 400 13px/1.5 var(--platform-font-sans);overflow-wrap:anywhere}
 .admin-content-surface .admin-content-manage-link{min-height:44px;align-self:center}
 .admin-content-surface .admin-content-availability-form{min-width:0;gap:10px}
 .admin-content-surface .admin-content-availability-form :is(input,select,button){box-sizing:border-box;min-width:0;max-width:100%;min-height:44px;font-size:14px}
@@ -26801,8 +26803,8 @@ html[data-a11y-reduced-motion="true"] *::after {
 [data-admin-workspace] .rs-admin-home .admin-door-grid{grid-template-columns:minmax(0,1fr);gap:10px}
 [data-admin-workspace] .rs-admin-home .admin-door-card{min-height:64px;padding:10px;gap:10px;border-radius:10px}
 [data-admin-workspace] .rs-admin-home .admin-door-card .admin-inline-icon{width:32px;height:32px;border-radius:8px}
-[data-admin-workspace] .rs-admin-home .admin-door-card span{font:600 14px/1.4 Inter,system-ui,sans-serif;overflow-wrap:anywhere}
-[data-admin-workspace] .rs-admin-home .admin-door-card strong{font:400 13px/1.4 Inter,system-ui,sans-serif;overflow-wrap:anywhere}
+[data-admin-workspace] .rs-admin-home .admin-door-card span{font: 600 14px/1.4 var(--platform-font-sans);overflow-wrap:anywhere}
+[data-admin-workspace] .rs-admin-home .admin-door-card strong{font: 400 13px/1.4 var(--platform-font-sans);overflow-wrap:anywhere}
 [data-admin-workspace] .rs-admin-home :is(.admin-status-item,.admin-recent-item){min-width:0;overflow-wrap:anywhere}
 @media(max-width:1100px){[data-admin-workspace] .rs-admin-home .rs-admin-primary .admin-quick-list{grid-template-columns:repeat(2,minmax(0,1fr))}[data-admin-workspace] .rs-admin-home .admin-operation-grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:540px){[data-admin-workspace] .rs-admin-home .rs-admin-primary .admin-quick-list{grid-template-columns:minmax(0,1fr)}[data-admin-workspace] .rs-admin-home .rs-admin-primary button{min-height:56px}}
