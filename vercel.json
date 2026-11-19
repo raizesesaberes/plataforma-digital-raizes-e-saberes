@@ -15,5 +15,6 @@
   ],
   "buildCommand": "node scripts/build-static-web.mjs",
   "outputDirectory": "dist",
-  "installCommand": ""
+  "installCommand": "",
+  "git": {"deploymentEnabled": {"homologacao-publicador-videos": false}}
 }

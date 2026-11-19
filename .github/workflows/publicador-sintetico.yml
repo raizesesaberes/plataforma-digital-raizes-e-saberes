@@ -1,0 +1,17 @@
+name: Publicador de vídeos — teste sintético
+on:
+  push:
+    branches: [homologacao-publicador-videos]
+permissions:
+  contents: read
+jobs:
+  teste-local:
+    if: github.ref == 'refs/heads/homologacao-publicador-videos'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Testar o publicador em um banco descartável, sem segredos
+        run: bash tools/publicador-sintetico/run.sh
