@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 import pathlib
+import re
 import secrets
 import subprocess
 import sys
@@ -80,11 +81,40 @@ def login(user, role):
 
 def sql(statement, label):
     process = subprocess.run(['psql', '-X', '-qAt', '-w', '-v', 'ON_ERROR_STOP=1',
-                              '-h', '127.0.0.1', '-p', '54322', '-U', 'postgres', '-d', 'postgres'],
-                             env={**os.environ, 'PGPASSWORD': unquote(db.password)},
+                              '-v', 'VERBOSITY=verbose', '-f', '-', '-h', '127.0.0.1', '-p', '54322',
+                              '-U', 'postgres', '-d', 'postgres'],
+                             env={**os.environ, 'PGPASSWORD': unquote(db.password), 'LC_ALL': 'C'},
                              input=statement, text=True, capture_output=True, timeout=25)
-    check(not process.returncode, 'SQL failed: ' + label + ' (stderr suppressed)')
+    if process.returncode:
+        # Deliberately never log stderr/stdout, command arguments, SQL or connection status.
+        match = re.search(r'(?m)^(?:psql:(?:<stdin>|/dev/stdin|-):([1-9][0-9]{0,5}):\s*)?'
+                          r'(?:ERROR|FATAL|PANIC):\s+([0-9A-Z]{5})(?=[:\s]|$)', process.stderr)
+        if match:
+            line = ' line=' + match[1] if match[1] else ''
+            check(False, 'SQL failed: ' + label + ' sqlstate=' + match[2] + line)
+        category = next((key for key, canonical in (
+            ('connection-refused', 'Connection refused'),
+            ('authentication-failed', 'password authentication failed'),
+            ('no-password', 'no password supplied'),
+        ) if canonical in process.stderr), 'unclassified')
+        check(False, 'SQL failed: ' + label + ' psql_rc=' + str(process.returncode) + ' category=' + category)
     return process.stdout.strip()
+
+# Only read the role flags and allowlisted setting on the already-validated loopback endpoint.
+profile = sql("""
+SELECT current_setting('server_version_num') || ',' ||
+       CASE WHEN rolsuper THEN '1' ELSE '0' END || ',' ||
+       CASE WHEN rolcreaterole THEN '1' ELSE '0' END || ',' ||
+       CASE WHEN has_database_privilege(current_database(),'CREATE') THEN '1' ELSE '0' END || ',' ||
+       CASE WHEN current_setting('createrole_self_grant', true) ~ '(^|,)[[:space:]]*set[[:space:]]*(,|$)'
+            THEN '1' ELSE '0' END
+FROM pg_roles WHERE rolname=current_user AND current_user='postgres';
+""", 'read-only fixture-role preflight')
+check(re.fullmatch(r'[0-9]{5,6}(,[01]){4}', profile) is not None, 'unexpected fixture-role preflight shape')
+version, superuser, create_role, create_db_schema, self_grant_set = profile.split(',')
+print('Fixture role preflight: pg=' + version + ' superuser=' + superuser +
+      ' createrole=' + create_role + ' database_create=' + create_db_schema +
+      ' self_grant_set=' + self_grant_set, flush=True)
 
 
 original = pathlib.Path(sys.argv[1]).read_bytes()
