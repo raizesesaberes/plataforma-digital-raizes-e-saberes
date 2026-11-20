@@ -1,0 +1,20 @@
+name: Publicador — integração sintética local
+on:
+  push:
+    branches: [homologacao-publicador-videos]
+    paths:
+      - .github/workflows/publicador-integracao-local.yml
+      - tools/publicador-sintetico/integration.py
+      - tools/publicador-sintetico/integration.sh
+permissions:
+  contents: read
+jobs:
+  integration:
+    if: github.ref == 'refs/heads/homologacao-publicador-videos'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - run: bash tools/publicador-sintetico/integration.sh
