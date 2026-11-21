@@ -1,4 +1,5 @@
 import base64
+from admin_fixture import serve_admin
 import hashlib
 import json
 import os
@@ -34,6 +35,8 @@ adapter = pathlib.Path(sys.argv[4]).resolve(strict=True)
 motion_fixture = pathlib.Path(sys.argv[5]).resolve(strict=True)
 chromium_test = pathlib.Path(sys.argv[6]).resolve(strict=True)
 chromium = pathlib.Path(sys.argv[7]).resolve(strict=True)
+admin_browser = pathlib.Path(sys.argv[8]).resolve(strict=True)
+admin_key = pathlib.Path(sys.argv[9]).resolve(strict=True)
 check(hashlib.sha256(policy.read_bytes()).hexdigest() == 'a0e22d40e092b4ae6155309e5f2937f10175533a32ca15ad8d6b36fb7638c3d9', 'unexpected deployed v7 policy core hash')
 tls = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 tls.load_verify_locations(cafile=str(cert))
@@ -456,12 +459,52 @@ ok(req('/storage/v1/object/' + bucket + '/' + key, service, 'POST', media, servi
 storage_denied(read(rjwt), 'direct reader before catalog publication')
 delivery_denied(rjwt, 'reader before approval')
 delivery_denied(None, 'anonymous reader before approval','session_required',401)
-check(ok(rpc('approver_fixture', ajwt), 'separate Auth approval') == 'approved', 'unconfirmed approval')
-check(counts() == '0,0,0,0', 'approval unexpectedly wrote catalog')
-delivery_denied(rjwt, 'reader approved but not published')
-check(ok(rpc('publisher_fixture', pjwt), 'first publication') == 'published', 'publication missing')
-check(counts() == '1,1,2,1', 'invalid catalog cardinality')
-check(ok(rpc('publisher_fixture', pjwt), 'exact retry') == 'already published', 'unexpected idempotency result')
+def admin_state():
+    approved = owner_read(f"SELECT actor FROM pv3.approval WHERE batch='{batch}'", 'Admin fixed approval')
+    receipt = owner_read(f"SELECT actor FROM pv3.receipt WHERE batch='{batch}'", 'Admin fixed receipt')
+    cardinality = counts()
+    check(approved in ('', 'pv3_approve') and receipt in ('', 'pv3_publish'),
+          'unexpected fixture approval/receipt actors')
+    if not receipt:
+        check(cardinality == '0,0,0,0', 'Admin displayed a partial catalog')
+    else:
+        check(approved == 'pv3_approve' and cardinality == '1,1,2,1', 'Admin displayed an invalid receipt')
+    return {'phase': 'published' if receipt else 'approved' if approved else 'review',
+            'receipt': batch if receipt else None, 'catalog': cardinality}
+
+
+def auth_user(jwt):
+    return ok(req('/auth/v1/user', jwt), 'fixture Admin identity').get('id')
+
+
+def admin_invoke(name, jwt):
+    result = ok(rpc(name, jwt), 'fixture Admin RPC')
+    if name == 'approver_fixture' and result == 'approved':
+        check(counts() == '0,0,0,0', 'approval unexpectedly wrote catalog')
+        delivery_denied(rjwt, 'reader approved but not published')
+    return result
+
+
+actors = {'reviewer': (ajwt, approver), 'publisher': (pjwt, publisher), 'other': (njwt, wrong[0])}
+check(len({uid for _, uid in actors.values()}) == len(actors), 'Admin actor identities not distinct')
+with serve_admin(cert, admin_key, {'label': 'Matemática · V2 · Unidade 1 · aulas 4 e 5', 'sha': sha},
+                 auth_user, actors, admin_invoke, admin_state) as (admin_url, evidence):
+    browser_run = subprocess.run(['node', str(admin_browser), str(chromium), str(cert)],
+                                 input=json.dumps({'url': admin_url}), text=True, capture_output=True, timeout=44)
+    if browser_run.returncode:
+        known = ('page','unauthorized','reviewer','manifest','approve','publisher','confirmation','lock','readback','replay')
+        phase = next((x for x in known if browser_run.stderr.strip() == 'Admin fixture failed phase=' + x), 'runner')
+        raise SystemExit('synthetic Chromium Admin test failed phase=' + phase)
+    try:
+        metrics = json.loads(browser_run.stdout)
+    except json.JSONDecodeError:
+        raise SystemExit('malformed Chromium Admin evidence') from None
+    check(metrics == {'ok': True, 'readback': True, 'replay': True}, 'invalid Chromium Admin evidence')
+    check(evidence == {'approve': 1, 'publish': 2, 'state': 4, 'ambiguous': 1, 'failed_readback': 1, 'recovered': 1, 'auth': set(actors)},
+          'unexpected counts of Admin calls or authenticated identities')
+
+print('PASS: Chromium Admin approvals and publication, distinct real synthetic Auth users, independent '
+      'locked after ambiguous response and failed readback, separate receipt recovery, explicit replay without duplicate.', flush=True)
 check(counts() == '1,1,2,1', 'retry changed catalog cardinality')
 check(owner_read(f"SELECT sha FROM pv3.asset WHERE batch='{batch}'", 'catalog digest') == sha, 'unexpected catalog digest')
 check(owner_read(f"SELECT array_agg(lesson ORDER BY lesson)::text FROM pv3.coverage WHERE batch='{batch}' AND id='{lesson_id}'",

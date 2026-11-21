@@ -45,4 +45,4 @@ assert c["api"]["tls"]["enabled"] is True, "Local HTTPS only"
 assert c["api"]["port"] == 54321 and c["db"]["port"] == 54322, "Unexpected local endpoints"
 PY
 sb start >/dev/null 2>&1 || { echo 'Local Supabase stack did not start'; exit 1; }
-sb status -o json 2>/dev/null | sandbox python3 "$base/integration.py" "$base/schema.sql" "$work/tls-cert.pem" "$base/teacher-training-policy-v7.mjs" "$base/teacher-training-loopback.mjs" "$base/teacher-fixture-motion.mp4" "$base/chromium-fixture-playback.mjs" "$chrome"
+sb status -o json 2>/dev/null | sandbox python3 "$base/integration.py" "$base/schema.sql" "$work/tls-cert.pem" "$base/teacher-training-policy-v7.mjs" "$base/teacher-training-loopback.mjs" "$base/teacher-fixture-motion.mp4" "$base/chromium-fixture-playback.mjs" "$chrome" "$base/chromium-admin-fixture.mjs" "$work/tls-key.pem"
