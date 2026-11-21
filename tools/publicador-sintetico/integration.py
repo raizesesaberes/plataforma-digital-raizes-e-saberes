@@ -31,6 +31,9 @@ api = 'https://127.0.0.1:54321'
 cert = pathlib.Path(sys.argv[2]).resolve(strict=True)
 policy = pathlib.Path(sys.argv[3]).resolve(strict=True)
 adapter = pathlib.Path(sys.argv[4]).resolve(strict=True)
+motion_fixture = pathlib.Path(sys.argv[5]).resolve(strict=True)
+chromium_test = pathlib.Path(sys.argv[6]).resolve(strict=True)
+chromium = pathlib.Path(sys.argv[7]).resolve(strict=True)
 check(hashlib.sha256(policy.read_bytes()).hexdigest() == 'a0e22d40e092b4ae6155309e5f2937f10175533a32ca15ad8d6b36fb7638c3d9', 'unexpected deployed v7 policy core hash')
 tls = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 tls.load_verify_locations(cafile=str(cert))
@@ -167,14 +170,15 @@ check(len({user[0] for user in (pub, app, reader, wrong)}) == 4, 'synthetic iden
 batch = 'fixture-' + secrets.token_hex(6)
 bucket = 'videos'
 lesson_id = str(uuid.uuid4())
-# One generated 16x16 blue MPEG-4 frame, 986 bytes, no source media or audio.
-media = base64.b64decode("AAAAHGZ0eXBpc281AAACAGlzbzVpc282bXA0MQAAAvdtb292AAAAbG12aGQAAAAAAAAAAAAAAAAAAAPoAAAAAAABAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACHnRyYWsAAABcdGtoZAAAAAMAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAEAAAABAAAAAAAbptZGlhAAAAIG1kaGQAAAAAAAAAAAAAAAAAAEAAAAAAAFXEAAAAAAAtaGRscgAAAAAAAAAAdmlkZQAAAAAAAAAAAAAAAFZpZGVvSGFuZGxlcgAAAAFlbWluZgAAABR2bWhkAAAAAQAAAAAAAAAAAAAAJGRpbmYAAAAcZHJlZgAAAAAAAAABAAAADHVybCAAAAABAAABJXN0YmwAAADZc3RzZAAAAAAAAAABAAAAyW1wNHYAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAEAAQAEgAAABIAAAAAAAAAAEKTGF2YyBtcGVnNAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY//8AAABPZXNkcwAAAAADgICAPgABAASAgIAwIBEAAAAAAw1AAAMNQAWAgIAeAAABsAEAAAG1iRMAAAEAAAABIADEjYgADQCEAhRjBoCAgAECAAAAEHBhc3AAAAABAAAAAQAAABRidHJ0AAAAAAADDUAAAw1AAAAAEHN0dHMAAAAAAAAAAAAAABBzdHNjAAAAAAAAAAAAAAAUc3RzegAAAAAAAAAAAAAAAAAAABBzdGNvAAAAAAAAAAAAAAAobXZleAAAACB0cmV4AAAAAAAAAAEAAAABAAAAAAAAAAAAAAAAAAAAPXVkdGEAAAA1bWV0YQAAAAAAAAAhaGRscgAAAAAAAAAAbWRpcmFwcGwAAAAAAAAAAAAAAAAIaWxzdAAAAGhtb29mAAAAEG1maGQAAAAAAAAAAQAAAFB0cmFmAAAAHHRmaGQAAgA4AAAAAQAAQAAAAAAUAQEAAAAAABR0ZmR0AQAAAAAAAAAAAAAAAAAAGHRydW4AAAAFAAAAAQAAAHACAAAAAAAAHG1kYXQAAAGzABAHAAABthYFGCobYHgFrwAAAENtZnJhAAAAK3RmcmEBAAAAAAAAAQAAAAAAAAABAAAAAAAAAAAAAAAAAAADEwEBAQAAABBtZnJvAAAAAAAAAEM=")
-check(len(media) == 986 and hashlib.sha256(media).hexdigest() ==
-      "53e69e5ed987d6aeca2f263ece6290b348e45e49f19ac764bc02afb0157618cc", "unexpected fixture bytes")
+# Original six-second synthetic motion + tone MP4, no external footage or voices.
+media = motion_fixture.read_bytes()
+check(len(media) == 75782
+      and hashlib.sha256(media).hexdigest() == '9db7e9e991d9274a33c9ea911cb9d36dfda2e17b735f024968f934b8ce3ad5de',
+      'unexpected synthetic browser fixture bytes')
 sha = hashlib.sha256(media).hexdigest()
-key = 'formacao/fixture/fixture/fixture/volume-1/unidade-1/aula-1/' + sha + '.mp4'
+key = 'formacao/fixture/fixture/fixture/volume-1/unidade-1/aula-4/' + sha + '.mp4'
 payload = json.dumps([dict(id=lesson_id, title='Synthetic local fixture', path=key, sha=sha, edition='fixture',
-                           subject='fixture', volume=1, unit=1, audience='teacher', covered=[1])],
+                           subject='fixture', volume=1, unit=1, audience='teacher', covered=[4, 5])],
                      separators=(',', ':'))
 
 setup = f"""
@@ -371,7 +375,7 @@ def delivery(token):
     return value
 
 
-def signed_bytes(result):
+def signed_address(result):
     asset = result.get('asset', {})
     check(result.get('status') == 200 and asset.get('expiresIn') == 300
           and asset.get('lessonId') == lesson_id and asset.get('mimeType') == 'video/mp4',
@@ -381,7 +385,35 @@ def signed_bytes(result):
           and address.path == '/storage/v1/object/sign/' + bucket + '/' + key
           and re.fullmatch(r'token=[0-9A-Za-z._~%-]+', address.query) and not address.fragment,
           'unexpected local signed asset location')
+    return address
+
+
+def signed_bytes(result):
+    address = signed_address(result)
     return req(address.path + '?' + address.query)
+
+
+def browser_playback(result):
+    address = signed_address(result)
+    run = subprocess.run(['node', str(chromium_test), str(chromium), str(cert)],
+                         input=json.dumps({'url': address.geturl()}), text=True, capture_output=True, timeout=40)
+    if run.returncode:
+        # The browser only emits fixed phase tokens. Never print raw child logs or a URL.
+        labels = ('codec','metadata','dimensions','autoplay','playback','seek','after-seek')
+        phase = next((x for x in labels if run.stderr.strip() == 'Browser playback failed: '+x), 'runner')
+        raise SystemExit('synthetic Chromium playback failed phase=' + phase)
+    try:
+        m = json.loads(run.stdout)
+        initial, after = m['initial'], m['after']
+        check(m['codec'] in ('maybe','probably') and 5.9 <= m['duration'] <= 6.1
+              and (m['width'],m['height']) == (160,96)
+              and initial['time'] >= 1.1 and initial['frames'] >= 3 and initial['audioBytes'] > 0
+              and after['time'] >= 4.85 and after['frames'] > initial['frames']
+              and re.fullmatch(r'(?:Chrome|Chromium)/[0-9.]+', m['browser']),
+              'unexpected synthetic Chromium playback metrics')
+    except (ValueError, KeyError, TypeError):
+        raise SystemExit('malformed synthetic Chromium playback evidence') from None
+    print('PASS: ' + m['browser'] + ' H.264/AAC, decoded video and audio, six-second motion, seek and resume.', flush=True)
 
 
 def delivery_denied(token, title, code='training_access_denied', status=403):
@@ -428,15 +460,18 @@ check(ok(rpc('approver_fixture', ajwt), 'separate Auth approval') == 'approved',
 check(counts() == '0,0,0,0', 'approval unexpectedly wrote catalog')
 delivery_denied(rjwt, 'reader approved but not published')
 check(ok(rpc('publisher_fixture', pjwt), 'first publication') == 'published', 'publication missing')
-check(counts() == '1,1,1,1', 'invalid catalog cardinality')
+check(counts() == '1,1,2,1', 'invalid catalog cardinality')
 check(ok(rpc('publisher_fixture', pjwt), 'exact retry') == 'already published', 'unexpected idempotency result')
-check(counts() == '1,1,1,1', 'retry changed catalog cardinality')
+check(counts() == '1,1,2,1', 'retry changed catalog cardinality')
 check(owner_read(f"SELECT sha FROM pv3.asset WHERE batch='{batch}'", 'catalog digest') == sha, 'unexpected catalog digest')
+check(owner_read(f"SELECT array_agg(lesson ORDER BY lesson)::text FROM pv3.coverage WHERE batch='{batch}' AND id='{lesson_id}'",
+                 'one asset coverage') == '{4,5}', 'synthetic asset does not cover exactly lessons 4 and 5')
 
 ticket = delivery(rjwt)
 authorized = signed_bytes(ticket)
 check(authorized[0] == 200 and hashlib.sha256(authorized[1]).hexdigest() == sha and authorized[1] == media,
       'catalog-authorized private bytes missing or digest mismatch')
+browser_playback(ticket)
 delivery_denied(njwt,'unrelated authenticated user after publication')
 delivery_denied(None,'anonymous user after publication','session_required',401)
 for result in [read(rjwt), read(njwt), read(None), req('/storage/v1/object/public/' + bucket + '/' + key)]:
@@ -444,7 +479,7 @@ for result in [read(rjwt), read(njwt), read(None), req('/storage/v1/object/publi
 sql(f"""BEGIN; SET LOCAL ROLE pv3_withdraw;
 INSERT INTO pv3.withdrawal(batch,reason) VALUES ('{batch}','synthetic withdrawal');
 COMMIT;""", 'separate local withdrawal role')
-check(counts() == '1,1,1,1', 'withdrawal unexpectedly deleted catalog evidence')
+check(counts() == '1,1,2,1', 'withdrawal unexpectedly deleted catalog evidence')
 delivery_denied(rjwt,'formerly authorized reader after withdrawal')
 storage_denied(read(rjwt), 'direct Storage reader after withdrawal')
 print('PASS: distinct Auth approval/publication, private bytes through catalog-bound HTTPS signing only, '
