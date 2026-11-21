@@ -5,6 +5,7 @@ import os
 import pathlib
 import re
 import secrets
+import ssl
 import subprocess
 import sys
 import time
@@ -20,13 +21,19 @@ def check(condition, label):
 
 
 status = json.load(sys.stdin)
-for field, schemes, port in [('API_URL', ('http',), 54321), ('DB_URL', ('postgresql', 'postgres'), 54322)]:
+for field, schemes, port in [('API_URL', ('https',), 54321), ('DB_URL', ('postgresql', 'postgres'), 54322)]:
     url = urlsplit(status[field])
     check(url.hostname in ('127.0.0.1', 'localhost') and url.scheme in schemes and url.port == port
           and not url.query and not url.fragment, 'nonlocal or unexpected endpoint')
 db = urlsplit(status['DB_URL'])
 check(db.username == 'postgres' and db.path == '/postgres' and db.password, 'unexpected database identity')
-api = 'http://127.0.0.1:54321'
+api = 'https://127.0.0.1:54321'
+cert = pathlib.Path(sys.argv[2]).resolve(strict=True)
+policy = pathlib.Path(sys.argv[3]).resolve(strict=True)
+adapter = pathlib.Path(sys.argv[4]).resolve(strict=True)
+check(hashlib.sha256(policy.read_bytes()).hexdigest() == 'a0e22d40e092b4ae6155309e5f2937f10175533a32ca15ad8d6b36fb7638c3d9', 'unexpected deployed v7 policy core hash')
+tls = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+tls.load_verify_locations(cafile=str(cert))
 anon = status['ANON_KEY']
 service = status['SERVICE_ROLE_KEY']
 
@@ -36,7 +43,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
+opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect(), urllib.request.HTTPSHandler(context=tls))
 
 
 def req(path, token=None, method='GET', data=None, key=None, mime='application/json'):
@@ -52,6 +59,8 @@ def req(path, token=None, method='GET', data=None, key=None, mime='application/j
             return response.status, response.read()
     except urllib.error.HTTPError as error:
         return error.code, error.read()
+    except (urllib.error.URLError, TimeoutError):
+        raise SystemExit('local HTTPS request failed, details suppressed') from None
 
 
 def ok(result, label):
@@ -127,17 +136,9 @@ check(170000 <= int(version) < 180000 and (superuser, create_role, create_db_sch
 object_acl = sql("""
 SELECT CASE WHEN has_schema_privilege('public','USAGE') AND has_schema_privilege('public','CREATE')
             AND pg_has_role((SELECT nspowner FROM pg_namespace WHERE nspname='public'),'USAGE')
-            THEN '1' ELSE '0' END || ',' ||
-       CASE WHEN EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-            WHERE n.nspname='storage' AND c.relname='objects' AND c.relrowsecurity
-              AND pg_has_role(c.relowner,'USAGE') AND has_schema_privilege(n.oid,'USAGE'))
             THEN '1' ELSE '0' END;
 """, 'read-only fixture-object preflight')
-check(re.fullmatch(r'[01],[01]', object_acl) is not None, 'unexpected fixture-object preflight shape')
-public_ddl, storage_ddl = object_acl.split(',')
-print('Fixture object preflight: public_ddl=' + public_ddl + ' storage_rls_ddl=' + storage_ddl, flush=True)
-check(public_ddl == '1', 'disposable bootstrap does not own the existing public DDL path')
-check(storage_ddl == '1', 'disposable bootstrap does not already own Storage policy DDL path')
+check(object_acl == '1', 'disposable bootstrap does not own the existing public DDL path')
 
 # Preserve the versioned source byte-for-byte. Insert an explicit SET-only local bootstrap
 # adapter into the in-memory schema transaction; do not use a cluster-wide setting.
@@ -164,14 +165,15 @@ publisher, approver, reader_id = pub[0], app[0], reader[0]
 check(len({user[0] for user in (pub, app, reader, wrong)}) == 4, 'synthetic identities not distinct')
 
 batch = 'fixture-' + secrets.token_hex(6)
-bucket = 'publisher-fixture'
-key = batch + '.mp4'
+bucket = 'videos'
+lesson_id = str(uuid.uuid4())
 # One generated 16x16 blue MPEG-4 frame, 986 bytes, no source media or audio.
 media = base64.b64decode("AAAAHGZ0eXBpc281AAACAGlzbzVpc282bXA0MQAAAvdtb292AAAAbG12aGQAAAAAAAAAAAAAAAAAAAPoAAAAAAABAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACHnRyYWsAAABcdGtoZAAAAAMAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAEAAAABAAAAAAAbptZGlhAAAAIG1kaGQAAAAAAAAAAAAAAAAAAEAAAAAAAFXEAAAAAAAtaGRscgAAAAAAAAAAdmlkZQAAAAAAAAAAAAAAAFZpZGVvSGFuZGxlcgAAAAFlbWluZgAAABR2bWhkAAAAAQAAAAAAAAAAAAAAJGRpbmYAAAAcZHJlZgAAAAAAAAABAAAADHVybCAAAAABAAABJXN0YmwAAADZc3RzZAAAAAAAAAABAAAAyW1wNHYAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAEAAQAEgAAABIAAAAAAAAAAEKTGF2YyBtcGVnNAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY//8AAABPZXNkcwAAAAADgICAPgABAASAgIAwIBEAAAAAAw1AAAMNQAWAgIAeAAABsAEAAAG1iRMAAAEAAAABIADEjYgADQCEAhRjBoCAgAECAAAAEHBhc3AAAAABAAAAAQAAABRidHJ0AAAAAAADDUAAAw1AAAAAEHN0dHMAAAAAAAAAAAAAABBzdHNjAAAAAAAAAAAAAAAUc3RzegAAAAAAAAAAAAAAAAAAABBzdGNvAAAAAAAAAAAAAAAobXZleAAAACB0cmV4AAAAAAAAAAEAAAABAAAAAAAAAAAAAAAAAAAAPXVkdGEAAAA1bWV0YQAAAAAAAAAhaGRscgAAAAAAAAAAbWRpcmFwcGwAAAAAAAAAAAAAAAAIaWxzdAAAAGhtb29mAAAAEG1maGQAAAAAAAAAAQAAAFB0cmFmAAAAHHRmaGQAAgA4AAAAAQAAQAAAAAAUAQEAAAAAABR0ZmR0AQAAAAAAAAAAAAAAAAAAGHRydW4AAAAFAAAAAQAAAHACAAAAAAAAHG1kYXQAAAGzABAHAAABthYFGCobYHgFrwAAAENtZnJhAAAAK3RmcmEBAAAAAAAAAQAAAAAAAAABAAAAAAAAAAAAAAAAAAADEwEBAQAAABBtZnJvAAAAAAAAAEM=")
 check(len(media) == 986 and hashlib.sha256(media).hexdigest() ==
       "53e69e5ed987d6aeca2f263ece6290b348e45e49f19ac764bc02afb0157618cc", "unexpected fixture bytes")
 sha = hashlib.sha256(media).hexdigest()
-payload = json.dumps([dict(id=batch, title='Synthetic local fixture', path=key, sha=sha, edition='fixture',
+key = 'formacao/fixture/fixture/fixture/volume-1/unidade-1/aula-1/' + sha + '.mp4'
+payload = json.dumps([dict(id=lesson_id, title='Synthetic local fixture', path=key, sha=sha, edition='fixture',
                            subject='fixture', volume=1, unit=1, audience='teacher', covered=[1])],
                      separators=(',', ':'))
 
@@ -259,8 +261,7 @@ GRANT EXECUTE ON FUNCTION public.approver_fixture() TO pv3_approve;
 CREATE ROLE pv3_fixture_media NOLOGIN NOSUPERUSER NOBYPASSRLS NOINHERIT;
 GRANT pv3_fixture_media TO postgres WITH INHERIT FALSE GRANTED BY CURRENT_USER;
 GRANT pv3_fixture_media TO postgres WITH SET TRUE GRANTED BY CURRENT_USER;
-GRANT USAGE ON SCHEMA fixture_auth TO authenticated, pv3_fixture_media;
-GRANT CREATE ON SCHEMA fixture_auth TO pv3_fixture_media;
+GRANT USAGE,CREATE ON SCHEMA public TO pv3_fixture_media;
 SET LOCAL ROLE pv3_owner;
 GRANT USAGE ON SCHEMA pv3 TO pv3_fixture_media;
 GRANT SELECT (batch,id,path,sha) ON pv3.asset TO pv3_fixture_media;
@@ -273,27 +274,35 @@ DO $g$ DECLARE t text; BEGIN
 END $g$;
 RESET ROLE;
 
--- Create and set ACL as the final restricted owner in the same transaction.
+-- Synthetic adapters for the production delivery core. Neither endpoint grants catalog
+-- tables to callers. Neither Storage roles, policies nor RLS settings are changed.
 SET LOCAL ROLE pv3_fixture_media;
-CREATE FUNCTION fixture_auth.media_allowed(b text,k text) RETURNS boolean
+CREATE FUNCTION public.teacher_fixture_authorize(p_lesson_id uuid, p_school_id uuid) RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $f$
- SELECT b='{bucket}' AND k='{key}'
+ SELECT p_school_id IS NULL AND p_lesson_id = '{lesson_id}'::uuid
    AND (nullif(current_setting('request.jwt.claims', true),'')::jsonb->>'sub')='{reader_id}'
    AND EXISTS(
-     SELECT 1 FROM pv3.asset a
-     JOIN pv3.content c USING(id,batch)
-     JOIN pv3.receipt r USING(batch)
-     WHERE a.batch='{batch}' AND a.id='{batch}' AND a.path=k AND a.sha='{sha}'
-       AND NOT EXISTS (SELECT 1 FROM pv3.withdrawal w WHERE w.batch=a.batch)
+     SELECT 1 FROM pv3.content c JOIN pv3.receipt r USING(batch)
+     WHERE c.batch='{batch}' AND c.id='{lesson_id}'
+       AND NOT EXISTS (SELECT 1 FROM pv3.withdrawal w WHERE w.batch=c.batch)
    );
 $f$;
-REVOKE ALL ON FUNCTION fixture_auth.media_allowed(text,text) FROM PUBLIC, anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION fixture_auth.media_allowed(text,text) TO authenticated;
+CREATE FUNCTION public.teacher_fixture_binding(p_lesson_id uuid,p_kind text) RETURNS jsonb
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $f$
+ SELECT jsonb_build_object('lessonId',a.id,'kind','video','bucket','{bucket}',
+                           'path',a.path,'sha256',a.sha,'mimeType','video/mp4')
+ FROM pv3.asset a JOIN pv3.content c USING(id,batch) JOIN pv3.receipt r USING(batch)
+ WHERE p_lesson_id='{lesson_id}'::uuid AND p_kind='video' AND a.id='{lesson_id}'
+   AND a.batch='{batch}' AND a.path='{key}' AND a.sha='{sha}'
+   AND NOT EXISTS (SELECT 1 FROM pv3.withdrawal w WHERE w.batch=a.batch);
+$f$;
+REVOKE ALL ON FUNCTION public.teacher_fixture_authorize(uuid,uuid),public.teacher_fixture_binding(uuid,text)
+ FROM PUBLIC, anon, authenticated, service_role, pv3_publish, pv3_approve;
+GRANT EXECUTE ON FUNCTION public.teacher_fixture_authorize(uuid,uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.teacher_fixture_binding(uuid,text) TO service_role;
 RESET ROLE;
-REVOKE CREATE ON SCHEMA fixture_auth FROM pv3_fixture_media;
+REVOKE CREATE ON SCHEMA public FROM pv3_fixture_media;
 REVOKE pv3_fixture_media FROM postgres GRANTED BY CURRENT_USER;
-CREATE POLICY fixture_storage_read ON storage.objects FOR SELECT TO authenticated
- USING (fixture_auth.media_allowed(bucket_id,name));
 
 SET LOCAL ROLE pv3_prepare;
 INSERT INTO pv3.manifest(batch,payload) VALUES ('{batch}','{payload}');
@@ -301,24 +310,24 @@ COMMIT;
 NOTIFY pgrst, 'reload schema';
 """
 sql(setup, 'fixture precise roles, scoped API, catalog-linked Storage policy')
-# Verify effective ACLs on the final helper, before requesting application tokens.
-# Denial includes privileges inherited from any role and PUBLIC defaults.
+# Verify effective ACLs on exact fixture RPCs, including role inheritance/default ACLs.
 helper_acl = sql("""
-SELECT (
-    p.proowner = 'pv3_fixture_media'::regrole
-    AND p.prosecdef
-    AND has_schema_privilege('authenticated', 'fixture_auth', 'USAGE')
-    AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
-    AND NOT EXISTS (
-        SELECT 1 FROM unnest(ARRAY['anon','pv3_publish','pv3_approve','service_role']) AS d(role_name)
-        WHERE has_function_privilege(d.role_name::name, p.oid, 'EXECUTE')
-    )
-    AND NOT has_schema_privilege('pv3_fixture_media','fixture_auth','CREATE')
-    AND NOT pg_has_role('postgres','pv3_fixture_media','SET')
-)
-FROM pg_proc p WHERE p.oid=to_regprocedure('fixture_auth.media_allowed(text,text)');
-""", 'read-only final media helper ACL')
-check(helper_acl == 't', 'unexpected effective media helper ACL or ownership')
+SELECT count(*)=2
+ AND bool_and(p.proowner = 'pv3_fixture_media'::regrole AND p.prosecdef)
+ AND bool_and(has_function_privilege(
+     CASE p.proname WHEN 'teacher_fixture_authorize' THEN 'authenticated' ELSE 'service_role' END::name,
+     p.oid,'EXECUTE'))
+ AND bool_and(NOT EXISTS (
+    SELECT 1 FROM unnest(ARRAY['anon','pv3_publish','pv3_approve',
+       CASE p.proname WHEN 'teacher_fixture_authorize' THEN 'service_role' ELSE 'authenticated' END])
+       AS d(role_name)
+    WHERE has_function_privilege(d.role_name::name,p.oid,'EXECUTE')))
+ AND NOT has_schema_privilege('pv3_fixture_media','public','CREATE')
+ AND NOT pg_has_role('postgres','pv3_fixture_media','SET')
+FROM pg_proc p WHERE p.oid IN (to_regprocedure('public.teacher_fixture_authorize(uuid,uuid)'),
+                             to_regprocedure('public.teacher_fixture_binding(uuid,text)'));
+""", 'read-only final fixture delivery ACL')
+check(helper_acl == 't', 'unexpected effective fixture delivery ACL or ownership')
 pjwt = login(pub, 'pv3_publish')
 ajwt = login(app, 'pv3_approve')
 rjwt = login(reader, 'authenticated')
@@ -345,6 +354,40 @@ def read(token):
 
 def storage_denied(result, label):
     check(result[0] in (400, 401, 403, 404) and result[1] != media, label + ' not denied')
+
+
+def delivery(token):
+    # Local credentials enter the isolated child through stdin only.
+    result = subprocess.run(['node', str(adapter), str(policy), str(cert)],
+                            env={**os.environ, 'NODE_EXTRA_CA_CERTS': str(cert)},
+                            input=json.dumps({'token': token, 'anon': anon, 'service': service,
+                                              'lessonId': lesson_id}), text=True, capture_output=True,
+                            timeout=35)
+    check(result.returncode == 0, 'local delivery adapter failed, details suppressed')
+    try:
+        value = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        raise SystemExit('invalid local delivery adapter response') from None
+    return value
+
+
+def signed_bytes(result):
+    asset = result.get('asset', {})
+    check(result.get('status') == 200 and asset.get('expiresIn') == 300
+          and asset.get('lessonId') == lesson_id and asset.get('mimeType') == 'video/mp4',
+          'missing authorized signed asset')
+    address = urlsplit(asset.get('signedUrl', ''))
+    check(address.scheme == 'https' and address.netloc == '127.0.0.1:54321'
+          and address.path == '/storage/v1/object/sign/' + bucket + '/' + key
+          and re.fullmatch(r'token=[0-9A-Za-z._~%-]+', address.query) and not address.fragment,
+          'unexpected local signed asset location')
+    return req(address.path + '?' + address.query)
+
+
+def delivery_denied(token, title, code='training_access_denied', status=403):
+    result = delivery(token)
+    check(result.get('status') == status and result.get('code') == code and 'asset' not in result,
+          title + ' was not denied')
 
 
 # Read-only evidence of role boundaries and no pv3 catalog grants to ordinary users.
@@ -378,24 +421,31 @@ ok(req('/storage/v1/bucket', service, 'POST', {'id': bucket, 'name': bucket, 'pu
    'create private synthetic bucket')
 ok(req('/storage/v1/object/' + bucket + '/' + key, service, 'POST', media, service, 'video/mp4'),
    'upload synthetic fixture')
-storage_denied(read(rjwt), 'authorized reader before catalog publication')
+storage_denied(read(rjwt), 'direct reader before catalog publication')
+delivery_denied(rjwt, 'reader before approval')
+delivery_denied(None, 'anonymous reader before approval','session_required',401)
 check(ok(rpc('approver_fixture', ajwt), 'separate Auth approval') == 'approved', 'unconfirmed approval')
 check(counts() == '0,0,0,0', 'approval unexpectedly wrote catalog')
+delivery_denied(rjwt, 'reader approved but not published')
 check(ok(rpc('publisher_fixture', pjwt), 'first publication') == 'published', 'publication missing')
 check(counts() == '1,1,1,1', 'invalid catalog cardinality')
 check(ok(rpc('publisher_fixture', pjwt), 'exact retry') == 'already published', 'unexpected idempotency result')
 check(counts() == '1,1,1,1', 'retry changed catalog cardinality')
 check(owner_read(f"SELECT sha FROM pv3.asset WHERE batch='{batch}'", 'catalog digest') == sha, 'unexpected catalog digest')
 
-authorized = read(rjwt)
+ticket = delivery(rjwt)
+authorized = signed_bytes(ticket)
 check(authorized[0] == 200 and hashlib.sha256(authorized[1]).hexdigest() == sha and authorized[1] == media,
-      'private authenticated read missing or digest mismatch')
-# Anonymous/public and unrelated authenticated reads use ordinary service routes.
-for result in [read(njwt), read(None), req('/storage/v1/object/public/' + bucket + '/' + key)]:
-    storage_denied(result, 'unrelated or anonymous read after publication')
+      'catalog-authorized private bytes missing or digest mismatch')
+delivery_denied(njwt,'unrelated authenticated user after publication')
+delivery_denied(None,'anonymous user after publication','session_required',401)
+for result in [read(rjwt), read(njwt), read(None), req('/storage/v1/object/public/' + bucket + '/' + key)]:
+    storage_denied(result, 'direct or public Storage read after publication')
 sql(f"""BEGIN; SET LOCAL ROLE pv3_withdraw;
 INSERT INTO pv3.withdrawal(batch,reason) VALUES ('{batch}','synthetic withdrawal');
 COMMIT;""", 'separate local withdrawal role')
 check(counts() == '1,1,1,1', 'withdrawal unexpectedly deleted catalog evidence')
-storage_denied(read(rjwt), 'formerly authorized reader after withdrawal')
-print('PASS: separate locally issued publisher/approver JWTs; catalog and private media gated; repeat stable; withdrawal denies fresh read')
+delivery_denied(rjwt,'formerly authorized reader after withdrawal')
+storage_denied(read(rjwt), 'direct Storage reader after withdrawal')
+print('PASS: distinct Auth approval/publication, private bytes through catalog-bound HTTPS signing only, '
+      'idempotency, and no fresh signed URL after withdrawal. Previously signed URLs may remain valid until expiry.')
