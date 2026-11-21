@@ -121,7 +121,44 @@ original = pathlib.Path(sys.argv[1]).read_bytes()
 check(hashlib.sha256(original).hexdigest() == "dd0931956de9e91030a2bc180e8ac24f6cdf2f3b0354c408a8d43a1fd670fcfd",
       "unexpected v3.1 source hash")
 schema = original.decode("utf-8")
-sql(schema, 'original v3.1 schema')
+check(170000 <= int(version) < 180000 and (superuser, create_role, create_db_schema, self_grant_set)
+      == ('0', '1', '1', '0'), 'unexpected disposable fixture bootstrap role profile')
+# Non-mutating, controlled preflight: no grants to a service/provider role, and no privileges altered.
+object_acl = sql("""
+SELECT CASE WHEN has_schema_privilege('public','USAGE') AND has_schema_privilege('public','CREATE')
+            AND pg_has_role((SELECT nspowner FROM pg_namespace WHERE nspname='public'),'USAGE')
+            THEN '1' ELSE '0' END || ',' ||
+       CASE WHEN EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+            WHERE n.nspname='storage' AND c.relname='objects' AND c.relrowsecurity
+              AND pg_has_role(c.relowner,'USAGE') AND has_schema_privilege(n.oid,'USAGE'))
+            THEN '1' ELSE '0' END;
+""", 'read-only fixture-object preflight')
+check(re.fullmatch(r'[01],[01]', object_acl) is not None, 'unexpected fixture-object preflight shape')
+public_ddl, storage_ddl = object_acl.split(',')
+print('Fixture object preflight: public_ddl=' + public_ddl + ' storage_rls_ddl=' + storage_ddl, flush=True)
+check(public_ddl == '1', 'disposable bootstrap does not own the existing public DDL path')
+check(storage_ddl == '1', 'disposable bootstrap does not already own Storage policy DDL path')
+
+# Preserve the versioned source byte-for-byte. Insert an explicit SET-only local bootstrap
+# adapter into the in-memory schema transaction; do not use a cluster-wide setting.
+anchor = "CREATE ROLE pv3_withdraw NOLOGIN NOSUPERUSER NOBYPASSRLS;\n"
+check(schema.count(anchor) == 1, 'unexpected v3.1 bootstrap anchor')
+fixture_memberships = (
+    "GRANT pv3_owner,pv3_prepare,pv3_withdraw TO postgres WITH INHERIT FALSE GRANTED BY CURRENT_USER;\n"
+    "GRANT pv3_owner,pv3_prepare,pv3_withdraw TO postgres WITH SET TRUE GRANTED BY CURRENT_USER;\n"
+)
+sql(schema.replace(anchor, anchor + fixture_memberships, 1), 'original v3.1 schema + scoped local bootstrap')
+check(sql("""
+SELECT count(*) FROM pg_auth_members m JOIN pg_roles member ON member.oid=m.member
+           JOIN pg_roles granted ON granted.oid=m.roleid
+WHERE member.rolname='postgres' AND granted.rolname IN ('pv3_owner','pv3_prepare','pv3_withdraw')
+AND NOT m.admin_option AND NOT m.inherit_option AND m.set_option;
+""", 'fixture bootstrap SET-only memberships') == '3', 'unexpected fixture bootstrap role memberships')
+
+
+def owner_read(statement, label):
+    # Direct verifier reads explicitly assume the existing owner with FORCE RLS. No read grant.
+    return sql('BEGIN READ ONLY; SET LOCAL ROLE pv3_owner;\n' + statement + ';\nCOMMIT;', label)
 pub, app, reader, wrong = [create(name) for name in ('publisher', 'approver', 'reader', 'other')]
 publisher, approver, reader_id = pub[0], app[0], reader[0]
 check(len({user[0] for user in (pub, app, reader, wrong)}) == 4, 'synthetic identities not distinct')
@@ -220,7 +257,11 @@ GRANT EXECUTE ON FUNCTION public.approver_fixture() TO pv3_approve;
 -- Storage policy exposes no catalog privileges to authenticated.
 -- The boolean helper is owned by a dedicated no-login role with scoped SELECT only.
 CREATE ROLE pv3_fixture_media NOLOGIN NOSUPERUSER NOBYPASSRLS NOINHERIT;
+GRANT pv3_fixture_media TO postgres WITH INHERIT FALSE GRANTED BY CURRENT_USER;
+GRANT pv3_fixture_media TO postgres WITH SET TRUE GRANTED BY CURRENT_USER;
 GRANT USAGE ON SCHEMA fixture_auth TO authenticated, pv3_fixture_media;
+GRANT CREATE ON SCHEMA fixture_auth TO pv3_fixture_media;
+SET LOCAL ROLE pv3_owner;
 GRANT USAGE ON SCHEMA pv3 TO pv3_fixture_media;
 GRANT SELECT (batch,id,path,sha) ON pv3.asset TO pv3_fixture_media;
 GRANT SELECT (batch,id) ON pv3.content TO pv3_fixture_media;
@@ -230,6 +271,10 @@ DO $g$ DECLARE t text; BEGIN
   EXECUTE format('CREATE POLICY fixture_media_limit ON pv3.%I AS RESTRICTIVE FOR SELECT TO pv3_fixture_media USING (batch = %L)',t,'{batch}');
  END LOOP;
 END $g$;
+RESET ROLE;
+
+-- Create and set ACL as the final restricted owner in the same transaction.
+SET LOCAL ROLE pv3_fixture_media;
 CREATE FUNCTION fixture_auth.media_allowed(b text,k text) RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $f$
  SELECT b='{bucket}' AND k='{key}'
@@ -242,11 +287,11 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $f$
        AND NOT EXISTS (SELECT 1 FROM pv3.withdrawal w WHERE w.batch=a.batch)
    );
 $f$;
-GRANT CREATE ON SCHEMA fixture_auth TO pv3_fixture_media;
-ALTER FUNCTION fixture_auth.media_allowed(text,text) OWNER TO pv3_fixture_media;
-REVOKE CREATE ON SCHEMA fixture_auth FROM pv3_fixture_media;
 REVOKE ALL ON FUNCTION fixture_auth.media_allowed(text,text) FROM PUBLIC, anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION fixture_auth.media_allowed(text,text) TO authenticated;
+RESET ROLE;
+REVOKE CREATE ON SCHEMA fixture_auth FROM pv3_fixture_media;
+REVOKE pv3_fixture_media FROM postgres GRANTED BY CURRENT_USER;
 CREATE POLICY fixture_storage_read ON storage.objects FOR SELECT TO authenticated
  USING (fixture_auth.media_allowed(bucket_id,name));
 
@@ -256,6 +301,24 @@ COMMIT;
 NOTIFY pgrst, 'reload schema';
 """
 sql(setup, 'fixture precise roles, scoped API, catalog-linked Storage policy')
+# Verify effective ACLs on the final helper, before requesting application tokens.
+# Denial includes privileges inherited from any role and PUBLIC defaults.
+helper_acl = sql("""
+SELECT (
+    p.proowner = 'pv3_fixture_media'::regrole
+    AND p.prosecdef
+    AND has_schema_privilege('authenticated', 'fixture_auth', 'USAGE')
+    AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
+    AND NOT EXISTS (
+        SELECT 1 FROM unnest(ARRAY['anon','pv3_publish','pv3_approve','service_role']) AS d(role_name)
+        WHERE has_function_privilege(d.role_name::name, p.oid, 'EXECUTE')
+    )
+    AND NOT has_schema_privilege('pv3_fixture_media','fixture_auth','CREATE')
+    AND NOT pg_has_role('postgres','pv3_fixture_media','SET')
+)
+FROM pg_proc p WHERE p.oid=to_regprocedure('fixture_auth.media_allowed(text,text)');
+""", 'read-only final media helper ACL')
+check(helper_acl == 't', 'unexpected effective media helper ACL or ownership')
 pjwt = login(pub, 'pv3_publish')
 ajwt = login(app, 'pv3_approve')
 rjwt = login(reader, 'authenticated')
@@ -267,7 +330,7 @@ def rpc(name, token):
 
 
 def counts():
-    return sql("SELECT " + "||','||".join(f"(SELECT count(*) FROM pv3.{t} WHERE batch='{batch}')"
+    return owner_read("SELECT " + "||','||".join(f"(SELECT count(*) FROM pv3.{t} WHERE batch='{batch}')"
                                          for t in ('content', 'asset', 'coverage', 'receipt')), 'counts')
 
 
@@ -287,7 +350,7 @@ def storage_denied(result, label):
 # Read-only evidence of role boundaries and no pv3 catalog grants to ordinary users.
 check(sql("""SELECT count(*) FROM pg_roles WHERE rolname IN ('pv3_publish','pv3_approve','pv3_fixture_media')
            AND NOT rolcanlogin AND NOT rolbypassrls AND NOT rolsuper""", 'role flags') == '3', 'unexpected test flags')
-check(sql("""SELECT has_schema_privilege('authenticated','pv3','USAGE')
+check(owner_read("""SELECT has_schema_privilege('authenticated','pv3','USAGE')
            OR has_table_privilege('authenticated','pv3.asset','SELECT')""", 'ordinary role catalog privileges') == 'f',
       'ordinary authenticated acquired catalog privileges')
 check(sql("""SELECT has_function_privilege('pv3_publish','public.approver_fixture()','EXECUTE')
@@ -322,7 +385,7 @@ check(ok(rpc('publisher_fixture', pjwt), 'first publication') == 'published', 'p
 check(counts() == '1,1,1,1', 'invalid catalog cardinality')
 check(ok(rpc('publisher_fixture', pjwt), 'exact retry') == 'already published', 'unexpected idempotency result')
 check(counts() == '1,1,1,1', 'retry changed catalog cardinality')
-check(sql(f"SELECT sha FROM pv3.asset WHERE batch='{batch}'", 'catalog digest') == sha, 'unexpected catalog digest')
+check(owner_read(f"SELECT sha FROM pv3.asset WHERE batch='{batch}'", 'catalog digest') == sha, 'unexpected catalog digest')
 
 authorized = read(rjwt)
 check(authorized[0] == 200 and hashlib.sha256(authorized[1]).hexdigest() == sha and authorized[1] == media,
