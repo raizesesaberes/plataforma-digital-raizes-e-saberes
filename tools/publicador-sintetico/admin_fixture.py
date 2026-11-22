@@ -39,10 +39,10 @@ function render() {
   e('manifest').textContent=data?.manifest?.label||'';
   e('hash').textContent=data?.manifest?.sha||'';
   e('approve').disabled=busy||role!=='reviewer'||state?.phase!=='review';
-  e('publish').disabled=busy||Boolean(reconcileRequired)||role!=='publisher'||!(state?.phase==='published'||state?.phase==='approved'&&e('confirm').checked);
+  e('publish').disabled=busy||data?.readOnly===true||Boolean(reconcileRequired)||role!=='publisher'||!(state?.phase==='published'||state?.phase==='approved'&&e('confirm').checked);
   e('confirm').disabled=busy||Boolean(reconcileRequired)||role!=='publisher'||state?.phase!=='approved';
   e('role').disabled=busy||Boolean(reconcileRequired);
-  e('recover').disabled=busy||!reconcileRequired||role!=='publisher';
+  e('recover').disabled=busy||role!=='publisher'||(!reconcileRequired&&data?.readOnly!==true);
 }
 async function go(f) {if(busy)return;busy=true;render();
   try{await f();}catch{e('feedback').textContent=reconcileRequired?'reconcile_required':'verification_failed';}
@@ -50,7 +50,7 @@ async function go(f) {if(busy)return;busy=true;render();
 e('role').addEventListener('change',()=>go(async()=>{
   if(reconcileRequired)return;
   role='';e('confirm').checked=false; e('feedback').textContent='';
-  
+
   data=await send('/session',{role:e('role').value});role=data.role;
   if(data.reconcileRequired===true)reconcileRequired={prior:null,uncertain:true};
 }));
@@ -62,7 +62,16 @@ e('approve').addEventListener('click',()=>go(async()=>{
   e('feedback').textContent='approval_verified';
 }));
 async function recoverReceipt(){
-  if(!reconcileRequired)return;
+  if(!reconcileRequired){
+    if(role!=='publisher'||data?.readOnly!==true||!data.state.receipt)return;
+    const prior=data.state.receipt;
+    const current=await send('/state');
+    if(current.readOnly!==true||current.state.phase!=='published'||current.state.receipt!==prior)
+      throw Error('receipt_state');
+    data=current;
+    e('feedback').textContent='prior_receipt_read_only';
+    return;
+  }
   const pending=reconcileRequired;
   const current=await send('/state');  // never calls a write endpoint
   if(current.state.phase!=='published'||!current.state.receipt||pending.prior&&current.state.receipt!==pending.prior)
@@ -73,7 +82,7 @@ async function recoverReceipt(){
 }
 e('recover').addEventListener('click',()=>go(recoverReceipt));
 e('publish').addEventListener('click',()=>go(async()=>{
-  if(reconcileRequired||role!=='publisher'||!['approved','published'].includes(data?.state?.phase))return;
+  if(reconcileRequired||data?.readOnly===true||role!=='publisher'||!['approved','published'].includes(data?.state?.phase))return;
   if(data.state.phase==='approved'&&!e('confirm').checked)return;
   e('confirm').checked=false;
   reconcileRequired={prior:data.state.receipt,uncertain:false};
@@ -88,6 +97,7 @@ render();
 def serve_admin(cert, private_key, manifest, auth_user, role_tokens, invoke, state):
     """Bind exact, pre-issued local Auth identities and parameterless fixture RPCs."""
     sessions = {}
+    receipt_only_sessions = set()
     evidence = {'approve': 0, 'publish': 0, 'state': 0, 'ambiguous': 0, 'failed_readback': 0, 'recovered': 0, 'auth': set()}
     origin = None
     dispatch_lock = Lock()
@@ -140,12 +150,17 @@ def serve_admin(cert, private_key, manifest, auth_user, role_tokens, invoke, sta
                 evidence['auth'].add(role)
                 if cookie:
                     sessions.pop(cookie, None)
+                    receipt_only_sessions.discard(cookie)
                 token = secrets.token_hex(32)
                 sessions[token] = role
                 if role == 'publisher' and evidence['ambiguous'] == 1 and evidence['recovered'] == 0:
                     return self.response(200, {'role': role, 'state': {'phase': 'reconcile_required', 'receipt': None},
                                                'manifest': manifest, 'reconcileRequired': True}, cookie=token)
-                return self.response(200, {'role': role, 'state': state(), 'manifest': manifest}, cookie=token)
+                current_state = state()
+                if role == 'publisher' and current_state['phase'] == 'published':
+                    receipt_only_sessions.add(token)
+                return self.response(200, {'role': role, 'state': current_state, 'manifest': manifest,
+                                           'readOnly': token in receipt_only_sessions}, cookie=token)
             if current is None:
                 return self.response(401, {'ok': False})
             if self.path == '/state' and self.command == 'GET':
@@ -158,14 +173,15 @@ def serve_admin(cert, private_key, manifest, auth_user, role_tokens, invoke, sta
                     if current_state['phase'] != 'published' or not current_state['receipt']:
                         return self.response(409, {'ok': False})
                     evidence['recovered'] += 1
-                return self.response(200, {'role': current, 'state': current_state, 'manifest': manifest})
+                return self.response(200, {'role': current, 'state': current_state, 'manifest': manifest,
+                                           'readOnly': cookie in receipt_only_sessions})
             if self.path == '/approve' and self.command == 'POST' and payload == {} and current == 'reviewer':
                 evidence['approve'] += 1
                 if invoke('approver_fixture', role_tokens[current][0]) != 'approved':
                     return self.response(409, {'ok': False})
                 return self.response(200, {'ok': True})
             if self.path == '/publish' and self.command == 'POST' and set(payload) == {'confirm'} and payload['confirm'] is True and current == 'publisher':
-                if evidence['ambiguous'] == 1 and evidence['recovered'] == 0:
+                if cookie in receipt_only_sessions or (evidence['ambiguous'] == 1 and evidence['recovered'] == 0):
                     return self.response(409, {'ok': False})
                 evidence['publish'] += 1
                 commit = invoke('publisher_fixture', role_tokens[current][0])

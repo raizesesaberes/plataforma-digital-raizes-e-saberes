@@ -37,6 +37,8 @@ chromium_test = pathlib.Path(sys.argv[6]).resolve(strict=True)
 chromium = pathlib.Path(sys.argv[7]).resolve(strict=True)
 admin_browser = pathlib.Path(sys.argv[8]).resolve(strict=True)
 admin_key = pathlib.Path(sys.argv[9]).resolve(strict=True)
+admin_mode = sys.argv[10]
+check(admin_mode in ('same-session', 'restart'), 'unexpected synthetic fixture case')
 check(hashlib.sha256(policy.read_bytes()).hexdigest() == 'a0e22d40e092b4ae6155309e5f2937f10175533a32ca15ad8d6b36fb7638c3d9', 'unexpected deployed v7 policy core hash')
 tls = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 tls.load_verify_locations(cafile=str(cert))
@@ -477,7 +479,14 @@ def auth_user(jwt):
     return ok(req('/auth/v1/user', jwt), 'fixture Admin identity').get('id')
 
 
+# Keep invocation counts in the harness, not in either HTTP adapter instance.
+admin_publish_calls = 0
+
+
 def admin_invoke(name, jwt):
+    global admin_publish_calls
+    if name == 'publisher_fixture':
+        admin_publish_calls += 1
     result = ok(rpc(name, jwt), 'fixture Admin RPC')
     if name == 'approver_fixture' and result == 'approved':
         check(counts() == '0,0,0,0', 'approval unexpectedly wrote catalog')
@@ -487,24 +496,71 @@ def admin_invoke(name, jwt):
 
 actors = {'reviewer': (ajwt, approver), 'publisher': (pjwt, publisher), 'other': (njwt, wrong[0])}
 check(len({uid for _, uid in actors.values()}) == len(actors), 'Admin actor identities not distinct')
-with serve_admin(cert, admin_key, {'label': 'Matemática · V2 · Unidade 1 · aulas 4 e 5', 'sha': sha},
-                 auth_user, actors, admin_invoke, admin_state) as (admin_url, evidence):
-    browser_run = subprocess.run(['node', str(admin_browser), str(chromium), str(cert)],
-                                 input=json.dumps({'url': admin_url}), text=True, capture_output=True, timeout=44)
-    if browser_run.returncode:
-        known = ('page','unauthorized','reviewer','manifest','approve','publisher','confirmation','lock','readback','replay')
-        phase = next((x for x in known if browser_run.stderr.strip() == 'Admin fixture failed phase=' + x), 'runner')
-        raise SystemExit('synthetic Chromium Admin test failed phase=' + phase)
-    try:
-        metrics = json.loads(browser_run.stdout)
-    except json.JSONDecodeError:
-        raise SystemExit('malformed Chromium Admin evidence') from None
-    check(metrics == {'ok': True, 'readback': True, 'replay': True}, 'invalid Chromium Admin evidence')
-    check(evidence == {'approve': 1, 'publish': 2, 'state': 4, 'ambiguous': 1, 'failed_readback': 1, 'recovered': 1, 'auth': set(actors)},
-          'unexpected counts of Admin calls or authenticated identities')
+def run_admin_browser(mode, expected_metrics, receipt=None):
+    manifest = {'label': 'Matemática · V2 · Unidade 1 · aulas 4 e 5', 'sha': sha}
+    with serve_admin(cert, admin_key, manifest, auth_user, actors, admin_invoke, admin_state) as (admin_url, evidence):
+        browser_input = {'url': admin_url, 'mode': mode}
+        if receipt is not None:
+            browser_input['receipt'] = receipt
+        try:
+            browser_run = subprocess.run(['node', str(admin_browser), str(chromium), str(cert)],
+                                         input=json.dumps(browser_input), text=True, capture_output=True, timeout=44)
+        except subprocess.TimeoutExpired:
+            raise SystemExit('synthetic Chromium Admin runner timed out; details suppressed') from None
+        if browser_run.returncode:
+            known = ('page','unauthorized','reviewer','manifest','approve','publisher','confirmation',
+                     'lock','readback','replay','restart','guard')
+            phase = next((x for x in known if browser_run.stderr.strip() == 'Admin fixture failed phase=' + x), 'runner')
+            raise SystemExit('synthetic Chromium Admin test failed phase=' + phase)
+        try:
+            metrics = json.loads(browser_run.stdout)
+        except json.JSONDecodeError:
+            raise SystemExit('malformed Chromium Admin evidence') from None
+        check(metrics == expected_metrics, 'invalid Chromium Admin evidence')
+        return evidence
 
-print('PASS: Chromium Admin approvals and publication, distinct real synthetic Auth users, independent '
-      'locked after ambiguous response and failed readback, separate receipt recovery, explicit replay without duplicate.', flush=True)
+
+def catalog_snapshot():
+    # Capture complete ordered fixture rows, not just counts or a fresh read of the receipt label.
+    tables = ('approval', 'receipt', 'content', 'asset', 'coverage')
+    fields = [f"(SELECT jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text) FROM pv3.{t} t WHERE batch='{batch}')"
+              for t in tables]
+    rows = owner_read("SELECT jsonb_build_array(" + ",".join(fields) + ")::text", 'restart catalog snapshot')
+    try:
+        record = json.loads(rows)
+    except json.JSONDecodeError:
+        raise SystemExit('malformed restart catalog snapshot') from None
+    check(isinstance(record, list) and len(record) == len(tables)
+          and all(isinstance(x, list) for x in record)
+          and [len(x) for x in record] == [1, 1, 1, 1, 2], 'restart catalog snapshot incomplete')
+    return record
+
+
+if admin_mode == 'same-session':
+    evidence = run_admin_browser('same-session', {'ok': True, 'readback': True, 'replay': True})
+    check(evidence == {'approve': 1, 'publish': 2, 'state': 4, 'ambiguous': 1, 'failed_readback': 1,
+                       'recovered': 1, 'auth': set(actors)} and admin_publish_calls == 2,
+          'unexpected counts of Admin calls or authenticated identities')
+    print('PASS: Chromium Admin approvals and publication, distinct real synthetic Auth users, independent '
+          'locked after ambiguous response and failed readback, separate receipt recovery, explicit replay without duplicate.', flush=True)
+else:
+    evidence = run_admin_browser('before-restart', {'ok': True, 'ambiguous': True, 'firstReadbackFailed': True})
+    check(evidence == {'approve': 1, 'publish': 1, 'state': 2, 'ambiguous': 1, 'failed_readback': 1,
+                       'recovered': 0, 'auth': set(actors)} and admin_publish_calls == 1,
+          'restart stage A did not stop after exactly one committed publish and failed readback')
+    receipt = admin_state()['receipt']
+    check(receipt == batch, 'restart stage A receipt missing')
+    prior_rows = catalog_snapshot()
+    # A new Node process always creates a fresh Chromium profile; the adapter also starts anew.
+    # The local PostgreSQL stack, fixture batch and Auth users stay in place.
+    restored = run_admin_browser('after-restart', {'ok': True, 'readback': True, 'guard': True}, receipt)
+    check(restored == {'approve': 0, 'publish': 0, 'state': 1, 'ambiguous': 0, 'failed_readback': 0,
+                       'recovered': 0, 'auth': {'publisher'}} and admin_publish_calls == 1,
+          'restart stage B invoked a write or did not read the existing receipt')
+    check(admin_state()['receipt'] == receipt and catalog_snapshot() == prior_rows,
+          'adapter restart changed the receipt or catalog/asset/coverage rows')
+    print('PASS: fresh Chromium and restarted Admin adapter recovered the same PostgreSQL receipt; '
+          'HTTP 409 blocked a second publish before RPC dispatch, one publisher RPC total, identical catalog rows.', flush=True)
 check(counts() == '1,1,2,1', 'retry changed catalog cardinality')
 check(owner_read(f"SELECT sha FROM pv3.asset WHERE batch='{batch}'", 'catalog digest') == sha, 'unexpected catalog digest')
 check(owner_read(f"SELECT array_agg(lesson ORDER BY lesson)::text FROM pv3.coverage WHERE batch='{batch}' AND id='{lesson_id}'",

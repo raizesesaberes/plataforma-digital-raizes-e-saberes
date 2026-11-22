@@ -14,6 +14,9 @@ async function main() {
   const input = JSON.parse(readFileSync(0, 'utf8')); // URL never on argv
   // The Admin page belongs to a fresh private HTTPS loopback test listener.
   const url = new URL(input.url);
+  const mode=input.mode;
+  need(['same-session','before-restart','after-restart'].includes(mode));
+  need(mode==='after-restart'?/^fixture-[a-f0-9]{12}$/.test(input.receipt):!Object.hasOwn(input,'receipt'));
   need(url.protocol === 'https:' && url.hostname === '127.0.0.1' &&
        /^[0-9]{4,5}$/.test(url.port) && !url.username && !url.password &&
        url.pathname === '/' && !url.search && !url.hash);
@@ -65,7 +68,7 @@ async function main() {
     const same=await cmd('Runtime.evaluate',{expression:"location.href === "+JSON.stringify(url.href)+
       " && document.readyState === 'complete' && !!document.getElementById('role')",returnByValue:true},sessionId);
     need(same.result?.value===true);
-    const program=(async function adminUI() {
+    const program=(async function adminUI(mode,expectedReceipt) {
       const need=(ok,phase)=>{if(!ok)throw Error(phase);};
       const e=id=>document.getElementById(id);
       const until=(f,phase,limit=7500)=>new Promise((resolve,reject)=>{
@@ -84,6 +87,17 @@ async function main() {
       });
       const pick=(name)=>{e('role').value=name;e('role').dispatchEvent(new Event('change'));};
       await until(()=>e('role')&&e('approve')&&e('publish'),'page');
+      if(mode==='after-restart'){
+        pick('publisher');
+        await until(()=>e('stage').textContent==='published'&&!e('role').disabled,'restart');
+        need(e('receipt').textContent===expectedReceipt&&e('publish').disabled&&e('confirm').disabled&&!e('recover').disabled,'restart');
+        const guarded=await fetch('/publish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({confirm:true})});
+        need(guarded.status===409,'guard');
+        e('recover').click();
+        await until(()=>e('feedback').textContent==='prior_receipt_read_only','readback');
+        need(e('receipt').textContent===expectedReceipt&&e('publish').disabled&&e('confirm').disabled,'readback');
+        return {ok:true,readback:true,guard:true};
+      }
       pick('other');
       await until(()=>e('stage').textContent==='review'&&!e('role').disabled,'unauthorized');
       need(e('approve').disabled&&e('publish').disabled,'unauthorized');
@@ -103,6 +117,7 @@ async function main() {
       need(e('publish').disabled&&e('confirm').disabled&&!e('confirm').checked&&e('role').disabled&&!e('recover').disabled,'lock');
       e('publish').click(); // Disabled; first valid replay only after a read-only recovery.
       need(e('feedback').textContent==='reconcile_required','lock');
+      if(mode==='before-restart')return {ok:true,ambiguous:true,firstReadbackFailed:true};
       e('recover').click();
       await until(()=>e('feedback').textContent==='receipt_recovered_without_retry','readback');
       const receipt=e('receipt').textContent;
@@ -112,14 +127,14 @@ async function main() {
       need(e('receipt').textContent===receipt,'replay');
       return {ok:true,readback:true,replay:true};
     }).toString();
-    const r=await cmd('Runtime.evaluate',{expression:'('+program+')()',
+    const r=await cmd('Runtime.evaluate',{expression:'('+program+')('+JSON.stringify(mode)+','+JSON.stringify(input.receipt??null)+')',
        awaitPromise:true,returnByValue:true,userGesture:true},sessionId);
     if(r.exceptionDetails){
-      const phase=(r.exceptionDetails.exception?.description||'').match(/^Error: (page|unauthorized|reviewer|manifest|approve|publisher|confirmation|lock|readback|replay)\b/)?.[1];
+      const phase=(r.exceptionDetails.exception?.description||'').match(/^Error: (page|unauthorized|reviewer|manifest|approve|publisher|confirmation|lock|readback|replay|restart|guard)\b/)?.[1];
       process.stderr.write('Admin fixture failed phase='+(phase||'unclassified')+'\n');
       process.exitCode=1;return;
     }
-    need(r.result?.value?.ok&&r.result.value?.readback&&r.result.value?.replay);
+    need(r.result?.value?.ok);
     process.stdout.write(JSON.stringify(r.result.value));
   } finally {
     clearTimeout(deadline);
