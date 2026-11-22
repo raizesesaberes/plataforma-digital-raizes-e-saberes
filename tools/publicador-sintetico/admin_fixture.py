@@ -94,7 +94,7 @@ render();
 
 
 @contextmanager
-def serve_admin(cert, private_key, manifest, auth_user, role_tokens, invoke, state):
+def serve_admin(cert, private_key, manifest, auth_user, role_tokens, invoke, state, *, native_entry=None):
     """Bind exact, pre-issued local Auth identities and parameterless fixture RPCs."""
     sessions = {}
     receipt_only_sessions = set()
@@ -124,7 +124,10 @@ def serve_admin(cert, private_key, manifest, auth_user, role_tokens, invoke, sta
                 return self.response(403, {'ok': False})
             if self.command == 'POST' and self.headers.get('Origin') != origin:
                 return self.response(403, {'ok': False})
-            if self.command == 'GET' and self.path == '/':
+            if self.command == 'GET' and self.path == '/' and native_entry is not None:
+                return self.response(200, native_entry, 'text/html; charset=utf-8')
+            if self.command == 'GET' and (self.path == '/' or
+                                          (self.path == '/formacao-docente-homologacao' and native_entry is not None)):
                 return self.response(200, PAGE, 'text/html; charset=utf-8')
             if self.command == 'GET' and self.path == '/app.js':
                 return self.response(200, APP, 'text/javascript; charset=utf-8')

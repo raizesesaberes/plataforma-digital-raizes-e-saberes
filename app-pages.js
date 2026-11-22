@@ -14613,6 +14613,21 @@ const renderAdminSchoolExceptionsManager = ({ catalog, availabilityByContent, sc
   `;
 };
 
+// Loopback-only integration with the existing synthetic Admin publisher.
+const renderAdminTeacherTrainingPublisherCard = () => {
+  if (window.location.protocol !== "https:" ||
+      window.location.hostname !== "127.0.0.1" ||
+      window.RAIZES_FORMACAO_PUBLICADOR_HOMOLOGACAO !== true ||
+      !platformRoles.admin.includes(getCurrentPlatformRole())) return "";
+  return renderAdminContentModuleCard({
+    title: "Formação Docente",
+    description: "Aprovação e publicação de vídeo fictício. Ambiente isolado.",
+    status: "HOMOLOGAÇÃO",
+    icon: "chart",
+    href: "/formacao-docente-homologacao",
+  });
+};
+
 const renderAdminContentGovernanceConsole = () => {
   if (['entitlements', 'network-contracts'].includes(new URLSearchParams(window.location.search).get('type'))) return '<section class="admin-board"><contract-operations></contract-operations></section>';
   if (adminOperationalState.status === "loading" || adminOperationalState.status === "idle") {
@@ -14696,6 +14711,7 @@ const renderAdminContentGovernanceConsole = () => {
     <section class="admin-board">
       <div class="admin-section-head"><h2>Acervo Mestre</h2><span>Visão por módulo</span></div>
       <div class="admin-content-module-grid">
+        ${renderAdminTeacherTrainingPublisherCard()}
         ${canSeeQuestionBank ? renderAdminContentModuleCard({ title: "Banco de Questões", count: "Consultar", countLabel: "acervo editorial", description: "O total editorial e os direitos contratados são consultados separadamente; não representam o mesmo conjunto.", status: "OPERACIONAL", icon: "clipboard", href: "banco-questoes.html?view=dashboard" }) : ""}
         ${renderAdminContentModuleCard({ title: "Livros", count: totals.book || 0, countLabel: "itens", description: "Obras e materiais da Biblioteca Viva.", status: statusFromCount(totals.book), icon: "book", href: adminContentUrl({ type: "book", page: 1 }) })}
         ${renderAdminContentModuleCard({ title: "Atividades", count: totals.activity || 0, countLabel: "itens", description: "Atividades imprimíveis, digitais e de apoio pedagógico.", status: statusFromCount(totals.activity), icon: "doc", href: adminContentUrl({ type: "activity", page: 1 }) })}

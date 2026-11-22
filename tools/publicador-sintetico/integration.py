@@ -496,10 +496,18 @@ def admin_invoke(name, jwt):
 
 actors = {'reviewer': (ajwt, approver), 'publisher': (pjwt, publisher), 'other': (njwt, wrong[0])}
 check(len({uid for _, uid in actors.values()}) == len(actors), 'Admin actor identities not distinct')
+try:
+    native_entry = subprocess.run(['node', str(admin_browser.with_name('native-entry.mjs'))],
+                                  check=True, capture_output=True, timeout=8).stdout
+except (subprocess.SubprocessError, OSError):
+    raise SystemExit('native Admin entry failed to render; details suppressed') from None
+check(b'/formacao-docente-homologacao' in native_entry, 'native Admin publisher entry missing')
+
 def run_admin_browser(mode, expected_metrics, receipt=None):
     manifest = {'label': 'Matemática · V2 · Unidade 1 · aulas 4 e 5', 'sha': sha}
-    with serve_admin(cert, admin_key, manifest, auth_user, actors, admin_invoke, admin_state) as (admin_url, evidence):
-        browser_input = {'url': admin_url, 'mode': mode}
+    with serve_admin(cert, admin_key, manifest, auth_user, actors, admin_invoke, admin_state,
+                     native_entry=native_entry) as (admin_url, evidence):
+        browser_input = {'url': admin_url, 'mode': mode, 'nativeEntry': True}
         if receipt is not None:
             browser_input['receipt'] = receipt
         try:

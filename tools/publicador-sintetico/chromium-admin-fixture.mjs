@@ -62,10 +62,31 @@ async function main() {
     const {sessionId}=await cmd('Target.attachToTarget',{targetId,flatten:true});
     await cmd('Page.enable',{},sessionId);
     await cmd('Page.setLifecycleEventsEnabled',{enabled:true},sessionId);
+    async function waitLoad(loaderId) {
+      need(loaderId);
+      if(!loaded.has(loaderId))await new Promise((resolve,reject)=>lifecycle.set(loaderId,{resolve,reject}));
+    }
     const tryNav=await cmd('Page.navigate',{url:url.href},sessionId);
-    need(tryNav.loaderId&&!tryNav.errorText);
-    if(!loaded.has(tryNav.loaderId))await new Promise((resolve,reject)=>lifecycle.set(tryNav.loaderId,{resolve,reject}));
-    const same=await cmd('Runtime.evaluate',{expression:"location.href === "+JSON.stringify(url.href)+
+    need(!tryNav.errorText);
+    await waitLoad(tryNav.loaderId);
+    let target=url.href;
+    if(input.nativeEntry===true){
+      const frame=(await cmd('Page.getFrameTree',{},sessionId)).frameTree.frame.id;
+      const clicked=await cmd('Runtime.evaluate',{expression:`(() => {
+        const links=document.querySelectorAll('article.admin-content-module-card a[href="/formacao-docente-homologacao"]');
+        if(links.length!==1)return false;
+        links[0].click();return true;
+      })()`,returnByValue:true},sessionId);
+      need(clicked.result?.value===true);
+      target=new URL('/formacao-docente-homologacao',url).href;
+      for(let i=0;i<100;i++){
+        const now=(await cmd('Page.getFrameTree',{},sessionId)).frameTree.frame;
+        need(now.id===frame);
+        if(now.url===target){await waitLoad(now.loaderId);break;}
+        await new Promise(resolve=>setTimeout(resolve,30));
+      }
+    }
+    const same=await cmd('Runtime.evaluate',{expression:"location.href === "+JSON.stringify(target)+
       " && document.readyState === 'complete' && !!document.getElementById('role')",returnByValue:true},sessionId);
     need(same.result?.value===true);
     const program=(async function adminUI(mode,expectedReceipt) {
